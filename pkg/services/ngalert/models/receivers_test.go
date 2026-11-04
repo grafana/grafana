@@ -9,8 +9,6 @@ import (
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestReceiver_Clone(t *testing.T) {
@@ -68,9 +66,7 @@ func TestReceiver_EncryptDecrypt(t *testing.T) {
 	}
 }
 
-func TestIntegration_Redact(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestReceiverIntegration_Redact(t *testing.T) {
 	redactFn := func(key string) string {
 		return "TESTREDACTED"
 	}
@@ -100,9 +96,7 @@ func TestIntegration_Redact(t *testing.T) {
 	}
 }
 
-func TestIntegration_Validate(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestReceiverIntegration_Validate(t *testing.T) {
 	// Test that all known integration types are valid.
 	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
 		t.Run(string(integrationType), func(t *testing.T) {
@@ -117,9 +111,7 @@ func TestIntegration_Validate(t *testing.T) {
 	}
 }
 
-func TestIntegration_WithExistingSecureFields(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestReceiverIntegration_WithExistingSecureFields(t *testing.T) {
 	// Test that WithExistingSecureFields will copy over the secure fields from the existing integration.
 	testCases := []struct {
 		name         string
@@ -262,9 +254,7 @@ func TestSecretsIntegrationConfig(t *testing.T) {
 	}
 }
 
-func TestIntegration_SecureFields(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestReceiverIntegration_SecureFields(t *testing.T) {
 	// Test that all known integration types have a config and correctly mark their secrets as secure.
 	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
 		t.Run(string(integrationType), func(t *testing.T) {

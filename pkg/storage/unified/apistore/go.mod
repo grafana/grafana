@@ -6,7 +6,7 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600
-	github.com/grafana/grafana-app-sdk/logging v0.61.0
+	github.com/grafana/grafana-app-sdk/logging v0.61.1
 	github.com/grafana/grafana/apps/alerting/alertrulequality v0.0.0-20260930150852-c73965d1f90d
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20260930150852-c73965d1f90d
 	github.com/grafana/grafana/apps/folder v0.0.0-20260930143952-2d0116f02123
@@ -73,7 +73,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/authlib v0.0.0-20261023105149-ed7cea0f2b27 // indirect
-	github.com/grafana/grafana-app-sdk v0.61.0 // indirect
+	github.com/grafana/grafana-app-sdk v0.61.1 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.297.0 // indirect
 	github.com/grafana/otel-profiling-go v0.7.0 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // indirect
@@ -111,7 +111,7 @@ require (
 	github.com/prometheus/client_golang v1.25.0 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
 	github.com/prometheus/common v0.72.1 // indirect
-	github.com/prometheus/procfs v0.22.0 // indirect
+	github.com/prometheus/procfs v0.23.0 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20261013103202-7c8a61a7a736 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.8.0 // indirect
@@ -156,7 +156,7 @@ require (
 	k8s.io/component-base v0.37.1 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098 // indirect
-	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3 // indirect
+	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.37.0 // indirect
 	sigs.k8s.io/json v0.0.0-20260909141634-11ed52e25bc5 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect

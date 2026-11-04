@@ -203,7 +203,7 @@ function ensureLoggedIn(): void {
   const e2eSelectorsCjs = path.join(REPO_ROOT, 'node_modules', '@grafana', 'e2e-selectors', 'dist', 'cjs', 'index.cjs');
   if (!fs.existsSync(e2eSelectorsCjs)) {
     console.log(`[setup] building @grafana/e2e-selectors (one-time)`);
-    const build = spawnSync('npm', ['run', '--prefix', 'packages/grafana-e2e-selectors', 'build'], {
+    const build = spawnSync('pnpm', ['--filter', '@grafana/e2e-selectors', '--fail-if-no-match', 'run', 'build'], {
       cwd: REPO_ROOT,
       stdio: 'inherit',
     });
@@ -213,19 +213,15 @@ function ensureLoggedIn(): void {
   }
 
   console.log(`[setup] no storage state cached; running playwright authenticate project`);
-  const result = spawnSync(
-    'npm',
-    ['exec', '--no', '--', 'playwright', 'test', '--project=authenticate', '--reporter=list'],
-    {
-      cwd: REPO_ROOT,
-      stdio: 'inherit',
-      env: { ...process.env, GRAFANA_URL },
-    }
-  );
+  const result = spawnSync('pnpm', ['exec', 'playwright', 'test', '--project=authenticate', '--reporter=list'], {
+    cwd: REPO_ROOT,
+    stdio: 'inherit',
+    env: { ...process.env, GRAFANA_URL },
+  });
   if (result.status !== 0) {
     throw new Error(
       `playwright authenticate project failed (exit ${result.status}). ` +
-        `Run \`GRAFANA_URL=${GRAFANA_URL} yarn playwright test --project=authenticate\` manually to see what's wrong.`
+        `Run \`GRAFANA_URL=${GRAFANA_URL} pnpm exec playwright test --project=authenticate\` manually to see what's wrong.`
     );
   }
   if (!fs.existsSync(STORAGE_STATE)) {

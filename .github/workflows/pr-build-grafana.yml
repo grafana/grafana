@@ -20,20 +20,21 @@ permissions: {}
 
 jobs:
   detect-changes:
-    # Gate the whole workflow behind this check. Skip draft PRs entirely.
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && github.event.pull_request.draft == false
+    # Keep validation available to forks while skipping draft PRs entirely.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Detect whether code changed
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
     outputs:
-      # Build when non-test frontend or backend changes: a test-only PR can't
-      # affect the built image, so it shouldn't trigger the Docker build.
-      changed: ${{ steps.detect-changes.outputs.frontend-src == 'true' || steps.detect-changes.outputs.backend-src == 'true' }}
+      # Include Docker build inputs as well as non-test frontend and backend changes.
+      changed: ${{ steps.detect-changes.outputs.docker-build == 'true' ||
+        steps.detect-changes.outputs.frontend-src == 'true' ||
+        steps.detect-changes.outputs.backend-src == 'true' }}
       # Meticulous only exercises frontend changes, so it gates on this alone.
       frontend-src: ${{ steps.detect-changes.outputs.frontend-src }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 0
@@ -44,30 +45,15 @@ jobs:
         with:
           self: .github/workflows/pr-build-grafana.yml
 
-  setup:
-    name: setup
-    needs: [detect-changes]
-    if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-x64-small
-    permissions:
-      contents: read
-    outputs:
-      version: ${{ steps.output.outputs.version }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-      - name: Set up version
-        run: jq -r .version package.json | sed -s "s/pre/${BUILD_ID}/g" > VERSION
-        env:
-          BUILD_ID: ${{ github.run_id }}
-      - id: output
-        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+  # Prod-like build: compile frontend + backend in parallel → assemble tarball
+  # → build all 6 Docker variants. Mirrors the release-build.yml structure so
+  # the same code paths are exercised on every PR.
 
   build-frontend:
-    name: build frontend
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    name: build / frontend
     runs-on: ubuntu-x64-large
-    needs: [setup]
     permissions:
       contents: read
     steps:
@@ -78,42 +64,48 @@ jobs:
       - name: Install JS dependencies
         uses: ./.github/actions/yarn-install
       - name: Build frontend
-        run: npm run build
+        run: pnpm run build
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: pr-frontend
-          path: public
+          path: |
+            public/
+            !public/**/node_modules/
           retention-days: 1
 
   build-backend:
-    name: build backend
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    name: build / backend (linux-amd64)
     runs-on: ubuntu-x64-large
-    needs: [setup]
     permissions:
       contents: read
+    outputs:
+      version: ${{ steps.build.outputs.version }}
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: ./.github/actions/build-go
+      - id: build
+        uses: ./.github/actions/build-go
         with:
           build-number: ${{ github.run_id }}
-          build-version: ${{ needs.setup.outputs.version }}
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
-          name: pr-backend
+          name: pr-backend-linux-amd64
           path: bin/linux/amd64
           retention-days: 1
 
-  build-targz:
-    name: build targz
+  build-source-targz:
+    name: build / source tarball
     runs-on: ubuntu-x64-large
     needs:
-      - setup
       - build-frontend
       - build-backend
     permissions:
       contents: read
+    outputs:
+      version: ${{ needs.build-backend.outputs.version }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -121,22 +113,44 @@ jobs:
       - uses: ./.github/actions/build-targz
         with:
           build-number: ${{ github.run_id }}
-          build-version: ${{ needs.setup.outputs.version }}
+          build-version: ${{ needs.build-backend.outputs.version }}
           frontend-artifact: pr-frontend
-          backend-artifact: pr-backend
+          backend-artifact: pr-backend-linux-amd64
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
-          name: pr-targz
-          path: dist
+          name: pr-source-targz
+          path: dist/*.tar.gz
           retention-days: 1
 
-  build-docker:
-    name: build docker
-    runs-on: ubuntu-x64-large
+  build-docker-variants:
+    name: build / variants (targz)
+    needs: build-source-targz
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/build-docker-variants.yml
+    with:
+      targz-artifact-name: pr-source-targz
+      name: linux-amd64
+      os: linux
+      arch: amd64
+      arch-tag: amd64
+      version: ${{ needs.build-source-targz.outputs.version }}
+      build-number: ${{ github.run_id }}
+      tag-prefix: 'grafana/grafana-image-tags:'
+
+  run-meticulous-tests:
+    name: Run Meticulous tests
+    runs-on: ubuntu-x64
     needs:
       - detect-changes
-      - setup
-      - build-targz
+      - build-docker-variants
+    if: github.event_name == 'pull_request' &&
+      github.repository == 'grafana/grafana' &&
+      github.event.pull_request.head.repo.fork == false &&
+      github.event.pull_request.base.ref == 'main' &&
+      needs.detect-changes.outputs.frontend-src == 'true'
+    continue-on-error: true
     permissions:
       actions: write
       contents: read
@@ -145,12 +159,10 @@ jobs:
       pull-requests: write
       statuses: read
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Check whether Meticulous should run
-        if: github.repository == 'grafana/grafana' && github.event.pull_request.base.ref == 'main' && needs.detect-changes.outputs.frontend-src == 'true'
         id: meticulous-eligibility
         continue-on-error: true
         uses: actions/github-script@v8
@@ -167,34 +179,19 @@ jobs:
             }
             core.setOutput('run', run);
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        if: steps.meticulous-eligibility.outputs.run == 'true'
         with:
-          name: pr-targz
+          name: artifacts-docker-linux-amd64
           path: dist
-      - name: Set up Docker Buildx
-        run: docker buildx create --use
-      - name: Build docker image
-        id: build-image
-        env:
-          GOOS: linux
-          GOARCH: amd64
-          BUILD_NUMBER: ${{ github.run_id }}
-          BUILD_VERSION: ${{ needs.setup.outputs.version }}
-        run: |
-          for TARGZ in dist/*.tar.gz; do break; done
-          TAG_VERSION="${BUILD_VERSION//+/-}"
-          make build-docker \
-            -o "$TARGZ" \
-            BUILD_VERSION="$BUILD_VERSION" \
-            BUILD_NUMBER="$BUILD_NUMBER" \
-            DOCKER_TAG="grafana/grafana-image-tags:${TAG_VERSION}-amd64"
-          echo "image-tag=grafana/grafana-image-tags:${TAG_VERSION}-amd64" >> "$GITHUB_OUTPUT"
       - name: Load Docker image for Meticulous
+        id: load-image
         if: steps.meticulous-eligibility.outputs.run == 'true'
         continue-on-error: true
         run: |
           set -euo pipefail
           for IMAGE_ARCHIVE in dist/*.docker.tar.gz; do break; done
-          docker load -i "$IMAGE_ARCHIVE"
+          LOADED_IMAGE_NAME=$(docker load -i "$IMAGE_ARCHIVE" | sed -n 's/^Loaded image: //p')
+          echo "image-tag=${LOADED_IMAGE_NAME}" >> "$GITHUB_OUTPUT"
       - name: Get vault secrets
         if: steps.meticulous-eligibility.outputs.run == 'true'
         id: vault-secrets
@@ -209,26 +206,15 @@ jobs:
         uses: alwaysmeticulous/report-diffs-action/upload-container@739cb7bd62805f98f3c8749f8149ba4ecd86725d # v1
         with:
           api-token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).METICULOUS_API_TOKEN }}
-          image-tag: ${{ steps.build-image.outputs.image-tag }}
+          image-tag: ${{ steps.load-image.outputs.image-tag }}
           container-port: 3000
           container-env: |
             GF_AUTH_ANONYMOUS_ENABLED=true
             GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-      - name: Stage docker artifact
-        run: |
-          mkdir -p upload
-          cp dist/*.docker.tar.gz upload/
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
-        with:
-          name: pr-docker
-          path: upload
-          retention-days: 1
 
   push-docker-image:
-    needs:
-      - detect-changes
-      - build-docker
-    if: needs.detect-changes.outputs.changed == 'true'
+    needs: build-docker-variants
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: Push PR Docker image
     outputs:
       IMAGE: ${{ steps.push-image.outputs.IMAGE }}
@@ -244,7 +230,7 @@ jobs:
           environment: 'dev'
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: pr-docker
+          name: artifacts-docker-linux-amd64
           path: .
       - name: Load & Push Docker image
         id: push-image

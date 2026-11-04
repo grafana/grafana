@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/grafana/authlib/types"
@@ -330,6 +331,11 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.IndexMetrics = opts.IndexMetrics
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
 
+	resourceOpts.Search.SharedExternalCollections = make([]string, 0, len(opts.Cfg.VectorSharedExternalCollections))
+	for collection := range opts.Cfg.VectorSharedExternalCollections {
+		resourceOpts.Search.SharedExternalCollections = append(resourceOpts.Search.SharedExternalCollections, collection)
+	}
+	slices.Sort(resourceOpts.Search.SharedExternalCollections)
 	if opts.VectorBackend != nil {
 		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
 		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections

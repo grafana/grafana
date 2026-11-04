@@ -29,6 +29,8 @@ func TestMain(m *testing.M) {
 		// Match both stack names: the compiler may inline startEventListener into newEventExecutor.
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.(*eventExecutor).startEventListener.func1.1"),
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.newEventExecutor.(*eventExecutor).startEventListener.func1.1"),
+		// db.NewTestStore always starts a test tracer whose span processor is never shut down.
+		goleak.IgnoreTopFunction("go.opentelemetry.io/otel/sdk/trace.(*batchSpanProcessor).processQueue"),
 	)
 }
 

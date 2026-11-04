@@ -381,6 +381,44 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, singleQueryResult.Teams[0].UID, teamUIDs[0])
 			})
 
+			t.Run("Should be able to query teams by member UID", func(t *testing.T) {
+				// setup appends on every DB reset, so the last user belongs to the current DB.
+				memberID, memberUID := userIds[len(userIds)-1], userUIDs[len(userUIDs)-1]
+				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+					if err := AddOrUpdateTeamMemberHook(dbHelper, sess, memberID, testOrgID, team1.ID, false, 0); err != nil {
+						return err
+					}
+					return AddOrUpdateTeamMemberHook(dbHelper, sess, memberID, testOrgID, team2.ID, false, 0)
+				})
+				require.NoError(t, err)
+				defer func() {
+					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+						if err := RemoveTeamMemberHook(dbHelper, sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: memberID, TeamID: team1.ID}); err != nil {
+							return err
+						}
+						return RemoveTeamMemberHook(dbHelper, sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: memberID, TeamID: team2.ID})
+					})
+					require.NoError(t, err)
+				}()
+
+				// TotalCount comes from a separate count query, so it must apply the member filter too.
+				pageResult, err := teamSvc.SearchTeams(context.Background(), &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, MemberUID: memberUID, Limit: 1, Page: 1})
+				require.NoError(t, err)
+				require.Len(t, pageResult.Teams, 1)
+				require.EqualValues(t, 2, pageResult.TotalCount)
+
+				nameResult, err := teamSvc.SearchTeams(context.Background(), &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, MemberUID: memberUID, Name: team2.Name, Limit: 10, Page: 1})
+				require.NoError(t, err)
+				require.Len(t, nameResult.Teams, 1)
+				require.EqualValues(t, 1, nameResult.TotalCount)
+				require.Equal(t, team2.UID, nameResult.Teams[0].UID)
+
+				missingResult, err := teamSvc.SearchTeams(context.Background(), &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, MemberUID: "no-such-user", Limit: 10, Page: 1})
+				require.NoError(t, err)
+				require.Empty(t, missingResult.Teams)
+				require.Zero(t, missingResult.TotalCount)
+			})
+
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 				setup()

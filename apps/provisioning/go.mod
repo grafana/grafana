@@ -8,8 +8,8 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/go-github/v82 v82.0.0
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
-	github.com/grafana/grafana-app-sdk v0.61.0
-	github.com/grafana/grafana-app-sdk/logging v0.61.0
+	github.com/grafana/grafana-app-sdk v0.61.1
+	github.com/grafana/grafana-app-sdk/logging v0.61.1
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44
 	github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
@@ -44,7 +44,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.14.0 // indirect
 	github.com/emicklei/proto v1.14.3 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.6 // indirect
-	github.com/getkin/kin-openapi v0.151.0 // indirect
+	github.com/getkin/kin-openapi v0.152.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.6 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -87,7 +87,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/common v0.72.1 // indirect
-	github.com/prometheus/procfs v0.22.0 // indirect
+	github.com/prometheus/procfs v0.23.0 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20261013103202-7c8a61a7a736 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 // indirect
 	github.com/smallstep/pkcs7 v0.2.3 // indirect
@@ -117,7 +117,7 @@ require (
 	k8s.io/api v0.37.1 // indirect
 	k8s.io/component-base v0.37.1 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
-	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3 // indirect
+	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab // indirect
 	sigs.k8s.io/json v0.0.0-20260909141634-11ed52e25bc5 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
