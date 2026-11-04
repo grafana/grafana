@@ -52,7 +52,6 @@ function getTraceView(
   spanFilters?: TraceSearchProps,
   spanId?: string,
   expandSpan?: boolean,
-  exploreId?: string,
   storeOverride?: ReturnType<typeof configureStore>
 ) {
   const store = configureStore({
@@ -68,7 +67,7 @@ function getTraceView(
   return (
     <Provider store={storeOverride ?? store}>
       <TraceView
-        exploreId={exploreId}
+        exploreId={spanId !== undefined || expandSpan !== undefined ? 'left' : undefined}
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
@@ -330,7 +329,7 @@ describe('TraceView', () => {
           },
         },
       });
-      render(getTraceView([frame], undefined, spanId, true, 'left', store));
+      render(getTraceView([frame], undefined, spanId, true, store));
       return store;
     }
 
@@ -372,7 +371,7 @@ describe('TraceView', () => {
     });
 
     it('opens the linked span attributes and resource attributes with expandSpan=true and allows closing its details', async () => {
-      render(getTraceView([frameOld], undefined, childSpanId, true, 'left'));
+      render(getTraceView([frameOld], undefined, childSpanId, true));
       await waitFor(() => expect(screen.getByText('client-uuid-3')).toBeInTheDocument());
       expect(screen.getByText(/Span attributes/)).toBeInTheDocument();
 
