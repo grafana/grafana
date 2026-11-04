@@ -108,9 +108,13 @@ describe('RadialGauge', () => {
       expect(screen.queryByText('55')).not.toBeInTheDocument();
     });
 
-    it('should cut a name that is too long for the gauge', () => {
-      render(<RadialGaugeExample textMode="name" seriesName={'a'.repeat(300)} value={55} />);
-      expect(screen.getByText(`${'a'.repeat(222)}…`)).toBeInTheDocument();
+    it('should let CSS cut a name that is too long for the gauge', () => {
+      const name = 'a'.repeat(300);
+      render(<RadialGaugeExample textMode="name" seriesName={name} value={55} />);
+
+      const nameElement = screen.getByText(name);
+      expect(nameElement).toHaveStyle({ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' });
+      expect(Number(nameElement.parentElement?.getAttribute('width'))).toBeCloseTo(171.33, 1);
     });
 
     it('should render `none` if the textMode is set to `none`', () => {

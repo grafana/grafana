@@ -1,7 +1,5 @@
 import { type DataFrameView, type FieldDisplay, ThresholdsMode } from '@grafana/data';
 
-import { calculateFontSize } from '../../utils/measureText';
-
 import type { RadialGaugeProps } from './RadialGauge';
 import { type RadialGaugeDimensions } from './types';
 import {
@@ -14,7 +12,6 @@ import {
   getAngleBetweenSegments,
   getOptimalSegmentCount,
   getThresholdPercentageValue,
-  truncateToWidth,
 } from './utils';
 
 describe('RadialGauge utils', () => {
@@ -442,41 +439,6 @@ describe('RadialGauge utils', () => {
       const fieldDisplay = createFieldDisplay(75, 0, 50);
       const result = getThresholdPercentageValue(threshold, ThresholdsMode.Percentage, fieldDisplay);
       expect(result).toBe(0.75);
-    });
-  });
-
-  // jest-canvas-mock measures a string as its `length` at any font size, so at font size 14 each
-  // UTF-16 code unit is 1px wide.
-  describe('truncateToWidth', () => {
-    it('should return text that fits unchanged', () => {
-      expect(truncateToWidth('abcdef', 6, 14)).toBe('abcdef');
-    });
-
-    it('should cut text that does not fit and end it with an ellipsis', () => {
-      expect(truncateToWidth('abcdefgh', 6, 14)).toBe('abcde…');
-    });
-
-    it('should scale the measured width to the font size', () => {
-      expect(truncateToWidth('abcdefgh', 6, 28)).toBe('ab…');
-    });
-
-    it('should not leave a space before the ellipsis', () => {
-      expect(truncateToWidth('abc defgh', 5, 14)).toBe('abc…');
-    });
-
-    it('should not cut an emoji in half', () => {
-      expect(truncateToWidth('🚀🚀🚀🚀', 6, 14)).toBe('🚀🚀…');
-    });
-
-    it('should return only the ellipsis when nothing else fits', () => {
-      expect(truncateToWidth('abcdef', 0, 14)).toBe('…');
-    });
-
-    it('should not cut text at the font size calculateFontSize fit it to', () => {
-      const text = 'a'.repeat(120);
-      const fontSize = calculateFontSize(text, 100, 1000, 1.21);
-
-      expect(truncateToWidth(text, 100, fontSize)).toBe(text);
     });
   });
 });

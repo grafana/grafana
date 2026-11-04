@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import {
@@ -8,10 +9,10 @@ import {
   type GrafanaTheme2,
 } from '@grafana/data';
 
+import { useStyles2 } from '../../themes/ThemeContext';
 import { calculateFontSize } from '../../utils/measureText';
 
 import { type RadialShape, type RadialTextMode, type RadialGaugeDimensions } from './types';
-import { truncateToWidth } from './utils';
 
 interface RadialTextProps {
   displayValue: DisplayValue;
@@ -36,6 +37,7 @@ const SPARKLINE_SPACING = 8;
 const MIN_VALUE_FONT_SIZE = 1;
 const MIN_NAME_FONT_SIZE = 10;
 const MIN_UNIT_FONT_SIZE = 6;
+const NAME_ARC_GAP = 1;
 
 export const RadialText = memo(
   ({
@@ -49,6 +51,7 @@ export const RadialText = memo(
     valueManualFontSize,
     nameManualFontSize,
   }: RadialTextProps) => {
+    const styles = useStyles2(getStyles);
     const { centerX, centerY, radius, barWidth } = dimensions;
 
     if (textMode === 'none') {
@@ -115,6 +118,12 @@ export const RadialText = memo(
       yOffset += SPARKLINE_SPACING;
     }
 
+    // The name can use the whole width inside the arc at its height. maxTextWidth is too narrow for this,
+    // because the browser adds letter spacing that calculateFontSize does not measure.
+    const nameCenterY = nameY - yOffset;
+    const nameRadius = radius - barWidth / 2 - NAME_ARC_GAP;
+    const nameWidth = 2 * Math.sqrt(Math.max(nameRadius ** 2 - (nameCenterY - centerY) ** 2, 0));
+
     return (
       <g>
         {showValue && (
@@ -132,16 +141,16 @@ export const RadialText = memo(
           </text>
         )}
         {showName && (
-          <text
-            fontSize={nameFontSize}
-            x={centerX}
-            y={nameY - yOffset}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fill={nameColor}
+          <foreignObject
+            x={centerX - nameWidth / 2}
+            y={nameCenterY - nameHeight / 2}
+            width={nameWidth}
+            height={nameHeight}
           >
-            {truncateToWidth(displayValue.title ?? '', maxTextWidth, nameFontSize, theme.typography.body.fontWeight)}
-          </text>
+            <div className={styles.name} style={{ fontSize: nameFontSize, color: nameColor }}>
+              {displayValue.title}
+            </div>
+          </foreignObject>
         )}
       </g>
     );
@@ -149,3 +158,13 @@ export const RadialText = memo(
 );
 
 RadialText.displayName = 'RadialText';
+
+const getStyles = () => ({
+  name: css({
+    lineHeight: LINE_HEIGHT_FACTOR,
+    textAlign: 'center',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+  }),
+});
