@@ -2,7 +2,14 @@ import { act, screen } from '@testing-library/react';
 import { type ReactNode } from 'react';
 import { render } from 'test/test-utils';
 
-import { type DataFrame, FieldType, LoadingState, createDataFrame, getDefaultTimeRange } from '@grafana/data';
+import {
+  type DataFrame,
+  DataFrameType,
+  FieldType,
+  LoadingState,
+  createDataFrame,
+  getDefaultTimeRange,
+} from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneDataNode, SceneGridLayout, VizPanel } from '@grafana/scenes';
@@ -101,6 +108,7 @@ describe('ViewPanelSidePane', () => {
 
     it('hides the labels section for a wide frame', async () => {
       const wide = createDataFrame({
+        meta: { type: DataFrameType.TimeSeriesWide },
         fields: [
           { name: 'time', type: FieldType.time, values: [1] },
           { name: 'a', type: FieldType.number, values: [1], labels: { bot_job: 'a' } },
@@ -112,6 +120,19 @@ describe('ViewPanelSidePane', () => {
       expect(screen.queryByText('Labels')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('bot_job')).not.toBeInTheDocument();
       expect(screen.getByLabelText('By series')).toBeInTheDocument();
+    });
+
+    it('lists the labels of a frame with several value fields that is not typed as wide', async () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1] },
+          { name: 'a', type: FieldType.number, values: [1], labels: { bot_job: 'a' } },
+          { name: 'b', type: FieldType.number, values: [1], labels: { bot_job: 'b' } },
+        ],
+      });
+      await setup('view', [frame]);
+
+      expect(screen.getByLabelText('bot_job')).toBeInTheDocument();
     });
   });
 });

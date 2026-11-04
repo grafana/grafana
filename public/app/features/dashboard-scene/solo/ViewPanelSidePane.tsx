@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { type DataFrame, DataFrameType, FieldType, type PanelData } from '@grafana/data';
+import { type DataFrame, DataFrameType, type PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import {
@@ -202,13 +202,9 @@ function extractLabelsFromData(panelData: PanelData | undefined): string[] {
 }
 
 // Fanout by label groups whole frames, so a wide frame (several value fields, each with its own
-// labels) can't be split and would collapse into one group. Many datasources don't set meta.type,
-// so more than one number field also counts as wide.
+// labels) can't be split and would collapse into one group.
 function isWideFrame(frame: DataFrame): boolean {
-  if (frame.meta?.type === DataFrameType.TimeSeriesWide) {
-    return true;
-  }
-  return frame.fields.filter((f) => f.type === FieldType.number).length > 1;
+  return frame.meta?.type === DataFrameType.TimeSeriesWide;
 }
 
 function getModeForLabel(label: string) {
