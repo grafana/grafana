@@ -5334,6 +5334,9 @@
       "preferences": "Voorkeuren",
       "recent-dashboards": "Recente dashboards",
       "recent-scopes": "Recente scopes"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -7650,10 +7653,10 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
+      "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -12399,7 +12402,6 @@
       "copy-log-line-json": "Logboekinhoud kopiëren als JSON",
       "copy-shortlink": "Snelkoppeling kopiëren",
       "copy-to-clipboard": "Kopiëren naar klembord",
-      "displayed-fields-section": "Weergegeven velden ordenen",
       "fields": {
         "adhoc-statistics": "Ad-hocstatistieken",
         "copy-value-to-clipboard": "Waarde naar klembord kopiëren",
@@ -12423,14 +12425,11 @@
       "log-attributes-field": "Logattributen",
       "log-line-field": "Logregel",
       "log-line-section": "Logregel",
-      "move-displayed-field-down": "Naar beneden verplaatsen",
-      "move-displayed-field-up": "Naar boven verplaatsen",
       "no-details": "Weer te geven velden.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Logboek vastzetten",
       "prettify": "Verfraaien",
-      "remove-displayed-field": "Veld verwijderen",
       "remove-log": "Log verwijderen",
       "scroll-to-logline": "Naar logregel scrollen",
       "search": {
