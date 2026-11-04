@@ -186,7 +186,7 @@ Columns with filters applied have a filter icon displayed next to the title.
 To remove the filter, click the filter icon and then click **Clear filter**.
 The icon no longer displays.
 
-### Apply filters from table cells
+### Cross-filter from table cells
 
 You can apply filters directly from table cells using a field override.
 These filters let you choose whether to filter values in or out.
