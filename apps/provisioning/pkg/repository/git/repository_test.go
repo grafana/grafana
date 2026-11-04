@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -101,6 +103,33 @@ func TestNewGit(t *testing.T) {
 	require.Equal(t, "https://git.example.com/owner/repo.git", gitRepo.URL())
 	require.Equal(t, "main", gitRepo.Branch())
 	require.Equal(t, config, gitRepo.Config())
+}
+
+func TestNewRepository_SendsUserAgent(t *testing.T) {
+	var mu sync.Mutex
+	var agents []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		agents = append(agents, r.UserAgent())
+		mu.Unlock()
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(server.Close)
+
+	config := &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType}}
+	gitRepo, err := NewRepository(t.Context(), config, RepositoryConfig{URL: server.URL + "/owner/repo", Branch: "main"})
+	require.NoError(t, err)
+
+	ok, err := gitRepo.(*gitRepository).client.IsAuthorized(t.Context())
+	require.NoError(t, err)
+	require.False(t, ok)
+
+	mu.Lock()
+	defer mu.Unlock()
+	require.NotEmpty(t, agents)
+	for _, agent := range agents {
+		require.Equal(t, userAgent, agent)
+	}
 }
 
 func TestCreateSignature(t *testing.T) {
