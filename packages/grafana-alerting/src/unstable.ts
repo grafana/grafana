@@ -54,7 +54,10 @@ export {
   toRuleNotificationSettings,
   fromRuleNotificationSettings,
 } from './grafana/notificationSettings/notificationSettingsValue';
-export { useInheritedRoutingTimings } from './grafana/notificationSettings/hooks/useInheritedRoutingTimings';
+export {
+  useInheritedRoutingTimings,
+  type InheritedRoutingTimings,
+} from './grafana/notificationSettings/hooks/useInheritedRoutingTimings';
 export { type RoutingTimings } from './grafana/notificationSettings/constants';
 export { getRoutingTimingErrors, type RoutingTimingError } from './grafana/notificationSettings/utils/promDuration';
 export { DISABLE_GROUPING } from './grafana/notificationSettings/constants';

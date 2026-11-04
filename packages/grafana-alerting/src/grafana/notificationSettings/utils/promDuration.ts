@@ -7,7 +7,10 @@ const PROM_DURATION_NO_MILLIS = /^(\d+y)?(\d+w)?(\d+d)?(\d+h)?(\d+m)?(\d+s)?$/;
 
 /** Empty/undefined is valid because the field is optional. Pass `allowZero: false` for fields the backend
  * requires to be greater than zero, and `allowMilliseconds: false` for fields whose API schema has no `ms` unit. */
-export function isValidPromDuration(duration?: string, { allowZero = true, allowMilliseconds = true } = {}): boolean {
+export function isParseableByPrometheus(
+  duration?: string,
+  { allowZero = true, allowMilliseconds = true } = {}
+): boolean {
   if (!duration) {
     return true;
   }
@@ -22,10 +25,10 @@ export function isValidPromDuration(duration?: string, { allowZero = true, allow
 export type RoutingTimingError = 'format' | 'zero';
 
 function getTimingError(duration: string | undefined, allowZero: boolean): RoutingTimingError | undefined {
-  if (!isValidPromDuration(duration, { allowMilliseconds: false })) {
+  if (!isParseableByPrometheus(duration, { allowMilliseconds: false })) {
     return 'format';
   }
-  return isValidPromDuration(duration, { allowZero, allowMilliseconds: false }) ? undefined : 'zero';
+  return isParseableByPrometheus(duration, { allowZero, allowMilliseconds: false }) ? undefined : 'zero';
 }
 
 /** The timings the backend would reject, each with its reason. It allows a zero group wait but not a zero group or
