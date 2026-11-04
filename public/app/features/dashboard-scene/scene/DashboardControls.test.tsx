@@ -340,6 +340,17 @@ describe('DashboardControls', () => {
       });
     });
 
+    it('updates the viewed panel section annotation controls when the section annotations change', async () => {
+      const { controls, ancestorSet } = buildPanelModeAnnotationsScene('view');
+      renderInGrafanaContext(<controls.Component model={controls} />);
+      expect(await screen.findByText('ancestorAnnotation')).toBeInTheDocument();
+
+      act(() => ancestorSet.setState({ annotationLayers: [sectionAnnotation('addedAnnotation')] }));
+
+      expect(await screen.findByText('addedAnnotation')).toBeInTheDocument();
+      expect(screen.queryByText('ancestorAnnotation')).not.toBeInTheDocument();
+    });
+
     it('still mounts ScopesVariable.Component when panel edit variables override is active', async () => {
       const scopeVariable = new ScopesVariable({ enable: true });
 
@@ -1165,16 +1176,14 @@ function sectionAnnotation(name: string, isHidden = false) {
 }
 
 function buildPanelModeAnnotationsScene(mode: 'edit' | 'view') {
+  const ancestorSet = new DashboardDataLayerSet({
+    annotationLayers: [sectionAnnotation('ancestorAnnotation'), sectionAnnotation('hiddenAnnotation', true)],
+  });
   const { dashboard, controls, editedPanel } = buildPanelEditControlsScene({
     uid: `panel-${mode}-annotations`,
     editedPanelKey: 'edited-panel',
     rows: [
-      new RowItem({
-        title: 'Ancestor row',
-        $data: new DashboardDataLayerSet({
-          annotationLayers: [sectionAnnotation('ancestorAnnotation'), sectionAnnotation('hiddenAnnotation', true)],
-        }),
-      }),
+      new RowItem({ title: 'Ancestor row', $data: ancestorSet }),
       new RowItem({
         title: 'Other row',
         $data: new DashboardDataLayerSet({ annotationLayers: [sectionAnnotation('otherSectionAnnotation')] }),
@@ -1187,7 +1196,7 @@ function buildPanelModeAnnotationsScene(mode: 'edit' | 'view') {
     dashboard.setState({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
   }
 
-  return { controls };
+  return { controls, ancestorSet };
 }
 
 function buildPanelEditSceneWithRepeatVariable() {

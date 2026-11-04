@@ -26,31 +26,52 @@ const AnnotationQueryEditorModal = lazy(() =>
 type DashboardDataLayerControlsProps = {
   dashboard: DashboardScene;
   inMenu?: boolean;
-  // Section layers shown after the dashboard layers, e.g. for the panel in panel edit or view panel
-  sectionLayers?: SceneDataLayerProvider[];
+  // Section sets whose controls are shown after the dashboard layers, e.g. for the panel in panel edit or view panel
+  sectionDataLayerSets?: DashboardDataLayerSet[];
 };
 
-export function DashboardDataLayerControls({ dashboard, inMenu, sectionLayers }: DashboardDataLayerControlsProps) {
+export function DashboardDataLayerControls({
+  dashboard,
+  inMenu,
+  sectionDataLayerSets,
+}: DashboardDataLayerControlsProps) {
   // We render controls here (instead of the data layer set's default renderer) to
   // respect per-layer `placement` and edit-mode visibility rules.
   const dataLayerSet = sceneGraph.getData(dashboard);
   const state = dataLayerSet.useState();
 
   const visibleLayers = useMemo(() => {
-    const dashboardLayers =
-      isDashboardDataLayerSetState(state) && isDashboardDataLayerSet(dataLayerSet)
-        ? state.annotationLayers.filter((layer) => !layer.state.isHidden && layer.state.placement === undefined)
-        : [];
-    return [...dashboardLayers, ...(sectionLayers ?? [])];
-  }, [state, dataLayerSet, sectionLayers]);
+    if (!isDashboardDataLayerSetState(state) || !isDashboardDataLayerSet(dataLayerSet)) {
+      return [];
+    }
+    return state.annotationLayers.filter((layer) => !layer.state.isHidden && layer.state.placement === undefined);
+  }, [state, dataLayerSet]);
 
-  return useMemo(
+  const dashboardControls = useMemo(
     () =>
       visibleLayers.map((layer) => (
         <DataLayerControlEditWrapper key={layer.state.key!} layer={layer} inMenu={inMenu} />
       )),
     [inMenu, visibleLayers]
   );
+
+  return (
+    <>
+      {dashboardControls}
+      {sectionDataLayerSets?.map((set) => (
+        <SectionDataLayerControls key={set.state.key} dataLayerSet={set} inMenu={inMenu} />
+      ))}
+    </>
+  );
+}
+
+// Subscribes to the section set so adding, removing or duplicating its layers updates the controls
+function SectionDataLayerControls({ dataLayerSet, inMenu }: { dataLayerSet: DashboardDataLayerSet; inMenu?: boolean }) {
+  const { annotationLayers } = dataLayerSet.useState();
+
+  return annotationLayers
+    .filter((layer) => !layer.state.isHidden)
+    .map((layer) => <DataLayerControlEditWrapper key={layer.state.key!} layer={layer} inMenu={inMenu} />);
 }
 
 export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDataLayerProvider; inMenu?: boolean }) {

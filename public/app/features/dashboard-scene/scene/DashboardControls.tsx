@@ -18,7 +18,6 @@ import {
   SceneObjectUrlSyncConfig,
   type SceneObjectUrlValues,
   type CancelActivationHandler,
-  type SceneDataLayerProvider,
   type SceneObject,
   type SceneVariable,
   SceneVariableSet,
@@ -69,20 +68,20 @@ function getEditOrViewPanel(dashboard: DashboardScene) {
  * Panel edit and view panel replace the dashboard body, which is where section controls render,
  * so the section annotations that apply to the panel are shown with the dashboard controls instead.
  */
-function getPanelEditSectionAnnotationLayers(dashboard: DashboardScene): SceneDataLayerProvider[] {
+function getPanelEditSectionDataLayerSets(dashboard: DashboardScene): DashboardDataLayerSet[] {
   const panel = getEditOrViewPanel(dashboard);
-  const layers: SceneDataLayerProvider[] = [];
+  const sets: DashboardDataLayerSet[] = [];
   let current: SceneObject | undefined = panel?.parent;
 
   while (panel && current && current !== dashboard) {
     const data = current.state.$data;
     if (data instanceof DashboardDataLayerSet && data.isVisibleTo(panel)) {
-      layers.push(...data.state.annotationLayers.filter((layer) => !layer.state.isHidden));
+      sets.push(data);
     }
     current = current.parent;
   }
 
-  return layers;
+  return sets;
 }
 
 function getPanelEditVariables(dashboard: DashboardScene): SceneVariable[] | undefined {
@@ -218,7 +217,9 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     const hasVariables = variables.some((v) => v.state.hide !== VariableHide.hideVariable);
     const hasAnnotations =
       sceneGraph.getDataLayers(this).some((d) => d.state.isEnabled && !d.state.isHidden) ||
-      getPanelEditSectionAnnotationLayers(dashboard).length > 0;
+      getPanelEditSectionDataLayerSets(dashboard).some((set) =>
+        set.state.annotationLayers.some((layer) => !layer.state.isHidden)
+      );
     const hasLinks = getDashboardSceneFor(this).state.links?.length > 0;
     const hideLinks = this.state.hideLinksControls || !hasLinks;
     const hideVariables = this.state.hideVariableControls || (!hasAnnotations && !hasVariables);
@@ -247,7 +248,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
   const panelEditVariables = getPanelEditVariables(dashboard);
-  const panelEditSectionLayers = getPanelEditSectionAnnotationLayers(dashboard);
+  const panelEditSectionDataLayerSets = getPanelEditSectionDataLayerSets(dashboard);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
@@ -311,7 +312,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       {!hideVariableControls && (
         <>
           <VariableControls dashboard={dashboard} variablesOverride={panelEditVariables} />
-          <DashboardDataLayerControls dashboard={dashboard} sectionLayers={panelEditSectionLayers} />
+          <DashboardDataLayerControls dashboard={dashboard} sectionDataLayerSets={panelEditSectionDataLayerSets} />
         </>
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
