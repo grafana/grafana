@@ -71,6 +71,9 @@ type SupportedResource struct {
 	schema.GroupKind
 	// Capabilities is the set of declared capabilities (see Capability* constants).
 	Capabilities sets.Set[string]
+	// Collection is the group an expanded member's objects are stored under, empty for a
+	// resource that serves its own group. The managed-object index reports a member under it.
+	Collection string
 }
 
 // IsActive reports whether the resource is acted on by the pipeline (the default).
@@ -192,18 +195,26 @@ type clientFactory struct {
 	// configuredResources may still name collections rather than served groups.
 	configuredResources []SupportedResource
 	// expanded caches the result of resolving collections through discovery.
-	expandOnce sync.Once
-	expanded   []SupportedResource
-	expandErr  error
+	expandMu sync.Mutex
+	expanded []SupportedResource
 }
 
-// supportedResources resolves the configured set to served groups, once: a group that starts
-// being served later needs a restart, as installing the plugin does.
+// supportedResources resolves the configured set to served groups, caching the first success: a
+// group that starts being served later needs a restart, as installing the plugin does. A failure
+// is not cached — a cancelled or timed-out discovery would otherwise break provisioning until
+// restart — and the lock makes concurrent callers retry one at a time.
 func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedResource, error) {
-	f.expandOnce.Do(func() {
-		f.expanded, f.expandErr = expandWildcardGroups(ctx, discoveryKinds(f.clientsProvider, f.configuredResources), f.configuredResources)
-	})
-	return f.expanded, f.expandErr
+	f.expandMu.Lock()
+	defer f.expandMu.Unlock()
+	if f.expanded != nil {
+		return f.expanded, nil
+	}
+	expanded, err := expandWildcardGroups(ctx, discoveryKinds(f.clientsProvider, f.configuredResources), f.configuredResources)
+	if err != nil {
+		return nil, err
+	}
+	f.expanded = expanded
+	return expanded, nil
 }
 
 // TODO: Rename to NamespacedClients
@@ -348,9 +359,18 @@ type multiClientFactory struct {
 // collectionPatterns returns the configured groups that are wildcard patterns.
 func collectionPatterns(configured []SupportedResource) []string {
 	out := make([]string, 0, len(configured))
+	for _, r := range collectionResources(configured) {
+		out = append(out, r.Group)
+	}
+	return out
+}
+
+// collectionResources returns the configured entries whose group is a wildcard pattern.
+func collectionResources(configured []SupportedResource) []SupportedResource {
+	out := make([]SupportedResource, 0, len(configured))
 	for _, r := range configured {
 		if provisioningresources.IsWildcardGroup(r.Group) {
-			out = append(out, r.Group)
+			out = append(out, r)
 		}
 	}
 	return out
@@ -651,6 +671,16 @@ var nonProvisionableGroups = sets.New(
 func expandWildcardGroups(ctx context.Context, listKinds groupKindLister, configured []SupportedResource) ([]SupportedResource, error) {
 	var served []schema.GroupKind
 	var listed bool
+	// A pattern may cover a group that is also declared on its own, or that another pattern
+	// covers. The same group and kind twice would be listed twice, and full sync deletes the
+	// duplicate as an orphan at the same path. An explicit declaration wins over a pattern.
+	emitted := sets.New[schema.GroupKind]()
+	for _, r := range configured {
+		if !provisioningresources.IsWildcardGroup(r.Group) {
+			emitted.Insert(r.GroupKind)
+		}
+	}
+
 	out := make([]SupportedResource, 0, len(configured))
 	for _, r := range configured {
 		if !provisioningresources.IsWildcardGroup(r.Group) {
@@ -664,11 +694,16 @@ func expandWildcardGroups(ctx context.Context, listKinds groupKindLister, config
 			}
 			listed = true
 		}
+		collection := provisioningresources.CollectionGroup(r.Group)
 		for _, gk := range served {
 			if gk.Kind != r.Kind || !provisioningresources.MatchesGroup(r.Group, gk.Group) || nonProvisionableGroups.Has(gk.Group) {
 				continue
 			}
-			out = append(out, SupportedResource{GroupKind: gk, Capabilities: r.Capabilities})
+			if emitted.Has(gk) {
+				continue
+			}
+			emitted.Insert(gk)
+			out = append(out, SupportedResource{GroupKind: gk, Capabilities: r.Capabilities, Collection: collection})
 		}
 	}
 	return out, nil

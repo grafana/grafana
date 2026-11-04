@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -33,8 +34,8 @@ type ResourceListerFromSearch struct {
 	store ResourceStore
 	// clients lists a collection's members through the groups that serve them; nil without one.
 	clients ClientFactory
-	// collections are the configured wildcard patterns.
-	collections []string
+	// collections are the configured wildcard entries, matched on group pattern and kind.
+	collections []SupportedResource
 }
 
 // NewResourceLister returns a lister over the managed-object index. A configured collection's
@@ -43,7 +44,7 @@ func NewResourceLister(store ResourceStore, clients ClientFactory, configured []
 	return &ResourceListerFromSearch{
 		store:       store,
 		clients:     clients,
-		collections: collectionPatterns(configured),
+		collections: collectionResources(configured),
 	}
 }
 
@@ -58,12 +59,26 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		return nil, err
 	}
 
+	members, covered, err := o.listCollectionMembers(ctx, namespace, repository)
+	if err != nil {
+		return nil, err
+	}
+
 	collections := o.collectionGroups()
 	items := make([]provisioning.ResourceListItem, 0, len(objects.Items))
 	for _, v := range objects.Items {
+		gr := schema.GroupResource{Group: v.Object.Group, Resource: v.Object.Resource}
+		// A member listed through its own API group is reported there, not from the index: the
+		// same resource twice is deleted as an orphan at a duplicate path by full sync.
+		if covered.Has(gr) {
+			continue
+		}
 		// Indexed under the collection's own key, which names neither the serving group nor the
-		// served name; listed through their own API groups below.
+		// served name, so no API server can be asked for it. Dropping it leaves a member of an
+		// unserved collection out of cleanup; reporting it fails every reconcile of the delete.
 		if collections.Has(v.Object.Group) {
+			logging.FromContext(ctx).Warn("skipping indexed object of a collection no API group serves",
+				"group", v.Object.Group, "resource", v.Object.Resource, "name", v.Object.Name)
 			continue
 		}
 		items = append(items, provisioning.ResourceListItem{
@@ -78,46 +93,43 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		})
 	}
 
-	members, err := o.listCollectionMembers(ctx, namespace, repository)
-	if err != nil {
-		return nil, err
-	}
-
 	return &provisioning.ResourceList{Items: append(items, members...)}, nil
 }
 
 // collectionGroups returns the groups the configured collections are stored under.
 func (o *ResourceListerFromSearch) collectionGroups() sets.Set[string] {
 	groups := sets.New[string]()
-	for _, pattern := range o.collections {
-		groups.Insert(provisioningresources.CollectionGroup(pattern))
+	for _, r := range o.collections {
+		groups.Insert(provisioningresources.CollectionGroup(r.Group))
 	}
 	return groups
 }
 
 // listCollectionMembers lists what a repository manages inside the configured collections, one
-// request per served group instead of one for the whole repository. The index cannot answer it: it
-// reports a member under the collection's group, and possibly a different name, so the object it
-// describes cannot be addressed.
-func (o *ResourceListerFromSearch) listCollectionMembers(ctx context.Context, namespace, repository string) ([]provisioning.ResourceListItem, error) {
+// request per served group instead of one for the whole repository, and returns the resources it
+// answered for. The index cannot answer it: it reports a member under the collection's group, and
+// possibly a different name, so the object it describes cannot be addressed.
+func (o *ResourceListerFromSearch) listCollectionMembers(ctx context.Context, namespace, repository string) ([]provisioning.ResourceListItem, sets.Set[schema.GroupResource], error) {
+	covered := sets.New[schema.GroupResource]()
 	if len(o.collections) == 0 || o.clients == nil {
-		return nil, nil
+		return nil, covered, nil
 	}
 
 	clients, err := o.clients.Clients(ctx, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("get clients for collection members: %w", err)
+		return nil, nil, fmt.Errorf("get clients for collection members: %w", err)
 	}
 
 	var items []provisioning.ResourceListItem
 	for _, supported := range clients.SupportedResources() {
-		if !o.isMember(supported.Group) {
+		if !o.isMember(supported.GroupKind) {
 			continue
 		}
 		client, gvr, err := clients.ForKind(ctx, supported.WithVersion(""))
 		if err != nil {
-			return nil, fmt.Errorf("get client for %s: %w", supported.GroupKind, err)
+			return nil, nil, fmt.Errorf("get client for %s: %w", supported.GroupKind, err)
 		}
+		covered.Insert(gvr.GroupResource())
 		err = ForEach(ctx, client, func(obj *unstructured.Unstructured) error {
 			if item, ok := managedResourceItem(obj, gvr, repository); ok {
 				items = append(items, item)
@@ -125,16 +137,18 @@ func (o *ResourceListerFromSearch) listCollectionMembers(ctx context.Context, na
 			return nil
 		})
 		if err != nil {
-			return nil, fmt.Errorf("list %s: %w", gvr, err)
+			return nil, nil, fmt.Errorf("list %s: %w", gvr, err)
 		}
 	}
-	return items, nil
+	return items, covered, nil
 }
 
-// isMember reports whether a served group belongs to one of the configured collections.
-func (o *ResourceListerFromSearch) isMember(group string) bool {
-	for _, pattern := range o.collections {
-		if provisioningresources.MatchesGroup(pattern, group) {
+// isMember reports whether a served group and kind belong to one of the configured collections.
+// The kind matters: a broad pattern such as *.grafana.app covers the group of a kind declared on
+// its own, which is reported from the index and must not be listed here as well.
+func (o *ResourceListerFromSearch) isMember(gk schema.GroupKind) bool {
+	for _, r := range o.collections {
+		if r.Kind == gk.Kind && provisioningresources.MatchesGroup(r.Group, gk.Group) {
 			return true
 		}
 	}

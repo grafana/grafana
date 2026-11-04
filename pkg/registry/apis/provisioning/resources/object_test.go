@@ -173,3 +173,56 @@ func managedDataSource(t *testing.T, gvk schema.GroupVersionKind, name, reposito
 	meta.SetSourceProperties(utils.SourceProperties{Path: path, Checksum: "abc"})
 	return obj
 }
+
+// A pattern can cover the group of a kind declared on its own. Reporting that kind from the index
+// and listing it as a collection member too puts the same resource at one path twice, which full
+// sync deletes as an orphan duplicate.
+func TestResourceListerFromSearch_ListsAMemberOnceWhenAPatternCoversADeclaredKind(t *testing.T) {
+	const repository = "repo"
+	playlistGVR := schema.GroupVersionResource{Group: "playlist.grafana.app", Version: "v0alpha1", Resource: "playlists"}
+	playlistGVK := schema.GroupVersionKind{Group: "playlist.grafana.app", Version: "v0alpha1", Kind: "Playlist"}
+	dashboardGK := schema.GroupKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+
+	store := resource.NewMockResourceClient(t)
+	store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.ListManagedObjectsResponse{
+		Items: []*resourcepb.ListManagedObjectsResponse_Item{
+			{Object: &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1"}, Path: "db-1.json", Title: "Dashboard 1"},
+			{Object: &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Name: "pl-1"}, Path: "pl-1.json", Title: "Playlist 1"},
+		},
+	}, nil).Once()
+
+	scheme := runtime.NewScheme()
+	listGVK := playlistGVK
+	listGVK.Kind += "List"
+	scheme.AddKnownTypeWithName(listGVK, &unstructured.UnstructuredList{})
+	scheme.AddKnownTypeWithName(playlistGVK, &unstructured.Unstructured{})
+	dyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme,
+		map[schema.GroupVersionResource]string{playlistGVR: listGVK.Kind},
+		managedDataSource(t, playlistGVK, "pl-1", repository, "pl-1.json"),
+	)
+
+	clients := NewMockResourceClients(t)
+	clients.EXPECT().SupportedResources().Return([]SupportedResource{
+		{GroupKind: dashboardGK},
+		{GroupKind: playlistGVK.GroupKind(), Collection: "grafana.app"},
+	})
+	// Only the kind the pattern was configured for is listed through its API group; the dashboard
+	// is not a member of *.grafana.app/Playlist and stays on the index.
+	clients.EXPECT().ForKind(mock.Anything, playlistGVK.GroupKind().WithVersion("")).
+		Return(dyn.Resource(playlistGVR).Namespace("default"), playlistGVR, nil).Once()
+
+	factory := NewMockClientFactory(t)
+	factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil).Once()
+
+	lister := NewResourceLister(store, factory, []SupportedResource{
+		{GroupKind: dashboardGK},
+		{GroupKind: schema.GroupKind{Group: "*.grafana.app", Kind: "Playlist"}},
+	})
+
+	got, err := lister.List(context.Background(), "default", repository)
+	require.NoError(t, err)
+	require.Equal(t, []provisioning.ResourceListItem{
+		{Path: "db-1.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
+		{Path: "pl-1.json", Group: "playlist.grafana.app", Resource: "playlists", Name: "pl-1", Hash: "abc", Title: "Test data"},
+	}, got.Items)
+}

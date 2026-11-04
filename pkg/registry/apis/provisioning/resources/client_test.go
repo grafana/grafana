@@ -16,9 +16,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
 // playlistKind is an arbitrary identifier used only to exercise the supported-set plumbing
@@ -314,6 +316,41 @@ func TestExpandWildcardGroups(t *testing.T) {
 		require.Equal(t, []schema.GroupKind{{Group: "playlist.grafana.app", Kind: "Playlist"}}, groupKinds(expanded))
 	})
 
+	// The same group and kind twice is listed twice, and full sync deletes the duplicate as an
+	// orphan at the same path.
+	t.Run("does not expand onto a group that is also declared on its own", func(t *testing.T) {
+		configured, err := ParseSupportedResources([]string{
+			"prometheus.datasource.grafana.app/DataSource",
+			"*.datasource.grafana.app/DataSource",
+		})
+		require.NoError(t, err)
+
+		expanded, err := expandWildcardGroups(t.Context(), installed, configured)
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupKind{
+			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
+			{Group: "loki.datasource.grafana.app", Kind: "DataSource"},
+		}, groupKinds(expanded))
+		require.Empty(t, expanded[0].Collection, "the explicit declaration keeps its own identity")
+		require.Equal(t, "datasource.grafana.app", expanded[1].Collection,
+			"an expanded member records the group it is stored under")
+	})
+
+	t.Run("expands a group covered by two patterns once", func(t *testing.T) {
+		configured, err := ParseSupportedResources([]string{
+			"*.datasource.grafana.app/DataSource",
+			"*.grafana.app/DataSource",
+		})
+		require.NoError(t, err)
+
+		expanded, err := expandWildcardGroups(t.Context(), installed, configured)
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupKind{
+			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
+			{Group: "loki.datasource.grafana.app", Kind: "DataSource"},
+		}, groupKinds(expanded))
+	})
+
 	t.Run("propagates a discovery failure", func(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
 		require.NoError(t, err)
@@ -368,4 +405,50 @@ func groupKinds(rs []SupportedResource) []schema.GroupKind {
 		out = append(out, r.GroupKind)
 	}
 	return out
+}
+
+// A transient discovery failure must not be cached: a cancelled or timed-out first call would
+// otherwise leave every later sync and finalizer broken until restart.
+func TestClientFactorySupportedResourcesRetriesAfterFailure(t *testing.T) {
+	configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
+	require.NoError(t, err)
+
+	provider := &flakyClientsProvider{err: errors.New("apis unreachable")}
+	factory := &clientFactory{clientsProvider: provider, configuredResources: configured}
+
+	_, err = factory.supportedResources(t.Context())
+	require.ErrorContains(t, err, "apis unreachable")
+
+	provider.err = nil
+	_, err = factory.supportedResources(t.Context())
+	require.NoError(t, err, "a later call retries instead of replaying the failure")
+	require.Equal(t, 2, provider.calls)
+
+	_, err = factory.supportedResources(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 2, provider.calls, "the first success is cached")
+}
+
+// flakyClientsProvider fails until err is cleared, then serves a discovery client with no groups.
+type flakyClientsProvider struct {
+	err   error
+	calls int
+}
+
+func (p *flakyClientsProvider) GetClientsForKind(context.Context, schema.GroupVersionKind) (dynamic.Interface, client.DiscoveryClient, error) {
+	p.calls++
+	if p.err != nil {
+		return nil, nil, p.err
+	}
+	return nil, emptyDiscoveryClient{}, nil
+}
+
+func (p *flakyClientsProvider) GetClientsForResource(context.Context, schema.GroupVersionResource) (dynamic.Interface, client.DiscoveryClient, error) {
+	return nil, nil, p.err
+}
+
+type emptyDiscoveryClient struct{ client.DiscoveryClient }
+
+func (emptyDiscoveryClient) PreferredResources(context.Context, func(string) bool) ([]*metav1.APIResourceList, error) {
+	return nil, nil
 }
