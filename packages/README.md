@@ -45,9 +45,9 @@ All packages in the `grafana` group are versioned according to the current Grafa
 
 Some packages have their own version instead of following the Grafana version. Today that is `@grafana/plugin-compat`. For these packages, the version bump and the `CHANGELOG.md` entry come from the [conventional commit](https://www.conventionalcommits.org/) titles of the pull requests that change the package. Do not edit the `version` field or `CHANGELOG.md` by hand.
 
-A pull request that changes an independent package must have a title of the form `<type>: <description>`, for example `feat: Add useDataSourceInstanceList`. The `Check plugin-compat pull request title` workflow fails the pull request otherwise. The title becomes the squash-merged commit message that Nx reads, so the description should make sense to consumers.
+A pull request that changes an independent package must have a title of the form `<type>(<scope>): <description>`, where the scope is optional, for example `feat: Add useDataSourceInstanceList` or `fix(plugin-compat): Handle a missing host API`. The `Check plugin-compat pull request title` workflow fails the pull request otherwise. The title becomes the squash-merged commit message that Nx reads, so the description should make sense to consumers.
 
-Do not add a scope such as `feat(plugin-compat): ...`; the check rejects it. The one exception is `chore(deps): ...` (and `chore(deps-dev): ...`), the title Renovate uses for dependency updates, which never releases. Nx finds the package from the files a pull request changes, and a scope that does not match the project name makes it release a breaking change as a patch.
+A breaking change (`feat!: ...`) can have no scope or the scope of the package it changes, such as `plugin-compat` for `@grafana/plugin-compat`. Nx finds the package from the files a pull request changes and drops the breaking marker when the scope is something else, so `feat(datasources)!: ...` would be released as a minor change. The check rejects that title.
 
 Below 1.0 Nx shifts the bump down one level (its [`adjustSemverBumpsForZeroMajorVersion`](https://nx.dev/docs/reference/nx-json) option, on by default), so choose by intent:
 
