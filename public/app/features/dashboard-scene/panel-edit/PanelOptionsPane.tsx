@@ -55,6 +55,8 @@ interface PluginOptionsCache {
 export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   private _cachedPluginOptions: Record<string, PluginOptionsCache | undefined> = {};
 
+  private _selectedPluginId?: string;
+
   onToggleVizPicker = () => {
     const newState = !this.state.isVizPickerOpen;
 
@@ -62,6 +64,14 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       item: INTERACTION_ITEM.TOGGLE_DROPDOWN,
       open: newState,
     });
+
+    if (!newState && this.state.isNewPanel && !this.state.hasPickedViz) {
+      const panel = this.state.panelRef.resolve();
+      const pluginId = this._selectedPluginId ?? panel.state.pluginId;
+      if (getPanelPluginMetasMapSync()[pluginId]?.skipDefaultQuery) {
+        clearDefaultQuery(panel);
+      }
+    }
 
     this.setState({
       isVizPickerOpen: newState,
@@ -72,6 +82,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   onChangePanel = (options: VizTypeChangeDetails, panel = this.state.panelRef.resolve()) => {
     const { options: prevOptions, fieldConfig: prevFieldConfig, pluginId: prevPluginId } = panel.state;
     const pluginId = options.pluginId;
+    this._selectedPluginId = pluginId;
 
     reportInteraction(INTERACTION_EVENT_NAME, {
       item: INTERACTION_ITEM.SELECT_PANEL_PLUGIN,
@@ -102,10 +113,6 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
     if (cachedFieldConfig) {
       newFieldConfig = restoreCustomOverrideRules(newFieldConfig, cachedFieldConfig);
-    }
-
-    if (this.state.isNewPanel && !this.state.hasPickedViz && getPanelPluginMetasMapSync()[pluginId]?.skipDefaultQuery) {
-      clearDefaultQuery(panel);
     }
 
     panel.changePluginType(pluginId, cachedOptions, newFieldConfig);

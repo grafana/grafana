@@ -368,6 +368,32 @@ function setupTest(panelId: string) {
 describe('initial query defaults', () => {
   afterEach(() => setPanelPluginMetas({}));
 
+  it.each(['normal', 'custom', 'close'])('preserves queries during preview, then commits %s', (selection) => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
+    const runner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
+    const panel = new VizPanel({ pluginId: 'timeseries', $data: runner });
+    jest.spyOn(panel, 'changePluginType').mockResolvedValue();
+    const pane = new PanelOptionsPane({
+      panelRef: panel.getRef(),
+      isNewPanel: true,
+      isVizPickerOpen: true,
+      searchQuery: '',
+      listMode: OptionFilter.All,
+    });
+
+    pane.onChangePanel({ pluginId: 'custom', withModKey: true });
+    expect(pane.state.isVizPickerOpen).toBe(true);
+    expect(runner.state.queries).toEqual([{ refId: 'A' }]);
+
+    if (selection === 'close') {
+      pane.onToggleVizPicker();
+    } else {
+      pane.onChangePanel({ pluginId: selection });
+    }
+    expect(pane.state.hasPickedViz).toBe(true);
+    expect(runner.state.queries).toEqual(selection === 'normal' ? [{ refId: 'A' }] : []);
+  });
+
   it.each([false, true])(
     'only clears the starter on the first visualization choice (already picked=%s)',
     (hasPickedViz) => {
