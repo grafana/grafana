@@ -210,6 +210,35 @@ func TestEnsureSyncIdentifier(t *testing.T) {
 		assert.Equal(t, "mimir-prod-2", got)
 	})
 
+	t.Run("keeps the UID for an import staged under it before identifiers were recorded", func(t *testing.T) {
+		adminCfg := newFakeConfigClient()
+		adminCfg.setUID(1, "ds-1")
+		// There is no policy tree under the UID. Only the staged import marks it as used.
+		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: configWithExtraConfig("ds-1", "")}, namedMimirDS("ds-1", "Mimir Prod", 1))
+
+		got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
+		require.NoError(t, err)
+		assert.Equal(t, "ds-1", got)
+
+		obj, err := adminCfg.lookup("org-1")
+		require.NoError(t, err)
+		assert.Equal(t, "ds-1", recordedSyncIdentifier(&obj.Status, "ds-1"))
+	})
+
+	t.Run("uses a name another instance recorded when its own write failed", func(t *testing.T) {
+		adminCfg := newFakeConfigClient()
+		adminCfg.setUID(1, "ds-1")
+		obj, err := adminCfg.lookup("org-1")
+		require.NoError(t, err)
+		obj.Status = withSyncIdentifier(nil, "ds-1", originAPI, "picked-elsewhere")
+		adminCfg.setWriteErr(1, fmt.Errorf("conflict with the other instance's write"))
+		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: validAMConfigBase}, namedMimirDS("ds-1", "Mimir Prod", 1))
+
+		got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
+		require.NoError(t, err)
+		assert.Equal(t, "picked-elsewhere", got)
+	})
+
 	t.Run("does not adopt a manual import that has the datasource's name", func(t *testing.T) {
 		adminCfg := newFakeConfigClient()
 		adminCfg.setUID(1, "ds-1")
@@ -345,7 +374,7 @@ func TestDeleteExtraConfiguration_NameBasedSyncImport(t *testing.T) {
 
 	t.Run("is allowed for the stale slot once sync points at another datasource", func(t *testing.T) {
 		moa, adminCfg := setup(t)
-		// A new spec UID starts a new import: the identifier recorded for ds-1 no longer applies.
+		// Pointing the sync at another data source drops the identifier recorded for ds-1.
 		adminCfg.setUID(1, "ds-2")
 
 		gettable, err := moa.GetAlertmanagerConfiguration(ctx, 1, false)
@@ -359,10 +388,48 @@ func TestDeleteExtraConfiguration_NameBasedSyncImport(t *testing.T) {
 	})
 }
 
+// A sync that started before names were used has an import under the UID and no owner. The sync
+// treats an import without an owner as manual, so every save is refused until it is deleted. It is
+// then recreated under the UID. This test pins that, so a change to it is deliberate.
+func TestSyncExternalAMs_LegacyUIDImportWithoutOwnerIsRefusedUntilDeleted(t *testing.T) {
+	ctx := context.Background()
+	proxy := singleAMProxy(t, "ds-1", "route:\n  receiver: first\nreceivers:\n  - name: first")
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{namedMimirDS("ds-1", "Mimir Prod", 1)}}
+	adminCfg := newFakeConfigClient()
+	adminCfg.setUID(1, "ds-1")
+	moa, _ := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
+
+	legacy := v1.ExtraConfiguration{Identifier: "ds-1", AlertmanagerConfig: "route:\n  receiver: old\nreceivers:\n  - name: old"}
+	_, err := moa.SaveAndApplyExtraConfiguration(ctx, 1, &user.SignedInUser{}, noopExtraConfigAuthz{}, legacy, false, false, false)
+	require.NoError(t, err)
+
+	moa.SyncAlertmanagersForOrgs(ctx, []int64{1})
+
+	obj, err := adminCfg.lookup("org-1")
+	require.NoError(t, err)
+	assert.Equal(t, "ds-1", recordedSyncIdentifier(&obj.Status, "ds-1"), "the UID is recorded, not the datasource name")
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", ReasonForeignOwner.Label())))
+	gettable, err := moa.GetAlertmanagerConfiguration(ctx, 1, false)
+	require.NoError(t, err)
+	require.Len(t, gettable.ExtraConfigs, 1)
+	assert.Equal(t, "manual", gettable.ExtraConfigs[0].ManagedBy)
+	assert.Contains(t, gettable.ExtraConfigs[0].AlertmanagerConfig, "old", "the legacy import is left alone")
+
+	require.NoError(t, moa.DeleteExtraConfiguration(ctx, 1, &user.SignedInUser{}, noopExtraConfigAuthz{}, "ds-1"))
+	proxy.setResponse("ds-1", http.StatusOK, mimirConfigBody(t, "route:\n  receiver: second\nreceivers:\n  - name: second"))
+	moa.SyncAlertmanagersForOrgs(ctx, []int64{1})
+
+	gettable, err = moa.GetAlertmanagerConfiguration(ctx, 1, false)
+	require.NoError(t, err)
+	require.Len(t, gettable.ExtraConfigs, 1)
+	assert.Equal(t, "ds-1", gettable.ExtraConfigs[0].Identifier, "recreated under the UID, not the name")
+	assert.Equal(t, "auto-sync", gettable.ExtraConfigs[0].ManagedBy)
+}
+
 const extraConfigYAML = `route:\n  receiver: a\nreceivers:\n  - name: a`
 
-// configWithExtraConfig returns an AM config with an imported configuration staged under identifier,
-// owned by managedBy ("" for an import that predates owners).
+// configWithExtraConfig returns an AM config with an import staged under identifier and owned by
+// managedBy. An empty managedBy stands for an import that predates owners.
 func configWithExtraConfig(identifier, managedBy string) string {
 	return validAMConfigBase[:len(validAMConfigBase)-1] + fmt.Sprintf(`,"extra_config":[{"identifier":%q,"alertmanager_config":%q,"managed_by":%q}]}`, identifier, extraConfigYAML, managedBy)
 }
