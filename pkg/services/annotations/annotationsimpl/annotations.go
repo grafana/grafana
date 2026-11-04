@@ -41,7 +41,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	tagService tag.Service,
 	tracer tracing.Tracer,
-	ruleStore *alertingStore.RuleStore,
+	ruleStore alertingStore.Store,
 	dashSvc dashboards.DashboardService,
 	reg prometheus.Registerer,
 ) *RepositoryImpl {

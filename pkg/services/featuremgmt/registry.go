@@ -1232,6 +1232,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "authz.useLegacyCheckShadow",
+			Description:  "Compare local access-control evaluations with the AuthZ LegacyCheck RPC in the background.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "zanzana",
 			Description:  "Use openFGA as authorization engine.",
 			Stage:        FeatureStageExperimental,
@@ -1954,14 +1963,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "grafana.starredFolders",
-			Description: "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{React: true},
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
-		},
-		{
 			Name:        "grafana.newTextPanel",
 			Description: "Enables the new text panel",
 			Stage:       FeatureStagePublicPreview,
@@ -2384,6 +2385,15 @@ var (
 		{
 			Name:         "kubernetesUsersRedirect",
 			Description:  "Redirects the requests of the user service to the app platform APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "idTokenCacheDisabled",
+			Description:  "Disables the remote cache for signed ID tokens; a new token is signed on every authentication",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -2905,6 +2915,14 @@ var (
 		{
 			Name:        "grafana.cmdkHybridSearch",
 			Description: "Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "grafana.cmdkDashboardTags",
+			Description: "Shows dashboard tags in the command palette",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",

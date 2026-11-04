@@ -1200,6 +1200,20 @@
     },
     {
       "metadata": {
+        "name": "authz.useLegacyCheckShadow",
+        "resourceVersion": "1793714945722",
+        "creationTimestamp": "2026-11-03T14:09:05Z"
+      },
+      "spec": {
+        "description": "Compare local access-control evaluations with the AuthZ LegacyCheck RPC in the background.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "authz.userPermissions",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-20T18:39:56Z"
@@ -2739,6 +2753,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.cmdkDashboardTags",
+        "resourceVersion": "1793290413642",
+        "creationTimestamp": "2026-10-29T16:13:33Z"
+      },
+      "spec": {
+        "description": "Shows dashboard tags in the command palette",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.cmdkHybridSearch",
         "resourceVersion": "1793306194106",
         "creationTimestamp": "2026-08-20T12:34:45Z",
@@ -3618,7 +3646,8 @@
       "metadata": {
         "name": "grafana.starredFolders",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-06-24T07:52:23Z"
+        "creationTimestamp": "2026-06-24T07:52:23Z",
+        "deletionTimestamp": "2026-11-02T14:11:54Z"
       },
       "spec": {
         "description": "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
@@ -3846,6 +3875,20 @@
       },
       "spec": {
         "description": "When storing datasource resource permissions, only store action sets and not the full list of underlying permissions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "idTokenCacheDisabled",
+        "resourceVersion": "1793696077735",
+        "creationTimestamp": "2026-11-03T08:54:37Z"
+      },
+      "spec": {
+        "description": "Disables the remote cache for signed ID tokens; a new token is signed on every authentication",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,

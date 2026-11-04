@@ -5334,6 +5334,9 @@
       "preferences": "Preferencias",
       "recent-dashboards": "Paneles de control recientes",
       "recent-scopes": "Ámbitos recientes"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -7650,10 +7653,10 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
+      "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -12399,7 +12402,6 @@
       "copy-log-line-json": "Copiar el contenido del log como JSON",
       "copy-shortlink": "Copiar enlace corto",
       "copy-to-clipboard": "Copiar al portapapeles",
-      "displayed-fields-section": "Organizar los campos mostrados",
       "fields": {
         "adhoc-statistics": "Estadísticas específicas",
         "copy-value-to-clipboard": "Copiar valor al portapapeles",
@@ -12423,14 +12425,11 @@
       "log-attributes-field": "Atributos del log",
       "log-line-field": "Línea de log",
       "log-line-section": "Línea de log",
-      "move-displayed-field-down": "Bajar",
-      "move-displayed-field-up": "Subir",
       "no-details": "No hay campos que mostrar.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Anclar log",
       "prettify": "Embellecer",
-      "remove-displayed-field": "Eliminar campo",
       "remove-log": "Eliminar log",
       "scroll-to-logline": "Desplazarse a la línea de log",
       "search": {

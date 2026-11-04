@@ -104,7 +104,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({
         text: t('panel.header-menu.edit', `Edit`),
-        iconClassName: 'edit',
+        iconClassName: 'pen',
         shortcut: 'e',
         href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
         onClick: () => {
