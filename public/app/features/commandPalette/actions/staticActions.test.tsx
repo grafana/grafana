@@ -220,13 +220,13 @@ describe('useStaticActions - dashboard creation nav items, blocked on mobile', (
     expect(hasAction(result.current, 'navModel.dashboards/browse')).toBe(true);
   });
 
-  it('excludes only the New/Import dashboard actions when blocked on mobile', () => {
+  it('excludes only the New dashboard action when blocked on mobile', () => {
     setTestFlags({ 'grafana.mobileEditDeprecation': true });
 
     const { result } = renderStaticActions(dashboardsNavTree);
 
     expect(hasAction(result.current, 'navModel.dashboards/new')).toBe(false);
-    expect(hasAction(result.current, 'navModel.dashboards/import')).toBe(false);
+    expect(hasAction(result.current, 'navModel.dashboards/import')).toBe(true);
     expect(hasAction(result.current, 'navModel.dashboards/browse')).toBe(true);
   });
 });

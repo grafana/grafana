@@ -40,9 +40,8 @@ function idForNavItem(navItem: NavModelItem) {
   return 'navModel.' + (navItem.id ?? navItem.url ?? navItem.text ?? navItem.subTitle);
 }
 
-// Every current nav item under these ids creates a dashboard, which requires edit mode --
-// unavailable on mobile, so they're excluded rather than left as dead command-palette actions.
-const DASHBOARD_CREATION_NAV_IDS = new Set(['dashboards/new', 'dashboards/import']);
+// list of nav ids that require edit mode. They get excluded from the command palette on mobile.
+const DASHBOARD_CREATION_NAV_IDS = new Set(['dashboards/new']);
 
 function navTreeToActions(
   navTree: NavModelItem[],
