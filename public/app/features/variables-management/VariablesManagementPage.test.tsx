@@ -16,6 +16,7 @@ import { AnnoKeyFolder } from 'app/features/apiserver/types';
 
 import { type VariableEditorViewProps } from './VariableEditorView';
 import VariablesManagementPage from './VariablesManagementPage';
+import { registerSharedVariablesEntryPoint } from './enterprise-components/SharedVariablesEntryPointExtension';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -45,6 +46,7 @@ function renderPage(url: string) {
   const result = render(
     <GrafanaContext.Provider value={grafanaContext}>
       <Routes>
+        <Route path="/dashboards/variables" element={<VariablesManagementPage />} />
         <Route path="/dashboards/variables/new" element={<VariablesManagementPage />} />
         <Route path="/dashboards/variables/edit/:name" element={<VariablesManagementPage />} />
       </Routes>
@@ -119,5 +121,53 @@ describe('VariablesManagementPage editor navigation', () => {
 
     expect(getBreadcrumbTexts()).not.toContain(folderTitle);
     expect(locationService.getLocation().pathname).toBe('/dashboards/variables');
+  });
+});
+
+describe('VariablesManagementPage shared variables entry point', () => {
+  beforeEach(() => {
+    setTestFlags({ 'grafana.dashboardGlobalVariables': true, foldersAppPlatformAPI: false });
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+  });
+
+  afterEach(async () => {
+    registerSharedVariablesEntryPoint(null);
+    jest.restoreAllMocks();
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  function serveVariables(items: unknown[]) {
+    server.use(
+      http.get('/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/variables', () =>
+        HttpResponse.json({ kind: 'VariableList', apiVersion: 'dashboard.grafana.app/v2beta1', metadata: {}, items })
+      )
+    );
+  }
+
+  it('renders nothing extra until Enterprise registers an entry point', async () => {
+    serveVariables([folderVariable]);
+    renderPage('/dashboards/variables');
+
+    expect(await screen.findByRole('button', { name: /new variable/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Shared variables' })).not.toBeInTheDocument();
+  });
+
+  it('renders the registered entry point next to New variable', async () => {
+    registerSharedVariablesEntryPoint(() => <button>Shared variables</button>);
+    serveVariables([folderVariable]);
+    renderPage('/dashboards/variables');
+
+    expect(await screen.findByRole('button', { name: 'Shared variables' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /new variable/i })).toBeInTheDocument();
+  });
+
+  it('keeps the entry point when there are no variables yet', async () => {
+    registerSharedVariablesEntryPoint(() => <button>Shared variables</button>);
+    serveVariables([]);
+    renderPage('/dashboards/variables');
+
+    expect(await screen.findByRole('button', { name: 'Shared variables' })).toBeInTheDocument();
   });
 });
