@@ -2754,13 +2754,16 @@
     {
       "metadata": {
         "name": "grafana.cmdkDashboardTags",
-        "resourceVersion": "1793290413642",
-        "creationTimestamp": "2026-10-29T16:13:33Z"
+        "resourceVersion": "1793783494537",
+        "creationTimestamp": "2026-10-29T16:13:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-04 09:11:34.537228 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Shows dashboard tags in the command palette",
         "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
+        "codeowner": "@grafana/grafana-search-and-storage",
         "frontend": true,
         "expression": "false"
       }
@@ -4970,6 +4973,19 @@
     },
     {
       "metadata": {
+        "name": "playlist.slideshows",
+        "resourceVersion": "1793783521833",
+        "creationTimestamp": "2026-11-04T09:12:01Z"
+      },
+      "spec": {
+        "description": "Enables slideshows, playlists that can contain any kind of App Platform object",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "playlistsRBAC",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-03-19T14:43:19Z"
@@ -5995,6 +6011,20 @@
         "description": "Enable the secrets management app platform UI",
         "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "slideshows",
+        "resourceVersion": "1793783494537",
+        "creationTimestamp": "2026-11-04T09:11:34Z",
+        "deletionTimestamp": "2026-11-04T09:12:01Z"
+      },
+      "spec": {
+        "description": "Enables slideshows, playlists that can contain any kind of App Platform object",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
     },

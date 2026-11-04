@@ -119,6 +119,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-25,grafana.savedQueriesSearch,experimental,@grafana/sharing-squad,false,false,false
 2026-07-15,grafana.savedQueriesPage,experimental,@grafana/sharing-squad,false,false,false
 2026-03-19,playlistsRBAC,GA,@grafana/sharing-squad,false,false,false
+2026-11-04,playlist.slideshows,experimental,@grafana/dashboards-squad,false,false,false
 2026-01-27,savedQueriesRBAC,GA,@grafana/sharing-squad,false,false,false
 2026-03-16,newSavedQueriesExperience,GA,@grafana/sharing-squad,false,false,true
 2025-08-29,dashboardLibrary,experimental,@grafana/sharing-squad,false,false,false
@@ -337,7 +338,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-06,alerting.hybridSearch,experimental,@grafana/grafana-search-and-storage,false,false,false
 2026-07-01,grafana.vectorSearchCmdk,experimental,@grafana/grafana-search-and-storage,false,false,true
 2026-08-20,grafana.cmdkHybridSearch,experimental,@grafana/grafana-search-and-storage,false,false,true
-2026-10-29,grafana.cmdkDashboardTags,experimental,@grafana/search-and-storage,false,false,true
+2026-10-29,grafana.cmdkDashboardTags,experimental,@grafana/grafana-search-and-storage,false,false,true
 2026-07-16,assistant.fullscreenWorkspace,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-10-21,assistant.dashboard.artifacts,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-19,splunk.useLegacyResultsApi,experimental,@grafana/data-sources-plugins,false,false,false
