@@ -760,6 +760,15 @@ func storingCollection(configured []SupportedResource, gk schema.GroupKind) stri
 	return ""
 }
 
+// StorageGroup returns the group a served kind is addressed by in provisioning: the collection
+// that covers it, or the served group itself when no configured collection does.
+func StorageGroup(configured []SupportedResource, gk schema.GroupKind) string {
+	if collection := storingCollection(configured, gk); collection != "" {
+		return collection
+	}
+	return gk.Group
+}
+
 // groupKindLister lists the group/kind pairs a server serves.
 type groupKindLister func(ctx context.Context) ([]schema.GroupKind, error)
 

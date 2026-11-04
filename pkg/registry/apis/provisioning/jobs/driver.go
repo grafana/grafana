@@ -22,6 +22,7 @@ import (
 	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
@@ -94,6 +95,10 @@ type jobProcessor struct {
 	// metrics for recording job-level Prometheus metrics (warnings, operations, etc.)
 	metrics *JobMetrics
 
+	// supportedResources is the configured resource set, handed to each job's progress
+	// recorder so a collection's members are summarised under the collection.
+	supportedResources []resources.SupportedResource
+
 	// processed records the event-processing metrics (source counts + delivery
 	// latency) once a claim confirms a genuine pickup.
 	processed *usinformer.ProcessedMetrics
@@ -112,6 +117,7 @@ func newJobProcessor(
 	driverID string,
 	metrics *JobMetrics,
 	processed *usinformer.ProcessedMetrics,
+	supportedResources []resources.SupportedResource,
 	workers ...Worker,
 ) *jobProcessor {
 	return &jobProcessor{
@@ -124,6 +130,7 @@ func newJobProcessor(
 		driverID:             driverID,
 		metrics:              metrics,
 		processed:            processed,
+		supportedResources:   supportedResources,
 	}
 }
 
@@ -215,7 +222,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	go d.leaseRenewalLoop(leaseRenewalCtx, logger, leaseExpired)
 	defer cancelLeaseRenewal()
 
-	recorder := NewJobProgressRecorder(d.onProgress(), d.metrics, claimedJob.Spec.Action)
+	recorder := NewJobProgressRecorder(d.onProgress(), d.metrics, claimedJob.Spec.Action, d.supportedResources)
 	recorder.SetMessage(ctx, "start job")
 
 	// Process the job with lease loss detection

@@ -116,7 +116,7 @@ func TestJobProcessor_ManagerKindConflict(t *testing.T) {
 				resourceOpsTotal: prometheus.NewCounterVec(prometheus.CounterOpts{Name: "test_resource_operations_total"},
 					[]string{"action", "operation", "outcome", "reason", "group", "kind"}),
 			}
-			processor := newJobProcessor(time.Minute, time.Minute, store, repoGetter, history, "0", metrics, nil, worker)
+			processor := newJobProcessor(time.Minute, time.Minute, store, repoGetter, history, "0", metrics, nil, nil, worker)
 			require.NoError(t, processor.processKey(ctx, job.Namespace, job.Name, triggerLive, time.Time{}))
 			require.NotNil(t, completed)
 			require.Equal(t, tt.wantState, completed.Status.State)

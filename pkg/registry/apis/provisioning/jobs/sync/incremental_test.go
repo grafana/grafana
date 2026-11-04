@@ -1583,7 +1583,7 @@ func TestIncrementalSync_DeletedNonResourceFolders(t *testing.T) {
 				repo := newCompositeRepoWithConfig(t)
 				repoResources := resources.NewMockRepositoryResources(t)
 				metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
-				progress := jobs.NewJobProgressRecorder(func(context.Context, provisioning.JobStatus) error { return nil }, &metrics, provisioning.JobActionPull)
+				progress := jobs.NewJobProgressRecorder(func(context.Context, provisioning.JobStatus) error { return nil }, &metrics, provisioning.JobActionPull, nil)
 				changes := make([]repository.VersionedFileChange, 0, len(tt.paths))
 				for _, path := range tt.paths {
 					changes = append(changes, repository.VersionedFileChange{Action: repository.FileActionDeleted, Path: path, PreviousPath: path, Ref: "new-ref", PreviousRef: "old-ref"})
