@@ -82,13 +82,16 @@ const (
 	ReasonValidate           SyncReason = "validate"
 	ReasonSave               SyncReason = "save"
 	ReasonIdentifierMismatch SyncReason = "identifier_mismatch"
+	// ReasonIdentifierTaken: the name taken from the datasource is used by a policy tree or reserved.
+	ReasonIdentifierTaken SyncReason = "identifier_taken"
 	// ReasonForeignOwner: the config was staged manually, so sync does not overwrite it.
 	ReasonForeignOwner SyncReason = "foreign_owner"
 	// ReasonNoUpstreamConfig: Mimir returned an empty alertmanager_config.
 	// Distinct from ReasonSave — nothing was attempted to persist.
 	ReasonNoUpstreamConfig SyncReason = "no_upstream_config"
 	// ReasonConfigRead: couldn't read the org's config to check if it was already
-	// merged; the tick is skipped rather than risk overwriting it.
+	// merged, or couldn't record the sync identifier; the tick is skipped rather than risk
+	// overwriting it.
 	ReasonConfigRead SyncReason = "config_read"
 	// ReasonUnclassified is the safety net for errors not tagged with
 	// *SyncError. Keeps Prometheus label cardinality bounded.
@@ -116,6 +119,8 @@ func (r SyncReason) ConditionReason() string {
 		return "SaveFailed"
 	case ReasonIdentifierMismatch:
 		return "IdentifierMismatch"
+	case ReasonIdentifierTaken:
+		return "IdentifierTaken"
 	case ReasonForeignOwner:
 		return "ForeignOwner"
 	case ReasonNoUpstreamConfig:

@@ -13,8 +13,8 @@ import (
 	alertingnotifv1beta1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
 // fallbackSyncIdentifier is used when the datasource name has nothing usable left after cleaning it
@@ -120,11 +120,13 @@ func reportsSyncSucceeded(status *alertingnotifv1beta1.ConfigStatus, uid string,
 // ensureSyncIdentifier returns the identifier to import the synced configuration under, choosing and
 // recording one first if needed.
 //
-// The choice is written to Config.status before anything is imported under it. If that write were
-// lost, the next tick could choose a different name (say the datasource was renamed in between) and
-// the save would then clash with the configuration already imported under the first name. So when
-// the write fails, the UID is used instead, as before identifiers were recorded: the UID never
-// changes, and once something is imported under it later ticks see that and keep using it.
+// The choice is written to Config.status before anything is imported under it, so a later tick can't
+// choose a different name (say the datasource was renamed in between) and clash with the import. If
+// that write fails, the tick fails too. Importing under another name meanwhile could leave the
+// status and the staged import with different names when several instances sync at once.
+//
+// A sync that already imported under the datasource UID keeps it. Any other sync is named after the
+// datasource. When that name is taken or reserved the tick fails instead of picking another one.
 func (s *ExternalAMSyncer) ensureSyncIdentifier(ctx context.Context, orgID int64, target syncTarget) (string, error) {
 	if target.identifier != "" {
 		return target.identifier, nil
@@ -144,18 +146,10 @@ func (s *ExternalAMSyncer) ensureSyncIdentifier(ctx context.Context, orgID int64
 		return "", &SyncError{Reason: ReasonConfigRead, Cause: fmt.Errorf("parse alertmanager configuration: %w", err)}
 	}
 
-	taken := make(map[string]struct{}, len(amCfg.ManagedRoutes)+len(amCfg.ExtraConfigs)+2)
-	for name := range amCfg.ManagedRoutes {
-		taken[name] = struct{}{}
-	}
-	staged := make(map[string]string, len(amCfg.ExtraConfigs))
-	for _, ec := range amCfg.ExtraConfigs {
-		staged[ec.Identifier] = ec.ManagedBy
-	}
+	_, usedByRoute := amCfg.ManagedRoutes[target.uid]
+	usedByStaged := slices.ContainsFunc(amCfg.ExtraConfigs, func(ec v1.ExtraConfiguration) bool { return ec.Identifier == target.uid })
 
 	var candidate string
-	_, usedByRoute := taken[target.uid]
-	_, usedByStaged := staged[target.uid]
 	if usedByRoute || usedByStaged {
 		// Imported under the UID before identifiers were recorded. Keep that name so the syncer still
 		// recognises its own import.
@@ -165,20 +159,10 @@ func (s *ExternalAMSyncer) ensureSyncIdentifier(ctx context.Context, orgID int64
 		if err != nil {
 			return "", &SyncError{Reason: ReasonDatasourceLookup, Cause: fmt.Errorf("look up datasource: %w", err)}
 		}
-		// Merging rejects the default routing tree's names, so a new import can't use them.
-		taken[models.DefaultRoutingTreeName] = struct{}{}
-		taken[models.DefaultRoutingTreeNameAlias] = struct{}{}
-		base := syncIdentifierFromName(ds.Name)
-		candidate = uniqueSyncIdentifier(base, taken)
-		// Only one import can be staged, and a save under another name is refused. An import that
-		// auto-sync staged under this name is its own, with the identifier lost from the status, so
-		// reuse it. A manual import with this name is not ours. The sync would be refused on save, so
-		// the name counts as taken.
-		if staged[candidate] != v1.ExtraConfigManagedByAutoSync {
-			for name := range staged {
-				taken[name] = struct{}{}
-			}
-			candidate = uniqueSyncIdentifier(base, taken)
+		candidate = syncIdentifierFromName(ds.Name)
+		// Merging rejects a name that a policy tree uses, and the default tree's names are reserved.
+		if _, taken := amCfg.ManagedRoutes[candidate]; taken || models.IsDefaultRoutingTreeName(candidate) {
+			return "", &SyncError{Reason: ReasonIdentifierTaken, Cause: fmt.Errorf("the name %q, taken from the datasource, is used by a policy tree or reserved: rename the datasource or the policy tree", candidate)}
 		}
 	}
 
@@ -193,19 +177,7 @@ func (s *ExternalAMSyncer) ensureSyncIdentifier(ctx context.Context, orgID int64
 		return withSyncIdentifier(prev, target.uid, target.origin, chosen)
 	})
 	if err != nil {
-		// Another instance may have recorded one even though this write failed.
-		if cfg, getErr := s.getConfig(ctx, orgID); getErr == nil && cfg != nil {
-			if recorded := recordedSyncIdentifier(&cfg.Status, target.uid); recorded != "" {
-				return recorded, nil
-			}
-		}
-		// A name already imported under is stable, and a save under the UID would be refused next to it.
-		fallback := target.uid
-		if _, imported := staged[candidate]; imported {
-			fallback = candidate
-		}
-		s.logger.Warn("Failed to record external AM sync identifier; importing under it anyway", "org_id", orgID, "identifier", fallback, "err", err)
-		return fallback, nil
+		return "", &SyncError{Reason: ReasonConfigRead, Cause: fmt.Errorf("record sync identifier: %w", err)}
 	}
 	return chosen, nil
 }
@@ -232,28 +204,11 @@ func withSyncIdentifier(prev *alertingnotifv1beta1.ConfigStatus, uid string, ori
 func syncIdentifierFromName(name string) string {
 	id := nonIdentifierChars.ReplaceAllString(strings.ToLower(name), "-")
 	id = strings.Trim(id, "-")
+	if len(id) > legacy_storage.ManagedRouteNameMaxLength {
+		id = strings.TrimRight(id[:legacy_storage.ManagedRouteNameMaxLength], "-")
+	}
 	if id == "" {
 		return fallbackSyncIdentifier
 	}
 	return id
-}
-
-// uniqueSyncIdentifier returns base, or base with a "-2", "-3", ... suffix if base is already used by
-// a policy tree or another imported configuration. The result stays within the managed route name
-// length limit.
-func uniqueSyncIdentifier(base string, taken map[string]struct{}) string {
-	for n := 1; ; n++ {
-		suffix := ""
-		if n > 1 {
-			suffix = fmt.Sprintf("-%d", n)
-		}
-		id := base
-		if len(id)+len(suffix) > ualert.UIDMaxLength {
-			id = strings.TrimRight(id[:ualert.UIDMaxLength-len(suffix)], "-")
-		}
-		id += suffix
-		if _, ok := taken[id]; !ok {
-			return id
-		}
-	}
 }

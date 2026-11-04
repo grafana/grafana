@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -41,24 +42,15 @@ func TestSyncIdentifierFromName(t *testing.T) {
 	}
 }
 
-func TestUniqueSyncIdentifier(t *testing.T) {
-	taken := func(names ...string) map[string]struct{} {
-		m := map[string]struct{}{}
-		for _, n := range names {
-			m[n] = struct{}{}
-		}
-		return m
-	}
+func TestSyncIdentifierFromName_StaysWithinTheRouteNameLimit(t *testing.T) {
+	limit := legacy_storage.ManagedRouteNameMaxLength
 
-	assert.Equal(t, "mimir", uniqueSyncIdentifier("mimir", taken()))
-	assert.Equal(t, "mimir-2", uniqueSyncIdentifier("mimir", taken("mimir")))
-	assert.Equal(t, "mimir-3", uniqueSyncIdentifier("mimir", taken("mimir", "mimir-2")))
+	got := syncIdentifierFromName(strings.Repeat("a", limit+10))
+	assert.Equal(t, strings.Repeat("a", limit), got)
 
-	long := strings.Repeat("a", 50)
-	assert.Equal(t, strings.Repeat("a", 40), uniqueSyncIdentifier(long, taken()))
-	assert.Equal(t, strings.Repeat("a", 38)+"-2", uniqueSyncIdentifier(long, taken(strings.Repeat("a", 40))))
-	// Cutting the name short must not leave a dash right before the suffix.
-	assert.Equal(t, strings.Repeat("a", 37)+"-2", uniqueSyncIdentifier(strings.Repeat("a", 37)+"-bbb", taken(strings.Repeat("a", 37)+"-bb")))
+	// Cutting the name short must not leave a trailing dash.
+	got = syncIdentifierFromName(strings.Repeat("a", limit-1) + " bbb")
+	assert.Equal(t, strings.Repeat("a", limit-1), got)
 }
 
 func TestBuildSyncStatus_KeepsIdentifierRecordedForTheSameDatasource(t *testing.T) {
@@ -128,7 +120,7 @@ func TestSyncExternalAMs_KeepsNameAfterDatasourceRename(t *testing.T) {
 	assert.Zero(t, testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", ReasonSave.Label())))
 }
 
-func TestSyncExternalAMs_FallsBackToUIDWhenTheNameCannotBeRecorded(t *testing.T) {
+func TestSyncExternalAMs_FailsTheTickWhenTheNameCannotBeRecorded(t *testing.T) {
 	proxy := singleAMProxy(t, "ds-1", "route:\n  receiver: mimir-default\nreceivers:\n  - name: mimir-default")
 	ds := namedMimirDS("ds-1", "Mimir Prod", 1)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
@@ -140,12 +132,8 @@ func TestSyncExternalAMs_FallsBackToUIDWhenTheNameCannotBeRecorded(t *testing.T)
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
-	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
-	require.NoError(t, err)
-	cfg, err := Load([]byte(saved.AlertmanagerConfiguration))
-	require.NoError(t, err)
-	require.Len(t, cfg.ExtraConfigs, 1)
-	assert.Equal(t, "ds-1", cfg.ExtraConfigs[0].Identifier)
+	assertNoExtraConfigSaved(t, cs, 1)
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", ReasonConfigRead.Label())))
 }
 
 // newIdentifierTestSyncer builds a syncer wired only with what ensureSyncIdentifier needs.
@@ -167,29 +155,32 @@ func TestEnsureSyncIdentifier(t *testing.T) {
 		assert.Equal(t, "ds-1", got)
 	})
 
-	t.Run("adds a suffix when a policy tree already has the name", func(t *testing.T) {
+	t.Run("fails when a policy tree has the name", func(t *testing.T) {
 		adminCfg := newFakeConfigClient()
 		adminCfg.setUID(1, "ds-1")
 		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: configWithManagedRoute("mimir-prod")}, namedMimirDS("ds-1", "Mimir Prod", 1))
 
-		got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
-		require.NoError(t, err)
-		assert.Equal(t, "mimir-prod-2", got)
+		_, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
+		require.Error(t, err)
+		assert.Equal(t, ReasonIdentifierTaken, reasonOf(err))
+		obj, lookupErr := adminCfg.lookup("org-1")
+		require.NoError(t, lookupErr)
+		assert.Empty(t, recordedSyncIdentifier(&obj.Status, "ds-1"), "nothing is recorded")
 	})
 
-	t.Run("avoids the names reserved for the default routing tree", func(t *testing.T) {
-		for name, want := range map[string]string{"Default": "default-2", "User Defined": "user-defined-2"} {
+	t.Run("fails for the names reserved for the default routing tree", func(t *testing.T) {
+		for _, name := range []string{"Default", "User Defined"} {
 			adminCfg := newFakeConfigClient()
 			adminCfg.setUID(1, "ds-1")
 			s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: validAMConfigBase}, namedMimirDS("ds-1", name, 1))
 
-			got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
-			require.NoError(t, err)
-			assert.Equal(t, want, got, name)
+			_, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
+			require.Error(t, err, name)
+			assert.Equal(t, ReasonIdentifierTaken, reasonOf(err), name)
 		}
 	})
 
-	t.Run("keeps a name-based import it can no longer see in the status", func(t *testing.T) {
+	t.Run("records the same name again for an import staged under it", func(t *testing.T) {
 		adminCfg := newFakeConfigClient()
 		adminCfg.setUID(1, "ds-1")
 		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: configWithExtraConfig("mimir-prod", v1.ExtraConfigManagedByAutoSync)}, namedMimirDS("ds-1", "Mimir Prod", 1))
@@ -197,17 +188,6 @@ func TestEnsureSyncIdentifier(t *testing.T) {
 		got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
 		require.NoError(t, err)
 		assert.Equal(t, "mimir-prod", got)
-	})
-
-	t.Run("keeps a suffixed name-based import it can no longer see in the status", func(t *testing.T) {
-		adminCfg := newFakeConfigClient()
-		adminCfg.setUID(1, "ds-1")
-		raw := configWithManagedRouteAndExtraConfig("mimir-prod", "mimir-prod-2", v1.ExtraConfigManagedByAutoSync)
-		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: raw}, namedMimirDS("ds-1", "Mimir Prod", 1))
-
-		got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
-		require.NoError(t, err)
-		assert.Equal(t, "mimir-prod-2", got)
 	})
 
 	t.Run("keeps the UID for an import staged under it before identifiers were recorded", func(t *testing.T) {
@@ -225,39 +205,16 @@ func TestEnsureSyncIdentifier(t *testing.T) {
 		assert.Equal(t, "ds-1", recordedSyncIdentifier(&obj.Status, "ds-1"))
 	})
 
-	t.Run("uses a name another instance recorded when its own write failed", func(t *testing.T) {
-		adminCfg := newFakeConfigClient()
-		adminCfg.setUID(1, "ds-1")
-		obj, err := adminCfg.lookup("org-1")
-		require.NoError(t, err)
-		obj.Status = withSyncIdentifier(nil, "ds-1", originAPI, "picked-elsewhere")
-		adminCfg.setWriteErr(1, fmt.Errorf("conflict with the other instance's write"))
-		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: validAMConfigBase}, namedMimirDS("ds-1", "Mimir Prod", 1))
-
-		got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
-		require.NoError(t, err)
-		assert.Equal(t, "picked-elsewhere", got)
-	})
-
-	t.Run("does not adopt a manual import that has the datasource's name", func(t *testing.T) {
+	t.Run("names the sync after the datasource even when a manual import has that name", func(t *testing.T) {
 		adminCfg := newFakeConfigClient()
 		adminCfg.setUID(1, "ds-1")
 		raw := configWithExtraConfig("prod", v1.ExtraConfigManagedByManual)
 		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: raw}, namedMimirDS("ds-1", "Prod", 1))
 
+		// The save is refused later as foreign_owner, so the manual import is never overwritten.
 		got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
 		require.NoError(t, err)
-		assert.Equal(t, "prod-2", got)
-	})
-
-	t.Run("does not adopt an import without an owner that has the datasource's name", func(t *testing.T) {
-		adminCfg := newFakeConfigClient()
-		adminCfg.setUID(1, "ds-1")
-		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: configWithExtraConfig("prod", "")}, namedMimirDS("ds-1", "Prod", 1))
-
-		got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
-		require.NoError(t, err)
-		assert.Equal(t, "prod-2", got)
+		assert.Equal(t, "prod", got)
 	})
 
 	t.Run("does not take over a staged import under an unrelated name", func(t *testing.T) {
@@ -270,15 +227,15 @@ func TestEnsureSyncIdentifier(t *testing.T) {
 		assert.Equal(t, "mimir-prod", got)
 	})
 
-	t.Run("keeps a name-based import it recovered even when the name cannot be recorded", func(t *testing.T) {
+	t.Run("fails when the name cannot be recorded", func(t *testing.T) {
 		adminCfg := newFakeConfigClient()
 		adminCfg.setUID(1, "ds-1")
 		adminCfg.setWriteErr(1, fmt.Errorf("storage unavailable"))
-		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: configWithExtraConfig("mimir-prod", v1.ExtraConfigManagedByAutoSync)}, namedMimirDS("ds-1", "Mimir Prod", 1))
+		s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: validAMConfigBase}, namedMimirDS("ds-1", "Mimir Prod", 1))
 
-		got, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
-		require.NoError(t, err)
-		assert.Equal(t, "mimir-prod", got)
+		_, err := s.ensureSyncIdentifier(ctx, 1, syncTarget{uid: "ds-1", origin: originAPI})
+		require.Error(t, err)
+		assert.Equal(t, ReasonConfigRead, reasonOf(err))
 	})
 
 	t.Run("uses a name another instance recorded first", func(t *testing.T) {
@@ -522,10 +479,4 @@ const extraConfigYAML = `route:\n  receiver: a\nreceivers:\n  - name: a`
 // managedBy. An empty managedBy stands for an import that predates owners.
 func configWithExtraConfig(identifier, managedBy string) string {
 	return validAMConfigBase[:len(validAMConfigBase)-1] + fmt.Sprintf(`,"extra_config":[{"identifier":%q,"alertmanager_config":%q,"managed_by":%q}]}`, identifier, extraConfigYAML, managedBy)
-}
-
-// configWithManagedRouteAndExtraConfig is configWithExtraConfig plus a managed route named managedRoute.
-func configWithManagedRouteAndExtraConfig(managedRoute, identifier, managedBy string) string {
-	return validAMConfigBase[:len(validAMConfigBase)-1] +
-		fmt.Sprintf(`,"managed_routes":{%q:{"receiver":"grafana-default-email"}},"extra_config":[{"identifier":%q,"alertmanager_config":%q,"managed_by":%q}]}`, managedRoute, identifier, extraConfigYAML, managedBy)
 }
