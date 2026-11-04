@@ -111,7 +111,6 @@ declare module "@openfeature/core" {
     | "recentlyViewedDashboards"
     | "alertEnrichment"
     | "preferLibraryPanelTitle"
-    | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "dashboardLevelTimeMacros"
     | "favoriteDatasources"

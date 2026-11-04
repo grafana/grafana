@@ -5,7 +5,6 @@ import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1'
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient, useFlagFoldersAppPlatformAPI } from '@grafana/runtime/internal';
 import {
   API_GROUP as IAM_API_GROUP,
   API_VERSION as IAM_API_VERSION,
@@ -17,17 +16,9 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import {
   useDeleteFolderMutation as useDeleteFolderMutationLegacy,
-  useGetFolderQuery as useGetFolderQueryLegacy,
   useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
-  useNewFolderMutation as useLegacyNewFolderMutation,
-  useMoveFoldersMutation as useMoveFoldersMutationLegacy,
-  useSaveFolderMutation as useLegacySaveFolderMutation,
-  useMoveFolderMutation as useMoveFolderMutationLegacy,
-  useGetAffectedItemsQuery as useLegacyGetAffectedItemsQuery,
   type MoveFoldersArgs,
-  type DeleteFoldersArgs,
   type MoveFolderArgs,
-  browseDashboardsAPI,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 import { getSelectedUIDs, getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
@@ -60,7 +51,6 @@ import {
   useGetFolderQuery,
   useGetFolderAccessQuery,
   useGetFolderParentsQuery,
-  useDeleteFolderMutation,
   useCreateFolderMutation,
   useUpdateFolderMutation,
   type Folder,
@@ -140,63 +130,46 @@ export async function getFolderByUidFacade(uid: string) {
   // folder for either rather than fetching a folder resource that doesn't exist.
   const isRoot = isRootFolderUID(uid);
   const isVirtualFolder = uid && (isRoot || uid === config.sharedWithMeFolderUID);
-  const shouldUseAppPlatformAPI = getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, true);
 
-  if (shouldUseAppPlatformAPI) {
-    // Virtual folders aren't real resources, so the folder object comes from a
-    // hardcoded constant and they have no parents. Access is still a real query —
-    // the backend returns proper access info for the root and "shared with me" folders.
-    if (isVirtualFolder) {
-      const accessResponse = await dispatch(folderAPIv1beta1.endpoints.getFolderAccess.initiate({ name: uid }));
-      if (!accessResponse?.data) {
-        throw accessResponse.error || new Error('Folder access response is undefined');
-      }
-      return combineFolderResponses(isRoot ? rootFolder : sharedWithMeFolder, accessResponse.data, []);
+  // Virtual folders aren't real resources, so the folder object comes from a
+  // hardcoded constant and they have no parents. Access is still a real query —
+  // the backend returns proper access info for the root and "shared with me" folders.
+  if (isVirtualFolder) {
+    const accessResponse = await dispatch(folderAPIv1beta1.endpoints.getFolderAccess.initiate({ name: uid }));
+    if (!accessResponse?.data) {
+      throw accessResponse.error || new Error('Folder access response is undefined');
     }
-
-    const responses = await Promise.all([
-      dispatch(folderAPIv1beta1.endpoints.getFolderAccess.initiate({ name: uid })),
-      dispatch(folderAPIv1beta1.endpoints.getFolder.initiate({ name: uid })),
-      dispatch(folderAPIv1beta1.endpoints.getFolderParents.initiate({ name: uid })),
-    ]);
-
-    const [accessResponse, folderResponse, parentsResponse] = responses;
-
-    if (!folderResponse?.data || !accessResponse?.data || !parentsResponse?.data) {
-      // Throw the original error (with HTTP status) so callers can detect e.g. 403 and
-      // gracefully continue — this handles the case when a user has access to a dashboard
-      // but not to the containing folder.
-      const error = folderResponse.error || parentsResponse.error || accessResponse.error;
-      throw error || new Error('One of the folder responses is undefined');
-    }
-
-    const userKeys = getUserKeys(folderResponse.data);
-    let userResponse;
-    if (userKeys.length) {
-      userResponse = await dispatch(iamAPIv0alpha1.endpoints.getDisplayMapping.initiate({ key: userKeys }));
-    }
-
-    return combineFolderResponses(
-      folderResponse.data,
-      accessResponse.data,
-      parentsResponse.data.items,
-      userResponse?.data
-    );
+    return combineFolderResponses(isRoot ? rootFolder : sharedWithMeFolder, accessResponse.data, []);
   }
 
-  const legacyFolderResponse = await dispatch(
-    browseDashboardsAPI.endpoints.getFolder.initiate({
-      folderUID: uid,
-      accesscontrol: true,
-      isLegacyCall: false,
-    })
+  const responses = await Promise.all([
+    dispatch(folderAPIv1beta1.endpoints.getFolderAccess.initiate({ name: uid })),
+    dispatch(folderAPIv1beta1.endpoints.getFolder.initiate({ name: uid })),
+    dispatch(folderAPIv1beta1.endpoints.getFolderParents.initiate({ name: uid })),
+  ]);
+
+  const [accessResponse, folderResponse, parentsResponse] = responses;
+
+  if (!folderResponse?.data || !accessResponse?.data || !parentsResponse?.data) {
+    // Throw the original error (with HTTP status) so callers can detect e.g. 403 and
+    // gracefully continue — this handles the case when a user has access to a dashboard
+    // but not to the containing folder.
+    const error = folderResponse.error || parentsResponse.error || accessResponse.error;
+    throw error || new Error('One of the folder responses is undefined');
+  }
+
+  const userKeys = getUserKeys(folderResponse.data);
+  let userResponse;
+  if (userKeys.length) {
+    userResponse = await dispatch(iamAPIv0alpha1.endpoints.getDisplayMapping.initiate({ key: userKeys }));
+  }
+
+  return combineFolderResponses(
+    folderResponse.data,
+    accessResponse.data,
+    parentsResponse.data.items,
+    userResponse?.data
   );
-
-  if (legacyFolderResponse.error || !legacyFolderResponse.data) {
-    throw legacyFolderResponse.error || new Error('Legacy folder response is undefined');
-  }
-
-  return legacyFolderResponse.data;
 }
 
 /**
@@ -206,22 +179,18 @@ export async function getFolderByUidFacade(uid: string) {
  * @param uid
  */
 export function useGetFolderQueryFacade(uid?: string) {
-  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
   // "" / undefined and "general" both mean the synthetic root folder —
   // neither is a real folder resource.
   const isRoot = isRootFolderUID(uid);
   const isVirtualFolder = uid && (isRoot || uid === config.sharedWithMeFolderUID);
   const params = !uid ? skipToken : { name: uid };
 
-  const legacyFolderResult = useGetFolderQueryLegacy(
-    !shouldUseAppPlatformAPI && uid ? { folderUID: uid, accesscontrol: true, isLegacyCall: false } : skipToken
-  );
   // The folder object itself isn't fetched for virtual folders (the resource
   // doesn't exist), but access is a real query for them — the backend returns
   // proper access info for the root and "shared with me" folders.
-  const resultFolder = useGetFolderQuery(shouldUseAppPlatformAPI && !isVirtualFolder ? params : skipToken);
-  const resultAccess = useGetFolderAccessQuery(shouldUseAppPlatformAPI ? params : skipToken);
-  const resultParents = useGetFolderParentsQuery(shouldUseAppPlatformAPI && !isVirtualFolder ? params : skipToken);
+  const resultFolder = useGetFolderQuery(!isVirtualFolder ? params : skipToken);
+  const resultAccess = useGetFolderAccessQuery(params);
+  const resultParents = useGetFolderParentsQuery(!isVirtualFolder ? params : skipToken);
   const [triggerGetUserDisplayMapping, resultUserDisplay] = useLazyGetDisplayMappingQuery();
 
   const needsUserData = useMemo(() => {
@@ -235,12 +204,6 @@ export function useGetFolderQueryFacade(uid?: string) {
       triggerGetUserDisplayMapping({ key: userKeys }, true);
     }
   }, [needsUserData, resultFolder, triggerGetUserDisplayMapping]);
-
-  if (!shouldUseAppPlatformAPI) {
-    // RTK keeps `data` from the last fetched folder once the arg flips to skipToken; a caller that
-    // cleared its uid must not keep seeing that folder
-    return uid ? legacyFolderResult : { ...legacyFolderResult, data: undefined };
-  }
 
   // For virtual folders the folder object is hardcoded and there are no parents, but access
   // is a real query whose loading/error state we surface directly.
@@ -261,7 +224,7 @@ export function useGetFolderQueryFacade(uid?: string) {
     // Stitch together the responses to create a single FolderDTO object so on the outside this behaves as the legacy
     // api client.
     let newData: CombinedFolder | undefined;
-    // Guarded on `uid` for the same reason as the legacy branch: a cleared uid must not keep the last folder
+    // Guarded on `uid`: a cleared uid must not keep showing the last folder
     if (
       uid &&
       resultFolder.data &&
@@ -290,84 +253,23 @@ export function useGetFolderQueryFacade(uid?: string) {
 }
 
 export function useDeleteFolderMutationFacade() {
-  const [deleteFolderMutation] = useDeleteFolderMutation();
   const [deleteFolderLegacy] = useDeleteFolderMutationLegacy();
-  const refresh = useRefreshFolders();
-  const notify = useAppNotification();
-  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
   // TODO right now the app platform backend does not support cascading delete of children so we cannot use it.
-  const isBackendSupport = false;
-  if (!(shouldUseAppPlatformAPI && isBackendSupport)) {
-    return deleteFolderLegacy;
-  }
-
-  return async function deleteFolder(folder: FolderDTO) {
-    const result = await deleteFolderMutation({ name: folder.uid });
-    if (!result.error) {
-      // we could do this in the enhanceEndpoint method, but we would also need to change the args as we need parentUID
-      // here and so it seemed easier to do it here.
-      refresh({ childrenOf: folder.parentUid });
-      // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
-      // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
-      notify.success(t('folders.api.folder-deleted-success', 'Folder deleted'));
-      invalidateQuotaUsage(dispatch);
-    }
-    return result;
-  };
+  return deleteFolderLegacy;
 }
 
 export function useDeleteMultipleFoldersMutationFacade() {
   const [deleteFoldersLegacy] = useDeleteFoldersMutationLegacy();
-  const [deleteFolder] = useDeleteFolderMutation();
-  const dispatch = useDispatch();
-  const refresh = useRefreshFolders();
-  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
   // TODO right now the app platform backend does not support cascading delete of children so we cannot use it.
-  const isBackendSupport = false;
-  if (!(shouldUseAppPlatformAPI && isBackendSupport)) {
-    return deleteFoldersLegacy;
-  }
-
-  return async function deleteFolders({ folderUIDs }: DeleteFoldersArgs) {
-    const successMessage = t('folders.api.folder-deleted-success', 'Folder deleted');
-
-    // Delete all the folders sequentially
-    // TODO error handling here
-    for (const folderUID of folderUIDs) {
-      // This also shows warning alert
-      const isProvisioned = await isProvisionedFolderCheck(dispatch, folderUID);
-
-      if (!isProvisioned) {
-        const result = await deleteFolder({ name: folderUID });
-        if (!result.error) {
-          // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
-          // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
-          getAppEvents().publish({
-            type: AppEvents.alertSuccess.name,
-            payload: [successMessage],
-          });
-        }
-      }
-    }
-
-    refresh({ parentsOf: folderUIDs });
-    invalidateQuotaUsage(dispatch);
-    return { data: undefined };
-  };
+  return deleteFoldersLegacy;
 }
 
 export function useMoveMultipleFoldersMutationFacade() {
-  const moveFoldersLegacyResult = useMoveFoldersMutationLegacy();
   const [updateFolder, updateFolderData] = useUpdateFolderMutation();
   const dispatch = useDispatch();
   const refetch = useRefreshFolders();
-  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
-
-  if (!shouldUseAppPlatformAPI) {
-    return moveFoldersLegacyResult;
-  }
 
   async function moveFolders({ folderUIDs, destinationUID }: MoveFoldersArgs) {
     const provisionedWarning = t(
@@ -404,13 +306,7 @@ export function useMoveMultipleFoldersMutationFacade() {
 
 export function useCreateFolder() {
   const [createFolder, result] = useCreateFolderMutation();
-  const legacyHook = useLegacyNewFolderMutation();
   const refresh = useRefreshFolders();
-  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
-
-  if (!shouldUseAppPlatformAPI) {
-    return legacyHook;
-  }
 
   const createFolderAppPlatform = async (
     payload: NewFolder & {
@@ -477,13 +373,7 @@ export function useCreateFolder() {
 
 export function useUpdateFolder() {
   const [updateFolder, result] = useUpdateFolderMutation();
-  const legacyHook = useLegacySaveFolderMutation();
   const refresh = useRefreshFolders();
-  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
-
-  if (!shouldUseAppPlatformAPI) {
-    return legacyHook;
-  }
 
   const updateFolderAppPlatform = async (folder: Pick<FolderDTO, 'uid' | 'title' | 'version' | 'parentUid'>) => {
     const payload: UpdateFolderApiArg = {
@@ -517,14 +407,8 @@ export function useUpdateFolder() {
 
 export function useMoveFolderMutationFacade() {
   const [updateFolder, updateFolderData] = useUpdateFolderMutation();
-  const moveFolderResult = useMoveFolderMutationLegacy();
   const refresh = useRefreshFolders();
   const notify = useAppNotification();
-  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
-
-  if (!shouldUseAppPlatformAPI) {
-    return moveFolderResult;
-  }
 
   async function moveFolder({ folderUID, destinationUID }: MoveFolderArgs) {
     const result = await updateFolder({
@@ -570,20 +454,7 @@ export function useGetAffectedItems(selectedItems: Pick<DashboardTreeSelection, 
   const folderUIDs = getSelectedUIDs(selectedItems, 'folder');
   const dashboardUIDs = getSelectedUIDs(selectedItems, 'dashboard');
 
-  // Note the app platform counts are not calculated recursively, so the two APIs don't report the same numbers for
-  // nested folders but both are good enough to report whether folder is empty or not.
-  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
-  const hookParams:
-    | Parameters<typeof useLegacyGetAffectedItemsQuery>[0]
-    | Parameters<typeof useGetAffectedItemsQuery>[0] = {
-    folderUIDs,
-    dashboardUIDs,
-  };
-
-  const legacyResult = useLegacyGetAffectedItemsQuery(!shouldUseAppPlatformAPI ? hookParams : skipToken);
-  const appPlatformResult = useGetAffectedItemsQuery(shouldUseAppPlatformAPI ? hookParams : skipToken);
-
-  return shouldUseAppPlatformAPI ? appPlatformResult : legacyResult;
+  return useGetAffectedItemsQuery({ folderUIDs, dashboardUIDs });
 }
 
 function combinedState(

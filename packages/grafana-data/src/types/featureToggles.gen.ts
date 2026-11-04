@@ -866,11 +866,6 @@ export interface FeatureToggles {
   */
   newInfluxDSConfigPageDesign?: boolean;
   /**
-  * Enables use of app platform API for folders
-  * @default true
-  */
-  foldersAppPlatformAPI?: boolean;
-  /**
   * Applies OTel formatting templates to displayed logs
   * @default true
   */

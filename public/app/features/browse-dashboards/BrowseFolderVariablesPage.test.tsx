@@ -57,8 +57,7 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
 
   beforeEach(() => {
     config.unifiedAlertingEnabled = true;
-    // foldersAppPlatformAPI defaults to on, but this suite's folder handlers are the legacy ones.
-    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true, foldersAppPlatformAPI: false });
+    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
     server.use(
       http.get('/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/variables', () => {
         return HttpResponse.json({
@@ -133,11 +132,10 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
 
   it('does not display "New folder variable" when the user cannot edit the folder', async () => {
     server.use(
-      http.get('/api/folders/:uid', () => {
+      http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid/access', () => {
         return HttpResponse.json({
-          id: 1,
-          uid: mockFolderUid,
-          title: mockFolderName,
+          kind: 'FolderAccessInfo',
+          apiVersion: 'folder.grafana.app/v1beta1',
           canEdit: false,
           canSave: false,
           canAdmin: false,
