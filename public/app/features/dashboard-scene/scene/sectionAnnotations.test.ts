@@ -412,6 +412,40 @@ describe('section annotations', () => {
       deactivate();
     });
 
+    it('queries a repeat clone with its own repeat value when the source already has results', () => {
+      const variable = new TestVariable({
+        name: 'env',
+        query: 'A.*',
+        value: ['dev', 'prod'],
+        text: ['dev', 'prod'],
+        isMulti: true,
+        optionsToReturn: [
+          { label: 'dev', value: 'dev' },
+          { label: 'prod', value: 'prod' },
+        ],
+      });
+      const sourceLayer = annotationLayer('deploys');
+      sourceLayer.setState({ data: { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() } });
+      const source = new RowItem({
+        key: 'row-1',
+        repeatByVariable: 'env',
+        $data: new DashboardDataLayerSet({ annotationLayers: [sourceLayer] }),
+        layout: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
+      });
+      new DashboardScene({
+        $variables: new SceneVariableSet({ variables: [variable] }),
+        body: new RowsLayoutManager({ rows: [source] }),
+      });
+      performRowRepeats(variable as unknown as MultiValueVariable, source, true);
+
+      const cloneSet = source.state.repeatedRows![0].state.$data as DashboardDataLayerSet;
+      const deactivate = cloneSet.activate();
+
+      expect(cloneSet.state.annotationLayers[0].state.data).toBeUndefined();
+      expect(runLayer).toHaveBeenCalledTimes(1);
+      deactivate();
+    });
+
     it('does not query a collapsed row, and starts when the row expands', () => {
       const layer = annotationLayer('row-deploys');
       const set = new DashboardDataLayerSet({ annotationLayers: [layer] });

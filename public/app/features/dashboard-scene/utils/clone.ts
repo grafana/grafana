@@ -190,6 +190,8 @@ export function getRepeatVariableValueSet(
 /**
  * Deep-clone a section annotation set so duplicated rows/tabs get their own layer objects.
  * Scene clone keeps keys, and a shared key makes sidebar selection resolve to the first layer.
+ * Results are dropped: a layer with data does not query on activation, so a repeat clone would keep
+ * showing the source's events instead of querying with its own repeat value.
  */
 export function cloneSectionDataLayerSet(data: SceneObject | undefined): DashboardDataLayerSet | undefined {
   if (!(data instanceof DashboardDataLayerSet)) {
@@ -198,7 +200,7 @@ export function cloneSectionDataLayerSet(data: SceneObject | undefined): Dashboa
 
   return data.clone({
     key: undefined,
-    annotationLayers: data.state.annotationLayers.map((layer) => layer.clone({ key: undefined })),
+    annotationLayers: data.state.annotationLayers.map((layer) => layer.clone({ key: undefined, data: undefined })),
   });
 }
 
