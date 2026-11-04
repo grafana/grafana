@@ -971,8 +971,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
       if (this.state.isEditing) {
         this.startEditPeriod('user');
-      } else {
-        this.onEnterEditMode('user', 'picker');
+      } else if (!this.onEnterEditMode('user', 'picker')) {
+        return;
       }
       this.setState({ composerEditing: true });
       return;
@@ -1003,7 +1003,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /**
    * An Assistant edit while Composer is over Viewing switches it to Editing, with an Assistant edit session,
-   * as an Assistant edit from Viewing starts Agent editing without Composer. False when the user cannot edit.
+   * as an Assistant edit from Viewing starts Agent editing without Composer. False when the user cannot edit
+   * or entering edit mode was blocked.
    */
   public startComposerEditingForAssistant(): boolean {
     if (!isComposerMode(this.state) || !this.state.editable || !this.canEditDashboard()) {
@@ -1012,8 +1013,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (!isComposerEditing(this.state)) {
       if (this.state.isEditing) {
         this.startEditPeriod('assistant');
-      } else {
-        this.onEnterEditMode('assistant', 'assistant');
+      } else if (!this.onEnterEditMode('assistant', 'assistant')) {
+        return false;
       }
       this.setState({ composerEditing: true });
     }
