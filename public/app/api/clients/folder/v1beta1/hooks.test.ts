@@ -197,6 +197,31 @@ describe('useGetFolderQueryFacade', () => {
     });
   });
 
+  it('returns the folder with anonymous users when the user names cannot be looked up', async () => {
+    setTestFlags({ foldersAppPlatformAPI: true });
+    server.use(
+      http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/display', () =>
+        HttpResponse.json(
+          { kind: 'Status', apiVersion: 'v1', status: 'Failure', reason: 'Forbidden', code: 403 },
+          { status: 403 }
+        )
+      )
+    );
+
+    const result = await renderFolderHook();
+
+    expect(result.current.data).toMatchObject({
+      uid: expectedUid,
+      title: expectedTitle,
+      canEdit: true,
+      createdBy: 'Anonymous',
+      updatedBy: 'Anonymous',
+    });
+    // The folder picker disables itself on a 403, as if the viewer had no access to the folder.
+    expect(result.current.isError).toBe(false);
+    expect(result.current.error).toBeUndefined();
+  });
+
   it('runs a real access query for the root/general virtual folder', async () => {
     setTestFlags({ foldersAppPlatformAPI: true });
 

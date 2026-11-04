@@ -44,7 +44,7 @@ function PageHarness({ activeId, currentPageId }: { activeId: string; currentPag
   const pageNav = useDashboardsPageNav(activeId, currentPageId);
   return (
     <Page navId={currentPageId} pageNav={pageNav}>
-      <Page.Contents />
+      <Page.Contents>{null}</Page.Contents>
     </Page>
   );
 }

@@ -224,52 +224,45 @@ func TestSearchServerDrainsBeforeStopping(t *testing.T) {
 
 func TestEmbeddedErrorConversionOnRemoteServers(t *testing.T) {
 	failure := &resourcepb.ErrorResult{Code: http.StatusNotFound, Reason: string(metav1.StatusReasonNotFound), Message: "missing", Details: &resourcepb.ErrorDetails{Name: "item"}}
-	for _, enabled := range []bool{false, true} {
-		for _, standalone := range []bool{false, true} {
-			t.Run(fmt.Sprintf("enabled=%t/standalone=%t", enabled, standalone), func(t *testing.T) {
-				s := &service{
-					cfg:           &setting.Cfg{UnifiedStorageGRPCErrorResultToStatus: enabled},
-					authenticator: func(ctx context.Context) (context.Context, error) { return ctx, nil },
-				}
-				provider := newDenyAllProvider(t)
-				server := &embeddedErrorServer{failure: failure}
-				if standalone {
-					require.NoError(t, s.registerSearchServer(provider, server))
-				} else {
-					s.registerUnifiedResourceServer(provider, server, nil)
-				}
-				conn := startAndConnect(t, provider.GetServer())
-				check := func(respError *resourcepb.ErrorResult, err error) {
-					if !enabled {
-						require.NoError(t, err)
-						require.True(t, proto.Equal(failure, respError))
-						return
-					}
-					require.Equal(t, codes.NotFound, status.Code(err))
-					details := status.Convert(err).Details()
-					require.Len(t, details, 1)
-					require.True(t, proto.Equal(failure, details[0].(*resourcepb.ErrorResult)))
-				}
-				searchResp, err := resourcepb.NewResourceIndexClient(conn).Search(t.Context(), &resourcepb.ResourceSearchRequest{})
-				check(searchResp.GetError(), err)
-				if !standalone {
-					readResp, err := resourcepb.NewResourceStoreClient(conn).Read(t.Context(), &resourcepb.ReadRequest{})
-					check(readResp.GetError(), err)
+	for _, standalone := range []bool{false, true} {
+		t.Run(fmt.Sprintf("standalone=%t", standalone), func(t *testing.T) {
+			s := &service{
+				cfg:           &setting.Cfg{},
+				authenticator: func(ctx context.Context) (context.Context, error) { return ctx, nil },
+			}
+			provider := newDenyAllProvider(t)
+			server := &embeddedErrorServer{failure: failure}
+			if standalone {
+				require.NoError(t, s.registerSearchServer(provider, server))
+			} else {
+				s.registerUnifiedResourceServer(provider, server, nil)
+			}
+			conn := startAndConnect(t, provider.GetServer())
+			check := func(err error) {
+				require.Equal(t, codes.NotFound, status.Code(err))
+				details := status.Convert(err).Details()
+				require.Len(t, details, 1)
+				require.True(t, proto.Equal(failure, details[0].(*resourcepb.ErrorResult)))
+			}
+			_, err := resourcepb.NewResourceIndexClient(conn).Search(t.Context(), &resourcepb.ResourceSearchRequest{})
+			check(err)
+			if !standalone {
+				_, err := resourcepb.NewResourceStoreClient(conn).Read(t.Context(), &resourcepb.ReadRequest{})
+				check(err)
 
-					blobs := resourcepb.NewBlobStoreStreamingClient(conn)
-					put, err := blobs.PutBlobStream(t.Context())
-					require.NoError(t, err)
-					require.NoError(t, put.Send(&resourcepb.PutBlobRequest{}))
-					putResp, err := put.CloseAndRecv()
-					check(putResp.GetError(), err)
+				blobs := resourcepb.NewBlobStoreStreamingClient(conn)
+				put, err := blobs.PutBlobStream(t.Context())
+				require.NoError(t, err)
+				require.NoError(t, put.Send(&resourcepb.PutBlobRequest{}))
+				_, err = put.CloseAndRecv()
+				check(err)
 
-					get, err := blobs.GetBlobStream(t.Context(), &resourcepb.GetBlobRequest{})
-					require.NoError(t, err)
-					getResp, err := get.Recv()
-					check(getResp.GetError(), err)
-				}
-			})
-		}
+				get, err := blobs.GetBlobStream(t.Context(), &resourcepb.GetBlobRequest{})
+				require.NoError(t, err)
+				_, err = get.Recv()
+				check(err)
+			}
+		})
 	}
 }
 

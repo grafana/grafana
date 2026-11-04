@@ -1469,7 +1469,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -5327,6 +5334,9 @@
       "preferences": "Inställningar",
       "recent-dashboards": "Senaste paneler",
       "recent-scopes": "Senaste omfattningar"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -6244,6 +6254,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -7319,11 +7330,14 @@
         "keep-working": "",
         "save": "Spara",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "Vill du spara dina ändringar?"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "Ändringar som inte sparats"
         }
@@ -7639,17 +7653,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -10716,6 +10733,8 @@
       "clear-button": "Rensa val"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "CodeMirror-redigeraren kunde inte laddas",
       "language-load-failed": "Det gick inte att läsa in syntaxmarkeringen",
       "language-load-failed-description": "Redigeraren kommer att fortsätta utan språkspecifika funktioner.",
@@ -12383,7 +12402,6 @@
       "copy-log-line-json": "Kopiera logginnehåll som JSON",
       "copy-shortlink": "Kopiera kortlänk",
       "copy-to-clipboard": "Kopiera till urklippet",
-      "displayed-fields-section": "Organisera visade fält",
       "fields": {
         "adhoc-statistics": "Ad hoc-statistik",
         "copy-value-to-clipboard": "Kopiera värde till klippbordet",
@@ -12407,14 +12425,11 @@
       "log-attributes-field": "Loggattribut",
       "log-line-field": "Loggrad",
       "log-line-section": "Loggrad",
-      "move-displayed-field-down": "Flytta ner",
-      "move-displayed-field-up": "Flytta upp",
       "no-details": "Fält som ska visas.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Fäst logg",
       "prettify": "Gör snyggare",
-      "remove-displayed-field": "Ta bort fält",
       "remove-log": "Ta bort logg",
       "scroll-to-logline": "Skrolla till loggrad",
       "search": {

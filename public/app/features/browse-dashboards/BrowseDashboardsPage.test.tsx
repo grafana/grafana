@@ -408,26 +408,14 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(checkbox).toBeInTheDocument();
     });
 
-    describe('with starred folders enabled', () => {
-      beforeEach(() => {
-        setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
-      });
+    it('shows the star toggle as the first action, before "Recently deleted"', async () => {
+      render(<BrowseDashboardsPage queryParams={{}} />);
 
-      afterEach(async () => {
-        await act(async () => {
-          setTestFlags({});
-        });
-      });
+      const star = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
+      const recentlyDeleted = await screen.findByRole('link', { name: 'Recently deleted' });
 
-      it('shows the star toggle as the first action, before "Recently deleted"', async () => {
-        render(<BrowseDashboardsPage queryParams={{}} />);
-
-        const star = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
-        const recentlyDeleted = await screen.findByRole('link', { name: 'Recently deleted' });
-
-        // star precedes "Recently deleted" in document order, so it is the first action
-        expect(star.compareDocumentPosition(recentlyDeleted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      });
+      // star precedes "Recently deleted" in document order, so it is the first action
+      expect(star.compareDocumentPosition(recentlyDeleted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
   });
 

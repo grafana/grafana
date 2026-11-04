@@ -597,6 +597,38 @@ func newInitialBuildTestServer(t *testing.T, backend *initialBuildTestBackend, s
 	return server
 }
 
+// A global index searched recently before a restart is reopened with its last
+// search, so its idle time carries on. One idle for longer than the timeout is
+// not reopened at all.
+func TestStartupKeepsGlobalIndexIdleTimeAcrossRestart(t *testing.T) {
+	recent := time.Now().Add(-time.Hour).Truncate(time.Millisecond)
+	var mu sync.Mutex
+	reopened := map[NamespacedResource]time.Time{}
+	backend := &initialBuildTestBackend{beforeBuild: func(_ context.Context, key NamespacedResource, options BuildIndexOptions) error {
+		mu.Lock()
+		defer mu.Unlock()
+		reopened[key] = options.LastSearchedAt
+		return nil
+	}}
+	backend.openIndexStats = []ResourceStats{
+		{NamespacedResource: dashboardType("ns"), Count: 1},
+		{NamespacedResource: GlobalSearchKey("recent"), Count: 1, LastSearchedAt: recent},
+		{NamespacedResource: GlobalSearchKey("idle"), Count: 1, LastSearchedAt: time.Now().Add(-7 * time.Hour)},
+		{NamespacedResource: GlobalSearchKey("unknown"), Count: 1},
+	}
+	server := newInitialBuildTestServer(t, backend, nil, 1)
+	server.globalIndexIdleTimeout = 6 * time.Hour
+	require.NoError(t, server.init(t.Context()))
+
+	mu.Lock()
+	defer mu.Unlock()
+	require.Equal(t, map[NamespacedResource]time.Time{
+		dashboardType("ns"):        {},
+		GlobalSearchKey("recent"):  recent,
+		GlobalSearchKey("unknown"): {},
+	}, reopened, "an older list without search times reopens global indexes as before")
+}
+
 func TestStartupBuildsDeferHeldLocksWithoutOccupyingWorker(t *testing.T) {
 	stats := make([]ResourceStats, 3)
 	for i := range stats {
@@ -2947,6 +2979,33 @@ func TestSearchRejectsInvalidFolderTreeBeforeResolvingIndexes(t *testing.T) {
 			require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
 			require.Zero(t, backend.getIndexCalls)
 			require.Empty(t, backend.buildIndexCalls)
+		})
+	}
+}
+
+// Only verbs a row can be checked for are accepted, and not where rows come from
+// another index or trash, whose checks differ.
+func TestValidateAccessVerbs(t *testing.T) {
+	for name, tc := range map[string]struct {
+		req     *resourcepb.ResourceSearchRequest
+		wantErr bool
+	}{
+		"none":            {req: &resourcepb.ResourceSearchRequest{}},
+		"supported verbs": {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update", "delete", "set_permissions"}}},
+		"unknown verb":    {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update", "get"}}, wantErr: true},
+		"deleted":         {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update"}, IsDeleted: true}, wantErr: true},
+		"federated": {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update"}, Federated: []*resourcepb.ResourceKey{
+			{Group: "folder.grafana.app", Resource: "folders"},
+		}}, wantErr: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			err := ValidateAccessVerbs(tc.req)
+			if tc.wantErr {
+				require.NotNil(t, err)
+				require.Equal(t, int32(http.StatusBadRequest), err.Code)
+			} else {
+				require.Nil(t, err)
+			}
 		})
 	}
 }
