@@ -563,7 +563,7 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		Offset:       offset,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+	if err := resource.StatusErrorFromGRPC(err); err != nil {
 		backendLogger.FromContext(ctx).Error("Failed to search folders", "operation", "subtreeSearch", "namespace", namespace, "parents", parentUIDs, "error", err)
 		public := backendStatusError(err)
 		return nil, false, &public
@@ -610,8 +610,8 @@ func validateOnDelete(ctx context.Context,
 	}
 
 	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
-	rawErr, publicErr := countStatsErrors(resp.GetError(), err, true)
-	if rawErr == nil && resp.Stats == nil {
+	rawErr, publicErr := countStatsErrors(err, true)
+	if rawErr == nil && resp.GetStats() == nil {
 		rawErr = errors.New("count response did not include stats")
 		publicErr = countFailedError(rawErr, true)
 	}
@@ -623,7 +623,7 @@ func validateOnDelete(ctx context.Context,
 
 	allowedResourceTypes := []string{"alertrules", "recordingrules", "dashboards", "library_elements", "librarypanels", "folders", "variables"}
 
-	for _, v := range resp.Stats {
+	for _, v := range resp.GetStats() {
 		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {
 			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d %s", v.Count, v.Resource)
 		}
