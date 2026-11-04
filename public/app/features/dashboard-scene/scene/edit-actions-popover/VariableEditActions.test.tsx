@@ -1,6 +1,12 @@
 import { fireEvent, render, screen } from 'test/test-utils';
 
-import { ConstantVariable, CustomVariable, QueryVariable, type SceneVariable } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  ConstantVariable,
+  CustomVariable,
+  QueryVariable,
+  type SceneVariable,
+} from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -36,6 +42,14 @@ function renderVariableEditActions(variable: SceneVariable) {
 describe('<VariableEditActions />', () => {
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  test('when the user hovers over an ad hoc filter settings action, the tooltip says Filter settings', async () => {
+    const { user } = renderVariableEditActions(new AdHocFiltersVariable({ name: 'filter0', enableGroupBy: true }));
+
+    await user.hover(screen.getByRole('button', { name: 'Filter settings' }));
+
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Filter settings');
   });
 
   describe('when the variable is a ConstantVariable', () => {

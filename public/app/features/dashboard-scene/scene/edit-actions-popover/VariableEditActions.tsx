@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
-import { CustomVariable, QueryVariable, type SceneVariable } from '@grafana/scenes';
+import { CustomVariable, QueryVariable, sceneUtils, type SceneVariable } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import {
@@ -83,7 +83,11 @@ export function VariableEditActions({
       )}
       <SettingsActionButton
         onClick={onClickEdit}
-        tooltip={t('dashboard-scene.variable-edit-actions.tooltip-variable-settings', 'Variable settings')}
+        tooltip={
+          sceneUtils.isAdHocVariable(variable)
+            ? t('dashboard-scene.variable-edit-actions.tooltip-filter-settings', 'Filter settings')
+            : t('dashboard-scene.variable-edit-actions.tooltip-variable-settings', 'Variable settings')
+        }
       />
       <div className={styles.actionsDivider} />
       <DuplicateActionButton onClick={onClickDuplicate} />
