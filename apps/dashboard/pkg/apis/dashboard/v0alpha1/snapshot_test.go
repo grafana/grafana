@@ -39,7 +39,7 @@ func TestSnapshotBlobReferenceRoundTrip(t *testing.T) {
 				require.Nil(t, decoded.Blobs.Dashboard)
 			} else {
 				require.NotNil(t, decoded.Blobs.Dashboard)
-				require.Equal(t, tt.uid, decoded.Blobs.Dashboard.Uid)
+				require.Equal(t, tt.uid, *decoded.Blobs.Dashboard.Uid)
 			}
 		})
 	}

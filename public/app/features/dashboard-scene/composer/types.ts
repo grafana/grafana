@@ -155,7 +155,10 @@ export interface RegionPick {
 
 export type RegionCapture =
   | { status: 'ready'; image: Blob; width: number; height: number; capturedAt: string }
-  | { status: 'failed'; reason: 'unsupported' | 'too_large' | 'timeout' | 'busy' | 'not_visible' | 'failed' };
+  | {
+      status: 'failed';
+      reason: 'unsupported' | 'too_large' | 'timeout' | 'busy' | 'not_visible' | 'controls' | 'failed';
+    };
 
 export interface ComposerElement {
   ref: ElementRef;
@@ -212,8 +215,10 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * Renders a region as an image, WebP where the browser encodes it, longest edge at most 1568px. One
    * capture runs at a time ('busy' otherwise), and picking and tab switching wait for it. 'not_visible'
    * unless the region is fully in view on a selected tab (reveal it, then retry); scrolling during a
-   * capture also ends it as 'not_visible'. 'too_large' when the dashboard would render past 16 megapixels,
-   * 'unsupported' for tainted or cross-origin content, 'timeout' after 10 s (a late result is dropped).
+   * capture also ends it as 'not_visible'. 'controls' when it overlaps the dashboard's own buttons (time
+   * picker, refresh, share, mode); variables are captured. 'too_large' when the dashboard would render past
+   * 16 megapixels, 'unsupported' for tainted or cross-origin content, 'timeout' after 10 s (a late result is
+   * dropped).
    */
   captureRegion(regionId: string, signal: AbortSignal): Promise<RegionCapture>;
   /** Not supported in M1: returns []. */

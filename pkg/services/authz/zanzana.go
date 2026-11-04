@@ -129,7 +129,23 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 // the record of what it has reconciled outlives the process and survives a
 // rebuild of the Zanzana store.
 func newReconcilerState(kvStore kvstore.KVStore) reconciler.StateStore {
-	return kvstore.WithNamespace(kvStore, reconciler.StateKVOrgID, reconciler.StateKVNamespace)
+	return &reconcilerStateStore{
+		NamespacedKVStore: kvstore.WithNamespace(kvStore, reconciler.StateKVOrgID, reconciler.StateKVNamespace),
+		globalRoles:       kvstore.WithNamespace(kvStore, reconciler.StateKVOrgID, reconciler.GlobalRolesKVNamespace),
+	}
+}
+
+type reconcilerStateStore struct {
+	*kvstore.NamespacedKVStore
+	globalRoles *kvstore.NamespacedKVStore
+}
+
+func (s *reconcilerStateStore) GetGlobalRoleSnapshot(ctx context.Context, key string) (string, bool, error) {
+	return s.globalRoles.Get(ctx, key)
+}
+
+func (s *reconcilerStateStore) SetGlobalRoleSnapshot(ctx context.Context, key, value string) error {
+	return s.globalRoles.Set(ctx, key, value)
 }
 
 // ProvideZanzanaReconcilerState supplies the standalone zanzana module with the
