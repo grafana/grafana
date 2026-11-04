@@ -22,7 +22,7 @@ export function StackedAddBar({ variant, afterId }: StackedAddBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   if (multiSelectMode) {
-    return <div className={styles.bar} data-stacked-add-bar />;
+    return <div className={styles.spacer} data-stacked-add-spacer />;
   }
 
   const line = <div className={styles.line} />;
@@ -79,6 +79,9 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 
   return {
+    spacer: css({
+      height: theme.spacing(1.5),
+    }),
     bar: css({
       position: 'relative',
       display: 'flex',

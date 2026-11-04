@@ -61,12 +61,13 @@ describe('StackedAddBar', () => {
     expect(trackAddTransformationInitiated).toHaveBeenCalledWith('stacked_gap');
   });
 
-  it('renders no add button in multi-select mode', () => {
+  it('renders a plain spacer instead of an add bar in multi-select mode', () => {
     const { container } = renderWithQueryEditorProvider(<StackedAddBar variant="query" afterId="A" />, {
       uiStateOverrides: { multiSelectMode: true },
     });
 
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    expect(container.querySelector('[data-stacked-add-bar]')).toBeInTheDocument();
+    expect(container.querySelector('[data-stacked-add-bar]')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-stacked-add-spacer]')).toBeInTheDocument();
   });
 });
