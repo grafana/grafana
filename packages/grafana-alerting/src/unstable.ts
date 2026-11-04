@@ -51,6 +51,10 @@ export {
 export { type RoutingTimings } from './grafana/notificationSettings/constants';
 export { getRoutingTimingErrors, type RoutingTimingError } from './grafana/notificationSettings/utils/promDuration';
 export { useNotificationPolicyRouting } from './grafana/notificationSettings/hooks/useNotificationPolicyRouting';
+export {
+  useNotificationPolicyPreview,
+  type NotificationPolicyPreviewResult,
+} from './grafana/notificationPolicies/hooks/useNotificationPolicyPreview';
 export { DISABLE_GROUPING } from './grafana/notificationSettings/constants';
 export { getDefaultGroupByLabels, nextGroupBy } from './grafana/notificationSettings/utils/groupBy';
 

@@ -10,7 +10,6 @@ import {
 } from '../../api/notifications/v1beta1/mocks/fakes/Routes';
 import { listRoutingTreeHandler } from '../../api/notifications/v1beta1/mocks/handlers/RoutingTreeHandlers/listRoutingTreeHandler';
 import { USER_DEFINED_TREE_NAME } from '../../notificationPolicies/routingTree.utils';
-import { type PolicyRoutingSettings, policyRouting } from '../notificationSettingsValue';
 
 import { useNotificationPolicyRouting } from './useNotificationPolicyRouting';
 
@@ -18,7 +17,6 @@ const server = setupMockServer();
 
 const defaultTree = RoutingTreeFactory.build({ metadata: { name: USER_DEFINED_TREE_NAME } });
 const namedTree = RoutingTreeFactory.build({ metadata: { name: 'deployment-tools' } });
-const instances: Array<Array<[string, string]>> = [[['severity', 'critical']]];
 
 function serveTrees(...items: Array<ReturnType<typeof RoutingTreeFactory.build>>) {
   server.use(listRoutingTreeHandler(ListRoutingTreeApiResponseFactory.build({ items })));
@@ -28,15 +26,13 @@ beforeEach(() => {
   serveTrees(defaultTree, namedTree);
 });
 
-function renderState(value: PolicyRoutingSettings | null, withInstances = false) {
-  return renderHook(() => useNotificationPolicyRouting({ value, instances: withInstances ? instances : undefined }), {
-    wrapper: getDefaultWrapper(),
-  });
+function renderState(name?: string) {
+  return renderHook(() => useNotificationPolicyRouting(name), { wrapper: getDefaultWrapper() });
 }
 
 describe('selected tree', () => {
-  it('is the default policy for no value', async () => {
-    const { result } = renderState(null);
+  it('is the default policy for no name', async () => {
+    const { result } = renderState();
 
     await waitFor(() => expect(result.current.status).toBe('found'));
     expect(result.current.tree).toMatchObject({ name: USER_DEFINED_TREE_NAME, isDefault: true });
@@ -44,7 +40,7 @@ describe('selected tree', () => {
   });
 
   it('is the named tree', async () => {
-    const { result } = renderState(policyRouting('deployment-tools'));
+    const { result } = renderState('deployment-tools');
 
     await waitFor(() => expect(result.current.status).toBe('found'));
     expect(result.current.tree).toMatchObject({ name: 'deployment-tools', isDefault: false });
@@ -52,14 +48,14 @@ describe('selected tree', () => {
   });
 
   it('is resolving, and still valid, until the trees have loaded', async () => {
-    const { result } = renderState(policyRouting('deployment-tools'));
+    const { result } = renderState('deployment-tools');
 
     expect(result.current).toMatchObject({ status: 'resolving', tree: null, isValid: true });
     await waitFor(() => expect(result.current.status).toBe('found'));
   });
 
   it('is not found, and invalid, when the named tree no longer exists', async () => {
-    const { result } = renderState(policyRouting('deleted-tree'));
+    const { result } = renderState('deleted-tree');
 
     await waitFor(() => expect(result.current.status).toBe('notFound'));
     expect(result.current.tree).toBeNull();
@@ -67,7 +63,7 @@ describe('selected tree', () => {
   });
 
   it('finds the default policy under its alias', async () => {
-    const { result } = renderState(policyRouting('default'));
+    const { result } = renderState('default');
 
     await waitFor(() => expect(result.current.status).toBe('found'));
     expect(result.current.tree).toMatchObject({ name: USER_DEFINED_TREE_NAME, isDefault: true });
@@ -75,7 +71,7 @@ describe('selected tree', () => {
 
   it('does not treat a list without the default policy as a missing tree', async () => {
     serveTrees(namedTree);
-    const { result } = renderState(null);
+    const { result } = renderState();
 
     await waitFor(() => expect(result.current.status).toBe('found'));
     expect(result.current.tree).toBeNull();
@@ -84,7 +80,7 @@ describe('selected tree', () => {
 
   it('reports a failed fetch, and stays valid because nothing is known about the tree', async () => {
     server.use(listRoutingTreeHandler(() => new HttpResponse(null, { status: 500 })));
-    const { result } = renderState(policyRouting('deployment-tools'));
+    const { result } = renderState('deployment-tools');
 
     await waitFor(() => expect(result.current.status).toBe('error'));
     expect(result.current.tree).toBeNull();
@@ -92,42 +88,21 @@ describe('selected tree', () => {
   });
 });
 
-describe('preview', () => {
-  it('is not requested without instances', async () => {
-    const { result } = renderState(policyRouting('deployment-tools'));
+describe('isValid', () => {
+  it.each(['', 'user-defined', 'default'])(
+    'is false for the default policy named explicitly as %p, which the backend rejects as a named policy',
+    async (name) => {
+      const { result } = renderState(name);
 
-    await waitFor(() => expect(result.current.status).toBe('found'));
-    expect(result.current.previewRoutes).toBeNull();
-  });
+      await waitFor(() => expect(result.current.status).toBe('found'));
+      expect(result.current.tree).toMatchObject({ isDefault: true });
+      expect(result.current.isValid).toBe(false);
+    }
+  );
 
-  it('lists the receivers of the named tree that match the instances', async () => {
-    const { result } = renderState(policyRouting('deployment-tools'), true);
+  it('is false for an explicit default name even before the trees have loaded', () => {
+    const { result } = renderState('user-defined');
 
-    await waitFor(() => expect(result.current.previewRoutes).not.toBeNull());
-    expect(result.current.previewRoutes?.map((route) => route.receiver)).toContain(namedTree.spec.defaults.receiver);
-  });
-
-  it('previews the default policy for no value', async () => {
-    const { result } = renderState(null, true);
-
-    await waitFor(() => expect(result.current.previewRoutes).not.toBeNull());
-    expect(result.current.previewRoutes?.map((route) => route.receiver)).toContain(defaultTree.spec.defaults.receiver);
-  });
-
-  it('keeps the same routes reference while nothing changes', async () => {
-    const { result, rerender } = renderState(policyRouting('deployment-tools'), true);
-    await waitFor(() => expect(result.current.previewRoutes).not.toBeNull());
-    const routes = result.current.previewRoutes;
-
-    rerender();
-
-    expect(result.current.previewRoutes).toBe(routes);
-  });
-
-  it('is unknown, not empty, for a tree that no longer exists', async () => {
-    const { result } = renderState(policyRouting('deleted-tree'), true);
-
-    await waitFor(() => expect(result.current.status).toBe('notFound'));
-    expect(result.current.previewRoutes).toBeNull();
+    expect(result.current).toMatchObject({ status: 'resolving', isValid: false });
   });
 });

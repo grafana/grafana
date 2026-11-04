@@ -5,22 +5,23 @@ import { type Label } from '../../matchers/types';
 import { useMatchInstancesToSpecificRouteTree } from './useMatchPolicies';
 import { useRoutingTreeLookup } from './useResolvedRoutingTree';
 
-interface RoutingTreePreviewResult {
+export interface NotificationPolicyPreviewResult {
   /** Anything but `found` means the tree couldn't be confirmed, so `routes` is empty and shouldn't be read as "no match". */
   status: 'resolving' | 'notFound' | 'error' | 'found';
   /** The tree's routes matching the instances. When `status` is `found`, empty means nothing matched. */
   routes: Array<{ id: string; receiver?: string }>;
 }
 
-const NO_ROUTES: RoutingTreePreviewResult['routes'] = [];
+const NO_ROUTES: NotificationPolicyPreviewResult['routes'] = [];
 
 /** Previews the routes of a tree that match the instances. An unset name previews the default tree. */
-export function useRoutingTreePreview(
+export function useNotificationPolicyPreview(
   routingTreeName: string | undefined,
   instances: Label[][]
-): RoutingTreePreviewResult {
+): NotificationPolicyPreviewResult {
   const { found, isResolving, isError } = useRoutingTreeLookup(routingTreeName);
-  const match = useMatchInstancesToSpecificRouteTree(found ?? null, instances);
+  // Expanding a large tree is costly, so don't match until there is something to match.
+  const match = useMatchInstancesToSpecificRouteTree(instances.length > 0 ? (found ?? null) : null, instances);
   const routes = useMemo(
     () => (match ? Array.from(match.matchedPolicies.keys(), ({ id, receiver }) => ({ id, receiver })) : NO_ROUTES),
     [match]
