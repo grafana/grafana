@@ -23,7 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/storage"
 
 	authlib "github.com/grafana/authlib/types"
@@ -626,7 +625,10 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 				}
 				err := s.ensureRepoManagedByParentFolder(context.Background(), makeDashboard(t, "some-folder", nil))
 				require.Error(t, err)
-				status := responsewriters.ErrorToAPIStatus(err)
+				status := v1.Status{Code: http.StatusInternalServerError, Message: err.Error()}
+				if apiStatus, ok := err.(apierrors.APIStatus); ok { //nolint:errorlint // the API server reads the status without unwrapping
+					status = apiStatus.Status()
+				}
 				require.Equal(t, tc.wantCode, status.Code)
 				require.True(t, strings.HasPrefix(status.Message, "failed to read folder some-folder"), status.Message)
 				require.Contains(t, status.Message, tc.wantMessage)
