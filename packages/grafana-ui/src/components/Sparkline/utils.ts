@@ -128,6 +128,11 @@ export function getYRange(alignedFrame: DataFrame): Range.MinMax {
 
 const HIGHLIGHT_IDX_POINT_SIZE = 6;
 
+// Minimum pointer travel before uPlot starts a drag. Without a threshold, a
+// click that moves a pixel or two selects a range and changes the dashboard's
+// time range.
+const MIN_DRAG_DISTANCE = 5;
+
 const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   showPoints: VisibilityMode.Auto,
@@ -197,8 +202,9 @@ export const prepareConfig = (
 
   const selectTimeRange = onRangeSelected && sparkline.x?.type === FieldType.time;
   if (enableHover || selectTimeRange) {
-    // focus.prox Infinity keeps
-    // the single series focused so hover works across the full width.
+    // Crosshair plus a focused point at the hovered index. Dragging only
+    // selects a range; it never zooms. focus.prox Infinity keeps the single
+    // series focused so hover works across the full width.
     const yField = dataFrame.fields.find((f) => f !== xField && f.type === FieldType.number);
     // Paint the cursor point a solid series color. uPlot's default cursor-point color fn reads
     // the builder's `frames`, which Sparkline never populates, so it would throw on gradient
@@ -208,7 +214,7 @@ export const prepareConfig = (
       show: true,
       x: true,
       y: false,
-      drag: { x: Boolean(selectTimeRange), y: false, setScale: false, dist: 5 },
+      drag: { x: Boolean(selectTimeRange), y: false, setScale: false, dist: MIN_DRAG_DISTANCE },
       focus: { prox: Infinity },
       points: { size: HIGHLIGHT_IDX_POINT_SIZE, stroke: pointColor, fill: pointColor },
     });
@@ -232,6 +238,7 @@ export const prepareConfig = (
       const end = Math.round(plot.posToVal(left + width, 'x'));
       const from = Math.min(start, end);
       const to = Math.max(start, end);
+      // Clear the rectangle: the caller changes the dashboard time range instead.
       plot.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
       if (Number.isFinite(from) && Number.isFinite(to) && to > from) {
         onRangeSelected({ from, to });

@@ -30,6 +30,7 @@ export interface SparklineProps extends Themeable2 {
   showTooltip?: boolean;
   /** Emits the latest point at most once per animation frame; `null` immediately on leave/unmount. Enables the cursor. */
   onHover?: (hover: SparklineHoverEvent | null) => void;
+  /** Emits the dragged interval; the sparkline keeps its own x scale. */
   onRangeSelected?: (range: AbsoluteTimeRange) => void;
 }
 

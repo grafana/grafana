@@ -63,10 +63,9 @@ TableBarGaugeCellOptions: {
 // Sparkline cell options
 TableSparklineCellOptions: {
 	GraphFieldConfig
-	type:         TableCellDisplayMode & "sparkline"
-	hideValue?:   bool
-	showTooltip?: bool
-	// Allow dragging to select a time range when the host supports it.
+	type:             TableCellDisplayMode & "sparkline"
+	hideValue?:       bool
+	showTooltip?:     bool
 	selectTimeRange?: bool
 } @cuetsy(kind="interface")
 

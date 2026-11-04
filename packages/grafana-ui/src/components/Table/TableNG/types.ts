@@ -149,6 +149,7 @@ interface BaseTableProps {
   noValue?: string;
   /** used by SparklineCell when provided */
   timeRange?: TimeRange;
+  /** Lets sparkline cells set the dashboard time range; omitted when the feature is off. */
   onTimeRangeSelected?: (range: AbsoluteTimeRange) => void;
   /** Timezone used by the field display processors and value-filter matcher. */
   timeZone?: string;

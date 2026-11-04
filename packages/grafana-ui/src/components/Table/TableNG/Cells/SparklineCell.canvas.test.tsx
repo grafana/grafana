@@ -164,12 +164,13 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
   // The 5th positional prepareConfig arg is `enableHover`; the cell must forward
   // cellOptions.showTooltip so the sparkline only enables the cursor when opted in.
   it.each([
-    [true, false, true],
-    [false, false, false],
-    [true, true, false],
+    [true, false],
+    [false, false],
+    [true, true],
   ])(
     'selects time only when opted in and without data links (option=%s, links=%s)',
-    async (selectTimeRange, hasLinks, enabled) => {
+    async (selectTimeRange, hasLinks) => {
+      const enabled = selectTimeRange && !hasLinks;
       const onTimeRangeSelected = jest.fn();
       renderSparklineCell(
         sparklineField({

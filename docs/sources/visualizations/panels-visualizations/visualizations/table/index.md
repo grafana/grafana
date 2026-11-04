@@ -408,7 +408,8 @@ You can color sparklines using thresholds by setting the field's color scheme to
 ![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
 
 The sparkline cell type options are described in the following table.
-With the experimental `table.refreshNewFeatures` feature toggle enabled, turn on **Enable time range selection** to drag across a sparkline and select a time interval. The selection follows the panel time settings. This option requires time-based data and is disabled for fields with data links.
+
+With the experimental `table.refreshNewFeatures` feature toggle enabled, turn on **Enable time range selection** to drag across a sparkline and set the dashboard time range to the selected interval. This option requires time-based data and is disabled for fields with data links.
 
 For more detailed information about all of the sparkline styling options (except **Hide value**), refer to the [time series graph styles documentation](ref:graph-styles).
 

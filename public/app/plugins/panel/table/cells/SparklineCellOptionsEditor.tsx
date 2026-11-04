@@ -47,6 +47,7 @@ function getChartCellConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<Gr
           'Drag to select a time range. Disabled for fields with data links.'
         ),
         defaultValue: false,
+        // Only TableNG forwards the callback, and it sits behind both toggles.
         showIf: () =>
           getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false) &&
           getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
