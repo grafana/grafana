@@ -18,7 +18,7 @@ export interface OptionsPaneItemInfo {
   description?: string;
   searchTerms?: string[];
   popularRank?: number;
-  render: (descriptor: OptionsPaneItemDescriptor) => React.ReactElement<Record<string, unknown>>;
+  render: (descriptor: OptionsPaneItemDescriptor, searchQuery?: string) => React.ReactElement<Record<string, unknown>>;
   skipField?: boolean;
   useFieldset?: boolean;
   showIf?: () => boolean;
@@ -74,7 +74,7 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
   }
 
   if (skipField) {
-    return render(itemDescriptor);
+    return render(itemDescriptor, searchQuery);
   }
 
   return (
@@ -87,7 +87,7 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
       useFieldset={useFieldset}
       disabled={readOnly ? true : undefined}
     >
-      {render(itemDescriptor)}
+      {render(itemDescriptor, searchQuery)}
     </Field>
   );
 }

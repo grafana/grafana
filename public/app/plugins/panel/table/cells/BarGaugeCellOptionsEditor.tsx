@@ -4,12 +4,20 @@ import { BarGaugeDisplayMode, BarGaugeValueMode, type TableBarGaugeCellOptions }
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { type TableCellEditorProps } from '../TableCellOptionEditor';
+import { CellOptionSearchLabel } from './CellOptionSearchLabel';
 
 type Props = TableCellEditorProps<TableBarGaugeCellOptions>;
+export const barGaugeCellOptionLabels = {
+  displayMode: t('table.bar-gauge-cell-options-editor.label-gauge-display-mode', 'Gauge display mode'),
+  valueDisplay: t('table.bar-gauge-cell-options-editor.label-value-display', 'Value display'),
+};
 
-export const BarGaugeCellOptionsEditor = ({ cellOptions, onChange }: Props) => (
+export const BarGaugeCellOptionsEditor = ({ cellOptions, onChange, searchQuery }: Props) => (
   <>
-    <Field noMargin label={t('table.bar-gauge-cell-options-editor.label-gauge-display-mode', 'Gauge display mode')}>
+    <Field
+      noMargin
+      label={<CellOptionSearchLabel label={barGaugeCellOptionLabels.displayMode} searchQuery={searchQuery} />}
+    >
       <RadioButtonGroup<BarGaugeDisplayMode>
         value={cellOptions?.mode ?? BarGaugeDisplayMode.Gradient}
         onChange={(v) => {
@@ -19,7 +27,10 @@ export const BarGaugeCellOptionsEditor = ({ cellOptions, onChange }: Props) => (
         options={barGaugeOpts}
       />
     </Field>
-    <Field noMargin label={t('table.bar-gauge-cell-options-editor.label-value-display', 'Value display')}>
+    <Field
+      noMargin
+      label={<CellOptionSearchLabel label={barGaugeCellOptionLabels.valueDisplay} searchQuery={searchQuery} />}
+    >
       <RadioButtonGroup<BarGaugeValueMode>
         value={cellOptions?.valueDisplayMode ?? BarGaugeValueMode.Text}
         onChange={(v) => {

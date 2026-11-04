@@ -414,7 +414,7 @@ export function fillOptionsPaneItems(
         description: pluginOption.description,
         searchTerms: pluginOption.getSearchTerms?.(access.getValue(pluginOption.path)),
         useFieldset: pluginOption.useFieldset,
-        render: function renderEditor() {
+        render: function renderEditor(_descriptor, searchQuery) {
           return (
             <Editor
               value={access.getValue(pluginOption.path)}
@@ -424,6 +424,7 @@ export function fillOptionsPaneItems(
               item={pluginOption}
               context={context}
               id={htmlId}
+              {...({ searchQuery } as { searchQuery?: string })}
             />
           );
         },

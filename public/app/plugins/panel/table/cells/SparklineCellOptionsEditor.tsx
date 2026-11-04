@@ -10,6 +10,7 @@ import { defaultSparklineCellConfig } from '@grafana/ui/internal';
 
 import { getGraphFieldConfig } from '../../timeseries/config';
 import { type TableCellEditorProps } from '../TableCellOptionEditor';
+import { CellOptionSearchLabel } from './CellOptionSearchLabel';
 
 type OptionKey = keyof TableSparklineCellOptions;
 
@@ -70,7 +71,7 @@ function getChartCellConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<Gr
 }
 
 export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSparklineCellOptions>) => {
-  const { cellOptions, onChange } = props;
+  const { cellOptions, onChange, searchQuery } = props;
 
   const registry = useMemo(() => {
     return getSparklineCellOptionsRegistry();
@@ -96,7 +97,12 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
         const path = item.path;
 
         return (
-          <Field key={item.id} noMargin label={item.name} className={style.field}>
+          <Field
+            key={item.id}
+            noMargin
+            label={<CellOptionSearchLabel label={item.name} searchQuery={searchQuery} />}
+            className={style.field}
+          >
             <Editor
               onChange={(val) => onChange({ ...cellOptions, [path]: val })}
               value={(isOptionKey(path, values) ? values[path] : undefined) ?? item.defaultValue}

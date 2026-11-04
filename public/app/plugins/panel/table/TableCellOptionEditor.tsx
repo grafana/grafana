@@ -6,11 +6,19 @@ import { FlagKeys, getFeatureFlagClient, useFlagTableRefreshNewFeatures } from '
 import { type TableCellOptions } from '@grafana/schema';
 import { Combobox, type ComboboxOption, Field, Stack, Switch, TableCellDisplayMode } from '@grafana/ui';
 
-import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
-import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
-import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
-import { MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
+import { barGaugeCellOptionLabels, BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
+import {
+  colorBackgroundCellOptionLabels,
+  ColorBackgroundCellOptionsEditor,
+} from './cells/ColorBackgroundCellOptionsEditor';
+import { imageCellOptionLabels, ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
+import { markdownCellOptionLabel, MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
 import { getSparklineCellOptionSearchTerms, SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
+import { CellOptionSearchLabel } from './cells/CellOptionSearchLabel';
+
+const jsonCellOptionLabels = {
+  syntaxHighlighting: t('table.json-cell-options.syntax-highlighting', 'Syntax highlighting'),
+};
 
 // The props that any cell type editor are expected
 // to handle. In this case the generic type should
@@ -18,12 +26,14 @@ import { getSparklineCellOptionSearchTerms, SparklineCellOptionsEditor } from '.
 export interface TableCellEditorProps<T> {
   cellOptions: T;
   onChange: (value: T) => void;
+  searchQuery?: string;
 }
 
 interface Props {
   value: TableCellOptions;
   onChange: (v: TableCellOptions) => void;
   id?: string;
+  searchQuery?: string;
 }
 
 function getCellDisplayModeOptions(): Array<ComboboxOption<TableCellOptions['type']>> {
@@ -51,32 +61,23 @@ export function getTableCellOptionSearchTerms(value?: TableCellOptions): string[
 
   switch (value?.type) {
     case TableCellDisplayMode.Gauge:
-      cellEditorOptions = [
-        t('table.bar-gauge-cell-options-editor.label-gauge-display-mode', 'Gauge display mode'),
-        t('table.bar-gauge-cell-options-editor.label-value-display', 'Value display'),
-      ];
+      cellEditorOptions = Object.values(barGaugeCellOptionLabels);
       break;
     case TableCellDisplayMode.ColorBackground:
-      cellEditorOptions = [
-        t('table.color-background-cell-options-editor.label-background-display-mode', 'Background display mode'),
-        t('table.color-background-cell-options-editor.label-apply-to-entire-row', 'Apply to entire row'),
-      ];
+      cellEditorOptions = Object.values(colorBackgroundCellOptionLabels);
       break;
     case TableCellDisplayMode.Sparkline:
       cellEditorOptions = getSparklineCellOptionSearchTerms(value);
       break;
     case TableCellDisplayMode.Image:
-      cellEditorOptions = [
-        t('table.image-cell-options-editor.label-alt-text', 'Alt text'),
-        t('table.image-cell-options-editor.label-title-text', 'Title text'),
-      ];
+      cellEditorOptions = Object.values(imageCellOptionLabels);
       break;
     case TableCellDisplayMode.Markdown:
-      cellEditorOptions = [t('table.markdown-cell-options-editor.label-dynamic-height', 'Dynamic height')];
+      cellEditorOptions = [markdownCellOptionLabel];
       break;
     case TableCellDisplayMode.JSONView:
       if (getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false)) {
-        cellEditorOptions = [t('table.json-cell-options.syntax-highlighting', 'Syntax highlighting')];
+        cellEditorOptions = Object.values(jsonCellOptionLabels);
       }
       break;
   }
@@ -84,7 +85,7 @@ export function getTableCellOptionSearchTerms(value?: TableCellOptions): string[
   return [...cellTypeOptions, ...cellEditorOptions];
 }
 
-export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
+export const TableCellOptionEditor = ({ value, onChange, id, searchQuery }: Props) => {
   const jsonSyntaxHighlightingEnabled = useFlagTableRefreshNewFeatures();
   const cellType = value.type;
   const cellDisplayModeOptions = getCellDisplayModeOptions();
@@ -124,22 +125,29 @@ export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
         <Combobox id={id} options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
       {cellType === TableCellDisplayMode.Gauge && (
-        <BarGaugeCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+        <BarGaugeCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} searchQuery={searchQuery} />
       )}
       {cellType === TableCellDisplayMode.ColorBackground && (
-        <ColorBackgroundCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+        <ColorBackgroundCellOptionsEditor
+          cellOptions={value}
+          onChange={onCellOptionsChange}
+          searchQuery={searchQuery}
+        />
       )}
       {cellType === TableCellDisplayMode.Sparkline && (
-        <SparklineCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+        <SparklineCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} searchQuery={searchQuery} />
       )}
       {cellType === TableCellDisplayMode.Image && (
-        <ImageCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+        <ImageCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} searchQuery={searchQuery} />
       )}
       {cellType === TableCellDisplayMode.Markdown && (
-        <MarkdownCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+        <MarkdownCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} searchQuery={searchQuery} />
       )}
       {value.type === TableCellDisplayMode.JSONView && jsonSyntaxHighlightingEnabled && (
-        <Field noMargin label={t('table.json-cell-options.syntax-highlighting', 'Syntax highlighting')}>
+        <Field
+          noMargin
+          label={<CellOptionSearchLabel label={jsonCellOptionLabels.syntaxHighlighting} searchQuery={searchQuery} />}
+        >
           <Switch
             value={value.syntaxHighlighting !== false}
             onChange={(event) =>

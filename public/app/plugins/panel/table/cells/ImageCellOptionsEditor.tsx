@@ -5,8 +5,18 @@ import { type TableImageCellOptions } from '@grafana/schema';
 import { Field, Input } from '@grafana/ui';
 
 import { type TableCellEditorProps } from '../TableCellOptionEditor';
+import { CellOptionSearchLabel } from './CellOptionSearchLabel';
 
-export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditorProps<TableImageCellOptions>) => {
+export const imageCellOptionLabels = {
+  altText: t('table.image-cell-options-editor.label-alt-text', 'Alt text'),
+  titleText: t('table.image-cell-options-editor.label-title-text', 'Title text'),
+};
+
+export const ImageCellOptionsEditor = ({
+  cellOptions,
+  onChange,
+  searchQuery,
+}: TableCellEditorProps<TableImageCellOptions>) => {
   const onAltChange = (e: FormEvent<HTMLInputElement>) => {
     cellOptions.alt = e.currentTarget.value;
     onChange(cellOptions);
@@ -24,7 +34,7 @@ export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEdito
     <>
       <Field
         noMargin
-        label={t('table.image-cell-options-editor.label-alt-text', 'Alt text')}
+        label={<CellOptionSearchLabel label={imageCellOptionLabels.altText} searchQuery={searchQuery} />}
         description={t(
           'table.image-cell-options-editor.description-alt-text',
           "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader"
@@ -35,7 +45,7 @@ export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEdito
 
       <Field
         noMargin
-        label={t('table.image-cell-options-editor.label-title-text', 'Title text')}
+        label={<CellOptionSearchLabel label={imageCellOptionLabels.titleText} searchQuery={searchQuery} />}
         description={t(
           'table.image-cell-options-editor.description-title-text',
           'Text that will be displayed when the image is hovered by a cursor'

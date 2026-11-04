@@ -7,6 +7,12 @@ import { TableCellBackgroundDisplayMode, type TableColoredBackgroundCellOptions 
 import { Field, RadioButtonGroup, Switch } from '@grafana/ui';
 
 import { type TableCellEditorProps } from '../TableCellOptionEditor';
+import { CellOptionSearchLabel } from './CellOptionSearchLabel';
+
+export const colorBackgroundCellOptionLabels = {
+  displayMode: t('table.color-background-cell-options-editor.label-background-display-mode', 'Background display mode'),
+  applyToRow: t('table.color-background-cell-options-editor.label-apply-to-entire-row', 'Apply to entire row'),
+};
 
 const colorBackgroundOpts: Array<SelectableValue<TableCellBackgroundDisplayMode>> = [
   { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },
@@ -15,6 +21,7 @@ const colorBackgroundOpts: Array<SelectableValue<TableCellBackgroundDisplayMode>
 export const ColorBackgroundCellOptionsEditor = ({
   cellOptions,
   onChange,
+  searchQuery,
 }: TableCellEditorProps<TableColoredBackgroundCellOptions>) => {
   const applyToRowSwitchId = useId();
 
@@ -22,7 +29,7 @@ export const ColorBackgroundCellOptionsEditor = ({
     <>
       <Field
         noMargin
-        label={t('table.color-background-cell-options-editor.label-background-display-mode', 'Background display mode')}
+        label={<CellOptionSearchLabel label={colorBackgroundCellOptionLabels.displayMode} searchQuery={searchQuery} />}
       >
         <RadioButtonGroup<TableCellBackgroundDisplayMode>
           value={cellOptions?.mode ?? TableCellBackgroundDisplayMode.Gradient}
@@ -36,7 +43,7 @@ export const ColorBackgroundCellOptionsEditor = ({
 
       <Field
         noMargin
-        label={t('table.color-background-cell-options-editor.label-apply-to-entire-row', 'Apply to entire row')}
+        label={<CellOptionSearchLabel label={colorBackgroundCellOptionLabels.applyToRow} searchQuery={searchQuery} />}
         description={t(
           'table.color-background-cell-options-editor.description-apply-to-entire-row',
           'If selected the entire row will be colored as this cell would be.'
