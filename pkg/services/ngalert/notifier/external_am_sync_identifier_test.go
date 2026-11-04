@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -288,6 +289,52 @@ func TestSyncExternalAMs_ImportUnderRecordedNameIsMarkedAutoSync(t *testing.T) {
 	require.Len(t, gettable.ExtraConfigs, 1)
 	assert.Equal(t, "mimir-prod", gettable.ExtraConfigs[0].Identifier)
 	assert.Equal(t, "auto-sync", gettable.ExtraConfigs[0].ManagedBy)
+}
+
+func TestDeleteExtraConfiguration_NameBasedSyncImport(t *testing.T) {
+	ctx := context.Background()
+	signedIn := &user.SignedInUser{}
+
+	setup := func(t *testing.T) (*MultiOrgAlertmanager, *fakeConfigClient) {
+		proxy := singleAMProxy(t, "ds-1", "route:\n  receiver: mimir-default\nreceivers:\n  - name: mimir-default")
+		dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{namedMimirDS("ds-1", "Mimir Prod", 1)}}
+		adminCfg := newFakeConfigClient()
+		adminCfg.setUID(1, "ds-1")
+		moa, _ := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
+		moa.SyncAlertmanagersForOrgs(ctx, []int64{1})
+
+		gettable, err := moa.GetAlertmanagerConfiguration(ctx, 1, false)
+		require.NoError(t, err)
+		require.Len(t, gettable.ExtraConfigs, 1)
+		require.Equal(t, "mimir-prod", gettable.ExtraConfigs[0].Identifier)
+		return moa, adminCfg
+	}
+
+	t.Run("is refused while sync is active", func(t *testing.T) {
+		moa, _ := setup(t)
+
+		err := moa.DeleteExtraConfiguration(ctx, 1, signedIn, noopExtraConfigAuthz{}, "mimir-prod")
+		require.ErrorIs(t, err, ErrAlertmanagerExtraConfigManagedByAutoSync)
+
+		gettable, err := moa.GetAlertmanagerConfiguration(ctx, 1, false)
+		require.NoError(t, err)
+		require.Len(t, gettable.ExtraConfigs, 1, "the config must still be staged")
+	})
+
+	t.Run("is allowed for the stale slot once sync points at another datasource", func(t *testing.T) {
+		moa, adminCfg := setup(t)
+		// A new spec UID starts a new import: the identifier recorded for ds-1 no longer applies.
+		adminCfg.setUID(1, "ds-2")
+
+		gettable, err := moa.GetAlertmanagerConfiguration(ctx, 1, false)
+		require.NoError(t, err)
+		require.Equal(t, "manual", gettable.ExtraConfigs[0].ManagedBy)
+
+		require.NoError(t, moa.DeleteExtraConfiguration(ctx, 1, signedIn, noopExtraConfigAuthz{}, "mimir-prod"))
+		gettable, err = moa.GetAlertmanagerConfiguration(ctx, 1, false)
+		require.NoError(t, err)
+		require.Empty(t, gettable.ExtraConfigs)
+	})
 }
 
 const extraConfigYAML = `route:\n  receiver: a\nreceivers:\n  - name: a`
