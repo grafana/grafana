@@ -108,6 +108,23 @@ describe('RadialArcPathEndpointMarks', () => {
     );
   });
 
+  it('renders the single point marker at the arc start when the value is left of neutral', () => {
+    expectHTML(
+      render(
+        <svg role="img">
+          <RadialArcPathEndpointMarks
+            {...defaultProps}
+            arcLengthDeg={5}
+            markerAtStart
+            endpointMarker="point"
+            color="#FF0000"
+          />
+        </svg>
+      ),
+      '<svg role=\"img\"><circle cx=\"100\" cy=\"100\" r=\"4\" fill=\"#111217\" opacity=\"0.5\"/></svg>'
+    );
+  });
+
   it('does not render the start mark when arcLengthDeg is less than the minimum angle for "point" endpointMarker', () => {
     expectHTML(
       render(
