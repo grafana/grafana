@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, ConfirmModal, Field, Input, Select, Spinner, Stack } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, InlineField, InlineFieldRow, Select, Spinner, Stack } from '@grafana/ui';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../../alerting/state/alertDef';
 import { type DynamicThresholdPolicyV1, type SqlExpressionQuery, thresholdFunctions } from '../../types';
 import { SqlEditor } from '../SqlExpressions/SqlEditor/SqlEditor';
+import { ThresholdSelect } from '../ThresholdSelect';
 
-import { DynamicThresholdMappings } from './DynamicThresholdMappings';
-import { DynamicThresholdPreview } from './DynamicThresholdPreview';
+import { DYNAMIC_THRESHOLD_LABEL_WIDTH, DynamicThresholdMappings } from './DynamicThresholdMappings';
+import { ThresholdInputs } from './ThresholdInputs';
 import { buildDynamicThreshold, isRangeEvaluator } from './buildDynamicThreshold';
 import { getDynamicThresholdSourceOptions, useDynamicThresholdSourcePreview } from './sourcePreview';
 import { withoutDynamicThreshold } from './utils';
@@ -52,6 +53,14 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
   };
 
   useEffect(() => {
+    if (!policy.inputRefId && sourceOptions.length > 0 && sourceOptions[0].value) {
+      updatePolicy({ ...policy, inputRefId: sourceOptions[0].value });
+    }
+    // Only the missing input triggers this; the new policy comes back through props.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [policy.inputRefId, sourceOptions]);
+
+  useEffect(() => {
     if (!source.hasSchema) {
       return;
     }
@@ -68,9 +77,11 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
 
   const fieldError = (field: keyof DynamicThresholdPolicyV1) =>
     errors.find((error) => error.location.field === field && error.location.mappingIndex === undefined)?.message;
+  // The only numeric field is auto-selected and its row hidden, so its errors have no field to sit under.
+  const showNumericField = !(source.numericFields.length === 1 && source.numericFields[0] === '__value__');
   const supportedFields = new Set<keyof DynamicThresholdPolicyV1>([
     'inputRefId',
-    'valueField',
+    ...(showNumericField ? (['valueField'] as const) : []),
     'matchLabel',
     'evaluator',
     'defaultThreshold',
@@ -91,34 +102,37 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
   };
 
   return (
-    <Stack direction="column" gap={2}>
-      <Field
-        noMargin
-        label={t('expressions.dynamic-threshold.input-query', 'Input query')}
-        invalid={fieldError('inputRefId') ? true : undefined}
-        error={fieldError('inputRefId')}
-      >
-        <Select
-          aria-label={t('expressions.dynamic-threshold.input-query', 'Input query')}
-          options={sourceOptions}
-          value={sourceOptions.find((option) => option.value === policy.inputRefId) ?? null}
-          onChange={(option) => {
-            const inputRefId = option?.value ?? '';
-            if (inputRefId === policy.inputRefId) {
-              return;
-            }
-            updatePolicy({
-              ...policy,
-              inputRefId,
-              valueField: '',
-              matchLabel: '',
-              labelColumns: [],
-              mappings: [],
-              defaultThreshold: [],
-            });
-          }}
-        />
-      </Field>
+    <Stack direction="column" gap={1}>
+      <InlineFieldRow>
+        <InlineField
+          label={t('expressions.dynamic-threshold.input-label', 'Input')}
+          labelWidth={DYNAMIC_THRESHOLD_LABEL_WIDTH}
+          invalid={fieldError('inputRefId') ? true : undefined}
+          error={fieldError('inputRefId')}
+        >
+          <Select
+            width={20}
+            aria-label={t('expressions.dynamic-threshold.input-query', 'Input query')}
+            options={sourceOptions}
+            value={sourceOptions.find((option) => option.value === policy.inputRefId) ?? null}
+            onChange={(option) => {
+              const inputRefId = option?.value ?? '';
+              if (inputRefId === policy.inputRefId) {
+                return;
+              }
+              updatePolicy({
+                ...policy,
+                inputRefId,
+                valueField: '',
+                matchLabel: '',
+                labelColumns: [],
+                mappings: [],
+                defaultThreshold: [],
+              });
+            }}
+          />
+        </InlineField>
+      </InlineFieldRow>
 
       {generalErrors.length > 0 && (
         <Alert title={t('expressions.dynamic-threshold.validation-error', 'Unable to generate SQL')} severity="error">
@@ -150,59 +164,68 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
           </Alert>
         )}
 
-      <Field
-        noMargin
-        label={t('expressions.dynamic-threshold.numeric-field', 'Numeric field')}
-        invalid={fieldError('valueField') ? true : undefined}
-        error={fieldError('valueField')}
-      >
-        <Select
-          aria-label={t('expressions.dynamic-threshold.numeric-field', 'Numeric field')}
-          options={source.numericFields.map((field) => ({ value: field, label: field }))}
-          value={policy.valueField ? { value: policy.valueField, label: policy.valueField } : null}
-          onChange={(option) => updatePolicy({ ...policy, valueField: option?.value ?? '' })}
-        />
-      </Field>
+      {showNumericField && (
+        <InlineFieldRow>
+          <InlineField
+            label={t('expressions.dynamic-threshold.numeric-field', 'Numeric field')}
+            labelWidth={DYNAMIC_THRESHOLD_LABEL_WIDTH}
+            invalid={source.hasSchema && fieldError('valueField') ? true : undefined}
+            error={source.hasSchema ? fieldError('valueField') : undefined}
+          >
+            <Select
+              width={20}
+              aria-label={t('expressions.dynamic-threshold.numeric-field', 'Numeric field')}
+              options={source.numericFields.map((field) => ({ value: field, label: field }))}
+              value={policy.valueField ? { value: policy.valueField, label: policy.valueField } : null}
+              onChange={(option) => updatePolicy({ ...policy, valueField: option?.value ?? '' })}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
 
-      <Field
-        noMargin
-        label={t('expressions.dynamic-threshold.match-label', 'Match label')}
-        invalid={fieldError('matchLabel') ? true : undefined}
-        error={fieldError('matchLabel')}
-      >
-        <Select
-          aria-label={t('expressions.dynamic-threshold.match-label', 'Match label')}
-          options={source.stringFields.map((field) => ({ value: field, label: field }))}
-          value={policy.matchLabel ? { value: policy.matchLabel, label: policy.matchLabel } : null}
-          onChange={(option) => changeMatchLabel(option?.value ?? '')}
-        />
-      </Field>
+      <InlineFieldRow>
+        <InlineField
+          label={t('expressions.dynamic-threshold.match-label', 'Match label')}
+          labelWidth={DYNAMIC_THRESHOLD_LABEL_WIDTH}
+          invalid={fieldError('matchLabel') ? true : undefined}
+          error={fieldError('matchLabel')}
+        >
+          <Select
+            width={20}
+            aria-label={t('expressions.dynamic-threshold.match-label', 'Match label')}
+            options={source.stringFields.map((field) => ({ value: field, label: field }))}
+            value={policy.matchLabel ? { value: policy.matchLabel, label: policy.matchLabel } : null}
+            onChange={(option) => changeMatchLabel(option?.value ?? '')}
+          />
+        </InlineField>
+      </InlineFieldRow>
 
-      <Field
-        noMargin
-        label={t('expressions.dynamic-threshold.operator', 'Operator')}
-        invalid={fieldError('evaluator') ? true : undefined}
-        error={fieldError('evaluator')}
-      >
-        <Select
-          aria-label={t('expressions.dynamic-threshold.operator', 'Operator')}
-          options={thresholdFunctions}
-          value={thresholdFunctions.find((option) => option.value === policy.evaluator)}
-          onChange={(option) => {
-            const evaluator = option?.value ?? EvalFunction.IsAbove;
-            const count = isRangeEvaluator(evaluator) ? 2 : 1;
-            updatePolicy({
-              ...policy,
-              evaluator,
-              mappings: policy.mappings.map((mapping) => ({
-                ...mapping,
-                thresholds: resizeThresholds(mapping.thresholds, count),
-              })),
-              defaultThreshold: resizeThresholds(policy.defaultThreshold, count),
-            });
-          }}
-        />
-      </Field>
+      <InlineFieldRow>
+        <InlineField
+          label={t('expressions.dynamic-threshold.operator', 'Operator')}
+          labelWidth={DYNAMIC_THRESHOLD_LABEL_WIDTH}
+          invalid={fieldError('evaluator') ? true : undefined}
+          error={fieldError('evaluator')}
+        >
+          <ThresholdSelect
+            aria-label={t('expressions.dynamic-threshold.operator', 'Operator')}
+            value={thresholdFunctions.find((option) => option.value === policy.evaluator)}
+            onChange={(option) => {
+              const evaluator = option.value ?? EvalFunction.IsAbove;
+              const count = isRangeEvaluator(evaluator) ? 2 : 1;
+              updatePolicy({
+                ...policy,
+                evaluator,
+                mappings: policy.mappings.map((mapping) => ({
+                  ...mapping,
+                  thresholds: resizeThresholds(mapping.thresholds, count),
+                })),
+                defaultThreshold: resizeThresholds(policy.defaultThreshold, count),
+              });
+            }}
+          />
+        </InlineField>
+      </InlineFieldRow>
 
       <DynamicThresholdMappings
         mappings={policy.mappings}
@@ -212,43 +235,28 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
         onChange={(mappings) => updatePolicy({ ...policy, mappings })}
       />
 
-      <Field
-        noMargin
-        label={t('expressions.dynamic-threshold.default-threshold', 'Default threshold')}
-        invalid={fieldError('defaultThreshold') ? true : undefined}
-        error={fieldError('defaultThreshold')}
-        required
-      >
-        <>
-          <Stack direction="row" gap={1}>
-            {Array.from({ length: thresholdCount }, (_, index) => (
-              <Input
-                key={index}
-                type="number"
-                aria-label={
-                  thresholdCount === 1
-                    ? t('expressions.dynamic-threshold.default-threshold-input', 'Default threshold')
-                    : index === 0
-                      ? t('expressions.dynamic-threshold.default-lower-threshold-input', 'Default lower threshold')
-                      : t('expressions.dynamic-threshold.default-upper-threshold-input', 'Default upper threshold')
-                }
-                value={policy.defaultThreshold[index] ?? ''}
-                onChange={(event) => {
-                  const values = [...policy.defaultThreshold];
-                  if (event.currentTarget.value === '') {
-                    values[index] = undefined;
-                  } else {
-                    values[index] = Number(event.currentTarget.value);
-                  }
-                  updatePolicy({ ...policy, defaultThreshold: values });
-                }}
-              />
-            ))}
-          </Stack>
-        </>
-      </Field>
-
-      {result.ok && <DynamicThresholdPreview queries={queries} policy={policy} previewSql={result.previewSql} />}
+      <InlineFieldRow>
+        <InlineField
+          label={t('expressions.dynamic-threshold.default-label', 'Default')}
+          labelWidth={DYNAMIC_THRESHOLD_LABEL_WIDTH}
+          invalid={fieldError('defaultThreshold') ? true : undefined}
+          error={fieldError('defaultThreshold')}
+          required
+        >
+          <ThresholdInputs
+            thresholds={policy.defaultThreshold}
+            thresholdCount={thresholdCount}
+            getAriaLabel={(index) =>
+              thresholdCount === 1
+                ? t('expressions.dynamic-threshold.default-threshold-input', 'Default threshold')
+                : index === 0
+                  ? t('expressions.dynamic-threshold.default-lower-threshold-input', 'Default lower threshold')
+                  : t('expressions.dynamic-threshold.default-upper-threshold-input', 'Default upper threshold')
+            }
+            onChange={(defaultThreshold) => updatePolicy({ ...policy, defaultThreshold })}
+          />
+        </InlineField>
+      </InlineFieldRow>
 
       <Stack direction="row" gap={1}>
         <Button
