@@ -32,7 +32,12 @@ type PluginSetting struct {
 	AngularDetected bool                    `json:"angularDetected"`
 	LoadingStrategy plugins.LoadingStrategy `json:"loadingStrategy"`
 	ModuleHash      string                  `json:"moduleHash,omitempty"`
-	Translations    map[string]string       `json:"translations,omitempty"`
+	// BuildHash is the content-addressable build identity of the build this replica
+	// serves. The frontend uses it to request assets via the immutable
+	// build-addressed route /public/plugins/:id/:buildHash/* so a no-affinity client
+	// resolves its build's chunks from any replica (FR-001).
+	BuildHash    string            `json:"buildHash,omitempty"`
+	Translations map[string]string `json:"translations,omitempty"`
 }
 
 type PluginListItem struct {
@@ -54,6 +59,16 @@ type PluginListItem struct {
 	AccessControl   accesscontrol.Metadata  `json:"accessControl,omitempty"`
 	AngularDetected bool                    `json:"angularDetected"`
 	IAM             *auth.IAM               `json:"iam,omitempty"`
+}
+
+// PluginBuildInfo is the build a replica currently serves for a plugin. It lets
+// callers query build drift directly (which buildHash a given replica serves)
+// instead of diffing asset hashes externally.
+type PluginBuildInfo struct {
+	PluginID        string `json:"pluginId"`
+	Version         string `json:"version"`
+	BuildHash       string `json:"buildHash"`
+	ServedByReplica string `json:"servedByReplica"`
 }
 
 type PluginList []PluginListItem

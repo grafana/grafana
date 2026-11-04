@@ -30,3 +30,11 @@ type Service struct {
 func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
 	return s.calc.ModuleHash(ctx, p.ID, p.Info.Version)
 }
+
+// BuildHash returns the deterministic content-addressable buildHash for a
+// plugin's currently registered build. Unlike ModuleHash (the signed-CDN SRI
+// hash, empty for FS/unsigned plugins), BuildHash addresses every served build
+// by its content so FS and unsigned plugins also get a stable identity.
+func (s *Service) BuildHash(ctx context.Context, p pluginstore.Plugin) string {
+	return s.calc.BuildHash(ctx, p.ID, p.Info.Version)
+}
