@@ -9723,7 +9723,8 @@
       "schema-error": "Unable to load source schema",
       "schema-loading": "Loading source schema",
       "threshold": "Threshold",
-      "upper-threshold": "Upper threshold"
+      "upper-threshold": "Upper threshold",
+      "validation-error": "Unable to generate SQL"
     },
     "expression-query-editor": {
       "helper-text-sql": "Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie \"A\", \"B\") are available as tables and referenced by query-name. Fields are available as columns, as returned from the data source.",

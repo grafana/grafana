@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
-import { type DataFrame, FieldType } from '@grafana/data';
+import { type DataFrame, dateTime, FieldType } from '@grafana/data';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 
 import { dataSource } from '../../ExpressionDatasource';
@@ -120,6 +120,56 @@ describe('dynamic threshold source preview', () => {
     await waitFor(() => expect(refetch).toHaveBeenCalledTimes(2));
   });
 
+  it('does not manually refetch when a source first becomes enabled, but refreshes later model changes', async () => {
+    const refetch = jest.fn().mockResolvedValue(undefined);
+    mockUseSQLSchemas.mockReturnValue({
+      schemas: null,
+      loading: false,
+      error: null,
+      isFeatureEnabled: true,
+      refetch,
+    });
+    const { rerender } = renderHook(({ currentQueries }) => useDynamicThresholdSourcePreview(currentQueries, 'A', ''), {
+      initialProps: { currentQueries: [] as Array<ReturnType<typeof sourceQuery>> },
+    });
+
+    rerender({ currentQueries: [sourceQuery('A', 'first')] });
+    await act(async () => Promise.resolve());
+    expect(refetch).not.toHaveBeenCalled();
+
+    rerender({ currentQueries: [sourceQuery('A', 'second')] });
+    await waitFor(() => expect(refetch).toHaveBeenCalledTimes(1));
+  });
+
+  it('does not expose endpoint schema after the source is deleted', () => {
+    mockUseSQLSchemas.mockReturnValue({
+      schemas: {
+        kind: 'SQLSchemaResponse',
+        apiVersion: 'query.grafana.app/v0alpha1',
+        sqlSchemas: {
+          A: {
+            columns: [{ name: 'value', mysqlType: 'DOUBLE', dataFrameFieldType: 'float64', nullable: false }],
+            sampleRows: [],
+          },
+        },
+      },
+      loading: false,
+      error: null,
+      isFeatureEnabled: true,
+      refetch: jest.fn().mockResolvedValue(undefined),
+    });
+    const { result, rerender } = renderHook(
+      ({ currentQueries }) => useDynamicThresholdSourcePreview(currentQueries, 'A', ''),
+      { initialProps: { currentQueries: [sourceQuery('A')] } }
+    );
+
+    expect(result.current.numericFields).toEqual(['value']);
+    rerender({ currentQueries: [] });
+
+    expect(result.current.hasSchema).toBe(false);
+    expect(result.current.numericFields).toEqual([]);
+  });
+
   it('does not expose a stale fallback response after the source model changes', async () => {
     mockUseSQLSchemas.mockReturnValue({
       schemas: null,
@@ -155,6 +205,75 @@ describe('dynamic threshold source preview', () => {
       await Promise.resolve();
     });
     await waitFor(() => expect(result.current.numericFields).toEqual(['current']));
+  });
+
+  it('falls back to metadata fields when the schema endpoint fails', async () => {
+    const endpointError = new Error('schema transport failed');
+    mockUseSQLSchemas.mockReturnValue({
+      schemas: null,
+      loading: false,
+      error: endpointError,
+      isFeatureEnabled: true,
+      refetch: jest.fn().mockResolvedValue(undefined),
+    });
+    mockFetchSQLFields.mockResolvedValue([
+      { name: 'value', text: 'value', label: 'value', value: 'value', type: 'float64' },
+      { name: 'region', text: 'region', label: 'region', value: 'region', type: 'string' },
+    ]);
+
+    const queries = [sourceQuery('A')];
+    const { result } = renderHook(() => useDynamicThresholdSourcePreview(queries, 'A', ''));
+
+    await waitFor(() => expect(result.current.numericFields).toEqual(['value']));
+    expect(result.current.stringFields).toEqual(['region']);
+    expect(result.current.error).toBeNull();
+    expect(mockFetchSQLFields).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the endpoint transport error visible when its metadata fallback also fails', async () => {
+    const endpointError = new Error('schema transport failed');
+    mockUseSQLSchemas.mockReturnValue({
+      schemas: null,
+      loading: false,
+      error: endpointError,
+      isFeatureEnabled: true,
+      refetch: jest.fn().mockResolvedValue(undefined),
+    });
+    mockFetchSQLFields.mockRejectedValue(new Error('fallback failed'));
+
+    const queries = [sourceQuery('A')];
+    const { result } = renderHook(() => useDynamicThresholdSourcePreview(queries, 'A', ''));
+
+    await waitFor(() => expect(result.current.error).toBe(endpointError));
+    expect(result.current.hasSchema).toBe(false);
+  });
+
+  it('uses the editor time range for schema fallback and label-value requests', async () => {
+    const timeRange = {
+      from: dateTime('2026-11-03T10:00:00Z'),
+      to: dateTime('2026-11-03T11:00:00Z'),
+      raw: { from: 'now-1h', to: 'now' },
+    };
+    mockUseSQLSchemas.mockReturnValue({
+      schemas: null,
+      loading: false,
+      error: null,
+      isFeatureEnabled: false,
+      refetch: jest.fn().mockResolvedValue(undefined),
+    });
+    mockFetchSQLFields.mockResolvedValue([]);
+    const runMeta = jest
+      .spyOn(dataSource, 'runMetaSQLExprQuery')
+      .mockResolvedValue({ fields: [] } as unknown as DataFrame);
+
+    const queries = [sourceQuery('A')];
+    renderHook(() => useDynamicThresholdSourcePreview(queries, 'A', 'region', timeRange));
+
+    await waitFor(() => expect(runMeta).toHaveBeenCalledTimes(1));
+    expect(mockUseSQLSchemas).toHaveBeenCalledWith(expect.objectContaining({ timeRange }));
+    expect(mockFetchSQLFields).toHaveBeenCalledWith({ table: 'A' }, [queries[0].model], { range: timeRange });
+    expect(runMeta.mock.calls[0][1]).toBe(timeRange);
+    runMeta.mockRestore();
   });
 
   it('uses unique metadata request IDs for concurrent and reopened label-value requests', async () => {

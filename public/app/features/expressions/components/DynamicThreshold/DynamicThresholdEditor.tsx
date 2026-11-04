@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { type TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, ConfirmModal, Field, Input, Select, Spinner, Stack } from '@grafana/ui';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
@@ -14,20 +15,25 @@ import { getDynamicThresholdSourceOptions, useDynamicThresholdSourcePreview } fr
 interface Props {
   query: SqlExpressionQuery;
   queries: AlertQuery[];
+  timeRange?: TimeRange;
   onChange: (query: SqlExpressionQuery) => void;
 }
 
-export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
+export function DynamicThresholdEditor({ query, queries, timeRange, onChange }: Props) {
   const policy = query.dynamicThreshold!.policy;
   const [pendingMatchLabel, setPendingMatchLabel] = useState<string | null>(null);
   const sourceOptions = useMemo(() => getDynamicThresholdSourceOptions(queries, query.refId), [queries, query.refId]);
-  const source = useDynamicThresholdSourcePreview(queries, policy.inputRefId, policy.matchLabel);
+  const source = useDynamicThresholdSourcePreview(queries, policy.inputRefId, policy.matchLabel, timeRange);
   const result = buildDynamicThreshold(policy);
   const errors = result.ok ? [] : result.errors;
   const thresholdCount = isRangeEvaluator(policy.evaluator) ? 2 : 1;
 
-  const updatePolicy = (nextPolicy: DynamicThresholdPolicyV1) => {
-    const built = buildDynamicThreshold(nextPolicy);
+  const updatePolicy = (nextPolicy: DynamicThresholdPolicyV1, useLiveSchema = true) => {
+    const policyToBuild =
+      useLiveSchema && nextPolicy.inputRefId === policy.inputRefId && source.hasSchema && source.stringFields.length > 0
+        ? { ...nextPolicy, labelColumns: source.stringFields }
+        : nextPolicy;
+    const built = buildDynamicThreshold(policyToBuild);
     onChange({
       ...query,
       expression: built.ok ? built.expressionSql : '',
@@ -35,8 +41,8 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
       dynamicThreshold: {
         version: 1,
         policy: {
-          ...nextPolicy,
-          labelColumns: built.ok ? built.labelColumns : nextPolicy.labelColumns,
+          ...policyToBuild,
+          labelColumns: built.ok ? built.labelColumns : policyToBuild.labelColumns,
         },
       },
     });
@@ -51,7 +57,7 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
     const labelColumns =
       policy.labelColumns.length === 0 && source.stringFields.length > 0 ? source.stringFields : policy.labelColumns;
     if (valueField !== policy.valueField || labelColumns !== policy.labelColumns) {
-      updatePolicy({ ...policy, valueField, labelColumns });
+      updatePolicy({ ...policy, valueField, labelColumns }, false);
     }
     // The schema result is the trigger; query updates feed the new policy back through props.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,6 +65,16 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
 
   const fieldError = (field: keyof DynamicThresholdPolicyV1) =>
     errors.find((error) => error.location.field === field && error.location.mappingIndex === undefined)?.message;
+  const supportedFields = new Set<keyof DynamicThresholdPolicyV1>([
+    'inputRefId',
+    'valueField',
+    'matchLabel',
+    'evaluator',
+    'defaultThreshold',
+  ]);
+  const generalErrors = errors.filter(
+    (error) => error.location.mappingIndex === undefined && !supportedFields.has(error.location.field)
+  );
 
   const changeMatchLabel = (matchLabel: string) => {
     if (matchLabel === policy.matchLabel) {
@@ -83,19 +99,31 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
           aria-label={t('expressions.dynamic-threshold.input-query', 'Input query')}
           options={sourceOptions}
           value={sourceOptions.find((option) => option.value === policy.inputRefId) ?? null}
-          onChange={(option) =>
+          onChange={(option) => {
+            const inputRefId = option?.value ?? '';
+            if (inputRefId === policy.inputRefId) {
+              return;
+            }
             updatePolicy({
               ...policy,
-              inputRefId: option?.value ?? '',
+              inputRefId,
               valueField: '',
               matchLabel: '',
               labelColumns: [],
               mappings: [],
               defaultThreshold: [],
-            })
-          }
+            });
+          }}
         />
       </Field>
+
+      {generalErrors.length > 0 && (
+        <Alert title={t('expressions.dynamic-threshold.validation-error', 'Unable to generate SQL')} severity="error">
+          {generalErrors.map((error) => (
+            <div key={`${error.code}-${error.message}`}>{error.message}</div>
+          ))}
+        </Alert>
+      )}
 
       {source.loading && (
         <Stack direction="row" gap={1} alignItems="center">
@@ -188,31 +216,33 @@ export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
         error={fieldError('defaultThreshold')}
         required
       >
-        <Stack direction="row" gap={1}>
-          {Array.from({ length: thresholdCount }, (_, index) => (
-            <Input
-              key={index}
-              type="number"
-              aria-label={
-                thresholdCount === 1
-                  ? t('expressions.dynamic-threshold.default-threshold-input', 'Default threshold')
-                  : index === 0
-                    ? t('expressions.dynamic-threshold.default-lower-threshold-input', 'Default lower threshold')
-                    : t('expressions.dynamic-threshold.default-upper-threshold-input', 'Default upper threshold')
-              }
-              value={policy.defaultThreshold[index] ?? ''}
-              onChange={(event) => {
-                const values = [...policy.defaultThreshold];
-                if (event.currentTarget.value === '') {
-                  values[index] = undefined;
-                } else {
-                  values[index] = Number(event.currentTarget.value);
+        <>
+          <Stack direction="row" gap={1}>
+            {Array.from({ length: thresholdCount }, (_, index) => (
+              <Input
+                key={index}
+                type="number"
+                aria-label={
+                  thresholdCount === 1
+                    ? t('expressions.dynamic-threshold.default-threshold-input', 'Default threshold')
+                    : index === 0
+                      ? t('expressions.dynamic-threshold.default-lower-threshold-input', 'Default lower threshold')
+                      : t('expressions.dynamic-threshold.default-upper-threshold-input', 'Default upper threshold')
                 }
-                updatePolicy({ ...policy, defaultThreshold: values });
-              }}
-            />
-          ))}
-        </Stack>
+                value={policy.defaultThreshold[index] ?? ''}
+                onChange={(event) => {
+                  const values = [...policy.defaultThreshold];
+                  if (event.currentTarget.value === '') {
+                    values[index] = undefined;
+                  } else {
+                    values[index] = Number(event.currentTarget.value);
+                  }
+                  updatePolicy({ ...policy, defaultThreshold: values });
+                }}
+              />
+            ))}
+          </Stack>
+        </>
       </Field>
 
       <ConfirmModal

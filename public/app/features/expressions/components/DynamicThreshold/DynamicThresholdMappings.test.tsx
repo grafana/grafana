@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 
 import { DynamicThresholdMappings } from './DynamicThresholdMappings';
 
@@ -81,26 +82,35 @@ describe('DynamicThresholdMappings', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('preserves range threshold positions when lower is cleared and upper is entered first', async () => {
+  it('preserves range threshold positions when the upper bound is entered first and the lower bound is cleared', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
-    render(
-      <DynamicThresholdMappings
-        mappings={[{ labelValue: 'production', thresholds: [1, 2] }]}
-        labelValues={[]}
-        thresholdCount={2}
-        errors={[]}
-        onChange={onChange}
-      />
-    );
 
+    function StatefulMappings() {
+      const [mappings, setMappings] = useState<Array<{ labelValue: string; thresholds: Array<number | undefined> }>>([
+        { labelValue: 'production', thresholds: [undefined, undefined] },
+      ]);
+      return (
+        <DynamicThresholdMappings
+          mappings={mappings}
+          labelValues={[]}
+          thresholdCount={2}
+          errors={[]}
+          onChange={(nextMappings) => {
+            onChange(nextMappings);
+            setMappings(nextMappings);
+          }}
+        />
+      );
+    }
+
+    render(<StatefulMappings />);
+    await user.type(screen.getByRole('spinbutton', { name: 'Mapping row 1 upper threshold' }), '8');
+    expect(onChange).toHaveBeenLastCalledWith([{ labelValue: 'production', thresholds: [undefined, 8] }]);
+
+    await user.type(screen.getByRole('spinbutton', { name: 'Mapping row 1 lower threshold' }), '1');
     await user.clear(screen.getByRole('spinbutton', { name: 'Mapping row 1 lower threshold' }));
-    expect(onChange).toHaveBeenLastCalledWith([{ labelValue: 'production', thresholds: [undefined, 2] }]);
-
-    const upper = screen.getByRole('spinbutton', { name: 'Mapping row 1 upper threshold' });
-    fireEvent.change(upper, { target: { value: '' } });
-    fireEvent.change(upper, { target: { value: '8' } });
-    expect(onChange).toHaveBeenLastCalledWith([{ labelValue: 'production', thresholds: [1, 8] }]);
+    expect(onChange).toHaveBeenLastCalledWith([{ labelValue: 'production', thresholds: [undefined, 8] }]);
   });
 
   it('moves a mapping up with its row-specific control', async () => {

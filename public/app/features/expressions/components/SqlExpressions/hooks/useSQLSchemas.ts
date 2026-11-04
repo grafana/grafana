@@ -76,7 +76,6 @@ export function useSQLSchemas({ queries, enabled, timeRange, scopedVars, filters
     const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
-    setSchemas(null);
 
     try {
       const nonDashboardQueries = currentQueries.filter((q) => !isDashboardDatasource(q));
