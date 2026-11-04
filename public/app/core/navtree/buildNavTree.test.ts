@@ -799,6 +799,21 @@ describe('getInitialNavTree', () => {
       ]);
     });
 
+    it('puts any other ungrouped destination into General, and leaves create actions where they are', () => {
+      const tree = administration();
+      tree[0].children = [
+        ...(tree[0].children ?? []),
+        { id: 'plugin-page-some-app', text: 'Some app', url: '/a/some-app' },
+        { id: 'create-thing', text: 'New thing', url: '/admin/new', isCreateAction: true },
+      ];
+      withBootdata(tree);
+
+      const cfg = findById(getInitialNavTree(), NavID.cfg);
+
+      expect(ids(cfg?.children ?? [])).toEqual([NavID.cfgGeneral, NavID.cfgAccess, 'create-thing']);
+      expect(ids(findById(getInitialNavTree(), NavID.cfgGeneral)?.children ?? [])).toContain('plugin-page-some-app');
+    });
+
     it('leaves the tree as it was when the flag is off', () => {
       withBootdata(administration(), false);
 
