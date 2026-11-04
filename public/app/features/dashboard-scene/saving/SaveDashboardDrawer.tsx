@@ -1,7 +1,9 @@
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaHumanFriendlyDashDiffs } from '@grafana/runtime/internal';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
 import { Box, Drawer, EmptyState, ScrollContainer, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
@@ -22,12 +24,16 @@ import { SaveDashboardForm } from './SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 import { getSaveAsTemplateForm } from './enterprise-components/SaveAsTemplateFormExtension';
 import { getSaveDashboardTemplateForm } from './enterprise-components/SaveDashboardTemplateFormExtension';
+import { LazyReviewPane } from './review/ui/LazyReviewPane';
 import { isNewDashboard } from './shared';
 import { useDashboardSaveChanges } from './useDashboardSaveChanges';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
+  /** The Changes tab is open. Takes precedence over showReview. */
   showDiff?: boolean;
+  /** The Review tab is open */
+  showReview?: boolean;
   saveTimeRange?: boolean;
   saveVariables?: boolean;
   saveRefresh?: boolean;
@@ -46,6 +52,8 @@ interface SaveDashboardDrawerState extends SceneObjectState {
 export interface SaveFormDraft {
   title?: string;
   description?: string;
+  /** Save As only: whether the copy keeps the source's tags */
+  copyTags?: boolean;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
@@ -85,6 +93,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboardDrawer>) {
   const {
     showDiff,
+    showReview,
     saveAsCopy,
     saveAsDashboardTemplate,
     saveDashboardTemplate,
@@ -119,19 +128,42 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   const view = useDashboardRepositoryView(dashboard, saveAsCopy);
   const { isNewSave } = view;
   const target = getSaveTarget(view, saveTarget);
+  const humanFriendlyDiffsEnabled = useFlagGrafanaHumanFriendlyDashDiffs();
+
+  // Review covers the normal save and the Save As form (new dashboards and copies) of v2 dashboards only
+  const isReviewAvailable =
+    humanFriendlyDiffsEnabled &&
+    isDashboardV2Spec(initialSaveModel) &&
+    isDashboardV2Spec(changedSaveModel) &&
+    !hasMigratedToV2 &&
+    !saveAsDashboardTemplate &&
+    !saveDashboardTemplate &&
+    target !== 'repository' &&
+    view.status !== RepoViewStatus.Loading &&
+    !managedResourceCannotBeEdited &&
+    (isNewSave || !isProvisioned);
+  const isReviewActive = Boolean(showReview) && !showDiff && isReviewAvailable;
 
   const tabs = (
     <TabsBar>
       <Tab
         label={t('dashboard-scene.save-dashboard-drawer.tabs.label-details', 'Details')}
-        active={!showDiff}
-        onChangeTab={() => model.setState({ showDiff: false })}
+        active={!showDiff && !isReviewActive}
+        onChangeTab={() => model.setState({ showDiff: false, showReview: false })}
       />
+      {/* A new dashboard or a copy always has something to describe, even when nothing was edited */}
+      {isReviewAvailable && (isNewSave || changesCount > 0 || isReviewActive) && (
+        <Tab
+          label={t('dashboard-scene.save-dashboard-drawer.tabs.label-review', 'Review')}
+          active={isReviewActive}
+          onChangeTab={() => model.setState({ showDiff: false, showReview: true })}
+        />
+      )}
       {(changesCount > 0 || showDiff) && !managedResourceCannotBeEdited && (
         <Tab
           label={t('dashboard-scene.save-dashboard-drawer.tabs.label-changes', 'Changes')}
           active={showDiff}
-          onChangeTab={() => model.setState({ showDiff: true })}
+          onChangeTab={() => model.setState({ showDiff: true, showReview: false })}
           counter={changesCount}
         />
       )}
@@ -151,6 +183,11 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
 
   const initialAnnotation = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables];
   const currentAnnotation = getPredefinedVariablesAnnotation(dashboard);
+  const oldFolder = dashboard.getInitialState()?.meta.folderTitle;
+  const oldPredefinedVariables = formatPredefinedVariablesAnnotationLabel(
+    typeof initialAnnotation === 'string' ? initialAnnotation : undefined
+  );
+  const newPredefinedVariables = formatPredefinedVariablesAnnotationLabel(currentAnnotation);
 
   const renderForm = () => {
     if (saveDashboardTemplate) {
@@ -204,8 +241,8 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       tabs={tabs}
       scrollableContent={false}
     >
-      {/* The form stays mounted (hidden) while the Changes tab is open so its field state survives tab switches */}
-      <Box display={showDiff ? 'none' : 'flex'} direction="column" height="100%">
+      {/* The form stays mounted (hidden) while Changes or Review is open so its field state survives tab switches */}
+      <Box display={showDiff || isReviewActive ? 'none' : 'flex'} direction="column" height="100%">
         <ScrollContainer showScrollIndicators>
           <Box padding={0.5}>
             <Stack direction="column" gap={2}>
@@ -222,6 +259,24 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
           </Box>
         </ScrollContainer>
       </Box>
+      {isReviewActive && (
+        <LazyReviewPane
+          dashboard={dashboard}
+          mode={changeInfo.isNew ? 'new' : isNewSave ? 'saveAsCopy' : 'save'}
+          draft={model.saveFormDraft}
+          metadata={{
+            ...(hasFolderChanges ? { folder: { before: oldFolder, after: folderTitle } } : {}),
+            ...(hasPredefinedVariablesChanges
+              ? { predefinedVariables: { before: oldPredefinedVariables, after: newPredefinedVariables } }
+              : {}),
+          }}
+          saveTimeRange={saveTimeRange}
+          saveVariables={saveVariables}
+          saveRefresh={saveRefresh}
+          onBackToDetails={() => model.setState({ showReview: false })}
+          onShowChanges={() => model.setState({ showDiff: true, showReview: false })}
+        />
+      )}
       {showDiff && changesCount === 0 && (
         <EmptyState variant="completed" message={t('dashboard.review.no-changes', 'No changes to save')} />
       )}
@@ -234,12 +289,10 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
           hasFolderChanges={hasFolderChanges}
           hasPredefinedVariablesChanges={hasPredefinedVariablesChanges}
           hasMigratedToV2={hasMigratedToV2}
-          oldFolder={dashboard.getInitialState()?.meta.folderTitle}
+          oldFolder={oldFolder}
           newFolder={folderTitle}
-          oldPredefinedVariables={formatPredefinedVariablesAnnotationLabel(
-            typeof initialAnnotation === 'string' ? initialAnnotation : undefined
-          )}
-          newPredefinedVariables={formatPredefinedVariablesAnnotationLabel(currentAnnotation)}
+          oldPredefinedVariables={oldPredefinedVariables}
+          newPredefinedVariables={newPredefinedVariables}
         />
       )}
     </Drawer>

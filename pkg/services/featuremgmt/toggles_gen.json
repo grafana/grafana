@@ -2754,13 +2754,16 @@
     {
       "metadata": {
         "name": "grafana.cmdkDashboardTags",
-        "resourceVersion": "1793290413642",
-        "creationTimestamp": "2026-10-29T16:13:33Z"
+        "resourceVersion": "1793793930609",
+        "creationTimestamp": "2026-10-29T16:13:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-04 12:05:30.609531 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Shows dashboard tags in the command palette",
         "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
+        "codeowner": "@grafana/grafana-search-and-storage",
         "frontend": true,
         "expression": "false"
       }
@@ -3121,6 +3124,20 @@
         "description": "Enables PLG-focused growth redesign of the unified homepage",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.humanFriendlyDashDiffs",
+        "resourceVersion": "1793793930609",
+        "creationTimestamp": "2026-11-04T12:05:30Z"
+      },
+      "spec": {
+        "description": "Adds a Review tab to the dashboard save drawer with a human-friendly summary of the changes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "false"
       }

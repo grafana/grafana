@@ -51,6 +51,7 @@ declare module "@openfeature/core" {
     | "grafana.dashboardComposer"
     | "grafana.savedDashboardViews"
     | "grafana.dashboardPreviewMode"
+    | "grafana.humanFriendlyDashDiffs"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
     | "feedbackButton"

@@ -6,8 +6,10 @@ import { byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, type FetchError } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { ConstantVariable, sceneGraph, SceneRefreshPicker, VizPanel } from '@grafana/scenes';
-import { defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { defaultSpec, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type CorsWorker } from 'app/core/utils/CorsWorker';
 import {
@@ -16,6 +18,7 @@ import {
   ManagerKind,
   type MetaStatus,
 } from 'app/features/apiserver/types';
+import { syncGetPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import {
   type DashboardRepositoryView,
   useDashboardRepositoryView,
@@ -42,7 +45,11 @@ import {
   registerSaveDashboardTemplateForm,
   type SaveDashboardTemplateFormProps,
 } from './enterprise-components/SaveDashboardTemplateFormExtension';
+import { summarizeDashboardChanges } from './review/summarizeDashboardChanges';
+import { type ReviewInput, type ReviewSummary } from './review/types';
 import { type DashboardChangesRequest, type DashboardChangesResponse } from './shared';
+
+jest.mock('./review/summarizeDashboardChanges', () => ({ summarizeDashboardChanges: jest.fn() }));
 
 jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
   validationSrv: {
@@ -1401,3 +1408,377 @@ function setup(overrides?: Partial<DashboardSceneState>, isV2 = false) {
   //  await act(() => Promise.resolve());
   return { dashboard, openAndRender };
 }
+
+describe('SaveDashboardDrawer with grafana.humanFriendlyDashDiffs enabled', () => {
+  const summaryLine = 'Changes to the dashboard';
+
+  function buildReviewSummary(): ReviewSummary {
+    return {
+      mode: 'save',
+      baselineKind: 'saved',
+      overview: { line: summaryLine, counts: { added: 0, changed: 1, removed: 0, moved: 0 } },
+      tree: [
+        {
+          kind: 'dashboard',
+          id: 'dashboard',
+          label: 'Dashboard',
+          summary: 'properties',
+          claims: [],
+          categories: [
+            {
+              category: 'properties',
+              label: 'Properties',
+              changes: [
+                { kind: 'changed', text: 'Title: hello → Updated title', claims: ['title'] },
+                {
+                  kind: 'changed',
+                  text: 'Description: changed',
+                  details: { before: 'Old description', after: 'New description' },
+                  claims: ['description'],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      metadata: [],
+      systemDefaults: [],
+      bookkeeping: [],
+      collapsePanelsByDefault: false,
+    };
+  }
+
+  function lastReviewInput(): ReviewInput {
+    const calls = jest.mocked(summarizeDashboardChanges).mock.calls;
+    if (calls.length === 0) {
+      throw new Error('The summary was never computed');
+    }
+    return calls[calls.length - 1][0];
+  }
+
+  function specOf(model: ReviewInput['baseline']): DashboardV2Spec {
+    if (!model) {
+      throw new Error('Expected a v2 spec');
+    }
+    return model;
+  }
+
+  const tabNames = () => screen.getAllByRole('tab').map((tab) => tab.textContent);
+
+  async function openReview() {
+    await userEvent.click(await screen.findByRole('tab', { name: 'Review' }));
+    expect(await screen.findByText(summaryLine)).toBeInTheDocument();
+  }
+
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.GrafanaHumanFriendlyDashDiffs]: true });
+    jest.mocked(summarizeDashboardChanges).mockReset().mockReturnValue(buildReviewSummary());
+    const worker = createDetectChangesWorker.createWorker();
+    jest.mocked(worker.postMessage).mockImplementation(({ initial, changed, generation }: DashboardChangesRequest) => {
+      worker.onmessage?.(new MessageEvent('message', { data: { generation, hasChanges: !isEqual(initial, changed) } }));
+    });
+  });
+
+  afterEach(() => {
+    // Unmount first: the flag hook re-renders whatever is still mounted when the flags change
+    cleanup();
+    cleanUp();
+    cleanUp = () => {};
+    setTestFlags({});
+  });
+
+  describe('Review tab visibility', () => {
+    it('when a v2 dashboard has changes, Review sits between Details and Changes and Details stays selected', async () => {
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ title: 'Updated title' });
+
+      await openAndRender();
+
+      expect(await screen.findByRole('tab', { name: 'Review' })).toHaveAttribute('aria-selected', 'false');
+      expect(tabNames()).toEqual(['Details', 'Review', 'Changes1']);
+      expect(screen.getByRole('tab', { name: 'Details' })).toHaveAttribute('aria-selected', 'true');
+      expect(summarizeDashboardChanges).not.toHaveBeenCalled();
+    });
+
+    it('when the toggle is off, Review is not offered', async () => {
+      setTestFlags({ [FlagKeys.GrafanaHumanFriendlyDashDiffs]: false });
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ title: 'Updated title' });
+
+      await openAndRender();
+
+      expect(await screen.findByRole('tab', { name: /Changes/ })).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Review' })).not.toBeInTheDocument();
+    });
+
+    it('when the dashboard is v1, Review is not offered', async () => {
+      const { dashboard, openAndRender } = setup();
+      dashboard.setState({ title: 'Updated title' });
+
+      await openAndRender();
+
+      expect(await screen.findByRole('tab', { name: /Changes/ })).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Review' })).not.toBeInTheDocument();
+    });
+
+    it('when a v1 dashboard was migrated to v2 while editing, Review is not offered', async () => {
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.serializer.initialSaveModel = transformSceneToSaveModel(dashboard);
+      dashboard.setState({ title: 'Updated title' });
+
+      await openAndRender();
+
+      expect(await screen.findByRole('tab', { name: /Changes/ })).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Review' })).not.toBeInTheDocument();
+    });
+
+    it.each([
+      { flow: 'Save as template', opts: { saveAsDashboardTemplate: true } },
+      { flow: 'Save template', opts: { saveDashboardTemplate: true } },
+    ])('when the flow is $flow, Review is not offered', async ({ opts }) => {
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ title: 'Updated title' });
+
+      await openAndRender(opts);
+
+      expect(await screen.findByRole('tab', { name: /Changes/ })).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Review' })).not.toBeInTheDocument();
+    });
+
+    it('when the save goes to a provisioning repository, Review is not offered', async () => {
+      const status = RepoViewStatus.Ready;
+      jest.mocked(useDashboardRepositoryView).mockReturnValue({
+        status,
+        isNewSave: false,
+        isProvisioned: true,
+        canChooseTarget: false,
+        isInstanceManaged: false,
+        isReadOnlyRepo: false,
+        isMissingRepo: false,
+        isHeld: false,
+        lookup: { status },
+      });
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ title: 'Updated title' });
+
+      await openAndRender();
+
+      expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /Changes/ })).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Review' })).not.toBeInTheDocument();
+
+      const { useDashboardRepositoryView: actual } = jest.requireActual(
+        'app/features/provisioning/hooks/useDashboardRepositoryView'
+      );
+      jest.mocked(useDashboardRepositoryView).mockImplementation(actual);
+    });
+
+    it('when the dashboard is managed by a system that does not allow edits, Review is not offered', async () => {
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({
+        title: 'Updated title',
+        meta: { ...dashboard.state.meta, k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Kubectl } } },
+      });
+
+      await openAndRender();
+
+      expect(await screen.findByRole('tab', { name: 'Details' })).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Review' })).not.toBeInTheDocument();
+    });
+
+    it('when saving a copy of an unedited dashboard, Review is offered although Changes is not', async () => {
+      const { openAndRender } = setup(undefined, true);
+
+      await openAndRender({ saveAsCopy: true });
+
+      expect(await screen.findByRole('tab', { name: 'Review' })).toBeInTheDocument();
+      expect(tabNames()).toEqual(['Details', 'Review']);
+    });
+
+    it('when a new dashboard is unedited, Review is offered although Changes is not', async () => {
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ uid: '', meta: { ...dashboard.state.meta, k8s: undefined } });
+
+      await openAndRender();
+
+      expect(await screen.findByRole('tab', { name: 'Review' })).toBeInTheDocument();
+      expect(tabNames()).toEqual(['Details', 'Review']);
+    });
+
+    it('when there are no changes, Review is not offered', async () => {
+      const { openAndRender } = setup(undefined, true);
+
+      await openAndRender();
+
+      expect(await screen.findByRole('tab', { name: 'Details' })).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Review' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Review tab', () => {
+    it('when Review is opened on a normal save, the summary compares the save payload with the saved baseline', async () => {
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ title: 'Updated title' });
+      await openAndRender();
+
+      await openReview();
+
+      expect(screen.getByRole('tab', { name: 'Review' })).toHaveAttribute('aria-selected', 'true');
+      const input = lastReviewInput();
+      expect(input.mode).toBe('save');
+      expect(input.baselineKind).toBe('saved');
+      expect(specOf(input.baseline).title).toBe('hello');
+      expect(input.payload.title).toBe('Updated title');
+      expect(input.sourceTitle).toBeUndefined();
+      expect(input.metadata).toEqual({});
+      expect(input.getPlugin).toBe(syncGetPanelPlugin);
+    });
+
+    it('when Review is open, the Details form stays mounted and Back to details restores it', async () => {
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ title: 'Updated title' });
+      await openAndRender();
+      await userEvent.type(await screen.findByLabelText('message'), 'my save note');
+
+      await openReview();
+
+      expect(screen.getByLabelText('message')).not.toBeVisible();
+      expect(screen.queryByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).not.toBeVisible();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Back to details' }));
+
+      expect(screen.getByRole('tab', { name: 'Details' })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByLabelText('message')).toBeVisible();
+      expect(screen.getByLabelText('message')).toHaveValue('my save note');
+    });
+
+    it('when the save time range option changes, reopening Review summarizes the new payload', async () => {
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ title: 'Updated title' });
+      sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
+      await openAndRender();
+
+      await openReview();
+      expect(lastReviewInput().payload.timeSettings.from).toBe('now-6h');
+
+      await userEvent.click(screen.getByRole('tab', { name: 'Details' }));
+      await userEvent.click(screen.getByTestId(selectors.pages.SaveDashboardModal.saveTimerange));
+      await openReview();
+
+      expect(lastReviewInput().payload.timeSettings.from).toBe('now-1h');
+    });
+
+    it('when the dashboard is new, the summary describes the Save As model with no baseline', async () => {
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ uid: '', tags: ['team'], meta: { ...dashboard.state.meta, k8s: undefined } });
+      await openAndRender();
+      const titleInput = await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput);
+      await userEvent.clear(titleInput);
+      await userEvent.type(titleInput, 'My new board');
+
+      await openReview();
+
+      const input = lastReviewInput();
+      expect(input.mode).toBe('new');
+      expect(input.baseline).toBeNull();
+      expect(input.payload.title).toBe('My new board');
+      expect(input.payload.tags).toEqual(['team']);
+    });
+
+    it('when saving a copy, the summary compares the copy built from the form with its source', async () => {
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ tags: ['team'] });
+      await openAndRender({ saveAsCopy: true });
+      await userEvent.type(await screen.findByLabelText('Save dashboard description field'), 'A copy for testing');
+      await userEvent.click(screen.getByLabelText('Copy tags'));
+
+      await openReview();
+
+      const input = lastReviewInput();
+      expect(input.mode).toBe('saveAsCopy');
+      expect(input.sourceTitle).toBe('hello');
+      expect(specOf(input.baseline).title).toBe('hello');
+      expect(specOf(input.baseline).tags).toEqual([]);
+      expect(input.payload.title).toBe('hello Copy');
+      expect(input.payload.description).toBe('A copy for testing');
+      expect(input.payload.tags).toEqual(['team']);
+    });
+
+    it('when saving a copy with Copy tags off, the summarized copy drops the tags', async () => {
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ tags: ['team'] });
+      await openAndRender({ saveAsCopy: true });
+      expect(await screen.findByLabelText('Copy tags')).not.toBeChecked();
+
+      await openReview();
+
+      expect(lastReviewInput().payload.tags).toEqual([]);
+    });
+
+    it('when the dashboard changes while Review is open but the change count does not, the summary is recomputed once', async () => {
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ title: 'Updated title' });
+      await openAndRender();
+      await openReview();
+      expect(summarizeDashboardChanges).toHaveBeenCalledTimes(1);
+
+      act(() => dashboard.setState({ title: 'Third title' }));
+
+      await waitFor(() => expect(lastReviewInput().payload.title).toBe('Third title'));
+      // Recomputing reads the dashboard but must not itself look like an edit
+      await act(() => new Promise((resolve) => setTimeout(resolve, 300)));
+      expect(summarizeDashboardChanges).toHaveBeenCalledTimes(2);
+    });
+
+    it('when the summary is recomputed after an edit, an open Show stays open on its line', async () => {
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ title: 'Updated title' });
+      await openAndRender();
+      await openReview();
+      await userEvent.click(screen.getByRole('button', { name: 'Show' }));
+      expect(screen.getByText('Old description')).toBeInTheDocument();
+
+      act(() => dashboard.setState({ title: 'Third title' }));
+
+      await waitFor(() => expect(summarizeDashboardChanges).toHaveBeenCalledTimes(2));
+      expect(await screen.findByText('Changes to the dashboard')).toBeInTheDocument();
+      expect(screen.queryByText('Summarizing changes…')).not.toBeInTheDocument();
+      expect(screen.getByText('Old description')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Hide' })).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('when the summary cannot be rendered, Review shows the failure and the save flow stays usable', async () => {
+      // React reports the caught render error on the console
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest
+        .mocked(summarizeDashboardChanges)
+        .mockReturnValue({ ...buildReviewSummary(), tree: null } as unknown as ReviewSummary);
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ title: 'Updated title' });
+      await openAndRender();
+
+      await userEvent.click(await screen.findByRole('tab', { name: 'Review' }));
+      expect(await screen.findByText('Unable to summarize changes')).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'Back to details' }));
+
+      expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeVisible();
+      jest.mocked(console.error).mockRestore();
+    });
+
+    it('when the summary fails, Review says so and its link opens Changes', async () => {
+      jest.mocked(summarizeDashboardChanges).mockImplementation(() => {
+        throw new Error('engine failure');
+      });
+      const { dashboard, openAndRender } = setup(undefined, true);
+      dashboard.setState({ title: 'Updated title' });
+      await openAndRender();
+
+      await userEvent.click(await screen.findByRole('tab', { name: 'Review' }));
+      expect(await screen.findByText('Unable to summarize changes')).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'See the technical diff in Changes' }));
+
+      expect(screen.getByRole('tab', { name: /Changes/ })).toHaveAttribute('aria-selected', 'true');
+      expect(await screen.findByTestId('schema-diff-editor')).toBeInTheDocument();
+    });
+  });
+});

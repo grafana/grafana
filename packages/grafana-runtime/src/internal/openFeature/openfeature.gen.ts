@@ -206,6 +206,8 @@ export const FlagKeys = {
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Adds an experimental Protomaps vector basemap to the geomap panel */
   GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
+  /** Adds a Review tab to the dashboard save drawer with a human-friendly summary of the changes */
+  GrafanaHumanFriendlyDashDiffs: "grafana.humanFriendlyDashDiffs",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
@@ -1460,6 +1462,17 @@ export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagGrafanaGeomapProtomapsBasemap = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.geomapProtomapsBasemap", false, options).value;
+};
+
+/**
+ * Adds a Review tab to the dashboard save drawer with a human-friendly summary of the changes
+ *
+ * **Details:**
+ * - flag key: `grafana.humanFriendlyDashDiffs`
+ * - default value: `false`
+ */
+export const useFlagGrafanaHumanFriendlyDashDiffs = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.humanFriendlyDashDiffs", false, options).value;
 };
 
 /**

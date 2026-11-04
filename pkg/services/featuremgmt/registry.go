@@ -736,6 +736,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.humanFriendlyDashDiffs",
+			Description: "Adds a Review tab to the dashboard save drawer with a human-friendly summary of the changes",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
 			Stage:       FeatureStageExperimental,

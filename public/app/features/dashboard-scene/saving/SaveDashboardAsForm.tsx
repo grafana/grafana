@@ -55,7 +55,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
       },
       // The Copy tags switch below is hidden for new dashboards, which have no source to copy
       // from: their tags are the user's own, so the default must keep them.
-      copyTags: changeInfo.isNew,
+      copyTags: draft?.copyTags ?? changeInfo.isNew,
     },
   });
 
@@ -82,7 +82,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
     };
   }, []);
 
-  useParkSaveFormDraft(drawer, formValues.title, formValues.description);
+  useParkSaveFormDraft(drawer, formValues.title, formValues.description, formValues.copyTags);
 
   const onFolderChange = useCallback(
     (uid: string | undefined, title: string | undefined) => {
