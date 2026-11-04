@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 
 import { type DataFrame, FieldType, toDataFrame } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -66,10 +66,15 @@ beforeEach(() => {
 describe('DynamicThresholdPreview', () => {
   it('sends no request when cleanup happens while source interpolation is pending', async () => {
     const pending = deferred<unknown[]>();
-    jest.mocked(interpolateSourceQueries).mockReturnValueOnce(pending.promise as never);
+    jest.mocked(interpolateSourceQueries).mockImplementationOnce(() => pending.promise as never);
     const { unmount } = render(<DynamicThresholdPreview queries={queries} policy={policy} previewSql="SELECT 1" />);
 
+    await waitFor(() => expect(interpolateSourceQueries).toHaveBeenCalledTimes(1));
     unmount();
+    expect(backendSrv.resolveCancelerIfExists).toHaveBeenCalledTimes(1);
+    expect(backendSrv.resolveCancelerIfExists).toHaveBeenCalledWith(
+      expect.stringMatching(/^dynamic-threshold-preview-/)
+    );
     await act(async () => pending.resolve([]));
 
     expect(runMetaSQLExprQuery).not.toHaveBeenCalled();

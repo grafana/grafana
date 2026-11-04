@@ -11,6 +11,7 @@ import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 }
 import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { type AlertDataQuery, type AlertQuery } from '../../../types/unified-alerting-dto';
+import { hasDynamicThresholdSqlMismatch } from '../../expressions/components/DynamicThreshold/utils';
 import { isDynamicThresholdQuery, isExpressionQuery } from '../../expressions/guards';
 import {
   type ExpressionQuery,
@@ -224,6 +225,7 @@ interface ExpressionPreviewProps extends Pick<AlertQuery, 'refId'> {
 }
 
 function ExpressionPreview({ refId, model, evalData, isAlertCondition, isLoading = false }: ExpressionPreviewProps) {
+  const showDynamicThreshold = isDynamicThresholdQuery(model) && !hasDynamicThresholdSqlMismatch(model);
   const styles = useStyles2(getQueryBoxStyles);
 
   function renderPreview() {
@@ -244,7 +246,7 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition, isLoading
         return <ThresholdExpressionViewer model={model} />;
 
       case ExpressionQueryType.sql:
-        if (isDynamicThresholdQuery(model)) {
+        if (showDynamicThreshold) {
           return (
             <Stack direction="column" gap={1}>
               <Text color="secondary" variant="bodySmall">
@@ -270,7 +272,7 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition, isLoading
       refId={refId}
       headerItems={[
         <Text color="secondary" key="expression-type">
-          {isDynamicThresholdQuery(model)
+          {showDynamicThreshold
             ? t('alerting.expression-preview.dynamic-threshold', 'Dynamic threshold')
             : startCase(model.type)}
         </Text>,

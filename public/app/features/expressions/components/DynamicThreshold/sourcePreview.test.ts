@@ -184,9 +184,10 @@ describe('dynamic threshold source preview', () => {
     let resolveInterpolation!: (queries: unknown[]) => void;
     jest
       .mocked(interpolateSourceQueries)
-      .mockReturnValueOnce(new Promise((resolve) => (resolveInterpolation = resolve)) as never);
+      .mockImplementationOnce(() => new Promise((resolve) => (resolveInterpolation = resolve)) as never);
     const { unmount } = renderHook(() => useDynamicThresholdSourcePreview([sourceQuery('A')], 'A', 'region'));
 
+    await waitFor(() => expect(interpolateSourceQueries).toHaveBeenCalledTimes(1));
     unmount();
     await act(async () => resolveInterpolation([]));
 
