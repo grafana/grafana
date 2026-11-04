@@ -129,12 +129,12 @@ To enable this functionality, you need to add an override for every field by whi
 In the override:
 
 - Select a field name.
-- Add the **Standard options > Filter from values** override property.
-- Enable the **Filter from values** switch to allow viewers to update dashboard filters by interacting with the panel.
+- Add the **Standard options > Cross-filter** override property.
+- Enable the **Cross-filter** switch to allow viewers to update dashboard filters by interacting with the panel.
 
 You can also do this programmatically by returning the data frame with the appropriate `filterable` property on the desired fields.
 
-For provisioned dashboards, **Filter from values** uses the JSON property ID `filterable`.
+For provisioned dashboards, **Cross-filter** uses the JSON property ID `filterable`.
 For example, add the following override to the panel's `fieldConfig.overrides` array to enable filtering from the `service` field:
 
 ```json
