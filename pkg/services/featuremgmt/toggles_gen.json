@@ -2022,7 +2022,8 @@
       "metadata": {
         "name": "datasources.queryGatewaySlimAudit",
         "resourceVersion": "1790805819665",
-        "creationTimestamp": "2026-10-01T14:36:39Z"
+        "creationTimestamp": "2026-10-01T14:36:39Z",
+        "deletionTimestamp": "2026-11-04T14:12:07Z"
       },
       "spec": {
         "description": "Only attach query payloads to query gateway audit events when a guardrail fires",

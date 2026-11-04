@@ -91,6 +91,7 @@ import {
 } from '../utils/crossDashboardVariablesSelection';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 import { DashboardInteractions } from '../utils/interactions';
+import { isMobileEditDeprecated, redirectAwayFromMobileEdit } from '../utils/mobileEditDeprecation';
 import { fetchPredefinedVariables } from '../utils/predefinedVariables';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -698,9 +699,14 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           config.featureToggles.dashboardTemplates) &&
         options.route === DashboardRoutes.Template
       ) {
-        scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
-        scene.onEnterEditMode();
-        scene.setState({ isDirty: true });
+        if (isMobileEditDeprecated()) {
+          // Building a dashboard from a template requires edit mode, which is unavailable on mobile.
+          redirectAwayFromMobileEdit();
+        } else {
+          scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
+          scene.onEnterEditMode();
+          scene.setState({ isDirty: true });
+        }
       }
 
       // We don't want to cache temporary dashboards (e.g from Explore) or public dashboards
@@ -1195,10 +1201,14 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       }
 
       // Special handling for Template route - set up edit mode and dirty state
-      if (
+      const isTemplateRoute =
         getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) &&
-        options.route === DashboardRoutes.Template
-      ) {
+        options.route === DashboardRoutes.Template;
+
+      if (isTemplateRoute && isMobileEditDeprecated()) {
+        // Building or editing a dashboard template requires edit mode, which is unavailable on mobile.
+        redirectAwayFromMobileEdit();
+      } else if (isTemplateRoute) {
         const editMode = !!options.editTemplate;
 
         if (options.dashboardTemplateUid && editMode) {

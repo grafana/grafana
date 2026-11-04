@@ -46,8 +46,8 @@ func (c *unifiedUserTeamsBackend) ListUserTeams(ctx context.Context, query UserT
 		SearchAfter:  query.After,
 		Explain:      query.Explain,
 	})
-	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
-		return nil, err
+	if err != nil {
+		return nil, resource.StatusErrorFromGRPC(err)
 	}
 	rows, err := decodeUserTeamSearchRows(result)
 	if err != nil {
