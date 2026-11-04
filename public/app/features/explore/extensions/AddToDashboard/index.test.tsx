@@ -12,6 +12,7 @@ import { Echo } from 'app/core/services/echo/Echo';
 import { configureStore } from 'app/store/configureStore';
 import { type ExploreState } from 'app/types/explore';
 
+import { setMobileViewport } from '../../../dashboard-scene/utils/mobileViewportTestUtils';
 import { createEmptyQueryResponse } from '../../state/utils';
 
 import { AddToDashboard } from '.';
@@ -99,6 +100,7 @@ describe('AddToDashboardButton', () => {
 
     it('renders nothing when blocked on mobile', () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
 
       const { container } = setup(<AddToDashboard exploreId={'left'} />);
 
