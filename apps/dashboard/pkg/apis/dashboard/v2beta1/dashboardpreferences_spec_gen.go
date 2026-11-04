@@ -55,8 +55,6 @@ func (DashboardPreferencesPanelDefaults) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type DashboardPreferencesSpec struct {
-	// Owner of a user tier object ("user-<userUID>"). Unset on org and folder objects.
-	UserUID   *string                                `json:"userUID,omitempty"`
 	Dashboard *DashboardPreferencesDashboardDefaults `json:"dashboard,omitempty"`
 	Panels    *DashboardPreferencesPanelDefaults     `json:"panels,omitempty"`
 }

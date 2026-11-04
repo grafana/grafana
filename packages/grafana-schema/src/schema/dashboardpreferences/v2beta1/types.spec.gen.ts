@@ -76,8 +76,6 @@ export const defaultPanelDefaults = (): PanelDefaults => ({
 });
 
 export interface Spec {
-	// Owner of a user tier object ("user-<userUID>"). Unset on org and folder objects.
-	userUID?: string;
 	dashboard?: DashboardDefaults;
 	panels?: PanelDefaults;
 }

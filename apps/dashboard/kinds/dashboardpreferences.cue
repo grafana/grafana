@@ -9,8 +9,9 @@ dashboardPreferencesV2beta1: {
 	// The kind already ends in "s"; the SDK default (kind + "s") would serve "dashboardpreferencess".
 	pluralName: "DashboardPreferences"
 	// API contract:
-	// - one object per tier; metadata.name is derived from the tier and must match it:
-	//   org "namespace", folder "folder-" + metadata.annotations["grafana.app/folder"], user "user-" + spec.userUID
+	// - one object per tier; metadata.name identifies the tier:
+	//   org "namespace", folder "folder-<folderUID>", user "user-<userUID>"
+	// - a folder tier object also carries metadata.annotations["grafana.app/folder"], which must match its name
 	// - an absent spec field means "inherit from the next tier"
 	// List returns only the caller's own objects. The generic list-keys, search and trash routes
 	// cannot apply that filtering, so the kind serves none of them.

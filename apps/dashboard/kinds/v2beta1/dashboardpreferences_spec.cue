@@ -11,9 +11,6 @@ import (
 
 // Defaults for new dashboards and panels at one tier: org, folder or user. Every field is optional; an absent field inherits from the next tier.
 DashboardPreferencesSpec: {
-	// Owner of a user tier object ("user-<userUID>"). Unset on org and folder objects.
-	userUID?: string & strings.MaxRunes(40)
-
 	dashboard?: DashboardDefaults
 	panels?:    PanelDefaults
 }

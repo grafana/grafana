@@ -3733,13 +3733,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesSpec(ref common.Refer
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"userUID": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Owner of a user tier object (\"user-<userUID>\"). Unset on org and folder objects.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"dashboard": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(DashboardPreferencesDashboardDefaults{}.OpenAPIModelName()),
