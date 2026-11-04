@@ -81,9 +81,8 @@ func (d *DiscoveryClientImpl) GetKindForResource(gvr schema.GroupVersionResource
 	return schema.GroupVersionKind{}, fmt.Errorf("kind not found for %s", gvr.String())
 }
 
-// PreferredResources returns the server's preferred resources, ignoring the discovery failures of
-// groups the caller has no interest in. A partial answer is better than none: one unavailable API
-// group should not stop a caller from resolving the groups it actually needs.
+// PreferredResources returns the server's preferred resources, ignoring discovery failures of
+// groups the caller has no interest in: one unavailable group must not block the rest.
 func (d *DiscoveryClientImpl) PreferredResources(ctx context.Context, relevant func(group string) bool) ([]*metav1.APIResourceList, error) {
 	apiList, err := d.ServerPreferredResourcesWithContext(ctx)
 	var failed *discovery.ErrGroupDiscoveryFailed

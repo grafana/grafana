@@ -31,15 +31,14 @@ type ResourceStore interface {
 
 type ResourceListerFromSearch struct {
 	store ResourceStore
-	// clients lists the members of a collection through the API groups that serve them; nil when
-	// no collection is configured.
+	// clients lists a collection's members through the groups that serve them; nil without one.
 	clients ClientFactory
-	// collections are the configured wildcard patterns, empty unless one is configured.
+	// collections are the configured wildcard patterns.
 	collections []string
 }
 
-// NewResourceLister returns a lister over the managed-object index. The members of a configured
-// collection are listed through clients instead; see listCollectionMembers.
+// NewResourceLister returns a lister over the managed-object index. A configured collection's
+// members are listed through clients instead; see listCollectionMembers.
 func NewResourceLister(store ResourceStore, clients ClientFactory, configured []SupportedResource) ResourceLister {
 	return &ResourceListerFromSearch{
 		store:       store,
@@ -62,9 +61,8 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 	collections := o.collectionGroups()
 	items := make([]provisioning.ResourceListItem, 0, len(objects.Items))
 	for _, v := range objects.Items {
-		// A collection's members are indexed under the collection's own key, which names neither
-		// the group that serves them nor the name it serves them under. They are listed through
-		// their own API groups below instead.
+		// Indexed under the collection's own key, which names neither the serving group nor the
+		// served name; listed through their own API groups below.
 		if collections.Has(v.Object.Group) {
 			continue
 		}
@@ -98,13 +96,9 @@ func (o *ResourceListerFromSearch) collectionGroups() sets.Set[string] {
 }
 
 // listCollectionMembers lists what a repository manages inside the configured collections, one
-// request per served group, filtering on the same manager annotations the index does.
-//
-// The index cannot answer this. A collection's members are stored under the collection's group,
-// and may be stored under a different name than the one they are served by, so an item it reports
-// identifies an object no API server can be asked for. Going through the served groups costs a
-// request per member rather than one for the whole repository, but it is the only answer that
-// yields an addressable resource and it needs nothing from unified storage.
+// request per served group instead of one for the whole repository. The index cannot answer it: it
+// reports a member under the collection's group, and possibly a different name, so the object it
+// describes cannot be addressed.
 func (o *ResourceListerFromSearch) listCollectionMembers(ctx context.Context, namespace, repository string) ([]provisioning.ResourceListItem, error) {
 	if len(o.collections) == 0 || o.clients == nil {
 		return nil, nil
@@ -148,7 +142,7 @@ func (o *ResourceListerFromSearch) isMember(group string) bool {
 }
 
 // managedResourceItem builds the list item for an object managed by repository, from the same
-// source properties the index reports. It returns false for anything repository does not manage.
+// properties the index reports. It returns false for anything else.
 func managedResourceItem(obj *unstructured.Unstructured, gvr schema.GroupVersionResource, repository string) (provisioning.ResourceListItem, bool) {
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {

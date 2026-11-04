@@ -21,23 +21,17 @@ var (
 	DashboardResourceV2beta1  = dashboardV2beta1.DashboardResourceInfo.GroupVersionResource()
 )
 
-// WildcardGroupMarker introduces a configured group that is a pattern over served groups rather
-// than one group. It stands for the part of a served group that identifies the member, and may sit
-// anywhere in the pattern: leading for a member that prefixes a shared suffix
-// (*.datasource.grafana.app, *-app), trailing for one that suffixes a shared prefix
-// (grafana-plugin-*), or between the two. Several API groups can be persisted in one storage
-// collection -- every data source plugin serves its own group but is stored in
-// datasource.grafana.app -- and which groups those are depends on what the instance has installed,
-// so they cannot be written in configuration by hand.
+// WildcardGroupMarker makes a configured group a pattern over the served groups of a storage
+// collection. It stands for the part that identifies the member and may sit anywhere in the
+// pattern; which members exist depends on what the instance has installed, so they cannot be
+// configured by hand.
 const WildcardGroupMarker = "*"
 
-// WildcardGroupPrefix is the dotted pattern, whose literal part is itself the collection group:
-// *.datasource.grafana.app covers prometheus.datasource.grafana.app.
+// WildcardGroupPrefix is the dotted pattern, whose literal part is itself the collection group.
 const WildcardGroupPrefix = WildcardGroupMarker + "."
 
-// CollectionSeparator qualifies a pattern with the group its members are stored under, for a
-// pattern that does not name it: *-app@plugins.grafana.app covers the app plugin settings served
-// under a bare plugin ID.
+// CollectionSeparator qualifies a pattern that does not name the group its members are stored
+// under: *-app@plugins.grafana.app.
 const CollectionSeparator = "@"
 
 // IsWildcardGroup reports whether a configured group is a pattern rather than a served group.
@@ -45,17 +39,15 @@ func IsWildcardGroup(group string) bool {
 	return strings.Contains(group, WildcardGroupMarker)
 }
 
-// IsDottedWildcardGroup reports whether a pattern is the dotted form, the only one whose literal
-// part is itself the collection group and so needs no qualifier.
+// IsDottedWildcardGroup reports whether a pattern's literal part is itself the collection group.
 func IsDottedWildcardGroup(group string) bool {
 	return strings.HasPrefix(group, WildcardGroupPrefix) &&
 		!strings.Contains(strings.TrimPrefix(group, WildcardGroupPrefix), WildcardGroupMarker)
 }
 
-// CollectionGroup returns the group a configured entry's resources are stored under: the qualifier
-// when the pattern carries one, the literal part of a dotted pattern, and otherwise the group
-// itself. It is what provisioning addresses a collection by -- the search index reports a stored
-// member under it, and the operator registers one API server for it.
+// CollectionGroup returns the group a configured entry's resources are stored under, which is what
+// provisioning addresses a collection by: the qualifier, the literal part of a dotted pattern, or
+// the group itself.
 func CollectionGroup(configured string) string {
 	if _, collection, ok := strings.Cut(configured, CollectionSeparator); ok {
 		return collection
@@ -64,12 +56,8 @@ func CollectionGroup(configured string) string {
 }
 
 // MatchesGroup reports whether a served group is covered by a configured one: exactly, or as a
-// member matching its pattern. Membership is structural -- the member identifies itself in the
-// part of the served group the wildcard stands for -- so it holds for any collection that follows
-// that convention without this package knowing which collections exist.
-//
-// A member is never empty, so a pattern does not cover the group left when the wildcard stands for
-// nothing: *.datasource.grafana.app does not cover datasource.grafana.app itself.
+// member matching its pattern. The wildcard never stands for nothing, so *.datasource.grafana.app
+// does not cover datasource.grafana.app itself.
 func MatchesGroup(configured, served string) bool {
 	pattern, _, _ := strings.Cut(configured, CollectionSeparator)
 	before, after, wildcard := strings.Cut(pattern, WildcardGroupMarker)

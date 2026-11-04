@@ -13,11 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// TestIntegrationProvisioning_SettingsReportsTheCollection verifies that a wildcard entry reaches
-// the frontend as the collection it names rather than expanded: the collection group is what the
-// search index reports a stored member under, so it is what stats and list rows are matched
-// against, and it keeps the list one entry per configured kind rather than one per installed
-// plugin.
+// The collection group is what the index reports a stored member under, so it is what the
+// frontend matches stats and list rows against.
 func TestIntegrationProvisioning_SettingsReportsTheCollection(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -46,10 +43,8 @@ func TestIntegrationProvisioning_SettingsReportsTheCollection(t *testing.T) {
 	}
 }
 
-// TestIntegrationProvisioning_JobValidationCollectionGroup verifies the group rules a job must
-// follow for a kind configured as a collection. The members each serve their own group, so the
-// group identifying the resource cannot be resolved from the kind alone the way it can for a kind
-// that serves exactly one group.
+// A collection's members each serve their own group, so a job cannot resolve the group from the
+// kind alone the way it can for a kind that serves exactly one.
 func TestIntegrationProvisioning_JobValidationCollectionGroup(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -117,8 +112,7 @@ func TestIntegrationProvisioning_JobValidationCollectionGroup(t *testing.T) {
 			_, err := helper.Jobs.Resource.Create(t.Context(), jobObj, metav1.CreateOptions{})
 			if tt.wantAccepted {
 				require.NoError(t, err, "job naming a member of the collection should pass admission")
-				// Best-effort cleanup: the job controller reconciles the new job concurrently, so
-				// a delete can race with a status update. Admission acceptance is the assertion.
+				// Best-effort: the delete races the controller's status update.
 				_ = helper.Jobs.Resource.Delete(t.Context(), name, metav1.DeleteOptions{})
 				return
 			}
@@ -130,11 +124,8 @@ func TestIntegrationProvisioning_JobValidationCollectionGroup(t *testing.T) {
 	}
 }
 
-// TestIntegrationProvisioning_CollectionWithoutServedMembersSyncs verifies that a configured
-// collection nobody serves leaves the rest of the pipeline alone. Expansion asks discovery once,
-// on the first client taken, and every consumer of a client shares that result — so a collection
-// that resolves to no members must come back empty rather than fail, and the kinds that do serve
-// their own group must still sync.
+// Expansion asks discovery once and every consumer of a client shares that result, so a collection
+// resolving to no members must come back empty rather than fail the kinds that do serve a group.
 func TestIntegrationProvisioning_CollectionWithoutServedMembersSyncs(t *testing.T) {
 	helper := sharedHelper(t)
 

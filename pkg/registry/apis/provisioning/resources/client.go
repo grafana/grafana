@@ -87,9 +87,9 @@ func (r SupportedResource) IsFolderScoped() bool { return r.Capabilities.Has(Cap
 //	<group>/<Kind>[:cap[:cap...]]
 //
 // Group and kind are split on the last "/" (groups contain dots and may be multi-segment). The
-// group may be a wildcard pattern over the groups served inside a storage collection, with the "*"
-// anywhere in it, optionally qualified with the group those are stored under:
-// "*.datasource.grafana.app", "*-app@plugins.grafana.app" or "grafana-*@plugins.grafana.app". Capabilities are ":"-separated and must be in KnownCapabilities.
+// group may be a wildcard pattern over a storage collection's served groups, optionally qualified
+// with the group those are stored under: "*.datasource.grafana.app", "grafana-*@plugins.grafana.app".
+// Capabilities are ":"-separated and must be in KnownCapabilities.
 // Parsing is strict and fails fast at startup: each entry must be "<group>/<Kind>" with a
 // non-empty, dotted group and non-empty kind; capabilities must be known and not repeated; and a
 // resource ID must not appear twice. Whitespace is trimmed and empty entries are skipped.
@@ -136,10 +136,8 @@ func ParseSupportedResources(entries []string) ([]SupportedResource, error) {
 	return out, nil
 }
 
-// validateGroup checks a configured group, which may be a wildcard pattern. A pattern that does
-// not name a dotted group in its literal part must be qualified with the collection its members
-// are stored under: provisioning addresses a collection by that group, and nothing else in the
-// entry can supply it.
+// validateGroup checks a configured group, which may be a wildcard pattern. A pattern whose
+// literal part is not a dotted group must name the collection its members are stored under.
 func validateGroup(entry, group string) error {
 	pattern, collection, qualified := strings.Cut(group, provisioningresources.CollectionSeparator)
 	switch {
@@ -191,8 +189,7 @@ type ClientFactory interface {
 
 type clientFactory struct {
 	clientsProvider clientsProvider
-	// configuredResources is the merged base + registered set as configured, so it may still
-	// name collections rather than served groups.
+	// configuredResources may still name collections rather than served groups.
 	configuredResources []SupportedResource
 	// expanded caches the result of resolving collections through discovery.
 	expandOnce sync.Once
@@ -200,7 +197,8 @@ type clientFactory struct {
 	expandErr  error
 }
 
-// supportedResources resolves the configured set to served groups, once.
+// supportedResources resolves the configured set to served groups, once: a group that starts
+// being served later needs a restart, as installing the plugin does.
 func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedResource, error) {
 	f.expandOnce.Do(func() {
 		f.expanded, f.expandErr = expandWildcardGroups(ctx, discoveryKinds(f.clientsProvider, f.configuredResources), f.configuredResources)
@@ -342,8 +340,8 @@ func defaultSupportedResources(supported []SupportedResource) []SupportedResourc
 
 type multiClientFactory struct {
 	clientFactories map[string]ClientFactory
-	// collections are the configured wildcard patterns, kept so a served member group can be
-	// resolved back onto the API server registered for its collection.
+	// collections are the configured patterns, resolving a member group onto the API server
+	// registered for its collection.
 	collections []string
 }
 
@@ -369,8 +367,7 @@ func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (Res
 		}
 
 		clients[group] = c
-		// Each API server resolves the configured set against its own discovery, so a
-		// collection is expanded by whichever server actually serves its members.
+		// A collection is expanded by whichever server actually serves its members.
 		for _, r := range c.SupportedResources() {
 			if !seen.Has(r.GroupKind) {
 				seen.Insert(r.GroupKind)
@@ -594,9 +591,8 @@ func (c *multiResourceClients) SupportedResources() []SupportedResource {
 	return c.supportedResources
 }
 
-// clientsFor resolves the API server serving a group, falling back to the one registered for the
-// collection the group belongs to. Members of a collection are served together, so the caller
-// registers one provider per collection rather than one per member it cannot enumerate up front.
+// clientsFor resolves the API server serving a group, falling back to the one registered for its
+// collection: members are served together and cannot be enumerated up front.
 func (c *multiResourceClients) clientsFor(group string) (ResourceClients, bool) {
 	if clients, ok := c.resourceClientsByAPIGroup[group]; ok {
 		return clients, true
@@ -640,25 +636,18 @@ func ForEach(ctx context.Context, client dynamic.ResourceInterface, fn func(item
 	return nil
 }
 
-// nonProvisionableGroups are served groups that a wildcard entry never expands to. The built-in
-// data sources hold no stored instances, so provisioning them would add an empty list to every
-// export and three inert rows to the settings endpoint.
+// nonProvisionableGroups are served groups a wildcard never expands to: the built-in data sources
+// hold no stored instances, so they would add an empty export list and inert settings rows.
 var nonProvisionableGroups = sets.New(
 	"grafana.datasource.grafana.app",
 	"mixed.datasource.grafana.app",
 	"dashboard.datasource.grafana.app",
 )
 
-// expandWildcardGroups turns each configured collection entry into one entry per API group that
-// serves that kind inside the collection, asking discovery which those are. Entries that already
-// name a served group are passed through.
-//
-// Discovery is the right source rather than the installed plugin list: a plugin can be installed
-// without its group being served, and it is the served group a client has to address. Matching the
-// kind as well as the group keeps a broad pattern from expanding onto groups that do not serve it,
-// which would then fail to resolve a client. The result is cached on first success, so the ~15 call
-// sites that take a client do not each cost a /apis round trip; a group that starts being served
-// later needs a restart, as installing the plugin does.
+// expandWildcardGroups turns each configured collection into one entry per API group that serves
+// the kind inside it; an entry naming a served group passes through. Discovery is the source
+// rather than the installed plugin list: a plugin can be installed without its group being served,
+// and it is the served group a client has to address.
 func expandWildcardGroups(ctx context.Context, listKinds groupKindLister, configured []SupportedResource) ([]SupportedResource, error) {
 	var served []schema.GroupKind
 	var listed bool
@@ -688,10 +677,8 @@ func expandWildcardGroups(ctx context.Context, listKinds groupKindLister, config
 // groupKindLister lists the group/kind pairs a server serves.
 type groupKindLister func(ctx context.Context) ([]schema.GroupKind, error)
 
-// discoveryKinds lists every kind the server serves, through its discovery client. Discovery
-// failures of groups no configured pattern covers are tolerated, so one unavailable API group does
-// not stop the collections that are available from expanding; a failure inside a collection is
-// not, since a member would then silently go missing.
+// discoveryKinds lists every kind the server serves. A discovery failure outside the configured
+// collections is tolerated; one inside is not, since a member would silently go missing.
 func discoveryKinds(provider clientsProvider, configured []SupportedResource) groupKindLister {
 	relevant := func(group string) bool {
 		for _, r := range configured {

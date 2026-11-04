@@ -204,9 +204,8 @@ func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRe
 				}
 				continue
 			}
-			// An omitted group is resolved from the kind alone. That cannot work for a kind
-			// registered as a collection: its members each serve their own group, and reading
-			// the resource through the wrong one does not find it.
+			// A kind registered as a collection cannot resolve an omitted group: its members
+			// each serve their own, and reading through the wrong one finds nothing.
 			if resources.IsWildcardGroup(s.Group) {
 				groupRequired = true
 				continue

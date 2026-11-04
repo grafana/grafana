@@ -240,8 +240,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		require.Equal(t, []schema.GroupKind{{Group: "playlist.grafana.app", Kind: "Playlist"}}, groupKinds(expanded))
 	})
 
-	// A collection nobody serves expands to nothing rather than erroring: provisioning should start
-	// when a plugin is uninstalled, and the kind simply has no groups to act on.
+	// Provisioning must still start when the plugin serving a collection is uninstalled.
 	t.Run("a collection with no served members expands to nothing", func(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
 		require.NoError(t, err)
@@ -301,8 +300,7 @@ func TestExpandWildcardGroups(t *testing.T) {
 		}, groupKinds(expanded))
 	})
 
-	// A pattern can cover a group that does not serve the kind at all. Expanding onto it would
-	// produce an entry whose client cannot be resolved, so the kind has to match as well.
+	// Expanding onto a covered group that does not serve the kind yields an unresolvable client.
 	t.Run("skips a covered group that does not serve the kind", func(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.grafana.app/Playlist"})
 		require.NoError(t, err)

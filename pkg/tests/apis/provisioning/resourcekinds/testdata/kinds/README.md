@@ -29,9 +29,8 @@ delete/move jobs — against a new kind. No Go changes are required.
 - **`featureFlags`** — extra feature toggles the kind's apiserver/authorizer needs (raw toggle
   names). Often empty; playlists need `playlistsRBAC`.
 - **`collection`** — the storage collection the kind's group belongs to, when several API groups
-  share one (data sources: each plugin serves its own group but all are stored in
-  `datasource.grafana.app`). Setting it declares the kind as a wildcard, the way an operator would,
-  so the battery runs through discovery expansion, and points the `[unified_storage]` key at the
+  share one (each data source plugin serves its own group, all stored in `datasource.grafana.app`).
+  Setting it declares the kind as a wildcard and points the `[unified_storage]` key at the
   collection. Omit it for a kind that serves its own group.
 
 The file name (without `.json`) is the kind's label, used in subtest names and repository names.

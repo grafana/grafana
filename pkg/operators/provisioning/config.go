@@ -262,15 +262,11 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		return nil, err
 	}
 
-	// Dashboards and folders have dedicated server URLs; everything else is served by the
-	// aggregated API server. Skip the built-in groups, then ensure every other active
-	// resource's group resolves to the aggregated server — failing loudly if a resource needs
-	// it and it is unset, rather than hitting "no clients provider for group" at request time.
-	//
-	// A collection is registered under the collection group, not its members: the members
-	// depend on what the serving instance has installed and cannot be discovered here, before
-	// there is a client to discover through. Member groups resolve to it by suffix, and the
-	// collection group is also the identity authorization folds members onto.
+	// Dashboards and folders have dedicated server URLs; every other active resource must
+	// resolve to the aggregated server — failing loudly when it is unset, rather than hitting
+	// "no clients provider for group" at request time. A collection is registered under the
+	// collection group, not its members: those cannot be discovered before there is a client to
+	// discover through.
 	for _, r := range supportedResources {
 		if !r.IsActive() {
 			continue
