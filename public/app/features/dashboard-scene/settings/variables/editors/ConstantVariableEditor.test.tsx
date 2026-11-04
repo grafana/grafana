@@ -1,8 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { ConstantVariable } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+
+import { addToEditedDashboard } from '../variableEditTestUtils';
 
 import { ConstantVariableEditor, getConstantVariableOptions } from './ConstantVariableEditor';
 
@@ -92,3 +94,27 @@ async function buildTestScene() {
 
   return { constantVar };
 }
+
+describe('ConstantVariableEditor undo/redo', () => {
+  it('records a value change made in the sidebar as one undoable action', async () => {
+    const variable = new ConstantVariable({ name: 'constant', value: 'old' });
+    const sidebar = addToEditedDashboard(variable);
+    const [valueOption] = getConstantVariableOptions(variable);
+    valueOption.parent = new OptionsPaneCategoryDescriptor({ id: 'parent', title: 'Parent' });
+    render(valueOption.renderElement());
+
+    await userEvent.clear(screen.getByRole('textbox'));
+    await userEvent.type(screen.getByRole('textbox'), 'new');
+    await userEvent.tab();
+    expect(variable.state.value).toBe('new');
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    act(() => sidebar.undoAction());
+    expect(variable.state.value).toBe('old');
+    expect(screen.getByRole('textbox')).toHaveValue('old');
+
+    act(() => sidebar.redoAction());
+    expect(variable.state.value).toBe('new');
+    expect(screen.getByRole('textbox')).toHaveValue('new');
+  });
+});

@@ -231,30 +231,39 @@ jobs:
       - name: Remove main checkout before bump
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
         run: rm -rf .grafana-main
+      - name: Install dependencies (pnpm)
+        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
+        uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          node-version-file: false
+          cache: false
+          require-lockfile: true
       - name: Bump versions
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
         run: |
-          yarn install
           # Target VERSION explicitly and skip if already there; a relative bump isn't safe to re-run.
           current_version=$(node -p "require('./package.json').version")
           if [ "$current_version" != "$VERSION" ]; then
-            npm version "$VERSION" --no-git-tag-version
+            pnpm version "$VERSION" --no-git-tag-version --no-git-checks
             # Release branches cut before lerna was replaced with nx release still have lerna.json
             if [ -f lerna.json ]; then
-              yarn run lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
+              pnpm exec lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
             else
-              yarn nx release version "$VERSION"
+              pnpm exec nx release version "$VERSION"
             fi
           fi
-          yarn install
-          yarn prettier:write
+      - name: Refresh lockfile
+        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
+        run: |
+          pnpm install --no-frozen-lockfile
+          pnpm run prettier:write
       - name: make gen-cue
         if: ${{ !contains(inputs.version, '+security') }}
         shell: bash
         run: make gen-cue
 
       # Single commit for all release-PR file changes (changelog + version bumps +
-      # yarn.lock refresh + regenerated CUE schemas). ghcommit-action uses the Git Data
+      # lockfile refresh + regenerated CUE schemas). ghcommit-action uses the Git Data
       # API, which gives us two things in one shot:
       #   1. Commits made via the API with a GitHub App installation token are auto-signed
       #      by GitHub under grafana-writer[bot]'s identity (Verified signature),

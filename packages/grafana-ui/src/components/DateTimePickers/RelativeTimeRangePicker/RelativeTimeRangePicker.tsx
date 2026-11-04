@@ -257,7 +257,7 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
       })
     ),
     content: css({
-      background: theme.colors.background.primary,
+      background: theme.colors.background.elevated,
       boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       position: 'absolute',
       zIndex: theme.zIndex.modal,

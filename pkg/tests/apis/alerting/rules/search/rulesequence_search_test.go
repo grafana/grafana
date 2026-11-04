@@ -13,6 +13,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -27,7 +28,7 @@ const (
 	sequenceFolderB = "sequence-search-folder-b"
 
 	recordingRuleUIDsField = "recordingRuleUIDs"
-	alertingRuleUIDsField  = "alertingRuleUIDs"
+	alertRuleUIDsField     = "alertRuleUIDs"
 	intervalField          = "interval"
 )
 
@@ -82,12 +83,12 @@ func TestIntegrationRuleSequenceSearch(t *testing.T) {
 
 		recOnlyHit := sequenceHit(t, got, seqRecOnly)
 		require.ElementsMatch(t, recOnly, stringArrayField(t, recOnlyHit, recordingRuleUIDsField))
-		require.NotContains(t, perKindFieldValues(recOnlyHit), alertingRuleUIDsField)
+		require.NotContains(t, perKindFieldValues(recOnlyHit), alertRuleUIDsField)
 		require.Equal(t, "1m", perKindStringField(t, recOnlyHit, intervalField))
 
 		mixedHit := sequenceHit(t, got, seqMixed)
 		require.ElementsMatch(t, mixedRec, stringArrayField(t, mixedHit, recordingRuleUIDsField))
-		require.ElementsMatch(t, mixedAlert, stringArrayField(t, mixedHit, alertingRuleUIDsField))
+		require.ElementsMatch(t, mixedAlert, stringArrayField(t, mixedHit, alertRuleUIDsField))
 		require.Equal(t, "2m", perKindStringField(t, mixedHit, intervalField))
 	})
 
@@ -95,7 +96,7 @@ func TestIntegrationRuleSequenceSearch(t *testing.T) {
 		byRecording := searchSequences(t, ctx, adminRC, sequenceQuery(recordingRuleUIDsField, mixedAlert[0]))
 		require.Empty(t, byRecording.Items)
 
-		byAlerting := searchSequences(t, ctx, adminRC, sequenceQuery(alertingRuleUIDsField, mixedAlert[0]))
+		byAlerting := searchSequences(t, ctx, adminRC, sequenceQuery(alertRuleUIDsField, mixedAlert[0]))
 		require.Equal(t, []string{seqMixed}, sequenceNames(byAlerting.Items))
 	})
 
@@ -137,8 +138,26 @@ func TestIntegrationRuleSequenceSearch(t *testing.T) {
 
 		hit := sequenceHit(t, findSequences(t, ctx, adminRC, []string{addedAlert}), name)
 		require.ElementsMatch(t, toStrings(updated.Spec.RecordingRules), stringArrayField(t, hit, recordingRuleUIDsField))
-		require.ElementsMatch(t, toStrings(updated.Spec.AlertingRules), stringArrayField(t, hit, alertingRuleUIDsField))
+		require.ElementsMatch(t, toStrings(updated.Spec.AlertingRules), stringArrayField(t, hit, alertRuleUIDsField))
 		require.Empty(t, findSequences(t, ctx, adminRC, []string{recs[0]}), "a removed member must no longer match")
+	})
+
+	// v1beta1 renamed spec.alertingRules to spec.alertRules; the index reads
+	// each document with its own version's path, so both versions search alike.
+	t.Run("a sequence written as v1beta1 is found from either version", func(t *testing.T) {
+		betaRC := helper.Org1.Admin.RESTClient(t, &v1beta1.GroupVersion)
+		rec, alert := newRecording(t, sequenceFolderA), newAlerting(t, sequenceFolderA)
+		name := createRuleSequenceV1beta1(t, ctx, betaRC, sequenceFolderA, "4m", []string{rec}, []string{alert})
+
+		for _, version := range []string{v0alpha1.APIVersion, v1beta1.APIVersion} {
+			got := searchSequencesAt(t, ctx, betaRC, version, sequenceQuery(alertRuleUIDsField, alert))
+			require.Equal(t, []string{name}, sequenceNames(got.Items), version)
+			require.ElementsMatch(t, []string{alert}, stringArrayField(t, got.Items[0], alertRuleUIDsField), version)
+			require.ElementsMatch(t, []string{rec}, stringArrayField(t, got.Items[0], recordingRuleUIDsField), version)
+		}
+
+		got := searchSequencesAt(t, ctx, betaRC, v1beta1.APIVersion, sequenceQuery(alertRuleUIDsField, mixedAlert[0]))
+		require.Equal(t, []string{seqMixed}, sequenceNames(got.Items), "a sequence written as v0alpha1 is found through v1beta1")
 	})
 
 	t.Run("deleted sequences are not returned", func(t *testing.T) {
@@ -180,7 +199,7 @@ func findSequences(t *testing.T, ctx context.Context, rc *rest.RESTClient, ruleU
 	t.Helper()
 	var out []searchv0.ResultItem
 	seen := map[string]bool{}
-	for _, field := range []string{recordingRuleUIDsField, alertingRuleUIDsField} {
+	for _, field := range []string{recordingRuleUIDsField, alertRuleUIDsField} {
 		resp := searchSequences(t, ctx, rc, sequenceQuery(field, ruleUIDs...))
 		require.Empty(t, resp.Metadata.Continue, "all hits must fit in one page")
 		for _, h := range resp.Items {
@@ -197,17 +216,22 @@ func findSequences(t *testing.T, ctx context.Context, rc *rest.RESTClient, ruleU
 func sequenceQuery(field string, ruleUIDs ...string) *perKindQuery {
 	return newPerKindQuery().
 		filter(field, perKindOpIn, ruleUIDs...).
-		fields(recordingRuleUIDsField, alertingRuleUIDsField, intervalField).
+		fields(recordingRuleUIDsField, alertRuleUIDsField, intervalField).
 		limit(500)
 }
 
 func searchSequences(t *testing.T, ctx context.Context, rc *rest.RESTClient, q *perKindQuery) searchv0.SearchResults {
 	t.Helper()
+	return searchSequencesAt(t, ctx, rc, v0alpha1.APIVersion, q)
+}
+
+func searchSequencesAt(t *testing.T, ctx context.Context, rc *rest.RESTClient, version string, q *perKindQuery) searchv0.SearchResults {
+	t.Helper()
 	payload, err := json.Marshal(q.body)
 	require.NoError(t, err)
 
 	raw, err := rc.Post().
-		AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", ruleSequences, "search").
+		AbsPath("apis", v0alpha1.APIGroup, version, "namespaces", "default", ruleSequences, "search").
 		Body(payload).
 		DoRaw(ctx)
 	require.NoError(t, err, string(raw))
@@ -288,6 +312,39 @@ func createRuleSequence(t *testing.T, ctx context.Context, client *apis.TypedCli
 		},
 	}, v1.CreateOptions{})
 	require.NoError(t, err)
+	return created.Name
+}
+
+func createRuleSequenceV1beta1(t *testing.T, ctx context.Context, rc *rest.RESTClient, folder, interval string, recordingUIDs, alertUIDs []string) string {
+	t.Helper()
+	refs := func(uids []string) []any {
+		out := make([]any, 0, len(uids))
+		for _, uid := range uids {
+			out = append(out, map[string]any{"name": uid})
+		}
+		return out
+	}
+	body, err := json.Marshal(map[string]any{
+		"apiVersion": v1beta1.GroupVersion.String(),
+		"kind":       "RuleSequence",
+		"metadata": map[string]any{
+			"generateName": "search-seq-",
+			"annotations":  map[string]string{v1beta1.FolderAnnotationKey: folder},
+		},
+		"spec": map[string]any{
+			"trigger":        map[string]any{"interval": interval},
+			"recordingRules": refs(recordingUIDs),
+			"alertRules":     refs(alertUIDs),
+		},
+	})
+	require.NoError(t, err)
+	raw, err := rc.Post().
+		AbsPath("apis", v1beta1.APIGroup, v1beta1.APIVersion, "namespaces", "default", ruleSequences).
+		Body(body).
+		DoRaw(ctx)
+	require.NoError(t, err, string(raw))
+	var created v1beta1.RuleSequence
+	require.NoError(t, json.Unmarshal(raw, &created))
 	return created.Name
 }
 

@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -19,6 +21,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/mocks"
 	"github.com/grafana/nanogit/protocol"
@@ -106,6 +109,72 @@ func TestNewGit(t *testing.T) {
 	require.Equal(t, "https://git.example.com/owner/repo.git", gitRepo.URL())
 	require.Equal(t, "main", gitRepo.Branch())
 	require.Equal(t, config, gitRepo.Config())
+}
+
+func TestNewRepository_SendsUserAgent(t *testing.T) {
+	tests := []struct {
+		name      string
+		userAgent string
+		want      string
+	}{
+		{name: "default when unset", want: defaultUserAgent},
+		{name: "versioned", userAgent: "grafana-provisioning/13.4.0", want: "grafana-provisioning/13.4.0"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var mu sync.Mutex
+			var agents []string
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				mu.Lock()
+				agents = append(agents, r.UserAgent())
+				mu.Unlock()
+				w.WriteHeader(http.StatusUnauthorized)
+			}))
+			t.Cleanup(server.Close)
+
+			config := &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType}}
+			gitRepo, err := NewRepository(t.Context(), config, RepositoryConfig{URL: server.URL + "/owner/repo", Branch: "main", UserAgent: tt.userAgent}, nil, nil)
+			require.NoError(t, err)
+
+			ok, err := gitRepo.(*gitRepository).client.CanRead(t.Context())
+			require.NoError(t, err)
+			require.False(t, ok)
+
+			mu.Lock()
+			defer mu.Unlock()
+			require.NotEmpty(t, agents)
+			for _, agent := range agents {
+				require.Equal(t, tt.want, agent)
+			}
+		})
+	}
+}
+
+type emptySecureValues struct{}
+
+func (emptySecureValues) Token(context.Context) (common.RawSecureValue, error) { return "", nil }
+func (emptySecureValues) WebhookSecret(context.Context) (common.RawSecureValue, error) {
+	return "", nil
+}
+func (emptySecureValues) CommitSigningKey(context.Context) (common.RawSecureValue, error) {
+	return "", nil
+}
+
+func TestExtra_BuildUsesUserAgent(t *testing.T) {
+	decrypter := func(*provisioning.Repository) repository.SecureValues { return emptySecureValues{} }
+	config := &provisioning.Repository{Spec: provisioning.RepositorySpec{
+		Type: provisioning.GitRepositoryType,
+		Git:  &provisioning.GitRepositoryConfig{URL: "https://git.example.com/owner/repo.git", Branch: "main"},
+	}}
+
+	repo, err := Extra(decrypter, false, nil, nil, "custom-agent/1.0").Build(t.Context(), config)
+	require.NoError(t, err)
+	require.Equal(t, "custom-agent/1.0", repo.(*gitRepository).gitConfig.UserAgent)
+}
+
+func TestUserAgent(t *testing.T) {
+	require.Equal(t, "grafana-provisioning/13.4.0", UserAgent("13.4.0"))
+	require.Equal(t, "grafana-provisioning", UserAgent(""))
 }
 
 func TestCreateSignature(t *testing.T) {
@@ -5291,6 +5360,22 @@ func TestGitRepository_AuditLog(t *testing.T) {
 	require.Contains(t, output, `"namespace":"my-ns"`)
 	require.Contains(t, output, `"repository_name":"my-repo"`)
 	require.Contains(t, output, `"url":"https://git.example.com/owner/repo.git"`)
+}
+
+func TestGitRepository_CompareFiles_DeletedDirectories(t *testing.T) {
+	mockClient := &mocks.FakeClient{}
+	mockClient.GetRefReturns(nanogit.Ref{Hash: hash.Hash{1}}, nil)
+	mockClient.CompareCommitsReturns([]nanogit.CommitFile{
+		{Path: "configs/empty.json", Type: protocol.ObjectTypeTree, Status: protocol.FileStatusDeleted},
+		{Path: "configs/dashboard.json", Type: protocol.ObjectTypeBlob, Status: protocol.FileStatusDeleted},
+	}, nil)
+	repo := &gitRepository{client: mockClient, gitConfig: RepositoryConfig{Path: "configs"}, config: &provisioning.Repository{}}
+	changes, err := repo.CompareFiles(t.Context(), "main", "feature")
+	require.NoError(t, err)
+	require.Equal(t, []repository.VersionedFileChange{
+		{Action: repository.FileActionDeleted, Path: "empty.json/", PreviousPath: "empty.json/", Ref: "feature", PreviousRef: "main"},
+		{Action: repository.FileActionDeleted, Path: "dashboard.json", PreviousPath: "dashboard.json", Ref: "feature", PreviousRef: "main"},
+	}, changes)
 }
 
 func TestGitRepository_CompareFiles_HiddenPaths(t *testing.T) {

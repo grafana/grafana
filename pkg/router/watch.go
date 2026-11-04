@@ -4,42 +4,14 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strings"
 
 	"golang.org/x/net/http/httpguts"
-
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apiserver/pkg/endpoints/request"
 )
-
-var requestInfoFactory = &request.RequestInfoFactory{
-	APIPrefixes:          sets.NewString(strings.TrimPrefix(apisPrefix, "/")),
-	GrouplessAPIPrefixes: sets.NewString(),
-}
-
-// requestVerb returns the Kubernetes verb for req: "watch" for a watch, "list"
-// or "get" for reads, and so on. Paths outside the resource API, such as
-// discovery and OpenAPI, return the lowercased HTTP method.
-func requestVerb(req *http.Request) string {
-	outcome := outcomeOf(req)
-	if outcome != nil && outcome.verb != "" {
-		return outcome.verb
-	}
-	var verb string
-	if info, err := requestInfoFactory.NewRequestInfo(req); err == nil && info.Verb != "" {
-		verb = info.Verb
-	} else {
-		verb = strings.ToLower(req.Method)
-	}
-	if outcome != nil {
-		outcome.verb = verb
-	}
-	return verb
-}
 
 // rejectUpgrade answers an upgrade request, which is how a client asks for a
 // watch over WebSocket. The router does not proxy upgrades, so it says so
-// rather than failing some other way.
+// rather than failing some other way. An HTTP/2 extended CONNECT (RFC 8441)
+// carries no Connection header and is not caught here.
 func rejectUpgrade(w http.ResponseWriter, req *http.Request) bool {
 	if !httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {
 		return false

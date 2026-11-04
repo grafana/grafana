@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/grafana/authlib/types"
@@ -135,14 +136,16 @@ type buildResourceServerOpts func(*ServerOptions, *resource.ResourceServerOption
 
 // buildResourceServerOptions builds the resource.ResourceServerOptions from sql.ServerOptions.
 func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceServerOpts) (*resource.ResourceServerOptions, error) {
+	if err := opts.Cfg.ValidateSharedVectorConfig(); err != nil {
+		return nil, fmt.Errorf("vector collection configuration: %w", err)
+	}
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	serverOptions := &resource.ResourceServerOptions{
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
-		Reg:                     opts.Reg,
-		SecureValues:            opts.SecureValues,
-		GRPCErrorResultToStatus: opts.Cfg != nil && opts.Cfg.UnifiedStorageGRPCErrorResultToStatus,
+		Reg:          opts.Reg,
+		SecureValues: opts.SecureValues,
 	}
 	for _, optFn := range withOpts {
 		if err := optFn(opts, serverOptions); err != nil {
@@ -327,6 +330,11 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.IndexMetrics = opts.IndexMetrics
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
 
+	resourceOpts.Search.SharedExternalCollections = make([]string, 0, len(opts.Cfg.VectorSharedExternalCollections))
+	for collection := range opts.Cfg.VectorSharedExternalCollections {
+		resourceOpts.Search.SharedExternalCollections = append(resourceOpts.Search.SharedExternalCollections, collection)
+	}
+	slices.Sort(resourceOpts.Search.SharedExternalCollections)
 	if opts.VectorBackend != nil {
 		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
 		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections

@@ -84,6 +84,7 @@ type GetTeamsByUserQuery struct {
 }
 
 type SearchTeamsQuery struct {
+	MemberUID         string
 	Query             string
 	Name              string
 	Limit             int

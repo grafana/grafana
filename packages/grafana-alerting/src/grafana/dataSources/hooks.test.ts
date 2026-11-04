@@ -3,7 +3,11 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { type DataSourceJsonData } from '@grafana/data';
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 
-import { useDataSourcesWithValidRecordingTarget, useDataSourcesWithValidRecordingTargetByUid } from './hooks';
+import {
+  useDataSourcesManagingAlertsByUid,
+  useDataSourcesWithValidRecordingTarget,
+  useDataSourcesWithValidRecordingTargetByUid,
+} from './hooks';
 import { DataSourceInstanceSettingsFactory, setupDataSources } from './testSetup/DataSources';
 
 jest.mock('@grafana/runtime/unstable', () => {
@@ -66,6 +70,41 @@ describe('useDataSourcesWithValidRecordingTargetByUid', () => {
     setupDataSources(dataSource('prom'));
 
     const { result, rerender } = renderHook(() => useDataSourcesWithValidRecordingTargetByUid());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const first = result.current;
+
+    rerender();
+
+    expect(result.current).toBe(first);
+  });
+});
+
+describe('useDataSourcesManagingAlertsByUid', () => {
+  it('reports loading with no items, then keys the data sources that manage alerts by uid', async () => {
+    setupDataSources(dataSource('prom'), dataSource('not-managing', 'prometheus', { manageAlerts: false }));
+
+    const { result } = renderHook(() => useDataSourcesManagingAlertsByUid());
+
+    expect(result.current.byUid.size).toBe(0);
+    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect([...result.current.byUid.keys()]).toEqual(['prom']);
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('exposes the error when discovery fails', async () => {
+    hookMock.mockReturnValue({ items: [], isLoading: false, error: new Error('list request failed') });
+
+    const { result } = renderHook(() => useDataSourcesManagingAlertsByUid());
+
+    expect(result.current.byUid.size).toBe(0);
+    expect(result.current.error).toEqual(new Error('list request failed'));
+  });
+
+  it('keeps the same result object across re-renders', async () => {
+    setupDataSources(dataSource('prom'));
+
+    const { result, rerender } = renderHook(() => useDataSourcesManagingAlertsByUid());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     const first = result.current;
 

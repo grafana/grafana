@@ -1,21 +1,19 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import kbn from 'app/core/utils/kbn';
 import { AnnoKeyFolder, type ResourceForCreate } from 'app/features/apiserver/types';
 import {
   DASHBOARD_API_GROUP,
   dashboardAPIVersionResolver,
 } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
-import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { getResourceCommitMessage } from 'app/features/provisioning/utils/commitMessage';
-import { buildResourceBranchRedirectUrl } from 'app/features/provisioning/utils/redirect';
+import { buildResourceBranchRedirectUrl, getSavedDashboardPath } from 'app/features/provisioning/utils/redirect';
 
 import { getProvisionedRequestError } from '../components/utils/errors';
+import { getRequestRef } from '../utils/workflow';
 
 import { useCreateOrUpdateRepositoryFile } from './useCreateOrUpdateRepositoryFile';
 import { useProvisionedRequestHandler } from './useProvisionedRequestHandler';
@@ -31,12 +29,13 @@ export interface ImportProvisionedSaveParams {
   folderUid: string;
   /** Dashboard title — used for the default commit message and post-save URL slug. */
   title: string;
+  /** The commit creates `form.ref`; the destination page shows the PR banner instead of a toast. */
+  isNewBranch?: boolean;
   /** Form values from the provisioning fields. */
   form: {
     ref: string;
     path: string;
     comment?: string;
-    workflow?: string;
   };
 }
 
@@ -60,7 +59,15 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
   });
 
   const save = useCallback(
-    async ({ spec, apiVersion, uid, folderUid: targetFolderUid, title, form }: ImportProvisionedSaveParams) => {
+    async ({
+      spec,
+      apiVersion,
+      uid,
+      folderUid: targetFolderUid,
+      title,
+      isNewBranch,
+      form,
+    }: ImportProvisionedSaveParams) => {
       if (!repository) {
         return;
       }
@@ -84,7 +91,7 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
         const data = await createFile({
           name: repository.name,
           path: form.path,
-          ref: form.ref === repository.branch ? undefined : form.ref,
+          ref: getRequestRef(repository, form.ref),
           message: getResourceCommitMessage({
             comment: form.comment,
             repository,
@@ -97,9 +104,8 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
         }).unwrap();
 
         handleSuccess(data, {
-          workflow: form.workflow,
+          isNewBranch,
           folderUID: targetFolderUid,
-          selectedBranch: form.ref,
           handlers: {
             onWriteSuccess: (upsert) => {
               // Sync-disabled repositories can return success without creating a
@@ -107,19 +113,10 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
               // have a dashboard uid to navigate to.
               const dashboardUid = upsert?.metadata?.name;
               if (!dashboardUid) {
-                navigate(
-                  locationUtil.assureBaseUrl(targetFolderUid ? `/dashboards/f/${targetFolderUid}/` : '/dashboards')
-                );
+                navigate(targetFolderUid ? `/dashboards/f/${targetFolderUid}/` : '/dashboards');
                 return;
               }
-              const url = locationUtil.assureBaseUrl(
-                getDashboardUrl({
-                  uid: dashboardUid,
-                  slug: kbn.slugifyForUrl(title),
-                  currentQueryParams: window.location.search,
-                })
-              );
-              navigate(url);
+              navigate(getSavedDashboardPath(dashboardUid, title));
             },
             onBranchSuccess: ({ ref, path }, info) => {
               const url = buildResourceBranchRedirectUrl({

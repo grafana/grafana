@@ -12,9 +12,18 @@ export interface ScopesDashboardsTreeSearchProps {
   disabled: boolean;
   query: string;
   onChange: (value: string) => void;
+  /** Whether to show the drawer expand/collapse toggle. Only meaningful next to the standalone
+   * docked drawer — irrelevant (and confusing) when this search box is reused inside the mega menu,
+   * which has its own open/close affordance. Defaults to `true` to preserve the drawer's behavior. */
+  showNavigationToggle?: boolean;
 }
 
-export function ScopesDashboardsTreeSearch({ disabled, query, onChange }: ScopesDashboardsTreeSearchProps) {
+export function ScopesDashboardsTreeSearch({
+  disabled,
+  query,
+  onChange,
+  showNavigationToggle = true,
+}: ScopesDashboardsTreeSearchProps) {
   const styles = useStyles2(getStyles);
 
   const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({ value: query, dirty: false });
@@ -40,12 +49,13 @@ export function ScopesDashboardsTreeSearch({ disabled, query, onChange }: Scopes
       <FilterInput
         disabled={disabled}
         placeholder={t('scopes.dashboards.filter', 'Filter...')}
+        aria-label={t('scopes.dashboards.filterAriaLabel', 'Filter dashboards')}
         variant="filter"
         value={inputState.value}
         data-testid="scopes-dashboards-search"
         onChange={(value) => setInputState({ value, dirty: true })}
       />
-      <ContextualNavigationPaneToggle />
+      {showNavigationToggle && <ContextualNavigationPaneToggle />}
     </div>
   );
 }

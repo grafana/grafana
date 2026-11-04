@@ -165,19 +165,31 @@ describe('GMA-only Alert rules route', () => {
     return getAlertingRoutes();
   }
 
-  it('registers /alerting/rules/alert only with the flag on and adds no other route', () => {
+  it('registers /alerting/rules/alert and /alerting/rules/recording only with the flag on', () => {
     const routesOff = getRoutes(false);
     const routesOn = getRoutes(true);
 
     expect(routesOff.map((route) => route.path)).not.toContain('/alerting/rules/alert');
+    expect(routesOff.map((route) => route.path)).not.toContain('/alerting/rules/recording');
     expect(routesOn.map((route) => route.path)).toEqual([
       ...routesOff.map((route) => route.path),
       '/alerting/rules/alert',
+      '/alerting/rules/recording',
     ]);
   });
 
-  it('denies a user with only data source-managed read and admits a Grafana-managed reader', () => {
+  it('denies a user with only data source-managed read and admits a Grafana-managed reader (alert route)', () => {
     const guard = getRoutes(true).find((route) => route.path === '/alerting/rules/alert')?.roles;
+
+    contextSrv.user.permissions = { [AccessControlAction.AlertingRuleExternalRead]: true };
+    expect(guard?.()).toEqual(['Reject']);
+
+    contextSrv.user.permissions = { [AccessControlAction.AlertingRuleRead]: true };
+    expect(guard?.()).toEqual([]);
+  });
+
+  it('denies a user with only data source-managed read and admits a Grafana-managed reader (recording route)', () => {
+    const guard = getRoutes(true).find((route) => route.path === '/alerting/rules/recording')?.roles;
 
     contextSrv.user.permissions = { [AccessControlAction.AlertingRuleExternalRead]: true };
     expect(guard?.()).toEqual(['Reject']);

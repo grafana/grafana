@@ -4,6 +4,7 @@ import { type GetDataSourceInstanceListFilters, getDataSourceInstanceList } from
 
 import {
   SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
+  isDataSourceManagingAlerts,
   isSupportedExternalPrometheusFlavoredRulesSourceType,
   isValidRecordingRulesTarget,
 } from './predicates';
@@ -36,4 +37,27 @@ export const RECORDING_TARGET_FILTERS: GetDataSourceInstanceListFilters = Object
  */
 export function getDataSourcesWithValidRecordingTarget(): Promise<DataSourceInstanceListItem[]> {
   return getDataSourceInstanceList(RECORDING_TARGET_FILTERS);
+}
+
+function isManagingAlerts(item: DataSourceInstanceListItem): boolean {
+  // eslint-disable-next-line @grafana/no-config-datasources
+  const settings = config.datasources[item.name];
+
+  // An absent manageAlerts falls back to a config default that is usually true, so an item without
+  // settings must be dropped rather than judged on the default.
+  return settings?.uid === item.uid && isDataSourceManagingAlerts(settings);
+}
+
+export const MANAGING_ALERTS_FILTERS: GetDataSourceInstanceListFilters = Object.freeze({
+  // Also keeps the list from appending the built-in `-- Grafana --` data source.
+  alerting: true,
+  filter: isManagingAlerts,
+});
+
+/**
+ * The alerting data sources that manage alerts. The items carry no `jsonData`, so callers cannot
+ * re-check the condition; test membership by `uid` instead.
+ */
+export function getDataSourcesManagingAlerts(): Promise<DataSourceInstanceListItem[]> {
+  return getDataSourceInstanceList(MANAGING_ALERTS_FILTERS);
 }

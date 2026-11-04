@@ -268,14 +268,10 @@ func searchResponseHasRows(rsp *resourcepb.ResourceSearchResponse) (bool, error)
 	if rsp == nil {
 		return false, errors.New("nil search response")
 	}
-	switch rsp.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return len(rsp.GetResults().GetRows()) > 0, nil
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return len(rsp.GetRows()) > 0, nil
-	default:
+	if rsp.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return false, fmt.Errorf("unsupported search result format %d", rsp.GetResultFormat())
 	}
+	return len(rsp.GetRows()) > 0, nil
 }
 
 // Called on update
@@ -363,6 +359,13 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 			if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
 				return v, err
 			}
+		}
+	}
+
+	if !v.hasChanged && s.opts.EnableInlineBlobs {
+		v.hasChanged, err = s.blobsChanged(ctx, updateObject, previousObject)
+		if err != nil {
+			return v, err
 		}
 	}
 

@@ -3,11 +3,7 @@ import { useMemo } from 'react';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import {
-  getCanPushToConfiguredBranch,
-  getDefaultRef,
-  getDefaultWorkflow,
-} from 'app/features/provisioning/components/defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef } from 'app/features/provisioning/components/defaults';
 import { ensureFolderPathTrailingSlash } from 'app/features/provisioning/components/utils/path';
 import { type RepositoryViewData } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
@@ -54,7 +50,6 @@ export function useProvisionedFolderFormData({
       ref: getDefaultRef(repository, branchPrefix),
       repo: repository.name || '',
       path: ensureFolderPathTrailingSlash(folder?.metadata?.annotations?.[AnnoKeySourcePath] || ''),
-      workflow: getDefaultWorkflow(repository),
     };
   }, [repository, isLoading, title, folder?.metadata?.annotations, branchPrefix]);
 

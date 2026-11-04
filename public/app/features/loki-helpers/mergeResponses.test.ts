@@ -1,4 +1,5 @@
 import {
+  type DataFrame,
   type DataQueryResponse,
   type Field,
   FieldType,
@@ -159,6 +160,243 @@ describe('combineResponses', () => {
         },
       ],
     });
+  });
+
+  it('does not silently drop a field that only exists in the newly fetched frame', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+
+    // Simulates infinite-scroll fetching an older page (logFrameB) whose documents contain a
+    // field the already-displayed page (logFrameA) doesn't have, e.g. an Elasticsearch
+    // response where only some matched documents carry a given field.
+    logFrameB.fields.push({
+      name: 'extraField',
+      type: FieldType.string,
+      config: {},
+      values: ['extraB1', 'extraB2'],
+    });
+
+    const responseA: DataQueryResponse = {
+      data: [logFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [logFrameB],
+    };
+
+    const combined = combineResponses(responseA, responseB);
+    const extraField = combined.data[0].fields.find((field: Field) => field.name === 'extraField');
+
+    expect(extraField).toBeDefined();
+    expect(extraField?.values).toEqual(['extraB1', 'extraB2', undefined, undefined]);
+  });
+
+  it('keeps a newly fetched field aligned by row when page sizes differ and the new row lands in the middle', () => {
+    // dest has more rows than source, and source's single new row sorts between two existing
+    // dest rows rather than at either end, so a field only present in source must be padded to
+    // dest's own row count (not source's) and spliced at the matching time-sorted position.
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 3,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11, 22, 33] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id1', 'id2', 'id3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [23] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id4'] },
+        { name: 'extraField', type: FieldType.string, config: {}, values: ['extraB1'] },
+      ],
+    };
+
+    const responseA: DataQueryResponse = { data: [dest] };
+    const responseB: DataQueryResponse = { data: [source] };
+
+    const combined = combineResponses(responseA, responseB);
+    const timeField = combined.data[0].fields.find((field: Field) => field.name === 'Time');
+    const extraField = combined.data[0].fields.find((field: Field) => field.name === 'extraField');
+
+    expect(timeField?.values).toEqual([11, 22, 23, 33]);
+    expect(extraField).toBeDefined();
+    expect(extraField?.values).toEqual([undefined, undefined, 'extraB1', undefined]);
+  });
+
+  it('keeps a field introduced in the middle of the newly fetched frame', () => {
+    // `extraField` occupies an index that dest already uses for `Line`. Copying source fields
+    // only into empty slots drops it and can duplicate the shifted field at the end instead.
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11, 33] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line1', 'line3'] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id1', 'id3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22] },
+        { name: 'extraField', type: FieldType.string, config: {}, values: ['extra'] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line2'] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id2'] },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const fields = combined.data[0].fields;
+
+    expect(fields.map((field: Field) => field.name)).toEqual(['Time', 'Line', 'id', 'extraField']);
+    expect(fields.find((field: Field) => field.name === 'Time')?.values).toEqual([11, 22, 33]);
+    expect(fields.find((field: Field) => field.name === 'Line')?.values).toEqual(['line1', 'line2', 'line3']);
+    expect(fields.find((field: Field) => field.name === 'id')?.values).toEqual(['id1', 'id2', 'id3']);
+    expect(fields.find((field: Field) => field.name === 'extraField')?.values).toEqual([undefined, 'extra', undefined]);
+  });
+
+  it('keeps a field that replaces another field when both frames have the same field count', () => {
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11, 33] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line1', 'line3'] },
+        { name: 'fieldA', type: FieldType.string, config: {}, values: ['a1', 'a3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line2'] },
+        { name: 'fieldB', type: FieldType.string, config: {}, values: ['b2'] },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const fields = combined.data[0].fields;
+
+    expect(fields.map((field: Field) => field.name)).toEqual(['Time', 'Line', 'fieldA', 'fieldB']);
+    expect(fields.find((field: Field) => field.name === 'Time')?.values).toEqual([11, 22, 33]);
+    expect(fields.find((field: Field) => field.name === 'Line')?.values).toEqual(['line1', 'line2', 'line3']);
+    expect(fields.find((field: Field) => field.name === 'fieldA')?.values).toEqual(['a1', undefined, 'a3']);
+    expect(fields.find((field: Field) => field.name === 'fieldB')?.values).toEqual([undefined, 'b2', undefined]);
+  });
+
+  it('keeps a same-named field with different labels when it replaces another at the same count', () => {
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11, 33] },
+        { name: 'Value', type: FieldType.number, config: {}, values: [1, 3], labels: { level: 'debug' } },
+        { name: 'Value', type: FieldType.number, config: {}, values: [10, 30], labels: { only: 'dest' } },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22] },
+        { name: 'Value', type: FieldType.number, config: {}, values: [2], labels: { level: 'debug' } },
+        { name: 'Value', type: FieldType.number, config: {}, values: [20], labels: { only: 'source' } },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const fields = combined.data[0].fields;
+
+    expect(fields.map((field: Field) => field.labels)).toEqual([
+      undefined,
+      { level: 'debug' },
+      { only: 'dest' },
+      { only: 'source' },
+    ]);
+    expect(fields[1].values).toEqual([1, 2, 3]);
+    expect(fields[2].values).toEqual([10, undefined, 30]);
+    expect(fields[3].values).toEqual([undefined, 20, undefined]);
+  });
+
+  it('does not pair a dest field with an unrelated source field when no field by that name exists in source', () => {
+    // `onlyInDest` doesn't exist in `source` at all. findSourceField's positional fallback is
+    // meant to disambiguate same-named fields, but it also fires when there are zero name
+    // matches, so it incorrectly pairs `onlyInDest` with whatever field happens to share its
+    // numeric index in `source.fields` (`id`, here) and merges that field's values into it.
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22, 33] },
+        { name: 'onlyInDest', type: FieldType.string, config: {}, values: ['d1', 'd2'] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id2', 'id3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id1'] },
+      ],
+    };
+
+    const responseA: DataQueryResponse = { data: [dest] };
+    const responseB: DataQueryResponse = { data: [source] };
+
+    const combined = combineResponses(responseA, responseB);
+    const timeField = combined.data[0].fields.find((field: Field) => field.name === 'Time');
+    const idField = combined.data[0].fields.find((field: Field) => field.name === 'id');
+    const onlyInDest = combined.data[0].fields.find((field: Field) => field.name === 'onlyInDest');
+
+    // Sanity-check that the fields present in both frames still merge correctly; the bug is
+    // specific to the field that only exists in dest.
+    expect(timeField?.values).toEqual([11, 22, 33]);
+    expect(idField?.values).toEqual(['id1', 'id2', 'id3']);
+
+    expect(onlyInDest).toBeDefined();
+    expect(onlyInDest?.values).toEqual([undefined, 'd1', 'd2']);
+  });
+
+  it('keeps a dest-only field on the overlapping row when that row is updated in place', () => {
+    // Source repeats time/id 20 (updated in place) and adds time 25 (inserted between 20 and 30).
+    // A field that exists only in dest must stay put on the overlapping row and gain a placeholder
+    // only for the new row. Splicing on the overlap shifts d2/d3 onto the wrong rows.
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 3,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [10, 20, 30] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line1', 'line2', 'line3'] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id1', 'id2', 'id3'] },
+        { name: 'onlyInDest', type: FieldType.string, config: {}, values: ['d1', 'd2', 'd3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [20, 25] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line2-updated', 'line-new'] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id2', 'id-new'] },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const fields = combined.data[0].fields;
+
+    expect(fields.find((field: Field) => field.name === 'Time')?.values).toEqual([10, 20, 25, 30]);
+    expect(fields.find((field: Field) => field.name === 'Line')?.values).toEqual([
+      'line1',
+      'line2-updated',
+      'line-new',
+      'line3',
+    ]);
+    expect(fields.find((field: Field) => field.name === 'id')?.values).toEqual(['id1', 'id2', 'id-new', 'id3']);
+    expect(fields.find((field: Field) => field.name === 'onlyInDest')?.values).toEqual(['d1', 'd2', undefined, 'd3']);
+    expect(combined.data[0].length).toBe(4);
   });
 
   it('combines metric frames', () => {
@@ -584,6 +822,43 @@ describe('combineResponses', () => {
         },
       ],
     });
+  });
+
+  it('merges prepended nanosecond fractions for a new timestamp column and leaves the source frame unchanged', () => {
+    // Dest has no timestamp column. Copying the source field keeps its nanos array, and
+    // prepending the first of two rows splices that same array so the next read sees 100.
+    const sourceNanos = [100, 200];
+    const sourceTimestampValues = [10, 20];
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [30, 40] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id3', 'id4'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [10, 20] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id1', 'id2'] },
+        {
+          name: 'timestamp',
+          type: FieldType.time,
+          config: {},
+          values: sourceTimestampValues,
+          nanos: sourceNanos,
+        },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const timestamp = combined.data[0].fields.find((field: Field) => field.name === 'timestamp');
+
+    expect(timestamp?.nanos).toEqual([100, 200, 0, 0]);
+    expect(sourceNanos).toEqual([100, 200]);
+    expect(sourceTimestampValues).toEqual([10, 20]);
   });
 
   describe('combine stats', () => {

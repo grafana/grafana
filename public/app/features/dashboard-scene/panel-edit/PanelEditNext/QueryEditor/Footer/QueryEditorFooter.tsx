@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useMeasure } from 'react-use';
+import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -82,25 +81,6 @@ export function QueryEditorFooter() {
     ];
   }, [options, data, datasource]);
 
-  // The fade marks options clipped off the end, so it has to go once the list is scrolled to them.
-  const listRef = useRef<HTMLUListElement | null>(null);
-  const [measureRef, { width: listWidth }] = useMeasure<HTMLUListElement>();
-  const setListRef = useCallback(
-    (el: HTMLUListElement | null) => {
-      listRef.current = el;
-      if (el) {
-        measureRef(el);
-      }
-    },
-    [measureRef]
-  );
-  const [isClippedAtEnd, setIsClippedAtEnd] = useState(false);
-  const updateClippedAtEnd = useCallback(() => {
-    const list = listRef.current;
-    setIsClippedAtEnd(list !== null && list.scrollLeft + list.clientWidth < list.scrollWidth - 1);
-  }, []);
-  useEffect(updateClippedAtEnd, [updateClippedAtEnd, listWidth, items]);
-
   const handleItemClick = (event: React.MouseEvent, fieldId?: QueryOptionField) => {
     // Stop propagation to prevent ClickOutsideWrapper from immediately closing
     event.stopPropagation();
@@ -134,11 +114,7 @@ export function QueryEditorFooter() {
         </Button>
       </div>
 
-      <ul
-        ref={setListRef}
-        className={cx(styles.itemsList, { [styles.itemsListClipped]: isClippedAtEnd })}
-        onScroll={updateClippedAtEnd}
-      >
+      <ul className={styles.itemsList}>
         {items.map((item) => (
           <li key={item.id}>
             <Button
@@ -198,23 +174,19 @@ function getStyles(theme: GrafanaTheme2) {
       padding: 0,
       flex: 1,
       minWidth: 0,
-      // This list is the only part of the footer that gives way, so it absorbs every shortfall and
-      // can reach zero width. Scrolling keeps the options it holds reachable — clipping them left no
-      // way to get at them at all, which the fade already implied there was.
-      overflowX: 'auto',
-      overflowY: 'hidden',
+      overflow: 'hidden',
       whiteSpace: 'nowrap',
-      // A scrollbar inside a 32px footer would crowd it out. The list still scrolls by trackpad,
-      // Shift+wheel and Tab, and every option it holds is also under "Query options".
-      scrollbarWidth: 'none',
-      '&::-webkit-scrollbar': {
-        display: 'none',
+
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: theme.spacing(4),
+        background: `linear-gradient(to right, transparent, ${theme.colors.background.primary})`,
+        pointerEvents: 'none',
       },
-    }),
-    // Fades the clipped edge. A mask tracks the scroll port, where an absolutely positioned overlay
-    // would scroll away with the content it is meant to be fading.
-    itemsListClipped: css({
-      maskImage: `linear-gradient(to right, black calc(100% - ${theme.spacing(4)}), transparent)`,
     }),
     itemButton: css({
       // Override Button's default padding and add gap for children

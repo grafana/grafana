@@ -29,5 +29,24 @@ describe('ScaleDistributionEditor', () => {
       await userEvent.clear(el);
       expect(onChange).toHaveBeenCalledWith(origValue);
     });
+
+    it('updates the linear threshold input when its value is restored', async () => {
+      const onChange = jest.fn();
+      const user = userEvent.setup();
+      const value = { type: ScaleDistribution.Symlog, log: 10, linearThreshold: 1 };
+      const { rerender } = render(<ScaleDistributionEditor value={value} onChange={onChange} />);
+      const input = screen.getByRole('spinbutton', { name: 'Linear threshold' });
+
+      await user.clear(input);
+      await user.type(input, '5');
+      expect(onChange).toHaveBeenLastCalledWith({ ...value, linearThreshold: 5 });
+      rerender(<ScaleDistributionEditor value={{ ...value, linearThreshold: 5 }} onChange={onChange} />);
+
+      rerender(<ScaleDistributionEditor value={value} onChange={onChange} />);
+      expect(input).toHaveValue(1);
+
+      rerender(<ScaleDistributionEditor value={{ ...value, linearThreshold: 5 }} onChange={onChange} />);
+      expect(input).toHaveValue(5);
+    });
   });
 });

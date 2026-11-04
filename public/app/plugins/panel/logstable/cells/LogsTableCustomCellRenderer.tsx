@@ -7,7 +7,11 @@ import { type LogsFrame } from 'app/features/logs/logsFrame';
 
 import { ROW_ACTION_BUTTON_WIDTH } from '../constants';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
-import { LogsTableRowActionButtons } from '../rows/LogsTableRowActionButtons';
+import {
+  ERROR_ATTRIBUTE_ICON_WIDTH,
+  logsFrameHasErrorAttributes,
+  LogsTableRowActionButtons,
+} from '../rows/LogsTableRowActionButtons';
 import { type BuildLinkToLogLine } from '../types';
 
 export function LogsTableCustomCellRenderer(props: {
@@ -20,11 +24,11 @@ export function LogsTableCustomCellRenderer(props: {
   const { logsFrame, buildLinkToLog, options, supportsPermalink } = props;
   const { field, value, rowIndex } = props.cellProps;
   const cellPadding =
-    options.enableLogDetails && options.showCopyLogLink
+    (options.enableLogDetails && options.showCopyLogLink
       ? ROW_ACTION_BUTTON_WIDTH
       : options.enableLogDetails || options.showCopyLogLink
         ? ROW_ACTION_BUTTON_WIDTH / 2
-        : 0;
+        : 0) + (logsFrameHasErrorAttributes(logsFrame) ? ERROR_ATTRIBUTE_ICON_WIDTH : 0);
   const styles = useStyles2(getStyles, cellPadding);
 
   return (

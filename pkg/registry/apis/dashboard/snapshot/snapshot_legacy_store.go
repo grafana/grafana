@@ -12,14 +12,17 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	dashV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var (
@@ -31,6 +34,7 @@ type SnapshotLegacyStore struct {
 	Service               dashboardsnapshots.Service
 	Namespacer            request.NamespaceMapper
 	ExternalSnapshotToken string
+	Blobs                 resourcepb.BlobStoreClient
 }
 
 func (s *SnapshotLegacyStore) New() runtime.Object {
@@ -126,9 +130,11 @@ func (s *SnapshotLegacyStore) List(ctx context.Context, options *internalversion
 			if snap.OrgID != ns.OrgID {
 				return &dashV0.SnapshotList{}, nil
 			}
-			return &dashV0.SnapshotList{
-				Items: []dashV0.Snapshot{*convertSnapshotToK8sResource(snap, s.Namespacer)},
-			}, nil
+			item, err := convertSnapshotToK8sResource(snap, s.Namespacer)
+			if err != nil {
+				return nil, err
+			}
+			return &dashV0.SnapshotList{Items: []dashV0.Snapshot{*item}}, nil
 		}
 	}
 
@@ -144,7 +150,10 @@ func (s *SnapshotLegacyStore) List(ctx context.Context, options *internalversion
 			if snap == nil {
 				return &dashV0.SnapshotList{}, nil
 			}
-			item := convertSnapshotToK8sResource(snap, s.Namespacer)
+			item, err := convertSnapshotToK8sResource(snap, s.Namespacer)
+			if err != nil {
+				return nil, err
+			}
 			// Public key resolution lists across namespaces; ordinary LIST stays org-scoped.
 			namespace := k8srequest.NamespaceValue(ctx)
 			if (namespace != "" && item.Namespace != namespace) || !options.FieldSelector.Matches(SnapshotToSelectableFields(item)) {
@@ -200,7 +209,7 @@ func (s *SnapshotLegacyStore) Get(ctx context.Context, name string, options *met
 	}
 
 	if res != nil {
-		return convertSnapshotToK8sResource(res, s.Namespacer), nil
+		return convertSnapshotToK8sResource(res, s.Namespacer)
 	}
 	return nil, s.ResourceInfo.NewNotFound(name)
 }
@@ -219,6 +228,15 @@ func (s *SnapshotLegacyStore) Create(ctx context.Context, obj runtime.Object, cr
 		}
 	}
 
+	if _, err := inlineDashboardContent(snap); err != nil {
+		return nil, apierrors.NewBadRequest(err.Error())
+	}
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		result := snap.DeepCopy()
+		redactDashboardInput(result)
+		return result, nil
+	}
+
 	// Get user identity from context
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -231,7 +249,17 @@ func (s *SnapshotLegacyStore) Create(ctx context.Context, obj runtime.Object, cr
 	}
 
 	// Convert K8s resource to service command
-	cmd := convertK8sResourceToCreateCommand(snap, requester.GetOrgID(), userID)
+	cmd, err := convertK8sResourceToCreateCommand(snap, requester.GetOrgID(), userID)
+	if err != nil {
+		return nil, err
+	}
+	if ref := snap.Blobs.Dashboard; ref != nil && ref.Uid != nil {
+		dashboard, err := loadDashboardContent(ctx, s.Blobs, snap)
+		if err != nil {
+			return nil, err
+		}
+		cmd.Dashboard = &common.Unstructured{Object: dashboard}
+	}
 
 	// Create the snapshot via service
 	result, err := s.Service.CreateDashboardSnapshot(ctx, cmd)
@@ -239,8 +267,14 @@ func (s *SnapshotLegacyStore) Create(ctx context.Context, obj runtime.Object, cr
 		return nil, err
 	}
 
-	// Convert result back to K8s resource
-	return convertSnapshotToK8sResource(result, s.Namespacer), nil
+	// The legacy service encrypts the dashboard and returns an empty inline value.
+	// Preserve the input on the result so the dual writer can copy it to unified storage.
+	created, err := convertSnapshotToK8sResource(result, s.Namespacer)
+	if err != nil {
+		return nil, err
+	}
+	created.Blobs = *snap.Blobs.DeepCopy()
+	return created, nil
 }
 
 // Update implements rest.Updater - snapshots are immutable, so this returns an error

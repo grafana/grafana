@@ -10,17 +10,17 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// TestIntegrationDiscoveryEmbeddedCluster starts two embedded servers sharing a
-// KV-backed peer registry and asserts they self-assemble into a working cluster,
-// exercising the real ProvideServer/dskit lifecycle end-to-end.
-func TestIntegrationDiscoveryEmbeddedCluster(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+// TestDiscoveryEmbeddedCluster starts two embedded servers sharing a KV-backed peer
+// registry and asserts they self-assemble into a working cluster, exercising the real
+// ProvideServer/dskit lifecycle end-to-end. Deliberately not named TestIntegration*:
+// the registry is in-memory Badger, so the per-database matrix would only repeat it.
+func TestDiscoveryEmbeddedCluster(t *testing.T) {
 	t.Run("servers discover each other and form a cluster route", func(t *testing.T) {
 		_, a, b, _, _ := startTwoNodeCluster(t)
 
@@ -65,12 +65,10 @@ func TestIntegrationDiscoveryEmbeddedCluster(t *testing.T) {
 	})
 }
 
-// TestIntegrationDiscoveryDisabled asserts that discovery_enabled=false leaves a
-// node standalone: no discovery loop is wired even with a KV present, so it never
+// TestDiscoveryDisabled asserts that discovery_enabled=false leaves a node
+// standalone: no discovery loop is wired even with a KV present, so it never
 // solicits peer routes.
-func TestIntegrationDiscoveryDisabled(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestDiscoveryDisabled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
@@ -90,6 +88,64 @@ func TestIntegrationDiscoveryDisabled(t *testing.T) {
 	require.Never(t, func() bool {
 		return numRoutes(a) > 0 || numRoutes(b) > 0
 	}, time.Second, 100*time.Millisecond, "nodes formed a cluster route with discovery disabled")
+}
+
+// TestIntegrationDiscoverySQL runs discovery against the nats_discovery_peers
+// table of the database selected by GRAFANA_TEST_DB, wired through
+// ProvideServer's SQL store as in production. The matrix covers the
+// dialect-specific upsert, range scan and batch queries and the table's
+// per-dialect key collation. The test drives every tick and the registry clock
+// itself rather than using synctest: route reloads start nats-server goroutines
+// that share its WaitGroup and do real network I/O, so they cannot run inside a
+// bubble.
+func TestIntegrationDiscoverySQL(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.NewTestStore(t)
+	now := time.Unix(1_000, 0)
+	a := startSteppedSQLServer(t, sqlStore, &now)
+	b := startSteppedSQLServer(t, sqlStore, &now)
+	c := startSteppedSQLServer(t, sqlStore, &now)
+	store := a.kv
+	ttl := a.discovery.ttl
+	tick := func(nodes ...*Server) {
+		for _, n := range nodes {
+			n.discovery.tick(t.Context())
+		}
+	}
+
+	// Join: the first round registers everyone, the second routes to everyone.
+	tick(a, b, c)
+	now = now.Add(time.Second)
+	tick(a, b, c)
+	require.ElementsMatch(t, peersOf(a, b, c), registeredPeers(t, store))
+	require.Equal(t, routeSetOf(b, c), a.discovery.routes)
+	require.Equal(t, routeSetOf(a, c), b.discovery.routes)
+	require.Equal(t, routeSetOf(a, b), c.discovery.routes)
+	requireDelivery(t, a, c)
+
+	// Graceful leave: the row goes at shutdown and survivors drop the route on
+	// their next tick.
+	require.NoError(t, b.stopping(nil))
+	require.ElementsMatch(t, peersOf(a, c), registeredPeers(t, store))
+	now = now.Add(time.Second)
+	tick(a, c)
+	require.Equal(t, routeSetOf(c), a.discovery.routes)
+	require.Equal(t, routeSetOf(a), c.discovery.routes)
+
+	// Hard kill: c stops heartbeating without deregistering, so its row and route
+	// stay while its last heartbeat is within the TTL...
+	c.shutdown()
+	now = now.Add(ttl)
+	tick(a)
+	require.ElementsMatch(t, peersOf(a, c), registeredPeers(t, store))
+	require.Equal(t, routeSetOf(c), a.discovery.routes)
+
+	// ...and go on the first tick past it (heartbeats have one-second resolution).
+	now = now.Add(time.Second)
+	tick(a)
+	require.ElementsMatch(t, peersOf(a), registeredPeers(t, store))
+	require.Empty(t, a.discovery.routes)
 }
 
 // nodeCfg bundles a node's full Cfg with the Server it drives, so callers can
@@ -149,6 +205,49 @@ func newSharedTestKV(t *testing.T) kv.KV {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, db.Close()) })
 	return kv.NewBadgerKV(db)
+}
+
+// startSteppedSQLServer starts an embedded server whose registry
+// ProvideServer builds on sqlStore, without running the discovery loop, and
+// points the registry clock at now so the test steps discovery itself.
+func startSteppedSQLServer(t *testing.T, sqlStore db.DB, now *time.Time) *Server {
+	t.Helper()
+	s, err := ProvideServer(newEmbeddedTestCfg("127.0.0.1", ""), sqlStore, prometheus.NewRegistry())
+	require.NoError(t, err)
+	require.NoError(t, s.starting(t.Context()))
+	t.Cleanup(func() { _ = s.stopping(nil) })
+	require.NotNil(t, s.discovery, "ProvideServer did not wire the SQL registry")
+	registry, ok := s.discovery.registry.(*kvPeerStore)
+	require.True(t, ok)
+	registry.now = func() time.Time { return *now }
+	return s
+}
+
+func peersOf(nodes ...*Server) []peer {
+	peers := make([]peer, 0, len(nodes))
+	for _, n := range nodes {
+		peers = append(peers, n.discovery.self)
+	}
+	return peers
+}
+
+func routeSetOf(nodes ...*Server) map[string]struct{} {
+	routes := make(map[string]struct{}, len(nodes))
+	for _, n := range nodes {
+		routes[n.discovery.self.RouteURL] = struct{}{}
+	}
+	return routes
+}
+
+// registeredPeers reads the registry rows without pruning, unlike listActive.
+func registeredPeers(t *testing.T, store kv.KV) []peer {
+	t.Helper()
+	var peers []peer
+	for rec, err := range newKVPeerStore(store, discoveryClusterName).records(t.Context()) {
+		require.NoError(t, err)
+		peers = append(peers, peer{ServerName: rec.ServerName, RouteURL: rec.RouteURL})
+	}
+	return peers
 }
 
 // hasDiscovery reports whether the discovery loop was wired, read under the lock

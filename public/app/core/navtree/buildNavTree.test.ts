@@ -452,6 +452,19 @@ describe('pruneEmptyNavSections', () => {
     expect(findById(tree, NavID.explore)).toBeDefined();
   });
 
+  // More apps is created on demand, so it is only empty when an override has
+  // moved its last app elsewhere — maintenance windows, nested under SLO
+  it('removes an emptied More apps section but keeps a populated one', () => {
+    setup();
+    const empty: NavModelItem[] = [{ id: NavID.apps, text: 'More apps', url: '/apps', children: [] }];
+    const populated: NavModelItem[] = [
+      { id: NavID.apps, text: 'More apps', url: '/apps', children: [{ id: 'plugin-page-some-app', text: 'Some app' }] },
+    ];
+
+    expect(findById(pruneEmptyNavSections(empty), NavID.apps)).toBeUndefined();
+    expect(findById(pruneEmptyNavSections(populated), NavID.apps)).toBeDefined();
+  });
+
   it('keeps sections that gained children', () => {
     setup({
       orgRole: 'Admin',
@@ -605,6 +618,61 @@ describe('getInitialNavTree', () => {
     config.bootData = { ...config.bootData, navTree: [{ id: 'server-built', text: 'Server built' }] };
 
     expect(ids(getInitialNavTree())).toEqual(['server-built']);
+  });
+
+  // The transitional tweaks are the one stage both trees share, which is what
+  // lets a tweak land for everyone during the client-build rollout
+  it('applies the nav tweaks to the bootdata tree as well', () => {
+    setup({ openFeatureFlags: { 'grafana.navigationInfoArchRefresh': true } });
+    config.bootData = {
+      ...config.bootData,
+      navTree: [
+        { id: 'plugin-page-grafana-ml-app', text: 'Machine Learning', url: '/a/grafana-ml-app' },
+        { id: NavID.apps, text: 'More apps', url: '/apps', children: [] },
+      ],
+    };
+
+    const tree = getInitialNavTree();
+
+    expect(ids(tree)).toEqual([NavID.apps]);
+    expect(ids(findById(tree, NavID.apps)?.children ?? [])).toEqual(['plugin-page-grafana-ml-app']);
+  });
+
+  // More apps is built only once an app lands in it, and the empty shell is
+  // pruned before the tweaks run, so the section a tweak targets may be absent
+  it('creates the target section when the tweak finds none', () => {
+    setup({ openFeatureFlags: { 'grafana.navigationInfoArchRefresh': true } });
+    config.bootData = {
+      ...config.bootData,
+      navTree: [{ id: 'plugin-page-grafana-ml-app', text: 'Machine Learning', url: '/a/grafana-ml-app' }],
+    };
+
+    const tree = getInitialNavTree();
+
+    expect(ids(tree)).toEqual([NavID.apps]);
+    expect(ids(findById(tree, NavID.apps)?.children ?? [])).toEqual(['plugin-page-grafana-ml-app']);
+  });
+
+  it('leaves the tree alone when the tweak has nothing to move', () => {
+    setup({ openFeatureFlags: { 'grafana.navigationInfoArchRefresh': true } });
+    config.bootData = { ...config.bootData, navTree: [{ id: 'home', text: 'Home' }] };
+
+    expect(ids(getInitialNavTree())).toEqual(['home']);
+  });
+
+  // The tweaks run after applyAppSubUrl, and the server-built tree arrives
+  // prefixed, so a section a tweak creates has to carry the prefix itself
+  it('applies the app sub url to a section the tweak creates', () => {
+    setup({
+      openFeatureFlags: { 'grafana.navigationInfoArchRefresh': true },
+      config: { appSubUrl: '/grafana' },
+    });
+    config.bootData = {
+      ...config.bootData,
+      navTree: [{ id: 'plugin-page-grafana-ml-app', text: 'Machine Learning', url: '/grafana/a/grafana-ml-app' }],
+    };
+
+    expect(findById(getInitialNavTree(), NavID.apps)?.url).toBe('/grafana/apps');
   });
 
   // The apps section reads the app metas synchronously: app.ts fills the cache
