@@ -9,6 +9,9 @@ import (
 // the generated Go New*() and TS default*() constructors would write those defaults into new objects.
 // Every member is optional, so a merge-patch sets or clears one leaf at a time. reset is the exception:
 // a merge-patch replaces the whole list.
+// Numbers are integers within the limits of the editor that sets the same option on a dashboard or
+// panel. The dashboard and panel schemas accept any number, so a value copied from a dashboard has to
+// be checked against these limits before it is written here.
 
 // Defaults for new dashboards and panels at one tier: org, folder or user. Every field is optional; an absent field inherits from the next tier.
 DashboardPreferencesSpec: {
