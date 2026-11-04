@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { generatedAPI as folderAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
 
@@ -18,18 +18,19 @@ interface FolderSearchPage {
   continueToken?: string;
 }
 
-const folderHitSchema = z
-  .object({
+const folderHitSchema = z.pipe(
+  z.object({
     resource: z.object({ name: z.string() }),
     // A missing or malformed title falls back to the UID instead of failing the page.
-    fields: z.object({ title: z.string().optional().catch(undefined) }).catch({}),
-  })
-  .transform(({ resource, fields }): FolderHit => ({ uid: resource.name, title: fields.title ?? resource.name }));
+    fields: z.catch(z.object({ title: z.catch(z.optional(z.string()), undefined) }), {}),
+  }),
+  z.transform(({ resource, fields }): FolderHit => ({ uid: resource.name, title: fields.title ?? resource.name }))
+);
 
 // Only what the listing reads.
 const folderSearchResponseSchema = z.object({
   items: z.array(folderHitSchema),
-  metadata: z.object({ continue: z.string().optional() }),
+  metadata: z.object({ continue: z.optional(z.string()) }),
 });
 
 type FolderSearchResponse = z.infer<typeof folderSearchResponseSchema>;
