@@ -119,6 +119,25 @@ Each entry can be a hostname, `host:port`, a full URL (only the host is used), a
 
 **Only add hosts you trust** because an allowlisted host receives the configured Git token on every sync, fetch, and push.
 
+## Set the Git User-Agent
+
+{{< admonition type="note" >}}
+This setting only applies to self-managed Grafana (OSS and Enterprise). It's not configurable in Grafana Cloud.
+{{< /admonition >}}
+
+Git Sync identifies itself to your Git server with the `User-Agent` header `grafana-provisioning/<GRAFANA_VERSION>` on every clone, fetch, and push.
+If your Git server, a proxy, or a firewall in between rejects or filters requests by `User-Agent`, set your own value:
+
+1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
+1. Set `git_user_agent` in the `[provisioning]` section:
+
+   ```ini
+   [provisioning]
+   git_user_agent = my-company-grafana/1.0
+   ```
+
+1. Save the changes to the file and restart Grafana.
+
 ## Resource and role permissions
 
 By default, folders provisioned with Git Sync have these roles:

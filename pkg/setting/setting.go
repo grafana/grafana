@@ -197,7 +197,8 @@ type Cfg struct {
 	// "<group>/<Kind>[:cap...]" token (parsed by resources.ParseSupportedResources at startup).
 	ProvisioningResources                     []string
 	ProvisioningAllowImageRendering           bool
-	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
+	ProvisioningAllowInsecure                 bool   // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
+	ProvisioningGitUserAgent                  string // User-Agent sent to Git servers; empty = "grafana-provisioning/<version>"
 	ProvisioningMinSyncInterval               time.Duration
 	ProvisioningRepositoryTypes               []string
 	ProvisioningConnectionTypes               []string
@@ -2663,6 +2664,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)
+	cfg.ProvisioningGitUserAgent = strings.TrimSpace(iniFile.Section("provisioning").Key("git_user_agent").String())
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
