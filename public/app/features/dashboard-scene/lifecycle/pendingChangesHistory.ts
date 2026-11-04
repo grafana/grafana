@@ -10,6 +10,8 @@ import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import {
+  getPendingChangesHistory,
+  getScenePendingChangePreview,
   type PendingChangesHistory,
   type PendingChangesHistoryState,
   previewedDashboardUid,
@@ -76,6 +78,19 @@ export function startRecordingPendingChanges(scene: DashboardScene, stored: Dash
   const serialized = scene.getSaveModel();
   if (isDashboardV2Spec(serialized)) {
     baselines.set(scene, { serialized, stored });
+  }
+}
+
+/**
+ * After newer pending changes were reloaded into `scene` in place: it shows them now, so it is no
+ * longer superseded, and an edit session records onto them from here, as edit mode starting would.
+ */
+export function resumeRecordingPendingChanges(scene: DashboardScene) {
+  superseded.delete(scene);
+  baselines.delete(scene);
+  const preview = getScenePendingChangePreview(scene.state);
+  if (scene.state.isEditing && preview && getPendingChangesHistory(scene.state)) {
+    startRecordingPendingChanges(scene, preview.pending.history?.getState().proposed ?? preview.pending.proposed);
   }
 }
 
@@ -188,10 +203,10 @@ async function sendRecording(
 }
 
 /**
- * Loads the dashboard page again, fresh, back in edit mode when it was editing: a step through the
- * pending changes history loads a new scene, and leaves the requester where they were.
+ * Loads the dashboard page again, back in edit mode when it was editing, and leaves the requester
+ * where they were: into the open scene when it can (true), else onto a new scene.
  */
-export function reloadKeepingEditMode(uid: string, editing: boolean | undefined): Promise<void> {
+export function reloadKeepingEditMode(uid: string, editing: boolean | undefined): Promise<boolean> {
   return reloadPendingChangesPage(uid, editing);
 }
 

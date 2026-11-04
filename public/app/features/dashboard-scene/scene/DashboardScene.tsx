@@ -1325,6 +1325,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /**
+   * After the dashboard was reloaded into this scene in place, mid edit session: discarding goes back
+   * to what was reloaded, as it would after a fresh load in edit mode, not to the tree it replaced.
+   */
+  public rebaselineEditSession() {
+    if (!this.state.isEditing) {
+      return;
+    }
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false, planning: undefined });
+    this._initialUrlState = locationService.getLocation();
+  }
+
+  /**
    * Discard changes and revert to the last saved state, while keeping edit mode enabled.
    * This is useful for flows where you want to continue an action (for example share/export)
    * without forcing the user to exit edit mode.

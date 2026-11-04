@@ -60,6 +60,7 @@ import {
   isRedirectResponse,
 } from 'app/types/dashboard';
 
+import { swapInReloadedDashboard } from '../actions/dashboard/applyDashboardSpec';
 import {
   clearPendingChangePreview,
   isPreviewingPendingChanges,
@@ -69,6 +70,7 @@ import {
   previewedDashboardUid,
   proposesNewDashboard,
 } from '../lifecycle/pendingChangePreview';
+import { resumeRecordingPendingChanges } from '../lifecycle/pendingChangesHistory';
 import { setPendingChangesPageReload } from '../lifecycle/pendingChangesPageReload';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -1776,16 +1778,49 @@ const managers: {
   unified: undefined,
 };
 
-// A step through a plugin's pending changes history loads a new scene, and leaves the requester where they
-// were. Set here: the scene's modules can't import this one without closing an import cycle.
+// A step through a plugin's pending changes history, or a write the plugin made, loads the dashboard
+// again and leaves the requester where they were. Set here: the scene's modules can't import this one
+// without closing an import cycle.
 setPendingChangesPageReload(async (uid, editing) => {
   const manager = getDashboardScenePageStateManager();
+  const open = manager.state.dashboard;
+  if (open && previewedDashboardUid(open.state) === uid && (await reloadInPlace(manager, open, uid))) {
+    return true;
+  }
   await manager.reloadDashboardFresh({ uid, route: DashboardRoutes.Normal });
   const reloaded = manager.state.dashboard;
   if (editing && reloaded && !reloaded.state.isEditing) {
     reloaded.onEnterEditMode();
   }
+  return false;
 });
+
+/**
+ * Loads `uid` again into the open scene `open`, without the page's loading state or a new scene, so
+ * the page keeps its scroll position, URL state and edit mode. False when it can't, for the caller to
+ * fall back to a fresh load: a v1 dashboard, or the page moved to another scene meanwhile.
+ */
+async function reloadInPlace(
+  manager: UnifiedDashboardScenePageStateManager,
+  open: DashboardScene,
+  uid: string
+): Promise<boolean> {
+  const options = { uid, route: DashboardRoutes.Normal };
+  manager.clearDashboardCache();
+  manager.removeSceneCache(uid);
+  const rsp = await manager.fetchDashboard(options);
+  if (!rsp || !isDashboardV2Resource(rsp) || manager.state.dashboard !== open) {
+    return false;
+  }
+  const reloaded = manager.transformResponseToScene(rsp, options);
+  if (!reloaded) {
+    return false;
+  }
+  swapInReloadedDashboard(open, reloaded);
+  open.rebaselineEditSession();
+  resumeRecordingPendingChanges(open);
+  return true;
+}
 
 export function getDashboardScenePageStateManager(): UnifiedDashboardScenePageStateManager;
 export function getDashboardScenePageStateManager(v: 'v1'): DashboardScenePageStateManager;
