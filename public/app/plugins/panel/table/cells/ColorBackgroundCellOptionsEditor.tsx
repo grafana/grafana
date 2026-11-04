@@ -1,5 +1,3 @@
-import { useId } from 'react';
-
 import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -18,8 +16,10 @@ const colorBackgroundOpts: Array<SelectableValue<TableCellBackgroundDisplayMode>
   { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },
   { value: TableCellBackgroundDisplayMode.Gradient, label: 'Gradient' },
 ];
-const ColorBackgroundDisplayModeEditor = ({ cellOptions, onChange }: Props) => (
+const ColorBackgroundDisplayModeEditor = ({ cellOptions, onChange, id, labelId }: Props) => (
   <RadioButtonGroup<TableCellBackgroundDisplayMode>
+    id={id}
+    aria-labelledby={labelId}
     value={cellOptions?.mode ?? TableCellBackgroundDisplayMode.Gradient}
     onChange={(v) => {
       cellOptions.mode = v;
@@ -29,11 +29,10 @@ const ColorBackgroundDisplayModeEditor = ({ cellOptions, onChange }: Props) => (
   />
 );
 
-const ApplyToRowEditor = ({ cellOptions, onChange }: Props) => {
-  const applyToRowSwitchId = useId();
+const ApplyToRowEditor = ({ cellOptions, onChange, id }: Props) => {
   return (
     <Switch
-      id={applyToRowSwitchId}
+      id={id}
       label={selectors.components.PanelEditor.OptionsPane.fieldLabel(`Apply to entire row`)}
       value={cellOptions.applyToRow}
       onChange={() => {

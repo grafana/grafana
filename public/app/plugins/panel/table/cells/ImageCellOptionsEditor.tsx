@@ -1,4 +1,4 @@
-import { type FormEvent, useId } from 'react';
+import { type FormEvent } from 'react';
 
 import { t } from '@grafana/i18n';
 import { type TableImageCellOptions } from '@grafana/schema';
@@ -12,22 +12,20 @@ import {
 
 type Props = TableCellOptionEditorProps<TableImageCellOptions>;
 
-const AltTextEditor = ({ cellOptions, onChange }: Props) => {
+const AltTextEditor = ({ cellOptions, onChange, id }: Props) => {
   const onAltChange = (e: FormEvent<HTMLInputElement>) => {
     cellOptions.alt = e.currentTarget.value;
     onChange(cellOptions);
   };
-  const altTextInputId = useId();
-  return <Input id={altTextInputId} onChange={onAltChange} defaultValue={cellOptions.alt} />;
+  return <Input id={id} onChange={onAltChange} defaultValue={cellOptions.alt} />;
 };
 
-const TitleTextEditor = ({ cellOptions, onChange }: Props) => {
+const TitleTextEditor = ({ cellOptions, onChange, id }: Props) => {
   const onTitleChange = (e: FormEvent<HTMLInputElement>) => {
     cellOptions.title = e.currentTarget.value;
     onChange(cellOptions);
   };
-  const titleTextInputId = useId();
-  return <Input id={titleTextInputId} onChange={onTitleChange} defaultValue={cellOptions.title} />;
+  return <Input id={id} onChange={onTitleChange} defaultValue={cellOptions.title} />;
 };
 
 export const imageCellOptionEditors: Array<TableCellOptionEditorDefinition<TableImageCellOptions>> = [

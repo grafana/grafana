@@ -16,18 +16,20 @@ import { getSparklineCellOptionSearchTerms, SparklineCellOptionsEditor } from '.
 standardEditorsRegistry.setInit(getAllOptionEditors);
 mockComboboxRect();
 
-async function setup(cellOptions: Partial<TableSparklineCellOptions> = {}) {
+async function setup(cellOptions: Partial<TableSparklineCellOptions> = {}, searchQuery?: string) {
   const onChange = jest.fn();
   // Registry editors are lazy, so let them resolve before the test asserts
+  let container: HTMLElement;
   await act(async () => {
-    render(
+    ({ container } = render(
       <SparklineCellOptionsEditor
         cellOptions={{ type: TableCellDisplayMode.Sparkline, ...cellOptions }}
         onChange={onChange}
+        searchQuery={searchQuery}
       />
-    );
+    ));
   });
-  return { onChange };
+  return { onChange, container: container! };
 }
 
 describe('SparklineCellOptionsEditor', () => {
@@ -46,6 +48,23 @@ describe('SparklineCellOptionsEditor', () => {
     await setup();
     expect(screen.getByLabelText('Hide value')).toBeInTheDocument();
   });
+
+  it.each([undefined, 'hide', 'unmatched'])(
+    'keeps Sparkline labels associated when searching for %s',
+    async (query) => {
+      const { container } = await setup({}, query);
+      const control = screen.getByRole('switch', { name: 'Hide value' });
+      const label = container.querySelector(`label[for="${control.id}"]`);
+
+      expect(label).toHaveAttribute('for', control.id);
+      expect(label).toBeInTheDocument();
+      if (query === 'hide') {
+        expect(label?.querySelector('mark')).toHaveTextContent('Hide');
+      } else {
+        expect(label?.querySelector('mark')).not.toBeInTheDocument();
+      }
+    }
+  );
 
   it('forwards a changed option while preserving the existing cell options', async () => {
     const { onChange } = await setup({ lineWidth: 5 });

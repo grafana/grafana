@@ -11,8 +11,9 @@ import {
 
 type Props = TableCellOptionEditorProps<TableMarkdownCellOptions>;
 
-const DynamicHeightEditor = ({ cellOptions, onChange }: Props) => (
+const DynamicHeightEditor = ({ cellOptions, onChange, id }: Props) => (
   <Switch
+    id={id}
     onChange={(e) => {
       cellOptions.dynamicHeight = e.currentTarget.checked;
       onChange(cellOptions);
@@ -26,8 +27,10 @@ export const markdownCellOptionEditors: Array<TableCellOptionEditorDefinition<Ta
     id: 'dynamicHeight',
     name: () => t('table.markdown-cell-options-editor.label-dynamic-height', 'Dynamic height'),
     Editor: DynamicHeightEditor,
-    renderLabel: (name, searchQuery) => (
+    renderLabel: (name, searchQuery, htmlFor, labelId) => (
       <Label
+        id={labelId}
+        htmlFor={htmlFor}
         description={t(
           'table.markdown-cell-options-editor.description-dynamic-height',
           'We recommend enabling pagination with this option to avoid performance issues.'

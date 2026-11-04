@@ -21,6 +21,8 @@ function setup(cellOptions: Partial<TableBarGaugeCellOptions> = {}) {
 describe('BarGaugeCellOptionsEditor', () => {
   it('defaults the display mode to Gradient and value display to Text when unset', () => {
     setup();
+    expect(screen.getByRole('radiogroup', { name: 'Gauge display mode' })).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Value display' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Gradient' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Text color' })).toBeChecked();
   });

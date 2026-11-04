@@ -11,8 +11,10 @@ import {
 
 type Props = TableCellOptionEditorProps<TableBarGaugeCellOptions>;
 
-const BarGaugeDisplayModeEditor = ({ cellOptions, onChange }: Props) => (
+const BarGaugeDisplayModeEditor = ({ cellOptions, onChange, id, labelId }: Props) => (
   <RadioButtonGroup<BarGaugeDisplayMode>
+    id={id}
+    aria-labelledby={labelId}
     value={cellOptions?.mode ?? BarGaugeDisplayMode.Gradient}
     onChange={(v) => {
       cellOptions.mode = v;
@@ -22,8 +24,10 @@ const BarGaugeDisplayModeEditor = ({ cellOptions, onChange }: Props) => (
   />
 );
 
-const BarGaugeValueDisplayEditor = ({ cellOptions, onChange }: Props) => (
+const BarGaugeValueDisplayEditor = ({ cellOptions, onChange, id, labelId }: Props) => (
   <RadioButtonGroup<BarGaugeValueMode>
+    id={id}
+    aria-labelledby={labelId}
     value={cellOptions?.valueDisplayMode ?? BarGaugeValueMode.Text}
     onChange={(v) => {
       cellOptions.valueDisplayMode = v;

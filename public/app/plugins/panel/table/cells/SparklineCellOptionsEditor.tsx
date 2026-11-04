@@ -5,7 +5,7 @@ import { createFieldConfigRegistry, type SetFieldConfigOptionsArgs, type Standar
 import { t } from '@grafana/i18n';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type GraphFieldConfig, type TableSparklineCellOptions } from '@grafana/schema';
-import { Field, useStyles2 } from '@grafana/ui';
+import { Field, Label, useStyles2 } from '@grafana/ui';
 import { defaultSparklineCellConfig } from '@grafana/ui/internal';
 import { highlightOptionSearchTerm } from 'app/features/dashboard/components/PanelEditor/OptionSearchHighlight';
 
@@ -101,7 +101,12 @@ export const SparklineCellOptionsEditor = (props: TableCellOptionEditorProps<Tab
           <Field
             key={item.id}
             noMargin
-            label={searchQuery ? highlightOptionSearchTerm(item.name, searchQuery) : item.name}
+            label={
+              <Label htmlFor={`${htmlIdBase}${item.id}`} description={item.description}>
+                {searchQuery ? highlightOptionSearchTerm(item.name, searchQuery) : item.name}
+              </Label>
+            }
+            htmlFor={`${htmlIdBase}${item.id}`}
             className={style.field}
           >
             <Editor
