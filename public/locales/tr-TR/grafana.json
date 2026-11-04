@@ -522,6 +522,7 @@
         "save": "Kaydet"
       },
       "error-title": "Uyarı kuralı kaydedilemedi",
+      "form-errors": "",
       "no-group-success": "Kural başarıyla eklendi"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Metrik",
       "label-name": "Ad",
       "message": {
-        "must-enter-a-metric-name": "Bir metrik adı girilmelidir",
-        "must-enter-a-name": "Bir ad girilmelidir",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "Lütfen bir veri kaynağı seçin"
       },
       "metric-aria-label-metric": "metrik",
@@ -586,6 +587,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Evet, yapılandırmayı sıfırla",
+      "editor-label": "",
       "gma-manual-configuration-description": "Grafana'nın dahili Alertmanager yapılandırması manuel olarak değiştirilemez. Bu yapılandırmayı değiştirmek için bireysel kaynakları kullanıcı arayüzü üzerinden düzenleyin.",
       "gma-manual-configuration-is-not-supported": "Manuel yapılandırma değişiklikleri desteklenmiyor",
       "message": {
@@ -1097,6 +1099,7 @@
         "body": "Bu silinmiş uyarı kuralı tanımını geri yüklemek istediğinizden emin misiniz?",
         "confirm": "Evet, silinen kuralı geri yükle",
         "error": "Silinen uyarı kuralı geri yüklenemedi",
+        "preview-aria-label": "",
         "title": "Silinen uyarı kuralını geri yükle"
       },
       "table": {
@@ -1314,7 +1317,7 @@
     "folder-selector": {
       "description-select-folder": "Kuralı kaydedeceğiniz klasörü seçin.",
       "message": {
-        "select-a-folder": "Bir klasör seçin"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1442,22 +1445,42 @@
     },
     "gma-rule-list": {
       "alert-rules": {
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
       "datasources": "",
+      "folder-row": {
+        "collapse": "",
+        "count-description": "",
+        "count-tooltip": "",
+        "count-unavailable": "",
+        "expand": ""
+      },
       "interval": "",
       "recorded-metric": {
         "records": "",
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
-      "result-count": {
+      "rule-count": {
         "alert-rules_one": "",
         "alert-rules_other": "",
         "recording-rules_one": "",
@@ -1465,6 +1488,7 @@
       },
       "search": {
         "default-policy-unavailable": "",
+        "folders-disabled": "",
         "help": {
           "contact-point": "",
           "dashboard": "",
@@ -1513,6 +1537,9 @@
         "renamed-value": "",
         "unavailable-tokens": "",
         "unclosed-quote": "",
+        "view": "",
+        "view-folders": "",
+        "view-list": "",
         "wildcard-in-text": ""
       },
       "shared": {
@@ -1551,11 +1578,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Gruplar yükleniyor...",
       "message": {
-        "must-be-a-positive-integer": "Pozitif bir tam sayı olmalıdır.",
-        "must-enter-a-group-name": "Bir grup adı girilmelidir"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "Pozitif bir tam sayı olmalıdır."
       },
       "missing-series-resolve-placeholder": "Varsayılan: 2",
-      "or": "veya",
       "placeholder-select-an-evaluation-group": "Değerlendirme grubu seçin...",
       "text-configure-no-data-and-error-handling": "Veri yokken ve hata durumunda yapılacak işlemleri yapılandır",
       "title-set-evaluation-behavior": "Değerlendirme davranışını ayarla"
@@ -1849,6 +1875,7 @@
         "will-import-rules-count_one": "{{count}} kural içe aktarılacak",
         "will-import-rules-count_other": "{{count}} kural içe aktarılacak"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "Mevcut veri kaynağı tarafından yönetilen kurallar",
         "datasource-description": "Mevcut veri kaynaklarından kuralları içe aktar",
@@ -2981,7 +3008,7 @@
           "alerting": "Bu uyarı kuralı için değerlendirmeyi duraklatmak için açın.",
           "recording": "Bu kayıt kuralı için değerlendirmeyi duraklatmak için açın."
         },
-        "select-folder-before": "Değerlendirme grubunu ve aralığını ayarlamadan önce bir klasör seçin",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "Bu işlem geri alınamaz. Kaydettikten sonra bunu bir gruba yeniden ekleyemezsiniz.",
         "ungroup-warning-title": "Bu işlem uyarı kuralını grubundan kaldıracak."
       },
@@ -3655,6 +3682,9 @@
       "switch-to-data-source-managed": "Sorgunuzda seçilen veri kaynağı uyarı kuralı yönetimini destekliyor. Uyarı kuralının Grafana yerine veri kaynağı tarafından yönetilmesini istiyorsanız veri kaynağı yönetimine geçin.",
       "switch-to-grafana-managed": "İfadeleri, birden fazla sorguyu, bildirimlerde görselleri ve çeşitli diğer özellikleri kullanmak için Grafana tarafından yönetilen moda geçin.",
       "title-alert-rule-types": "Uyarı kuralı türleri"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -5304,6 +5334,9 @@
       "preferences": "Tercihler",
       "recent-dashboards": "Son panolar",
       "recent-scopes": "Son kapsamlar"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -6221,6 +6254,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -7293,11 +7327,18 @@
       "modal": {
         "cancel": "İptal et",
         "discard": "Vazgeç",
+        "keep-working": "",
         "save": "Kaydet",
+        "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
+          "leave-composer": "",
           "save-changes-question": "Değişikliklerinizi kaydetmek istiyor musunuz?"
         },
         "title": {
+          "composer-stop-editing": "",
+          "leave-composer": "",
           "unsaved-changes": "Kaydedilmemiş değişiklikler"
         }
       },
@@ -7612,17 +7653,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -9055,6 +9099,12 @@
         "inspect-value": "Değeri incele",
         "show-details": "Ayrıntıları göster",
         "view-log-line": "Günlük kaydı satırını göster"
+      },
+      "error-attribute": {
+        "error-fields-label": "",
+        "error-fields-tooltip": "",
+        "stacktrace-label": "",
+        "stacktrace-tooltip": ""
       },
       "loki-time-sort-tooltip": "Bu sütunu sıralamak yalnızca görüntülenen sonuçların sırasını değiştirir. Sorgunun zamana dayalı sıralama düzenini güncellemek için sağdaki Sıralama denetimini kullanın."
     },
@@ -10683,6 +10733,8 @@
       "clear-button": "Seçimi temizle"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "CodeMirror düzenleyicisi yüklenemedi",
       "language-load-failed": "Söz dizimi vurgulaması yüklenemedi",
       "language-load-failed-description": "Düzenleyici dile özgü özellikler olmadan çalışmaya devam edecek.",
@@ -11099,6 +11151,7 @@
         "add-all": "Görüntülenen tüm değerleri filtreye ekle",
         "blanks": "(Boşluklar)",
         "button": "{{name}} ögesini filtrele",
+        "include-missing": "",
         "operator": {
           "contains": "İçeriyor",
           "equals": "Eşittir",
@@ -11123,6 +11176,7 @@
       "filter-popup-heading": "Değerlere göre filtrele:",
       "filter-popup-input-placeholder": "Değerleri filtrele",
       "filter-popup-match-case": "Büyük/küçük harf duyarlılığı",
+      "filter-popup-row-count": "",
       "footer": {
         "reducer": {
           "count": "Sayı"
@@ -11139,6 +11193,18 @@
       "no-rows": "Satır yok",
       "no-values-label": "Değer yok",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}/{{numRows}} satır",
+      "range": {
+        "apply": "",
+        "empty": "",
+        "end": "",
+        "histogram": "",
+        "invalid": "",
+        "label": "",
+        "maximum": "",
+        "minimum": "",
+        "start": "",
+        "unbounded": ""
+      },
       "reorder-column-label": "",
       "show-column-label": "",
       "sort-by-column": "Sütuna göre sırala: {{column}}",
@@ -11475,13 +11541,8 @@
       "severity-low": "Düşük",
       "severity-minor": "Küçük",
       "severity-unknown": "Bilinmeyen",
-      "title": "Tetiklenen uyarılar",
       "view-all": "Tetiklenen tüm uyarıları göster",
-      "view-rules": "Tüm uyarı kurallarını göster",
-      "critical-count_one": "{{count}} kritik",
-      "critical-count_other": "{{count}} kritik",
-      "high-count_one": "{{count}} yüksek",
-      "high-count_other": "{{count}} yüksek"
+      "view-rules": "Tüm uyarı kurallarını göster"
     },
     "header-actions": {
       "active-incidents": "Etkin olaylar",
@@ -11507,21 +11568,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "Etkin olaylar yüklenemedi",
-      "title": "Etkin olaylar",
       "view-all": "Tüm olayları göster"
     },
     "learn-more": "Daha fazla bilgi edinin",
     "most-used-dashboards-tab": {
       "empty": "En çok kullanılan panolar burada görünecek.",
-      "empty-description": "Kuruluşunuzda panolar oluşturulup kullanım verileri toplandığında, son 30 gün içinde en çok görüntülenen panolar burada gösterilir.",
       "error-title": "En çok kullanılan panolar yüklenemedi",
       "loading": "En çok kullanılan panolar yükleniyor..."
-    },
-    "news-card": {
-      "empty": "Yakın zamanda bir blog yazısı yok.",
-      "error-title": "Yakın zamandaki blog yazıları yüklenemedi",
-      "read-more": "Grafana Labs blogunda daha fazlasını okuyun",
-      "title": "Blog'tan son gönderiler"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11876,7 +11929,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Yıldızlı panolarınız burada görünecek.",
-      "empty-description": "Pano sayfasındaki <1></1> simgesine tıklayarak favori panolarınızı yıldızlayabilirsiniz.",
       "error-title": "Yıldızlı panolar yüklenemedi",
       "loading": "Yıldızlı panolar yükleniyor..."
     },
@@ -12310,6 +12362,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "",
         "error-details": ""
       }
     },
@@ -12349,7 +12402,6 @@
       "copy-log-line-json": "Günlük içeriğini JSON olarak kopyala",
       "copy-shortlink": "Kısa bağlantıyı kopyala",
       "copy-to-clipboard": "Panoya kopyala",
-      "displayed-fields-section": "Görüntülenen alanları düzenle",
       "fields": {
         "adhoc-statistics": "Geçici istatistikler",
         "copy-value-to-clipboard": "Değeri panoya kopyala",
@@ -12373,14 +12425,11 @@
       "log-attributes-field": "Günlük kaydı öznitelikleri",
       "log-line-field": "Günlük satırı",
       "log-line-section": "Günlük satırı",
-      "move-displayed-field-down": "Aşağı taşı",
-      "move-displayed-field-up": "Yukarı taşı",
       "no-details": "Görüntülenecek alan yok.",
       "open-assistant": "Asistan'da günlük kaydı satırını açıklayın",
       "open-value-in": "",
       "pin-line": "Günlüğü sabitle",
       "prettify": "Düzgünleştir",
-      "remove-displayed-field": "Alanı kaldır",
       "remove-log": "Günlüğü kaldır",
       "scroll-to-logline": "Günlük satırına git",
       "search": {
@@ -13688,6 +13737,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -15746,20 +15796,8 @@
     "explain-or-modify": "Açıkla veya değiştir",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "İptal et",
-    "feedback-description": "Geri bildiriminiz, Grafana'daki sorgu deneyimini geliştirmeye yardımcı olur.",
-    "feedback-error": "Geri bildirim gönderilemedi. Tekrar deneyin.",
     "feedback-helpful": "Faydalı",
-    "feedback-label": "Geri bildirim paylaşın",
-    "feedback-negative-placeholder": "Neyin yolunda gitmediğini ve bunun yerine ne beklediğinizi açıklayın.",
-    "feedback-negative-title": "Sorun neydi?",
     "feedback-not-helpful": "Yardımcı değil",
-    "feedback-positive-placeholder": "Neyi beğendiniz? Nasıl daha da iyi olabilirdi?",
-    "feedback-positive-title": "Neler sorunsuz ilerledi?",
-    "feedback-privacy": "",
-    "feedback-recipient": "Geri bildiriminiz sorgulama üzerinde çalışan ekiplere iletilecektir.",
-    "feedback-send": "Gönder",
-    "feedback-sending": "Gönderiliyor...",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -16946,6 +16984,10 @@
     },
     "namespace-unavailable": "İstekleri göndermeden önce ad alanını kontrol edin veya tekrar denemek için sayfayı yeniden yükleyin.",
     "namespace-unavailable-title": "Ad alanı yüklenemedi",
+    "router-fixtures": {
+      "clear": "",
+      "title": ""
+    },
     "router-nav": {
       "api-docs": "",
       "manifests": "",
@@ -16962,7 +17004,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
-      "groups": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",
@@ -16976,8 +17019,9 @@
       "requests-description": "",
       "shadowed": "",
       "shadowed-description": "",
-      "sources": "",
-      "stack-lookups": "",
+      "tab-groups": "",
+      "tab-lookups": "",
+      "tab-sources": "",
       "title": ""
     }
   },

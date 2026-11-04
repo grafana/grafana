@@ -38,6 +38,7 @@ use (
 	./pkg/infra/tracing
 	./pkg/plugins
 	./pkg/plugins/codegen
+	./pkg/storage/dbproxy
 	./pkg/storage/unified/apistore
 	./pkg/storage/unified/resource/kv
 	./pkg/storage/unified/resourceclient

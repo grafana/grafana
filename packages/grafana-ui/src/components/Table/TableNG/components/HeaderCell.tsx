@@ -259,6 +259,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               displayName={displayName}
               groups={columnOptions}
               hasActiveFilter={hasActiveFilter}
+              isFilterOpen={isPopoverVisible && filterAnchor !== filterIconRef.current}
               onOpenFilter={openFilter}
               onHideColumn={hideable ? onHideColumn : undefined}
               canHideColumn={canHideColumn}
@@ -386,8 +387,8 @@ const getStyles = memoize(
     headerTooltipIcon: css({
       cursor: 'default',
     }),
-    // Wraps the filter icon without changing how it reads: no padding, border or background, so the
-    // button box is exactly the icon and the header's spacing and reserved width are unaffected.
+    // Keep the open-state highlight outside the button box so the header's spacing and reserved
+    // width are unaffected.
     headerCellFilterButton: css({
       label: 'headerCellFilterButton',
       display: 'flex',
@@ -397,6 +398,10 @@ const getStyles = memoize(
       padding: 0,
       cursor: 'pointer',
       borderRadius: theme.spacing(0.25),
+      '&[aria-expanded="true"]': {
+        backgroundColor: theme.colors.action.hover,
+        boxShadow: `0 0 0 ${theme.spacing(0.5)} ${theme.colors.action.hover}`,
+      },
     }),
   })
 );

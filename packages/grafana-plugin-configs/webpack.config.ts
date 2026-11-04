@@ -337,7 +337,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
     stats: 'minimal',
 
     watchOptions: {
-      ignored: ['**/node_modules', '**/dist', '**/.yarn'],
+      ignored: ['**/node_modules', '**/dist'],
     },
   };
 

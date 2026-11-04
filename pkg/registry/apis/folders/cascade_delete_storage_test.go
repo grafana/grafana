@@ -730,6 +730,35 @@ func TestCascadeDelete_DisabledDelegates(t *testing.T) {
 	require.Empty(t, store.stamped)
 }
 
+func TestCascadeDelete_FinalizerFolderDelegates(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	// A folder carrying the cascade finalizer is left to the cascade controller: the forced delete
+	// only marks it terminating, with no synchronous walk of its subtree.
+	root := newFolder("root")
+	root.Finalizers = []string{foldersv1.CascadeDeleteFinalizer}
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root, "child": newFolder("child")}}
+	searcher := &fakeCascadeSearcher{
+		childrenByParent:   map[string][]string{"root": {"child"}},
+		dashboardsByFolder: map[string][]string{"root": {"dash-1"}},
+	}
+	s, dyn := newDashboardCascade(store, searcher, unstructuredDashboard("default", "dash-1"))
+
+	validated := false
+	validate := func(context.Context, runtime.Object) error { validated = true; return nil }
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", validate, forceDelete())
+	require.NoError(t, err)
+	require.True(t, validated, "delete validation must still run")
+	require.Equal(t, []string{"root"}, store.deleted)
+	require.Empty(t, store.stamped)
+	require.Contains(t, store.existing, "child")
+
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	_, err = dyn.Resource(gvr).Namespace("default").Get(ctxWithNamespace(), "dash-1", metav1.GetOptions{})
+	require.NoError(t, err, "dashboard must be left for the cascade controller")
+}
+
 // recordingAccessClient records Check calls and optionally filters by allow.
 type recordingAccessClient struct {
 	checks []contentsAccessCheck
