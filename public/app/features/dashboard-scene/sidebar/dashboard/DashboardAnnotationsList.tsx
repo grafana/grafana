@@ -41,8 +41,8 @@ export function DashboardAnnotationsList({
   const { DragDropContext } = useDragAndDrop();
   const { annotationLayers } = dataLayerSet.useState();
   const { visible, controlsMenu, hidden } = useMemo(
-    () => partitionAnnotationsByDisplay(annotationLayers),
-    [annotationLayers]
+    () => partitionAnnotationsByDisplay(annotationLayers, { hasControlsMenu: !hideControlsMenuList }),
+    [annotationLayers, hideControlsMenuList]
   );
 
   const annotationActions = toDraggableListItemActions<DashboardAnnotationsDataLayer>(
