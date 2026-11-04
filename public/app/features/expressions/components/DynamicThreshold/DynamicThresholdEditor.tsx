@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { type TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, ConfirmModal, Field, Input, Select, Spinner, Stack } from '@grafana/ui';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
@@ -15,15 +14,14 @@ import { getDynamicThresholdSourceOptions, useDynamicThresholdSourcePreview } fr
 interface Props {
   query: SqlExpressionQuery;
   queries: AlertQuery[];
-  timeRange?: TimeRange;
   onChange: (query: SqlExpressionQuery) => void;
 }
 
-export function DynamicThresholdEditor({ query, queries, timeRange, onChange }: Props) {
+export function DynamicThresholdEditor({ query, queries, onChange }: Props) {
   const policy = query.dynamicThreshold!.policy;
   const [pendingMatchLabel, setPendingMatchLabel] = useState<string | null>(null);
   const sourceOptions = useMemo(() => getDynamicThresholdSourceOptions(queries, query.refId), [queries, query.refId]);
-  const source = useDynamicThresholdSourcePreview(queries, policy.inputRefId, policy.matchLabel, timeRange);
+  const source = useDynamicThresholdSourcePreview(queries, policy.inputRefId, policy.matchLabel);
   const result = buildDynamicThreshold(policy);
   const errors = result.ok ? [] : result.errors;
   const thresholdCount = isRangeEvaluator(policy.evaluator) ? 2 : 1;
