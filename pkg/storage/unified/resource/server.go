@@ -1277,6 +1277,10 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		return rsp, nil
 	}
 
+	if _, _, err := decodeReferenceOnlyBlobBody(req.Value); err != nil {
+		return nil, err
+	}
+
 	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
@@ -1403,6 +1407,10 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 			Code:    http.StatusUnauthorized,
 		}
 		return rsp, nil
+	}
+
+	if _, _, err := decodeReferenceOnlyBlobBody(req.Value); err != nil {
+		return nil, err
 	}
 
 	var (
