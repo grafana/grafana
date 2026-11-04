@@ -4,11 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
@@ -19,17 +25,63 @@ import (
 // migration from local AccessControl evaluation to centralized AuthZ checks.
 // Evaluation failures are returned as deny-with-error to avoid fail-open.
 func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error) {
+	return s.withLegacyCheckInstrumentation(ctx, req, func(ctx context.Context, req *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error) {
+		if req.GetInternalIdentity() != nil {
+			return &authzextv1.LegacyCheckResponse{
+				Allowed: false,
+				Error:   "internal legacy identities require the embedded server",
+			}, nil
+		}
+
+		return s.legacyCheck(ctx, req)
+	})
+}
+
+func (s *Service) withLegacyCheckInstrumentation(
+	ctx context.Context,
+	req *authzextv1.LegacyCheckRequest,
+	check func(context.Context, *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error),
+) (response *authzextv1.LegacyCheckResponse, err error) {
+	start := time.Now()
+	evaluation := "organization"
 	if req.GetInternalIdentity() != nil {
-		return &authzextv1.LegacyCheckResponse{
-			Allowed: false,
-			Error:   "internal legacy identities require the embedded server",
-		}, nil
+		evaluation = "internal"
+	} else if req.GetGlobalEvaluation() != nil {
+		evaluation = "global"
 	}
 
-	return s.legacyCheck(ctx, req)
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.LegacyCheck", trace.WithAttributes(
+		attribute.String("evaluation", evaluation),
+		attribute.Bool("restricted", req.GetRestriction() != nil),
+		attribute.Bool("skip_cache", req.GetSkipCache()),
+		attribute.Bool("skip_scope_resolution", req.GetSkipScopeResolution()),
+	))
+
+	defer func() {
+		checkErr := err
+		// Application failures use a successful gRPC status, so inspect the response too.
+		if checkErr == nil && (response.GetError() != "" || response.GetErrorCode() != authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_UNSPECIFIED) {
+			checkErr = fmt.Errorf("legacy check failed (%s): %s", response.GetErrorCode(), response.GetError())
+		}
+		if checkErr != nil {
+			_ = tracing.Error(span, checkErr)
+		}
+
+		allowed := checkErr == nil && response.GetAllowed()
+
+		s.metrics.legacyCheckRequests.WithLabelValues(evaluation, strconv.FormatBool(allowed)).Inc()
+		s.metrics.legacyCheckDuration.WithLabelValues(evaluation, strconv.FormatBool(allowed)).Observe(time.Since(start).Seconds())
+		span.SetAttributes(attribute.Bool("allowed", allowed))
+
+		span.End()
+	}()
+
+	return check(ctx, req)
 }
 
 func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error) {
+	span := trace.SpanFromContext(ctx)
+
 	// TODO: Complete in subsequent PRs:
 	//   - Standalone scope resolution: replace embedded service dependencies with namespace-aware providers.
 	//			MT AuthZ: https://github.com/grafana/identity-access-team/issues/2436
@@ -60,6 +112,7 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
+	span.SetAttributes(attribute.Int("action_count", len(actions)))
 
 	scopeRequest := legacyScopeRequest{
 		namespace:    ns,
