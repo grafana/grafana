@@ -178,9 +178,12 @@ To remove the filter, click the blue filter icon and then click **Clear filter**
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
 
-### Apply filters from the table
+## Cross-filter from a table cell
 
-In tables, you can apply filters directly from the visualization with one click.
+In tables, you can apply dashboard cross-filters directly from the visualization.
+Cross-filtering requires a **Group by** variable and a data source that supports dashboard filters, such as Prometheus or Loki.
+
+To enable cross-filtering, add a field override for each field you want to filter by, select **Standard options > Cross-filter**, and enable the **Cross-filter** switch.
 
 To display the filter icons, hover your cursor over the cell that has the value for which you want to filter:
 
