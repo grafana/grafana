@@ -72,6 +72,67 @@ describe('GrafanaRuleQueryViewer', () => {
     expect(screen.getByText(/refId: A/)).toBeInTheDocument();
   });
 
+  describe('SQL expressions', () => {
+    const sqlExpression = (refId: string, extra: Record<string, unknown> = {}): AlertQuery => ({
+      refId,
+      datasourceUid: '__expr__',
+      queryType: '',
+      model: {
+        refId,
+        type: 'sql',
+        datasource: { uid: '__expr__', type: '__expr__' },
+        expression: 'SELECT 1 AS generated_marker',
+        ...extra,
+      } as AlertDataQuery,
+    });
+
+    it('labels an expression with dynamic threshold metadata and shows the generated SQL', async () => {
+      const dataSources = await dataSourcesPromise;
+      const dynamicThreshold = {
+        version: 1,
+        policy: {
+          inputRefId: 'A',
+          valueField: 'value',
+          matchLabel: 'region',
+          labelColumns: ['region'],
+          evaluator: 'gt',
+          mappings: [],
+          defaultThreshold: [1],
+        },
+      };
+
+      render(
+        <GrafanaRuleQueryViewer
+          queries={[sqlExpression('B', { dynamicThreshold })]}
+          condition="B"
+          rule={mockCombinedRule()}
+          dataSourcesByUid={dataSources}
+        />
+      );
+
+      expect(await screen.findByText('Dynamic threshold')).toBeInTheDocument();
+      expect(screen.getByText('Generated SQL')).toBeInTheDocument();
+      expect(screen.queryByText('Sql')).not.toBeInTheDocument();
+    });
+
+    it('keeps the ordinary SQL label for SQL without metadata', async () => {
+      const dataSources = await dataSourcesPromise;
+
+      render(
+        <GrafanaRuleQueryViewer
+          queries={[sqlExpression('B')]}
+          condition="B"
+          rule={mockCombinedRule()}
+          dataSourcesByUid={dataSources}
+        />
+      );
+
+      expect(await screen.findByText('Sql')).toBeInTheDocument();
+      expect(screen.queryByText('Dynamic threshold')).not.toBeInTheDocument();
+      expect(screen.queryByText('Generated SQL')).not.toBeInTheDocument();
+    });
+  });
+
   it('renders neither badge nor query model when the data source did not resolve', async () => {
     const rule = mockCombinedRule();
 

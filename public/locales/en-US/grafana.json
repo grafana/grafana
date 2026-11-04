@@ -1249,6 +1249,8 @@
       "title-alerts-preview": "Alerts preview"
     },
     "expression-preview": {
+      "dynamic-threshold": "Dynamic threshold",
+      "dynamic-threshold-generated-sql": "Generated SQL",
       "expression-not-supported": "Expression not supported: {{type}}",
       "title-expression-failed": "Expression failed"
     },
