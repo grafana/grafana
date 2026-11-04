@@ -36,6 +36,7 @@ import { reloadPendingChangesPage } from '../lifecycle/pendingChangesPageReload'
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardInteractions } from '../utils/interactions';
+import { setMobileViewport } from '../utils/mobileViewportTestUtils';
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
 
 import {
@@ -2134,7 +2135,6 @@ describe('DashboardScenePageStateManager v2', () => {
     afterEach(async () => {
       jest.restoreAllMocks();
       setTestFlags({});
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
     it('edit-template flow: sets isDashboardTemplate + dashboardTemplateUid, scene is clean', async () => {
@@ -2194,7 +2194,7 @@ describe('DashboardScenePageStateManager v2', () => {
 
     it('redirects to /dashboards instead of auto-entering edit mode when the viewport is mobile-sized', async () => {
       setTestFlags({ 'grafana.customDashboardTemplates': true, 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
       const replaceSpy = jest.spyOn(locationService, 'replace');
 
       const loader = new DashboardScenePageStateManagerV2({});
@@ -3103,7 +3103,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     it('redirects to /dashboards instead of auto-entering edit mode when the viewport is mobile-sized', async () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
       config.featureToggles.suggestedDashboards = true;
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
 
       locationService.getLocation = jest.fn().mockReturnValue({
         pathname: '/dashboard/template',
@@ -3136,7 +3136,6 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(manager.state.dashboard?.state.isDirty).toBeFalsy();
 
       setTestFlags({});
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
     it('should reset to V2 manager when loading a new dashboard after template', async () => {

@@ -15,6 +15,7 @@ import * as useFolderReadmeModule from 'app/features/provisioning/hooks/useFolde
 import { type DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { setMobileViewport } from '../../dashboard-scene/utils/mobileViewportTestUtils';
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 
 import { BrowseView } from './BrowseView';
@@ -246,6 +247,7 @@ describe('browse-dashboards BrowseView', () => {
 
     it('does not show the Create dashboard CTA on mobile when mobileEditDeprecation is enabled', async () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
       render(
         <BrowseView permissions={mockPermissions} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />
       );

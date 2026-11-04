@@ -59,6 +59,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
 import { isEditEntryBlocked } from '../utils/mobileEditDeprecation';
+import { resetViewport, setMobileViewport } from '../utils/mobileViewportTestUtils';
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { createDeferred } from '../utils/test-utils';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
@@ -326,12 +327,7 @@ describe('DashboardScene', () => {
     describe('Mobile edit deprecation', () => {
       afterEach(() => {
         setTestFlags({});
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
       });
-
-      function setMobileViewport() {
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
-      }
 
       it('auto-enters edit mode normally on /dashboard/new on a mobile viewport when the toggle is off', () => {
         setMobileViewport();
@@ -363,7 +359,7 @@ describe('DashboardScene', () => {
 
       it('enters edit mode normally when the toggle is on but the viewport is not mobile-sized', () => {
         setTestFlags({ 'grafana.mobileEditDeprecation': true });
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1200 });
+        resetViewport();
         const scene = buildTestScene();
         scene.activate();
 

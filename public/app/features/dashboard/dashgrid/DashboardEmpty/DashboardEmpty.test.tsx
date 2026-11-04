@@ -9,6 +9,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardSceneState } from 'app/features/dashboard-scene/scene/types/dashboard';
 
+import { resetViewport, setMobileViewport } from '../../../dashboard-scene/utils/mobileViewportTestUtils';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../../utils/dashboard';
 
@@ -185,6 +186,7 @@ it('renders with buttons disabled when repository is read-only', () => {
 
 it('renders with buttons disabled when blocked on mobile, even with canCreate true', () => {
   setTestFlags({ 'grafana.mobileEditDeprecation': true });
+  setMobileViewport();
 
   setup({ canCreate: true });
 
@@ -201,6 +203,7 @@ describe('new layouts empty state', () => {
   afterEach(() => {
     cleanup();
     setTestFlags({});
+    resetViewport();
     mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: false });
   });
 
@@ -233,6 +236,7 @@ describe('new layouts empty state', () => {
 
   it('shows a message instead of the layout picker when blocked on mobile', () => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+    setMobileViewport();
 
     const dashboard = setupScene({ isEditing: false });
 

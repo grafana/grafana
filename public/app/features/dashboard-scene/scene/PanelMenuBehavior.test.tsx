@@ -37,6 +37,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
+import { setMobileViewport } from '../utils/mobileViewportTestUtils';
 
 import { DashboardScene } from './DashboardScene';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
@@ -1338,7 +1339,6 @@ describe('panelMenuBehavior', () => {
   describe('Copy, blocked on mobile', () => {
     afterEach(() => {
       setTestFlags({});
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
     it('offers Copy in the More... submenu outside edit mode when not blocked on mobile', async () => {
@@ -1356,7 +1356,7 @@ describe('panelMenuBehavior', () => {
 
     it('drops Copy from the More... submenu when blocked on mobile', async () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
       const { menu, panel } = await buildTestScene({});
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 
@@ -1371,7 +1371,6 @@ describe('panelMenuBehavior', () => {
   describe('Edit, blocked on mobile', () => {
     afterEach(() => {
       setTestFlags({});
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
     it('offers Edit when not blocked on mobile', async () => {
@@ -1387,7 +1386,7 @@ describe('panelMenuBehavior', () => {
 
     it('drops Edit from the menu when blocked on mobile', async () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
       const { scene, menu, panel } = await buildTestScene({});
       scene.setState({ editable: true });
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
@@ -1400,7 +1399,7 @@ describe('panelMenuBehavior', () => {
 
     it('still offers Edit for a session already in full editing', async () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
       const { scene, menu, panel } = await buildTestScene({});
       scene.setState({ editable: true, isEditing: true });
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });

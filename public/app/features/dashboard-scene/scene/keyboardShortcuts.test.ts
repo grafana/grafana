@@ -22,6 +22,7 @@ import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { DashboardInteractions } from '../utils/interactions';
+import { resetViewport, setMobileViewport } from '../utils/mobileViewportTestUtils';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 
@@ -519,12 +520,11 @@ describe('setupKeyboardShortcuts', () => {
   describe('edit mode shortcuts, blocked on mobile', () => {
     afterEach(() => {
       setTestFlags({});
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
     it('blocks the p v (paste) shortcut and warns instead of pasting', () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
       jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
       jest.spyOn(mockScene, 'pastePanel').mockImplementation();
       localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
@@ -543,14 +543,14 @@ describe('setupKeyboardShortcuts', () => {
 
     it('enables the p v (paste) shortcut after widening a dashboard opened on mobile', () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
       jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
       jest.spyOn(mockScene, 'pastePanel').mockImplementation();
       jest.spyOn(DashboardInteractions, 'trackPastePanelClick').mockImplementation();
       localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
 
       setupKeyboardShortcuts(mockScene);
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+      resetViewport();
       mockScene.setState({ isEditing: true });
       getBinding('p v')!.onTrigger();
 
@@ -559,7 +559,7 @@ describe('setupKeyboardShortcuts', () => {
 
     it('warns instead of opening settings when d s is pressed', () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
       jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
       mockScene.setState({ meta: { ...mockScene.state.meta, canSave: true } });
       const partialSpy = jest.spyOn(locationService, 'partial');
@@ -576,7 +576,7 @@ describe('setupKeyboardShortcuts', () => {
 
     it('blocks e shortcut and warns instead of entering edit mode', async () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
       jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
       mockScene.setState({ meta: { ...mockScene.state.meta, canSave: true } });
       jest.mocked(findVizPanelByPathId).mockReturnValue(new VizPanel({ pluginId: 'timeseries' }));
@@ -610,7 +610,7 @@ describe('setupKeyboardShortcuts', () => {
 
     it('blocks the p r (delete) shortcut and warns instead of deleting', async () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
       jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
       jest.mocked(findVizPanelByPathId).mockReturnValue(new VizPanel({ pluginId: 'timeseries' }));
       jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
@@ -632,7 +632,7 @@ describe('setupKeyboardShortcuts', () => {
 
     it('blocks the p d (duplicate) shortcut and warns instead of duplicating', async () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
       jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
       jest.mocked(findVizPanelByPathId).mockReturnValue(new VizPanel({ pluginId: 'timeseries' }));
       jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
@@ -660,7 +660,7 @@ describe('setupKeyboardShortcuts', () => {
         jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
         jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
         setTestFlags({ 'grafana.mobileEditDeprecation': true });
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+        setMobileViewport();
         const emitSpy = jest.spyOn(appEvents, 'emit');
 
         setupKeyboardShortcuts(mockScene);
@@ -714,10 +714,6 @@ describe('setupKeyboardShortcuts', () => {
   });
 
   describe('p c shortcut (copy panel), blocked on mobile', () => {
-    afterEach(() => {
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
-    });
-
     it('sets up the p c shortcut', () => {
       setupKeyboardShortcuts(mockScene);
 
@@ -726,7 +722,7 @@ describe('setupKeyboardShortcuts', () => {
 
     it('blocks the copy-panel shortcut on mobile and warns instead of copying', async () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
       jest.mocked(findVizPanelByPathId).mockReturnValue(new VizPanel({ pluginId: 'timeseries' }));
       jest.spyOn(mockScene, 'copyPanel').mockImplementation();
       const emitSpy = jest.spyOn(appEvents, 'emit');

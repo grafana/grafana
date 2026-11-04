@@ -29,6 +29,7 @@ import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSav
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getDashboardResourceText } from '../sidebar/codePaneUtils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { setMobileViewport } from '../utils/mobileViewportTestUtils';
 import { createDeferred } from '../utils/test-utils';
 
 import { DashboardModePicker } from './DashboardModePicker';
@@ -262,6 +263,7 @@ it('disables the mode picker in Viewing on mobile when mobileEditDeprecation is 
     'grafana.dashboardPreviewMode': true,
     'grafana.mobileEditDeprecation': true,
   });
+  setMobileViewport();
   const dashboard = setup();
   render(
     <TestProvider>

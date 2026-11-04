@@ -29,6 +29,7 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { setMobileViewport } from '../utils/mobileViewportTestUtils';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
@@ -495,6 +496,7 @@ describe('DashboardControls', () => {
 
     it('should not show EditDashboardSwitch or MakeDashboardEditableButton on mobile when mobileEditDeprecation is enabled', async () => {
       setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
       const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
       renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
@@ -512,6 +514,7 @@ describe('DashboardControls', () => {
 
     it('should not show MakeDashboardEditableButton on mobile when mobileEditDeprecation is enabled', async () => {
       setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
       const controls = buildTestSceneWithEditable({ editable: false, canEdit: false, canMakeEditable: true });
       renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
