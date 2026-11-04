@@ -202,7 +202,7 @@ To enable cell filters, follow these steps:
    {{< /admonition >}}
 
 1. Click **Add override property**.
-1. Select **Standard options > Filterable**.
+1. Select **Standard options > Filter from values**.
 1. Save the dashboard.
 1. Mouse over the cell to display the menu icon.
 1. Click the menu and select either **Filter for value** or **Filter out value**:
