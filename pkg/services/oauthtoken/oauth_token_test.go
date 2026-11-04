@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -858,7 +856,6 @@ func TestGetExternalSession_DelegatedUser(t *testing.T) {
 		desc            string
 		authenticatedBy string
 		serviceIdentity string
-		flagEnabled     bool
 		// validSessions are the user's sessions that are neither revoked nor expired, as GetUserTokens returns them.
 		validSessions []*auth.UserToken
 		expected      *auth.ExternalSession
@@ -868,7 +865,6 @@ func TestGetExternalSession_DelegatedUser(t *testing.T) {
 			desc:            "should use the external session of the most recent valid session when Assistant acts for the user",
 			authenticatedBy: login.ExtendedJWTModule,
 			serviceIdentity: assistantServiceIdentity,
-			flagEnabled:     true,
 			validSessions: []*auth.UserToken{
 				{Id: 1, UserId: 1, ExternalSessionId: 1, CreatedAt: 100},
 				{Id: 2, UserId: 1, ExternalSessionId: latest.ID, CreatedAt: 200},
@@ -880,7 +876,6 @@ func TestGetExternalSession_DelegatedUser(t *testing.T) {
 			desc:            "should return not found when no valid session has an external session",
 			authenticatedBy: login.ExtendedJWTModule,
 			serviceIdentity: assistantServiceIdentity,
-			flagEnabled:     true,
 			validSessions:   []*auth.UserToken{{Id: 3, UserId: 1, CreatedAt: 300}},
 			expectedErr:     auth.ErrExternalSessionNotFound,
 		},
@@ -888,34 +883,24 @@ func TestGetExternalSession_DelegatedUser(t *testing.T) {
 			desc:            "should return not found when the user has no valid session",
 			authenticatedBy: login.ExtendedJWTModule,
 			serviceIdentity: assistantServiceIdentity,
-			flagEnabled:     true,
 			validSessions:   []*auth.UserToken{},
 			expectedErr:     auth.ErrExternalSessionNotFound,
-		},
-		{
-			desc:            "should require a session token when the flag is disabled",
-			authenticatedBy: login.ExtendedJWTModule,
-			serviceIdentity: assistantServiceIdentity,
-			expectedErr:     auth.ErrExternalSessionTokenNotFound,
 		},
 		{
 			desc:            "should require a session token when another service acts for the user",
 			authenticatedBy: login.ExtendedJWTModule,
 			serviceIdentity: "other-service",
-			flagEnabled:     true,
 			expectedErr:     auth.ErrExternalSessionTokenNotFound,
 		},
 		{
 			desc:            "should require a session token when the access token has no service identity",
 			authenticatedBy: login.ExtendedJWTModule,
-			flagEnabled:     true,
 			expectedErr:     auth.ErrExternalSessionTokenNotFound,
 		},
 		{
-			desc:            "should still require a session token for other users when the flag is enabled",
+			desc:            "should still require a session token for other logins",
 			authenticatedBy: login.GenericOAuthModule,
 			serviceIdentity: assistantServiceIdentity,
-			flagEnabled:     true,
 			expectedErr:     auth.ErrExternalSessionTokenNotFound,
 		},
 	}
@@ -926,8 +911,6 @@ func TestGetExternalSession_DelegatedUser(t *testing.T) {
 		requesters := map[string]identity.Requester{"identity": id, "signed in user": id.SignedInUser()}
 		for kind, usr := range requesters {
 			t.Run(tt.desc+" ("+kind+")", func(t *testing.T) {
-				setOAuthTokenForDelegatedUsers(t, tt.flagEnabled)
-
 				sessionService := authtest.NewMockUserAuthTokenService(t)
 				if tt.validSessions != nil {
 					sessionService.On("GetUserTokens", mock.Anything, int64(1)).Return(tt.validSessions, nil).Once()
@@ -952,8 +935,6 @@ func TestGetExternalSession_DelegatedUser(t *testing.T) {
 }
 
 func TestGetCurrentOAuthToken_DelegatedUser(t *testing.T) {
-	setOAuthTokenForDelegatedUsers(t, true)
-
 	sessionService := authtest.NewMockUserAuthTokenService(t)
 	sessionService.On("GetUserTokens", mock.Anything, int64(1)).Return([]*auth.UserToken{{Id: 1, UserId: 1, ExternalSessionId: 2}}, nil).Once()
 	sessionService.On("GetExternalSession", mock.Anything, int64(2)).Return(&auth.ExternalSession{
@@ -992,12 +973,4 @@ func delegatedUser(authenticatedBy, serviceIdentity string) *authn.Identity {
 		AuthenticatedBy:   authenticatedBy,
 		AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{ServiceIdentity: serviceIdentity}},
 	}
-}
-
-func setOAuthTokenForDelegatedUsers(t *testing.T, enabled bool) {
-	t.Helper()
-	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagAuthOauthTokenForDelegatedUsers: {State: memprovider.Enabled, Variants: map[string]any{"value": enabled}, DefaultVariant: "value"},
-	})))
-	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 }
