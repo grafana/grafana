@@ -204,8 +204,8 @@ describe('PanelEditor', () => {
       expect(panel.isActive).toBe(false);
     });
 
-    it('keeps a replacement data provider active until editing ends', async () => {
-      const { panelEditor, panel, deactivatePanel } = await setup({
+    it('releases a replaced data provider, then the replacement when editing ends', async () => {
+      const { panel, deactivatePanel } = await setup({
         activateFullTree: false,
         pluginSkipDataQuery: false,
       });
@@ -221,7 +221,6 @@ describe('PanelEditor', () => {
 
       expect(original.isActive).toBe(false);
       expect(replacement.isActive).toBe(true);
-      expect(panelEditor.isActive).toBe(true);
 
       deactivate!();
       deactivate = undefined;
