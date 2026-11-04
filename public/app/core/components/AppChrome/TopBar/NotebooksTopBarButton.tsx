@@ -27,13 +27,17 @@ export const NotebooksTopBarButton = memo(function NotebooksTopBarButton() {
     <ToolbarButton
       iconOnly
       icon="book"
-      aria-label={t('navigation.notebooks.aria-label', 'Notebooks')}
+      aria-label={
+        isOpen
+          ? t('navigation.notebooks.close-scratchpad', 'Close scratchpad')
+          : t('navigation.notebooks.open-scratchpad', 'Open scratchpad')
+      }
       aria-expanded={isOpen}
       variant={isOpen ? 'active' : 'default'}
       tooltip={
         isOpen
-          ? t('navigation.notebooks.close-tooltip', 'Close notebooks panel')
-          : t('navigation.notebooks.open-tooltip', 'Open notebooks panel')
+          ? t('navigation.notebooks.close-scratchpad', 'Close scratchpad')
+          : t('navigation.notebooks.open-scratchpad', 'Open scratchpad')
       }
       onClick={() => {
         if (isOpen) {

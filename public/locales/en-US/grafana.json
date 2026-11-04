@@ -13421,9 +13421,8 @@
       "starred-folder-icon": "Folder"
     },
     "notebooks": {
-      "aria-label": "Notebooks",
-      "close-tooltip": "Close notebooks panel",
-      "open-tooltip": "Open notebooks panel"
+      "close-scratchpad": "Close scratchpad",
+      "open-scratchpad": "Open scratchpad"
     },
     "org-switcher": {
       "aria-label": "Change organization"
@@ -13771,18 +13770,33 @@
       "saved": "Saved",
       "saving": "Saving…"
     },
-    "side-panel": {
-      "back": "Back to notebooks",
-      "close": "Close notebooks",
-      "create": "Create",
-      "create-heading": "Create a new notebook",
-      "created-by-me": "Created by me",
-      "open-heading": "Open an existing notebook",
-      "search-placeholder": "Search notebooks",
-      "tag-placeholder": "Filter by tag",
-      "title": "Notebooks",
-      "title-label": "New notebook title",
-      "title-placeholder": "Notebook title (optional)"
+    "scratchpad": {
+      "add-note": "Add note",
+      "block-text": "Text block",
+      "clear": "Discard scratchpad",
+      "close": "Close scratchpad",
+      "discard-body": "Are you sure you want to discard this scratchpad? Everything in it will be lost.",
+      "discard-confirm": "Discard",
+      "discard-title": "Discard scratchpad",
+      "drag": "Drag to reorder",
+      "empty": "Jot down notes or add panels from dashboards and Explore. Save it as a notebook when it is ready.",
+      "make-heading": "Make heading",
+      "make-paragraph": "Make paragraph",
+      "no-create": "You cannot create notebooks",
+      "note-label": "Add a note",
+      "note-placeholder": "Add some text…",
+      "panel-added": "Panel added to scratchpad",
+      "private-hint": "Private draft, only saved on this browser",
+      "remove": "Remove block",
+      "save": "Save as notebook",
+      "save-error": "Could not save",
+      "save-failed": "Could not save as notebook",
+      "saved": "Saved as notebook {{title}}",
+      "saving": "Saving…",
+      "title": "Scratchpad",
+      "title-label": "Notebook name",
+      "title-placeholder": "Name your notebook (optional)",
+      "untitled-panel": "Untitled panel"
     },
     "view": {
       "available-once-created": "Available once you write something",
@@ -13973,8 +13987,7 @@
     },
     "header-menu": {
       "add-to-notebook": "Add to notebook",
-      "add-to-open-notebook": "Add to open notebook",
-      "add-to-open-notebook-titled": "Add to open: {{title}}",
+      "add-to-scratchpad": "Add to scratchpad",
       "choose-notebook": "Choose notebook…",
       "copy": "Copy",
       "copy-styles": "Copy styles",

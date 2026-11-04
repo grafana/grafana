@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
-import { NotebooksSidePanel } from 'app/features/notebook/sidePanel/NotebooksSidePanelLazy';
+import { ScratchpadPanel } from 'app/features/notebook/scratchpad/ScratchpadPanelLazy';
 
 import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { FloatingWidthHandle } from './FloatingWidthHandle';
@@ -105,7 +105,7 @@ export function ExtensionSidebar() {
         {ExtensionComponent ? (
           <ExtensionComponent {...props} extensionSidebarPresentation={presentation} />
         ) : (
-          <NotebooksSidePanel onClose={() => setDockedComponentId(undefined)} />
+          <ScratchpadPanel onClose={() => setDockedComponentId(undefined)} />
         )}
       </div>
       {floating && (

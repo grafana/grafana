@@ -38,7 +38,7 @@ describe('NotebooksTopBarButton', () => {
     mockSidebar();
     render(<NotebooksTopBarButton />);
 
-    expect(screen.queryByRole('button', { name: 'Notebooks' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open scratchpad' })).not.toBeInTheDocument();
   });
 
   it('renders nothing without read permission', () => {
@@ -46,14 +46,14 @@ describe('NotebooksTopBarButton', () => {
     mockSidebar();
     render(<NotebooksTopBarButton />);
 
-    expect(screen.queryByRole('button', { name: 'Notebooks' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open scratchpad' })).not.toBeInTheDocument();
   });
 
   it('closes the panel when it is already open', async () => {
     const setDocked = mockSidebar(CORE_NOTEBOOKS_COMPONENT_ID);
     const { user } = render(<NotebooksTopBarButton />);
 
-    const button = screen.getByRole('button', { name: 'Notebooks' });
+    const button = screen.getByRole('button', { name: 'Close scratchpad' });
     expect(button).toHaveAttribute('aria-expanded', 'true');
     await user.click(button);
 
