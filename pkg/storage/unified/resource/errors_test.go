@@ -110,7 +110,7 @@ func TestAsErrorResult_ContextErrors(t *testing.T) {
 					got := AsErrorResult(err)
 					require.Equal(t, tc.httpCode, got.Code)
 					require.Equal(t, err.Error(), got.Message)
-					require.Equal(t, tc.grpcCode, status.Code(errorResultStatus(got)))
+					require.Equal(t, tc.grpcCode, status.Code(GRPCStatusError(got)))
 				})
 			}
 		})
@@ -145,7 +145,7 @@ func TestAsErrorResult_MixedJoinedErrors(t *testing.T) {
 					got := AsErrorResult(err)
 					require.Equal(t, int32(http.StatusInternalServerError), got.Code)
 					require.Equal(t, err.Error(), got.Message)
-					require.Equal(t, codes.Internal, status.Code(errorResultStatus(got)))
+					require.Equal(t, codes.Internal, status.Code(GRPCStatusError(got)))
 					require.Equal(t, int32(http.StatusInternalServerError), AsErrorResult(StatusErrorFromResponse(nil, err)).Code)
 				})
 			}
@@ -170,7 +170,7 @@ func TestHandleQueueError_ContextErrors(t *testing.T) {
 				return &resourcepb.ReadResponse{Error: e}
 			})
 			require.NoError(t, err)
-			require.Equal(t, tc.want, status.Code(errorResultStatus(response.Error)))
+			require.Equal(t, tc.want, status.Code(GRPCStatusError(response.Error)))
 		})
 	}
 }
