@@ -14,7 +14,7 @@ import {
   useFlagGrafanaCmdkHybridSearch,
   useFlagGrafanaVectorSearchCmdk,
 } from '@grafana/runtime/internal';
-import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
+import { EmptyState, Icon, LoadingBar, getPortalContainer, useStyles2 } from '@grafana/ui';
 
 import { AskAssistantPill } from './AskAssistantPill';
 import { type DeepSearchNavHandle, DeepSearchResults } from './DeepSearchResults';
@@ -37,8 +37,9 @@ import { SECTION_DEEP_SEARCH, SECTION_NOTEBOOKS } from './values';
 
 export function CommandPalette() {
   useRegisterStaticActions();
+
   return (
-    <KBarPortal>
+    <KBarPortal container={getPortalContainer()}>
       <CommandPaletteContents />
     </KBarPortal>
   );

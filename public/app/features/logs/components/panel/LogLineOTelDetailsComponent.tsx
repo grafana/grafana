@@ -191,7 +191,12 @@ const LogLineDetailsOTelComponentBody = ({
         </div>
         {hasAttributes ? (
           <>
-            <LogLineDetailsError className={styles.errorContainer} fields={fields} labels={labels} />
+            <LogLineDetailsError
+              className={styles.errorContainer}
+              fields={fields}
+              labels={labels}
+              otelLanguage={log.otelLanguage}
+            />
             <div className={styles.categories}>
               {groupedFields.length > 0 &&
                 groupedFields.map(({ category, items }) => (

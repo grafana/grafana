@@ -241,7 +241,7 @@ func testEventStoreSaveGet(t *testing.T, ctx context.Context, store *eventStore)
 	for _, tc := range []struct {
 		name           string
 		previousRV     int64
-		previousAction kv.DataAction
+		previousAction DataAction
 		previousFolder string
 		metadata       *resourcepb.NotificationMetadata
 	}{
@@ -832,7 +832,7 @@ func eventStoreFailureBatch(t *testing.T, mode string, events []Event, cancel co
 
 func eventStoreTestEvents(count int) []Event {
 	events := make([]Event, count)
-	actions := []kv.DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted}
+	actions := []DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted}
 	for i := range events {
 		events[i] = Event{
 			Namespace: "default", Group: "apps", Resource: "resource", Name: fmt.Sprintf("test-%03d", i),
@@ -956,7 +956,7 @@ func TestEvent_JSONSerialization(t *testing.T) {
 	for _, tc := range []struct {
 		name           string
 		previous       string
-		previousAction kv.DataAction
+		previousAction DataAction
 		previousFolder string
 	}{
 		{name: "legacy record"},

@@ -2,12 +2,12 @@
 // This file contains the common parts of the rollup configuration that are shared across multiple packages.
 import nodeResolve from '@rollup/plugin-node-resolve';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import esbuild from 'rollup-plugin-esbuild';
 import { nodeExternals } from 'rollup-plugin-node-externals';
 
 // This is the path to the root of the grafana project
-// Prefer PROJECT_CWD env var set by yarn berry
-const projectCwd = process.env.PROJECT_CWD ?? '../../';
+const projectCwd = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 export const entryPoint = 'src/index.ts';
 

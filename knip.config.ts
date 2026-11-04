@@ -59,7 +59,7 @@ const config: KnipConfig = {
   workspaces: {
     '.': {
       ignoreDependencies: [
-        // used by yarn test:ci
+        // used by the test:ci script
         'jest-junit',
 
         // used by coverage script, see jest.config.codeowner.js
@@ -69,7 +69,7 @@ const config: KnipConfig = {
         '@grafana/levitate',
         'wait-on',
 
-        // used via `yarn <bin>` in scripts/validate-npm-packages.sh — knip doesn't detect yarn-invoked binaries
+        // invoked by scripts/validate-npm-packages.sh — knip doesn't detect shell-invoked binaries
         '@arethetypeswrong/cli',
         'publint',
 
@@ -109,6 +109,8 @@ const config: KnipConfig = {
         // locale extensions for enterprise translations
         'public/app/extensions/locales/localeExtensions.ts!',
         'public/app/extensions/api/clients/**/index.ts!',
+        // Temporary entry until the notification template editor consumes it in DPRO-457.
+        'public/app/features/alerting/unified/components/receivers/editor/goTemplate.ts!',
         'public/app/plugins/**/module.{ts,tsx,js}!',
         'scripts/**/*.{t,j,mt,mj,cj}s*',
         '!scripts/grafana-server/tmp/**',

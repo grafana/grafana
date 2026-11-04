@@ -30,7 +30,7 @@ import { useLogListContext } from './LogListContext';
 import { getIconButtonStyles } from './activeIconButtonStyles';
 import { type LogListModel, getNormalizedFieldName } from './processing';
 
-// Paginate fields above this number.
+// Paginate fields above this number. A suggested/maximum page size, not a fixed one.
 const FIELDS_PAGE_SIZE = 50;
 
 export function usePagedItems<T>(items: T[]) {
@@ -41,14 +41,16 @@ export function usePagedItems<T>(items: T[]) {
   }, [items]);
 
   const numberOfPages = Math.max(1, Math.ceil(items.length / FIELDS_PAGE_SIZE));
+  // Spread items evenly across that many pages instead of filling each to FIELDS_PAGE_SIZE and leaving a
+  // short, oddly-sized last page.
+  const pageSize = Math.ceil(items.length / numberOfPages);
   const currentPage = Math.min(page, numberOfPages);
   const pagedItems = useMemo(
-    () => items.slice((currentPage - 1) * FIELDS_PAGE_SIZE, currentPage * FIELDS_PAGE_SIZE),
-    [items, currentPage]
+    () => items.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [items, currentPage, pageSize]
   );
-  const showTopPagination = pagedItems.length === FIELDS_PAGE_SIZE;
 
-  return { pagedItems, currentPage, numberOfPages, onNavigate: setPage, showTopPagination };
+  return { pagedItems, currentPage, numberOfPages, onNavigate: setPage };
 }
 
 interface LogLineDetailsFieldsProps {
@@ -64,7 +66,7 @@ export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, s
   const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
-  const { pagedItems, currentPage, numberOfPages, onNavigate, showTopPagination } = usePagedItems(filteredFields);
+  const { pagedItems, currentPage, numberOfPages, onNavigate } = usePagedItems(filteredFields);
 
   if (!fields.length) {
     return null;
@@ -74,18 +76,16 @@ export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, s
 
   return (
     <>
-      {showTopPagination && (
-        <Stack justifyContent="center">
-          <Box marginBottom={1}>
-            <Pagination
-              currentPage={currentPage}
-              numberOfPages={numberOfPages}
-              onNavigate={onNavigate}
-              hideWhenSinglePage
-            />
-          </Box>
-        </Stack>
-      )}
+      <Stack justifyContent="center">
+        <Box marginBottom={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
       <div className={disableActions ? styles.fieldsTableNoActions : styles.fieldsTable}>
         {pagedItems.map((field, i) => (
           <LogLineDetailsField
@@ -137,7 +137,7 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
   const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
-  const { pagedItems, currentPage, numberOfPages, onNavigate, showTopPagination } = usePagedItems(filteredFields);
+  const { pagedItems, currentPage, numberOfPages, onNavigate } = usePagedItems(filteredFields);
 
   if (!fields.length) {
     return null;
@@ -147,18 +147,16 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
 
   return (
     <>
-      {showTopPagination && (
-        <Stack justifyContent="center">
-          <Box marginBottom={1}>
-            <Pagination
-              currentPage={currentPage}
-              numberOfPages={numberOfPages}
-              onNavigate={onNavigate}
-              hideWhenSinglePage
-            />
-          </Box>
-        </Stack>
-      )}
+      <Stack justifyContent="center">
+        <Box marginBottom={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
       <div className={styles.fieldsTable}>
         {pagedItems.map((field, i) => (
           <LogLineDetailsField

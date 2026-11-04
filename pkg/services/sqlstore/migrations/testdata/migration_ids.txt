@@ -285,6 +285,8 @@
 "Increase new_state column to length 40 not null"
 "Add dashboard_uid column to annotation table"
 "Add missing dashboard_uid to annotation table"
+"Add alert_uid column to annotation table"
+"Add index for org_id_alert_uid on annotation table"
 "create test_data table"
 "create dashboard_version table v1"
 "add index dashboard_version.dashboard_id"

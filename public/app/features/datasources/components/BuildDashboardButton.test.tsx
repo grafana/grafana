@@ -36,6 +36,11 @@ jest.mock('app/core/copy/appNotification', () => ({
   createWarningNotification: jest.fn((message) => ({ severity: 'warning', text: message })),
 }));
 
+const mockUseIsMobileEditDeprecated = jest.fn().mockReturnValue(false);
+jest.mock('app/features/dashboard-scene/utils/mobileEditDeprecation', () => ({
+  useIsMobileEditDeprecated: () => mockUseIsMobileEditDeprecated(),
+}));
+
 const mockOpenModal = jest.fn();
 const mockTriggerFetch = jest.fn();
 let mockLoaderChildProps: SuggestedDashboardsLoaderChildProps = {
@@ -235,6 +240,34 @@ describe('BuildDashboardButton', () => {
       capturedOnFetchComplete?.(false);
 
       expect(mockDispatch).toHaveBeenCalled();
+    });
+  });
+
+  describe('mobile edit', () => {
+    afterEach(() => {
+      mockUseIsMobileEditDeprecated.mockReturnValue(false);
+    });
+
+    it('renders nothing when blocked on mobile, even with the feature flag off', () => {
+      config.featureToggles.suggestedDashboards = false;
+      mockUseIsMobileEditDeprecated.mockReturnValue(true);
+
+      const { container } = render(
+        <MemoryRouter>
+          <BuildDashboardButton {...defaultProps} />
+        </MemoryRouter>
+      );
+
+      expect(container).toBeEmptyDOMElement();
+    });
+
+    it('renders nothing when blocked on mobile, even with the feature flag on', () => {
+      config.featureToggles.suggestedDashboards = true;
+      mockUseIsMobileEditDeprecated.mockReturnValue(true);
+
+      const { container } = render(<BuildDashboardButton {...defaultProps} />);
+
+      expect(container).toBeEmptyDOMElement();
     });
   });
 });
