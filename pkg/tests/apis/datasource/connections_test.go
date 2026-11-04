@@ -1,17 +1,20 @@
 package datasource
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0alpha1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -19,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestIntegrationConnectionsAnnotations(t *testing.T) {
+func TestIntegrationConnectionsDoNotInferManagerFromReadOnly(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	grafanaDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -52,12 +55,23 @@ datasources:
 		DirPath: cfgPath,
 	})
 
-	helper.CreateDS(&datasources.AddDataSourceCommand{
-		OrgID: helper.Org1.OrgID,
-		Name:  "Created",
-		UID:   "created",
-		Type:  datasources.DS_TESTDATA,
-	})
+	client := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
+		Group:    "grafana-testdata-datasource.datasource.grafana.app",
+		Version:  "v0alpha1",
+		Resource: "datasources",
+	}).Namespace("default")
+	_, err := client.Create(context.Background(), &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
+			"kind":       "DataSource",
+			"metadata":   map[string]any{"name": "api-read-only"},
+			"spec": map[string]any{
+				"title":    "API read only",
+				"readOnly": true,
+			},
+		},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
 
 	rsp := apis.DoRequest(helper, apis.RequestParams{
 		User:   helper.Org1.Admin,
@@ -66,14 +80,13 @@ datasources:
 	}, &datasourceV0alpha1.DataSourceConnectionList{})
 	require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
 
-	annotations := map[string]map[string]string{}
+	// Read-only is also what a non-editable provisioned datasource looks like in SQL, so neither is reported as managed
+	found := map[string]bool{}
 	for _, item := range rsp.Result.Items {
-		annotations[item.Name] = item.Annotations
+		found[item.Name] = true
+		require.NotContains(t, item.Annotations, utils.AnnoKeyManagerKind, item.Name)
+		require.NotContains(t, item.Annotations, utils.AnnoKeyManagerAllowsEdits, item.Name)
 	}
-
-	require.Equal(t, map[string]string{
-		utils.AnnoKeyManagerKind:        string(utils.ManagerKindClassicFP), // nolint:staticcheck
-		utils.AnnoKeyManagerAllowsEdits: "false",
-	}, annotations["provisioned"])
-	require.Empty(t, annotations["created"])
+	require.True(t, found["provisioned"])
+	require.True(t, found["api-read-only"])
 }

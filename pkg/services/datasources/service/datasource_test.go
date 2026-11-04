@@ -1748,11 +1748,7 @@ func TestIntegrationService_getConnections(t *testing.T) {
 					"name": "ccc",
 					"group": "test.datasource.grafana.app",
 					"version": "v0alpha1",
-					"plugin": "test",
-					"annotations": {
-						"grafana.app/managedBy": "classic-file-provisioning",
-						"grafana.app/managerAllowsEdits": "false"
-					}
+					"plugin": "test"
 				}
 			]
 		}`, string(jj))

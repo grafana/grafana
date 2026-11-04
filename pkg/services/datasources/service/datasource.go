@@ -22,7 +22,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -318,23 +317,13 @@ func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceC
 		}
 	}
 
-	// Only file provisioning can set read-only, and the SQL row does not keep the provisioner name
-	var annotations map[string]string
-	if ds.ReadOnly {
-		annotations = map[string]string{
-			utils.AnnoKeyManagerKind:        string(utils.ManagerKindClassicFP), // nolint:staticcheck
-			utils.AnnoKeyManagerAllowsEdits: "false",
-		}
-	}
-
 	return &queryV0.DataSourceConnection{
-		Title:       ds.Name,
-		APIGroup:    fmt.Sprintf("%s.datasource.grafana.app", ds.Type),
-		APIVersion:  "v0alpha1", // TODO, get this from the plugin
-		Name:        ds.UID,
-		Plugin:      ds.Type,
-		Labels:      labels,
-		Annotations: annotations,
+		Title:      ds.Name,
+		APIGroup:   fmt.Sprintf("%s.datasource.grafana.app", ds.Type),
+		APIVersion: "v0alpha1", // TODO, get this from the plugin
+		Name:       ds.UID,
+		Plugin:     ds.Type,
+		Labels:     labels,
 	}, nil
 }
 
