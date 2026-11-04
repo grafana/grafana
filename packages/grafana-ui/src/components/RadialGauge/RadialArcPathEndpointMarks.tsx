@@ -90,16 +90,17 @@ export const RadialArcPathEndpointMarks = memo(
         if (arcLengthDeg <= ENDPOINT_MARKER_MIN_ANGLE) {
           return null;
         }
-        const offsetAngle = toRad(ENDPOINT_MARKER_MIN_ANGLE);
+        // toRad also rotates by -90° so the gauge's 0° points up. An offset must not use that rotation.
+        const offsetAngle = (ENDPOINT_MARKER_MIN_ANGLE * Math.PI) / 180;
         const tipRadians = markerAtStart ? toRad(angle) : endRadians;
         const outerRadians = markerAtStart ? tipRadians - offsetAngle : tipRadians + offsetAngle;
         const xOuter = centerX + radius * Math.cos(outerRadians);
         const yOuter = centerY + radius * Math.sin(outerRadians);
         const xTip = markerAtStart ? xStart : xEnd;
         const yTip = markerAtStart ? yStart : yEnd;
-        // The start-side tip sits counterclockwise of the outer point, so the short arc
-        // back to the value must sweep the other way. Sweep 1 would pick the other ellipse.
-        const sweepFlag = markerAtStart ? 0 : 1;
+        // The outer point sits 10° beyond the tip, away from the bar. The short arc back
+        // to the value is clockwise for the start tip and counterclockwise for the end tip.
+        const sweepFlag = markerAtStart ? 1 : 0;
         return (
           <path
             d={`M ${xOuter} ${yOuter} A ${radius} ${radius} 0 0 ${sweepFlag} ${xTip} ${yTip}`}

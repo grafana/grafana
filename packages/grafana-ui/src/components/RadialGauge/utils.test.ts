@@ -317,6 +317,7 @@ describe('RadialGauge utils', () => {
 
       expect(result.startValueAngle).toBe(180); // Neutral at 50% of 360°
       expect(result.endValueAngle).toBe(0); // No difference
+      expect(result.markerAtStart).toBe(false);
     });
 
     it('should handle neutral values greater than value', () => {

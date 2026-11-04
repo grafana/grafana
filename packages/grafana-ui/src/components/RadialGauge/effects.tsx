@@ -85,8 +85,8 @@ interface SpotlightGradientProps {
   roundedBars: boolean;
   theme: GrafanaTheme2;
   color: string;
-  /** 1 places the bloom past the clockwise tip. -1 places it past the start tip. */
-  outwardSign?: number;
+  /** Places the bloom past the start tip. The clockwise tip is the default. */
+  bloomAtStart?: boolean;
 }
 
 export function SpotlightGradient({
@@ -96,13 +96,14 @@ export function SpotlightGradient({
   angle,
   theme,
   color,
-  outwardSign = 1,
+  bloomAtStart = false,
 }: SpotlightGradientProps) {
   if (theme.isLight) {
     return null;
   }
 
-  // Shift the centre forward by the endcap's angular half-width so the bloom sits over the visual tip.
+  // Shift the centre past the visual tip by the endcap's angular half-width.
+  const outwardSign = bloomAtStart ? -1 : 1;
   const endcapOffsetRad = (roundedBars ? dimensions.barWidth / (2 * dimensions.radius) : 0) * outwardSign;
   const angleRadian = ((angle - 90) * Math.PI) / 180 + endcapOffsetRad;
 

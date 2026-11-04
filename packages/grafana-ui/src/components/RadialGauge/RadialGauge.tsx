@@ -163,7 +163,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           key={spotlightGradientId}
           id={spotlightGradientId}
           angle={markerAtStart ? startAngle + startValueAngle : endValueAngle + startAngle}
-          outwardSign={markerAtStart ? -1 : 1}
+          bloomAtStart={markerAtStart}
           dimensions={dimensions}
           roundedBars={roundedBars}
           theme={theme}
