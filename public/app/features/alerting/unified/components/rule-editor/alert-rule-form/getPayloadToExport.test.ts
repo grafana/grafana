@@ -299,4 +299,44 @@ describe('getPayloadToExport with dynamic threshold metadata', () => {
     expect(exportedModels(payload)).toEqual([sqlModel, sqlModel, mathModel, thresholdModel]);
     expect(existing.grafana_alert.data[0].model).toHaveProperty('dynamicThreshold');
   });
+
+  it('leaves non-SQL expression and data source models carrying dynamicThreshold untouched', () => {
+    const mathWithKey = { ...mathModel, dynamicThreshold: dynamicThresholdMetadata };
+    const dataSourceModel = { refId: 'E', expr: 'up', dynamicThreshold: dynamicThresholdMetadata };
+    const rule = mockRulerGrafanaRule(
+      {},
+      {
+        uid: 'uid-existing',
+        title: 'Existing',
+        data: [
+          expressionQuery(mathWithKey),
+          { refId: 'E', datasourceUid: 'prom', queryType: '', model: dataSourceModel },
+        ],
+      }
+    );
+
+    const payload = getPayloadToExport(formValues, { name: 'Group', rules: [rule] }, 'uid-new');
+
+    expect(payload.rules[0]).toBe(rule);
+    expect(exportedModels(payload).slice(0, 2)).toEqual([mathWithKey, dataSourceModel]);
+    expect(exportedModels(payload)[0]).toBe(mathWithKey);
+    expect(exportedModels(payload)[1]).toBe(dataSourceModel);
+  });
+
+  it.each([undefined, null, 'text', 5])('does not throw and returns the rule unchanged when model is %p', (model) => {
+    const rule = mockRulerGrafanaRule(
+      {},
+      {
+        uid: 'uid-existing',
+        title: 'Existing',
+        data: [],
+      }
+    );
+    // @ts-expect-error simulating malformed persisted data
+    rule.grafana_alert.data.push({ refId: 'A', datasourceUid: 'prom', queryType: '', model });
+
+    const payload = getPayloadToExport(formValues, { name: 'Group', rules: [rule] }, 'uid-new');
+
+    expect(payload.rules[0]).toBe(rule);
+  });
 });
