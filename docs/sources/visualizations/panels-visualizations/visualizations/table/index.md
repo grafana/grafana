@@ -183,7 +183,7 @@ Columns with filters applied have a filter icon displayed next to the title.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-filtered-column-v13.3.png" max-width="140px" alt="Filtered column" >}}
 
-To remove the filter, click the filter icon and then click **Clear** or **Clear filter**.
+To remove the filter, click the filter icon and then click **Clear filter**.
 The icon no longer displays.
 
 ### Apply filters from table cells
