@@ -7,6 +7,7 @@ import { Button, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import {
+  type PostableRuleGrafanaRuleDTO,
   type PostableRulerRuleGroupDTO,
   type RulerRuleDTO,
   type RulerRuleGroupDTO,
@@ -137,6 +138,26 @@ interface GrafanaRuleDesignExportPreviewProps {
   exportValues: RuleFormValues;
   uid?: string;
 }
+// The builder metadata is private to the UI; exported (provisioning) rules keep only the generated executable SQL.
+const stripDynamicThresholdMetadata = <T extends RulerRuleDTO | PostableRuleGrafanaRuleDTO>(rule: T): T => {
+  if (!('grafana_alert' in rule) || !rule.grafana_alert.data?.some(({ model }) => 'dynamicThreshold' in model)) {
+    return rule;
+  }
+  return {
+    ...rule,
+    grafana_alert: {
+      ...rule.grafana_alert,
+      data: rule.grafana_alert.data.map((query) => {
+        if (!('dynamicThreshold' in query.model)) {
+          return query;
+        }
+        const { dynamicThreshold, ...model } = query.model;
+        return { ...query, model };
+      }),
+    },
+  };
+};
+
 export const getPayloadToExport = (
   formValues: RuleFormValues,
   existingGroup: RulerRuleGroupDTO<RulerRuleDTO> | null | undefined,
@@ -144,7 +165,10 @@ export const getPayloadToExport = (
 ): PostableRulerRuleGroupDTO => {
   const grafanaRuleDto = formValuesToRulerGrafanaRuleDTO(formValues);
 
-  const updatedRule = { ...grafanaRuleDto, grafana_alert: { ...grafanaRuleDto.grafana_alert, uid: ruleUid } };
+  const updatedRule = stripDynamicThresholdMetadata({
+    ...grafanaRuleDto,
+    grafana_alert: { ...grafanaRuleDto.grafana_alert, uid: ruleUid },
+  });
   if (existingGroup?.rules) {
     // we have to update the rule in the group in the same position if it exists, otherwise we have to add it at the end
     let alreadyExistsInGroup = false;
@@ -153,7 +177,7 @@ export const getPayloadToExport = (
         alreadyExistsInGroup = true;
         return updatedRule;
       } else {
-        return rule;
+        return stripDynamicThresholdMetadata(rule);
       }
     });
     if (!alreadyExistsInGroup) {
