@@ -199,9 +199,18 @@ type clientFactory struct {
 	clientsProvider clientsProvider
 	// configuredResources may still name collections rather than served groups.
 	configuredResources []SupportedResource
+	// storageGroup is the group this factory's API server holds, empty for a single server that
+	// holds everything. It decides which collections are expanded here.
+	storageGroup string
 	// expanded caches the result of resolving collections through discovery.
 	expandMu sync.Mutex
 	expanded []SupportedResource
+}
+
+// holds reports whether this factory's API server stores a collection, and so expands it. A
+// factory without a storage group is the only server there is, and holds everything.
+func (f *clientFactory) holds(collection string) bool {
+	return f.storageGroup == "" || f.storageGroup == collection
 }
 
 // supportedResources resolves the configured set to served groups, caching the first success: a
@@ -218,7 +227,7 @@ func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedReso
 	// excluded even when an active collection covers it. Discovery sees only the active ones, so
 	// a failure in a collection nobody acts on cannot fail the expansion.
 	active := activeResources(f.configuredResources)
-	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, active), f.configuredResources)
+	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, active, f.holds), f.configuredResources, f.holds)
 	if err != nil {
 		return nil, err
 	}
@@ -326,36 +335,24 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...
 }
 
 // NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers.
-// The supported set behaves as described on NewClientFactory, except that each server is given
-// only the resources it stores, so one server's discovery cannot fail clients for the others.
+// The supported set behaves as described on NewClientFactory.
+//
+// Every server resolves the whole configured set, so precedence between a collection and a member
+// declared on its own is resolved the same way wherever it is resolved. Only the server that holds
+// a collection expands it: its members reach the merged set from there, and a server that holds no
+// collection asks discovery nothing, so its outage cannot fail the clients for other groups.
 func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
-	servers := sets.New[string]()
-	for api := range configProviders {
-		servers.Insert(api)
-	}
-
+	configured := defaultSupportedResources(supported)
 	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
-		clientFactory := NewClientFactory(configProvider, resourcesStoredIn(api, servers, supported)...)
-		clientFactories[api] = clientFactory
-	}
-
-	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(supported)}
-}
-
-// resourcesStoredIn returns the configured resources an API server holds, which is what it can
-// expand and serve: a collection goes to the server registered for the group it is stored under.
-// An entry no server claims is kept everywhere, so it still surfaces and still fails loudly on the
-// client it cannot resolve rather than disappearing from the supported set.
-func resourcesStoredIn(api string, servers sets.Set[string], supported []SupportedResource) []SupportedResource {
-	out := make([]SupportedResource, 0, len(supported))
-	for _, r := range supported {
-		group := provisioningresources.CollectionGroup(r.Group)
-		if group == api || !servers.Has(group) {
-			out = append(out, r)
+		clientFactories[api] = &clientFactory{
+			clientsProvider:     newSingleAPIClients(configProvider),
+			configuredResources: configured,
+			storageGroup:        api,
 		}
 	}
-	return out
+
+	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(configured)}
 }
 
 // activeResources returns only the active resources. Disabled resources are declared (and
@@ -697,7 +694,7 @@ var nonProvisionableGroups = sets.New(
 // the kind inside it; an entry naming a served group passes through. Discovery is the source
 // rather than the installed plugin list: a plugin can be installed without its group being served,
 // and it is the served group a client has to address.
-func expandCollections(ctx context.Context, listKinds groupKindLister, configured []SupportedResource) ([]SupportedResource, error) {
+func expandCollections(ctx context.Context, listKinds groupKindLister, configured []SupportedResource, holds func(collection string) bool) ([]SupportedResource, error) {
 	var served []schema.GroupKind
 	var listed bool
 	// A collection may cover a group that is also declared on its own, or that another collection
@@ -723,7 +720,10 @@ func expandCollections(ctx context.Context, listKinds groupKindLister, configure
 		// result anyway, and asking discovery for them lets an inert declaration fail the clients
 		// every active resource needs. Only a failure inside an active collection is relevant,
 		// and a provider or non-ErrGroupDiscoveryFailed error is not filtered at all.
-		if !r.IsActive() {
+		//
+		// A collection another server holds is skipped for the same reason: that server expands
+		// it, and its members reach the merged set from there.
+		if !r.IsActive() || !holds(provisioningresources.CollectionGroup(r.Group)) {
 			continue
 		}
 		if !listed {
@@ -765,12 +765,15 @@ type groupKindLister func(ctx context.Context) ([]schema.GroupKind, error)
 
 // discoveryKinds lists every kind the server serves. A discovery failure outside the configured
 // collections is tolerated; one inside is not, since a member would silently go missing.
-func discoveryKinds(provider clientsProvider, configured []SupportedResource) groupKindLister {
-	// Only a collection is expanded here, so only a failure inside one hides a member. A group
-	// declared on its own passes through, and resolves (or fails) when a client for it is taken.
+func discoveryKinds(provider clientsProvider, configured []SupportedResource, holds func(collection string) bool) groupKindLister {
+	// Only a collection expanded here can hide a member. A group declared on its own passes
+	// through and resolves (or fails) when a client for it is taken, and a collection another
+	// server holds is that server's to report on.
 	relevant := func(group string) bool {
 		for _, r := range configured {
-			if provisioningresources.IsCollection(r.Group) && provisioningresources.CoversGroup(r.Group, group) {
+			if provisioningresources.IsCollection(r.Group) &&
+				provisioningresources.CoversGroup(r.Group, group) &&
+				holds(provisioningresources.CollectionGroup(r.Group)) {
 				return true
 			}
 		}

@@ -213,7 +213,7 @@ func TestExpandCollections(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
 		require.NoError(t, err)
 
-		expanded, err := expandCollections(t.Context(), installed, configured)
+		expanded, err := expandCollections(t.Context(), installed, configured, holdsEverything)
 		require.NoError(t, err)
 		require.ElementsMatch(t, []schema.GroupKind{
 			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
@@ -225,7 +225,7 @@ func TestExpandCollections(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource:skipvalidation"})
 		require.NoError(t, err)
 
-		expanded, err := expandCollections(t.Context(), installed, configured)
+		expanded, err := expandCollections(t.Context(), installed, configured, holdsEverything)
 		require.NoError(t, err)
 		require.Len(t, expanded, 2)
 		for _, r := range expanded {
@@ -246,7 +246,7 @@ func TestExpandCollections(t *testing.T) {
 		expanded, err := expandCollections(t.Context(), func(context.Context) ([]schema.GroupKind, error) {
 			t.Fatal("discovery should not be consulted for a collection nobody acts on")
 			return nil, nil
-		}, configured)
+		}, configured, holdsEverything)
 		require.NoError(t, err)
 		require.Equal(t, []schema.GroupKind{{Group: "playlist.grafana.app", Kind: "Playlist"}}, groupKinds(expanded))
 	})
@@ -258,7 +258,7 @@ func TestExpandCollections(t *testing.T) {
 		expanded, err := expandCollections(t.Context(), func(context.Context) ([]schema.GroupKind, error) {
 			t.Fatal("discovery should not be consulted without a wildcard entry")
 			return nil, nil
-		}, configured)
+		}, configured, holdsEverything)
 		require.NoError(t, err)
 		require.Equal(t, []schema.GroupKind{{Group: "playlist.grafana.app", Kind: "Playlist"}}, groupKinds(expanded))
 	})
@@ -268,7 +268,7 @@ func TestExpandCollections(t *testing.T) {
 		configured, err := ParseSupportedResources([]string{"*.datasource.grafana.app/DataSource"})
 		require.NoError(t, err)
 
-		expanded, err := expandCollections(t.Context(), served("dashboard.grafana.app/Dashboard"), configured)
+		expanded, err := expandCollections(t.Context(), served("dashboard.grafana.app/Dashboard"), configured, holdsEverything)
 		require.NoError(t, err)
 		require.Empty(t, expanded)
 	})
@@ -281,7 +281,7 @@ func TestExpandCollections(t *testing.T) {
 			"grafana-slo-app/Settings",
 			"acme-slo-app/Settings",
 			"plugins.grafana.app/Settings",
-		), configured)
+		), configured, holdsEverything)
 		require.NoError(t, err)
 		require.Equal(t, []schema.GroupKind{{Group: "grafana-slo-app", Kind: "Settings"}}, groupKinds(expanded))
 	})
@@ -294,7 +294,7 @@ func TestExpandCollections(t *testing.T) {
 			"grafana-slo-app/Settings",
 			"grafana-app-sdk/Settings",
 			"plugins.grafana.app/Settings",
-		), configured)
+		), configured, holdsEverything)
 		require.NoError(t, err)
 		require.Equal(t, []schema.GroupKind{{Group: "grafana-slo-app", Kind: "Settings"}}, groupKinds(expanded),
 			"only a group matching the pattern's literal part is a member")
@@ -314,7 +314,7 @@ func TestExpandCollections(t *testing.T) {
 				{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
 				{Group: "router-test.ext.grafana.app", Kind: "Thing"},
 			}, nil
-		}, configured)
+		}, configured, holdsEverything)
 		require.NoError(t, err)
 		require.Equal(t, 1, calls, "the served groups are listed once for the whole set")
 		require.ElementsMatch(t, []schema.GroupKind{
@@ -332,7 +332,7 @@ func TestExpandCollections(t *testing.T) {
 			"playlist.grafana.app/Playlist",
 			"dashboard.grafana.app/Dashboard",
 			"folder.grafana.app/Folder",
-		), configured)
+		), configured, holdsEverything)
 		require.NoError(t, err)
 		require.Equal(t, []schema.GroupKind{{Group: "playlist.grafana.app", Kind: "Playlist"}}, groupKinds(expanded))
 	})
@@ -346,7 +346,7 @@ func TestExpandCollections(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		expanded, err := expandCollections(t.Context(), installed, configured)
+		expanded, err := expandCollections(t.Context(), installed, configured, holdsEverything)
 		require.NoError(t, err)
 		require.Equal(t, []schema.GroupKind{
 			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
@@ -366,7 +366,7 @@ func TestExpandCollections(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		expanded, err := expandCollections(t.Context(), installed, configured)
+		expanded, err := expandCollections(t.Context(), installed, configured, holdsEverything)
 		require.NoError(t, err)
 		require.Equal(t, []schema.GroupKind{
 			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
@@ -383,7 +383,7 @@ func TestExpandCollections(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		expanded, err := expandCollections(t.Context(), installed, configured)
+		expanded, err := expandCollections(t.Context(), installed, configured, holdsEverything)
 		require.NoError(t, err)
 		require.Equal(t, []schema.GroupKind{
 			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
@@ -397,7 +397,7 @@ func TestExpandCollections(t *testing.T) {
 
 		_, err = expandCollections(t.Context(), func(context.Context) ([]schema.GroupKind, error) {
 			return nil, errors.New("apis unreachable")
-		}, configured)
+		}, configured, holdsEverything)
 		require.ErrorContains(t, err, "apis unreachable")
 	})
 }
@@ -537,7 +537,7 @@ func TestDiscoveryKindsIgnoresFailuresOutsideCollections(t *testing.T) {
 	require.NoError(t, err)
 
 	capture := &capturingDiscoveryClient{}
-	_, err = discoveryKinds(&flakyClientsProvider{discovery: capture}, configured)(t.Context())
+	_, err = discoveryKinds(&flakyClientsProvider{discovery: capture}, configured, holdsEverything)(t.Context())
 	require.NoError(t, err)
 	require.NotNil(t, capture.relevant, "the predicate is handed to discovery")
 	assert.False(t, capture.relevant("playlist.grafana.app"),
@@ -557,26 +557,50 @@ func (c *capturingDiscoveryClient) PreferredResources(_ context.Context, relevan
 	return nil, nil
 }
 
-// Every server used to expand every collection, so one server's discovery failure failed the
-// clients for all of them. A server only expands, and only serves, what it stores.
-func TestResourcesStoredIn(t *testing.T) {
+// holdsEverything is the single-server case: one API server stores every collection.
+func holdsEverything(string) bool { return true }
+
+// Per-server factories resolve the whole configured set, so a server that stores no collection
+// asks discovery nothing while every server agrees on what is supported. Partitioning the set
+// instead split a member from the collection covering it, and left a server holding nothing with
+// the static fallback set.
+func TestClientFactoryPerServerExpansion(t *testing.T) {
 	configured, err := ParseSupportedResources([]string{
 		"dashboard.grafana.app/Dashboard:folder",
+		"prometheus.datasource.grafana.app/DataSource",
 		"*.datasource.grafana.app/DataSource",
-		"alerting.grafana.app/AlertRule",
 	})
 	require.NoError(t, err)
-	servers := sets.New("dashboard.grafana.app", "datasource.grafana.app")
 
-	require.Equal(t, []schema.GroupKind{
-		{Group: "dashboard.grafana.app", Kind: "Dashboard"},
-		{Group: "alerting.grafana.app", Kind: "AlertRule"},
-	}, groupKinds(resourcesStoredIn("dashboard.grafana.app", servers, configured)),
-		"a group no server claims is kept, so it still fails loudly on the client it cannot resolve")
+	factoryFor := func(api string, discovery client.DiscoveryClient) *clientFactory {
+		return &clientFactory{
+			clientsProvider:     &flakyClientsProvider{discovery: discovery},
+			configuredResources: configured,
+			storageGroup:        api,
+		}
+	}
 
-	require.Equal(t, []schema.GroupKind{
-		{Group: "*.datasource.grafana.app", Kind: "DataSource"},
-		{Group: "alerting.grafana.app", Kind: "AlertRule"},
-	}, groupKinds(resourcesStoredIn("datasource.grafana.app", servers, configured)),
-		"the collection is expanded by the server that stores it")
+	t.Run("a server that stores no collection asks discovery nothing", func(t *testing.T) {
+		// A provider error is not filtered by the relevance predicate, so expansion would fail.
+		supported, err := factoryFor("dashboard.grafana.app", nil).supportedResources(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupKind{
+			{Group: "dashboard.grafana.app", Kind: "Dashboard"},
+			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
+		}, groupKinds(supported))
+		require.Equal(t, "datasource.grafana.app", supported[1].Collection,
+			"the member is stamped with the group that stores it, wherever it is resolved")
+	})
+
+	t.Run("the server that stores the collection expands it", func(t *testing.T) {
+		supported, err := factoryFor("datasource.grafana.app", servedDiscoveryClient{}).supportedResources(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupKind{
+			{Group: "dashboard.grafana.app", Kind: "Dashboard"},
+			{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
+			{Group: "loki.datasource.grafana.app", Kind: "DataSource"},
+		}, groupKinds(supported), "the member declared on its own is not expanded onto twice")
+		require.False(t, supported[1].IsFolderScoped(), "the explicit declaration keeps its own capabilities")
+		require.Equal(t, "datasource.grafana.app", supported[1].Collection)
+	})
 }
