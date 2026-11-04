@@ -1469,7 +1469,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -5327,6 +5334,9 @@
       "preferences": "Preferências",
       "recent-dashboards": "Painéis de controle recentes",
       "recent-scopes": "Escopos recentes"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -6244,6 +6254,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -7319,11 +7330,14 @@
         "keep-working": "",
         "save": "Salvar",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "Deseja salvar suas alterações?"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "Alterações não salvas"
         }
@@ -7639,17 +7653,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -10716,6 +10733,8 @@
       "clear-button": "Limpar seleção"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "Erro ao carregar o editor CodeMirror",
       "language-load-failed": "Erro ao carregar o realce de sintaxe",
       "language-load-failed-description": "O editor continuará sem recursos específicos da linguagem.",
@@ -12383,7 +12402,6 @@
       "copy-log-line-json": "Copiar conteúdo do log como JSON",
       "copy-shortlink": "Copiar link curto",
       "copy-to-clipboard": "Copiar para a área de transferência",
-      "displayed-fields-section": "Organizar campos exibidos",
       "fields": {
         "adhoc-statistics": "Estatísticas ad-hoc",
         "copy-value-to-clipboard": "Copiar valor para a área de transferência",
@@ -12407,14 +12425,11 @@
       "log-attributes-field": "Atributos de log",
       "log-line-field": "Linha de registro",
       "log-line-section": "Linha de log",
-      "move-displayed-field-down": "Mover para baixo",
-      "move-displayed-field-up": "Mover para cima",
       "no-details": "Sem campos para exibir.",
       "open-assistant": "Acessar explicação da linha de registro no Assistente",
       "open-value-in": "",
       "pin-line": "Fixar log",
       "prettify": "Formatar",
-      "remove-displayed-field": "Remover campo",
       "remove-log": "Remover registro",
       "scroll-to-logline": "Rolar para a linha do registro",
       "search": {

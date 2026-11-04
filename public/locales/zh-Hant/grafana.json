@@ -1462,7 +1462,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -5277,6 +5284,9 @@
       "preferences": "偏好設定",
       "recent-dashboards": "最近的儀表板",
       "recent-scopes": "最近的範圍"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -6194,6 +6204,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -7266,11 +7277,14 @@
         "keep-working": "",
         "save": "儲存",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "要儲存您的變更嗎？"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "未儲存變更"
         }
@@ -7585,17 +7599,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -10634,6 +10651,8 @@
       "clear-button": "清空選項"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "CodeMirror 編輯器無法載入",
       "language-load-failed": "語法醒目提示無法載入",
       "language-load-failed-description": "編輯器將繼續，但不會有特定語言的功能。",
@@ -12279,7 +12298,6 @@
       "copy-log-line-json": "將記錄內容複製為 JSON",
       "copy-shortlink": "複製短連結",
       "copy-to-clipboard": "複製至剪貼簿",
-      "displayed-fields-section": "組織顯示的欄位",
       "fields": {
         "adhoc-statistics": "隨機統計資料",
         "copy-value-to-clipboard": "將此值複製到剪貼簿",
@@ -12303,14 +12321,11 @@
       "log-attributes-field": "記錄屬性",
       "log-line-field": "記錄行",
       "log-line-section": "記錄行",
-      "move-displayed-field-down": "下移",
-      "move-displayed-field-up": "上移",
       "no-details": "沒有要顯示的欄位。",
       "open-assistant": "在 Assistant 中解釋記錄行",
       "open-value-in": "",
       "pin-line": "固定記錄",
       "prettify": "美化",
-      "remove-displayed-field": "移除欄位",
       "remove-log": "移除記錄",
       "scroll-to-logline": "捲動到記錄行",
       "search": {

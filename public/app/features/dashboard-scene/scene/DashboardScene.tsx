@@ -51,7 +51,10 @@ import { getDashboardSceneProfiler } from 'app/features/dashboard/services/Dashb
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
-import { scrollToRow } from 'app/features/dashboard-scene/scene/layout-rows/scrollToRow';
+import {
+  keepRowInViewWhileLayoutSettles,
+  scrollToRow,
+} from 'app/features/dashboard-scene/scene/layout-rows/scrollToRow';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
@@ -77,6 +80,7 @@ import { getLifecycleBreadcrumbLabel } from '../lifecycle/lifecycle';
 import {
   getPendingChangePreview,
   getPendingChangesHistory,
+  getScenePendingChangePreview,
   previewedDashboardUid,
   proposesNewDashboard,
 } from '../lifecycle/pendingChangePreview';
@@ -441,6 +445,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   /** Row slug path from the url that did not match any row yet (e.g. a repeated row not created yet) */
   private _pendingRowScroll?: string;
   private _pendingRowScrollSub?: Unsubscribable;
+  /**
+   * Not tied to activation: url sync runs before the scene activates, and StrictMode deactivates and
+   * re-activates it in development. Following stops by itself once the row leaves the page.
+   */
+  private _stopFollowingRow?: () => void;
 
   /**
    * What initiated the current edit session, e.g. the assistant building a dashboard for the user
@@ -744,7 +753,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this._sidebarBeforeViewing = undefined;
 
       this.state.sidebar.clearHistory();
-      const preview = getPendingChangePreview('page', previewedDashboardUid(this.state));
+      const preview = getScenePendingChangePreview(this.state);
       if (preview && getPendingChangesHistory(this.state)) {
         startRecordingPendingChanges(this, preview.pending.history?.getState().proposed ?? preview.pending.proposed);
       }
@@ -1267,7 +1276,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       shareView: null,
     });
 
-    locationService.replace(locationUtil.stripBaseFromUrl(url));
+    if (!this.state.meta.isEmbedded) {
+      locationService.replace(locationUtil.stripBaseFromUrl(url));
+    }
 
     if (restoreInitialState) {
       // Restore initial state and disable editing
@@ -1294,7 +1305,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /** Whether edits are recorded in the history of pending changes to a saved dashboard, with no Save. */
   public recordsToPendingChanges(): boolean {
-    const preview = getPendingChangePreview('page', previewedDashboardUid(this.state));
+    const preview = getScenePendingChangePreview(this.state);
     return Boolean(getPendingChangesHistory(this.state) && preview && !proposesNewDashboard(preview.pending));
   }
 
@@ -1449,12 +1460,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveDashboardTemplate,
     saveAsDashboardTemplate,
     onSaveSuccess,
+    onDismiss,
     recoverToNewBranch,
   }: {
     saveAsCopy?: boolean;
     saveDashboardTemplate?: boolean;
     saveAsDashboardTemplate?: boolean;
     onSaveSuccess?: () => void;
+    onDismiss?: () => void;
     recoverToNewBranch?: RecoverToNewBranch;
     showDiff?: boolean;
   }) {
@@ -1491,6 +1504,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           saveAsDashboardTemplate,
           saveDashboardTemplate,
           onSaveSuccess,
+          onDismiss,
           recoverToNewBranch,
         },
         () => this.hasVariableErrors()
@@ -2269,8 +2283,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public scrollToRow(drow: string) {
     locationService.partial({ drow: null }, true);
+    this._stopFollowingRow?.();
 
-    if (scrollToRow(drow, this.state.body)) {
+    if (this._scrollToRowAndFollow(drow)) {
       this._pendingRowScroll = undefined;
       return;
     }
@@ -2281,10 +2296,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // NewSceneObjectAddedEvent when done, so keep the slug pending and retry on that event.
     this._pendingRowScroll = drow;
     this._pendingRowScrollSub ??= this.subscribeToEvent(NewSceneObjectAddedEvent, () => {
-      if (this._pendingRowScroll && scrollToRow(this._pendingRowScroll, this.state.body)) {
+      if (this._pendingRowScroll && this._scrollToRowAndFollow(this._pendingRowScroll)) {
         this._pendingRowScroll = undefined;
       }
     });
+  }
+
+  private _scrollToRowAndFollow(drow: string): boolean {
+    const row = scrollToRow(drow, this.state.body);
+    if (!row) {
+      return false;
+    }
+
+    this._stopFollowingRow = keepRowInViewWhileLayoutSettles(row);
+    return true;
   }
 
   getSaveModel(): Dashboard | DashboardV2Spec {

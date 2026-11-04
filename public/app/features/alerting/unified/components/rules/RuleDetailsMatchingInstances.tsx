@@ -98,7 +98,7 @@ export function RuleDetailsMatchingInstances(props: Props) {
   const [alertState, setAlertState] = useState<InstanceStateFilter>();
 
   // This key is used to force a rerender on the inputs when the filters are cleared
-  const [filterKey] = useState<number>(Math.floor(Math.random() * 100));
+  const [filterKey] = useState<number>(() => Math.floor(Math.random() * 100));
   const queryStringKey = `queryString-${filterKey}`;
 
   const styles = useStyles2(getStyles);

@@ -158,6 +158,7 @@ Now that you've created a basic dashboard, you can augment it with more options,
 - [The sidebar and toolbar](#the-sidebar-and-toolbar): Learn about editing without leaving the dashboard.
 - [Navigate using the content outline](#navigate-using-the-content-outline): Learn how to quickly navigate to any dashboard element with the content outline.
 - [Edit a dashboard](#edit-a-dashboard): Learn how to edit a dashboard.
+- [Undo and redo changes](#undo-and-redo-changes): Learn how to revert and reinstate changes while you edit. (Public preview)
 
 ### The sidebar and toolbar
 
@@ -170,7 +171,7 @@ Hover your cursor over the numbers to display descriptions of the toolbar option
 
 {{< image-map key="sidebar-toolbar" >}}
 
-The toolbar is displayed in both edit and view mode, but the **Dashboard options** and **Feedback** icons aren't available in view mode.
+The toolbar is displayed in both edit and view mode, but the **Dashboard options**, **Feedback**, and **Edit as code**, **Undo**, and **Redo** icons aren't available in view mode (Undo and redo are in public preview).
 
 The available configuration options in the sidebar differ depending on the selected dashboard element:
 
@@ -242,7 +243,8 @@ To edit a dashboard, follow these steps:
    | Edit panels | <p>Hover your cursor over any part of a panel to display the actions tooltip, which has the following options: **Settings**, **Edit visualization**, **Copy**, **Duplicate**, **Delete**.</p><p>Click **Settings** to access high-level panel options in the sidebar, or **Edit visualization** to open the panel editor.</p>  |
    | Edit dashboard controls | <p>Hover your cursor over any part of a dashboard control to display the actions tooltip, which has the following options: **Settings**, **Duplicate**, and **Delete**. Click **Settings** to access options in the sidebar. For some controls, the tooltip also includes an **Edit query** or **Edit values** option. |
    | Edit rows and tabs | Click a row or tab to access grouping settings in the sidebar. |
-   | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+   | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).   |
+   | Undo or redo changes   | Click the **Undo** or **Redo** icon in the toolbar. For more information, refer to [Undo and redo changes](#undo-and-redo-changes). (Public preview) |
 
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -252,6 +254,30 @@ To edit a dashboard, follow these steps:
 
 <!-- prettier-ignore-end -->
 
+### Undo and redo changes
+
+{{< docs/public-preview product="Dashboard undo and redo" featureFlag="`dashboardUndoRedo`" >}}
+
+While you're editing a dashboard, you can revert a change with the **Undo** option and reinstate it with **Redo** in the toolbar:
+
+- Click the **Undo** icon to revert the most recent change.
+- Click the **Redo** icon to reinstate the change you most recently reverted.
+
+Grafana keeps up to 100 changes in the undo and redo history.
+That means you can continue clicking **Undo** to keep undoing changes you've made, or **Redo** to keep reinstating changes, even if you've saved the dashboard.
+Hover your cursor over the icons to display a tooltip with the change you're about to revert or reinstate:
+
+{{< video-embed src="/media/docs/grafana/dashboards/screenrecord-undo-redo-stack-v13.3.mp4" alt="Screen recording of three changes being reverted and reinstated" >}}
+
+While the undo and redo options aren't available when you're in the panel editor, you can undo and redo those panel changes when you go back to the dashboard.
+If you make multiple changes to the panel before returning to the dashboard, all the changes are reverted or reinstated as a batch.
+
+Keep the following undo and redo behavior in mind:
+
+- **Options disabled when there are no changes**: **Undo** is disabled until you make a change, and **Redo** is disabled until you undo a change.
+- **History resets in a new session**: You can't undo changes from a previous edit session, even if you haven't saved them.
+- **Limited history**: Grafana keeps up to 100 changes in the history. When the limit is reached, the oldest changes are removed first.
+
 ## Panel layouts
 
 Panel layouts control the size and arrangement of panels in the dashboard.
@@ -260,7 +286,7 @@ There are two panel layout options:
 - **Custom**: You can position and size panels individually. This is the default selection for a new dashboard. **Show/hide rules** are not supported.
 - **Auto grid**: Panels resize and fit automatically to create a uniform grid. You can't make manual changes to this layout. **Show/hide rules** are supported.
 
-When you first create a dashboard, you select a layout and that selection becomes your the default for rows and tabs that you add to the dashboard.
+When you first create a dashboard, the default layout is **Auto**.
 However, you can change this default in the dashboard settings.
 
 ### Auto grid layout

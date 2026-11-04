@@ -1,6 +1,7 @@
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   APP_OBSERVABILITY_APP_ID,
   HOSTED_TRACES_APP_ID,
@@ -212,7 +213,11 @@ const installedPlugins = createTtlCachedPromise(
 );
 
 export function fetchInstalledPlugins(): Promise<LocalPlugin[]> {
-  return installedPlugins.get();
+  // /api/plugins is legacy-only; an empty inventory already makes plugin-backed offers fail closed. The gate
+  // goes once the inventory reads the plugins.grafana.app metas and per-app settings instead.
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantHomepage, false)
+    ? Promise.resolve([])
+    : installedPlugins.get();
 }
 
 export function resetInstalledPlugins(): void {
