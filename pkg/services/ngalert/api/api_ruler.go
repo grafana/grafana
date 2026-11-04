@@ -507,6 +507,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 	return changesToResponse(finalChanges)
 }
 
+//nolint:gocyclo
 func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals, deletePermanently bool) (*rulestore.GroupDelta, *ngmodels.AlertConfiguration, error) {
 	var finalChanges *rulestore.GroupDelta
 	var dbConfig *ngmodels.AlertConfiguration
