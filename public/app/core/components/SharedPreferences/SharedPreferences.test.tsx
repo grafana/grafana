@@ -87,33 +87,21 @@ afterAll(() => {
 });
 
 describe('SharedPreferences', () => {
-  it('renders the theme preference', async () => {
+  it('renders the loaded theme, home dashboard, timezone, week start, and default language preferences', async () => {
     const { themeSelect } = await setup();
     await waitFor(() => expect(themeSelect).toHaveValue('Light'));
-  });
 
-  it('renders the home dashboard preference', async () => {
-    await setup();
     const dashboardSelect = getSelectParent(screen.getByLabelText('Home Dashboard'));
     await waitFor(() => {
       expect(dashboardSelect).toHaveTextContent(dashbdD.item.title);
     });
-  });
 
-  it('renders the timezone preference', async () => {
-    await setup();
     const tzSelect = getSelectParent(screen.getByLabelText('Timezone'));
     expect(tzSelect).toHaveTextContent('Browser Time');
-  });
 
-  it('renders the week start preference', async () => {
-    await setup();
     const weekSelect = await screen.findByRole('combobox', { name: 'Week start' });
     await waitFor(() => expect(weekSelect).toHaveValue('Monday'));
-  });
 
-  it('renders the default language preference', async () => {
-    await setup();
     const langSelect = await screen.findByRole('combobox', { name: /language/i });
     expect(langSelect).toHaveValue('Default');
   });

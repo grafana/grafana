@@ -24,6 +24,12 @@
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.cjs"
     },
+    "./store": {
+      "@grafana-app/source": "./src/store.ts",
+      "types": "./dist/types/store.d.ts",
+      "import": "./dist/esm/store.mjs",
+      "require": "./dist/cjs/store.cjs"
+    },
     "./unstable": {
       "@grafana-app/source": "./src/unstable.ts",
       "types": "./dist/types/unstable.d.ts",
