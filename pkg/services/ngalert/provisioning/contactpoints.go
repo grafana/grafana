@@ -281,6 +281,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	return contactPoint, nil
 }
 
+//nolint:gocyclo
 func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID int64, user identity.Requester, contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) error {
 	// set all redacted values with the latest known value from the store
 	if contactPoint.Settings == nil {
