@@ -239,6 +239,25 @@ describe('recording edits to pending changes', () => {
     expect(hasUnrecordedPendingChange(scene)).toBe(false);
   });
 
+  it('leaves nothing unsaved when a recording on its way fails after the scene was reloaded in place', async () => {
+    let model = specWith({ hello: { title: 'Hello' } });
+    const scene = fakeScene(() => model);
+    startRecordingPendingChanges(scene, model);
+    const history = fakeHistory();
+    let fail = (_error: Error) => {};
+    history.record.mockImplementationOnce(() => new Promise((_resolve, reject) => (fail = reject)));
+
+    model = specWith({ hello: { title: 'First' } });
+    const sent = recordPendingChange(scene, history, 'First edit');
+    await Promise.resolve();
+    resumeRecordingPendingChanges(scene);
+    fail(new Error('offline'));
+    await sent;
+
+    expect(hasUnrecordedPendingChange(scene)).toBe(false);
+    expect(appEvents.emit).not.toHaveBeenCalledWith(AppEvents.alertError, expect.any(Array));
+  });
+
   // A queue that stayed rejected would fail Apply's and Undo's wait; a scene cleared of the conflict
   // would let them act on pending changes the page never loaded.
   it('keeps the scene superseded, and its edits unrecorded, after the reload for a conflict failed', async () => {

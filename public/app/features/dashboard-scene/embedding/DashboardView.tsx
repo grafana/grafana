@@ -85,9 +85,11 @@ export function DashboardView({
     const open = stateManager.state.dashboard;
     const options = { uid, route: DashboardRoutes.Embedded, pendingChanges };
     void (async () => {
-      // A reload in place that fails is tried as a fresh one, which reports its own failure.
+      // A reload in place that fails is tried as a fresh one, which reports its own failure, unless a
+      // newer revision came meanwhile: its reload shows the dashboard, and a fresh load would replace the
+      // scene it reloads in place.
       const inPlace = open ? await reloadDashboardInPlace(stateManager, open, options).catch(() => false) : false;
-      if (!inPlace) {
+      if (!inPlace && shownRevision.current === revision) {
         await stateManager.reloadDashboardFresh(options);
       }
       if (shownRevision.current === revision) {

@@ -123,6 +123,23 @@ it('loads a newer revision in place and reports each revision it shows', async (
   expect(reload).not.toHaveBeenCalled();
 });
 
+// A fresh load would replace the scene the newer revision is reloading in place.
+it('leaves a failed reload of an overtaken revision to the newer one', async () => {
+  let failOlder = (_error: Error) => {};
+  reloadInPlace.mockImplementationOnce(() => new Promise((_resolve, reject) => (failOlder = reject)));
+  const shown = jest.fn();
+  const { rerender } = render(
+    <DashboardView uid="draft-1" pendingChanges="chat-1" revision={1} onRevisionShown={shown} />
+  );
+  rerender(<DashboardView uid="draft-1" pendingChanges="chat-1" revision={2} onRevisionShown={shown} />);
+  rerender(<DashboardView uid="draft-1" pendingChanges="chat-1" revision={3} onRevisionShown={shown} />);
+
+  await act(async () => failOlder(new Error('offline')));
+
+  await waitFor(() => expect(shown).toHaveBeenLastCalledWith(3));
+  expect(reload).not.toHaveBeenCalled();
+});
+
 it('opens the native save form and saves the draft without navigating the host', async () => {
   const user = userEvent.setup();
   const changed = jest.fn();

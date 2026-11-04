@@ -186,12 +186,20 @@ async function sendRecording(
   try {
     recorded = (await history.record({ proposed, description })).recorded;
   } catch (error) {
+    // The scene took newer pending changes in meanwhile, which replaced this edit.
+    if ((reloads.get(scene) ?? 0) !== reload) {
+      return;
+    }
     // `proposed` stays the baseline, so the next recording, or leaving edit mode, carries this edit.
     unrecorded.add(scene);
     appEvents.emit(AppEvents.alertError, [
       t('dashboard-scene.lifecycle.record-pending-change-failed', 'Your change could not be saved'),
       error instanceof Error ? error.message : String(error),
     ]);
+    return;
+  }
+  // The scene took newer pending changes in while this was on its way: it shows them, whatever this did.
+  if ((reloads.get(scene) ?? 0) !== reload) {
     return;
   }
   // Each recording carries the edits before it, so this one kept any that failed.
