@@ -9,7 +9,7 @@ require (
 	github.com/mattn/go-isatty v0.0.24
 	github.com/stretchr/testify v1.12.1
 	github.com/tjhop/slog-gokit v0.2.0
-	gopkg.in/ini.v1 v1.67.2
+	gopkg.in/ini.v1 v1.67.3
 )
 
 require (
