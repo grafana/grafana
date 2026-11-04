@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/http"
 	"strings"
 	"sync"
@@ -165,9 +166,8 @@ type ClientFactory interface {
 }
 
 type clientFactory struct {
-	clientsProvider clientsProvider
-	// supportedResources is the merged base + registered set, computed once.
-	supportedResources []SupportedResource
+	clientsProvider    clientsProvider
+	supportedResources SupportedResourcesFunc
 }
 
 // TODO: Rename to NamespacedClients
@@ -263,23 +263,36 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // the enabled subset via SupportedResources(). When none is provided it falls back to the
 // static SupportedProvisioningResources base set.
 func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
+	return NewClientFactoryWithResources(configProvider, StaticSupportedResources(supported...))
+}
+
+// NewClientFactoryWithResources creates a ClientFactory that reads the supported set each
+// time it creates clients.
+func NewClientFactoryWithResources(configProvider apiserver.RestConfigProvider, supported SupportedResourcesFunc) ClientFactory {
 	return &clientFactory{
 		clientsProvider:    newSingleAPIClients(configProvider),
-		supportedResources: activeResources(defaultSupportedResources(supported)),
+		supportedResources: supported,
 	}
 }
 
 // NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers.
 // The supported set behaves as described on NewClientFactory.
 func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
+	return NewClientFactoryForMultipleAPIServersWithResources(configProviders, nil, StaticSupportedResources(supported...))
+}
+
+// NewClientFactoryForMultipleAPIServersWithResources creates a ClientFactory for multiple API
+// servers that reads the supported set each time it creates clients. When fallback is set, it
+// provides the config for each supported group that has no config provider, or nil when the
+// group cannot be reached.
+func NewClientFactoryForMultipleAPIServersWithResources(configProviders map[string]apiserver.RestConfigProvider, fallback func(group string) apiserver.RestConfigProvider, supported SupportedResourcesFunc) ClientFactory {
 	clientFactories := make(map[string]ClientFactory)
 
 	for api, configProvider := range configProviders {
-		clientFactory := NewClientFactory(configProvider, supported...)
-		clientFactories[api] = clientFactory
+		clientFactories[api] = NewClientFactoryWithResources(configProvider, supported)
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories, supportedResources: activeResources(defaultSupportedResources(supported))}
+	return &multiClientFactory{clientFactories: clientFactories, fallback: fallback, supportedResources: supported}
 }
 
 // activeResources returns only the active resources. Disabled resources are declared (and
@@ -303,14 +316,31 @@ func defaultSupportedResources(supported []SupportedResource) []SupportedResourc
 }
 
 type multiClientFactory struct {
-	clientFactories map[string]ClientFactory
-	// supportedResources is the merged base + registered set, computed once.
-	supportedResources []SupportedResource
+	mutex              sync.Mutex
+	clientFactories    map[string]ClientFactory
+	fallback           func(group string) apiserver.RestConfigProvider
+	supportedResources SupportedResourcesFunc
 }
 
 func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
+	supported := activeResources(defaultSupportedResources(m.supportedResources(ctx)))
+
+	m.mutex.Lock()
+	if m.fallback != nil {
+		for _, r := range supported {
+			if _, ok := m.clientFactories[r.Group]; ok {
+				continue
+			}
+			if configProvider := m.fallback(r.Group); configProvider != nil {
+				m.clientFactories[r.Group] = NewClientFactoryWithResources(configProvider, m.supportedResources)
+			}
+		}
+	}
+	clientFactories := maps.Clone(m.clientFactories)
+	m.mutex.Unlock()
+
 	clients := make(map[string]ResourceClients)
-	for group, clientFactory := range m.clientFactories {
+	for group, clientFactory := range clientFactories {
 		c, err := clientFactory.Clients(ctx, namespace)
 		if err != nil {
 			return nil, err
@@ -325,7 +355,7 @@ func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (Res
 	return &multiResourceClients{
 		namespace:                 namespace,
 		resourceClientsByAPIGroup: clients,
-		supportedResources:        m.supportedResources,
+		supportedResources:        supported,
 	}, nil
 }
 
@@ -333,7 +363,7 @@ func (f *clientFactory) Clients(ctx context.Context, namespace string) (Resource
 	return &resourceClients{
 		namespace:          namespace,
 		clientsProvider:    f.clientsProvider,
-		supportedResources: f.supportedResources,
+		supportedResources: activeResources(defaultSupportedResources(f.supportedResources(ctx))),
 		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil

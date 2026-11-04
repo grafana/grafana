@@ -171,8 +171,9 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	availableResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
-	for _, r := range b.supportedResources {
+	supportedResources := b.supportedResources(ctx)
+	availableResources := make([]provisioning.SupportedResource, 0, len(supportedResources))
+	for _, r := range supportedResources {
 		availableResources = append(availableResources, provisioning.SupportedResource{
 			Group:    r.Group,
 			Kind:     r.Kind,

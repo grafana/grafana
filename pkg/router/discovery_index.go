@@ -146,7 +146,7 @@ func writeGroupVersions(b *strings.Builder, backend Backend, manifest *app.Manif
 			if len(version.Kinds) > 0 {
 				b.WriteString("\n| Kind | Resource | Scope |\n| --- | --- | --- |\n")
 				for _, kind := range version.Kinds {
-					fmt.Fprintf(b, "| %s | %s | %s |\n", mdText(kind.Kind), mdCode(kind.Resource()), mdText(kindScope(kind.Scope)))
+					fmt.Fprintf(b, "| %s | %s | %s |\n", mdText(kind.Kind), mdCode(kind.Resource), mdText(kindScope(kind.Scope)))
 				}
 			}
 			writeCustomRoutes(b, "/apis/"+gv.GroupVersion, version.OpenAPI.Paths)
