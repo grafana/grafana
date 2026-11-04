@@ -499,7 +499,7 @@ func TestNatsNotifierWatch_WaitsForTheSubscriberToStart(t *testing.T) {
 		n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 
 		ready := make(chan error, 1)
-		n.Watch(t.Context(), WatchOptions{captureReady: ready})
+		n.Watch(t.Context(), WatchOptions{CaptureReady: ready})
 		time.Sleep(time.Minute)
 		synctest.Wait()
 		require.Zero(t, sub.calls.Load(), "subscribing before the subscriber started would fail and log an error")
@@ -970,16 +970,16 @@ func TestWatchWrittenKeysNeedsTheNatsNotifier(t *testing.T) {
 	assert.Equal(t, EventSubscriber(sub), keysSubscriber(KVBackendOptions{EventSubscriber: sub, EnableNatsNotifier: true}))
 }
 
-func TestNatsEventSourceWatch(t *testing.T) {
+func TestNewNatsNotifier(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := &fakeEventSubscriber{enabled: true}
 		reg := prometheus.NewRegistry()
-		src := NewNatsEventSource(sub, reg, &logging.NoOpLogger{})
-
-		ready := make(chan error, 1)
 		expiry := NewWatchExpiry()
 		generation := expiry.WatchInvalidation()
-		out := src.Watch(t.Context(), WatchOptions{BufferSize: 1}, ready, expiry)
+		n := NewNatsNotifier(sub, expiry, NewNatsNotifierDroppedMetric(reg), &logging.NoOpLogger{})
+
+		ready := make(chan error, 1)
+		out := n.Watch(t.Context(), WatchOptions{BufferSize: 1, CaptureReady: ready})
 		require.NoError(t, <-ready)
 		require.Equal(t, resourcewatch.SubjectAllResources, sub.subject)
 
@@ -998,7 +998,7 @@ func TestNatsEventSourceWatch(t *testing.T) {
 		}
 
 		// Fill the output, then block the settle loop on it, then the input:
-		// the next drop is reported to this watch's own invalidator.
+		// the next drop is reported to this notifier's invalidator.
 		for range 2 {
 			sub.currentHandler()("some.subject", notification)
 			time.Sleep(time.Second)

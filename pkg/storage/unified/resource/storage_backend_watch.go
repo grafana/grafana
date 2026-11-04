@@ -114,7 +114,7 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context) (watchS
 	started := false
 	opts := k.watchOpts
 	ready := make(chan error, 1)
-	opts.captureReady = ready
+	opts.CaptureReady = ready
 	notifications := k.notifier.Watch(ctx, opts)
 	boundary := make(chan int64)
 	startDelivery := make(chan struct{})
