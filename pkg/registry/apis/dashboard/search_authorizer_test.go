@@ -90,13 +90,23 @@ func TestDashboardsAPIBuilderSearchAuthorizer(t *testing.T) {
 			want:      authorizer.DecisionDeny,
 		},
 		{
-			name:      "delegated dashboards group wildcard without folders",
+			name:      "delegated dashboards group wildcard without folders keeps working",
 			requester: delegatedRequester("dashboard.grafana.app:*"),
-			want:      authorizer.DecisionDeny,
+			want:      authorizer.DecisionAllow,
 		},
 		{
-			name:      "delegated search grant only",
+			name:      "delegated search grant only keeps working",
 			requester: delegatedRequester("dashboard.grafana.app/search:*"),
+			want:      authorizer.DecisionAllow,
+		},
+		{
+			name:      "delegated folders get and dashboards list without any search grant is allowed",
+			requester: delegatedRequester("folder.grafana.app/folders:get", "dashboard.grafana.app/dashboards:list"),
+			want:      authorizer.DecisionAllow,
+		},
+		{
+			name:      "delegated unrelated grants only",
+			requester: delegatedRequester("dashboard.grafana.app/dashboards:update", "folder.grafana.app/folders:update"),
 			want:      authorizer.DecisionDeny,
 		},
 		{
@@ -105,9 +115,9 @@ func TestDashboardsAPIBuilderSearchAuthorizer(t *testing.T) {
 			want:      authorizer.DecisionAllow,
 		},
 		{
-			name:      "service token with search grant only",
+			name:      "service token with search grant only keeps working",
 			requester: serviceRequester("dashboard.grafana.app/search:*"),
-			want:      authorizer.DecisionDeny,
+			want:      authorizer.DecisionAllow,
 		},
 	}
 
@@ -220,11 +230,17 @@ func (r *recordingAuthorizer) authorize(_ context.Context, attr authorizer.Attri
 }
 
 func TestNewSearchAuthorizer(t *testing.T) {
-	t.Run("asks for list on dashboards and folders", func(t *testing.T) {
-		fake := &recordingAuthorizer{decisions: []authorizer.Decision{authorizer.DecisionAllow, authorizer.DecisionAllow}}
-		decision, _, err := newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), searchAttributes("", "list"))
+	allow, deny, noOpinion := authorizer.DecisionAllow, authorizer.DecisionDeny, authorizer.DecisionNoOpinion
+	boom := errors.New("boom")
+	run := func(fake *recordingAuthorizer) (authorizer.Decision, string, error) {
+		return newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), searchAttributes("", "list"))
+	}
+
+	t.Run("asks for list on dashboards and folders first", func(t *testing.T) {
+		fake := &recordingAuthorizer{decisions: []authorizer.Decision{allow, allow}}
+		decision, _, err := run(fake)
 		require.NoError(t, err)
-		require.Equal(t, authorizer.DecisionAllow, decision)
+		require.Equal(t, allow, decision)
 		require.Len(t, fake.asked, 2)
 
 		type check struct{ group, resource, verb, namespace string }
@@ -239,54 +255,72 @@ func TestNewSearchAuthorizer(t *testing.T) {
 		}, got)
 	})
 
-	t.Run("stops at the first denial and returns its decision", func(t *testing.T) {
-		fake := &recordingAuthorizer{decisions: []authorizer.Decision{authorizer.DecisionDeny}}
-		decision, reason, err := newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), searchAttributes("", "list"))
-		require.NoError(t, err)
-		require.Equal(t, authorizer.DecisionDeny, decision)
-		require.Equal(t, "reason", reason)
-		require.Len(t, fake.asked, 1)
-	})
-
-	t.Run("no opinion from a check is denied", func(t *testing.T) {
-		for i := range 2 {
-			decisions := []authorizer.Decision{authorizer.DecisionAllow, authorizer.DecisionAllow}
-			decisions[i] = authorizer.DecisionNoOpinion
-			fake := &recordingAuthorizer{decisions: decisions}
-			decision, _, err := newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), searchAttributes("", "list"))
-			require.NoError(t, err)
-			require.Equal(t, authorizer.DecisionDeny, decision)
+	t.Run("falls back to the original request when the pair does not allow", func(t *testing.T) {
+		for name, tc := range map[string]struct {
+			decisions []authorizer.Decision
+			asked     int
+		}{
+			"dashboards denied":     {[]authorizer.Decision{deny, allow}, 2},
+			"folders denied":        {[]authorizer.Decision{allow, deny, allow}, 3},
+			"dashboards no opinion": {[]authorizer.Decision{noOpinion, allow}, 2},
+			"folders no opinion":    {[]authorizer.Decision{allow, noOpinion, allow}, 3},
+		} {
+			t.Run(name, func(t *testing.T) {
+				fake := &recordingAuthorizer{decisions: tc.decisions}
+				decision, _, err := run(fake)
+				require.NoError(t, err)
+				require.Equal(t, allow, decision)
+				require.Len(t, fake.asked, tc.asked)
+				require.Equal(t, "search", fake.asked[len(fake.asked)-1].GetResource())
+				require.Equal(t, searchAttributes("", "list"), fake.asked[len(fake.asked)-1])
+			})
 		}
 	})
 
-	t.Run("an error from a check is returned and denies", func(t *testing.T) {
-		boom := errors.New("boom")
-		fake := &recordingAuthorizer{err: boom}
-		decision, _, err := newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), searchAttributes("", "list"))
-		require.ErrorIs(t, err, boom)
-		require.Equal(t, authorizer.DecisionDeny, decision)
-	})
-
-	t.Run("a denial from the folders check is returned", func(t *testing.T) {
-		fake := &recordingAuthorizer{decisions: []authorizer.Decision{authorizer.DecisionAllow, authorizer.DecisionDeny}}
-		decision, reason, err := newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), searchAttributes("", "list"))
+	t.Run("does not ask the original request when the pair allows", func(t *testing.T) {
+		fake := &recordingAuthorizer{decisions: []authorizer.Decision{allow, allow}}
+		_, _, err := run(fake)
 		require.NoError(t, err)
-		require.Equal(t, authorizer.DecisionDeny, decision)
-		require.Equal(t, "reason", reason)
-		require.Len(t, fake.asked, 2)
+		for _, a := range fake.asked {
+			require.NotEqual(t, "search", a.GetResource())
+		}
 	})
 
-	t.Run("an error from the folders check is returned and denies", func(t *testing.T) {
-		boom := errors.New("boom")
-		fake := &recordingAuthorizer{decisions: []authorizer.Decision{authorizer.DecisionAllow}, err: boom, errAt: 1}
-		decision, _, err := newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), searchAttributes("", "list"))
+	t.Run("denies when both paths fail", func(t *testing.T) {
+		for name, decisions := range map[string][]authorizer.Decision{
+			"deny":       {deny, deny},
+			"no opinion": {deny, noOpinion},
+			"folders":    {allow, deny, deny},
+		} {
+			t.Run(name, func(t *testing.T) {
+				fake := &recordingAuthorizer{decisions: decisions}
+				decision, reason, err := run(fake)
+				require.NoError(t, err)
+				require.Equal(t, deny, decision)
+				require.Equal(t, "reason", reason)
+			})
+		}
+	})
+
+	t.Run("an error from either pair check denies without trying the original request", func(t *testing.T) {
+		for _, errAt := range []int{0, 1} {
+			fake := &recordingAuthorizer{decisions: []authorizer.Decision{allow, allow, allow}, err: boom, errAt: errAt}
+			decision, _, err := run(fake)
+			require.ErrorIs(t, err, boom)
+			require.Equal(t, deny, decision)
+			require.Len(t, fake.asked, errAt+1)
+		}
+	})
+
+	t.Run("an error from the original request denies", func(t *testing.T) {
+		fake := &recordingAuthorizer{decisions: []authorizer.Decision{deny, allow}, err: boom, errAt: 1}
+		decision, _, err := run(fake)
 		require.ErrorIs(t, err, boom)
-		require.Equal(t, authorizer.DecisionDeny, decision)
-		require.Len(t, fake.asked, 2)
+		require.Equal(t, deny, decision)
 	})
 
 	t.Run("other requests go straight to the fallback", func(t *testing.T) {
-		fake := &recordingAuthorizer{decisions: []authorizer.Decision{authorizer.DecisionAllow}}
+		fake := &recordingAuthorizer{decisions: []authorizer.Decision{allow}}
 		attr := authzAttributes("dashboards", "get")
 		_, _, err := newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), attr)
 		require.NoError(t, err)

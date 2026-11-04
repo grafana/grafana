@@ -1737,8 +1737,8 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	// Variables use classic variables:* when accessControl is wired; otherwise
 	// they fall through to the service authorizer (standalone / Cloud).
 	variableAuthorizer := newVariableAuthorizer(b.accessControl, serviceAuthorizer)
-	// Namespace search is authorized as a read of dashboards and folders
-	// rather than a grant on the search resource.
+	// Namespace search is allowed with a read of dashboards and folders or with
+	// the existing grant on the search resource.
 	searchAuthorizer := newSearchAuthorizer(serviceAuthorizer)
 
 	return authorizer.AuthorizerFunc(
