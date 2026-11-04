@@ -26,11 +26,13 @@ const (
 	alertRuleResource     = "alertrules.rules.alerting.grafana.app"
 	recordingRuleResource = "recordingrules.rules.alerting.grafana.app"
 	libraryPanelResource  = "librarypanels.dashboard.grafana.app"
+	libraryPanelMigration = "librarypanels migration"
+	migrationLogTable     = "unifiedstorage_migration_log"
 )
 
 // LegacyCountedResources is guarded by a test: once one of these gets a migration
 // registered, legacyTableIsStale has to read the migration status instead of config.
-var LegacyCountedResources = []string{alertRuleResource, recordingRuleResource, libraryPanelResource}
+var LegacyCountedResources = []string{alertRuleResource, recordingRuleResource}
 
 // Read stats from legacy SQL
 type LegacyStatsGetter struct {
@@ -59,14 +61,31 @@ const (
 )
 
 // From mode 4 on nothing writes the legacy table, so its rows are leftovers and counting
-// them would warn about resources that no longer exist. When Cfg is set, config is enough
-// because these resources have no migration registered there; if that changes, read the
-// migration status like dualwrite.Service.ReadFromUnified does.
+// them would warn about resources that no longer exist. Library panels can also be
+// migrated while still in mode 1, so their successful migration log takes precedence
+// over config, as it does for the dual-writer's storage mode resolution.
 //
 // A caller with no DualWriterMode config at all (nil Cfg) falls back to a per-stack kv_store
 // marker instead -- the only signal that exists there today.
 func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, resource string) (bool, error) {
 	if s.Cfg != nil {
+		if resource == libraryPanelResource {
+			exists, err := sess.IsTableExist(helper.Table(migrationLogTable))
+			if err != nil {
+				return false, err
+			}
+			if exists {
+				count, err := sess.Table(helper.Table(migrationLogTable)).
+					Where("migration_id = ? AND success = ?", libraryPanelMigration, true).
+					Count()
+				if err != nil {
+					return false, err
+				}
+				if count > 0 {
+					return true, nil
+				}
+			}
+		}
 		return s.Cfg.UnifiedStorage[resource].DualWriterMode >= grafanarest.Mode4, nil
 	}
 

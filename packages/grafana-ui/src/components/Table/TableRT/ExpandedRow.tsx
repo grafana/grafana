@@ -17,9 +17,10 @@ export interface Props {
   rowIndex: number;
   width: number;
   cellHeight: TableCellHeight;
+  columnCount: number;
 }
 
-export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeight }: Props) {
+export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeight, columnCount }: Props) {
   const frames: DataFrame[][] = nestedData.values;
   const subTables: React.ReactNode[] = [];
   const theme = useTheme2();
@@ -55,7 +56,15 @@ export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeig
     );
   });
 
-  return <div className={styles.subTables}>{subTables}</div>;
+  // This wrapper is rendered as a sibling of the row's cells, inside the row's `role="row"` div.
+  // A `row` can only own `cell`/`gridcell`/`columnheader`/`rowheader` children, so this needs a
+  // `cell` role of its own to legally contain the nested sub-table(s). It comes first in the DOM for
+  // styling reasons, so it's placed after the last column to keep the data cells aligned with their headers.
+  return (
+    <div className={styles.subTables} role="cell" aria-colindex={columnCount + 1}>
+      {subTables}
+    </div>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

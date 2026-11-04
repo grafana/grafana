@@ -1,16 +1,32 @@
-import { renderHook } from '@testing-library/react';
+import { render, renderHook, screen } from '@testing-library/react';
 import { type ReactNode } from 'react';
 
-import { createLogLine } from '../mocks/logRow';
+import { createLogLine, createLogRow } from '../mocks/logRow';
 
 import {
   useLogListContextData,
   useLogListContext,
   useLogIsPinned,
   LogListContext,
+  LogListContextProvider,
   useLogIsPermalinked,
 } from './LogListContext';
-import { defaultValue } from './__mocks__/LogListContext';
+import { defaultProps, defaultValue } from './__mocks__/LogListContext';
+
+jest.mock('@grafana/assistant', () => {
+  return {
+    ...jest.requireActual('@grafana/assistant'),
+    useAssistant: jest.fn().mockReturnValue({
+      isLoading: false,
+      isAvailable: true,
+    }),
+  };
+});
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (_flag: string, defaultValue: boolean) => defaultValue,
+}));
 
 const log = createLogLine({ rowId: 'yep', uid: 'uid' });
 const value = {
@@ -58,6 +74,35 @@ test('Allows to tell if a log is not permalinked', () => {
   const { result } = renderHook(() => useLogIsPermalinked(otherLog), { wrapper });
 
   expect(result.current).toBe(false);
+});
+
+function ErrorFieldsProbe() {
+  const { hasLogsWithErrorAttributes } = useLogListContext();
+  return <span>{hasLogsWithErrorAttributes ? 'error-fields' : 'no-error-fields'}</span>;
+}
+
+test('hasLogsWithErrorAttributes is true when a log has an error message or stack trace', () => {
+  const log = createLogRow({ labels: { 'exception.stacktrace': 'at main' } });
+
+  render(
+    <LogListContextProvider {...defaultProps} logs={[log]}>
+      <ErrorFieldsProbe />
+    </LogListContextProvider>
+  );
+
+  expect(screen.getByText('error-fields')).toBeInTheDocument();
+});
+
+test('hasLogsWithErrorAttributes is false when logs have no error fields', () => {
+  const log = createLogRow({ labels: { app: 'api', 'error.type': 'timeout' } });
+
+  render(
+    <LogListContextProvider {...defaultProps} logs={[log]}>
+      <ErrorFieldsProbe />
+    </LogListContextProvider>
+  );
+
+  expect(screen.getByText('no-error-fields')).toBeInTheDocument();
 });
 
 test('Identifies custom grammar', () => {

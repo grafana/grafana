@@ -75,6 +75,19 @@ linters:
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/dashboard is not allowed to import grafana core
+        apps-live:
+          list-mode: lax
+          files:
+            - '**/apps/live/*'
+            - '**/apps/live/**/*'
+            - '!**/pkg/registry/apps/live/*'
+            - '!**/pkg/registry/apps/live/**/*'
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
+            - github.com/grafana/grafana/pkg/infra/log
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: apps/live is not allowed to import grafana core
         apps-secret:
           list-mode: lax
           files:

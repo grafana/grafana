@@ -6,7 +6,7 @@ import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navig
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { evaluateAccess, evaluateAccessAll } from './routePermissions';
-import { isNotificationHistoryEnabled } from './unified/featureToggles';
+import { isNotificationHistoryEnabled, shouldUseGmaOnlyListView } from './unified/featureToggles';
 import { proxied } from './unified/plugin-proxy/withRouteProxy';
 import {
   PERMISSIONS_CONTACT_POINTS,
@@ -95,6 +95,21 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         () =>
           import(
             /* webpackChunkName: "EditMuteTiming" */ 'app/features/alerting/unified/components/mute-timings/EditMuteTiming'
+          )
+      ),
+    }),
+    proxied({
+      path: '/alerting/routes/mute-timing/:name/edit',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsWrite,
+        AccessControlAction.AlertingNotificationsExternalWrite,
+        ...PERMISSIONS_TIME_INTERVALS_READ,
+        ...PERMISSIONS_TIME_INTERVALS_MODIFY,
+      ]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "EditMuteTimingByPath" */ 'app/features/alerting/unified/components/mute-timings/EditMuteTimingByPath'
           )
       ),
     }),
@@ -430,6 +445,30 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertingTriage" */ 'app/features/alerting/unified/triage/Triage')
+      ),
+    });
+  }
+
+  if (shouldUseGmaOnlyListView()) {
+    // The GMA-only Alert rules page requires Grafana-managed read only, not the legacy GMA-or-DMA combo.
+    routes.push({
+      path: '/alerting/rules/alert',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "GmaAlertRulesPage" */ 'app/features/alerting/unified/gma-rule-list/alert-rules/AlertRulesPage'
+          )
+      ),
+    });
+    routes.push({
+      path: '/alerting/rules/recording',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "GmaRecordingRulesPage" */ 'app/features/alerting/unified/gma-rule-list/recording-rules/RecordingRulesPage'
+          )
       ),
     });
   }

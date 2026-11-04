@@ -9,6 +9,7 @@ import { LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type CombinedFolder, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { OwnerReference } from 'app/core/components/OwnerReferences/OwnerReference';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { STARRED_FOLDERS_UID } from 'app/features/search/constants';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
@@ -19,7 +20,6 @@ import { useDispatch } from 'app/types/store';
 import { PAGE_SIZE } from '../../api/constants';
 import { getFolderPermissions } from '../../permissions';
 import { refetchChildren } from '../../state/actions';
-import { starredFoldersEnabled } from '../../utils/dashboards';
 import CreateNewButton from '../CreateNewButton';
 import { FolderActionsButton } from '../FolderActionsButton';
 
@@ -30,6 +30,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
   // valid there, so a read-only Git repository must not disable the New menu
   const { isReadOnlyRepo, repoType, repository } = useGetResourceRepositoryView({ folderName: folderDTO?.uid });
   const { canCreateDashboards, canCreateFolders } = getFolderPermissions(folderDTO ?? rootFolderDTO);
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
   const dispatch = useDispatch();
 
   // Stars and the browse-dashboards "Starred folders" row use independent caches, so refetch the
@@ -48,7 +49,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
 
   return (
     <Stack alignItems="center" wrap>
-      {starredFoldersEnabled() && folderDTO && (
+      {folderDTO && (
         <StarToolbarButton
           group="folder.grafana.app"
           kind="Folder"
@@ -75,7 +76,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
           repository={repository}
         />
       )}
-      {(canCreateDashboards || canCreateFolders) && (
+      {(canCreateFolders || (canCreateDashboards && !isMobileEditDeprecated)) && (
         <CreateNewButton
           parentFolder={folderDTO}
           canCreateDashboard={canCreateDashboards}

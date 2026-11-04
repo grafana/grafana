@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { type AriaRole, type ReactNode } from 'react';
 import * as React from 'react';
-import SVG from 'react-inlinesvg';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
@@ -11,8 +10,8 @@ import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
 
 import { GrotCTA } from './GrotCTA/GrotCTA';
+import { GrotCompleted } from './GrotCompleted/GrotCompleted';
 import { GrotNotFound } from './GrotNotFound/GrotNotFound';
-import GrotCompleted from './grot-completed.svg';
 
 interface Props {
   /**
@@ -25,9 +24,9 @@ interface Props {
    */
   image?: ReactNode;
   /**
-   * Message to display to the user
+   * Message to display to the user. Strings use the `h4` text style; React nodes render as provided.
    */
-  message: string;
+  message: ReactNode;
   /**
    * Which variant to use. Affects the default image shown.
    */
@@ -60,9 +59,13 @@ export const EmptyState = ({
       <div className={styles.container}>
         {!hideImage && imageToShow}
         <Stack direction="column" alignItems="center">
-          <Text variant="h4" textAlignment="center">
-            {message}
-          </Text>
+          {typeof message === 'string' ? (
+            <Text variant="h4" textAlignment="center">
+              {message}
+            </Text>
+          ) : (
+            message
+          )}
           {children && (
             <Text color="secondary" textAlignment="center">
               {children}
@@ -84,7 +87,7 @@ function getDefaultImageForVariant(variant: Props['variant'], className?: string
       return <GrotNotFound width={300} className={className} />;
     }
     case 'completed': {
-      return <SVG src={GrotCompleted} width={300} className={className} />;
+      return <GrotCompleted width={300} className={className} />;
     }
     default: {
       throw new Error(`Unknown variant: ${variant}`);

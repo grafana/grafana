@@ -122,13 +122,11 @@ func (c PostRankAuthzConfig) growWindow(base, nextWindow int) int {
 }
 
 // ensureSearchFields makes bleve load every stored field when the caller did not
-// request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel tells
-// hitsToTable to use the curated allFields column list.
+// request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel selects the
+// curated response field list.
 //
-// It also adds the resource version, which every result carries regardless of the
-// requested fields. Both happen here rather than in toBleveSearchRequest because
-// Search snapshots the response field list before calling this, so what is added
-// is loaded without becoming a response column.
+// Load the stored resource version after Search snapshots the response fields,
+// so its internal field name does not become a response field.
 func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) error {
 	if len(req.Fields) < 1 && req.Limit > 0 {
 		f, err := b.index.Fields()
@@ -140,6 +138,10 @@ func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req 
 	}
 	if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING) {
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING)
+	}
+	// Checking access to the returned rows needs each hit's folder.
+	if len(req.AccessVerbs) > 0 && !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER) {
+		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER)
 	}
 	return nil
 }
@@ -475,6 +477,7 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 func (b *bleveIndex) runPostFilterAuthz(
 	ctx context.Context,
 	access authlib.AccessClient,
+	rowAccess authlib.AccessClient,
 	req *resourcepb.ResourceSearchRequest,
 	index bleve.Index,
 	firstReq *bleve.SearchRequest,
@@ -583,7 +586,7 @@ windows:
 			}
 		}
 
-		for info, err := range authorizeHits(ctx, access, candidateSeq, extractFn, trashAuthz) {
+		for info, err := range authorizeHits(ctx, access, candidateSeq, len(res.Hits), extractFn, trashAuthz) {
 			if err != nil {
 				return nil, err
 			}
@@ -659,24 +662,30 @@ windows:
 		authorized = max(authorized, facetAuthorized)
 		exhausted = facetExhausted
 	}
-	return response, b.finalizePostFilter(ctx, response, page.documents(), selectFields, fieldValueSchema, firstReq.Sort, req, firstRes,
+	docs := page.documents()
+	err = b.finalizePostFilter(ctx, response, docs, selectFields, fieldValueSchema, firstReq.Sort, req, firstRes,
 		authorized, exhausted, reverseSort, wantFacets, trashAuthz != nil, agg, stats)
+	// A response that failed to finalize is discarded with its error.
+	b.addRowAccess(ctx, rowAccess, req.AccessVerbs, response, docs)
+	return response, err
 }
 
 // authorizeHits filters ranked hits by the trash rule when trashAuthz is set,
 // otherwise by the read check. Same shape either way, so the scan loops do not
-// need to know which is running.
+// need to know which is running. sizeHint is how many hits candidates yields
+// at most.
 func authorizeHits(
 	ctx context.Context,
 	access authlib.AccessClient,
 	candidates iter.Seq[docInfo],
+	sizeHint int,
 	extractFn func(docInfo) authz.BatchCheckItem,
 	trashAuthz *resource.TrashAuthorizer,
 ) iter.Seq2[docInfo, error] {
 	if trashAuthz != nil {
 		return trashAuthorized(ctx, candidates, trashAuthz)
 	}
-	return authz.FilterAuthorized(ctx, access, candidates, extractFn, authz.WithTracer(tracer))
+	return authz.FilterAuthorized(ctx, access, candidates, extractFn, authz.WithTracer(tracer), authz.WithSizeHint(sizeHint))
 }
 
 func (b *bleveIndex) prepareFacetAggregation(
@@ -767,7 +776,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 				}
 			}
 		}
-		for info, err := range authorizeHits(ctx, access, candidateSeq, extractFn, trashAuthz) {
+		for info, err := range authorizeHits(ctx, access, candidateSeq, len(windowHits), extractFn, trashAuthz) {
 			if err != nil {
 				return nil, 0, false, err
 			}
@@ -869,7 +878,7 @@ func (b *bleveIndex) finalizePostFilter(
 	}
 
 	resultsConversionStart := time.Now()
-	if err := b.setSearchResults(ctx, response, selectFields, fieldValueSchema, page, sort, req.Explain); err != nil {
+	if err := b.setSearchResults(response, fieldValueSchema, page, sort); err != nil {
 		return err
 	}
 	if wantFacets {
@@ -1016,4 +1025,96 @@ func (a *facetAggregator) build() map[string]*resourcepb.ResourceSearchResponse_
 		}
 	}
 	return out
+}
+
+// accessCheck is one verb to check for one returned row.
+type accessCheck struct {
+	row  *resourcepb.ResourceSearchRow
+	verb string
+}
+
+// addRowAccess answers, for each returned row, whether the caller may do each
+// of verbs to it. The rows are checked in one batch. If that fails, as it does
+// when the calling service may not check a verb of a type on the caller's
+// behalf, each type and verb is checked on its own, and the ones that still fail
+// are left out rather than answered no.
+func (b *bleveIndex) addRowAccess(ctx context.Context, access authlib.AccessClient, verbs []string, response *resourcepb.ResourceSearchResponse, hits search.DocumentMatchCollection) {
+	if len(verbs) == 0 || len(response.Rows) == 0 {
+		return
+	}
+	ctx, span := tracer.Start(ctx, "search.bleveIndex.addRowAccess")
+	defer span.End()
+	logger := b.logger.FromContext(ctx)
+
+	checks := make([]accessCheck, 0, len(response.Rows)*len(verbs))
+	for _, row := range response.Rows {
+		for _, verb := range verbs {
+			checks = append(checks, accessCheck{row: row, verb: verb})
+		}
+	}
+	// Without an access client the search checks nothing, so nothing is refused.
+	if access == nil {
+		recordAccess(checks, nil)
+		return
+	}
+	// A permission granted on a folder applies to what is in it. The search loads
+	// each hit's folder for this, whether or not it returns the folder field.
+	folders := make(map[string]string, len(hits))
+	for _, hit := range hits {
+		folders[hit.ID], _ = hit.Fields[resource.SEARCH_FIELD_FOLDER].(string)
+	}
+	check := func(c accessCheck) authz.BatchCheckItem {
+		return authz.BatchCheckItem{
+			Name:      c.row.Key.Name,
+			Folder:    folders[resource.SearchID(c.row.Key)],
+			Verb:      c.verb,
+			Group:     c.row.Key.Group,
+			Resource:  c.row.Key.Resource,
+			Namespace: c.row.Key.Namespace,
+		}
+	}
+	checkAll := func(checks []accessCheck) error {
+		allowed := make(map[accessCheck]bool, len(checks))
+		for c, err := range authz.FilterAuthorized(ctx, access, slices.Values(checks), check, authz.WithTracer(tracer), authz.WithSizeHint(len(checks))) {
+			if err != nil {
+				return err
+			}
+			allowed[c] = true
+		}
+		recordAccess(checks, allowed)
+		return nil
+	}
+	err := checkAll(checks)
+	if err == nil {
+		return
+	}
+	// Expected when the calling service may not check some type and verb, so not
+	// a warning: each type and verb is checked on its own next.
+	span.RecordError(err)
+	logger.Debug("Failed to check access to search results in one batch, checking each type and verb", "error", err)
+
+	var groups []string
+	byGroup := map[string][]accessCheck{}
+	for _, c := range checks {
+		group := c.row.Key.Group + "/" + c.row.Key.Resource + ":" + c.verb
+		if _, ok := byGroup[group]; !ok {
+			groups = append(groups, group)
+		}
+		byGroup[group] = append(byGroup[group], c)
+	}
+	for _, group := range groups {
+		if err := checkAll(byGroup[group]); err != nil {
+			logger.Warn("Failed to check access to search results", "check", group, "error", err)
+		}
+	}
+}
+
+// recordAccess sets each check's answer on its row: allowed when allowed is nil.
+func recordAccess(checks []accessCheck, allowed map[accessCheck]bool) {
+	for _, c := range checks {
+		if c.row.Access == nil {
+			c.row.Access = map[string]bool{}
+		}
+		c.row.Access[c.verb] = allowed == nil || allowed[c]
+	}
 }

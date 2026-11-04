@@ -153,7 +153,6 @@ func buildKeyPath(key *resourcepb.ResourceKey, rv int64, action resourcepb.BulkR
 }
 
 func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
-	b.logCall("ProcessBulk")
 	if b.disableStorageServices {
 		return &resourcepb.BulkResponse{
 			Error: resource.AsErrorResult(errors.New("storage backend is not enabled")),
@@ -294,7 +293,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 	}
 
 	// Write each event into the history
-	for batchIter.NextBatch() {
+	for batchIter.NextBatch(ctx) {
 		if batchIter.RollbackRequested() {
 			return rollbackWithError(nil)
 		}
@@ -305,6 +304,10 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 		if _, err := b.insertHistoryBatch(ctx, tx, batch, rv, rsp, nil); err != nil {
 			return rollbackWithError(err)
 		}
+	}
+
+	if err := ctx.Err(); err != nil {
+		return rollbackWithError(err)
 	}
 
 	// Refresh planner stats so syncCollection's self-join avoids a nested-loop plan.
@@ -341,7 +344,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 			// Make sure the collection RV is above our last written event
 			_, err := b.rvManager.ExecWithRV(ctx, key, func(_ context.Context, _ db.Tx) (string, error) {
 				return "", nil
-			})
+			}, nil)
 			if err != nil {
 				b.log.Warn("error increasing RV", "error", err)
 			}
@@ -508,13 +511,19 @@ func (b *backend) writeBulkChunked(ctx context.Context, setting resource.BulkSet
 		return chunker.add(int64(bytes), len(batch))
 	}
 
-	for batchIter.NextBatch() {
+	for batchIter.NextBatch(ctx) {
 		if err := processChunkFn(); err != nil {
 			if abortErr := chunker.abort(); abortErr != nil {
 				b.log.Warn("rollback", "error", err, "aborting", abortErr)
 			}
 			return err
 		}
+	}
+	if err := ctx.Err(); err != nil {
+		if abortErr := chunker.abort(); abortErr != nil {
+			b.log.Warn("rollback", "error", err, "aborting", abortErr)
+		}
+		return err
 	}
 	if err := chunker.commit(); err != nil {
 		return err
@@ -582,7 +591,7 @@ func (b *backend) writeBulkChunked(ctx context.Context, setting resource.BulkSet
 		// transaction, so a failure is warn-only as in processBulkWithTx.
 		if _, err := b.rvManager.ExecWithRV(ctx, key, func(_ context.Context, _ db.Tx) (string, error) {
 			return "", nil
-		}); err != nil {
+		}, nil); err != nil {
 			b.log.Warn("error increasing RV", "error", err)
 		}
 
@@ -731,8 +740,8 @@ type singleRequestBatchIterator struct {
 	batch []*resourcepb.BulkRequest
 }
 
-func (s *singleRequestBatchIterator) NextBatch() bool {
-	if !s.iter.Next() {
+func (s *singleRequestBatchIterator) NextBatch(ctx context.Context) bool {
+	if ctx.Err() != nil || !s.iter.Next() {
 		return false
 	}
 	if req := s.iter.Request(); req != nil {

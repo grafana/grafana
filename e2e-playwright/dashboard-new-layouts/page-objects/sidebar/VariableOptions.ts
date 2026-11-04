@@ -2,6 +2,9 @@ import { type Locator, test } from '@playwright/test';
 
 import { PageObject } from '../PageObject';
 
+type SelectionOptionSwitch = 'Multi-value' | 'Include All value' | 'Allow custom values';
+type SelectionOptionTitle = SelectionOptionSwitch | 'Custom all value';
+
 /**
  * The "Variable options" pane in the sidebar — variable type,
  * name/label inputs, plus type-specific options (e.g. datasource variables)
@@ -30,6 +33,11 @@ export class VariableOptions extends PageObject {
     });
   }
 
+  /** Returns the warning shown under the name input (e.g. when the name shadows another variable) */
+  getNameWarning(): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByRole('alert');
+  }
+
   /** Returns the variable label input */
   getLabelInput(): Locator {
     return this.getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.variableLabelInput);
@@ -45,12 +53,49 @@ export class VariableOptions extends PageObject {
     });
   }
 
-  /** Selects the variable's display option from the dropdown */
-  async selectDisplay(displayLabel: string) {
-    await test.step(`Select variable display "${displayLabel}"`, async () => {
+  /** Returns the variable description textarea */
+  getDescriptionInput(): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByRole('textbox', {
+      name: 'Description',
+      exact: true,
+    });
+  }
+
+  /** Sets the variable description */
+  async setDescription(description: string) {
+    await test.step(`Set variable description to "${description}"`, async () => {
+      const input = this.getDescriptionInput();
+      await input.fill(description);
+      await input.blur();
+    });
+  }
+
+  /** Switches the selected variable to another type (e.g. "query") through the "Change type" pane */
+  async changeType(variableType: string) {
+    await test.step(`Change variable type to "${variableType}"`, async () => {
+      await this.getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.changeVariableType).click();
+      await this.selectVariableType(variableType);
+    });
+  }
+
+  /** Opens the variable's display dropdown */
+  async openDisplaySelect() {
+    await test.step('Open variable display dropdown', async () => {
       await this.getByGrafanaSelector(
         this.selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect
       ).click();
+    });
+  }
+
+  /** Returns every option of the open display dropdown, in display order; each option's text is its label followed by its description */
+  getDisplayOptions(): Locator {
+    return this.page.getByRole('listbox').getByRole('option');
+  }
+
+  /** Selects the variable's display option from the dropdown */
+  async selectDisplay(displayLabel: string) {
+    await test.step(`Select variable display "${displayLabel}"`, async () => {
+      await this.openDisplaySelect();
       // the option also renders a description so we can't just use getByRole('option', {name,exact})
       await this.page.getByRole('option').getByText(displayLabel, { exact: true }).click();
     });
@@ -136,6 +181,34 @@ export class VariableOptions extends PageObject {
         await this.getByGrafanaSelector(
           this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton
         ).click();
+      });
+    },
+  };
+
+  readonly selection = {
+    /** Returns a "Selection options" field, found by its title */
+    getField: (title: SelectionOptionTitle): Locator =>
+      this.getByGrafanaSelector(
+        this.selectors.components.PanelEditor.OptionsPane.fieldLabel(`selection-options-category ${title}`),
+        { root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container) }
+      ),
+    /** Returns a "Selection options" switch, found by its field title */
+    getSwitch: (title: SelectionOptionSwitch): Locator => this.selection.getField(title).getByRole('switch'),
+    /** Toggles a "Selection options" switch */
+    toggle: async (title: SelectionOptionSwitch) => {
+      await test.step(`Toggle "${title}" option`, async () => {
+        // force: true because the switch input is visually covered by its label
+        await this.selection.getSwitch(title).click({ force: true });
+      });
+    },
+    /** Returns the custom All value input (only rendered while "Include All value" is on) */
+    getCustomAllValueInput: (): Locator => this.selection.getField('Custom all value').getByRole('textbox'),
+    /** Sets the custom All value; the field applies it on blur */
+    setCustomAllValue: async (allValue: string) => {
+      await test.step(`Set custom all value to "${allValue}"`, async () => {
+        const input = this.selection.getCustomAllValueInput();
+        await input.fill(allValue);
+        await input.blur();
       });
     },
   };

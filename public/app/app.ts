@@ -1,5 +1,3 @@
-import 'jquery';
-
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -47,9 +45,11 @@ import {
   FlagKeys,
   initDataSourceInstanceSettings,
   initOpenFeature,
+  isSignedInOrAnonymous,
   setExpressionDataSourceInstance,
   setDataSourcePluginImporter,
   setGetObservablePluginComponents,
+  setGetObservablePluginFunctions,
   setGetObservablePluginLinks,
   setDataSourcePicker,
   setJourneyRegistry,
@@ -88,6 +88,7 @@ import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks
 import { isPluginNavAvailable } from './core/navtree/utils';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
+import { StPodReadyService } from './core/services/StPodReadyService';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
 import { initEchoSrv } from './core/services/echo/init';
@@ -111,6 +112,7 @@ import { PanelScreenshotServiceImpl } from './features/panel-screenshot/PanelScr
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import {
   getObservablePluginComponents,
+  getObservablePluginFunctions,
   getObservablePluginLinks,
 } from './features/plugins/extensions/getPluginExtensions';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
@@ -141,8 +143,8 @@ import { createTextBoxVariableAdapter } from './features/variables/textbox/adapt
 import { configureStore } from './store/configureStore';
 import { getState } from './store/store';
 
-// import symlinked extensions
-const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
+// Only the top-level overlay entrypoint is loaded; scanning the entire app follows pnpm workspace symlinks.
+const extensionsIndex = require.context('./extensions', false, /^\.\/index\.ts$/);
 const extensionsExports = extensionsIndex.keys().map((key) => {
   return extensionsIndex(key);
 });
@@ -202,7 +204,7 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      if (config.featureToggles.cujTracking) {
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.CujTracking, false)) {
         setJourneyTracker(new JourneyTrackerImpl());
 
         // Initialize the journey registry (metadata + split triggers)
@@ -341,7 +343,7 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      if (contextSrv.user.orgRole !== '') {
+      if (isSignedInOrAnonymous()) {
         preloadPlugins(await getAppPluginsToPreload());
       }
 
@@ -352,6 +354,7 @@ export class GrafanaApp {
       setPluginFunctionsHook(usePluginFunctions);
       setGetObservablePluginLinks(getObservablePluginLinks);
       setGetObservablePluginComponents(getObservablePluginComponents);
+      setGetObservablePluginFunctions(getObservablePluginFunctions);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
@@ -359,6 +362,7 @@ export class GrafanaApp {
       const keybindingsService = new KeybindingSrv(locationService, chromeService);
       const newAssetsChecker = new NewFrontendAssetsChecker();
       newAssetsChecker.start();
+      const stPodReady = new StPodReadyService();
       // The menu as the chrome shows it: the boot copy is empty when the client builds the nav tree.
       pageHistorySrv.start(chromeService, () => getState().navBarTree);
 
@@ -378,6 +382,7 @@ export class GrafanaApp {
         chrome: chromeService,
         keybindings: keybindingsService,
         newAssetsChecker,
+        stPodReady,
         config,
       };
 

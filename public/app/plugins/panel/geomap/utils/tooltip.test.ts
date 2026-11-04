@@ -1,6 +1,8 @@
 import Feature from 'ol/Feature';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import { Point } from 'ol/geom';
+import LayerGroup from 'ol/layer/Group';
+import VectorLayer from 'ol/layer/Vector';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import VectorSource from 'ol/source/Vector';
 
@@ -8,7 +10,9 @@ import { DataHoverClearEvent, type DataFrame } from '@grafana/data';
 
 import { GeomapPanel } from '../GeomapPanel';
 import { type GeomapHoverPayload, type GeomapLayerHover } from '../event';
+import { type MapLayerState } from '../types';
 
+import { getMapLayerState } from './layers';
 import { pointerMoveListener, setTooltipListeners } from './tooltip';
 
 // Mock the GeomapPanel class
@@ -288,6 +292,42 @@ describe('tooltip utils', () => {
       const layerHover = panel.hoverPayload.layers?.[0] as GeomapLayerHover;
       expect(layerHover.features.length).toBe(1); // only feature1
       expect(layerHover.features).not.toContain(farFeature);
+    });
+  });
+
+  describe('layer filter', () => {
+    afterEach(() =>
+      jest
+        .mocked(getMapLayerState)
+        .mockReturnValue({ options: { tooltip: true } } as ReturnType<typeof getMapLayerState>)
+    );
+
+    function hoverFilter() {
+      pointerMoveListener(mockEvent, panel);
+      const options = (panel.map!.forEachFeatureAtPixel as jest.Mock).mock.calls[0][2];
+      return options.layerFilter as (layer: unknown) => boolean;
+    }
+
+    it.each([
+      { desc: 'hit-tests data layers that show tooltips', state: { options: { tooltip: true } }, tested: true },
+      { desc: 'skips data layers with tooltips off', state: { options: { tooltip: false } }, tested: false },
+      // A vector basemap returned directly carries layer state, so every road would otherwise be hoverable
+      { desc: 'skips the basemap', state: { isBasemap: true, options: {} }, tested: false },
+    ])('$desc', ({ state, tested }) => {
+      jest.mocked(getMapLayerState).mockReturnValue(state as ReturnType<typeof getMapLayerState>);
+
+      expect(hoverFilter()(mockWebGLLayer)).toBe(tested);
+    });
+
+    it('skips layers inside a basemap layer group', () => {
+      const basemapChild = new VectorLayer();
+      panel.layers = [
+        { isBasemap: true, layer: new LayerGroup({ layers: [basemapChild] }) } as unknown as MapLayerState,
+      ];
+
+      const layerFilter = hoverFilter();
+      expect(layerFilter(basemapChild)).toBe(false);
+      expect(layerFilter(mockWebGLLayer)).toBe(true);
     });
   });
 });

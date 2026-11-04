@@ -6,6 +6,10 @@
  */
 
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import {
+  PENDING_CHANGES_COMMANDS,
+  isPendingChangesEnabled,
+} from 'app/features/dashboard-scene/lifecycle/pendingChangesFlag';
 import { DASHBOARD_COMMAND_SCHEMAS } from 'app/features/dashboard-scene/mutation-api/commands/schemaRegistry';
 import type { MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
 import { NOTEBOOK_COMMANDS } from 'app/features/notebook/mutation-api/registry';
@@ -21,7 +25,9 @@ import { NOTEBOOK_COMMANDS } from 'app/features/notebook/mutation-api/registry';
  *
  * Dashboard schemas now avoid command implementations, but keep registry reads and notebook flag
  * evaluation at call time.
- * Notebook commands are flag-gated for the same reason `DashboardMutationClient` gates them.
+ * Notebook commands are flag-gated for the same reason `DashboardMutationClient` gates them, and so
+ * are the pending changes commands: a plugin reads RELOAD_FROM_SERVER's schema to tell whether this
+ * build previews its pending changes.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- schemas come from commands with heterogeneous payload and scene types
 export function allMutationCommands(): Array<Pick<MutationCommand<any, any>, 'name' | 'payloadSchema'>> {
@@ -29,5 +35,9 @@ export function allMutationCommands(): Array<Pick<MutationCommand<any, any>, 'na
     ? NOTEBOOK_COMMANDS
     : [];
 
-  return [...DASHBOARD_COMMAND_SCHEMAS, ...notebookCommands];
+  const dashboardCommands = isPendingChangesEnabled()
+    ? DASHBOARD_COMMAND_SCHEMAS
+    : DASHBOARD_COMMAND_SCHEMAS.filter((command) => !PENDING_CHANGES_COMMANDS.has(command.name));
+
+  return [...dashboardCommands, ...notebookCommands];
 }

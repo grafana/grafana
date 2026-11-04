@@ -5,6 +5,7 @@ import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
+import { useFlagGrafanaScopesDashboardsMegaMenu } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
   SceneObjectBase,
@@ -32,6 +33,7 @@ import { KioskMode } from 'app/types/dashboard';
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { usePanelEditDirty } from '../panel-edit/usePanelEditDirty';
+import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
@@ -45,7 +47,7 @@ import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
 import { DashboardFiltersOverviewPaneToggle } from './dashboard-filters-overview/DashboardFiltersOverviewPaneToggle';
-import { dashboardModesEnabled, getDashboardMode } from './dashboardModes';
+import { dashboardModesEnabled, getPickerMode } from './dashboardModes';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
@@ -212,6 +214,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
+  const scopesMegaMenuEnabled = useFlagGrafanaScopesDashboardsMegaMenu();
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
   const panelEditVariables = getPanelEditVariables(dashboard);
@@ -229,7 +232,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
             {!hideVariableControls && <VariableControls dashboard={dashboard} />}
             {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
-            <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+            <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)} data-dashboard-actions>
               <div className={styles.fixedControls}>
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
               </div>
@@ -253,7 +256,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 
   return (
     <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
-      <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+      {/* Composer does not capture a region that covers the dashboard's own buttons. */}
+      <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)} data-dashboard-actions>
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
             <timePicker.Component model={timePicker} />
@@ -271,7 +275,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           </div>
         )}
       </div>
-      {config.featureToggles.scopeFilters && !editPanel && (
+      {config.featureToggles.scopeFilters && !editPanel && !scopesMegaMenuEnabled && (
         <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
       )}
       {!hideVariableControls && (
@@ -301,10 +305,11 @@ function DashboardControlActions({
   dashboard: DashboardScene;
   hidePlaylistNav?: boolean;
 }) {
-  const { isEditing, editPanel, uid, meta, editable } = dashboard.useState();
+  const { isEditing, editPanel, uid, meta, editable, mode, composerEditing } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   if (kioskMode === KioskMode.Full) {
     return null;
@@ -322,14 +327,16 @@ function DashboardControlActions({
 
   const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying && !editPanel;
   const modesEnabled = dashboardModesEnabled();
-  const hasChanges = dashboard.state.isDirty;
   const showSaveButton =
     isEditing &&
     (canSave || canSaveAs) &&
     !isEditingLibraryPanel &&
-    (!modesEnabled || getDashboardMode(dashboard.state) !== 'view' || hasChanges || !hasUid);
-  const showEditButton = (hasUid || isEditing) && !isPlaying && canEditDashboard && isEditable && !editPanel;
-  const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
+    getPickerMode({ mode, isEditing, composerEditing }) !== 'view';
+  // A draft (a new dashboard proposed as pending changes) has no uid until it's saved.
+  const isDraft = Boolean(meta.newDashboardUid);
+  const showEditButton =
+    (hasUid || isDraft) && !isPlaying && canEditDashboard && isEditable && !editPanel && !isMobileEditDeprecated;
+  const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing && !isMobileEditDeprecated;
   const showPanelEditButtons = Boolean(editPanel);
 
   return (

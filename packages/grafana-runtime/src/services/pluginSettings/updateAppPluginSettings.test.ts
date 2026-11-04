@@ -7,12 +7,12 @@ import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { setLogger, initializeLoggersRegistry } from '../logging/registry';
 import { getPluginMetaFromCache, refetchPluginMeta } from '../pluginMeta/plugins';
 import { clockPanelMetaOnPrem, myOrgTestAppMeta, v0alpha1Response } from '../pluginMeta/test-fixtures/v0alpha1Response';
+import { getCacheKey } from '../pluginUtils';
 
 import { legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
 import { clockPanelOnPremPluginMeta, myOrgTestAppSettings, testdataPluginMeta } from './test-fixtures/v0alpha1Response';
 import { type Settings as v0alpha1Settings } from './types';
 import { updateAppPluginSettings } from './updateAppPluginSettings';
-import { getCacheKey } from './utils';
 
 jest.mock('../pluginMeta/plugins', () => ({
   ...jest.requireActual('../pluginMeta/plugins'),
@@ -121,9 +121,10 @@ describe('settings', () => {
               path: '/secure/password/remove',
               value: true,
             },
+            { op: 'remove', path: '/secure/apiKey/name' },
             {
-              op: 'replace',
-              path: '/secure/apiKey/name',
+              op: 'add',
+              path: '/secure/apiKey/create',
               value: 'the api key',
             },
             {

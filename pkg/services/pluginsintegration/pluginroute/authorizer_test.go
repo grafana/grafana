@@ -14,9 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -32,7 +32,7 @@ func TestGetAuthorizerManifestKinds(t *testing.T) {
 	b := &manifestBuilder{
 		pluginID:      "test-app",
 		kindPolicies:  kindPolicies(manifest),
-		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
+		accessChecker: pluginaccesscontrol.NewAppAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
 	}
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
 
@@ -126,7 +126,7 @@ func TestGetAuthorizerAppAccessGatesKinds(t *testing.T) {
 	b := &manifestBuilder{
 		pluginID:      "test-app",
 		kindPolicies:  kindPolicies(testManifest(t)),
-		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: false}),
+		accessChecker: pluginaccesscontrol.NewAppAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: false}),
 	}
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
 
@@ -143,7 +143,7 @@ func TestGetAuthorizerServiceTokenPermissions(t *testing.T) {
 	b := &manifestBuilder{
 		pluginID:      "test-app",
 		kindPolicies:  kindPolicies(testManifest(t)),
-		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: false}),
+		accessChecker: pluginaccesscontrol.NewAppAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: false}),
 	}
 	service := func(permissions ...string) context.Context {
 		return identity.WithRequester(context.Background(), &identity.StaticRequester{
@@ -173,7 +173,7 @@ func TestGetAuthorizerRequiresIdentity(t *testing.T) {
 	b := &manifestBuilder{
 		pluginID:      "test-app",
 		kindPolicies:  kindPolicies(testManifest(t)),
-		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
+		accessChecker: pluginaccesscontrol.NewAppAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
 	}
 	decision, reason, err := b.GetAuthorizer().Authorize(context.Background(),
 		authorizer.AttributesRecord{Resource: "testkinds", Verb: "get"})
@@ -189,7 +189,7 @@ func TestGetAuthorizerStatusOnlyWritableByServices(t *testing.T) {
 	b := &manifestBuilder{
 		pluginID:      "test-app",
 		kindPolicies:  kindPolicies(testManifest(t)),
-		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
+		accessChecker: pluginaccesscontrol.NewAppAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
 	}
 	status := func(verb string) authorizer.AttributesRecord {
 		return authorizer.AttributesRecord{APIGroup: testGroup, Resource: "testkinds", Subresource: "status", Verb: verb}
@@ -283,7 +283,7 @@ func builderWithClusterKind(t *testing.T) *manifestBuilder {
 	return &manifestBuilder{
 		pluginID:      "test-app",
 		kindPolicies:  kindPolicies(manifest),
-		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
+		accessChecker: pluginaccesscontrol.NewAppAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
 	}
 }
 
@@ -326,7 +326,7 @@ func TestGetAuthorizerParameterizedCustomRoute(t *testing.T) {
 	b := &manifestBuilder{
 		pluginID:      "test-app",
 		kindPolicies:  kindPolicies(manifest),
-		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
+		accessChecker: pluginaccesscontrol.NewAppAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
 	}
 	require.Equal(t, map[string]bool{"rotate": true}, b.kindPolicies["secrets"].customRoutes)
 

@@ -14,11 +14,14 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 	"uuid"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -149,49 +152,9 @@ func TestKVStorageBackendListResourceLastImportTimesSkipsMalformedKeys(t *testin
 	require.Equal(t, expected, times, "valid imports before and after malformed keys are returned")
 }
 
-func TestKVStorageBackendPendingDeleteStoreDefaultsToMainKV(t *testing.T) {
-	tests := []struct {
-		name           string
-		experimentalKV func(KV) *ExperimentalKVOptions
-	}{
-		{
-			name: "nil experimental options",
-		},
-		{
-			name: "tenant metadata disabled",
-			experimentalKV: func(kv KV) *ExperimentalKVOptions {
-				return &ExperimentalKVOptions{KV: kv}
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mainKV := setupBadgerKV(t)
-			experimentalKV := setupBadgerKV(t)
-			backend := setupTestStorageBackend(t, withKV(mainKV), func(opts *KVBackendOptions) {
-				if tt.experimentalKV != nil {
-					opts.ExperimentalKV = tt.experimentalKV(experimentalKV)
-				}
-				opts.TenantDeleterConfig = &TenantDeleterConfig{
-					Interval: time.Hour,
-					Log:      log.NewNopLogger(),
-				}
-			})
-
-			require.Same(t, mainKV, backend.tenantDeleter.pendingDeleteStore.kv)
-		})
-	}
-}
-
-func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
+func TestKVStorageBackendTenantDeletionUsesMainKV(t *testing.T) {
 	mainKV := setupBadgerKV(t)
-	experimentalKV := setupBadgerKV(t)
 	backend := setupTestStorageBackend(t, withKV(mainKV), func(opts *KVBackendOptions) {
-		opts.ExperimentalKV = &ExperimentalKVOptions{
-			KV:             experimentalKV,
-			TenantMetadata: true,
-		}
 		opts.TenantWatcherConfig = &TenantWatcherConfig{
 			TenantAPIServerURL: "http://127.0.0.1:1",
 			Token:              "test-token",
@@ -213,11 +176,9 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 
 	// The watcher and deleter must share the exact store so records cannot be
 	// written to one KV and scanned from another.
-	require.Same(t, experimentalKV, backend.tenantWatcher.pendingDeleteStore.kv)
+	require.Same(t, mainKV, backend.tenantWatcher.pendingDeleteStore.kv)
 	require.Same(t, backend.tenantWatcher.pendingDeleteStore, backend.tenantDeleter.pendingDeleteStore)
 
-	// Reconciling a tenant writes its pending-delete record to the experimental
-	// KV while the resource label update goes through the main backend.
 	previousRV := requireGeneratedResourceVersion(t, backend.resourceVersions)
 	saveTestResource(t, backend.dataStore, testStacksNS1, "apps", "dashboards", "dash1", previousRV, nil)
 	backend.tenantWatcher.handleTenant(t.Context(), pendingDeleteTenant(testStacksNS1, pastTime()))
@@ -225,8 +186,9 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 	record, err := backend.tenantWatcher.pendingDeleteStore.Get(t.Context(), testStacksNS1)
 	require.NoError(t, err)
 	require.True(t, record.LabelingComplete)
-	_, err = newPendingDeleteStore(mainKV).Get(t.Context(), testStacksNS1)
-	require.ErrorIs(t, err, kv.ErrNotFound)
+	storedRecord, err := newPendingDeleteStore(mainKV).Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	require.Equal(t, record, storedRecord)
 
 	latest, err := backend.dataStore.GetLatestResourceKey(t.Context(), GetRequestKey{
 		Namespace: testStacksNS1,
@@ -257,19 +219,6 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 	require.Equal(t, DataActionCreated, event.PreviousAction)
 	require.Empty(t, event.PreviousFolder)
 
-	// The experimental KV is metadata-only: resource data and events remain in
-	// the main KV even when tenant metadata routing is enabled.
-	for _, err := range experimentalKV.Keys(t.Context(), dataSection, ListOptions{}) {
-		require.NoError(t, err)
-		require.Fail(t, "resource data must not be written to the experimental KV")
-	}
-	for _, err := range experimentalKV.Keys(t.Context(), eventsSection, ListOptions{}) {
-		require.NoError(t, err)
-		require.Fail(t, "resource events must not be written to the experimental KV")
-	}
-
-	// The deleter finds the watcher's record in the shared experimental store
-	// and uses it to purge the resource from the main KV.
 	backend.tenantDeleter.runDeletionPass(t.Context())
 
 	_, err = backend.dataStore.GetLatestResourceKey(t.Context(), GetRequestKey{
@@ -705,6 +654,50 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 
 // countingKV counts data and event reads so tests can verify storage round trips
 // and detect per-event lookups.
+// closeTrackingKV hands out data values as plain readers, like the streaming
+// gRPC KV client, and counts how many of them get closed.
+type closeTrackingKV struct {
+	KV
+	closed atomic.Int32
+}
+
+type closeTrackingReader struct {
+	io.Reader
+	closed *atomic.Int32
+}
+
+func (r closeTrackingReader) Close() error {
+	r.closed.Add(1)
+	return nil
+}
+
+func (k *closeTrackingKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
+	r, err := k.KV.Get(ctx, section, key)
+	if err != nil {
+		return nil, err
+	}
+	return closeTrackingReader{Reader: r, closed: &k.closed}, nil
+}
+
+func TestKvStorageBackend_GetValueFromDataStoreClosesReader(t *testing.T) {
+	store := &closeTrackingKV{KV: setupBadgerKV(t)}
+	backend := setupTestStorageBackend(t, withKV(store))
+	_, rv := createAndWriteTestObject(t, backend)
+
+	store.closed.Store(0)
+	value, err := backend.getValueFromDataStore(context.Background(), DataKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            "test-resource",
+		ResourceVersion: rv,
+		Action:          DataActionCreated,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, value)
+	require.Equal(t, int32(1), store.closed.Load())
+}
+
 type countingKV struct {
 	KV
 	mu         sync.Mutex
@@ -925,10 +918,13 @@ func (k *unreadableValueKV) BatchGet(ctx context.Context, section string, keys [
 	}
 }
 
-type failingReadCloser struct{ err error }
+type failingReadCloser struct {
+	err      error
+	closeErr error
+}
 
 func (f failingReadCloser) Read([]byte) (int, error) { return 0, f.err }
-func (f failingReadCloser) Close() error             { return nil }
+func (f failingReadCloser) Close() error             { return f.closeErr }
 
 // TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing
 // guards the error paths of resolving a batch. A failed batch read returns no
@@ -1235,6 +1231,110 @@ func TestKvStorageBackend_ReadResource_Success(t *testing.T) {
 	require.Equal(t, "resources", response.Key.Resource)
 	require.Equal(t, rv, response.ResourceVersion)
 	require.Equal(t, objectToJSONBytes(t, testObj), response.Value)
+}
+
+func TestKvStorageBackend_ReadResource_ErrorStatus(t *testing.T) {
+	for _, stage := range []string{"latest resource version", "resolve key", "get body", "read body"} {
+		t.Run(stage, func(t *testing.T) {
+			for _, tc := range []struct {
+				name string
+				err  error
+				want codes.Code
+			}{
+				{"canceled", context.Canceled, codes.Canceled},
+				{"deadline exceeded", context.DeadlineExceeded, codes.DeadlineExceeded},
+				{"grpc canceled", status.Error(codes.Canceled, "canceled read"), codes.Canceled},
+				{"grpc deadline exceeded", status.Error(codes.DeadlineExceeded, "expired read"), codes.DeadlineExceeded},
+				{"backend failure", errors.New("storage failed"), codes.Internal},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					store := &readErrorKV{stage: stage, err: tc.err}
+					backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+						store.KV = opts.KvStore
+						opts.KvStore = store
+					})
+					_, rv := createAndWriteTestObject(t, backend)
+					store.fail.Store(true)
+
+					req := &resourcepb.ReadRequest{Key: storageTestKey("test-resource")}
+					if stage == "latest resource version" {
+						req.ResourceVersion = rv
+					}
+					response := backend.ReadResource(t.Context(), req)
+					require.NotNil(t, response.Error)
+					require.Contains(t, response.Error.Message, tc.err.Error())
+					require.Equal(t, tc.want, grpcCodeFromErrorResult(response.Error))
+					_, err := UnaryErrorResultInterceptor()(t.Context(), req, nil, func(context.Context, any) (any, error) {
+						return &resourcepb.ReadResponse{Error: response.Error}, nil
+					})
+					require.Equal(t, tc.want, status.Code(err))
+				})
+			}
+		})
+	}
+}
+
+func TestKvStorageBackend_ReadResource_JoinedReadCloseErrors(t *testing.T) {
+	backendErr := errors.New("storage failed")
+	for _, tc := range []struct {
+		name     string
+		readErr  error
+		closeErr error
+		want     codes.Code
+	}{
+		{"canceled read and failed close", context.Canceled, backendErr, codes.Internal},
+		{"failed read and canceled close", backendErr, context.Canceled, codes.Internal},
+		{"expired read and failed close", context.DeadlineExceeded, backendErr, codes.Internal},
+		{"failed read and expired close", backendErr, context.DeadlineExceeded, codes.Internal},
+		{"grpc canceled read and failed close", status.Error(codes.Canceled, "canceled read"), backendErr, codes.Internal},
+		{"failed read and grpc canceled close", backendErr, status.Error(codes.Canceled, "canceled close"), codes.Internal},
+		{"both canceled", context.Canceled, context.Canceled, codes.Canceled},
+		{"both expired", context.DeadlineExceeded, context.DeadlineExceeded, codes.DeadlineExceeded},
+		{"only close canceled", io.EOF, context.Canceled, codes.Canceled},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &readErrorKV{stage: "read body", err: tc.readErr, closeErr: tc.closeErr}
+			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+				store.KV = opts.KvStore
+				opts.KvStore = store
+			})
+			createAndWriteTestObject(t, backend)
+			store.fail.Store(true)
+
+			response := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{Key: storageTestKey("test-resource")})
+			require.NotNil(t, response.Error)
+			require.Contains(t, response.Error.Message, tc.closeErr.Error())
+			require.Equal(t, tc.want, grpcCodeFromErrorResult(response.Error))
+			require.Equal(t, tc.want, status.Code(errorResultStatus(response.Error)))
+		})
+	}
+}
+
+type readErrorKV struct {
+	KV
+	stage    string
+	err      error
+	closeErr error
+	fail     atomic.Bool
+}
+
+func (k *readErrorKV) Keys(ctx context.Context, section string, opts ListOptions) iter.Seq2[string, error] {
+	if k.fail.Load() && (k.stage == "resolve key" && section == kv.DataSection || k.stage == "latest resource version" && section == kv.EventsSection) {
+		return func(yield func(string, error) bool) { yield("", k.err) }
+	}
+	return k.KV.Keys(ctx, section, opts)
+}
+
+func (k *readErrorKV) Get(ctx context.Context, section, key string) (io.ReadCloser, error) {
+	if k.fail.Load() && section == kv.DataSection {
+		switch k.stage {
+		case "get body":
+			return nil, k.err
+		case "read body":
+			return failingReadCloser{err: k.err, closeErr: k.closeErr}, nil
+		}
+	}
+	return k.KV.Get(ctx, section, key)
 }
 
 func TestKvStorageBackend_ReadResource_SpecificVersion(t *testing.T) {
@@ -3042,6 +3142,138 @@ func TestKvStorageBackend_ListModifiedSince_WithFolder(t *testing.T) {
 	}
 }
 
+func TestKvStorageBackend_ListModifiedSince_PastEventRetention(t *testing.T) {
+	ns := NamespacedResource{
+		Namespace: "retention-ns",
+		Group:     "test.group",
+		Resource:  "test-resources",
+	}
+	listNames := func(t *testing.T, backend *kvStorageBackend, sinceRV int64) []string {
+		t.Helper()
+		_, seq := backend.ListModifiedSince(t.Context(), ns, sinceRV, nil)
+		var names []string
+		for mr, err := range seq {
+			require.NoError(t, err)
+			names = append(names, mr.Key.Name)
+		}
+		slices.Sort(names)
+		return names
+	}
+	// Prunes the first object's event, as if it were past retention.
+	setup := func(t *testing.T, retention time.Duration) (*kvStorageBackend, int64) {
+		t.Helper()
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.EventRetentionPeriod = retention
+		})
+		rv, _ := addTestObject(t, backend, t.Context(), ns, "pruned", "value")
+		_, err := backend.eventStore.CleanupOldEvents(t.Context(), time.Now().Add(time.Second))
+		require.NoError(t, err)
+		addTestObject(t, backend, t.Context(), ns, "retained", "value")
+		return backend, rv
+	}
+
+	t.Run("reads the data store when sinceRV is older than the retention period", func(t *testing.T) {
+		backend, rv := setup(t, 30*time.Minute)
+		sinceRV := SubtractDurationFromSnowflake(rv, 40*time.Minute)
+
+		require.Equal(t, []string{"pruned", "retained"}, listNames(t, backend, sinceRV))
+	})
+
+	t.Run("reads the event store when sinceRV is within the retention period", func(t *testing.T) {
+		backend, rv := setup(t, 30*time.Minute)
+		sinceRV := SubtractDurationFromSnowflake(rv, 10*time.Minute)
+
+		// Missing "pruned" shows the event store answered.
+		require.Equal(t, []string{"retained"}, listNames(t, backend, sinceRV))
+	})
+
+	t.Run("reads the data store when pruning emptied the event store", func(t *testing.T) {
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.EventRetentionPeriod = 30 * time.Minute
+		})
+		rv, _ := addTestObject(t, backend, t.Context(), ns, "pruned", "value")
+		_, err := backend.eventStore.CleanupOldEvents(t.Context(), time.Now().Add(time.Second))
+		require.NoError(t, err)
+
+		oldRV := SubtractDurationFromSnowflake(rv, 40*time.Minute)
+		require.Equal(t, []string{"pruned"}, listNames(t, backend, oldRV))
+		// No committed RV to advance to, so the checkpoint stays.
+		latestRV, _ := backend.ListModifiedSince(t.Context(), ns, oldRV, nil)
+		require.Equal(t, oldRV, latestRV)
+
+		require.Empty(t, listNames(t, backend, SubtractDurationFromSnowflake(rv, 10*time.Minute)))
+	})
+
+	t.Run("skips the data store after a recent call with the same sinceRV found the event store empty", func(t *testing.T) {
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.EventRetentionPeriod = 30 * time.Minute
+		})
+		rv, _ := addTestObject(t, backend, t.Context(), ns, "pruned", "value")
+		_, err := backend.eventStore.CleanupOldEvents(t.Context(), time.Now().Add(time.Second))
+		require.NoError(t, err)
+		oldRV := SubtractDurationFromSnowflake(rv, 40*time.Minute)
+
+		listSince := func(calledAt time.Time) []string {
+			_, seq := backend.ListModifiedSince(t.Context(), ns, oldRV, &calledAt)
+			var names []string
+			for mr, err := range seq {
+				require.NoError(t, err)
+				names = append(names, mr.Key.Name)
+			}
+			return names
+		}
+		require.Empty(t, listSince(time.Now().Add(-time.Minute)))
+		// Events committed since a call this old may already be pruned.
+		require.Equal(t, []string{"pruned"}, listSince(time.Now().Add(-27*time.Minute)))
+	})
+
+	t.Run("rescans the data store when the event store scan outlives the retention period", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			// Snowflake RVs must be positive, so move the fake clock past their epoch.
+			time.Sleep(time.Until(time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)))
+			// Built by hand: the data store cache from newDataStore runs a goroutine that never exits the bubble.
+			kv := setupBadgerKV(t)
+			backend := &kvStorageBackend{
+				dataStore:            &dataStore{kv: kv},
+				eventStore:           newEventStore(kv),
+				log:                  &logging.NoOpLogger{},
+				metrics:              newKVBackendMetrics(nil),
+				eventRetentionPeriod: eventStoreRetentionMargin + 2*time.Second,
+			}
+			save := func(name string) int64 {
+				key := DataKey{Namespace: ns.Namespace, Group: ns.Group, Resource: ns.Resource, Name: name, ResourceVersion: snowflakeFromTime(time.Now()), Action: DataActionCreated}
+				require.NoError(t, backend.dataStore.Save(t.Context(), key, strings.NewReader(name)))
+				require.NoError(t, backend.eventStore.Save(t.Context(), Event{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: key.Name, ResourceVersion: key.ResourceVersion, Action: key.Action}))
+				return key.ResourceVersion
+			}
+			rv := save("pruned")
+			time.Sleep(time.Millisecond)
+			slowRV := save("slow")
+			_, err := backend.eventStore.CleanupOldEvents(t.Context(), time.UnixMilli(snowflakeTimestampMillis(slowRV)))
+			require.NoError(t, err)
+
+			_, seq := backend.ListModifiedSince(t.Context(), ns, SubtractDurationFromSnowflake(rv, time.Millisecond), nil)
+			var names []string
+			for mr, err := range seq {
+				require.NoError(t, err)
+				names = append(names, mr.Key.Name)
+				if len(names) == 1 {
+					time.Sleep(2500 * time.Millisecond)
+				}
+			}
+			// The rescan recovers the pruned event without repeating what the event store listed.
+			require.Equal(t, []string{"slow", "pruned"}, names)
+		})
+	})
+
+	t.Run("reads the data store past an hour even with a longer retention period", func(t *testing.T) {
+		backend, rv := setup(t, 24*time.Hour)
+		sinceRV := SubtractDurationFromSnowflake(rv, 2*time.Hour)
+
+		require.Equal(t, []string{"pruned", "retained"}, listNames(t, backend, sinceRV))
+	})
+}
+
 func TestKvStorageBackend_ListModifiedSince_TimestampOptimization(t *testing.T) {
 	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
 		opts.SearchLookback = time.Second
@@ -3930,7 +4162,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			Resource:        "clusterresources",
 			Name:            "my-cluster-resource",
 			ResourceVersion: rv1,
-			Action:          kv.DataActionCreated,
+			Action:          DataActionCreated,
 		}
 
 		_, err = backend.dataStore.Get(ctx, eventKey1)
@@ -4968,7 +5200,7 @@ func TestListModifiedSinceSingleConnection(t *testing.T) {
 		t.Run(age.String(), func(t *testing.T) {
 			store, pool := setupSqlKVWithDB(t)
 			backend := &kvStorageBackend{
-				dataStore:  newDataStore(store, nil),
+				dataStore:  newDataStore(store),
 				eventStore: newEventStore(store),
 				log:        &logging.NoOpLogger{},
 			}

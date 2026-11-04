@@ -12,8 +12,11 @@ import { prepareAPIMocks } from './utils';
 test.use({
   featureToggles: {
     scopeFilters: true,
-    groupByVariable: true,
-    reloadDashboardsOnParamsChange: true,
+  },
+  openFeature: {
+    flags: {
+      reloadDashboardsOnParamsChange: true,
+    },
   },
 });
 

@@ -9,7 +9,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -119,7 +119,7 @@ func extractFilters(req *Query) filters {
 	}
 	// Only the controlled group metadata label is selectable on the legacy store.
 	for _, r := range req.GroupFilters {
-		if r.Key != model.GroupLabelKey {
+		if r.Key != v1beta1.GroupLabelKey {
 			continue
 		}
 		if r.Operator == metav1.LabelSelectorOpNotIn {

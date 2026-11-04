@@ -31,16 +31,24 @@ type ConnectionGetter interface {
 // A non-nil keys makes the NATS re-list keys-only (identity, no bodies); nil
 // keeps the full-object list. Both callers follow [provisioning]
 // keys_only_relist, in process over storage and in the operator over HTTP.
-func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics) (DeltaSource, ConnectionGetter) {
+//
+// freshness instruments how the getter's reads compare to the notifications
+// that triggered them (see freshness.go); nil disables the observation, and it
+// applies to the NATS path only.
+func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, ConnectionGetter) {
 	if nats.Enabled(subscriber) {
-		recorder := metrics.Recorder(provisioningapis.ConnectionResourceInfo.GroupVersionResource())
+		gvr := provisioningapis.ConnectionResourceInfo.GroupVersionResource()
+		recorder := metrics.Recorder(gvr)
 		source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore(), keys, recorder)
 		// Same as the repository informer: the controller's only feed, with
 		// connection health checks driven by the re-list, so it must keep
 		// operating at the re-list cadence while NATS is unavailable rather
 		// than gate on the subscription.
 		source.AllowDegradedStart()
-		return source, NewClientConnectionGetter(client.ProvisioningV0alpha1())
+		announced := newAnnouncements()
+		source.SetAnnouncements(announced)
+		getter := NewClientConnectionGetter(client.ProvisioningV0alpha1())
+		return source, observeConnectionFreshness(getter, announced, freshness.Recorder(gvr.Resource))
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
 	return inf.Informer(), NewCachedConnectionGetter(inf.Lister())

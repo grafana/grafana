@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -106,6 +108,33 @@ func TestNewGit(t *testing.T) {
 	require.Equal(t, "https://git.example.com/owner/repo.git", gitRepo.URL())
 	require.Equal(t, "main", gitRepo.Branch())
 	require.Equal(t, config, gitRepo.Config())
+}
+
+func TestNewRepository_SendsUserAgent(t *testing.T) {
+	var mu sync.Mutex
+	var agents []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		agents = append(agents, r.UserAgent())
+		mu.Unlock()
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(server.Close)
+
+	config := &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType}}
+	gitRepo, err := NewRepository(t.Context(), config, RepositoryConfig{URL: server.URL + "/owner/repo", Branch: "main"}, nil, nil)
+	require.NoError(t, err)
+
+	ok, err := gitRepo.(*gitRepository).client.CanRead(t.Context())
+	require.NoError(t, err)
+	require.False(t, ok)
+
+	mu.Lock()
+	defer mu.Unlock()
+	require.NotEmpty(t, agents)
+	for _, agent := range agents {
+		require.Equal(t, userAgent, agent)
+	}
 }
 
 func TestCreateSignature(t *testing.T) {
@@ -5291,6 +5320,22 @@ func TestGitRepository_AuditLog(t *testing.T) {
 	require.Contains(t, output, `"namespace":"my-ns"`)
 	require.Contains(t, output, `"repository_name":"my-repo"`)
 	require.Contains(t, output, `"url":"https://git.example.com/owner/repo.git"`)
+}
+
+func TestGitRepository_CompareFiles_DeletedDirectories(t *testing.T) {
+	mockClient := &mocks.FakeClient{}
+	mockClient.GetRefReturns(nanogit.Ref{Hash: hash.Hash{1}}, nil)
+	mockClient.CompareCommitsReturns([]nanogit.CommitFile{
+		{Path: "configs/empty.json", Type: protocol.ObjectTypeTree, Status: protocol.FileStatusDeleted},
+		{Path: "configs/dashboard.json", Type: protocol.ObjectTypeBlob, Status: protocol.FileStatusDeleted},
+	}, nil)
+	repo := &gitRepository{client: mockClient, gitConfig: RepositoryConfig{Path: "configs"}, config: &provisioning.Repository{}}
+	changes, err := repo.CompareFiles(t.Context(), "main", "feature")
+	require.NoError(t, err)
+	require.Equal(t, []repository.VersionedFileChange{
+		{Action: repository.FileActionDeleted, Path: "empty.json/", PreviousPath: "empty.json/", Ref: "feature", PreviousRef: "main"},
+		{Action: repository.FileActionDeleted, Path: "dashboard.json", PreviousPath: "dashboard.json", Ref: "feature", PreviousRef: "main"},
+	}, changes)
 }
 
 func TestGitRepository_CompareFiles_HiddenPaths(t *testing.T) {

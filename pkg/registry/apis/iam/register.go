@@ -602,10 +602,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	if teamStorage == nil && b.legacyTeamStore != nil {
 		teamStorage = b.legacyTeamStore
 	}
-	teamGetter, ok := teamStorage.(rest.Getter)
-	if !ok {
-		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team getter storage")
-	}
 	teamLister, ok := teamStorage.(rest.Lister)
 	if !ok {
 		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team lister storage")
@@ -621,7 +617,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	// /teamlbacrules/{name}/for-subject/{type}/{uid}.
 	storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")] = teamlbacapi.NewRulesForSubjectREST(
 		teamLBACRuleGetter,
-		teamGetter,
 		teamLister,
 		b.tracing,
 		b.reg,
