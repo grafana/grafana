@@ -418,7 +418,16 @@ func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAcce
 		},
 	})
 	if err := resourceutil.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
-		return nil, err
+		var status *apierrors.StatusError
+		if !errors.As(err, &status) {
+			return nil, fmt.Errorf("failed to read folder %s: %w", name, err)
+		}
+		msg := "failed to read folder " + name
+		if status.ErrStatus.Message != "" {
+			msg += ": " + status.ErrStatus.Message
+		}
+		status.ErrStatus.Message = msg
+		return nil, status
 	}
 
 	folder := &unstructured.Unstructured{}

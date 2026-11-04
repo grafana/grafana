@@ -575,6 +575,12 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 				wantMessage: "folder not found",
 			},
 			{
+				name:        "response error: not found without a message",
+				rsp:         &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}},
+				wantCode:    http.StatusNotFound,
+				wantMessage: "failed to read folder some-folder",
+			},
+			{
 				name:        "response error: forbidden",
 				rsp:         &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "not allowed to read folders"}},
 				wantCode:    http.StatusForbidden,
@@ -622,6 +628,7 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 				require.Error(t, err)
 				status := responsewriters.ErrorToAPIStatus(err)
 				require.Equal(t, tc.wantCode, status.Code)
+				require.True(t, strings.HasPrefix(status.Message, "failed to read folder some-folder"), status.Message)
 				require.Contains(t, status.Message, tc.wantMessage)
 			})
 		}

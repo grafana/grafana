@@ -20,6 +20,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/storage"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -52,7 +53,11 @@ func (c *inlineBlobClient) Create(_ context.Context, req *resourcepb.CreateReque
 	return &resourcepb.CreateResponse{ResourceVersion: 1}, nil
 }
 
-func (c *inlineBlobClient) Read(context.Context, *resourcepb.ReadRequest, ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+func (c *inlineBlobClient) Read(_ context.Context, req *resourcepb.ReadRequest, _ ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+	if req.GetKey().GetGroup() == folders.GROUP {
+		folder := fmt.Sprintf(`{"apiVersion":%q,"kind":"Folder","metadata":{"name":%q}}`, folders.APIVERSION, req.GetKey().GetName())
+		return &resourcepb.ReadResponse{Value: []byte(folder), ResourceVersion: 1}, nil
+	}
 	if c.value == nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
