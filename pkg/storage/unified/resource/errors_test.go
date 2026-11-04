@@ -140,6 +140,100 @@ func TestErrorFromResponse(t *testing.T) {
 	})
 }
 
+func TestGRPCStatusError(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil input returns nil", func(t *testing.T) {
+		t.Parallel()
+		require.NoError(t, GRPCStatusError(nil))
+	})
+
+	t.Run("encoding failure returns internal error without details", func(t *testing.T) {
+		t.Parallel()
+		// Invalid UTF-8 cannot be marshaled into a proto3 string field.
+		err := GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "\xff"})
+		st := status.Convert(err)
+		require.Equal(t, codes.Internal, st.Code())
+		require.Equal(t, "failed to encode error details", st.Message())
+		require.Empty(t, st.Details())
+	})
+
+	for _, tc := range []struct {
+		name   string
+		code   int32
+		reason metav1.StatusReason
+		want   codes.Code
+	}{
+		{"conflict 409", http.StatusConflict, metav1.StatusReasonConflict, codes.Aborted},
+		{"already exists 409", http.StatusConflict, metav1.StatusReasonAlreadyExists, codes.AlreadyExists},
+		{"invalid 422", http.StatusUnprocessableEntity, metav1.StatusReasonInvalid, codes.InvalidArgument},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			failure := &resourcepb.ErrorResult{
+				Code:    tc.code,
+				Reason:  string(tc.reason),
+				Message: "request failed",
+				Details: &resourcepb.ErrorDetails{
+					Group: "dashboard.grafana.app", Kind: "dashboards", Name: "dashboard", Uid: "uid",
+					RetryAfterSeconds: 12,
+					Causes: []*resourcepb.ErrorCause{{
+						Reason: string(metav1.CauseTypeFieldValueInvalid), Field: "metadata.resourceVersion", Message: "outdated version",
+					}},
+				},
+			}
+
+			err := GRPCStatusError(failure)
+
+			st, ok := status.FromError(err)
+			require.True(t, ok)
+			require.Equal(t, tc.want, st.Code())
+			require.Equal(t, failure.Message, st.Message())
+			details := st.Details()
+			require.Len(t, details, 1)
+			require.Empty(t, cmp.Diff(failure, details[0], protocmp.Transform()))
+			require.Empty(t, cmp.Diff(failure, AsErrorResult(err), protocmp.Transform()))
+		})
+	}
+}
+
+// Clients must observe the same Kubernetes error whether the server embeds an
+// ErrorResult in the response or returns it as a gRPC status.
+func TestGRPCStatusError_RoundTripMatchesEmbeddedError(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name   string
+		result *resourcepb.ErrorResult
+	}{
+		{"not found 404", NewNotFoundError(&resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "abc"})},
+		{"conflict 409", &resourcepb.ErrorResult{Code: http.StatusConflict, Reason: string(metav1.StatusReasonConflict), Message: "conflict"}},
+		{"already exists 409", &resourcepb.ErrorResult{Code: http.StatusConflict, Reason: string(metav1.StatusReasonAlreadyExists), Message: "exists"}},
+		{"invalid 422 with causes", &resourcepb.ErrorResult{
+			Code: http.StatusUnprocessableEntity, Reason: string(metav1.StatusReasonInvalid), Message: "invalid",
+			Details: &resourcepb.ErrorDetails{
+				Group: "dashboard.grafana.app", Kind: "dashboards", Name: "abc",
+				Causes: []*resourcepb.ErrorCause{{Reason: string(metav1.CauseTypeFieldValueInvalid), Field: "spec.title", Message: "required"}},
+			},
+		}},
+		{"service unavailable 503", NewServiceUnavailableError("try again later")},
+		{"too many requests 429", NewTooManyRequestsError("slow down")},
+		{"missing code", &resourcepb.ErrorResult{Message: "no code"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			embedded := StatusErrorFromResponse(tc.result, nil)
+			viaGRPC := StatusErrorFromGRPC(GRPCStatusError(tc.result))
+
+			var want, got apierrors.APIStatus
+			require.ErrorAs(t, embedded, &want)
+			require.ErrorAs(t, viaGRPC, &got)
+			require.Empty(t, cmp.Diff(want.Status(), got.Status()))
+		})
+	}
+}
+
 func TestGRPCCodeFromErrorResult(t *testing.T) {
 	t.Parallel()
 
