@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
-import { FieldType, generateUUID, getDefaultTimeRange, type SelectableValue } from '@grafana/data';
+import { FieldType, generateUUID, getDefaultTimeRange, type SelectableValue, type TimeRange } from '@grafana/data';
 import { quoteIdentifierIfNecessary } from '@grafana/sql';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -43,21 +43,36 @@ export function classifySchemaFields(columns: SQLSchemaField[]): Omit<DynamicThr
   return { numericFields, stringFields };
 }
 
-export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRefId: string, matchLabel: string) {
+export function useDynamicThresholdSourcePreview(
+  queries: AlertQuery[],
+  inputRefId: string,
+  matchLabel: string,
+  timeRange?: TimeRange
+) {
   const sourceQuery = queries.find((query) => query.refId === inputRefId && !isExpressionQuery(query.model));
   const sourceQueries = useMemo(() => (sourceQuery ? [sourceQuery.model] : []), [sourceQuery]);
   const { schemas, loading, error, isFeatureEnabled, refetch } = useSQLSchemas({
     queries: sourceQueries,
     enabled: Boolean(sourceQuery),
+    timeRange,
   });
   const sourceKey = sourceQuery ? `${inputRefId}\0${JSON.stringify(sourceQuery.model)}` : '';
-  const initialSchemaFetch = useRef(true);
+  const previousSourceKey = useRef(sourceKey);
+  const hasProcessedSource = useRef(false);
   const [schemaSourceKey, setSchemaSourceKey] = useState(sourceKey);
   useDeepCompareEffect(() => {
-    if (initialSchemaFetch.current) {
-      initialSchemaFetch.current = false;
+    const previousKey = previousSourceKey.current;
+    previousSourceKey.current = sourceKey;
+    setSchemaSourceKey(sourceKey);
+
+    if (!hasProcessedSource.current) {
+      hasProcessedSource.current = true;
       return;
     }
+    if (!sourceKey || !previousKey) {
+      return;
+    }
+
     let cancelled = false;
     setSchemaSourceKey('');
     void refetch().then(() => {
@@ -70,6 +85,13 @@ export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRef
     };
   }, [sourceQuery?.model, inputRefId, refetch]);
 
+  const schema =
+    sourceQuery && sourceKey && schemaSourceKey === sourceKey ? schemas?.sqlSchemas[inputRefId] : undefined;
+  const endpointError =
+    isFeatureEnabled && sourceKey && schemaSourceKey === sourceKey
+      ? (error ?? (schema?.error ? new Error(schema.error) : null))
+      : null;
+  const shouldUseFallback = Boolean(sourceQuery) && (!isFeatureEnabled || Boolean(endpointError));
   const [fallbackResult, setFallbackResult] = useState<{
     key: string;
     fields: SQLSchemaField[] | null;
@@ -81,12 +103,12 @@ export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRef
   });
 
   useEffect(() => {
-    if (!sourceQuery || isFeatureEnabled) {
+    if (!sourceQuery || !sourceKey || !shouldUseFallback) {
       return;
     }
 
     let cancelled = false;
-    fetchSQLFields({ table: inputRefId }, [sourceQuery.model])
+    fetchSQLFields({ table: inputRefId }, [sourceQuery.model], { range: timeRange })
       .then((fields) => {
         if (!cancelled) {
           setFallbackResult({
@@ -113,10 +135,10 @@ export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRef
     return () => {
       cancelled = true;
     };
-  }, [inputRefId, isFeatureEnabled, sourceKey, sourceQuery]);
+  }, [inputRefId, shouldUseFallback, sourceKey, sourceQuery, timeRange]);
 
   useEffect(() => {
-    if (!sourceQuery || !matchLabel) {
+    if (!sourceQuery || !sourceKey || !matchLabel) {
       return;
     }
 
@@ -131,7 +153,7 @@ export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRef
             rawSql: `SELECT DISTINCT ${label} FROM ${table} WHERE ${label} IS NOT NULL ORDER BY ${label} LIMIT 100`,
             refId,
           },
-          getDefaultTimeRange(),
+          timeRange ?? getDefaultTimeRange(),
           interpolatedQueries
         )
       )
@@ -150,22 +172,19 @@ export function useDynamicThresholdSourcePreview(queries: AlertQuery[], inputRef
     return () => {
       cancelled = true;
     };
-  }, [inputRefId, matchLabel, sourceKey, sourceQuery]);
+  }, [inputRefId, matchLabel, sourceKey, sourceQuery, timeRange]);
 
-  const schema = schemaSourceKey === sourceKey ? schemas?.sqlSchemas[inputRefId] : undefined;
-  const fields = isFeatureEnabled ? schema?.columns : fallbackResult.key === sourceKey ? fallbackResult.fields : null;
+  const fallback = fallbackResult.key === sourceKey ? fallbackResult : null;
+  const fields = shouldUseFallback ? fallback?.fields : schema?.columns;
   const classified = classifySchemaFields(fields ?? []);
   const labelValues = labelValueResult.key === `${sourceKey}\0${matchLabel}` ? labelValueResult.values : [];
+  const fallbackFailed = Boolean(fallback?.error);
 
   return {
     ...classified,
     labelValues,
-    loading: isFeatureEnabled ? loading : Boolean(sourceQuery) && fallbackResult.key !== sourceKey,
-    error: isFeatureEnabled
-      ? (error ?? (schema?.error ? new Error(schema.error) : null))
-      : fallbackResult.key === sourceKey
-        ? fallbackResult.error
-        : null,
-    hasSchema: fields !== null && fields !== undefined,
+    loading: isFeatureEnabled && !endpointError ? loading : Boolean(sourceQuery) && !fallback,
+    error: shouldUseFallback ? (fallbackFailed ? (endpointError ?? fallback?.error ?? null) : null) : endpointError,
+    hasSchema: Boolean(sourceQuery && sourceKey && fields !== null && fields !== undefined),
   };
 }

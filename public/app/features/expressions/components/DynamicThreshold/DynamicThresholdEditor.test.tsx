@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 
@@ -154,6 +155,18 @@ describe('DynamicThresholdEditor', () => {
     expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.defaultThreshold).toEqual([undefined]);
   });
 
+  it('selecting the current input query is a no-op', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(<DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={onChange} />);
+
+    await user.click(screen.getByRole('combobox', { name: 'Input query' }));
+    await user.click(screen.getAllByText('A').at(-1)!);
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('clears schema-dependent policy state when the input query changes', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
@@ -216,25 +229,33 @@ describe('DynamicThresholdEditor', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('preserves positional range slots when either bound is cleared or entered first', async () => {
+  it('preserves positional range slots when the upper bound is entered first and the lower bound is cleared', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
-    render(
-      <DynamicThresholdEditor
-        query={makeQuery({ evaluator: EvalFunction.IsWithinRange, defaultThreshold: [1, 2] })}
-        queries={[sourceQuery]}
-        onChange={onChange}
-      />
-    );
 
-    const lower = screen.getByRole('spinbutton', { name: 'Default lower threshold' });
-    const upper = screen.getByRole('spinbutton', { name: 'Default upper threshold' });
-    await user.clear(lower);
+    function StatefulEditor() {
+      const [query, setQuery] = useState(
+        makeQuery({ evaluator: EvalFunction.IsWithinRange, defaultThreshold: [1, 2] })
+      );
+      return (
+        <DynamicThresholdEditor
+          query={query}
+          queries={[sourceQuery]}
+          onChange={(nextQuery) => {
+            onChange(nextQuery);
+            setQuery(nextQuery);
+          }}
+        />
+      );
+    }
+
+    render(<StatefulEditor />);
+    await user.clear(screen.getByRole('spinbutton', { name: 'Default lower threshold' }));
     expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.defaultThreshold).toEqual([undefined, 2]);
 
-    fireEvent.change(upper, { target: { value: '' } });
-    fireEvent.change(upper, { target: { value: '9' } });
-    expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.defaultThreshold).toEqual([1, 9]);
+    await user.clear(screen.getByRole('spinbutton', { name: 'Default upper threshold' }));
+    await user.type(screen.getByRole('spinbutton', { name: 'Default upper threshold' }), '9');
+    expect(onChange.mock.calls.at(-1)?.[0].dynamicThreshold.policy.defaultThreshold).toEqual([undefined, 9]);
   });
 
   it('resizes threshold slots only when operator arity changes', async () => {
@@ -282,6 +303,63 @@ describe('DynamicThresholdEditor', () => {
     rerender(<DynamicThresholdEditor query={makeQuery()} queries={[sourceQuery]} onChange={onChange} />);
 
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('regenerates label columns from the live schema after a user-driven policy edit', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+
+    function StatefulEditor() {
+      const [query, setQuery] = useState(makeQuery({ labelColumns: ['region'] }));
+      return (
+        <DynamicThresholdEditor
+          query={query}
+          queries={[sourceQuery]}
+          onChange={(nextQuery) => {
+            onChange(nextQuery);
+            setQuery(nextQuery);
+          }}
+        />
+      );
+    }
+
+    render(<StatefulEditor />);
+    expect(onChange).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('combobox', { name: 'Match label' }));
+    await user.click(screen.getByText('cluster'));
+    await user.click(screen.getByRole('button', { name: 'Change label' }));
+    await user.type(screen.getByRole('spinbutton', { name: 'Default threshold' }), '12');
+
+    const update = onChange.mock.calls.at(-1)?.[0];
+    expect(update.dynamicThreshold.policy).toEqual(
+      expect.objectContaining({ matchLabel: 'cluster', labelColumns: ['region', 'cluster'], defaultThreshold: [12] })
+    );
+    expect(update.expression).toContain('`A`.`region` AS `region`');
+    expect(update.expression).toContain('`A`.`cluster` AS `cluster`');
+  });
+
+  it.each([
+    {
+      name: 'label-column collisions',
+      query: makeQuery({ labelColumns: ['region', 'alert_result'] }),
+      message: 'Label column alert_result conflicts with a generated output column.',
+    },
+    {
+      name: 'generated SQL length',
+      query: makeQuery({
+        mappings: Array.from({ length: 20 }, (_, index) => ({
+          labelValue: `region-${index}-${'x'.repeat(600)}`,
+          thresholds: [index],
+        })),
+      }),
+      message: 'Generated SQL must not exceed 10000 characters.',
+    },
+  ])('renders $name errors in a general alert', ({ query, message }) => {
+    render(<DynamicThresholdEditor query={query} queries={[sourceQuery]} onChange={jest.fn()} />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Unable to generate SQL');
+    expect(screen.getByRole('alert')).toHaveTextContent(message);
   });
 
   it('selecting the current match label is a no-op', async () => {

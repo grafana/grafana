@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { times } from 'lodash';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { type DataFrame, toDataFrame } from '@grafana/data';
+import { type DataFrame, type PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { ExpressionQueryType, type SqlExpressionQuery } from 'app/features/expressions/types';
 
@@ -11,8 +11,10 @@ import { EvalFunction } from '../../../state/alertDef';
 
 import { Expression, ExpressionResult, getGroupedByStateAndSeriesCount } from './Expression';
 
+const mockDynamicThresholdEditor = jest.fn((_props: unknown) => <div data-testid="dynamic-threshold-editor" />);
+
 jest.mock('app/features/expressions/components/DynamicThreshold/DynamicThresholdEditor', () => ({
-  DynamicThresholdEditor: () => <div data-testid="dynamic-threshold-editor" />,
+  DynamicThresholdEditor: (props: unknown) => mockDynamicThresholdEditor(props),
 }));
 
 jest.mock('app/features/expressions/components/SqlExpressions/SqlExpr', () => ({
@@ -26,6 +28,7 @@ jest.mock('app/features/expressions/components/SqlExpressions/SqlExpr', () => ({
 describe('Expression editor routing', () => {
   it('does not mount SqlExpr or seed placeholder SQL for new dynamic threshold metadata', async () => {
     const onChangeQuery = jest.fn();
+    const timeRange = getDefaultTimeRange();
     const query: SqlExpressionQuery = {
       refId: 'B',
       datasource: ExpressionDatasourceRef,
@@ -53,6 +56,7 @@ describe('Expression editor routing', () => {
           <Expression
             query={query}
             queries={[]}
+            data={{ timeRange } as PanelData}
             onSetCondition={jest.fn()}
             onUpdateRefId={jest.fn()}
             onRemoveExpression={jest.fn()}
@@ -66,6 +70,7 @@ describe('Expression editor routing', () => {
 
     expect(await screen.findByTestId('dynamic-threshold-editor')).toBeInTheDocument();
     expect(screen.queryByTestId('sql-expression-editor')).not.toBeInTheDocument();
+    expect(mockDynamicThresholdEditor).toHaveBeenCalledWith(expect.objectContaining({ timeRange }));
     expect(onChangeQuery).not.toHaveBeenCalled();
     expect(query.expression).toBe('');
   });
