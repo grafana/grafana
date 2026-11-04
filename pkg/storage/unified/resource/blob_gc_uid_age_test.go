@@ -2,6 +2,11 @@ package resource
 
 import (
 	"context"
+	"fmt"
+	"iter"
+	"regexp"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 	"uuid"
@@ -32,6 +37,99 @@ func TestUUIDV7Time(t *testing.T) {
 	require.False(t, ok)
 	_, ok = uuidV7Time("blob")
 	require.False(t, ok)
+}
+
+func TestUUIDV7TimeValidation(t *testing.T) {
+	const valid = "01234567-89ab-7cde-8fab-0123456789ab"
+	want := time.UnixMilli(0x0123456789ab)
+	for _, uid := range []string{valid, strings.ToUpper(valid), "01234567-89ab-7cde-9fab-0123456789ab", "01234567-89ab-7cde-afab-0123456789ab", "01234567-89ab-7cde-bfab-0123456789ab"} {
+		got, ok := uuidV7Time(uid)
+		require.True(t, ok, uid)
+		require.Equal(t, want, got)
+	}
+	invalid := []string{"", "blob", "00000000-0000-7xxx-xxxx-xxxxxxxxxxxx", valid[:35], valid + "0", "{" + valid + "}", "urn:uuid:" + valid, strings.ReplaceAll(valid, "-", "")}
+	for i := range len(valid) {
+		invalid = append(invalid, valid[:i]+"x"+valid[i+1:])
+	}
+	for _, version := range "012345689abcdef" {
+		invalid = append(invalid, valid[:14]+string(version)+valid[15:])
+	}
+	for _, variant := range "01234567cdef" {
+		invalid = append(invalid, valid[:19]+string(variant)+valid[20:])
+	}
+	for _, uid := range invalid {
+		t.Run(uid, func(t *testing.T) {
+			got, ok := uuidV7Time(uid)
+			require.False(t, ok)
+			require.True(t, got.IsZero())
+		})
+	}
+}
+
+func FuzzUUIDV7Time(f *testing.F) {
+	for _, uid := range []string{"", "blob", "00000000-0000-7xxx-xxxx-xxxxxxxxxxxx", "01234567-89ab-7cde-8fab-0123456789ab", "FFFFFFFF-FFFF-7FFF-BFFF-FFFFFFFFFFFF", "00000000-0000-7000-8000-000000000000", "01234567-89ab-7cde-cfab-0123456789ab"} {
+		f.Add(uid)
+	}
+	canonicalV7 := regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`)
+	f.Fuzz(func(t *testing.T, uid string) {
+		got, ok := uuidV7Time(uid)
+		require.Equal(t, canonicalV7.MatchString(uid), ok)
+		if !ok {
+			require.True(t, got.IsZero())
+			return
+		}
+		ms, err := strconv.ParseInt(uid[:8]+uid[9:13], 16, 64)
+		require.NoError(t, err)
+		require.Equal(t, time.UnixMilli(ms), got)
+	})
+}
+
+type uidAgeGCStore struct {
+	key     string
+	deleted []string
+}
+
+func (s *uidAgeGCStore) Keys(context.Context, string, kv.ListOptions) iter.Seq2[string, error] {
+	return func(yield func(string, error) bool) { yield(s.key, nil) }
+}
+
+func (s *uidAgeGCStore) Delete(_ context.Context, section, key string) error {
+	s.deleted = append(s.deleted, section+":"+key)
+	return nil
+}
+
+func TestBlobGCUIDAgeSafety(t *testing.T) {
+	now := time.UnixMilli(0x0123456789ab)
+	grace := time.Hour
+	for _, tc := range []struct {
+		name           string
+		uid            string
+		count, skipped int
+	}{
+		{name: "malformed suffix", uid: "00000000-0000-7xxx-xxxx-xxxxxxxxxxxx", skipped: 1},
+		{name: "invalid variant", uid: "00000000-0000-7000-c000-000000000000", skipped: 1},
+		{name: "invalid separator", uid: "00000000-0000-7000-8000x000000000000", skipped: 1},
+		{name: "legacy", uid: "00000000-0000-4000-8000-000000000000", skipped: 1},
+		{name: "future", uid: uidAt(now.Add(time.Hour))},
+		{name: "within grace", uid: uidAt(now.Add(-grace + time.Millisecond))},
+		{name: "grace boundary", uid: uidAt(now.Add(-grace)), count: 1},
+		{name: "beyond grace", uid: uidAt(now.Add(-grace - time.Millisecond)), count: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &uidAgeGCStore{key: kv.BlobKey{Group: "g", Resource: "r", Namespace: "ns", Name: "n", UID: tc.uid}.String()}
+			gc := NewBlobGarbageCollector(store, 10, 0)
+			count, err := gc.Collect(t.Context(), now, grace, false, func(context.Context, kv.BlobKey) (bool, error) { return false, nil })
+			require.NoError(t, err)
+			require.Equal(t, tc.count, count)
+			require.Equal(t, tc.skipped, gc.SkippedWithoutAge())
+			require.Len(t, store.deleted, tc.count)
+		})
+	}
+}
+
+func uidAt(at time.Time) string {
+	ms := at.UnixMilli()
+	return fmt.Sprintf("%08x-%04x-7000-8000-000000000000", ms>>16, ms&0xffff)
 }
 
 func TestBlobGCPlainKVUsesUIDAge(t *testing.T) {
