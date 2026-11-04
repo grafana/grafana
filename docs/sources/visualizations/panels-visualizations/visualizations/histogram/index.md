@@ -88,6 +88,16 @@ The data is converted as follows:
 The data is converted as follows:
 
 {{< figure src="/static/img/docs/histogram-panel/histogram-example-height-weight.png" max-width="1025px" alt="A histogram visualization showing the male height and weight distribution" >}}
+## Cross-filter from a histogram bar
+
+In histograms, you can apply dashboard cross-filters directly from the visualization.
+Cross-filtering requires a **Group by** variable and a data source that supports dashboard filters, such as Prometheus or Loki.
+
+To enable cross-filtering, add a field override for each field you want to filter by, select **Standard options > Cross-filter**, and enable the **Cross-filter** switch.
+
+In the visualization, click a series, then select **Filter on this value** or **Filter out this value** to filter by its labels.
+
+For more information, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
 
 ## Configuration options
 
