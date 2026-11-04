@@ -197,10 +197,7 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Name: "grafana_storage_server_event_emit_after_commit_failures_total",
 			Help: "Total number of writes whose data was committed but whose event failed to be emitted",
 		}, []string{"resource", "action"}),
-		NatsNotifierDropped: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_storage_server_nats_notifier_dropped_events_total",
-			Help: "Notifications dropped by the NATS notifier before delivery, by reason (unmarshal_error, unknown_type, buffer_full).",
-		}, []string{"reason"}),
+		NatsNotifierDropped: NewNatsNotifierDroppedMetric(reg),
 		GCCycleDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "grafana_storage_server_gc_cycle_duration_seconds",
 			Help:    "Elapsed duration of a garbage-collection cycle, including batch waits, by outcome.",

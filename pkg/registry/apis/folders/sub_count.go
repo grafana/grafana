@@ -38,22 +38,21 @@ var countedKinds = []string{
 
 // countStatsErrors resolves the outcome of a GetStats call made by the folder count callers.
 //
-// raw is the exact failure, for logs and traces. It comes from ErrorFromResponse rather than
-// StatusErrorFromResponse because the latter replaces unstructured gRPC 5xx messages with the
-// generic status text and would drop a federated.CountError wrapping a gRPC or API status.
+// raw is the exact call error, for logs and traces. It is not converted with StatusErrorFromGRPC
+// because that replaces unstructured gRPC 5xx messages with the generic status text and would
+// drop a federated.CountError wrapping a gRPC or API status.
 //
 // public is what the folder API returns: a sanitized 500 from countFailedError, except for
 // cancellations and timeouts, which keep their 499/504 status so caller disconnects are not
 // reported as server failures.
-func countStatsErrors(respErr *resourcepb.ErrorResult, err error, deleting bool) (raw error, public error) {
-	raw = resource.ErrorFromResponse(respErr, err)
-	if raw == nil {
+func countStatsErrors(err error, deleting bool) (raw error, public error) {
+	if err == nil {
 		return nil, nil
 	}
-	if isCanceledOrTimedOut(raw) {
-		return raw, resource.StatusErrorFromResponse(respErr, err)
+	if isCanceledOrTimedOut(err) {
+		return err, resource.StatusErrorFromGRPC(err)
 	}
-	return raw, countFailedError(raw, deleting)
+	return err, countFailedError(err, deleting)
 }
 
 func isCanceledOrTimedOut(err error) bool {
@@ -177,7 +176,7 @@ func (r *subCountREST) getStats(ctx context.Context, namespace, name string) (*r
 		Kinds:     countedKinds,
 		Folder:    []string{name},
 	})
-	rawErr, publicErr := countStatsErrors(stats.GetError(), err, false)
+	rawErr, publicErr := countStatsErrors(err, false)
 	if rawErr != nil {
 		_ = tracing.Error(span, rawErr)
 		logging.FromContext(ctx).Error("Failed to get folder descendant counts", "namespace", namespace, "folder", name, "error", rawErr)

@@ -60,8 +60,8 @@ func (r *SearchDisplayProvider) GetDisplayList(ctx context.Context, ns authlib.N
 		for i, j := range jobs {
 			g.Go(func() error {
 				srsp, err := r.client.Search(gctx, j.req)
-				if err := resource.StatusErrorFromResponse(srsp.GetError(), err); err != nil {
-					return err
+				if err != nil {
+					return resource.StatusErrorFromGRPC(err)
 				}
 				responses[i] = srsp
 				return nil

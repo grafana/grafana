@@ -542,9 +542,6 @@ type ResourceServerOptions struct {
 
 	StorageMetrics *StorageMetrics
 
-	// GRPCErrorResultToStatus enables conversion of embedded ErrorResults on in-process calls.
-	GRPCErrorResultToStatus bool
-
 	IndexMetrics *BleveIndexMetrics
 
 	VectorMetrics *VectorMetrics
@@ -747,7 +744,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		ctx:                            ctx,
 		cancel:                         cancel,
 		storageMetrics:                 opts.StorageMetrics,
-		grpcErrorResultToStatus:        opts.GRPCErrorResultToStatus,
 		maxPageSizeBytes:               opts.MaxPageSizeBytes,
 		authorizeBeforeFetchEnabled:    opts.AuthorizeBeforeFetchEnabled,
 		reg:                            opts.Reg,
@@ -845,24 +841,23 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 var _ ResourceServer = (*server)(nil)
 
 type server struct {
-	log                     log.Logger
-	backend                 StorageBackend
-	vectorBackend           vector.VectorBackend
-	bulkBatchOptions        BulkBatchOptions
-	blob                    BlobSupport
-	blobTransfers           *blobTransfers
-	secure                  secrets.InlineSecureValueSupport
-	search                  *searchServer
-	searchClient            resourcepb.ResourceIndexClient
-	diagnostics             resourcepb.DiagnosticsServer //nolint:staticcheck
-	access                  claims.AccessClient
-	writeHooks              WriteAccessHooks
-	now                     func() int64
-	mostRecentRV            atomic.Int64 // The most recent resource version seen by the server
-	storageMetrics          *StorageMetrics
-	grpcErrorResultToStatus bool
-	overridesService        *OverridesService
-	quotasConfig            QuotasConfig
+	log              log.Logger
+	backend          StorageBackend
+	vectorBackend    vector.VectorBackend
+	bulkBatchOptions BulkBatchOptions
+	blob             BlobSupport
+	blobTransfers    *blobTransfers
+	secure           secrets.InlineSecureValueSupport
+	search           *searchServer
+	searchClient     resourcepb.ResourceIndexClient
+	diagnostics      resourcepb.DiagnosticsServer //nolint:staticcheck
+	access           claims.AccessClient
+	writeHooks       WriteAccessHooks
+	now              func() int64
+	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics   *StorageMetrics
+	overridesService *OverridesService
+	quotasConfig     QuotasConfig
 	// Kind declarations from the manifests, refreshed by the manifest watcher. List
 	// reads the selectable fields from it before asking an index about a selector.
 	// May be nil.
@@ -2435,6 +2430,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	// Capture before setup: invalidations during subscription or snapshot reads must
 	// expire this watch too, even if it has not entered the live loop yet.
+	cached, _ := s.broadcaster.(*broadcaster[*WrittenEvent])
+	waitsForStartup := cached != nil && cached.cache.identity != nil && cached.starting()
 	watchExpiryC := s.watchExpiry.WatchInvalidation()
 
 	// Treat a closed client transport and cancellation of this watch's context
@@ -2489,7 +2486,18 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 	name := fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace)
 	var stream <-chan *WrittenEvent
-	if b, ok := s.broadcaster.(*broadcaster[*WrittenEvent]); ok && b.cache.identity != nil {
+	if b := cached; b != nil && b.cache.identity != nil {
+		// Invalidations before capture starts, such as the one when it first
+		// starts, predate the stream a waiting watch subscribes to. Later ones,
+		// even before the cache is ready, still expire it.
+		if waitsForStartup {
+			if err := b.ensureReady(ctx); err != nil {
+				return err
+			}
+			if expiry := s.watchStartup.expiryAtCapture(); expiry != nil {
+				watchExpiryC = expiry
+			}
+		}
 		var resume *watchResume
 		if req.Since > 0 && !req.SendInitialEvents {
 			resume = &watchResume{groupResource: GroupResource{Group: key.Group, Resource: key.Resource}, since: requestedSince, requestedRV: req.Since}
