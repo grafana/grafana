@@ -88,12 +88,6 @@ describe('StackedEditorRenderer', () => {
     ]);
   });
 
-  it('shows the total item count in the header', () => {
-    renderStackedEditor();
-
-    expect(screen.getByText('Showing 3 items')).toBeInTheDocument();
-  });
-
   it('shows datasource errors in stacked mode', () => {
     renderStackedEditor({}, { dsError: new Error('Failed to load datasource: Prometheus') });
 
@@ -145,15 +139,6 @@ describe('StackedEditorRenderer', () => {
     renderStackedEditor();
 
     expect(screen.queryByLabelText('Max data points')).not.toBeInTheDocument();
-  });
-
-  it('clicking the exit button exits stacked mode', async () => {
-    const exit = jest.fn();
-    const { user } = renderStackedEditor({ stackedMode: makeStackedMode({ enabled: true, exit }) });
-
-    await user.click(screen.getByRole('button', { name: /exit stacked view/i }));
-
-    expect(exit).toHaveBeenCalledTimes(1);
   });
 
   it('opens positioned on the selected card, not the first card', () => {

@@ -15931,28 +15931,17 @@
       "give-feedback": "Give feedback",
       "tooltip": "Experimental feature options"
     },
-    "footer": {
-      "edit-option": "Edit {{label}}",
-      "inspect-queries": "Inspect queries",
-      "label": {
-        "interval": "Interval",
-        "max-data-points": "Max data points",
-        "min-interval": "Min interval",
-        "relative-time": "Relative time",
-        "time-shift": "Time shift"
-      },
-      "placeholder": {
-        "no-limit": "No limit"
-      },
-      "query-inspector": "Query inspector",
-      "query-options": "Query options"
-    },
     "header": {
       "alert": "Alert",
+      "enter-stacked-view": "Enter stacked view",
+      "exit-stacked-view": "Exit stacked view",
       "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
       "pending-transformation": "Select a transformation",
       "pending-transformation-cancel": "Cancel",
+      "showing-items_one": "Showing {{count}} item",
+      "showing-items_other": "Showing {{count}} items",
+      "stacked-view": "Stacked view",
       "transformation": "Transformation"
     },
     "help": {
@@ -15970,6 +15959,22 @@
       "add-query": "Add query",
       "message": "Add a query, expression, or transformation to get started"
     },
+    "query-options-bar": {
+      "edit-option": "Edit {{label}}",
+      "inspect-queries": "Inspect queries",
+      "label": {
+        "interval": "Interval",
+        "max-data-points": "Max data points",
+        "min-interval": "Min interval",
+        "relative-time": "Relative time",
+        "time-shift": "Time shift"
+      },
+      "placeholder": {
+        "no-limit": "No limit"
+      },
+      "query-inspector": "Query inspector",
+      "query-options": "Query options"
+    },
     "sidebar": {
       "add": "Add",
       "add-below": "Add below {{id}}",
@@ -15986,8 +15991,6 @@
       "card-click": "Select card {{id}}",
       "card-multi-select": "Include card {{id}} in bulk selection",
       "data": "Data",
-      "enter-stacked-view": "Enter stacked view",
-      "exit-stacked-view": "Exit stacked view",
       "footer-items_one": "{{count}} items",
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
@@ -15997,19 +16000,14 @@
       "new-type": "New {{type}}",
       "queries-empty": "No queries or expressions",
       "queries-expressions": "Queries & Expressions",
-      "stacked": "Stack",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
       "transformations-empty": "No transformations",
       "view-toggle": "View"
     },
     "stacked": {
-      "exit": "Exit stacked view",
-      "exit-aria-label": "Exit stacked view",
       "hidden-aria-label": "Hidden",
       "scroll-area-aria-label": "Stacked editor items",
-      "showing-items_one": "Showing {{count}} items",
-      "showing-items_other": "Showing {{count}} items",
       "transformation": "Transformation"
     },
     "transformation-debug": {

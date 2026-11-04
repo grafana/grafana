@@ -1,19 +1,17 @@
 import { css } from '@emotion/css';
+import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { CardEditorRenderer } from '../CardEditorRenderer';
 import { QueryOptionsOverlay } from '../QueryOptionsOverlay';
 
-export function QueryEditorBody() {
+export function QueryEditorBody({ children }: { children: ReactNode }) {
   const styles = useStyles2(getStyles);
 
   return (
     <QueryOptionsOverlay>
-      <div className={styles.scrollableContent}>
-        <CardEditorRenderer />
-      </div>
+      <div className={styles.scrollableContent}>{children}</div>
     </QueryOptionsOverlay>
   );
 }

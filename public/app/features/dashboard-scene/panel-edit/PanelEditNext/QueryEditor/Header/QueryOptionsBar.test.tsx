@@ -5,7 +5,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { QueryEditorType } from '../../constants';
 import { renderWithQueryEditorProvider } from '../testUtils';
 
-import { QueryEditorFooter } from './QueryEditorFooter';
+import { QueryOptionsBar } from './QueryOptionsBar';
 
 const trackQueryMenuAction = jest.fn();
 const trackQueryOptionsToggle = jest.fn();
@@ -27,13 +27,13 @@ jest.mock('../../../../inspect/PanelInspectDrawer', () => ({
   },
 }));
 
-describe('QueryEditorFooter', () => {
+describe('QueryOptionsBar', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders query inspector button', () => {
-    renderWithQueryEditorProvider(<QueryEditorFooter />);
+    renderWithQueryEditorProvider(<QueryOptionsBar />);
 
     expect(screen.getByRole('button', { name: /query inspector/i })).toBeInTheDocument();
   });
@@ -43,7 +43,7 @@ describe('QueryEditorFooter', () => {
     const showModal = jest.fn();
     getDashboardSceneFor.mockReturnValue({ showModal });
 
-    const { user } = renderWithQueryEditorProvider(<QueryEditorFooter />, {
+    const { user } = renderWithQueryEditorProvider(<QueryOptionsBar />, {
       panelState: { panel },
       uiStateOverrides: { cardType: QueryEditorType.Query },
     });
