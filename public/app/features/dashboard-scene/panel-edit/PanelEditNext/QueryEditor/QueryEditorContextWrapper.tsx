@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
@@ -326,7 +326,9 @@ export function QueryEditorContextWrapper({
 
   // A ref keeps activateStackedItem stable; the stack's IntersectionObserver re-subscribes when it changes.
   const activeCardIdsRef = useRef({ queryRefId: activeQueryRefId, transformationId: activeTransformationId });
-  activeCardIdsRef.current = { queryRefId: activeQueryRefId, transformationId: activeTransformationId };
+  useLayoutEffect(() => {
+    activeCardIdsRef.current = { queryRefId: activeQueryRefId, transformationId: activeTransformationId };
+  });
 
   // Scrolling the stack activates the card coming into view, which is navigation — so keep the
   // bulk selection so checkboxes ticked in the sidebar survive scrolling the stack.

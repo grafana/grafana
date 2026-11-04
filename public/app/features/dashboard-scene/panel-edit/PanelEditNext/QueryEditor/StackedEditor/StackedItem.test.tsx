@@ -22,7 +22,7 @@ jest.mock('../TransformationEditorRenderer', () => ({
 }));
 
 jest.mock('../hooks/useQueryDatasource', () => ({
-  useQueryDatasource: () => ({ queryDsData: null, queryDsLoading: false }),
+  useQueryDatasource: () => ({ queryDsData: { dsSettings: ds1SettingsMock }, queryDsLoading: false }),
 }));
 
 jest.mock('../Header/PluginActions', () => ({
@@ -119,10 +119,12 @@ describe('StackedSection header actions', () => {
     expect(toggleTransformationDisabled).toHaveBeenCalledWith('organize-0');
   });
 
-  it('keeps action labels out of the section accessible name', () => {
+  it('names each section after its item rather than its header controls', () => {
     renderSections();
 
-    expect(getSection('B')).not.toHaveAccessibleName(/hide query|remove query|more query actions/i);
+    expect(getSection('A')).toHaveAccessibleName('Query A, Test DS');
+    expect(getSection('B')).toHaveAccessibleName('Query B, Test DS');
+    expect(getSection('organize-0')).toHaveAccessibleName('Transformation Organize fields');
   });
 
   it('shows data source help only in the current section', () => {

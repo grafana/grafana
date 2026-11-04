@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type RefObject, useCallback, useMemo, useRef } from 'react';
+import { type RefObject, useCallback, useId, useMemo, useRef } from 'react';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2, type ScopedVars } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -35,10 +35,13 @@ interface DatasourceSectionProps {
 
 function DatasourceSection({ selectedQuery, onChange, currentDatasource, scopedVars }: DatasourceSectionProps) {
   const styles = useStyles2(getDatasourceSectionStyles);
+  // The stacked view renders one picker per query, and the picker's default id is shared.
+  const inputId = useId();
 
   return (
     <div className={styles.dataSourcePickerWrapper}>
       <DataSourcePicker
+        inputId={inputId}
         dashboard={true}
         variables={true}
         current={currentDatasource ?? selectedQuery.datasource}
@@ -128,8 +131,6 @@ interface ContentHeaderProps {
   target?: HeaderActionTarget;
   /** `stacked` renders the header inside a stacked view section, which draws its own accent bar. */
   variant?: ContentHeaderVariant;
-  /** Lets a surrounding section use the header title as its accessible name. */
-  headingId?: string;
 }
 
 type ContentHeaderVariant = 'default' | 'stacked';
@@ -163,7 +164,6 @@ export function ContentHeader({
   scopedVars,
   target,
   variant = 'default',
-  headingId,
 }: ContentHeaderProps) {
   // Fallback ref if none provided (for saved queries positioning)
   const internalContainerRef = useRef<HTMLDivElement>(null);
@@ -208,8 +208,7 @@ export function ContentHeader({
 
   return (
     <div className={cx(styles.container, isStacked && styles.stackedContainer)} ref={containerRef}>
-      {/* Actions stay outside the heading so their labels don't leak into a section's accessible name. */}
-      <div className={styles.leftSection} id={headingId}>
+      <div className={styles.leftSection}>
         <Icon name={typeConfig[cardType].icon} size="sm" />
 
         {cardType === QueryEditorType.Alert && selectedAlert && (
@@ -301,13 +300,11 @@ export function ContentHeaderSceneWrapper({
   renderHeaderExtras,
   target,
   variant,
-  headingId,
 }: {
   renderHeaderExtras?: () => React.ReactNode;
   /** Renders the header for this card instead of the selected one. */
   target?: HeaderActionTarget;
   variant?: ContentHeaderVariant;
-  headingId?: string;
 } = {}) {
   const uiState = useQueryEditorUIContext();
   const { pendingExpression, setPendingExpression, pendingTransformation, setPendingTransformation } = uiState;
@@ -365,7 +362,6 @@ export function ContentHeaderSceneWrapper({
       scopedVars={scopedVars}
       target={target}
       variant={variant}
-      headingId={headingId}
     />
   );
 }
