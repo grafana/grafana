@@ -211,7 +211,24 @@ To enable cell filters, follow these steps:
 
 For more information about applying filters this way, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
 
-## Sort columns
+## Reset or save column changes
+
+Whenever you show, hide, or reorder column, a table displays an unsaved changes (eye) icon to indicate this.
+<!--TODO: What kinds of changes make this happen? Column management stuff or filtering as well?-->
+Click the icon
+
+<!--TODO: screenshot of a table with the eye -->
+<!-- TODO: What happens on click vs hover -->
+When you click the drop-down list next to the icon, one or both of the following options are displayed:
+
+- **Save changes**: Save the changes to the dashboard. Only for users with permission to edit the dashboard.
+- **Remove changes**: View the table without the changes. Dashboard editors and viewers.
+
+Saving the change creates a transformation that reflects the change you made using filters.
+
+<!--TODO: screenshot of transformations new query editor-->
+
+## Column sorting
 
 Click a column title to change the sort order from default to descending to ascending.
 Each time you click, the sort order changes to the next option in the cycle and then back to the default for the table.
