@@ -365,9 +365,18 @@ func (s *ServiceImpl) canReadPlaylists(c *contextmodel.ReqContext) bool {
 	return c.HasRole(org.RoleViewer)
 }
 
-// buildSlideshowsNavLink returns the top-level Slideshows section for users who can read playlists,
-// because slideshows share the playlist permissions.
+// buildSlideshowsNavLink returns the top-level Slideshows section when the toggle is on, for users
+// who can read playlists, because slideshows share the playlist permissions.
 func (s *ServiceImpl) buildSlideshowsNavLink(c *contextmodel.ReqContext) *navtree.NavLink {
+	if !openfeature.NewDefaultClient().Boolean(
+		c.Req.Context(),
+		featuremgmt.FlagPlaylistSlideshows,
+		false,
+		openfeature.TransactionContext(c.Req.Context()),
+	) {
+		return nil
+	}
+
 	if !s.canReadPlaylists(c) {
 		return nil
 	}

@@ -269,6 +269,7 @@ func TestBuildSlideshowsNavLink(t *testing.T) {
 	}
 
 	t.Run("Should show Slideshows for a signed-in Viewer", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagPlaylistSlideshows: true})
 		link := newService().buildSlideshowsNavLink(newReqCtx(true, false))
 
 		require.NotNil(t, link)
@@ -277,11 +278,23 @@ func TestBuildSlideshowsNavLink(t *testing.T) {
 	})
 
 	t.Run("Should show Slideshows for an anonymous Viewer", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagPlaylistSlideshows: true})
 		require.NotNil(t, newService().buildSlideshowsNavLink(newReqCtx(false, true)))
 	})
 
 	t.Run("Should not show Slideshows for an unauthenticated user", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagPlaylistSlideshows: true})
 		require.Nil(t, newService().buildSlideshowsNavLink(newReqCtx(false, false)))
+	})
+
+	t.Run("Should not show Slideshows when the toggle is off", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagPlaylistSlideshows: false})
+		require.Nil(t, newService().buildSlideshowsNavLink(newReqCtx(true, false)))
+	})
+
+	t.Run("Should not show Slideshows when the toggle is not set", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{})
+		require.Nil(t, newService().buildSlideshowsNavLink(newReqCtx(true, false)))
 	})
 }
 
