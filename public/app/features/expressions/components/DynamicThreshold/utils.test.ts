@@ -29,7 +29,10 @@ function makeQuery(expression: string, overrides: Partial<DynamicThresholdPolicy
 
 describe('hasDynamicThresholdSqlMismatch', () => {
   const built = buildDynamicThreshold(policy);
-  const sql = built.ok ? built.expressionSql : '';
+  if (!built.ok) {
+    throw new Error('expected the test policy to compile');
+  }
+  const sql = built.expressionSql;
 
   it('is false when the saved SQL equals the recompiled policy', () => {
     expect(hasDynamicThresholdSqlMismatch(makeQuery(sql))).toBe(false);
