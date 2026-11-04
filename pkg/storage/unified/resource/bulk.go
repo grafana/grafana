@@ -471,6 +471,9 @@ func spoolBulkRequests(ctx context.Context, source BulkRequestBatchIterator, opt
 			}
 		}
 	}
+	if err = ctx.Err(); err != nil {
+		return nil, err
+	}
 	if err = writer.Flush(); err != nil {
 		return nil, fmt.Errorf("flush bulk spool: %w", err)
 	}
@@ -549,6 +552,9 @@ func (s *spooledBulkRequests) NextBatch(ctx context.Context) bool {
 	s.batch = s.batch[:0]
 	payloadBytes := 0
 	for {
+		if ctx.Err() != nil {
+			return false
+		}
 		req, err := s.readRequest()
 		if errors.Is(err, io.EOF) {
 			s.eof = true

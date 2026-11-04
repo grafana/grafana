@@ -1180,24 +1180,30 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 }
 
 func TestAssistantPagesTopLevelNavigation(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaPluginPathNesting, true)
 	for _, tt := range []struct {
 		name      string
 		ossMode   bool
 		trialMode bool
-		role      identity.RoleType
+		hasRead   bool
 		wantPages bool
 	}{
-		{name: "cloud", role: identity.RoleAdmin, wantPages: true},
-		{name: "OSS", role: identity.RoleAdmin, ossMode: true},
-		{name: "trial", role: identity.RoleAdmin, trialMode: true, wantPages: true},
-		{name: "without access", role: identity.RoleViewer},
+		{name: "cloud", hasRead: true, wantPages: true},
+		{name: "OSS", hasRead: true, ossMode: true},
+		{name: "trial", hasRead: true, trialMode: true, wantPages: true},
+		{name: "without access", hasRead: false},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AppSubURL = "/grafana"
+			permissions := []ac.Permission{}
+			if tt.hasRead {
+				permissions = append(permissions, ac.Permission{Action: "assistant.ext.grafana.app/pages:get"})
+			}
 			service := ServiceImpl{
 				cfg:           cfg,
-				accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+				log:           log.New("navtree"),
+				accessControl: accesscontrolmock.New().WithPermissions(permissions),
 				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
 					assistantAppID: {JSONData: map[string]any{"ossMode": tt.ossMode, "trialMode": tt.trialMode}},
 				}},
@@ -1206,7 +1212,7 @@ func TestAssistantPagesTopLevelNavigation(t *testing.T) {
 			httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
 			require.NoError(t, err)
 			reqCtx := &contextmodel.ReqContext{
-				SignedInUser: &user.SignedInUser{OrgRole: tt.role},
+				SignedInUser: &user.SignedInUser{OrgRole: identity.RoleViewer},
 				Context:      &web.Context{Req: httpReq},
 			}
 			plugin := pluginstore.Plugin{JSONData: plugins.JSONData{
@@ -1214,7 +1220,8 @@ func TestAssistantPagesTopLevelNavigation(t *testing.T) {
 				Type: plugins.TypeApp,
 				Includes: []*plugins.Includes{
 					{Name: "Assistant", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
-					{Name: "Pages", Path: "/a/grafana-assistant-app/pages", Icon: "file-alt", Type: "page", AddToNav: true, Role: identity.RoleAdmin},
+					{Name: "Templates", Path: "/a/grafana-assistant-app/pages/templates", Type: "page", AddToNav: true, Action: "assistant.ext.grafana.app/pages:get"},
+					{Name: "Pages", Path: "/a/grafana-assistant-app/pages", Icon: "file-alt", Type: "page", AddToNav: true, Action: "assistant.ext.grafana.app/pages:get"},
 				},
 			}}
 			dashboards := &navtree.NavLink{Id: navtree.NavIDDashboards, SortWeight: navtree.WeightDashboard}
@@ -1228,6 +1235,7 @@ func TestAssistantPagesTopLevelNavigation(t *testing.T) {
 			pages := tree.FindByURL("/grafana/a/grafana-assistant-app/pages")
 			if !tt.wantPages {
 				require.Nil(t, pages)
+				require.Nil(t, tree.FindByURL("/grafana/a/grafana-assistant-app/pages/templates"))
 				return
 			}
 			require.NotNil(t, pages)
@@ -1236,6 +1244,9 @@ func TestAssistantPagesTopLevelNavigation(t *testing.T) {
 			require.Equal(t, "pages", pages.Icon)
 			require.True(t, pages.IsNew)
 			require.Equal(t, assistantAppID, pages.PluginID)
+			require.Len(t, pages.Children, 1)
+			require.Equal(t, "Templates", pages.Children[0].Text)
+			require.Equal(t, "/grafana/a/grafana-assistant-app/pages/templates", pages.Children[0].Url)
 			tree.Sort()
 			require.Equal(t, []*navtree.NavLink{dashboards, pages, explore, ai}, tree.Children)
 		})
@@ -1370,6 +1381,57 @@ func TestNestPluginIncludesByPath(t *testing.T) {
 
 	page := func(name, path string) *plugins.Includes {
 		return &plugins.Includes{Name: name, Path: path, Type: "page", AddToNav: true}
+	}
+
+	for _, tt := range []struct {
+		name     string
+		enabled  bool
+		section  string
+		override bool
+	}{
+		{name: "root", enabled: true, section: navtree.NavIDRoot},
+		{name: "section", enabled: true, section: navtree.NavIDCfg},
+		{name: "overridden core page", enabled: true, section: navtree.NavIDCfg, override: true},
+		{name: "flag disabled", section: navtree.NavIDRoot},
+		{name: "missing section", enabled: true, section: "missing"},
+	} {
+		t.Run("standalone parent/"+tt.name, func(t *testing.T) {
+			setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaPluginPathNesting, tt.enabled)
+			service := newService(
+				page("Usage", "/a/nesting-app/settings/usage"),
+				page("Settings", "/a/nesting-app/settings"),
+			)
+			service.navigationAppPathConfig = map[string]NavigationAppConfig{
+				"/a/nesting-app/settings": {SectionID: tt.section},
+			}
+			section := &navtree.NavLink{Id: navtree.NavIDCfg}
+			if tt.override {
+				section.Children = []*navtree.NavLink{{Url: "/a/nesting-app/settings", Text: "Core settings"}}
+			}
+			tree := navtree.NavTreeRoot{Children: []*navtree.NavLink{section}}
+			require.NoError(t, service.addAppLinks(&tree, reqCtx))
+			parent := tree.FindByURL("/a/nesting-app/settings")
+			app := tree.FindById("plugin-page-nesting-app")
+			if tt.section == "missing" || !tt.enabled {
+				require.NotNil(t, app)
+				require.Len(t, app.Children, 1)
+				require.Equal(t, "Usage", app.Children[0].Text)
+				if parent != nil {
+					require.Empty(t, parent.Children)
+				}
+				return
+			}
+			require.NotNil(t, parent)
+			require.Nil(t, app)
+			require.Len(t, parent.Children, 1)
+			require.Equal(t, "/a/nesting-app/settings/usage", parent.Children[0].Url)
+			if tt.section == navtree.NavIDRoot {
+				require.Contains(t, tree.Children, parent)
+			} else {
+				require.Len(t, section.Children, 1)
+				require.Same(t, parent, section.Children[0])
+			}
+		})
 	}
 
 	t.Run("nests a page under its path-ancestor, regardless of include order", func(t *testing.T) {
