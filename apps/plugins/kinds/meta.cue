@@ -73,7 +73,7 @@ metaV0Alpha1: {
 	// +listType=atomic
 	routes?: [...#Route]
 	skipDataQuery?: bool
-	// Alpha: suppress automatic starter queries without disabling explicit queries.
+	// @alpha Suppress automatic starter queries without disabling explicit queries.
 	skipDefaultQuery?: bool
 	state?:            "alpha" | "beta" | "stable" | "deprecated"
 	streaming?:        bool

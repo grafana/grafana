@@ -38,7 +38,7 @@ type MetaJSONData struct {
 	// +listType=atomic
 	Routes        []MetaRoute `json:"routes,omitempty"`
 	SkipDataQuery *bool       `json:"skipDataQuery,omitempty"`
-	// Alpha: suppress automatic starter queries without disabling explicit queries.
+	// @alpha Suppress automatic starter queries without disabling explicit queries.
 	SkipDefaultQuery *bool              `json:"skipDefaultQuery,omitempty"`
 	State            *MetaJSONDataState `json:"state,omitempty"`
 	Streaming        *bool              `json:"streaming,omitempty"`

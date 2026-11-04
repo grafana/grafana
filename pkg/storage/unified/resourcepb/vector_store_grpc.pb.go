@@ -32,8 +32,10 @@ const (
 // VectorStore embeds resources from outside unified storage. Requests carry the
 // authenticated publisher namespace; enrolled shared collections use separate storage.
 // Callers send collections and text documents; the server embeds and stores them but does not manage their lifecycle after that.
-// Reads go through the search service and are RBAC-checked per result; folder-scoped
-// resources (per the authz mapper) are checked against each row's folder.
+// Reads go through the search service. Tenant-scoped results receive per-result
+// RBAC checks; enrolled shared collections are readable across authenticated
+// tenants, subject to any configured service-identity read restriction.
+// Folder-scoped tenant resources (per the authz mapper) are checked against each row's folder.
 //
 // Request-level failures come back as gRPC status codes with an empty response
 // body:
@@ -108,8 +110,10 @@ func (c *vectorStoreClient) UpdateMetadata(ctx context.Context, in *VectorUpdate
 // VectorStore embeds resources from outside unified storage. Requests carry the
 // authenticated publisher namespace; enrolled shared collections use separate storage.
 // Callers send collections and text documents; the server embeds and stores them but does not manage their lifecycle after that.
-// Reads go through the search service and are RBAC-checked per result; folder-scoped
-// resources (per the authz mapper) are checked against each row's folder.
+// Reads go through the search service. Tenant-scoped results receive per-result
+// RBAC checks; enrolled shared collections are readable across authenticated
+// tenants, subject to any configured service-identity read restriction.
+// Folder-scoped tenant resources (per the authz mapper) are checked against each row's folder.
 //
 // Request-level failures come back as gRPC status codes with an empty response
 // body:

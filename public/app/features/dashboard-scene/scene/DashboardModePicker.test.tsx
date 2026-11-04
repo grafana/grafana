@@ -23,6 +23,7 @@ import {
   getPendingComposerEnterTarget,
   PENDING_REQUEST_TTL_MS,
   resetComposerEnterRequestsForTests,
+  settleComposerEnterRequest,
 } from '../composer/composerEntryRequests';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 
@@ -141,11 +142,11 @@ async function openPicker(configure?: (scene: DashboardScene) => void) {
 
 const composerItem = () => screen.queryByRole('button', { name: 'Composer', hidden: true });
 
-it('offers Composer as a toolbar button with the crosshair when its flag is on and Assistant can be shown', () => {
+it('offers Composer as a toolbar button with the AI select icon when its flag is on and Assistant can be shown', () => {
   renderPicker();
   expect(composerItem()).toBeEnabled();
   expect(composerItem()).toHaveTextContent('');
-  expect(within(composerItem()!).getByTestId('icon-crosshair')).toBeInTheDocument();
+  expect(within(composerItem()!).getByTestId('icon-ai-select')).toBeInTheDocument();
   expect(composerItem()).toHaveAttribute('aria-pressed', 'false');
 });
 
@@ -288,12 +289,31 @@ it('asks a listening Assistant straight away without reopening its docked sideba
   expect(scene.state.mode).not.toBe('composer');
 });
 
+it('shows Composer opening until Assistant settles the request, ignoring a second press', async () => {
+  const { user } = renderPicker();
+
+  await user.click(composerItem()!);
+
+  expect(within(composerItem()!).getByTestId('icon-spinner')).toBeInTheDocument();
+  expect(composerItem()).toHaveAttribute('aria-busy', 'true');
+  expect(composerItem()).toHaveFocus();
+  expect(await screen.findByRole('tooltip')).toHaveTextContent(/^Opening Composer…$/);
+
+  await user.click(composerItem()!);
+  expect(assistant).toHaveBeenCalledTimes(1);
+
+  act(() => settleComposerEnterRequest('picker-test'));
+
+  expect(within(composerItem()!).getByTestId('icon-ai-select')).toBeInTheDocument();
+  expect(composerItem()).toHaveAttribute('aria-busy', 'false');
+});
+
 it('ends a request Assistant has not acted on when the dashboard goes away', async () => {
   const { user } = renderPicker();
   await user.click(composerItem()!);
   expect(sidebarPresentation()).toBe('floating');
 
-  deactivate();
+  act(() => deactivate());
   deactivate = () => {};
 
   // The floated sidebar goes back to the user's layout.

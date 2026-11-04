@@ -84,7 +84,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _layoutItem: DashboardLayoutItem;
   private _originalSaveModel!: Panel;
   private _changesHaveBeenMade = false;
-  private _tableViewPanelActivationAdded = false;
 
   public constructor(state: PanelEditorState) {
     super(state);
@@ -133,6 +132,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       }
     }
 
+    // Splitter layout and table view changes remount the preview; keep its event subscriptions alive.
+    this._subs.add(this._layoutItem.activate());
+    this._subs.add(panel.activate());
+
+    // An already-active provider may be owned by panel notices rather than the panel.
+    let deactivateData = panel.state.$data?.activate();
+    this._subs.add(() => deactivateData?.());
+
     this._subs.add(
       this._layoutItem.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
         // TODO add support for undo/redo within panel edit
@@ -143,6 +150,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // Listen for panel plugin changes
     this._subs.add(
       panel.subscribeToState((n, p) => {
+        if (n.$data !== p.$data) {
+          deactivateData?.();
+          deactivateData = n.$data?.activate();
+        }
         if (n.pluginId !== p.pluginId) {
           this.waitForPlugin();
         }
@@ -435,13 +446,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dataProvider = panel.state.$data;
     if (!dataProvider) {
       return;
-    }
-
-    // In order to maintain panel active state when switching to table view call activate here so that the panel is never deactivated
-    // This is to make sure panel state subscriptions remain activate from the queries pane
-    if (!this._tableViewPanelActivationAdded) {
-      this._subs.add(panel.activate());
-      this._tableViewPanelActivationAdded = true;
     }
 
     this.setState({

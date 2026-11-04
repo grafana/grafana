@@ -1483,7 +1483,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -5427,6 +5434,9 @@
       "preferences": "Preference",
       "recent-dashboards": "Nedávné nástěnky",
       "recent-scopes": "Nedávné rozsahy"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -6344,6 +6354,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -7425,11 +7436,14 @@
         "keep-working": "",
         "save": "Uložit",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "Chcete uložit změny?"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "Neuložené změny"
         }
@@ -7747,17 +7761,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -10880,6 +10897,8 @@
       "clear-button": "Vymazat výběr"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "Editor CodeMirror se nepodařilo načíst",
       "language-load-failed": "Zvýraznění syntaxe se nepodařilo načíst",
       "language-load-failed-description": "Editor bude pokračovat bez funkcí specifických pro jazyk.",
@@ -12591,7 +12610,6 @@
       "copy-log-line-json": "Kopírovat obsah protokolu jako JSON",
       "copy-shortlink": "Kopírovat krátký odkaz",
       "copy-to-clipboard": "Kopírovat do schránky",
-      "displayed-fields-section": "Uspořádat zobrazená pole",
       "fields": {
         "adhoc-statistics": "Ad-hoc statistiky",
         "copy-value-to-clipboard": "Zkopírovat hodnotu do schránky",
@@ -12615,14 +12633,11 @@
       "log-attributes-field": "Atributy protokolu",
       "log-line-field": "Řádek protokolu",
       "log-line-section": "Řádek protokolu",
-      "move-displayed-field-down": "Přesunout dolů",
-      "move-displayed-field-up": "Přesunout nahoru",
       "no-details": "Žádná pole k zobrazení.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Připnout protokol",
       "prettify": "Zkrášlit",
-      "remove-displayed-field": "Odebrat pole",
       "remove-log": "Odebrat protokol",
       "scroll-to-logline": "Posunout na řádek protokolu",
       "search": {

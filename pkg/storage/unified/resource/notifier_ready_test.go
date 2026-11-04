@@ -61,7 +61,7 @@ func TestNATSCaptureReadinessAcknowledgment(t *testing.T) {
 		generation := expiry.WatchInvalidation()
 		returned := make(chan struct{})
 		go func() {
-			n.Watch(ctx, WatchOptions{SettleDelay: time.Millisecond, captureReady: ready})
+			n.Watch(ctx, WatchOptions{SettleDelay: time.Millisecond, CaptureReady: ready})
 			close(returned)
 		}()
 		time.Sleep(time.Second)
@@ -100,7 +100,7 @@ func TestNATSInitialCaptureRecoveryInvalidatesWatches(t *testing.T) {
 				defer cancel()
 				ready := make(chan error, 1)
 				generation := expiry.WatchInvalidation()
-				events := n.Watch(ctx, WatchOptions{captureReady: ready})
+				events := n.Watch(ctx, WatchOptions{CaptureReady: ready})
 				defer func() {
 					cancel()
 					_, ok := <-events

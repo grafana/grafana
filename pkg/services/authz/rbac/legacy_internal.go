@@ -23,7 +23,7 @@ func RegisterEmbeddedLegacyCheckServer(channel *inprocgrpc.Channel, service *Ser
 }
 
 func (s *embeddedLegacyCheckServer) LegacyCheck(ctx context.Context, req *authzv1.LegacyCheckRequest) (*authzv1.LegacyCheckResponse, error) {
-	return s.service.legacyCheck(ctx, req)
+	return s.service.withLegacyCheckInstrumentation(ctx, req, s.service.legacyCheck)
 }
 
 func (s *Service) prepareLegacyInternalEvaluation(

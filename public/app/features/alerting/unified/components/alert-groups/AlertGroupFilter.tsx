@@ -19,7 +19,7 @@ interface Props {
 }
 
 export const AlertGroupFilter = ({ groups }: Props) => {
-  const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
+  const [filterKey, setFilterKey] = useState<number>(() => Math.floor(Math.random() * 100));
   const [queryParams, setQueryParams] = useQueryParams();
   const { groupBy = [], queryString, alertState, receivers = [] } = getFiltersFromUrlParams(queryParams);
   const matcherFilterKey = `matcher-${filterKey}`;
