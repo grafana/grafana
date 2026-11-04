@@ -92,7 +92,7 @@ We recommend that you only use one dataset in a bar chart because using multiple
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
 
-## Apply filters from the bar chart
+## Cross-filter from a bar
 
 In bar charts, you can apply filters directly from the visualization.
 Filters are available when the x-axis field is filterable and the data source supports dashboard filters, such as Prometheus or Loki.
