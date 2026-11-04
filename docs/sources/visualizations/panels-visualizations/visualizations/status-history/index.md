@@ -134,6 +134,11 @@ Use these options to refine the visualization.
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+To let viewers update dashboard filters from this visualization, add a field override for each field you want to filter by, select **Standard options > Cross-filter**, and enable the **Cross-filter** switch.
+Cross-filtering requires a **Group by** variable and a data source that supports dashboard filters, such as Prometheus or Loki.
+Click a series, then select **Filter on this value** or **Filter out this value** to filter by its labels.
+For setup instructions, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
+
 ### Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}

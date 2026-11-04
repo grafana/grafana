@@ -95,7 +95,8 @@ We recommend that you only use one dataset in a bar chart because using multiple
 ## Apply filters from the bar chart
 
 In bar charts, you can apply filters directly from the visualization.
-Filters are available when the x-axis field is filterable and the data source supports dashboard drilldown filters, such as Prometheus or Loki.
+Filters are available when the x-axis field is filterable and the data source supports dashboard filters, such as Prometheus or Loki.
+To enable filtering, add a field override for the x-axis field, select **Standard options > Cross-filter**, and enable the **Cross-filter** switch.
 
 To display the filter button, hover your cursor over the bar that has the value for which you want to filter and click the bar:
 
