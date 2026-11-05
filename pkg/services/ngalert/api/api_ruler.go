@@ -557,6 +557,10 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 			return err
 		}
 
+		if err := validateNoNewEmptyLabelKeys(groupChanges); err != nil {
+			return err
+		}
+
 		if settingsValidator != nil {
 			contactPointRoutingChanged := false
 			for _, s := range newOrUpdatedNotificationSettings {
@@ -784,6 +788,28 @@ func validateQueries(ctx context.Context, groupChanges *rulestore.GroupDelta, va
 				return fmt.Errorf("%w '%s' (UID: %s): %s", ngmodels.ErrAlertRuleFailedValidation, upd.New.Title, upd.New.UID, err.Error())
 			}
 		}
+	}
+	return nil
+}
+
+// validateNoNewEmptyLabelKeys rejects empty label keys only on rules that are
+// created or that gain one in this request. Rules that already carry an empty
+// key in storage (created before the check existed) and are re-submitted as part
+// of a whole-group write are not rejected.
+func validateNoNewEmptyLabelKeys(groupChanges *rulestore.GroupDelta) error {
+	for _, rule := range groupChanges.New {
+		if _, ok := rule.Labels[""]; ok {
+			return fmt.Errorf("%w '%s': label key cannot be empty", ngmodels.ErrAlertRuleFailedValidation, rule.Title)
+		}
+	}
+	for _, upd := range groupChanges.Update {
+		if _, ok := upd.New.Labels[""]; !ok {
+			continue
+		}
+		if _, existed := upd.Existing.Labels[""]; existed {
+			continue
+		}
+		return fmt.Errorf("%w '%s' (UID: %s): label key cannot be empty", ngmodels.ErrAlertRuleFailedValidation, upd.New.Title, upd.New.UID)
 	}
 	return nil
 }
