@@ -206,7 +206,7 @@ describe('picking', () => {
     expect(scene.state.mode).toBe('view');
   });
 
-  it('leaves Composer on Escape during a drag', async () => {
+  it('cancels a drag on the first Escape and leaves Composer on the next', async () => {
     const { session, startPick } = setup();
     const pick = startPick();
     const overlay = screen.getByTestId('dashboard-composer-overlay');
@@ -214,7 +214,9 @@ describe('picking', () => {
     fireEvent.pointerMove(overlay, { clientX: 350, clientY: 450 });
 
     fireEvent.keyDown(window, { key: 'Escape' });
+    expect(session.isClosed).toBe(false);
 
+    fireEvent.keyDown(window, { key: 'Escape' });
     await expect(pick).resolves.toBeNull();
     expect(session.isClosed).toBe(true);
   });
@@ -240,6 +242,7 @@ describe('picking', () => {
 
     fireEvent.keyDown(document.body, { key: 'Escape' });
     await expect(pick).resolves.toBeNull();
+    expect(session.isClosed).toBe(true);
   });
 });
 
@@ -758,6 +761,7 @@ describe('regions', () => {
   });
 
   it.each([
+    ['Escape', () => fireEvent.keyDown(window, { key: 'Escape' })],
     ['pointer cancel', () => fireEvent.pointerCancel(screen.getByTestId('dashboard-composer-overlay'))],
     ['window blur', () => fireEvent.blur(window)],
     ['scroll', () => fireEvent.scroll(window)],
