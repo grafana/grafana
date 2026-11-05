@@ -1515,11 +1515,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/import-to-gma/ImportToGMA.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/import-to-gma/NamespaceAndGroupFilter.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
