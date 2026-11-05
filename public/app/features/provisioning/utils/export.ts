@@ -35,9 +35,15 @@ function toSecurePlaceholders(
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
-// A connection-backed repository has its token minted server-side, and creating a writable
-// repository that declares both a connection and a token is rejected as mutually exclusive.
-function secretsToSkip(resource: Repository | Connection): string[] {
+function secretsToSkip(resource: Repository | Connection, kind: string): string[] {
+  // A connection's token is always derived server-side — a JWT minted from the private key for
+  // GitHub App connections, the exchanged token for OAuth — and is rejected if it is anything else.
+  if (kind === 'Connection') {
+    return ['token'];
+  }
+
+  // A connection-backed repository has its token minted server-side too, and creating a writable
+  // repository that declares both a connection and a token is rejected as mutually exclusive.
   const spec = resource.spec;
   return spec && 'connection' in spec && spec.connection?.name ? ['token'] : [];
 }
@@ -51,9 +57,10 @@ function secretsToSkip(resource: Repository | Connection): string[] {
  * do not populate per-item TypeMeta.
  */
 export function exportResourceAsJson(resource: Repository | Connection, fallbackKind: 'Repository' | 'Connection') {
+  const kind = resource.kind ?? fallbackKind;
   const manifest: Record<string, unknown> = {
     apiVersion: resource.apiVersion ?? DEFAULT_API_VERSION,
-    kind: resource.kind ?? fallbackKind,
+    kind,
     metadata: {
       name: resource.metadata?.name,
       namespace: resource.metadata?.namespace,
@@ -61,7 +68,7 @@ export function exportResourceAsJson(resource: Repository | Connection, fallback
     spec: resource.spec,
   };
 
-  const secure = toSecurePlaceholders(resource.secure, secretsToSkip(resource));
+  const secure = toSecurePlaceholders(resource.secure, secretsToSkip(resource, kind));
   if (secure) {
     manifest.secure = secure;
   }

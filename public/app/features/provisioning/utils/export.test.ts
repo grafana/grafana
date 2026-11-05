@@ -114,6 +114,40 @@ describe('exportResourceAsJson', () => {
     expect(manifest.secure).toEqual({ token: { create: '<replace-with-token>' } });
   });
 
+  it('omits the derived token from an authorized OAuth connection but keeps its client secret', async () => {
+    const connection: Connection = {
+      metadata: { name: 'oauth-conn' },
+      spec: { title: 'OAuth Conn', type: 'githubOAuth' },
+      secure: {
+        // Set once the user authorizes the app; a serialized oauth2.Token, not a fillable credential.
+        token: { name: 'enc-oauth-token-ref' },
+        clientSecret: { name: 'enc-client-secret-ref' },
+      },
+    };
+
+    exportResourceAsJson(connection, 'Connection');
+    const manifest = await savedManifest();
+
+    expect(manifest.secure).toEqual({ clientSecret: { create: '<replace-with-clientSecret>' } });
+  });
+
+  it('omits the derived token from a GitHub App connection but keeps its private key', async () => {
+    const connection: Connection = {
+      metadata: { name: 'app-conn' },
+      spec: { title: 'App Conn', type: 'github' },
+      secure: {
+        // Minted as a JWT from the private key, so it cannot be supplied by hand.
+        token: { name: 'enc-jwt-ref' },
+        privateKey: { name: 'enc-private-key-ref' },
+      },
+    };
+
+    exportResourceAsJson(connection, 'Connection');
+    const manifest = await savedManifest();
+
+    expect(manifest.secure).toEqual({ privateKey: { create: '<replace-with-privateKey>' } });
+  });
+
   it('prefers the resource own apiVersion/kind over the fallback', async () => {
     const repository: Repository = {
       apiVersion: 'provisioning.grafana.app/v1beta1',
