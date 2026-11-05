@@ -2038,14 +2038,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "cdnPluginsUrls",
-			Description: "Enable loading plugins via declarative URLs",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaCatalogSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "pluginInstallAPISync",
 			Description: "Enable syncing plugin installations to the installs API",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
