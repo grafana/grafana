@@ -60,14 +60,9 @@ func TestDeleteCheckMetricsRegistration(t *testing.T) {
 		require.NotPanics(t, func() { m.record(deleteCheckAllowed, blockingKindNone) })
 	})
 
-	t.Run("registering twice on one registry shares the counter", func(t *testing.T) {
+	t.Run("registering twice on one registry fails loudly", func(t *testing.T) {
 		reg := prometheus.NewRegistry()
-		first := newDeleteCheckMetrics(reg, true)
-		second := newDeleteCheckMetrics(reg, true)
-		require.NotNil(t, second)
-
-		first.record(deleteCheckAllowed, blockingKindNone)
-		second.record(deleteCheckAllowed, blockingKindNone)
-		require.Equal(t, 2.0, testutil.ToFloat64(first.checks.WithLabelValues("allowed", "enabled", "none")))
+		require.NotNil(t, newDeleteCheckMetrics(reg, true))
+		require.Panics(t, func() { newDeleteCheckMetrics(reg, true) })
 	})
 }

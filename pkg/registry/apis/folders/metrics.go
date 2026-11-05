@@ -1,10 +1,6 @@
 package folders
 
-import (
-	"errors"
-
-	"github.com/prometheus/client_golang/prometheus"
-)
+import "github.com/prometheus/client_golang/prometheus"
 
 // Fixed label values keep the metric's cardinality bounded.
 const (
@@ -31,17 +27,7 @@ func newDeleteCheckMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) *d
 		Name: "grafana_folder_delete_checks_total",
 		Help: "Folder delete checks, by outcome, whether counting joined the legacy database, and the resource kind that blocked the delete",
 	}, []string{"outcome", "legacy_join", "blocking_kind"})
-	if err := reg.Register(checks); err != nil {
-		var already prometheus.AlreadyRegisteredError
-		if !errors.As(err, &already) {
-			return nil
-		}
-		existing, ok := already.ExistingCollector.(*prometheus.CounterVec)
-		if !ok {
-			return nil
-		}
-		checks = existing
-	}
+	reg.MustRegister(checks)
 	join := "disabled"
 	if legacyJoinEnabled {
 		join = "enabled"
