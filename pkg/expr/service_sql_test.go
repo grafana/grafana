@@ -270,58 +270,47 @@ func newDSAndSQLQueries(t *testing.T, sqlQuery, format string, dsRefIDs ...strin
 	return queries
 }
 
-func TestSQLServiceZeroRowNumericWide(t *testing.T) {
+// The panel-format case runs in TestSQLServiceGroupByDatasource.
+func TestSQLServiceZeroRowNumericWideAlerting(t *testing.T) {
 	// A filter that matches no rows can produce a zero-row frame that is
 	// still declared numeric-wide.
-	zeroRowWide := func() *data.Frame {
-		return data.NewFrame("",
-			data.NewField("name", nil, []string{}),
-			data.NewField("age", nil, []int64{}),
-			data.NewField("salary", nil, []float64{}),
-		).SetMeta(&data.FrameMeta{Type: data.FrameTypeNumericWide})
-	}
+	zeroRowWide := data.NewFrame("",
+		data.NewField("name", nil, []string{}),
+		data.NewField("age", nil, []int64{}),
+		data.NewField("salary", nil, []float64{}),
+	).SetMeta(&data.FrameMeta{Type: data.FrameTypeNumericWide})
 	sibling := data.NewFrame("",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("value", nil, []float64{1}),
 	)
 
-	for _, tc := range []struct {
-		name   string
-		format string
-	}{
-		{name: "panel", format: ""},
-		{name: "alerting", format: "alerting"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			resp := map[string]backend.DataResponse{
-				"A": {Frames: data.Frames{zeroRowWide()}},
-				"C": {Frames: data.Frames{sibling}},
-			}
-			s, req := newMockQueryService(resp, newDSAndSQLQueries(t, "SELECT * FROM A", tc.format, "A", "C"))
-			s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
-
-			pl, err := s.BuildPipeline(t.Context(), req)
-			require.NoError(t, err)
-
-			rsp, err := s.ExecutePipeline(t.Context(), time.Now(), pl)
-			require.NoError(t, err)
-
-			require.NoError(t, rsp.Responses["A"].Error)
-			require.NoError(t, rsp.Responses["S"].Error)
-			require.Len(t, rsp.Responses["S"].Frames, 1)
-			out := rsp.Responses["S"].Frames[0]
-			require.Equal(t, 0, out.Rows())
-			names := make([]string, 0, len(out.Fields))
-			for _, f := range out.Fields {
-				names = append(names, f.Name)
-			}
-			require.Equal(t, []string{SQLMetricFieldName, SQLValueFieldName}, names)
-
-			require.NoError(t, rsp.Responses["C"].Error)
-			require.Len(t, rsp.Responses["C"].Frames, 1)
-			require.Equal(t, 1, rsp.Responses["C"].Frames[0].Rows())
-		})
+	resp := map[string]backend.DataResponse{
+		"A": {Frames: data.Frames{zeroRowWide}},
+		"C": {Frames: data.Frames{sibling}},
 	}
+	s, req := newMockQueryService(resp, newDSAndSQLQueries(t, "SELECT * FROM A", "alerting", "A", "C"))
+	s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+	pl, err := s.BuildPipeline(t.Context(), req)
+	require.NoError(t, err)
+
+	rsp, err := s.ExecutePipeline(t.Context(), time.Now(), pl)
+	require.NoError(t, err)
+
+	require.NoError(t, rsp.Responses["A"].Error)
+	require.NoError(t, rsp.Responses["S"].Error)
+	require.Len(t, rsp.Responses["S"].Frames, 1)
+	out := rsp.Responses["S"].Frames[0]
+	require.Equal(t, 0, out.Rows())
+	names := make([]string, 0, len(out.Fields))
+	for _, f := range out.Fields {
+		names = append(names, f.Name)
+	}
+	require.Equal(t, []string{SQLMetricFieldName, SQLValueFieldName}, names)
+
+	require.NoError(t, rsp.Responses["C"].Error)
+	require.Len(t, rsp.Responses["C"].Frames, 1)
+	require.Equal(t, 1, rsp.Responses["C"].Frames[0].Rows())
 }
 
 func TestSQLServiceGroupByDatasource(t *testing.T) {
