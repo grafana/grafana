@@ -1,9 +1,16 @@
 import {
   API_GROUP as DASHBOARD_API_GROUP,
+  API_RESOURCES as DASHBOARD_API_RESOURCES,
   API_VERSION as DASHBOARD_API_VERSION,
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
+import {
+  API_GROUP as FOLDER_API_GROUP,
+  API_RESOURCES as FOLDER_API_RESOURCES,
+} from '@grafana/api-clients/rtkq/folder/v1beta1';
+import {
+  API_GROUP as PLAYLIST_API_GROUP,
+  API_RESOURCES as PLAYLIST_API_RESOURCES,
+} from '@grafana/api-clients/rtkq/playlist/v1';
 import { t } from '@grafana/i18n';
 import { type IconName } from '@grafana/ui';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
@@ -55,7 +62,7 @@ const kindDefinitions = {
     getLabel: () => t('provisioning.resource-kind.folders', 'Folders'),
     group: FOLDER_API_GROUP,
     kind: 'Folder',
-    resource: 'folders',
+    resource: FOLDER_API_RESOURCES.Folder,
     icon: 'folder',
     routes: { item: (name: string) => `/dashboards/f/${name}`, list: '/dashboards' },
     source: { via: 'search' },
@@ -64,7 +71,7 @@ const kindDefinitions = {
     getLabel: () => t('provisioning.resource-kind.dashboards', 'Dashboards'),
     group: DASHBOARD_API_GROUP,
     kind: 'Dashboard',
-    resource: 'dashboards',
+    resource: DASHBOARD_API_RESOURCES.Dashboard,
     icon: 'apps',
     routes: { item: (name: string) => `/d/${name}`, list: '/dashboards' },
     source: { via: 'search' },
@@ -73,7 +80,7 @@ const kindDefinitions = {
     getLabel: () => t('provisioning.resource-kind.playlists', 'Playlists'),
     group: PLAYLIST_API_GROUP,
     kind: 'Playlist',
-    resource: 'playlists',
+    resource: PLAYLIST_API_RESOURCES.Playlist,
     icon: 'presentation-play',
     routes: {
       // The edit page (config + items), not /playlists/play, which would immediately launch the
@@ -91,7 +98,7 @@ const kindDefinitions = {
     // GroupResource (librarypanels.dashboard.grafana.app).
     group: DASHBOARD_API_GROUP,
     kind: 'LibraryPanel',
-    resource: 'librarypanels',
+    resource: DASHBOARD_API_RESOURCES.LibraryPanel,
     icon: 'library-panel',
     // No deep-link route for a single library panel exists; they're only viewable from the
     // collection page, which is also why they route like a non-foldered kind despite living in
@@ -105,6 +112,8 @@ const kindDefinitions = {
     // see `isCollectionGroup`.
     group: DATASOURCE_COLLECTION_GROUP,
     kind: 'DataSource',
+    // Declared, not taken from a client's API_RESOURCES: every plugin serves its own group, so the
+    // collection has no generated client of its own.
     resource: 'datasources',
     icon: 'database',
     routes: { item: (name: string) => `/connections/datasources/edit/${name}`, list: '/connections/datasources' },
@@ -154,7 +163,11 @@ export interface ResourceKindInfo {
   group: string;
   /** Kubernetes Kind, e.g. `Dashboard`. Also the kind's label in the files/resources tree. */
   kind: ResourceItemType;
-  /** Plural resource name as reported by the API (`ResourceListItem.resource`), e.g. `dashboards`. */
+  /**
+   * Resource name the apiserver serves the kind under, as reported by the API
+   * (`ResourceListItem.resource`), e.g. `dashboards`. Kubernetes plurals are declared per kind
+   * rather than computed, so entries take theirs from their client's generated `API_RESOURCES`.
+   */
   resource: string;
   /** Icon shown for this kind in the resource tree. */
   icon: IconName;

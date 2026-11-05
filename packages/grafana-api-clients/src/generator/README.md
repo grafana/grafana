@@ -39,13 +39,16 @@ The generator automates the following:
    - Exports Redux reducers and middleware in `rtkq/index.ts`
    - Updates `package.json` exports to include the new API client
 5. Formats all generated files using Prettier and ESLint
-6. Automatically runs the appropriate command to generate endpoints from the OpenAPI schema
+6. Automatically runs the appropriate command to generate endpoints from the OpenAPI schema, which
+   also emits `resources.gen.ts` (the group version's `API_RESOURCES`) and re-exports it from
+   `index.ts`
 
 For complete existing clients, the generator skips the create steps and only runs the appropriate endpoint generation
 command. For partial clients, it fills in the missing create steps first.
 
 ## Limitations
 
+- `resources.gen.ts` is emitted for OSS clients only; the Enterprise codegen script does not run that step.
 - The generator is optimized for Kubernetes-style APIs, as it requires Kubernetes resource details. For legacy APIs, manual adjustments may be needed.
 - It expects processed OpenAPI specifications to exist in the `openapi_snapshots` directory
 
