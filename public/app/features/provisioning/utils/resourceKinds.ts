@@ -1,4 +1,7 @@
-import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import {
+  API_GROUP as DASHBOARD_API_GROUP,
+  API_VERSION as DASHBOARD_API_VERSION,
+} from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { t } from '@grafana/i18n';
@@ -94,7 +97,7 @@ const kindDefinitions = {
     // collection page, which is also why they route like a non-foldered kind despite living in
     // folders on the backend.
     routes: { list: '/library-panels' },
-    source: { via: 'apiserver', version: 'v0alpha1' },
+    source: { via: 'apiserver', version: DASHBOARD_API_VERSION },
   },
   datasource: {
     getLabel: () => t('provisioning.resource-kind.datasources', 'Data sources'),
