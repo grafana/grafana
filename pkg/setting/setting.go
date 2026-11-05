@@ -202,8 +202,8 @@ type Cfg struct {
 	// "<group>/<Kind>[:cap...]" token (parsed by resources.ParseSupportedResources at startup).
 	ProvisioningResources []string
 	// ProvisioningBootstrapPath is the directory the bootstrap repository reads. When
-	// set, Grafana registers a read-only local repository over it at startup, so the
-	// mounted files can declare the instance's repositories and connections themselves.
+	// set, Grafana registers a local repository over it at startup, so the mounted files
+	// can declare the instance's repositories and connections themselves.
 	ProvisioningBootstrapPath                 string
 	ProvisioningAllowImageRendering           bool
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only

@@ -15,13 +15,14 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 const namespace = "default"
 
 var config = Config{Path: "conf/provisioning/bootstrap", Namespace: namespace}
 
-func TestEnsureCreatesReadOnlyLocalRepository(t *testing.T) {
+func TestEnsureCreatesALocalRepository(t *testing.T) {
 	client := newClientset()
 
 	require.NoError(t, Ensure(context.Background(), repositories(client), config))
@@ -30,9 +31,43 @@ func TestEnsureCreatesReadOnlyLocalRepository(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, provisioning.LocalRepositoryType, repo.Spec.Type)
 	assert.Equal(t, config.Path, repo.Spec.Local.Path)
-	assert.Empty(t, repo.Spec.Workflows, "an empty workflow list is what makes the repository read-only")
 	assert.True(t, repo.Spec.Sync.Enabled)
 	assert.Equal(t, provisioning.SyncTargetTypeFolderless, repo.Spec.Sync.Target)
+	assert.Equal(t, []provisioning.Workflow{provisioning.WriteWorkflow}, repo.Spec.Workflows,
+		"the resources it provisions are edited through this repository's files endpoint")
+}
+
+func TestEnsureMarksTheRepositoryNotEditable(t *testing.T) {
+	client := newClientset()
+
+	require.NoError(t, Ensure(context.Background(), repositories(client), config))
+
+	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	manager, ok := metaOf(t, repo).GetManagerProperties()
+	require.True(t, ok, "the repository should declare a manager so the UI renders it read-only")
+	assert.NotEqual(t, utils.ManagerKindRepo, manager.Kind, "the repository flow has its own edit workflow")
+	assert.False(t, manager.AllowsEdits)
+	assert.NotContains(t, repo.Annotations, utils.AnnoKeyManagerAllowsEdits)
+}
+
+func TestEnsureRestoresTheManagerAnnotations(t *testing.T) {
+	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
+		applySpec(&repo.Spec, config.Path)
+		metaOf(t, repo).SetManagerProperties(utils.ManagerProperties{
+			Kind:        utils.ManagerKindKubectl,
+			Identity:    "someone-else",
+			AllowsEdits: true,
+		})
+	}))
+
+	require.NoError(t, Ensure(context.Background(), repositories(client), config))
+
+	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	manager, _ := metaOf(t, repo).GetManagerProperties()
+	assert.Equal(t, Name, manager.Identity)
+	assert.False(t, manager.AllowsEdits)
 }
 
 func TestEnsureIsIdempotent(t *testing.T) {
@@ -49,7 +84,7 @@ func TestEnsureIsIdempotent(t *testing.T) {
 
 func TestEnsurePreservesTheClampedSyncInterval(t *testing.T) {
 	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
-		applySpec(&repo.Spec, config.Path)
+		config.apply(repo)
 		repo.Spec.Sync.IntervalSeconds = 60
 		repo.Spec.Local.Path = "conf/provisioning/stale"
 	}))
@@ -66,7 +101,7 @@ func TestEnsureRepairsADivertedRepository(t *testing.T) {
 	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
 		repo.Spec.Type = provisioning.GitHubRepositoryType
 		repo.Spec.GitHub = &provisioning.GitHubRepositoryConfig{URL: "https://github.com/acme/elsewhere"}
-		repo.Spec.Workflows = []provisioning.Workflow{provisioning.WriteWorkflow}
+		repo.Spec.Workflows = []provisioning.Workflow{provisioning.BranchWorkflow}
 		repo.Spec.Sync.Enabled = false
 	}))
 
@@ -76,7 +111,7 @@ func TestEnsureRepairsADivertedRepository(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, provisioning.LocalRepositoryType, repo.Spec.Type)
 	assert.Nil(t, repo.Spec.GitHub)
-	assert.Empty(t, repo.Spec.Workflows)
+	assert.Equal(t, []provisioning.Workflow{provisioning.WriteWorkflow}, repo.Spec.Workflows)
 	assert.True(t, repo.Spec.Sync.Enabled)
 }
 
@@ -111,6 +146,13 @@ func newClientset(objects ...runtime.Object) *fakeclientset.Clientset {
 
 func repositories(client *fakeclientset.Clientset) Repositories {
 	return client.ProvisioningV0alpha1().Repositories(namespace)
+}
+
+func metaOf(t *testing.T, repo *provisioning.Repository) utils.GrafanaMetaAccessor {
+	t.Helper()
+	meta, err := utils.MetaAccessor(repo)
+	require.NoError(t, err)
+	return meta
 }
 
 func repositoryWith(mutate func(*provisioning.Repository)) *provisioning.Repository {

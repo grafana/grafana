@@ -1558,8 +1558,8 @@ func WithConnectionTypes(types []string) GrafanaOption {
 }
 
 // WithProvisioningBootstrapPath sets [provisioning] bootstrap_path, so the server
-// registers a read-only local repository over that directory at startup. The
-// directory and its files must exist before the server starts.
+// registers a local repository over that directory at startup. The directory and its
+// files must exist before the server starts.
 func WithProvisioningBootstrapPath(path string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningBootstrapPath = path
