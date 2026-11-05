@@ -26,6 +26,7 @@ import {
   createNotebook,
   NotebookConflictError,
   readNotebookResourceVersion,
+  type StoredCell,
   updateNotebook,
 } from '../api/notebookResource';
 import { canEditNotebooks } from '../permissions';
@@ -960,7 +961,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     let hitConflict = false;
 
     this.inFlightSave = this.write(uid, spec)
-      .then(({ generation, resourceVersion, spec: stored }) => {
+      .then(({ generation, resourceVersion, cells: stored }) => {
         // The ids the server just gave cells go into the baseline before they go onto the cells, because
         // putting them on the cells changes what serializes: a baseline without them would read as an
         // edit and save the notebook again.
@@ -1089,14 +1090,14 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private write(
     uid: string | undefined,
     spec: NotebookSpec
-  ): Promise<{ generation?: number; resourceVersion?: string; spec?: NotebookSpec }> {
+  ): Promise<{ generation?: number; resourceVersion?: string; cells?: StoredCell[] }> {
     if (uid) {
       const overwrite = this.overwriteNextSave;
       this.overwriteNextSave = false;
       return updateNotebook(uid, spec, overwrite ? undefined : this.state.savedResourceVersion);
     }
 
-    return createNotebook(spec).then(({ uid: created, generation, resourceVersion, spec: stored }) => {
+    return createNotebook(spec).then(({ uid: created, generation, resourceVersion, cells: stored }) => {
       this.adoptingUid = true;
       try {
         this.scene.setState({ uid: created });
@@ -1104,7 +1105,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         this.adoptingUid = false;
       }
       NotebookAnalytics.created(created, this.entryPoint, spec.layout.spec.cells.length);
-      return { generation, resourceVersion, spec: stored };
+      return { generation, resourceVersion, cells: stored };
     });
   }
 
@@ -1131,19 +1132,18 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
  */
 function adoptedCellIds(
   sent: NotebookSpec,
-  stored: NotebookSpec | undefined,
+  storedItems: StoredCell[] | undefined,
   cells: NotebookCellItem[]
 ): Map<NotebookCellItem, string> {
   const adopted = new Map<NotebookCellItem, string>();
-  const storedItems = stored?.layout?.spec?.cells;
   const sentItems = sent.layout.spec.cells;
   if (!storedItems || storedItems.length !== sentItems.length || cells.length !== sentItems.length) {
     return adopted;
   }
 
   sentItems.forEach((item, index) => {
-    const id = storedItems[index].spec.id;
-    if (!id || item.spec.id || storedItems[index].spec.element.name !== item.spec.element.name) {
+    const { id, element } = storedItems[index];
+    if (!id || item.spec.id || element !== item.spec.element.name) {
       return;
     }
     adopted.set(cells[index], id);

@@ -51,6 +51,11 @@ function savedNotebook(spec: NotebookSpec, generation = 2) {
   };
 }
 
+/** The element and id of every cell in a spec, the way the API reports what the server stored. */
+function cellsOf(spec: NotebookSpec) {
+  return spec.layout.spec.cells.map((item) => ({ element: item.spec.element.name, id: item.spec.id }));
+}
+
 function fetchOf(response: unknown) {
   const fetch = jest.fn().mockReturnValue(of(createFetchResponse(response)));
   setBackendSrv({ fetch } as unknown as BackendSrv);
@@ -86,7 +91,11 @@ describe('updateNotebook', () => {
     const spec = notebookSpec();
     fetchOf(savedNotebook(spec, 7));
 
-    await expect(updateNotebook('nb-1', spec)).resolves.toEqual({ generation: 7, resourceVersion: '1755', spec });
+    await expect(updateNotebook('nb-1', spec)).resolves.toEqual({
+      generation: 7,
+      resourceVersion: '1755',
+      cells: cellsOf(spec),
+    });
   });
 
   it('leaves resourceVersion unset when the response carries none', async () => {
@@ -94,7 +103,7 @@ describe('updateNotebook', () => {
     const saved = savedNotebook(spec);
     fetchOf({ ...saved, metadata: { ...saved.metadata, resourceVersion: undefined } });
 
-    await expect(updateNotebook('nb-1', spec)).resolves.toEqual({ generation: 2, spec });
+    await expect(updateNotebook('nb-1', spec)).resolves.toEqual({ generation: 2, cells: cellsOf(spec) });
   });
 
   it('sends only the remaining elements once a cell is deleted', async () => {
@@ -180,7 +189,13 @@ describe('createNotebook', () => {
     // rebuilt from a fetch, so it has to come back rather than being dropped here. The resourceVersion
     // lets a caller that just created the notebook through a live scene (e.g. the mutation-api commands)
     // report its revision without a second read.
-    expect(created).toEqual({ uid: 'nb-1', url: '/notebooks/nb-1', generation: 1, resourceVersion: '1755', spec });
+    expect(created).toEqual({
+      uid: 'nb-1',
+      url: '/notebooks/nb-1',
+      generation: 1,
+      resourceVersion: '1755',
+      cells: cellsOf(spec),
+    });
   });
 
   it('leaves resourceVersion unset when the response carries none', async () => {
@@ -188,7 +203,12 @@ describe('createNotebook', () => {
     const saved = savedNotebook(spec, 1);
     fetchOf({ ...saved, metadata: { ...saved.metadata, resourceVersion: undefined } });
 
-    await expect(createNotebook(spec)).resolves.toEqual({ uid: 'nb-1', url: '/notebooks/nb-1', generation: 1, spec });
+    await expect(createNotebook(spec)).resolves.toEqual({
+      uid: 'nb-1',
+      url: '/notebooks/nb-1',
+      generation: 1,
+      cells: cellsOf(spec),
+    });
   });
 
   it('leaves the generation unset when the response carries none', async () => {
@@ -201,7 +221,7 @@ describe('createNotebook', () => {
       uid: 'nb-1',
       url: '/notebooks/nb-1',
       resourceVersion: '1755',
-      spec,
+      cells: cellsOf(spec),
     });
   });
 });

@@ -27,6 +27,7 @@ import {
   createNotebook,
   NotebookConflictError,
   readNotebookResourceVersion,
+  type StoredCell,
   updateNotebook,
 } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
@@ -764,24 +765,12 @@ describe('NotebookAutosave', () => {
   });
 
   describe('cell ids', () => {
-    /** What the server stores: the spec as sent, with an id on every cell that arrived without one. */
-    function storedWithIds(spec: NotebookSpec): NotebookSpec {
-      return {
-        ...spec,
-        layout: {
-          ...spec.layout,
-          spec: {
-            cells: spec.layout.spec.cells.map((item, index) => ({
-              ...item,
-              spec: {
-                element: item.spec.element,
-                id: item.spec.id ?? `00000000-0000-4000-8000-0000000000a${index}`,
-                source: item.spec.source,
-              },
-            })),
-          },
-        },
-      };
+    /** What the server stores: a cell for every one sent, with an id on each that arrived without one. */
+    function storedWithIds(spec: NotebookSpec): StoredCell[] {
+      return spec.layout.spec.cells.map((item, index) => ({
+        element: item.spec.element.name,
+        id: item.spec.id ?? `00000000-0000-4000-8000-0000000000a${index}`,
+      }));
     }
 
     /** A notebook saved before ids existed, as a load would build it. */
@@ -812,7 +801,7 @@ describe('NotebookAutosave', () => {
     it('adopts the id the server gave a new cell, and does not save again for it', async () => {
       jest
         .mocked(updateNotebook)
-        .mockImplementation(async (_uid, spec) => ({ generation: 2, spec: storedWithIds(spec) }));
+        .mockImplementation(async (_uid, spec) => ({ generation: 2, cells: storedWithIds(spec) }));
       const scene = activateEditing();
       const [first] = scene.state.body.state.cells;
 
@@ -832,7 +821,7 @@ describe('NotebookAutosave', () => {
     it('sends the adopted id with the next edit', async () => {
       jest
         .mocked(updateNotebook)
-        .mockImplementation(async (_uid, spec) => ({ generation: 2, spec: storedWithIds(spec) }));
+        .mockImplementation(async (_uid, spec) => ({ generation: 2, cells: storedWithIds(spec) }));
       const scene = activateEditing();
       const added = scene.state.body.insertCellAfter(scene.state.body.state.cells[0], {
         kind: 'Markdown',
@@ -866,7 +855,7 @@ describe('NotebookAutosave', () => {
       it('saves it once when someone who can write opens it, and adopts the ids the server gives', async () => {
         jest
           .mocked(updateNotebook)
-          .mockImplementation(async (_uid, spec) => ({ generation: 2, spec: storedWithIds(spec) }));
+          .mockImplementation(async (_uid, spec) => ({ generation: 2, cells: storedWithIds(spec) }));
         const scene = sceneWithoutIds();
 
         deactivate = scene.activate();
@@ -883,7 +872,7 @@ describe('NotebookAutosave', () => {
       it('does not show it as a save, since nobody asked for one', async () => {
         jest
           .mocked(updateNotebook)
-          .mockImplementation(async (_uid, spec) => ({ generation: 2, spec: storedWithIds(spec) }));
+          .mockImplementation(async (_uid, spec) => ({ generation: 2, cells: storedWithIds(spec) }));
         const scene = sceneWithoutIds();
         const statuses: string[] = [];
         scene.autosave.subscribeToState({ next: (state) => statuses.push(state.status) });
