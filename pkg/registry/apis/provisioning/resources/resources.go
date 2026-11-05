@@ -472,6 +472,13 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse new file: %w", err)
 	}
 
+	// Before the identity-change delete below, not just at the write: rejecting
+	// the destination afterwards would leave the old resource deleted with no
+	// replacement.
+	if err := checkSecureValues(newParsed); err != nil {
+		return "", "", newParsed.GVK, size, err
+	}
+
 	if oldParseErr != nil {
 		if pathErr := IsPathSupported(previousPath); pathErr != nil {
 			// Bad path, not a content problem: proceed with the new write;

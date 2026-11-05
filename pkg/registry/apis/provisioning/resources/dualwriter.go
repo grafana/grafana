@@ -673,8 +673,14 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		return nil, fmt.Errorf("parse new file: %w", err)
 	}
 
-	if err := checkSecureValues(newParsed); err != nil {
-		return nil, err
+	// Only supplied content can introduce a secret. Relocating a file already in
+	// the repository must stay possible -- directory and bulk moves do it without
+	// reading content at all, and blocking it here would strand a repository that
+	// already carries one.
+	if len(opts.Data) > 0 {
+		if err := checkSecureValues(newParsed); err != nil {
+			return nil, err
+		}
 	}
 
 	// Make sure the new resource is valid
