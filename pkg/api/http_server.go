@@ -275,7 +275,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	starService star.Service, csrfService csrf.Service,
 	apiKeyService apikey.Service, kvStore kvstore.KVStore, usageStats usagestats.Service,
 	secretsMigrator secrets.Migrator, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
-	secretsService secrets.Service,   //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretMigrationProvider spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	pubdashApi *publicdashboards.Api, userService user.Service, tempUserService tempUser.Service,
 	loginAttemptService loginAttempt.Service, orgService org.Service, orgDeletionService org.DeletionService, teamService team.Service,
