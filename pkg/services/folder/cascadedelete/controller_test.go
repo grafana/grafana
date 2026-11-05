@@ -392,3 +392,97 @@ func TestController_ShutDownStopsTheQueueWithoutRun(t *testing.T) {
 	_, shutdown := c.queue.Get()
 	require.True(t, shutdown, "workers started after a ShutDown must find the queue closed")
 }
+
+func TestController_ResyncOfUnchangedFoldersIsDropped(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		m.addFolder("b", "", foldersv1.CascadeDeleteFinalizer)
+		_, stop := startController(t, m, 100)
+		defer stop()
+
+		m.mu.Lock()
+		m.rvs["a"], m.rvs["b"] = 1, 1
+		m.mu.Unlock()
+		m.resync()
+		synctest.Wait()
+		require.Equal(t, 1, m.getCount("a"))
+		require.Equal(t, 1, m.getCount("b"))
+
+		for range 3 {
+			time.Sleep(ResyncPeriod)
+			m.resync()
+			synctest.Wait()
+		}
+		require.Equal(t, 1, m.getCount("a"), "a resync must not read a folder nobody changed")
+		require.Equal(t, 1, m.getCount("b"))
+
+		m.mu.Lock()
+		m.notify("a", false)
+		m.mu.Unlock()
+		synctest.Wait()
+		require.Equal(t, 2, m.getCount("a"))
+		require.Equal(t, 1, m.getCount("b"))
+	})
+}
+
+func TestController_ResyncRetriesATerminatingFolderUntilItIsReleased(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		m.addFolder("b", "a", otherFinalizer, foldersv1.CascadeDeleteFinalizer)
+		m.addFolder("idle", "", foldersv1.CascadeDeleteFinalizer)
+		_, stop := startController(t, m, 100)
+		defer stop()
+
+		m.resync()
+		synctest.Wait()
+		m.userDelete("a")
+		synctest.Wait()
+		require.True(t, m.exists("a"), "a waits for b, which another finalizer holds")
+		passes, idlePasses := m.getCount("a"), m.getCount("idle")
+
+		// No event names a, so only a resync can finish it.
+		m.mu.Lock()
+		delete(m.folders, "b")
+		m.notify("b", true)
+		m.mu.Unlock()
+		synctest.Wait()
+		require.True(t, m.exists("a"))
+
+		time.Sleep(ResyncPeriod)
+		m.resync()
+		synctest.Wait()
+		require.False(t, m.exists("a"))
+		require.Greater(t, m.getCount("a"), passes)
+		require.Equal(t, idlePasses, m.getCount("idle"), "the resync must not read a folder that is not terminating")
+	})
+}
+
+func TestController_DeletedFolderIsEnqueuedAgainWhenItComesBack(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		_, stop := startController(t, m, 100)
+		defer stop()
+
+		m.mu.Lock()
+		m.rvs["a"] = 1
+		m.mu.Unlock()
+		m.resync()
+		synctest.Wait()
+		require.Equal(t, 1, m.getCount("a"))
+
+		// The delete forgets the version, so a re-created folder at an equal version is read.
+		m.mu.Lock()
+		delete(m.folders, "a")
+		m.notify("a", true)
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		m.rvs["a"] = 1
+		m.mu.Unlock()
+		synctest.Wait()
+		m.resync()
+		synctest.Wait()
+		require.Equal(t, 3, m.getCount("a"), "one read for the delete event, one for the re-created folder")
+	})
+}

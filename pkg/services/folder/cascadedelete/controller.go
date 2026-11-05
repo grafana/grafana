@@ -3,10 +3,12 @@ package cascadedelete
 import (
 	"context"
 	"errors"
+	"slices"
 	"sync"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/cache"
@@ -14,6 +16,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -48,6 +51,12 @@ type Controller struct {
 	folders    FolderGetter
 	reconciler *Reconciler
 	queue      workqueue.TypedRateLimitingInterface[string]
+
+	mu sync.Mutex
+	// seen lets a resync that repeats a folder's last version be dropped without reading it.
+	seen map[string]string
+	// waiting is the terminating folders a resync must retry: nothing names them when a subfolder goes.
+	waiting map[string]struct{}
 }
 
 // NewController builds a controller. A nil limiter uses DefaultRateLimiter. The queue starts its
@@ -60,6 +69,8 @@ func NewController(folders FolderGetter, r *Reconciler, limiter workqueue.TypedR
 	return &Controller{
 		folders:    folders,
 		reconciler: r,
+		seen:       map[string]string{},
+		waiting:    map[string]struct{}{},
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(limiter, workqueue.TypedRateLimitingQueueConfig[string]{
 			Name: "folder_cascade_delete",
 		}),
@@ -74,22 +85,60 @@ func NewDefaultController(dyn dynamic.Interface, searcher resourcepb.ResourceInd
 	return NewController(clients, r, nil)
 }
 
-// Handler enqueues the folder behind every add, update and delete event.
+// Handler enqueues the folder behind each event, except a resync repeating a folder's last version
+// when it is not waiting. An event without a resource version is always enqueued.
 func (c *Controller) Handler() cache.ResourceEventHandler {
 	return cache.ResourceEventHandlerFuncs{
-		AddFunc:    c.enqueue,
-		UpdateFunc: func(_, obj any) { c.enqueue(obj) },
-		DeleteFunc: c.enqueue,
+		AddFunc:    func(obj any) { c.enqueue(obj, false) },
+		UpdateFunc: func(_, obj any) { c.enqueue(obj, false) },
+		DeleteFunc: func(obj any) { c.enqueue(obj, true) },
 	}
 }
 
-func (c *Controller) enqueue(obj any) {
+func (c *Controller) enqueue(obj any, deleted bool) {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
 		logging.DefaultLogger.Warn("Folder cascade delete: cannot key event object", "error", err)
 		return
 	}
+	if c.isResyncOfUnchanged(key, obj, deleted) {
+		return
+	}
 	c.queue.Add(key)
+}
+
+func (c *Controller) isResyncOfUnchanged(key string, obj any, deleted bool) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if deleted {
+		delete(c.seen, key)
+		delete(c.waiting, key)
+		return false
+	}
+	var rv string
+	if tombstone, ok := obj.(cache.DeletedFinalStateUnknown); ok {
+		obj = tombstone.Obj
+	}
+	if acc, err := meta.Accessor(obj); err == nil {
+		rv = acc.GetResourceVersion()
+	}
+	prev, known := c.seen[key]
+	if rv == "" {
+		return false
+	}
+	c.seen[key] = rv
+	_, waiting := c.waiting[key]
+	return known && prev == rv && !waiting
+}
+
+func (c *Controller) setWaiting(key string, waiting bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if waiting {
+		c.waiting[key] = struct{}{}
+		return
+	}
+	delete(c.waiting, key)
 }
 
 // ShutDown stops the queue. Run does it when its context ends; a caller that fails before reaching
@@ -146,6 +195,7 @@ func (c *Controller) processNext(ctx context.Context) bool {
 
 	f, err := c.folders.Get(ctx, namespace, name)
 	if apierrors.IsNotFound(err) {
+		c.setWaiting(key, false)
 		c.queue.Forget(key)
 		return true
 	}
@@ -155,6 +205,7 @@ func (c *Controller) processNext(ctx context.Context) bool {
 		return true
 	}
 
+	c.setWaiting(key, f.DeletionTimestamp != nil && slices.Contains(f.Finalizers, foldersv1.CascadeDeleteFinalizer))
 	res, err := c.reconciler.Reconcile(ctx, f)
 	switch {
 	case errors.Is(err, ErrChildrenStillListed):
@@ -167,6 +218,7 @@ func (c *Controller) processNext(ctx context.Context) bool {
 		c.queue.Forget(key)
 		c.queue.Add(key)
 	case res.Released:
+		c.setWaiting(key, false)
 		c.queue.Forget(key)
 		if parent := f.Annotations[utils.AnnoKeyFolder]; parent != "" {
 			c.queue.Add(namespace + "/" + parent)
