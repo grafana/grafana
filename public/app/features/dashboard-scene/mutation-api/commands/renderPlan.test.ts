@@ -602,8 +602,9 @@ describe('RENDER_PLAN', () => {
     it('keeps the plan, with ids for everything and every position as rendered', async () => {
       const { scene, client } = setup();
 
-      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: plan });
 
+      expect(result.data).toEqual(getEditablePlan(scene));
       expect(getEditablePlan(scene)).toEqual({
         revision: 0,
         plan: {
@@ -777,7 +778,9 @@ describe('RENDER_PLAN', () => {
       const arranged = getEditablePlan(scene)?.plan;
 
       // The payload is the plan as proposed; the arranged one in the preview wins.
-      await client.execute({ type: 'RENDER_PLAN', payload: { ...arrangedPlan, phase: 'building' } });
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: { ...arrangedPlan, phase: 'building' } });
+
+      expect(result.data).toEqual({ plan: arranged });
 
       expect(scene.state.planning).toMatchObject({ phase: 'building', planId: 'plan-1' });
       const [throughput, errors] = getRows(scene);
@@ -919,6 +922,8 @@ describe('RENDER_PLAN', () => {
 
       expect(result.success).toBe(true);
       expect(scene.state.planning).toBeDefined();
+      // The plan is only returned with plan editing on.
+      expect(result.data).toBeUndefined();
     });
 
     it('does not refuse a re-render of an already-planning scene, even though it now has panels', async () => {

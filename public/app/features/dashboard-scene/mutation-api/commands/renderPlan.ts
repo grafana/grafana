@@ -258,7 +258,14 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
       // dragging off again.
       body.editModeChanged?.(canArrangeLayout(scene.state));
 
-      return { success: true, changes: [{ path: '/', previousValue: null, newValue: plan.title }] };
+      // With editing on, the caller learns the ids the plan was given and, on Build, the plan the
+      // skeleton was made from, which it needs to fill each panel by its element key.
+      const rendered = scene.state.planning?.phase === 'preview' ? scene.state.planning.editable : { plan };
+      return {
+        success: true,
+        ...(editing ? { data: rendered } : {}),
+        changes: [{ path: '/', previousValue: null, newValue: plan.title }],
+      };
     } catch (error) {
       return {
         success: false,
