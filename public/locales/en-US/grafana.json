@@ -2932,6 +2932,10 @@
       "see-activity-button": "See Alert Activity",
       "title": "Revert to previous experience"
     },
+    "route-timings": {
+      "error-format": "Invalid duration format. Must be {number}{time_unit}",
+      "error-zero": "Must be greater than zero"
+    },
     "routing": {
       "routing": "Routing"
     },
