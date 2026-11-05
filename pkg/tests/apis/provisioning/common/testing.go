@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -1696,6 +1697,69 @@ func (h *ProvisioningTestHelper) CleanupAllRepos(t *testing.T) {
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repositories should be cleaned up between subtests")
 }
 
+// GithubConnectionObject builds a minimal GitHub connection body: the fields the
+// API requires and nothing test-specific, so a caller only has to name it. Pass
+// it to CreateGithubConnection, which installs the mocked GitHub client.
+func (h *ProvisioningTestHelper) GithubConnectionObject(name string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": provisioning.APIVERSION,
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      name,
+			"namespace": h.Namespace,
+		},
+		"spec": map[string]any{
+			"title": name,
+			"type":  provisioning.GitHubRepositoryType,
+			"github": map[string]any{
+				"appID":          "123456",
+				"installationID": "454545",
+			},
+		},
+		"secure": map[string]any{
+			"privateKey": map[string]any{
+				"create": base64.StdEncoding.EncodeToString([]byte(TestGithubPrivateKeyPEM)),
+			},
+		},
+	}}
+}
+
+// CreateNamedGithubConnection builds and creates a connection in one step, and
+// removes it when the test ends.
+func (h *ProvisioningTestHelper) CreateNamedGithubConnection(t *testing.T, name string) *unstructured.Unstructured {
+	t.Helper()
+	created, err := h.CreateGithubConnection(t, h.GithubConnectionObject(name))
+	require.NoError(t, err, "failed to create connection %q", name)
+	t.Cleanup(func() {
+		_ = h.Connections.Resource.Delete(context.WithoutCancel(t.Context()), created.GetName(), metav1.DeleteOptions{})
+	})
+	return created
+}
+
+// WaitForHealthyConnection polls until the connection controller has reconciled
+// the connection: its ObservedGeneration has caught up to the object
+// generation, a health check has run, it is healthy, and the Ready condition is
+// True. This is the connection analogue of WaitForHealthyRepository.
+func (h *ProvisioningTestHelper) WaitForHealthyConnection(t *testing.T, name string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := h.Connections.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get connection %s", name) {
+			return
+		}
+		conn := MustFromUnstructured[provisioning.Connection](t, obj)
+		assert.Equal(collect, conn.Generation, conn.Status.ObservedGeneration,
+			"controller should reconcile the observed generation")
+		assert.Greater(collect, conn.Status.Health.Checked, int64(0),
+			"connection %s health check has not run yet", name)
+		assert.True(collect, conn.Status.Health.Healthy, "connection %s is not healthy yet", name)
+		ready := FindCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		if assert.NotNil(collect, ready, "connection %s should have a Ready condition", name) {
+			assert.Equal(collect, metav1.ConditionTrue, ready.Status, "connection %s Ready condition should be true", name)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "connection %s should be reconciled and healthy", name)
+}
+
 func (h *ProvisioningTestHelper) CreateGithubConnection(
 	t *testing.T,
 	ctx context.Context,
@@ -2936,6 +3000,54 @@ func GetRepositoryClientV1Beta1(helper *apis.K8sTestHelper) *apis.K8sResourceCli
 			Resource: "repositories",
 		},
 	})
+}
+
+// ToUnstructured converts a typed K8s object to an unstructured object
+// using the canonical DefaultUnstructuredConverter.
+func ToUnstructured[T any](obj *T) (*unstructured.Unstructured, error) {
+	raw, err := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return nil, err
+	}
+	return &unstructured.Unstructured{Object: raw}, nil
+}
+
+// FromUnstructured converts an unstructured object to a typed K8s object
+// using the canonical DefaultUnstructuredConverter.
+func FromUnstructured[T any](obj *unstructured.Unstructured) (*T, error) {
+	result := new(T)
+	err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, result)
+	return result, err
+}
+
+// MustToUnstructured is a test-fatal wrapper around ToUnstructured.
+func MustToUnstructured[T any](t *testing.T, obj *T) *unstructured.Unstructured {
+	t.Helper()
+	result, err := ToUnstructured(obj)
+	require.NoError(t, err)
+	return result
+}
+
+// MustFromUnstructured is a test-fatal wrapper around FromUnstructured.
+func MustFromUnstructured[T any](t *testing.T, obj *unstructured.Unstructured) *T {
+	t.Helper()
+	result, err := FromUnstructured[T](obj)
+	require.NoError(t, err)
+	return result
+}
+
+// RetryOnConflict retries fn while it returns a 409 Conflict, using
+// EventuallyWithT so the retry window is time-bounded.
+func RetryOnConflict(t *testing.T, fn func() error) error {
+	t.Helper()
+	var lastErr error
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		lastErr = fn()
+		if apierrors.IsConflict(lastErr) {
+			c.Errorf("conflict error, retrying: %v", lastErr)
+		}
+	}, WaitTimeoutDefault, 200*time.Millisecond, "operation failed with persistent 409 Conflict")
+	return lastErr
 }
 
 // ToUnstructuredConnection converts a Connection to an unstructured object
