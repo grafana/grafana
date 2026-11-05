@@ -135,12 +135,16 @@ export function createTraceLogsLink({
 }
 
 /**
- * Converts a configured span time shift to milliseconds. An invalid shift, such as a unit-less "0" that
- * rangeUtil.intervalToMs rejects, is treated as unset so it cannot break building links.
+ * Converts a configured span time shift to milliseconds. An invalid shift is treated as unset so it cannot break
+ * building links.
  */
 export function timeShiftToMs(shift: string | undefined, defaultMs = 0): number {
-  if (!shift) {
+  if (!shift?.trim()) {
     return defaultMs;
+  }
+  // rangeUtil.intervalToMs reads a unit-less number as seconds but rejects a unit-less 0, which the editor suggests.
+  if (Number(shift) === 0) {
+    return 0;
   }
   try {
     return rangeUtil.intervalToMs(shift);

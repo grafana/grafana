@@ -46,7 +46,7 @@ describe('getTimeRangeFromTimestamps', () => {
 });
 
 describe('createTraceLogsLink time shift', () => {
-  it('treats an invalid time shift as no shift', () => {
+  it('treats a unit-less 0 time shift as no shift', () => {
     const rootSpan = {
       spanID: 'span1',
       traceID: 'trace1',
