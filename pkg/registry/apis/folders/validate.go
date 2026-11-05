@@ -1,6 +1,7 @@
 package folders
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -630,7 +631,12 @@ func validateOnDelete(ctx context.Context,
 
 	allowedResourceTypes := []string{"alertrules", "recordingrules", "dashboards", "library_elements", "librarypanels", "folders", "variables"}
 
-	for _, v := range resp.GetStats() {
+	// Sorted so the refusal and its blocking_kind label don't depend on the response order.
+	stats := slices.Clone(resp.GetStats())
+	slices.SortFunc(stats, func(a, b *resourcepb.ResourceStatsResponse_Stats) int {
+		return cmp.Or(cmp.Compare(a.Resource, b.Resource), cmp.Compare(a.Group, b.Group))
+	})
+	for _, v := range stats {
 		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {
 			metrics.record(deleteCheckRefusedNotEmpty, v.Resource)
 			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d %s", v.Count, v.Resource)

@@ -57,6 +57,29 @@ func TestValidateOnDeleteRecordsOutcome(t *testing.T) {
 	}
 }
 
+func TestValidateOnDeleteBlockingKindIgnoresStatsOrder(t *testing.T) {
+	folder := &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn"}}
+	stat := func(resource string, count int64) *resourcepb.ResourceStatsResponse_Stats {
+		return &resourcepb.ResourceStatsResponse_Stats{Resource: resource, Count: count}
+	}
+	orders := map[string][]*resourcepb.ResourceStatsResponse_Stats{
+		"dashboards first":  {stat("dashboards", 2), stat("alertrules", 3), stat("folders", 0)},
+		"alert rules first": {stat("folders", 0), stat("alertrules", 3), stat("dashboards", 2)},
+	}
+	for name, order := range orders {
+		t.Run(name, func(t *testing.T) {
+			m := newDeleteCheckMetrics(prometheus.NewRegistry(), true)
+			searcher := &mockSearchClient{stats: &resourcepb.ResourceStatsResponse{Stats: order}}
+
+			err := validateOnDelete(context.Background(), folder, searcher, nil, false, m)
+
+			require.ErrorContains(t, err, "contains 3 alertrules")
+			require.Equal(t, 1.0, testutil.ToFloat64(m.checks.WithLabelValues("refused_not_empty", "enabled", "alertrules", "false")))
+			require.Equal(t, 1, testutil.CollectAndCount(m.checks))
+		})
+	}
+}
+
 func TestValidateLabelsDryRunDeletes(t *testing.T) {
 	setKubernetesFolderCascadeDeleteToggle(t, false)
 	m := newDeleteCheckMetrics(prometheus.NewRegistry(), true)
