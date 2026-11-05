@@ -61,7 +61,7 @@ const specWithNullLists = {
           spec: {
             conditionalRendering,
             variables: [{ kind: 'GroupByVariable', spec: { name: 'g', options: null } }],
-            annotations: [annotation],
+            annotations: null,
             layout: {
               kind: 'RowsLayout',
               spec: {
@@ -70,6 +70,7 @@ const specWithNullLists = {
                     kind: 'RowsLayoutRow',
                     spec: {
                       conditionalRendering,
+                      annotations: null,
                       layout: {
                         kind: 'AutoGridLayout',
                         spec: { items: [{ kind: 'AutoGridLayoutItem', spec: { conditionalRendering } }] },
@@ -146,6 +147,29 @@ describe('fillNullLists', () => {
     } as unknown as DashboardV2Spec;
 
     expect(() => fillNullLists(spec)).not.toThrow();
+    expect(tab.spec.annotations).toEqual([]);
+    expect(section.annotations).toEqual([]);
+  });
+
+  it('preserves omitted nested annotations', () => {
+    const row = {
+      kind: 'RowsLayoutRow',
+      spec: { layout: { kind: 'GridLayout', spec: { items: [] } } },
+    };
+    const tab = {
+      kind: 'TabsLayoutTab',
+      spec: { layout: { kind: 'RowsLayout', spec: { rows: [row] } } },
+    };
+    const spec = {
+      title: 'omitted annotations',
+      timeSettings: { from: 'now-6h', to: 'now' },
+      layout: { kind: 'TabsLayout', spec: { tabs: [tab] } },
+    } as unknown as DashboardV2Spec;
+
+    fillNullLists(spec);
+
+    expect('annotations' in tab.spec).toBe(false);
+    expect('annotations' in row.spec).toBe(false);
   });
 
   it('fills a panel that has no data or visualization config', () => {
