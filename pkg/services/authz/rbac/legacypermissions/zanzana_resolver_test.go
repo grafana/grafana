@@ -152,9 +152,7 @@ func zanzanaResolve(resp *authzv1.ListResponse, action, scope string) ([]ac.Perm
 
 func TestSearchPermissionsForIdentity_NoActionOrPrefix_ListsAllSupportedActions(t *testing.T) {
 	fake := &fakeZanzanaClient{
-		listResp: &authzv1.ListResponse{
-			Items: []string{"uid-1"},
-		},
+		listResp: &authzv1.ListResponse{All: true},
 	}
 	r := &ZanzanaPermissionResolver{client: fake}
 
@@ -1043,6 +1041,38 @@ func TestSearchUsersPermissions_KeepsDatasourceSubresourcesSeparate(t *testing.T
 			perms, err := r.SearchUsersPermissions(context.Background(), usr, 1, ac.SearchOptions{UserID: 1, Action: action})
 			require.NoError(t, err)
 			require.Equal(t, []ac.Permission{{Action: action, Scope: "datasources:uid:" + uid}}, perms[1])
+		})
+	}
+}
+
+type settingsVerbZanzanaClient struct {
+	fakeZanzanaClient
+	verbs map[string]bool
+}
+
+func (c *settingsVerbZanzanaClient) List(_ context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	return &authzv1.ListResponse{All: c.verbs[req.Verb]}, nil
+}
+
+func TestReportingSettingsWriteRequiresAllWriteVerbs(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		verbs   map[string]bool
+		allowed bool
+	}{
+		{"update only", map[string]bool{utils.VerbUpdate: true}, false},
+		{"create and update", map[string]bool{utils.VerbCreate: true, utils.VerbUpdate: true}, false},
+		{"all writes", map[string]bool{utils.VerbCreate: true, utils.VerbUpdate: true, utils.VerbDelete: true}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := NewZanzanaPermissionResolver(&settingsVerbZanzanaClient{verbs: tc.verbs}, nil, nil, false)
+			permissions, err := r.listPermissions(t.Context(), "default", "user:1", nil, "reporting.grafana.app", "reportsettings", "", utils.VerbUpdate, "reports.settings:write", "")
+			require.NoError(t, err)
+			if tc.allowed {
+				require.NotEmpty(t, permissions)
+			} else {
+				require.Empty(t, permissions, "a partial native grant must not become legacy full-write access")
+			}
 		})
 	}
 }

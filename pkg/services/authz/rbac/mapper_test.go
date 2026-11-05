@@ -758,3 +758,39 @@ func TestMapperRegistry_ResourceMappings_DashboardGroup(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "annotations:read", action)
 }
+
+func TestReportingLegacyMapping(t *testing.T) {
+	reg := NewMapperRegistry()
+	for _, tc := range []struct {
+		resource, verb, action string
+		skipScope              bool
+	}{
+		{"reports", "get", "reports:read", false},
+		{"reports", "list", "reports:read", false},
+		{"reports", "watch", "reports:read", false},
+		{"reports", "create", "reports:create", true},
+		{"reports", "update", "reports:write", false},
+		{"reports", "patch", "reports:write", false},
+		{"reports", "delete", "reports:delete", false},
+		{"reportsettings", "get", "reports.settings:read", true},
+		{"reportsettings", "list", "reports.settings:read", true},
+		{"reportsettings", "watch", "reports.settings:read", true},
+		{"reportsettings", "create", "reports.settings:write", true},
+		{"reportsettings", "update", "reports.settings:write", true},
+		{"reportsettings", "patch", "reports.settings:write", true},
+		{"reportsettings", "delete", "reports.settings:write", true},
+	} {
+		t.Run(tc.resource+"/"+tc.verb, func(t *testing.T) {
+			mapping, ok := reg.Get("reporting.grafana.app", tc.resource, "")
+			require.True(t, ok, "existing report roles must authorize the new API")
+			action, ok := mapping.Action(tc.verb)
+			require.True(t, ok)
+			require.Equal(t, tc.action, action)
+			require.Equal(t, tc.skipScope, mapping.SkipScope(tc.verb))
+			if tc.resource == "reports" {
+				require.Equal(t, "reports:uid:weekly", mapping.Scope("weekly"))
+			}
+			require.False(t, mapping.HasFolderSupport())
+		})
+	}
+}

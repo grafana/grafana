@@ -334,6 +334,24 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 		return nil, fmt.Errorf("zanzana list failed: %w", err)
 	}
 
+	if action == "reports.settings:write" {
+		// Legacy write covers all mutations; a native update-only grant must not become full write.
+		if !resp.All {
+			return nil, nil
+		}
+		for _, verb := range []string{utils.VerbCreate, utils.VerbDelete} {
+			check := *req
+			check.Verb = verb
+			allowed, err := r.client.List(ctx, &check)
+			if err != nil {
+				return nil, fmt.Errorf("zanzana list failed: %w", err)
+			}
+			if !allowed.All {
+				return nil, nil
+			}
+		}
+	}
+
 	permissions := []ac.Permission{}
 
 	// Build the set of scopes that satisfy the filter: the exact scope plus

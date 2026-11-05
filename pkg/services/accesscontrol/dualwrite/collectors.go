@@ -3,6 +3,9 @@ package dualwrite
 import (
 	"context"
 	"fmt"
+	"strconv"
+
+	authlib "github.com/grafana/authlib/types"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/attribute"
@@ -12,9 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	rbacstore "github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 func teamMembershipCollector(store db.DB) legacyTupleCollector {
@@ -342,9 +347,10 @@ func roleBindingsCollector(store db.DB) legacyTupleCollector {
 }
 
 func rolePermissionsCollector(store db.DB) legacyTupleCollector {
+	reportStore := rbacstore.NewStore(legacysql.NewDatabaseProvider(store), tracer)
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		var query = `
-			SELECT r.uid as role_uid, p.action, p.kind, p.identifier
+			SELECT r.uid as role_uid, p.action, p.kind, p.identifier, p.attribute
 			FROM permission p
 			INNER JOIN role r ON p.role_id = r.id
 			LEFT JOIN builtin_role br ON r.id  = br.role_id
@@ -356,6 +362,7 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 			Action     string `xorm:"action"`
 			Kind       string
 			Identifier string
+			Attribute  string
 			RoleUID    string `xorm:"role_uid"`
 		}
 
@@ -370,6 +377,21 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 		// Group permissions by role UID
 		rolePermissionsMap := make(map[string][]zanzana.RolePermission)
 		for _, p := range permissions {
+			// Tuples use report UIDs, while legacy role rows may still use numeric IDs.
+			if p.Kind == "reports" && p.Attribute == "id" && p.Identifier != "*" {
+				id, err := strconv.ParseInt(p.Identifier, 10, 64)
+				if err != nil || id <= 0 {
+					continue
+				}
+				uid, found, err := reportStore.GetReportUIDByID(ctx, authlib.NamespaceInfo{OrgID: orgID}, id)
+				if err != nil {
+					return nil, fmt.Errorf("resolve report ID %d in org %d: %w", id, orgID, err)
+				}
+				if !found {
+					continue
+				}
+				p.Identifier = uid
+			}
 			rolePermissionsMap[p.RoleUID] = append(rolePermissionsMap[p.RoleUID], zanzana.RolePermission{
 				Action:     p.Action,
 				Kind:       p.Kind,

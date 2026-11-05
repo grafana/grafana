@@ -16,6 +16,7 @@ var (
 
 	sqlQueryBasicRoles = mustTemplate("basic_role_query.sql")
 	sqlUserIdentifiers = mustTemplate("user_identifier_query.sql")
+	sqlReportUID       = mustTemplate("report_uid_query.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -83,3 +84,12 @@ func newGetFolders(sql *legacysql.LegacyDatabaseHelper, q *FolderQuery) getFolde
 		FolderTable: sql.Table("folder"),
 	}
 }
+
+type getReportUIDQuery struct {
+	sqltemplate.SQLTemplate
+	ReportTable string
+	OrgID       int64
+	ReportID    int64
+}
+
+func (*getReportUIDQuery) Validate() error { return nil }

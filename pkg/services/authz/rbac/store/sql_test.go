@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"testing"
 	"text/template"
 
@@ -52,6 +53,17 @@ func TestIdentityQueries(t *testing.T) {
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
+			sqlReportUID: {
+				{
+					Name: "report_by_id",
+					Data: &getReportUIDQuery{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						ReportTable: nodb.Table("report"),
+						OrgID:       1,
+						ReportID:    17,
+					},
+				},
+			},
 			sqlUserIdentifiers: {
 				{
 					Name: "id_specified",
@@ -288,4 +300,58 @@ func permissionScopes(permissions []accesscontrol.Permission) []string {
 		scopes = append(scopes, permission.Scope)
 	}
 	return scopes
+}
+
+func TestIntegrationReportUIDLookup(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	db := sqlstore.NewTestStore(t)
+	session := db.GetSqlxSession()
+	ctx := t.Context()
+	// A mapped table also exercises providers that qualify tenant table names.
+	_, err := session.Exec(ctx, `CREATE TABLE report_uid_lookup_test (id BIGINT PRIMARY KEY, org_id BIGINT, uid VARCHAR(40))`)
+	require.NoError(t, err)
+	for _, row := range []struct {
+		id, orgID int64
+		uid       any
+	}{
+		{17, 1, "weekly"},
+		{18, 2, "other-org"},
+		{19, 1, ""},
+		{20, 1, nil},
+	} {
+		_, err := session.Exec(ctx, `INSERT INTO report_uid_lookup_test (id, org_id, uid) VALUES (?, ?, ?)`, row.id, row.orgID, row.uid)
+		require.NoError(t, err)
+	}
+	provider := func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{DB: db, Table: func(name string) string {
+			require.Equal(t, "report", name)
+			return "report_uid_lookup_test"
+		}}, nil
+	}
+	s := NewStore(provider, tracing.InitializeTracerForTest())
+	for _, tc := range []struct {
+		orgID, id int64
+		want      string
+		found     bool
+	}{
+		{1, 17, "weekly", true},
+		{1, 18, "", false},
+		{2, 18, "other-org", true},
+		{3, 17, "", false},
+		{1, 99, "", false},
+		{1, 19, "", false},
+		{1, 20, "", false},
+	} {
+		got, found, err := s.GetReportUIDByID(ctx, types.NamespaceInfo{OrgID: tc.orgID}, tc.id)
+		require.NoError(t, err)
+		require.Equal(t, tc.want, got)
+		require.Equal(t, tc.found, found)
+	}
+
+	canceled, cancel := context.WithCancel(ctx)
+	cancel()
+	_, found, err := s.GetReportUIDByID(canceled, types.NamespaceInfo{OrgID: 1}, 17)
+	require.ErrorIs(t, err, context.Canceled)
+	require.False(t, found)
 }

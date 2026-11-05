@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -1115,4 +1116,82 @@ func TestZanzanaCollector(t *testing.T) {
 
 		mockClient.AssertExpectations(t)
 	})
+}
+
+func TestIntegrationReportRolePermissionsCollector(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("legacy IDs resolve within the organization while UID scopes stay unchanged", func(t *testing.T) {
+		env := setupTestEnv(t)
+		roleUID := createRole(t, env, "report-role", 1)
+		err := env.db.WithDbSession(env.ctx, func(sess *db.Session) error {
+			if _, err := sess.Exec("CREATE TABLE report (id BIGINT PRIMARY KEY, org_id BIGINT NOT NULL, uid VARCHAR(40))"); err != nil {
+				return err
+			}
+			if _, err := sess.Exec("INSERT INTO report (id, org_id, uid) VALUES (17, 1, 'weekly'), (18, 2, 'foreign')"); err != nil {
+				return err
+			}
+			var roleID int64
+			if _, err := sess.SQL("SELECT id FROM role WHERE uid = ?", roleUID).Get(&roleID); err != nil {
+				return err
+			}
+			for _, p := range []struct{ action, attribute, identifier string }{
+				{"reports:read", "id", "17"},
+				{"reports:write", "id", "18"},
+				{"reports:delete", "id", "99"},
+				{"reports:write", "uid", "17"},
+				{"reports:read", "uid", "native"},
+				{"reports:delete", "id", "*"},
+			} {
+				_, err := sess.Exec("INSERT INTO permission (role_id, action, scope, kind, attribute, identifier, created, updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+					roleID, p.action, "reports:"+p.attribute+":"+p.identifier, "reports", p.attribute, p.identifier, time.Now(), time.Now())
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		require.NoError(t, err)
+		objects, err := rolePermissionsCollector(env.db)(env.ctx, 1)
+		require.NoError(t, err)
+		var tuples []string
+		for _, object := range objects {
+			for _, tuple := range object {
+				tuples = append(tuples, tuple.String())
+			}
+		}
+		subject := zanzana.NewTupleEntry(zanzana.TypeRole, roleUID, zanzana.RelationAssignee)
+		require.ElementsMatch(t, []string{
+			common.NewResourceTuple(subject, zanzana.RelationGet, "reporting.grafana.app", "reports", "", "weekly").String(),
+			common.NewResourceTuple(subject, zanzana.RelationUpdate, "reporting.grafana.app", "reports", "", "17").String(),
+			common.NewResourceTuple(subject, zanzana.RelationGet, "reporting.grafana.app", "reports", "", "native").String(),
+			zanzana.NewGroupResourceTuple(subject, zanzana.RelationDelete, "reporting.grafana.app", "reports", "").String(),
+		}, tuples)
+	})
+
+	t.Run("report lookup errors abort collection", func(t *testing.T) {
+		env := setupTestEnv(t)
+		roleUID := createRole(t, env, "report-role", 1)
+		err := env.db.WithDbSession(env.ctx, func(sess *db.Session) error {
+			_, err := sess.Exec("INSERT INTO permission (role_id, action, scope, kind, attribute, identifier, created, updated) SELECT id, ?, ?, ?, ?, ?, ?, ? FROM role WHERE uid = ?",
+				"reports:read", "reports:id:17", "reports", "id", "17", time.Now(), time.Now(), roleUID)
+			return err
+		})
+		require.NoError(t, err)
+		ctx, cancel := context.WithCancel(env.ctx)
+		defer cancel()
+		_, err = rolePermissionsCollector(cancelAfterPermissionReadDB{DB: env.db, cancel: cancel})(ctx, 1)
+		require.ErrorIs(t, err, context.Canceled, "lookup errors must not reconcile an incomplete permission set")
+	})
+}
+
+type cancelAfterPermissionReadDB struct {
+	db.DB
+	cancel context.CancelFunc
+}
+
+func (s cancelAfterPermissionReadDB) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	err := s.DB.WithDbSession(ctx, callback)
+	s.cancel()
+	return err
 }
