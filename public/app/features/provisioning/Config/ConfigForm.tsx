@@ -29,7 +29,6 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
-import { ProvisionedFromFileBanner } from '../components/ProvisionedFromFileBanner';
 import { PROVISIONING_URL } from '../constants';
 import { useConnectionList } from '../hooks/useConnectionList';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
@@ -39,7 +38,6 @@ import { connectionTypesForProvider } from '../utils/connectionData';
 import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions, getRemoteConfig } from '../utils/git';
-import { isManagedResourceReadOnly } from '../utils/managedResource';
 import {
   getRepositoryTypeConfig,
   isGitProvider,
@@ -91,8 +89,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
   });
 
   const isEdit = Boolean(repositoryName);
-  // File-provisioned repositories are managed from disk; their config cannot be edited in the UI.
-  const isProvisioned = data ? isManagedResourceReadOnly(data) : false;
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
@@ -223,7 +219,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
       <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
       <Stack direction="column" gap={2}>
-        {isProvisioned && <ProvisionedFromFileBanner />}
         {submitError && (
           <Alert
             severity="error"
@@ -576,12 +571,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
         )}
 
         <Stack gap={2}>
-          <Button type={'submit'} disabled={isLoading || isProvisioned || (usesConnection && allConnectionsLoading)}>
+          <Button type={'submit'} disabled={isLoading || (usesConnection && allConnectionsLoading)}>
             {isLoading
               ? t('provisioning.config-form.button-saving', 'Saving...')
               : t('provisioning.config-form.button-save', 'Save')}
           </Button>
-          {repositoryName && data && !isProvisioned && (
+          {repositoryName && data && (
             <DeleteRepositoryButton name={repositoryName} repository={data} redirectTo={PROVISIONING_URL} />
           )}
         </Stack>

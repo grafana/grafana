@@ -16,7 +16,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -73,7 +72,6 @@ spec:
 func bootGrafana(t *testing.T, manifests map[string]string) *apis.K8sTestHelper {
 	t.Helper()
 	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{featuremgmt.FlagProvisioning},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {DualWriterMode: grafanarest.Mode5, EnableMigration: true},
 			"folders.folder.grafana.app":       {DualWriterMode: grafanarest.Mode5, EnableMigration: true},
