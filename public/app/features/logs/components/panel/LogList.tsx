@@ -416,6 +416,20 @@ const LogListComponent = ({
     listRef.current?.resetAfterIndex(0);
   }, [forceEscape, otelLogsFormattingEnabled, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
 
+  // Cached height is only safe to carry over to a new `logs` array when it is the same underlying result set
+  const prevDataFramesRef = useRef(dataFrames);
+  useEffect(() => {
+    const isSameResultSet =
+      !!dataFrames?.length &&
+      !!prevDataFramesRef.current?.length &&
+      dataFrames.some((frame) => prevDataFramesRef.current!.includes(frame));
+    prevDataFramesRef.current = dataFrames;
+    if (!isSameResultSet) {
+      virtualization.resetLogLineSizes();
+    }
+    listRef.current?.resetAfterIndex(0);
+  }, [dataFrames, logs, virtualization]);
+
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
   }, [wrapLogMessage, showDetails, displayedFields, dedupStrategy]);
