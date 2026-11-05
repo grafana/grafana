@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	"google.golang.org/grpc"
@@ -115,7 +114,7 @@ func (r *screenshotRenderer) RenderScreenshot(ctx context.Context, repo provisio
 		ContentType: mime.TypeByExtension(ext), // image/png
 		Value:       body,
 	})
-	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+	if err != nil {
 		return "", err
 	}
 	if rsp.Url != "" {

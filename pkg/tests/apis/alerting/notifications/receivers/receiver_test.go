@@ -73,11 +73,29 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		},
 	}
 
-	t.Run("create should fail if object name is specified", func(t *testing.T) {
+	t.Run("create should fail if object name is not a valid UID", func(t *testing.T) {
 		receiver := newResource.Copy().(*v1beta1.Receiver)
-		receiver.Name = "new-receiver"
+		receiver.Name = "New-Receiver" // contains an uppercase letter, not a valid DNS subdomain
 		_, err := client.Create(ctx, receiver, resource.CreateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
+	})
+
+	t.Run("create should honor a client-supplied object name as the UID", func(t *testing.T) {
+		receiver := newResource.Copy().(*v1beta1.Receiver)
+		receiver.Name = "my-custom-receiver-uid"
+		receiver.Spec.Title = "Receiver-With-Custom-UID"
+		actual, err := client.Create(ctx, receiver, resource.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "my-custom-receiver-uid", actual.Name)
+
+		t.Run("create should fail if the UID is already taken", func(t *testing.T) {
+			other := receiver.Copy().(*v1beta1.Receiver)
+			other.Spec.Title = "A-Different-Title"
+			_, err := client.Create(ctx, other, resource.CreateOptions{})
+			require.Truef(t, errors.IsConflict(err), "Expected Conflict but got %s", err)
+		})
+
+		require.NoError(t, client.Delete(ctx, actual.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
 	})
 
 	var resourceID resource.Identifier
@@ -96,7 +114,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		require.Equal(t, newResource.Spec, actual.Spec)
 	})
 
-	t.Run("update should rename receiver if name in the specification changes", func(t *testing.T) {
+	t.Run("update should preserve UID when name in the specification changes", func(t *testing.T) {
 		existing, err := client.Get(ctx, resourceID)
 		require.NoError(t, err)
 
@@ -106,7 +124,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		actual, err := client.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, updated.Spec, actual.Spec)
-		require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
+		require.Equalf(t, updated.Name, actual.Name, "Renaming a receiver should preserve its UID (resource name), but it changed")
 		require.NotEqualf(t, updated.ResourceVersion, actual.ResourceVersion, "Update should change the resource version but it didn't")
 
 		resource, err := client.Get(ctx, actual.GetStaticMetadata().Identifier())
@@ -1300,6 +1318,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 
 			actual, err := adminClient.Update(ctx, renamed, resource.UpdateOptions{})
 			require.NoError(t, err)
+			require.Equalf(t, receiver.Name, actual.Name, "renaming a receiver should preserve its UID (resource name)")
 
 			updatedRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
 			require.Equal(t, http.StatusAccepted, status)

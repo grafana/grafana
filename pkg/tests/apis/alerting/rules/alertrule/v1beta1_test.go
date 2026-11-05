@@ -122,7 +122,6 @@ func readUnified(t *testing.T, helper *apis.K8sTestHelper, resource, name string
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		rsp, err := helper.GetEnv().ResourceClient.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(c, err)
-		require.Nil(c, rsp.Error)
 		require.NoError(c, json.Unmarshal(rsp.Value, &out))
 	}, 5*time.Second, 50*time.Millisecond)
 	return out
@@ -145,12 +144,11 @@ func seedUnified(t *testing.T, helper *apis.K8sTestHelper, resource string, rule
 		"spec": rule["spec"],
 	})
 	require.NoError(t, err)
-	rsp, err := helper.GetEnv().ResourceClient.Create(ctx, &resourcepb.CreateRequest{
+	_, err = helper.GetEnv().ResourceClient.Create(ctx, &resourcepb.CreateRequest{
 		Key:   &resourcepb.ResourceKey{Namespace: "default", Group: v1beta1.GroupVersion.Group, Resource: resource, Name: name},
 		Value: value,
 	})
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 }
 
 func field(t *testing.T, obj map[string]any, path ...string) any {

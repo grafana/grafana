@@ -1,3 +1,4 @@
+import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
@@ -202,6 +203,41 @@ describe('NotificationPreview', () => {
     });
 
     expect(ui.contactPointGroup.query()).not.toBeInTheDocument();
+  });
+
+  it('should show an error when the notification policies cannot be loaded', async () => {
+    mockHasEditPermission(false);
+    mockOneAlertManager();
+    mockPreviewApiResponse(server, [mockAlertmanagerAlert({ labels: { tomato: 'red' } })]);
+    server.use(
+      http.get('/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/routingtrees', () =>
+        HttpResponse.json({ message: 'boom' }, { status: 500 })
+      )
+    );
+
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
+
+    expect(await screen.findByText(/could not load routing preview for grafana/i)).toBeInTheDocument();
+    expect(screen.getByText(/boom/)).toBeInTheDocument();
+  });
+
+  it('should show an error instead of a blank preview when the selected policy no longer exists', async () => {
+    mockHasEditPermission(false);
+    mockOneAlertManager();
+    mockPreviewApiResponse(server, [mockAlertmanagerAlert({ labels: { tomato: 'red' } })]);
+
+    render(
+      <NotificationPreview
+        alertQueries={[alertQuery]}
+        customLabels={[]}
+        condition="A"
+        folder={folder}
+        policyName="deleted-policy"
+      />
+    );
+
+    expect(await screen.findByText(/could not load routing preview for grafana/i)).toBeInTheDocument();
+    expect(screen.getByText(/deleted-policy/)).toBeInTheDocument();
   });
 
   // Regression test for bug #3 from PR #124697:
