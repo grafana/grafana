@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
@@ -97,7 +98,11 @@ func TestSQLKVUnixTimestampUsesContextTransaction(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"timestamp"}).AddRow(int64(1234567890)))
 	mock.ExpectRollback()
 
-	timestamp, err := store.UnixTimestamp(ContextWithDBTX(t.Context(), tx))
+	// Bound the pool wait if UnixTimestamp stops reusing the transaction's connection.
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+
+	timestamp, err := store.UnixTimestamp(ContextWithDBTX(ctx, tx))
 	require.NoError(t, err)
 	require.Equal(t, int64(1234567890), timestamp)
 	require.NoError(t, tx.Rollback())
