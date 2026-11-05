@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type JSX, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { type JSX, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2, locationUtil } from '@grafana/data';
@@ -271,7 +271,11 @@ function PanelActions({
               report('duplicate');
               dashboard.duplicatePanel(panel);
             }}
-            isRepeated={isRepeat}
+            disabled={isRepeat}
+            disabledTooltip={t(
+              'dashboard-scene.control-edit-actions.duplicate-tooltip-disabled',
+              "Repeated panels can't be duplicated individually"
+            )}
           />
           <DeleteActionButton
             title={t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel')}
@@ -279,7 +283,11 @@ function PanelActions({
             yesText={t('dashboard-scene.panel-actions-popover.remove-confirm', 'Remove')}
             tooltip={isRepeat ? undefined : t('dashboard-scene.panel-actions-popover.remove', 'Remove (p r)')}
             onConfirm={onRemove}
-            isRepeated={isRepeat}
+            disabled={isRepeat}
+            disabledTooltip={t(
+              'dashboard-scene.control-edit-actions.delete-tooltip-disabled',
+              "Repeated panels can't be deleted individually"
+            )}
           />
         </>
       )}
@@ -344,22 +352,22 @@ function ActionsSeparator() {
  * while rendering nothing, so a slot with children can still look empty.
  */
 function useHasVisibleItems(element: HTMLElement | null): boolean {
-  const [hasItems, setHasItems] = useState(false);
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      if (!element) {
+        return () => {};
+      }
+      const observer = new MutationObserver(onChange);
+      observer.observe(element, { childList: true, subtree: true, characterData: true });
+      return () => observer.disconnect();
+    },
+    [element]
+  );
 
-  useEffect(() => {
-    if (!element) {
-      setHasItems(false);
-      return;
-    }
-    const update = () =>
-      setHasItems(Boolean(element.textContent?.trim()) || element.querySelector('svg, img') !== null);
-    update();
-    const observer = new MutationObserver(update);
-    observer.observe(element, { childList: true, subtree: true, characterData: true });
-    return () => observer.disconnect();
-  }, [element]);
-
-  return hasItems;
+  return useSyncExternalStore(
+    subscribe,
+    () => element !== null && (Boolean(element.textContent?.trim()) || element.querySelector('svg, img') !== null)
+  );
 }
 
 function getHeaderActions(panel: VizPanel): VizPanelHeaderActions | undefined {
@@ -369,18 +377,15 @@ function getHeaderActions(panel: VizPanel): VizPanelHeaderActions | undefined {
 
 function useIsGroupByPickerOpen(panel: VizPanel): boolean {
   const headerActions = getHeaderActions(panel);
-  const [isOpen, setIsOpen] = useState(Boolean(headerActions?.state.isGroupByPickerOpen));
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      const sub = headerActions?.subscribeToState(onChange);
+      return () => sub?.unsubscribe();
+    },
+    [headerActions]
+  );
 
-  useEffect(() => {
-    if (!headerActions) {
-      return;
-    }
-    setIsOpen(Boolean(headerActions.state.isGroupByPickerOpen));
-    const sub = headerActions.subscribeToState((state) => setIsOpen(Boolean(state.isGroupByPickerOpen)));
-    return () => sub.unsubscribe();
-  }, [headerActions]);
-
-  return isOpen;
+  return useSyncExternalStore(subscribe, () => Boolean(headerActions?.state.isGroupByPickerOpen));
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -166,6 +166,8 @@ export function EditActionsPopover({
       (element) => element?.matches(':hover') || element?.contains(document.activeElement)
     );
     if (!isInUse) {
+      // Hover and focus live in the DOM, so they can only be read here, once the menu has closed.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsOpen(false);
     }
   }, [keepOpen, isOpen, refs]);
