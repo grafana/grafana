@@ -5,6 +5,7 @@ import {
   AdHocFiltersVariable,
   NewSceneObjectAddedEvent,
   sceneGraph,
+  type SceneObject,
   sceneUtils,
   type SceneObjectUrlValue,
   type SceneObjectUrlValues,
@@ -12,6 +13,7 @@ import {
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { type TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { buildDashboardWithAccessInfoFromScene } from '../../serialization/buildDashboardWithAccessInfoFromScene';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
@@ -139,6 +141,79 @@ export function applyDashboardSpec({ scene, spec, description, scope, actor }: A
       syncRebuiltChildrenFromUrl(scene, urlUpdates);
       refreshSwappedInData(scene);
     },
+  });
+}
+
+/**
+ * Swaps `reloaded`, the open dashboard loaded again from the server, onto the open scene in place of
+ * a fresh page load: no loading state, and the page keeps its scroll position, URL state, open panel
+ * editor and edit mode. Not an edit: there is nothing to undo, and the scene is as stored.
+ */
+export function swapInReloadedDashboard(scene: DashboardScene, reloaded: DashboardScene): void {
+  const incoming = sceneUtils.getUrlState(reloaded);
+  const { loadingView, ...newState } = sceneUtils.cloneSceneObjectState(reloaded.state, {
+    key: scene.state.key,
+    sidebar: scene.state.sidebar,
+  });
+  // As in applyDashboardSpec: drop an open panel editor, which drives the discarded tree, and re-open it.
+  const requestedPanel = scene.urlSync?.getUrlState().editPanel;
+  const editPanelKey =
+    scene.state.editPanel?.getUrlKey() ?? (typeof requestedPanel === 'string' ? requestedPanel : undefined);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow the base handler to the dashboard's own, which owns the hold below
+  const urlSync = scene.urlSync as DashboardUrlSync | undefined;
+  if (editPanelKey) {
+    urlSync?.retainEditPanelAcrossRebuild(editPanelKey);
+  }
+  // An embedded dashboard isn't synced with the page URL, which belongs to the page around it.
+  const urlUpdates = scene.state.meta.isEmbedded
+    ? {}
+    : urlUpdatesForSwap(scene, {
+        incoming,
+        outgoingKeys: Object.keys(sceneUtils.getUrlState(scene)),
+        fromSpec: () => specUrlState(scene),
+        toSpec: () => incoming,
+      });
+  const { isEditing, editable, mode } = scene.state;
+  const tabs = openTabs(scene);
+  scene.setState({
+    ...newState,
+    // A fresh load starts in view mode; the page was editing, and goes on editing what it reloaded.
+    ...(isEditing ? { isEditing, editable } : {}),
+    mode,
+    editPanel: undefined,
+    isDirty: false,
+  });
+  scene.applyDashboardMode();
+  resolveAdHocMultiValueOperators(scene);
+  scene.state.sidebar.refreshAfterRebuild();
+  syncRebuiltChildrenFromUrl(scene, urlUpdates);
+  // A dashboard without URL sync (an embedded one) keeps its open tabs only in the tree just replaced.
+  reopenTabs(scene, tabs);
+  if (editPanelKey) {
+    urlSync?.updateFromUrl({ editPanel: editPanelKey });
+  }
+}
+
+// A type import: the tabs layout's module imports this one's, so it is recognized by what it does.
+function isTabsLayout(object: SceneObject): object is TabsLayoutManager {
+  return 'switchToTab' in object && typeof object.switchToTab === 'function' && 'tabs' in object.state;
+}
+
+/** The tab each tabs layout of `scene` has open, in the tree's order. */
+function openTabs(scene: DashboardScene): Array<string | undefined> {
+  return sceneGraph
+    .findAllObjects(scene, isTabsLayout)
+    .flatMap((layout) => (isTabsLayout(layout) ? [layout.state.currentTabSlug] : []));
+}
+
+/** Opens `tabs` again, in the tree's order, where a tabs layout still has the tab. */
+function reopenTabs(scene: DashboardScene, tabs: Array<string | undefined>) {
+  const layouts = sceneGraph.findAllObjects(scene, isTabsLayout).filter(isTabsLayout);
+  layouts.forEach((layout, i) => {
+    const slug = tabs[i];
+    if (slug && slug !== layout.state.currentTabSlug && layout.state.tabs.some((tab) => tab.getSlug() === slug)) {
+      layout.setState({ currentTabSlug: slug });
+    }
   });
 }
 

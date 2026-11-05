@@ -7,10 +7,12 @@ import { grafanaRulesNav } from '../../utils/navigation';
 import { FolderPath } from '../rule-row/FolderPath';
 import { RuleDatasources } from '../rule-row/RuleDatasources';
 import { RuleDescription } from '../rule-row/RuleDescription';
+import { RuleInstanceCounts } from '../rule-row/RuleInstanceCounts';
 import { RuleInterval } from '../rule-row/RuleInterval';
 import { RuleLabels } from '../rule-row/RuleLabels';
 import { RuleListItem } from '../rule-row/RuleListItem';
 import { RuleOriginBadge } from '../rule-row/RuleOriginBadge';
+import { RuleRouting } from '../rule-row/RuleRouting';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
@@ -47,11 +49,13 @@ export function AlertRuleRow({ searchHit, folderPath, rule }: AlertRuleRowProps)
       right={searchHit.interval && <RuleInterval interval={searchHit.interval} />}
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
+        <RuleInstanceCounts key="counts" searchHit={searchHit} />,
+        // parseSearchLabels guarantees labels is non-empty when present; RuleLabels handles the null case.
+        searchHit.labels && <RuleLabels key="labels" labels={searchHit.labels} />,
         searchHit.datasourceUIDs && searchHit.datasourceUIDs.length > 0 && (
           <RuleDatasources key="ds" datasourceUIDs={searchHit.datasourceUIDs} />
         ),
-        // parseSearchLabels guarantees labels is non-empty when present; RuleLabels handles the null case.
-        searchHit.labels && <RuleLabels key="labels" labels={searchHit.labels} />,
+        <RuleRouting key="routing" searchHit={searchHit} />,
       ]}
     />
   );

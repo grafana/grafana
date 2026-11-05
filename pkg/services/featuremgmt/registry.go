@@ -1560,6 +1560,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "teamlbac.apiNoFallback",
+			Description:  "Return Team LBAC API Kubernetes errors instead of falling back to legacy datasource rules",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{Go: true},
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:        "elasticsearchImprovedParsing",
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
@@ -1895,7 +1904,7 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: false,
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "preferLibraryPanelTitle",
@@ -2023,14 +2032,6 @@ var (
 		{
 			Name:        "cdnPluginsLoadFirst",
 			Description: "Prioritize loading plugins from the CDN before other sources",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaCatalogSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "cdnPluginsUrls",
-			Description: "Enable loading plugins via declarative URLs",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaCatalogSquad,
@@ -3346,15 +3347,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
-		},
-		{
-			Name:         "datasources.queryGatewaySlimAudit",
-			Description:  "Only attach query payloads to query gateway audit events when a guardrail fires",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDataSourcesPlugins,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{Go: true},
 		},
 		// TODO: add docs for the unified_alerting.folder_label_full_sync_interval setting before removing this
 		{

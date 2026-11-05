@@ -914,7 +914,7 @@ func TestFolderLookupSearchErrors(t *testing.T) {
 			t.Run(name+"/"+tc.name, func(t *testing.T) {
 				cli := new(client.MockK8sHandler)
 				cli.On("GetNamespace", int64(1)).Return("default").Once()
-				cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(tc.searchResponse(), tc.err).Once()
+				cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(nil, tc.err).Once()
 				svc := &Service{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
 				query := lookup
 				query.OrgID = 1
@@ -923,7 +923,7 @@ func TestFolderLookupSearchErrors(t *testing.T) {
 				got, err := svc.Get(t.Context(), &query)
 
 				require.Nil(t, got)
-				requireFolderStorageError(t, tc.want, err)
+				requireFolderStorageError(t, tc.err, err)
 				cli.AssertExpectations(t)
 			})
 		}
@@ -1214,13 +1214,11 @@ func TestDeleteVariablesInFoldersSearchErrors(t *testing.T) {
 			cli := new(client.MockK8sHandler)
 			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 				return slices.Equal(req.Fields, []string{resource.SEARCH_FIELD_NAME})
-			})).Return(tc.searchResponse(), tc.err).Once()
+			})).Return(nil, tc.err).Once()
 			service := &Service{variableK8sClient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
 			err := service.deleteVariablesInFolders(t.Context(), 1, []string{"allowed"})
-			require.ErrorContains(t, err, tc.want.Error())
-			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
-			}
+			require.ErrorContains(t, err, tc.err.Error())
+			require.ErrorIs(t, err, tc.err)
 			cli.AssertExpectations(t)
 		})
 	}
@@ -1323,12 +1321,10 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 
 	for _, tc := range folderStorageFailures(t) {
 		t.Run("dashboard search error/"+tc.name, func(t *testing.T) {
-			dashboardK8sclient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(tc.searchResponse(), tc.err).Once()
+			dashboardK8sclient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(nil, tc.err).Once()
 			err := service.Delete(ctx, &folder.DeleteFolderCommand{UID: "uid", OrgID: 1, SignedInUser: user})
-			require.ErrorContains(t, err, tc.want.Error())
-			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
-			}
+			require.ErrorContains(t, err, tc.err.Error())
+			require.ErrorIs(t, err, tc.err)
 			dashboardK8sclient.AssertExpectations(t)
 		})
 	}

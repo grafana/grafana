@@ -26,6 +26,9 @@ import (
 const (
 	defaultServerNamePrefix = "grafana-nats-"
 	ServerServiceName       = "nats-server"
+
+	routePingInterval = 5 * time.Second
+	routeMaxPingsOut  = 2
 )
 
 var (
@@ -298,6 +301,11 @@ func (s *Server) serverOptions() *natsserver.Options {
 			// Clients connect in-process, so peers' client URLs would only fill
 			// their server pools with addresses they never dial.
 			NoAdvertise: true,
+			// A half-dead route drops messages without telling any client, until
+			// the server closes it as stale. The defaults (30s pings, 2 missed)
+			// take 60-90s to notice; these take 10-15s.
+			PingInterval: routePingInterval,
+			MaxPingsOut:  routeMaxPingsOut,
 		},
 	}
 }

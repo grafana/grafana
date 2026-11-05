@@ -5,13 +5,16 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
+// AlertUIDRuleNotFound is stored in annotation.alert_uid for alert annotations whose rule no longer
+// exists, so they are not examined again. It can never be a valid rule UID.
+const AlertUIDRuleNotFound = "!orphaned_alert_rule"
+
 type ItemQuery struct {
 	OrgID    int64  `json:"orgId"`
 	From     int64  `json:"from"`
 	To       int64  `json:"to"`
 	UserID   int64  `json:"userId"`
 	UserUID  string `json:"userUID"`
-	AlertID  int64  `json:"alertId"`
 	AlertUID string `json:"alertUID"`
 	// Deprecated: Use DashboardUID and OrgID instead
 	DashboardID  int64    `json:"dashboardId"`
@@ -94,6 +97,7 @@ type Item struct {
 	PanelID      int64            `json:"panelId" xorm:"panel_id"`
 	Text         string           `json:"text"`
 	AlertID      int64            `json:"alertId" xorm:"alert_id"`
+	AlertUID     string           `json:"alertUID" xorm:"alert_uid"`
 	PrevState    string           `json:"prevState"`
 	NewState     string           `json:"newState"`
 	Epoch        int64            `json:"epoch"`
@@ -114,8 +118,10 @@ func (i Item) TableName() string {
 
 // swagger:model Annotation
 type ItemDTO struct {
-	ID        int64  `json:"id,omitempty" xorm:"id"`
+	ID int64 `json:"id,omitempty" xorm:"id"`
+	// Deprecated. Use alertUID instead.
 	AlertID   int64  `json:"alertId,omitempty" xorm:"alert_id"`
+	AlertUID  string `json:"alertUID,omitempty" xorm:"alert_uid"`
 	AlertName string `json:"alertName,omitempty"`
 	// Deprecated: Use DashboardUID and OrgID instead
 	DashboardID  int64            `json:"dashboardId,omitempty" xorm:"dashboard_id"`

@@ -1403,7 +1403,8 @@
       "metadata": {
         "name": "cdnPluginsUrls",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-08-29T14:46:39Z"
+        "creationTimestamp": "2025-08-29T14:46:39Z",
+        "deletionTimestamp": "2026-11-05T08:33:51Z"
       },
       "spec": {
         "description": "Enable loading plugins via declarative URLs",
@@ -2022,7 +2023,8 @@
       "metadata": {
         "name": "datasources.queryGatewaySlimAudit",
         "resourceVersion": "1790805819665",
-        "creationTimestamp": "2026-10-01T14:36:39Z"
+        "creationTimestamp": "2026-10-01T14:36:39Z",
+        "deletionTimestamp": "2026-11-04T14:12:07Z"
       },
       "spec": {
         "description": "Only attach query payloads to query gateway audit events when a guardrail fires",
@@ -2754,13 +2756,16 @@
     {
       "metadata": {
         "name": "grafana.cmdkDashboardTags",
-        "resourceVersion": "1793290413642",
-        "creationTimestamp": "2026-10-29T16:13:33Z"
+        "resourceVersion": "1793824807529",
+        "creationTimestamp": "2026-10-29T16:13:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-04 20:40:07.529765 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Shows dashboard tags in the command palette",
         "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "expression": "false"
       }
@@ -2768,16 +2773,16 @@
     {
       "metadata": {
         "name": "grafana.cmdkHybridSearch",
-        "resourceVersion": "1793306194106",
+        "resourceVersion": "1793824807529",
         "creationTimestamp": "2026-08-20T12:34:45Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-10-29 20:36:34.106495 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-04 20:40:07.529765 +0000 UTC"
         }
       },
       "spec": {
         "description": "Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-and-storage",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "expression": "false"
       }
@@ -3722,16 +3727,16 @@
     {
       "metadata": {
         "name": "grafana.vectorSearchCmdk",
-        "resourceVersion": "1793306194106",
+        "resourceVersion": "1793824807529",
         "creationTimestamp": "2026-07-01T12:42:40Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-10-29 20:36:34.106495 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-04 20:40:07.529765 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables semantic (vector) dashboard search in the command palette",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-search-and-storage",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "expression": "false"
       }
@@ -6329,6 +6334,20 @@
         "description": "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamlbac.apiNoFallback",
+        "resourceVersion": "1792791570311",
+        "creationTimestamp": "2026-10-23T21:39:30Z"
+      },
+      "spec": {
+        "description": "Return Team LBAC API Kubernetes errors instead of falling back to legacy datasource rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

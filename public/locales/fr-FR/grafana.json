@@ -2047,7 +2047,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Appliquer"
+      "apply": "Appliquer",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5762,7 +5763,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5944,6 +5946,9 @@
       "render-label": {
         "tooltip-remove-property": "Supprimer la propriété"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "Ajouter {{typeName}}",
@@ -6441,6 +6446,9 @@
           "hide-header": "Masquer l’en-tête de ligne",
           "title": "Titre"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filtres"
         },
@@ -6522,11 +6530,10 @@
         "data-source": "Source de données",
         "display": "Afficher les contrôles d’annotation dans",
         "display-options": {
-          "above-dashboard": "Au-dessus du tableau de bord",
           "controls-menu": "Menu des commandes",
-          "controls-menu-description": "Accessible lorsque le menu des commandes est ouvert",
+          "controls-menu-description": "",
           "hidden": "Masqué",
-          "hidden-description": "Masque l’interrupteur permettant d’activer ou de désactiver cette annotation"
+          "hidden-description": ""
         },
         "enabled": "Activé",
         "enabled-description": "Lorsque cette option est activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
@@ -6629,7 +6636,9 @@
         "tab": "Onglet",
         "tabs": "Onglets",
         "variable": "Variable {{type}}",
-        "variable-set": "Variables"
+        "variable-set": "Variables",
+        "selected-panels_one": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Exporter"
@@ -6808,6 +6817,9 @@
             "description": "Répétez cet onglet pour chaque valeur de la variable sélectionnée.",
             "title": "Répéter par variable"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filtres"
@@ -7584,6 +7596,7 @@
       "error-invalid-json": "Fichier JSON non valide",
       "error-invalid-layout": "Le fichier JSON de la mise en page n’a pas été validé. Veuillez vérifier le fichier JSON et réessayer.",
       "error-invalid-v2-panel": "Le fichier JSON du panneau n’a pas été validé. Veuillez vérifier le fichier JSON et réessayer.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Erreur de validation"
     },
     "interval-variable-form": {
@@ -7760,7 +7773,9 @@
       "title-delete-all-transformations": "Supprimer toutes les transformations ?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Modifier la visualisation"
+      "edit-visualization": "Modifier la visualisation",
+      "panels-selected_one": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Basculer la vue du tableau",
@@ -14016,6 +14031,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Impossible de trouver quoi que ce soit correspondant à votre requête"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

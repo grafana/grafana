@@ -2,6 +2,7 @@ package team
 
 import (
 	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -147,12 +148,21 @@ func TestUnifiedTeamSearchErrors(t *testing.T) {
 	_, err := NewUnifiedSearchClient(&MockClient{MockError: wantErr}).Search(t.Context(), SearchQuery{})
 	require.ErrorIs(t, err, wantErr)
 
+	t.Run("status detail", func(t *testing.T) {
+		failure := &resourcepb.ErrorResult{
+			Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "index busy",
+			Details: &resourcepb.ErrorDetails{Group: "iam.grafana.app", Kind: "teams", RetryAfterSeconds: 7},
+		}
+		result, err := NewUnifiedSearchClient(&MockClient{MockError: resource.GRPCStatusError(failure)}).Search(t.Context(), SearchQuery{})
+		require.Nil(t, result)
+		require.Equal(t, resource.StatusError(failure), err)
+	})
+
 	for _, tt := range []struct {
 		name     string
 		response *resourcepb.ResourceSearchResponse
 		err      string
 	}{
-		{name: "response error", response: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: "index down"}}, err: "index down"},
 		{name: "unspecified format", response: &resourcepb.ResourceSearchResponse{}, err: "unsupported search result format"},
 		{name: "table format", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE}, err: "unsupported search result format"},
 		{name: "unsupported format", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(99)}, err: "unsupported search result format"},

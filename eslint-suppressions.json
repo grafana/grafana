@@ -1657,9 +1657,6 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/GrafanaEvaluationBehavior.tsx": {
-    "react-hooks/preserve-manual-memoization": {
-      "count": 3
-    },
     "react-hooks/set-state-in-effect": {
       "count": 1
     }
@@ -2763,11 +2760,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/solo/ViewPanelSidePane.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/solo/ViewPanelWrapper.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3356,9 +3348,6 @@
   },
   "public/app/features/geo/gazetteer/gazetteer.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
