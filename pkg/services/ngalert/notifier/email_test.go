@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -220,15 +221,21 @@ func createEmailSender(t *testing.T) *emailSender {
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../../../public/"
 	cfg.BuildVersion = "4.0.0"
-	cfg.Smtp.Enabled = true
-	cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
-	cfg.Smtp.FromAddress = "from@address.com"
-	cfg.Smtp.FromName = "Grafana Admin"
-	cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
-	cfg.Smtp.Host = "localhost:1234"
+	// The notification service reads these live from cfg.Raw.
+	smtpSection := cfg.Raw.Section("smtp")
+	smtpSection.Key("enabled").SetValue("true")
+	smtpSection.Key("from_address").SetValue("from@address.com")
+	smtpSection.Key("from_name").SetValue("Grafana Admin")
+	smtpSection.Key("host").SetValue("localhost:1234")
+	cfg.Raw.Section("emails").Key("content_types").SetValue("text/html, text/plain")
+	smtp, err := setting.ReadSmtpSettings(cfg.Raw, cfg.InstanceName)
+	require.NoError(t, err)
+	cfg.Smtp = smtp
 	mailer := notifications.NewFakeMailer()
 
-	ns, err := notifications.ProvideService(bus, cfg, mailer, nil)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	ns, err := notifications.ProvideService(bus, cfg, cfgProvider, mailer, nil)
 	require.NoError(t, err)
 
 	return &emailSender{ns: ns}

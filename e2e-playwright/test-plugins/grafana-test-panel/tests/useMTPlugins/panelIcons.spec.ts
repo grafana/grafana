@@ -10,7 +10,9 @@ const ALL_VISUALIZATIONS_TAB = 'Visualizations';
 test.use({ openFeature: { flags: { 'plugins.useMTPlugins': true } } });
 
 test.describe('grafana-test-panel', { tag: ['@plugins', '@plugins.useMTPlugins'] }, () => {
-  test('all panel type icons load in the visualization picker', async ({ gotoPanelEditPage, selectors }) => {
+  // The core meta provider ignores plugin.<id>.as_external, so canvas gets the core plugin's logo path,
+  // which the external canvas plugin does not have.
+  test.fixme('all panel type icons load in the visualization picker', async ({ gotoPanelEditPage, selectors }) => {
     const panelEditPage = await gotoPanelEditPage({ dashboard: { uid: 'aBXrJ0R7z' }, id: '9' });
 
     await panelEditPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();

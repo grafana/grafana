@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -39,7 +40,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 	t.Run("Testing Team commands and queries", func(t *testing.T) {
 		sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, tracing.InitializeTracerForTest(), nil)
+		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, tracing.InitializeTracerForTest(), nil, iamapi.Features{})
 		require.NoError(t, err)
 		testUser := &user.SignedInUser{
 			OrgID: 1,
@@ -380,6 +381,44 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, singleQueryResult.Teams[0].UID, teamUIDs[0])
 			})
 
+			t.Run("Should be able to query teams by member UID", func(t *testing.T) {
+				// setup appends on every DB reset, so the last user belongs to the current DB.
+				memberID, memberUID := userIds[len(userIds)-1], userUIDs[len(userUIDs)-1]
+				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+					if err := AddOrUpdateTeamMemberHook(dbHelper, sess, memberID, testOrgID, team1.ID, false, 0); err != nil {
+						return err
+					}
+					return AddOrUpdateTeamMemberHook(dbHelper, sess, memberID, testOrgID, team2.ID, false, 0)
+				})
+				require.NoError(t, err)
+				defer func() {
+					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+						if err := RemoveTeamMemberHook(dbHelper, sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: memberID, TeamID: team1.ID}); err != nil {
+							return err
+						}
+						return RemoveTeamMemberHook(dbHelper, sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: memberID, TeamID: team2.ID})
+					})
+					require.NoError(t, err)
+				}()
+
+				// TotalCount comes from a separate count query, so it must apply the member filter too.
+				pageResult, err := teamSvc.SearchTeams(context.Background(), &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, MemberUID: memberUID, Limit: 1, Page: 1})
+				require.NoError(t, err)
+				require.Len(t, pageResult.Teams, 1)
+				require.EqualValues(t, 2, pageResult.TotalCount)
+
+				nameResult, err := teamSvc.SearchTeams(context.Background(), &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, MemberUID: memberUID, Name: team2.Name, Limit: 10, Page: 1})
+				require.NoError(t, err)
+				require.Len(t, nameResult.Teams, 1)
+				require.EqualValues(t, 1, nameResult.TotalCount)
+				require.Equal(t, team2.UID, nameResult.Teams[0].UID)
+
+				missingResult, err := teamSvc.SearchTeams(context.Background(), &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, MemberUID: "no-such-user", Limit: 10, Page: 1})
+				require.NoError(t, err)
+				require.Empty(t, missingResult.Teams)
+				require.Zero(t, missingResult.TotalCount)
+			})
+
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 				setup()
@@ -580,7 +619,7 @@ func TestIntegrationSQLStore_DeleteRenderers(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil, iamapi.Features{})
 		require.NoError(t, err)
 		created, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{
 			Name:  "delete-renderer-test",
@@ -686,7 +725,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 	}
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil, iamapi.Features{})
 	require.NoError(t, err)
 
 	// Seed 10 teams
@@ -730,7 +769,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		dbHelper, err := legacysql.NewDatabaseProvider(store)(context.Background())
 		require.NoError(t, err)
 
-		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil, iamapi.Features{})
 		require.NoError(t, err)
 
 		team1Cmd := team.CreateTeamCommand{
@@ -760,7 +799,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			userCmd := user.CreateUserCommand{
 				Email: fmt.Sprint("user", i, "@example.org"),
 				Name:  fmt.Sprint("user", i),
@@ -791,7 +830,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	setup(store, cfg)
-	teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil, iamapi.Features{})
 	require.NoError(t, err)
 
 	type getTeamMembersTestCase struct {

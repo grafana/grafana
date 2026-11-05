@@ -21,18 +21,38 @@ import (
 
 func TestConnection_Test(t *testing.T) {
 	tests := []struct {
-		name           string
-		token          common.RawSecureValue
-		listErr        error
-		expectedCode   int
-		expectedErrors []provisioning.ErrorDetails
-		expectSuccess  bool
+		name            string
+		token           common.RawSecureValue
+		providerResults *provisioning.TestResults
+		expectedCode    int
+		expectedErrors  []provisioning.ErrorDetails
+		expectSuccess   bool
 	}{
 		{
-			name:          "success - token accepted by provider",
-			token:         marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
-			expectedCode:  http.StatusOK,
-			expectSuccess: true,
+			name:            "success - token accepted by provider",
+			token:           marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
+			providerResults: connection.SuccessTestResults(),
+			expectedCode:    http.StatusOK,
+			expectSuccess:   true,
+		},
+		{
+			name:            "success - token not expired yet",
+			token:           marshalTestToken(t, &oauth2.Token{AccessToken: "access", Expiry: time.Now().Add(time.Hour)}),
+			providerResults: connection.SuccessTestResults(),
+			expectedCode:    http.StatusOK,
+			expectSuccess:   true,
+		},
+		{
+			name:         "failure - token expired",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "access", Expiry: time.Now().Add(-time.Hour)}),
+			expectedCode: http.StatusUnauthorized,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "secure.token",
+					Detail: "The connection's access token has expired",
+				},
+			},
 		},
 		{
 			name:         "failure - no token stored",
@@ -70,8 +90,56 @@ func TestConnection_Test(t *testing.T) {
 			},
 		},
 		{
+			name:  "failure - provider results are returned as is",
+			token: marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
+			providerResults: connection.FailedTestResults(http.StatusUnauthorized, []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  "secure.token",
+				Detail: "The provider rejected the connection's access token",
+			}}),
+			expectedCode: http.StatusUnauthorized,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "secure.token",
+					Detail: "The provider rejected the connection's access token",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider := newMockProvider(t, "")
+			if tt.providerResults != nil {
+				provider.EXPECT().Test(mock.Anything).Return(tt.providerResults)
+			}
+			conn := newConnection(provider, provisioning.GitLabRepositoryType, testOAuthConfig, "", tt.token)
+
+			results, err := conn.Test(t.Context())
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectSuccess, results.Success)
+			assert.Equal(t, tt.expectedCode, results.Code)
+			assert.Equal(t, tt.expectedErrors, results.Errors)
+		})
+	}
+}
+
+func TestTestByListingRepositories(t *testing.T) {
+	tests := []struct {
+		name           string
+		listErr        error
+		expectedCode   int
+		expectedErrors []provisioning.ErrorDetails
+		expectSuccess  bool
+	}{
+		{
+			name:          "success - provider lists repositories",
+			expectedCode:  http.StatusOK,
+			expectSuccess: true,
+		},
+		{
 			name:         "failure - provider rejects token",
-			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
 			listErr:      connection.ErrAuthentication,
 			expectedCode: http.StatusUnauthorized,
 			expectedErrors: []provisioning.ErrorDetails{
@@ -84,7 +152,6 @@ func TestConnection_Test(t *testing.T) {
 		},
 		{
 			name:         "failure - provider returns other error",
-			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
 			listErr:      errors.New("boom"),
 			expectedCode: http.StatusUnprocessableEntity,
 			expectedErrors: []provisioning.ErrorDetails{
@@ -98,12 +165,10 @@ func TestConnection_Test(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			provider := newMockProvider(t, "")
-			provider.EXPECT().ListRepositories(mock.Anything).Return(nil, tt.listErr).Maybe()
-			conn := newConnection(provider, provisioning.GitLabRepositoryType, testOAuthConfig, "", tt.token)
+			lister := connection.NewMockRepositoryLister(t)
+			lister.EXPECT().ListRepositories(mock.Anything).Return(nil, tt.listErr)
 
-			results, err := conn.Test(t.Context())
-			require.NoError(t, err)
+			results := TestByListingRepositories(t.Context(), lister)
 			assert.Equal(t, tt.expectSuccess, results.Success)
 			assert.Equal(t, tt.expectedCode, results.Code)
 			assert.Equal(t, tt.expectedErrors, results.Errors)
@@ -180,10 +245,13 @@ func TestConnection_ListRepositories(t *testing.T) {
 	repos := []provisioning.ExternalRepository{{Name: "repo", Owner: "owner", URL: "https://gitlab.com/owner/repo"}}
 
 	t.Run("success", func(t *testing.T) {
-		provider := newMockProvider(t, "")
-		provider.EXPECT().ListRepositories(mock.Anything).Return(repos, nil)
-		conn := newConnection(provider, provisioning.GitLabRepositoryType, testOAuthConfig, "",
-			marshalTestToken(t, &oauth2.Token{AccessToken: "access"}))
+		lister := connection.NewMockRepositoryLister(t)
+		lister.EXPECT().ListRepositories(mock.Anything).Return(repos, nil)
+		conn := &listingConnection{
+			oauthConnection: newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "",
+				marshalTestToken(t, &oauth2.Token{AccessToken: "access"})),
+			lister: lister,
+		}
 
 		result, err := conn.ListRepositories(t.Context())
 		require.NoError(t, err)
@@ -191,7 +259,10 @@ func TestConnection_ListRepositories(t *testing.T) {
 	})
 
 	t.Run("failure - no token stored", func(t *testing.T) {
-		conn := newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "", "")
+		conn := &listingConnection{
+			oauthConnection: newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "", ""),
+			lister:          connection.NewMockRepositoryLister(t),
+		}
 
 		_, err := conn.ListRepositories(t.Context())
 		require.ErrorIs(t, err, connection.ErrAuthentication)
@@ -205,6 +276,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 		response     map[string]any
 		responseCode int
 		expectedErr  string
+		wantAuthErr  bool // error must be classified as connection.ErrAuthentication (user-actionable)
 		validate     func(t *testing.T, token *oauth2.Token)
 	}{
 		{
@@ -240,12 +312,60 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			name:        "failure - no refresh token",
 			token:       marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
 			expectedErr: "no refresh token available; authorize the OAuth application again",
+			wantAuthErr: true,
 		},
 		{
-			name:         "failure - token endpoint rejects refresh",
+			name:         "failure - invalid_grant (revoked/expired) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusBadRequest,
+			response:     map[string]any{"error": "invalid_grant"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - GitHub bad_refresh_token (HTTP 200) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusOK,
+			response:     map[string]any{"error": "bad_refresh_token"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - GitHub incorrect_client_credentials (HTTP 200) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusOK,
+			response:     map[string]any{"error": "incorrect_client_credentials"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - invalid_client (HTTP 400) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusBadRequest,
+			response:     map[string]any{"error": "invalid_client"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - token endpoint 401 is user-actionable",
 			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
 			responseCode: http.StatusUnauthorized,
 			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - token endpoint 429 stays system-caused (retryable)",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusTooManyRequests,
+			expectedErr:  "refresh access token",
+			wantAuthErr:  false,
+		},
+		{
+			name:         "failure - token endpoint 5xx stays system-caused",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusInternalServerError,
+			expectedErr:  "refresh access token",
+			wantAuthErr:  false,
 		},
 	}
 
@@ -257,12 +377,21 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			raw, err := conn.GenerateConnectionToken(t.Context())
 			if tt.expectedErr != "" {
 				require.ErrorContains(t, err, tt.expectedErr)
+				if tt.wantAuthErr {
+					assert.ErrorIs(t, err, connection.ErrAuthentication, "expected a user-actionable authentication error")
+				} else {
+					assert.NotErrorIs(t, err, connection.ErrAuthentication, "expected a system-caused error")
+				}
 				return
 			}
 			require.NoError(t, err)
+			require.NotNil(t, raw)
 
 			token := &oauth2.Token{}
-			require.NoError(t, json.Unmarshal([]byte(raw), token))
+			require.NoError(t, json.Unmarshal([]byte(raw.Token), token))
+			// The persisted expiration mirrors the access token's expiry (Equal
+			// ignores the monotonic-clock reading the live token carries).
+			assert.True(t, token.Expiry.Equal(raw.ExpiresAt))
 			tt.validate(t, token)
 		})
 	}
@@ -307,11 +436,14 @@ func TestConnection_ExchangeAuthorizationCode(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+			require.NotNil(t, raw)
 
 			token := &oauth2.Token{}
-			require.NoError(t, json.Unmarshal([]byte(raw), token))
+			require.NoError(t, json.Unmarshal([]byte(raw.Token), token))
 			assert.Equal(t, "access", token.AccessToken)
 			assert.Equal(t, "refresh", token.RefreshToken)
+			// The persisted expiration mirrors the exchanged token's expiry.
+			assert.True(t, token.Expiry.Equal(raw.ExpiresAt))
 		})
 	}
 }
@@ -384,6 +516,15 @@ func newTokenServer(t *testing.T, code int, response map[string]any) *httptest.S
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if code != 0 {
+			// A non-nil response with an error status returns a JSON OAuth error
+			// body (e.g. {"error":"invalid_grant"}) so oauth2 populates
+			// RetrieveError.ErrorCode; otherwise a plain status is returned.
+			if response != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(code)
+				require.NoError(t, json.NewEncoder(w).Encode(response))
+				return
+			}
 			http.Error(w, "denied", code)
 			return
 		}

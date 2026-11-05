@@ -91,9 +91,8 @@ export function prepConfig(opts: PrepConfigOpts) {
     isTime = false;
   }
 
-  const pxRatio = devicePixelRatio;
-
   let heatmapType = dataRef.current?.heatmap?.meta?.type;
+  let fillValues = dataRef.current?.heatmapColors?.values;
   const exemplarFillColor = theme.visualization.getColorByName(opts.exemplarColor);
 
   let qt: Quadtree;
@@ -111,24 +110,29 @@ export function prepConfig(opts: PrepConfigOpts) {
     });
   });
 
-  if (isTime) {
+  builder.addHook('setData', (u) => {
+    // Keep fills aligned with the data committed to uPlot; dataRef may advance before a deferred draw runs.
+    fillValues = dataRef.current?.heatmapColors?.values;
+
+    if (!isTime) {
+      return;
+    }
+
     // this is a tmp hack because in mode: 2, uplot does not currently call scales.x.range() for setData() calls
     // scales.x.range() typically reads back from drilled-down panelProps.timeRange via getTimeRange()
-    builder.addHook('setData', (u) => {
-      //let [min, max] = (u.scales!.x!.range! as uPlot.Range.Function)(u, 0, 100, xScaleKey);
+    //let [min, max] = (u.scales!.x!.range! as uPlot.Range.Function)(u, 0, 100, xScaleKey);
 
-      let { min: xMin, max: xMax } = u.scales!.x;
+    let { min: xMin, max: xMax } = u.scales!.x;
 
-      let min = getTimeRange().from.valueOf();
-      let max = getTimeRange().to.valueOf();
+    let min = getTimeRange().from.valueOf();
+    let max = getTimeRange().to.valueOf();
 
-      if (xMin !== min || xMax !== max) {
-        queueMicrotask(() => {
-          u.setScale(xScaleKey, { min, max });
-        });
-      }
-    });
-  }
+    if (xMin !== min || xMax !== max) {
+      queueMicrotask(() => {
+        u.setScale(xScaleKey, { min, max });
+      });
+    }
+  });
 
   builder.addHook('drawClear', (u) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
@@ -496,7 +500,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       ySizeDivisor,
       disp: {
         fill: {
-          values: (u, seriesIdx) => dataRef.current?.heatmapColors?.values!,
+          values: () => fillValues!,
           index: dataRef.current?.heatmapColors?.palette!,
         },
       },
@@ -532,7 +536,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         },
       },
       exemplarFillColor,
-      dataRef.current.yLayout
+      isOrdinalY ? dataRef.current.yLayout : undefined
     ),
     theme,
     scaleKey: '', // facets' scales used (above)
@@ -551,6 +555,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       if (seriesIdx === 1) {
         hRect = null;
 
+        const pxRatio = uPlot.pxRatio;
         let cx = u.cursor.left! * pxRatio;
         let cy = u.cursor.top! * pxRatio;
 
@@ -571,6 +576,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       fill: 'rgba(255,255,255, 0.3)',
       bbox: (u, seriesIdx) => {
         let isHovered = hRect && seriesIdx === hRect.sidx;
+        const pxRatio = uPlot.pxRatio;
 
         return {
           left: isHovered ? hRect!.x / pxRatio : -10,
@@ -592,13 +598,11 @@ const CRISP_EDGES_GAP_MIN = 4;
 export function heatmapPathsDense(opts: PathbuilderOpts) {
   const { disp, each, gap = 1, hideLE = -Infinity, hideGE = Infinity, xAlign = 1, yAlign = 1, ySizeDivisor = 1 } = opts;
 
-  const pxRatio = devicePixelRatio;
-
   const round = gap! >= CRISP_EDGES_GAP_MIN ? Math.round : (v: number) => v;
 
-  const cellGap = Math.round(gap! * pxRatio);
-
   return (u: uPlot, seriesIdx: number) => {
+    const cellGap = Math.round(gap! * uPlot.pxRatio);
+
     uPlot.orient(
       u,
       seriesIdx,
@@ -753,8 +757,8 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
 
           let x = valToPosX(dataX[i], scaleX, xDim, xOff);
           let y = valToPosY(yVal, scaleY, yDim, yOff);
-          let w = 8;
-          let h = 8;
+          let w = 6 * uPlot.pxRatio;
+          let h = 6 * uPlot.pxRatio;
 
           rect(points, x - w / 2, y - h / 2, w, h);
 
@@ -780,13 +784,11 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
 export function heatmapPathsSparse(opts: PathbuilderOpts) {
   const { disp, each, gap = 1, hideLE = -Infinity, hideGE = Infinity } = opts;
 
-  const pxRatio = devicePixelRatio;
-
   const round = gap! >= CRISP_EDGES_GAP_MIN ? Math.round : (v: number) => v;
 
-  const cellGap = Math.round(gap! * pxRatio);
-
   return (u: uPlot, seriesIdx: number) => {
+    const cellGap = Math.round(gap! * uPlot.pxRatio);
+
     uPlot.orient(
       u,
       seriesIdx,

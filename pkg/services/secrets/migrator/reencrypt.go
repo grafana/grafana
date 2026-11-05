@@ -227,8 +227,6 @@ func (s alertingSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Secre
 	var anyFailure bool
 
 	for _, result := range results {
-		result := result
-
 		err := sqlStore.InTransaction(ctx, func(ctx context.Context) error {
 			postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
 			if err != nil {
@@ -236,7 +234,7 @@ func (s alertingSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Secre
 				return err
 			}
 
-			for _, receiver := range postableUserConfig.AlertmanagerConfig.Receivers {
+			for _, receiver := range postableUserConfig.Receivers {
 				for _, gmr := range receiver.GrafanaManagedReceivers {
 					for k, v := range gmr.SecureSettings {
 						decoded, err := base64.StdEncoding.DecodeString(v)

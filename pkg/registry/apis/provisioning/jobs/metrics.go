@@ -22,11 +22,15 @@ type JobMetrics struct {
 	fullSyncPhaseDurationHist        *prometheus.HistogramVec // phases of full sync
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
 
+	throughputHist *prometheus.HistogramVec // resource ops per second achieved by a job, by action + variance
+
 	resourceOpsTotal   *prometheus.CounterVec   // per-resource outcome counter
 	resourceOpDuration *prometheus.HistogramVec // per-resource operation duration
 	resourceOpBytes    *prometheus.HistogramVec // per-resource content size in bytes
 	inFlight           *prometheus.GaugeVec     // jobs currently being processed, by driver + action
 	busySeconds        *prometheus.CounterVec   // job duration credited at completion, by driver + action
+
+	gitHTTPRequestsPerJob *prometheus.HistogramVec // git HTTP round trips a single job made, by action
 }
 
 // claimTrigger records what enqueued the work-queue key that a worker is now
@@ -228,6 +232,25 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		)
 		registry.MustRegister(syncDurationHist)
 
+		// Per-execution throughput: resources processed divided by the execution's
+		// wall-clock duration, observed once when the job finishes. Unlike
+		// rate(resource_operations_total), which is a fleet-wide rate over a scrape
+		// window, this captures the throughput of an individual run — so p50/p99 of
+		// this histogram answers "how fast is a single job going". The variance label
+		// breaks an action down further (full vs incremental for a pull job); it is
+		// empty for actions with no sub-type. The bucket range (0.1 -> 1000 ops/s)
+		// covers a slow large-resource run at the bottom and a fast, highly parallel
+		// run at the top.
+		throughputHist := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_throughput_ops_per_second",
+				Help:    "Resource operations per second achieved by a completed job (resources processed / job duration), by action and variance",
+				Buckets: prometheus.ExponentialBucketsRange(0.1, 1000, 12),
+			},
+			[]string{"action", "variance"},
+		)
+		registry.MustRegister(throughputHist)
+
 		resourceOpsTotal := prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_jobs_resource_operations_total",
@@ -277,6 +300,22 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		)
 		registry.MustRegister(busySeconds)
 
+		gitHTTPRequestsPerJob := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name: "grafana_provisioning_jobs_git_http_requests",
+				Help: "Number of git HTTP round trips a single job made to its remote, observed once per job at completion. Zero for jobs on repositories with no remote (e.g. local).",
+				// A leading 0 bucket so the documented zero-round-trip case (local/no-remote
+				// jobs) is distinguishable from a single request; then 1 -> 16384, since a
+				// trivial job is a handful of round trips and a large full sync on a slow
+				// remote can be thousands.
+				Buckets: append([]float64{0}, prometheus.ExponentialBuckets(1, 2, 15)...),
+			},
+			// variance mirrors the throughput metric: full vs incremental for a pull
+			// job, empty for actions with no sub-type.
+			[]string{"action", "variance"},
+		)
+		registry.MustRegister(gitHTTPRequestsPerJob)
+
 		jobMetrics = JobMetrics{
 			registry:                         registry,
 			processedTotal:                   processedTotal,
@@ -285,11 +324,13 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			incrementalSyncPhaseDurationHist: incrementalSyncPhaseDurationHist,
 			fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 			syncDurationHist:                 syncDurationHist,
+			throughputHist:                   throughputHist,
 			resourceOpsTotal:                 resourceOpsTotal,
 			resourceOpDuration:               resourceOpDuration,
 			resourceOpBytes:                  resourceOpBytes,
 			inFlight:                         inFlight,
 			busySeconds:                      busySeconds,
+			gitHTTPRequestsPerJob:            gitHTTPRequestsPerJob,
 		}
 	})
 	return jobMetrics
@@ -322,7 +363,7 @@ func (m *JobMetrics) RecordBusySeconds(driverID, action string, seconds float64)
 	m.busySeconds.WithLabelValues(driverID, action).Add(seconds)
 }
 
-func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountChanged int, resourceCountDryRun int, duration float64) {
+func (m *JobMetrics) RecordJob(jobAction string, variance string, outcome string, resourceCountChanged int, resourceCountDryRun int, duration float64) {
 	m.processedTotal.WithLabelValues(jobAction, outcome).Inc()
 
 	// Record duration for every outcome so slow-but-failing jobs are visible (a job
@@ -341,6 +382,33 @@ func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountCh
 	} else {
 		m.durationHist.WithLabelValues(jobAction, changedBucket, outcome).Observe(duration)
 	}
+
+	// Per-execution throughput: ops/second. A failed job's resource count is partial
+	// (see the bucket note above), so its ops/s would be misleading — record only jobs
+	// that ran to a success/warning state. Pull-request jobs measure work by resources
+	// dry-run rather than changed, matching the duration histogram's numerator. Skip
+	// the degenerate cases too: a non-positive duration would divide to +Inf, and a run
+	// that did no work is not a throughput sample worth keeping (it would pile up in the
+	// lowest bucket and drag the percentiles down).
+	ops := resourceCountChanged
+	if jobAction == string(provisioning.JobActionPullRequest) {
+		ops = resourceCountDryRun
+	}
+	if m.throughputHist != nil && outcome != utils.ErrorOutcome && ops > 0 && duration > 0 {
+		m.throughputHist.WithLabelValues(jobAction, variance).Observe(float64(ops) / duration)
+	}
+}
+
+// RecordGitClientStats records the git client work a single job did, observed
+// once at completion. Only the round-trip count feeds a metric (its
+// per-execution distribution is what a fleet-wide counter cannot give); the full
+// breakdown — retries, objects, bytes, cache hits/misses — is emitted on the
+// completion span and log line instead of as extra series. Nil-safe.
+func (m *JobMetrics) RecordGitClientStats(action string, variance string, httpRequests int64) {
+	if m == nil || m.gitHTTPRequestsPerJob == nil {
+		return
+	}
+	m.gitHTTPRequestsPerJob.WithLabelValues(action, variance).Observe(float64(httpRequests))
 }
 
 func (m *JobMetrics) RecordIncrementalSyncPhase(phase IncrementalSyncPhase, duration time.Duration) {

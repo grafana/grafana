@@ -1,8 +1,19 @@
-import { render, type RenderResult } from '@testing-library/react';
+import { render, screen, type RenderResult } from '@testing-library/react';
+import tinycolor from 'tinycolor2';
 
-import { type Field, FieldType, MappingType, createTheme } from '@grafana/data';
+import {
+  type Field,
+  FieldType,
+  MappingType,
+  ThemeContext,
+  createTheme,
+  fieldColorModeRegistry,
+  getColorByStringHash,
+} from '@grafana/data';
+import { FieldColorModeId } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
+import { getTagColorsFromName } from '../../../../utils/tags';
 
 import { PillCell } from './PillCell';
 
@@ -191,6 +202,98 @@ describe('PillCell', () => {
     });
   });
 
+  describe('Visual refresh', () => {
+    it.each([
+      ['dark', 'rgb(38, 0, 0)', 'rgb(255, 166, 166)'],
+      ['light', 'rgb(255, 230, 230)', 'rgb(89, 0, 0)'],
+    ] as const)('renders mapped pills with tonal colors in %s mode', (mode, backgroundColor, color) => {
+      const theme = createTheme({ colors: { mode } });
+      theme.flags.visualDesignRefresh = true;
+      const field = fieldWithValues(['error']);
+      field.config.mappings = [{ type: MappingType.ValueToText, options: { error: { color: '#ff0000' } } }];
+      field.display = () => ({ text: 'error', color: '#ff0000', numeric: 0 });
+
+      render(
+        <ThemeContext.Provider value={theme}>
+          <PillCell field={field} rowIdx={0} theme={theme} getTextColorForBackground={getTextColorForBackground} />
+        </ThemeContext.Provider>
+      );
+      expect(screen.getByText('error')).toHaveStyle({ backgroundColor, color });
+    });
+
+    // Tag reads the theme off context, so the flag has to be on the provided theme too — in the
+    // table the prop and the context theme are the same object.
+    const refreshTheme = createTheme();
+    refreshTheme.flags.visualDesignRefresh = true;
+
+    const renderRefreshed = (field: Field) =>
+      render(
+        <ThemeContext.Provider value={refreshTheme}>
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={field}
+            rowIdx={0}
+            theme={refreshTheme}
+          />
+        </ThemeContext.Provider>
+      );
+
+    it('renders pills with the refreshed Tag styling and colors', () => {
+      renderRefreshed(fieldWithValues(['value1,value2']));
+      for (const text of ['value1', 'value2']) {
+        const pill = screen.getByText(text);
+        const { background, text: textColor } = getTagColorsFromName(text, refreshTheme);
+        expect(pill).toHaveStyle({
+          backgroundColor: background,
+          color: textColor,
+          borderRadius: refreshTheme.shape.radius.pill,
+        });
+      }
+    });
+
+    it('uses tag colors when the field has the default thresholds color mode', () => {
+      const mockField = fieldWithValues(['value1']);
+      const field = {
+        ...mockField,
+        config: { ...mockField.config, color: { mode: FieldColorModeId.Thresholds } },
+      } satisfies Field;
+
+      // Thresholds is the default mode, but it has no categorical palette for coloring pills.
+      const { background, text } = getTagColorsFromName('value1', refreshTheme);
+      renderRefreshed(field);
+      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor: background, color: text });
+    });
+
+    it('derives a contrasting tonal pair from a fixed field color', () => {
+      const mockField = fieldWithValues(['value1']);
+      const fixed = {
+        ...mockField,
+        config: { ...mockField.config, color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
+      } satisfies Field;
+
+      renderRefreshed(fixed);
+      const pill = screen.getByText('value1');
+      expect(pill.style.backgroundColor).not.toBe(
+        tinycolor(refreshTheme.visualization.getColorByName('red')).toRgbString()
+      );
+      expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(4.5);
+    });
+
+    it('honours a categorical field palette over the tag colors', () => {
+      const mockField = fieldWithValues(['value1']);
+      const classic = {
+        ...mockField,
+        config: { ...mockField.config, color: { mode: FieldColorModeId.PaletteClassic } },
+      } satisfies Field;
+
+      renderRefreshed(classic);
+      const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic).getColors!(refreshTheme);
+      const pill = screen.getByText('value1');
+      expect(pill.style.backgroundColor).not.toBe(tinycolor(getColorByStringHash(palette, 'value1')).toRgbString());
+      expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(4.5);
+    });
+  });
+
   describe('Color by value mappings', () => {
     it('CSV values', () => {
       const mockField = fieldWithValues(['success,error,warning,unknown']);
@@ -232,6 +335,38 @@ describe('PillCell', () => {
         <span style="background-color: rgb(255, 0, 0); color: rgb(247, 248, 250);">error</span>
         <span style="background-color: rgb(255, 255, 0); color: rgb(32, 34, 38);">warning</span>
         <span style="background-color: rgb(255, 120, 10); color: rgb(247, 248, 250);">unknown</span>
+        `
+      );
+    });
+
+    it('looks the mapped color up by the raw value, not by the text the mapping renders', () => {
+      const mockField = fieldWithValues(['success,error']);
+      // a mapping that rewrites the text as well as the color. `display` resolves against the raw
+      // value, as the real one does, and has no answer for the text it produced — so looking the
+      // color up by that text loses the mapping.
+      const mapped: Record<string, { text: string; color: string }> = {
+        success: { text: 'OK', color: '#00FF00' },
+        error: { text: 'Bad', color: '#FF0000' },
+      };
+      const field = {
+        ...mockField,
+        config: {
+          ...mockField.config,
+          mappings: [{ type: MappingType.ValueToText, options: mapped }],
+        },
+        display: (value: unknown) => ({
+          ...(mapped[String(value)] ?? { text: String(value), color: '#FF780A' }),
+          numeric: 0,
+        }),
+      } satisfies Field;
+
+      expectHTML(
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        ),
+        `
+        <span style="background-color: rgb(0, 255, 0); color: rgb(247, 248, 250);">OK</span>
+        <span style="background-color: rgb(255, 0, 0); color: rgb(247, 248, 250);">Bad</span>
         `
       );
     });

@@ -201,14 +201,14 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 	require.NoError(c.t, err)
 	c.orgSvc = orgSvc
 
-	teamSvc, err := teamimpl.NewLegacyService(legacysql.NewDatabaseProvider(c.env.SQLStore), tracing.NewNoopTracerService())
+	teamSvc, err := teamimpl.NewLegacyService(legacysql.NewDatabaseProvider(c.env.SQLStore), tracing.NewNoopTracerService(), nil)
 	require.NoError(c.t, err)
 	c.teamSvc = teamSvc
 
 	userSvc, err := userimpl.NewLegacyService(
 		legacysql.NewDatabaseProvider(c.env.SQLStore), orgSvc, c.env.Cfg, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
-		supportbundlestest.NewFakeBundleService())
+		supportbundlestest.NewFakeBundleService(), nil)
 	require.NoError(c.t, err)
 	c.userSvc = userSvc
 
@@ -275,6 +275,10 @@ func (c *K8sTestHelper) SetGithubRepositoryFactory(f *githubRepository.Factory) 
 
 func (c *K8sTestHelper) SetQuotaStatus(status provisioning.QuotaStatus) {
 	c.env.QuotaGetter.(*quotas.FixedQuotaGetter).SetQuotaStatus(status)
+}
+
+func (c *K8sTestHelper) SetQuotaError(err error) {
+	c.env.QuotaGetter.(*quotas.FixedQuotaGetter).SetError(err)
 }
 
 func (c *K8sTestHelper) GetListenerAddress() string {

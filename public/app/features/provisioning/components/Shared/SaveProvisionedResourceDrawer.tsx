@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { customAlphabet } from 'nanoid';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -15,26 +14,21 @@ import {
 } from 'app/features/apiserver/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { useCreateOrUpdateRepositoryFile } from '../../hooks/useCreateOrUpdateRepositoryFile';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { useProvisionedResourceDrawerHandlers } from '../../hooks/useProvisionedResourceDrawerHandlers';
-import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
 import { type ResourceBranchAction } from '../../utils/redirect';
 import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
+import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
-import {
-  getCanPushToConfiguredBranch,
-  getDefaultRef,
-  getDefaultWorkflow,
-  shouldEnforceBranchTemplate,
-} from '../defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 import { slugifyForFilename } from '../utils/path';
 
@@ -154,7 +148,7 @@ function FormContent({
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues, mode: 'onBlur' });
   const { handleSubmit, watch, formState } = methods;
-  const [workflow] = watch(['workflow']);
+  const ref = watch('ref') ?? '';
 
   // Default the success handlers to the kind's list navigation (invalidate + navigate); a caller can
   // override either. `create`/`update`/`delete` differ only by the PR-banner action param.
@@ -178,30 +172,28 @@ function FormContent({
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  // Branch (PR) workflow: pre-fill the branch from the repository's name template and lock the field
-  // when the repository enforces it; render the PR title from the title template for the PR banner.
-  const { locked: lockBranch } = useBranchTemplate({
+  // Branch-name template fill/lock and the PR title for the banner follow from the target branch.
+  const { workflow, isNewBranch, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
-    workflow,
-    value: watch('ref') ?? '',
-    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+    ref,
+    isRefDirty: Boolean(formState.dirtyFields.ref),
+    setRef: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
 
   const showError = (err: unknown) => {
     setError(getProvisionedRequestError(err, t('provisioning.save-resource.error-saving', 'Failed to save changes')));
   };
 
   const { handleSuccess } = useProvisionedRequestHandler({
-    workflow,
+    isNewBranch,
     resourceType,
     repository,
     successMessage,
     handlers: {
       onDismiss,
       onWriteSuccess: () => writeSuccess(),
-      // Branch (PR) workflow: pass the repo info so the destination page can render the PR banner.
+      // Pushed to a branch: pass the repo info so the destination page can render the PR banner.
       onBranchSuccess: ({ ref, urls }) =>
         branchSuccess({
           ref,
@@ -214,7 +206,7 @@ function FormContent({
     },
   });
 
-  const doSave = async ({ ref, workflow, path }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, path }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     // Use the submitted path: for new resources the path field is editable, so the user may have
@@ -225,8 +217,7 @@ function FormContent({
       return;
     }
 
-    // For the write workflow we commit to the configured branch; otherwise use the selected branch.
-    const branchRef = workflow === 'write' ? undefined : ref;
+    const branchRef = getRequestRef(repository, ref);
 
     reportInteraction('grafana_provisioning_resource_save_submitted', {
       resourceType,
@@ -239,7 +230,7 @@ function FormContent({
       const data = isDelete
         ? await deleteFile({ name: repoName, path, ref: branchRef, message }).unwrap()
         : await saveFile({ name: repoName, path, ref: branchRef, message, body: body ?? {} }).unwrap();
-      handleSuccess(data, { workflow, selectedBranch: ref });
+      handleSuccess(data);
     } catch (err) {
       showError(err);
     }
@@ -262,10 +253,11 @@ function FormContent({
           {error && <ProvisioningAlert error={error} />}
 
           <Stack gap={2}>
-            <Button variant="secondary" fill="outline" onClick={onDismiss}>
-              {t('provisioning.save-resource.button-cancel', 'Cancel')}
-            </Button>
-            <Button type="submit" variant={isDelete ? 'destructive' : 'primary'} disabled={request.isLoading}>
+            <Button
+              type="submit"
+              variant={isDelete ? 'destructive' : 'primary'}
+              disabled={request.isLoading || isResolving}
+            >
               {isDelete
                 ? request.isLoading
                   ? t('provisioning.save-resource.button-deleting', 'Deleting...')
@@ -273,6 +265,9 @@ function FormContent({
                 : request.isLoading
                   ? t('provisioning.save-resource.button-saving', 'Saving...')
                   : t('provisioning.save-resource.button-save', 'Save')}
+            </Button>
+            <Button variant="secondary" fill="outline" onClick={onDismiss}>
+              {t('provisioning.save-resource.button-cancel', 'Cancel')}
             </Button>
           </Stack>
         </Stack>
@@ -358,7 +353,6 @@ function ResourceDrawerContent({
   });
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const sourcePath = getSourcePath(managedResource);
-  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   // Title combines a shared translated template with the kind's translated noun (interpolated, so
   // translators control word order), instead of a per-kind "Save/Delete provisioned <kind>" string.
@@ -379,13 +373,8 @@ function ResourceDrawerContent({
       ref: getDefaultRef(repository, prefix),
       repo: repository.name || '',
       path: sourcePath || '',
-      // When the branch name template is enforced, push through the branch workflow so the templated
-      // branch is created and sent as `ref`; useBranchTemplate then fills it.
-      workflow: shouldEnforceBranchTemplate(repository, gitConventionsEnabled)
-        ? ('branch' as const)
-        : getDefaultWorkflow(repository),
     };
-  }, [repository, isLoading, title, sourcePath, prefix, gitConventionsEnabled]);
+  }, [repository, isLoading, title, sourcePath, prefix]);
 
   return (
     <Drawer

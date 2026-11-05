@@ -7,13 +7,12 @@ import (
 	"fmt"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/grafana/dskit/backoff"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
-	"time"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 const (
@@ -23,9 +22,14 @@ const (
 	defaultBufferSize  = 10000
 )
 
-type notifier interface {
+// EventWatcher streams change events as they happen.
+type EventWatcher interface {
 	// Watch returns a channel that will receive events as they happen.
 	Watch(context.Context, WatchOptions) <-chan Event
+}
+
+type notifier interface {
+	EventWatcher
 	// Publish lets callers to inform watchers about events. Some notifiers
 	// (e.g., channel notifier) require callers to provide the events to be published.
 	// Others (e.g., polling notifier) queries events separately, making
@@ -33,18 +37,25 @@ type notifier interface {
 	Publish(Event)
 }
 
+var (
+	_ notifier = (*pollingNotifier)(nil)
+	_ notifier = (*channelNotifier)(nil)
+	_ notifier = (*natsNotifier)(nil)
+)
+
 type pollingNotifier struct {
 	eventStore *eventStore
-	log        log.Logger
+	log        logging.Logger
 }
 
 type notifierOptions struct {
-	log                log.Logger
+	log                logging.Logger
 	useChannelNotifier bool
 
 	enableNatsNotifier bool
 	eventSubscriber    EventSubscriber
 	natsDropped        *prometheus.CounterVec
+	invalidator        Invalidator
 }
 
 type WatchOptions struct {
@@ -52,6 +63,16 @@ type WatchOptions struct {
 	BufferSize  int           // How many events to buffer
 	MinBackoff  time.Duration // Minimum interval between polling requests
 	MaxBackoff  time.Duration // Maximum interval between polling requests
+
+	// CaptureReady, when set, is a buffered channel that gets one value: nil
+	// once the notifier captures every later write, or the error that stopped it.
+	CaptureReady chan<- error
+}
+
+func (opts WatchOptions) captured(err error) {
+	if opts.CaptureReady != nil {
+		opts.CaptureReady <- err
+	}
 }
 
 func (opts WatchOptions) normalize() WatchOptions {
@@ -73,25 +94,25 @@ func (opts WatchOptions) normalize() WatchOptions {
 func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
 	if opts.enableNatsNotifier {
 		if opts.eventSubscriber != nil && opts.eventSubscriber.Enabled() {
-			return newNatsNotifier(opts.eventSubscriber, opts.natsDropped, opts.log.New("notifier", "natsNotifier"))
+			return newNatsNotifier(opts.eventSubscriber, opts.invalidator, opts.natsDropped, opts.log.With("notifier", "natsNotifier"))
 		}
 		opts.log.Warn("nats notifier requested but subscriber unavailable, falling back to polling")
 	}
 
 	if opts.useChannelNotifier {
-		return newChannelNotifier(opts.log.New("notifier", "channelNotifier"))
+		return newChannelNotifier(opts.log.With("notifier", "channelNotifier"))
 	}
 
-	return &pollingNotifier{eventStore: eventStore, log: opts.log.New("notifier", "pollingNotifier")}
+	return &pollingNotifier{eventStore: eventStore, log: opts.log.With("notifier", "pollingNotifier")}
 }
 
 type channelNotifier struct {
-	log         log.Logger
+	log         logging.Logger
 	subscribers map[chan Event]struct{}
 	mu          sync.Mutex
 }
 
-func newChannelNotifier(log log.Logger) *channelNotifier {
+func newChannelNotifier(log logging.Logger) *channelNotifier {
 	return &channelNotifier{
 		log:         log,
 		subscribers: make(map[chan Event]struct{}),
@@ -112,6 +133,7 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 	cn.mu.Lock()
 	cn.subscribers[raw] = struct{}{}
 	cn.mu.Unlock()
+	opts.captured(nil)
 
 	// Output channel with settled, sorted events, returned to the watcher.
 	out := make(chan Event, opts.BufferSize)
@@ -160,9 +182,9 @@ func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts 
 		})
 
 		// Emit events that have "settled" (old enough that concurrent writes should have appeared).
-		threshold := snowflakeFromTime(time.Now().Add(-opts.SettleDelay))
+		settled := settledBefore(time.Now().Add(-opts.SettleDelay))
 		emitted := 0
-		for emitted < len(buffer) && buffer[emitted].ResourceVersion <= threshold {
+		for emitted < len(buffer) && settled(buffer[emitted].ResourceVersion) {
 			select {
 			case out <- buffer[emitted]:
 			case <-ctx.Done():
@@ -171,6 +193,18 @@ func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts 
 			emitted++
 		}
 		buffer = buffer[emitted:]
+	}
+}
+
+// settledBefore reports whether an RV was written before cutoff. Legacy SQL RVs
+// are microsecond timestamps, which compare below any snowflake threshold.
+func settledBefore(cutoff time.Time) func(rv int64) bool {
+	snowflakeCutoff, microCutoff := snowflakeFromTime(cutoff), cutoff.UnixMicro()
+	return func(rv int64) bool {
+		if IsSnowflake(rv) {
+			return rv <= snowflakeCutoff
+		}
+		return rv <= microCutoff
 	}
 }
 
@@ -211,7 +245,13 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 		lastEmittedRV = 0 // No events yet, start from the beginning
 	} else if err != nil {
 		n.log.Error("Failed to get last event resource version", "error", err)
+		if opts.CaptureReady != nil {
+			opts.captured(err)
+			close(events)
+			return events
+		}
 	}
+	opts.captured(nil)
 
 	go func() {
 		defer close(events)
@@ -239,10 +279,12 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 			case <-time.After(currentInterval):
 				// Poll for new events since lastEmittedRV.
 				// ListSince is inclusive, so skip events at or below lastEmittedRV.
-				for evt, err := range n.eventStore.ListSince(ctx, lastEmittedRV, SortOrderAsc) {
+				listFailed := false
+				for evt, err := range n.eventStore.ListSince(ctx, lastEmittedRV) {
 					if err != nil {
 						n.log.Error("Failed to list events since", "error", err)
-						continue
+						listFailed = true
+						break
 					}
 					if evt.ResourceVersion <= lastEmittedRV {
 						continue
@@ -253,6 +295,13 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 					}
 					seen[key] = true
 					buffer = append(buffer, evt)
+				}
+
+				// A partial scan may end within a shared RV. Retain the buffer, but
+				// do not advance lastEmittedRV past unread events until a scan succeeds.
+				if listFailed {
+					currentInterval = bo.NextDelay()
+					continue
 				}
 
 				// Sort buffer by RV

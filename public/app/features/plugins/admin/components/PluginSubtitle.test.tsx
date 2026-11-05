@@ -105,6 +105,21 @@ describe('PluginSubtitle', () => {
       expect(screen.queryByText(/permission to uninstall/i)).not.toBeInTheDocument();
     });
   });
+
+  describe('when grafana.com is unreachable', () => {
+    beforeEach(() => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      jest.spyOn(runtime, 'useIsRemotePluginsAvailable').mockReturnValue(false);
+    });
+
+    it('renders the unreachable warning instead of the not published one', () => {
+      const plugin = { ...basePlugin, isInstalled: true, isPublished: false };
+      render(<PluginSubtitle plugin={plugin} />);
+      expect(screen.getByText(/cannot access grafana.com/i)).toBeInTheDocument();
+      expect(screen.queryByText(/not published/i)).not.toBeInTheDocument();
+    });
+  });
+
   it('renders plugin subtitle extensions', () => {
     const TestExtension = () => <div>Extension Content</div>;
     registerPluginSubtitleExtension(TestExtension);

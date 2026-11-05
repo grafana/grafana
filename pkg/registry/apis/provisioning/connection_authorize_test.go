@@ -2,10 +2,12 @@ package provisioning
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,7 +19,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1/fake"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // mockOAuthCapableConnection combines the generated Connection and
@@ -136,7 +137,7 @@ func TestConnectionAuthorizeConnector(t *testing.T) {
 		}
 		oauthConn.MockOAuthConnection.EXPECT().
 			ExchangeAuthorizationCode(mock.Anything, "abc", "").
-			Return("", errors.New("provider rejected the code"))
+			Return(nil, errors.New("provider rejected the code"))
 		access := NewMockConnectionAuthorizeAccess(t)
 		access.EXPECT().GetConnectionSpec(mock.Anything, "test-connection").Return(testAuthorizeConnection(), nil)
 		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(oauthConn, nil)
@@ -160,7 +161,7 @@ func TestConnectionAuthorizeConnector(t *testing.T) {
 		}
 		oauthConn.MockOAuthConnection.EXPECT().
 			ExchangeAuthorizationCode(mock.Anything, "abc", "").
-			Return(common.RawSecureValue("new-token"), nil)
+			Return(&connection.ExpirableSecureValue{Token: "new-token"}, nil)
 		access := NewMockConnectionAuthorizeAccess(t)
 		access.EXPECT().GetConnectionSpec(mock.Anything, "test-connection").Return(testAuthorizeConnection(), nil)
 		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(oauthConn, nil)
@@ -175,17 +176,20 @@ func TestConnectionAuthorizeConnector(t *testing.T) {
 
 	t.Run("exchanges the code and clears it from the response", func(t *testing.T) {
 		responder := &mockResponder{}
+		var capturedPatch []byte
 		fakeClient := &fake.FakeProvisioningV0alpha1{Fake: &k8testing.Fake{}}
 		fakeClient.PrependReactor("patch", "connections", func(action k8testing.Action) (bool, runtime.Object, error) {
+			capturedPatch = action.(k8testing.PatchAction).GetPatch()
 			return true, &provisioning.Connection{}, nil
 		})
 		oauthConn := &mockOAuthCapableConnection{
 			MockConnection:      connection.NewMockConnection(t),
 			MockOAuthConnection: connection.NewMockOAuthConnection(t),
 		}
+		expiresAt := time.Now().Add(time.Hour)
 		oauthConn.MockOAuthConnection.EXPECT().
 			ExchangeAuthorizationCode(mock.Anything, "abc", "https://grafana.example.com/callback").
-			Return(common.RawSecureValue("new-token"), nil)
+			Return(&connection.ExpirableSecureValue{Token: "new-token", ExpiresAt: expiresAt}, nil)
 		access := NewMockConnectionAuthorizeAccess(t)
 		access.EXPECT().GetConnectionSpec(mock.Anything, "test-connection").Return(testAuthorizeConnection(), nil)
 		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(oauthConn, nil)
@@ -202,6 +206,9 @@ func TestConnectionAuthorizeConnector(t *testing.T) {
 		require.True(t, ok)
 		require.True(t, resp.Status.Authorized)
 		require.Empty(t, resp.Spec.Code)
+		// The exchanged token's expiration is persisted on status so its first
+		// lifetime is observable by the freshness counter.
+		require.Contains(t, string(capturedPatch), fmt.Sprintf(`"expiration":%d`, expiresAt.UnixMilli()))
 	})
 }
 

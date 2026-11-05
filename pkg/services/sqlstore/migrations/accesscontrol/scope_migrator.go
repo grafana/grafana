@@ -18,7 +18,7 @@ func AddAlertingScopeRemovalMigration(mg *migrator.Migrator) {
 	mg.AddMigration(AlertingScopeRemovalMigrationID, &alertingScopeRemovalMigrator{})
 }
 
-var _ migrator.CodeMigration = new(alertingScopeRemovalMigrator)
+var _ migrator.CodeMigration = (*alertingScopeRemovalMigrator)(nil)
 
 type alertingScopeRemovalMigrator struct {
 	permissionMigrator
@@ -39,7 +39,7 @@ func AddAnnotationsAllScopeReplacementMigration(mg *migrator.Migrator) {
 	mg.AddMigration(AnnotationsAllScopeReplacementMigrationID, &annotationsAllScopeReplacementMigrator{})
 }
 
-var _ migrator.CodeMigration = new(annotationsAllScopeReplacementMigrator)
+var _ migrator.CodeMigration = (*annotationsAllScopeReplacementMigrator)(nil)
 
 type annotationsAllScopeReplacementMigrator struct {
 	permissionMigrator

@@ -67,6 +67,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 		})
 		if err != nil {
 			if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
+				ap.log.Error("Failed to get existing plugin settings", "type", app.PluginID, "orgId", app.OrgID, "error", err)
 				return fmt.Errorf("%w: %s", err, app.PluginID)
 			}
 		} else {

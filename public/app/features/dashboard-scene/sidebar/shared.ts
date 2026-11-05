@@ -5,9 +5,10 @@ import { type ElementSelectionContextItem } from '@grafana/ui';
 import { getEditableElementFor } from '../actions/utils/getEditableElementFor';
 import { type BulkActionElement, isBulkActionElement } from '../scene/types/BulkActionElement';
 import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { getDashboardSceneFor } from '../utils/utils';
 
-import { type DashboardSidebar } from './DashboardSidebar';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
+import { type DashboardSidebarLike } from './types';
 
 export const SIDEBAR_COLLAPSED_KEY = 'grafana.dashboards.sidebar.isCollapsed';
 
@@ -16,7 +17,7 @@ export function useSidebarCollapsed() {
 }
 
 export function getEditableElementForSelection(
-  sidebar: DashboardSidebar,
+  sidebar: DashboardSidebarLike,
   selected: ElementSelectionContextItem[]
 ): EditableDashboardElement | undefined {
   if (selected.length === 1) {
@@ -43,7 +44,7 @@ export function getEditableElementForSelection(
       return first.createMultiSelectedElement(elements);
     }
 
-    return new MultiSelectedObjectsEditableElement(elements);
+    return new MultiSelectedObjectsEditableElement(elements, getDashboardSceneFor(sidebar));
   }
 
   return undefined;

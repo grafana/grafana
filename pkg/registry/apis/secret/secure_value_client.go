@@ -38,7 +38,7 @@ type secureValueClient struct {
 	access    authorizer.Authorizer
 }
 
-var _ SecureValueClient = &secureValueClient{}
+var _ SecureValueClient = (*secureValueClient)(nil)
 
 func ProvideSecureValueClient(service contracts.SecureValueService, validator contracts.SecureValueValidator, access claims.AccessClient) SecureValueClient {
 	return &secureValueClient{
@@ -259,6 +259,8 @@ func (c *secureValueClient) mapError(err error, name string) error {
 		return apierrors.NewNotFound(gr, name)
 	case errors.Is(err, ErrSecureValueAlreadyExists):
 		return apierrors.NewAlreadyExists(gr, name)
+	case errors.Is(err, contracts.ErrSecureValueConflict):
+		return apierrors.NewConflict(gr, name, err)
 	}
 
 	return apierrors.NewInternalError(err)

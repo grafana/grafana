@@ -133,7 +133,7 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
           {cardType === QueryEditorType.Alert ? (
             <AlertsView alertRules={alertRules} />
           ) : (
-            <QueriesAndTransformationsView showButtonLabels={showButtonLabels} />
+            <QueriesAndTransformationsView />
           )}
         </div>
       </ScrollContainer>

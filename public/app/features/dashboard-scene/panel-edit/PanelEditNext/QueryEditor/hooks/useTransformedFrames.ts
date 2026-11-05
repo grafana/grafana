@@ -8,6 +8,9 @@ import {
   type DataFrame,
   type DataTransformContext,
   type DataTransformerConfig,
+  type FrameMatcher,
+  getFrameMatchers,
+  type PanelData,
   transformDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -50,7 +53,7 @@ const reportedUnresolvable = new WeakSet<DataTransformerConfig>();
  * Custom operators are skipped, matching the pipeline: their options are captured in a closure, so
  * there is nothing here to resolve.
  */
-function interpolateConfigs(configs: TransformationConfigs): TransformationConfigs {
+export function interpolateConfigs<T extends TransformationConfigs[number]>(configs: T[]): T[] {
   return configs.map((config) => {
     if (!isInterpolatable(config)) {
       return config;
@@ -82,6 +85,33 @@ export function isInterpolatable(config: TransformationConfigs[number]): config 
 }
 
 /**
+ * The matcher for a filter as the pipeline applies it, or nothing if that filter cannot be built
+ * into one.
+ *
+ * Pass an interpolated config — {@link FrameReplay.configs} or {@link useInterpolatedConfigs} —
+ * rather than the stored one: a `$var` in the filter resolves before the replay sees it, so a
+ * matcher built from the original narrows on the literal.
+ *
+ * `getFrameMatchers` throws on a matcher id it does not know, and `byName` runs its option through
+ * `stringToJsRegex`, which throws on a `/`-prefixed string that is not a complete `/pattern/flags` —
+ * a variable resolving to a path is enough. The pipeline's own call sits behind the replay's error
+ * handling; this one runs during render, where a throw would take the surrounding editor down with
+ * it, so a filter that cannot be built is treated as no filter at all.
+ */
+export function frameMatcherFor(config: TransformationConfigs[number] | undefined): FrameMatcher | undefined {
+  if (config === undefined || !isInterpolatable(config) || !config.filter?.options) {
+    return undefined;
+  }
+
+  try {
+    return getFrameMatchers(config.filter);
+  } catch (err) {
+    console.error('Failed to build a transformation filter for the panel editor', err);
+    return undefined;
+  }
+}
+
+/**
  * Whether two configs resolve to the same transformation. Custom operators are compared by
  * identity, which is what "unchanged" means for something interpolation passes through untouched.
  */
@@ -98,7 +128,7 @@ function isSameConfig(a: TransformationConfigs[number], b: TransformationConfigs
  * objects in Scene state still hold the literal `$var`. The resolved options are the only thing that
  * moves, so they are the only thing an effect can key on.
  */
-function useInterpolatedConfigs(configs: TransformationConfigs): TransformationConfigs {
+export function useInterpolatedConfigs(configs: TransformationConfigs): TransformationConfigs {
   return useStableArray(interpolateConfigs(configs), isSameConfig);
 }
 
@@ -239,23 +269,39 @@ function logTransformationFailure(err: unknown) {
   console.error('Failed to replay transformations for the panel editor', err);
 }
 
+/** The frames a transformation runs over follow its topic: annotation ones never receive series. */
+export function transformationTopic(transformation: Transformation): DataTopic {
+  return transformation.transformConfig.topic === DataTopic.Annotations ? DataTopic.Annotations : DataTopic.Series;
+}
+
+/**
+ * The query frames `transformation` runs over, matching {@link precedingTransformations}. Returns the
+ * panel data's own arrays, or a shared empty one, so callers get a stable identity across renders.
+ */
+export function framesForTopic(data: PanelData | undefined, transformation: Transformation | null): DataFrame[] {
+  const frames =
+    transformation && transformationTopic(transformation) === DataTopic.Annotations ? data?.annotations : data?.series;
+  return frames ?? NO_FRAMES;
+}
+
 /**
  * What the pipeline runs ahead of `selected`: the user's transformations up to it.
  *
- * Annotation-topic entries are left out, because the pipeline routes those to `data.annotations` in
- * a separate pass — replaying them over the series would apply a transformation to frames it never
- * receives.
+ * Only entries sharing `selected`'s topic are kept, because the pipeline routes each topic through its
+ * own pass — series transformations over `data.series`, annotation ones over `data.annotations`.
+ * Replaying the other topic's entries would apply a transformation to frames it never receives.
  *
  * A `selected` the list does not contain is treated as first rather than sliced by its `-1` index,
  * which would silently drop the list's last entry.
  */
 export function precedingTransformations(selected: Transformation, all: Transformation[]): TransformationConfigs {
+  const topic = transformationTopic(selected);
   const selectedIndex = all.findIndex(({ transformId }) => transformId === selected.transformId);
 
   const preceding = all
     .slice(0, Math.max(selectedIndex, 0))
     .map(({ transformConfig }) => transformConfig)
-    .filter((config) => config.topic == null || config.topic === DataTopic.Series);
+    .filter((config) => (config.topic ?? DataTopic.Series) === topic);
 
   return preceding.length === 0 ? NO_CONFIGS : preceding;
 }

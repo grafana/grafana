@@ -27,36 +27,29 @@ func isPublic(metadata map[string]any) bool {
 	}
 }
 
-// bulkFlagEvalFilteringEnabled reads the features.bulkFlagEvalFiltering flag.
-// It gates only authed bulk filtering while unauth is always filtered to public flags.
-func bulkFlagEvalFilteringEnabled(ctx context.Context, logger log.Logger) bool {
+func (b *APIBuilder) bypassEnabled(ctx context.Context, logger log.Logger) bool {
+	if b.goffURL == nil {
+		return false
+	}
+
 	evalCtx := openfeature.TransactionContext(ctx)
 
 	details, err := openfeature.NewDefaultClient().BooleanValueDetails(
 		ctx,
-		featuremgmt.FlagFeaturesBulkFlagEvalFiltering,
+		featuremgmt.FlagFeaturesLegacyOverrideLookupBypass,
 		false,
 		evalCtx,
 	)
 
-	if err != nil {
-		logger.Warn("Failed to evaluate bulkFlagEvalFiltering, falling back to default",
-			"default", details.Value,
-			"errorCode", details.ErrorCode,
-			"errorMessage", details.ErrorMessage,
-			"targetingKey", evalCtx.TargetingKey(),
-			"attributes", evalCtx.Attributes(),
-			"err", err,
-		)
-		return details.Value
-	}
-
-	logger.Debug("Successfully evaluated bulkFlagEvalFiltering",
+	logger.Debug("legacyOverrideLookupBypass evaluation result",
 		"value", details.Value,
 		"variant", details.Variant,
 		"reason", details.Reason,
+		"errorCode", details.ErrorCode,
+		"errorMessage", details.ErrorMessage,
 		"targetingKey", evalCtx.TargetingKey(),
 		"attributes", evalCtx.Attributes(),
+		"err", err,
 	)
 
 	return details.Value

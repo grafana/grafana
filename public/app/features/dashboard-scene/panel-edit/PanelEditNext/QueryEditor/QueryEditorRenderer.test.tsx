@@ -1,6 +1,6 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { InMemoryProvider, OpenFeature, OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { type PropsWithChildren, type ReactElement, useEffect, useRef, useState } from 'react';
+import { type PropsWithChildren, type ReactElement, StrictMode, useEffect, useRef, useState } from 'react';
 
 import {
   type DataQueryError,
@@ -12,11 +12,16 @@ import {
   type TestDataSourceResponse,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 
+import { DashboardScene } from '../../../scene/DashboardScene';
+import { DashboardGridItem } from '../../../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../../../scene/layout-default/DefaultGridLayoutManager';
+import { buildPanelEditScene } from '../../PanelEditor';
 import { QueryEditorType } from '../constants';
 
 import { QueryEditorProvider } from './QueryEditorContext';
@@ -35,6 +40,11 @@ import {
   mockUIStateBase,
   renderWithQueryEditorProvider,
 } from './testUtils';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 jest.mock('app/features/query/components/QueryEditorRow', () => ({
   filterPanelDataToQuery: jest.fn(() => undefined),
@@ -84,12 +94,14 @@ const queryB: TestQuery = { refId: 'B', legendFormat: 'series-b' };
 
 function renderRenderer(
   selectedQuery: DataQuery | null,
-  uiStateOverrides: NonNullable<Parameters<typeof renderWithQueryEditorProvider>[1]>['uiStateOverrides'] = {}
+  uiStateOverrides: NonNullable<Parameters<typeof renderWithQueryEditorProvider>[1]>['uiStateOverrides'] = {},
+  dsState: NonNullable<Parameters<typeof renderWithQueryEditorProvider>[1]>['dsState'] = {}
 ) {
   return renderWithQueryEditorProvider(<QueryEditorRenderer />, {
     queries: [queryA, queryB],
     selectedQuery,
     uiStateOverrides: { selectedQueryDsData, ...uiStateOverrides },
+    dsState,
   });
 }
 
@@ -124,6 +136,13 @@ describe('QueryEditorRenderer', () => {
     renderRenderer(queryA, { selectedQueryDsData: null });
     expect(screen.getByText(/failed to load datasource for this query/i)).toBeInTheDocument();
     expect(screen.getByText(/select a datasource for this query/i)).toBeInTheDocument();
+  });
+
+  it('shows a datasource error', () => {
+    renderRenderer(queryA, {}, { dsError: new Error('Failed to load datasource: Prometheus') });
+
+    const alert = screen.getByRole('alert', { name: 'Datasource error' });
+    expect(alert).toHaveTextContent(/failed to load datasource: prometheus/i);
   });
 
   it('renders the query editor for the selected query', () => {
@@ -256,6 +275,7 @@ describe('QueryEditorRenderer', () => {
     const secondSettings = { ...ds1SettingsMock, uid: 'prometheus-second' };
     const renderPanel = (settings: typeof ds1SettingsMock) => (
       <QueryEditorPanel
+        panel={new VizPanel({ key: 'panel-1' })}
         query={queryA}
         queryDsData={{
           datasource: new MockDataSourceApi({ QueryEditor: InstanceAwareQueryEditor }, settings),
@@ -468,5 +488,147 @@ describe('QueryEditorRenderer', () => {
     });
 
     expect(screen.getByText('Error!!')).toBeInTheDocument();
+  });
+});
+
+describe('Coauthoring availability decisions', () => {
+  const eventName = 'grafana_query_coauthoring_availability_evaluated';
+  const domain = 'query-coauthoring-decision-tests';
+  let provider: InMemoryProvider;
+
+  beforeEach(async () => {
+    provider = new InMemoryProvider();
+    await OpenFeature.setProviderAndWait(domain, provider);
+    jest.mocked(reportInteraction).mockClear();
+  });
+
+  function configureVariant(variant: string, value: boolean) {
+    provider.putConfiguration({
+      [FlagKeys.QueryeditorCoauthoringUi]: {
+        variants: { [variant]: value },
+        defaultVariant: variant,
+        disabled: false,
+      },
+    });
+  }
+
+  function createEditingPanel() {
+    const panel = new VizPanel({ key: 'panel-7', pluginId: 'timeseries' });
+    const gridItem = new DashboardGridItem({ body: panel });
+    const dashboard = new DashboardScene({
+      uid: 'coauthoring-dashboard',
+      body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [gridItem] }) }),
+      editPanel: buildPanelEditScene(panel),
+    });
+    dashboard.recordEditMutation();
+    jest.mocked(reportInteraction).mockClear();
+    return { panel, dashboard };
+  }
+
+  function renderDecision(
+    panel: VizPanel,
+    options: { loading?: boolean; datasourceType?: string; query?: DataQuery } = {}
+  ) {
+    const settings = { ...ds1SettingsMock, type: options.datasourceType ?? 'prometheus' };
+    return renderWithQueryEditorProvider(
+      <OpenFeatureProvider client={OpenFeature.getClient(domain)}>
+        <StrictMode>
+          <QueryEditorRenderer />
+        </StrictMode>
+      </OpenFeatureProvider>,
+      {
+        selectedQuery: options.query ?? queryA,
+        queries: [queryA, queryB],
+        panelState: { panel },
+        uiStateOverrides: {
+          selectedQueryDsLoading: options.loading ?? false,
+          selectedQueryDsData: {
+            datasource: new MockDataSourceApi({ QueryEditor: UncontrolledQueryEditor }, settings),
+            dsSettings: settings,
+          },
+        },
+      }
+    );
+  }
+
+  it.each([
+    { variant: 'enabled', value: true, arm: 'treatment' },
+    { variant: 'disabled', value: false, arm: 'control' },
+    { variant: 'excluded', value: false, arm: 'excluded' },
+  ])('reports $arm with the existing editing context before any coauthoring use', ({ variant, value, arm }) => {
+    configureVariant(variant, value);
+    const { panel, dashboard } = createEditingPanel();
+    renderDecision(panel);
+
+    expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-a');
+    expect(reportInteraction).toHaveBeenCalledTimes(1);
+    expect(reportInteraction).toHaveBeenCalledWith(eventName, {
+      experiment_id: 'query_coauthoring',
+      experiment_variant: arm,
+      datasource_type: 'prometheus',
+      dashboard_uid: 'coauthoring-dashboard',
+      panel_id: 7,
+      edit_session_id: dashboard.getEditSessionTracking().edit_session_id,
+    });
+  });
+
+  it('reports once across Strict Mode, query switches and remounts, then again for a new panel-edit visit', () => {
+    configureVariant('disabled', false);
+    const { panel, dashboard } = createEditingPanel();
+    const first = renderDecision(panel);
+    expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-a');
+    first.unmount();
+    const second = renderDecision(panel, { query: queryB });
+    expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-b');
+    expect(reportInteraction).toHaveBeenCalledTimes(1);
+    second.unmount();
+
+    dashboard.setState({ editPanel: buildPanelEditScene(panel) });
+    renderDecision(panel);
+    expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-a');
+    expect(reportInteraction).toHaveBeenCalledTimes(2);
+  });
+
+  it('waits for a loaded supported query editor before recording its decision', () => {
+    configureVariant('disabled', false);
+    const { panel } = createEditingPanel();
+    const loading = renderDecision(panel, { loading: true });
+    expect(screen.getByText(/loading datasource/i)).toBeInTheDocument();
+    expect(reportInteraction).not.toHaveBeenCalled();
+    loading.unmount();
+
+    const otherDatasource = renderDecision(panel, { datasourceType: 'loki' });
+    expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-a');
+    expect(reportInteraction).not.toHaveBeenCalled();
+    otherDatasource.unmount();
+
+    renderDecision(panel);
+    expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-a');
+    expect(reportInteraction).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    { variant: 'unrecognized', value: false },
+    { variant: 'enabled', value: false },
+  ])('does not infer control from an invalid $variant/$value assignment', ({ variant, value }) => {
+    configureVariant(variant, value);
+    const { panel } = createEditingPanel();
+    renderDecision(panel);
+    expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-a');
+    expect(reportInteraction).not.toHaveBeenCalled();
+  });
+
+  it('does not record a missing flag fallback as control and reports when the flag resolves', async () => {
+    const { panel } = createEditingPanel();
+    renderDecision(panel);
+    expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-a');
+    expect(reportInteraction).not.toHaveBeenCalled();
+
+    await act(async () => configureVariant('disabled', false));
+    expect(reportInteraction).toHaveBeenCalledWith(
+      eventName,
+      expect.objectContaining({ experiment_variant: 'control' })
+    );
+    expect(reportInteraction).toHaveBeenCalledTimes(1);
   });
 });

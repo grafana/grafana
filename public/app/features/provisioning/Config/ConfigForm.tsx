@@ -38,12 +38,7 @@ import { connectionTypesForProvider } from '../utils/connectionData';
 import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions, getRemoteConfig } from '../utils/git';
-import {
-  getRepositoryTypeConfig,
-  isGitProvider,
-  supportsConnections,
-  supportsWebhooks,
-} from '../utils/repositoryTypes';
+import { getRepositoryTypeConfig, isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
@@ -100,7 +95,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   // or OAuth app) have a connection reference in their spec; PAT-based
   // repositories store credentials directly.
   const connectionName = data?.spec?.connection?.name;
-  const usesConnection = Boolean(connectionName && supportsConnections(type));
+  const usesConnection = Boolean(connectionName && isGitProvider(type));
 
   // Offer connections of the same type as the referenced one, mirroring the
   // wizard where the kind (app vs OAuth) is fixed before picking a connection.
@@ -113,7 +108,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   // for this provider so a replacement can be picked.
   const connectionTypes = referencedConnectionType
     ? [referencedConnectionType]
-    : supportsConnections(type)
+    : isGitProvider(type)
       ? connectionTypesForProvider(type)
       : [];
 
@@ -320,7 +315,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 />
               </Field>
             )}
-            {gitFields.tokenUserConfig && !usesConnection && (
+            {gitFields.tokenUserConfig && (!usesConnection || type === 'git') && (
               <Field
                 noMargin
                 label={gitFields.tokenUserConfig.label}

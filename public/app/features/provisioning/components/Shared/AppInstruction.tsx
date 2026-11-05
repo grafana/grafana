@@ -14,7 +14,7 @@ const githubAppDocsUrl = 'https://docs.github.com/en/apps/creating-github-apps/r
 
 const GITLAB_SCOPE = 'api';
 
-const docsUrls: Record<OAuthConnectionType, string> = {
+const docsUrls: Record<Exclude<OAuthConnectionType, 'gitOAuth'>, string> = {
   githubOAuth: 'https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app',
   githubEnterpriseOAuth: 'https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app',
   gitlabOAuth: 'https://docs.gitlab.com/integration/oauth_provider/',
@@ -51,6 +51,11 @@ function OAuthAppInstruction({ type }: { type: OAuthConnectionType }) {
             <TextLink external href={docsUrls.githubOAuth}>
               View step-by-step instructions
             </TextLink>
+          </Trans>
+        ) : type === 'gitOAuth' ? (
+          <Trans i18nKey="provisioning.oauth-app.help-instructions-git">
+            In your Git provider, create an OAuth application with the callback URL below, then paste its client ID,
+            client secret, and OAuth endpoints here. The access tokens it issues must be accepted for Git over HTTPS.
           </Trans>
         ) : type === 'gitlabOAuth' ? (
           <Trans i18nKey="provisioning.oauth-app.help-instructions-gitlab">

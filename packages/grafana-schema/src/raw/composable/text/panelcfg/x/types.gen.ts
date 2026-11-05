@@ -10,7 +10,7 @@
 
 // Generated from public/app/plugins/panel/text/panelcfg.cue file.
 
-export const pluginVersion = "13.3.0-pre";
+export const pluginVersion = "13.4.0-pre";
 
 export enum TextMode {
   Code = 'code',
@@ -63,6 +63,10 @@ export interface Options {
    */
   frameIndex?: number;
   mode: TextMode;
+  /**
+   * Rows per page once a per-row render pages its content. Unset fits the page to the panel height.
+   */
+  pageSize?: number;
   renderMode?: RenderMode;
 }
 

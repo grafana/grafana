@@ -3,31 +3,14 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
 import { ctaClicked } from '../analytics/main';
-import { type Solution, type SolutionId, type SolutionOffer } from '../solutions/types';
+import { stubSolution } from '../solutions/test-utils';
+import { type SolutionOffer } from '../solutions/types';
 
 import { AvailableSolutionCard, SolutionCard } from './SolutionCard';
 
 jest.mock('../analytics/main', () => ({ ctaClicked: jest.fn() }));
 
 const mockCtaClicked = jest.mocked(ctaClicked);
-
-function solution(id: SolutionId, overrides: Partial<Solution> = {}): Solution {
-  return {
-    id,
-    title: id,
-    icon: 'chart-line',
-    signal: async () => 'active',
-    datasource: async () => null,
-    needsAttention: async () => false,
-    stats: async () => null,
-    refinedStats: async () => null,
-    sparkline: async () => null,
-    cta: async () => null,
-    alert: async () => null,
-    offer: async () => null,
-    ...overrides,
-  };
-}
 
 beforeEach(() => {
   mockCtaClicked.mockClear();
@@ -44,7 +27,7 @@ describe('SolutionCard', () => {
       primary: 'payments-api restarts',
       details: ['14 restarts/hr'],
     };
-    const item = solution('kubernetes', {
+    const item = stubSolution('kubernetes', {
       title: 'Kubernetes Monitoring',
       icon: 'kubernetes',
       stats: async () => ({ primary: '247 pods' }),
@@ -73,7 +56,7 @@ describe('SolutionCard', () => {
   });
 
   it('renders an enabled card without inventing a secondary line', async () => {
-    const item = solution('metrics', {
+    const item = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
       stats: async () => ({ primary: '34 services' }),
     });
@@ -85,7 +68,7 @@ describe('SolutionCard', () => {
   });
 
   it('withholds the optional action while it is unresolved', async () => {
-    const item = solution('logs', { title: 'Logs', cta: () => new Promise(() => {}) });
+    const item = stubSolution('logs', { title: 'Logs', cta: () => new Promise(() => {}) });
 
     render(<SolutionCard solution={item} needsAttention={false} />);
 
@@ -96,7 +79,7 @@ describe('SolutionCard', () => {
 
 describe('AvailableSolutionCard', () => {
   it('renders and tracks an enable offer', async () => {
-    const item = solution('metrics', { title: 'Metrics & infrastructure' });
+    const item = stubSolution('metrics', { title: 'Metrics & infrastructure' });
     const offer: SolutionOffer = {
       availability: 'enable',
       description: 'Diagnose slow queries and connection saturation.',
@@ -129,7 +112,7 @@ describe('AvailableSolutionCard', () => {
   });
 
   it('shows an offer without a dead-end action when the user cannot act', () => {
-    const item = solution('metrics', { title: 'Metrics & infrastructure' });
+    const item = stubSolution('metrics', { title: 'Metrics & infrastructure' });
     const offer: SolutionOffer = {
       availability: 'enable',
       description: 'Diagnose slow queries and connection saturation.',
@@ -144,7 +127,7 @@ describe('AvailableSolutionCard', () => {
   });
 
   it('labels an enabled but inactive app as ready to configure', () => {
-    const item = solution('kubernetes', { title: 'Kubernetes Monitoring', icon: 'kubernetes' });
+    const item = stubSolution('kubernetes', { title: 'Kubernetes Monitoring', icon: 'kubernetes' });
     const offer: SolutionOffer = {
       availability: 'setup',
       description: 'See cluster health in one view.',
@@ -158,7 +141,7 @@ describe('AvailableSolutionCard', () => {
   });
 
   it('uses the external-link treatment for learn-more offers', () => {
-    const item = solution('traces', { title: 'Traces', icon: 'gf-traces' });
+    const item = stubSolution('traces', { title: 'Traces', icon: 'gf-traces' });
     const offer: SolutionOffer = {
       availability: 'setup',
       description: 'Instrument an application.',
@@ -175,7 +158,7 @@ describe('AvailableSolutionCard', () => {
   });
 
   it('supports custom internal learn-more links', () => {
-    const item = solution('metrics', { title: 'Metrics & infrastructure' });
+    const item = stubSolution('metrics', { title: 'Metrics & infrastructure' });
     const offer: SolutionOffer = {
       availability: 'setup',
       description: 'Connect a metrics source.',

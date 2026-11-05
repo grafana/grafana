@@ -19,7 +19,6 @@ import * as React from 'react';
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
 import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../../Theme';
 import type TNil from '../../types/TNil';
 
 import * as markers from './AccordionKeyValues.markers';
@@ -54,7 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     headerHighContrast: css({
       label: 'headerHighContrast',
       '&:hover': {
-        background: autoColor(theme, '#ddd'),
+        background: theme.colors.action.hover,
       },
     }),
     emptyIcon: css({
@@ -79,6 +78,7 @@ export type AccordionKeyValuesProps = {
   onToggle?: null | (() => void);
   promoGetter?: AttributePluginPromoGetter;
   datasourceType?: string;
+  openLinksInSameTab?: boolean;
 };
 
 export default function AccordionKeyValues({
@@ -96,6 +96,7 @@ export default function AccordionKeyValues({
   onToggle = null,
   promoGetter,
   datasourceType,
+  openLinksInSameTab,
 }: AccordionKeyValuesProps) {
   const isEmpty = (!Array.isArray(data) || !data.length) && !logName;
   const styles = useStyles2(getStyles);
@@ -146,6 +147,7 @@ export default function AccordionKeyValues({
           onlyValues={onlyValues}
           promoGetter={promoGetter}
           datasourceType={datasourceType}
+          openLinksInSameTab={openLinksInSameTab}
         />
       )}
     </div>

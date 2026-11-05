@@ -13,28 +13,6 @@ func SelectableFields() map[LowerGroupResource][]string {
 	return SelectableFieldsForManifests(AppManifests()...)
 }
 
-// AppManifestsWithKinds keeps only the manifests declaring a kind in some
-// version.
-func AppManifestsWithKinds(manifiests ...*app.ManifestData) []*app.ManifestData {
-	filtered := make([]*app.ManifestData, 0, len(manifiests))
-	for _, m := range manifiests {
-		if m == nil {
-			continue
-		}
-		hasKinds := false
-		for _, v := range m.Versions {
-			if len(v.Kinds) > 0 {
-				hasKinds = true
-				break
-			}
-		}
-		if hasKinds {
-			filtered = append(filtered, m)
-		}
-	}
-	return filtered
-}
-
 // SelectableFieldsForManifests returns a map keyed by (group, kind) to the list
 // of selectable fields (across all versions). Each kind is also keyed by
 // (group, plural), pointing to the same fields.

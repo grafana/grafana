@@ -201,8 +201,8 @@ export function getFormElementStyles(theme: GrafanaTheme2) {
       fontWeight: theme.typography.fontWeightMedium,
       fontSize: theme.typography.size.sm,
       backgroundColor: theme.colors.background.secondary,
-      height: '32px',
-      lineHeight: '32px',
+      height: theme.spacing(theme.components.height.md),
+      lineHeight: theme.spacing(theme.components.height.md),
       marginRight: theme.spacing(0.5),
       borderRadius: theme.shape.radius.default,
       justifyContent: 'space-between',
@@ -256,7 +256,7 @@ export function getFormElementStyles(theme: GrafanaTheme2) {
     '.gf-form-input': {
       display: 'block',
       width: '100%',
-      height: '32px',
+      height: theme.spacing(theme.components.height.md),
       padding: theme.spacing(0, 1),
       fontSize: theme.typography.size.md,
       lineHeight: '18px',
@@ -276,7 +276,7 @@ export function getFormElementStyles(theme: GrafanaTheme2) {
         overflow: 'auto',
         whiteSpace: 'pre-wrap',
         padding: `6px ${theme.spacing(1)}`,
-        minHeight: '32px',
+        minHeight: theme.spacing(theme.components.height.md),
         height: 'auto',
       },
 
@@ -362,7 +362,7 @@ export function getFormElementStyles(theme: GrafanaTheme2) {
 
       '.gf-form-input': {
         marginRight: 0,
-        lineHeight: '32px',
+        lineHeight: theme.spacing(theme.components.height.md),
       },
 
       'select.gf-form-input': {

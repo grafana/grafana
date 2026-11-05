@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from 'react';
 import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { useDataSourceInstanceList } from '@grafana/runtime';
 import { TabbedContainer, type TabConfig } from '@grafana/ui';
 import { SortOrder, type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';

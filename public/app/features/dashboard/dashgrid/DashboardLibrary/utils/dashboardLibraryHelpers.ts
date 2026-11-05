@@ -1,7 +1,7 @@
 import { locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { type PluginDashboard } from 'app/types/plugins';
 
 import { CONTENT_KINDS } from '../constants';

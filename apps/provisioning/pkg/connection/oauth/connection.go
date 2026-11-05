@@ -18,12 +18,12 @@ import (
 )
 
 // Provider supplies the provider-specific pieces of an OAuth app connection
-// (e.g. GitLab, Bitbucket): its OAuth application settings and API calls.
+// (e.g. GitLab, Bitbucket): its OAuth application settings and health check.
 //
 //go:generate mockery --name Provider --structname MockProvider --inpackage --filename provider_mock.go --with-expecter
 type Provider interface {
 	Endpoint() oauth2.Endpoint
-	ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error)
+	Test(ctx context.Context) *provisioning.TestResults
 }
 
 type oauthConnection struct {
@@ -44,9 +44,11 @@ func newConnection(provider Provider, repoType provisioning.RepositoryType, cfg 
 	}
 }
 
-// Test validates that the stored access token works against the provider.
+// Test validates the stored access token, then checks it against the provider
+// when the provider can list repositories.
 func (c *oauthConnection) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	if token, err := parseToken(c.token); err != nil || token.AccessToken == "" {
+	token, err := parseToken(c.token)
+	if err != nil || token.AccessToken == "" {
 		return connection.FailedTestResults(
 			http.StatusUnauthorized,
 			[]provisioning.ErrorDetails{{
@@ -57,27 +59,18 @@ func (c *oauthConnection) Test(ctx context.Context) (*provisioning.TestResults, 
 		), nil
 	}
 
-	if _, err := c.ListRepositories(ctx); err != nil {
-		if errors.Is(err, connection.ErrAuthentication) {
-			return connection.FailedTestResults(
-				http.StatusUnauthorized,
-				[]provisioning.ErrorDetails{{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  field.NewPath("secure", "token").String(),
-					Detail: "The provider rejected the connection's access token",
-				}},
-			), nil
-		}
+	if !token.Expiry.IsZero() && time.Now().After(token.Expiry) {
 		return connection.FailedTestResults(
-			http.StatusUnprocessableEntity,
+			http.StatusUnauthorized,
 			[]provisioning.ErrorDetails{{
-				Type:   metav1.CauseTypeInternal,
-				Detail: fmt.Errorf("failed to list repositories: %w", err).Error(),
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  field.NewPath("secure", "token").String(),
+				Detail: "The connection's access token has expired",
 			}},
 		), nil
 	}
 
-	return connection.SuccessTestResults(), nil
+	return c.provider.Test(ctx), nil
 }
 
 // GenerateRepositoryToken returns an access token usable for git operations on
@@ -105,14 +98,46 @@ func (c *oauthConnection) GenerateRepositoryToken(_ context.Context, repo *provi
 	}, nil
 }
 
+// TestByListingRepositories checks a provider's access token by listing the
+// repositories it can access.
+//
+// TODO: use a lighter endpoint than listing repositories to check the token.
+func TestByListingRepositories(ctx context.Context, lister connection.RepositoryLister) *provisioning.TestResults {
+	if _, err := lister.ListRepositories(ctx); err != nil {
+		if errors.Is(err, connection.ErrAuthentication) {
+			return connection.FailedTestResults(
+				http.StatusUnauthorized,
+				[]provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("secure", "token").String(),
+					Detail: "The provider rejected the connection's access token",
+				}},
+			)
+		}
+		return connection.FailedTestResults(
+			http.StatusUnprocessableEntity,
+			[]provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeInternal,
+				Detail: fmt.Errorf("failed to list repositories: %w", err).Error(),
+			}},
+		)
+	}
+	return connection.SuccessTestResults()
+}
+
+type listingConnection struct {
+	*oauthConnection
+	lister connection.RepositoryLister
+}
+
 // ListRepositories returns the list of repositories accessible through this connection.
-func (c *oauthConnection) ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error) {
+func (c *listingConnection) ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error) {
 	token, err := parseToken(c.token)
 	if err != nil || token.AccessToken == "" {
 		return nil, fmt.Errorf("connection access token not available: %w", connection.ErrAuthentication)
 	}
 
-	return c.provider.ListRepositories(ctx)
+	return c.lister.ListRepositories(ctx)
 }
 
 // GenerateConnectionToken exchanges the stored refresh token for a new access
@@ -120,13 +145,13 @@ func (c *oauthConnection) ListRepositories(ctx context.Context) ([]provisioning.
 // (e.g. GitLab) return a new one, which is stored as part of the token; when
 // absent the stored refresh token remains valid and is kept.
 // Implements the connection.TokenConnection interface.
-func (c *oauthConnection) GenerateConnectionToken(ctx context.Context) (common.RawSecureValue, error) {
+func (c *oauthConnection) GenerateConnectionToken(ctx context.Context) (*connection.ExpirableSecureValue, error) {
 	stored, err := parseToken(c.token)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if stored.RefreshToken == "" {
-		return "", errors.New("no refresh token available; authorize the OAuth application again")
+		return nil, fmt.Errorf("no refresh token available; authorize the OAuth application again: %w", connection.ErrAuthentication)
 	}
 
 	cfg := oauth2.Config{
@@ -137,21 +162,73 @@ func (c *oauthConnection) GenerateConnectionToken(ctx context.Context) (common.R
 
 	next, err := cfg.TokenSource(ctx, &oauth2.Token{RefreshToken: stored.RefreshToken}).Token()
 	if err != nil {
-		return "", fmt.Errorf("refresh access token: %w", err)
+		// A revoked or expired authorization is user-actionable: the user must
+		// re-authorize the OAuth application. Transient failures (timeouts, rate
+		// limiting, 5xx, transport errors) stay unwrapped so they classify as
+		// system-caused and are retried rather than surfaced as a credential fault.
+		if isOAuthReauthRequired(err) {
+			return nil, fmt.Errorf("refresh access token: %w: %w", connection.ErrAuthentication, err)
+		}
+		return nil, fmt.Errorf("refresh access token: %w", err)
 	}
 
 	if next.RefreshToken == "" {
 		next.RefreshToken = stored.RefreshToken
 	}
 
-	return marshalToken(next)
+	raw, err := marshalToken(next)
+	if err != nil {
+		return nil, err
+	}
+
+	// next.Expiry is zero when the provider does not return an expiry, which maps
+	// to a non-expiring token on the status.
+	return &connection.ExpirableSecureValue{Token: raw, ExpiresAt: next.Expiry}, nil
+}
+
+// oauthReauthErrorCodes are token-endpoint `error` codes (RFC 6749 §5.2 and
+// provider-specific) that mean the stored authorization or the configured client
+// credentials are no longer valid and the user must act. GitHub reports these
+// with a 200 status rather than 401/403, and oauth2 exposes the code either way,
+// so they are matched independently of the HTTP status.
+var oauthReauthErrorCodes = map[string]bool{
+	"invalid_grant":                true, // RFC 6749 §5.2; GitLab: refresh token revoked/expired
+	"invalid_client":               true, // RFC 6749 §5.2: client credentials rejected
+	"bad_refresh_token":            true, // GitHub: refresh token incorrect or expired
+	"refresh_token_expired":        true, // GitHub: refresh token expired
+	"incorrect_client_credentials": true, // GitHub: client secret rotated or revoked
+}
+
+// isOAuthReauthRequired reports whether an OAuth token-refresh error means the
+// stored authorization is invalid and the user must re-authorize, as opposed to
+// a transient failure worth retrying. It matches the credential-rejection error
+// codes above and 401/403 responses (rejected client credentials), while
+// deliberately excluding retryable statuses such as 408 and 429 and all
+// 5xx/transport errors. oauth2 surfaces the error code even on a 200 response
+// (some providers, including GitHub, return errors that way), so the code is
+// checked independently of the HTTP status.
+func isOAuthReauthRequired(err error) bool {
+	var retrieveErr *oauth2.RetrieveError
+	if !errors.As(err, &retrieveErr) {
+		return false
+	}
+	if oauthReauthErrorCodes[retrieveErr.ErrorCode] {
+		return true
+	}
+	if retrieveErr.Response != nil {
+		switch retrieveErr.Response.StatusCode {
+		case http.StatusUnauthorized, http.StatusForbidden:
+			return true
+		}
+	}
+	return false
 }
 
 // ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.
 // Implements the connection.OAuthConnection interface.
-func (c *oauthConnection) ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (common.RawSecureValue, error) {
+func (c *oauthConnection) ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (*connection.ExpirableSecureValue, error) {
 	if code == "" {
-		return "", errors.New("an authorization code is required")
+		return nil, errors.New("an authorization code is required")
 	}
 
 	cfg := oauth2.Config{
@@ -163,10 +240,16 @@ func (c *oauthConnection) ExchangeAuthorizationCode(ctx context.Context, code, r
 
 	token, err := cfg.Exchange(ctx, code)
 	if err != nil {
-		return "", fmt.Errorf("exchange authorization code: %w", err)
+		return nil, fmt.Errorf("exchange authorization code: %w", err)
 	}
 
-	return marshalToken(token)
+	raw, err := marshalToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	// token.Expiry is zero when the provider issues a non-expiring access token.
+	return &connection.ExpirableSecureValue{Token: raw, ExpiresAt: token.Expiry}, nil
 }
 
 // ValidateToken checks the stored token. A missing expiry means the provider
@@ -211,7 +294,8 @@ func marshalToken(token *oauth2.Token) (common.RawSecureValue, error) {
 }
 
 var (
-	_ connection.Connection      = (*oauthConnection)(nil)
-	_ connection.TokenConnection = (*oauthConnection)(nil)
-	_ connection.OAuthConnection = (*oauthConnection)(nil)
+	_ connection.Connection       = (*oauthConnection)(nil)
+	_ connection.TokenConnection  = (*oauthConnection)(nil)
+	_ connection.OAuthConnection  = (*oauthConnection)(nil)
+	_ connection.RepositoryLister = (*listingConnection)(nil)
 )

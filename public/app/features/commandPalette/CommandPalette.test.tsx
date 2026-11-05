@@ -1,4 +1,5 @@
-import { KBarPortal, KBarProvider } from 'kbar';
+import { KBarPortal, KBarProvider, useKBar } from 'kbar';
+import { HttpResponse, http } from 'msw';
 import { act, render, screen, userEvent } from 'test/test-utils';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
@@ -12,7 +13,11 @@ import {
 } from '@grafana/runtime/internal';
 import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { PortalContainer } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { getObservablePluginLinks } from '../plugins/extensions/getPluginExtensions';
 
@@ -52,12 +57,40 @@ jest.mock('kbar', () => ({
   KBarAnimator: jest.fn().mockImplementation(({ children }) => <div>{children}</div>),
 }));
 
+// jsdom has no layout, so the real virtualizer renders an arbitrary few-row window and rows
+// later in the list (e.g. notebook results, which come last) are only sometimes in the DOM.
+jest.mock('react-virtual', () => ({
+  useVirtual: ({ size }: { size: number }) => ({
+    virtualItems: Array.from({ length: size }, (_, index) => ({
+      index,
+      start: index * 50,
+      measureRef: jest.fn(),
+    })),
+    totalSize: size * 50,
+    scrollToIndex: jest.fn(),
+  }),
+}));
+
 const setup = () => {
   return render(
     <KBarProvider>
       <CommandPalette />
     </KBarProvider>
   );
+};
+
+// Window listeners run after the palette's own click handling, so this reads whether the palette cancelled the
+// link's navigation, then cancels it itself because jsdom can't navigate.
+const isNavigationCancelledOnClick = async (element: Element) => {
+  let cancelled: boolean | undefined;
+  const recordAndCancel = (event: MouseEvent) => {
+    cancelled = event.defaultPrevented;
+    event.preventDefault();
+  };
+  window.addEventListener('click', recordAndCancel);
+  await userEvent.click(element);
+  window.removeEventListener('click', recordAndCancel);
+  return cancelled;
 };
 
 const triggerEmptyState = async () => {
@@ -70,6 +103,7 @@ const triggerEmptyState = async () => {
 
 describe('CommandPalette', () => {
   beforeEach(() => {
+    setTestFlags({ 'dashboard.notebooks': false });
     jest.mocked(KBarPortal).mockImplementation(({ children }) => <div>{children}</div>);
     setPluginLinksHook(() => ({
       links: [],
@@ -84,6 +118,33 @@ describe('CommandPalette', () => {
     (useFlagGrafanaCmdkHybridSearch as jest.Mock).mockReturnValue(false);
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
     (reportInteraction as jest.Mock).mockClear();
+  });
+
+  it('mounts the palette in the shared overlay container when opened', async () => {
+    jest
+      .mocked(KBarPortal)
+      .mockImplementation(jest.requireActual<{ KBarPortal: typeof KBarPortal }>('kbar').KBarPortal);
+
+    function OpenPalette() {
+      const { query } = useKBar();
+      return <button onClick={() => query.toggle()}>Open command palette</button>;
+    }
+
+    const { user } = render(
+      <>
+        <PortalContainer />
+        <KBarProvider>
+          <OpenPalette />
+          <CommandPalette />
+        </KBarProvider>
+      </>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Open command palette' }));
+
+    const input = await screen.findByRole('combobox');
+    const overlayContainer = document.getElementById('grafana-portal-container');
+    expect(overlayContainer).toContainElement(input);
   });
 
   it('reevaluates extension links each time the palette opens', async () => {
@@ -146,6 +207,95 @@ describe('CommandPalette', () => {
     const user = userEvent.setup();
     await user.type(screen.getByPlaceholderText('Search or jump to...'), 'Dynamic extension action');
     expect(await screen.findByText('Dynamic extension action')).toBeInTheDocument();
+  });
+
+  it('lets a path-only extension link navigate to its path when selected', async () => {
+    setPluginLinksHook(() => ({
+      links: [
+        {
+          id: 'test-plugin/path-only-link',
+          type: PluginExtensionTypes.link as const,
+          title: 'Path-only extension link',
+          description: 'Has a path and no onClick',
+          pluginId: 'test-plugin',
+          path: '/a/test-plugin/page',
+        },
+      ],
+      isLoading: false,
+    }));
+    setup();
+
+    await userEvent.type(screen.getByPlaceholderText('Search or jump to...'), 'Path-only extension link');
+    const row = (await screen.findByText('Path-only extension link')).closest('a');
+
+    expect(row).toHaveAttribute('href', '/a/test-plugin/page');
+    expect(await isNavigationCancelledOnClick(row!)).toBe(false);
+  });
+
+  it('calls onClick instead of navigating when an extension link has one', async () => {
+    const onClick = jest.fn();
+    setPluginLinksHook(() => ({
+      links: [
+        {
+          id: 'test-plugin/onclick-link',
+          type: PluginExtensionTypes.link as const,
+          title: 'Click handler extension link',
+          description: 'Has both a path and an onClick',
+          pluginId: 'test-plugin',
+          path: '/a/test-plugin/page',
+          onClick,
+        },
+      ],
+      isLoading: false,
+    }));
+    setup();
+
+    await userEvent.type(screen.getByPlaceholderText('Search or jump to...'), 'Click handler extension link');
+    const row = (await screen.findByText('Click handler extension link')).closest('a');
+
+    expect(await isNavigationCancelledOnClick(row!)).toBe(true);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  describe('notebook results', () => {
+    // contextSrv.user is a mutable singleton, so these are restored even when an assertion throws —
+    // otherwise a failure here leaks a signed-in user with notebooks:read into every later test.
+    const originalPermissions = contextSrv.user.permissions;
+    const originalIsSignedIn = contextSrv.user.isSignedIn;
+
+    beforeEach(() => {
+      contextSrv.user.permissions = { [AccessControlAction.NotebooksRead]: true };
+      contextSrv.user.isSignedIn = true;
+      setTestFlags({ 'dashboard.notebooks': true });
+    });
+
+    afterEach(() => {
+      contextSrv.user.permissions = originalPermissions;
+      contextSrv.user.isSignedIn = originalIsSignedIn;
+    });
+
+    it('shows notebook search results alongside other palette actions', async () => {
+      server.use(
+        http.post('*/apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/search', () =>
+          HttpResponse.json({
+            items: [
+              {
+                resource: { group: 'dashboard.grafana.app', resource: 'notebooks', kind: 'Notebook', name: 'nb1' },
+                fields: { title: 'Incident latency notes' },
+              },
+            ],
+          })
+        )
+      );
+
+      setup();
+      await userEvent.setup().type(screen.getByPlaceholderText('Search or jump to...'), 'Incident');
+
+      expect(await screen.findByRole('option', { name: 'Notebooks: Incident latency notes' })).toHaveAttribute(
+        'href',
+        expect.stringContaining('/notebooks/nb1')
+      );
+    });
   });
 
   it('should render empty state with AI Assistant button when no results and assistant is available', async () => {
@@ -482,8 +632,7 @@ describe('CommandPalette', () => {
       const user = userEvent.setup();
       // "dark" matches the static change-theme action (a command, not a link, so no navigation)
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'dark');
-      const options = await screen.findAllByRole('option', {}, { timeout: 3000 });
-      await user.click(options[0]);
+      await user.click(await screen.findByRole('option', { name: /^Preferences: Change theme/ }, { timeout: 3000 }));
 
       expect(reportInteraction).toHaveBeenCalledWith(
         'command_palette_action_selected',

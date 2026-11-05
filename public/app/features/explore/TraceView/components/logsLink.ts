@@ -108,7 +108,11 @@ export function getTraceToLogsQuery(
   spanID?: string,
   serviceNames: string[] = []
 ) {
-  const customQuery = traceToLogsOptions.customQuery ? traceToLogsOptions.query : undefined;
+  // Treat omitted customQuery + non-empty query as custom (provisioned V2); explicit false ignores leftover query text.
+  const customQuery =
+    traceToLogsOptions.customQuery || (traceToLogsOptions.customQuery == null && traceToLogsOptions.query)
+      ? traceToLogsOptions.query
+      : undefined;
   const tagsToUse =
     traceToLogsOptions.tags && traceToLogsOptions.tags.length > 0 ? traceToLogsOptions.tags : getDefaultLogsTags();
 
@@ -175,8 +179,8 @@ function escapeRegExp(value: string): string {
 
 /** Field-name pairs used when probing which structured id labels exist in logs. */
 const TRACE_SPAN_ID_FIELD_VARIANTS = [
-  { trace: 'traceID', span: 'spanID' },
   { trace: 'trace_id', span: 'span_id' },
+  { trace: 'traceID', span: 'spanID' },
   { trace: 'traceId', span: 'spanId' },
   { trace: 'TraceID', span: 'SpanID' },
   { trace: 'TraceId', span: 'SpanId' },

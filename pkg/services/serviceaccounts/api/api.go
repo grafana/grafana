@@ -256,10 +256,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 	if perPage <= 0 {
 		perPage = 1000
 	}
-	page := c.QueryInt("page")
-	if page < 1 {
-		page = 1
-	}
+	page := max(c.QueryInt("page"), 1)
 	// its okay that it fails, it is only filtering that might be weird, but to safe quard against any weird incoming query param
 	onlyWithExpiredTokens := c.QueryBool("expiredTokens")
 	onlyDisabled := c.QueryBool("disabled")

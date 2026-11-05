@@ -83,7 +83,16 @@ export function useSaveConnection(onAuthorized: (connectionName: string) => void
       }
 
       if (shouldAuthorize && form.clientID && isOAuthConnectionType(form.type)) {
-        if (!authorize({ type: form.type, clientID: form.clientID, name, serverUrl: form.serverUrl })) {
+        if (
+          !authorize({
+            type: form.type,
+            clientID: form.clientID,
+            name,
+            serverUrl: form.serverUrl,
+            authURL: form.authURL,
+            scopes: form.scopes,
+          })
+        ) {
           return {
             status: 'error',
             fieldErrors: false,

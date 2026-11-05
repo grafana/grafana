@@ -16,6 +16,8 @@ import { getVariableFolderUid } from '../variables-management/utils';
 import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
 import { useNavModel } from './hooks/useNavModel';
 
+const VARIABLE_EDIT_URL = '/dashboards/variables/edit/';
+
 export function BrowseFolderVariablesPage() {
   const { uid: folderUID = '' } = useParams();
   const navigate = useNavigate();
@@ -72,11 +74,8 @@ export function BrowseFolderVariablesPage() {
         {folderDTO && (
           <Stack direction="column" gap={3}>
             <div>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Text element="h3">
-                  <Trans i18nKey="browse-dashboards.folder-variables.list-heading">Folder variables</Trans>
-                </Text>
-                {canCreate && folderDTO.canEdit && (
+              {canCreate && folderDTO.canEdit && (
+                <Stack direction="row" justifyContent="flex-end" alignItems="center">
                   <Button
                     onClick={() =>
                       navigate(locationUtil.assureBaseUrl(`/dashboards/variables/new?folderUid=${folderUID}`))
@@ -84,8 +83,8 @@ export function BrowseFolderVariablesPage() {
                   >
                     <Trans i18nKey="browse-dashboards.folder-variables.new">New folder variable</Trans>
                   </Button>
-                )}
-              </Stack>
+                </Stack>
+              )}
               {folderVariables.length === 0 ? (
                 <Text color="secondary">
                   <Trans i18nKey="browse-dashboards.folder-variables.empty">
@@ -105,7 +104,11 @@ export function BrowseFolderVariablesPage() {
                       ? (variable) => {
                           const name = variable.metadata.name;
                           if (name) {
-                            navigate(locationUtil.assureBaseUrl(`/dashboards/variables/edit/${name}`));
+                            navigate(
+                              locationUtil.assureBaseUrl(
+                                `${VARIABLE_EDIT_URL}${encodeURIComponent(name)}?folderUid=${folderUID}`
+                              )
+                            );
                           }
                         }
                       : undefined

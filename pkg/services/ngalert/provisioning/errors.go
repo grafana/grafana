@@ -16,10 +16,14 @@ var ErrNotFound = fmt.Errorf("object not found")
 var (
 	ErrVersionConflict = errutil.Conflict("alerting.notifications.conflict")
 
-	ErrTimeIntervalNotFound = errutil.NotFound("alerting.notifications.time-intervals.notFound")
-	ErrTimeIntervalExists   = errutil.BadRequest("alerting.notifications.time-intervals.nameExists", errutil.WithPublicMessage("Time interval with this name already exists. Use a different name or update existing one."))
-	ErrTimeIntervalInvalid  = errutil.BadRequest("alerting.notifications.time-intervals.invalidFormat").MustTemplate("Invalid format of the submitted time interval", errutil.WithPublic("Time interval is in invalid format. Correct the payload and try again."))
-	ErrTimeIntervalInUse    = errutil.Conflict("alerting.notifications.time-intervals.used").MustTemplate(
+	ErrTimeIntervalNotFound  = errutil.NotFound("alerting.notifications.time-intervals.notFound")
+	ErrTimeIntervalExists    = errutil.BadRequest("alerting.notifications.time-intervals.nameExists", errutil.WithPublicMessage("Time interval with this name already exists. Use a different name or update existing one."))
+	timeIntervalUidExists    = "Time interval with UID '{{ .Public.UID }}' already exists. Use a different UID."
+	ErrTimeIntervalUidExists = errutil.Conflict("alerting.notifications.time-intervals.uidExists").MustTemplate(
+		timeIntervalUidExists, errutil.WithPublic(timeIntervalUidExists),
+	)
+	ErrTimeIntervalInvalid = errutil.BadRequest("alerting.notifications.time-intervals.invalidFormat").MustTemplate("Invalid format of the submitted time interval", errutil.WithPublic("Time interval is in invalid format. Correct the payload and try again."))
+	ErrTimeIntervalInUse   = errutil.Conflict("alerting.notifications.time-intervals.used").MustTemplate(
 		"Time interval '{{ .Private.Name }}' is used by {{ if .Public.UsedByRules }}alert rules {{ .Private.UsedByRules }}{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
 		errutil.WithPublic("Time interval is used by {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}"),
 	)
@@ -124,6 +128,14 @@ func MakeErrTimeIntervalDependentResourcesProvenance(usedByRoutes bool, rules []
 
 	return ErrTimeIntervalDependentResourcesProvenance.Build(errutil.TemplateData{
 		Public: data,
+	})
+}
+
+func MakeErrTimeIntervalUidExists(uid string) error {
+	return ErrTimeIntervalUidExists.Build(errutil.TemplateData{
+		Public: map[string]any{
+			"UID": uid,
+		},
 	})
 }
 

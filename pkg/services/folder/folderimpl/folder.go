@@ -40,6 +40,7 @@ var (
 )
 
 type Service struct {
+	cfg                    *setting.Cfg
 	unifiedStore           folder.Store
 	log                    *slog.Logger
 	features               featuremgmt.FeatureToggles
@@ -69,6 +70,7 @@ func ProvideService(
 	restConfig apiserver.RestConfigProvider,
 ) *Service {
 	srv := &Service{
+		cfg:                    cfg,
 		log:                    slog.Default().With("logger", "folder-service"),
 		features:               features,
 		accessControl:          ac,
@@ -244,8 +246,8 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 		if !isSubfolder {
 			// Get parents UIDs
 			parentUIDs := make([]string, 0)
-			pathUIDs := strings.Split(f.FullpathUIDs, "/")
-			for _, p := range pathUIDs {
+			pathUIDs := strings.SplitSeq(f.FullpathUIDs, "/")
+			for p := range pathUIDs {
 				if p != "" && p != f.UID {
 					parentUIDs = append(parentUIDs, p)
 				}
@@ -328,7 +330,8 @@ func SplitFullpath(s string) []string {
 }
 
 func toFolderError(err error) error {
-	if apierrors.IsForbidden(err) {
+	statusErr := resource.StatusError(resource.AsErrorResult(err))
+	if apierrors.IsForbidden(statusErr) {
 		return folder.ErrAccessDenied
 	}
 

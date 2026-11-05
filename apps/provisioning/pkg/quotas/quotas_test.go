@@ -582,6 +582,22 @@ func TestFixedQuotaGetter_SetQuotaStatus(t *testing.T) {
 	assert.Equal(t, int64(2), status.MaxRepositories)
 }
 
+func TestFixedQuotaGetter_SetError(t *testing.T) {
+	ctx := context.Background()
+	getter := NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 10})
+	lookupErr := errors.New("quota service failed")
+
+	getter.SetError(lookupErr)
+	status, err := getter.GetQuotaStatus(ctx, "ns")
+	require.ErrorIs(t, err, lookupErr)
+	assert.Equal(t, provisioning.QuotaStatus{}, status)
+
+	getter.SetError(nil)
+	status, err = getter.GetQuotaStatus(ctx, "ns")
+	require.NoError(t, err)
+	assert.Equal(t, int64(10), status.MaxRepositories)
+}
+
 func TestFixedQuotaGetter_ImplementsInterface(t *testing.T) {
 	// Verify that FixedQuotaGetter implements QuotaGetter interface
 	var _ QuotaGetter = (*FixedQuotaGetter)(nil)

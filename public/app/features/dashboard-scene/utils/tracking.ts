@@ -1,19 +1,21 @@
 import { store } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { type SceneGridItemLike } from '@grafana/scenes';
+import { type SceneGridItemLike, type VizPanel } from '@grafana/scenes';
 import {
   isTemplateDashboardAssistantEnabled,
   isSuggestedDashboardAssistantEnabled,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
 import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
+import { type Options, RenderMode, TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
 import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 
+import { type DashboardEditSessionTracking } from './dashboardModeTracking';
 import { DashboardInteractions } from './interactions';
 
 export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: number) {
@@ -38,6 +40,8 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
         }
       : {}),
   });
+
+  trackTextPanelUsage(dashboard);
 }
 
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
@@ -56,7 +60,7 @@ export async function trackDashboardSceneCreatedOrSaved(
     diff_count: number;
     transformation_counts?: Record<string, number>;
     expression_counts?: Record<string, number>;
-  }
+  } & Partial<DashboardEditSessionTracking>
 ) {
   const sceneDashboardTrackingInfo = dashboard.getTrackingInformation();
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
@@ -115,6 +119,72 @@ export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {
       isCrossLayout: true,
     });
   }
+}
+
+const TEXT_PANEL_PLUGIN_ID = 'text';
+
+const MERMAID_PATTERN = /(?:```|~~~)[ \t]*mermaid|class=["'][^"']*\bmermaid\b/i;
+const HANDLEBARS_PATTERN = /\{\{[^}]*\}\}/;
+const DATA_MACRO_PATTERN = /\$\{__(value|field|data|series)\b/;
+
+function trackTextPanelUsage(dashboard: DashboardScene) {
+  if (!isTextV2WithNewFeatures()) {
+    return;
+  }
+
+  const usage = getTextPanelUsage(dashboard.state.body.getVizPanels());
+
+  if (usage) {
+    DashboardInteractions.textPanelUsage({ ...usage, dashboard_uid: dashboard.state.uid });
+  }
+}
+
+function isTextV2WithNewFeatures() {
+  const flags = getFeatureFlagClient();
+
+  return (
+    flags.getBooleanValue(FlagKeys.GrafanaNewTextPanel, false) && flags.getBooleanValue(FlagKeys.TextNewFeatures, false)
+  );
+}
+
+function getTextPanelUsage(panels: VizPanel[]) {
+  const textPanels = panels.filter((panel) => panel.state.pluginId === TEXT_PANEL_PLUGIN_ID);
+
+  if (textPanels.length === 0) {
+    return undefined;
+  }
+
+  const usage = {
+    mermaid_count: 0,
+    handlebars_count: 0,
+    data_macro_count: 0,
+    per_row_count: 0,
+  };
+
+  for (const panel of textPanels) {
+    const options: Partial<Options> = panel.state.options;
+    const content = options.content ?? '';
+
+    if (options.mode !== TextMode.Code) {
+      if (MERMAID_PATTERN.test(content)) {
+        usage.mermaid_count++;
+      }
+
+      if (HANDLEBARS_PATTERN.test(content)) {
+        usage.handlebars_count++;
+      }
+    }
+
+    if (DATA_MACRO_PATTERN.test(content)) {
+      usage.data_macro_count++;
+    }
+
+    if (options.renderMode === RenderMode.PerRow) {
+      usage.per_row_count++;
+    }
+  }
+
+  return usage;
 }
 
 async function getDashboardLibraryTrackingProperties(dashboard: DashboardScene) {

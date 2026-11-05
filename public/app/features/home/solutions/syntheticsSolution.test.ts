@@ -10,7 +10,8 @@ import {
   probeSyntheticChecks,
   type SyntheticsHealth,
 } from './syntheticsData';
-import { syntheticsSolution } from './syntheticsSolution';
+import { type SyntheticsFilter } from './syntheticsFilter';
+import { syntheticsDetection, syntheticsSolution } from './syntheticsSolution';
 
 jest.mock('./syntheticsData', () => ({
   ...jest.requireActual('./syntheticsData'),
@@ -40,6 +41,13 @@ const mockAccessibleAppPage = jest.mocked(accessibleAppPage);
 
 const datasource = { uid: 'sm-uid', name: 'sm-prom', type: 'prometheus' } as DataSourceInstanceListItem;
 const healthy: SyntheticsHealth = { failing: null, worstCheck: null, worstRatio: null };
+const storedFilter: SyntheticsFilter = {
+  datasourceUid: 'sm-uid',
+  datasourceName: 'sm-prom',
+  job: ['canary'],
+  instance: [],
+  probe: [],
+};
 
 beforeEach(() => {
   mockFetchHealth.mockReset();
@@ -57,13 +65,14 @@ beforeEach(() => {
   mockAccessibleAppPage.mockReset();
   mockAccessibleAppPage.mockImplementation(async (appId, path) => `/a/${appId}${path}`);
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+  jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(true);
 });
 
 afterEach(() => jest.restoreAllMocks());
 
 describe('syntheticsSolution', () => {
   it('constructs an inert solution with its identity available synchronously', () => {
-    const solution = syntheticsSolution();
+    const solution = syntheticsSolution(null);
 
     expect(solution).toMatchObject({ id: 'synthetics', icon: 'globe', title: 'Synthetic Monitoring' });
     expect(mockProbe).not.toHaveBeenCalled();
@@ -74,7 +83,7 @@ describe('syntheticsSolution', () => {
   });
 
   it('shares one active detection between signal and datasource readers', async () => {
-    const solution = syntheticsSolution();
+    const solution = syntheticsSolution(null);
 
     await expect(solution.signal()).resolves.toBe('active');
     await expect(solution.datasource()).resolves.toBe(datasource);
@@ -84,7 +93,7 @@ describe('syntheticsSolution', () => {
 
   it('reports inactive with no datasource after a definitive empty result', async () => {
     mockProbe.mockResolvedValue(null);
-    const solution = syntheticsSolution();
+    const solution = syntheticsSolution(null);
 
     await expect(solution.signal()).resolves.toBe('inactive');
     await expect(solution.datasource()).resolves.toBeNull();
@@ -92,7 +101,7 @@ describe('syntheticsSolution', () => {
 
   it('degrades a failed detection to unknown without starting detail queries', async () => {
     mockProbe.mockRejectedValue(new Error('datasource list failed'));
-    const solution = syntheticsSolution();
+    const solution = syntheticsSolution(null);
 
     await expect(solution.signal()).resolves.toBe('unknown');
     await expect(solution.datasource()).resolves.toBeNull();
@@ -110,7 +119,7 @@ describe('syntheticsSolution', () => {
   it('queries each detail once with the datasource that proved Synthetics usage', async () => {
     const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
     mockFetchSeries.mockResolvedValue(series);
-    const solution = syntheticsSolution();
+    const solution = syntheticsSolution(null);
 
     await Promise.all([
       solution.stats(),
@@ -124,17 +133,36 @@ describe('syntheticsSolution', () => {
 
     expect(mockProbe).toHaveBeenCalledTimes(1);
     expect(mockFetchStats).toHaveBeenCalledTimes(1);
-    expect(mockFetchStats).toHaveBeenCalledWith(datasource);
+    expect(mockFetchStats).toHaveBeenCalledWith(datasource, null);
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
-    expect(mockFetchHealth).toHaveBeenCalledWith(datasource);
+    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, null);
     expect(mockFetchSeries).toHaveBeenCalledTimes(1);
-    expect(mockFetchSeries).toHaveBeenCalledWith(datasource);
+    expect(mockFetchSeries).toHaveBeenCalledWith(datasource, null);
+  });
+
+  it('scopes facts to a filter saved for the resolved datasource and ignores one saved for another', async () => {
+    await syntheticsSolution(storedFilter).stats();
+    await syntheticsSolution({ ...storedFilter, datasourceUid: 'other-uid' }).stats();
+
+    expect(mockFetchStats.mock.calls).toEqual([
+      [datasource, storedFilter],
+      [datasource, null],
+    ]);
+  });
+
+  it('shares a detection between recreated solutions', async () => {
+    const detect = syntheticsDetection();
+
+    await syntheticsSolution(null, detect).datasource();
+    await syntheticsSolution(storedFilter, detect).datasource();
+
+    expect(mockProbe).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('syntheticsSolution alert', () => {
   it('returns no alert when no check is failing, without probing the app', async () => {
-    const solution = syntheticsSolution();
+    const solution = syntheticsSolution(null);
 
     await expect(solution.needsAttention()).resolves.toBe(false);
     await expect(solution.alert()).resolves.toBeNull();
@@ -143,29 +171,30 @@ describe('syntheticsSolution alert', () => {
 
   it('treats a zero failing count as healthy', async () => {
     mockFetchHealth.mockResolvedValue({ failing: 0, worstCheck: null, worstRatio: null });
-    const solution = syntheticsSolution();
+    const solution = syntheticsSolution(null);
 
     await expect(solution.needsAttention()).resolves.toBe(false);
     await expect(solution.alert()).resolves.toBeNull();
   });
 
   it('reports failing checks with the worst offender as detail', async () => {
-    mockFetchHealth.mockResolvedValue({ failing: 2, worstCheck: 'checkout-flow', worstRatio: 0.42 });
-    const solution = syntheticsSolution();
+    // A check name carries characters i18next would HTML-escape by default.
+    mockFetchHealth.mockResolvedValue({ failing: 2, worstCheck: 'Frontend: browser /login', worstRatio: 0.42 });
+    const solution = syntheticsSolution(null);
 
     await expect(solution.needsAttention()).resolves.toBe(true);
     await expect(solution.alert()).resolves.toEqual({
       primary: '2 checks failing',
-      details: ['checkout-flow at 42%'],
+      details: ['Frontend: browser /login at 42%'],
     });
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
-    expect(mockFetchHealth).toHaveBeenCalledWith(datasource);
+    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, null);
   });
 
   it('omits the detail row when the worst check is unidentified', async () => {
     mockFetchHealth.mockResolvedValue({ failing: 1, worstCheck: null, worstRatio: null });
 
-    await expect(syntheticsSolution().alert()).resolves.toEqual({
+    await expect(syntheticsSolution(null).alert()).resolves.toEqual({
       primary: '1 check failing',
       details: [],
     });
@@ -174,17 +203,17 @@ describe('syntheticsSolution alert', () => {
 
 describe('syntheticsSolution stats and sparkline', () => {
   it('formats the check count with the success-ratio secondary', async () => {
-    await expect(syntheticsSolution().stats()).resolves.toEqual({
+    await expect(syntheticsSolution(null).stats()).resolves.toEqual({
       primary: '12 checks',
       secondary: '98.5% success · 24h',
     });
-    expect(mockFetchStats).toHaveBeenCalledWith(datasource);
+    expect(mockFetchStats).toHaveBeenCalledWith(datasource, null);
   });
 
   it('renders a fully green fleet without a trailing decimal', async () => {
     mockFetchStats.mockResolvedValue({ checks: 2, successRatio: 1 });
 
-    await expect(syntheticsSolution().stats()).resolves.toEqual({
+    await expect(syntheticsSolution(null).stats()).resolves.toEqual({
       primary: '2 checks',
       secondary: '100% success · 24h',
     });
@@ -192,31 +221,47 @@ describe('syntheticsSolution stats and sparkline', () => {
 
   it('omits stats without a check count', async () => {
     mockFetchStats.mockResolvedValue({ checks: null, successRatio: 0.9 });
-    await expect(syntheticsSolution().stats()).resolves.toBeNull();
+    await expect(syntheticsSolution(null).stats()).resolves.toBeNull();
 
     mockFetchStats.mockResolvedValue({ checks: 0, successRatio: 0.9 });
-    await expect(syntheticsSolution().stats()).resolves.toBeNull();
+    await expect(syntheticsSolution(null).stats()).resolves.toBeNull();
+  });
+
+  it('reports all checks ignored instead of hiding a confirmed empty scoped count', async () => {
+    mockFetchStats.mockResolvedValue({ checks: 0, successRatio: null });
+
+    await expect(syntheticsSolution(storedFilter).stats()).resolves.toEqual({
+      primary: 'All checks ignored',
+      secondary: 'Adjust the filters',
+    });
+  });
+
+  it('keeps a scoped card blank when the count is unavailable rather than claiming every check is ignored', async () => {
+    // A failed count query inside the partial stats batch leaves the ratio but no count.
+    mockFetchStats.mockResolvedValue({ checks: null, successRatio: 0.9 });
+
+    await expect(syntheticsSolution(storedFilter).stats()).resolves.toBeNull();
   });
 
   it('drops the secondary when the success ratio is unavailable', async () => {
     mockFetchStats.mockResolvedValue({ checks: 3, successRatio: null });
 
-    await expect(syntheticsSolution().stats()).resolves.toEqual({ primary: '3 checks' });
+    await expect(syntheticsSolution(null).stats()).resolves.toEqual({ primary: '3 checks' });
   });
 
   it('returns the success trend with its 24-hour caption', async () => {
     const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
     mockFetchSeries.mockResolvedValue(series);
 
-    await expect(syntheticsSolution().sparkline()).resolves.toEqual({
+    await expect(syntheticsSolution(null).sparkline()).resolves.toEqual({
       series,
       caption: 'Success rate · last 24h',
     });
-    expect(mockFetchSeries).toHaveBeenCalledWith(datasource);
+    expect(mockFetchSeries).toHaveBeenCalledWith(datasource, null);
   });
 
   it('omits the sparkline when the probe metrics are unavailable', async () => {
-    await expect(syntheticsSolution().sparkline()).resolves.toBeNull();
+    await expect(syntheticsSolution(null).sparkline()).resolves.toBeNull();
   });
 });
 
@@ -224,7 +269,7 @@ describe('syntheticsSolution CTA and offer', () => {
   it('opens the checks page when the solution needs attention', async () => {
     mockFetchHealth.mockResolvedValue({ failing: 2, worstCheck: 'checkout-flow', worstRatio: 0.42 });
 
-    await expect(syntheticsSolution().cta()).resolves.toEqual({
+    await expect(syntheticsSolution(null).cta()).resolves.toEqual({
       label: 'View failing checks',
       href: '/a/grafana-synthetic-monitoring-app/checks',
       action: 'view_alerts',
@@ -236,7 +281,7 @@ describe('syntheticsSolution CTA and offer', () => {
     mockFetchHealth.mockResolvedValue({ failing: 2, worstCheck: null, worstRatio: null });
     mockAccessibleAppPage.mockImplementation(async (appId, path) => (path === '/checks' ? null : `/a/${appId}${path}`));
 
-    await expect(syntheticsSolution().cta()).resolves.toEqual({
+    await expect(syntheticsSolution(null).cta()).resolves.toEqual({
       label: 'Open Synthetic Monitoring',
       href: '/a/grafana-synthetic-monitoring-app/home',
       action: 'open_solution',
@@ -244,7 +289,7 @@ describe('syntheticsSolution CTA and offer', () => {
   });
 
   it('opens the app home when nothing needs attention', async () => {
-    await expect(syntheticsSolution().cta()).resolves.toEqual({
+    await expect(syntheticsSolution(null).cta()).resolves.toEqual({
       label: 'Open Synthetic Monitoring',
       href: '/a/grafana-synthetic-monitoring-app/home',
       action: 'open_solution',
@@ -255,7 +300,7 @@ describe('syntheticsSolution CTA and offer', () => {
   it('falls back to Explore using the proving datasource when the app is inaccessible', async () => {
     mockAccessibleAppPage.mockResolvedValue(null);
 
-    const cta = await syntheticsSolution().cta();
+    const cta = await syntheticsSolution(null).cta();
 
     expect(cta?.label).toBe('Open in Explore');
     expect(cta?.href).toMatch(/^\/explore\?left=/);
@@ -263,10 +308,17 @@ describe('syntheticsSolution CTA and offer', () => {
     expect(decodeURIComponent(cta!.href)).toContain('sm-prom');
   });
 
+  it('omits the Explore fallback when the user cannot access Explore', async () => {
+    mockAccessibleAppPage.mockResolvedValue(null);
+    jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(false);
+
+    await expect(syntheticsSolution(null).cta()).resolves.toBeNull();
+  });
+
   it('offers the accessible setup flow after a definitive no-data result', async () => {
     mockProbe.mockResolvedValue(null);
 
-    await expect(syntheticsSolution().offer()).resolves.toEqual({
+    await expect(syntheticsSolution(null).offer()).resolves.toEqual({
       availability: 'setup',
       description: 'Monitor uptime and performance of your endpoints from probes around the world.',
       setupHint: 'create a check',
@@ -284,7 +336,7 @@ describe('syntheticsSolution CTA and offer', () => {
     mockProbe.mockResolvedValue(null);
     mockAccessibleAppPage.mockResolvedValue(null);
 
-    await expect(syntheticsSolution().offer()).resolves.toEqual({
+    await expect(syntheticsSolution(null).offer()).resolves.toEqual({
       availability: 'setup',
       description: 'Monitor uptime and performance of your endpoints from probes around the world.',
       setupHint: 'create a check',
@@ -297,13 +349,13 @@ describe('syntheticsSolution CTA and offer', () => {
     mockProbe.mockResolvedValue(null);
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
 
-    await expect(syntheticsSolution().offer()).resolves.toMatchObject({ availability: 'setup', cta: null });
+    await expect(syntheticsSolution(null).offer()).resolves.toMatchObject({ availability: 'setup', cta: null });
     expect(contextSrv.hasPermission).toHaveBeenCalledWith('grafana-synthetic-monitoring-app.checks:write');
     expect(mockAccessibleAppPage).not.toHaveBeenCalled();
   });
 
   it('never loads plugin availability for an active solution', async () => {
-    await expect(syntheticsSolution().offer()).resolves.toBeNull();
+    await expect(syntheticsSolution(null).offer()).resolves.toBeNull();
     expect(mockPluginAvailability).not.toHaveBeenCalled();
     expect(mockSetupGuideEnabled).not.toHaveBeenCalled();
   });

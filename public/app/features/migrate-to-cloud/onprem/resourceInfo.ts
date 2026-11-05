@@ -1,8 +1,11 @@
 import { t } from '@grafana/i18n';
+import { type IconName } from '@grafana/ui';
 
 import { type ResourceTableItem } from './types';
 
-export function iconNameForResource(resource: ResourceTableItem['type']) {
+export function iconNameForResource(resource: ResourceTableItem['type']): IconName;
+export function iconNameForResource(resource: string): IconName | undefined;
+export function iconNameForResource(resource: string): IconName | undefined {
   switch (resource) {
     case 'DASHBOARD':
       return 'dashboard';
@@ -31,7 +34,9 @@ export function iconNameForResource(resource: ResourceTableItem['type']) {
   }
 }
 
-export function pluralizeResourceName(resource: ResourceTableItem['type']) {
+export function pluralizeResourceName(resource: ResourceTableItem['type']): string;
+export function pluralizeResourceName(resource: string): string | undefined;
+export function pluralizeResourceName(resource: string): string | undefined {
   switch (resource) {
     case 'DASHBOARD':
       return t('migrate-to-cloud.resource-types.dashboard', 'Dashboards');

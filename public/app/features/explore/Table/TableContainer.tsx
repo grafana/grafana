@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { memo, useState } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
+import { useAsync } from 'react-use';
 
 import {
   applyFieldOverrides,
@@ -16,7 +17,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
 import { type AdHocFilterItem, PanelChrome, useTheme2, PanelContextProvider } from '@grafana/ui';
-const TEMPO_STREAMING_PROGRESS_REF_ID = 'streaming-progress';
+import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
@@ -29,6 +30,7 @@ import { MetaInfoText } from '../MetaInfoText';
 import { selectIsWaitingForData } from '../state/query';
 import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
+const TEMPO_STREAMING_PROGRESS_REF_ID = 'streaming-progress';
 const MAX_NUMBER_OF_COLUMNS = 20;
 
 interface TableContainerProps {
@@ -74,6 +76,8 @@ export const TableContainer = memo(function TableContainer({
 }: Props) {
   const theme = useTheme2();
   const [showAll, setShowAll] = useState(false);
+  const tablePlugin = useAsync(() => importPanelPlugin('table'), []);
+  const panelPadding = tablePlugin.value?.noPadding ? 'none' : 'md';
 
   function hasSubFrames(data: DataFrame) {
     return data.fields.some((f) => f.type === FieldType.nestedFrames);
@@ -168,15 +172,22 @@ export const TableContainer = memo(function TableContainer({
           width={width}
           height={200}
           loadingState={panelLoadingState}
+          // Renders MetaInfoText, not the table panel — don't inherit its noPadding.
+          padding="md"
         >
-          {() => <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned') }]} />}
+          {() => (
+            // Matches the title's extra inline-start padding (PANEL_TITLE_INSET in Table/TableNG/constants.ts).
+            <div className={css({ paddingInlineStart: theme.spacing.x0_5 })}>
+              <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned') }]} />
+            </div>
+          )}
         </PanelChrome>
       )}
       {frames && frames.length > 0 && (
         <div className={css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(1) })}>
           {frames.map((data, i) => (
             <PanelChrome
-              key={data.refId || `table-${i}`}
+              key={`${data.refId || `table-${i}`}-${panelPadding}`}
               title={getTableTitle(dataFrames, data, i)}
               titleItems={[
                 !showAll && dataLimited && (
@@ -199,6 +210,7 @@ export const TableContainer = memo(function TableContainer({
               width={width}
               height={getTableHeight(data.length, hasSubFrames(data), queryStreaming)}
               loadingState={panelLoadingState}
+              padding={panelPadding}
             >
               {(innerWidth, innerHeight) => (
                 <DataLinksContext.Provider value={{ dataLinkPostProcessor }}>

@@ -219,6 +219,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
         value={visibility}
         onChange={(value) => {
           edit({
+            meta: { actionId: 'conditional-rendering.changeVisibility' },
             description: t('dashboard.conditional-rendering.conditions.group.visibility.label', '{{type}} visibility', {
               type: getTranslatedObjectType(objectType),
             }),
@@ -233,6 +234,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
           value={condition}
           onChange={(value) => {
             edit({
+              meta: { actionId: 'conditional-rendering.changeMatch' },
               description: t('dashboard.conditional-rendering.conditions.group.condition.label', 'Match rules'),
               source: model,
               perform: () => model.changeCondition(value),
@@ -249,6 +251,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
           const condition = model.createCondition(value!);
 
           edit({
+            meta: { actionId: 'conditional-rendering.addRule' },
             description: t('dashboard.edit-actions.add-conditional-rule', 'Add {{ruleDescription}} rule', {
               ruleDescription: lowerCase(label),
             }),

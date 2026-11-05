@@ -2,12 +2,14 @@ package v1
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -262,7 +264,7 @@ func TestTimeIntervalFingerprint(t *testing.T) {
 	t.Run("stable across metadata modification", func(t *testing.T) {
 		fingerprint := TimeIntervalFingerprint(baseInterval())
 
-		metadataType := reflect.TypeOf(ResourceMetadata{})
+		metadataType := reflect.TypeFor[ResourceMetadata]()
 		otherMetadata := reflect.ValueOf(ResourceMetadata{
 			UID:        "some-other-uid",
 			Version:    "some-other-version",
@@ -302,7 +304,7 @@ func TestTimeIntervalFingerprint(t *testing.T) {
 		}
 		otherValue := reflect.ValueOf(other)
 
-		intervalType := reflect.TypeOf(timeinterval.TimeInterval{})
+		intervalType := reflect.TypeFor[timeinterval.TimeInterval]()
 		for i := 0; i < intervalType.NumField(); i++ {
 			field := intervalType.Field(i).Name
 			cp := baseInterval()
@@ -365,7 +367,80 @@ func TestTimeIntervalFingerprint(t *testing.T) {
 
 	t.Run("matches the version set by NewTimeInterval", func(t *testing.T) {
 		base := baseInterval()
-		created := NewTimeInterval(base.Title, base.TimeIntervals, models.ProvenanceNone)
+		created := NewTimeInterval(TimeIntervalUID(base.Title), base.Title, base.TimeIntervals, models.ProvenanceNone)
 		assert.Equal(t, TimeIntervalFingerprint(base), created.Version)
 	})
+}
+
+func TestTimeIntervalUID(t *testing.T) {
+	titles := map[string]ResourceUID{
+		"business-hours":                         ResourceUID("ef8zkhedc25v8sme7l2fbhtzd"),
+		"Business Hours":                         ResourceUID("7vz82x6cvl7s2kmit6hvixfdx"),
+		"snake_case_title":                       ResourceUID("5ji7xvy6wbt48olyfnxrokgaz"),
+		"with/slash":                             ResourceUID("5j2gzhns29fq4tg6t41eif3lk"),
+		"ünïcödé 工作时间 🕒":                         ResourceUID("6feupar5t92omno7pbshpyj20"),
+		strings.Repeat("a very long title ", 50): ResourceUID("ahzg8ilj37rh7w9qp5lrkob1u"),
+		" ":                                      ResourceUID("dosx97exdz0x30namo1v3ef2q"),
+	}
+
+	t.Run("is deterministic", func(t *testing.T) {
+		for title, expectedUID := range titles {
+			t.Run(title, func(t *testing.T) {
+				assert.Equal(t, TimeIntervalUID(title), TimeIntervalUID(title))
+				assert.Equal(t, expectedUID, TimeIntervalUID(title))
+			})
+		}
+	})
+
+	t.Run("differs between titles", func(t *testing.T) {
+		seen := map[ResourceUID]string{}
+		for title := range titles {
+			uid := TimeIntervalUID(title)
+			other, dup := seen[uid]
+			require.Falsef(t, dup, "%q and %q share a UID", title, other)
+			seen[uid] = title
+		}
+	})
+
+	t.Run("is a valid Kubernetes name and Grafana UID for any title", func(t *testing.T) {
+		for title := range titles {
+			uid := string(TimeIntervalUID(title))
+			assert.Empty(t, k8svalidation.IsDNS1123Subdomain(uid), title)
+			assert.NoError(t, ValidateTimeIntervalUID(uid), title)
+			assert.Len(t, uid, 25)
+		}
+	})
+
+	t.Run("is not the name-based UID", func(t *testing.T) {
+		for title := range titles {
+			assert.NotEqual(t, models.NameToUid(title), string(TimeIntervalUID(title)))
+		}
+	})
+}
+
+func TestValidateTimeIntervalUID(t *testing.T) {
+	testCases := []struct {
+		name    string
+		uid     string
+		wantErr bool
+	}{
+		{name: "valid", uid: "my-interval.1"},
+		{name: "max length", uid: strings.Repeat("a", 40)},
+		{name: "empty", uid: "", wantErr: true},
+		{name: "blank", uid: "  ", wantErr: true},
+		{name: "colon", uid: "a:b", wantErr: true},
+		{name: "too long", uid: strings.Repeat("a", 41), wantErr: true},
+		{name: "uppercase", uid: "Upper", wantErr: true},
+		{name: "underscore", uid: "a_b", wantErr: true},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateTimeIntervalUID(tc.uid)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
 }

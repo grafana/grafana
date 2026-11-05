@@ -1,18 +1,35 @@
 import { render, screen } from 'test/test-utils';
 
-import { SOLUTION_IDS } from '../solutions/constants';
+import { stubSolution } from '../solutions/test-utils';
 
 import { Solutions } from './Solutions';
 
-jest.mock('./SolutionCard', () => ({
-  ...jest.requireActual('./SolutionCard'),
-  SolutionCardSkeleton: () => <div data-testid="solution-card-skeleton" />,
-}));
+const metrics = stubSolution('metrics', { title: 'Metrics & infrastructure' });
 
 describe('Solutions', () => {
-  it('renders one skeleton for each supported solution', () => {
-    render(<Solutions emptyMessage="" loading cards={[]} />);
+  it('renders one skeleton per pending solution', () => {
+    render(<Solutions emptyMessage="" cards={[]} pendingCount={5} />);
 
-    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(SOLUTION_IDS.length);
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(5);
+  });
+
+  it('renders placed cards above the skeletons of the solutions still resolving', async () => {
+    render(
+      <Solutions
+        emptyMessage=""
+        cards={[{ solution: metrics, kind: 'live', needsAttention: false }]}
+        pendingCount={2}
+      />
+    );
+
+    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(2);
+  });
+
+  it('shows the empty message only once nothing is pending', () => {
+    render(<Solutions emptyMessage="Nothing here" cards={[]} pendingCount={0} />);
+
+    expect(screen.getByText('Nothing here')).toBeInTheDocument();
+    expect(screen.queryByTestId('solution-card-skeleton')).not.toBeInTheDocument();
   });
 });

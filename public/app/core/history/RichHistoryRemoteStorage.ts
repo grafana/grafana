@@ -1,8 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { type DataQuery } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getBackendSrv, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type RichHistoryQuery } from 'app/types/explore';
 
 import { PreferencesService } from '../services/PreferencesService';

@@ -114,6 +114,18 @@ describe('FieldDisplay', () => {
     expect(display[0].display.numeric).toEqual(0);
   });
 
+  it('Should return numeric min/max defaults when there is no data and the saved min/max defaults are strings', () => {
+    const options = createEmptyDisplayOptions({
+      fieldConfig: {
+        defaults: { min: '0', max: '200' },
+      },
+    });
+
+    const display = getFieldDisplayValues(options);
+    expect(display[0].field.min).toBe(0);
+    expect(display[0].field.max).toBe(200);
+  });
+
   it('Should return field with default text when no mapping or data available', () => {
     const options = createEmptyDisplayOptions();
     const display = getFieldDisplayValues(options);
@@ -497,6 +509,48 @@ describe('FieldDisplay', () => {
 
       const result = getFieldDisplayValues(options);
       expect(result[0].display.title).toEqual('NewName');
+    });
+  });
+
+  describe('sparkline', () => {
+    it('should return sparkline when data has multiple values', () => {
+      const options = createDisplayOptions({
+        sparkline: true,
+        reduceOptions: { calcs: [ReducerID.last] },
+        data: [
+          toDataFrame({
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+              { name: 'Value', type: FieldType.number, values: [10, 20, 30] },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result).toHaveLength(1);
+      expect(result[0].sparkline?.x?.name).toBe('Time');
+      expect(result[0].sparkline?.y.name).toBe('Value');
+      expect(result[0].sparkline?.highlightIndex).toBe(2);
+    });
+
+    it('should not return sparkline when data has less than 2 values', () => {
+      const options = createDisplayOptions({
+        sparkline: true,
+        reduceOptions: { calcs: [ReducerID.last] },
+        data: [
+          toDataFrame({
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [1] },
+              { name: 'Value', type: FieldType.number, values: [10] },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result).toHaveLength(1);
+      expect(result[0].sparkline).toBe(undefined);
     });
   });
 });

@@ -35,6 +35,38 @@ Options can be an array of objects with seperate label and values, or an array o
 
 While Combobox can handle large sets of options, you should consider both the user experience of searching through many options, and the performance of loading many options from an API.
 
+### Custom option rendering
+
+Use `renderOption` to replace the content inside an option row. Combobox continues to own the option element, selection, highlighting, and keyboard and pointer interactions.
+
+Combobox uses its default content for generated custom-value and select-all options.
+
+```tsx
+<Combobox
+  options={[
+    { label: 'API server', value: 'api' },
+    { label: 'Database', value: 'database' },
+  ]}
+  value={value}
+  onChange={setValue}
+  width={32}
+  renderOption={(option) => (
+    <Stack direction="row" alignItems="center" justifyContent="space-between">
+      <span>{option.label ?? option.value}</span>
+      <Badge text="Available" color="green" />
+    </Stack>
+  )}
+/>
+```
+
+Custom option renderers must meet these requirements:
+
+- Keep the renderer pure and free of side effects. Virtualized rows can render repeatedly, and the render function _may_ be called before an option is rendered, such as to measure layout.
+- Custom content can use variable heights. Combobox starts with a conservative two-line estimate, then measures each mounted custom row and updates the virtual layout.
+- Menu and option width is estimated from that `label` and `description` on items. It is currently not measured from the custom content, so ensure your custom content fits within the estimated width or can wrap.
+- Include the option label or equivalent accessible text in the rendered content. The plain string `label` is still used for filtering and for the selected input value.
+- Do not nest buttons, links, inputs, or other interactive controls. The option row owns focus and selection.
+
 ### Grouping
 
 Each option object may also have a `group` string property. Options with matching group names will be sorted together, as will options with undefined groups. Combobox will order these based on the first occurence of each `group` (or absence of `group`) in the `options` prop.
@@ -110,7 +142,7 @@ Some differences to note:
 - `allowCustomValue` has been renamed to `createCustomValue`.
 - When specifying `width="auto"`, `minWidth` is also required.
 - Many props used to control subtle behaviour have been removed to simplify the API and improve performance.
-  - Custom render props, or label as ReactNode is not supported at this time. Reach out if you have a hard requirement for this and we can discuss.
+- Use `renderOption` for custom option content. It does not replace the option row or its interaction behavior; follow the renderer requirements above.
 
 For all async behaviour, pass in a function that returns `Promise<ComboboxOption[]>` that will be called when the menu is opened, and on keypress.
 

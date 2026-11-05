@@ -4,51 +4,27 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestResolveBuildDir(t *testing.T) {
-	t.Run("resolves build when the rspack flag is off", func(t *testing.T) {
-		require.Equal(t, "build", ResolveBuildDir(context.Background()))
-	})
-
-	t.Run("resolves build/rspack when the rspack flag is on", func(t *testing.T) {
-		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
-
-		require.Equal(t, "build/rspack", ResolveBuildDir(context.Background()))
-	})
-}
-
 func TestGetWebAssetsBuildDir(t *testing.T) {
-	// Env must be dev so GetWebAssets skips its process-wide cache between subtests.
 	cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata"}
 	license := licensingtest.NewFakeLicensing()
 	license.On("ContentDeliveryPrefix").Return("grafana")
 
-	t.Run("flag off reads the webpack manifest", func(t *testing.T) {
-		ctx := context.Background()
-
-		assets, err := GetWebAssets(ctx, ResolveBuildDir(ctx), cfg, license)
-		require.NoError(t, err)
-		require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
-		require.Equal(t, "public/build/grafana.dark.722d809dba5a31f57d49.css", assets.Dark)
-	})
-
-	t.Run("flag on reads the rspack manifest", func(t *testing.T) {
-		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
-		ctx := context.Background()
-
-		assets, err := GetWebAssets(ctx, ResolveBuildDir(ctx), cfg, license)
-		require.NoError(t, err)
-		require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
-		require.Equal(t, "public/build/grafana.dark.dddd3333eeee4444ffff.css", assets.Dark)
-	})
+	assets, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
+	require.NoError(t, err)
+	require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
+	require.Equal(t, "public/build/grafana.dark.dddd3333eeee4444ffff.css", assets.Dark)
 }
 
 func TestGetWebAssetsSwagger(t *testing.T) {
@@ -56,19 +32,9 @@ func TestGetWebAssetsSwagger(t *testing.T) {
 	license := licensingtest.NewFakeLicensing()
 	license.On("ContentDeliveryPrefix").Return("grafana")
 
-	t.Run("flag off", func(t *testing.T) {
-		assets, err := GetWebAssets(context.Background(), "build-swagger", cfg, license)
-		require.NoError(t, err)
-		require.Equal(t, "public/build-swagger/runtime.js", assets.JSFiles[0].FilePath)
-	})
-
-	t.Run("flag on", func(t *testing.T) {
-		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
-
-		assets, err := GetWebAssets(context.Background(), "build-swagger", cfg, license)
-		require.NoError(t, err)
-		require.Equal(t, "public/build-swagger/runtime.js", assets.JSFiles[0].FilePath)
-	})
+	assets, err := GetWebAssets(context.Background(), "build-swagger", cfg, license)
+	require.NoError(t, err)
+	require.Equal(t, "public/build-swagger/runtime.js", assets.JSFiles[0].FilePath)
 }
 
 func TestGetWebAssetsMissingBuildDir(t *testing.T) {
@@ -82,7 +48,7 @@ func TestGetWebAssetsMissingBuildDir(t *testing.T) {
 }
 
 func TestReadWebassets(t *testing.T) {
-	assets, err := ReadWebAssetsFromFile("testdata/build/assets-manifest.json")
+	assets, err := ReadWebAssetsFromFile("testdata/assets-manifest.json")
 	require.NoError(t, err)
 
 	dto, err := json.MarshalIndent(assets, "", "  ")
@@ -196,7 +162,6 @@ func TestPublicPathFollowsBuildDir(t *testing.T) {
 		expected string
 	}{
 		{buildDir: BuildDir, expected: "public/build/"},
-		{buildDir: RspackBuildDir, expected: "public/build/rspack/"},
 		{buildDir: "build-swagger", expected: "public/build-swagger/"},
 	}
 
@@ -211,8 +176,82 @@ func TestPublicPathFollowsBuildDir(t *testing.T) {
 		license := licensingtest.NewFakeLicensing()
 		license.On("ContentDeliveryPrefix").Return("grafana")
 
-		assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
+		assets, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
 		require.NoError(t, err)
-		require.Equal(t, "public/build/rspack/", assets.PublicPath)
+		require.Equal(t, "public/build/", assets.PublicPath)
+	})
+}
+
+func TestGetWebAssetsFromDevServer(t *testing.T) {
+	license := licensingtest.NewFakeLicensing()
+	license.On("ContentDeliveryPrefix").Return("grafana")
+
+	manifest, err := os.ReadFile(filepath.Join("testdata", BuildDir, AssetsManifestFile))
+	require.NoError(t, err)
+
+	t.Run("prefixes assets with the dev server origin", func(t *testing.T) {
+		var gotPath string
+		devServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotPath = r.URL.Path
+			_, _ = w.Write(manifest)
+		}))
+		defer devServer.Close()
+
+		cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata", FrontendDevServerURL: devServer.URL}
+		assets, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
+		require.NoError(t, err)
+
+		require.Equal(t, "/public/build/"+AssetsManifestFile, gotPath)
+		require.Equal(t, devServer.URL+"/", assets.ContentDeliveryURL)
+		require.Equal(t, "public/build/", assets.PublicPath)
+		require.Equal(t, devServer.URL+"/public/build/runtime.js", assets.JSFiles[0].FilePath)
+	})
+
+	t.Run("falls back to the build on disk when the dev server is down", func(t *testing.T) {
+		devServer := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+		devServerURL := devServer.URL
+		devServer.Close()
+
+		cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata", FrontendDevServerURL: devServerURL}
+		assets, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
+		require.NoError(t, err)
+
+		require.Empty(t, assets.ContentDeliveryURL)
+		require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
+	})
+
+	// The realistic failure is not "nothing is listening" but a dev server that is up and
+	// answering wrongly - mid-build, or with a drifted publicPath.
+	t.Run("falls back to the build on disk when the dev server answers badly", func(t *testing.T) {
+		for name, handler := range map[string]http.HandlerFunc{
+			"a 500":      func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusInternalServerError) },
+			"a 404":      func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNotFound) },
+			"not json":   func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("<html>nope</html>")) },
+			"no entries": func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte(`{}`)) },
+		} {
+			t.Run(name, func(t *testing.T) {
+				devServer := httptest.NewServer(handler)
+				defer devServer.Close()
+
+				cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata", FrontendDevServerURL: devServer.URL}
+				assets, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
+				require.NoError(t, err)
+
+				require.Empty(t, assets.ContentDeliveryURL)
+				require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
+			})
+		}
+	})
+
+	t.Run("is ignored for the swagger build, which has no dev server", func(t *testing.T) {
+		devServer := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+			t.Error("the swagger build must not read its manifest from the dev server")
+		}))
+		defer devServer.Close()
+
+		cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata", FrontendDevServerURL: devServer.URL}
+		assets, err := GetWebAssets(context.Background(), "build-swagger", cfg, license)
+		require.NoError(t, err)
+		require.Empty(t, assets.ContentDeliveryURL)
 	})
 }

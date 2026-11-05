@@ -1,4 +1,11 @@
-import { ensureFolderPathTrailingSlash, generatePath, joinPath, slugifyForFilename, splitPath } from './path';
+import {
+  ensureFolderPathTrailingSlash,
+  generatePath,
+  joinPath,
+  slugifyForFilename,
+  splitPath,
+  splitSourcePath,
+} from './path';
 
 describe('generatePath', () => {
   const timestamp = '2023-05-15-abcde';
@@ -77,6 +84,24 @@ describe('generatePath', () => {
     });
 
     expect(result).toBe('team-alpha/my-dashboard.json');
+  });
+});
+
+describe('splitSourcePath', () => {
+  it('should split off the #ref fragment written by provisioning previews', () => {
+    expect(splitSourcePath('dashboards/my-dash.json#feature/x')).toEqual({
+      filePath: 'dashboards/my-dash.json',
+      fragmentRef: 'feature/x',
+    });
+  });
+
+  it('should return only the file path when there is no fragment', () => {
+    expect(splitSourcePath('dashboards/my-dash.json')).toEqual({ filePath: 'dashboards/my-dash.json' });
+  });
+
+  it('should return an empty result for undefined or empty input', () => {
+    expect(splitSourcePath(undefined)).toEqual({});
+    expect(splitSourcePath('')).toEqual({});
   });
 });
 

@@ -1,3 +1,4 @@
+import { isTimeCompareFrame, withComparisonSuffix } from '../dataframe/timeCompare';
 import { type Labels } from '../types/data';
 import {
   type DataFrame,
@@ -36,7 +37,7 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   }
 
   // list all the
-  if (index === undefined && frame.fields.length > 0) {
+  if (index === undefined && valueFieldNames.length > 0) {
     return frame.fields
       .filter((f) => f.type !== FieldType.time)
       .map((f) => getFieldDisplayName(f, frame))
@@ -47,7 +48,7 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
     return `Series (${frame.refId})`;
   }
 
-  return `Series (${index})`;
+  return index === undefined ? 'Series' : `Series (${index})`;
 }
 
 export function cacheFieldDisplayNames(frames: DataFrame[]) {
@@ -92,15 +93,15 @@ function calculateFieldDisplayName(
   commonLabels?: Labels
 ): string {
   const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;
-  const isComparisonSeries = Boolean(frame?.meta?.timeCompare?.isTimeShiftQuery);
+  const isComparisonSeries = isTimeCompareFrame(frame);
   let displayName = hasConfigTitle ? field.config!.displayName! : field.name;
 
   if (hasConfigTitle) {
-    return isComparisonSeries ? `${displayName} (comparison)` : displayName;
+    return isComparisonSeries ? withComparisonSuffix(displayName) : displayName;
   }
 
   if (frame && field.config?.displayNameFromDS) {
-    return isComparisonSeries ? `${field.config.displayNameFromDS} (comparison)` : field.config.displayNameFromDS;
+    return isComparisonSeries ? withComparisonSuffix(field.config.displayNameFromDS) : field.config.displayNameFromDS;
   }
 
   // This is an ugly exception for time field
@@ -172,7 +173,7 @@ function calculateFieldDisplayName(
   }
 
   if (isComparisonSeries) {
-    displayName = `${displayName} (comparison)`;
+    displayName = withComparisonSuffix(displayName);
   }
   return displayName;
 }

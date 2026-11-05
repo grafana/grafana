@@ -24,7 +24,7 @@ func TestLease(t *testing.T) {
 }
 
 func TestAcquireNameValidation(t *testing.T) {
-	m := lease.NewManager(newMapKV(), "holder-validation", nil, lease.WithGarbageCollectionDisabled)
+	m := lease.NewManager(newMapKV(), "holder-validation", "test", nil, lease.WithGarbageCollectionDisabled)
 
 	t.Run("invalid keys are rejected", func(t *testing.T) {
 		for _, name := range []string{"", "invalid key", "invalid\nkey"} {
@@ -59,7 +59,7 @@ func TestAcquireNameValidation(t *testing.T) {
 
 func TestAcquireTTLValidation(t *testing.T) {
 	const minTTL = 100 * time.Millisecond
-	m := lease.NewManager(newMapKV(), "holder-validation", nil, lease.WithInternalMinTTL(minTTL), lease.WithGarbageCollectionDisabled)
+	m := lease.NewManager(newMapKV(), "holder-validation", "test", nil, lease.WithInternalMinTTL(minTTL), lease.WithGarbageCollectionDisabled)
 
 	testCases := []struct {
 		d       time.Duration

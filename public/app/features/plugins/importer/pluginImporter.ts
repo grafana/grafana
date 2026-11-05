@@ -12,7 +12,6 @@ import {
   type PluginMeta,
   throwIfAngular,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { getLogger } from '@grafana/runtime/unstable';
 import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
@@ -105,10 +104,35 @@ const appPluginPostImport: PostImportStrategy<AppPlugin, AppPluginMeta> = async 
   });
   addedLinksRegistry.register({ pluginId: meta.id, configs: plugin.addedLinkConfigs || [] });
   addedFunctionsRegistry.register({ pluginId: meta.id, configs: plugin.addedFunctionConfigs || [] });
+  await handOverRestrictedApis(meta.id, plugin);
 
   pluginsCache.set(meta.id, plugin);
   return plugin;
 };
+
+/**
+ * Answers `AppPlugin.onRestrictedApis`: the restricted APIs the allow and block lists give `pluginId`, the id
+ * this module was loaded for. Loaded only for a plugin that asks, so others pay nothing for it.
+ */
+async function handOverRestrictedApis(pluginId: string, plugin: AppPlugin): Promise<void> {
+  // Optional: a plugin built against an older @grafana/data may export an AppPlugin without it.
+  const listeners = plugin.restrictedApisListeners ?? [];
+  if (listeners.length === 0) {
+    return;
+  }
+  const { getRestrictedGrafanaApisAtLoad } = await import('../components/restrictedGrafanaApis/restrictedGrafanaApis');
+  const apis = getRestrictedGrafanaApisAtLoad(pluginId);
+  for (const listener of listeners) {
+    try {
+      listener(apis);
+    } catch (error) {
+      // One plugin's listener failing must not fail its load.
+      getLogger('features.plugins').logError(error instanceof Error ? error : new Error(String(error)), {
+        pluginId,
+      });
+    }
+  }
+}
 
 const promisesCache: Map<string, Promise<PanelPlugin | GenericDataSourcePlugin | AppPlugin>> = new Map();
 
@@ -150,7 +174,6 @@ const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataS
         pluginVersion: meta.info?.version ?? '',
         expectedHash: meta.moduleHash ?? '',
         loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
-        sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
       });
     }
     return Promise.resolve(cached);
@@ -164,7 +187,6 @@ const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataS
         pluginVersion: meta.info?.version ?? '',
         expectedHash: meta.moduleHash ?? '',
         loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
-        sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
       });
     }
     return getPromiseFromCache(meta);

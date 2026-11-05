@@ -87,7 +87,7 @@ export function PanelVizTypePicker({
   );
 
   /** TABS */
-  const tabs = useMemo(getTabs, []);
+  const [tabs] = useState(getTabs);
   const defaultTab = tabs[0].value;
   const [storedListMode, setStoredListMode] = useSessionStorage(LS_VISUALIZATION_SELECT_TAB_KEY, defaultTab);
 
@@ -227,7 +227,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginLeft: theme.spacing(1), // shift button to the right
   }),
   filter: css({
-    minHeight: theme.spacing(4),
+    minHeight: theme.spacing(theme.components.height.md),
     marginBottom: theme.spacing(1),
     marginRight: theme.spacing(1),
     marginLeft: theme.spacing(1),

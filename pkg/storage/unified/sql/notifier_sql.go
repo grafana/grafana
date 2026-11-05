@@ -87,6 +87,11 @@ func newPollingNotifier(cfg *pollingNotifierConfig) (*pollingNotifier, error) {
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("invalid polling notifier config: %w", err)
 	}
+	// Recording sites should not have to check for nil.
+	storageMetrics := cfg.storageMetrics
+	if storageMetrics == nil {
+		storageMetrics = resource.ProvideStorageMetrics(nil)
+	}
 	return &pollingNotifier{
 		dialect:         cfg.dialect,
 		pollingInterval: cfg.pollingInterval,
@@ -96,7 +101,7 @@ func newPollingNotifier(cfg *pollingNotifierConfig) (*pollingNotifier, error) {
 		listLatestRVs:   cfg.listLatestRVs,
 		historyPoll:     cfg.historyPoll,
 		done:            cfg.done,
-		storageMetrics:  cfg.storageMetrics,
+		storageMetrics:  storageMetrics,
 	}, nil
 }
 
@@ -110,11 +115,15 @@ func (p *pollingNotifier) notify(ctx context.Context) (<-chan *resource.WrittenE
 	return stream, nil
 }
 
+// since holds the newest delivered history RV per collection, polledAt the
+// resource_version table value at its last successful poll. The table holds
+// one past the newest history RV, so it is compared with polledAt, not since.
 func (p *pollingNotifier) poller(ctx context.Context, since groupResourceRV, stream chan<- *resource.WrittenEvent) {
 	t := time.NewTicker(p.pollingInterval)
 	defer close(stream)
 	defer t.Stop()
 
+	polledAt := groupResourceRV{}
 	for {
 		select {
 		case <-ctx.Done():
@@ -128,6 +137,7 @@ func (p *pollingNotifier) poller(ctx context.Context, since groupResourceRV, str
 			if err != nil {
 				p.log.Error("poller get latest resource version", "err", err)
 				t.Reset(p.pollingInterval)
+				span.End()
 				continue
 			}
 			for group, items := range grv {
@@ -139,9 +149,12 @@ func (p *pollingNotifier) poller(ctx context.Context, since groupResourceRV, str
 					if _, ok := since[group][resource]; !ok {
 						since[group][resource] = 0
 					}
+					if _, ok := polledAt[group]; !ok {
+						polledAt[group] = make(map[string]int64)
+					}
 
 					// We don't need to poll if the RV hasn't changed.
-					if since[group][resource] >= latestRV {
+					if since[group][resource] >= latestRV || polledAt[group][resource] == latestRV {
 						continue
 					}
 
@@ -155,6 +168,9 @@ func (p *pollingNotifier) poller(ctx context.Context, since groupResourceRV, str
 					if next > since[group][resource] {
 						since[group][resource] = next
 					}
+					// Every commit moves the table value, so an unchanged one
+					// means nothing new became visible since this poll.
+					polledAt[group][resource] = latestRV
 				}
 			}
 
@@ -173,9 +189,7 @@ func (p *pollingNotifier) poll(ctx context.Context, grp string, res string, sinc
 	if err != nil {
 		return 0, fmt.Errorf("poll history: %w", err)
 	}
-	if p.storageMetrics != nil {
-		p.storageMetrics.PollerLatency.Observe(time.Since(start).Seconds())
-	}
+	p.storageMetrics.PollerLatency.Observe(time.Since(start).Seconds())
 
 	var nextRV int64
 	for _, rec := range records {

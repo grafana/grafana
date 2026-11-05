@@ -262,6 +262,62 @@ describe('decorateSystemJSInstantiate', () => {
     });
   });
 
+  it.each([
+    {
+      name: 'single export',
+      packages: ['@grafana/ui:Button', '@grafana/ui:__esModule'],
+      expected: ['Button'],
+    },
+    {
+      name: 'multiple exports',
+      packages: ['@grafana/ui:Button', '@grafana/ui:Input', '@grafana/ui:Button'],
+      expected: ['Button', 'Input'],
+    },
+    {
+      name: 'whole package after a selector',
+      packages: ['@grafana/ui:Button', '@grafana/ui'],
+      expected: ['Button', 'Input'],
+    },
+    {
+      name: 'whole package before a selector',
+      packages: ['@grafana/ui', '@grafana/ui:Button'],
+      expected: ['Button', 'Input'],
+    },
+  ])('reports $name without changing import values or reporting duplicates', async ({ name, packages, expected }) => {
+    config.pluginImportTelemetryPackages = packages;
+    let importedValues: unknown[] = [];
+    const dependency = { Button: () => 'button', Input: () => 'input', __esModule: true };
+    const registration: SystemJSRegistration = [
+      ['@grafana/ui'],
+      () => ({
+        setters: [
+          (module) => {
+            importedValues = [module.Button, module.Input, module.__esModule];
+          },
+        ],
+        execute: () => importedValues,
+      }),
+    ];
+    const pluginId = `acme-${name.replaceAll(' ', '-')}`;
+    const decoratedRegistration = await decorateSystemJSInstantiate.call(
+      systemJSPrototype,
+      async () => registration,
+      `https://example.com/public/plugins/${pluginId}/module.js`
+    );
+    const declaration = decoratedRegistration![1](() => undefined, context);
+
+    declaration.setters![0](dependency);
+    declaration.setters![0](dependency);
+
+    expect(declaration.execute?.()).toEqual([dependency.Button, dependency.Input, true]);
+    expect(mockLogInfo.mock.calls).toEqual(
+      expected.map((importName) => [
+        'Plugin accessed shared dependency import',
+        { pluginId, dependencyName: '@grafana/ui', importName },
+      ])
+    );
+  });
+
   it('does not decorate unconfigured shared dependencies', async () => {
     config.pluginImportTelemetryPackages = [];
     const registration: SystemJSRegistration = [['react-router-dom'], () => ({ setters: [] })];

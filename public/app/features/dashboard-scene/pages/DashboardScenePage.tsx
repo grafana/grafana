@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { type Params, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
@@ -18,7 +18,6 @@ import {
   type DashboardPageRouteParams,
   type DashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
-import { TemplateDashboardModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
@@ -33,12 +32,28 @@ import { DashboardTemplateUseBanner } from '../components/DashboardTemplateUseBa
 import { ScriptedDashboardDeprecationBanner } from '../components/ScriptedDashboardDeprecationBanner';
 import { ScriptedDashboardsDisabledPage } from '../components/ScriptedDashboardsDisabledPage';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
+import { DashboardLifecycleBanner } from '../lifecycle/DashboardLifecycleBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { useScenesFlickeringFix } from '../utils/utils';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { shouldHideDashboardKioskFooter } from './utils';
+
+// Loaded on demand so the dashboard-library UI stays out of the dashboard page chunk.
+const LazyTemplateDashboardModal = lazy(() =>
+  import(
+    /* webpackChunkName: "dashboard-library" */ 'app/features/dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal'
+  ).then((m) => ({ default: m.TemplateDashboardModal }))
+);
+
+function TemplateDashboardModal() {
+  return (
+    <Suspense fallback={null}>
+      <LazyTemplateDashboardModal />
+    </Suspense>
+  );
+}
 
 export interface Props
   extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
@@ -57,6 +72,10 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const { dashboard, isLoading, loadError } = stateManager.useState();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
+  // Selects which pending changes the same dashboard previews, and whether it shows them or the
+  // saved dashboard (see pendingChangePreview.ts).
+  const pendingChanges = queryParams.pendingChanges;
+  const pendingChangesView = queryParams.pendingChangesView;
   const prevParams = useRef<Params<string>>(params);
 
   useScenesFlickeringFix();
@@ -101,6 +120,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     queryParams.gnetId,
     queryParams.dashboardTemplateUid,
     queryParams.editTemplate,
+    pendingChanges,
+    pendingChangesView,
   ]);
 
   useEffect(() => {
@@ -157,7 +178,13 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
-      <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
+      <DashboardPreviewBanner
+        queryParams={queryParams}
+        route={route.routeName}
+        slug={slug}
+        path={path}
+        dashboard={dashboard}
+      />
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <ScriptedDashboardDeprecationBanner isScripted={type === 'script'} />
       <OrphanedDashboardBanner dashboard={dashboard} />
@@ -165,6 +192,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardTemplateSavedBanner />
       <DashboardTemplateUseBanner dashboard={dashboard} />
       <DashboardTemplateEditBanner dashboard={dashboard} />
+      <DashboardLifecycleBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
       {showCustomTemplates && <TemplateDashboardModal />}

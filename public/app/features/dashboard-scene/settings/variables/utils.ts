@@ -2,8 +2,7 @@ import { chain } from 'lodash';
 
 import { type SelectableValue, getDataSourceRef } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -22,28 +21,18 @@ import {
   SwitchVariable,
 } from '@grafana/scenes';
 import { type DataSourceRef, VariableHide, type VariableType } from '@grafana/schema';
-import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { getIntervalsQueryFromNewIntervalModel } from '../../utils/getIntervalsQueryFromNewIntervalModel';
 import { isPredefinedOrigin } from '../../utils/predefinedVariables';
-import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
-import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
-import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
-import { CustomVariableEditor } from './editors/CustomVariableEditor/CustomVariableEditor';
-import { getCustomVariableOptions } from './editors/CustomVariableEditor/getCustomVariableOptions';
-import { DataSourceVariableEditor, getDataSourceVariableOptions } from './editors/DataSourceVariableEditor';
-import { getGroupByVariableOptions, GroupByVariableEditor } from './editors/GroupByVariableEditor';
-import { getIntervalVariableOptions, IntervalVariableEditor } from './editors/IntervalVariableEditor';
-import { QueryVariableEditor } from './editors/QueryVariableEditor/QueryVariableEditor';
-import { getQueryVariableOptions } from './editors/QueryVariableEditor/getQueryVariableOptions';
-import { getSwitchVariableOptions, SwitchVariableEditor } from './editors/SwitchVariableEditor';
-import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
+// NOTE: type names/descriptions live here and the editor component registry lives
+// in `editableVariablesRegistry.ts`. Keep editor imports out
+// of this file: it is reached from view-mode code (variable controls, change tracking)
+// and any editor import here would pull all variable editors into the initial bundle.
 
-interface EditableVariableConfig {
+interface EditableVariableMetadata {
   name: string;
   description: string;
-  editor: React.ComponentType<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
-  getOptions?: (variable: SceneVariable) => OptionsPaneItemDescriptor[];
 }
 
 //exclude system variable type and snapshot variable type
@@ -55,15 +44,13 @@ export function isEditableVariableType(type: VariableType): type is EditableVari
 
 export const getDefaultTopPlacementLabel = () => t('dashboard.sidebar.variables.top-placement', 'Above dashboard');
 
-export const getEditableVariables: () => Record<EditableVariableType, EditableVariableConfig> = () => ({
+export const getEditableVariablesMetadata: () => Record<EditableVariableType, EditableVariableMetadata> = () => ({
   custom: {
     name: t('dashboard-scene.get-editable-variables.name.custom', 'Custom'),
     description: t(
       'dashboard-scene.get-editable-variables.description.values-are-static-and-defined-manually',
       'Values are static and defined manually'
     ),
-    editor: CustomVariableEditor,
-    getOptions: getCustomVariableOptions,
   },
   query: {
     name: t('dashboard-scene.get-editable-variables.name.query', 'Query'),
@@ -71,8 +58,6 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
       'dashboard-scene.get-editable-variables.description.values-fetched-source-query',
       'Values are fetched from a data source query'
     ),
-    editor: QueryVariableEditor,
-    getOptions: getQueryVariableOptions,
   },
   constant: {
     name: t('dashboard-scene.get-editable-variables.name.constant', 'Constant'),
@@ -80,8 +65,6 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
       'dashboard-scene.get-editable-variables.description.hidden-constant-variable',
       'A hidden constant variable, useful for metric prefixes in dashboards you want to share'
     ),
-    editor: ConstantVariableEditor,
-    getOptions: getConstantVariableOptions,
   },
   interval: {
     name: t('dashboard-scene.get-editable-variables.name.interval', 'Interval'),
@@ -89,8 +72,6 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
       'dashboard-scene.get-editable-variables.description.values-timespans',
       'Values are timespans, ex 1m, 1h, 1d'
     ),
-    editor: IntervalVariableEditor,
-    getOptions: getIntervalVariableOptions,
   },
   datasource: {
     name: t('dashboard-scene.get-editable-variables.name.data-source', 'Data source'),
@@ -98,8 +79,6 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
       'dashboard-scene.get-editable-variables.description.dynamically-switch-source-multiple-panels',
       'Dynamically switch the data source for multiple panels'
     ),
-    editor: DataSourceVariableEditor,
-    getOptions: getDataSourceVariableOptions,
   },
   adhoc: {
     name: t('dashboard-scene.get-editable-variables.name.ad-hoc-filters', 'Filter'),
@@ -107,14 +86,10 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
       'dashboard-scene.get-editable-variables.description.add-keyvalue-filters-on-the-fly',
       'Add key/value filters on the fly'
     ),
-    editor: AdHocFiltersVariableEditor,
-    getOptions: getAdHocFilterOptions,
   },
   groupby: {
     name: t('dashboard-scene.get-editable-variables.name.group-by', 'Group by'),
     description: t('dashboard-scene.get-editable-variables.description.group', 'Add keys to group by on the fly'),
-    editor: GroupByVariableEditor,
-    getOptions: getGroupByVariableOptions,
   },
   textbox: {
     name: t('dashboard-scene.get-editable-variables.name.textbox', 'Textbox'),
@@ -122,8 +97,6 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
       'dashboard-scene.get-editable-variables.description.users-enter-arbitrary-strings-textbox',
       'Users can enter any arbitrary strings in a textbox'
     ),
-    editor: TextBoxVariableEditor,
-    getOptions: getTextBoxVariableOptions,
   },
   switch: {
     name: t('dashboard-scene.get-editable-variables.name.switch', 'Switch'),
@@ -131,20 +104,18 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
       'dashboard-scene.get-editable-variables.description.users-enter-arbitrary-strings-switch',
       'A variable that can be toggled on and off'
     ),
-    editor: SwitchVariableEditor,
-    getOptions: getSwitchVariableOptions,
   },
 });
 
-export function getEditableVariableDefinition(type: string): EditableVariableConfig {
-  const editableVariables = getEditableVariables();
+export function getEditableVariableMetadata(type: string): EditableVariableMetadata {
+  const metadata = getEditableVariablesMetadata();
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const editableVariable = editableVariables[type as EditableVariableType];
-  if (!editableVariable) {
+  const entry = metadata[type as EditableVariableType];
+  if (!entry) {
     throw new Error(`Variable type ${type} not found`);
   }
 
-  return editableVariable;
+  return entry;
 }
 
 export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
@@ -179,50 +150,43 @@ export function getVariableTypeLabel(
   variableType: EditableVariableType,
   { standalone }: VariableTypeSelectOptionsArgs = {}
 ): string {
-  if (variableType === 'adhoc' && standalone && config.featureToggles.dashboardUnifiedDrilldownControls) {
+  if (variableType === 'adhoc' && standalone) {
     return t('dashboard.sidebar.add.filters.label', 'Filter and Group by');
   }
-  return getEditableVariables()[variableType].name;
+  return getEditableVariablesMetadata()[variableType].name;
 }
 
 export function getVariableTypeSelectOptions({ standalone }: VariableTypeSelectOptionsArgs = {}): Array<
   SelectableValue<EditableVariableType>
 > {
-  const editableVariables = getEditableVariables();
-  const unifiedDrilldown = Boolean(config.featureToggles.dashboardUnifiedDrilldownControls);
+  const metadata = getEditableVariablesMetadata();
 
   const results = EDITABLE_VARIABLES_SELECT_ORDER.map(
     (variableType): SelectableValue<EditableVariableType> => ({
       label: getVariableTypeLabel(variableType, { standalone }),
       value: variableType,
       description:
-        variableType === 'adhoc' && unifiedDrilldown && standalone
+        variableType === 'adhoc' && standalone
           ? t(
               'dashboard-scene.get-editable-variables.description.add-filters-and-group-by-keys-on-the-fly',
               'Add key/value filters and group by keys on the fly'
             )
-          : editableVariables[variableType].description,
+          : metadata[variableType].description,
     })
   );
 
   return results.filter((option) => {
-    // Legacy standalone groupby is experimental/deprecated; leave it gated only
-    // by groupByVariable and focus new work on the unified adhoc path.
-    if (!config.featureToggles.groupByVariable && option.value === 'groupby') {
+    // Standalone groupby is superseded by the group by support in the unified adhoc filters.
+    if (option.value === 'groupby') {
       return false;
     }
-    if (option.value === 'adhoc' && unifiedDrilldown && !standalone) {
+    if (option.value === 'adhoc' && !standalone) {
       // Dashboards have a dedicated "Filter and Group by" entry point instead.
       return false;
     }
 
     return true;
   });
-}
-
-export function getVariableEditor(type: EditableVariableType) {
-  const editableVariables = getEditableVariables();
-  return editableVariables[type].editor;
 }
 
 export interface CommonVariableProperties {
@@ -255,10 +219,7 @@ export async function getVariableScene(type: EditableVariableType, initialState:
     case 'datasource':
       return new DataSourceVariable(initialState);
     case 'adhoc':
-      return new AdHocFiltersVariable({
-        ...initialState,
-        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? { enableGroupBy: true } : {}),
-      });
+      return new AdHocFiltersVariable({ ...initialState, enableGroupBy: true });
     case 'groupby':
       return new GroupByVariable(initialState);
     case 'textbox':

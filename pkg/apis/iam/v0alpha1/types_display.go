@@ -40,15 +40,34 @@ type Display struct {
 	// InternalID is the legacy numeric id for identity,
 	// Deprecated: use the identityRef where possible
 	InternalID int64 `json:"internalId,omitempty"`
-
-	// Role is the org role of the identity in the active organization
-	// (Admin/Editor/Viewer/None). Only populated for the current-user
-	// ("users/~") endpoint.
-	Role string `json:"role,omitempty"`
 }
 
 func (Display) OpenAPIModelName() string {
 	return OpenAPIPrefix + "Display"
+}
+
+type CurrentUserInfo struct {
+	Display `json:",inline"`
+
+	// Namespace is the namespace of the current identity.
+	Namespace string `json:"namespace,omitempty"`
+
+	// Role is the org role of the identity in the active organization
+	// (Admin/Editor/Viewer/None).
+	Role string `json:"role,omitempty"`
+
+	// AuthenticatedBy is the authentication provider used for the current identity.
+	AuthenticatedBy string `json:"authenticatedBy,omitempty"`
+
+	// Email is the email address for the current identity.
+	Email string `json:"email,omitempty"`
+
+	// The user teams
+	Teams []string `json:"teams,omitempty"`
+}
+
+func (CurrentUserInfo) OpenAPIModelName() string {
+	return OpenAPIPrefix + "CurrentUserInfo"
 }
 
 type IdentityRef struct {

@@ -72,9 +72,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		jobCleanupController := jobs.NewJobCleanupController(
 			jobStore,
 			jobHistoryWriter,
@@ -84,7 +82,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 			logger.Error("job cleanup controller failed", "error", err)
 		}
 		logger.Info("job cleanup controller stopped")
-	}()
+	})
 
 	// Start the historic-job source when history cleanup is enabled; cleanup runs
 	// off its re-lists.

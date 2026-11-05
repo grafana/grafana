@@ -1,9 +1,11 @@
 package v0alpha1
 
 import (
-	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	openapicommon "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -634,8 +636,15 @@ type RepositoryStatus struct {
 	// Token will get updated with current token information
 	Token TokenStatus `json:"token,omitempty"`
 
-	// Error information during repository deletion (if any)
+	// Error information during repository deletion (if any).
+	// Deprecated: prefer the structured Deletion field. Retained for
+	// backwards compatibility with clients that read the concise string.
 	DeleteError string `json:"deleteError,omitempty"`
+
+	// Deletion reports the progress of an in-progress deletion and the problem
+	// blocking it, so a client can explain the holdup and force-remove the
+	// blocking finalizer. Populated only while the repository is Terminating.
+	Deletion *DeletionStatus `json:"deletion,omitempty"`
 
 	// Quota contains the configured quota limits for this repository
 	Quota QuotaStatus `json:"quota,omitempty"`
@@ -657,6 +666,9 @@ type SyncStatus struct {
 
 	// When the sync job finished
 	Finished int64 `json:"finished,omitempty"`
+
+	// When the controller last attempted a sync or an interval check (Unix milliseconds).
+	LastChecked int64 `json:"lastChecked,omitempty"`
 
 	// When the next sync check is scheduled
 	Scheduled int64 `json:"scheduled,omitempty"`
@@ -701,7 +713,6 @@ func (TokenStatus) OpenAPIModelName() string {
 }
 
 // QuotaStatus represents the quota limits configured for this repository.
-// These values come from static configuration and are read-only.
 type QuotaStatus struct {
 	// MaxRepositories is the maximum number of repositories allowed.
 	// 0 means unlimited.
@@ -710,6 +721,10 @@ type QuotaStatus struct {
 	// MaxResourcesPerRepository is the maximum number of resources allowed per repository.
 	// 0 means unlimited.
 	MaxResourcesPerRepository int64 `json:"maxResourcesPerRepository,omitempty"`
+
+	// UpdatedAt is when the controller last successfully refreshed these quota limits.
+	// It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet.
+	UpdatedAt int64 `json:"updatedAt,omitempty"`
 }
 
 func (QuotaStatus) OpenAPIModelName() string {
@@ -1015,6 +1030,56 @@ type ErrorDetails struct {
 	BadValue any `json:"badValue,omitempty"`
 }
 
+// OpenAPIDefinition describes the inline value, including mutually exclusive operations.
+func (ErrorDetails) OpenAPIDefinition() openapicommon.OpenAPIDefinition {
+	return openapicommon.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ErrorDetails describes an individual field error intended to help users identify and fix issues in resource specifications. This type is modeled after Kubernetes' StatusCause and serves the same purpose: to deliver actionable feedback about fields in the spec that require attention. Errors may relate to invalid formats, missing or invalid values, or cases where a referenced value does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to communicate validation or external reference errors that users can resolve by editing spec fields.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Type is a machine-readable description of the cause of the error. This is intended for programmatic handling and matches Kubernetes' CauseType values.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"field": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Field is the path to the field or JSON pointer that caused the error. This helps users and tools identify exactly where to correct the problem. This field is optional and may be empty if not applicable.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"detail": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"origin": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Origin indicates where the error originated in validation, or the name of the external service that reported the error. This can be useful for tooling or debugging, and may reference a specific rule, function, or service. This field is optional and may be empty.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"badValue": {
+						// NOTE: the type is not known -- it could be anything
+						SchemaProps: spec.SchemaProps{
+							Description: "BadValue is the value of the field that was determined to be invalid, if applicable. This can be any type. This field is optional and may be omitted if not relevant.",
+						},
+					},
+				},
+				Required: []string{"type"},
+			},
+		},
+	}
+}
+
 // DeepCopy copies the receiver, creating a new ErrorDetails.
 func (in *ErrorDetails) DeepCopy() *ErrorDetails {
 	if in == nil {
@@ -1034,6 +1099,69 @@ func (in *ErrorDetails) DeepCopyInto(out *ErrorDetails) {
 
 func (ErrorDetails) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ErrorDetails"
+}
+
+// DeletionState is the phase of an in-progress repository deletion.
+// +enum
+type DeletionState string
+
+func (DeletionState) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeletionState"
+}
+
+const (
+	// DeletionStateBlocked indicates the latest finalizer pass failed and deletion
+	// did not complete. The controller keeps retrying, so a transient failure
+	// (a brief outage, an API conflict) may still clear on its own; a persistent
+	// one (credentials expired, a webhook that cannot be removed) needs the user
+	// to force-remove the blocking finalizer. Finalizer is the finalizer that
+	// failed on that pass.
+	//
+	// This is the only state the controller emits: status.deletion is written
+	// only when a pass fails. While finalizers are still running, status.deletion
+	// is absent, which (together with a set deletionTimestamp) is itself the
+	// "in progress" signal — so no separate Working state is needed.
+	DeletionStateBlocked DeletionState = "Blocked"
+)
+
+// DeletionCause classifies the error blocking repository deletion.
+// +enum
+type DeletionCause string
+
+func (DeletionCause) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeletionCause"
+}
+
+const (
+	// DeletionCauseUser indicates a failure that requires user intervention.
+	DeletionCauseUser DeletionCause = "user"
+	// DeletionCauseSystem indicates an infrastructure or unclassified failure.
+	DeletionCauseSystem DeletionCause = "system"
+)
+
+// DeletionStatus reports the progress of an in-progress deletion and the problem
+// blocking it. It is populated while the repository is Terminating and its
+// finalizers run, so a client can explain the holdup and force-remove the
+// blocking finalizer.
+type DeletionStatus struct {
+	// State is the phase of the deletion.
+	State DeletionState `json:"state,omitempty"`
+
+	// Finalizer names the finalizer whose teardown is blocking deletion, i.e.
+	// which deletion step failed. A client force-removing deletion removes exactly
+	// this finalizer.
+	Finalizer string `json:"finalizer,omitempty"`
+
+	// Message is a human-readable explanation of what went wrong, suitable for
+	// showing to users.
+	Message string `json:"message,omitempty"`
+
+	// Cause classifies the blocking error. It may be absent on older statuses.
+	Cause DeletionCause `json:"cause,omitempty"`
+}
+
+func (DeletionStatus) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeletionStatus"
 }
 
 // HistoryList is a list of versions of a resource

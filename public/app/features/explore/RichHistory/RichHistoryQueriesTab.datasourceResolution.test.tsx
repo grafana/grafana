@@ -3,7 +3,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
 
@@ -13,8 +13,8 @@ import { RichHistoryQueriesTab, type RichHistoryQueriesTabProps } from './RichHi
 // datasource-resolution effect runs. A previous version resolved the list with a bare
 // (non-awaited) get inside a try/catch, so a single failing datasource rejected the whole
 // Promise.all and left every card with "Data source does not exist anymore".
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
 }));
 

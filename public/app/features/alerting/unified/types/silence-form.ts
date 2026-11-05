@@ -16,7 +16,4 @@ export type SilenceFormFields = {
   comment: string;
   matchers: MatcherFieldValue[];
   createdBy: string;
-  matcherName: string;
-  matcherValue: string;
-  isRegex: boolean;
 };

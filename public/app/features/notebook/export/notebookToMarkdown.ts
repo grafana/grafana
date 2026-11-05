@@ -8,14 +8,8 @@ import {
 } from '../types';
 
 interface NotebookExportMeta {
-  /**
-   * Absolute link back to the notebook, so an exported document can be traced to its source.
-   *
-   * Optional because the Cursor export leaves it out: Cursor's deep link handler mis-parses
-   * embedded URLs. Omitting it here is safer than generating the link and stripping it back out,
-   * which cannot tell the generated line from an identical line in the notebook's own prose.
-   */
-  url?: string;
+  /** Absolute link back to the notebook, so an exported document can be traced to its source. */
+  url: string;
 }
 
 /**
@@ -66,9 +60,7 @@ function buildHeader(spec: NotebookSpec, meta: NotebookExportMeta): string {
   }
 
   lines.push(`- **Time range:** ${spec.timeSettings.from} to ${spec.timeSettings.to}`);
-  if (meta.url) {
-    lines.push(`- **Link:** [Open in Grafana](${meta.url})`);
-  }
+  lines.push(`- **Link:** [Open in Grafana](${meta.url})`);
 
   return `${lines.join('\n')}\n\n---`;
 }

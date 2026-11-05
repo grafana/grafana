@@ -2,7 +2,7 @@ import { escapeStringForRegex, Registry, type RegistryItem, stringStartsAsRegEx,
 
 import { type ExtractFieldsOptions, FieldExtractorID } from './types';
 
-type Parser = (v: string) => Record<string, any> | undefined;
+type Parser = (v: string) => Record<string, unknown> | undefined;
 
 export interface FieldExtractor extends RegistryItem {
   getParser: (opts: ExtractFieldsOptions) => Parser;

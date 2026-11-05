@@ -28,7 +28,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   const folderUID = rule && rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.namespace_uid : undefined;
 
   const rulePermission = getRulesPermissions(rulesSourceName);
-  const { folder, loading } = useFolder(folderUID);
+  const { folder, loading, error: folderError } = useFolder(folderUID);
 
   // handle discovery and data source errors
   if (error) {
@@ -56,12 +56,13 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
     }
 
     if (!folder) {
-      // Loading or invalid folder UID
+      // The folder request only starts once the rule is known, so for a render the folder is neither
+      // loaded nor loading. Until the request fails, the answer is still pending, not "not editable".
       return {
         isRulerAvailable: true,
         isEditable: false,
         isRemovable: false,
-        loading,
+        loading: !folderError,
       };
     }
 

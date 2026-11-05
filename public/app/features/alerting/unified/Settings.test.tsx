@@ -8,6 +8,7 @@ import { setupGrafanaManagedServer, withExternalOnlySetting } from './components
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
 import { addSettingsSection } from './settings/extensions';
+import { setupPrometheusAlertingPlugin } from './testSetup/prometheusAlertingPlugin';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -38,7 +39,7 @@ const ui = {
   provisionedBadge: byText(/^Provisioned$/),
 
   // New selectors for extension tabs
-  alertmanagerTab: byRole('tab', { name: 'Alert managers' }),
+  alertmanagerTab: byRole('tab', { name: 'Alertmanagers' }),
   enrichmentTab: byRole('tab', { name: 'Enrichment' }),
   notificationsTab: byRole('tab', { name: 'Notifications' }),
   customTab: (name: string) => byRole('tab', { name }),
@@ -104,7 +105,7 @@ describe('Alerting settings', () => {
     expect(ui.saveConfigurationButton.query()).not.toBeInTheDocument();
   });
 
-  it('should be able to view versions', async () => {
+  it('should compare a previous configuration with the latest version', async () => {
     const { user } = render(<SettingsPage />);
 
     // wait for loading to be done
@@ -115,16 +116,14 @@ describe('Alerting settings', () => {
     await user.click(ui.viewConfigurationButton.get(internalAMCard));
     expect(await ui.configurationDrawer.find()).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(ui.configurationDrawer.get()).toBeInTheDocument();
-    });
-
     // click versions tab
     await user.click(ui.versionsTab.get());
 
-    await waitFor(() => {
-      expect(screen.getByText(/last applied/i)).toBeInTheDocument();
-    });
+    expect(await screen.findByText(/last applied/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Compare' }));
+
+    expect(await screen.findByRole('textbox', { name: 'Original' })).toHaveTextContent('previous template');
+    expect(screen.getByRole('textbox', { name: 'Modified' })).toHaveTextContent('current template');
   });
 
   it('should correctly render provisioned data sources', async () => {
@@ -258,5 +257,40 @@ describe('Alerting settings', () => {
     expect(ui.alertmanagerTab.get()).toBeInTheDocument();
     expect(ui.enrichmentTab.query()).not.toBeInTheDocument();
     expect(ui.notificationsTab.query()).not.toBeInTheDocument();
+  });
+});
+
+describe('Alerting settings with the Prometheus Alerting plugin', () => {
+  setupPrometheusAlertingPlugin();
+
+  beforeEach(() => {
+    grantUserRole('ServerAdmin');
+    setupGrafanaManagedServer(server);
+  });
+
+  it('leaves external Alertmanager configuration to the plugin but keeps enable/disable', async () => {
+    render(<SettingsPage />);
+
+    expect(await ui.builtInAlertmanagerSection.find()).toBeInTheDocument();
+
+    for (const ds of DataSourcesResponse) {
+      const card = ui.alertmanagerCard(ds.name).get();
+
+      await waitFor(() => {
+        expect(ui.editConfigurationButton.query(card)).not.toBeInTheDocument();
+      });
+      expect(ui.viewConfigurationButton.query(card)).not.toBeInTheDocument();
+    }
+
+    // Whether Grafana delivers its own alerts to an external Alertmanager is still ours to decide,
+    // so the delivery controls stay. (Provisioned data sources never had them.)
+    expect(ui.enableButton.queryAll().length + ui.disableButton.queryAll().length).toBeGreaterThan(0);
+  });
+
+  it('keeps "View configuration" on the built-in Alertmanager', async () => {
+    render(<SettingsPage />);
+
+    const internalAMCard = await ui.builtInAlertmanagerCard.find();
+    expect(await ui.viewConfigurationButton.find(internalAMCard)).toBeInTheDocument();
   });
 });

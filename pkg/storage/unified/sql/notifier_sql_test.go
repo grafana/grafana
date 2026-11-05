@@ -2,13 +2,17 @@ package sql
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -160,7 +164,6 @@ func TestPollingNotifierConfig(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			err := tt.config.validate()
@@ -375,5 +378,209 @@ func TestPollingNotifier(t *testing.T) {
 		case <-time.After(time.Second):
 			t.Fatal("timeout waiting for events channel to close")
 		}
+	})
+}
+
+// fakePollStore models how rvmanager commits a batch: rows get consecutive RVs
+// from stored+1, then the resource_version table stores one past the last.
+type fakePollStore struct {
+	mu      sync.Mutex
+	tableRV map[string]int64
+	history []*historyPollResponse
+	polls   int
+	failing int
+	// duringPoll runs in historyPoll before (selected=false) and after
+	// (selected=true) the rows are read. Set it and failing before starting
+	// the poller.
+	duringPoll func(selected bool)
+}
+
+func newFakePollStore() *fakePollStore {
+	return &fakePollStore{tableRV: map[string]int64{}}
+}
+
+func (s *fakePollStore) commit(grp, res string, names ...string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	rv := s.tableRV[grp+"/"+res] + 1
+	for _, name := range names {
+		s.history = append(s.history, &historyPollResponse{
+			Key:             resourcepb.ResourceKey{Namespace: "default", Group: grp, Resource: res, Name: name},
+			ResourceVersion: rv,
+			Action:          int(resourcepb.WatchEvent_ADDED),
+		})
+		rv++
+	}
+	s.tableRV[grp+"/"+res] = rv
+}
+
+func (s *fakePollStore) listLatestRVs(context.Context) (groupResourceRV, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	grv := groupResourceRV{}
+	for key, rv := range s.tableRV {
+		grp, res, _ := strings.Cut(key, "/")
+		if grv[grp] == nil {
+			grv[grp] = map[string]int64{}
+		}
+		grv[grp][res] = rv
+	}
+	return grv, nil
+}
+
+func (s *fakePollStore) historyPoll(_ context.Context, grp, res string, since int64) ([]*historyPollResponse, error) {
+	if s.duringPoll != nil {
+		s.duringPoll(false)
+	}
+	s.mu.Lock()
+	s.polls++
+	if s.failing > 0 {
+		s.failing--
+		s.mu.Unlock()
+		return nil, errTest
+	}
+	var out []*historyPollResponse
+	for _, rec := range s.history {
+		if rec.Key.Group == grp && rec.Key.Resource == res && rec.ResourceVersion > since {
+			out = append(out, rec)
+		}
+	}
+	s.mu.Unlock()
+	if s.duringPoll != nil {
+		s.duringPoll(true)
+	}
+	return out, nil
+}
+
+func (s *fakePollStore) pollCount() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.polls
+}
+
+const fakePollInterval = 100 * time.Millisecond
+
+// startFakePoller must run inside a synctest bubble.
+func startFakePoller(t *testing.T, store *fakePollStore) <-chan *resource.WrittenEvent {
+	t.Helper()
+	done := make(chan struct{})
+	t.Cleanup(func() { close(done) })
+	n, err := newPollingNotifier(&pollingNotifierConfig{
+		dialect:         sqltemplate.PostgreSQL,
+		pollingInterval: fakePollInterval,
+		watchBufferSize: 100,
+		log:             &logging.NoOpLogger{},
+		bulkLock:        &bulkLock{},
+		listLatestRVs:   store.listLatestRVs,
+		historyPoll:     store.historyPoll,
+		done:            done,
+	})
+	require.NoError(t, err)
+	events, err := n.notify(t.Context())
+	require.NoError(t, err)
+	// Keep the test's wakeups half an interval off the poll ticks.
+	time.Sleep(fakePollInterval / 2)
+	return events
+}
+
+// waitTicks lets n poll ticks pass.
+func waitTicks(n int) {
+	time.Sleep(time.Duration(n) * fakePollInterval)
+	synctest.Wait()
+}
+
+func drainEvents(events <-chan *resource.WrittenEvent) []string {
+	var got []string
+	for {
+		select {
+		case e := <-events:
+			got = append(got, fmt.Sprintf("%s/%d", e.Key.Name, e.ResourceVersion))
+		default:
+			return got
+		}
+	}
+}
+
+func TestPollingNotifierPollsOnlyChangedCollections(t *testing.T) {
+	t.Run("idle collection is not polled after its writes are delivered", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			store := newFakePollStore()
+			store.commit("g", "r", "existing")
+			events := startFakePoller(t, store)
+
+			waitTicks(10)
+			require.Empty(t, drainEvents(events))
+			require.Equal(t, 0, store.pollCount())
+
+			store.commit("g", "r", "a", "b", "c")
+			waitTicks(1)
+			require.Equal(t, []string{"a/3", "b/4", "c/5"}, drainEvents(events))
+			require.Equal(t, 1, store.pollCount())
+
+			waitTicks(50)
+			require.Empty(t, drainEvents(events))
+			require.Equal(t, 1, store.pollCount(), "idle collection must not be polled")
+
+			// Another instance writes to the same collection.
+			store.commit("g", "r", "d")
+			waitTicks(50)
+			require.Equal(t, []string{"d/7"}, drainEvents(events))
+			require.Equal(t, 2, store.pollCount())
+
+			// An RV bump without history rows, like the bulk import's.
+			store.commit("g", "r")
+			waitTicks(50)
+			require.Empty(t, drainEvents(events))
+			require.Equal(t, 3, store.pollCount())
+		})
+	})
+
+	t.Run("new collection is delivered from the start", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			store := newFakePollStore()
+			events := startFakePoller(t, store)
+
+			store.commit("g", "new", "a", "b")
+			waitTicks(50)
+			require.Equal(t, []string{"a/1", "b/2"}, drainEvents(events))
+			require.Equal(t, 1, store.pollCount())
+		})
+	})
+
+	t.Run("writes committed during a poll are delivered once", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			store := newFakePollStore()
+			store.commit("g", "r", "existing")
+			store.duringPoll = func(selected bool) {
+				switch {
+				case !selected && store.pollCount() == 0:
+					// After listLatestRVs, before the rows are read.
+					store.commit("g", "r", "b")
+				case selected && store.pollCount() == 1:
+					// After the rows are read.
+					store.commit("g", "r", "c")
+				}
+			}
+			events := startFakePoller(t, store)
+
+			store.commit("g", "r", "a")
+			waitTicks(50)
+			require.Equal(t, []string{"a/3", "b/5", "c/7"}, drainEvents(events))
+			require.Equal(t, 2, store.pollCount())
+		})
+	})
+
+	t.Run("failed poll is retried", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			store := newFakePollStore()
+			store.commit("g", "r", "existing")
+			store.failing = 2
+			events := startFakePoller(t, store)
+
+			store.commit("g", "r", "a")
+			waitTicks(50)
+			require.Equal(t, []string{"a/3"}, drainEvents(events))
+			require.Equal(t, 3, store.pollCount())
+		})
 	})
 }

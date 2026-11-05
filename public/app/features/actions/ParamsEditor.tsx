@@ -34,7 +34,7 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
   }, [contentTypeParamValue, headersContentType]);
 
   // forces re-init of first SuggestionsInput(s), since they are stateful and don't respond to 'value' prop changes to be able to clear them :(
-  const [entryKey, setEntryKey] = useState(Math.random().toString());
+  const [entryKey, setEntryKey] = useState(() => Math.random().toString());
 
   const changeParamValue = (paramValue: string) => {
     setParamValue(paramValue);

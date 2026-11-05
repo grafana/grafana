@@ -16,9 +16,9 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, isFetchError, locationSearchToObject } from '@grafana/runtime';
+import { config, getPluginSettings, isFetchError, locationSearchToObject } from '@grafana/runtime';
 import { refetchPluginSettings } from '@grafana/runtime/internal';
-import { getLogger, getPluginSettings } from '@grafana/runtime/unstable';
+import { getLogger } from '@grafana/runtime/unstable';
 import { Alert, ErrorWithStack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';

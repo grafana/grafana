@@ -35,7 +35,7 @@ import { getDataSourceInstanceSettings } from '../services/dataSource/settings';
 
 import { ExpressionDatasourceRef, isExpressionReference } from './expressionRef';
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
-import { isQueryServiceCompatible } from './qscheck';
+import { isDatasourceAuthCompatible, isQueryServiceCompatible } from './qscheck';
 import { type BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
 
@@ -99,7 +99,6 @@ export interface HealthCheckResult {
 
 /**
  * Response shape from the /apis/{group}/v0alpha1/.../datasources/{uid}/health endpoint.
- * Used when datasourcesApiServerEnableHealthEndpointFrontend is enabled.
  *
  * @internal
  */
@@ -246,14 +245,16 @@ class DataSourceWithBackend<
     let url = '/api/ds/query?ds_type=' + this.type;
 
     // Use the new query service
-    if (config.featureToggles.queryServiceFromUI) {
-      // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
-      const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.querier.fe-allowed-types', {
-        types: [],
-      });
-      if (isQueryServiceCompatible(datasources, allowedTypes)) {
-        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
+    // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
+    const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.querier.fe-allowed-types', {
+      types: [],
+    });
+    if (isQueryServiceCompatible(datasources, allowedTypes)) {
+      let apiGroup = 'query.grafana.app';
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesQuerierNewName, false)) {
+        apiGroup = 'datasource.grafana.app';
       }
+      url = `/apis/${apiGroup}/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
     }
 
     if (hasExpr) {
@@ -419,12 +420,9 @@ class DataSourceWithBackend<
   /**
    * Internal function to build the datasource URL based on the feature toggle
    */
-  buildResourcesDatasourceUrl(path: string): string {
-    const enabledRedirect = getFeatureFlagClient().getBooleanValue(
-      'datasources.apiserver.useNewAPIsForDatasourceResources',
-      false
-    );
-    if (enabledRedirect) {
+  buildResourcesDatasourceUrl(rawPath: string): string {
+    const path = rawPath.replace(/^\/+/, '');
+    if (this.supportsDatasourceApi('resources')) {
       // example:
       // /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resources/api/v1/labels
       const apiVersion = 'v0alpha1';
@@ -433,14 +431,28 @@ class DataSourceWithBackend<
     return `/api/datasources/uid/${this.uid}/resources/${path}`;
   }
 
+  private supportsDatasourceApi(endpoint: 'resources' | 'health'): boolean {
+    // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
+    const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.apiserver.fe-allowed-types', {
+      resources: [],
+      health: [],
+    });
+    if (!allowedTypes || typeof allowedTypes !== 'object' || Array.isArray(allowedTypes)) {
+      return false;
+    }
+    const pluginIds = allowedTypes[endpoint];
+    return (
+      Array.isArray(pluginIds) &&
+      (pluginIds.includes('*') || pluginIds.includes(this.meta?.id ?? this.type)) &&
+      isDatasourceAuthCompatible(this.datasourceInstanceSettings)
+    );
+  }
+
   /**
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
-    const useNewApi = getFeatureFlagClient().getBooleanValue(
-      FlagKeys.DatasourcesApiServerEnableHealthEndpointFrontend,
-      false
-    );
+    const useNewApi = this.supportsDatasourceApi('health');
     const healthCheckURL = useNewApi
       ? `/apis/${this.meta?.id ?? this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
       : `/api/datasources/uid/${this.uid}/health`;

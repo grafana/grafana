@@ -311,7 +311,7 @@ func (b Base) Is(err error) bool {
 }
 
 // Allow errorutil errors to be returned as informative k8s errors
-var _ = errorsK8s.APIStatus(&Error{})
+var _ errorsK8s.APIStatus = (*Error)(nil)
 
 // Error is the error type for errors within Grafana, extending
 // the Go error type with Grafana specific metadata to reduce

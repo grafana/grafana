@@ -3,8 +3,8 @@ package schedule
 import (
 	"context"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
@@ -41,7 +41,7 @@ func TestLoadedResultsFromRuleState(t *testing.T) {
 
 	t.Run("should not return any states with reason", func(t *testing.T) {
 		for _, s := range p.states[rule.GetKey()] {
-			s.StateReason = uuid.NewString()
+			s.StateReason = uuid.NewV4().String()
 		}
 		loaded := reader.Read(context.Background())
 		require.Empty(t, loaded)

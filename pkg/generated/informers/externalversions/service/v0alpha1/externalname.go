@@ -20,11 +20,39 @@ import (
 )
 
 // ExternalNameInformer provides access to a shared informer and lister for
-// ExternalNames.
+// ExternalNames. Prefer using the type-safe variant (see [TypedExternalNameInformer]).
 type ExternalNameInformer interface {
 	Informer() cache.SharedIndexInformer
 	Lister() servicev0alpha1.ExternalNameLister
 }
+
+// TypedExternalNameInformer provides access to a shared informer and lister for
+// ExternalNames, including the type-safe TypedInformer variant.
+// It is a superset of ExternalNameInformer.
+type TypedExternalNameInformer interface {
+	Informer() cache.SharedIndexInformer
+	TypedInformer() ExternalNameIndexInformer
+	Lister() servicev0alpha1.ExternalNameLister
+}
+
+// ExternalNameIndexInformer is a wrapper around the underlying [cache.SharedIndexInformer]
+// with type-safe variants of several methods.
+type ExternalNameIndexInformer cache.TypedSharedIndexInformer[*apisservicev0alpha1.ExternalName]
+
+// ExternalNameHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerFuncs] for ExternalName.
+type ExternalNameHandlerFuncs = cache.TypedResourceEventHandlerFuncs[*apisservicev0alpha1.ExternalName]
+
+// ExternalNameDetailedHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerDetailedFuncs] for ExternalName.
+type ExternalNameDetailedHandlerFuncs = cache.TypedResourceEventHandlerDetailedFuncs[*apisservicev0alpha1.ExternalName]
+
+// ExternalNameFilteringHandler is a specialization of [cache.TypedFilteringResourceEventHandler] for ExternalName.
+type ExternalNameFilteringHandler = cache.TypedFilteringResourceEventHandler[*apisservicev0alpha1.ExternalName]
+
+// ExternalNameIndexers is a specialization of [cache.TypedIndexers] for ExternalName.
+type ExternalNameIndexers = cache.TypedIndexers[*apisservicev0alpha1.ExternalName]
+
+// DeletedExternalName is a specialization of [cache.DeletedObject] for ExternalName.
+type DeletedExternalName = cache.DeletedObject[*apisservicev0alpha1.ExternalName]
 
 type externalNameInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
@@ -35,25 +63,49 @@ type externalNameInformer struct {
 // NewExternalNameInformer constructs a new informer for ExternalName type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedExternalNameInformer]).
 func NewExternalNameInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
 	return NewExternalNameInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
+}
+
+// NewTypedExternalNameInformer constructs a new informer for ExternalName type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedExternalNameInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers ExternalNameIndexers) ExternalNameIndexInformer {
+	return NewTypedExternalNameInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers)})
 }
 
 // NewFilteredExternalNameInformer constructs a new informer for ExternalName type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedFilteredExternalNameInformer]).
 func NewFilteredExternalNameInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return NewExternalNameInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+	return NewTypedExternalNameInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewTypedFilteredExternalNameInformer constructs a new informer for ExternalName type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedFilteredExternalNameInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers ExternalNameIndexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) ExternalNameIndexInformer {
+	return NewTypedExternalNameInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers), TweakListOptions: tweakListOptions})
 }
 
 // NewExternalNameInformerWithOptions constructs a new informer for ExternalName type with additional options.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedExternalNameInformerWithOptions]).
 func NewExternalNameInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	return NewTypedExternalNameInformerWithOptions(client, namespace, options)
+}
+
+// NewTypedExternalNameInformerWithOptions constructs a new informer for ExternalName type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedExternalNameInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) ExternalNameIndexInformer {
 	gvr := schema.GroupVersionResource{Group: "service.grafana.app", Version: "v0alpha1", Resource: "externalnames"}
 	identifier := options.InformerName.WithResource(gvr)
 	tweakListOptions := options.TweakListOptions
-	return cache.NewSharedIndexInformerWithOptions(
+	return cache.NewTypedSharedIndexInformer[*apisservicev0alpha1.ExternalName](cache.NewSharedIndexInformerWithOptions(
 		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
@@ -86,17 +138,57 @@ func NewExternalNameInformerWithOptions(client versioned.Interface, namespace st
 			Indexers:     options.Indexers,
 			Identifier:   identifier,
 		},
-	)
+	))
 }
 
 func (f *externalNameInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewExternalNameInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
+	return NewTypedExternalNameInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *externalNameInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&apisservicev0alpha1.ExternalName{}, f.defaultInformer)
+	return f.TypedInformer()
+}
+
+func (f *externalNameInformer) TypedInformer() ExternalNameIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*apisservicev0alpha1.ExternalName](f.factory.InformerFor(&apisservicev0alpha1.ExternalName{}, f.defaultInformer))
 }
 
 func (f *externalNameInformer) Lister() servicev0alpha1.ExternalNameLister {
 	return servicev0alpha1.NewExternalNameLister(f.Informer().GetIndexer())
+}
+
+// ToTypedExternalNameInformer converts an untyped informer into a TypedExternalNameInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *ExternalName. If that is not the case, calling type-safe methods of the returned
+// TypedExternalNameInformer leads to runtime panics. A safer alternative is to pass
+// around a TypedExternalNameInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTypedExternalNameInformer(informer ExternalNameInformer) TypedExternalNameInformer {
+	if informer, ok := informer.(TypedExternalNameInformer); ok {
+		return informer
+	}
+	return &externalNameTypedInformerAdapter{informer}
+}
+
+type externalNameTypedInformerAdapter struct {
+	ExternalNameInformer
+}
+
+func (a *externalNameTypedInformerAdapter) TypedInformer() ExternalNameIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*apisservicev0alpha1.ExternalName](a.Informer())
+}
+
+// ToExternalNameIndexInformer converts an untyped informer into a ExternalNameIndexInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *ExternalName. If that is not the case, calling type-safe methods of the returned
+// ExternalNameIndexInformer leads to runtime panics. A safer alternative is to pass
+// around a ExternalNameIndexInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToExternalNameIndexInformer(informer cache.SharedIndexInformer) ExternalNameIndexInformer {
+	if informer, ok := informer.(ExternalNameIndexInformer); ok {
+		return informer
+	}
+	return cache.NewTypedSharedIndexInformer[*apisservicev0alpha1.ExternalName](informer)
 }

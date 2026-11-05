@@ -29,7 +29,7 @@ function renderModal(props: React.ComponentProps<typeof ModalEditor>) {
       // the <InteractiveTable /> is wrapped in a div because it does not allow a data-testid attribute
       within(
         renderResult.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.previewTable)
-      ).getByRole('table') as HTMLTableElement,
+      ).findByRole<HTMLTableElement>('table'),
   };
 
   return {
@@ -61,7 +61,7 @@ describe('ModalEditor', () => {
       expect(labels[1]).toHaveTextContent('beta');
     });
 
-    it('shows JSON draft options when the textarea changes', () => {
+    it('shows JSON draft options when the textarea changes', async () => {
       const { variable, onClose } = buildCustomVariable({ valuesFormat: 'json', query: '' });
       const { actions, elements } = renderModal({ variable, onClose });
 
@@ -69,7 +69,7 @@ describe('ModalEditor', () => {
         '[{"value":"dev","text":"Development","region":"eu"},{"value":"prod","text":"Production","region":"us"}]'
       );
 
-      const table = elements.multiPropsPreviewTable();
+      const table = await elements.multiPropsPreviewTable();
 
       const headerCells = within(table).getAllByRole('columnheader');
       expect(headerCells.map((cell) => cell.textContent)).toEqual(['value', 'text', 'region']);
