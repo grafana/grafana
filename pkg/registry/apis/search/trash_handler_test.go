@@ -125,11 +125,8 @@ func TestTrashHandler_RejectsBadRequests(t *testing.T) {
 	}
 }
 
-// The backend reports failures in the payload, so a nil transport error is not enough.
 func TestTrashHandler_PropagatesBackendErrorResult(t *testing.T) {
-	client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
-		Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "nope"},
-	}}
+	client := &fakeIndexClient{err: resource.GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "nope"})}
 	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
 
 	w := doTrashRequest(t, h, trashBody(``))

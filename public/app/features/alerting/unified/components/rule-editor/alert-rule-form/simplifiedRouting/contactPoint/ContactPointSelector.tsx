@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import {
   ContactPointSelector as GrafanaManagedContactPointSelector,
@@ -16,10 +16,10 @@ export interface ContactPointSelectorProps {
 }
 
 export function ContactPointSelector({ alertManager }: ContactPointSelectorProps) {
-  const { control, watch, trigger } = useFormContext<RuleFormValues>();
+  const { control, trigger } = useFormContext<RuleFormValues>();
 
   const selectedContactPointField = `contactPoints.${alertManager}.selectedContactPoint` as const;
-  const contactPointInForm = watch(selectedContactPointField);
+  const contactPointInForm = useWatch({ control, name: selectedContactPointField });
 
   const { status, selectedContactPointId } = useResolvedContactPoint(contactPointInForm);
 

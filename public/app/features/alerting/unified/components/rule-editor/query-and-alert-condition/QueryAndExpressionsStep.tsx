@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { useEffectOnce } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -98,7 +98,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   const {
     setValue,
     getValues,
-    watch,
     formState: { errors },
     control,
   } = useFormContext<RuleFormValues>();
@@ -132,12 +131,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     }
   });
 
-  const [type, condition, dataSourceName, editorSettings] = watch([
-    'type',
-    'condition',
-    'dataSourceName',
-    'editorSettings',
-  ]);
+  const [type, condition, dataSourceName, editorSettings] = useWatch({
+    control,
+    name: ['type', 'condition', 'dataSourceName', 'editorSettings'],
+  });
   //if its a new rule, look at the local storage
 
   const isGrafanaAlertingType = isGrafanaAlertingRuleByType(type);
@@ -470,11 +467,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
           <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} disabled={editingExistingRule} />
         )}
 
-        {/* This is the PromQL Editor for recording rules */}
-        {isRecordingRuleType && dataSourceName && (
+        {/* This is the PromQL Editor for recording rules.
+            A new rule starts on the Grafana rules source while its query already holds the default data source,
+            so wait until a data source is picked */}
+        {isRecordingRuleType && dataSourceName && dataSourceName !== GRAFANA_RULES_SOURCE_NAME && dataSourceUid && (
           <Field error={errors.expression?.message} invalid={!!errors.expression?.message} noMargin>
             <RecordingRuleEditor
-              dataSourceName={dataSourceName}
+              dataSourceUid={dataSourceUid}
               queries={queries}
               runQueries={() => runQueriesPreview()}
               onChangeQuery={onChangeRecordingRulesQueries}

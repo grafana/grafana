@@ -40,6 +40,10 @@ function resolveAliasIDs(panels: PanelPluginMetas): PanelPluginMetas {
   return panelsByAliasIDs;
 }
 
+export function setPanelPluginMetasFromBootData(input: PanelPluginMetas): void {
+  setPanelsAndAliases(input);
+}
+
 function setPanelsAndAliases(input: PanelPluginMetas) {
   // Text v2 supports data queries, but plugin.json is shared with v1 which does not.
   // Remove once v2 is the default and plugin.json can set skipDataQuery: false.
@@ -50,7 +54,7 @@ function setPanelsAndAliases(input: PanelPluginMetas) {
   panelsByAliasIDs = resolveAliasIDs(panels);
 }
 
-function setMetas(metas: PluginMetasResponse | null) {
+export function setPanelPluginMetasFromResponse(metas: PluginMetasResponse | null): void {
   if (!metas?.items.length) {
     // null means plugin meta failed to load, empty items means the API had nothing
     const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
@@ -82,7 +86,7 @@ async function initPanelPluginMetas(): Promise<void> {
   }
 
   const metas = await initPluginMetas();
-  setMetas(metas);
+  setPanelPluginMetasFromResponse(metas);
 }
 
 function getListedPanels(panels: PanelPluginMeta[]): PanelPluginMeta[] {
@@ -191,5 +195,5 @@ export async function refetchPanelPluginMetas(): Promise<void> {
   }
 
   const metas = await refetchPluginMetas();
-  setMetas(metas);
+  setPanelPluginMetasFromResponse(metas);
 }

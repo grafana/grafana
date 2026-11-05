@@ -1071,6 +1071,7 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 		oldURL          string
 		newURL          string
 		newToken        common.InlineSecureValue
+		connection      string
 		wantErr         bool
 		wantErrContains string
 	}{
@@ -1094,6 +1095,29 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 			newURL:  "https://github.com/grafana/repo",
 			wantErr: false,
 		},
+		{
+			name:       "allows url change on the same host for a connection-backed repository",
+			oldURL:     "https://github.com/grafana/old",
+			newURL:     "https://github.com/grafana/new",
+			connection: "gh-app",
+			wantErr:    false,
+		},
+		{
+			name:            "rejects url change when the stored token reference is echoed back",
+			oldURL:          "https://github.com/grafana/old",
+			newURL:          "https://github.com/grafana/new",
+			newToken:        common.InlineSecureValue{Name: "old-token"},
+			wantErr:         true,
+			wantErrContains: "secure.token",
+		},
+		{
+			name:            "rejects host change for a connection-backed repository",
+			oldURL:          "https://github.com/grafana/old",
+			newURL:          "https://attacker.example.com/grafana/old",
+			connection:      "gh-app",
+			wantErr:         true,
+			wantErrContains: "secure.token",
+		},
 	}
 
 	for _, tt := range tests {
@@ -1112,6 +1136,10 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 
 			newRepo := newGitHubRepositoryForURLChangeTest(tt.newURL)
 			newRepo.Secure.Token = tt.newToken
+			if tt.connection != "" {
+				oldRepo.Spec.Connection = &provisioning.ConnectionInfo{Name: tt.connection}
+				newRepo.Spec.Connection = &provisioning.ConnectionInfo{Name: tt.connection}
+			}
 
 			attr := newAdmissionValidatorTestAttributes(newRepo, oldRepo, admission.Update)
 
@@ -1119,7 +1147,7 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErrContains)
-				assert.True(t, newRepo.Secure.Token.IsZero(), "old token should not be copied after rejection")
+				assert.Equal(t, tt.newToken, newRepo.Secure.Token, "secure values should not be copied after rejection")
 				return
 			}
 

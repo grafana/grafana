@@ -2033,7 +2033,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "適用"
+      "apply": "適用",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5712,7 +5713,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5894,6 +5896,9 @@
       "render-label": {
         "tooltip-remove-property": "プロパティを削除"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "{{typeName}}を追加",
@@ -6390,6 +6395,9 @@
           "hide-header": "行ヘッダーを非表示",
           "title": "タイトル"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "フィルター"
         },
@@ -6471,11 +6479,10 @@
         "data-source": "データソース",
         "display": "注釈コントロールの表示場所",
         "display-options": {
-          "above-dashboard": "ダッシュボード上部",
           "controls-menu": "コントロールメニュー",
-          "controls-menu-description": "コントロールメニューが開いているときにアクセスできます",
+          "controls-menu-description": "",
           "hidden": "非表示",
-          "hidden-description": "この注釈のオン/オフを切り替えるためのトグルを非表示にします"
+          "hidden-description": ""
         },
         "enabled": "有効",
         "enabled-description": "有効にすると、ダッシュボードを更新するたびに注釈クエリが実行されます",
@@ -6578,7 +6585,8 @@
         "tab": "タブ",
         "tabs": "タブ",
         "variable": "{{type}}変数",
-        "variable-set": "変数"
+        "variable-set": "変数",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "エクスポート"
@@ -6757,6 +6765,9 @@
             "description": "選択した変数の値ごとにこのタブを繰り返します。",
             "title": "変数で繰り返す"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "フィルター"
@@ -7531,6 +7542,7 @@
       "error-invalid-json": "無効なJSON",
       "error-invalid-layout": "レイアウトのJSONが検証に合格しませんでした。JSONを確認して再試行してください。",
       "error-invalid-v2-panel": "パネルJSONが検証に合格しませんでした。JSONを確認して再試行してください。",
+      "mobile-edit-unavailable": "",
       "validation-error": "検証エラー"
     },
     "interval-variable-form": {
@@ -7705,7 +7717,8 @@
       "title-delete-all-transformations": "すべての変換を削除しますか？"
     },
     "panel-edit-actions": {
-      "edit-visualization": "可視化を編集"
+      "edit-visualization": "可視化を編集",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "テーブル表示を切り替え",
@@ -13906,6 +13919,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "クエリに一致するものが見つかりませんでした"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

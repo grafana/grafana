@@ -1,0 +1,126 @@
+name: Setup Grafana for E2E tests
+description: Assemble, configure and start Grafana from built directories or workflow artifacts. Requires frontend dependencies.
+
+inputs:
+  built-backend-dir:
+    description: Directory containing the backend binaries. Mutually exclusive with backend-artifact-name.
+    required: false
+  backend-artifact-name:
+    description: Backend artifact to download. Mutually exclusive with built-backend-dir.
+    required: false
+  built-frontend-dir:
+    description: Directory containing the assembled frontend. Mutually exclusive with frontend-artifact-name.
+    required: false
+  frontend-artifact-name:
+    description: Frontend artifact to download. Mutually exclusive with built-frontend-dir.
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Validate inputs
+      shell: bash
+      env:
+        BUILT_BACKEND_DIR: ${{ inputs.built-backend-dir }}
+        BACKEND_ARTIFACT_NAME: ${{ inputs.backend-artifact-name }}
+        BUILT_FRONTEND_DIR: ${{ inputs.built-frontend-dir }}
+        FRONTEND_ARTIFACT_NAME: ${{ inputs.frontend-artifact-name }}
+      run: |
+        if [[ -z "$BUILT_BACKEND_DIR" && -z "$BACKEND_ARTIFACT_NAME" ]] ||
+           [[ -n "$BUILT_BACKEND_DIR" && -n "$BACKEND_ARTIFACT_NAME" ]]; then
+          echo "::error::Provide exactly one of built-backend-dir or backend-artifact-name."
+          exit 1
+        fi
+        if [[ -z "$BUILT_FRONTEND_DIR" && -z "$FRONTEND_ARTIFACT_NAME" ]] ||
+           [[ -n "$BUILT_FRONTEND_DIR" && -n "$FRONTEND_ARTIFACT_NAME" ]]; then
+          echo "::error::Provide exactly one of built-frontend-dir or frontend-artifact-name."
+          exit 1
+        fi
+
+    - name: Download backend artifact
+      if: inputs.backend-artifact-name != ''
+      uses: actions/download-artifact@v8
+      with:
+        name: ${{ inputs.backend-artifact-name }}
+        path: grafana-server/bin
+
+    - name: Copy built backend
+      if: inputs.built-backend-dir != ''
+      shell: bash
+      env:
+        BUILT_BACKEND_DIR: ${{ inputs.built-backend-dir }}
+      run: |
+        mkdir -p grafana-server/bin
+        cp -R "$BUILT_BACKEND_DIR"/. grafana-server/bin/
+
+    - name: Download frontend artifact
+      if: inputs.frontend-artifact-name != ''
+      uses: actions/download-artifact@v8
+      with:
+        name: ${{ inputs.frontend-artifact-name }}
+        path: grafana-server/public
+
+    - name: Copy built frontend
+      if: inputs.built-frontend-dir != ''
+      shell: bash
+      env:
+        BUILT_FRONTEND_DIR: ${{ inputs.built-frontend-dir }}
+      run: |
+        mkdir -p grafana-server/public
+        cp -R "$BUILT_FRONTEND_DIR"/. grafana-server/public/
+
+    - name: Build test plugins
+      shell: bash
+      run: pnpm run e2e:plugin:build
+
+    - name: Configure Grafana for E2E tests
+      shell: bash
+      run: |
+        chmod +x grafana-server/bin/grafana*
+        cp -R conf tools grafana-server/
+        mkdir -p grafana-server/conf/provisioning/{datasources,dashboards,alerting,plugins}
+        cp scripts/grafana-server/custom.ini grafana-server/conf/custom.ini
+        cp devenv/datasources.yaml grafana-server/conf/provisioning/datasources/
+        cp devenv/dashboards.yaml grafana-server/conf/provisioning/dashboards/
+        cp devenv/alert_rules.yaml grafana-server/conf/provisioning/alerting/
+        cp devenv/plugins.yaml grafana-server/conf/provisioning/plugins/
+        mkdir -p grafana-server/data/plugins
+        cp -R e2e-playwright/test-plugins/. grafana-server/data/plugins/
+
+    # Only canvas is bundled to keep the other core plugins under test unchanged.
+    - name: Download bundled catalog plugins
+      shell: bash
+      run: |
+        bash scripts/download-catalog-plugins.sh \
+          --out grafana-server/data/plugins-bundled \
+          --grafana-version "$(jq -r .version package.json)" \
+          --os linux \
+          --arch amd64 \
+          --no-default-catalog-plugins \
+          --plugins canvas
+
+    - name: Start Grafana server
+      shell: bash
+      run: |
+        grafana-server/bin/grafana server \
+          --homepath="$PWD/grafana-server" \
+          cfg:server.http_port=3001 \
+          > grafana-server/grafana.log 2>&1 &
+
+    - name: Wait for Grafana server to start
+      shell: bash
+      run: |
+        timeout=60
+        elapsed=0
+        printf "Waiting for Grafana to start"
+        while ! curl -s -f http://localhost:3001/health > /dev/null 2>&1; do
+          if [ $elapsed -ge $timeout ]; then
+            cat grafana-server/grafana.log
+            printf "Timeout after %d seconds waiting for Grafana\n" "$timeout"
+            exit 1
+          fi
+          printf "."
+          sleep 1
+          elapsed=$((elapsed + 1))
+        done
+        printf "\nThe Grafana server is ready\n"

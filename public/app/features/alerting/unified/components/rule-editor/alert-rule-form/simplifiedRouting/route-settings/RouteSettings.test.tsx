@@ -12,12 +12,15 @@ import { RoutingSettings } from './RouteSettings';
 
 const server = setupMswServer();
 
-interface HarnessProps {
+function FormWrapper({
+  groupBy = [],
+  overrideGrouping = true,
+  overrideTimings = false,
+}: {
   groupBy?: string[];
+  overrideGrouping?: boolean;
   overrideTimings?: boolean;
-}
-
-function Harness({ groupBy = [], overrideTimings = false }: HarnessProps) {
+}) {
   const form = useForm<RuleFormValues>({
     mode: 'onChange',
     defaultValues: {
@@ -25,7 +28,7 @@ function Harness({ groupBy = [], overrideTimings = false }: HarnessProps) {
       contactPoints: {
         grafana: {
           selectedContactPoint: 'team-receiver',
-          overrideGrouping: true,
+          overrideGrouping,
           groupBy,
           overrideTimings,
           groupWaitValue: '',
@@ -50,13 +53,13 @@ const expectGroupBy = (labels: string[]) =>
 
 describe('RoutingSettings group by', () => {
   it('seeds the required labels when grouping is overridden and nothing is set', () => {
-    render(<Harness />);
+    render(<FormWrapper />);
 
     expectGroupBy(['grafana_folder', 'alertname']);
   });
 
   it('replaces everything with the disable marker when Disable is picked', async () => {
-    render(<Harness groupBy={['grafana_folder', 'alertname', 'cluster']} />);
+    render(<FormWrapper groupBy={['grafana_folder', 'alertname', 'cluster']} />);
 
     await selectOptionInTest(screen.getByLabelText('Group by'), 'Disable (...)');
 
@@ -64,11 +67,40 @@ describe('RoutingSettings group by', () => {
   });
 
   it('restores the required labels when the disable marker is removed', async () => {
-    const { user } = render(<Harness groupBy={['...']} />);
+    const { user } = render(<FormWrapper groupBy={['...']} />);
 
     await user.click(screen.getByRole('button', { name: /remove/i }));
 
     expectGroupBy(['grafana_folder', 'alertname']);
+  });
+});
+
+describe('RoutingSettings overrides', () => {
+  it('shows the group by field once grouping is overridden', async () => {
+    const { user } = render(<FormWrapper overrideGrouping={false} />);
+
+    await user.click(screen.getByLabelText('Override grouping'));
+
+    expect(await screen.findByLabelText('Group by')).toBeInTheDocument();
+  });
+
+  it('keeps the picked group by when grouping override is turned off and on again', async () => {
+    const { user } = render(<FormWrapper overrideGrouping={false} />);
+    await user.click(screen.getByLabelText('Override grouping'));
+    await selectOptionInTest(await screen.findByLabelText('Group by'), 'Disable (...)');
+
+    await user.click(screen.getByLabelText('Override grouping'));
+    await user.click(screen.getByLabelText('Override grouping'));
+
+    expectGroupBy(['...']);
+  });
+
+  it('shows the timing fields once timings are overridden', async () => {
+    const { user } = render(<FormWrapper />);
+
+    await user.click(screen.getByLabelText('Override timings'));
+
+    expect(await screen.findByLabelText(/group wait/i)).toBeInTheDocument();
   });
 });
 
@@ -89,7 +121,7 @@ describe('RoutingSettings timings', () => {
       template_files: {},
     });
     server.use(http.get(ROUTING_TREES_URL, () => HttpResponse.json({ items: [defaultPolicy] })));
-    render(<Harness overrideTimings />);
+    render(<FormWrapper overrideTimings />);
 
     expect(await screen.findByPlaceholderText('45s')).toBe(timingInputs().groupWait);
     expect(screen.getByPlaceholderText('6m')).toBe(timingInputs().groupInterval);
@@ -97,7 +129,7 @@ describe('RoutingSettings timings', () => {
   });
 
   it('rejects a zero group interval and repeat interval, which the backend rejects too', async () => {
-    const { user } = render(<Harness overrideTimings />);
+    const { user } = render(<FormWrapper overrideTimings />);
 
     await user.type(timingInputs().groupInterval, '0s');
     await user.type(timingInputs().repeatInterval, '0s');
@@ -106,7 +138,7 @@ describe('RoutingSettings timings', () => {
   });
 
   it('accepts a zero group wait', async () => {
-    const { user } = render(<Harness overrideTimings />);
+    const { user } = render(<FormWrapper overrideTimings />);
 
     await user.type(timingInputs().groupWait, '0s');
     await user.tab();
@@ -115,7 +147,7 @@ describe('RoutingSettings timings', () => {
   });
 
   it('rejects milliseconds, which the rules API has no unit for', async () => {
-    const { user } = render(<Harness overrideTimings />);
+    const { user } = render(<FormWrapper overrideTimings />);
 
     await user.type(timingInputs().groupWait, '500ms');
 
@@ -123,7 +155,7 @@ describe('RoutingSettings timings', () => {
   });
 
   it('validates each timing on its own', async () => {
-    const { user } = render(<Harness overrideTimings />);
+    const { user } = render(<FormWrapper overrideTimings />);
 
     await user.type(timingInputs().groupInterval, '5m');
     await user.type(timingInputs().repeatInterval, '1m');
