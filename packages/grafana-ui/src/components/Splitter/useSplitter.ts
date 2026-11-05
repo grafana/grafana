@@ -363,13 +363,13 @@ export function useSplitter(options: UseSplitterOptions) {
     }
   }, [onSizeChanged, handleSize, measurementProp, getPrimaryFlexSize]);
 
-  // Pixel-pane percentages also change with the surrounding layout. Observe live sizes so an
-  // initially hidden container or a later resize cannot leave the announced value stale.
+  // Snapping and surrounding layout changes resize panes outside the drag handlers. Observe live
+  // sizes in both sizing modes so collapsing or reopening cannot leave the announced value stale.
   useLayoutEffect(() => {
     const primaryPane = firstPaneRef.current;
     const container = containerRef.current;
     const handle = splitterRef.current;
-    if (!usePixels || !primaryPane || !container || !handle) {
+    if (!primaryPane || !container || !handle) {
       return;
     }
 

@@ -473,24 +473,34 @@ describe('useSplitter', () => {
       }
     );
 
-    it('updates the percentage when the primary pane changes size', () => {
-      const { container } = render(
-        <TestSplitter
-          direction="row"
-          usePixels
-          pixelPane="primary"
-          initialSize={350}
-          primaryWidth={350}
-          containerWidth={1016}
-        />
-      );
-      const handle = screen.getByRole('separator');
-      expect(handle).toHaveAttribute('aria-valuenow', '35');
+    it.each([
+      { sizing: 'pixel', usePixels: true, initialSize: 350 },
+      { sizing: 'flex', usePixels: false, initialSize: 0.35 },
+    ])(
+      'updates the percentage when the $sizing primary pane changes size without a render or drag',
+      ({ usePixels, initialSize }) => {
+        const { container } = render(
+          <TestSplitter
+            direction="row"
+            usePixels={usePixels}
+            pixelPane="primary"
+            initialSize={initialSize}
+            primaryWidth={350}
+            containerWidth={1016}
+          />
+        );
+        const handle = screen.getByRole('separator');
+        expect(handle).toHaveAttribute('aria-valuenow', '35');
 
-      resize(container.firstElementChild!.firstElementChild!, 500);
+        resize(container.firstElementChild!.firstElementChild!, 500);
 
-      expect(handle).toHaveAttribute('aria-valuenow', '50');
-    });
+        expect(handle).toHaveAttribute('aria-valuenow', '50');
+
+        resize(container.firstElementChild!.firstElementChild!, 350);
+
+        expect(handle).toHaveAttribute('aria-valuenow', '35');
+      }
+    );
 
     it('reports zero for a collapsed primary pane in a measurable container', () => {
       render(
