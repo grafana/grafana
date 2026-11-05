@@ -77,7 +77,7 @@ function convertGlobToRegEx(text: string): string {
 function expandSeriesReferences(
   target: string,
   targetsByRefId: Map<string, string>,
-  seen: ReadonlySet<string> = new Set()
+  seen: ReadonlySet<string>
 ): string {
   return target.replace(/#([A-Z])/g, (match: string, refId: string) => {
     const referenced = targetsByRefId.get(refId);
@@ -538,7 +538,7 @@ export class GraphiteDatasource
       );
       expandedQueries = queries.map((query) => {
         const target = query.target ?? '';
-        const targetWithReferences = expandSeriesReferences(target, targetsByRefId);
+        const targetWithReferences = expandSeriesReferences(target, targetsByRefId, new Set([query.refId]));
         // A partial expansion must not replace a saved `targetFull`.
         const isFullyResolved = targetWithReferences !== target && !/#[A-Z]/.test(targetWithReferences);
         const targetFull = isFullyResolved ? targetWithReferences : query.targetFull;

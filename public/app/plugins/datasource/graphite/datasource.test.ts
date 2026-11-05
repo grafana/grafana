@@ -1487,6 +1487,15 @@ describe('graphiteDatasource', () => {
 
       expect(queries.map((q) => q.targetFull)).toEqual([undefined, undefined]);
     });
+
+    it('does not expand a query that references itself', () => {
+      const [query] = createDatasource().interpolateVariablesInQueries(
+        [{ refId: 'A', target: 'sumSeries(#A)', targetFull: 'sumSeries(metric.$input)' }],
+        {}
+      );
+
+      expect(query.targetFull).toBe('sumSeries(metric.10)');
+    });
   });
 
   describe('querying for template variables', () => {
