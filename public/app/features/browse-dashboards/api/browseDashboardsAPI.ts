@@ -38,7 +38,7 @@ async function refreshTeamFolders() {
   dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
 }
 
-export interface DeleteFoldersArgs {
+interface DeleteFoldersArgs {
   folderUIDs: string[];
 }
 
