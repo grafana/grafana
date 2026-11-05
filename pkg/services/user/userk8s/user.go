@@ -22,6 +22,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -56,6 +57,12 @@ type UserK8sService struct {
 }
 
 var _ user.Service = (*UserK8sService)(nil)
+
+// ErrPasswordUpdateNotSupported is returned by Update when the command sets a password or old password.
+var ErrPasswordUpdateNotSupported = errutil.NotImplemented(
+	"user.k8s-password-update-unsupported",
+	errutil.WithPublicMessage("Changing the password is not supported"),
+).Errorf("password updates are not supported by the kubernetes user service")
 
 func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *UserK8sService {
 	return &UserK8sService{
@@ -474,6 +481,14 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	defer span.End()
 
 	ctxLogger := s.logger.FromContext(ctx)
+
+	// The user resource doesn't store credentials, so reporting success here would skip the
+	// old password check and leave the stored hash unchanged.
+	if cmd.Password != nil || cmd.OldPassword != nil {
+		span.RecordError(ErrPasswordUpdateNotSupported)
+		span.SetStatus(codes.Error, ErrPasswordUpdateNotSupported.Error())
+		return ErrPasswordUpdateNotSupported
+	}
 
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {

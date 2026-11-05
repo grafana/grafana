@@ -257,19 +257,11 @@ func TestGlobalDocumentBuilderBlobErrors(t *testing.T) {
 			wantErr: context.Canceled,
 		},
 		{
-			name: "response error",
-			blob: &globalDocumentBlob{response: &resourcepb.GetBlobResponse{
-				Error: &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "blob unavailable"},
-			}},
-			wantError: "blob unavailable",
-		},
-		{
-			name: "transport error takes precedence",
+			name: "status error",
 			blob: &globalDocumentBlob{
-				response: &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Message: "blob unavailable"}},
-				err:      context.Canceled,
+				err: GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "blob unavailable"}),
 			},
-			wantErr: context.Canceled,
+			wantError: "blob unavailable",
 		},
 		{
 			name: "invalid JSON",

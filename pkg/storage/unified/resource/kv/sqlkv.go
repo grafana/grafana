@@ -79,10 +79,6 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "search_snapshot_manifest"
 	case SearchSnapshotDataSection:
 		tableName = "search_snapshot_data"
-	case StatsDailySection:
-		tableName = "resource_stats_daily"
-	case StatsAggregatesSection:
-		tableName = "resource_stats_aggregates"
 	case NATSPeersSection:
 		tableName = "nats_discovery_peers"
 	case VersionPolicySection:
