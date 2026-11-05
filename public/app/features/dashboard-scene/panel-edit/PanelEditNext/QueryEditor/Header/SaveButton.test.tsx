@@ -94,6 +94,24 @@ describe('SaveButton', () => {
     expect(runQueries).not.toHaveBeenCalled();
   });
 
+  it('replaces the target query rather than the selected one', () => {
+    const updateSelectedQuery = jest.fn();
+    const setSelectedQuery = jest.fn();
+    const target: DataQuery = { refId: 'B', datasource: { uid: 'prom', type: 'prometheus' } };
+
+    renderWithQueryEditorProvider(<SaveButton target={makeQueryActionTarget(target)} />, {
+      selectedQuery,
+      uiStateOverrides: { cardType: QueryEditorType.Query, setSelectedQuery },
+      actionsOverrides: { updateSelectedQuery },
+    });
+
+    const fromLibrary: DataQuery = { refId: 'X', datasource: { uid: 'prom', type: 'prometheus' } };
+    capturedOnSelectQuery!(fromLibrary);
+
+    expect(updateSelectedQuery).toHaveBeenCalledWith({ ...fromLibrary, refId: 'B' }, 'B');
+    expect(setSelectedQuery).toHaveBeenCalledWith({ ...fromLibrary, refId: 'B' });
+  });
+
   it('still replaces a single query in place via the single-query callback', () => {
     const updateSelectedQuery = jest.fn();
     const setSelectedQuery = jest.fn();

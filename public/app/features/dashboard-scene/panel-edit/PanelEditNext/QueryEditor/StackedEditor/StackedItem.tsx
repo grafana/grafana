@@ -66,6 +66,7 @@ export function StackedQueryItem({ query, headingId, isCurrent }: StackedQueryIt
   const { updateSelectedQuery, addQuery, runQueries, startQueryPreview } = useActionsContext();
   const { queryDsData, queryDsLoading } = useQueryDatasource(query, dsSettings, panel);
   const editorType = getStackedQueryEditorType(query);
+  const target = { cardType: editorType, query, dsData: queryDsData, dsLoading: queryDsLoading };
 
   return (
     <>
@@ -75,11 +76,8 @@ export function StackedQueryItem({ query, headingId, isCurrent }: StackedQueryIt
         name={query.refId}
         detail={isExpressionQuery(query) ? getExpressionSectionLabel(query) : queryDsData?.dsSettings?.name}
       />
-      <ContentHeaderSceneWrapper
-        variant="stacked"
-        target={{ cardType: editorType, query, dsData: queryDsData, dsLoading: queryDsLoading }}
-      />
-      {isCurrent && showingDatasourceHelp && <DatasourceHelpPanel />}
+      <ContentHeaderSceneWrapper variant="stacked" target={target} />
+      {isCurrent && showingDatasourceHelp && <DatasourceHelpPanel target={target} />}
       <div className={styles.itemBody}>
         <QueryEditorPanel
           panel={panel}
