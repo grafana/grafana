@@ -1,6 +1,9 @@
 package folders
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+)
 
 // Fixed label values keep the metric's cardinality bounded.
 const (
@@ -23,14 +26,10 @@ type deleteCheckMetrics struct {
 // without the legacy database. dry_run separates checks that delete nothing, so they don't skew
 // "allowed", while backend failures stay visible either way.
 func newDeleteCheckMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) *deleteCheckMetrics {
-	if reg == nil {
-		return nil
-	}
-	checks := prometheus.NewCounterVec(prometheus.CounterOpts{
+	checks := promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 		Name: "grafana_folder_delete_checks_total",
 		Help: "Folder delete checks, by outcome, whether counting joined the legacy database, the resource kind that blocked the delete, and whether it was a dry run",
 	}, []string{"outcome", "legacy_join", "blocking_kind", "dry_run"})
-	reg.MustRegister(checks)
 	join := "disabled"
 	if legacyJoinEnabled {
 		join = "enabled"

@@ -116,11 +116,14 @@ func TestDryRunCountFailureIsStillRecorded(t *testing.T) {
 }
 
 func TestDeleteCheckMetricsRegistration(t *testing.T) {
-	t.Run("nil registerer yields nil metrics that record nothing", func(t *testing.T) {
+	t.Run("a nil registerer records without registering", func(t *testing.T) {
 		m := newDeleteCheckMetrics(nil, true)
-		require.Nil(t, m)
-		require.NotPanics(t, func() { m.record(deleteCheckAllowed, blockingKindNone) })
-		require.Nil(t, m.withDryRun(true))
+		require.NotPanics(t, func() { m.withDryRun(true).record(deleteCheckAllowed, blockingKindNone) })
+	})
+
+	t.Run("a nil recorder records nothing", func(t *testing.T) {
+		var m *deleteCheckMetrics
+		require.NotPanics(t, func() { m.withDryRun(true).record(deleteCheckAllowed, blockingKindNone) })
 	})
 
 	t.Run("registering twice on one registry fails loudly", func(t *testing.T) {
