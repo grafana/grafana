@@ -289,14 +289,14 @@ describe('<PanelActionsWrapper />', () => {
         'Panel settings',
         '|',
         "Repeated panels can't be duplicated individually",
-        "Repeated panels can't be deleted individually",
+        "Repeated panels can't be removed individually",
         '|',
         'Expand (v)',
         'More actions',
       ]);
       const toolbar = within(getToolbar());
       expect(toolbar.getByRole('button', { name: "Repeated panels can't be duplicated individually" })).toBeDisabled();
-      expect(toolbar.getByRole('button', { name: "Repeated panels can't be deleted individually" })).toBeDisabled();
+      expect(toolbar.getByRole('button', { name: "Repeated panels can't be removed individually" })).toBeDisabled();
     });
 
     test('clicking Expand views the panel and reports the click', async () => {

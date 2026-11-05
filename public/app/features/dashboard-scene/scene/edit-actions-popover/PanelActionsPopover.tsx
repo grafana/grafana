@@ -289,8 +289,8 @@ function PanelActions({
             onConfirm={onRemove}
             disabled={isRepeat}
             disabledTooltip={t(
-              'dashboard-scene.control-edit-actions.delete-tooltip-disabled',
-              "Repeated panels can't be deleted individually"
+              'dashboard-scene.panel-actions-popover.remove-tooltip-disabled',
+              "Repeated panels can't be removed individually"
             )}
           />
         </>

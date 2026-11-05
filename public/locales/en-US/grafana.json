@@ -7761,6 +7761,7 @@
       "more-actions": "More actions",
       "remove": "Remove (p r)",
       "remove-confirm": "Remove",
+      "remove-tooltip-disabled": "Repeated panels can't be removed individually",
       "restore-size": "Restore size (v)",
       "settings": "Panel settings"
     },
