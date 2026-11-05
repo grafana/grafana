@@ -19,7 +19,7 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { getInstantFromDataQuery } from '../../utils/rule-form';
+import { getInstantFromDataQuery, syncAlertQueryDatasource } from '../../utils/rule-form';
 
 import { type AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
 import {
@@ -118,7 +118,9 @@ export const QueryRows = ({
           return item;
         }
 
-        return {
+        // Keep datasourceUid as the source of truth. Plugin onChange can still carry the previous
+        // model.datasource after a picker change (see grafana/grafana#122469).
+        return syncAlertQueryDatasource({
           ...item,
           refId: query.refId,
           queryType: item.model.queryType ?? '',
@@ -127,7 +129,7 @@ export const QueryRows = ({
             ...query,
             datasource: query.datasource!,
           },
-        };
+        });
       })
     );
   };

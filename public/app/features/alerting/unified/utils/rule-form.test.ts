@@ -132,6 +132,60 @@ describe('formValuesToRulerGrafanaRuleDTO', () => {
     expect(formValuesToRulerGrafanaRuleDTO(values)).toMatchSnapshot();
   });
 
+  it('syncs model.datasource with datasourceUid when they diverge after a datasource change', () => {
+    setupDataSources(
+      mockDataSource({
+        uid: 'testdata',
+        name: 'testdata',
+        type: 'grafana-testdata-datasource',
+      }),
+      mockDataSource({
+        uid: 'prometheus',
+        name: 'prometheus',
+        type: DataSourceType.Prometheus,
+      })
+    );
+
+    const values: RuleFormValues = {
+      ...getDefaultFormValues(),
+      type: RuleFormType.grafana,
+      condition: 'A',
+      queries: [
+        {
+          refId: 'A',
+          relativeTimeRange: { from: 600, to: 0 },
+          datasourceUid: 'testdata',
+          queryType: 'query',
+          model: {
+            refId: 'A',
+            expr: 'up',
+            datasource: { type: DataSourceType.Prometheus, uid: 'prometheus' },
+          },
+        },
+        {
+          refId: 'B',
+          datasourceUid: ExpressionDatasourceUID,
+          queryType: 'expression',
+          model: {
+            refId: 'B',
+            type: ExpressionQueryType.reduce,
+            datasource: { uid: ExpressionDatasourceUID, type: '__expr__' },
+            expression: 'A',
+          } as ExpressionQuery,
+        },
+      ],
+    };
+
+    const dto = formValuesToRulerGrafanaRuleDTO(values);
+    const dataQuery = dto.grafana_alert.data[0];
+    const expressionQuery = dto.grafana_alert.data[1];
+
+    expect(dataQuery.datasourceUid).toBe('testdata');
+    expect(dataQuery.model.datasource).toEqual({ type: 'grafana-testdata-datasource', uid: 'testdata' });
+    expect(expressionQuery.datasourceUid).toBe(ExpressionDatasourceUID);
+    expect(expressionQuery.model.datasource).toEqual({ uid: ExpressionDatasourceUID, type: '__expr__' });
+  });
+
   it('should set keep_firing_for if values are populated', () => {
     const formValues: RuleFormValues = {
       ...getDefaultFormValues(),
