@@ -714,7 +714,7 @@ func TestConvertTimeSeriesToFullLongNonNumericFields(t *testing.T) {
 		require.Equal(t, []string{"time", SQLValueFieldName, SQLMetricFieldName, "field_Time", "field_host", "host"}, names)
 	})
 
-	t.Run("a label renamed for a generated column skips the name of a field", func(t *testing.T) {
+	t.Run("a field named like a renamed label column gets a field_ prefix", func(t *testing.T) {
 		input := data.Frames{
 			data.NewFrame("",
 				data.NewField("time", nil, times[:1]),
@@ -729,7 +729,9 @@ func TestConvertTimeSeriesToFullLongNonNumericFields(t *testing.T) {
 		for _, f := range output[0].Fields {
 			names = append(names, f.Name)
 		}
-		require.Equal(t, []string{"time", SQLValueFieldName, SQLMetricFieldName, "label_time", "label_label_time"}, names)
+		require.Equal(t, []string{"time", SQLValueFieldName, SQLMetricFieldName, "field_label_time", "label_time"}, names)
+		require.Equal(t, new("nightly"), output[0].Fields[4].At(0))
+		require.Equal(t, new("x"), output[0].Fields[3].At(0))
 	})
 
 	for name, extra := range map[string][]*data.Field{

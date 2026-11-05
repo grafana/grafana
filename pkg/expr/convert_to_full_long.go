@@ -262,10 +262,10 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 	if hasDisplayCol {
 		fields = append(fields, data.NewField(SQLDisplayFieldName, nil, displays))
 	}
-	auxFields := auxCols.fields(fields, labelKeys, len(rows))
+	labelCols := labelColumnNames(labelKeys, fields)
+	auxFields := auxCols.fields(fields, labelCols, len(rows))
 	auxCols.fill(auxFields)
 	fields = append(fields, auxFields...)
-	labelCols := labelColumnNames(labelKeys, fields)
 	for _, k := range labelKeys {
 		fields = append(fields, data.NewField(labelCols[k], nil, labels[k]))
 	}
@@ -402,10 +402,10 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 	if hasDisplayCol {
 		fields = append(fields, data.NewField(SQLDisplayFieldName, nil, displays))
 	}
-	auxFields := auxCols.fields(fields, labelKeys, len(rows))
+	labelCols := labelColumnNames(labelKeys, fields)
+	auxFields := auxCols.fields(fields, labelCols, len(rows))
 	auxCols.fill(auxFields)
 	fields = append(fields, auxFields...)
-	labelCols := labelColumnNames(labelKeys, fields)
 	for _, k := range labelKeys {
 		fields = append(fields, data.NewField(labelCols[k], nil, labels[k]))
 	}
@@ -611,18 +611,18 @@ func (r rowsWithAux[R]) Swap(i, j int) {
 }
 
 // fields returns one empty nullable field per column. A name that matches a
-// generated column or a label key gets a "field_" prefix until it is unique, so
-// columns that convert today keep their names.
-func (a *auxColumns) fields(generated []*data.Field, labelKeys []string, n int) []*data.Field {
+// generated column or a label column gets a "field_" prefix until it is unique,
+// so columns that convert today keep their names.
+func (a *auxColumns) fields(generated []*data.Field, labelCols map[string]string, n int) []*data.Field {
 	if len(a.cols) == 0 {
 		return nil
 	}
-	taken := make(map[string]struct{}, len(generated)+len(labelKeys)+len(a.cols))
+	taken := make(map[string]struct{}, len(generated)+len(labelCols)+len(a.cols))
 	for _, f := range generated {
 		taken[strings.ToLower(f.Name)] = struct{}{}
 	}
-	for _, k := range labelKeys {
-		taken[strings.ToLower(k)] = struct{}{}
+	for _, name := range labelCols {
+		taken[strings.ToLower(name)] = struct{}{}
 	}
 	out := make([]*data.Field, 0, len(a.cols))
 	for _, c := range a.cols {
