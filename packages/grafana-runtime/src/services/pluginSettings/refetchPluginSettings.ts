@@ -4,11 +4,11 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromiseWithArgs } from '../../utils/getCachedPromise';
 import { refetchPluginMeta } from '../pluginMeta/plugins';
+import { getCacheKey, getLegacyCacheKey } from '../pluginUtils';
 
 import { getAppPluginSettings, getLegacySettings } from './getPluginSettings';
 import { logPluginSettingsDebug } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
-import { getCacheKey, getLegacyCacheKey } from './utils';
 
 export async function refetchPluginSettings(pluginId: string): Promise<PluginMeta> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {

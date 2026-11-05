@@ -13,6 +13,7 @@ import {
 } from '@grafana/scenes';
 import { PanelChromeHeaderControlsContext } from '@grafana/ui/internal';
 
+import { PanelAdHocChangesAction } from './panel-actions/PanelAdHocChangesAction';
 import { PanelGroupByAction } from './panel-actions/PanelGroupByAction/PanelGroupByAction';
 
 export interface VizPanelHeaderActionsState extends SceneObjectState {
@@ -191,6 +192,7 @@ function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<VizPanelHe
 
   return (
     <>
+      {model.parent instanceof VizPanel && <PanelAdHocChangesAction panel={model.parent} />}
       {!hasExternalHeaderControls && isGroupByActionSupported && (groupByVariable || adhocGroupByVariable) && (
         <div className="show-on-hover">
           <PanelGroupByAction

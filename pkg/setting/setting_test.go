@@ -683,6 +683,18 @@ func TestRedactedValue(t *testing.T) {
 			expected: RedactedPassword,
 		},
 		{
+			desc:     "client token",
+			key:      "GF_SOME_SERVICE_CLIENT_TOKEN",
+			value:    "some-token",
+			expected: RedactedPassword,
+		},
+		{
+			desc:     "client token exchange url stays visible",
+			key:      "GF_SOME_SERVICE_CLIENT_TOKEN_EXCHANGE_URL",
+			value:    "http://example.com/token-exchange",
+			expected: "http://example.com/token-exchange",
+		},
+		{
 			desc:     "boolean token setting stays visible",
 			key:      "GF_AUTH_GENERIC_OAUTH_USE_REFRESH_TOKEN",
 			value:    "true",

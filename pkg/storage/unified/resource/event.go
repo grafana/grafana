@@ -72,5 +72,13 @@ type WrittenEvent struct {
 	Timestamp int64
 }
 
+func (e *WrittenEvent) sizeBytes() int64 {
+	if e == nil {
+		return 0
+	}
+	// Count capacity because a short payload can retain a larger backing array.
+	return int64(cap(e.Value))
+}
+
 // EventAppender is a function to write events.
 type EventAppender = func(context.Context, *WriteEvent) (int64, error)

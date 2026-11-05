@@ -2360,6 +2360,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		rc.Req.Header.Set(configForceReplaceHeader, "true")
 
 		amCfg := apimodels.AlertmanagerUserConfig{
 			AlertmanagerConfig: `{"route":{"receiver":"default"},"receivers":[{"name":"default"}]}`,
