@@ -25,8 +25,6 @@ import { type RecentActivity } from './useRecentActivity';
 interface Props {
   recent: RecentActivity;
   foldersByUid: Record<string, LocationInfo>;
-  /** Starring a dashboard here changes what the Starred tab shows. */
-  onStarChange: () => void;
 }
 
 /** An empty history means a new user or a fresh clear: point them at dashboards, as the Recent tab always did. */
@@ -54,7 +52,7 @@ function EmptyStateCta() {
   );
 }
 
-export function RecentActivityTab({ recent, foldersByUid, onStarChange }: Props) {
+export function RecentActivityTab({ recent, foldersByUid }: Props) {
   const { items, counts, total, filter, loading, error, retry } = recent;
   const styles = useStyles2(getStyles);
   const navTree = useSelector((state) => state.navBarTree);
@@ -135,7 +133,6 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange }: Props)
                         group="dashboard.grafana.app"
                         kind="Dashboard"
                         id={item.uid}
-                        onStarChange={onStarChange}
                       />
                     )}
                   </span>

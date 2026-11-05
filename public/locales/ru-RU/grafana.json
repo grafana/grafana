@@ -1483,7 +1483,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -2068,7 +2075,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Применить"
+      "apply": "Применить",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5427,6 +5435,9 @@
       "preferences": "Настройки",
       "recent-dashboards": "Последние дашборды",
       "recent-scopes": "Недавние области"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -5852,7 +5863,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -6034,6 +6046,9 @@
       "render-label": {
         "tooltip-remove-property": "Удалить свойство"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "Добавить {{typeName}}",
@@ -6344,6 +6359,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -6532,6 +6548,9 @@
           "hide-header": "Скрытие заголовка строки",
           "title": "Заголовок"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Фильтры"
         },
@@ -6613,11 +6632,10 @@
         "data-source": "Источник данных",
         "display": "Показывать элементы управления аннотациями в",
         "display-options": {
-          "above-dashboard": "Над дашбордом",
           "controls-menu": "Меню управления",
-          "controls-menu-description": "Доступно при открытом меню управления",
+          "controls-menu-description": "",
           "hidden": "Скрыто",
-          "hidden-description": "Скрывает переключатель для включения и отключения этой аннотации"
+          "hidden-description": ""
         },
         "enabled": "Включено",
         "enabled-description": "Если этот параметр включен, запрос аннотации создается при каждом обновлении дашборда",
@@ -6720,7 +6738,11 @@
         "tab": "Вкладка",
         "tabs": "Вкладки",
         "variable": "Тип переменной: {{type}}",
-        "variable-set": "Переменные"
+        "variable-set": "Переменные",
+        "selected-panels_one": "",
+        "selected-panels_few": "",
+        "selected-panels_many": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Экспорт"
@@ -6899,6 +6921,9 @@
             "description": "Повторите эту вкладку для каждого значения в выбранной переменной.",
             "title": "Повторение по переменной"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Фильтры"
@@ -7425,11 +7450,14 @@
         "keep-working": "",
         "save": "Сохранить",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "Сохранить изменения?"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "Несохраненные изменения"
         }
@@ -7676,6 +7704,7 @@
       "error-invalid-json": "Недопустимый JSON",
       "error-invalid-layout": "JSON-файл макета не прошел проверку. Проверьте файл и повторите попытку.",
       "error-invalid-v2-panel": "JSON-файл панели не прошел проверку. Проверьте файл и повторите попытку.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Ошибка проверки"
     },
     "interval-variable-form": {
@@ -7747,17 +7776,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -7853,7 +7885,11 @@
       "title-delete-all-transformations": "Удалить все преобразования?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Изменить визуализацию"
+      "edit-visualization": "Изменить визуализацию",
+      "panels-selected_one": "",
+      "panels-selected_few": "",
+      "panels-selected_many": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Переключить табличное представление",
@@ -10880,6 +10916,8 @@
       "clear-button": "Очистить выбор"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "Не удалось загрузить редактор CodeMirror",
       "language-load-failed": "Не удалось загрузить подсветку синтаксиса",
       "language-load-failed-description": "Редактор продолжит работу без языковых функций.",
@@ -12591,7 +12629,6 @@
       "copy-log-line-json": "Копировать содержимое журнала в формате JSON",
       "copy-shortlink": "Копировать короткую ссылку",
       "copy-to-clipboard": "Копировать в буфер обмена",
-      "displayed-fields-section": "Организовать отображаемые поля",
       "fields": {
         "adhoc-statistics": "Специальная статистика",
         "copy-value-to-clipboard": "Копировать значение в буфер обмена",
@@ -12615,14 +12652,11 @@
       "log-attributes-field": "Атрибуты журнала",
       "log-line-field": "Строка журнала",
       "log-line-section": "Строка журнала",
-      "move-displayed-field-down": "Вниз",
-      "move-displayed-field-up": "Вверх",
       "no-details": "Отсутствуют поля для отображения.",
       "open-assistant": "Объяснить строку журнала в Assistant",
       "open-value-in": "",
       "pin-line": "Закрепить журнал",
       "prettify": "Форматировать",
-      "remove-displayed-field": "Удалить поле",
       "remove-log": "Удалить журнал",
       "scroll-to-logline": "Прокрутить до строки журнала",
       "search": {
@@ -14221,6 +14255,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Не удалось найти данные, соответствующие вашему запросу"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

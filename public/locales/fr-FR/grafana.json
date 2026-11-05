@@ -1469,7 +1469,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -2040,7 +2047,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Appliquer"
+      "apply": "Appliquer",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5327,6 +5335,9 @@
       "preferences": "Préférences",
       "recent-dashboards": "Tableaux de bord récents",
       "recent-scopes": "Portées récentes"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -5752,7 +5763,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5934,6 +5946,9 @@
       "render-label": {
         "tooltip-remove-property": "Supprimer la propriété"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "Ajouter {{typeName}}",
@@ -6244,6 +6259,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -6430,6 +6446,9 @@
           "hide-header": "Masquer l’en-tête de ligne",
           "title": "Titre"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filtres"
         },
@@ -6511,11 +6530,10 @@
         "data-source": "Source de données",
         "display": "Afficher les contrôles d’annotation dans",
         "display-options": {
-          "above-dashboard": "Au-dessus du tableau de bord",
           "controls-menu": "Menu des commandes",
-          "controls-menu-description": "Accessible lorsque le menu des commandes est ouvert",
+          "controls-menu-description": "",
           "hidden": "Masqué",
-          "hidden-description": "Masque l’interrupteur permettant d’activer ou de désactiver cette annotation"
+          "hidden-description": ""
         },
         "enabled": "Activé",
         "enabled-description": "Lorsque cette option est activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
@@ -6618,7 +6636,9 @@
         "tab": "Onglet",
         "tabs": "Onglets",
         "variable": "Variable {{type}}",
-        "variable-set": "Variables"
+        "variable-set": "Variables",
+        "selected-panels_one": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Exporter"
@@ -6797,6 +6817,9 @@
             "description": "Répétez cet onglet pour chaque valeur de la variable sélectionnée.",
             "title": "Répéter par variable"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filtres"
@@ -7319,11 +7342,14 @@
         "keep-working": "",
         "save": "Enregistrer",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "Souhaitez-vous enregistrer vos modifications ?"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "Modifications non enregistrées"
         }
@@ -7570,6 +7596,7 @@
       "error-invalid-json": "Fichier JSON non valide",
       "error-invalid-layout": "Le fichier JSON de la mise en page n’a pas été validé. Veuillez vérifier le fichier JSON et réessayer.",
       "error-invalid-v2-panel": "Le fichier JSON du panneau n’a pas été validé. Veuillez vérifier le fichier JSON et réessayer.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Erreur de validation"
     },
     "interval-variable-form": {
@@ -7639,17 +7666,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -7743,7 +7773,9 @@
       "title-delete-all-transformations": "Supprimer toutes les transformations ?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Modifier la visualisation"
+      "edit-visualization": "Modifier la visualisation",
+      "panels-selected_one": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Basculer la vue du tableau",
@@ -10716,6 +10748,8 @@
       "clear-button": "Effacer la sélection"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "Échec du chargement de l’éditeur CodeMirror",
       "language-load-failed": "Échec du chargement de la coloration syntaxique",
       "language-load-failed-description": "L’éditeur s’ouvrira sans les fonctionnalités spécifiques au langage.",
@@ -12383,7 +12417,6 @@
       "copy-log-line-json": "Copier le contenu du journal au format JSON",
       "copy-shortlink": "Copier le lien court",
       "copy-to-clipboard": "Copier dans le presse-papiers",
-      "displayed-fields-section": "Organiser les champs affichés",
       "fields": {
         "adhoc-statistics": "Statistiques ponctuelles",
         "copy-value-to-clipboard": "Copier la valeur dans le presse-papiers",
@@ -12407,14 +12440,11 @@
       "log-attributes-field": "Attributs du journal",
       "log-line-field": "Ligne de journal",
       "log-line-section": "Ligne de log",
-      "move-displayed-field-down": "Déplacer vers le bas",
-      "move-displayed-field-up": "Déplacer vers le haut",
       "no-details": "Aucun champ à afficher.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Épingler ce log",
       "prettify": "Mettre en forme",
-      "remove-displayed-field": "Supprimer le champ",
       "remove-log": "Supprimer le journal",
       "scroll-to-logline": "Faire défiler jusqu’à la ligne du journal",
       "search": {
@@ -14001,6 +14031,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Impossible de trouver quoi que ce soit correspondant à votre requête"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

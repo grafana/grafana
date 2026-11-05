@@ -538,8 +538,8 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelDelete(ctx context.Context, n
 		Limit:        1,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
-		return err
+	if err != nil {
+		return resource.StatusErrorFromGRPC(err)
 	}
 	if result.GetTotalHits() > 0 {
 		return apierrors.NewForbidden(
@@ -1079,12 +1079,8 @@ func notebookStorageOpts() apistore.StorageOptions {
 	}
 }
 
-// snapshotStorageOpts configures snapshot storage. Snapshots need nothing beyond
-// the GVK that storageForVersion pairs these with, which is the whole point of
-// going through it: the declared kind is what stops a snapshot from being
-// persisted as some other kind in the dashboard group.
 func snapshotStorageOpts() apistore.StorageOptions {
-	return apistore.StorageOptions{}
+	return apistore.StorageOptions{EnableInlineBlobs: true}
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
@@ -1347,6 +1343,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			Service:               b.snapshotService,
 			Namespacer:            b.namespacer,
 			ExternalSnapshotToken: b.snapshotOptions.ExternalSnapshotToken,
+			Blobs:                 b.unified,
 		}
 
 		selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
@@ -1361,7 +1358,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			return err
 		}
 		snapshotGr := snapshots.GroupResource()
-		snapshotDualWrite, err := opts.DualWriteBuilder(snapshotGr, snapshotLegacyStore, snapshot.NewUnifiedBlobStorage(unifiedSnapshotStore, b.unified))
+		snapshotDualWrite, err := opts.DualWriteBuilder(snapshotGr, snapshotLegacyStore, snapshot.NewUnifiedBlobStorage(unifiedSnapshotStore))
 		if err != nil {
 			return err
 		}
