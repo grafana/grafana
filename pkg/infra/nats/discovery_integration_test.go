@@ -2,7 +2,9 @@ package nats
 
 import (
 	"context"
+	"errors"
 	"net/url"
+	"sync"
 	"testing"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -190,9 +193,7 @@ func TestIntegrationServerAutoListenAddress(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.NewTestStore(t)
-	cfg := newEmbeddedTestCfg("", "")
-	cfg.SecretKey = "test-secret-a"
-	s, err := ProvideServer(cfg, sqlStore, prometheus.NewRegistry())
+	s, err := ProvideServer(newEmbeddedTestCfg("", ""), sqlStore, prometheus.NewRegistry())
 	require.NoError(t, err)
 	require.NoError(t, s.starting(t.Context()))
 	t.Cleanup(func() { _ = s.stopping(nil) })
@@ -210,12 +211,50 @@ func TestIntegrationServerAutoListenAddress(t *testing.T) {
 		t.Fatalf("unexpected database %q", driver)
 	}
 	require.Equal(t, routeAuthUser, s.opts.Cluster.Username)
+	require.Equal(t, storedRouteCredential(t, s.kv), s.opts.Cluster.Password)
 
 	require.NotNil(t, s.discovery, "ProvideServer did not wire the SQL registry")
 	s.discovery.tick(t.Context())
 	u, err := url.Parse(registeredRouteURL(t, s))
 	require.NoError(t, err)
 	require.Nil(t, u.User, "registry row carries credentials")
+}
+
+// TestIntegrationRouteCredentialConcurrentCreate checks that instances starting
+// together on one database adopt a single route credential.
+func TestIntegrationRouteCredentialConcurrentCreate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.NewTestStore(t)
+	store, err := kv.NewSQLKV(sqlStore.GetEngine().DB().DB, sqlStore.GetDialect().DriverName())
+	require.NoError(t, err)
+	key := routeCredentialKey(discoveryClusterName)
+	require.NoError(t, store.Delete(t.Context(), kv.NATSPeersSection, key))
+	t.Cleanup(func() { _ = store.Delete(context.Background(), kv.NATSPeersSection, key) })
+
+	const loaders = 8
+	start := make(chan struct{})
+	got := make([]string, loaders)
+	errs := make([]error, loaders)
+	var wg sync.WaitGroup
+	for i := range loaders {
+		wg.Go(func() {
+			<-start
+			creds, err := loadRouteCredentials(t.Context(), store, discoveryClusterName)
+			errs[i] = err
+			if err == nil {
+				got[i], _ = creds.Password()
+			}
+		})
+	}
+	close(start)
+	wg.Wait()
+
+	require.NoError(t, errors.Join(errs...))
+	want := storedRouteCredential(t, store)
+	for _, pass := range got {
+		require.Equal(t, want, pass)
+	}
 }
 
 // nodeCfg bundles a node's full Cfg with the Server it drives, so callers can
@@ -259,11 +298,9 @@ func newTestDiscoveryServer(t *testing.T, store kv.KV, discoveryEnabled bool) (*
 		DiscoveryInterval: 50 * time.Millisecond,
 		DiscoveryTTL:      time.Minute,
 	}
-	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+	// Both servers discover each other through the shared registry.
+	s, err := newServer(cfg.NATS, store, "", log.New("infra.nats.server"), prometheus.NewRegistry())
 	require.NoError(t, err)
-	// ProvideServer leaves kv nil without a sqlStore; inject the shared registry
-	// so both servers discover each other through it.
-	s.kv = store
 	return s, cfg
 }
 

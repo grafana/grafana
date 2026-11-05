@@ -29,6 +29,8 @@ const (
 
 	routePingInterval = 5 * time.Second
 	routeMaxPingsOut  = 2
+
+	routeCredentialTimeout = 10 * time.Second
 )
 
 var (
@@ -54,27 +56,34 @@ type Server struct {
 	reloadMu sync.Mutex
 	// clusterTLS is nil unless cluster TLS is configured.
 	clusterTLS *clusterTLSWatcher
-	// routeAuth is nil unless secret_key can authenticate routes.
+	// routeAuth is nil unless the shared registry provides a route credential.
 	routeAuth *url.Userinfo
 }
 
 func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) (*Server, error) {
-	s := &Server{
-		cfg: cfg.NATS,
-		log: log.New("infra.nats.server"),
-	}
-
 	// A sqlStore is required to wire DB-backed peer discovery. When present (the
 	// monolith always injects it) the embedded server clusters through discovery;
 	// when absent it runs as a single standalone node. Module mode passes nil but
 	// is prevented from enabling embedded NATS upstream (see module_server.go), so
 	// in practice a running embedded server in production always has discovery.
-	if !s.IsDisabled() && sqlStore != nil {
+	var store kv.KV
+	if cfg.NATS.Enabled && cfg.NATS.Embedded() && sqlStore != nil {
 		sqlKV, err := kv.NewSQLKV(sqlStore.GetEngine().DB().DB, sqlStore.GetDialect().DriverName())
 		if err != nil {
 			return nil, fmt.Errorf("create nats discovery kv: %w", err)
 		}
-		s.kv = sqlKV
+		store = sqlKV
+	}
+	return newServer(cfg.NATS, store, dbDriver(sqlStore), log.New("infra.nats.server"), reg)
+}
+
+// newServer builds the server around store, the shared peer registry, which
+// is nil for a standalone node. dbDriver names the database behind store.
+func newServer(cfg setting.NATSSettings, store kv.KV, dbDriver string, logger log.Logger, reg prometheus.Registerer) (*Server, error) {
+	s := &Server{
+		cfg: cfg,
+		log: logger,
+		kv:  store,
 	}
 
 	// Only register the embedded-server metrics when this instance actually runs
@@ -82,9 +91,9 @@ func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) 
 	if !s.IsDisabled() {
 		s.metrics = newServerMetrics(reg)
 
-		s.routeAuth = routeCredentials(cfg.SecretKey)
+		s.routeAuth = s.loadRouteAuth()
 		if s.cfg.ListenAddress == "" {
-			s.cfg.ListenAddress = autoListenAddress(s.log, s.cfg, dbDriver(sqlStore), s.routeAuth != nil)
+			s.cfg.ListenAddress = autoListenAddress(s.log, s.cfg, dbDriver, s.routeAuth != nil)
 		}
 		warnExposedClusterPort(s.log, s.cfg, s.routeAuth != nil)
 
@@ -304,7 +313,7 @@ func (s *Server) serverOptions() *natsserver.Options {
 		ConnectErrorReports:   5,
 		ReconnectErrorReports: 5,
 		Cluster: natsserver.ClusterOpts{
-			Name:      "grafana",
+			Name:      discoveryClusterName,
 			Host:      s.cfg.ListenAddress,
 			Port:      s.cfg.ClusterPort,
 			Advertise: clusterAdvertise(s.cfg.AdvertiseAddress),
@@ -325,6 +334,24 @@ func (s *Server) serverOptions() *natsserver.Options {
 		opts.Cluster.Password, _ = s.routeAuth.Password()
 	}
 	return opts
+}
+
+// loadRouteAuth reads or creates the route credential in the discovery
+// registry. Routes only authenticate when discovery runs on a shared store; a
+// store failure leaves them unauthenticated, which keeps an automatic bind on
+// loopback, rather than failing Grafana startup.
+func (s *Server) loadRouteAuth() *url.Userinfo {
+	if s.kv == nil || !s.cfg.DiscoveryEnabled {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), routeCredentialTimeout)
+	defer cancel()
+	creds, err := loadRouteCredentials(ctx, s.kv, discoveryClusterName)
+	if err != nil {
+		s.log.Warn("nats cluster routes are unauthenticated: failed to read or create the route credential in the database", "err", err)
+		return nil
+	}
+	return creds
 }
 
 func dbDriver(sqlStore db.DB) string {

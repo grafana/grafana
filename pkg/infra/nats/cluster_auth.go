@@ -1,42 +1,90 @@
 package nats
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
+	"bytes"
+	"context"
+	"crypto/rand"
 	"encoding/hex"
+	"errors"
+	"fmt"
+	"io"
 	"net"
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 const (
-	// publishedSecretKey is the secret_key shipped in defaults.ini. Anyone can
-	// derive route credentials from it, so it never authenticates routes.
-	publishedSecretKey = "SW2YcwTIb9zpOOhoPsMm"
+	routeAuthUser = "grafana"
 
-	// routeAuthPurpose separates the route credential from every other value
-	// derived from secret_key, so it reveals nothing that is reused elsewhere.
-	routeAuthPurpose = "grafana-nats-cluster-route-auth-v1"
-	routeAuthUser    = "grafana"
+	// routeCredentialKeySuffix names the route credential row in the peer
+	// registry section. Peer rows are keyed "<cluster>/<server>"; this key has
+	// no "/", so it can neither collide with a peer row nor fall in the
+	// cluster's peer prefix range.
+	routeCredentialKeySuffix = ".route-credential"
 
 	loopbackListenAddress = "127.0.0.1"
 	wildcardListenAddress = "0.0.0.0"
 )
 
-// routeCredentials derives the cluster route user and password from
-// secret_key, which every HA instance must already share, so a host without it
-// cannot join the mesh. It returns nil when secret_key is empty or the
-// published default.
-func routeCredentials(secretKey string) *url.Userinfo {
-	if secretKey == "" || secretKey == publishedSecretKey {
-		return nil
+func routeCredentialKey(clusterName string) string {
+	return clusterName + routeCredentialKeySuffix
+}
+
+// loadRouteCredentials returns the cluster route credential shared through
+// the discovery registry, creating it on first use. A random value reveals
+// nothing about any other secret even when it crosses the network in clear
+// text.
+func loadRouteCredentials(ctx context.Context, store kv.KV, clusterName string) (*url.Userinfo, error) {
+	key := routeCredentialKey(clusterName)
+	password, err := readRouteCredential(ctx, store, key)
+	if err == nil {
+		return url.UserPassword(routeAuthUser, password), nil
 	}
-	mac := hmac.New(sha256.New, []byte(secretKey))
-	mac.Write([]byte(routeAuthPurpose))
-	return url.UserPassword(routeAuthUser, hex.EncodeToString(mac.Sum(nil)))
+	if !errors.Is(err, kv.ErrNotFound) {
+		return nil, err
+	}
+
+	// Deleting the row and restarting every instance rotates the credential:
+	// the first instance to start creates a new one.
+	var b [32]byte
+	_, _ = rand.Read(b[:])
+	created := hex.EncodeToString(b[:])
+	// Create only commits when the key is absent (a primary key in SQL, a
+	// conflict-checked transaction in Badger), so concurrent first startups
+	// commit exactly one value. A losing create fails, for whatever reason the
+	// store reports, after the winner committed, so the read-back adopts it.
+	createErr := store.Batch(ctx, kv.NATSPeersSection, []kv.BatchOp{
+		{Mode: kv.BatchOpCreate, Key: key, Value: []byte(created)},
+	})
+	if createErr == nil {
+		return url.UserPassword(routeAuthUser, created), nil
+	}
+	password, err = readRouteCredential(ctx, store, key)
+	if err != nil {
+		return nil, fmt.Errorf("create nats route credential: %w", errors.Join(createErr, err))
+	}
+	return url.UserPassword(routeAuthUser, password), nil
+}
+
+func readRouteCredential(ctx context.Context, store kv.KV, key string) (string, error) {
+	r, err := store.Get(ctx, kv.NATSPeersSection, key)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = r.Close() }()
+	value, err := io.ReadAll(r)
+	if err != nil {
+		return "", err
+	}
+	value = bytes.TrimSpace(value)
+	if len(value) == 0 {
+		return "", fmt.Errorf("nats route credential %q is empty", key)
+	}
+	return string(value), nil
 }
 
 // autoListenAddress picks the cluster listen address when listen_address is
@@ -49,13 +97,13 @@ func autoListenAddress(logger log.Logger, cfg setting.NATSSettings, dbDriver str
 		return loopbackListenAddress
 	}
 	if !authenticated {
-		logger.Warn("nats cluster port bound to loopback because secret_key is empty or the published default, so routes "+
-			"cannot be authenticated; only instances on this host can cluster. Set a non-default secret_key shared by "+
-			"every instance, or set listen_address", "listen_address", loopbackListenAddress, "database", dbDriver)
+		logger.Warn("nats cluster port bound to loopback because no route credential is available, so routes cannot be "+
+			"authenticated; only instances on this host can cluster until a restart can read or create the credential, "+
+			"or listen_address is set", "listen_address", loopbackListenAddress, "database", dbDriver)
 		return loopbackListenAddress
 	}
 	logger.Info("nats cluster port bound to all interfaces so instances on other hosts sharing the database can cluster; "+
-		"routes authenticate with a credential derived from secret_key", "listen_address", wildcardListenAddress, "database", dbDriver)
+		"routes authenticate with a credential shared through the database", "listen_address", wildcardListenAddress, "database", dbDriver)
 	return wildcardListenAddress
 }
 
@@ -74,8 +122,8 @@ func warnExposedClusterPort(logger log.Logger, cfg setting.NATSSettings, authent
 		return
 	}
 	logger.Warn("nats cluster port listens beyond loopback without route credentials or cluster TLS: it accepts routes "+
-		"from any host that can reach it. Set a non-default secret_key shared by every instance, or configure cluster TLS",
-		"listen_address", cfg.ListenAddress)
+		"from any host that can reach it. Route credentials need peer discovery through a shared database; otherwise "+
+		"configure cluster TLS, or restrict the cluster port to the Grafana instances", "listen_address", cfg.ListenAddress)
 }
 
 // isLoopbackHost reports whether addr only accepts connections from this host.

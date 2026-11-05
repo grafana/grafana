@@ -456,9 +456,8 @@ func startTestTLSServerWithLog(t *testing.T, store kv.KV, tlsCfg setting.NATSClu
 		DiscoveryTTL:      time.Minute,
 		ClusterTLS:        tlsCfg,
 	}
-	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+	s, err := newServer(cfg.NATS, store, "", log.New("infra.nats.server"), prometheus.NewRegistry())
 	require.NoError(t, err)
-	s.kv = store
 	if hook != nil {
 		s.log = hook
 	}
