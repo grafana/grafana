@@ -141,9 +141,8 @@ export const VarMappingToggleEditor = ({
   }
 
   const variables = source?.getVariables() ?? getFallbackVarMappingVariables();
-  // Named after the property, so picking it again reuses the variable instead of adding copies
   const newVariable = newValues && {
-    name: getNewVariableName(item.id),
+    name: getNewVariableName(kind, item, variables),
     values: newValues,
   };
   const newVariableExists = newVariable !== undefined && variables.some(({ name }) => name === newVariable.name);
@@ -226,11 +225,7 @@ function getPickerOptions(
   newVariableExists: boolean
 ): Array<ComboboxOption<string>> {
   const matching = new Set(
-    variables
-      .filter(
-        (variable) => variable.values?.length && getDisallowedValues(kind, settings, variable.values).length === 0
-      )
-      .map((variable) => variable.name)
+    variables.filter((variable) => hasOnlyAllowedValues(kind, settings, variable)).map((variable) => variable.name)
   );
   // Groups only help once some variable is known to match; otherwise the list stays flat
   const getGroup = (name: string) =>
@@ -306,8 +301,24 @@ function getNewVariableCurrent(
 }
 
 /** The last segment of the property path, e.g. `drawStyle` */
-function getNewVariableName(propertyId: string): string {
-  return propertyId.split('.').pop()?.replace(/\W/g, '_') || 'variable';
+function hasOnlyAllowedValues(kind: VarMappingToggleKind, settings: unknown, variable: VarMappingVariable): boolean {
+  return Boolean(variable.values?.length) && getDisallowedValues(kind, settings, variable.values ?? []).length === 0;
+}
+
+/**
+ * Named after the property, so picking it again reuses the variable instead of adding copies. A
+ * variable with that name whose values don't all fit the option isn't reused, since names like
+ * `mode` are common, so the new one gets a numbered name instead.
+ */
+function getNewVariableName(kind: VarMappingToggleKind, item: Props['item'], variables: VarMappingVariable[]): string {
+  const baseName = item.id.split('.').pop()?.replace(/\W/g, '_') || 'variable';
+  for (let n = 1; ; n++) {
+    const name = n === 1 ? baseName : `${baseName}_${n}`;
+    const existing = variables.find((variable) => variable.name === name);
+    if (!existing || hasOnlyAllowedValues(kind, item.settings, existing)) {
+      return name;
+    }
+  }
 }
 
 function getHint(kind: VarMappingToggleKind, item: Props['item'], value: unknown): string {
