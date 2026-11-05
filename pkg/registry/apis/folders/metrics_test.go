@@ -9,8 +9,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/admission"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -49,10 +51,45 @@ func TestValidateOnDeleteRecordsOutcome(t *testing.T) {
 
 			_ = validateOnDelete(context.Background(), folder, tt.searcher, tt.options, tt.cascade, m)
 
-			require.Equal(t, 1.0, testutil.ToFloat64(m.checks.WithLabelValues(tt.wantOutcome, tt.wantJoin, tt.wantBlocking)))
+			require.Equal(t, 1.0, testutil.ToFloat64(m.checks.WithLabelValues(tt.wantOutcome, tt.wantJoin, tt.wantBlocking, "false")))
 			require.Equal(t, 1, testutil.CollectAndCount(m.checks), "only one series should have been recorded")
 		})
 	}
+}
+
+func TestValidateLabelsDryRunDeletes(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, false)
+	m := newDeleteCheckMetrics(prometheus.NewRegistry(), true)
+	b := &FolderAPIBuilder{
+		searcher:     &mockSearchClient{stats: &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{}}},
+		deleteChecks: m,
+	}
+	obj := &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn", Namespace: "default"}}
+	validate := func(dryRun bool) {
+		t.Helper()
+		err := b.Validate(context.Background(), admission.NewAttributesRecord(nil, obj,
+			folders.SchemeGroupVersion.WithKind("folder"), obj.Namespace, obj.Name,
+			folders.SchemeGroupVersion.WithResource("folders"), "", admission.Delete,
+			&metav1.DeleteOptions{}, dryRun, &user.SignedInUser{}), nil)
+		require.NoError(t, err)
+	}
+
+	validate(true)
+	validate(false)
+	validate(false)
+
+	require.Equal(t, 1.0, testutil.ToFloat64(m.checks.WithLabelValues("allowed", "enabled", "none", "true")))
+	require.Equal(t, 2.0, testutil.ToFloat64(m.checks.WithLabelValues("allowed", "enabled", "none", "false")))
+	require.Equal(t, 2, testutil.CollectAndCount(m.checks), "dry runs and real deletes are separate series")
+}
+
+func TestDryRunCountFailureIsStillRecorded(t *testing.T) {
+	m := newDeleteCheckMetrics(prometheus.NewRegistry(), true).withDryRun(true)
+	folder := &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn"}}
+
+	_ = validateOnDelete(context.Background(), folder, &mockSearchClient{statsErr: errors.New("boom")}, nil, false, m)
+
+	require.Equal(t, 1.0, testutil.ToFloat64(m.checks.WithLabelValues("refused_count_failed", "enabled", "none", "true")))
 }
 
 func TestDeleteCheckMetricsRegistration(t *testing.T) {
@@ -60,6 +97,7 @@ func TestDeleteCheckMetricsRegistration(t *testing.T) {
 		m := newDeleteCheckMetrics(nil, true)
 		require.Nil(t, m)
 		require.NotPanics(t, func() { m.record(deleteCheckAllowed, blockingKindNone) })
+		require.Nil(t, m.withDryRun(true))
 	})
 
 	t.Run("registering twice on one registry fails loudly", func(t *testing.T) {
