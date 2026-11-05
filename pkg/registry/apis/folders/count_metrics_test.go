@@ -55,12 +55,15 @@ func TestCountMetricsLabelTheCaller(t *testing.T) {
 	m := newCountMetrics(prometheus.NewRegistry(), true)
 	search := &mockSearchClient{stats: &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{}}}
 
+	resp := &recordingResponder{}
 	handler, err := (&subCountREST{
 		getter:   &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn"}}},
 		searcher: m.wrap(search, countCallerEndpoint),
-	}).Connect(newChildrenCtx(), "nnn", nil, &recordingResponder{})
+	}).Connect(newChildrenCtx(), "nnn", nil, resp)
 	require.NoError(t, err)
 	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/nnn/counts", nil))
+	require.NoError(t, resp.err)
+	require.Equal(t, 200, resp.status)
 
 	folder := &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn"}}
 	require.NoError(t, validateOnDelete(context.Background(), folder, m.wrap(search, countCallerDeleteCheck), nil, false, nil))

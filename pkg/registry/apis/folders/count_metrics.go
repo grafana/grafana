@@ -19,6 +19,12 @@ const (
 	countOutcomeCanceled = "canceled"
 )
 
+// The series for these are created at construction, so a new caller or outcome belongs here.
+var (
+	countCallers  = []string{countCallerEndpoint, countCallerDeleteCheck}
+	countOutcomes = []string{countOutcomeOK, countOutcomeError, countOutcomeCanceled}
+)
+
 // countMetrics counts the folder content counts (GetStats calls), by caller and outcome.
 // A nil value records nothing.
 type countMetrics struct {
@@ -37,8 +43,8 @@ func newCountMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) *countMe
 		join = "enabled"
 	}
 	// Created up front so rate() alerts see the first failure.
-	for _, caller := range []string{countCallerEndpoint, countCallerDeleteCheck} {
-		for _, outcome := range []string{countOutcomeOK, countOutcomeError, countOutcomeCanceled} {
+	for _, caller := range countCallers {
+		for _, outcome := range countOutcomes {
 			requests.WithLabelValues(caller, outcome, join).Add(0)
 		}
 	}
