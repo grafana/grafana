@@ -181,7 +181,7 @@ Creates a notebook.
 
 **Example request**:
 
-The following notebook has a markdown cell followed by a time series panel:
+The following notebook has a Markdown cell followed by a time series panel:
 
 ```http
 POST /apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks HTTP/1.1
