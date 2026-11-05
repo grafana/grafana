@@ -19,6 +19,14 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		BitbucketConnectionConfig{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref),
 		BitbucketRepositoryConfig{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref),
 		BranchOptions{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_BranchOptions(ref),
+		Bundle{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v0alpha1_Bundle(ref),
+		BundleFile{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_BundleFile(ref),
+		BundleFileList{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_BundleFileList(ref),
+		BundleFileRef{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_BundleFileRef(ref),
+		BundleFileSpec{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_BundleFileSpec(ref),
+		BundleList{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_BundleList(ref),
+		BundleSpec{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_BundleSpec(ref),
+		BundleStatus{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_BundleStatus(ref),
 		CommitOptions{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref),
 		Connection{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
 		ConnectionAuthorizeRequest{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequest(ref),
@@ -223,6 +231,397 @@ func schema_pkg_apis_provisioning_v0alpha1_BranchOptions(ref common.ReferenceCal
 				},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_Bundle(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Bundle groups a set of repository files so that another resource can use them.\n\nResources whose definition needs more than their own file -- markdown, scripts, queries, data the resource pipeline cannot parse -- point at a Bundle instead of carrying the file set themselves. That keeps the file set out of the consuming kind's schema: the consumer declares only which bundle it uses, and the bundle owns everything about the files.\n\nIn a repository a bundle is therefore two manifests: the Bundle, and the resource that references it.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(BundleSpec{}.OpenAPIModelName()),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(BundleStatus{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			BundleSpec{}.OpenAPIModelName(), BundleStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_BundleFile(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "BundleFile is a copy of one supporting file of a bundle, as it was at a particular repository ref.\n\nBundles are resources whose definition spans a set of files the resource pipeline cannot parse. Storing each of those files here rather than reading them from the provider on demand gives them ordinary resource authorization, keeps the provider out of the read path, and lets consumers watch them. The repository stays authoritative: a BundleFile is derived, server-owned and overwritten from the repository on every sync, never written by a user.\n\nIdentity is (bundle, path). A file belongs to one bundle and lives and dies with it; two bundles declaring the same repository path each store their own copy, so there is no sharing to reason about and deletion is simply \"with the bundle\".\n\nThere is no ref: the hash identifies which version of the content is stored, which is all a consumer needs to tell a current file from a stale one. Not carrying a ref also means a file whose content did not change costs no write when its bundle advances.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(BundleFileSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			BundleFileSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_BundleFileList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(BundleFile{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			BundleFile{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_BundleFileRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "BundleFileRef points at one file a bundle resolved to.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path in the repository, relative to its root.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of the BundleFile resource holding this file's content.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Hash of the decoded content. A consumer compares it against the stored file to know it has the version this bundle published.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"size": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Size of the decoded content in bytes.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+				Required: []string{"path", "name"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_BundleFileSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"repository": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Repository this file was read from.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"bundle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Bundle this file belongs to.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path is the file's location, relative to the repository root -- the same form every other provisioning path takes.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Hash of the decoded content. It is both the change detector and the version a consumer checks: a bundle records the hashes it resolved, so a file whose hash matches is the one the bundle expects.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"size": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Size of the decoded content in bytes.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"content": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Content of the file, base64-encoded. Always encoded, whatever the file holds: bundles carry arbitrary files, and a single representation avoids both guessing at text and silently mangling anything that is not valid UTF-8.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"repository", "bundle", "path"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_BundleList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(Bundle{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			Bundle{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_BundleSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"paths": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Paths belonging to this bundle, relative to the repository root -- the same form every other provisioning path takes.\n\nA path with a trailing \"/\" is a folder, and everything beneath it belongs to the bundle; anything else is a single file. Selection is by path only: a repository path is already the addressing scheme provisioning uses everywhere, and a declared path is readable in a diff.\n\nThese are what the author declared; what they resolved to is status.files.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_BundleStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ref is the repository ref the files below were resolved at. Without it a resolved list is a claim with no referent: neither staleness nor safe deletion could be determined from it.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"files": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Files the bundle resolved to at Ref, after expanding folders. Unlike spec.paths these are always files.\n\nEach entry names the BundleFile holding it, so this is the index a consumer reads to fetch content: one GET of the bundle yields every name, hash and size, and the files are then fetched directly by name. Without the name a client would have to either list bundle files by label -- which returns all of their content -- or recompute the name from the path, duplicating a hash the server owns.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(BundleFileRef{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"unresolved": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Unresolved are spec.paths entries that matched nothing at Ref. Reported rather than hidden, so a folder renamed away surfaces instead of quietly emptying the bundle.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"conditions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+								"x-kubernetes-map-type":  "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			BundleFileRef{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
 	}
 }
 

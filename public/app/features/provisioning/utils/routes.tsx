@@ -9,6 +9,7 @@ import { DashboardRoutes } from 'app/types/dashboard';
 
 import { checkRequiredFeatures } from '../GettingStarted/features';
 import {
+  BUNDLE_URL,
   CONNECTIONS_URL,
   CONNECT_URL,
   GETTING_STARTED_URL,
@@ -127,6 +128,15 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       roles: adminRoles,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "FileHistoryPage"*/ 'app/features/provisioning/File/FileHistoryPage')
+      ),
+    },
+    {
+      // No `roles`: a bundle is reached from wherever the resource that uses it lives, not only
+      // from the admin pages, so this is not gated on repositories:write. The bundles API
+      // enforces access, and the page surfaces its refusal.
+      path: BUNDLE_URL + '/:name',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "BundleViewPage"*/ 'app/features/provisioning/Bundle/BundleViewPage')
       ),
     },
     {

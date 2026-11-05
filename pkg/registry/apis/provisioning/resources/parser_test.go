@@ -19,6 +19,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -1175,4 +1176,128 @@ func TestParsedResource_Run(t *testing.T) {
 func TestExistingFolderCanonicalRoot(t *testing.T) {
 	parsed := &ParsedResource{Existing: &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"annotations": map[string]interface{}{"grafana.app/folder": "general"}}}}}
 	require.Empty(t, parsed.ExistingFolder(), "root must not become an orphan-folder cleanup target")
+}
+
+// sampleResourceGVK is an example kind registered with the bundle capability: it may
+// reference a Bundle, which is a provisioning kind of its own.
+var (
+	sampleResourceGVK = schema.GroupVersionKind{Group: "example.grafana.app", Version: "v0alpha1", Kind: "SampleResource"}
+	sampleResourceGVR = schema.GroupVersionResource{Group: "example.grafana.app", Version: "v0alpha1", Resource: "sampleresources"}
+	bundleGVK         = schema.GroupVersionKind{Group: "provisioning.grafana.app", Version: "v0alpha1", Kind: "Bundle"}
+	bundleGVR         = schema.GroupVersionResource{Group: "provisioning.grafana.app", Version: "v0alpha1", Resource: "bundles"}
+)
+
+func TestParserBundleKind(t *testing.T) {
+	supported := []SupportedResource{
+		{GroupKind: dashboardV0.DashboardResourceInfo.GroupVersionKind().GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+		{GroupKind: bundleGVK.GroupKind(), Capabilities: sets.New[string]()},
+		{GroupKind: sampleResourceGVK.GroupKind(), Capabilities: sets.New(CapabilityFolder, CapabilityBundle)},
+	}
+
+	clients := NewMockResourceClients(t)
+	clients.On("ForKind", mock.Anything, dashboardV0.DashboardResourceInfo.GroupVersionKind()).
+		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+	clients.On("ForKind", mock.Anything, bundleGVK).Return(nil, bundleGVR, nil).Maybe()
+	clients.On("ForKind", mock.Anything, sampleResourceGVK).Return(nil, sampleResourceGVR, nil).Maybe()
+	clients.On("SupportedResources").Return(supported).Maybe()
+
+	parser := &parser{
+		repo: provisioning.ResourceRepositoryInfo{
+			Type:      provisioning.LocalRepositoryType,
+			Namespace: "xxx",
+			Name:      "repo",
+		},
+		clients: clients,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		},
+	}
+
+	t.Run("a Bundle declares its paths", func(t *testing.T) {
+		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "bundles/sample/bundle.yaml",
+			Data: []byte(`apiVersion: provisioning.grafana.app/v0alpha1
+kind: Bundle
+metadata:
+  name: sample
+spec:
+  paths:
+    - bundles/sample/README.md
+    - bundles/sample/docs/
+    - shared/query.sql
+`),
+		})
+		require.NoError(t, err)
+
+		require.True(t, parsed.IsBundle)
+		require.Empty(t, parsed.BundleRef)
+		require.Len(t, parsed.BundleEntries, 3)
+		require.Equal(t, "bundles/sample/README.md", parsed.BundleEntries[0].Path)
+		require.True(t, parsed.BundleEntries[1].IsFolder())
+		require.Equal(t, "shared/query.sql", parsed.BundleEntries[2].Path)
+	})
+
+	t.Run("an unusable path invalidates the Bundle", func(t *testing.T) {
+		_, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "bundles/sample/bundle.yaml",
+			Data: []byte(`apiVersion: provisioning.grafana.app/v0alpha1
+kind: Bundle
+metadata:
+  name: sample
+spec:
+  paths:
+    - ../../etc/passwd
+`),
+		})
+
+		var resourceErr *ResourceValidationError
+		require.ErrorAs(t, err, &resourceErr)
+		require.ErrorIs(t, err, safepath.ErrPathTraversalAttempt)
+	})
+
+	t.Run("a linkable resource records the bundle it references", func(t *testing.T) {
+		// The reference is a label, so no consuming kind owes a schema change for it.
+		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "bundles/sample/resource.json",
+			Data: []byte(`{
+				"apiVersion": "example.grafana.app/v0alpha1",
+				"kind": "SampleResource",
+				"metadata": {
+					"name": "sample",
+					"labels": {"provisioning.grafana.app/bundle": "sample"}
+				},
+				"spec": {"title": "sample"}
+			}`),
+		})
+		require.NoError(t, err)
+
+		require.False(t, parsed.IsBundle)
+		require.Empty(t, parsed.BundleEntries)
+		require.Equal(t, "sample", parsed.BundleRef)
+	})
+
+	t.Run("a kind without the capability ignores a bundle reference", func(t *testing.T) {
+		// Without this, a stray label on an unrelated kind would silently claim files.
+		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "dashboards/one.json",
+			Data: []byte(`{
+				"apiVersion": "dashboard.grafana.app/v0alpha1",
+				"kind": "Dashboard",
+				"metadata": {
+					"name": "one",
+					"labels": {"provisioning.grafana.app/bundle": "sample"}
+				},
+				"spec": {"title": "one"}
+			}`),
+		})
+		require.NoError(t, err)
+
+		require.False(t, parsed.IsBundle)
+		require.Empty(t, parsed.BundleRef)
+		require.Empty(t, parsed.BundleEntries)
+	})
 }
