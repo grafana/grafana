@@ -263,7 +263,7 @@ describe('PlaylistSrv', () => {
       // Resolve A first, then B — the later-resolving start wins and tears down the earlier.
       resolveA([{ type: 'dashboard_by_uid', value: 'a', dashboards: [{ url: '/url/to/a' } as DashboardQueryResult] }]);
       await pA;
-      // Start A has navigated to its dashboard, so the page URL is no longer where playback began.
+      // The page URL changes while loads are pending (and start A navigates), so it's no longer where playback began.
       hrefMock.mockReturnValue('http://localhost/url/to/a');
       resolveB([{ type: 'dashboard_by_uid', value: 'b', dashboards: [{ url: '/url/to/b' } as DashboardQueryResult] }]);
       await pB;
@@ -277,6 +277,21 @@ describe('PlaylistSrv', () => {
       srv.stop();
       jest.useRealTimers();
     }
+  });
+
+  it('keeps the URL playback was started from when the page changes while dashboards load', async () => {
+    let resolveLoad: (items: PlaylistItemUI[]) => void = () => {};
+    loadDashboardsMock.mockReturnValueOnce(new Promise<PlaylistItemUI[]>((res) => (resolveLoad = res)));
+
+    const promise = srv.start(mockPlaylist);
+    hrefMock.mockReturnValue('http://localhost/somewhere/else');
+    resolveLoad([
+      { type: 'dashboard_by_uid', value: 'aaa', dashboards: [{ url: '/url/to/aaa' } as DashboardQueryResult] },
+    ]);
+    await promise;
+
+    expect((srv as any).startUrl).toBe(initialUrl); // eslint-disable-line @typescript-eslint/no-explicit-any
+    srv.stop();
   });
 
   it('should replace playlist start page in history when starting playlist', async () => {

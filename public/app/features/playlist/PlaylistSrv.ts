@@ -99,6 +99,10 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   }
 
   async start(playlist: Playlist) {
+    // Capture before awaiting: the user may navigate while dashboards load. Mid-playback the page shows
+    // a dashboard, so keep the URL the run started from.
+    const startUrl = this.state.isPlaying ? this.startUrl : window.location.href;
+
     // Do the async work before touching instance state: PlaylistStartPage calls start() during render,
     // so overlapping calls must not interleave.
     if (!playlist.spec?.items?.length) {
@@ -132,8 +136,6 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     }
 
     // No awaits from here on, so the later of two overlapping start() calls cleanly replaces the earlier.
-    // Mid-playback the page shows a dashboard, so keep the URL the run started from.
-    const startUrl = this.state.isPlaying ? this.startUrl : window.location.href;
     this.stop();
     this.startUrl = startUrl;
     this.index = 0;
