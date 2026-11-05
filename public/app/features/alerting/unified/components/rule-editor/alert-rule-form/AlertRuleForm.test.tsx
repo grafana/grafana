@@ -2,7 +2,7 @@ import { HttpResponse } from 'msw';
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { locationService, setPluginLinksHook } from '@grafana/runtime';
@@ -442,6 +442,15 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
     await waitFor(() => expect(screen.queryByText('Folder is required')).not.toBeInTheDocument());
   });
 
+  it('shows the selected folder in the folder picker', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.click(await screen.findByRole('button', { name: /select folder/i }));
+    await user.click(await screen.findByLabelText('Folder A'));
+
+    await waitFor(() => expect(ui.inputs.folder.get()).toHaveTextContent('Folder A'));
+  });
+
   it('requires a group and POSTs to the legacy ruler API only', async () => {
     const legacyRequests = captureRequests((req) => req.method === 'POST' && req.url.includes(LEGACY_RULER_BASE));
     const appPlatformRequests = captureRequests(
@@ -490,5 +499,26 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
       expect(ui.buttons.save.get()).toBeEnabled();
     });
     expect(replaceSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('AlertRuleForm labels', () => {
+  beforeEach(() => {
+    grantAlertingPermissions();
+    mockPreviewApiResponse(server, []);
+  });
+
+  it('shows the labels saved in the labels editor', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.click(await screen.findByRole('button', { name: 'Add labels' }));
+    const dialog = await screen.findByRole('dialog');
+    const keyPicker = within(dialog).getByTestId('labelsInSubform-key-0');
+    await user.type(within(keyPicker).getByRole('combobox'), 'team{enter}');
+    const valuePicker = within(dialog).getByTestId('labelsInSubform-value-0');
+    await user.type(within(valuePicker).getByRole('combobox'), 'alerting{enter}');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByLabelText('team: alerting')).toBeInTheDocument();
   });
 });

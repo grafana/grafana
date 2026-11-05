@@ -1657,9 +1657,6 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/GrafanaEvaluationBehavior.tsx": {
-    "react-hooks/preserve-manual-memoization": {
-      "count": 3
-    },
     "react-hooks/set-state-in-effect": {
       "count": 1
     }
