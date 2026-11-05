@@ -78,6 +78,42 @@ describe('exportResourceAsJson', () => {
     expect(JSON.stringify(manifest)).not.toContain('enc-token-ref');
   });
 
+  it('omits the connection-minted token so a connection-backed repository stays applyable', async () => {
+    const repository: Repository = {
+      metadata: { name: 'conn-repo' },
+      spec: {
+        title: 'Connection Repo',
+        type: 'github',
+        sync: { target: 'folder', enabled: false },
+        workflows: ['write'],
+        connection: { name: 'my-github-app' },
+      },
+      secure: {
+        token: { name: 'enc-minted-token-ref' },
+        webhookSecret: { name: 'enc-webhook-ref' },
+      },
+    };
+
+    exportResourceAsJson(repository, 'Repository');
+    const manifest = await savedManifest();
+
+    expect(manifest.spec?.connection).toEqual({ name: 'my-github-app' });
+    expect(manifest.secure).toEqual({ webhookSecret: { create: '<replace-with-webhookSecret>' } });
+  });
+
+  it('keeps the token placeholder for a repository that authenticates with its own token', async () => {
+    const repository: Repository = {
+      metadata: { name: 'token-repo' },
+      spec: { title: 'Token Repo', type: 'github', sync: { target: 'folder', enabled: false }, workflows: ['write'] },
+      secure: { token: { name: 'enc-token-ref' } },
+    };
+
+    exportResourceAsJson(repository, 'Repository');
+    const manifest = await savedManifest();
+
+    expect(manifest.secure).toEqual({ token: { create: '<replace-with-token>' } });
+  });
+
   it('prefers the resource own apiVersion/kind over the fallback', async () => {
     const repository: Repository = {
       apiVersion: 'provisioning.grafana.app/v1beta1',

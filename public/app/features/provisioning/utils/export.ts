@@ -12,12 +12,13 @@ import {
 const DEFAULT_API_VERSION = `${API_GROUP}/${API_VERSION}`;
 
 /**
- * Stored secrets come back from the API as name references, never plaintext, so they cannot be
- * exported as-is. Each configured secret becomes a `{ create: <placeholder> }` entry instead, which
- * keeps the manifest a ready-to-fill template.
+ * Stored secrets come back from the API as name references, never plaintext, so each configured
+ * secret becomes a `{ create: <placeholder> }` entry to fill in. `skipKeys` drops secrets the
+ * server mints for itself, where a filled-in placeholder would be rejected rather than accepted.
  */
 function toSecurePlaceholders(
-  secure?: SecureValues | ConnectionSecure
+  secure: SecureValues | ConnectionSecure | undefined,
+  skipKeys: string[] = []
 ): Record<string, { create: string }> | undefined {
   if (!secure) {
     return undefined;
@@ -25,13 +26,20 @@ function toSecurePlaceholders(
 
   const out: Record<string, { create: string }> = {};
   for (const [key, value] of Object.entries(secure)) {
-    if (value == null) {
+    if (value == null || skipKeys.includes(key)) {
       continue;
     }
     out[key] = { create: `<replace-with-${key}>` };
   }
 
   return Object.keys(out).length > 0 ? out : undefined;
+}
+
+// A connection-backed repository has its token minted server-side, and creating a writable
+// repository that declares both a connection and a token is rejected as mutually exclusive.
+function secretsToSkip(resource: Repository | Connection): string[] {
+  const spec = resource.spec;
+  return spec && 'connection' in spec && spec.connection?.name ? ['token'] : [];
 }
 
 /**
@@ -53,7 +61,7 @@ export function exportResourceAsJson(resource: Repository | Connection, fallback
     spec: resource.spec,
   };
 
-  const secure = toSecurePlaceholders(resource.secure);
+  const secure = toSecurePlaceholders(resource.secure, secretsToSkip(resource));
   if (secure) {
     manifest.secure = secure;
   }
