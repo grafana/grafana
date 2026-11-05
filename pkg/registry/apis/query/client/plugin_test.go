@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"net/http"
 	"testing"
 	"time"
@@ -73,44 +74,73 @@ func TestExpressionHeadersReachPluginThroughQueryService(t *testing.T) {
 		},
 	}
 
-	for _, grouped := range []bool{false, true} {
-		name := "API client that does not send the marker"
-		if grouped {
-			name += " grouped by data source"
-		}
-		t.Run(name, func(t *testing.T) {
-			plugin := &recordingPlugin{}
-			// The middleware that copies headers from the incoming HTTP request, as in production.
-			pluginsClient, err := backend.HandlerFromMiddlewares(
-				handlertest.Handler{QueryDataFunc: plugin.queryData},
-				clientmiddleware.NewTracingHeaderMiddleware(),
-			)
-			require.NoError(t, err)
+	tests := []struct {
+		name string
+		// incoming are the headers on the HTTP request to the query API.
+		incoming http.Header
+		// exprHeaders are the headers the expression service gets with the request.
+		exprHeaders map[string]string
+		want        map[string]string
+	}{
+		{
+			name: "API client that does not send the marker",
+			want: map[string]string{"http_" + expr.HeaderFromExpression: "true"},
+		},
+		{
+			name:        "incoming HTTP header wins over the expression header",
+			incoming:    http.Header{"X-Dashboard-Uid": []string{"from-http-request"}},
+			exprHeaders: map[string]string{"http_X-Dashboard-Uid": "from-expression"},
+			want: map[string]string{
+				"http_" + expr.HeaderFromExpression: "true",
+				"http_X-Dashboard-Uid":              "from-http-request",
+			},
+		},
+	}
 
-			ctx := identity.WithRequester(context.Background(), signedInUser)
-			httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, "/apis/query.grafana.app/v0alpha1/namespaces/default/query", nil)
-			require.NoError(t, err)
-			cdt := &handlertest.HandlerMiddlewareTest{T: t}
-			clientmiddleware.WithReqContext(httpReq, signedInUser)(cdt)
-			ctx = httpReq.Context()
-
-			flags := []any{}
+	for _, tt := range tests {
+		for _, grouped := range []bool{false, true} {
+			name := tt.name
 			if grouped {
-				flags = append(flags, featuremgmt.FlagSseGroupByDatasource)
+				name += " grouped by data source"
 			}
-			features := featuremgmt.WithFeatures(flags...)
-			exprService := newExpressionService(t, ctx, ds, pluginsClient, features)
+			t.Run(name, func(t *testing.T) {
+				plugin := &recordingPlugin{}
+				// The middleware that copies headers from the incoming HTTP request, as in production.
+				pluginsClient, err := backend.HandlerFromMiddlewares(
+					handlertest.Handler{QueryDataFunc: plugin.queryData},
+					clientmiddleware.NewTracingHeaderMiddleware(),
+				)
+				require.NoError(t, err)
 
-			_, err = exprService.TransformData(ctx, time.Now(), &expr.Request{
-				OrgId:   1,
-				User:    signedInUser,
-				Queries: queries,
+				ctx := identity.WithRequester(context.Background(), signedInUser)
+				httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, "/apis/query.grafana.app/v0alpha1/namespaces/default/query", nil)
+				require.NoError(t, err)
+				httpReq.Header = tt.incoming.Clone()
+				cdt := &handlertest.HandlerMiddlewareTest{T: t}
+				clientmiddleware.WithReqContext(httpReq, signedInUser)(cdt)
+				ctx = httpReq.Context()
+
+				flags := []any{}
+				if grouped {
+					flags = append(flags, featuremgmt.FlagSseGroupByDatasource)
+				}
+				features := featuremgmt.WithFeatures(flags...)
+				exprService := newExpressionService(t, ctx, ds, pluginsClient, features)
+
+				_, err = exprService.TransformData(ctx, time.Now(), &expr.Request{
+					OrgId:   1,
+					User:    signedInUser,
+					Headers: maps.Clone(tt.exprHeaders),
+					Queries: queries,
+				})
+				require.NoError(t, err)
+
+				require.Len(t, plugin.requests, 1)
+				for k, v := range tt.want {
+					require.Equal(t, v, plugin.requests[0].Headers[k], k)
+				}
 			})
-			require.NoError(t, err)
-
-			require.Len(t, plugin.requests, 1)
-			require.Equal(t, "true", plugin.requests[0].Headers["http_X-Grafana-From-Expr"])
-		})
+		}
 	}
 }
 
