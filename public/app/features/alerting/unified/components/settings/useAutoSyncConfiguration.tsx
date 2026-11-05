@@ -16,6 +16,8 @@ import { isNotFoundError } from '../../api/util';
 import {
   type AutoSyncHealth,
   type AutoSyncState,
+  type PredictedSyncIdentifier,
+  type SyncIdentifiersInUse,
   autoSyncInitializingMessage,
   deriveAutoSyncState,
   deriveReadiness,
@@ -39,8 +41,8 @@ export interface UseAutoSyncConfigurationResult {
   setSelectedUid: (uid: string) => void;
   /** The name a sync from `uid` imports under, to compare with the staged config's identifier. */
   getSyncIdentifier: (uid: string) => string;
-  /** The name a first sync from `uid` would import under, given the names already in use. */
-  predictSyncIdentifier: (uid: string, datasourceName: string, taken: Set<string>) => string;
+  /** The name a first sync from `uid` would use, and whether the sync would fail with it. */
+  predictSyncIdentifier: (uid: string, datasourceName: string, inUse: SyncIdentifiersInUse) => PredictedSyncIdentifier;
   /** Persists the given UID (or the current selection). Resolves to true on success. */
   save: (uidOverride?: string, opts?: { silent?: boolean }) => Promise<boolean>;
   /** Clears the synced UID. Resolves to true on success. */
@@ -174,8 +176,8 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
     lastSyncedUid: configResource?.status?.externalAlertmanagerSync?.datasourceUid ?? '',
     setSelectedUid: (uid: string) => setSelectedOverride(uid),
     getSyncIdentifier: (uid: string) => getSyncIdentifier(configResource, uid),
-    predictSyncIdentifier: (uid: string, datasourceName: string, taken: Set<string>) =>
-      predictSyncIdentifier(configResource, uid, datasourceName, taken),
+    predictSyncIdentifier: (uid: string, datasourceName: string, inUse: SyncIdentifiersInUse) =>
+      predictSyncIdentifier(configResource, uid, datasourceName, inUse),
     save: (uidOverride?: string, opts?: { silent?: boolean }) => persist(uidOverride ?? selectedUid, opts),
     // Clearing the UID, not deleting: delete is denied on the singleton, and admission permits clearing.
     disableSync: () => persist(''),

@@ -28,6 +28,8 @@ type SyncConditionReason =
   | 'ValidationFailed'
   | 'SaveFailed'
   | 'IdentifierMismatch'
+  | 'IdentifierTaken'
+  | 'ForeignOwner'
   | 'NoUpstreamConfig'
   | 'ConfigReadFailed'
   | 'SyncFailed';

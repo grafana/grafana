@@ -137,7 +137,7 @@ function pickStep1Values(values: ImportFormValues): Step1Values {
  * clash with existing ones are renamed after it. Auto-sync names the tree itself, so its dry run uses the
  * name the sync will pick, and waits until that is known.
  */
-function buildDryRunArgs(
+export function buildDryRunArgs(
   values: Step1Values,
   autoSyncIdentifier: string | undefined
 ): ValidateAlertmanagerConfigImportArgs | typeof skipToken {

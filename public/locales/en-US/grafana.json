@@ -1907,6 +1907,8 @@
       },
       "step1": {
         "autosync-label": "Auto-sync",
+        "autosync-name-reserved": "The sync would use the name {{name}}, which is reserved for the default policy. Rename the data source.",
+        "autosync-name-taken": "The sync would use the name {{name}}, which a policy tree already uses. Rename the data source or the policy tree.",
         "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.",
         "autosync-tooltip-unsupported": "Auto-sync isn't available for this Alertmanager type. Select a Mimir or Cortex data source to enable it.",
         "datasource": "Alertmanager data source",

@@ -1,4 +1,5 @@
 // Pure derivations over the org's Config singleton, shared by the two auto-sync hooks.
+import { isDefaultRoutingTreeName } from '@grafana/alerting/unstable';
 import { type Config, type ConfigStatus } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { type DataSourceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -144,50 +145,57 @@ const SYNC_IDENTIFIER_MAX_LENGTH = 40;
 
 /**
  * Turns a datasource name into a policy tree name the same way the sync worker does: anything other than
- * a lowercase letter or digit becomes a single dash, with no dashes at either end.
+ * a lowercase letter or digit becomes a single dash, with no dashes at either end. The result is cut to
+ * 40 characters, the longest policy tree name.
  */
 export function syncIdentifierFromName(name: string): string {
   const identifier = name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/^-+|-+$/g, '')
+    .slice(0, SYNC_IDENTIFIER_MAX_LENGTH)
+    .replace(/-+$/, '');
   return identifier || SYNC_IDENTIFIER_FALLBACK;
 }
 
-/** Adds "-2", "-3", ... to `base` until it isn't one of the `taken` names, like the sync worker does. */
-export function uniqueSyncIdentifier(base: string, taken: Set<string>): string {
-  for (let n = 1; ; n++) {
-    const suffix = n > 1 ? `-${n}` : '';
-    let identifier = base;
-    if (identifier.length + suffix.length > SYNC_IDENTIFIER_MAX_LENGTH) {
-      identifier = identifier.slice(0, SYNC_IDENTIFIER_MAX_LENGTH - suffix.length).replace(/-+$/, '');
-    }
-    identifier += suffix;
-    if (!taken.has(identifier)) {
-      return identifier;
-    }
-  }
+export interface SyncIdentifiersInUse {
+  policyTreeNames: ReadonlySet<string>;
+  stagedIdentifiers: ReadonlySet<string>;
+}
+
+export interface PredictedSyncIdentifier {
+  identifier: string;
+  // The sync never picks another name. It fails until the policy tree or the datasource is renamed.
+  conflict?: 'policy-tree' | 'reserved';
 }
 
 /**
- * The name the first sync of a datasource will import under, so it can be checked before sync is turned
- * on. `taken` holds the names of existing policy trees and imported configurations.
+ * Predicts the name of the first sync, so a conflict shows before sync is turned on. Follows the backend:
+ * a recorded name wins, the UID stays when a policy tree or a staged import already uses it, and any
+ * other sync uses the datasource name.
  */
 export function predictSyncIdentifier(
   configResource: Config | undefined,
   uid: string,
   datasourceName: string,
-  taken: Set<string>
-): string {
+  inUse: SyncIdentifiersInUse
+): PredictedSyncIdentifier {
   const sync = configResource?.status?.externalAlertmanagerSync;
   if (sync?.datasourceUid === uid && sync.identifier) {
-    return sync.identifier;
+    return { identifier: sync.identifier };
   }
   // An earlier sync imported under the UID, and the worker keeps using that name.
-  if (taken.has(uid)) {
-    return uid;
+  if (inUse.policyTreeNames.has(uid) || inUse.stagedIdentifiers.has(uid)) {
+    return { identifier: uid };
   }
-  return uniqueSyncIdentifier(syncIdentifierFromName(datasourceName), taken);
+  const identifier = syncIdentifierFromName(datasourceName);
+  if (isDefaultRoutingTreeName(identifier)) {
+    return { identifier, conflict: 'reserved' };
+  }
+  if (inUse.policyTreeNames.has(identifier)) {
+    return { identifier, conflict: 'policy-tree' };
+  }
+  return { identifier };
 }
 
 export function deriveSyncHealth(configResource: Config | undefined, configuredUid: string): AutoSyncHealth {

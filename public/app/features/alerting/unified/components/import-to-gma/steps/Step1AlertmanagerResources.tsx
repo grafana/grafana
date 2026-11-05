@@ -31,6 +31,8 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
+import { useStagedConfig } from '../../../settings/import/useStagedConfig';
+import { type PredictedSyncIdentifier } from '../../../utils/autoSync';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
 import { useListNotificationPolicyRoutes } from '../../notification-policies/useNotificationPolicyRoute';
 import {
@@ -138,12 +140,14 @@ export function Step1Content({ canImport, dryRunState, dryRunResult }: Step1Cont
 
   const duplicateTemplateFileName = findDuplicateTemplateFileName(notificationsTemplateFiles);
 
-  // Shown in the disabled name field's tooltip, so the user knows what auto-sync will call the tree.
-  const autoSyncIdentifier = usePredictedAutoSyncIdentifier(
+  // The disabled name field shows this name in its tooltip, and the conflict message when it is taken.
+  const autoSyncPrediction = useAutoSyncPrediction(
     autoSyncActive,
     notificationsDatasourceUID,
     notificationsDatasourceName
   );
+  const autoSyncIdentifier = autoSyncPrediction?.identifier;
+  const autoSyncConflictMessage = getAutoSyncConflictMessage(autoSyncPrediction);
 
   // Checks the name's format, then asks whether a policy tree already has it.
   const validatePolicyTreeNameIsFree = useCallback(
@@ -414,8 +418,8 @@ export function Step1Content({ canImport, dryRunState, dryRunResult }: Step1Cont
                 )
               }
               required={!autoSyncActive}
-              invalid={!!errors.policyTreeName}
-              error={errors.policyTreeName?.message}
+              invalid={!!errors.policyTreeName || !!autoSyncConflictMessage}
+              error={errors.policyTreeName?.message ?? autoSyncConflictMessage}
               noMargin
             >
               <Input
@@ -454,6 +458,7 @@ export function useStep1Validation(canImport: boolean): boolean {
     notificationsYamlFile,
     notificationsTemplateFiles,
     autoSyncNotificationsEnabled,
+    notificationsDatasourceName,
   ] = watch([
     'notificationsSource',
     'policyTreeName',
@@ -461,9 +466,18 @@ export function useStep1Validation(canImport: boolean): boolean {
     'notificationsYamlFile',
     'notificationsTemplateFiles',
     'autoSyncNotificationsEnabled',
+    'notificationsDatasourceName',
   ]);
 
+  // The sync fails on a taken name, so Next stays blocked until it is renamed.
+  const autoSyncPrediction = useAutoSyncPrediction(
+    isAutoSyncSelected(autoSyncNotificationsEnabled ?? false, notificationsSource),
+    notificationsDatasourceUID,
+    notificationsDatasourceName
+  );
+
   const hasStep1Errors =
+    Boolean(autoSyncPrediction?.conflict) ||
     Boolean(errors.notificationsSource) ||
     Boolean(errors.policyTreeName) ||
     Boolean(errors.notificationsDatasourceUID) ||
@@ -593,35 +607,75 @@ function DataSourceSelectField({ options, noOptionsMessage }: DataSourceSelectFi
 }
 
 /**
- * The name auto-sync will give the policy tree on its first sync: the datasource's name, with "-2" and so on
- * added when a policy tree already has it. Undefined while auto-sync isn't selected, or while the policy trees
- * it checks against are still loading.
+ * Predicts the policy tree name of the first sync. Returns undefined until the policy trees, the staged
+ * import and the Config have loaded. Without that wait, a name recorded on the Config could flash as a
+ * conflict. A list that failed to load counts as empty, because the sync has the final say.
  */
-export function usePredictedAutoSyncIdentifier(
+export function useAutoSyncPrediction(
   autoSyncActive: boolean,
   datasourceUID: string | undefined,
   datasourceName: string | null | undefined
-): string | undefined {
-  const { predictSyncIdentifier } = useAutoSyncConfiguration();
+): PredictedSyncIdentifier | undefined {
+  const { predictSyncIdentifier, isLoading: isLoadingAutoSyncConfig } = useAutoSyncConfiguration();
   const {
     data: policyTrees,
     isSuccess: hasPolicyTrees,
     isError: failedPolicyTrees,
   } = useListNotificationPolicyRoutes({ skip: !autoSyncActive });
+  const { stagedConfig, isLoading: isLoadingStagedConfig } = useStagedConfig({ skip: !autoSyncActive });
+  const stagedIdentifier = stagedConfig?.identifier;
 
   return useMemo(() => {
-    if (!autoSyncActive || !datasourceUID || !datasourceName || !(hasPolicyTrees || failedPolicyTrees)) {
+    if (
+      !autoSyncActive ||
+      !datasourceUID ||
+      !datasourceName ||
+      isLoadingAutoSyncConfig ||
+      isLoadingStagedConfig ||
+      !(hasPolicyTrees || failedPolicyTrees)
+    ) {
       return undefined;
     }
-    const taken = new Set((policyTrees ?? []).flatMap((tree) => (tree.name ? [tree.name] : [])));
-    return predictSyncIdentifier(datasourceUID, datasourceName, taken);
+    return predictSyncIdentifier(datasourceUID, datasourceName, {
+      policyTreeNames: new Set((policyTrees ?? []).flatMap((tree) => (tree.name ? [tree.name] : []))),
+      stagedIdentifiers: new Set(stagedIdentifier ? [stagedIdentifier] : []),
+    });
   }, [
     autoSyncActive,
     datasourceUID,
     datasourceName,
+    isLoadingAutoSyncConfig,
+    isLoadingStagedConfig,
     hasPolicyTrees,
     failedPolicyTrees,
     policyTrees,
+    stagedIdentifier,
     predictSyncIdentifier,
   ]);
+}
+
+export function usePredictedAutoSyncIdentifier(
+  autoSyncActive: boolean,
+  datasourceUID: string | undefined,
+  datasourceName: string | null | undefined
+): string | undefined {
+  return useAutoSyncPrediction(autoSyncActive, datasourceUID, datasourceName)?.identifier;
+}
+
+function getAutoSyncConflictMessage(prediction: PredictedSyncIdentifier | undefined): string | undefined {
+  if (prediction?.conflict === 'policy-tree') {
+    return t(
+      'alerting.import-to-gma.step1.autosync-name-taken',
+      'The sync would use the name {{name}}, which a policy tree already uses. Rename the data source or the policy tree.',
+      { name: prediction.identifier }
+    );
+  }
+  if (prediction?.conflict === 'reserved') {
+    return t(
+      'alerting.import-to-gma.step1.autosync-name-reserved',
+      'The sync would use the name {{name}}, which is reserved for the default policy. Rename the data source.',
+      { name: prediction.identifier }
+    );
+  }
+  return undefined;
 }

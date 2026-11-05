@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { HttpResponse, http } from 'msw';
+import { isEqual } from 'lodash';
+import { HttpResponse, delay, http } from 'msw';
 import React, { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { getWrapper, render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
@@ -24,9 +25,14 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { type ImportFormValues } from '../ImportToGMA';
+import { type ImportFormValues, buildDryRunArgs } from '../ImportToGMA';
 
-import { Step1Content, usePredictedAutoSyncIdentifier, useStep1Validation } from './Step1AlertmanagerResources';
+import {
+  Step1Content,
+  useAutoSyncPrediction,
+  usePredictedAutoSyncIdentifier,
+  useStep1Validation,
+} from './Step1AlertmanagerResources';
 
 const server = setupMswServer();
 
@@ -803,20 +809,211 @@ describe('Step1AlertmanagerResources', () => {
       });
 
       describe('the name auto-sync will use', () => {
-        function renderPrediction(autoSyncActive = true) {
-          return renderHook(() => usePredictedAutoSyncIdentifier(autoSyncActive, MIMIR_DS.uid, MIMIR_DS.name), {
-            wrapper: getWrapper({}),
-          });
+        function predictName(autoSyncActive = true, datasourceName: string = MIMIR_DS.name) {
+          const seen: Array<ReturnType<typeof useAutoSyncPrediction>> = [];
+          const view = renderHook(
+            () => {
+              const prediction = useAutoSyncPrediction(autoSyncActive, MIMIR_DS.uid, datasourceName);
+              seen.push(prediction);
+              return prediction;
+            },
+            { wrapper: getWrapper({}) }
+          );
+          return { ...view, seen };
         }
 
-        it('names the policy tree after the datasource', async () => {
-          grantUserRole('Admin');
-          const { result } = renderPrediction();
+        function serveRoutingTrees(names: string[], responseDelay = 0) {
+          server.use(
+            http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`, async () => {
+              await delay(responseDelay);
+              return HttpResponse.json({
+                kind: 'RoutingTree',
+                metadata: {},
+                items: names.map((name) => ({
+                  metadata: { name },
+                  spec: { defaults: { receiver: 'x' }, routes: [] },
+                })),
+              });
+            })
+          );
+        }
 
-          await waitFor(() => expect(result.current).toBe('mimir-alertmanager'));
+        function serveStagedImport(identifier: string, responseDelay = 0) {
+          server.use(
+            http.get('/api/alertmanager/:name/config/api/v1/alerts', async () => {
+              await delay(responseDelay);
+              return HttpResponse.json({
+                alertmanager_config: {},
+                template_files: {},
+                extra_config: [{ identifier, merge_matchers: [], alertmanager_config: '', template_files: {} }],
+              });
+            })
+          );
+        }
+
+        beforeEach(() => {
+          grantUserRole('Admin');
         });
 
-        it('adds a suffix when a policy tree already uses that name, like the sync does', async () => {
+        it('names the policy tree after the datasource', async () => {
+          const { result } = predictName();
+
+          await waitFor(() => expect(result.current).toEqual({ identifier: 'mimir-alertmanager' }));
+        });
+
+        it('reports a conflict when a policy tree uses the name', async () => {
+          serveRoutingTrees(['mimir-alertmanager', 'mimir-alertmanager-2']);
+          const { result } = predictName();
+
+          await waitFor(() =>
+            expect(result.current).toEqual({ identifier: 'mimir-alertmanager', conflict: 'policy-tree' })
+          );
+        });
+
+        it('reports a conflict for a name reserved for the default policy', async () => {
+          const { result } = predictName(true, 'User Defined');
+
+          await waitFor(() => expect(result.current).toEqual({ identifier: 'user-defined', conflict: 'reserved' }));
+        });
+
+        it('keeps the UID when a policy tree from an earlier sync has it', async () => {
+          serveRoutingTrees([MIMIR_DS.uid, 'mimir-alertmanager']);
+          const { result } = predictName();
+
+          await waitFor(() => expect(result.current).toEqual({ identifier: MIMIR_DS.uid }));
+        });
+
+        it('keeps the UID when a staged import from an earlier sync has it', async () => {
+          serveStagedImport(MIMIR_DS.uid);
+          serveRoutingTrees(['mimir-alertmanager']);
+          const { result } = predictName();
+
+          await waitFor(() => expect(result.current).toEqual({ identifier: MIMIR_DS.uid }));
+        });
+
+        it('does not count a staged import under the datasource name as taken', async () => {
+          serveStagedImport('mimir-alertmanager');
+          const { result } = predictName();
+
+          await waitFor(() => expect(result.current).toEqual({ identifier: 'mimir-alertmanager' }));
+        });
+
+        // Each source is delayed on its own while the others answer at once. A prediction made before the
+        // slow one answers would be built from partial data, so every prediction seen must be the final one.
+        function expectOnlyFinalPrediction(seen: Array<ReturnType<typeof useAutoSyncPrediction>>, final: object) {
+          expect(seen.filter(Boolean).length).toBeGreaterThan(0);
+          expect(seen.filter(Boolean).every((prediction) => isEqual(prediction, final))).toBe(true);
+        }
+
+        it('uses the recorded name and shows no conflict while the Config loads', async () => {
+          server.use(
+            http.get(
+              '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/configs/:name',
+              async () => {
+                await delay(150);
+                return HttpResponse.json({
+                  apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+                  kind: 'Config',
+                  metadata: { name: 'default', namespace: 'default' },
+                  spec: {},
+                  status: { externalAlertmanagerSync: { datasourceUid: MIMIR_DS.uid, identifier: 'recorded-name' } },
+                });
+              }
+            )
+          );
+          serveRoutingTrees(['mimir-alertmanager']);
+          const { result, seen } = predictName();
+
+          await waitFor(() => expect(result.current).toEqual({ identifier: 'recorded-name' }));
+          expectOnlyFinalPrediction(seen, { identifier: 'recorded-name' });
+        });
+
+        it('has no prediction while the policy trees load', async () => {
+          serveRoutingTrees(['mimir-alertmanager'], 150);
+          const { result, seen } = predictName();
+
+          await waitFor(() =>
+            expect(result.current).toEqual({ identifier: 'mimir-alertmanager', conflict: 'policy-tree' })
+          );
+          expectOnlyFinalPrediction(seen, { identifier: 'mimir-alertmanager', conflict: 'policy-tree' });
+        });
+
+        it('has no prediction while the staged import loads', async () => {
+          serveStagedImport(MIMIR_DS.uid, 150);
+          serveRoutingTrees(['mimir-alertmanager']);
+          const { result, seen } = predictName();
+
+          await waitFor(() => expect(result.current).toEqual({ identifier: MIMIR_DS.uid }));
+          expectOnlyFinalPrediction(seen, { identifier: MIMIR_DS.uid });
+        });
+
+        it('shows the conflict once the staged import has loaded', async () => {
+          serveStagedImport('another-import', 150);
+          serveRoutingTrees(['mimir-alertmanager']);
+          const { result, seen } = predictName();
+
+          await waitFor(() =>
+            expect(result.current).toEqual({ identifier: 'mimir-alertmanager', conflict: 'policy-tree' })
+          );
+          expectOnlyFinalPrediction(seen, { identifier: 'mimir-alertmanager', conflict: 'policy-tree' });
+        });
+
+        it('has no prediction while auto-sync is not selected', () => {
+          const { result } = predictName(false);
+
+          expect(result.current).toBeUndefined();
+        });
+
+        it.each([
+          ['the slug when nothing uses it', [], 'mimir-alertmanager'],
+          ['the UID when a policy tree from an earlier sync has it', [MIMIR_DS.uid], MIMIR_DS.uid],
+        ])('sends %s as the dry run identifier', async (_, trees, expected) => {
+          serveRoutingTrees(trees);
+          const { result } = renderHook(
+            () => {
+              const identifier = usePredictedAutoSyncIdentifier(true, MIMIR_DS.uid, MIMIR_DS.name);
+              return identifier
+                ? buildDryRunArgs(
+                    {
+                      policyTreeName: '',
+                      notificationsSource: 'datasource',
+                      notificationsDatasourceUID: MIMIR_DS.uid,
+                      notificationsDatasourceName: MIMIR_DS.name,
+                      notificationsYamlFile: null,
+                      notificationsTemplateFiles: [],
+                      autoSyncNotificationsEnabled: true,
+                    },
+                    identifier
+                  )
+                : undefined;
+            },
+            { wrapper: getWrapper({}) }
+          );
+
+          await waitFor(() => expect(result.current).toMatchObject({ configIdentifier: expected }));
+        });
+      });
+
+      describe('when the name the sync would use is taken', () => {
+        function setupStep1(autoSyncNotificationsEnabled: boolean, onResult = jest.fn()) {
+          render(
+            <TestWrapper
+              defaultValues={{
+                notificationsSource: 'datasource',
+                notificationsDatasourceUID: MIMIR_DS.uid,
+                notificationsDatasourceName: MIMIR_DS.name,
+                autoSyncNotificationsEnabled,
+                policyTreeName: autoSyncNotificationsEnabled ? '' : 'my-own-tree',
+              }}
+            >
+              <Step1Content {...defaultStep1Props} />
+              <ValidationHookWrapper canImport={true} onResult={onResult} />
+            </TestWrapper>
+          );
+          return onResult;
+        }
+
+        beforeEach(() => {
           grantUserRole('Admin');
           server.use(
             http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`, () =>
@@ -829,15 +1026,23 @@ describe('Step1AlertmanagerResources', () => {
               })
             )
           );
-          const { result } = renderPrediction();
-
-          await waitFor(() => expect(result.current).toBe('mimir-alertmanager-2'));
         });
 
-        it('has no name while auto-sync is not selected', () => {
-          const { result } = renderPrediction(false);
+        it('shows the conflict and blocks Next when auto-sync is selected', async () => {
+          const onResult = setupStep1(true);
 
-          expect(result.current).toBeUndefined();
+          expect(
+            await screen.findByText(/would use the name mimir-alertmanager, which a policy tree already uses/i)
+          ).toBeInTheDocument();
+          expect(screen.getByText(/rename the data source or the policy tree/i)).toBeInTheDocument();
+          await waitFor(() => expect(onResult).toHaveBeenLastCalledWith(false));
+        });
+
+        it('shows nothing and does not block when auto-sync is off', async () => {
+          const onResult = setupStep1(false);
+
+          await waitFor(() => expect(onResult).toHaveBeenLastCalledWith(true));
+          expect(screen.queryByText(/would use the name/i)).not.toBeInTheDocument();
         });
       });
 
