@@ -926,7 +926,7 @@ func TestAfterDeleteStopsWaitingForAStalledPermissionDelete(t *testing.T) {
 		start := time.Now()
 		b.afterDelete(&dashv1.Dashboard{ObjectMeta: metav1.ObjectMeta{Name: "dash-uid", Namespace: "stacks-1"}}, &metav1.DeleteOptions{})
 
-		require.Less(t, time.Since(start), 34*time.Second, "afterDelete held the delete request past the apiserver's 34 s write-handler cap")
+		require.Equal(t, afterDeleteTimeout, time.Since(start))
 	})
 }
 
