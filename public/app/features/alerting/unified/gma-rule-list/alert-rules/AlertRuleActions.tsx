@@ -8,7 +8,6 @@ import {
 import { useAssistant } from '@grafana/assistant';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useFlagAlertEnrichment, useFlagAlertingEnrichmentPerRule } from '@grafana/runtime/internal';
 import { ConfirmModal, Dropdown, LinkButton, Menu, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
@@ -17,26 +16,22 @@ import { EnrichmentDrawerExtension } from 'app/features/alerting/unified/compone
 import { RedirectToCloneRule } from 'app/features/alerting/unified/components/rules/CloneRule';
 import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/silences/SilenceGrafanaRuleDrawer';
 import { isGranted } from 'app/features/alerting/unified/hooks/abilities/abilityUtils';
-import { useEnrichmentAbility } from 'app/features/alerting/unified/hooks/abilities/otherAbilities';
-import { EnrichmentAction } from 'app/features/alerting/unified/hooks/abilities/types';
-import { AlertingAction, useAlertingAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { isK8sEntityProvisioned } from 'app/features/alerting/unified/utils/k8s/utils';
 import { type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { grafanaRulesNav } from '../../utils/navigation';
-import { getRulePermissions } from '../rule-row/rulePermissions';
 
-import { type AlertRuleSearchHit } from './alertRuleSearchHit';
+import { useRuleAbilities } from './useRuleAbilities';
 
 interface AlertRuleActionsProps {
-  searchHit: AlertRuleSearchHit;
-  rule: AlertRule | undefined;
-  ruleIsLoading?: boolean;
+  rule: AlertRule;
 }
 
-export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: AlertRuleActionsProps) {
-  const { uid, title } = searchHit;
-  const perms = getRulePermissions(rule, ruleIsLoading);
+export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
+  const uid = rule.metadata.name ?? '';
+  const title = rule.spec.title ?? '';
+  const abilities = useRuleAbilities(rule);
 
   const [showSilenceDrawer, setShowSilenceDrawer] = useState(false);
   const [showEnrichmentDrawer, setShowEnrichmentDrawer] = useState(false);
@@ -47,16 +42,9 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
   const [updateAlertRule, { isLoading: isPausing }] = useUpdateAlertRuleMutation();
 
   const { isAvailable: isAssistantAvailable } = useAssistant();
-  const enrichmentReadAbility = useEnrichmentAbility(EnrichmentAction.Read);
-  const alertEnrichmentEnabled = useFlagAlertEnrichment();
-  const alertingEnrichmentPerRuleEnabled = useFlagAlertingEnrichmentPerRule();
-  const canManageEnrichments =
-    isGranted(enrichmentReadAbility) && alertEnrichmentEnabled && alertingEnrichmentPerRuleEnabled;
 
-  const isPaused = rule?.spec?.paused ?? false;
-
-  const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
-  const canDuplicate = createSupported && createAllowed && !perms.isPluginManaged;
+  const isPaused = rule.spec?.paused ?? false;
+  const isProvisioned = isK8sEntityProvisioned(rule);
 
   const identifier: GrafanaRuleIdentifier = { ruleSourceName: GRAFANA_RULES_SOURCE_NAME, uid };
 
@@ -66,8 +54,8 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
       appEvents.emit(AppEvents.alertError, [
         t('alerting.gma-rule-list.actions.pause-error', 'Failed to {{action}} rule', {
           action: isPaused
-            ? t('alerting.gma-rule-list.actions.resume', 'resume')
-            : t('alerting.gma-rule-list.actions.pause', 'pause'),
+            ? t('alerting.gma-rule-list.actions.resume-action', 'resume')
+            : t('alerting.gma-rule-list.actions.pause-action', 'pause'),
           interpolation: { escapeValue: false },
         }),
       ]);
@@ -94,6 +82,8 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
     }
   };
 
+  const canManageEnrichments = isGranted(abilities.canManageEnrichments);
+
   const menu = (
     <Menu>
       <Menu.Item
@@ -101,7 +91,7 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
         icon="eye"
         url={grafanaRulesNav.viewLink(uid)}
       />
-      {canDuplicate && (
+      {isGranted(abilities.canDuplicate) && (
         <Menu.Item
           label={t('alerting.gma-rule-list.actions.duplicate', 'Duplicate')}
           icon="copy"
@@ -113,7 +103,7 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
         icon="link"
         onClick={handleCopyLink}
       />
-      {perms.canPause && (
+      {isGranted(abilities.canPause) && (
         <>
           <Menu.Divider />
           <Menu.Item
@@ -128,7 +118,7 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
           />
         </>
       )}
-      {perms.canDelete && (
+      {isGranted(abilities.canDelete) && (
         <Menu.Item
           label={t('alerting.gma-rule-list.actions.delete', 'Delete')}
           icon="trash-alt"
@@ -137,7 +127,7 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
         />
       )}
       {(isAssistantAvailable || canManageEnrichments) && <Menu.Divider />}
-      {isAssistantAvailable && rule && <AnalyzeRuleButton alertRule={rule} />}
+      {isAssistantAvailable && <AnalyzeRuleButton alertRule={rule} />}
       {canManageEnrichments && (
         <Menu.Item
           label={t('alerting.gma-rule-list.actions.manage-enrichments', 'Manage enrichments')}
@@ -156,21 +146,14 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
 
   return (
     <Stack direction="row" alignItems="center" gap={0.5}>
-      {(perms.canEdit || perms.isLoading) && (
-        <LinkButton
-          size="sm"
-          variant="secondary"
-          fill="text"
-          href={perms.canEdit ? grafanaRulesNav.editLink(uid) : '#'}
-          disabled={perms.isLoading}
-          aria-disabled={perms.isLoading}
-        >
+      {isGranted(abilities.canEdit) && (
+        <LinkButton size="sm" variant="secondary" fill="text" href={grafanaRulesNav.editLink(uid)}>
           <Trans i18nKey="common.edit">Edit</Trans>
         </LinkButton>
       )}
 
       <Dropdown overlay={menu}>
-        <MoreButton disabled={perms.isLoading} />
+        <MoreButton />
       </Dropdown>
 
       {showSilenceDrawer && <SilenceGrafanaRuleDrawer ruleUid={uid} onClose={() => setShowSilenceDrawer(false)} />}
@@ -193,7 +176,7 @@ export function AlertRuleActions({ searchHit, rule, ruleIsLoading = false }: Ale
       {redirectToClone && (
         <RedirectToCloneRule
           identifier={identifier}
-          isProvisioned={perms.isRestricted}
+          isProvisioned={isProvisioned}
           onDismiss={() => setRedirectToClone(false)}
         />
       )}
