@@ -1,5 +1,9 @@
 import { render, screen } from 'test/test-utils';
 
+import { mockDataSource } from '../../mocks';
+import { setupDataSources } from '../../testSetup/datasources';
+import { mockK8sAlertRule } from '../mocks/handlers';
+
 import { AlertRuleRow } from './AlertRuleRow';
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
@@ -74,5 +78,92 @@ describe('AlertRuleRow', () => {
     renderRow({ searchHit: baseHit() });
 
     expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+  });
+
+  it('renders a provisioning badge when the full rule has provenance set', () => {
+    const rule = {
+      ...mockK8sAlertRule({ uid: 'rule-1', title: 'CPU high' }),
+      metadata: { name: 'rule-1', annotations: { 'grafana.com/provenance': 'terraform' } },
+    };
+    renderRow({ searchHit: baseHit(), rule });
+
+    expect(screen.getByText('Provisioned')).toBeInTheDocument();
+  });
+
+  it('renders no badge when rule is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
+  });
+
+  it('shows queried datasources when the hit has them', () => {
+    setupDataSources(mockDataSource({ uid: 'ds-prom', name: 'Prometheus' }));
+    renderRow({ searchHit: baseHit({ datasourceUIDs: ['ds-prom'] }) });
+
+    expect(screen.getByRole('link', { name: 'Prometheus' })).toBeInTheDocument();
+  });
+
+  it('shows no datasources when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByRole('link', { name: /data source/i })).not.toBeInTheDocument();
+  });
+
+  it('shows labels when the hit has them', () => {
+    renderRow({ searchHit: baseHit({ labels: { team: 'platform', env: 'prod' } }) });
+
+    expect(screen.getByText('2 labels')).toBeInTheDocument();
+  });
+
+  it('shows no labels when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/label/)).not.toBeInTheDocument();
+  });
+
+  describe('instance counts', () => {
+    it('shows firing and healthy counts in the meta strip linked to the instances tab', () => {
+      renderRow({ searchHit: baseHit({ totalsFiring: 3, totalsHealthy: 7 }) });
+
+      const link = screen.getByRole('link', { name: /instances/i });
+      expect(link).toHaveAttribute('href', '/alerting/grafana/rule-1/view?tab=instances');
+      expect(link).toHaveTextContent('3 firing');
+      expect(link).toHaveTextContent('7 normal');
+    });
+
+    it('shows no counts when all totals fields are absent', () => {
+      renderRow({ searchHit: baseHit() });
+
+      expect(screen.queryByRole('link', { name: /instances/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('routing', () => {
+    it('shows "Delivered to {receiver}" for simplified routing', () => {
+      renderRow({ searchHit: baseHit({ notificationType: 'SimplifiedRouting', receiver: 'pagerduty' }) });
+
+      expect(screen.getByText('Delivered to')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'pagerduty' })).toBeInTheDocument();
+    });
+
+    it('shows "Policy: {name}" for a named routing tree', () => {
+      renderRow({ searchHit: baseHit({ notificationType: 'NamedRoutingTree', routingTree: 'infra-critical' }) });
+
+      expect(screen.getByText('Policy: infra-critical')).toBeInTheDocument();
+    });
+
+    it('shows "Default policy" for a routing tree without a name', () => {
+      renderRow({ searchHit: baseHit({ notificationType: 'NamedRoutingTree' }) });
+
+      expect(screen.getByText('Default policy')).toBeInTheDocument();
+    });
+
+    it('shows no routing when notificationType is absent', () => {
+      renderRow({ searchHit: baseHit() });
+
+      expect(screen.queryByText('Delivered to')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Policy:/)).not.toBeInTheDocument();
+      expect(screen.queryByText('Default policy')).not.toBeInTheDocument();
+    });
   });
 });

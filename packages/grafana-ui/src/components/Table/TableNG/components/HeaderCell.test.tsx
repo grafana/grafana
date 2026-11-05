@@ -1,8 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect } from 'react';
 
 import { createTheme, type Field, FieldType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { type Column } from '@grafana/react-data-grid';
 
 import { TableFilterProvider, useTableFilters } from '../TableFilterContext';
@@ -325,6 +326,77 @@ describe('HeaderCell', () => {
     expect(filterButton).toHaveAttribute('aria-expanded', 'true');
   });
 
+  it('closes the previous filter popup when another filter is opened', async () => {
+    const first = makeField({ config: { custom: { filterable: true } } });
+    const second = makeField({
+      name: 'Field2',
+      values: ['x', 'y', 'z'],
+      config: { custom: { filterable: true } },
+    });
+    render(
+      <div onClick={(event) => event.stopPropagation()}>
+        <TableFilterProvider props={{ data: { fields: [first, second], length: 3 }, width: 300, height: 200 }}>
+          <HeaderCell {...baseProps} field={first} />
+          <HeaderCell {...baseProps} field={second} column={{ key: 'Field2' } as Column<TableRow, TableSummaryRow>} />
+        </TableFilterProvider>
+      </div>
+    );
+    const firstButton = screen.getByLabelText('Filter Field1');
+    const secondButton = screen.getByLabelText('Filter Field2');
+
+    firstButton.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(firstButton).toHaveAttribute('aria-expanded', 'true');
+    secondButton.focus();
+    await userEvent.keyboard('{Enter}');
+
+    expect(firstButton).toHaveAttribute('aria-expanded', 'false');
+    expect(secondButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getAllByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Container)).toHaveLength(1);
+  });
+
+  it('can reopen a filter popup after its header remounts', async () => {
+    const field = makeField({ config: { custom: { filterable: true } } });
+    const props = { data: { fields: [field], length: 3 }, width: 300, height: 200 };
+    const Header = ({ show }: { show: boolean }) => (
+      <TableFilterProvider props={props}>{show && <HeaderCell {...baseProps} field={field} />}</TableFilterProvider>
+    );
+    const view = render(<Header show />);
+    await userEvent.click(screen.getByLabelText('Filter Field1'));
+    expect(screen.getByLabelText('Filter Field1')).toHaveAttribute('aria-expanded', 'true');
+
+    view.rerender(<Header show={false} />);
+    view.rerender(<Header show />);
+    const remountedButton = screen.getByLabelText('Filter Field1');
+    expect(remountedButton).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(remountedButton);
+    expect(remountedButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Container)).toBeInTheDocument();
+  });
+
+  it('closes the filter popup when an outside click stops propagation', async () => {
+    const field = makeField({ config: { custom: { filterable: true } } });
+    render(
+      <div onClick={(event) => event.stopPropagation()}>
+        <TableFilterProvider props={{ data: { fields: [field], length: 3 }, width: 300, height: 200 }}>
+          <HeaderCell {...baseProps} field={field} />
+          <button>Outside</button>
+        </TableFilterProvider>
+      </div>
+    );
+    const filterButton = screen.getByLabelText('Filter Field1');
+
+    await userEvent.click(filterButton);
+    expect(filterButton).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.click(screen.getByRole('button', { name: 'Outside' }));
+
+    expect(filterButton).toHaveAttribute('aria-expanded', 'false');
+    expect(
+      screen.queryByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Container)
+    ).not.toBeInTheDocument();
+  });
+
   describe('table.refresh', () => {
     const filterableField = () => makeField({ config: { custom: { filterable: true } } });
     const menuLabel = 'Column options for Field1';
@@ -504,7 +576,7 @@ describe('HeaderCell', () => {
       expect(container.querySelector('.table-ng-header-cell')).toBeInTheDocument();
     });
 
-    it('opens the filter popup from the column menu', async () => {
+    it('keeps the menu trigger visible while its filter is open and clears its open state on Escape', async () => {
       render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
 
       await userEvent.click(screen.getByLabelText(menuLabel));
@@ -513,9 +585,47 @@ describe('HeaderCell', () => {
       await userEvent.click(filterItem);
       // FilterPopup renders the value list with its own Ok/Cancel controls
       expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+      expect(screen.getByLabelText(menuLabel)).toHaveStyle({ opacity: '1' });
+      expect(screen.getByLabelText(menuLabel)).toHaveAttribute('data-filter-open', 'true');
+
+      await userEvent.keyboard('{Escape}');
+      expect(screen.queryByRole('button', { name: 'Ok' })).not.toBeInTheDocument();
+      expect(screen.getByLabelText(menuLabel)).not.toHaveAttribute('data-filter-open');
     });
 
-    it('marks an active filter in the refreshed header', async () => {
+    it('moves focus to the filter search input when the popup is opened from the column menu by keyboard', async () => {
+      const user = userEvent.setup();
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      act(() => screen.getByLabelText(menuLabel).focus());
+      await user.keyboard('{Enter}');
+      const filterItem = await screen.findByRole('menuitem', { name: 'Filter values' });
+      act(() => filterItem.focus());
+      await user.keyboard('{Enter}');
+
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+    });
+
+    it('returns focus to the column menu button when the filter popup is applied by keyboard', async () => {
+      const user = userEvent.setup();
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      const menuButton = screen.getByLabelText(menuLabel);
+      act(() => menuButton.focus());
+      await user.keyboard('{Enter}');
+      act(() => screen.getByRole('menuitem', { name: 'Filter values' }).focus());
+      await user.keyboard('{Enter}');
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+
+      act(() => screen.getByRole('button', { name: 'Ok' }).focus());
+      await user.keyboard('{Enter}');
+
+      expect(menuButton).toHaveFocus();
+      expect(screen.queryByRole('button', { name: 'Ok' })).not.toBeInTheDocument();
+    });
+
+    it('highlights only the funnel while its filter is open and clears the state on Cancel', async () => {
       const field = filterableField();
       const data = { fields: [field], length: 3 };
       const FilteredHeader = () => {
@@ -533,6 +643,71 @@ describe('HeaderCell', () => {
 
       expect(await screen.findByLabelText(filterIconLabel)).toHaveAttribute('aria-haspopup', 'dialog');
       expect(screen.getByLabelText(menuLabel)).toHaveStyle({ opacity: '0' });
+
+      await userEvent.click(screen.getByLabelText(filterIconLabel));
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+      expect(screen.getByLabelText(filterIconLabel)).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByLabelText(menuLabel)).not.toHaveAttribute('data-filter-open');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(screen.getByLabelText(filterIconLabel)).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it.each([
+      { reportedAs: 'the body', lostFocus: () => document.body },
+      { reportedAs: 'the document element', lostFocus: () => document.documentElement },
+      { reportedAs: 'null', lostFocus: () => null },
+      { reportedAs: 'the removed filter icon', lostFocus: (filterIcon: HTMLElement) => filterIcon },
+    ])(
+      'moves focus to the column menu button when clearing the filter removes the filter icon (lost focus reported as $reportedAs)',
+      async ({ lostFocus }) => {
+        const field = filterableField();
+        const data = { fields: [field], length: 3 };
+        const FilteredHeader = () => {
+          // Keyed on applyFilter, which stays stable across filter changes, so clearing is not undone.
+          const applyFilter = useTableFilters()?.applyFilter;
+          useEffect(() => {
+            applyFilter?.(field, { id: 'inSet', options: { mode: 'display', values: ['a'] } });
+          }, [applyFilter]);
+          return <HeaderCell {...baseProps} field={field} tableRefreshEnabled />;
+        };
+        const user = userEvent.setup();
+        render(
+          <TableFilterProvider props={{ data, width: 300, height: 200 }}>
+            <FilteredHeader />
+          </TableFilterProvider>
+        );
+        const filterIcon = screen.getByLabelText(filterIconLabel);
+        // jsdom always reports lost focus as the body, so stand in for browsers that report it differently.
+        const readActiveElement = Object.getOwnPropertyDescriptor(Document.prototype, 'activeElement')!.get!;
+        const activeElement = jest.spyOn(document, 'activeElement', 'get').mockImplementation(() => {
+          const active = readActiveElement.call(document);
+          return active === document.body && !filterIcon.isConnected ? lostFocus(filterIcon) : active;
+        });
+
+        act(() => filterIcon.focus());
+        await user.keyboard('{Enter}');
+        await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+        act(() => screen.getByRole('button', { name: 'Clear filter' }).focus());
+        await user.keyboard('{Enter}');
+        activeElement.mockRestore();
+
+        expect(screen.getByLabelText(menuLabel)).toHaveFocus();
+        expect(screen.queryByLabelText(filterIconLabel)).not.toBeInTheDocument();
+      }
+    );
+
+    it('does not pull focus back into the header when the popup is dismissed by clicking empty space', async () => {
+      const user = userEvent.setup();
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      await user.click(screen.getByLabelText(menuLabel));
+      await user.click(await screen.findByRole('menuitem', { name: 'Filter values' }));
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+      await user.click(document.body);
+
+      expect(document.body).toHaveFocus();
+      expect(screen.queryByRole('button', { name: 'Ok' })).not.toBeInTheDocument();
     });
   });
 

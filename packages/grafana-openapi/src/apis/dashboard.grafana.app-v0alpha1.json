@@ -2770,9 +2770,12 @@
       },
       "SnapshotBlobReference": {
         "type": "object",
-        "required": ["uid"],
         "properties": {
           "contentType": {
+            "type": "string"
+          },
+          "data": {
+            "description": "Write-only base64-encoded dashboard JSON, replaced by a server-issued reference on write.",
             "type": "string"
           },
           "hash": {
@@ -2783,8 +2786,7 @@
             "format": "int64"
           },
           "uid": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
         }
       },
@@ -2834,13 +2836,6 @@
       "SnapshotSpec": {
         "type": "object",
         "properties": {
-          "dashboard": {
-            "description": "The raw dashboard (unstructured for now)",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
           "deleteKey": {
             "description": "Snapshot delete key",
             "type": "string"

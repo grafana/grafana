@@ -31,6 +31,7 @@ import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
 import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
+import { AutoOpenMegaMenuForScopedContent } from './useAutoOpenMegaMenuForScopedContent';
 
 export const EXTENSION_SIDEBAR_FLOATING_TESTID = 'extension-sidebar-floating';
 
@@ -85,17 +86,13 @@ export function AppChrome({ children }: Props) {
 
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
-    !state.chromeless &&
-      !scopesMegaMenuEnabled &&
-      scopes?.state.enabled &&
-      scopes?.state.drawerOpened &&
-      !scopes?.state.readOnly
+    !state.chromeless && !scopesMegaMenuEnabled && scopes?.state.enabled && scopes?.state.drawerOpened
   );
 
   const headerLevels = useChromeHeaderLevels();
   const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight(), visualRefreshEnabled);
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth, floatingExtensionSidebarWidth);
-  const dragStyles = useStyles2(getDragStyles);
+  const dragStyles = useStyles2(getDragStyles, 'middle');
   const isSmallScreen = !useMediaQueryMinWidth('sm');
 
   useResponsiveDockedMegaMenu(chrome);
@@ -241,7 +238,8 @@ export function AppChrome({ children }: Props) {
                 defaultSize={{ width: extensionSidebarWidth }}
                 enable={isExtensionSidebarFloating ? false : { left: true }}
                 onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
-                handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
+                handleClasses={{ left: dragStyles.dragHandleVertical }}
+                handleStyles={{ left: { left: -7 } }}
                 // Floating has its own, lower minimum; an inline min-width would override `floatingWidth`.
                 minWidth={isExtensionSidebarFloating ? undefined : MIN_EXTENSION_SIDEBAR_WIDTH}
                 maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
@@ -260,6 +258,7 @@ export function AppChrome({ children }: Props) {
       )}
       {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
       {!state.chromeless && <LazyFeatureControlFloating />}
+      {scopesMegaMenuEnabled && <AutoOpenMegaMenuForScopedContent chrome={chrome} />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}

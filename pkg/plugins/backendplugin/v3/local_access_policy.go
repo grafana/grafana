@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/plugin"
 )
 
 // LocalAccessPolicy is what a plugin started by this Grafana process may sign
@@ -53,15 +54,6 @@ var localAccessPolicyTokens = struct {
 	byToken map[string]localAccessPolicyHolder
 }{byToken: map[string]localAccessPolicyHolder{}}
 
-// The environment variables that give a plugin process its credentials for
-// Grafana's API: the URL to call it at, the token exchange, and the access
-// policy token for the exchange. The app SDK reads them in BuildKubeConfig.
-const (
-	EnvVarRouterURL         = "API_ACCESS_ROUTER_URL"
-	EnvVarTokenExchangeURL  = "API_ACCESS_TOKEN_EXCHANGE_URL"
-	EnvVarAccessPolicyToken = "API_ACCESS_CAP_TOKEN"
-)
-
 // IssueLocalAccessPolicyToken returns a new secret that authenticates pluginID
 // to the local token exchange: the local stand-in for a cloud access policy
 // token. It is random and held only in memory. Grafana issues one each time it
@@ -98,7 +90,7 @@ func RevokeLocalAccessPolicyToken(token string) {
 // process environment, if Grafana set one.
 func LocalAccessPolicyTokenFromEnv(env []string) string {
 	for _, v := range env {
-		if token, ok := strings.CutPrefix(v, EnvVarAccessPolicyToken+"="); ok {
+		if token, ok := strings.CutPrefix(v, plugin.EnvVarAPIAccessCAPToken+"="); ok {
 			return token
 		}
 	}
