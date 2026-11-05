@@ -23,6 +23,12 @@ title: 'Query History HTTP API '
 
 {{< docs/shared lookup="developers/deprecated-apis-nonmigrated.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+{{< admonition type="note" >}}
+
+The new [Saved queries HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/saved-queries/) is related to this API, but it isn't a full replacement. It lets you store, share, and manage queries on the server, but it doesn't record the queries you run or support starring. Saved queries are only available in Grafana Enterprise and Grafana Cloud. Refer to [Differences from the legacy Query history API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/saved-queries/#differences-from-the-legacy-query-history-api) to learn how both APIs match.
+
+{{< /admonition >}}
+
 This API can be used to add queries to Query history. It requires that the user is logged in and that Query history feature is enabled in config file.
 
 ## Add query to Query history
