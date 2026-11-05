@@ -53,7 +53,7 @@ func TestValidateOnDeleteRecordsOutcome(t *testing.T) {
 			_ = validateOnDelete(context.Background(), folder, tt.searcher, tt.options, tt.cascade, m)
 
 			require.Equal(t, 1.0, testutil.ToFloat64(m.checks.WithLabelValues(tt.wantOutcome, tt.wantJoin, tt.wantBlocking, "false")))
-			require.Equal(t, 1, recordedSeries(m.checks), "only one series should have been recorded")
+			require.Equal(t, 1, recordedSeries(t, m.checks), "only one series should have been recorded")
 		})
 	}
 }
@@ -76,7 +76,7 @@ func TestValidateOnDeleteBlockingKindIgnoresStatsOrder(t *testing.T) {
 
 			require.ErrorContains(t, err, "contains 3 alertrules")
 			require.Equal(t, 1.0, testutil.ToFloat64(m.checks.WithLabelValues("refused_not_empty", "enabled", "alertrules", "false")))
-			require.Equal(t, 1, recordedSeries(m.checks))
+			require.Equal(t, 1, recordedSeries(t, m.checks))
 		})
 	}
 }
@@ -104,7 +104,7 @@ func TestValidateLabelsDryRunDeletes(t *testing.T) {
 
 	require.Equal(t, 1.0, testutil.ToFloat64(m.checks.WithLabelValues("allowed", "enabled", "none", "true")))
 	require.Equal(t, 2.0, testutil.ToFloat64(m.checks.WithLabelValues("allowed", "enabled", "none", "false")))
-	require.Equal(t, 2, recordedSeries(m.checks), "dry runs and real deletes are separate series")
+	require.Equal(t, 2, recordedSeries(t, m.checks), "dry runs and real deletes are separate series")
 }
 
 func TestDryRunCountFailureIsStillRecorded(t *testing.T) {
@@ -135,13 +135,14 @@ func TestDeleteCheckMetricsRegistration(t *testing.T) {
 }
 
 // recordedSeries counts the series that have observations. Series are created at zero up front.
-func recordedSeries(c prometheus.Collector) int {
+func recordedSeries(t *testing.T, c prometheus.Collector) int {
+	t.Helper()
 	ch := make(chan prometheus.Metric, 128)
 	go func() { c.Collect(ch); close(ch) }()
 	n := 0
 	for m := range ch {
 		var d dto.Metric
-		_ = m.Write(&d)
+		require.NoError(t, m.Write(&d))
 		if d.GetCounter().GetValue() > 0 {
 			n++
 		}

@@ -46,7 +46,7 @@ func TestCountingSearcherRecordsOutcome(t *testing.T) {
 
 			require.Equal(t, tt.err, err, "the call result must pass through unchanged")
 			require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues(countCallerEndpoint, tt.wantOutcome, tt.wantJoin)))
-			require.Equal(t, 1, recordedSeries(m.requests))
+			require.Equal(t, 1, recordedSeries(t, m.requests))
 		})
 	}
 }

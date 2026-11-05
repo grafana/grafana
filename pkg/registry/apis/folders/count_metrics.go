@@ -26,7 +26,7 @@ type countMetrics struct {
 	legacyJoin string
 }
 
-// legacyJoinEnabled is a label so an "ok" count with legacy_join="disabled" is queryable.
+// newCountMetrics labels counts with legacyJoinEnabled so an "ok" count with legacy_join="disabled" is queryable.
 func newCountMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) *countMetrics {
 	requests := promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 		Name: "grafana_folder_counts_requests_total",
