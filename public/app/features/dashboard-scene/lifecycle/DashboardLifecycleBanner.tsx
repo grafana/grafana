@@ -420,7 +420,7 @@ function PendingChangesBanner({
   );
 }
 
-interface NewDashboardProps extends PendingChangesProps {
+interface NewDashboardProps extends Omit<PendingChangesProps, 'close'> {
   placement: PendingChangesView;
   onDiscardDraft?: () => void;
 }
