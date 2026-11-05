@@ -1,12 +1,21 @@
-import { DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
+import {
+  AppEvents,
+  DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+  type ScopedVars,
+} from '@grafana/data';
 
 import { isExpressionReference } from '../../utils/expressionRef';
 import { UserStorage } from '../../utils/userStorage';
+import { getAppEvents } from '../appEvents';
 import { getDataSourceSrv, type RuntimeDataSourceRegistration } from '../dataSourceSrv';
+import { getDatasourcePluginMeta, getPluginIdFromDatasourceInstanceType } from '../pluginMeta/datasources';
+import { logPluginMetaWarning } from '../pluginMeta/logging';
 
 import { notifyDataSourceCacheChanged } from './cacheGeneration';
 import { FALLBACK_TO_LEGACY_INSTANCE_WARNING } from './constants';
-import { isDataSourceLoadError } from './errors';
+import { DataSourcePluginImportError, isDataSourceLoadError } from './errors';
 import { getExpressionDataSourceInstance } from './expressionDs';
 import { describeRef, logDataSourceInstanceError, logDataSourceWarning } from './logging';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
@@ -69,29 +78,8 @@ export async function getDataSourceInstance(
       }
     }
 
-    const cacheUid = settings.uid;
-
-    const cached = getCachedPlugin(cacheUid);
-    if (cached) {
-      return cached;
-    }
-
-    const inflight = inflightLoads.get(cacheUid);
-    if (inflight) {
-      // `await` (not a bare `return`) so a rejection routes through the catch below to the
-      // fallback. A bare `return` adopts the promise without awaiting, so concurrent callers
-      // would skip the fallback that the first caller (which awaits) gets.
-      return await inflight;
-    }
-
-    const promise = loadDataSourceInstance(cacheUid, settings);
-    inflightLoads.set(cacheUid, promise);
-
-    try {
-      return await promise;
-    } finally {
-      inflightLoads.delete(cacheUid);
-    }
+    // `await` (not a bare `return`) so a rejection reaches the catch below.
+    return await loadDataSourceInstanceFromSettings(settings);
   } catch (err) {
     // The list or the settings failed to load. Boot data would hide that failure, so do not fall back.
     if (isDataSourceLoadError(err)) {
@@ -117,43 +105,109 @@ function normalizeEmptyRef(ref: DataSourceRef | string | null | undefined): Data
   return ref;
 }
 
-async function loadDataSourceInstance(cacheUid: string, settings: DataSourceInstanceSettings): Promise<DataSourceApi> {
-  if (!importDataSourcePlugin) {
+/**
+ * Load the plugin instance for already-resolved instance settings. This is the single loader and
+ * instance cache behind both {@link getDataSourceInstance} and the legacy `DataSourceSrv.get()`,
+ * so one data source never has two live instances. Concurrent callers for the same uid share one
+ * in-flight load.
+ *
+ * On an import or construction failure it logs, shows the `"<name> plugin failed"` alert, and
+ * throws {@link DataSourcePluginImportError}. Nothing is cached, so the next call retries.
+ *
+ * `importer` defaults to the one registered with {@link setDataSourcePluginImporter}. The legacy
+ * `DataSourceSrv` passes its own so it keeps working where the boot registration did not run.
+ *
+ * @internal
+ */
+export async function loadDataSourceInstanceFromSettings(
+  settings: DataSourceInstanceSettings,
+  importer: ImportDataSourcePluginFn | undefined = importDataSourcePlugin
+): Promise<DataSourceApi> {
+  const cacheUid = settings.uid;
+
+  const cached = getCachedPlugin(cacheUid);
+  if (cached) {
+    return cached;
+  }
+
+  const inflight = inflightLoads.get(cacheUid);
+  if (inflight) {
+    return inflight;
+  }
+
+  const promise = loadDataSourceInstance(cacheUid, settings, importer);
+  inflightLoads.set(cacheUid, promise);
+
+  try {
+    return await promise;
+  } finally {
+    inflightLoads.delete(cacheUid);
+  }
+}
+
+async function loadDataSourceInstance(
+  cacheUid: string,
+  settings: DataSourceInstanceSettings,
+  importer: ImportDataSourcePluginFn | undefined
+): Promise<DataSourceApi> {
+  if (!importer) {
     throw new Error('Data source importer has not been set. Call setDataSourcePluginImporter during application boot.');
   }
 
-  let dsPlugin;
+  // Built-in frontend data sources (-- Grafana --, -- Mixed --, -- Dashboard --) have type 'datasource'.
+  const pluginId = getPluginIdFromDatasourceInstanceType(settings.type, settings.name);
+
+  let instance: DataSourceApi;
   try {
-    dsPlugin = await importDataSourcePlugin(settings.meta);
+    // Fall back to settings.meta when the plugin meta lookup misses so that runtime-registered
+    // data sources (which are not in the plugin meta map) still load.
+    let meta = await getDatasourcePluginMeta(pluginId);
+    if (!meta) {
+      logPluginMetaWarning(
+        `Plugin meta for datasource ${settings.uid} (pluginId: ${pluginId}) was not found, falling back to instanceSettings.meta`,
+        { pluginId, key: settings.uid }
+      );
+      meta = settings.meta;
+    }
+
+    const dsPlugin = await importer(meta);
+
+    const racedCache = getCachedPlugin(cacheUid);
+    if (racedCache) {
+      return racedCache;
+    }
+
+    instance = new dsPlugin.DataSourceClass(settings);
+    instance.components = dsPlugin.components;
+
+    if (!instance.userStorage) {
+      // DataSourceApi does not instantiate a userStorage property, but DataSourceWithBackend does.
+      instance.userStorage = new UserStorage(settings.type);
+    }
+
+    // Some old plugins do not extend DataSourceApi, so patch them manually.
+    if (!(instance instanceof DataSourceApi)) {
+      const anyInstance: { [key: string]: unknown } = instance;
+      anyInstance.name = settings.name;
+      anyInstance.id = settings.id;
+      anyInstance.type = pluginId;
+      anyInstance.meta = meta;
+      anyInstance.uid = settings.uid;
+      anyInstance.getRef = DataSourceApi.prototype.getRef;
+    }
   } catch (error) {
     logDataSourceInstanceError(`Failed to import datasource plugin ${settings.name} (${settings.uid})`, error, {
-      pluginId: settings.meta.id,
+      pluginId,
       uid: settings.uid,
       name: settings.name,
     });
-    throw error;
-  }
-
-  const racedCache = getCachedPlugin(cacheUid);
-  if (racedCache) {
-    return racedCache;
-  }
-
-  const instance = new dsPlugin.DataSourceClass(settings);
-  instance.components = dsPlugin.components;
-
-  if (!instance.userStorage) {
-    instance.userStorage = new UserStorage(settings.type);
-  }
-
-  if (!(instance instanceof DataSourceApi)) {
-    const anyInstance: { [key: string]: unknown } = instance;
-    anyInstance.name = settings.name;
-    anyInstance.id = settings.id;
-    anyInstance.type = settings.type;
-    anyInstance.meta = settings.meta;
-    anyInstance.uid = settings.uid;
-    anyInstance.getRef = DataSourceApi.prototype.getRef;
+    if (error instanceof Error) {
+      getAppEvents()?.publish({
+        type: AppEvents.alertError.name,
+        payload: [settings.name + ' plugin failed', error.toString()],
+      });
+    }
+    throw new DataSourcePluginImportError(settings.uid, error);
   }
 
   setCachedPlugin(cacheUid, instance);

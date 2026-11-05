@@ -1,5 +1,7 @@
 import {
+  AppEvents,
   DataSourceApi,
+  type EventBus,
   type DataQueryResponse,
   type DataSourceInstanceSettings,
   type DataSourcePluginMeta,
@@ -8,8 +10,10 @@ import {
 
 import { TracedError } from '../../utils/TracedError';
 import { RuntimeDataSource } from '../RuntimeDataSource';
+import { setAppEvents } from '../appEvents';
 import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setLogger } from '../logging/registry';
+import { setDatasourcePluginMetas } from '../pluginMeta/datasources';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import {
@@ -23,8 +27,9 @@ import {
   registerRuntimeDataSourceInstance,
   setDataSourcePluginImporter,
 } from './dataSource';
+import { DataSourcePluginImportError } from './errors';
 import { setExpressionDataSourceInstance } from './expressionDs';
-import { getRuntimePlugin, _resetForTests as resetPluginCache } from './pluginCache';
+import { getCachedPlugin, getRuntimePlugin, _resetForTests as resetPluginCache } from './pluginCache';
 import {
   reloadDataSourceInstanceSettings,
   setDataSourceInstanceSettings,
@@ -73,6 +78,8 @@ const logWarning = jest.fn();
 beforeEach(() => {
   resetPlugin();
   resetPluginCache();
+  // An empty map leaves the plugin meta cache uninitialized, so lookups miss and fall back to settings.meta.
+  setDatasourcePluginMetas({});
   logError.mockClear();
   logWarning.mockClear();
   setLogger('grafana/runtime.plugins.datasource', {
@@ -172,21 +179,28 @@ describe('plugin', () => {
       expect(MockClass).toHaveBeenCalledTimes(1);
     });
 
-    it('throws when the plugin import fails', async () => {
-      const settings = ds();
-      setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
-      setDataSourcePluginImporter(jest.fn().mockRejectedValue(new Error('module not found')));
-
-      await expect(getDataSourceInstance(settings.uid)).rejects.toThrow(/module not found/);
-    });
-
-    it('logs a TracedError that preserves the original stack and does not sanitize the rethrow', async () => {
+    it('throws a DataSourcePluginImportError with the cause message when the plugin import fails', async () => {
       const settings = ds();
       setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
       const importError = new Error('module not found');
       setDataSourcePluginImporter(jest.fn().mockRejectedValue(importError));
 
-      await expect(getDataSourceInstance(settings.uid)).rejects.toBe(importError);
+      const error = await getDataSourceInstance(settings.uid).catch((e) => e);
+
+      expect(error).toBeInstanceOf(DataSourcePluginImportError);
+      expect(error.message).toBe('module not found');
+      expect(error.uid).toBe(settings.uid);
+      expect(error.cause).toBe(importError);
+      expect(error.stack).toBe(importError.stack);
+    });
+
+    it('logs a TracedError that preserves the original stack', async () => {
+      const settings = ds();
+      setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+      const importError = new Error('module not found');
+      setDataSourcePluginImporter(jest.fn().mockRejectedValue(importError));
+
+      await expect(getDataSourceInstance(settings.uid)).rejects.toBeInstanceOf(DataSourcePluginImportError);
 
       expect(logError).toHaveBeenCalledTimes(1);
       const [loggedError] = logError.mock.calls[0];
@@ -469,7 +483,24 @@ describe('plugin', () => {
       });
     });
 
-    it('passes settings.meta to the importer', async () => {
+    it('passes the plugin meta to the importer when the plugin meta lookup finds it', async () => {
+      const settings = ds();
+      setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+      const pluginMeta = { ...settings.meta, fromPluginMeta: true };
+      setDatasourcePluginMetas({ 'test-db': pluginMeta });
+
+      const mockImport = jest.fn().mockResolvedValue({
+        DataSourceClass: jest.fn().mockReturnValue(Object.create(DataSourceApi.prototype)),
+        components: {},
+      });
+      setDataSourcePluginImporter(mockImport);
+
+      await getDataSourceInstance(settings.uid);
+
+      expect(mockImport).toHaveBeenCalledWith(pluginMeta);
+    });
+
+    it('passes settings.meta to the importer when the plugin meta lookup misses', async () => {
       const settings = ds();
       setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
 
@@ -502,6 +533,86 @@ describe('plugin', () => {
       expect(result.meta).toEqual(settings.meta);
       expect(result.uid).toBe(settings.uid);
       expect((result.getRef as () => unknown)()).toEqual({ type: settings.type, uid: settings.uid });
+    });
+
+    it('patches legacy plugins with the resolved plugin id and plugin meta', async () => {
+      const settings = ds({ uid: '-- Grafana --', name: '-- Grafana --', type: 'datasource' });
+      setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+      const grafanaMeta = { ...settings.meta, id: 'grafana', fromPluginMeta: true };
+      setDatasourcePluginMetas({ grafana: grafanaMeta });
+
+      const MockClass = jest.fn().mockReturnValue({});
+      setDataSourcePluginImporter(jest.fn().mockResolvedValue({ DataSourceClass: MockClass, components: {} }));
+
+      const result = (await getDataSourceInstance(settings.uid)) as unknown as Record<string, unknown>;
+
+      expect(result.type).toBe('grafana');
+      expect(result.meta).toEqual(grafanaMeta);
+    });
+
+    describe('plugin load failure', () => {
+      const publish = jest.fn();
+
+      beforeEach(() => {
+        publish.mockClear();
+        setAppEvents({ publish } as unknown as EventBus);
+      });
+
+      it('shows the "plugin failed" alert once', async () => {
+        const settings = ds();
+        setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+        setDataSourcePluginImporter(jest.fn().mockRejectedValue(new Error('module not found')));
+
+        await expect(getDataSourceInstance(settings.uid)).rejects.toBeInstanceOf(DataSourcePluginImportError);
+
+        expect(publish).toHaveBeenCalledTimes(1);
+        expect(publish).toHaveBeenCalledWith({
+          type: AppEvents.alertError.name,
+          payload: ['Alpha plugin failed', 'Error: module not found'],
+        });
+      });
+
+      it('treats a constructor that throws like a failed import', async () => {
+        const settings = ds();
+        setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+        const DataSourceClass = jest.fn(() => {
+          throw new Error('bad constructor');
+        });
+        setDataSourcePluginImporter(jest.fn().mockResolvedValue({ DataSourceClass, components: {} }));
+
+        await expect(getDataSourceInstance(settings.uid)).rejects.toBeInstanceOf(DataSourcePluginImportError);
+        expect(publish).toHaveBeenCalledTimes(1);
+      });
+
+      it('does not fall back to the legacy srv, so the plugin is not imported a second time', async () => {
+        const settings = ds();
+        setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+        setDataSourcePluginImporter(jest.fn().mockRejectedValue(new Error('module not found')));
+        const get = jest.fn();
+        setDataSourceSrv({ get } as unknown as DataSourceSrv);
+
+        await expect(getDataSourceInstance(settings.uid)).rejects.toBeInstanceOf(DataSourcePluginImportError);
+
+        expect(get).not.toHaveBeenCalled();
+        expect(logWarning).not.toHaveBeenCalledWith(FALLBACK_TO_LEGACY_INSTANCE_WARNING, expect.anything());
+      });
+
+      it('caches nothing, so the next call retries the import', async () => {
+        const settings = ds();
+        setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+        const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+        const mockImport = jest
+          .fn()
+          .mockRejectedValueOnce(new Error('module not found'))
+          .mockResolvedValueOnce({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} });
+        setDataSourcePluginImporter(mockImport);
+
+        await expect(getDataSourceInstance(settings.uid)).rejects.toBeInstanceOf(DataSourcePluginImportError);
+        expect(getCachedPlugin(settings.uid)).toBeUndefined();
+
+        await expect(getDataSourceInstance(settings.uid)).resolves.toBe(instance);
+        expect(mockImport).toHaveBeenCalledTimes(2);
+      });
     });
   });
 
@@ -737,7 +848,7 @@ describe('plugin', () => {
       expect(logWarning).not.toHaveBeenCalled();
     });
 
-    it('routes a concurrent in-flight caller through the fallback when the load rejects', async () => {
+    it('rejects a concurrent in-flight caller without the fallback when the load fails', async () => {
       const settings = ds();
       setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
 
@@ -746,25 +857,23 @@ describe('plugin', () => {
       const importPromise = new Promise((_, reject) => {
         rejectImport = reject;
       });
-      setDataSourcePluginImporter(jest.fn().mockReturnValue(importPromise));
+      const mockImport = jest.fn().mockReturnValue(importPromise);
+      setDataSourcePluginImporter(mockImport);
 
-      const legacyInstance = Object.create(DataSourceApi.prototype) as DataSourceApi;
-      const get = jest.fn().mockResolvedValue(legacyInstance);
+      const get = jest.fn();
       setDataSourceSrv({ get } as unknown as DataSourceSrv);
 
-      // First caller starts the load; the second reuses the in-flight promise.
-      const first = getDataSourceInstance(settings.uid);
-      const second = getDataSourceInstance(settings.uid);
+      const results = Promise.allSettled([getDataSourceInstance(settings.uid), getDataSourceInstance(settings.uid)]);
 
       // Let both reach their await points (first awaiting the load, second awaiting in-flight).
       await new Promise((resolve) => setTimeout(resolve, 0));
       rejectImport(new Error('module not found'));
 
-      // Both callers — including the in-flight one — fall back to the legacy instance.
-      await expect(first).resolves.toBe(legacyInstance);
-      await expect(second).resolves.toBe(legacyInstance);
-      expect(get).toHaveBeenCalledTimes(2);
-      expect(logWarning).toHaveBeenCalledTimes(2);
+      const [first, second] = await results;
+      expect(first).toMatchObject({ status: 'rejected', reason: expect.any(DataSourcePluginImportError) });
+      expect(second).toMatchObject({ status: 'rejected', reason: expect.any(DataSourcePluginImportError) });
+      expect(mockImport).toHaveBeenCalledTimes(1);
+      expect(get).not.toHaveBeenCalled();
     });
   });
 });
