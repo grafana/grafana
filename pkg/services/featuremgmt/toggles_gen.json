@@ -269,6 +269,21 @@
     },
     {
       "metadata": {
+        "name": "alerting.watchersBanner",
+        "resourceVersion": "1793832854718",
+        "creationTimestamp": "2026-11-04T22:54:14Z"
+      },
+      "spec": {
+        "description": "Show the Assistant Watchers banner on the alert rule list. Watchers are only available in Grafana Cloud.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingAIAnalyzeCentralStateHistory",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-07-16T16:42:42Z"
@@ -1403,7 +1418,8 @@
       "metadata": {
         "name": "cdnPluginsUrls",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-08-29T14:46:39Z"
+        "creationTimestamp": "2025-08-29T14:46:39Z",
+        "deletionTimestamp": "2026-11-05T08:33:51Z"
       },
       "spec": {
         "description": "Enable loading plugins via declarative URLs",

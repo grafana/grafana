@@ -2047,7 +2047,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Uygula"
+      "apply": "Uygula",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5762,7 +5763,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5944,6 +5946,9 @@
       "render-label": {
         "tooltip-remove-property": "Özelliği kaldır"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "{{typeName}} ekle",
@@ -6441,6 +6446,9 @@
           "hide-header": "Satır başlığını gizle",
           "title": "Başlık"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filtreler"
         },
@@ -6522,11 +6530,10 @@
         "data-source": "Veri kaynağı",
         "display": "Ek açıklama denetimlerini şurada göster:",
         "display-options": {
-          "above-dashboard": "Panonun üstünde",
           "controls-menu": "Denetim menüsü",
-          "controls-menu-description": "Denetim menüsü açıkken erişilebilir",
+          "controls-menu-description": "",
           "hidden": "Gizli",
-          "hidden-description": "Bu ek açıklamayı açma/kapatma düğmesini gizler"
+          "hidden-description": ""
         },
         "enabled": "Etkin",
         "enabled-description": "Etkinleştirildiğinde her pano yenilemesinde açıklama sorgusu çalıştırılır",
@@ -6629,7 +6636,9 @@
         "tab": "Sekme",
         "tabs": "Sekmeler",
         "variable": "{{type}} değişkeni",
-        "variable-set": "Değişkenler"
+        "variable-set": "Değişkenler",
+        "selected-panels_one": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Dışa aktar"
@@ -6808,6 +6817,9 @@
             "description": "Seçilen değişkenin her değeri için bu sekmeyi tekrarla.",
             "title": "Değişkene göre tekrar et"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filtreler"
@@ -7584,6 +7596,7 @@
       "error-invalid-json": "Geçersiz JSON",
       "error-invalid-layout": "Düzen JSON'u doğrulamayı geçemedi. Lütfen JSON'u kontrol edin ve tekrar deneyin.",
       "error-invalid-v2-panel": "Panel JSON doğrulamayı geçemedi. Lütfen JSON'u kontrol edin ve tekrar deneyin.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Doğrulama hatası"
     },
     "interval-variable-form": {
@@ -7760,7 +7773,9 @@
       "title-delete-all-transformations": "Tüm dönüşümler silinsin mi?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Görselleştirmeyi düzenle"
+      "edit-visualization": "Görselleştirmeyi düzenle",
+      "panels-selected_one": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Tablo görünümünü aç/kapat",
@@ -14016,6 +14031,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Sorgunuzla eşleşen hiçbir şey bulunamadı"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

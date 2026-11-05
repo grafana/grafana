@@ -538,8 +538,8 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelDelete(ctx context.Context, n
 		Limit:        1,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
-		return err
+	if err != nil {
+		return resource.StatusErrorFromGRPC(err)
 	}
 	if result.GetTotalHits() > 0 {
 		return apierrors.NewForbidden(

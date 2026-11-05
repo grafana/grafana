@@ -3068,6 +3068,10 @@ Maximum number of repositories allowed. Default is `10`. Set to `0` for unlimite
 
 Maximum number of resources (dashboards, folders, etc.) allowed per repository. Default is `0`, which means unlimited.
 
+#### `max_job_body_size`
+
+Maximum size, in bytes, of the request body when you create a provisioning job, for example a pull or migrate job. Requests above this size are rejected with `413 Request Entity Too Large`. A value of `0` or less uses the default (150KiB).
+
 #### `public_root_url`
 
 Public-facing root URL of this Grafana instance, used by provisioning to construct URLs that must be reachable from external systems. When empty, falls back to `[server] root_url`.

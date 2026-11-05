@@ -30,3 +30,11 @@ export const getReadOnlyTooltipText = ({ isLocal = false }) => {
 export function getOrphanedRepositoryTooltip(): string {
   return t('provisioning.orphaned-repository-tooltip', 'Repository not found');
 }
+
+/**
+ * Tooltip for any provisioning resource (Repository, Connection, ...) owned by an external manager
+ * that does not allow edits, and is therefore read-only in the UI.
+ */
+export function getManagedReadOnlyTooltip(): string {
+  return t('provisioning.managed-read-only-tooltip', 'This resource is managed externally and is read-only');
+}
