@@ -639,8 +639,10 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 }
 
 func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
-	// Read the original file to get its content for parsing and authorization
-	originalFile, err := r.repo.Read(ctx, opts.OriginalPath, "")
+	// Read the original file to get its content for parsing and authorization. The
+	// copy being moved is the one on the target ref, which can differ from the
+	// configured branch -- a secret rotated there must not be moved back.
+	originalFile, err := r.readWithRefFallback(ctx, opts.OriginalPath, opts.Ref)
 	if err != nil {
 		return nil, fmt.Errorf("read original file: %w", err)
 	}
@@ -678,11 +680,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	}
 
 	if len(opts.Data) > 0 {
-		// Read the original path again on the target ref: parsed is the configured
-		// branch's copy, which can hold a secret the target branch already rotated.
-		if err := r.keepCommittedSecureValues(ctx, newParsed, opts.OriginalPath, opts.Ref); err != nil {
-			return nil, err
-		}
+		keepPlaintextSecureValues(parsed.Obj, newParsed.Obj)
 	}
 
 	// Make sure the new resource is valid
@@ -870,17 +868,22 @@ func (r *DualReadWriter) shouldUpdateGrafanaDB(opts DualWriteOptions, parsed *Pa
 	return r.isConfiguredBranch(opts)
 }
 
+// readWithRefFallback reads path on ref, falling back to the configured branch
+// when ref does not exist yet: a new PR branch starts from that branch's copy.
+func (r *DualReadWriter) readWithRefFallback(ctx context.Context, path, ref string) (*repository.FileInfo, error) {
+	info, err := r.repo.Read(ctx, path, ref)
+	if errors.Is(err, repository.ErrRefNotFound) && ref != "" {
+		return r.repo.Read(ctx, path, "")
+	}
+	return info, err
+}
+
 // keepCommittedSecureValues restores into the update the plaintext secure values
 // already committed at path. A client that saves back what the resource API
 // returned carries only the reference, which would otherwise drop the secret from
 // the repository and leave the file unable to provision the resource again.
 func (r *DualReadWriter) keepCommittedSecureValues(ctx context.Context, parsed *ParsedResource, path, ref string) error {
-	committed, err := r.repo.Read(ctx, path, ref)
-	if errors.Is(err, repository.ErrRefNotFound) && ref != "" {
-		// Target branch doesn't exist yet (e.g. a new PR branch); the file it
-		// will branch from is the one on the configured branch.
-		committed, err = r.repo.Read(ctx, path, "")
-	}
+	committed, err := r.readWithRefFallback(ctx, path, ref)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) || errors.Is(err, repository.ErrRefNotFound) || apierrors.IsNotFound(err) {
 			return nil
