@@ -12391,7 +12391,8 @@
     "log-details": {
       "error": {
         "diagnose-with-assistant": "Diagnose with assistant",
-        "error-details": "Error details"
+        "error-details": "Error details",
+        "expand-stacktrace": "Expand stack trace"
       }
     },
     "log-labels": {
