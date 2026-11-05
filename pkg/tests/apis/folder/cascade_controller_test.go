@@ -169,7 +169,11 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		})
 		// A folder already terminating when the initial list is read is only recorded, so the test
 		// must not delete one before then.
-		<-synced
+		select {
+		case <-synced:
+		case <-time.After(30 * time.Second):
+			t.Fatal("the initial folder list was not delivered")
+		}
 		return writer
 	}
 

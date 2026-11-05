@@ -47,6 +47,9 @@ func DefaultRateLimiter() workqueue.TypedRateLimiter[string] {
 // Only the release of a subfolder's cascade wakes its parent. A subfolder held by another finalizer
 // after that disappears later with no event naming its parent, so that parent is picked up again
 // only by the event source's periodic resync.
+//
+// The initial list is not a source of work: a folder that is already terminating when the controller
+// starts waits for its next change.
 type Controller struct {
 	folders    FolderGetter
 	reconciler *Reconciler
@@ -89,7 +92,7 @@ func NewDefaultController(dyn dynamic.Interface, searcher resourcepb.ResourceInd
 // when it is not waiting. An event without a resource version is always enqueued.
 //
 // The initial list is only recorded, so starting costs no read per folder. A folder that is already
-// terminating then is not reconciled until it changes again, or until a periodic re-list shows a new version.
+// terminating then is not reconciled until it changes again.
 func (c *Controller) Handler() cache.ResourceEventHandler {
 	return handler{c}
 }
@@ -110,8 +113,8 @@ func (h handler) OnDelete(obj any) { h.c.enqueue(obj, true) }
 
 // record remembers a folder's version without enqueueing it.
 func (c *Controller) record(obj any) {
-	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
-	if err != nil {
+	key, ok := eventKey(obj)
+	if !ok {
 		return
 	}
 	if rv := resourceVersion(obj); rv != "" {
@@ -119,6 +122,15 @@ func (c *Controller) record(obj any) {
 		c.seen[key] = rv
 		c.mu.Unlock()
 	}
+}
+
+func eventKey(obj any) (string, bool) {
+	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+	if err != nil {
+		logging.DefaultLogger.Warn("Folder cascade delete: cannot key event object", "error", err)
+		return "", false
+	}
+	return key, true
 }
 
 func resourceVersion(obj any) string {
@@ -132,9 +144,8 @@ func resourceVersion(obj any) string {
 }
 
 func (c *Controller) enqueue(obj any, deleted bool) {
-	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
-	if err != nil {
-		logging.DefaultLogger.Warn("Folder cascade delete: cannot key event object", "error", err)
+	key, ok := eventKey(obj)
+	if !ok {
 		return
 	}
 	if c.isResyncOfUnchanged(key, obj, deleted) {

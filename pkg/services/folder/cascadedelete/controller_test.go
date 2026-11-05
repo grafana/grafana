@@ -517,3 +517,31 @@ func TestController_InitialListIsRecordedWithoutReads(t *testing.T) {
 		require.Zero(t, m.getCount("b"))
 	})
 }
+
+// A known limitation: the initial list is only recorded, so a folder already terminating at start
+// waits for its next change.
+func TestController_FolderTerminatingAtStartWaitsForItsNextChange(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		m.folders["a"].terminating = true
+		_, stop := startController(t, m, 100)
+		defer stop()
+
+		m.mu.Lock()
+		m.rvs["a"] = 1
+		m.mu.Unlock()
+		m.initialList()
+		time.Sleep(ResyncPeriod)
+		m.resync()
+		synctest.Wait()
+		require.True(t, m.exists("a"))
+		require.Zero(t, m.getCount("a"))
+
+		m.mu.Lock()
+		m.notify("a", false)
+		m.mu.Unlock()
+		synctest.Wait()
+		require.False(t, m.exists("a"))
+	})
+}
