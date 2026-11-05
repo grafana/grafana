@@ -503,6 +503,12 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 			wantToken: common.InlineSecureValue{},
 		},
 		{
+			name:      "marks an echoed stored reference for removal",
+			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{Name: "old-token"}),
+			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"}),
+			wantToken: common.InlineSecureValue{Remove: true},
+		},
+		{
 			name:      "keeps a caller-supplied token",
 			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{Create: "caller-token"}),
 			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"}),

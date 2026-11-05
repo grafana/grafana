@@ -104,7 +104,7 @@ func CopySecureValues(new, old *provisioning.Repository) {
 // RequiresNewTokenForURLChange reports whether a URL change must come with a new token.
 // The rule exists so a stored credential cannot be repointed at another host.
 func RequiresNewTokenForURLChange(new, old *provisioning.Repository) bool {
-	if old == nil || new.URL() == old.URL() || !new.Secure.Token.IsZero() {
+	if old == nil || new.URL() == old.URL() || suppliedNewToken(new, old) {
 		return false
 	}
 
@@ -119,17 +119,24 @@ func InvalidateConnectionTokenOnURLChange(new, old *provisioning.Repository) {
 	if old == nil || new.URL() == old.URL() {
 		return
 	}
-	// A caller-supplied token wins, and there is nothing to invalidate if none is stored.
-	if !new.Secure.Token.IsZero() || old.Secure.Token.IsZero() {
+	// Nothing to invalidate if no token is stored, and a caller-supplied one wins.
+	if old.Secure.Token.IsZero() || suppliedNewToken(new, old) {
 		return
 	}
-	// Must match the exemption exactly: marking the token for removal makes it non-zero,
-	// which would otherwise satisfy RequiresNewTokenForURLChange and skip the host check.
+	// Must match the exemption exactly: marking the token for removal counts as supplying
+	// one, which would otherwise satisfy RequiresNewTokenForURLChange and skip the host check.
 	if !connectionMintsTokenForURLChange(new, old) {
 		return
 	}
 
 	new.Secure.Token = common.InlineSecureValue{Remove: true}
+}
+
+// suppliedNewToken reports whether the incoming object carries a token decision of its own.
+// Echoing the stored reference back is not one: a read-modify-write client resends what it
+// read, and treating that as a new token would let it move the URL on the old credential.
+func suppliedNewToken(new, old *provisioning.Repository) bool {
+	return !new.Secure.Token.IsZero() && new.Secure.Token != old.Secure.Token
 }
 
 // connectionMintsTokenForURLChange reports whether the connection can mint a token for the

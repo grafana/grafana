@@ -1103,6 +1103,14 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 			wantErr:    false,
 		},
 		{
+			name:            "rejects url change when the stored token reference is echoed back",
+			oldURL:          "https://github.com/grafana/old",
+			newURL:          "https://github.com/grafana/new",
+			newToken:        common.InlineSecureValue{Name: "old-token"},
+			wantErr:         true,
+			wantErrContains: "secure.token",
+		},
+		{
 			name:            "rejects host change for a connection-backed repository",
 			oldURL:          "https://github.com/grafana/old",
 			newURL:          "https://attacker.example.com/grafana/old",
@@ -1139,7 +1147,7 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErrContains)
-				assert.True(t, newRepo.Secure.Token.IsZero(), "old token should not be copied after rejection")
+				assert.Equal(t, tt.newToken, newRepo.Secure.Token, "secure values should not be copied after rejection")
 				return
 			}
 
