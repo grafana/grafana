@@ -221,6 +221,25 @@ describe('NotificationPreview', () => {
     expect(screen.getByText(/boom/)).toBeInTheDocument();
   });
 
+  it('should show an error instead of a blank preview when the selected policy no longer exists', async () => {
+    mockHasEditPermission(false);
+    mockOneAlertManager();
+    mockPreviewApiResponse(server, [mockAlertmanagerAlert({ labels: { tomato: 'red' } })]);
+
+    render(
+      <NotificationPreview
+        alertQueries={[alertQuery]}
+        customLabels={[]}
+        condition="A"
+        folder={folder}
+        policyName="deleted-policy"
+      />
+    );
+
+    expect(await screen.findByText(/could not load routing preview for grafana/i)).toBeInTheDocument();
+    expect(screen.getByText(/deleted-policy/)).toBeInTheDocument();
+  });
+
   // Regression test for bug #3 from PR #124697:
   // __grafana_managed_route__ is routing infrastructure and must never be shown to users —
   // neither in the instance label list nor in the "Non-matching labels" section of the route drawer.

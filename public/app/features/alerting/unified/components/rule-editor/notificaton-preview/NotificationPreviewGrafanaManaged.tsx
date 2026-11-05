@@ -26,13 +26,17 @@ function NotificationPreviewGrafanaManaged({
   const labelSets = useMemo(() => instances.map((instance) => Object.entries(instance)), [instances]);
   const { status, results, error } = useNotificationPolicyPreview(policyName, labelSets);
 
-  if (status === 'error') {
+  if (status === 'error' || status === 'notFound') {
     const title = t('alerting.notification-preview.error', 'Could not load routing preview for {{alertmanager}}', {
       alertmanager: alertManagerSource.name,
     });
     return (
       <Alert title={title} severity="error">
-        {stringifyErrorLike(error)}
+        {status === 'error'
+          ? stringifyErrorLike(error)
+          : t('alerting.notification-preview.policy-not-found', 'Notification policy "{{policyName}}" was not found.', {
+              policyName,
+            })}
       </Alert>
     );
   }
