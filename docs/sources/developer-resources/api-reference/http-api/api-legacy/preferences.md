@@ -23,6 +23,10 @@ title: 'Preferences API'
 
 {{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+{{< admonition type="note" >}}
+This HTTP API is deprecated. Use the [Preferences HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/preferences/) instead. To learn how the legacy endpoints map to the new ones, refer to [Migrate from the legacy Preferences API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/preferences/#migrate-from-the-legacy-preferences-api).
+{{< /admonition >}}
+
 Keys:
 
 - **theme** - One of: `light`, `dark`, or an empty string for the default theme
