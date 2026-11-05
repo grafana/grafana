@@ -33,24 +33,29 @@ describe('QueryEditorSidebar', () => {
   });
 
   describe('button labels experiment', () => {
-    it('keeps the add and stacked view buttons icon-only in the control variant', () => {
+    it('keeps the stacked view button icon-only in the control variant', () => {
       setTestFlags({ [FlagKeys.PaneleditButtonLabels]: false });
 
       renderWithQueryEditorProvider(<Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />);
 
-      expect(screen.getByRole('button', { name: 'Add query or expression' })).not.toHaveTextContent('Add');
-      expect(screen.getByRole('button', { name: 'Add transformation' })).not.toHaveTextContent('Add');
       expect(screen.getByRole('button', { name: 'Enter stacked view' })).not.toHaveTextContent('Stack');
     });
 
-    it('labels the add and stacked view buttons in the treatment variant', () => {
+    it('labels the stacked view button in the treatment variant', () => {
       setTestFlags({ [FlagKeys.PaneleditButtonLabels]: true });
 
       renderWithQueryEditorProvider(<Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />);
 
-      expect(screen.getByRole('button', { name: 'Add query or expression' })).toHaveTextContent('Add');
-      expect(screen.getByRole('button', { name: 'Add transformation' })).toHaveTextContent('Add');
       expect(screen.getByRole('button', { name: 'Stack' })).toHaveTextContent(/^Stack$/);
+    });
+
+    it.each([false, true])('labels both section header add buttons when the flag is %s', (flagValue) => {
+      setTestFlags({ [FlagKeys.PaneleditButtonLabels]: flagValue });
+
+      renderWithQueryEditorProvider(<Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />);
+
+      expect(screen.getByRole('button', { name: 'Add query' })).toHaveTextContent(/^Add$/);
+      expect(screen.getByRole('button', { name: 'Add transformation' })).toHaveTextContent(/^Add$/);
     });
   });
 

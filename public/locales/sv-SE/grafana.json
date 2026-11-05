@@ -2047,7 +2047,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Tillämpa"
+      "apply": "Tillämpa",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5762,7 +5763,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5944,6 +5946,9 @@
       "render-label": {
         "tooltip-remove-property": "Ta bort egenskap"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "Lägg till {{typeName}}",
@@ -6441,6 +6446,9 @@
           "hide-header": "Dölj radrubrik",
           "title": "Titel"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filter"
         },
@@ -6522,11 +6530,10 @@
         "data-source": "Datakälla",
         "display": "Visa kommentar-kontroller i",
         "display-options": {
-          "above-dashboard": "Ovanför instrumentpanel",
           "controls-menu": "Kontrollmeny",
-          "controls-menu-description": "Kan nås när kontrollmenyn är öppen",
+          "controls-menu-description": "",
           "hidden": "Dolt",
-          "hidden-description": "Döljer växlingen för att aktivera eller inaktivera denna kommentar"
+          "hidden-description": ""
         },
         "enabled": "Aktiverad",
         "enabled-description": "När aktiverat utfärdas kommentarsfrågan vid varje uppdatering av instrumentpanelen",
@@ -6629,7 +6636,9 @@
         "tab": "Flik",
         "tabs": "Flikar",
         "variable": "{{type}}-variabel",
-        "variable-set": "Variabler"
+        "variable-set": "Variabler",
+        "selected-panels_one": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Exportera"
@@ -6808,6 +6817,9 @@
             "description": "Upprepa den här fliken för varje värde i den valda variabeln.",
             "title": "Upprepa per variabel"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filter"
@@ -7584,6 +7596,7 @@
       "error-invalid-json": "Ogiltig JSON",
       "error-invalid-layout": "JSON-koden för layout kunde inte valideras. Kontrollera JSON och försök igen.",
       "error-invalid-v2-panel": "Panelens JSON-kod kunde inte valideras. Kontrollera JSON och försök igen.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Valideringsfel"
     },
     "interval-variable-form": {
@@ -7760,7 +7773,9 @@
       "title-delete-all-transformations": "Radera alla transformeringar?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Redigera visualisering"
+      "edit-visualization": "Redigera visualisering",
+      "panels-selected_one": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Växla tabellvy",
@@ -14016,6 +14031,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Kunde inte hitta något som matchar din fråga"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

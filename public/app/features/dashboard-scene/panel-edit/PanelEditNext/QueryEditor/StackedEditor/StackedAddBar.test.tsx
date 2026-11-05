@@ -27,6 +27,31 @@ describe('StackedAddBar', () => {
     expect(screen.getByRole('menuitem', { name: 'Add transformation' })).toBeInTheDocument();
   });
 
+  it('lists add query, expression, then transformation in the query bar menu', async () => {
+    const { user } = renderWithQueryEditorProvider(<StackedAddBar variant="query" afterId="A" />);
+
+    await user.click(screen.getByRole('button', { name: 'Add below A' }));
+
+    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+      'Add query',
+      'Add expression',
+      'Add transformation',
+    ]);
+  });
+
+  it('appends a transformation to the end of the list from a query bar', async () => {
+    const setPendingTransformation = jest.fn();
+    const { user } = renderWithQueryEditorProvider(<StackedAddBar variant="query" afterId="A" />, {
+      uiStateOverrides: { setPendingTransformation },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Add below A' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Add transformation' }));
+
+    expect(setPendingTransformation).toHaveBeenCalledWith({ insertAfter: undefined });
+    expect(trackAddTransformationInitiated).toHaveBeenCalledWith('stacked_gap');
+  });
+
   it('stays open while its menu is open', async () => {
     const { user, container } = renderWithQueryEditorProvider(<StackedAddBar variant="query" afterId="A" />);
     const bar = container.querySelector('[data-stacked-add-bar]');

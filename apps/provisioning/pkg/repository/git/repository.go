@@ -35,8 +35,18 @@ import (
 // ErrNoBranches is returned when a repository has no branches (e.g., a completely empty repository).
 var ErrNoBranches = errors.New("no branches found in repository")
 
-// userAgent identifies Grafana to the Git server. The nanogit default ("nanogit/0") is rejected by github.com.
-const userAgent = "grafana-provisioning"
+// defaultUserAgent identifies Grafana to the Git server when no User-Agent is configured.
+// The nanogit default ("nanogit/0") is rejected by github.com.
+const defaultUserAgent = "grafana-provisioning"
+
+// UserAgent returns the User-Agent Grafana sends to Git servers by default: defaultUserAgent
+// followed by the Grafana build version, so a Git host can tell which release is calling.
+func UserAgent(version string) string {
+	if version == "" {
+		return defaultUserAgent
+	}
+	return defaultUserAgent + "/" + version
+}
 
 type RepositoryConfig struct {
 	URL              string
@@ -48,6 +58,8 @@ type RepositoryConfig struct {
 	SMIMECertificate string
 	Path             string
 	SkipGitSuffix    bool
+	// UserAgent overrides the User-Agent sent to the Git server. Empty means defaultUserAgent.
+	UserAgent string
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
@@ -70,7 +82,7 @@ func NewRepository(
 	metrics *repository.OperationMetrics,
 	clientMetrics *ClientMetrics,
 ) (GitRepository, error) {
-	opts := []options.Option{options.WithCapabilityNegotiation(), options.WithUserAgent(userAgent)}
+	opts := []options.Option{options.WithCapabilityNegotiation(), options.WithUserAgent(cmp.Or(gitConfig.UserAgent, defaultUserAgent))}
 	if gitConfig.SkipGitSuffix {
 		opts = append(opts, options.WithoutGitSuffix())
 	}
@@ -238,8 +250,8 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		r.SetBranch(branch)
 	}
 
-	// Check authorization
-	if ok, err := r.client.CanRead(ctx); err != nil || !ok {
+	// Check authorization. A missing repository is reported by the existence check below.
+	if ok, err := r.client.CanRead(ctx); (err != nil || !ok) && !errors.Is(err, client.ErrRepositoryNotFound) {
 		// Map nanogit errors to repository errors for proper HTTP status codes
 		if err != nil {
 			err = mapNanogitError(err)
@@ -1207,7 +1219,7 @@ func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults 
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
 				Field:  field.NewPath("secure", "token").String(),
-				Detail: "authentication failed",
+				Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized",
 			}},
 		}
 	}
@@ -1219,7 +1231,7 @@ func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults 
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
 				Field:  field.NewPath("secure", "token").String(),
-				Detail: "permission denied",
+				Detail: "permission denied: the Git server returned HTTP 403 Forbidden",
 			}},
 		}
 	}

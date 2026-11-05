@@ -1,4 +1,4 @@
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -15,10 +15,9 @@ interface LabelsFieldInFormProps {
   onEditClick: () => void;
 }
 export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
-  const { watch } = useFormContext<RuleFormValues>();
+  const { control } = useFormContext<RuleFormValues>();
 
-  const labels = watch('labels');
-  const type = watch('type');
+  const [labels, type] = useWatch({ control, name: ['labels', 'type'] });
 
   const isRecordingRule = type ? isRecordingRuleByType(type) : false;
 

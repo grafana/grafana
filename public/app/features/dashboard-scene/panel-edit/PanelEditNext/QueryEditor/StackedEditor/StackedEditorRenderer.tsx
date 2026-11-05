@@ -7,6 +7,7 @@ import { Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorType } from '../../constants';
 import { DatasourceErrorAlert } from '../DatasourceErrorAlert';
+import { ExperimentalFeedbackButton } from '../Header/ExperimentalFeedbackButton';
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { StackedAddBar } from './StackedAddBar';
@@ -68,16 +69,19 @@ export function StackedEditorRenderer() {
             })}
           </Text>
         </Stack>
-        <Button
-          variant="secondary"
-          fill="text"
-          size="sm"
-          icon="times"
-          onClick={stackedMode.exit}
-          aria-label={t('query-editor-next.stacked.exit-aria-label', 'Exit stacked view')}
-        >
-          <Trans i18nKey="query-editor-next.stacked.exit">Exit stacked view</Trans>
-        </Button>
+        <Stack gap={1} alignItems="center">
+          <ExperimentalFeedbackButton />
+          <Button
+            variant="secondary"
+            fill="text"
+            size="sm"
+            icon="times"
+            onClick={stackedMode.exit}
+            aria-label={t('query-editor-next.stacked.exit-aria-label', 'Exit stacked view')}
+          >
+            <Trans i18nKey="query-editor-next.stacked.exit">Exit stacked view</Trans>
+          </Button>
+        </Stack>
       </div>
 
       <div className={styles.errorAlert}>

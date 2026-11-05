@@ -1,46 +1,23 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Dropdown, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Dropdown, Icon, Menu, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { trackAddTransformationInitiated } from '../../tracking';
-import { AddCardMenu } from '../AddCardMenu';
-import { useQueryEditorUIContext } from '../QueryEditorContext';
-
-function getButtonAriaLabel(variant: 'query' | 'transformation', afterId?: string) {
-  if (variant === 'transformation') {
-    return afterId
-      ? t('query-editor-next.sidebar.add-transformation-below', 'Add transformation below {{id}}', { id: afterId })
-      : t('query-editor-next.sidebar.add-transformation', 'Add transformation');
-  }
-
-  return afterId
-    ? t('query-editor-next.sidebar.add-below', 'Add below {{id}}', { id: afterId })
-    : t('query-editor-next.sidebar.add-query-or-expression', 'Add query or expression');
-}
+import { AddQueryMenuItems } from './AddQueryMenuItems';
+import { useAddTransformation } from './useAddCardActions';
 
 interface AddCardButtonProps {
   variant: 'query' | 'transformation';
-  afterId?: string;
-  alwaysVisible?: boolean;
-  showLabel?: boolean;
-  onAdd?: () => void;
+  afterId: string;
 }
 
-export const AddCardButton = ({
-  variant,
-  afterId,
-  onAdd,
-  alwaysVisible = false,
-  showLabel = false,
-}: AddCardButtonProps) => {
-  const showButtonLabel = alwaysVisible && showLabel;
-  const styles = useStyles2(getStyles, alwaysVisible);
+export const AddCardButton = ({ variant, afterId }: AddCardButtonProps) => {
+  const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const { setPendingTransformation } = useQueryEditorUIContext();
+  const handleTransformationClick = useAddTransformation(afterId);
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -48,62 +25,51 @@ export const AddCardButton = ({
     setMenuOpen(visible);
   }, []);
 
-  const queryMenu = <AddCardMenu afterId={afterId} source={afterId ? 'inline' : 'section_header'} onAdd={onAdd} />;
-
-  const handleTransformationClick = useCallback(() => {
-    trackAddTransformationInitiated(afterId ? 'inline' : 'section_header');
-    setPendingTransformation({ insertAfter: afterId });
-    onAdd?.();
-  }, [afterId, setPendingTransformation, onAdd]);
-
-  const ariaLabel = getButtonAriaLabel(variant, afterId);
-  const buttonLabel = t('query-editor-next.sidebar.add', 'Add');
-
   if (variant === 'transformation') {
     return (
       <button
-        className={cx(styles.button, { [styles.buttonWithLabel]: showButtonLabel })}
-        data-add-button={!alwaysVisible || undefined}
-        data-testid={
-          afterId
-            ? selectors.components.Transforms.addTransformationBelowButton(afterId)
-            : selectors.components.Transforms.addTransformationButton
-        }
+        className={styles.button}
+        data-add-button
+        data-testid={selectors.components.Transforms.addTransformationBelowButton(afterId)}
         type="button"
-        aria-label={ariaLabel}
+        aria-label={t('query-editor-next.sidebar.add-transformation-below', 'Add transformation below {{id}}', {
+          id: afterId,
+        })}
         onClick={handleTransformationClick}
       >
-        <Icon name="plus" size={alwaysVisible ? 'sm' : 'md'} />
-        {showButtonLabel && buttonLabel}
+        <Icon name="plus" size="md" />
       </button>
     );
   }
 
   return (
     <Dropdown
-      overlay={queryMenu}
-      placement={alwaysVisible ? 'bottom-start' : 'right-start'}
-      offset={alwaysVisible ? [0, theme.spacing.gridSize * 0.5] : [theme.spacing.gridSize, 0]}
+      overlay={
+        <Menu>
+          <AddQueryMenuItems afterId={afterId} />
+        </Menu>
+      }
+      placement="right-start"
+      offset={[theme.spacing.gridSize, 0]}
       onVisibleChange={handleMenuVisibleChange}
     >
       <button
-        className={cx(styles.button, { [styles.buttonWithLabel]: showButtonLabel })}
-        data-add-button={!alwaysVisible || undefined}
+        className={styles.button}
+        data-add-button
         data-menu-open={menuOpen || undefined}
         type="button"
-        aria-label={ariaLabel}
+        aria-label={t('query-editor-next.sidebar.add-below', 'Add below {{id}}', { id: afterId })}
       >
-        <Icon name="plus" size={alwaysVisible ? 'sm' : 'md'} />
-        {showButtonLabel && buttonLabel}
+        <Icon name="plus" size="md" />
       </button>
     </Dropdown>
   );
 };
 
-function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     button: css({
-      display: alwaysVisible ? 'inline-flex' : 'flex',
+      display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       width: theme.spacing(2.5),
@@ -114,37 +80,32 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       color: theme.colors.secondary.contrastText,
       cursor: 'pointer',
       padding: 0,
-      // Never let the row's flex layout shrink this below its own content — the section title
-      // wraps to make room instead.
-      flexShrink: 0,
       willChange: 'transform',
-      transform: alwaysVisible ? 'translateZ(0)' : 'translateY(-50%) translateZ(0)',
+      transform: 'translateY(-50%) translateZ(0)',
 
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: [
-          theme.transitions.create(alwaysVisible ? ['background-color'] : ['opacity', 'background-color'], {
+          theme.transitions.create(['opacity', 'background-color'], {
             duration: 100,
           }),
           'transform 250ms cubic-bezier(0.25, 1, 0.5, 1)',
         ].join(', '),
       },
 
-      // Hover-button positioning & hidden-by-default state (revealed by SidebarCard hover)
-      ...(!alwaysVisible && {
-        position: 'absolute' as const,
-        top: `calc(100% + ${theme.spacing(0.25)})`,
-        left: theme.spacing(-2.5),
-        zIndex: 1,
-        opacity: 0,
-        pointerEvents: 'none' as const,
-      }),
+      // Hidden by default; revealed by SidebarCard hover.
+      position: 'absolute',
+      top: `calc(100% + ${theme.spacing(0.25)})`,
+      left: theme.spacing(-2.5),
+      zIndex: 1,
+      opacity: 0,
+      pointerEvents: 'none',
 
       '&:hover': {
         background: theme.colors.secondary.shade,
       },
 
       '&:active': {
-        transform: alwaysVisible ? 'scale(0.97)' : 'translateY(-50%) scale(0.97)',
+        transform: 'translateY(-50%) scale(0.97)',
       },
 
       '&:focus-visible': {
@@ -152,19 +113,9 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
         // border for the solid fill and is nearly invisible as a focus ring against it.
         outline: `2px solid ${theme.colors.primary.border}`,
         outlineOffset: '2px',
-        ...(!alwaysVisible && {
-          opacity: 1,
-          pointerEvents: 'auto' as const,
-        }),
+        opacity: 1,
+        pointerEvents: 'auto',
       },
-    }),
-    buttonWithLabel: css({
-      width: 'auto',
-      gap: theme.spacing(0.5),
-      padding: theme.spacing(0, 0.75),
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      marginLeft: 'auto',
     }),
   };
 }

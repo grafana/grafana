@@ -3,11 +3,12 @@ import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Dropdown, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Dropdown, Icon, Menu, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { trackAddTransformationInitiated } from '../../tracking';
-import { AddCardMenu } from '../AddCardMenu';
-import { useQueryEditorUIContext } from '../QueryEditorContext';
+import { QueryEditorType } from '../../constants';
+import { useQueryEditorTypeConfig, useQueryEditorUIContext } from '../QueryEditorContext';
+import { AddQueryMenuItems } from '../Sidebar/AddQueryMenuItems';
+import { useAddTransformation } from '../Sidebar/useAddCardActions';
 
 interface StackedAddBarProps {
   variant: 'query' | 'transformation';
@@ -18,8 +19,12 @@ interface StackedAddBarProps {
 export function StackedAddBar({ variant, afterId }: StackedAddBarProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const { multiSelectMode, setPendingTransformation } = useQueryEditorUIContext();
+  const typeConfig = useQueryEditorTypeConfig();
+  const { multiSelectMode } = useQueryEditorUIContext();
   const [menuOpen, setMenuOpen] = useState(false);
+  const addTransformationAfter = useAddTransformation(afterId, undefined, 'stacked_gap');
+  // Transformations run after all queries, so a query gap can only append to the end.
+  const appendTransformation = useAddTransformation(undefined, undefined, 'stacked_gap');
 
   if (multiSelectMode) {
     return <div className={styles.spacer} data-stacked-add-spacer />;
@@ -37,10 +42,7 @@ export function StackedAddBar({ variant, afterId }: StackedAddBarProps) {
           aria-label={t('query-editor-next.sidebar.add-transformation-below', 'Add transformation below {{id}}', {
             id: afterId,
           })}
-          onClick={() => {
-            trackAddTransformationInitiated('stacked_gap');
-            setPendingTransformation({ insertAfter: afterId });
-          }}
+          onClick={addTransformationAfter}
         >
           <Icon name="plus" size="sm" />
           {t('query-editor-next.sidebar.add-transformation', 'Add transformation')}
@@ -53,7 +55,17 @@ export function StackedAddBar({ variant, afterId }: StackedAddBarProps) {
     <div className={styles.bar} data-stacked-add-bar data-open={menuOpen || undefined}>
       {line}
       <Dropdown
-        overlay={<AddCardMenu afterId={afterId} source="stacked_gap" showAddTransformation />}
+        overlay={
+          <Menu>
+            <AddQueryMenuItems afterId={afterId} source="stacked_gap" />
+            <Menu.Divider />
+            <Menu.Item
+              label={t('query-editor-next.sidebar.add-transformation', 'Add transformation')}
+              icon={typeConfig[QueryEditorType.Transformation].icon}
+              onClick={appendTransformation}
+            />
+          </Menu>
+        }
         placement="bottom-start"
         offset={[0, theme.spacing.gridSize * 0.5]}
         onVisibleChange={setMenuOpen}
