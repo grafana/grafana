@@ -15,6 +15,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -199,21 +200,44 @@ func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, options
 // countSupportedResources sums counts for resource types that support provisioning.
 // The supported set is identified by group+kind; the plural resource used to match the
 // stats is resolved via discovery.
+//
+// Stats are keyed by the group a resource is stored under, which for a kind in a shared storage
+// collection is the collection rather than the group serving it, so a supported group counts
+// against a stat it is a member of as well as against its own.
 func countSupportedResources(ctx context.Context, stats []provisioning.ResourceCount, clients resources.ResourceClients) (int64, error) {
-	supported := make(map[schema.GroupResource]bool)
+	logger := logging.FromContext(ctx)
+	supported := make([]schema.GroupResource, 0, len(clients.SupportedResources()))
 	for _, kind := range clients.SupportedResources() {
 		_, gvr, err := clients.ForKind(ctx, schema.GroupVersionKind{Group: kind.Group, Kind: kind.Kind})
 		if err != nil {
-			return 0, fmt.Errorf("resolve client for %s/%s: %w", kind.Group, kind.Kind, err)
+			// A kind nobody serves contributes nothing to export; failing here would block an
+			// export of the kinds that do resolve.
+			logger.Warn("skipping unresolvable kind in quota pre-count",
+				"group", kind.Group, "kind", kind.Kind, "error", err)
+			continue
 		}
-		supported[gvr.GroupResource()] = true
+		supported = append(supported, gvr.GroupResource())
 	}
 
 	var total int64
 	for _, stat := range stats {
-		if supported[schema.GroupResource{Group: stat.Group, Resource: stat.Resource}] {
+		if countsTowardsQuota(supported, stat) {
 			total += stat.Count
 		}
 	}
 	return total, nil
+}
+
+// countsTowardsQuota reports whether a stat covers a supported resource.
+func countsTowardsQuota(supported []schema.GroupResource, stat provisioning.ResourceCount) bool {
+	for _, gr := range supported {
+		if gr.Resource != stat.Resource {
+			continue
+		}
+		if gr.Group == stat.Group ||
+			provisioningresources.MatchesGroup(provisioningresources.WildcardGroupPrefix+stat.Group, gr.Group) {
+			return true
+		}
+	}
+	return false
 }

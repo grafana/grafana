@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/restmapper"
 
+	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -47,6 +48,9 @@ type kindSpec struct {
 	FolderScoped bool `json:"folderScoped"`
 	// FeatureFlags are extra feature toggles the kind needs (raw toggle names, e.g. "playlistsRBAC").
 	FeatureFlags []string `json:"featureFlags"`
+	// Collection is the storage collection the kind's group belongs to, when several API groups
+	// share one. Set it to declare the kind as a wildcard, the way an operator would.
+	Collection string `json:"collection"`
 	// Manifest is a sample resource manifest; the harness patches its name and spec.title per instance.
 	Manifest json.RawMessage `json:"manifest"`
 }
@@ -59,6 +63,7 @@ type resourceKind struct {
 	kind         string
 	folderScoped bool
 	featureFlags []string
+	collection   string
 	manifest     []byte
 }
 
@@ -106,6 +111,7 @@ func mustLoadKinds() []resourceKind {
 			kind:         meta.Kind,
 			folderScoped: spec.FolderScoped,
 			featureFlags: spec.FeatureFlags,
+			collection:   spec.Collection,
 			manifest:     []byte(spec.Manifest),
 		})
 	}
@@ -120,10 +126,14 @@ func (rk resourceKind) groupPrefix() string { return rk.group + "/" }
 
 // token is the [provisioning] resources entry that enables this kind (active, folder-scoped or not).
 func (rk resourceKind) token() string {
-	if rk.folderScoped {
-		return rk.group + "/" + rk.kind + ":folder"
+	group := rk.group
+	if rk.collection != "" {
+		group = provisioningresources.WildcardGroupPrefix + rk.collection
 	}
-	return rk.group + "/" + rk.kind
+	if rk.folderScoped {
+		return group + "/" + rk.kind + ":folder"
+	}
+	return group + "/" + rk.kind
 }
 
 // unifiedStorageKey is the [unified_storage] config key (<resource>.<group>) for this kind. The

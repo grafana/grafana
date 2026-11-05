@@ -921,3 +921,26 @@ func asJSON(v any, pretty bool) string {
 	bytes, _ := json.Marshal(v)
 	return string(bytes)
 }
+
+func TestSharedGroupLabel(t *testing.T) {
+	const collection = "datasource.grafana.app"
+
+	t.Run("round-trips a served group", func(t *testing.T) {
+		value := utils.SharedGroupLabelValue(collection, "grafana-testdata-datasource.datasource.grafana.app")
+		require.Equal(t, "grafana-testdata-datasource", value)
+		require.LessOrEqual(t, len(value), 63, "label values are capped at 63 characters")
+		require.Equal(t, "grafana-testdata-datasource.datasource.grafana.app", utils.SharedGroupFromLabel(collection, value))
+	})
+
+	t.Run("key is namespaced by the collection", func(t *testing.T) {
+		require.Equal(t, "datasource.grafana.app/group", utils.SharedGroupLabelKey(collection))
+	})
+
+	t.Run("an unset label leaves the collection group in place", func(t *testing.T) {
+		require.Empty(t, utils.SharedGroupFromLabel(collection, ""))
+	})
+
+	t.Run("the collection itself has no suffix to trim", func(t *testing.T) {
+		require.Equal(t, collection, utils.SharedGroupLabelValue(collection, collection))
+	})
+}

@@ -51,9 +51,15 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 
 	items := make([]provisioning.ResourceListItem, 0, len(objects.Items))
 	for _, v := range objects.Items {
+		// The key of a shared collection names the collection, not an API group any
+		// server serves, so a client resolved from it would never find the object.
+		group := v.Object.Group
+		if v.ServedGroup != "" {
+			group = v.ServedGroup
+		}
 		items = append(items, provisioning.ResourceListItem{
 			Path:     v.Path,
-			Group:    v.Object.Group,
+			Group:    group,
 			Resource: v.Object.Resource,
 			Name:     v.Object.Name,
 			Hash:     v.Hash,

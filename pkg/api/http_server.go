@@ -24,6 +24,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -224,6 +226,8 @@ type HTTPServer struct {
 	promGatherer                    prometheus.Gatherer
 	clientConfigProvider            grafanaapiserver.DirectRestConfigProvider
 	clientGenerator                 resource.ClientGenerator
+	unifiedClient                   unifiedresource.ResourceClient
+	dualWrite                       dualwrite.Service
 	namespacer                      request.NamespaceMapper
 	anonService                     anonymous.Service
 	userVerifier                    user.Verifier
@@ -286,6 +290,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, anonService anonymous.Service,
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider, clientGenerator resource.ClientGenerator,
+	unifiedClient unifiedresource.ResourceClient,
+	dualWrite dualwrite.Service,
 	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall, publicDashboardsService publicdashboards.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -391,6 +397,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		promGatherer:                 promGatherer,
 		clientConfigProvider:         clientConfigProvider,
 		clientGenerator:              clientGenerator,
+		unifiedClient:                unifiedClient,
+		dualWrite:                    dualWrite,
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,

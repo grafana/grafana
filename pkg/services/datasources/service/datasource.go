@@ -323,6 +323,7 @@ func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceC
 		APIVersion: "v0alpha1", // TODO, get this from the plugin
 		Name:       ds.UID,
 		Plugin:     ds.Type,
+		URL:        ds.URL,
 		Labels:     labels,
 	}, nil
 }

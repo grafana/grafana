@@ -191,21 +191,36 @@ func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRe
 		}
 
 		// A non-empty group must match the group registered for that kind.
-		var kindOK, groupOK bool
+		var kindOK, groupOK, groupRequired bool
 		for _, s := range supported {
 			if s.Kind != r.Kind {
 				continue
 			}
 			kindOK = true
-			if r.Group == "" || r.Group == s.Group {
-				groupOK = true
-				break
+			if r.Group != "" {
+				if resources.MatchesGroup(s.Group, r.Group) {
+					groupOK = true
+					break
+				}
+				continue
 			}
+			// An omitted group is resolved from the kind alone. That cannot work for a kind
+			// registered as a collection: its members each serve their own group, and reading
+			// the resource through the wrong one does not find it.
+			if resources.IsWildcardGroup(s.Group) {
+				groupRequired = true
+				continue
+			}
+			groupOK = true
+			break
 		}
 		switch {
 		case !kindOK:
 			list = append(list, field.Invalid(path.Child("kind"), r.Kind,
 				fmt.Sprintf("kind is not supported for export; supported kinds: %s", strings.Join(supportedKinds(supported), ", "))))
+		case groupRequired && !groupOK:
+			list = append(list, field.Required(path.Child("group"),
+				fmt.Sprintf("group is required for kind %s: it is served by several groups", r.Kind)))
 		case !groupOK:
 			list = append(list, field.Invalid(path.Child("group"), r.Group,
 				fmt.Sprintf("group %q is not supported for kind %s", r.Group, r.Kind)))

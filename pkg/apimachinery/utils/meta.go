@@ -70,6 +70,30 @@ const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
 // Deprecated: This label will be removed when legacy support via internal IDs is no longer required.
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
 
+// SharedGroupLabelKey returns the label a shared storage collection uses to record
+// which API group serves an object. Several API groups can be persisted in one
+// collection under the collection's own group; the label is what tells them apart,
+// and reversing it is the only way back to the served group from stored data.
+// Its value is the served group with the collection group's suffix trimmed, since
+// label values are capped at 63 characters.
+func SharedGroupLabelKey(collectionGroup string) string {
+	return collectionGroup + "/group"
+}
+
+// SharedGroupLabelValue returns the SharedGroupLabelKey value for a served group.
+func SharedGroupLabelValue(collectionGroup, servedGroup string) string {
+	return strings.TrimSuffix(servedGroup, "."+collectionGroup)
+}
+
+// SharedGroupFromLabel reverses SharedGroupLabelValue. It returns "" when the value
+// is empty, so callers fall back to the collection group.
+func SharedGroupFromLabel(collectionGroup, labelValue string) string {
+	if labelValue == "" {
+		return ""
+	}
+	return labelValue + "." + collectionGroup
+}
+
 // Accessor functions for k8s objects
 //
 //go:generate mockery --name GrafanaMetaAccessor --structname MockGrafanaMetaAccessor --inpackage --filename meta_mock.go --with-expecter

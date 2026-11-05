@@ -931,6 +931,33 @@ func TestCountSupportedResources(t *testing.T) {
 	}
 }
 
+// A kind in a shared storage collection is counted under the collection group, which is not the
+// group serving it, so the two have to be matched rather than compared.
+func TestCountSupportedResourcesInACollection(t *testing.T) {
+	clients := resources.NewMockResourceClients(t)
+	clients.EXPECT().SupportedResources().Return([]resources.SupportedResource{
+		{GroupKind: schema.GroupKind{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"}},
+		{GroupKind: schema.GroupKind{Group: "loki.datasource.grafana.app", Kind: "DataSource"}},
+		{GroupKind: schema.GroupKind{Group: "unserved.grafana.app", Kind: "Gone"}},
+	}).Maybe()
+	clients.EXPECT().ForKind(mock.Anything, mock.Anything).RunAndReturn(
+		func(_ context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
+			if gvk.Kind == "Gone" {
+				return nil, schema.GroupVersionResource{}, fmt.Errorf("preferred version not found")
+			}
+			return nil, schema.GroupVersionResource{Group: gvk.Group, Version: "v0alpha1", Resource: "datasources"}, nil
+		}).Maybe()
+
+	got, err := countSupportedResources(context.Background(), []v0alpha1.ResourceCount{
+		{Group: "datasource.grafana.app", Resource: "datasources", Count: 12},
+		{Group: "alerting.grafana.app", Resource: "alertrules", Count: 50},
+	}, clients)
+
+	// An unresolvable kind is skipped rather than failing the export it contributes nothing to.
+	require.NoError(t, err)
+	assert.Equal(t, int64(12), got, "the collection's stat is counted once for its served members")
+}
+
 func TestCheckExportQuota(t *testing.T) {
 	tests := []struct {
 		name        string

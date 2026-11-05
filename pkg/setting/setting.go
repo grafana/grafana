@@ -200,7 +200,7 @@ type Cfg struct {
 	ProvisioningAllowedTargets []string
 	// ProvisioningResources is the configured set of provisionable resources, each as a
 	// "<group>/<Kind>[:cap...]" token (parsed by resources.ParseSupportedResources at startup).
-	ProvisioningResources                     []string
+	ProvisioningResources []string
 	ProvisioningAllowImageRendering           bool
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration

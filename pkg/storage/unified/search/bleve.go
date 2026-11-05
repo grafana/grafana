@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -2304,6 +2305,12 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 		}, nil
 	}
 
+	// Documents of a shared collection carry the group that serves them in a label,
+	// because the key they are indexed under names the collection instead. Reading it back
+	// depends on the labels sub-document being dynamically mapped with stored values; making
+	// it static, or mapping it without Store, silently empties every served group.
+	sharedGroupField := labelFieldPrefix + utils.SharedGroupLabelKey(b.key.Group)
+
 	start := time.Now()
 	q := bleve.NewBooleanQuery()
 	q.AddMust(&query.TermQuery{
@@ -2326,6 +2333,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 			resource.SEARCH_FIELD_SOURCE_PATH,
 			resource.SEARCH_FIELD_SOURCE_CHECKSUM,
 			resource.SEARCH_FIELD_SOURCE_TIME,
+			sharedGroupField,
 		},
 		Sort: search.SortOrder{
 			&search.SortField{
@@ -2391,6 +2399,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 		if err != nil {
 			return nil, err
 		}
+		item.ServedGroup = utils.SharedGroupFromLabel(item.Object.Group, asString(hit.Fields[sharedGroupField]))
 		rsp.Items = append(rsp.Items, item)
 	}
 	stats.AddResultsConversionTime(time.Since(start))

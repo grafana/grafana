@@ -3,17 +3,28 @@ import { css } from '@emotion/css';
 import type { GrafanaTheme2 } from '@grafana/data';
 import { Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { useUrlParams } from 'app/core/navigation/hooks';
 import { AdvisorRedirectNotice } from 'app/features/connections/components/AdvisorRedirectNotice/AdvisorRedirectNotice';
 import { RunAdvisorChecksButton } from 'app/features/connections/components/RunAdvisorChecksButton/RunAdvisorChecksButton';
 import { AdvisorCheckProvider } from 'app/features/connections/hooks/useDatasourceAdvisorChecks';
 import { DataSourceAddButton } from 'app/features/datasources/components/DataSourceAddButton';
 import { DataSourcesList } from 'app/features/datasources/components/DataSourcesList';
 import { getDataSourcesCount } from 'app/features/datasources/state/selectors';
+import { PreviewBannerViewPR } from 'app/features/provisioning/components/Shared/PreviewBannerViewPR';
+import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { type StoreState, useSelector } from 'app/types/store';
 
 export function DataSourcesListPage() {
   const styles = useStyles2(getStyles);
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
+  // Set after a repository-managed data source is committed to a new branch; surfaces the PR banner.
+  const { newPrURL, repoURL } = usePullRequestParam();
+  const [urlParams] = useUrlParams();
+  const branchInfo = {
+    targetBranch: urlParams.get('ref') || undefined,
+    configuredBranch: urlParams.get('repo_branch') || undefined,
+    repoBaseUrl: repoURL,
+  };
 
   const actions =
     dataSourcesCount > 0 ? (
@@ -26,6 +37,7 @@ export function DataSourcesListPage() {
     <AdvisorCheckProvider>
       <Page navId={'connections-datasources'} actions={actions}>
         <Page.Contents className={styles.pageContents}>
+          {newPrURL && <PreviewBannerViewPR prURL={newPrURL} isNewPr repoUrl={repoURL} branchInfo={branchInfo} />}
           <AdvisorRedirectNotice />
           <DataSourcesList />
         </Page.Contents>

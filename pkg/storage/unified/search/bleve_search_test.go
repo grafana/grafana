@@ -4459,3 +4459,58 @@ func TestSearchRejectsInternalFields(t *testing.T) {
 		require.Nil(t, search(t, req).Error)
 	})
 }
+
+// Several API groups can be persisted in one collection, so the key a document is
+// indexed under names the collection rather than the group that serves it. Listing
+// managed objects has to hand provisioning the served group, or the client it
+// resolves from the listing would look for the object in a group no server serves.
+func TestListManagedObjectsReportsTheServedGroupOfASharedCollection(t *testing.T) {
+	const collection = "datasource.grafana.app"
+	key := resource.NamespacedResource{Namespace: "default", Group: collection, Resource: "datasources"}
+	index := newTestIndexWithFields(t, key, nil)
+
+	manager := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo-x"}
+	doc := func(name string, labels map[string]string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+					Name:      name,
+				},
+				Title:   name,
+				Labels:  labels,
+				Manager: &manager,
+				Source:  &utils.SourceProperties{Path: name + ".json"},
+			},
+		}
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		doc("testdata-ds", map[string]string{utils.SharedGroupLabelKey(collection): "grafana-testdata-datasource"}),
+		doc("prometheus-ds", map[string]string{utils.SharedGroupLabelKey(collection): "prometheus"}),
+		// A collection member written before the label existed, or by something that
+		// does not use shared storage at all.
+		doc("unlabelled-ds", nil),
+	}}))
+
+	listed, err := index.ListManagedObjects(context.Background(), &resourcepb.ListManagedObjectsRequest{
+		Namespace: key.Namespace,
+		Kind:      string(manager.Kind),
+		Id:        manager.Identity,
+	}, &resource.SearchStats{})
+	require.NoError(t, err)
+	require.Nil(t, listed.Error)
+
+	served := map[string]string{}
+	for _, item := range listed.Items {
+		require.Equal(t, collection, item.Object.Group, "the key still names the collection")
+		served[item.Object.Name] = item.ServedGroup
+	}
+	require.Equal(t, map[string]string{
+		"testdata-ds":   "grafana-testdata-datasource." + collection,
+		"prometheus-ds": "prometheus." + collection,
+		"unlabelled-ds": "",
+	}, served)
+}

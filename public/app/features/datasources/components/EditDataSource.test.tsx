@@ -1,4 +1,5 @@
-import { screen, render } from '@testing-library/react';
+import { screen, render, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
@@ -7,6 +8,7 @@ import { setPluginComponentsHook, setPluginLinksHook, useDataSourceInstanceSetti
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { configureStore } from 'app/store/configureStore';
 
+import { type DataSourceSettingsK8s } from '../api';
 import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../mocks/dataSourcesMocks';
 
 import { missingRightsMessage } from './DataSourceMissingRightsMessage';
@@ -472,5 +474,78 @@ describe('<EditDataSource>', () => {
       jsonData: { ...getMockDataSource().jsonData, test: 'test' },
       secureJsonData: { test: 'test' },
     });
+  });
+});
+
+describe('<EditDataSource> provisioning', () => {
+  const managedResource = (annotations: Record<string, string>): DataSourceSettingsK8s => ({
+    apiVersion: 'prometheus.datasource.grafana.app/v0alpha1',
+    kind: 'DataSource',
+    metadata: { name: getMockDataSource().uid, annotations },
+    spec: {
+      access: 'proxy',
+      title: getMockDataSource().name,
+      url: '',
+      user: '',
+      database: '',
+      basicAuth: false,
+      basicAuthUser: '',
+    },
+  });
+
+  const repoManaged = managedResource({
+    'grafana.app/managedBy': 'repo',
+    'grafana.app/managerId': 'test-repo',
+    'grafana.app/sourcePath': 'datasources/prom.json',
+  });
+
+  const terraformManaged = managedResource({ 'grafana.app/managedBy': 'terraform' });
+
+  beforeEach(() => {
+    setPluginComponentsHook(jest.fn().mockReturnValue({ isLoading: false, components: [] }));
+  });
+
+  it('renders no provisioning surfaces for an unmanaged data source', () => {
+    setup();
+
+    expect(screen.queryByText('Managed data source')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save & test/i })).toBeEnabled();
+  });
+
+  it('keeps a repository-managed data source editable', () => {
+    setup({ provisioning: { resource: repoManaged, isLoading: false } });
+
+    // Git Sync has its own edit workflow, so the page must not fall back to read-only.
+    expect(screen.queryByText('Managed data source')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save & test/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^delete$/i })).toBeEnabled();
+  });
+
+  it('commits a repository-managed data source through the provisioning drawer instead of saving it directly', async () => {
+    const onUpdate = jest.fn();
+    const onTest = jest.fn();
+    setup({ provisioning: { resource: repoManaged, isLoading: false }, onUpdate, onTest });
+
+    await userEvent.click(screen.getByRole('button', { name: /save & test/i }));
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: /save provisioned data source/i })).toBeVisible());
+    expect(onUpdate).not.toHaveBeenCalled();
+    expect(onTest).not.toHaveBeenCalled();
+  });
+
+  it('makes a data source read-only when another manager owns it and disallows edits', () => {
+    setup({ provisioning: { resource: terraformManaged, isLoading: false } });
+
+    expect(screen.getByText(/managed externally and cannot be modified/i)).toBeVisible();
+    // ButtonRow swaps "Save & test" for a bare "Test" when saving is not allowed.
+    expect(screen.queryByRole('button', { name: /save & test/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^test$/i })).toBeVisible();
+    expect(screen.getByRole('button', { name: /^delete$/i })).toBeDisabled();
+  });
+
+  it('renders a loading indicator while the provisioning state is being read', () => {
+    setup({ provisioning: { isLoading: true } });
+
+    expect(screen.getByText('Loading ...')).toBeInTheDocument();
   });
 });

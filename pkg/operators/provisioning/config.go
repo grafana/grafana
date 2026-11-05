@@ -39,6 +39,7 @@ import (
 	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -256,21 +257,27 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	// aggregated API server. Skip the built-in groups, then ensure every other active
 	// resource's group resolves to the aggregated server — failing loudly if a resource needs
 	// it and it is unset, rather than hitting "no clients provider for group" at request time.
+	//
+	// A collection is registered under the collection group, not its members: the members
+	// depend on what the serving instance has installed and cannot be discovered here, before
+	// there is a client to discover through. Member groups resolve to it by suffix, and the
+	// collection group is also the identity authorization folds members onto.
 	for _, r := range supportedResources {
 		if !r.IsActive() {
 			continue
 		}
-		switch r.Group {
+		group := provisioningresources.CollectionGroup(r.Group)
+		switch group {
 		case resources.DashboardResource.Group, resources.FolderResource.Group, provisioning.GROUP:
 			continue // built-in groups with dedicated server URLs
 		}
-		if _, ok := apiServerURLs[r.Group]; ok {
+		if _, ok := apiServerURLs[group]; ok {
 			continue
 		}
 		if aggregatedServerURL == "" {
 			return nil, fmt.Errorf("aggregated_server_url is required in [operator] section to serve resource %s/%s", r.Group, r.Kind)
 		}
-		apiServerURLs[r.Group] = aggregatedServerURL
+		apiServerURLs[group] = aggregatedServerURL
 	}
 
 	configProviders := make(map[string]apiserver.RestConfigProvider)
