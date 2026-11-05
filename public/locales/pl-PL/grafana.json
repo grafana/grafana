@@ -2075,7 +2075,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Zastosuj"
+      "apply": "Zastosuj",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5862,7 +5863,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -6044,6 +6046,9 @@
       "render-label": {
         "tooltip-remove-property": "Usuń właściwość"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "Dodaj: {{typeName}}",
@@ -6543,6 +6548,9 @@
           "hide-header": "Ukryj nagłówek wiersza",
           "title": "Tytuł"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filtry"
         },
@@ -6624,11 +6632,10 @@
         "data-source": "Źródło danych",
         "display": "Pokaż opcje adnotacji w:",
         "display-options": {
-          "above-dashboard": "Nad pulpitem",
           "controls-menu": "Menu sterowania",
-          "controls-menu-description": "Dostępne, gdy menu sterowania jest otwarte",
+          "controls-menu-description": "",
           "hidden": "Ukryte",
-          "hidden-description": "Ukrywa przełącznik do włączania lub wyłączania tej adnotacji"
+          "hidden-description": ""
         },
         "enabled": "Włączony",
         "enabled-description": "Po włączeniu zapytanie dotyczące adnotacji jest wysyłane przy każdym odświeżeniu pulpitu",
@@ -6731,7 +6738,11 @@
         "tab": "Karta",
         "tabs": "Karty",
         "variable": "Zmienna {{type}}",
-        "variable-set": "Zmienne"
+        "variable-set": "Zmienne",
+        "selected-panels_one": "",
+        "selected-panels_few": "",
+        "selected-panels_many": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Eksportuj"
@@ -6910,6 +6921,9 @@
             "description": "Powtórz tę kartę dla każdej wartości w wybranej zmiennej.",
             "title": "Powtórz według zmiennej"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filtry"
@@ -7690,6 +7704,7 @@
       "error-invalid-json": "Nieprawidłowy JSON",
       "error-invalid-layout": "Kod JSON układu nie przeszedł weryfikacji. Sprawdź kod JSON i spróbuj ponownie.",
       "error-invalid-v2-panel": "Kod JSON panelu nie przeszedł weryfikacji. Sprawdź kod JSON i spróbuj ponownie.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Błąd weryfikacji"
     },
     "interval-variable-form": {
@@ -7870,7 +7885,11 @@
       "title-delete-all-transformations": "Usunąć wszystkie transformacje?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Edytuj wizualizację"
+      "edit-visualization": "Edytuj wizualizację",
+      "panels-selected_one": "",
+      "panels-selected_few": "",
+      "panels-selected_many": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Przełącz widok tabeli",
@@ -14236,6 +14255,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Nie znaleziono wyników pasujących do Twojego zapytania"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

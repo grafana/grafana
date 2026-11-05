@@ -2033,7 +2033,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "套用"
+      "apply": "套用",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5712,7 +5713,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5894,6 +5896,9 @@
       "render-label": {
         "tooltip-remove-property": "移除屬性"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "新增 {{typeName}}",
@@ -6390,6 +6395,9 @@
           "hide-header": "隱藏列標題",
           "title": "標題"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "篩選條件"
         },
@@ -6471,11 +6479,10 @@
         "data-source": "資料來源",
         "display": "在以下方地方顯示註解控制項",
         "display-options": {
-          "above-dashboard": "儀表板上方",
           "controls-menu": "控制選單",
-          "controls-menu-description": "開啟控制選單時可以存取",
+          "controls-menu-description": "",
           "hidden": "隱藏",
-          "hidden-description": "隱藏開啟或關閉此註解的切換"
+          "hidden-description": ""
         },
         "enabled": "已啟用",
         "enabled-description": "啟用後，每次儀表板重新整理時都會發出註解查詢",
@@ -6578,7 +6585,8 @@
         "tab": "分頁",
         "tabs": "分頁",
         "variable": "{{type}}變數",
-        "variable-set": "變數"
+        "variable-set": "變數",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "匯出"
@@ -6757,6 +6765,9 @@
             "description": "對所選變數中的每個值重複此分頁。",
             "title": "依據變數重複"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "篩選條件"
@@ -7531,6 +7542,7 @@
       "error-invalid-json": "無效的 JSON",
       "error-invalid-layout": "版面配置 JSON 未通過驗證。請檢查 JSON，然後再試一次。",
       "error-invalid-v2-panel": "面板 JSON 未通過驗證。請檢查 JSON，然後再試一次。",
+      "mobile-edit-unavailable": "",
       "validation-error": "驗證錯誤"
     },
     "interval-variable-form": {
@@ -7705,7 +7717,8 @@
       "title-delete-all-transformations": "是否要刪除所有轉換？"
     },
     "panel-edit-actions": {
-      "edit-visualization": "編輯視覺化"
+      "edit-visualization": "編輯視覺化",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "切換表格檢視",
@@ -13906,6 +13919,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "找不到符合您查詢的內容"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {
