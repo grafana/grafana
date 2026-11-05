@@ -3,7 +3,9 @@ import { screen } from '@testing-library/react';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { QueryEditorType } from '../../constants';
-import { renderWithQueryEditorProvider } from '../testUtils';
+import { QueryEditorDetailsSidebar } from '../Body/QueryEditorDetailsSidebar';
+import { mockQueryOptionsState, renderWithQueryEditorProvider } from '../testUtils';
+import { QueryOptionField } from '../types';
 
 import { QueryOptionsBar } from './QueryOptionsBar';
 
@@ -57,5 +59,70 @@ describe('QueryOptionsBar', () => {
       args: { panelRef: 'panel-ref-1', currentTab: InspectTab.Query },
     });
     expect(trackQueryMenuAction).toHaveBeenCalledWith('open_inspector', QueryEditorType.Query);
+  });
+
+  describe('query options', () => {
+    const openSidebar = jest.fn();
+    const closeSidebar = jest.fn();
+
+    function renderBar(isQueryOptionsOpen: boolean, ui = <QueryOptionsBar />) {
+      return renderWithQueryEditorProvider(ui, {
+        uiStateOverrides: {
+          queryOptions: { ...mockQueryOptionsState, isQueryOptionsOpen, openSidebar, closeSidebar },
+        },
+      });
+    }
+
+    it('opens the sidebar without a focused field from the "Query options" button', async () => {
+      const { user } = renderBar(false);
+
+      await user.click(screen.getByRole('button', { name: 'Query options' }));
+
+      expect(openSidebar).toHaveBeenCalledWith();
+      expect(closeSidebar).not.toHaveBeenCalled();
+      expect(trackQueryOptionsToggle).toHaveBeenCalledWith(true);
+    });
+
+    it('closes the sidebar from the "Query options" button when it is already open', async () => {
+      const { user } = renderBar(true);
+
+      await user.click(screen.getByRole('button', { name: 'Query options' }));
+
+      expect(closeSidebar).toHaveBeenCalledTimes(1);
+      expect(openSidebar).not.toHaveBeenCalled();
+      expect(trackQueryOptionsToggle).toHaveBeenCalledWith(false);
+    });
+
+    it('opens the sidebar focused on the clicked option', async () => {
+      const { user } = renderBar(false);
+
+      await user.click(screen.getByRole('button', { name: 'Edit Max data points' }));
+
+      expect(openSidebar).toHaveBeenCalledWith(QueryOptionField.maxDataPoints);
+      expect(trackQueryOptionsToggle).toHaveBeenCalledWith(true);
+    });
+
+    it('opens the sidebar without a focused field from the read-only interval option', async () => {
+      const { user } = renderBar(false);
+
+      await user.click(screen.getByRole('button', { name: 'Edit Interval' }));
+
+      expect(openSidebar).toHaveBeenCalledWith();
+    });
+
+    it('switches the open sidebar to the clicked option without treating the click as outside', async () => {
+      const { user } = renderBar(
+        true,
+        <>
+          <QueryOptionsBar />
+          <QueryEditorDetailsSidebar />
+        </>
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Edit Relative time' }));
+
+      expect(openSidebar).toHaveBeenCalledWith(QueryOptionField.relativeTime);
+      expect(closeSidebar).not.toHaveBeenCalled();
+    });
   });
 });
