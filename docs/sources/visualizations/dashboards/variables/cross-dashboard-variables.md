@@ -13,6 +13,8 @@ description: Add variables that you can use across dashboards, globally or by fo
 weight: 150
 ---
 
+# Cross-dashboard variables
+
 {{< docs/public-preview product="Cross-dashboard variables" featureFlag="`grafana.dashboardGlobalVariables`" >}}
 
 Unlike variables that are specific to the dashboard in which you build them, you can create _cross-dashboard variables_ for use across multiple dashboards.
