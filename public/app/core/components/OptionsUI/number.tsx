@@ -96,7 +96,10 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
         return;
       }
 
-      setCommitted(raw);
+      // Show what's stored, which differs from the text when it was floored
+      const numText = String(num);
+      setText(numText);
+      setCommitted(numText);
       onChange(num);
     },
     [committed, onChange, settings]
