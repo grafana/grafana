@@ -151,7 +151,7 @@ func TestMutateNotebook(t *testing.T) {
 		nb := newNotebook("nb")
 		nb.Spec.Title = ""
 
-		require.NoError(t, mutateNotebook(notebookAttributes(admission.Create, nb, &metav1.CreateOptions{}), nil))
+		require.NoError(t, mutateNotebook(notebookAttributes(admission.Create, nb, &metav1.CreateOptions{})))
 
 		require.Regexp(t, defaultTitlePattern, nb.Spec.Title)
 	})
@@ -161,7 +161,7 @@ func TestMutateNotebook(t *testing.T) {
 		nb := newNotebook("nb")
 		nb.Spec.Title = "   "
 
-		require.NoError(t, mutateNotebook(notebookAttributes(admission.Create, nb, &metav1.CreateOptions{}), nil))
+		require.NoError(t, mutateNotebook(notebookAttributes(admission.Create, nb, &metav1.CreateOptions{})))
 
 		require.Regexp(t, defaultTitlePattern, nb.Spec.Title)
 	})
@@ -170,7 +170,7 @@ func TestMutateNotebook(t *testing.T) {
 		nb := newNotebook("nb")
 		nb.Spec.Title = "  Incident review  "
 
-		require.NoError(t, mutateNotebook(notebookAttributes(admission.Create, nb, &metav1.CreateOptions{}), nil))
+		require.NoError(t, mutateNotebook(notebookAttributes(admission.Create, nb, &metav1.CreateOptions{})))
 
 		require.Equal(t, "  Incident review  ", nb.Spec.Title)
 	})
@@ -180,7 +180,7 @@ func TestMutateNotebook(t *testing.T) {
 		nb := newNotebook("nb")
 		nb.Spec.Title = ""
 
-		require.NoError(t, mutateNotebook(notebookAttributes(admission.Update, nb, &metav1.UpdateOptions{}), nil))
+		require.NoError(t, mutateNotebook(notebookAttributes(admission.Update, nb, &metav1.UpdateOptions{})))
 
 		require.Empty(t, nb.Spec.Title)
 	})
@@ -198,7 +198,7 @@ func TestMutateNotebook(t *testing.T) {
 			nb.Spec.TimeSettings.HideTimepicker = true
 			nb.Spec.TimeSettings.From = "now-1h"
 
-			require.NoError(t, mutateNotebook(notebookAttributes(tc.op, nb, tc.opts), nil))
+			require.NoError(t, mutateNotebook(notebookAttributes(tc.op, nb, tc.opts)))
 
 			require.False(t, nb.Spec.TimeSettings.HideTimepicker)
 			require.Equal(t, "now-1h", nb.Spec.TimeSettings.From)

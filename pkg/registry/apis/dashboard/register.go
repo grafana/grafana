@@ -139,8 +139,7 @@ type DashboardsAPIBuilder struct {
 	homeDashboard            home.HomeDashboardGetter // On-prem home dashboard support
 	namespacer               request.NamespaceMapper
 	dashboardActivityChannel live.DashboardActivityChannel
-	isStandalone             bool             // skips any handling including anything to do with legacy storage
-	notebookMetrics          *notebookMetrics // nil when built without a registry, which counts nothing
+	isStandalone             bool // skips any handling including anything to do with legacy storage
 
 	// Embedded mode builds resourcePermissionsSvc lazily from restConfigProvider; standalone
 	// injects resourcePermissionsSvc directly and leaves restConfigProvider nil.
@@ -215,7 +214,6 @@ func RegisterAPIService(
 		dashboardActivityChannel: dashboardActivityChannel,
 		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
 		homeDashboard:            home.NewHomeDashboardSupport(cfg),
-		notebookMetrics:          newNotebookMetrics(reg),
 	}
 
 	accessControl.RegisterScopeAttributeResolver(VariableUIDScopeResolver(folderService))

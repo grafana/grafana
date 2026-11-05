@@ -43,9 +43,8 @@ func notebookCellID(item dashv2beta1.NotebookNotebookLayoutItemKind) string {
 //
 // An item that matches nothing gets a new id. An id is never given to two items.
 //
-// old is nil on create. It returns how many new ids it generated, which leaves out the ones inherited
-// from old.
-func assignNotebookCellIDs(notebook, old *dashv2beta1.Notebook) int {
+// old is nil on create.
+func assignNotebookCellIDs(notebook, old *dashv2beta1.Notebook) {
 	cells := notebook.Spec.Layout.Spec.Cells
 
 	taken := make(map[string]struct{}, len(cells))
@@ -69,7 +68,6 @@ func assignNotebookCellIDs(notebook, old *dashv2beta1.Notebook) int {
 		}
 	}
 
-	generated := 0
 	for i := range cells {
 		if notebookCellID(cells[i]) != "" {
 			continue
@@ -84,14 +82,11 @@ func assignNotebookCellIDs(notebook, old *dashv2beta1.Notebook) int {
 				}
 				id = newNotebookCellID()
 			}
-			generated++
 		}
 
 		taken[id] = struct{}{}
 		cells[i].Spec.Id = &id
 	}
-
-	return generated
 }
 
 // takeStoredID hands out the next stored id for the element name that nothing has claimed, and removes
@@ -107,19 +102,6 @@ func takeStoredID(storedIDs map[string][]string, name string, taken map[string]s
 		}
 	}
 	return "", false
-}
-
-// notebookHasCellWithoutID is whether a stored notebook predates cell ids, at least in part.
-func notebookHasCellWithoutID(notebook *dashv2beta1.Notebook) bool {
-	if notebook == nil {
-		return false
-	}
-	for _, cell := range notebook.Spec.Layout.Spec.Cells {
-		if notebookCellID(cell) == "" {
-			return true
-		}
-	}
-	return false
 }
 
 // validateNotebookCellIDs rejects an id that is malformed or on more than one item. An item without an

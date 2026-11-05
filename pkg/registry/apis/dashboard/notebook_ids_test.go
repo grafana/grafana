@@ -186,18 +186,9 @@ func TestAssignNotebookCellIDs(t *testing.T) {
 		stored := notebookWithCells(layoutCell("a", testCellID(1)), layoutCell("b", testCellID(2)))
 		nb := notebookWithCells(layoutCell("a", ""), layoutCell("b", testCellID(2)))
 
-		generated := assignNotebookCellIDs(nb, stored)
+		assignNotebookCellIDs(nb, stored)
 
 		require.Equal(t, []string{testCellID(100), testCellID(2)}, cellIDs(nb))
-		require.Equal(t, 1, generated)
-	})
-
-	t.Run("reports how many ids it generated, leaving out inherited ones", func(t *testing.T) {
-		stored := notebookWithCells(layoutCell("a", testCellID(1)))
-
-		require.Equal(t, 1, assignNotebookCellIDs(notebookWithCells(layoutCell("a", ""), layoutCell("b", "")), stored))
-		require.Equal(t, 2, assignNotebookCellIDs(notebookWithCells(layoutCell("a", ""), layoutCell("b", "")), nil))
-		require.Zero(t, assignNotebookCellIDs(notebookWithCells(layoutCell("a", testCellID(1))), stored))
 	})
 
 	t.Run("a new id never collides with one already on the notebook", func(t *testing.T) {
