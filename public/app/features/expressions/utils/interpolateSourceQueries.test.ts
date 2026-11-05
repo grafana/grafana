@@ -98,4 +98,23 @@ describe('interpolateSourceQueries', () => {
 
     expect(result).toEqual([missing, { ...found, rawSql: 'done' }]);
   });
+
+  it('rejects when a data source cannot be loaded and throwOnMissingDataSource is set', async () => {
+    const missing = { refId: 'A', datasource: { uid: 'missing', type: 'mysql' } };
+    mockDataSources({});
+
+    await expect(
+      interpolateSourceQueries([missing], {}, undefined, { throwOnMissingDataSource: true })
+    ).rejects.toThrow('Datasource missing was not found');
+  });
+
+  it('resolves data sources with dataSourceScopedVars', async () => {
+    const query = { refId: 'A', datasource: { uid: '${ds}', type: 'mysql' } };
+    const dataSourceScopedVars = { ds: { value: 'mysql_uid', text: 'mysql_uid' } };
+    mockGetDatasource.mockResolvedValue({ uid: 'mysql_uid' });
+
+    await interpolateSourceQueries([query], {}, undefined, { dataSourceScopedVars });
+
+    expect(mockGetDatasource).toHaveBeenCalledWith(query.datasource, dataSourceScopedVars);
+  });
 });

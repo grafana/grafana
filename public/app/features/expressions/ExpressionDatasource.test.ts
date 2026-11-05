@@ -131,6 +131,24 @@ describe('ExpressionDatasourceApi', () => {
       );
     });
 
+    it('fails the request when a query data source cannot be loaded', async () => {
+      const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+      const query: ExpressionQuery = {
+        type: ExpressionQueryType.math,
+        refId: 'A',
+        expression: '$A + $B',
+        datasource: { uid: 'missing', type: 'mysql' },
+      };
+
+      mockGetDatasource.mockRejectedValue(new Error('Datasource missing was not found'));
+      const querySpy = jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [] }));
+
+      await expect(lastValueFrom(ds.query(buildRequest(query, {})))).rejects.toThrow(
+        'Datasource missing was not found'
+      );
+      expect(querySpy).not.toHaveBeenCalled();
+    });
+
     describe('when several queries share a data source', () => {
       // Mirrors a data source such as Graphite that resolves `#A` references from sibling queries.
       type GraphiteQuery = DataQuery & { target: string };
