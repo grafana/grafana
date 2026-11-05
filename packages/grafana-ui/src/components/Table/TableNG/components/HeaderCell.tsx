@@ -80,6 +80,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   warnings = [],
 }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
   const sortable = isSortableField(field);
   const styles = useStyles2(getStyles, headerCellWrap, sortable, tableRefreshEnabled);
@@ -94,7 +95,6 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const headerTooltip = field.config.custom?.headerTooltip ?? field.config.description;
 
   // The menu item and active-filter icon share this popup.
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const filterIconRef = useRef<HTMLButtonElement>(null);
   const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(null);
   const { isPopoverVisible, setPopoverVisible, popupProps, filterEnabled, unsupportedReason } = useFilterPopupState({
