@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"slices"
 
+	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -18,9 +21,10 @@ func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) 
 	ctx, span := c.tracer.Start(ctx, "LegacyClient.LegacyCheck")
 	defer func() {
 		if err != nil {
-			span.RecordError(err)
+			_ = tracing.Error(span, err)
 		}
 
+		span.SetAttributes(attribute.Bool("allowed", allowed))
 		span.End()
 	}()
 

@@ -208,6 +208,11 @@ export function useGetFolderQueryFacade(uid?: string) {
     }
   }, [needsUserData, resultFolder, triggerGetUserDisplayMapping]);
 
+  // User names only fill in createdBy and updatedBy. If they can't be looked up, for example on a 403 from the
+  // display API, return the folder without them and keep that error off the folder: the folder picker reads a
+  // 403 as no access to the folder and disables itself.
+  const waitForUserData = needsUserData && !resultUserDisplay.isError;
+
   // For virtual folders the folder object is hardcoded and there are no parents, but access
   // is a real query whose loading/error state we surface directly.
   if (isVirtualFolder) {
@@ -233,7 +238,7 @@ export function useGetFolderQueryFacade(uid?: string) {
       resultFolder.data &&
       resultParents.data &&
       resultAccess.data &&
-      (!needsUserData || resultUserDisplay.data)
+      (!waitForUserData || resultUserDisplay.data)
     ) {
       newData = combineFolderResponses(
         resultFolder.data,
@@ -246,7 +251,7 @@ export function useGetFolderQueryFacade(uid?: string) {
     // Wrap the stitched data into single RTK query response type object so this looks like a single API call
     return {
       ...resultFolder,
-      ...combinedState(resultFolder, resultParents, resultAccess, resultUserDisplay, needsUserData),
+      ...combinedState(resultFolder, resultParents, resultAccess, resultUserDisplay, waitForUserData),
       refetch: async () => {
         return Promise.all([resultFolder.refetch(), resultParents.refetch(), resultAccess.refetch()]);
       },

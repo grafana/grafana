@@ -10,8 +10,9 @@ import {
   simpleRoutingTreesListDefaultAliasScenario,
   simpleRoutingTreesListScenario,
 } from '../components/RoutingTreeSelector/RoutingTreeSelector.scenario';
+import * as routeUtils from '../route.utils';
 
-import { useRoutingTreePreview } from './useRoutingTreePreview';
+import { useNotificationPolicyPreview } from './useNotificationPolicyPreview';
 import { useRoutingTrees } from './useRoutingTrees';
 
 const server = setupMockServer();
@@ -25,12 +26,12 @@ beforeEach(() => {
 
 // useRoutingTrees shares the list request with the hook under test, so its status tells us the fetch has settled.
 function renderPreview(name?: string) {
-  return renderHook(() => ({ preview: useRoutingTreePreview(name, instances), list: useRoutingTrees() }), {
+  return renderHook(() => ({ preview: useNotificationPolicyPreview(name, instances), list: useRoutingTrees() }), {
     wrapper: getDefaultWrapper(),
   });
 }
 
-describe('useRoutingTreePreview', () => {
+describe('useNotificationPolicyPreview', () => {
   it('returns the routes of the named tree that match the instances', async () => {
     const { result } = renderPreview(namedTree.metadata.name);
 
@@ -85,5 +86,17 @@ describe('useRoutingTreePreview', () => {
 
     await waitFor(() => expect(result.current.preview.status).toBe('error'));
     expect(result.current.preview.routes).toEqual([]);
+  });
+
+  it('does not match the tree when there are no instances to match', async () => {
+    const matchSpy = jest.spyOn(routeUtils, 'matchInstancesToRoute');
+    const { result } = renderHook(() => useNotificationPolicyPreview(namedTree.metadata.name, []), {
+      wrapper: getDefaultWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.status).toBe('found'));
+    expect(result.current.routes).toEqual([]);
+    expect(matchSpy).not.toHaveBeenCalled();
+    matchSpy.mockRestore();
   });
 });
