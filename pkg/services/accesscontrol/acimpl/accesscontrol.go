@@ -71,7 +71,8 @@ func (a *AccessControl) evaluate(ctx context.Context, user identity.Requester, e
 		return false, nil
 	}
 
-	if a.openFeatureClient.Boolean(ctx, featuremgmt.FlagAuthzUseLegacyCheck, false, openfeature.TransactionContext(ctx)) {
+	const defaultLegacyCheck = false
+	if a.openFeatureClient.Boolean(ctx, featuremgmt.FlagAuthzUseLegacyCheck, defaultLegacyCheck, openfeature.TransactionContext(ctx)) {
 		return a.evaluateLegacyCheck(ctx, user, evaluator)
 	}
 

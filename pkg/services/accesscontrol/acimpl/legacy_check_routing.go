@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 )
 
+var _ legacyclient.LegacyCheckClientSetter = (*AccessControl)(nil)
+
 func (a *AccessControl) SetLegacyCheckClient(
 	client *legacyclient.LegacyClient,
 	useExternalGroups bool,

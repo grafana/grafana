@@ -210,9 +210,7 @@ func ProvideAuthZClients(
 			channel,
 			legacyclient.WithLegacyTracerClientOption(tracer),
 		)
-		if configurable, ok := accessControl.(interface {
-			SetLegacyCheckClient(*legacyclient.LegacyClient, bool, authlib.NamespaceFormatter)
-		}); ok {
+		if configurable, ok := accessControl.(legacyclient.LegacyCheckClientSetter); ok {
 			configurable.SetLegacyCheckClient(
 				legacyAccessClient,
 				cfg.IDUseExternalGroupsForGroupsClaim,
