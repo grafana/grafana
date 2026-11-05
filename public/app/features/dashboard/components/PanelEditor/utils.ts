@@ -2,33 +2,18 @@ import { omit, omitBy } from 'lodash';
 
 import {
   type DynamicConfigValue,
-  type FieldConfigPropertyItem,
   type FieldConfigSource,
   type PanelPlugin,
-  standardEditorsRegistry,
   type ThresholdsConfig,
 } from '@grafana/data';
 import {
-  getVarMappingKind,
   isThresholdStepVarMappingKey,
   isVarMappingProp,
   splitThresholdStepExpressions,
   thresholdStepVarMappingKey,
   unwrapVarMappingPropId,
-  type VarMappingKind,
   wrapVarMappingPropId,
 } from '@grafana/data/internal';
-
-/**
- * The kind of expression the panel editor lets a property take, or `undefined` for none. A slider
- * keeps its slider, since a text input in its place would lose the slider for every value.
- */
-export function getVarMappingEditingKind(
-  item: Pick<FieldConfigPropertyItem, 'id' | 'process' | 'editor'>
-): VarMappingKind | undefined {
-  const kind = getVarMappingKind(item);
-  return kind === 'number' && item.editor === standardEditorsRegistry.getIfExists('slider')?.editor ? undefined : kind;
-}
 
 /**
  * Sets or clears `defaults.varMappings[id]`. Unlike `updateDefaultFieldConfigValue`, `id` is the
