@@ -1,9 +1,10 @@
 import { produce } from 'immer';
 import { chain, compact, isEmpty } from 'lodash';
 import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
+import { useAsync } from 'react-use';
 
 import { isDefaultRoutingTreeName } from '@grafana/alerting';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { type CombinedRuleGroup, type CombinedRuleNamespace, type Rule } from 'app/types/unified-alerting';
 import { PromRuleType, type RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -104,8 +105,8 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
   const deferredNamespaces = useDeferredValue(namespaces);
   const deferredFilterState = useDeferredValue(filterState);
 
-  return useMemo(() => {
-    const filteredRules = filterRules(deferredNamespaces, deferredFilterState);
+  const { value: filteredRules = [] } = useAsync(async () => {
+    const filteredRules = await filterRules(deferredNamespaces, deferredFilterState);
 
     // Totals recalculation is a workaround for the lack of server-side filtering
     filteredRules.forEach((namespace) => {
@@ -125,12 +126,14 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
 
     return filteredRules;
   }, [deferredNamespaces, deferredFilterState]);
+
+  return filteredRules;
 };
 
-export const filterRules = (
+export const filterRules = async (
   namespaces: CombinedRuleNamespace[],
   filterState: RulesFilter = { dataSourceNames: [], labels: [], freeFormWords: [] }
-): CombinedRuleNamespace[] => {
+): Promise<CombinedRuleNamespace[]> => {
   let filteredNamespaces = namespaces;
 
   const dataSourceFilter = filterState.dataSourceNames;
@@ -150,9 +153,11 @@ export const filterRules = (
   const filteredRuleNamespaces: CombinedRuleNamespace[] = [];
 
   try {
-    const matches = filteredNamespaces.reduce<CombinedRuleNamespace[]>(reduceNamespaces(filterState), []);
+    const matches = await Promise.all(filteredNamespaces.map(reduceNamespaces(filterState)));
     matches.forEach((match) => {
-      filteredRuleNamespaces.push(match);
+      if (match) {
+        filteredRuleNamespaces.push(match);
+      }
     });
   } catch (error) {
     logError(new Error('Failed to filter rules', { cause: error }), {
@@ -164,7 +169,7 @@ export const filterRules = (
 };
 
 const reduceNamespaces = (filterState: RulesFilter) => {
-  return (namespaceAcc: CombinedRuleNamespace[], namespace: CombinedRuleNamespace) => {
+  return async (namespace: CombinedRuleNamespace): Promise<CombinedRuleNamespace | undefined> => {
     const groupNameFilter = filterState.groupName;
     let filteredGroups = namespace.groups;
 
@@ -172,16 +177,17 @@ const reduceNamespaces = (filterState: RulesFilter) => {
       filteredGroups = fuzzyFilter(filteredGroups, (g) => g.name, groupNameFilter);
     }
 
-    filteredGroups = filteredGroups.reduce<CombinedRuleGroup[]>(reduceGroups(filterState), []);
+    const matchingGroups = await Promise.all(filteredGroups.map(reduceGroups(filterState)));
+    filteredGroups = matchingGroups.filter((group): group is CombinedRuleGroup => !!group);
 
     if (filteredGroups.length) {
-      namespaceAcc.push({
+      return {
         ...namespace,
         groups: filteredGroups,
-      });
+      };
     }
 
-    return namespaceAcc;
+    return undefined;
   };
 };
 
@@ -189,7 +195,7 @@ const reduceNamespaces = (filterState: RulesFilter) => {
 const reduceGroups = (filterState: RulesFilter) => {
   const ruleNameQuery = filterState.ruleName ?? filterState.freeFormWords.join(' ');
 
-  return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
+  return async (group: CombinedRuleGroup): Promise<CombinedRuleGroup | undefined> => {
     let filteredRules = group.rules;
 
     if (ruleNameQuery) {
@@ -205,133 +211,135 @@ const reduceGroups = (filterState: RulesFilter) => {
       });
     }
 
-    filteredRules = filteredRules.filter((rule) => {
-      const promRuleDefition = rule.promRule;
+    const matches = await Promise.all(
+      filteredRules.map(async (rule) => {
+        const promRuleDefition = rule.promRule;
 
-      // this will track what properties we're checking predicates for
-      // all predicates must be "true" to include the rule in the result set
-      // (this will result in an AND operation for our matchers)
-      const matchesFilterFor = chain(filterState)
-        // ⚠️ keep this list of properties we filter for here up-to-date ⚠️
-        // We are ignoring predicates we've matched before we get here (like "freeFormWords")
-        .pick([
-          'ruleType',
-          'dataSourceNames',
-          'ruleHealth',
-          'labels',
-          'ruleState',
-          'dashboardUid',
-          'plugins',
-          'contactPoint',
-          'ruleSource',
-          'policy',
-        ])
-        .omitBy(isEmpty)
-        .mapValues(() => false)
-        .value();
+        // this will track what properties we're checking predicates for
+        // all predicates must be "true" to include the rule in the result set
+        // (this will result in an AND operation for our matchers)
+        const matchesFilterFor = chain(filterState)
+          // ⚠️ keep this list of properties we filter for here up-to-date ⚠️
+          // We are ignoring predicates we've matched before we get here (like "freeFormWords")
+          .pick([
+            'ruleType',
+            'dataSourceNames',
+            'ruleHealth',
+            'labels',
+            'ruleState',
+            'dashboardUid',
+            'plugins',
+            'contactPoint',
+            'ruleSource',
+            'policy',
+          ])
+          .omitBy(isEmpty)
+          .mapValues(() => false)
+          .value();
 
-      if ('ruleType' in matchesFilterFor && filterState.ruleType === promRuleDefition?.type) {
-        matchesFilterFor.ruleType = true;
-      }
-
-      if ('plugins' in matchesFilterFor && filterState.plugins === 'hide') {
-        matchesFilterFor.plugins = rule.rulerRule && !isPluginProvidedRule(rule.rulerRule);
-      }
-
-      if ('contactPoint' in matchesFilterFor) {
-        const contactPoint = filterState.contactPoint;
-        const hasContactPoint =
-          rulerRuleType.grafana.rule(rule.rulerRule) &&
-          rule.rulerRule.grafana_alert.notification_settings?.receiver === contactPoint;
-
-        if (hasContactPoint) {
-          matchesFilterFor.contactPoint = true;
+        if ('ruleType' in matchesFilterFor && filterState.ruleType === promRuleDefition?.type) {
+          matchesFilterFor.ruleType = true;
         }
-      }
 
-      if ('policy' in matchesFilterFor) {
-        const policy = filterState.policy;
-        if (rulerRuleType.grafana.rule(rule.rulerRule)) {
-          const isDefaultPolicyFilter = isDefaultRoutingTreeName(policy ?? undefined);
+        if ('plugins' in matchesFilterFor && filterState.plugins === 'hide') {
+          matchesFilterFor.plugins = rule.rulerRule && !isPluginProvidedRule(rule.rulerRule);
+        }
 
-          if (isDefaultPolicyFilter) {
-            if (ruleUsesDefaultPolicy(rule.rulerRule.grafana_alert.notification_settings)) {
+        if ('contactPoint' in matchesFilterFor) {
+          const contactPoint = filterState.contactPoint;
+          const hasContactPoint =
+            rulerRuleType.grafana.rule(rule.rulerRule) &&
+            rule.rulerRule.grafana_alert.notification_settings?.receiver === contactPoint;
+
+          if (hasContactPoint) {
+            matchesFilterFor.contactPoint = true;
+          }
+        }
+
+        if ('policy' in matchesFilterFor) {
+          const policy = filterState.policy;
+          if (rulerRuleType.grafana.rule(rule.rulerRule)) {
+            const isDefaultPolicyFilter = isDefaultRoutingTreeName(policy ?? undefined);
+
+            if (isDefaultPolicyFilter) {
+              if (ruleUsesDefaultPolicy(rule.rulerRule.grafana_alert.notification_settings)) {
+                matchesFilterFor.policy = true;
+              }
+            } else if (rule.rulerRule.grafana_alert.notification_settings?.policy === policy) {
               matchesFilterFor.policy = true;
             }
-          } else if (rule.rulerRule.grafana_alert.notification_settings?.policy === policy) {
-            matchesFilterFor.policy = true;
           }
         }
-      }
 
-      if ('dataSourceNames' in matchesFilterFor) {
-        if (rulerRuleType.grafana.rule(rule.rulerRule)) {
-          const doesNotQueryDs = isQueryingDataSource(rule.rulerRule, filterState);
-
-          if (doesNotQueryDs) {
+        if ('dataSourceNames' in matchesFilterFor) {
+          if (rulerRuleType.grafana.rule(rule.rulerRule)) {
+            if (await matchesDataSourceFilter(rule.rulerRule, filterState)) {
+              matchesFilterFor.dataSourceNames = true;
+            }
+          } else {
             matchesFilterFor.dataSourceNames = true;
           }
-        } else {
-          matchesFilterFor.dataSourceNames = true;
         }
-      }
 
-      if ('ruleHealth' in filterState && promRuleDefition) {
-        const ruleHealth = getRuleHealth(promRuleDefition.health);
-        const match = filterState.ruleHealth === ruleHealth;
+        if ('ruleHealth' in filterState && promRuleDefition) {
+          const ruleHealth = getRuleHealth(promRuleDefition.health);
+          const match = filterState.ruleHealth === ruleHealth;
 
-        if (match) {
-          matchesFilterFor.ruleHealth = true;
+          if (match) {
+            matchesFilterFor.ruleHealth = true;
+          }
         }
-      }
 
-      // Query strings can match alert name, label keys, and label values
-      if ('labels' in matchesFilterFor) {
-        const matchers = compact(filterState.labels.map(looseParseMatcher));
+        // Query strings can match alert name, label keys, and label values
+        if ('labels' in matchesFilterFor) {
+          const matchers = compact(filterState.labels.map(looseParseMatcher));
 
-        // check if the label we query for exists in _either_ the rule definition or in any of its alerts
-        const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(rule.labels, matchers);
-        const doAlertsContainMatchingLabels =
-          matchers.length > 0 &&
-          promRuleDefition &&
-          promRuleDefition.type === PromRuleType.Alerting &&
-          promRuleDefition.alerts &&
-          promRuleDefition.alerts.some((alert) => labelsMatchMatchers(alert.labels, matchers));
+          // check if the label we query for exists in _either_ the rule definition or in any of its alerts
+          const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(rule.labels, matchers);
+          const doAlertsContainMatchingLabels =
+            matchers.length > 0 &&
+            promRuleDefition &&
+            promRuleDefition.type === PromRuleType.Alerting &&
+            promRuleDefition.alerts &&
+            promRuleDefition.alerts.some((alert) => labelsMatchMatchers(alert.labels, matchers));
 
-        if (doRuleLabelsMatchQuery || doAlertsContainMatchingLabels) {
-          matchesFilterFor.labels = true;
+          if (doRuleLabelsMatchQuery || doAlertsContainMatchingLabels) {
+            matchesFilterFor.labels = true;
+          }
         }
-      }
 
-      if ('ruleState' in matchesFilterFor) {
-        const promRule = rule.promRule;
-        const hasPromRuleDefinition = promRule && prometheusRuleType.alertingRule(promRule);
+        if ('ruleState' in matchesFilterFor) {
+          const promRule = rule.promRule;
+          const hasPromRuleDefinition = promRule && prometheusRuleType.alertingRule(promRule);
 
-        const ruleStateMatches = hasPromRuleDefinition && promRule.state === filterState.ruleState;
+          const ruleStateMatches = hasPromRuleDefinition && promRule.state === filterState.ruleState;
 
-        if (ruleStateMatches) {
-          matchesFilterFor.ruleState = true;
+          if (ruleStateMatches) {
+            matchesFilterFor.ruleState = true;
+          }
         }
-      }
 
-      if (
-        'dashboardUid' in matchesFilterFor &&
-        rule.annotations[Annotation.dashboardUID] === filterState.dashboardUid
-      ) {
-        matchesFilterFor.dashboardUid = true;
-      }
+        if (
+          'dashboardUid' in matchesFilterFor &&
+          rule.annotations[Annotation.dashboardUID] === filterState.dashboardUid
+        ) {
+          matchesFilterFor.dashboardUid = true;
+        }
 
-      return Object.values(matchesFilterFor).every((match) => match === true);
-    });
+        return Object.values(matchesFilterFor).every((match) => match === true);
+      })
+    );
+    filteredRules = filteredRules.filter((_, index) => matches[index]);
 
     // Add rules to the group that match the rule list filters
     if (filteredRules.length) {
-      groupAcc.push({
+      return {
         ...group,
         rules: filteredRules,
-      });
+      };
     }
-    return groupAcc;
+
+    return undefined;
   };
 };
 
@@ -344,18 +352,27 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
   }
 }
 
-const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: RulesFilter): boolean => {
+const matchesDataSourceFilter = async (rulerRule: RulerGrafanaRuleDTO, filterState: RulesFilter): Promise<boolean> => {
   if (!filterState.dataSourceNames?.length) {
     return true;
   }
 
-  return !!rulerRule.grafana_alert.data.find((query) => {
-    if (!query.datasourceUid) {
-      return false;
-    }
-    const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-    return ds?.name && filterState?.dataSourceNames?.includes(ds.name);
-  });
+  return Promise.any(
+    rulerRule.grafana_alert.data.map(async (query) => {
+      if (!query.datasourceUid) {
+        return Promise.reject();
+      }
+
+      const ds = await getDataSourceInstanceSettings(query.datasourceUid);
+      if (!ds?.name || !filterState.dataSourceNames.includes(ds.name)) {
+        return Promise.reject();
+      }
+
+      return true;
+    })
+  )
+    .then(() => true)
+    .catch(() => false);
 };
 
 const RULES_FILTER_KEYS = new Set<string>([
