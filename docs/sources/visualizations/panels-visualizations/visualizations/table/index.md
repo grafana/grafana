@@ -243,8 +243,6 @@ The `Min` column no longer appears in the table's column management sidebar:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-updated-from-save-v13.3.png" max-width="650px" alt="Table updated from saved changes" >}}
 
-
-
 ## Column sorting
 
 Click a column title to change the sort order from default to descending to ascending.
