@@ -32,6 +32,8 @@ export const FlagKeys = {
   AlertingRuleReviews: "alerting.ruleReviews",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
+  /** Show the Assistant Watchers banner on the alert rule list. Watchers are only available in Grafana Cloud. */
+  AlertingWatchersBanner: "alerting.watchersBanner",
   /** Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking */
   AlertingAlertListPanelEnhancements: "alertingAlertListPanelEnhancements",
   /** Rule backtesting API for alerting */
@@ -42,6 +44,8 @@ export const FlagKeys = {
   AlertingEnrichmentAssistantInvestigations: "alertingEnrichmentAssistantInvestigations",
   /** Enable enrichment per rule in the alerting UI. */
   AlertingEnrichmentPerRule: "alertingEnrichmentPerRule",
+  /** Enables the API to import Alertmanager configuration */
+  AlertingImportAlertmanagerAPI: "alertingImportAlertmanagerAPI",
   /** Enables the new Jira integration for contact points in cloud alert managers. */
   AlertingJiraIntegration: "alertingJiraIntegration",
   /** Enables the new alert list view design */
@@ -506,6 +510,17 @@ export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvalu
 };
 
 /**
+ * Show the Assistant Watchers banner on the alert rule list. Watchers are only available in Grafana Cloud.
+ *
+ * **Details:**
+ * - flag key: `alerting.watchersBanner`
+ * - default value: `false`
+ */
+export const useFlagAlertingWatchersBanner = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.watchersBanner", false, options).value;
+};
+
+/**
  * Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking
  *
  * **Details:**
@@ -558,6 +573,17 @@ export const useFlagAlertingEnrichmentAssistantInvestigations = (options?: React
  */
 export const useFlagAlertingEnrichmentPerRule = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alertingEnrichmentPerRule", false, options).value;
+};
+
+/**
+ * Enables the API to import Alertmanager configuration
+ *
+ * **Details:**
+ * - flag key: `alertingImportAlertmanagerAPI`
+ * - default value: `false`
+ */
+export const useFlagAlertingImportAlertmanagerAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingImportAlertmanagerAPI", false, options).value;
 };
 
 /**

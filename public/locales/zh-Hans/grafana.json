@@ -2033,7 +2033,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "应用"
+      "apply": "应用",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5712,7 +5713,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5894,6 +5896,9 @@
       "render-label": {
         "tooltip-remove-property": "移除属性"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "添加{{typeName}}",
@@ -6390,6 +6395,9 @@
           "hide-header": "隐藏行标题",
           "title": "标题"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "筛选条件"
         },
@@ -6471,11 +6479,10 @@
         "data-source": "数据源",
         "display": "显示此范围内的注释控件",
         "display-options": {
-          "above-dashboard": "数据面板上方",
           "controls-menu": "控件菜单",
-          "controls-menu-description": "控件菜单打开时可以访问",
+          "controls-menu-description": "",
           "hidden": "隐藏",
-          "hidden-description": "隐藏用于开启或关闭此注释的切换按钮"
+          "hidden-description": ""
         },
         "enabled": "已启用",
         "enabled-description": "启用后，每次数据面板刷新时都会发出注释查询",
@@ -6578,7 +6585,8 @@
         "tab": "标签页",
         "tabs": "标签页",
         "variable": "{{type}}变量",
-        "variable-set": "变量"
+        "variable-set": "变量",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "导出"
@@ -6757,6 +6765,9 @@
             "description": "对于所选变量中的每个值，重复此选项卡。",
             "title": "按变量重复"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "筛选条件"
@@ -7531,6 +7542,7 @@
       "error-invalid-json": "无效的 JSON",
       "error-invalid-layout": "布局 JSON 未通过验证。请检查 JSON，然后重试。",
       "error-invalid-v2-panel": "面板 JSON 未通过验证。请检查 JSON，然后重试。",
+      "mobile-edit-unavailable": "",
       "validation-error": "验证错误"
     },
     "interval-variable-form": {
@@ -7705,7 +7717,8 @@
       "title-delete-all-transformations": "删除所有转换？"
     },
     "panel-edit-actions": {
-      "edit-visualization": "编辑可视化"
+      "edit-visualization": "编辑可视化",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "切换表格视图",
@@ -13906,6 +13919,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "找不到与您的查询匹配的内容"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {
