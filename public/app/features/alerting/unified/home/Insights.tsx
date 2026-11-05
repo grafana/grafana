@@ -105,12 +105,13 @@ const namespace = getAPINamespace();
 export const INSTANCE_ID = namespace.includes('stacks-') ? namespace.replace('stacks-', '') : undefined;
 
 const getInsightsDataSources = async () => {
-  return Promise.all(
-    [ashDs, cloudUsageDs, grafanaCloudPromDs].map(async (ds) => ({
-      ...ds,
-      settings: await getDataSourceInstanceSettings(ds.uid),
-    }))
+  await Promise.all(
+    [ashDs, cloudUsageDs, grafanaCloudPromDs].map(async (ds) => {
+      ds.settings = await getDataSourceInstanceSettings(ds.uid);
+    })
   );
+
+  return [ashDs, cloudUsageDs, grafanaCloudPromDs];
 };
 export const insightsIsAvailable = async () => {
   const [_, cloudUsageDs, __] = await getInsightsDataSources();
