@@ -1,11 +1,10 @@
 // `structuredClone` is not yet in jsdom https://github.com/jsdom/jsdom/issues/3363
 import 'core-js/stable/structured-clone';
 import 'whatwg-fetch';
-import { configure } from '@testing-library/react';
 import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
 import path from 'node:path';
-import { initReactI18next } from 'react-i18next';
+import { initReactI18next } from 'react-i18next/initReactI18next';
 
 import { matchers } from '@grafana/test-utils';
 
@@ -13,6 +12,34 @@ import { setPluginComponentsHook } from '../../packages/grafana-runtime/src/serv
 import { getEnvConfig } from '../../scripts/cli/env-util';
 
 import { jestDomMatchers } from './lazyJestDomMatchers';
+
+// The config leaf shares state with the public entry without loading its query/render graph.
+const { configure } = require('@testing-library/dom/dist/config') as Pick<
+  typeof import('@testing-library/dom'),
+  'configure'
+>;
+configure({ asyncUtilTimeout: 2000 });
+
+// Unmount before console enforcement restores its spies, without importing React in pure suites.
+const reactTestingLibrary = require.resolve('@testing-library/react');
+const pureReactTestingLibrary = require.resolve('@testing-library/react/pure');
+const reactCleanups = new Set<typeof import('@testing-library/react').cleanup>();
+function rememberReactCleanup() {
+  for (const entry of [reactTestingLibrary, pureReactTestingLibrary]) {
+    const loaded = require.cache[entry];
+    if (loaded) {
+      reactCleanups.add(loaded.exports.cleanup);
+    }
+  }
+}
+// Nested teardown can reset modules before this setup's afterEach. Keep cleanup for retained imports.
+beforeEach(rememberReactCleanup);
+afterEach(() => {
+  rememberReactCleanup();
+  for (const cleanup of reactCleanups) {
+    cleanup();
+  }
+});
 
 const config = getEnvConfig(path.resolve(__dirname, '../..'));
 
@@ -79,10 +106,6 @@ jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
 // Runtime consumers also need a default hook because tests do not run Grafana's startup registration.
 // Register once per suite so tests can override it with setPluginComponentsHook.
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
-
-// our tests are heavy in CI due to parallelisation and monaco and kusto
-// so we increase the default timeout to 2secs to avoid flakiness
-configure({ asyncUtilTimeout: 2000 });
 
 // Mock Performance API methods not implemented in jsdom
 if (window.performance) {
