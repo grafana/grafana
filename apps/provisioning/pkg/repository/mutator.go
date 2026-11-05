@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -93,6 +94,26 @@ func CopySecureValues(new, old *provisioning.Repository) {
 	}
 }
 
+// RequiresNewTokenForURLChange reports whether a URL change must come with a new token.
+// The rule exists so a stored credential cannot be repointed at another host; a connection
+// mints its own token, so only a host change needs one from the user.
 func RequiresNewTokenForURLChange(new, old *provisioning.Repository) bool {
-	return old != nil && new.URL() != old.URL() && new.Secure.Token.IsZero()
+	if old == nil || new.URL() == old.URL() || !new.Secure.Token.IsZero() {
+		return false
+	}
+
+	return !new.HasConnection() || !sameURLHost(new.URL(), old.URL())
+}
+
+func sameURLHost(a, b string) bool {
+	parsedA, err := url.Parse(a)
+	if err != nil {
+		return false
+	}
+	parsedB, err := url.Parse(b)
+	if err != nil {
+		return false
+	}
+
+	return parsedA.Host != "" && strings.EqualFold(parsedA.Host, parsedB.Host)
 }
