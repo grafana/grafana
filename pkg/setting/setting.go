@@ -786,10 +786,6 @@ type Cfg struct {
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	SearchClientForwardAuthEnabled             bool
-	// SearchPostRankAuthz enables the post-filter authorization search path:
-	// bleve ranks without the in-searcher authz wrapper and authorization runs
-	// app-side in rank order with early exit once the page is filled.
-	SearchPostRankAuthz bool
 	// SearchPostRankAuthz tunables. Zero falls back to the defaults in
 	// search.PostRankAuthzConfig.effective().
 	SearchPostRankAuthzOverFetchFactor int
