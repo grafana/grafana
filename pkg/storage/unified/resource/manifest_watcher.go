@@ -215,12 +215,6 @@ type ManifestWatcher struct {
 	byName   map[string]*app.ManifestData
 	source   string
 	lastHash string
-	// emptyWarned is set once an empty list has been logged at warn level and
-	// cleared by the next non-empty list. An install with no app manifests
-	// stays empty for as long as it runs, and warning on every poll was about
-	// 3,500 log lines a day there (#137058). The first empty poll still warns
-	// so a half-ready apiserver is visible; the rest log at debug.
-	emptyWarned bool
 }
 
 // manifestWatcherMetrics are the watcher's Prometheus metrics. Built with a nil
@@ -401,23 +395,6 @@ func (w *ManifestWatcher) hasSnapshot() bool {
 	return len(w.byName) > 0
 }
 
-// emptyLog returns the log function for an empty list: warn until one has
-// been logged, debug after that, until a non-empty list resets it.
-func (w *ManifestWatcher) emptyLog() func(msg string, ctx ...any) {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	if w.emptyWarned {
-		return w.log.Debug
-	}
-	return w.log.Warn
-}
-
-func (w *ManifestWatcher) setEmptyWarned(v bool) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	w.emptyWarned = v
-}
-
 // runPollCycle publishes the manifest set only if it changed. A failed list or
 // an empty result keeps the previous snapshot: an unreachable or half-ready
 // apiserver must never blank the live set, which would drop search fields and
@@ -437,12 +414,14 @@ func (w *ManifestWatcher) runPollCycle(ctx context.Context) {
 	w.metrics.lastSuccess.SetToCurrentTime()
 	if len(result) == 0 {
 		w.metrics.polls.WithLabelValues("empty").Inc()
-		w.emptyLog()("manifest watcher poll cycle: zero manifests, keeping previous set")
-		w.setEmptyWarned(true)
+		// An empty list is a normal, steady state on installs without app
+		// manifests, so log it at debug: warning on every poll was about
+		// 3,500 log lines a day there (#137058). A failed list is still an
+		// error, and a source failure a warning; only the empty case is quiet.
+		w.log.Debug("manifest watcher poll cycle: zero manifests, keeping previous set")
 		return
 	}
 	w.metrics.polls.WithLabelValues("success").Inc()
-	w.setEmptyWarned(false)
 
 	manifests := sortedManifests(result)
 	hash, err := hashManifests(manifests)
@@ -494,7 +473,7 @@ func (w *ManifestWatcher) listFirst(ctx context.Context, prev map[string]*app.Ma
 			errs = append(errs, fmt.Errorf("%s: %w", src.name, err))
 		case len(result) == 0:
 			w.metrics.sourcePolls.WithLabelValues(src.name, "empty").Inc()
-			w.emptyLog()("manifest watcher: source listed zero manifests", "source", src.name)
+			w.log.Debug("manifest watcher: source listed zero manifests", "source", src.name)
 			listed = true
 		default:
 			w.metrics.sourcePolls.WithLabelValues(src.name, "success").Inc()

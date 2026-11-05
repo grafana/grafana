@@ -404,10 +404,11 @@ func TestManifestWatcher_EmptyListKeepsPreviousSet(t *testing.T) {
 	require.Len(t, w.Manifests(), 1)
 }
 
-func TestManifestWatcher_EmptyListWarnsOnceThenDebug(t *testing.T) {
+func TestManifestWatcher_EmptyListLogsAtDebugNotWarn(t *testing.T) {
 	// #137058: an install with no app manifests is empty for as long as it
-	// runs. The first empty poll warns (both the per-source line and the
-	// cycle line); later ones log at debug until a list comes back non-empty.
+	// runs, so the empty case (both the per-source line and the cycle line)
+	// logs at debug on every poll, never warn. A list failure, tested
+	// elsewhere, stays an error.
 	empty := func(k8stesting.Action) (bool, runtime.Object, error) {
 		return true, &unstructured.UnstructuredList{}, nil
 	}
@@ -417,25 +418,9 @@ func TestManifestWatcher_EmptyListWarnsOnceThenDebug(t *testing.T) {
 	w := newManifestWatcher(appManifestSources(client), 0, nil, logger, nil)
 
 	w.runPollCycle(t.Context())
-	require.Equal(t, 2, logger.WarnLogs.Calls)
-	require.Equal(t, 0, logger.DebugLogs.Calls)
-
 	w.runPollCycle(t.Context())
-	w.runPollCycle(t.Context())
-	require.Equal(t, 2, logger.WarnLogs.Calls, "an empty list must not warn on every poll")
-	require.Equal(t, 4, logger.DebugLogs.Calls)
-
-	// A non-empty list resets it, so a later empty list is worth a warning again.
-	client2 := fakeManifestClient(
-		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
-	)
-	w.sources = appManifestSources(client2)
-	w.runPollCycle(t.Context())
-	require.Len(t, w.Manifests(), 1)
-	client2.PrependReactor("list", "appmanifests", empty)
-	w.runPollCycle(t.Context())
-	require.Equal(t, 4, logger.WarnLogs.Calls)
-	require.Len(t, w.Manifests(), 1)
+	require.Equal(t, 0, logger.WarnLogs.Calls, "an empty list is a normal state, not a warning")
+	require.Equal(t, 4, logger.DebugLogs.Calls, "each empty poll logs the source and cycle lines at debug")
 }
 
 func TestManifestWatcher_RecordsMetrics(t *testing.T) {
