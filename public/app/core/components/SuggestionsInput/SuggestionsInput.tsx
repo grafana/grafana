@@ -36,7 +36,10 @@ interface SuggestionsInputProps {
   autoFocus?: boolean;
   id?: string;
   'aria-label'?: string;
-  /** Called on every edit, before the value is committed through `onChange` */
+  /**
+   * Called on every edit, before the value is committed through `onChange`. Passing it makes the
+   * input controlled: it shows `value`, so the caller has to pass the edited text back.
+   */
   onInputChange?: (value: string) => void;
   inputRef?: React.Ref<HTMLInputElement>;
   prefix?: React.ReactNode;
@@ -80,18 +83,20 @@ export const SuggestionsInput = ({
 }: SuggestionsInputProps) => {
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
-  const [variableValue, setVariableValue] = useState<string>(value.toString());
+  const [ownValue, setOwnValue] = useState<string>(value.toString());
+  const variableValue = onInputChange ? value.toString() : ownValue;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [inputHeight, setInputHeight] = useState<number>(0);
   const [startPos, setStartPos] = useState<number>(0);
+  const [cursorPos, setCursorPos] = useState<number>(0);
   const placement = 'bottom-start';
 
   const theme = useTheme2();
   const styles = getStyles(theme, inputHeight);
 
-  // What's typed after the `$` narrows the list, so Enter can't pick a variable that wasn't typed
-  const query = showingSuggestions ? getSuggestionQuery(variableValue, startPos) : '';
+  // What's typed after the `$` narrows the list, so Enter doesn't pick a variable that doesn't match it
+  const query = showingSuggestions ? getSuggestionQuery(variableValue, startPos, cursorPos) : '';
   const shownSuggestions = query
     ? suggestions.filter((suggestion) => suggestion.value.toLowerCase().includes(query))
     : suggestions;
@@ -138,26 +143,28 @@ export const SuggestionsInput = ({
       const curPos = input.selectionStart!;
       const x = input.value;
 
-      if (x[startPos - 1] === '$') {
-        input.value = x.slice(0, startPos) + item.value + x.slice(curPos);
-      } else {
-        input.value = x.slice(0, startPos) + '$' + `{${item.value}}` + x.slice(curPos);
-      }
+      const newValue =
+        x[startPos - 1] === '$'
+          ? x.slice(0, startPos) + item.value + x.slice(curPos)
+          : x.slice(0, startPos) + '$' + `{${item.value}}` + x.slice(curPos);
 
-      setVariableValue(input.value);
+      setOwnValue(newValue);
+      onInputChange?.(newValue);
       setShowingSuggestions(false);
 
       setSuggestionsIndex(0);
-      onChange(input.value);
+      onChange(newValue);
     },
-    [onChange, startPos]
+    [onChange, onInputChange, startPos]
   );
 
   const onKeyDown = React.useCallback(
     (event: React.KeyboardEvent) => {
       if (!showingSuggestions) {
         if (event.key === '$' || (event.key === ' ' && event.ctrlKey)) {
-          setStartPos(inputRef.current!.selectionStart || 0);
+          const pos = inputRef.current!.selectionStart || 0;
+          setStartPos(pos);
+          setCursorPos(pos);
           setShowingSuggestions(true);
           return;
         }
@@ -194,7 +201,8 @@ export const SuggestionsInput = ({
 
   const onValueChanged = React.useCallback(
     (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setVariableValue(event.currentTarget.value);
+      setOwnValue(event.currentTarget.value);
+      setCursorPos(event.currentTarget.selectionStart ?? event.currentTarget.value.length);
       setSuggestionsIndex(0);
       onInputChange?.(event.currentTarget.value);
     },
@@ -272,12 +280,12 @@ export const SuggestionsInput = ({
 
 SuggestionsInput.displayName = 'SuggestionsInput';
 
-/** The variable name typed so far after the `$` or `${` at `startPos` */
-function getSuggestionQuery(text: string, startPos: number): string {
+/** The variable name typed between the `$` or `${` at `startPos` and the cursor */
+function getSuggestionQuery(text: string, startPos: number, cursorPos: number): string {
   return (
     text
-      .slice(startPos)
-      .match(/^\$?\{?(\w*)/)?.[1]
+      .slice(startPos, cursorPos)
+      .match(/^\$?\{?([\w.]*)/)?.[1]
       .toLowerCase() ?? ''
   );
 }

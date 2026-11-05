@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef } from 'react';
+import { createRef, useState } from 'react';
 
 import { VariableOrigin } from '@grafana/data';
 
@@ -28,18 +28,25 @@ describe('SuggestionsInput', () => {
   it('reports every edit through onInputChange and passes through label, ref, prefix and suffix', async () => {
     const onInputChange = jest.fn();
     const inputRef = createRef<HTMLInputElement>();
-    render(
-      <SuggestionsInput
-        value=""
-        onChange={jest.fn()}
-        onInputChange={onInputChange}
-        suggestions={suggestions}
-        aria-label="Threshold 1"
-        inputRef={inputRef}
-        prefix={<span>before</span>}
-        suffix={<span>after</span>}
-      />
-    );
+    function Controlled() {
+      const [text, setText] = useState('');
+      return (
+        <SuggestionsInput
+          value={text}
+          onChange={jest.fn()}
+          onInputChange={(value) => {
+            onInputChange(value);
+            setText(value);
+          }}
+          suggestions={suggestions}
+          aria-label="Threshold 1"
+          inputRef={inputRef}
+          prefix={<span>before</span>}
+          suffix={<span>after</span>}
+        />
+      );
+    }
+    render(<Controlled />);
 
     const input = screen.getByRole('textbox', { name: 'Threshold 1' });
     await userEvent.type(input, '42');
@@ -81,5 +88,40 @@ describe('SuggestionsInput', () => {
     expect(screen.queryByText('other')).not.toBeInTheDocument();
     await userEvent.keyboard('{Enter}');
     expect(input).toHaveValue('$zz');
+  });
+
+  it('shows the value passed in with onInputChange, also when the caller replaces the text', async () => {
+    const onChange = jest.fn();
+    const onInputChange = jest.fn();
+    const { rerender } = render(
+      <SuggestionsInput value="5" onChange={onChange} onInputChange={onInputChange} suggestions={suggestions} />
+    );
+
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, '$');
+    await userEvent.click(await screen.findByText('t'));
+    expect(onInputChange).toHaveBeenLastCalledWith('5${t}');
+    expect(onChange).toHaveBeenLastCalledWith('5${t}');
+
+    rerender(
+      <SuggestionsInput value="7" onChange={onChange} onInputChange={onInputChange} suggestions={suggestions} />
+    );
+    expect(input).toHaveValue('7');
+    expect(input).toHaveFocus();
+  });
+
+  it('narrows the list by what is typed up to the cursor, including dots', async () => {
+    const dataSuggestions = [
+      { value: '__data.fields', label: '__data.fields', origin: VariableOrigin.Template },
+      { value: '__data.refId', label: '__data.refId', origin: VariableOrigin.Template },
+    ];
+    render(<SuggestionsInput value="" onChange={jest.fn()} suggestions={dataSuggestions} />);
+
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, 'suffix');
+    await userEvent.type(input, '$__data.fi', { initialSelectionStart: 0, initialSelectionEnd: 0 });
+    expect(input).toHaveValue('$__data.fisuffix');
+    expect(screen.getByText('__data.fields')).toBeInTheDocument();
+    expect(screen.queryByText('__data.refId')).not.toBeInTheDocument();
   });
 });

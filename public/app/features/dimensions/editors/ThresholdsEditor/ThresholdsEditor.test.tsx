@@ -730,6 +730,66 @@ describe('ThresholdsEditor', () => {
         ],
       });
     });
+    it('keeps partially typed numbers as typed until blur', async () => {
+      const onChange = jest.fn();
+      setup(
+        {
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: '#7EB26D' },
+              { value: 50, color: '#EAB839' },
+            ],
+          },
+          onChange,
+        },
+        { fieldConfigExpressions: true }
+      );
+
+      const input = screen.getByRole('textbox', { name: 'Threshold 1' });
+      await userEvent.clear(input);
+      await userEvent.type(input, '5.');
+      expect(input).toHaveValue('5.');
+
+      await userEvent.type(input, '5');
+      await userEvent.tab();
+      expect(input).toHaveValue('5.5');
+      expect(onChange).toHaveBeenLastCalledWith({
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: '#7EB26D' },
+          { value: 5.5, color: '#EAB839' },
+        ],
+      });
+    });
+
+    it('removes a threshold with one click right after editing it', async () => {
+      const onChange = jest.fn();
+      setup(
+        {
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: '#7EB26D' },
+              { value: 50, color: '#EAB839' },
+            ],
+          },
+          onChange,
+        },
+        { fieldConfigExpressions: true }
+      );
+
+      const input = screen.getByRole('textbox', { name: 'Threshold 1' });
+      await userEvent.clear(input);
+      await userEvent.type(input, '5.');
+      await userEvent.click(screen.getByRole('button', { name: 'Remove threshold 1' }));
+
+      expect(screen.queryByDisplayValue('5')).not.toBeInTheDocument();
+      expect(onChange).toHaveBeenLastCalledWith({
+        mode: ThresholdsMode.Absolute,
+        steps: [{ value: -Infinity, color: '#7EB26D' }],
+      });
+    });
   });
 
   it('keeps the number input without suggestions when expressions are off', async () => {

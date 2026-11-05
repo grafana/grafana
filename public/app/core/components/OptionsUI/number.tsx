@@ -50,8 +50,7 @@ type VarMappingProps = Omit<StandardEditorProps<number | string, NumberFieldConf
 export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMappingProps) => {
   const { settings } = item;
   const formatted = value == null ? '' : String(value);
-  // SuggestionsInput keeps its own text, so it's remounted to show a value it didn't produce
-  const [revision, setRevision] = useState(0);
+  const [text, setText] = useState(formatted);
   const [rangeError, setRangeError] = useState<string>();
   // The last text passed to onChange, so the blur after Enter doesn't commit it again
   const [committed, setCommitted] = useState(formatted);
@@ -59,11 +58,9 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
 
   if (formatted !== prevFormatted) {
     setPrevFormatted(formatted);
+    setCommitted(formatted);
+    setText(formatted);
     setRangeError(undefined);
-    if (formatted !== committed) {
-      setCommitted(formatted);
-      setRevision((r) => r + 1);
-    }
   }
 
   const commit = useCallback(
@@ -91,7 +88,7 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
 
       const parsed = Number(raw);
       if (!Number.isFinite(parsed)) {
-        setRevision((r) => r + 1);
+        setText(committed);
         return;
       }
 
@@ -122,13 +119,13 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
       }}
     >
       <SuggestionsInput
-        key={revision}
         id={id}
-        value={formatted}
+        value={text}
         placeholder={settings?.placeholder}
         suggestions={getVariableSuggestions()}
         invalid={rangeError !== undefined}
         error={rangeError}
+        onInputChange={setText}
         onChange={commit}
       />
     </div>
