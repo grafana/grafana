@@ -7,7 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 import { CardGrid, type CardGridItem } from '../CardGrid/CardGrid';
 import { CategoryHeader } from '../CategoryHeader/CategoryHeader';
 
-import { CloudProviderCards, DS_ONBOARDING_PLUGIN_ID } from './CloudProviderCards';
+import { CloudProviderCards, DS_ONBOARDING_PLUGIN_ID, useShowCloudProviderCards } from './CloudProviderCards';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   spacer: css({
@@ -20,6 +20,7 @@ export interface PluginContentViewProps {
   datasourceCardGridItems: CardGridItem[];
   appsCardGridItems: CardGridItem[];
   pluginsByCategory: Array<{ label: string; items: CardGridItem[] }>;
+  searchTerm?: string;
   onClickCardGridItem: (e: React.MouseEvent<HTMLElement>, item: CardGridItem) => void;
 }
 
@@ -28,10 +29,11 @@ export function PluginContentView({
   datasourceCardGridItems,
   appsCardGridItems,
   pluginsByCategory,
+  searchTerm,
   onClickCardGridItem,
 }: PluginContentViewProps) {
   const styles = useStyles2(getStyles);
-  const hasOnboardingApp = appsCardGridItems.some((item) => item.id === DS_ONBOARDING_PLUGIN_ID);
+  const hasOnboardingApp = useShowCloudProviderCards(searchTerm ?? '');
 
   if (groupBy === 'type') {
     return (
@@ -46,13 +48,13 @@ export function PluginContentView({
           </>
         )}
 
-        {appsCardGridItems.length > 0 && (
+        {(appsCardGridItems.length > 0 || hasOnboardingApp) && (
           <>
             <div className={styles.spacer} />
             <CategoryHeader iconName="apps" label={t('connections.connect-data.apps-header', 'Apps')} />
             {hasOnboardingApp && (
               <>
-                <CloudProviderCards />
+                <CloudProviderCards searchTerm={searchTerm} />
                 <div className={styles.spacer} />
               </>
             )}

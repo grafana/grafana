@@ -29,6 +29,16 @@ jest.mock('@grafana/runtime', () => ({
   useChromeHeaderHeight: jest.fn(),
 }));
 
+const mockUseAppPluginMeta = jest.fn();
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useAppPluginMeta: (...args: unknown[]) => mockUseAppPluginMeta(...args),
+}));
+
+beforeEach(() => {
+  mockUseAppPluginMeta.mockReturnValue({ loading: false, error: undefined, value: undefined });
+});
+
 const renderPage = (plugins: CatalogPlugin[] = [], path = '/add-new-connection'): RenderResult => {
   locationService.push(path);
   return render(
@@ -177,6 +187,71 @@ describe('Add new connection', () => {
     // Should show the modal if the user has no permissions
     await userEvent.click(await screen.findByText('Sample data source'));
     expect(screen.queryByText(new RegExp(exampleSentenceInModal))).toBeInTheDocument();
+  });
+});
+
+describe('Cloud provider tiles', () => {
+  const onboardingApp = getCatalogPluginMock({
+    type: PluginType.app,
+    name: 'Data Source Onboarding',
+    id: 'grafana-dsonboarding-app',
+  });
+
+  beforeEach(() => {
+    mockUseAppPluginMeta.mockReturnValue({
+      loading: false,
+      error: undefined,
+      value: { id: 'grafana-dsonboarding-app' },
+    });
+  });
+
+  test('shows the AWS, Azure and Google Cloud tiles and hides the generic onboarding card', async () => {
+    renderPage([onboardingApp, mockCatalogAppPlugin]);
+
+    expect(await screen.findByText('AWS data sources')).toBeInTheDocument();
+    expect(screen.getByText('Azure data sources')).toBeInTheDocument();
+    expect(screen.getByText('Google Cloud data sources')).toBeInTheDocument();
+    expect(screen.queryByText('Data Source Onboarding')).not.toBeInTheDocument();
+  });
+
+  test('links the tiles to the onboarding app pages', async () => {
+    renderPage([onboardingApp]);
+
+    expect(await screen.findByRole('link', { name: /AWS data sources/ })).toHaveAttribute(
+      'href',
+      '/a/grafana-dsonboarding-app/aws'
+    );
+    expect(screen.getByRole('link', { name: /Azure data sources/ })).toHaveAttribute(
+      'href',
+      '/a/grafana-dsonboarding-app/azure/services'
+    );
+  });
+
+  test.each([
+    ['aws', 'AWS data sources', ['Azure data sources', 'Google Cloud data sources']],
+    ['azure', 'Azure data sources', ['AWS data sources', 'Google Cloud data sources']],
+    ['bigquery', 'Google Cloud data sources', ['AWS data sources', 'Azure data sources']],
+  ])('searching "%s" only shows the matching tile', async (search, shown, hidden) => {
+    // the search results contain no plugins, tiles must not depend on them
+    renderPage([], `/add-new-connection?search=${search}`);
+
+    expect(await screen.findByText(shown)).toBeInTheDocument();
+    hidden.forEach((name) => expect(screen.queryByText(name)).not.toBeInTheDocument());
+  });
+
+  test('hides the tiles when the search matches none of them', async () => {
+    renderPage([mockCatalogAppPlugin], '/add-new-connection?search=sample');
+
+    expect(await screen.findByText('Sample app')).toBeInTheDocument();
+    expect(screen.queryByText('AWS data sources')).not.toBeInTheDocument();
+  });
+
+  test('does not show the tiles when the onboarding app is not installed', async () => {
+    mockUseAppPluginMeta.mockReturnValue({ loading: false, error: undefined, value: undefined });
+    renderPage([mockCatalogAppPlugin]);
+
+    expect(await screen.findByText('Sample app')).toBeInTheDocument();
+    expect(screen.queryByText('AWS data sources')).not.toBeInTheDocument();
   });
 });
 

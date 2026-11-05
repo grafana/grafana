@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { locationUtil, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useAppPluginMeta } from '@grafana/runtime/internal';
 import { Badge, Card, Grid, useStyles2 } from '@grafana/ui';
 
 export const DS_ONBOARDING_PLUGIN_ID = 'grafana-dsonboarding-app';
@@ -12,6 +13,8 @@ interface CloudProvider {
   name: string;
   description: string;
   url?: string;
+  // Extra non-translated terms the search box should match, e.g. product names.
+  keywords: string[];
 }
 
 function getProviders(): CloudProvider[] {
@@ -22,6 +25,18 @@ function getProviders(): CloudProvider[] {
       name: t('connections.cloud-provider-cards.aws.name', 'AWS data sources'),
       description: t('connections.cloud-provider-cards.aws.description', 'CloudWatch, Athena, Redshift, and 7 more'),
       url: `/a/${DS_ONBOARDING_PLUGIN_ID}/aws`,
+      keywords: [
+        'aws',
+        'amazon',
+        'cloudwatch',
+        'athena',
+        'redshift',
+        'prometheus',
+        'x-ray',
+        'timestream',
+        'cloud',
+        'onboard',
+      ],
     },
     {
       id: 'azure',
@@ -32,12 +47,14 @@ function getProviders(): CloudProvider[] {
         'Azure Monitor, Data Explorer, and managed Prometheus'
       ),
       url: `/a/${DS_ONBOARDING_PLUGIN_ID}/azure/services`,
+      keywords: ['azure', 'microsoft', 'monitor', 'data explorer', 'prometheus', 'cloud', 'onboard'],
     },
     {
       id: 'gcp',
       logoText: 'GC',
       name: t('connections.cloud-provider-cards.gcp.name', 'Google Cloud data sources'),
       description: t('connections.cloud-provider-cards.gcp.description', 'BigQuery, Cloud Monitoring, and more'),
+      keywords: ['gcp', 'google', 'google cloud', 'bigquery', 'cloud monitoring', 'stackdriver', 'cloud', 'onboard'],
     },
   ];
 }
@@ -68,12 +85,36 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export function CloudProviderCards() {
+function matchesSearch(provider: CloudProvider, searchTerm: string): boolean {
+  const term = searchTerm.trim().toLowerCase();
+  if (!term) {
+    return true;
+  }
+  return [provider.name, provider.description, provider.id, ...provider.keywords].some((value) =>
+    value.toLowerCase().includes(term)
+  );
+}
+
+/**
+ * Whether the cloud tiles should render for this search: the onboarding app is installed
+ * (checked independently of the search results) and at least one tile matches.
+ */
+export function useShowCloudProviderCards(searchTerm: string): boolean {
+  const { value: onboardingApp } = useAppPluginMeta(DS_ONBOARDING_PLUGIN_ID);
+  return Boolean(onboardingApp) && getProviders().some((provider) => matchesSearch(provider, searchTerm));
+}
+
+export function CloudProviderCards({ searchTerm = '' }: { searchTerm?: string }) {
   const styles = useStyles2(getStyles);
+  const providers = getProviders().filter((provider) => matchesSearch(provider, searchTerm));
+
+  if (providers.length === 0) {
+    return null;
+  }
 
   return (
     <Grid gap={1.5} minColumnWidth={44}>
-      {getProviders().map((provider) => {
+      {providers.map((provider) => {
         const comingSoon = !provider.url;
         return (
           <Card

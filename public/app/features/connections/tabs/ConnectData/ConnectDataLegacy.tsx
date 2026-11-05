@@ -20,7 +20,11 @@ import { ROUTES } from '../../constants';
 import { CardGrid, type CardGridItem } from './CardGrid/CardGrid';
 import { CategoryHeader } from './CategoryHeader/CategoryHeader';
 import { NoAccessModal } from './NoAccessModal/NoAccessModal';
-import { CloudProviderCards, DS_ONBOARDING_PLUGIN_ID } from './components/CloudProviderCards';
+import {
+  CloudProviderCards,
+  DS_ONBOARDING_PLUGIN_ID,
+  useShowCloudProviderCards,
+} from './components/CloudProviderCards';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   searchContainer: css({
@@ -133,8 +137,6 @@ export function AddNewConnectionLegacy() {
     [dataSourcesPlugins]
   );
 
-  const hasOnboardingApp = appsPlugins.some((plugin) => plugin.id === DS_ONBOARDING_PLUGIN_ID);
-
   const appsCardGridItems = useMemo(
     () =>
       appsPlugins.map((plugin) => ({
@@ -153,9 +155,11 @@ export function AddNewConnectionLegacy() {
     history.push({ query: { filterBy: value } });
   };
 
+  const hasOnboardingApp = useShowCloudProviderCards(searchTerm);
+
   const showNoResults = useMemo(
-    () => !isLoading && !error && dataSourcesPlugins.length < 1 && appsPlugins.length < 1,
-    [isLoading, error, dataSourcesPlugins, appsPlugins]
+    () => !isLoading && !error && dataSourcesPlugins.length < 1 && appsPlugins.length < 1 && !hasOnboardingApp,
+    [isLoading, error, dataSourcesPlugins, appsPlugins, hasOnboardingApp]
   );
 
   return (
@@ -244,13 +248,13 @@ export function AddNewConnectionLegacy() {
             )}
 
             {/* Apps Section */}
-            {appsPlugins.length > 0 && (
+            {(appsPlugins.length > 0 || hasOnboardingApp) && (
               <>
                 <div className={styles.spacer} />
                 <CategoryHeader iconName="apps" label={t('connections.connect-data.apps-header', 'Apps')} />
                 {hasOnboardingApp && (
                   <>
-                    <CloudProviderCards />
+                    <CloudProviderCards searchTerm={searchTerm} />
                     <div className={styles.spacer} />
                   </>
                 )}
