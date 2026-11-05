@@ -1857,7 +1857,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	testEnv, err := server.ProvideTestEnv(testingT, serverServer, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, v5, idimplService, factory, githubFactory, decryptService, quotaGetter, config)
+	testEnv, err := server.ProvideTestEnv(testingT, serverServer, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, v5, idimplService, factory, githubFactory, decryptService, quotaGetter, config, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}

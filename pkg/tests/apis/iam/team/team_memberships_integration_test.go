@@ -13,6 +13,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/dynamic"
+	clientrest "k8s.io/client-go/rest"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -22,6 +24,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamk8s"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -93,6 +96,18 @@ func TestIntegrationGetUserTeamMembershipsByUIDWithoutUsersAPI(t *testing.T) {
 						require.NoError(c, err)
 						assert.Len(c, got, 2)
 					}, 10*time.Second, 100*time.Millisecond)
+
+					t.Run("background helper", func(t *testing.T) {
+						cfg, err := helper.GetEnv().RestConfigProvider.GetRestConfig(t.Context())
+						require.NoError(t, err)
+						cfg = dynamic.ConfigFor(clientrest.CopyConfig(cfg))
+						cfg.GroupVersion = &iamv0alpha1.GroupVersion
+						client, err := clientrest.RESTClientFor(cfg)
+						require.NoError(t, err)
+						got, err := teamk8s.ReadUserTeamMemberships(t.Context(), client, namespace, userUID, true)
+						require.NoError(t, err)
+						require.Equal(t, []team.UserTeamMembership{{TeamID: syncedTeamID, TeamUID: syncedTeam, External: true, Permission: team.PermissionTypeAdmin}}, got)
+					})
 
 					for name, ctx := range callers {
 						t.Run(name, func(t *testing.T) {

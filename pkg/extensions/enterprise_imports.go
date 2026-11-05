@@ -543,6 +543,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/team/teamapi"
 	_ "github.com/grafana/grafana/pkg/services/team/teamdelete"
 	_ "github.com/grafana/grafana/pkg/services/team/teamimpl"
+	_ "github.com/grafana/grafana/pkg/services/team/teamk8s"
 	_ "github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	_ "github.com/grafana/grafana/pkg/services/updatemanager"
 	_ "github.com/grafana/grafana/pkg/services/user"
