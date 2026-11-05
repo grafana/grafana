@@ -146,7 +146,7 @@ func TestMigrationBulkCompletionErrors(t *testing.T) {
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			}
-			if tc.err == publicationStatusErr {
+			if errors.Is(tc.err, publicationStatusErr) {
 				require.True(t, proto.Equal(publication, resource.AsErrorResult(err)), "status details must be preserved")
 			}
 		})
