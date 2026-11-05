@@ -7,7 +7,7 @@ import { isRecord } from 'app/core/utils/isRecord';
 import { displayShort, type ValueFormat } from './formatters';
 import { humanizeKey, humanizePath } from './labels';
 import { type ItemField, type NamedListItems } from './namedLists';
-import { unescapeSegment, valueAt } from './paths';
+import { safely, unescapeSegment, untilIndex, valueAt } from './paths';
 
 export type NamedListKind =
   | 'variables'
@@ -74,8 +74,7 @@ function keyedField(
 
 /** Anything else: the path up to the first array index, humanized. */
 function fallbackField(path: string[], skip = 0): ItemField {
-  const end = path.findIndex((segment) => /^\d+$/.test(segment));
-  const fieldPath = end === -1 ? path : path.slice(0, end);
+  const fieldPath = untilIndex(path);
   return {
     key: fieldPath.join('/'),
     label: humanizePath(fieldPath.slice(skip)),
@@ -378,11 +377,7 @@ function transformationLabels(): Record<string, string> {
 }
 
 function transformationName(id: string): string {
-  try {
-    return standardTransformersRegistry.getIfExists(id)?.name ?? id;
-  } catch {
-    return id;
-  }
+  return safely(() => standardTransformersRegistry.getIfExists(id)?.name) ?? id;
 }
 
 function overrides(ctx: ListKindContext): NamedListItems {

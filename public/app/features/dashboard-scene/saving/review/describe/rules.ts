@@ -6,7 +6,7 @@ import { type ReviewCategory } from '../types';
 import { displayAutoRefresh, type DisplayValue, type ValueFormat } from './formatters';
 import { displayColorScheme, humanizeKey, humanizePath, isStandardTextFieldConfig, type PanelLabels } from './labels';
 import { type NamedListKind } from './listKinds';
-import { valueAt } from './paths';
+import { changedOnBothSides, untilIndex, valueAt } from './paths';
 
 export type Owner = { kind: 'dashboard' } | { kind: 'panel'; element: string };
 
@@ -220,12 +220,7 @@ function panelRules(element: string, ctx: AttributionContext): Rule[] {
   });
   // Values the old visualization had and the new one dropped belong to the Visualization line.
   const droppedByTypeChange = (path: string[]) => vizTypeChanged && valueAt(ctx.payload, path) === undefined;
-  const visualizationRule = (pattern: string[]): Rule => ({
-    pattern,
-    build: () => ({
-      ...visualization(),
-    }),
-  });
+  const visualizationRule = (pattern: string[]): Rule => ({ pattern, build: visualization });
 
   return [
     simple(['title'], 'properties', () => labels.title(), { type: 'name', quoted: true }),
@@ -367,23 +362,15 @@ export function fieldConfigFormat(path: readonly string[], display?: DisplayValu
   return { type: 'auto', display, quoted: textInput ?? isStandardTextFieldConfig(path.join('.')) };
 }
 
-/** Array indexes are never shown: a change inside an array is a change of the array. */
-function untilIndex(path: string[]): string[] {
-  const index = path.findIndex((segment) => /^\d+$/.test(segment));
-  return index === -1 ? path : path.slice(0, index);
+type Sides = Pick<AttributionContext, 'baseline' | 'payload'>;
+
+function elementKindChanged(element: string, ctx: Sides): boolean {
+  return changedOnBothSides(['elements', element, 'kind'], ctx.baseline, ctx.payload);
 }
 
-function elementKindChanged(element: string, ctx: AttributionContext): boolean {
-  const before = valueAt(ctx.baseline, ['elements', element, 'kind']);
-  const after = valueAt(ctx.payload, ['elements', element, 'kind']);
-  return before !== undefined && after !== undefined && before !== after;
-}
-
-function typeChanged(element: string, ctx: AttributionContext): boolean {
-  const path = ['elements', element, 'spec', 'vizConfig', 'group'];
-  const before = valueAt(ctx.baseline, path);
-  const after = valueAt(ctx.payload, path);
-  return before !== undefined && after !== undefined && before !== after;
+/** Whether a panel switched visualization type. */
+export function typeChanged(element: string, ctx: Sides): boolean {
+  return changedOnBothSides(['elements', element, 'spec', 'vizConfig', 'group'], ctx.baseline, ctx.payload);
 }
 
 function matches(pattern: string[], path: string[]): boolean {

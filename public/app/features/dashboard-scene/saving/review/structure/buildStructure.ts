@@ -7,11 +7,13 @@ import { type Diff } from '../../../settings/version-history/utils';
 import { unescapeSegment } from '../describe/paths';
 import {
   type ChangeKind,
+  DASHBOARD_NODE_ID,
   type PathKey,
   type RawChange,
   type ReviewCategory,
   type Structure,
   type StructureFieldKey,
+  settingRank,
   type StructureNode,
 } from '../types';
 
@@ -31,8 +33,6 @@ import {
 
 const noEscape = { escapeValue: false };
 
-export const DASHBOARD_NODE_ID = 'dashboard';
-
 type Side = 'baseline' | 'payload';
 
 /** Who a diff path is attributed to: a node's status, or one of the RawChanges. */
@@ -43,7 +43,7 @@ type ClaimTarget = { node: StructureNode } | { change: RawChange };
  * noise in that array is attributed to.
  */
 interface ArrayEvent {
-  identity: string;
+  nodeId: string;
   index: number;
   target: ClaimTarget;
 }
@@ -58,27 +58,6 @@ const SECTION_FIELDS: Array<{ field: StructureFieldKey; category: ReviewCategory
   { field: 'variables', category: 'controls' },
   { field: 'annotations', category: 'controls' },
 ];
-
-/** Auto grid settings in the order the layout options list them. */
-const AUTO_GRID_SETTINGS = [
-  'maxColumnCount',
-  'columnWidthMode',
-  'columnWidth',
-  'rowHeightMode',
-  'rowHeight',
-  'minHeightMode',
-  'minHeight',
-  'maxHeightMode',
-  'maxHeight',
-  'fillScreen',
-  'fitContent',
-  'matchRowHeights',
-];
-
-function settingRank(key: string): number {
-  const rank = AUTO_GRID_SETTINGS.indexOf(key);
-  return rank === -1 ? AUTO_GRID_SETTINGS.length : rank;
-}
 
 const PANEL_ITEM_FIELDS = new Map<string, StructureFieldKey>([
   ['x', 'position'],
@@ -374,9 +353,13 @@ class StructureBuilder {
       }
       const beforeIds = this.readingOrder(before, 'baseline');
       const afterIds = this.readingOrder(after, 'payload');
-      const common = new Set(afterIds.filter((id) => beforeIds.includes(id)));
-      const beforeCommon = beforeIds.filter((id) => common.has(id));
-      const afterCommon = afterIds.filter((id) => common.has(id));
+      const beforeSet = new Set(beforeIds);
+      const afterSet = new Set(afterIds);
+      const beforeCommon = beforeIds.filter((id) => afterSet.has(id));
+      const afterCommon = afterIds.filter((id) => beforeSet.has(id));
+      if (isEqual(beforeCommon, afterCommon)) {
+        continue;
+      }
       const stable = (id: string) => this.coordinatesUnchanged(before, after, id);
       const kept = new Set(longestCommonSubsequence(beforeCommon, afterCommon, stable));
       for (const id of afterCommon) {
@@ -712,34 +695,34 @@ class StructureBuilder {
       const events: ArrayEvent[] = [];
       const beforeItems = this.children(before, 'baseline');
       const afterItems = this.children(after, 'payload');
-      const beforeIds = new Set(beforeItems.map((item) => item.identity));
-      const afterIds = new Set(afterItems.map((item) => item.identity));
+      const beforeIds = new Set(beforeItems.map((item) => item.nodeId));
+      const afterIds = new Set(afterItems.map((item) => item.nodeId));
 
       for (const item of afterItems) {
         const node = this.nodeById.get(item.nodeId);
-        if (!beforeIds.has(item.identity)) {
+        if (!beforeIds.has(item.nodeId)) {
           if (node?.status) {
-            events.push({ identity: item.identity, index: item.index, target: { node } });
+            events.push({ nodeId: item.nodeId, index: item.index, target: { node } });
           }
           continue;
         }
         const movedNode = this.moves.has(item.nodeId) ? node : undefined;
         if (movedNode) {
-          events.push({ identity: item.identity, index: item.index, target: { node: movedNode } });
+          events.push({ nodeId: item.nodeId, index: item.index, target: { node: movedNode } });
           continue;
         }
         const own = this.change(item.nodeId, 'position') ?? this.change(item.nodeId, 'size');
         if (own) {
-          events.push({ identity: item.identity, index: item.index, target: { change: own } });
+          events.push({ nodeId: item.nodeId, index: item.index, target: { change: own } });
         }
       }
       for (const item of beforeItems) {
-        if (afterIds.has(item.identity)) {
+        if (afterIds.has(item.nodeId)) {
           continue;
         }
         const node = this.nodeById.get(item.nodeId);
         if (node?.status) {
-          events.push({ identity: item.identity, index: item.index, target: { node } });
+          events.push({ nodeId: item.nodeId, index: item.index, target: { node } });
         }
       }
       this.events.set(
@@ -749,17 +732,14 @@ class StructureBuilder {
     }
   }
 
-  /** A layout's children by array index, with the identity used to tell whether two indexes hold the same item. */
+  /** A layout's children by array index, with the node id that tells whether two indexes hold the same item. */
   private children(container: WalkedContainer, side: Side) {
     if (isPanelLayoutKind(container.kind)) {
       return container.placements
-        .map((p) => ({ identity: `panel:${p.elementName}`, nodeId: this.panelId(p.elementName), index: p.index }))
+        .map((p) => ({ nodeId: this.panelId(p.elementName), index: p.index }))
         .sort((a, b) => a.index - b.index);
     }
-    return container.sections.map((s) => {
-      const id = this.sectionId(side, s.path);
-      return { identity: id, nodeId: id, index: s.index };
-    });
+    return container.sections.map((s) => ({ nodeId: this.sectionId(side, s.path), index: s.index }));
   }
 
   private resolve(path: string[]): ClaimTarget | undefined {
@@ -875,16 +855,25 @@ class StructureBuilder {
   private misaligned(ownerId: string, index: number, beforeId?: string, afterId?: string): ClaimTarget {
     const events = this.events.get(ownerId) ?? [];
     const own =
-      events.find((event) => event.identity === afterId && afterId !== undefined) ??
-      events.find((event) => event.identity === beforeId && beforeId !== undefined);
+      events.find((event) => event.nodeId === afterId && afterId !== undefined) ??
+      events.find((event) => event.nodeId === beforeId && beforeId !== undefined);
     return own?.target ?? this.nearestEvent(ownerId, index) ?? this.fallback(ownerId);
   }
 
-  /** The last event at or before the index, else the first one. */
+  /** The last event at or before the index, else the first one. Events are sorted by index. */
   private nearestEvent(ownerId: string, index: number): ClaimTarget | undefined {
     const events = this.events.get(ownerId) ?? [];
-    const before = events.filter((event) => event.index <= index);
-    return (before[before.length - 1] ?? events[0])?.target;
+    let low = 0;
+    let high = events.length;
+    while (low < high) {
+      const middle = (low + high) >> 1;
+      if (events[middle].index <= index) {
+        low = middle + 1;
+      } else {
+        high = middle;
+      }
+    }
+    return (events[low - 1] ?? events[0])?.target;
   }
 
   /** Last resort, so a layout difference no rule explains still shows up instead of being dropped. */

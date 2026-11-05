@@ -50,6 +50,31 @@ export type PanelCategory =
   | 'other';
 export type ReviewCategory = DashboardCategory | SectionCategory | PanelCategory;
 
+/** Id of the dashboard's own node, the root of every structure. */
+export const DASHBOARD_NODE_ID = 'dashboard';
+
+/** Auto grid settings in the order the layout options list them. */
+export const AUTO_GRID_SETTINGS = [
+  'maxColumnCount',
+  'columnWidthMode',
+  'columnWidth',
+  'rowHeightMode',
+  'rowHeight',
+  'minHeightMode',
+  'minHeight',
+  'maxHeightMode',
+  'maxHeight',
+  'fillScreen',
+  'fitContent',
+  'matchRowHeights',
+] as const;
+
+export function settingRank(key: string): number {
+  const order: readonly string[] = AUTO_GRID_SETTINGS;
+  const rank = order.indexOf(key);
+  return rank === -1 ? order.length : rank;
+}
+
 /** Display order of categories per node kind, as in the plan's structure table. */
 export const CATEGORY_ORDER = {
   dashboard: ['properties', 'layout', 'controls', 'other'],
@@ -235,7 +260,6 @@ export interface StructureNode {
   /** Parent node id; undefined for the dashboard and for root-level sections and panels. */
   parentId?: string;
   status?: NodeStatus;
-  statusText?: string;
   /**
    * Moved nodes: the move text, without the node's own position, e.g.
    * `moved from Tab "Tab 2" to Tab "Tab 1", after Panel "P2"`. describe/ composes the final statusText.

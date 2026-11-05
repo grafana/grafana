@@ -25,6 +25,19 @@ export function valueAt(root: unknown, path: ReadonlyArray<string | number>): un
   return current;
 }
 
+/** Set on both sides, to different values. */
+export function changedOnBothSides(path: ReadonlyArray<string | number>, before: unknown, after: unknown): boolean {
+  const a = valueAt(before, path);
+  const b = valueAt(after, path);
+  return a !== undefined && b !== undefined && a !== b;
+}
+
+/** Array indexes are never shown: a change inside an array is a change of the array. */
+export function untilIndex(path: string[]): string[] {
+  const index = path.findIndex((segment) => /^\d+$/.test(segment));
+  return index === -1 ? path : path.slice(0, index);
+}
+
 export function hasValueAt(root: unknown, path: ReadonlyArray<string | number>): boolean {
   return valueAt(root, path) !== undefined;
 }

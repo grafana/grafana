@@ -10,6 +10,7 @@ import {
   stringOverrideProcessor,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { isRecord } from 'app/core/utils/isRecord';
 
 import { safely, unescapeSegment } from './paths';
 
@@ -80,8 +81,6 @@ export interface PanelLabels {
   optionGroup(rest: readonly string[]): { label: string; order: number } | undefined;
   /** The field config option whose id is the longest prefix of `rest` (below `fieldConfig.defaults`). */
   fieldConfig(rest: readonly string[]): OptionLabel | undefined;
-  /** Translated plugin name. */
-  pluginName?: string;
 }
 
 export function getPanelLabels(
@@ -99,7 +98,6 @@ export function getPanelLabels(
     return optionLabels;
   };
   return {
-    pluginName: plugin.meta?.name,
     option: (rest) => findLabel(getOptionLabels(), rest),
     optionGroup: (rest) => {
       const below = getOptionLabels().filter(
@@ -226,13 +224,13 @@ export function isStandardTextFieldConfig(id: string): boolean {
 
 /** The label of an option's choice (select, radio), when the option offers fixed choices. */
 function choiceLabels(settings: unknown): ((value: unknown) => string | undefined) | undefined {
-  const choices = isRecordLike(settings) && Array.isArray(settings.options) ? settings.options : undefined;
+  const choices = isRecord(settings) && Array.isArray(settings.options) ? settings.options : undefined;
   if (!choices) {
     return undefined;
   }
   return (value) => {
-    const choice: unknown = choices.find((option: unknown) => isRecordLike(option) && option.value === value);
-    return isRecordLike(choice) && typeof choice.label === 'string' ? choice.label : undefined;
+    const choice: unknown = choices.find((option: unknown) => isRecord(option) && option.value === value);
+    return isRecord(choice) && typeof choice.label === 'string' ? choice.label : undefined;
   };
 }
 
@@ -249,10 +247,6 @@ export function unitName(value: unknown): string | undefined {
     )
   );
   return unitNames.get(value);
-}
-
-function isRecordLike(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }
 
 function isEditorItem(item: unknown): item is EditorItemLike {
@@ -276,8 +270,8 @@ function readDotted(root: Record<string, unknown>, path: string): Record<string,
 
 /** A field color as the color scheme picker names it: "From thresholds", "Single color (red)". */
 export function displayColorScheme(value: unknown): string | undefined {
-  const mode = isRecordLike(value) ? value.mode : undefined;
-  if (!isRecordLike(value) || typeof mode !== 'string') {
+  const mode = isRecord(value) ? value.mode : undefined;
+  if (!isRecord(value) || typeof mode !== 'string') {
     return undefined;
   }
   const name = safely(() => fieldColorModeRegistry.getIfExists(mode)?.name) ?? mode;

@@ -52,8 +52,9 @@ export function nameSide(walked: WalkedLayout, elements: DashboardV2Spec['elemen
   for (const section of walked.sections) {
     const siblings = siblingsOf(section, walked);
     const segment = nameAmong(
-      siblings.map((s) => s.title),
+      section.title,
       siblings.indexOf(section),
+      siblings.filter((s) => s.title === section.title).length,
       (title) => sectionName(section.kind, title)
     );
     names.segments.set(section.path, segment);
@@ -71,12 +72,16 @@ export function nameSide(walked: WalkedLayout, elements: DashboardV2Spec['elemen
 
   for (const container of walked.containerByPath.values()) {
     const titles = container.placements.map((placement) => titleOf(placement.elementName));
+    const titleCounts = new Map<string, number>();
+    for (const title of titles) {
+      titleCounts.set(title, (titleCounts.get(title) ?? 0) + 1);
+    }
     const sectionPath = container.sectionPath ? names.sections.get(container.sectionPath) : undefined;
     container.placements.forEach((placement, index) => {
       if (names.panels.has(placement.elementName)) {
         return;
       }
-      const panel = nameAmong(titles, index, panelName);
+      const panel = nameAmong(titles[index], index, titleCounts.get(titles[index]) ?? 0, panelName);
       names.panels.set(placement.elementName, panel);
       const uniqueInDashboard = (dashboardCounts.get(titles[index]) ?? 0) <= 1;
       names.owners.set(
@@ -125,9 +130,13 @@ function siblingsOf(section: WalkedSection, walked: WalkedLayout): WalkedSection
   return parent?.sections ?? [section];
 }
 
-function nameAmong(titles: string[], index: number, nameOf: (title: string) => string): ElementName {
-  const title = titles[index];
-  const ambiguous = titles.filter((other) => other === title).length > 1;
+function nameAmong(
+  title: string,
+  index: number,
+  sameTitleCount: number,
+  nameOf: (title: string) => string
+): ElementName {
+  const ambiguous = sameTitleCount > 1;
   const name = nameOf(title);
   const position = index + 1;
   return { name, ambiguous, position, label: ambiguous ? withPosition(name, position) : name };

@@ -21,14 +21,15 @@ import {
   nodeSummary,
   overviewLine,
 } from './describe/overview';
-import { asArray, isUnset, unescapeSegment, valueAt } from './describe/paths';
-import { attribute, type AttributionContext, fieldConfigFormat, type FieldTarget } from './describe/rules';
+import { asArray, isUnset, safely, unescapeSegment, valueAt } from './describe/paths';
+import { attribute, type AttributionContext, fieldConfigFormat, type FieldTarget, typeChanged } from './describe/rules';
 import { describeRawChange, rawFieldDefault } from './describe/structureChanges';
 import { isDefaultValue, isSystemDefault, type DefaultsContext } from './describe/systemDefaults';
 import { buildStructure } from './structure/buildStructure';
 import {
   CATEGORY_ORDER,
   claimCovers,
+  DASHBOARD_NODE_ID,
   type PathKey,
   pathKey,
   type RawChange,
@@ -43,6 +44,8 @@ import {
   type StructureNode,
   type SystemDefaultGroup,
 } from './types';
+
+const noEscape = { escapeValue: false };
 
 /** Above this many changed panels, panel nodes start collapsed. */
 const COLLAPSE_PANELS_ABOVE = 10;
@@ -66,13 +69,7 @@ export function summarizeDashboardChanges(input: ReviewInput): ReviewSummary {
     diff.path[0] === 'layout' || (diff.path[0] === 'elements' && diff.path.length === 2);
   const structure = buildStructure(baseline, payload, diffs.filter(isStructureDiff));
 
-  const getPlugin = (id: string): PanelPlugin | undefined => {
-    try {
-      return input.getPlugin?.(id);
-    } catch {
-      return undefined;
-    }
-  };
+  const getPlugin = (id: string): PanelPlugin | undefined => safely(() => input.getPlugin?.(id));
   const defaultsCtx: DefaultsContext = { baseline, payload, getPlugin };
   const listCtx: ListContext = {
     isDefault: (path, value, baselineHas) => isDefaultValue(path, 'add', value, baselineHas, defaultsCtx),
@@ -140,19 +137,20 @@ export function summarizeDashboardChanges(input: ReviewInput): ReviewSummary {
     (isDefault ? group.defaults : group.diffs).push(diff);
   }
 
-  const dashboardNode = structure.nodes.find((node) => node.kind === 'dashboard');
-  const dashboardId = dashboardNode?.id ?? 'dashboard';
   const nodeIdOf = (target: FieldTarget) =>
     target.owner.kind === 'panel'
-      ? (structure.panelNodeId(unescapeSegment(target.owner.element)) ?? dashboardId)
-      : dashboardId;
+      ? (structure.panelNodeId(unescapeSegment(target.owner.element)) ?? DASHBOARD_NODE_ID)
+      : DASHBOARD_NODE_ID;
 
   const entriesByNode = new Map<string, NodeEntry[]>();
   const defaultsByNode = new Map<string, NodeEntry[]>();
   let sequence = 0;
   const push = (map: Map<string, NodeEntry[]>, nodeId: string, entry: Omit<NodeEntry, 'sequence'>) => {
+    // Everything in a new dashboard is new, whatever its line says ("Title: set to Checkout").
+    const change =
+      input.mode === 'new' && map === entriesByNode ? { ...entry.change, kind: 'added' as const } : entry.change;
     const list = map.get(nodeId) ?? [];
-    list.push({ ...entry, sequence: sequence++ });
+    list.push({ ...entry, change, sequence: sequence++ });
     map.set(nodeId, list);
   };
 
@@ -213,20 +211,12 @@ export function summarizeDashboardChanges(input: ReviewInput): ReviewSummary {
     }
     const target = isRawDefault(raw, diffIndex) ? defaultsByNode : entriesByNode;
     const rawCtx = { diffsUnder: diffIndex.under, nodes: structure.nodes, list: listCtx };
-    // Show / hide rules have their own category on every node, panels included.
-    const category = raw.field === 'conditionalRendering' ? 'showHide' : raw.category;
     for (const { change, order } of describeRawChange(raw, rawCtx)) {
-      push(target, raw.nodeId, { category, order, key: '', change });
+      push(target, raw.nodeId, { category: raw.category, order, key: '', change });
     }
   }
 
   const tree = buildTree(structure, entriesByNode, input.mode === 'new');
-  if (input.mode === 'new') {
-    // Everything in a new dashboard is new, whatever its line says ("Title: set to Checkout").
-    flatten(tree).forEach((node) =>
-      node.categories.forEach((group) => group.changes.forEach((change) => (change.kind = 'added')))
-    );
-  }
   const metadata = describeMetadata(input.metadata);
   const systemDefaults = groupDefaults(structure.nodes, defaultsByNode);
   const flat = flatten(tree);
@@ -307,9 +297,6 @@ function mayBeDefault(
   if (diff.path[3] === 'vizConfig' && diff.path[4] === 'version' && isVizTypeChange(target, baseline, payload)) {
     return false;
   }
-  if (describe.type === 'value' && describe.format.type === 'long' && diff.path.length > target.path.length) {
-    return !isVizTypeChange(target, baseline, payload);
-  }
   if (describe.type === 'namedList') {
     const index = diff.path[target.path.length];
     if (index === undefined) {
@@ -343,23 +330,17 @@ function describeNewPluginDefaults(category: ReviewCategory, name: string, claim
     category === 'pluginOptions'
       ? t('dashboard-scene.review.default.plugin-options', 'Plugin options: set to the {{name}} defaults', {
           name,
-          interpolation: { escapeValue: false },
+          interpolation: noEscape,
         })
       : t('dashboard-scene.review.default.field-config', 'Field config: set to the {{name}} defaults', {
           name,
-          interpolation: { escapeValue: false },
+          interpolation: noEscape,
         });
   return { kind: 'changed', text, claims };
 }
 
 function isVizTypeChange(target: FieldTarget, baseline: DashboardV2Spec, payload: DashboardV2Spec): boolean {
-  if (target.owner.kind !== 'panel') {
-    return false;
-  }
-  const group = ['elements', target.owner.element, 'spec', 'vizConfig', 'group'];
-  const before = valueAt(baseline, group);
-  const after = valueAt(payload, group);
-  return before !== undefined && after !== undefined && before !== after;
+  return target.owner.kind === 'panel' && typeChanged(target.owner.element, { baseline, payload });
 }
 
 interface DiffIndex {
@@ -368,9 +349,7 @@ interface DiffIndex {
 }
 
 function indexDiffs(diffs: Diff[]): DiffIndex {
-  const sorted = diffs
-    .map((diff) => ({ key: pathKey(diff.path), diff }))
-    .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  const sorted = diffs.map((diff) => ({ key: pathKey(diff.path), diff })).sort((a, b) => compareKeys(a.key, b.key));
   const lowerBound = (key: string) => {
     let low = 0;
     let high = sorted.length;
@@ -502,12 +481,8 @@ function groupByCategory(node: StructureNode, entries: NodeEntry[]): ReviewCateg
     .filter((group) => group.changes.length > 0);
 }
 
-/** The move from structure/; a ready-made status text stands in until it gives the parts. */
 function moveOf(node: StructureNode): NodeMove | undefined {
-  if (node.moveText) {
-    return { text: node.moveText, position: node.movePosition };
-  }
-  return node.statusText ? { text: node.statusText } : undefined;
+  return node.moveText ? { text: node.moveText, position: node.movePosition } : undefined;
 }
 
 function toReviewNode(

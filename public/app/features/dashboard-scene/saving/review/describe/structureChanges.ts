@@ -2,13 +2,22 @@ import { t } from '@grafana/i18n';
 import { defaultAutoGridLayoutSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { type Diff } from '../../../settings/version-history/utils';
-import { type PathKey, type RawChange, type ReviewChange, type StructureNode } from '../types';
+import {
+  type AUTO_GRID_SETTINGS,
+  DASHBOARD_NODE_ID,
+  type PathKey,
+  type RawChange,
+  type ReviewChange,
+  settingRank,
+  type StructureNode,
+} from '../types';
 
 import { changed, describeValue, type ValueFormat, type Worded } from './formatters';
 import { humanizeKey } from './labels';
 import { listItemsOf } from './listKinds';
 import { describeNamedList, type ListContext } from './namedLists';
 import { asArray, valueAt } from './paths';
+import { labels } from './rules';
 import { describeShowHideRules } from './showHideRules';
 
 const noEscape = { escapeValue: false };
@@ -46,7 +55,7 @@ const FIELD_ORDER: Record<RawChange['field'], number> = {
 
 /** Words a change found by structure/, splitting settings that are several fields into one line each. */
 export function describeRawChange(raw: RawChange, ctx: RawChangeContext): WordedRawChange[] {
-  const order = FIELD_ORDER[raw.field] ?? 0;
+  const order = FIELD_ORDER[raw.field];
   const one = (worded: Worded): WordedRawChange[] => [{ change: { ...worded, claims: raw.claims }, order }];
 
   if (raw.text) {
@@ -56,7 +65,7 @@ export function describeRawChange(raw: RawChange, ctx: RawChangeContext): Worded
   switch (raw.field) {
     case 'title':
       return one(
-        describeValue(t('dashboard-scene.review.field.title', 'Title'), raw.before, raw.after, {
+        describeValue(labels.title(), raw.before, raw.after, {
           type: 'name',
           quoted: true,
         })
@@ -69,14 +78,14 @@ export function describeRawChange(raw: RawChange, ctx: RawChangeContext): Worded
       );
     case 'fillScreen':
       return one(
-        describeValue(t('dashboard-scene.review.field.fill-screen', 'Fill screen'), raw.before, raw.after, {
+        describeValue(LAYOUT_SETTING_LABELS.fillScreen(), raw.before, raw.after, {
           type: 'boolean',
         })
       );
     case 'fitContent':
       // A panel's own setting overrides its auto grid's; without one it follows the layout.
       return one(
-        describeValue(t('dashboard-scene.review.field.fit-content', 'Fit content'), raw.before, raw.after, {
+        describeValue(LAYOUT_SETTING_LABELS.fitContent(), raw.before, raw.after, {
           type: 'boolean',
           absent: 'inherit',
         })
@@ -196,7 +205,7 @@ function positionText(vertical: string, horizontal: string): string {
 
 function describeSectionOrder(raw: RawChange, nodes: StructureNode[]): Worded {
   const children = nodes.filter(
-    (node) => node.kind === 'section' && (node.parentId ?? 'dashboard') === raw.nodeId && node.id !== raw.nodeId
+    (node) => node.kind === 'section' && (node.parentId ?? DASHBOARD_NODE_ID) === raw.nodeId && node.id !== raw.nodeId
   );
   const rootChildren = nodes.filter((node) => node.kind === 'section' && node.parentId === undefined);
   const kind = (children[0] ?? (raw.nodeId === nodes[0]?.id ? rootChildren[0] : undefined))?.sectionKind;
@@ -218,12 +227,7 @@ function repeatValue(repeat: unknown): unknown {
   return typeof repeat === 'object' && repeat !== null ? valueAt(repeat, ['value']) : repeat;
 }
 
-const REPEAT_FIELDS: Array<{
-  key: string;
-  label: () => string;
-  format: ValueFormat;
-  display?: (v: unknown) => unknown;
-}> = [
+const REPEAT_FIELDS: Array<{ key: string; label: () => string; format: ValueFormat }> = [
   { key: 'value', label: repeatLabel, format: { type: 'name' } },
   {
     key: 'direction',
@@ -272,7 +276,7 @@ function describePanelRepeat(raw: RawChange, order: number): WordedRawChange[] {
   return lines.map(({ change, order }) => ({ change, order }));
 }
 
-const LAYOUT_SETTING_LABELS: Record<string, () => string> = {
+const LAYOUT_SETTING_LABELS: Record<(typeof AUTO_GRID_SETTINGS)[number], () => string> = {
   maxColumnCount: () => t('dashboard-scene.review.field.max-columns', 'Max columns'),
   columnWidthMode: () => t('dashboard-scene.review.field.column-width', 'Column width'),
   columnWidth: () => t('dashboard-scene.review.field.custom-column-width', 'Custom column width'),
@@ -286,8 +290,6 @@ const LAYOUT_SETTING_LABELS: Record<string, () => string> = {
   fitContent: () => t('dashboard-scene.review.field.fit-content', 'Fit content'),
   matchRowHeights: () => t('dashboard-scene.review.field.match-row-heights', 'Match row heights'),
 };
-
-const LAYOUT_SETTING_ORDER = Object.keys(LAYOUT_SETTING_LABELS);
 
 function layoutSettingDefault(key: string): unknown {
   const defaults: Record<string, unknown> = { ...defaultAutoGridLayoutSpec() };
@@ -315,9 +317,8 @@ export function rawFieldDefault(raw: RawChange): unknown {
 
 function describeLayoutSettings(raw: RawChange, order: number): WordedRawChange[] {
   if (raw.subField) {
-    const label = Object.hasOwn(LAYOUT_SETTING_LABELS, raw.subField)
-      ? LAYOUT_SETTING_LABELS[raw.subField]()
-      : humanizeKey(raw.subField);
+    const subField = raw.subField;
+    const label = isAutoGridSetting(subField) ? LAYOUT_SETTING_LABELS[subField]() : humanizeKey(subField);
     const fallback = layoutSettingDefault(raw.subField);
     // The serializer leaves a setting out when it is at its default, so a missing boolean reads as that default.
     const format: ValueFormat =
@@ -325,7 +326,7 @@ function describeLayoutSettings(raw: RawChange, order: number): WordedRawChange[
     return [
       {
         change: { ...describeValue(label, raw.before, raw.after, format), claims: raw.claims },
-        order: order + settingOrder(raw.subField) / 100,
+        order: order + settingRank(subField) / 100,
       },
     ];
   }
@@ -340,17 +341,16 @@ function describeLayoutSettings(raw: RawChange, order: number): WordedRawChange[
   ];
 }
 
-function settingOrder(key: string): number {
-  const index = LAYOUT_SETTING_ORDER.indexOf(key);
-  return index === -1 ? LAYOUT_SETTING_ORDER.length : index;
+function isAutoGridSetting(key: string): key is (typeof AUTO_GRID_SETTINGS)[number] {
+  return Object.hasOwn(LAYOUT_SETTING_LABELS, key);
 }
 
-/** Gives each claim to the line whose key appears in it (after `below`, when given); the rest go to the first line. */
-function splitClaims(claims: PathKey[], lines: Array<{ key: string; change: ReviewChange }>, below?: string) {
+/** Gives each claim to the line whose key comes right after `below` in it; the rest go to the first line. */
+function splitClaims(claims: PathKey[], lines: Array<{ key: string; change: ReviewChange }>, below: string) {
   for (const claim of claims) {
     const segments = claim.split('/');
-    const start = below ? segments.lastIndexOf(below) + 1 : 0;
-    const line = lines.find(({ key }) => (below ? segments[start] === key : segments.includes(key))) ?? lines[0];
+    const next = segments[segments.lastIndexOf(below) + 1];
+    const line = lines.find(({ key }) => next === key) ?? lines[0];
     line.change.claims.push(claim);
   }
 }

@@ -20,9 +20,10 @@ export interface SectionMatching {
 export function matchSections(baseline: WalkedLayout, payload: WalkedLayout): SectionMatching {
   const matching: SectionMatching = { baselineToPayload: new Map(), payloadToBaseline: new Map() };
 
-  const pair = (b: WalkedSection, p: WalkedSection) => {
+  const pair = (b: WalkedSection, p: WalkedSection, pairs: Array<[WalkedSection, WalkedSection]>) => {
     matching.baselineToPayload.set(b.path, p.path);
     matching.payloadToBaseline.set(p.path, b.path);
+    pairs.push([b, p]);
   };
   const isMatchedB = (s: WalkedSection) => matching.baselineToPayload.has(s.path);
   const isMatchedP = (s: WalkedSection) => matching.payloadToBaseline.has(s.path);
@@ -36,8 +37,7 @@ export function matchSections(baseline: WalkedLayout, payload: WalkedLayout): Se
       }
       const bs = b.sections.find((s) => !isMatchedB(s) && s.title === ps.title);
       if (bs) {
-        pair(bs, ps);
-        pairs.push([bs, ps]);
+        pair(bs, ps, pairs);
       }
     }
 
@@ -47,8 +47,7 @@ export function matchSections(baseline: WalkedLayout, payload: WalkedLayout): Se
       const candidates = [remainingB.find((s) => s.index === ps.index), remainingB[rank]];
       const bs = candidates.find((s) => s && !isMatchedB(s) && mostlySamePanels(s, ps));
       if (bs) {
-        pair(bs, ps);
-        pairs.push([bs, ps]);
+        pair(bs, ps, pairs);
       }
     });
 
@@ -74,8 +73,7 @@ export function matchSections(baseline: WalkedLayout, payload: WalkedLayout): Se
     for (const bs of unmatchedB) {
       const ps = deeperP.find((s) => !isMatchedP(s) && s.title && s.title === bs.title && s.kind === bs.kind);
       if (ps) {
-        pair(bs, ps);
-        pairs.push([bs, ps]);
+        pair(bs, ps, pairs);
       }
     }
     for (const ps of unmatchedP) {
@@ -84,8 +82,7 @@ export function matchSections(baseline: WalkedLayout, payload: WalkedLayout): Se
       }
       const bs = deeperB.find((s) => !isMatchedB(s) && s.title && s.title === ps.title && s.kind === ps.kind);
       if (bs) {
-        pair(bs, ps);
-        pairs.push([bs, ps]);
+        pair(bs, ps, pairs);
       }
     }
   };

@@ -354,7 +354,6 @@ describe('buildStructure', () => {
       const structure = structureOf(before, after);
 
       expect(nodeByLabel(structure, 'Panel "Disk"')).toMatchObject({ status: 'added' });
-      expect(nodeByLabel(structure, 'Panel "Disk"').statusText).toBeUndefined();
       expect(nodeByLabel(structure, 'Panel "Memory"')).toMatchObject({ status: 'removed' });
       expect(
         [...nodeByLabel(structure, 'Panel "Disk"').claims, ...nodeByLabel(structure, 'Panel "Memory"').claims].sort()
@@ -372,7 +371,6 @@ describe('buildStructure', () => {
 
       const removed = nodeByLabel(structure, 'Row "API"');
       expect(removed).toMatchObject({ status: 'removed' });
-      expect(removed.statusText).toBeUndefined();
       // Disk was moved out before the row was removed, so it isn't removed with it.
       expect(removed.removedContents).toEqual(['Tab "Inner"', 'Panel "Memory"']);
       expect(removed.claims.sort()).toEqual(['elements/b', 'layout/spec/rows/1']);
@@ -836,7 +834,6 @@ describe('buildStructure', () => {
         status: 'moved',
         moveText: 'moved from Row "API" to Row "DB", after Panel "Memory"',
       });
-      expect(node.statusText).toBeUndefined();
       expect(node.movePosition).toBeUndefined();
     });
 

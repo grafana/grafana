@@ -1,4 +1,6 @@
 import { css } from '@emotion/css';
+import { upperFirst } from 'lodash';
+import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -18,8 +20,7 @@ import { type ChangeKind, type ReviewNode, type ReviewSummary } from '../types';
 
 import { ReviewChangeList } from './ReviewChangeList';
 import { ReviewDisclosure } from './ReviewDisclosure';
-import { ReviewNodeView, needsMarkerColumn } from './ReviewNodeView';
-import { capitalizeLabel } from './capitalizeLabel';
+import { ReviewNodeView, needsMarkerColumn, nodeKey, removedContentsKey } from './ReviewNodeView';
 import { useReviewExpansion } from './useReviewExpansion';
 import { type ReviewSummaryState } from './useReviewSummary';
 
@@ -40,7 +41,7 @@ export function ReviewTab({ state, onBackToDetails, onShowChanges }: ReviewTabPr
     <Box display="flex" direction="column" height="100%">
       <ScrollContainer showScrollIndicators>
         <Box padding={0.5}>
-          {state.status === 'loading' && (
+          {(state.status === 'loading' || (state.status === 'ready' && state.refreshing)) && (
             <LoadingPlaceholder text={t('dashboard-scene.review.loading', 'Summarizing changes…')} />
           )}
           {state.status === 'error' && (
@@ -49,9 +50,6 @@ export function ReviewTab({ state, onBackToDetails, onShowChanges }: ReviewTabPr
                 <Trans i18nKey="dashboard-scene.review.error-show-changes">See the technical diff in Changes</Trans>
               </Button>
             </Alert>
-          )}
-          {state.status === 'ready' && state.refreshing && (
-            <LoadingPlaceholder text={t('dashboard-scene.review.loading', 'Summarizing changes…')} />
           )}
           {state.status === 'ready' && <ReviewSummaryView summary={state.summary} />}
         </Box>
@@ -67,16 +65,13 @@ export function ReviewTab({ state, onBackToDetails, onShowChanges }: ReviewTabPr
 
 function ReviewSummaryView({ summary }: { summary: ReviewSummary }) {
   const styles = useStyles2(getStyles);
-  const panelIds = new Set(collectPanelIds(summary.tree));
-  const expansion = useReviewExpansion((key) => {
-    if (key === METADATA_KEY || key === SYSTEM_DEFAULTS_KEY) {
-      return false;
-    }
-    if (key.startsWith('removed:')) {
-      return !summary.collapsePanelsByDefault;
-    }
-    return !(summary.collapsePanelsByDefault && panelIds.has(key.slice('node:'.length)));
-  });
+  const collapsedByDefault = useMemo(
+    () => new Set(summary.collapsePanelsByDefault ? collapsibleKeys(summary.tree) : []),
+    [summary]
+  );
+  const expansion = useReviewExpansion(
+    (key) => key !== METADATA_KEY && key !== SYSTEM_DEFAULTS_KEY && !collapsedByDefault.has(key)
+  );
 
   const { tree, metadata, systemDefaults, overview } = summary;
   const systemDefaultsCount = systemDefaults.reduce((count, group) => count + group.changes.length, 0);
@@ -86,6 +81,7 @@ function ReviewSummaryView({ summary }: { summary: ReviewSummary }) {
   }
 
   const counts = COUNT_ORDER.filter((kind) => overview.counts[kind] > 0);
+  const markerColumn = needsMarkerColumn(tree);
 
   return (
     <Stack direction="column" gap={2}>
@@ -140,13 +136,7 @@ function ReviewSummaryView({ summary }: { summary: ReviewSummary }) {
       {tree.length > 0 && (
         <div className={styles.tree}>
           {tree.map((node) => (
-            <ReviewNodeView
-              key={node.id}
-              node={node}
-              level={3}
-              expansion={expansion}
-              markerColumn={needsMarkerColumn(tree)}
-            />
+            <ReviewNodeView key={node.id} node={node} level={3} expansion={expansion} markerColumn={markerColumn} />
           ))}
         </div>
       )}
@@ -192,16 +182,14 @@ function ReviewSummaryView({ summary }: { summary: ReviewSummary }) {
                   "Values Grafana filled in automatically. You didn't edit them."
                 )}
               </Text>
-              {systemDefaults
-                .filter((group) => group.changes.length > 0)
-                .map((group, index) => (
-                  <div key={index} className={styles.defaultsGroup}>
-                    <div role="heading" aria-level={4} className={styles.groupHeading}>
-                      {capitalizeLabel(group.label)}
-                    </div>
-                    <ReviewChangeList changes={group.changes} />
+              {systemDefaults.map((group, index) => (
+                <div key={index} className={styles.defaultsGroup}>
+                  <div role="heading" aria-level={4} className={styles.groupHeading}>
+                    {upperFirst(group.label)}
                   </div>
-                ))}
+                  <ReviewChangeList changes={group.changes} />
+                </div>
+              ))}
             </ReviewDisclosure>
           )}
         </div>
@@ -270,12 +258,13 @@ function formatCount(kind: ChangeKind, count: number): string {
   }
 }
 
-function collectPanelIds(nodes: ReviewNode[]): string[] {
+/** Expansion keys of the parts that start collapsed on a large review: panels and "removed with it" lists. */
+function collapsibleKeys(nodes: ReviewNode[]): string[] {
   return nodes.flatMap((node) => {
     if (node.kind === 'panel') {
-      return [node.id];
+      return [nodeKey(node)];
     }
-    return node.kind === 'section' ? collectPanelIds(node.children) : [];
+    return node.kind === 'section' ? [removedContentsKey(node), ...collapsibleKeys(node.children)] : [];
   });
 }
 

@@ -39,7 +39,6 @@ export interface WalkedSection {
   parentPath?: PathKey;
   /** Index in the parent's rows/tabs array. */
   index: number;
-  depth: number;
   container: WalkedContainer;
 }
 
@@ -85,7 +84,7 @@ export function walkLayout(layout: LayoutKind | undefined): WalkedLayout {
     placementByElement: new Map(),
     containerByPath: new Map(),
   };
-  walked.root = walkContainer(layout ?? { kind: 'GridLayout', spec: { items: [] } }, 'layout', undefined, 0, walked);
+  walked.root = walkContainer(layout ?? { kind: 'GridLayout', spec: { items: [] } }, 'layout', undefined, walked);
   return walked;
 }
 
@@ -93,7 +92,6 @@ function walkContainer(
   layout: LayoutKind,
   path: PathKey,
   sectionPath: PathKey | undefined,
-  depth: number,
   walked: WalkedLayout
 ): WalkedContainer {
   const container: WalkedContainer = {
@@ -143,7 +141,6 @@ function walkContainer(
           spec,
           parentPath: sectionPath,
           index,
-          depth,
           container: undefined!,
         };
         container.sections.push(section);
@@ -153,7 +150,6 @@ function walkContainer(
           spec.layout ?? { kind: 'GridLayout', spec: { items: [] } },
           `${sectionPathKey}/spec/layout`,
           sectionPathKey,
-          depth + 1,
           walked
         );
       });

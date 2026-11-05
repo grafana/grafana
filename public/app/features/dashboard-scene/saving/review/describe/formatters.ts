@@ -218,7 +218,7 @@ export function detailOf(value: unknown): string {
 }
 
 export function displayShort(value: unknown): string {
-  return typeof value === 'string' ? value : String(value);
+  return String(value);
 }
 
 export function displayAutoRefresh(value: unknown): string {

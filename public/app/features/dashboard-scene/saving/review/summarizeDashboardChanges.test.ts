@@ -107,7 +107,6 @@ describe('summarizeDashboardChanges', () => {
           sectionKind: 'row',
           label: "'Nodes' row",
           status: 'removed',
-          statusText: 'removed',
           removedContents: ["'CPU'"],
           claims: ['layout/spec/rows/0'],
         },

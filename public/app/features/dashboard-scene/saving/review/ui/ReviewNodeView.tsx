@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { upperFirst } from 'lodash';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -9,7 +10,6 @@ import { type ReviewNode, type SectionReviewNode } from '../types';
 import { ReviewChangeList } from './ReviewChangeList';
 import { ReviewDisclosure } from './ReviewDisclosure';
 import { ElementIcon, MarkerSlot, isAddedOrRemoved, nodeElementKind } from './ReviewMarks';
-import { capitalizeLabel } from './capitalizeLabel';
 import { type ReviewExpansion } from './useReviewExpansion';
 
 interface Props {
@@ -31,13 +31,14 @@ export function ReviewNodeView({ node, level, expansion, markerColumn }: Props) 
   const removedContents = node.kind === 'section' ? (node.removedContents ?? []) : [];
   const hasContent = node.categories.length > 0 || children.length > 0 || removedContents.length > 0;
   const expanded = hasContent ? expansion.isExpanded(nodeKey(node)) : undefined;
+  const childMarkerColumn = needsMarkerColumn(children);
 
   const header = (
     <>
       {/* The spaces keep the parts apart in the accessible name; flex layout ignores them */}
       <span className={styles.title}>
         {markerColumn && <MarkerSlot kind={node.status} />} <ElementIcon kind={nodeElementKind(node)} />
-        <Text weight="medium">{capitalizeLabel(node.label)}</Text>
+        <Text weight="medium">{upperFirst(node.label)}</Text>
       </span>{' '}
       {node.statusText && <Text color="secondary">{node.statusText}</Text>}{' '}
       {expanded === false && node.summary && (
@@ -74,7 +75,7 @@ export function ReviewNodeView({ node, level, expansion, markerColumn }: Props) 
               node={child}
               level={level + 1}
               expansion={expansion}
-              markerColumn={needsMarkerColumn(children)}
+              markerColumn={childMarkerColumn}
             />
           ))}
         </div>
@@ -114,7 +115,7 @@ function RemovedContents({
       >
         <ul className={styles.removedList}>
           {items.map((item, index) => (
-            <li key={index}>{capitalizeLabel(item)}</li>
+            <li key={index}>{upperFirst(item)}</li>
           ))}
         </ul>
       </ReviewDisclosure>
