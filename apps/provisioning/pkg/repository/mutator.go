@@ -136,8 +136,17 @@ func InvalidateConnectionTokenOnURLChange(new, old *provisioning.Repository) {
 // suppliedNewToken reports whether the incoming object carries a token decision of its own.
 // Echoing the stored reference back is not one: a read-modify-write client resends what it
 // read, and treating that as a new token would let it move the URL on the old credential.
+// Only the credential identity counts, so a description cannot stand in for a new token.
 func suppliedNewToken(new, old *provisioning.Repository) bool {
-	return !new.Secure.Token.IsZero() && new.Secure.Token != old.Secure.Token
+	token := new.Secure.Token
+	switch {
+	case token.IsZero():
+		return false
+	case token.Remove || !token.Create.IsZero():
+		return true
+	default:
+		return token.Name != old.Secure.Token.Name
+	}
 }
 
 // connectionMintsTokenForURLChange reports whether the connection can mint a token for the

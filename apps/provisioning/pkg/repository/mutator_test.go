@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -510,6 +511,12 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 			wantToken: common.InlineSecureValue{Remove: true},
 		},
 		{
+			name:      "marks an echoed reference carrying a description for removal",
+			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{Name: "old-token", Description: ptr.To("git token")}),
+			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"}),
+			wantToken: common.InlineSecureValue{Remove: true},
+		},
+		{
 			name:      "keeps a caller-supplied token",
 			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{Create: "caller-token"}),
 			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"}),
@@ -630,6 +637,65 @@ func TestAdmissionMutator_Mutate_InvalidatesAfterURLNormalization(t *testing.T) 
 			require.NoError(t, m.Mutate(context.Background(), attr, nil))
 			// A zero token means the mutator left it alone, so storage keeps the stored one.
 			assert.Equal(t, tt.wantToken, newRepo.Secure.Token)
+		})
+	}
+}
+
+// Description is a *string, so comparing whole structs compares pointers: an echoed
+// reference that carries a description would never match the stored one and would count as
+// a supplied token, skipping both the re-mint and the host check.
+func TestSuppliedNewTokenIgnoresDescription(t *testing.T) {
+	repoWithToken := func(token common.InlineSecureValue) *provisioning.Repository {
+		return &provisioning.Repository{Secure: provisioning.SecureValues{Token: token}}
+	}
+	describe := ptr.To[string]
+
+	tests := []struct {
+		name string
+		new  common.InlineSecureValue
+		old  common.InlineSecureValue
+		want bool
+	}{
+		{
+			name: "echoed reference with a description is not a new token",
+			new:  common.InlineSecureValue{Name: "inline-abc", Description: describe("git token")},
+			old:  common.InlineSecureValue{Name: "inline-abc"},
+			want: false,
+		},
+		{
+			name: "same description in a different allocation is not a new token",
+			new:  common.InlineSecureValue{Name: "inline-abc", Description: describe("git token")},
+			old:  common.InlineSecureValue{Name: "inline-abc", Description: describe("git token")},
+			want: false,
+		},
+		{
+			name: "a different reference is a new token",
+			new:  common.InlineSecureValue{Name: "inline-xyz"},
+			old:  common.InlineSecureValue{Name: "inline-abc"},
+			want: true,
+		},
+		{
+			name: "a created value is a new token",
+			new:  common.InlineSecureValue{Create: "raw-token"},
+			old:  common.InlineSecureValue{Name: "inline-abc"},
+			want: true,
+		},
+		{
+			name: "a removal marker is a token decision",
+			new:  common.InlineSecureValue{Remove: true},
+			old:  common.InlineSecureValue{Name: "inline-abc"},
+			want: true,
+		},
+		{
+			name: "an absent token is not a new token",
+			old:  common.InlineSecureValue{Name: "inline-abc"},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, suppliedNewToken(repoWithToken(tt.new), repoWithToken(tt.old)))
 		})
 	}
 }
