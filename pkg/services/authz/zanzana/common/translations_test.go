@@ -60,3 +60,35 @@ func TestDatasourceLegacyActionsUseSharedResource(t *testing.T) {
 		})
 	}
 }
+
+func TestActionListEntryLegacyScopeKind(t *testing.T) {
+	for _, tc := range []struct {
+		action, resource, kind string
+	}{
+		{"secret.securevalues:read", "securevalues", "secret.securevalues"},
+		{"secret.securevalues.permissions:read", "securevalues", "secret.securevalues"},
+		{"secret.securevalues.permissions:write", "securevalues", "secret.securevalues"},
+		{"folders.permissions:read", "folders", "folders"},
+		{"dashboards:read", "dashboards", "dashboards"},
+		// Inherited notebook actions must retain notebook scopes.
+		{"notebooks:read", "notebooks", "notebooks"},
+		{"datasources.caching:read", "datasources", "datasources"},
+	} {
+		t.Run(tc.action, func(t *testing.T) {
+			entry, ok := TranslateActionToListEntry(tc.action)
+			require.True(t, ok)
+			require.Equal(t, tc.resource, entry.Resource)
+			require.Equal(t, tc.kind, entry.LegacyScopeKind)
+			require.Contains(t, SupportedActions(), entry)
+		})
+	}
+
+	entry, ok := TranslateActionToListEntry("unknown:read")
+	require.False(t, ok)
+	require.Empty(t, entry)
+	group, resource, subresource, verb := TranslateActionToListParams("unknown:read")
+	require.Empty(t, group)
+	require.Empty(t, resource)
+	require.Empty(t, subresource)
+	require.Empty(t, verb)
+}
