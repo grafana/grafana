@@ -122,17 +122,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceMetadataList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceMetadataList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceMetadataList"
                 }
               }
             }
@@ -279,12 +279,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceMetadata"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceMetadata"
                 }
               }
             }
@@ -467,67 +467,19 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue": {
-        "description": "Allow access to a secure value inside",
-        "oneOf": [
-          {
-            "required": [
-              "name"
-            ]
-          },
-          {
-            "required": [
-              "create"
-            ]
-          },
-          {
-            "required": [
-              "remove"
-            ]
-          }
-        ],
-        "properties": {
-          "create": {
-            "description": "Create a secure value -- this is only used for POST/PUT",
-            "type": "string",
-            "maxLength": 24576,
-            "minLength": 1
-          },
-          "description": {
-            "description": "Optionally when creating a secure value, you can pass a custom description.",
-            "type": "string"
-          },
-          "name": {
-            "description": "Name in the secret service (reference)",
-            "type": "string",
-            "maxLength": 253,
-            "minLength": 1
-          },
-          "remove": {
-            "description": "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
-        "type": "object",
-        "additionalProperties": true,
-        "x-kubernetes-preserve-unknown-fields": true
-      },
-      "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource": {
+      "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceMetadata": {
+        "description": "A datasource without its spec and secure values",
         "type": "object",
         "required": [
-          "metadata",
-          "spec"
+          "metadata"
         ],
         "properties": {
           "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "description": "The group and version that serve and write the datasource",
             "type": "string"
           },
           "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "description": "Kind of the object",
             "type": "string"
           },
           "metadata": {
@@ -535,21 +487,6 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
-          },
-          "secure": {
-            "description": "Secure values allows setting values that are never shown to users The returned properties are only the names of the configured values",
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
-            }
-          },
-          "spec": {
-            "description": "DataSource configuration -- these properties are all visible to anyone able to query the data source from their browser",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.UnstructuredSpec"
               }
             ]
           }
@@ -562,7 +499,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceList": {
+      "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceMetadataList": {
         "type": "object",
         "required": [
           "metadata",
@@ -570,17 +507,17 @@
         ],
         "properties": {
           "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "description": "The group and version that serve and write the datasource",
             "type": "string"
           },
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceMetadata"
             }
           },
           "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "description": "Kind of the object",
             "type": "string"
           },
           "metadata": {
@@ -621,56 +558,6 @@
             "additionalProperties": {}
           }
         }
-      },
-      "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.UnstructuredSpec": {
-        "type": "object",
-        "required": [
-          "title",
-          "jsonData"
-        ],
-        "properties": {
-          "access": {
-            "description": "Possible enum values:\n - `\"direct\"` The frontend can connect directly to the remote URL This method is discouraged\n - `\"proxy\"` Connect to the remote datasource through the grafana backend",
-            "type": "string",
-            "enum": [
-              "direct",
-              "proxy"
-            ]
-          },
-          "basicAuth": {
-            "type": "boolean"
-          },
-          "basicAuthUser": {
-            "type": "string"
-          },
-          "database": {
-            "type": "string"
-          },
-          "jsonData": {
-            "type": "object",
-            "additionalProperties": true,
-            "x-kubernetes-preserve-unknown-fields": true
-          },
-          "readOnly": {
-            "type": "boolean"
-          },
-          "title": {
-            "description": "The display name (previously saved as the \"name\" property)",
-            "type": "string",
-            "default": ""
-          },
-          "url": {
-            "description": "Server URL",
-            "type": "string"
-          },
-          "user": {
-            "type": "string"
-          },
-          "withCredentials": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": true
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",

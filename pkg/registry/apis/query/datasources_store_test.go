@@ -27,7 +27,7 @@ import (
 )
 
 type fakeUnified struct {
-	items []datasourceV0.DataSource
+	items []dataSourceMetadata
 	err   error
 	calls int
 }
@@ -50,10 +50,10 @@ func (f *fakeUnified) List(context.Context, *internalversion.ListOptions) (runti
 	if f.err != nil {
 		return nil, f.err
 	}
-	return &datasourceV0.DataSourceList{Items: f.items}, nil
+	return &dataSourceMetadataList{Items: f.items}, nil
 }
 
-func (f *fakeUnified) NewList() runtime.Object { return &datasourceV0.DataSourceList{} }
+func (f *fakeUnified) NewList() runtime.Object { return &dataSourceMetadataList{} }
 
 func (f *fakeUnified) ConvertToTable(context.Context, runtime.Object, runtime.Object) (*metav1.Table, error) {
 	return nil, errors.New("not used")
@@ -65,7 +65,7 @@ func storeContext() context.Context {
 }
 
 func newTestStore(status dualwrite.Service, unified *fakeUnified, canRead bool, rows ...*datasources.DataSource) *datasourcesStore {
-	info := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("query.grafana.app", "")
+	info := newDataSourcesResourceInfo("query.grafana.app")
 	return &datasourcesStore{
 		resourceInfo:   info,
 		tableConverter: info.TableConverter(),
@@ -86,8 +86,8 @@ func rows() []*datasources.DataSource {
 	}
 }
 
-func managed(name, plugin string) datasourceV0.DataSource {
-	return datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{
+func managed(name, plugin string) dataSourceMetadata {
+	return dataSourceMetadata{ObjectMeta: metav1.ObjectMeta{
 		Name:        name,
 		Labels:      map[string]string{datasourceV0.LabelKeyGroup: plugin},
 		Annotations: map[string]string{utils.AnnoKeyManagerKind: "repo", utils.AnnoKeyManagerIdentity: "my-repo"},
@@ -96,7 +96,7 @@ func managed(name, plugin string) datasourceV0.DataSource {
 
 func names(t *testing.T, obj runtime.Object) []string {
 	t.Helper()
-	list, ok := obj.(*datasourceV0.DataSourceList)
+	list, ok := obj.(*dataSourceMetadataList)
 	require.True(t, ok)
 	out := make([]string, 0, len(list.Items))
 	for _, item := range list.Items {
@@ -115,10 +115,12 @@ func TestDataSourcesStore_Legacy(t *testing.T) {
 		require.Equal(t, []string{"loki", "prom"}, names(t, obj))
 		require.Zero(t, unified.calls, "the collection is not read below dual write")
 
-		list := obj.(*datasourceV0.DataSourceList)
+		list := obj.(*dataSourceMetadataList)
 		require.Equal(t, "loki", list.Items[0].Labels[datasourceV0.LabelKeyGroup])
 		require.Equal(t, "prometheus", list.Items[1].Labels[datasourceV0.LabelKeyGroup])
-		require.Equal(t, "query.grafana.app/v0alpha1", list.Items[0].APIVersion)
+		require.Equal(t, "loki.datasource.grafana.app/v0alpha1", list.Items[0].APIVersion)
+		require.Equal(t, "DataSource", list.Items[0].Kind)
+		require.Equal(t, "prometheus.datasource.grafana.app/v0alpha1", list.Items[1].APIVersion)
 		require.NotContains(t, list.Items[0].Annotations, utils.AnnoKeyManagerKind)
 	})
 
@@ -133,13 +135,13 @@ func TestDataSourcesStore_Legacy(t *testing.T) {
 		first, err := store.List(storeContext(), &internalversion.ListOptions{Limit: 1})
 		require.NoError(t, err)
 		require.Equal(t, []string{"loki"}, names(t, first))
-		token := first.(*datasourceV0.DataSourceList).Continue
+		token := first.(*dataSourceMetadataList).Continue
 		require.NotEmpty(t, token)
 
 		second, err := store.List(storeContext(), &internalversion.ListOptions{Limit: 1, Continue: token})
 		require.NoError(t, err)
 		require.Equal(t, []string{"prom"}, names(t, second))
-		require.Empty(t, second.(*datasourceV0.DataSourceList).Continue)
+		require.Empty(t, second.(*dataSourceMetadataList).Continue)
 	})
 
 	t.Run("rejects a bad continue token", func(t *testing.T) {
@@ -163,7 +165,7 @@ func TestDataSourcesStore_Legacy(t *testing.T) {
 	t.Run("get returns the object across types", func(t *testing.T) {
 		obj, err := newTestStore(status, &fakeUnified{}, true, rows()...).Get(storeContext(), "prom", &metav1.GetOptions{})
 		require.NoError(t, err)
-		require.Equal(t, "prometheus", obj.(*datasourceV0.DataSource).Labels[datasourceV0.LabelKeyGroup])
+		require.Equal(t, "prometheus", obj.(*dataSourceMetadata).Labels[datasourceV0.LabelKeyGroup])
 	})
 
 	t.Run("get hides what is missing or unreadable", func(t *testing.T) {
@@ -179,11 +181,11 @@ func TestDataSourcesStore_DualWrite(t *testing.T) {
 	status := dualwrite.ProvideTestService(dualwrite.StorageStatus{WriteLegacy: true, WriteUnified: true})
 
 	t.Run("takes the annotations from the collection", func(t *testing.T) {
-		unified := &fakeUnified{items: []datasourceV0.DataSource{managed("loki", "loki")}}
+		unified := &fakeUnified{items: []dataSourceMetadata{managed("loki", "loki")}}
 		obj, err := newTestStore(status, unified, true, rows()...).List(storeContext(), &internalversion.ListOptions{})
 		require.NoError(t, err)
 
-		list := obj.(*datasourceV0.DataSourceList)
+		list := obj.(*dataSourceMetadataList)
 		require.Equal(t, []string{"loki", "prom"}, names(t, obj))
 		require.Equal(t, "repo", list.Items[0].Annotations[utils.AnnoKeyManagerKind])
 		require.Equal(t, "my-repo", list.Items[0].Annotations[utils.AnnoKeyManagerIdentity])
@@ -198,28 +200,29 @@ func TestDataSourcesStore_DualWrite(t *testing.T) {
 	})
 
 	t.Run("get takes the annotations from the collection", func(t *testing.T) {
-		unified := &fakeUnified{items: []datasourceV0.DataSource{managed("loki", "loki")}}
+		unified := &fakeUnified{items: []dataSourceMetadata{managed("loki", "loki")}}
 		obj, err := newTestStore(status, unified, true, rows()...).Get(storeContext(), "loki", &metav1.GetOptions{})
 		require.NoError(t, err)
-		require.Equal(t, "repo", obj.(*datasourceV0.DataSource).Annotations[utils.AnnoKeyManagerKind])
+		require.Equal(t, "repo", obj.(*dataSourceMetadata).Annotations[utils.AnnoKeyManagerKind])
 	})
 
 	t.Run("get without a stored copy returns the row", func(t *testing.T) {
 		obj, err := newTestStore(status, &fakeUnified{}, true, rows()...).Get(storeContext(), "prom", &metav1.GetOptions{})
 		require.NoError(t, err)
-		require.Equal(t, "prom", obj.(*datasourceV0.DataSource).Name)
+		require.Equal(t, "prom", obj.(*dataSourceMetadata).Name)
 	})
 }
 
 func TestDataSourcesStore_Unified(t *testing.T) {
 	status := dualwrite.ProvideTestService(dualwrite.StorageStatus{WriteUnified: true, ReadUnified: true})
-	unified := &fakeUnified{items: []datasourceV0.DataSource{managed("stored", "loki")}}
+	unified := &fakeUnified{items: []dataSourceMetadata{managed("stored", "loki")}}
 	store := newTestStore(status, unified, true, rows()...)
 
 	t.Run("list reads the collection, not the table", func(t *testing.T) {
 		obj, err := store.List(storeContext(), &internalversion.ListOptions{})
 		require.NoError(t, err)
 		require.Equal(t, []string{"stored"}, names(t, obj))
+		require.Equal(t, "loki.datasource.grafana.app/v0alpha1", obj.(*dataSourceMetadataList).Items[0].APIVersion)
 	})
 
 	t.Run("get reads the collection, not the table", func(t *testing.T) {
@@ -228,13 +231,13 @@ func TestDataSourcesStore_Unified(t *testing.T) {
 
 		obj, err := store.Get(storeContext(), "stored", &metav1.GetOptions{})
 		require.NoError(t, err)
-		require.Equal(t, "repo", obj.(*datasourceV0.DataSource).Annotations[utils.AnnoKeyManagerKind])
+		require.Equal(t, "repo", obj.(*dataSourceMetadata).Annotations[utils.AnnoKeyManagerKind])
 	})
 }
 
 func TestDataSourcesStore_UnifiedAccess(t *testing.T) {
 	status := dualwrite.ProvideTestService(dualwrite.StorageStatus{WriteUnified: true, ReadUnified: true})
-	unified := &fakeUnified{items: []datasourceV0.DataSource{managed("stored", "loki")}}
+	unified := &fakeUnified{items: []dataSourceMetadata{managed("stored", "loki")}}
 	store := newTestStore(status, unified, false)
 
 	obj, err := store.List(storeContext(), &internalversion.ListOptions{})

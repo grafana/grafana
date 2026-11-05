@@ -259,6 +259,19 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		require.Equal(t, "grafana-testdata-datasource", item.GetLabels()[datasourceV0alpha1.LabelKeyGroup])
 		require.Equal(t, "my-repo", item.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 
+		t.Run("points at the serving group and leaves out the spec and secure values", func(t *testing.T) {
+			require.Equal(t, expectedAPIVersion, item.GetAPIVersion())
+			require.Equal(t, "DataSource", item.GetKind())
+
+			rsp := apis.DoRequest(helper, apis.RequestParams{
+				User: helper.Org1.Admin,
+				Path: "/apis/datasource.grafana.app/v0alpha1/namespaces/default/datasources/test",
+			}, &json.RawMessage{})
+			require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
+			require.NotContains(t, string(rsp.Body), `"spec"`)
+			require.NotContains(t, string(rsp.Body), `"secure"`)
+		})
+
 		t.Run("selects by group label", func(t *testing.T) {
 			list, err := all.List(ctx, metav1.ListOptions{LabelSelector: datasourceV0alpha1.LabelKeyGroup + "=grafana-testdata-datasource"})
 			require.NoError(t, err)
