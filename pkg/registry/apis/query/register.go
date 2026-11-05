@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"runtime"
 	"strconv"
 
@@ -210,10 +211,8 @@ func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 }
 
 func addDataSourceTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
-	scheme.AddKnownTypes(gv,
-		&datasourceV0.DataSource{},
-		&datasourceV0.DataSourceList{},
-	)
+	scheme.AddKnownTypeWithName(gv.WithKind(dataSourceKind), &dataSourceMetadata{})
+	scheme.AddKnownTypeWithName(gv.WithKind(dataSourceListKind), &dataSourceMetadataList{})
 }
 
 func (b *QueryAPIBuilder) InstallSchema(scheme *apiruntime.Scheme) error {
@@ -256,7 +255,11 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 }
 
 func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return datasourceV0.GetOpenAPIDefinitions
+	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		defs := datasourceV0.GetOpenAPIDefinitions(ref)
+		maps.Copy(defs, dataSourceMetadataDefinitions(ref))
+		return defs
+	}
 }
 
 func (b *QueryAPIBuilder) GetAuthorizer() authorizer.Authorizer {

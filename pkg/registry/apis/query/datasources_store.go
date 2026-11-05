@@ -35,6 +35,8 @@ var DataSourceCollectionResource = schema.GroupResource{
 	Resource: datasourceV0.DataSourceResourceInfo.GetName(),
 }
 
+var errExpectedDataSource = errors.New("expected a datasource")
+
 // annotationPageSize bounds each read of the collection when annotations are merged in.
 const annotationPageSize = 500
 
@@ -125,6 +127,9 @@ func (s *datasourcesStore) Get(ctx context.Context, name string, options *metav1
 		if !s.canRead(ctx, user, name) {
 			return nil, apierrors.NewNotFound(s.resourceInfo.GroupResource(), name)
 		}
+		if ds, ok := obj.(*dataSourceMetadata); ok {
+			ds.pointAtServingGroup()
+		}
 		return obj, nil
 	}
 
@@ -183,7 +188,7 @@ func (s *datasourcesStore) List(ctx context.Context, options *internalversion.Li
 	}
 	sort.Slice(found, func(i, j int) bool { return found[i].UID < found[j].UID })
 
-	items := make([]datasourceV0.DataSource, 0, len(found))
+	items := make([]dataSourceMetadata, 0, len(found))
 	for _, legacy := range found {
 		if !s.canRead(ctx, user, legacy.UID) {
 			continue
@@ -208,13 +213,14 @@ func (s *datasourcesStore) listUnified(ctx context.Context, user identity.Reques
 	if err != nil {
 		return nil, err
 	}
-	list, ok := obj.(*datasourceV0.DataSourceList)
+	list, ok := obj.(*dataSourceMetadataList)
 	if !ok {
 		return obj, nil
 	}
 	readable := list.Items[:0]
 	for _, ds := range list.Items {
 		if s.canRead(ctx, user, ds.Name) {
+			ds.pointAtServingGroup()
 			readable = append(readable, ds)
 		}
 	}
@@ -223,8 +229,8 @@ func (s *datasourcesStore) listUnified(ctx context.Context, user identity.Reques
 }
 
 // page applies the list options the table cannot: selectors and paging, in memory.
-func (s *datasourcesStore) page(items []datasourceV0.DataSource, options *internalversion.ListOptions) (runtime.Object, error) {
-	list := &datasourceV0.DataSourceList{Items: []datasourceV0.DataSource{}}
+func (s *datasourcesStore) page(items []dataSourceMetadata, options *internalversion.ListOptions) (runtime.Object, error) {
+	list := &dataSourceMetadataList{Items: []dataSourceMetadata{}}
 	if options == nil {
 		list.Items = items
 		return list, nil
@@ -261,18 +267,18 @@ func (s *datasourcesStore) page(items []datasourceV0.DataSource, options *intern
 
 // asDataSource converts a table row. The group label is written the way the collection stores it,
 // so every storage mode answers with the same contract.
-func (s *datasourcesStore) asDataSource(legacy *datasources.DataSource) (*datasourceV0.DataSource, error) {
+func (s *datasourcesStore) asDataSource(legacy *datasources.DataSource) (*dataSourceMetadata, error) {
 	group := legacy.Type + "." + datasourceV0.GROUP
-	ds, err := converter.NewConverter(s.mapper, group, legacy.Type, nil).AsDataSource(legacy)
+	full, err := converter.NewConverter(s.mapper, group, legacy.Type, nil).AsDataSource(legacy)
 	if err != nil {
 		return nil, err
 	}
+	ds := &dataSourceMetadata{ObjectMeta: full.ObjectMeta}
 	if ds.Labels == nil {
 		ds.Labels = map[string]string{}
 	}
 	ds.Labels[datasourceV0.LabelKeyGroup] = datasourceV0.GroupLabelValue(group)
-	ds.APIVersion = s.resourceInfo.GroupVersion().String()
-	ds.Kind = s.resourceInfo.GroupVersionKind().Kind
+	ds.pointAtServingGroup()
 	return ds, nil
 }
 
@@ -285,7 +291,7 @@ func (s *datasourcesStore) canRead(ctx context.Context, user identity.Requester,
 
 // mergeStoredMetaInto fills in the labels and annotations the table cannot hold. A failed read
 // leaves the list as it is: losing the list costs more than losing the metadata.
-func (s *datasourcesStore) mergeStoredMetaInto(ctx context.Context, items []datasourceV0.DataSource) {
+func (s *datasourcesStore) mergeStoredMetaInto(ctx context.Context, items []dataSourceMetadata) {
 	stored := map[string]runtime.Object{}
 	options := &internalversion.ListOptions{Limit: annotationPageSize}
 	for {
@@ -294,7 +300,7 @@ func (s *datasourcesStore) mergeStoredMetaInto(ctx context.Context, items []data
 			s.logger.Warn("could not read the stored data source metadata", "error", err)
 			return
 		}
-		page, ok := rsp.(*datasourceV0.DataSourceList)
+		page, ok := rsp.(*dataSourceMetadataList)
 		if !ok {
 			return
 		}
@@ -316,8 +322,8 @@ func (s *datasourcesStore) mergeStoredMetaInto(ctx context.Context, items []data
 
 // mergeStoredMeta copies the stored labels and annotations onto a table row, which wins on
 // everything else.
-func mergeStoredMeta(ds *datasourceV0.DataSource, stored runtime.Object) {
-	found, ok := stored.(*datasourceV0.DataSource)
+func mergeStoredMeta(ds *dataSourceMetadata, stored runtime.Object) {
+	found, ok := stored.(*dataSourceMetadata)
 	if !ok {
 		return
 	}
@@ -338,7 +344,7 @@ func mergeStoredMeta(ds *datasourceV0.DataSource, stored runtime.Object) {
 // newDataSourcesStore reads the collection unfiltered: every type is persisted under the datasource
 // group, and the object keeps the label that names its type.
 func (b *QueryAPIBuilder) newDataSourcesStore(opts builder.APIGroupOptions) (*datasourcesStore, error) {
-	info := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(b.GetGroupVersion().Group, "")
+	info := newDataSourcesResourceInfo(b.GetGroupVersion().Group)
 	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, info, opts.StorageOptsGetterFor(info, apistore.StorageOptions{
 		SharedStorage: &apistore.SharedStorage{Group: datasourceV0.GROUP, Unfiltered: true},
 	}))
