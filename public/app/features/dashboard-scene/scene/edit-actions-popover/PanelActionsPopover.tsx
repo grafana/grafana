@@ -239,7 +239,7 @@ function PanelActions({
           name="pen"
           size="md"
           className={actionStyles.action}
-          tooltip={t('dashboard-scene.panel-actions-popover.edit', 'Edit visualization')}
+          tooltip={t('dashboard-scene.panel-actions-popover.edit', 'Edit visualization (e)')}
           tooltipPlacement="top"
           onClick={onEdit}
         />

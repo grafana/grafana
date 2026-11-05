@@ -22,7 +22,7 @@ test.describe('Panel actions popover', { tag: ['@dashboards'] }, () => {
     await panels.openActionsPopover(PANEL_TITLE);
 
     const popover = panels.getActionsPopover();
-    await expect(popover.getByRole('button', { name: 'Edit visualization' })).toBeVisible();
+    await expect(popover.getByRole('button', { name: 'Edit visualization (e)' })).toBeVisible();
     await expect(popover.getByRole('button', { name: 'Explore (p x)' })).toBeVisible();
     await expect(popover.getByRole('button', { name: 'Expand (v)' })).toBeVisible();
     await expect(popover.getByRole('button', { name: 'More actions' })).toBeVisible();

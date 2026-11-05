@@ -7755,7 +7755,7 @@
     },
     "panel-actions-popover": {
       "aria-label": "Panel actions",
-      "edit": "Edit visualization",
+      "edit": "Edit visualization (e)",
       "expand": "Expand (v)",
       "explore": "Explore (p x)",
       "more-actions": "More actions",
