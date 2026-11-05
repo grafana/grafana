@@ -102,8 +102,10 @@ conventions in their existing guides and skills. -->
 ### A remounted component deactivates its scene object
 
 `activate()` on a scene object is ref-counted. When a scene object's component
-unmounts and nothing else keeps it active, Scenes deactivates the object and clears
-its subscriptions. A component remounts when the same element renders under a
+unmounts and nothing else keeps it active, Scenes deactivates the object. Deactivation
+removes the object's own subscriptions. It also removes every listener that other
+objects added with `subscribeToState` or `subscribeToEvent`, so those objects stop
+getting updates. A component remounts when the same element renders under a
 different parent, for example `isFull ? <A>{viz}</A> : <B>{viz}</B>`. In panel edit,
 the options pane outlives the preview, so a preview remount can stop panel options
 from responding without any error.
