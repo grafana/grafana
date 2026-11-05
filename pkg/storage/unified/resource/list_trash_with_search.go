@@ -49,14 +49,14 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 		return nil, err
 	}
 	if errRes != nil {
-		return &resourcepb.ListResponse{Error: errRes}, nil
+		return nil, rpcError(errRes)
 	}
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+		return nil, rpcError(&resourcepb.ErrorResult{
 			Code: http.StatusUnauthorized, Message: "no user found in context",
-		}}, nil
+		})
 	}
 	authorizer := s.newTrashAuthorizer(ctx, user, req.Options.Key)
 	rsp := &resourcepb.ListResponse{ResourceVersion: page.resourceVersion}
@@ -73,7 +73,7 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 			if req.NextPageToken == "" {
 				return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerTrash, err)
 			}
-			return &resourcepb.ListResponse{Error: NewServiceUnavailableError("batch reading trash is not supported by this storage backend")}, nil
+			return nil, rpcError(NewServiceUnavailableError("batch reading trash is not supported by this storage backend"))
 		}
 		if err != nil {
 			return nil, err
@@ -88,15 +88,15 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 			row := chunk[count]
 			count++
 			if val == nil {
-				return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+				return nil, rpcError(&resourcepb.ErrorResult{
 					Code: http.StatusInternalServerError, Message: "empty trash read response",
-				}}, nil
+				})
 			}
 			if val.Error.GetCode() == http.StatusNotFound {
 				continue
 			}
-			if err := ErrorFromResponse(val.Error, nil); err != nil {
-				return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
+			if val.Error != nil {
+				return nil, rpcError(val.Error)
 			}
 			obj, err := parseTrashItem(val.Value)
 			if err != nil || obj.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
@@ -128,7 +128,7 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 				setListStopReason(ctx, reason)
 				token, err := newSearchContinueToken(item.row.sortFields, page.resourceVersion, sortAscending)
 				if err != nil {
-					return &resourcepb.ListResponse{Error: NewBadRequestError("invalid continue token")}, nil
+					return nil, rpcError(NewBadRequestError("invalid continue token"))
 				}
 				rsp.NextPageToken = token
 				return rsp, nil
@@ -136,7 +136,7 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 		}
 	}
 	if errRes := setSearchListContinueToken(req, page.response, page.rows, page.resourceVersion, sortAscending, rsp); errRes != nil {
-		return &resourcepb.ListResponse{Error: errRes}, nil
+		return nil, rpcError(errRes)
 	}
 
 	return rsp, nil

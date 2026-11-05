@@ -61,6 +61,21 @@ func watchSendError(err error) error {
 	return err
 }
 
+// queueRPCError is the error-only equivalent of HandleQueueError: a full
+// tenant queue is reported as 429/ResourceExhausted.
+func queueRPCError(err error) error {
+	if errors.Is(err, scheduler.ErrTenantQueueFull) {
+		return rpcError(NewTooManyRequestsError("tenant queue is full, please try again later"))
+	}
+	return rpcErrorFrom(err)
+}
+
+// rpcFailure logs res if it is a server error and returns it as the call's gRPC error.
+func (s *server) rpcFailure(ctx context.Context, op string, key *resourcepb.ResourceKey, res *resourcepb.ErrorResult) error {
+	s.logIfServerError(ctx, op, key, res)
+	return rpcError(res)
+}
+
 // logIfServerError logs errRes at Error level if it represents a 5xx (server) error.
 func (s *server) logIfServerError(ctx context.Context, op string, key *resourcepb.ResourceKey, errRes *resourcepb.ErrorResult) {
 	if errRes == nil || errRes.Code < 500 {
@@ -351,6 +366,7 @@ type BlobSupport interface {
 
 	// Get the raw blob bytes and metadata -- limited to protobuf message size.
 	// Remote SQL-backed uploads can instead use StreamingBlobSupport.
+	// Failures are returned as errors, not in the response.
 	PutResourceBlob(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error)
 
 	// Get blob contents.  When possible, this will return a signed URL
@@ -1262,14 +1278,12 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		return nil, status.Error(codes.InvalidArgument, r.Message)
 	}
 
-	rsp := &resourcepb.CreateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		rsp.Error = &resourcepb.ErrorResult{
+		return nil, rpcError(&resourcepb.ErrorResult{
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
-		}
-		return rsp, nil
+		})
 	}
 
 	if _, _, err := decodeReferenceOnlyBlobBody(req.Value); err != nil {
@@ -1287,12 +1301,10 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		if quotaErr, ok := errors.AsType[QuotaExceededError](err); ok {
 			msg = quotaErr.Message()
 		}
-		return &resourcepb.CreateResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: msg,
-				Code:    http.StatusForbidden,
-			},
-		}, nil
+		return nil, rpcError(&resourcepb.ErrorResult{
+			Message: msg,
+			Code:    http.StatusForbidden,
+		})
 	}
 
 	var res *resourcepb.CreateResponse
@@ -1300,24 +1312,20 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		res, err = s.create(queueCtx, user, req)
 	})
 	if runErr != nil {
-		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.CreateResponse {
-			return &resourcepb.CreateResponse{Error: e}
-		})
+		return nil, queueRPCError(runErr)
 	}
 
-	s.sleepAfterSuccessfulWriteOperation(ctx, "Create", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Create", req.Key, err)
 
 	return res, err
 }
 
 func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
 	rsp := &resourcepb.CreateResponse{}
-	defer func() { s.logIfServerError(ctx, "server.create", req.Key, rsp.Error) }()
 
 	event, e := s.newEvent(ctx, user, req.Key, 0, req.Value, nil)
 	if e != nil {
-		rsp.Error = e
-		return rsp, nil
+		return nil, s.rpcFailure(ctx, "server.create", req.Key, e)
 	}
 
 	// If the resource already exists, the create will return an already exists or a
@@ -1330,20 +1338,16 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 			// whether to retry; the gRPC layer must not replay conflicts automatically.
 			return nil, status.Error(codes.Aborted, err.Error())
 		}
-		rsp.Error = AsErrorResult(err)
+		return nil, s.rpcFailure(ctx, "server.create", req.Key, AsErrorResult(err))
 	}
 	return rsp, nil
-}
-
-type responseWithErrorResult interface {
-	GetError() *resourcepb.ErrorResult
 }
 
 // sleepAfterSuccessfulWriteOperation will sleep for a specified time if the operation was successful.
 // Returns boolean indicating whether the sleep was performed or not (used in testing).
 //
 // This sleep is performed to guarantee search-after-write consistency, when rate-limiting updates to search index.
-func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operation string, key *resourcepb.ResourceKey, res responseWithErrorResult, err error) bool {
+func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operation string, key *resourcepb.ResourceKey, err error) bool {
 	if s.artificialSuccessfulWriteDelay <= 0 {
 		return false
 	}
@@ -1351,15 +1355,6 @@ func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operati
 	if err != nil {
 		// No sleep necessary if operation failed.
 		return false
-	}
-
-	// We expect that non-nil interface values with typed nils can still handle GetError() call.
-	if res != nil {
-		errRes := res.GetError()
-		if errRes != nil {
-			// No sleep necessary if operation failed.
-			return false
-		}
 	}
 
 	ctx, span := tracer.Start(ctx, "resource.server.sleepAfterSuccessfulWriteOperation")
@@ -1394,14 +1389,12 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		return nil, status.Error(codes.InvalidArgument, r.Message)
 	}
 
-	rsp := &resourcepb.UpdateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		rsp.Error = &resourcepb.ErrorResult{
+		return nil, rpcError(&resourcepb.ErrorResult{
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
-		}
-		return rsp, nil
+		})
 	}
 
 	if _, _, err := decodeReferenceOnlyBlobBody(req.Value); err != nil {
@@ -1416,30 +1409,26 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		res, err = s.update(queueCtx, user, req)
 	})
 	if runErr != nil {
-		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.UpdateResponse {
-			return &resourcepb.UpdateResponse{Error: e}
-		})
+		return nil, queueRPCError(runErr)
 	}
 
-	s.sleepAfterSuccessfulWriteOperation(ctx, "Update", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Update", req.Key, err)
 
 	return res, err
 }
 
 func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
+	const op = "server.update"
 	rsp := &resourcepb.UpdateResponse{}
-	defer func() { s.logIfServerError(ctx, "server.update", req.Key, rsp.Error) }()
 
 	latest := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
 		Key: req.Key,
 	})
 	if latest.Error != nil {
-		rsp.Error = latest.Error
-		return rsp, nil
+		return nil, s.rpcFailure(ctx, op, req.Key, latest.Error)
 	}
 	if latest.Value == nil {
-		rsp.Error = NewBadRequestError("current value does not exist")
-		return rsp, nil
+		return nil, s.rpcFailure(ctx, op, req.Key, NewBadRequestError("current value does not exist"))
 	}
 
 	// Skip write events when there is no change to the payload, but still enforce RBAC.
@@ -1453,15 +1442,13 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 			Name:      key.Name,
 		}, latest.Folder)
 		if err != nil {
-			return &resourcepb.UpdateResponse{Error: AsErrorResult(err)}, nil
+			return nil, s.rpcFailure(ctx, op, req.Key, AsErrorResult(err))
 		}
 		if !a.Allowed {
-			return &resourcepb.UpdateResponse{
-				Error: &resourcepb.ErrorResult{
-					Message: "not allowed to update resource",
-					Code:    http.StatusForbidden,
-				},
-			}, nil
+			return nil, rpcError(&resourcepb.ErrorResult{
+				Message: "not allowed to update resource",
+				Code:    http.StatusForbidden,
+			})
 		}
 
 		rsp.ResourceVersion = latest.ResourceVersion // No change, return the current RV
@@ -1470,14 +1457,13 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 
 	event, e := s.newEvent(ctx, user, req.Key, req.ResourceVersion, req.Value, latest.Value)
 	if e != nil {
-		rsp.Error = e
-		return rsp, nil
+		return nil, s.rpcFailure(ctx, op, req.Key, e)
 	}
 
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
-		rsp.Error = AsErrorResult(err)
+		return nil, s.rpcFailure(ctx, op, req.Key, AsErrorResult(err))
 	}
 	return rsp, nil
 }
@@ -1495,14 +1481,12 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		return nil, status.Error(codes.InvalidArgument, r.Message)
 	}
 
-	rsp := &resourcepb.DeleteResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		rsp.Error = &resourcepb.ErrorResult{
+		return nil, rpcError(&resourcepb.ErrorResult{
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
-		}
-		return rsp, nil
+		})
 	}
 
 	var (
@@ -1514,26 +1498,23 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		res, err = s.delete(queueCtx, user, req)
 	})
 	if runErr != nil {
-		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.DeleteResponse {
-			return &resourcepb.DeleteResponse{Error: e}
-		})
+		return nil, queueRPCError(runErr)
 	}
 
-	s.sleepAfterSuccessfulWriteOperation(ctx, "Delete", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Delete", req.Key, err)
 
 	return res, err
 }
 
 func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resourcepb.DeleteRequest) (*resourcepb.DeleteResponse, error) {
+	const op = "server.delete"
 	rsp := &resourcepb.DeleteResponse{}
-	defer func() { s.logIfServerError(ctx, "server.delete", req.Key, rsp.Error) }()
 
 	latest := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
 		Key: req.Key,
 	})
 	if latest.Error != nil {
-		rsp.Error = latest.Error
-		return rsp, nil
+		return nil, s.rpcFailure(ctx, op, req.Key, latest.Error)
 	}
 
 	access, err := s.access.Check(ctx, user, claims.CheckRequest{
@@ -1544,14 +1525,12 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		Name:      req.Key.Name,
 	}, latest.Folder)
 	if err != nil {
-		rsp.Error = AsErrorResult(err)
-		return rsp, nil
+		return nil, s.rpcFailure(ctx, op, req.Key, AsErrorResult(err))
 	}
 	if !access.Allowed {
-		rsp.Error = &resourcepb.ErrorResult{
+		return nil, rpcError(&resourcepb.ErrorResult{
 			Code: http.StatusForbidden,
-		}
-		return rsp, nil
+		})
 	}
 
 	now := metav1.NewTime(time.UnixMilli(s.now()))
@@ -1593,7 +1572,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
 	if err != nil {
-		rsp.Error = AsErrorResult(err)
+		return nil, s.rpcFailure(ctx, op, req.Key, AsErrorResult(err))
 	}
 	return rsp, nil
 }
@@ -1604,11 +1583,10 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return &resourcepb.ReadResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: "no user found in context",
-				Code:    http.StatusUnauthorized,
-			}}, nil
+		return nil, rpcError(&resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		})
 	}
 
 	// Don't validate the name format here: the backend reports invalid names as
@@ -1626,29 +1604,24 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 		res, err = s.read(queueCtx, user, req)
 	})
 	if runErr != nil {
-		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.ReadResponse {
-			return &resourcepb.ReadResponse{Error: e}
-		})
+		return nil, queueRPCError(runErr)
 	}
 
 	return res, err
 }
 
-func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (readRsp *resourcepb.ReadResponse, readErr error) {
-	defer func() {
-		if readRsp != nil {
-			s.logIfServerError(ctx, "server.read", req.Key, readRsp.Error)
-		}
-	}()
-
+func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
 	rsp := s.backend.ReadResource(ctx, req)
 	if errRes := s.authorizeRead(ctx, user, req.Key, rsp); errRes != nil {
-		return &resourcepb.ReadResponse{Error: errRes}, nil
+		return nil, s.rpcFailure(ctx, "server.read", req.Key, errRes)
+	}
+	// This is an internal backend error, not the legacy gRPC response field.
+	if rsp.Error != nil {
+		return nil, s.rpcFailure(ctx, "server.read", req.Key, rsp.Error)
 	}
 	return &resourcepb.ReadResponse{
 		ResourceVersion: rsp.ResourceVersion,
 		Value:           rsp.Value,
-		Error:           rsp.Error,
 	}, nil
 }
 
@@ -1803,37 +1776,33 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 	// The history + trash queries do not yet support additional filters
 	if req.Source != resourcepb.ListRequest_STORE {
 		if len(req.Options.Fields) > 0 || len(req.Options.Labels) > 0 {
-			return &resourcepb.ListResponse{
-				Error: NewBadRequestError("unexpected field/label selector for history query"),
-			}, nil
+			return nil, rpcError(NewBadRequestError("unexpected field/label selector for history query"))
 		}
 	}
 
 	// Trash authorizes by decoding the object (see listFromTrash), so neither it
 	// nor history can be served from keys alone.
 	if req.KeysOnly && req.Source != resourcepb.ListRequest_STORE {
-		return &resourcepb.ListResponse{
-			Error: NewBadRequestError("keys_only is only supported for the store source"),
-		}, nil
+		return nil, rpcError(NewBadRequestError("keys_only is only supported for the store source"))
 	}
 
 	if errRes := requireListIdentity(ctx, req); errRes != nil {
-		return &resourcepb.ListResponse{Error: errRes}, nil
+		return nil, rpcError(errRes)
 	}
 
 	// Do not allow label query for trash/history
 	for _, v := range req.Options.Labels {
 		if v.Key == utils.LabelKeyGetHistory || v.Key == utils.LabelKeyGetTrash {
-			return &resourcepb.ListResponse{Error: NewBadRequestError("history and trash must be requested as source")}, nil
+			return nil, rpcError(NewBadRequestError("history and trash must be requested as source"))
 		}
 	}
 
 	// Fast path for getting single value in a list. Skipped for keys_only: it
 	// resolves names through Read, which fetches whole objects.
 	if !req.KeysOnly {
-		if rsp := s.tryFieldSelector(ctx, req); rsp != nil {
+		if rsp, err := s.tryFieldSelector(ctx, req); rsp != nil || err != nil {
 			path = listPathFieldSelector
-			return rsp, nil
+			return rsp, err
 		}
 	}
 
@@ -1848,9 +1817,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 	// re-apply those against the decoded object, which a keys-only response
 	// lacks, so a dropped selector would look like it matched.
 	if req.KeysOnly && (len(req.Options.Fields) > 0 || len(req.Options.Labels) > 0) {
-		return &resourcepb.ListResponse{
-			Error: NewBadRequestError("keys_only cannot be combined with field/label selectors"),
-		}, nil
+		return nil, rpcError(NewBadRequestError("keys_only cannot be combined with field/label selectors"))
 	}
 
 	req = filterSelectors(req)
@@ -1882,9 +1849,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 
 	if req.NextPageToken != "" {
 		if token, err := GetContinueToken(req.NextPageToken); err == nil && tokenFromOtherListPath(token, false) {
-			return &resourcepb.ListResponse{
-				Error: NewBadRequestError("continue token was issued for a search-backed list"),
-			}, nil
+			return nil, rpcError(NewBadRequestError("continue token was issued for a search-backed list"))
 		}
 	}
 
@@ -2276,11 +2241,10 @@ func (s *server) listLimitStopReason(req *resourcepb.ListRequest, rsp *resourcep
 func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return &resourcepb.ListResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: "no user found in context",
-				Code:    http.StatusUnauthorized,
-			}}, nil
+		return nil, rpcError(&resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		})
 	}
 
 	rsp := &resourcepb.ListResponse{}
@@ -2345,19 +2309,15 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 // finalizeListResponse validates the resource version, sets pagination token,
 // and records metrics. Shared by listFromStore, listFromHistory, and listFromTrash.
 func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListResponse, rv int64, err error, nextToken string, key *resourcepb.ResourceKey) (*resourcepb.ListResponse, error) {
-	defer func() { s.logIfServerError(ctx, "server.list", key, rsp.Error) }()
-
 	if err != nil {
-		rsp.Error = AsErrorResult(err)
-		return rsp, nil
+		return nil, s.rpcFailure(ctx, "server.list", key, AsErrorResult(err))
 	}
 
 	if rv < 1 {
-		rsp.Error = &resourcepb.ErrorResult{
+		return nil, s.rpcFailure(ctx, "server.list", key, &resourcepb.ErrorResult{
 			Code:    http.StatusInternalServerError,
 			Message: fmt.Sprintf("invalid resource version for list: %v", rv),
-		}
-		return rsp, nil
+		})
 	}
 
 	rsp.ResourceVersion = rv
@@ -2712,7 +2672,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				}
 				if event.PreviousRV > 0 {
 					prevObj, err := s.Read(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
-					if err = ErrorFromResponse(prevObj.GetError(), err); err != nil && AsErrorResult(err).Code == http.StatusNotFound {
+					if err != nil && AsErrorResult(err).Code == http.StatusNotFound {
 						// History pruning can remove the previous revision while the event is still replayable.
 						s.log.Debug("previous object no longer available", "key", event.Key, "resource_version", event.PreviousRV)
 					} else if err != nil {
@@ -2804,20 +2764,31 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 	}
 
 	if s.search != nil {
-		return s.search.GetStats(ctx, req)
+		return statsCallResult(s.search.GetStats(ctx, req))
 	}
 
 	if s.searchClient != nil {
-		return s.searchClient.GetStats(ctx, req)
+		return statsCallResult(s.searchClient.GetStats(ctx, req))
 	}
 
 	// TODO: remove this fallback once the SQL backend is phased out; it's not implemented
 	// in the KV backend.
 	if srv, ok := s.backend.(StatsGetter); ok {
-		return srv.GetStats(ctx, req)
+		return statsCallResult(srv.GetStats(ctx, req))
 	}
 
 	return nil, fmt.Errorf("search index not configured")
+}
+
+// Direct Go calls to local search and the SQL stats fallback bypass unary gRPC
+// conversion and can still return body errors; these are not errors from a gRPC
+// server. This temporary conversion can be removed once those producers return
+// native errors.
+func statsCallResult(rsp *resourcepb.ResourceStatsResponse, err error) (*resourcepb.ResourceStatsResponse, error) {
+	if err == nil && rsp.GetError() != nil {
+		return nil, rpcError(rsp.GetError())
+	}
+	return rsp, err
 }
 
 // requireUserNamespace is a cross-tenant safety net for delegated-only
@@ -2846,7 +2817,7 @@ func requireUserNamespace(ctx context.Context, namespace string) *resourcepb.Err
 // Do not route end-user traffic here directly.
 func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
-		return &resourcepb.ListManagedObjectsResponse{Error: errRes}, nil
+		return nil, rpcError(errRes)
 	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
@@ -2860,7 +2831,7 @@ func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListMan
 // Do not route end-user traffic here directly.
 func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
 	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
-		return &resourcepb.CountManagedObjectsResponse{Error: errRes}, nil
+		return nil, rpcError(errRes)
 	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
@@ -2879,11 +2850,15 @@ func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckReque
 // Do not route end-user traffic here directly.
 func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
 	if failure := s.authorizeBlobPut(ctx, req); failure != nil {
-		return &resourcepb.PutBlobResponse{Error: failure}, nil
+		return nil, rpcError(failure)
 	}
 	rsp, err := s.blob.PutResourceBlob(ctx, req)
 	if err != nil {
-		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+		return nil, rpcErrorFrom(err)
+	}
+	// Blob backends may still report failure in the body.
+	if rsp.GetError() != nil {
+		return nil, rpcError(rsp.GetError())
 	}
 	return rsp, nil
 }
@@ -2938,10 +2913,10 @@ func (s *server) authorizeBlobPut(ctx context.Context, req *resourcepb.PutBlobRe
 
 func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest) (*resourcepb.QuotaUsageResponse, error) {
 	if s.overridesService == nil {
-		return &resourcepb.QuotaUsageResponse{Error: &resourcepb.ErrorResult{
+		return nil, rpcError(&resourcepb.ErrorResult{
 			Message: "overrides service not configured on resource server",
 			Code:    http.StatusNotImplemented,
-		}}, nil
+		})
 	}
 	nsr := NamespacedResource{
 		Namespace: req.Key.Namespace,
@@ -2953,14 +2928,11 @@ func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRe
 		Kinds:     []string{nsr.GroupResource()},
 	})
 	if err != nil {
-		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
-	}
-	if statsRsp.Error != nil {
-		return &resourcepb.QuotaUsageResponse{Error: statsRsp.Error}, nil
+		return nil, rpcErrorFrom(err)
 	}
 	limit, err := s.overridesService.GetQuota(ctx, nsr)
 	if err != nil {
-		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+		return nil, rpcErrorFrom(err)
 	}
 
 	rsp := &resourcepb.QuotaUsageResponse{Limit: int64(limit.Limit)}
@@ -3002,11 +2974,15 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
 	info, failure := s.resolveBlobGet(ctx, req)
 	if failure != nil {
-		return &resourcepb.GetBlobResponse{Error: failure}, nil
+		return nil, rpcError(failure)
 	}
 	rsp, err := s.blob.GetResourceBlob(ctx, req.Resource, info, req.MustProxyBytes)
 	if err != nil {
-		return &resourcepb.GetBlobResponse{Error: AsErrorResult(err)}, nil
+		return nil, rpcErrorFrom(err)
+	}
+	// Blob backends may still report failure in the body.
+	if rsp.GetError() != nil {
+		return nil, rpcError(rsp.GetError())
 	}
 	return rsp, nil
 }
@@ -3178,7 +3154,7 @@ func (s *server) runInQueue(ctx context.Context, tenantID, operation string, run
 // Do not route end-user traffic here directly.
 func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
 	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
-		return &resourcepb.RebuildIndexesResponse{Error: errRes}, nil
+		return nil, rpcError(errRes)
 	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
@@ -3214,7 +3190,7 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 		Namespace: nsr.Namespace,
 		Kinds:     []string{nsr.GroupResource()},
 	})
-	if err := ErrorFromResponse(statsRsp.GetError(), err); err != nil {
+	if err != nil {
 		s.degraded(ctx, "check_quota", "stats_error", nsr, err)
 		return nil
 	}
