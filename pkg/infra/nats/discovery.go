@@ -134,6 +134,11 @@ func (d *discovery) connectWake() {
 		nc.Close()
 		return
 	}
+	// The server only knows of the subscription, and tells routed peers, once
+	// it has processed it; until then a peer's wake would not reach us.
+	if err := nc.Flush(); err != nil {
+		d.log.Warn("nats discovery wake flush failed", "err", err)
+	}
 	d.wakeConn = nc
 }
 

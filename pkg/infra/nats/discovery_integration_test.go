@@ -113,9 +113,9 @@ func TestDiscoveryWakeOnLeave(t *testing.T) {
 	reloadsB := runWithReloads(t, b)
 	requireReload(t, reloadsA, routeSetOf(b, c))
 	requireReload(t, reloadsB, routeSetOf(a, c))
-	// The wake travels over c's routes, so they must carry interest first.
-	requireDelivery(t, c, a)
-	requireDelivery(t, c, b)
+	// c sends a single wake when it leaves, so a's and b's interest in the
+	// wake subject must have reached c over its routes first.
+	requireWakeInterest(t, c, 2)
 
 	require.NoError(t, c.stopping(nil))
 
@@ -337,6 +337,19 @@ func runWithReloads(t *testing.T, s *Server) <-chan map[string]struct{} {
 
 // requireReload waits for the next route reload and checks its route set. The
 // timer only guards against a hang; no assertion depends on it.
+// requireWakeInterest waits until s sees the wake subscription of the given
+// number of routed peers, besides its own.
+func requireWakeInterest(t *testing.T, s *Server, peers int) {
+	t.Helper()
+	deadline := time.Now().Add(30 * time.Second)
+	for s.server.GlobalAccount().Interest(discoveryWakeSubject) < peers+1 {
+		if time.Now().After(deadline) {
+			t.Fatalf("%s has wake interest from %d peers, want %d", s.opts.ServerName, s.server.GlobalAccount().Interest(discoveryWakeSubject)-1, peers)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
 func requireReload(t *testing.T, reloads <-chan map[string]struct{}, want map[string]struct{}) {
 	t.Helper()
 	select {
