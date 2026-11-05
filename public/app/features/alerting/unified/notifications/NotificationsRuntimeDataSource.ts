@@ -55,7 +55,6 @@ const notificationsDataSourcePluginId = 'grafana-notifications-plugin';
 export const notificationsDatasource: DataSourceInformation = {
   type: notificationsDataSourcePluginId,
   uid: notificationsDataSourceUid,
-  settings: undefined,
 };
 
 interface NotificationsAPIQuery extends DataQuery {
