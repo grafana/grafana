@@ -51,6 +51,16 @@ For example, to use the dashboard API or a hook:
 import { generatedAPI, useListDashboardsQuery } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 ```
 
+### Naming a resource
+
+Each client also exports `API_RESOURCES`, the resource name the apiserver serves each of the group version's kinds under, generated from the spec's list operations. Use it rather than writing the plural out: Kubernetes plurals are declared per kind, not computed from the kind name (`Repository` is served as `repositories`).
+
+```ts
+import { API_GROUP, API_RESOURCES } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+
+API_RESOURCES.LibraryPanel; // 'librarypanels'
+```
+
 ### Adding RTKQ middleware to your Redux store
 
 If you're using this package in the context of the Grafana application, the middleware is already added for all API clients, so you don't need to add it manually.
@@ -116,13 +126,14 @@ Use this flow when an existing API changes and you need to regenerate the API ty
    pnpm generate-apis
    ```
 
-   This processes snapshots into `packages/grafana-openapi/src/apis/*.json` and regenerates `endpoints.gen.ts` files under `packages/grafana-api-clients/src/clients/rtkq/`.
+   This processes snapshots into `packages/grafana-openapi/src/apis/*.json` and regenerates `endpoints.gen.ts` and `resources.gen.ts` files under `packages/grafana-api-clients/src/clients/rtkq/`.
 
 5. Review the generated diff. A typical update includes:
    - Source API type or schema files.
    - `pkg/tests/apis/openapi_snapshots/<group>.grafana.app-<version>.json`.
    - `packages/grafana-openapi/src/apis/<group>.grafana.app-<version>.json`.
    - `packages/grafana-api-clients/src/clients/rtkq/<group>/<version>/endpoints.gen.ts`.
+   - `packages/grafana-api-clients/src/clients/rtkq/<group>/<version>/resources.gen.ts`, if the group version gained or renamed a kind.
 
 You can also run `pnpm generate:api-client` and select an existing API group/version.
 The generator will offer to update the existing client by running the endpoint generation step without modifying the client config or Redux wiring.

@@ -201,7 +201,8 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
-    "generate-apis": "pnpm --filter @grafana/openapi --fail-if-no-match run process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
+    "generate-apis": "pnpm --filter @grafana/openapi --fail-if-no-match run process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts && pnpm run generate-resource-names",
+    "generate-resource-names": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/scripts/generate-resource-names.ts",
     "generate:api-client": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/generator/generate.ts"
   },
   "devDependencies": {

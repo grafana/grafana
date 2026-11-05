@@ -1,4 +1,5 @@
 export { BASE_URL, API_GROUP, API_VERSION } from './baseAPI';
+export { API_RESOURCES } from './resources.gen';
 export { folderAPIVersionResolver, getFolderAPIBaseURL, type FolderAPIVersion } from './folderApiVersionResolver';
 import { generatedAPI as dashboardAPI } from '../../dashboard/v0alpha1';
 
