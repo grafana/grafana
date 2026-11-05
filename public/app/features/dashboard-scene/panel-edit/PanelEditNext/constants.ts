@@ -32,6 +32,9 @@ export const QUERY_EDITOR_STACKED_VIEW_KEY = 'grafana.dashboard.query-editor-nex
 export const QUERY_EDITOR_BANNER_DISMISSED_KEY = 'grafana.dashboard.query-editor-next.banner-dismissed';
 export const QUERY_EDITOR_V2_PREFERENCE_KEY = 'grafana.dashboard.query-editor-next.v2-preference';
 
+/** Share of the editor height given to the viz before the user drags the viz/data splitter. */
+export const DEFAULT_VIZ_RATIO = 0.45;
+
 export interface QueryEditorTypeConfig {
   icon: IconName;
   color: string;

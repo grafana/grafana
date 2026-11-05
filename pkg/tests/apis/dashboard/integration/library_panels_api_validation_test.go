@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -696,9 +695,6 @@ func testIntegrationLibraryPanelMode1PreservesSQLIDInUnifiedStorage(t *testing.T
 			Name:      uid,
 		}})
 		if !assert.NoError(c, readErr) || !assert.NotNil(c, rsp) {
-			return
-		}
-		if !assert.NoError(c, resource.ErrorFromResponse(rsp.Error, readErr)) {
 			return
 		}
 		stored := &unstructured.Unstructured{}

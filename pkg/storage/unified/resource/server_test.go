@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -32,9 +33,13 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
@@ -130,9 +135,10 @@ func TestSimpleServer(t *testing.T) {
 
 		// should return 404 if not found
 		found, err := server.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.NotNil(t, found.Error)
-		require.Equal(t, int32(http.StatusNotFound), found.Error.Code)
+		foundErr := rpcErrorResult(t, err)
+		require.Nil(t, found)
+		require.NotNil(t, foundErr)
+		require.Equal(t, int32(http.StatusNotFound), foundErr.Code)
 
 		created, err := server.Create(ctx, &resourcepb.CreateRequest{
 			Value: raw,
@@ -168,8 +174,9 @@ func TestSimpleServer(t *testing.T) {
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
-		require.NoError(t, err)
-		require.Equal(t, int32(400), updated.Error.Code) // bad request
+		updatedErr := rpcErrorResult(t, err)
+		require.Nil(t, updated)
+		require.Equal(t, int32(400), updatedErr.Code) // bad request
 
 		// remove the invalid labels
 		obj.SetLabels(nil)
@@ -237,10 +244,10 @@ func TestSimpleServer(t *testing.T) {
 		require.True(t, deleted.ResourceVersion > updated.ResourceVersion)
 
 		// We should get not found status when trying to read the latest value
-		found, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.NotNil(t, found.Error)
-		require.Equal(t, int32(404), found.Error.Code)
+		_, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		foundErr = rpcErrorResult(t, err)
+		require.NotNil(t, foundErr)
+		require.Equal(t, int32(404), foundErr.Code)
 
 		// And the deleted value should not be in the results
 		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
@@ -356,8 +363,10 @@ func TestSimpleServer(t *testing.T) {
 			Key:   key,
 		})
 
-		require.NoError(t, err)
-		require.NotNil(t, created)
+		// The name passes key validation; the create then fails only because
+		// it does not match the object's name.
+		require.Nil(t, created)
+		require.ErrorContains(t, err, "key/name do not match")
 
 		// legacy name - also valid
 		key = &resourcepb.ResourceKey{
@@ -372,8 +381,10 @@ func TestSimpleServer(t *testing.T) {
 			Key:   key,
 		})
 
-		require.NoError(t, err)
-		require.NotNil(t, created)
+		// The name passes key validation; the create then fails only because
+		// it does not match the object's name.
+		require.Nil(t, created)
+		require.ErrorContains(t, err, "key/name do not match")
 
 		// legacy name - also valid
 		key = &resourcepb.ResourceKey{
@@ -388,8 +399,10 @@ func TestSimpleServer(t *testing.T) {
 			Key:   key,
 		})
 
-		require.NoError(t, err)
-		require.NotNil(t, created)
+		// The name passes key validation; the create then fails only because
+		// it does not match the object's name.
+		require.Nil(t, created)
+		require.ErrorContains(t, err, "key/name do not match")
 
 		invalidQualifiedNames := []string{
 			"",                                     // empty
@@ -466,7 +479,7 @@ func TestSimpleServer(t *testing.T) {
     	"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {
-				"name": "fdgsv37qslr0ga",
+				"name": "occ-check",
 				"namespace": "default",
 				"uid": "xyz",
 				"annotations": {
@@ -491,7 +504,7 @@ func TestSimpleServer(t *testing.T) {
 			Group:     "playlist.grafana.app",
 			Resource:  "rrrr", // can be anything :(
 			Namespace: "default",
-			Name:      "fdgsv37qslr0ga",
+			Name:      "occ-check",
 		}
 
 		created, err := server.Create(ctx, &resourcepb.CreateRequest{
@@ -510,13 +523,13 @@ func TestSimpleServer(t *testing.T) {
 
 		// Second update with stale RV and different bytes should return a conflict.
 		rawV3 := []byte(strings.Replace(string(raw), `"title": "hello"`, `"title": "again"`, 1))
-		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{
+		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           rawV3,
 			ResourceVersion: created.ResourceVersion})
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusConflict), rsp.Error.Code)
-		require.Contains(t, rsp.Error.Message, "requested RV does not match current RV")
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusConflict), rspErr.Code)
+		require.Contains(t, rspErr.Message, "requested RV does not match current RV")
 	})
 
 	t.Run("playlist update with identical bytes does not increment RV", func(t *testing.T) {
@@ -780,28 +793,17 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 		log:                            log.NewNopLogger(),
 	}
 
-	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {
-		slept := s.sleepAfterSuccessfulWriteOperation(ctx, "test", &resourcepb.ResourceKey{}, res, err)
+	check := func(t *testing.T, expectedSleep bool, err error) {
+		slept := s.sleepAfterSuccessfulWriteOperation(ctx, "test", &resourcepb.ResourceKey{}, err)
 		require.Equal(t, expectedSleep, slept)
 	}
 
-	// Successful responses should sleep
-	check(t, true, nil, nil)
+	// Successful operations should sleep
+	check(t, true, nil)
 
-	check(t, true, (responseWithErrorResult)((*resourcepb.CreateResponse)(nil)), nil)
-	check(t, true, &resourcepb.CreateResponse{}, nil)
-
-	check(t, true, (responseWithErrorResult)((*resourcepb.UpdateResponse)(nil)), nil)
-	check(t, true, &resourcepb.UpdateResponse{}, nil)
-
-	check(t, true, (responseWithErrorResult)((*resourcepb.DeleteResponse)(nil)), nil)
-	check(t, true, &resourcepb.DeleteResponse{}, nil)
-
-	// Failed responses should return without sleeping
-	check(t, false, nil, errors.New("some error"))
-	check(t, false, &resourcepb.CreateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
-	check(t, false, &resourcepb.UpdateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
-	check(t, false, &resourcepb.DeleteResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
+	// Failed operations should return without sleeping
+	check(t, false, errors.New("some error"))
+	check(t, false, GRPCStatusError(AsErrorResult(errors.New("some error"))))
 }
 
 type fakeResourceIndexClient struct {
@@ -840,17 +842,17 @@ func TestGetQuotaUsage(t *testing.T) {
 			log:              log.NewNopLogger(),
 		}
 
-		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
+		_, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
 			Key: &resourcepb.ResourceKey{
 				Namespace: "stacks-123",
 				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, resp.Error)
-		assert.Equal(t, int32(http.StatusNotImplemented), resp.Error.Code)
-		assert.Equal(t, "overrides service not configured on resource server", resp.Error.Message)
+		respErr := rpcErrorResult(t, err)
+		require.NotNil(t, respErr)
+		assert.Equal(t, int32(http.StatusNotImplemented), respErr.Code)
+		assert.Equal(t, "overrides service not configured on resource server", respErr.Message)
 	})
 
 	t.Run("returns usage and limit successfully", func(t *testing.T) {
@@ -902,7 +904,7 @@ func TestGetQuotaUsage(t *testing.T) {
 		assert.Equal(t, int64(500), resp.Limit)
 	})
 
-	t.Run("surfaces stats response error on the response", func(t *testing.T) {
+	t.Run("surfaces returned stats error", func(t *testing.T) {
 		tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 		content := `overrides:
   "123":
@@ -918,9 +920,7 @@ func TestGetQuotaUsage(t *testing.T) {
 		require.NoError(t, err)
 
 		searchClient := newFakeResourceIndexClient()
-		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
-			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
-		}
+		searchClient.statsError = GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"})
 
 		s, err := NewResourceServer(ResourceServerOptions{
 			Backend:          &mockStorageBackend{},
@@ -932,17 +932,17 @@ func TestGetQuotaUsage(t *testing.T) {
 			_ = s.Stop(ctx)
 		})
 
-		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
+		_, err = s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
 			Key: &resourcepb.ResourceKey{
 				Namespace: "stacks-123",
 				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, resp.Error)
-		assert.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
-		assert.Equal(t, "stats blew up", resp.Error.Message)
+		respErr := rpcErrorResult(t, err)
+		require.NotNil(t, respErr)
+		assert.Equal(t, int32(http.StatusInternalServerError), respErr.Code)
+		assert.Equal(t, "stats blew up", respErr.Message)
 	})
 }
 
@@ -1113,9 +1113,7 @@ func TestCheckQuotas(t *testing.T) {
 			}
 
 			searchClient := newFakeResourceIndexClient()
-			searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
-				Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
-			}
+			searchClient.statsError = GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"})
 
 			if transportError {
 				searchClient.statsResponse = nil
@@ -1216,15 +1214,19 @@ func TestQuotaSelectionOnCreate(t *testing.T) {
 				Key:   key,
 				Value: []byte(`{"apiVersion":"plugins.grafana.app/v0alpha1","kind":"Plugin","metadata":{"name":"test-plugin","namespace":"stacks-123"},"spec":{"id":"test-plugin"}}`),
 			})
-			require.NoError(t, err)
-			require.Equal(t, tc.wantCode, response.GetError().GetCode())
+			if tc.wantCode != 0 {
+				require.Nil(t, response)
+				require.Equal(t, tc.wantCode, rpcErrorResult(t, err).GetCode())
+			} else {
+				require.NoError(t, err)
+			}
 			require.Len(t, stats.statsRequests, tc.wantStats)
 			read, err := s.Read(ctx, &resourcepb.ReadRequest{Key: key})
-			require.NoError(t, err)
 			if tc.wantCode != 0 {
-				require.Equal(t, int32(http.StatusNotFound), read.GetError().GetCode())
+				require.Nil(t, read)
+				require.Equal(t, int32(http.StatusNotFound), rpcErrorResult(t, err).GetCode())
 			} else {
-				require.Nil(t, read.Error)
+				require.NoError(t, err)
 				require.NotEmpty(t, read.Value)
 			}
 		})
@@ -1565,30 +1567,6 @@ func (m *mockWatchServer) SendHeader(metadata.MD) error { return nil }
 func (m *mockWatchServer) SetTrailer(metadata.MD)       {}
 func (m *mockWatchServer) SendMsg(any) error            { return nil }
 func (m *mockWatchServer) RecvMsg(any) error            { return nil }
-
-// mockDailyStatsServer implements resourcepb.ResourceStats_GetResourceDailyStatsServer
-// for testing, collecting everything sent by the server.
-type mockDailyStatsServer struct {
-	grpc.ServerStream
-	ctx  context.Context
-	days []*resourcepb.DailyStat
-}
-
-func newMockDailyStatsServer(ctx context.Context) *mockDailyStatsServer {
-	return &mockDailyStatsServer{ctx: ctx}
-}
-
-func (m *mockDailyStatsServer) Send(d *resourcepb.DailyStat) error {
-	m.days = append(m.days, d)
-	return nil
-}
-
-func (m *mockDailyStatsServer) Context() context.Context     { return m.ctx }
-func (m *mockDailyStatsServer) SetHeader(metadata.MD) error  { return nil }
-func (m *mockDailyStatsServer) SendHeader(metadata.MD) error { return nil }
-func (m *mockDailyStatsServer) SetTrailer(metadata.MD)       {}
-func (m *mockDailyStatsServer) SendMsg(any) error            { return nil }
-func (m *mockDailyStatsServer) RecvMsg(any) error            { return nil }
 
 const (
 	watchTestGroup     = "playlist.grafana.app"
@@ -3022,16 +3000,16 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
 
-		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.Equal(t, codes.PermissionDenied, status.Code(err), "reads are denied too, so no resource version is known")
+		_, err = srv.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           makeValue(""),
-			ResourceVersion: latest.ResourceVersion,
+			ResourceVersion: 0,
 		})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("regular update is allowed when user has update permission", func(t *testing.T) {
@@ -3057,10 +3035,10 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		}
 		srv := newServer(t, ac)
 
-		rsp, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: makeValue("")})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: makeValue("")})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("folder move is denied when user cannot update in source folder", func(t *testing.T) {
@@ -3077,15 +3055,15 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
-		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+		_, err = srv.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           makeValue(folderB), // move to folder-b
 			ResourceVersion: latest.ResourceVersion,
 		})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
-		require.Contains(t, rsp.Error.Message, "not allowed to update resource in the source folder")
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
+		require.Contains(t, rspErr.Message, "not allowed to update resource in the source folder")
 	})
 
 	t.Run("folder move is denied when user cannot create in destination folder", func(t *testing.T) {
@@ -3102,15 +3080,15 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
-		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+		_, err = srv.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           makeValue(folderB),
 			ResourceVersion: latest.ResourceVersion,
 		})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
-		require.Contains(t, rsp.Error.Message, "not allowed to create resource in the destination folder")
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
+		require.Contains(t, rspErr.Message, "not allowed to create resource in the destination folder")
 	})
 
 	t.Run("folder move is allowed when user has permission on both folders", func(t *testing.T) {
@@ -3136,10 +3114,10 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
 
-		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("read is allowed when user has get permission", func(t *testing.T) {
@@ -3180,9 +3158,9 @@ func TestNewEventPermissionChecks(t *testing.T) {
 			return authlib.CheckResponse{}, errors.New("authz service unavailable")
 		}
 
-		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
 	})
 
 	t.Run("delete is denied when user lacks delete permission", func(t *testing.T) {
@@ -3191,12 +3169,12 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
 
-		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: latest.ResourceVersion})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.Equal(t, codes.PermissionDenied, status.Code(err), "reads are denied too, so no resource version is known")
+		_, err = srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: 0})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("delete is allowed when user has delete permission", func(t *testing.T) {
@@ -3230,236 +3208,6 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
 		require.Equal(t, folderA, capturedFolder)
-	})
-}
-
-// TestStatsAccessChecks covers the authorization behavior of the usage-stats
-// RPCs: reads must be equivalent to reading the object (folder-aware authz),
-// while ingest only requires an authenticated caller.
-func TestStatsAccessChecks(t *testing.T) {
-	user := &identity.StaticRequester{
-		Type:      authlib.TypeUser,
-		Login:     "testuser",
-		UserID:    123,
-		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
-		Namespace: "default",
-	}
-	ctx := authlib.WithAuthInfo(context.Background(), user)
-
-	const (
-		group     = "playlist.grafana.app"
-		resource  = "playlists"
-		namespace = "default"
-		name      = "test-resource"
-		folderA   = "folder-a"
-	)
-
-	value := []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"` + name + `","uid":"test-uid","namespace":"` + namespace + `","annotations":{"grafana.app/folder":"` + folderA + `"}},"spec":{"title":"t","interval":"5m","items":[]}}`)
-
-	key := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: namespace, Name: name}
-
-	// newStatsServer builds a stats-enabled server backed by an in-memory KV
-	// store (leases are required by the ingester) and seeds one resource in
-	// folderA using an always-allow client before switching to ac.
-	newStatsServer := func(t *testing.T, ac *callbackAccessClient) *server {
-		t.Helper()
-		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
-		require.NoError(t, err)
-		t.Cleanup(func() { _ = db.Close() })
-
-		kv := NewBadgerKV(db)
-		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, Holder: "test"})
-		require.NoError(t, err)
-
-		srv, err := NewResourceServer(ResourceServerOptions{
-			Backend:           store,
-			AccessClient:      ac,
-			UsageStatsEnabled: true,
-		})
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			_ = srv.Stop(stopCtx)
-		})
-
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
-		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
-		require.NoError(t, err)
-		require.Nil(t, created.Error)
-		return srv
-	}
-
-	t.Run("GetResourceDailyStats passes the resolved folder to the access check", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac)
-
-		var capturedReq authlib.CheckRequest
-		var capturedFolder string
-		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-			capturedReq, capturedFolder = req, folder
-			return allow()
-		}
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
-		require.NoError(t, err)
-		require.Equal(t, utils.VerbGet, capturedReq.Verb)
-		require.Equal(t, name, capturedReq.Name)
-		require.Equal(t, folderA, capturedFolder, "read must resolve the object folder, not pass an empty one")
-	})
-
-	t.Run("GetResourceDailyStats is denied when the user cannot read the object", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac)
-
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
-		require.Equal(t, codes.PermissionDenied, status.Code(err))
-	})
-
-	t.Run("RecordEvent does not perform an object-level access check", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac)
-
-		// Even a deny-all access client must not block ingest: the path only
-		// requires an authenticated caller.
-		accessCalled := false
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
-			accessCalled = true
-			return deny()
-		}
-
-		_, err := srv.RecordEvent(ctx, &resourcepb.RecordEventRequest{
-			Key:    key,
-			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 1}},
-		})
-		require.NoError(t, err)
-		require.False(t, accessCalled, "ingest must not call the access client")
-	})
-
-	t.Run("RecordEvent requires an authenticated caller", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac)
-
-		_, err := srv.RecordEvent(context.Background(), &resourcepb.RecordEventRequest{
-			Key:    key,
-			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 1}},
-		})
-		require.Equal(t, codes.Unauthenticated, status.Code(err))
-	})
-}
-
-func TestGetResourceDailyStats(t *testing.T) {
-	user := &identity.StaticRequester{
-		Type:      authlib.TypeUser,
-		Login:     "testuser",
-		UserID:    123,
-		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
-		Namespace: "default",
-	}
-	ctx := authlib.WithAuthInfo(context.Background(), user)
-
-	const (
-		group     = "dashboard.grafana.app"
-		resource  = "dashboards"
-		namespace = "default"
-		name      = "test-dashboard"
-		folderA   = "folder-a"
-	)
-
-	value := []byte(`{"apiVersion":"dashboard.grafana.app/v1beta1","kind":"Dashboard","metadata":{"name":"` + name + `","uid":"test-uid","namespace":"` + namespace + `","annotations":{"grafana.app/folder":"` + folderA + `"}},"spec":{"title":"t"}}`)
-
-	key := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: namespace, Name: name}
-
-	newStatsServer := func(t *testing.T, ac *callbackAccessClient, enabled bool) *server {
-		t.Helper()
-		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
-		require.NoError(t, err)
-		t.Cleanup(func() { _ = db.Close() })
-
-		kv := NewBadgerKV(db)
-		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, Holder: "test"})
-		require.NoError(t, err)
-
-		srv, err := NewResourceServer(ResourceServerOptions{
-			Backend:           store,
-			AccessClient:      ac,
-			UsageStatsEnabled: enabled,
-		})
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			_ = srv.Stop(stopCtx)
-		})
-
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
-		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
-		require.NoError(t, err)
-		require.Nil(t, created.Error)
-		return srv
-	}
-
-	t.Run("returns the recorded daily stats", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, true)
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
-
-		_, err := srv.RecordEvent(ctx, &resourcepb.RecordEventRequest{
-			Key:    key,
-			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 3}, {Metric: "queries", Value: 1}},
-		})
-		require.NoError(t, err)
-
-		// Buffered events only surface after a flush to the KV store.
-		require.NoError(t, srv.statsIngester.Flush(ctx))
-
-		stream := newMockDailyStatsServer(ctx)
-		err = srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, stream)
-		require.NoError(t, err)
-		require.Len(t, stream.days, 1)
-		require.Equal(t, uint64(3), stream.days[0].Metrics["views"])
-		require.Equal(t, uint64(1), stream.days[0].Metrics["queries"])
-	})
-
-	t.Run("returns no days when nothing has been recorded", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, true)
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
-
-		stream := newMockDailyStatsServer(ctx)
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, stream)
-		require.NoError(t, err)
-		require.Empty(t, stream.days)
-	})
-
-	t.Run("is unimplemented when usage stats are disabled", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, false)
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
-		require.Equal(t, codes.Unimplemented, status.Code(err))
-	})
-
-	t.Run("requires an authenticated caller", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, true)
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(context.Background()))
-		require.Equal(t, codes.Unauthenticated, status.Code(err))
-	})
-
-	t.Run("rejects an invalid request key", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, true)
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{
-			Key: &resourcepb.ResourceKey{Namespace: namespace, Resource: resource, Name: name},
-		}, newMockDailyStatsServer(ctx))
-		require.Equal(t, codes.InvalidArgument, status.Code(err))
 	})
 }
 
@@ -3545,12 +3293,12 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
 
-		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: folderKey})
-		require.NoError(t, err)
-		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: folderKey, ResourceVersion: latest.ResourceVersion})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: folderKey})
+		require.Equal(t, codes.PermissionDenied, status.Code(err), "reads are denied too, so no resource version is known")
+		_, err = srv.Delete(ctx, &resourcepb.DeleteRequest{Key: folderKey, ResourceVersion: 0})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("folder delete is allowed when user has delete permission", func(t *testing.T) {
@@ -3702,9 +3450,9 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 
 	t.Run("rejects when no user in context", func(t *testing.T) {
 		srv, _, blob := newBlobAuthzTestServer(t, nil)
-		rsp, err := srv.PutBlob(context.Background(), &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusUnauthorized), rsp.Error.Code)
+		_, err := srv.PutBlob(context.Background(), &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusUnauthorized), rspErr.Code)
 		require.False(t, blob.putReached)
 	})
 
@@ -3750,9 +3498,9 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 		srv, ac, blob := newBlobAuthzTestServer(t, nil)
 		ac.fn = folderOnlyCreate("folder-x")
 
-		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 		require.False(t, blob.putReached)
 	})
 
@@ -3777,9 +3525,9 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 		srv, ac, blob := newBlobAuthzTestServer(t, nil)
 		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
 
-		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 		require.False(t, blob.putReached)
 	})
 
@@ -3788,9 +3536,9 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 		seedParent(t, srv, ac)
 		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
 
-		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 		require.False(t, blob.putReached)
 	})
 
@@ -3801,9 +3549,9 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 			return authlib.CheckResponse{}, errors.New("authz backend unavailable")
 		}
 
-		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
 		require.False(t, blob.putReached)
 	})
 
@@ -3836,10 +3584,10 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 			return &errorOnReadResourceBackend{StorageBackend: real, readErr: backendErr}
 		})
 
-		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.Equal(t, backendErr.Code, rsp.Error.Code, "must surface the backend error code, not collapse to 404")
-		require.Equal(t, backendErr.Message, rsp.Error.Message)
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, backendErr.Code, rspErr.Code, "must surface the backend error code, not collapse to 404")
+		require.Equal(t, backendErr.Message, rspErr.Message)
 		require.False(t, blob.putReached)
 	})
 }
@@ -3884,22 +3632,22 @@ func TestDelegatedRPCsNamespaceGate(t *testing.T) {
 		invoke func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult
 	}{
 		{"GetBlob", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.GetBlob(ctx, &resourcepb.GetBlobRequest{
+			_, err := srv.GetBlob(ctx, &resourcepb.GetBlobRequest{
 				Resource: &resourcepb.ResourceKey{Namespace: ns, Group: "g", Resource: "r", Name: "n"},
 			})
-			return rsp.Error
+			return errorResultDetail(err)
 		}},
 		{"ListManagedObjects", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{Namespace: ns})
-			return rsp.Error
+			_, err := srv.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{Namespace: ns})
+			return errorResultDetail(err)
 		}},
 		{"CountManagedObjects", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{Namespace: ns})
-			return rsp.Error
+			_, err := srv.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{Namespace: ns})
+			return errorResultDetail(err)
 		}},
 		{"RebuildIndexes", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{Namespace: ns})
-			return rsp.Error
+			_, err := srv.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{Namespace: ns})
+			return errorResultDetail(err)
 		}},
 	}
 	scenarios := []struct {
@@ -3925,9 +3673,9 @@ func TestDelegatedRPCsNamespaceGate(t *testing.T) {
 
 func TestGetBlob_RejectsMissingResourceKey(t *testing.T) {
 	srv, _, _ := newBlobAuthzTestServer(t, nil)
-	rsp, err := srv.GetBlob(ctxWithUserInNs("org-1"), &resourcepb.GetBlobRequest{Uid: "blob-uid"})
-	require.NoError(t, err)
-	require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+	_, err := srv.GetBlob(ctxWithUserInNs("org-1"), &resourcepb.GetBlobRequest{Uid: "blob-uid"})
+	rspErr := rpcErrorResult(t, err)
+	require.Equal(t, int32(http.StatusBadRequest), rspErr.Code)
 }
 
 func TestGetBlobReferenceChecks(t *testing.T) {
@@ -3944,11 +3692,19 @@ func TestGetBlobReferenceChecks(t *testing.T) {
 		require.Nil(t, rsp.Error)
 		return rsp.ResourceVersion
 	}
-	getBlob := func(t *testing.T, srv *server, req *resourcepb.GetBlobRequest) *resourcepb.GetBlobResponse {
+	type getBlobResult struct {
+		Value       []byte
+		ContentType string
+		Error       *resourcepb.ErrorResult
+	}
+	getBlob := func(t *testing.T, srv *server, req *resourcepb.GetBlobRequest) getBlobResult {
 		t.Helper()
 		rsp, err := srv.GetBlob(ctx, req)
-		require.NoError(t, err)
-		return rsp
+		if err != nil {
+			require.Nil(t, rsp)
+			return getBlobResult{Error: rpcErrorResult(t, err)}
+		}
+		return getBlobResult{Value: rsp.Value, ContentType: rsp.ContentType}
 	}
 
 	t.Run("rejects a request without a resource name", func(t *testing.T) {
@@ -4579,10 +4335,10 @@ func TestServerListKeysOnly(t *testing.T) {
 					KeysOnly: true,
 					Source:   source,
 				})
-				require.NoError(t, err)
-				require.NotNil(t, rsp.Error, "keys_only must be refused, not silently served")
-				require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
-				require.Empty(t, rsp.Items)
+				rspErr := rpcErrorResult(t, err)
+				require.NotNil(t, rspErr, "keys_only must be refused, not silently served")
+				require.Equal(t, int32(http.StatusBadRequest), rspErr.Code)
+				require.Nil(t, rsp)
 			})
 		}
 	})
@@ -4715,15 +4471,14 @@ func TestCrossNamespaceKeysListRequiresWildcardIdentity(t *testing.T) {
 				}},
 				KeysOnly: true,
 			})
-			require.NoError(t, err)
 
 			if tc.wantErr != "" {
-				require.NotNil(t, rsp.Error, "the list must not succeed")
-				assert.Contains(t, rsp.Error.Message, tc.wantErr)
+				require.Nil(t, rsp, "the list must not succeed")
+				assert.Contains(t, rpcErrorResult(t, err).Message, tc.wantErr)
 				return
 			}
 
-			require.Nil(t, rsp.Error)
+			require.NoError(t, err)
 			got := make([]string, 0, len(rsp.Items))
 			for _, item := range rsp.Items {
 				got = append(got, item.Namespace)
@@ -4856,13 +4611,13 @@ func TestServerListKeysOnly_RefusesEverySelector(t *testing.T) {
 			require.Nil(t, created.Error)
 
 			rsp, err := srv.List(ctx, &resourcepb.ListRequest{Options: opts, KeysOnly: true})
-			require.NoError(t, err)
-			require.NotNil(t, rsp.Error, "must be refused, not served as if the selector matched")
-			require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+			rspErr := rpcErrorResult(t, err)
+			require.NotNil(t, rspErr, "must be refused, not served as if the selector matched")
+			require.Equal(t, int32(http.StatusBadRequest), rspErr.Code)
 			// Named, so these cannot start passing because some other validation
 			// began rejecting the request first.
-			require.Contains(t, rsp.Error.Message, "selectors")
-			require.Empty(t, rsp.Items)
+			require.Contains(t, rspErr.Message, "selectors")
+			require.Nil(t, rsp)
 		})
 	}
 }
@@ -4905,7 +4660,7 @@ func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
 	require.Equal(t, []string{"ns-one"}, slices.Compact(batches))
 	require.Equal(t, map[string]string{"aaa": "ns-one", "bbb": "ns-one"}, items)
 
-	wrongScope, err := srv.List(ctx, &resourcepb.ListRequest{
+	_, err := srv.List(ctx, &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 			Group: group, Resource: resource, Namespace: "ns-one",
 		}},
@@ -4914,12 +4669,12 @@ func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
 			Namespace: "ns-two", KeysOnly: true, Name: "aaa", ResourceVersion: rsp.ResourceVersion,
 		}.String(),
 	})
-	require.NoError(t, err)
-	require.NotNil(t, wrongScope.Error)
-	require.Equal(t, int32(http.StatusBadRequest), wrongScope.Error.Code)
-	require.Contains(t, wrongScope.Error.Message, "list scope does not match")
+	wrongScopeErr := rpcErrorResult(t, err)
+	require.NotNil(t, wrongScopeErr)
+	require.Equal(t, int32(http.StatusBadRequest), wrongScopeErr.Code)
+	require.Contains(t, wrongScopeErr.Message, "list scope does not match")
 
-	missingScope, err := srv.List(ctx, &resourcepb.ListRequest{
+	_, err = srv.List(ctx, &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 			Group: group, Resource: resource, Namespace: "ns-one",
 		}},
@@ -4928,18 +4683,21 @@ func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
 			KeysOnly: true, Name: "bbb", ResourceVersion: rsp.ResourceVersion,
 		}.String(),
 	})
-	require.NoError(t, err)
-	require.NotNil(t, missingScope.Error)
-	require.Equal(t, int32(http.StatusBadRequest), missingScope.Error.Code)
-	require.Contains(t, missingScope.Error.Message, "list scope does not match")
+	missingScopeErr := rpcErrorResult(t, err)
+	require.NotNil(t, missingScopeErr)
+	require.Equal(t, int32(http.StatusBadRequest), missingScopeErr.Code)
+	require.Contains(t, missingScopeErr.Message, "list scope does not match")
 
 	for _, namespace := range []string{"ns-empty", "ns-two"} {
 		t.Run("rejects unauthorized namespace "+namespace, func(t *testing.T) {
-			foreign := list(namespace)
-			require.NotNil(t, foreign.Error)
-			require.Equal(t, int32(http.StatusForbidden), foreign.Error.Code)
-			require.Contains(t, foreign.Error.Message, "namespace mismatch")
-			require.Empty(t, foreign.Items)
+			foreign, err := srv.List(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: group, Resource: resource, Namespace: namespace,
+				}},
+				KeysOnly: true,
+			})
+			require.Nil(t, foreign)
+			requireRPCError(t, err, &resourcepb.ErrorResult{Message: "namespace mismatch", Code: http.StatusForbidden})
 		})
 	}
 }
@@ -5186,15 +4944,9 @@ func TestResourceServerQOSTimeoutStatus(t *testing.T) {
 						}
 						unblock()
 						r := awaitQOSTestResult(t, results)
-						require.NoError(t, r.err)
-						require.NotNil(t, r.rsp)
-						require.NotNil(t, r.rsp.Error)
-						require.Equal(t, tc.httpCode, r.rsp.Error.Code)
-						_, err := UnaryErrorResultInterceptor()(callerCtx, nil, nil, func(context.Context, any) (any, error) {
-							return r.rsp, nil
-						})
-						require.Equal(t, tc.grpcCode, status.Code(err))
-						require.True(t, proto.Equal(r.rsp.Error, AsErrorResult(err)))
+						require.Nil(t, r.rsp)
+						require.Equal(t, tc.grpcCode, status.Code(r.err))
+						require.Equal(t, tc.httpCode, rpcErrorResult(t, r.err).Code)
 						synctest.Wait()
 					})
 				})
@@ -5335,4 +5087,235 @@ func newQOSTestSpanRecorder(t *testing.T) *tracetest.SpanRecorder {
 		require.NoError(t, provider.Shutdown(context.Background()))
 	})
 	return recorder
+}
+
+// requireRPCError asserts that err is the gRPC status a handler returns for
+// want: the mapped code and want attached as the only ErrorResult detail.
+func requireRPCError(t testing.TB, err error, want *resourcepb.ErrorResult) {
+	t.Helper()
+	require.Error(t, err)
+	st, ok := status.FromError(err)
+	require.True(t, ok, "expected a gRPC status error, got %T: %v", err, err)
+	require.Equal(t, grpcCodeFromErrorResult(want), st.Code())
+	details := st.Details()
+	require.Len(t, details, 1)
+	got, ok := details[0].(*resourcepb.ErrorResult)
+	require.True(t, ok, "expected an ErrorResult detail, got %T", details[0])
+	require.True(t, proto.Equal(want, got), "want %v, got %v", want, got)
+}
+
+// rpcErrorResult asserts that err is a gRPC status carrying an ErrorResult
+// detail and returns it.
+func rpcErrorResult(t testing.TB, err error) *resourcepb.ErrorResult {
+	t.Helper()
+	require.Error(t, err)
+	res := errorResultDetail(err)
+	require.NotNil(t, res, "expected an ErrorResult detail on %v", err)
+	require.Equal(t, grpcCodeFromErrorResult(res), status.Code(err))
+	return res
+}
+
+func errorResultDetail(err error) *resourcepb.ErrorResult {
+	st, ok := status.FromError(err)
+	if !ok {
+		return nil
+	}
+	for _, d := range st.Details() {
+		if res, ok := d.(*resourcepb.ErrorResult); ok {
+			return res
+		}
+	}
+	return nil
+}
+
+func TestRPCError(t *testing.T) {
+	require.NoError(t, GRPCStatusError(nil))
+
+	conflict := &resourcepb.ErrorResult{
+		Message: "conflict",
+		Code:    http.StatusConflict,
+		Reason:  string(metav1.StatusReasonConflict),
+		Details: &resourcepb.ErrorDetails{Name: "a", Causes: []*resourcepb.ErrorCause{{Field: "spec"}}},
+	}
+	err := GRPCStatusError(conflict)
+	requireRPCError(t, err, conflict)
+	require.Equal(t, codes.Aborted, status.Code(err))
+
+	invalid := &resourcepb.ErrorResult{Code: http.StatusUnprocessableEntity, Reason: string(metav1.StatusReasonInvalid)}
+	requireRPCError(t, GRPCStatusError(invalid), invalid)
+}
+
+func TestRPCErrorFrom(t *testing.T) {
+	require.NoError(t, rpcErrorFrom(nil))
+
+	t.Run("gRPC status is returned unchanged", func(t *testing.T) {
+		plain := status.Error(codes.Unavailable, "down")
+		require.Same(t, plain, rpcErrorFrom(plain))
+
+		detailed := GRPCStatusError(NewNotFoundError(&resourcepb.ResourceKey{Resource: "dashboards", Name: "a"}))
+		require.Same(t, detailed, rpcErrorFrom(detailed))
+
+		wrapped := fmt.Errorf("context: %w", plain)
+		require.Same(t, wrapped, rpcErrorFrom(wrapped))
+	})
+
+	t.Run("API status keeps its details", func(t *testing.T) {
+		apiErr := NewConflictStatusError("g", "r", "n", "changed")
+		requireRPCError(t, rpcErrorFrom(apiErr), AsErrorResult(apiErr))
+	})
+
+	t.Run("plain errors map like an embedded error", func(t *testing.T) {
+		err := rpcErrorFrom(errors.New("boom"))
+		requireRPCError(t, err, &resourcepb.ErrorResult{Message: "boom", Code: http.StatusInternalServerError})
+		require.Equal(t, codes.Internal, status.Code(err))
+	})
+
+	t.Run("cancellation keeps the existing mapping", func(t *testing.T) {
+		err := rpcErrorFrom(context.Canceled)
+		requireRPCError(t, err, AsErrorResult(context.Canceled))
+	})
+}
+
+// Clients convert the returned status at the HTTP boundary; it must produce
+// the same Kubernetes status the response-embedded error used to.
+func TestRPCErrorKeepsHTTPSemantics(t *testing.T) {
+	for name, res := range map[string]*resourcepb.ErrorResult{
+		"not found": NewNotFoundError(&resourcepb.ResourceKey{Group: "g", Resource: "r", Name: "n"}),
+		"conflict": {
+			Message: "changed", Code: http.StatusConflict, Reason: string(metav1.StatusReasonConflict),
+			Details: &resourcepb.ErrorDetails{Group: "g", Kind: "r", Name: "n"},
+		},
+		"already exists": {Message: "exists", Code: http.StatusConflict, Reason: string(metav1.StatusReasonAlreadyExists)},
+		"invalid": {
+			Message: "bad", Code: http.StatusUnprocessableEntity, Reason: string(metav1.StatusReasonInvalid),
+			Details: &resourcepb.ErrorDetails{Name: "n", Causes: []*resourcepb.ErrorCause{{Reason: "FieldValueRequired", Field: "spec.title"}}},
+		},
+		"forbidden without message": {Code: http.StatusForbidden},
+		"too many requests":         NewTooManyRequestsError("slow down"),
+		"server error":              {Message: "storage failed", Code: http.StatusInternalServerError},
+	} {
+		t.Run(name, func(t *testing.T) {
+			require.Equal(t, StatusError(res), StatusErrorFromGRPC(GRPCStatusError(res)))
+			require.Equal(t, StatusError(res), StatusErrorFromResponse(nil, GRPCStatusError(res)))
+		})
+	}
+}
+
+func TestQueueRPCError(t *testing.T) {
+	err := queueRPCError(fmt.Errorf("enqueue: %w", scheduler.ErrTenantQueueFull))
+	requireRPCError(t, err, NewTooManyRequestsError("tenant queue is full, please try again later"))
+	require.Equal(t, codes.ResourceExhausted, status.Code(err))
+
+	// Matches the error HandleQueueError embeds in the response.
+	other := errors.New("timeout")
+	legacy, legacyErr := HandleQueueError(other, func(e *resourcepb.ErrorResult) *resourcepb.ReadResponse {
+		return &resourcepb.ReadResponse{Error: e}
+	})
+	require.NoError(t, legacyErr)
+	requireRPCError(t, queueRPCError(other), legacy.Error)
+}
+
+// Servers return native status errors without any conversion interceptor, both
+// to direct Go callers and over a real gRPC transport.
+func TestServerReturnsStatusErrorsWithoutConversion(t *testing.T) {
+	srv, err := NewResourceServer(ResourceServerOptions{Backend: &missingReadBackend{}})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "example.grafana.app", Resource: "widgets", Name: "missing"}
+	want := &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "missing"}
+	ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+
+	t.Run("direct call", func(t *testing.T) {
+		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.Nil(t, rsp)
+		requireRPCError(t, err, want)
+	})
+
+	t.Run("remote gRPC", func(t *testing.T) {
+		listener := bufconn.Listen(1 << 20)
+		grpcServer := grpc.NewServer(grpc.UnaryInterceptor(func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+			return handler(authlib.WithAuthInfo(ctx, &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, UserUID: "u1", Namespace: "default"}), req)
+		}))
+		resourcepb.RegisterResourceStoreServer(grpcServer, srv)
+		go func() { _ = grpcServer.Serve(listener) }()
+		t.Cleanup(grpcServer.Stop)
+		conn, err := grpc.NewClient("passthrough:///bufnet",
+			grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }),
+			grpc.WithTransportCredentials(insecure.NewCredentials()))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = conn.Close() })
+
+		rsp, err := resourcepb.NewResourceStoreClient(conn).Read(t.Context(), &resourcepb.ReadRequest{Key: key})
+		require.Nil(t, rsp)
+		requireRPCError(t, err, want)
+		var apiStatus apierrors.APIStatus
+		require.ErrorAs(t, StatusErrorFromGRPC(err), &apiStatus)
+		require.Equal(t, int32(http.StatusNotFound), apiStatus.Status().Code)
+	})
+}
+
+// bodyErrorBlob is a blob backend that still reports failure in the response.
+type bodyErrorBlob struct {
+	stubBlobSupport
+	res *resourcepb.ErrorResult
+}
+
+func (b *bodyErrorBlob) PutResourceBlob(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	return &resourcepb.PutBlobResponse{Error: b.res}, nil
+}
+
+// Until every blob backend returns errors, a body failure from the backend is
+// still returned as the call's error rather than as a successful response.
+func TestPutBlobReturnsBackendBodyFailureAsError(t *testing.T) {
+	srv, _, _ := newBlobAuthzTestServer(t, nil)
+	want := &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "empty content"}
+	srv.blob = &bodyErrorBlob{res: want}
+	key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default", Name: "missing"}
+
+	rsp, err := srv.PutBlob(ctxWithUserInNs("default"), &resourcepb.PutBlobRequest{Resource: key})
+	require.Nil(t, rsp)
+	requireRPCError(t, err, want)
+}
+
+type bodyErrorStatsBackend struct {
+	missingReadBackend
+	result *resourcepb.ResourceStatsResponse
+}
+
+func (b *bodyErrorStatsBackend) GetStats(context.Context, *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
+	return b.result, nil
+}
+
+func TestGetStatsReturnsBackendBodyFailureAsError(t *testing.T) {
+	want := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats failed"}
+	backend := &bodyErrorStatsBackend{result: &resourcepb.ResourceStatsResponse{Error: want}}
+	srv, err := NewResourceServer(ResourceServerOptions{Backend: backend})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
+	ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+
+	rsp, err := srv.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default"})
+	require.Nil(t, rsp)
+	requireRPCError(t, err, want)
+}
+
+func TestGetStatsPassesThroughClientResult(t *testing.T) {
+	want := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats failed"}
+	stats := newFakeResourceIndexClient()
+	stats.statsError = GRPCStatusError(want)
+	srv, err := NewResourceServer(ResourceServerOptions{Backend: &missingReadBackend{}, SearchClient: stats})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
+	ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+
+	rsp, err := srv.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default"})
+	require.Nil(t, rsp)
+	requireRPCError(t, err, want)
+
+	require.Same(t, stats.statsError, err)
+
+	stats.statsResponse, stats.statsError = &resourcepb.ResourceStatsResponse{}, nil
+	rsp, err = srv.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default"})
+	require.NoError(t, err)
+	require.Same(t, stats.statsResponse, rsp)
 }
