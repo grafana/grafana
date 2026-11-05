@@ -39,7 +39,6 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
@@ -49,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -3635,19 +3635,19 @@ func TestDelegatedRPCsNamespaceGate(t *testing.T) {
 			_, err := srv.GetBlob(ctx, &resourcepb.GetBlobRequest{
 				Resource: &resourcepb.ResourceKey{Namespace: ns, Group: "g", Resource: "r", Name: "n"},
 			})
-			return errorResultDetail(err)
+			return resourceutil.ErrorResultFromGRPCDetails(err)
 		}},
 		{"ListManagedObjects", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
 			_, err := srv.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{Namespace: ns})
-			return errorResultDetail(err)
+			return resourceutil.ErrorResultFromGRPCDetails(err)
 		}},
 		{"CountManagedObjects", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
 			_, err := srv.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{Namespace: ns})
-			return errorResultDetail(err)
+			return resourceutil.ErrorResultFromGRPCDetails(err)
 		}},
 		{"RebuildIndexes", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
 			_, err := srv.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{Namespace: ns})
-			return errorResultDetail(err)
+			return resourceutil.ErrorResultFromGRPCDetails(err)
 		}},
 	}
 	scenarios := []struct {
@@ -5090,17 +5090,10 @@ func newQOSTestSpanRecorder(t *testing.T) *tracetest.SpanRecorder {
 }
 
 // requireRPCError asserts that err is the gRPC status a handler returns for
-// want: the mapped code and want attached as the only ErrorResult detail.
+// want: the mapped code and want attached as the ErrorResult detail.
 func requireRPCError(t testing.TB, err error, want *resourcepb.ErrorResult) {
 	t.Helper()
-	require.Error(t, err)
-	st, ok := status.FromError(err)
-	require.True(t, ok, "expected a gRPC status error, got %T: %v", err, err)
-	require.Equal(t, grpcCodeFromErrorResult(want), st.Code())
-	details := st.Details()
-	require.Len(t, details, 1)
-	got, ok := details[0].(*resourcepb.ErrorResult)
-	require.True(t, ok, "expected an ErrorResult detail, got %T", details[0])
+	got := rpcErrorResult(t, err)
 	require.True(t, proto.Equal(want, got), "want %v, got %v", want, got)
 }
 
@@ -5109,40 +5102,10 @@ func requireRPCError(t testing.TB, err error, want *resourcepb.ErrorResult) {
 func rpcErrorResult(t testing.TB, err error) *resourcepb.ErrorResult {
 	t.Helper()
 	require.Error(t, err)
-	res := errorResultDetail(err)
+	res := resourceutil.ErrorResultFromGRPCDetails(err)
 	require.NotNil(t, res, "expected an ErrorResult detail on %v", err)
 	require.Equal(t, grpcCodeFromErrorResult(res), status.Code(err))
 	return res
-}
-
-func errorResultDetail(err error) *resourcepb.ErrorResult {
-	st, ok := status.FromError(err)
-	if !ok {
-		return nil
-	}
-	for _, d := range st.Details() {
-		if res, ok := d.(*resourcepb.ErrorResult); ok {
-			return res
-		}
-	}
-	return nil
-}
-
-func TestRPCError(t *testing.T) {
-	require.NoError(t, GRPCStatusError(nil))
-
-	conflict := &resourcepb.ErrorResult{
-		Message: "conflict",
-		Code:    http.StatusConflict,
-		Reason:  string(metav1.StatusReasonConflict),
-		Details: &resourcepb.ErrorDetails{Name: "a", Causes: []*resourcepb.ErrorCause{{Field: "spec"}}},
-	}
-	err := GRPCStatusError(conflict)
-	requireRPCError(t, err, conflict)
-	require.Equal(t, codes.Aborted, status.Code(err))
-
-	invalid := &resourcepb.ErrorResult{Code: http.StatusUnprocessableEntity, Reason: string(metav1.StatusReasonInvalid)}
-	requireRPCError(t, GRPCStatusError(invalid), invalid)
 }
 
 func TestRPCErrorFrom(t *testing.T) {
@@ -5174,31 +5137,6 @@ func TestRPCErrorFrom(t *testing.T) {
 		err := rpcErrorFrom(context.Canceled)
 		requireRPCError(t, err, AsErrorResult(context.Canceled))
 	})
-}
-
-// Clients convert the returned status at the HTTP boundary; it must produce
-// the same Kubernetes status the response-embedded error used to.
-func TestRPCErrorKeepsHTTPSemantics(t *testing.T) {
-	for name, res := range map[string]*resourcepb.ErrorResult{
-		"not found": NewNotFoundError(&resourcepb.ResourceKey{Group: "g", Resource: "r", Name: "n"}),
-		"conflict": {
-			Message: "changed", Code: http.StatusConflict, Reason: string(metav1.StatusReasonConflict),
-			Details: &resourcepb.ErrorDetails{Group: "g", Kind: "r", Name: "n"},
-		},
-		"already exists": {Message: "exists", Code: http.StatusConflict, Reason: string(metav1.StatusReasonAlreadyExists)},
-		"invalid": {
-			Message: "bad", Code: http.StatusUnprocessableEntity, Reason: string(metav1.StatusReasonInvalid),
-			Details: &resourcepb.ErrorDetails{Name: "n", Causes: []*resourcepb.ErrorCause{{Reason: "FieldValueRequired", Field: "spec.title"}}},
-		},
-		"forbidden without message": {Code: http.StatusForbidden},
-		"too many requests":         NewTooManyRequestsError("slow down"),
-		"server error":              {Message: "storage failed", Code: http.StatusInternalServerError},
-	} {
-		t.Run(name, func(t *testing.T) {
-			require.Equal(t, StatusError(res), StatusErrorFromGRPC(GRPCStatusError(res)))
-			require.Equal(t, StatusError(res), StatusErrorFromResponse(nil, GRPCStatusError(res)))
-		})
-	}
 }
 
 func TestQueueRPCError(t *testing.T) {

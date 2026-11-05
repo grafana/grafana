@@ -247,7 +247,7 @@ func (b *globalDocumentBuilder) BuildDocument(ctx context.Context, key *resource
 			return nil, fmt.Errorf("blob support is not configured")
 		}
 		rsp, err := b.blob.GetResourceBlob(ctx, key, info, true)
-		if err := ErrorFromResponse(rsp.GetError(), err); err != nil {
+		if err != nil {
 			return nil, fmt.Errorf("error reading blob: %w", err)
 		}
 		var content struct {
