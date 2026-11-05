@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useId, useRef } from 'react';
+import { Fragment, useId, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -10,6 +10,7 @@ import { DatasourceErrorAlert } from '../DatasourceErrorAlert';
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 import { QueryOptionsOverlay } from '../QueryOptionsOverlay';
 
+import { StackedAddBar } from './StackedAddBar';
 import { StackedSection } from './StackedSection';
 import { useStackedItemScroll } from './useStackedItemScroll';
 import {
@@ -74,16 +75,21 @@ export function StackedEditorRenderer() {
             {items.map((item) => {
               const key = getStackedItemKey(item);
               return (
-                <StackedSection
-                  key={key}
-                  item={item}
-                  isCurrent={isCurrentStackedItem({
-                    item,
-                    selectedQueryRefId: selectedQuery?.refId,
-                    selectedTransformationId: selectedTransformation?.transformId,
-                  })}
-                  headingId={`${headingIdPrefix}-${key}`}
-                />
+                <Fragment key={key}>
+                  <StackedSection
+                    item={item}
+                    isCurrent={isCurrentStackedItem({
+                      item,
+                      selectedQueryRefId: selectedQuery?.refId,
+                      selectedTransformationId: selectedTransformation?.transformId,
+                    })}
+                    headingId={`${headingIdPrefix}-${key}`}
+                  />
+                  <StackedAddBar
+                    variant={item.type === QueryEditorType.Transformation ? 'transformation' : 'query'}
+                    afterId={item.id}
+                  />
+                </Fragment>
               );
             })}
           </div>
