@@ -4,7 +4,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { useCanWritePlaylists } from './utils';
+import { isValidInterval, useCanWritePlaylists } from './utils';
 
 jest.mock('app/core/services/context_srv', () => ({
   ...jest.requireActual('app/core/services/context_srv'),
@@ -63,5 +63,15 @@ describe('useCanWritePlaylists', () => {
       const { result } = renderUseCanWritePlaylists();
       expect(result.current).toBe(false);
     });
+  });
+});
+
+describe('isValidInterval', () => {
+  it.each(['30', '30s', '5m', '1h', '2d', '500ms'])('accepts %s', (interval) => {
+    expect(isValidInterval(interval)).toBe(true);
+  });
+
+  it.each(['', '0s', '-5m', '30ssdddmm', '5mm', '1.5m', '1e3', '30 s', 'abc', 's'])('rejects %s', (interval) => {
+    expect(isValidInterval(interval)).toBe(false);
   });
 });
