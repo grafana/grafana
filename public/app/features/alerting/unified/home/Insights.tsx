@@ -1,6 +1,6 @@
 import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   EmbeddedScene,
   NestedScene,
@@ -104,25 +104,23 @@ const namespace = getAPINamespace();
 
 export const INSTANCE_ID = namespace.includes('stacks-') ? namespace.replace('stacks-', '') : undefined;
 
-const getInsightsDataSources = () => {
-  const dataSourceSrv = getDataSourceSrv();
-
-  [ashDs, cloudUsageDs, grafanaCloudPromDs].forEach((ds) => {
-    ds.settings = dataSourceSrv.getInstanceSettings(ds.uid);
-  });
-  return [ashDs, cloudUsageDs, grafanaCloudPromDs];
+const getInsightsDataSources = async () => {
+  return Promise.all(
+    [ashDs, cloudUsageDs, grafanaCloudPromDs].map(async (ds) => ({
+      ...ds,
+      settings: await getDataSourceInstanceSettings(ds.uid),
+    }))
+  );
 };
-
-export const insightsIsAvailable = () => {
-  const [_, cloudUsageDs, __] = getInsightsDataSources();
+export const insightsIsAvailable = async () => {
+  const [_, cloudUsageDs, __] = await getInsightsDataSources();
   return cloudUsageDs.settings;
 };
 
-export function getInsightsScenes() {
-  const [ashDs, cloudUsageDs, grafanaCloudPromDs] = getInsightsDataSources();
+export async function getInsightsScenes() {
+  const [ashDs, cloudUsageDs, grafanaCloudPromDs] = await getInsightsDataSources();
 
   const categories = [];
-
   const showGrafanaManaged = ashDs.settings && cloudUsageDs.settings;
   const showGrafanaAlertmanager = Boolean(cloudUsageDs.settings);
   const showMimirAlertmanager = Boolean(cloudUsageDs.settings);

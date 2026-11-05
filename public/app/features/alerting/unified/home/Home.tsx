@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -17,10 +17,37 @@ import SyntheticMonitoringCard from './SyntheticMonitoringCard';
 
 function Home() {
   const styles = useStyles2(getStyles);
-  const insightsEnabled = insightsIsAvailable() || isLocalDevEnv();
+  const [insightsEnabled, setInsightsEnabled] = useState(false);
+  const [insightsScene, setInsightsScene] = useState<Awaited<ReturnType<typeof getInsightsScenes>>>();
+  const [activeTab, setActiveTab] = useState<'insights' | 'overview'>('overview');
 
-  const [activeTab, setActiveTab] = useState<'insights' | 'overview'>(insightsEnabled ? 'insights' : 'overview');
-  const insightsScene = getInsightsScenes();
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadInsights() {
+      try {
+        const [scene, available] = await Promise.all([getInsightsScenes(), insightsIsAvailable()]);
+        const enabled = Boolean(available) || isLocalDevEnv();
+
+        if (cancelled) {
+          return;
+        }
+
+        setInsightsScene(scene);
+        setInsightsEnabled(enabled);
+      } catch {
+        if (!cancelled) {
+          setInsightsEnabled(isLocalDevEnv());
+        }
+      }
+    }
+
+    void loadInsights();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <AlertingPageWrapper subTitle="Learn about problems in your systems moments after they occur" navId="alerting">
@@ -51,7 +78,7 @@ function Home() {
           />
         </TabsBar>
         <TabContent className={styles.tabContent}>
-          {activeTab === 'insights' && <insightsScene.Component model={insightsScene} />}
+          {activeTab === 'insights' && insightsScene && <insightsScene.Component model={insightsScene} />}
           {activeTab === 'overview' && <GettingStarted />}
         </TabContent>
       </Box>
