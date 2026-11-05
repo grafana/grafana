@@ -11,6 +11,7 @@ import {
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { calculateFontSize } from '../../utils/measureText';
+import { TruncatedText } from '../Text/TruncatedText';
 
 import { type RadialShape, type RadialTextMode, type RadialGaugeDimensions } from './types';
 
@@ -147,9 +148,13 @@ export const RadialText = memo(
             width={nameWidth}
             height={nameHeight}
           >
-            <div className={styles.name} style={{ fontSize: nameFontSize, color: nameColor }}>
-              {displayValue.title}
-            </div>
+            <TruncatedText
+              childElement={(ref) => (
+                <span ref={ref} className={styles.name} style={{ fontSize: nameFontSize, color: nameColor }}>
+                  {displayValue.title}
+                </span>
+              )}
+            />
           </foreignObject>
         )}
       </g>
@@ -161,6 +166,7 @@ RadialText.displayName = 'RadialText';
 
 const getStyles = () => ({
   name: css({
+    display: 'block',
     lineHeight: LINE_HEIGHT_FACTOR,
     textAlign: 'center',
     textOverflow: 'ellipsis',

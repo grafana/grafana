@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 
 import { ThresholdsMode } from '@grafana/schema';
@@ -115,6 +116,41 @@ describe('RadialGauge', () => {
       const nameElement = screen.getByText(name);
       expect(nameElement).toHaveStyle({ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' });
       expect(Number(nameElement.parentElement?.getAttribute('width'))).toBeCloseTo(171.33, 1);
+    });
+
+    it('should show the whole name in a tooltip when CSS cuts it', async () => {
+      const name = 'a'.repeat(300);
+      const originalResizeObserver = global.ResizeObserver;
+      let notifyResize: ResizeObserverCallback = () => {};
+      global.ResizeObserver = class ResizeObserver {
+        constructor(callback: ResizeObserverCallback) {
+          notifyResize = callback;
+        }
+
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      };
+
+      try {
+        const user = userEvent.setup();
+        render(<RadialGaugeExample textMode="name" seriesName={name} value={55} />);
+
+        // jsdom does no layout, so the cut is simulated the way the browser reports it
+        const nameElement = screen.getByText(name);
+        Object.defineProperties(nameElement, {
+          clientWidth: { configurable: true, value: 171 },
+          scrollWidth: { configurable: true, value: 1800 },
+        });
+        await act(async () => {
+          notifyResize([{ target: nameElement } as unknown as ResizeObserverEntry], {} as ResizeObserver);
+        });
+
+        await user.hover(screen.getByText(name));
+        expect(await screen.findByRole('tooltip')).toHaveTextContent(name);
+      } finally {
+        global.ResizeObserver = originalResizeObserver;
+      }
     });
 
     it('should render `none` if the textMode is set to `none`', () => {
