@@ -79,6 +79,15 @@ func (m *memStore) eventObject(name string) *foldersv1.Folder {
 	return &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name, ResourceVersion: strconv.Itoa(m.rvs[name])}}
 }
 
+// initialList delivers every folder as the informer's first list does.
+func (m *memStore) initialList() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, name := range slices.Sorted(maps.Keys(m.folders)) {
+		m.handler.OnAdd(m.eventObject(name), true)
+	}
+}
+
 // resync re-delivers every folder at its current version, like a re-list.
 func (m *memStore) resync() {
 	m.mu.Lock()

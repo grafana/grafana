@@ -486,3 +486,34 @@ func TestController_DeletedFolderIsEnqueuedAgainWhenItComesBack(t *testing.T) {
 		require.Equal(t, 3, m.getCount("a"), "one read for the delete event, one for the re-created folder")
 	})
 }
+
+func TestController_InitialListIsRecordedWithoutReads(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		m.addFolder("b", "", foldersv1.CascadeDeleteFinalizer)
+		_, stop := startController(t, m, 100)
+		defer stop()
+
+		m.mu.Lock()
+		m.rvs["a"], m.rvs["b"] = 1, 1
+		m.mu.Unlock()
+		m.initialList()
+		time.Sleep(ResyncPeriod)
+		m.resync()
+		synctest.Wait()
+		require.Zero(t, m.getCount("a"))
+		require.Zero(t, m.getCount("b"))
+
+		// Live changes are still reconciled, and a folder the list did not have is read.
+		m.userDelete("a")
+		m.mu.Lock()
+		m.addFolder("c", "", foldersv1.CascadeDeleteFinalizer)
+		m.notify("c", false)
+		m.mu.Unlock()
+		synctest.Wait()
+		require.False(t, m.exists("a"))
+		require.Positive(t, m.getCount("c"))
+		require.Zero(t, m.getCount("b"))
+	})
+}

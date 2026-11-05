@@ -87,12 +87,48 @@ func NewDefaultController(dyn dynamic.Interface, searcher resourcepb.ResourceInd
 
 // Handler enqueues the folder behind each event, except a resync repeating a folder's last version
 // when it is not waiting. An event without a resource version is always enqueued.
+//
+// The initial list is only recorded, so starting costs no read per folder. A folder that is already
+// terminating then is not reconciled until it changes again, or until a periodic re-list shows a new version.
 func (c *Controller) Handler() cache.ResourceEventHandler {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc:    func(obj any) { c.enqueue(obj, false) },
-		UpdateFunc: func(_, obj any) { c.enqueue(obj, false) },
-		DeleteFunc: func(obj any) { c.enqueue(obj, true) },
+	return handler{c}
+}
+
+type handler struct{ c *Controller }
+
+func (h handler) OnAdd(obj any, isInInitialList bool) {
+	if isInInitialList {
+		h.c.record(obj)
+		return
 	}
+	h.c.enqueue(obj, false)
+}
+
+func (h handler) OnUpdate(_, obj any) { h.c.enqueue(obj, false) }
+
+func (h handler) OnDelete(obj any) { h.c.enqueue(obj, true) }
+
+// record remembers a folder's version without enqueueing it.
+func (c *Controller) record(obj any) {
+	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+	if err != nil {
+		return
+	}
+	if rv := resourceVersion(obj); rv != "" {
+		c.mu.Lock()
+		c.seen[key] = rv
+		c.mu.Unlock()
+	}
+}
+
+func resourceVersion(obj any) string {
+	if tombstone, ok := obj.(cache.DeletedFinalStateUnknown); ok {
+		obj = tombstone.Obj
+	}
+	if acc, err := meta.Accessor(obj); err == nil {
+		return acc.GetResourceVersion()
+	}
+	return ""
 }
 
 func (c *Controller) enqueue(obj any, deleted bool) {
@@ -115,13 +151,7 @@ func (c *Controller) isResyncOfUnchanged(key string, obj any, deleted bool) bool
 		delete(c.waiting, key)
 		return false
 	}
-	var rv string
-	if tombstone, ok := obj.(cache.DeletedFinalStateUnknown); ok {
-		obj = tombstone.Obj
-	}
-	if acc, err := meta.Accessor(obj); err == nil {
-		rv = acc.GetResourceVersion()
-	}
+	rv := resourceVersion(obj)
 	prev, known := c.seen[key]
 	if rv == "" {
 		return false
