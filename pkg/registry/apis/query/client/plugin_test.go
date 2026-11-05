@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"sync"
 	"testing"
 	"time"
 
@@ -36,14 +35,11 @@ import (
 // recordingPlugin is the plugin at the end of the middleware chain. It
 // records every request it gets.
 type recordingPlugin struct {
-	mu       sync.Mutex
 	requests []*backend.QueryDataRequest
 }
 
 func (p *recordingPlugin) queryData(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	p.mu.Lock()
 	p.requests = append(p.requests, req)
-	p.mu.Unlock()
 
 	rsp := backend.NewQueryDataResponse()
 	for _, q := range req.Queries {
