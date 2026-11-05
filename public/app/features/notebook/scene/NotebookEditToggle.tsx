@@ -1,12 +1,10 @@
-import { css, cx } from '@emotion/css';
 import { useSyncExternalStore } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaNotebookComposer } from '@grafana/runtime/internal';
-import { RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { AssistantSparkleGradient } from 'app/core/components/AppChrome/FullscreenWorkspace/AssistantToolbarButtons';
+import { RadioButtonGroup } from '@grafana/ui';
 import {
   clearPendingComposerEnterRequest,
   getPendingComposerEnterTarget,
@@ -22,8 +20,6 @@ import { type NotebookScene } from './NotebookScene';
 
 type NotebookMode = 'view' | 'edit' | 'composer';
 
-const COMPOSER_ICON_GRADIENT_ID = 'grafana-assistant-notebook-composer-icon-gradient';
-
 /**
  * Switches the notebook between reading, editing and Composer. Named modes rather than a switch, so the
  * current one is stated rather than inferred from a toggle's position. Reading and editing live on the
@@ -35,7 +31,6 @@ const COMPOSER_ICON_GRADIENT_ID = 'grafana-assistant-notebook-composer-icon-grad
  * to the mode the notebook is still in. View or Edit from Composer ends the session first.
  */
 export function NotebookEditToggle({ notebook }: { notebook: NotebookScene }) {
-  const styles = useStyles2(getStyles);
   const { isEditing, isComposing, uid } = notebook.useState();
   // Read for its re-render: canEnterNotebookComposer reads the flag itself.
   useFlagGrafanaNotebookComposer();
@@ -62,7 +57,7 @@ export function NotebookEditToggle({ notebook }: { notebook: NotebookScene }) {
     options.push({
       label: t('notebook.composer.toggle', 'Composer'),
       value: 'composer',
-      icon: 'ai-sparkle',
+      icon: 'ai-select',
       description: t('notebook.composer.toggle-enter', 'Point at cells and regions and ask Assistant to change them'),
     });
   }
@@ -91,28 +86,12 @@ export function NotebookEditToggle({ notebook }: { notebook: NotebookScene }) {
   };
 
   return (
-    <>
-      {composerOffered && <AssistantSparkleGradient id={COMPOSER_ICON_GRADIENT_ID} />}
-      <RadioButtonGroup
-        id="notebook-edit-mode"
-        data-testid={selectors.pages.Notebooks.Item.editModeToggle}
-        className={cx(composerOffered && styles.composerSparkle)}
-        options={options}
-        value={mode}
-        onChange={onChange}
-      />
-    </>
+    <RadioButtonGroup
+      id="notebook-edit-mode"
+      data-testid={selectors.pages.Notebooks.Item.editModeToggle}
+      options={options}
+      value={mode}
+      onChange={onChange}
+    />
   );
 }
-
-const getStyles = () => ({
-  // The Assistant sparkle in the Chat button's colours, as in the dashboard mode picker. Composer is always
-  // the last option.
-  composerSparkle: css({
-    '& > :last-child svg': { opacity: 1 },
-    '& > :last-child svg path': {
-      fill: `url(#${COMPOSER_ICON_GRADIENT_ID})`,
-      stroke: `url(#${COMPOSER_ICON_GRADIENT_ID})`,
-    },
-  }),
-});

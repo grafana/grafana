@@ -239,11 +239,6 @@ export interface FeatureToggles {
   */
   cloudWatchBatchQueries?: boolean;
   /**
-  * Enable Grafana to sync configuration and state with a remote Alertmanager.
-  * @default false
-  */
-  alertmanagerRemoteSecondary?: boolean;
-  /**
   * Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
   * @default false
   */
@@ -319,11 +314,6 @@ export interface FeatureToggles {
   * @default false
   */
   canvasPanelPanZoom?: boolean;
-  /**
-  * Enables time comparison option in supported panels
-  * @default true
-  */
-  timeComparison?: boolean;
   /**
   * Enables shared crosshair in table panel
   * @default false
@@ -896,11 +886,6 @@ export interface FeatureToggles {
   */
   dashboardLevelTimeMacros?: boolean;
   /**
-  * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
-  * @default false
-  */
-  alertmanagerRemoteSecondaryWithRemoteState?: boolean;
-  /**
   * Enable favorite datasources
   * @default false
   */
@@ -987,11 +972,6 @@ export interface FeatureToggles {
   * @default false
   */
   pluginInsights?: boolean;
-  /**
-  * Enables a new panel time settings drawer
-  * @default true
-  */
-  panelTimeSettings?: boolean;
   /**
   * Enables http proxy settings for aws datasources
   * @default false
@@ -1092,6 +1072,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesUsersRedirect?: boolean;
+  /**
+  * Disables the remote cache for signed ID tokens; a new token is signed on every authentication
+  * @default false
+  */
+  idTokenCacheDisabled?: boolean;
   /**
   * Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
   * @default false

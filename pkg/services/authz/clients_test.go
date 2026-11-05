@@ -11,6 +11,12 @@ import (
 
 type testUserPermissionsClient struct{}
 
+type testLegacyAccessClient struct{}
+
+func (*testLegacyAccessClient) LegacyCheck(context.Context, LegacyCheckRequest) (bool, error) {
+	return false, nil
+}
+
 func (*testUserPermissionsClient) GetUserPermissions(context.Context, authlib.AuthInfo, authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
 	return authlib.GetUserPermissionsResponse{}, nil
 }
@@ -19,11 +25,13 @@ func (*testUserPermissionsClient) InvalidateUserPermissions(context.Context, aut
 	return nil
 }
 
-func TestAuthZClientsExposeAccessAndRBACUserPermissionsSeparately(t *testing.T) {
+func TestAuthZClientsExposeCapabilitiesSeparately(t *testing.T) {
 	accessClient := authlib.FixedAccessClient(true)
+	legacyAccessClient := &testLegacyAccessClient{}
 	permissionsClient := &testUserPermissionsClient{}
-	clients := newAuthZClients(accessClient, permissionsClient)
+	clients := newAuthZClients(accessClient, legacyAccessClient, permissionsClient)
 
 	require.Same(t, accessClient, ProvideAuthZAccessClient(clients))
+	require.Same(t, legacyAccessClient, ProvideAuthZLegacyAccessClient(clients))
 	require.Same(t, permissionsClient, ProvideAuthZUserPermissionsClient(clients))
 }

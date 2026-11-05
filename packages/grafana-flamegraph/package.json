@@ -76,7 +76,7 @@
     "@types/fs-extra": "^11",
     "@types/jest": "^29.5.4",
     "@types/lodash": "^4.17.25",
-    "@types/node": "24.10.1",
+    "@types/node": "26.6.5",
     "@types/react": "19.2.18",
     "@types/react-table": "^7.7.20",
     "@types/tinycolor2": "1.4.6",

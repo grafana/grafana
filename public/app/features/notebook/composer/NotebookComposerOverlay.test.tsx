@@ -301,8 +301,9 @@ describe('notebook rendering in Composer', () => {
 describe('notebook Composer with the extension sidebar docked', () => {
   it('keeps the session open, and still picks and captures, without the docked sidebar', async () => {
     buildNotebook();
+    // An open docked sidebar keeps its layout when the session starts.
     const entered = await composerApi.enter({ resource: 'notebook', uid: 'nb-overlay' });
-    expect(sidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('docked');
     setExtensionSidebarPresentation('docked');
     expect(entered.signal.aborted).toBe(false);
     expect(sidebarPresentation()).toBe('docked');

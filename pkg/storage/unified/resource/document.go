@@ -310,6 +310,11 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 	tt, err := obj.GetUpdatedTimestamp()
 	if err == nil && tt != nil {
 		doc.Updated = tt.UnixMilli()
+	} else {
+		// Storage only sets updated on the first change, so an object never edited
+		// would sort last by update time and miss "updated since" filters. The older
+		// dashboard and folder APIs treat it as updated when created; so does search.
+		doc.Updated = doc.Created
 	}
 	for _, owner := range obj.GetOwnerReferences() {
 		gv, err := schema.ParseGroupVersion(owner.APIVersion)

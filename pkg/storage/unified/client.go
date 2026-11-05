@@ -92,6 +92,10 @@ type natsEventSubscriber struct {
 
 func (a natsEventSubscriber) Enabled() bool { return a.sub.Enabled() }
 
+// Started lets the notifier wait for the subscriber service, which the
+// monolith starts after it builds the storage server.
+func (a natsEventSubscriber) Started() <-chan struct{} { return a.sub.Started() }
+
 func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (resource.Subscription, error) {
 	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler), nats.WithOnReconnect(onReconnect))
 }
@@ -186,9 +190,8 @@ func newClient(opts options.StorageOptions,
 		}
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend:                 backend,
-			SeededWatchesEnabled:    cfg.SeededWatchesEnabled,
-			GRPCErrorResultToStatus: cfg.UnifiedStorageGRPCErrorResultToStatus,
+			Backend:              backend,
+			SeededWatchesEnabled: cfg.SeededWatchesEnabled,
 			Blob: resource.BlobConfig{
 				URL: opts.BlobStoreURL,
 			},

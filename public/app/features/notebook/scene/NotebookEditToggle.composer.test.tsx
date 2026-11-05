@@ -11,6 +11,7 @@ import {
 } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import {
   getEffectiveExtensionSidebarPresentation,
+  isExtensionSidebarFloatingOverridden,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
@@ -23,7 +24,6 @@ import {
   resetComposerEnterRequestsForTests,
   PENDING_REQUEST_TTL_MS,
   settleComposerEnterRequest,
-  wasComposerEnterRequestDocked,
 } from 'app/features/dashboard-scene/composer/composerEntryRequests';
 import { composerApi } from 'app/features/plugins/components/restrictedGrafanaApis/composer/composerApi';
 import { OpenExtensionSidebarEvent } from 'app/types/events';
@@ -123,7 +123,7 @@ const radio = (name: string) => screen.queryByRole('radio', { name });
 const composerOption = () => radio('Composer');
 
 describe('Composer in the notebook mode switch', () => {
-  it('is the third option, after View and Edit, with the sparkle and its description', async () => {
+  it('is the third option, after View and Edit, with the Composer icon and its description', async () => {
     const { user } = render(<NotebookEditToggle notebook={notebook()} />);
 
     expect(screen.getAllByRole('radio').map((option) => option.closest('div')?.textContent)).toEqual([
@@ -131,7 +131,7 @@ describe('Composer in the notebook mode switch', () => {
       'Edit',
       'Composer',
     ]);
-    expect(within(screen.getByText('Composer').closest('label')!).getByTestId('icon-ai-sparkle')).toBeInTheDocument();
+    expect(within(screen.getByText('Composer').closest('label')!).getByTestId('icon-ai-select')).toBeInTheDocument();
     await user.hover(composerOption()!);
     expect(await screen.findByText('Point at cells and regions and ask Assistant to change them')).toBeInTheDocument();
   });
@@ -320,7 +320,8 @@ describe('Composer in the notebook mode switch', () => {
     setExtensionSidebarPresentation('docked');
 
     expect(sidebarPresentation()).toBe('docked');
-    expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(true);
+    // What composerApi.enter reads to keep the session docked.
+    expect(isExtensionSidebarFloatingOverridden()).toBe(false);
     expect(assistant).toHaveBeenCalledWith(TARGET);
     expect(getPendingComposerEnterTarget()).toEqual(TARGET);
   });

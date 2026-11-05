@@ -65,6 +65,12 @@ export function NotebookScenePage() {
     };
   }, [stateManager, uid, isNew, notebooksEnabled]);
 
+  // Activated here, above UrlSyncContextProvider, rather than inside it. Deactivating the scene removes
+  // every listener on it, including the ones url sync registered, and with the activation inside the
+  // provider they were not restored: nothing wrote edit mode or the time range to the url again.
+  const renderedScene = notebooksEnabled && scene && !(isNew && scene.state.uid) ? scene : undefined;
+  useEffect(() => renderedScene?.activate(), [renderedScene]);
+
   if (!notebooksEnabled) {
     return <PageNotFound />;
   }
@@ -105,7 +111,6 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   const { isOpen: sidebarOpen, presentation } = useExtensionSidebarContext();
   const sidebarFloats = sidebarOpen && presentation === 'floating';
 
-  useEffect(() => scene.activate(), [scene]);
   // Composer starts only on the notebook its route draws: see canEnterNotebookComposer.
   useEffect(() => setRouteNotebook(scene), [scene]);
   useTrackNotebookVisitForFeedback();

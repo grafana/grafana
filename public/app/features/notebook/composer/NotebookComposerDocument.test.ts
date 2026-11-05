@@ -9,6 +9,10 @@ import {
   setExtensionSidebarPresentation,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { contextSrv } from 'app/core/services/context_srv';
+import {
+  clearPendingComposerEnterRequest,
+  requestComposerEnter,
+} from 'app/features/dashboard-scene/composer/composerEntryRequests';
 import { composerApi } from 'app/features/plugins/components/restrictedGrafanaApis/composer/composerApi';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -150,12 +154,26 @@ describe('entering Composer on a notebook', () => {
   });
 });
 
-// grafana.extensionSidebarFloating is off here: the session floats the sidebar without it.
+// grafana.extensionSidebarFloating is off here: a sidebar the switch opened floats without it.
 describe('the extension sidebar', () => {
-  it('floats for a notebook session and goes back to docked when it ends', async () => {
+  it('keeps floating a sidebar the switch opened floating, and goes back to docked when the session ends', async () => {
+    const stopListening = composerApi.onEnterRequested(() => {}, { resources: ['notebook'] });
+    cleanups.push(stopListening, clearPendingComposerEnterRequest);
     const scene = onRoute();
+    requestComposerEnter(NOTEBOOK, { float: true });
     const session = await composerApi.enter(NOTEBOOK);
     expect(sidebarPresentation()).toBe('floating');
+
+    session.exit();
+
+    expect(scene.state.isComposing).toBe(false);
+    expect(sidebarPresentation()).toBe('docked');
+  });
+
+  it('keeps an open docked sidebar docked for the session', async () => {
+    const scene = onRoute();
+    const session = await composerApi.enter(NOTEBOOK);
+    expect(sidebarPresentation()).toBe('docked');
 
     session.exit();
 
