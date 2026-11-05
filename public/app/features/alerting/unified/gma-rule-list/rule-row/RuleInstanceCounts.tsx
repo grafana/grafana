@@ -7,27 +7,26 @@ import { Icon, Stack, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { grafanaRulesNav } from '../../utils/navigation';
 import { type AlertRuleSearchHit } from '../alert-rules/alertRuleSearchHit';
 
-type InstanceState = 'firing' | 'pending' | 'recovering' | 'healthy' | 'nodata' | 'error';
+/** Keys of AlertRuleSearchHit that carry per-state instance totals. Adding a new totals* field
+ * to AlertRuleSearchHit automatically expands this type, causing compile errors in TOTALS_FIELDS,
+ * labels, and badge until all three are updated. */
+type TotalsField = Extract<keyof AlertRuleSearchHit, `totals${string}`>;
 
-/** Keys of AlertRuleSearchHit whose values are numeric totals. */
-type TotalsField =
-  | 'totalsFiring'
-  | 'totalsPending'
-  | 'totalsRecovering'
-  | 'totalsHealthy'
-  | 'totalsNoData'
-  | 'totalsError';
+/** 'totalsFiring' → 'firing', 'totalsNoData' → 'nodata', etc. */
+type InstanceState = Lowercase<TotalsField extends `totals${infer S}` ? S : never>;
 
-/** Maps each instance state to the search-hit field that carries its count. Adding a state to
- * InstanceState requires adding it here, to labels, and to badge — TypeScript enforces all three. */
-const TOTALS_FIELDS = {
+/** Maps each state to the search-hit field that carries its count. */
+const TOTALS_FIELDS: Record<InstanceState, TotalsField> = {
   firing: 'totalsFiring',
   pending: 'totalsPending',
   recovering: 'totalsRecovering',
   healthy: 'totalsHealthy',
   nodata: 'totalsNoData',
   error: 'totalsError',
-} satisfies Record<InstanceState, TotalsField>;
+};
+
+/** Iteration order for display. */
+const INSTANCE_STATES: readonly InstanceState[] = ['firing', 'pending', 'recovering', 'healthy', 'nodata', 'error'];
 
 interface RuleInstanceCountsProps {
   searchHit: AlertRuleSearchHit;
@@ -45,10 +44,9 @@ export function RuleInstanceCounts({ searchHit }: RuleInstanceCountsProps) {
     error: t('alerting.gma-rule-list.instances.error', 'error'),
   };
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const stateDefs = (Object.entries(TOTALS_FIELDS) as Array<[InstanceState, TotalsField]>)
-    .map(([state, field]) => ({ state, count: searchHit[field] }))
-    .filter((entry): entry is { state: InstanceState; count: number } => entry.count !== undefined && entry.count > 0);
+  const stateDefs = INSTANCE_STATES.map((state) => ({ state, count: searchHit[TOTALS_FIELDS[state]] })).filter(
+    (entry): entry is { state: InstanceState; count: number } => entry.count !== undefined && entry.count > 0
+  );
 
   if (stateDefs.length === 0) {
     return null;
