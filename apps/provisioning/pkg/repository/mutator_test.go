@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
-	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -479,6 +478,7 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 			Secure: provisioning.SecureValues{Token: token},
 		}
 	}
+	describe := func(s string) *string { return &s }
 
 	tests := []struct {
 		name      string
@@ -512,7 +512,7 @@ func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
 		},
 		{
 			name:      "marks an echoed reference carrying a description for removal",
-			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{Name: "old-token", Description: ptr.To("git token")}),
+			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{Name: "old-token", Description: describe("git token")}),
 			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"}),
 			wantToken: common.InlineSecureValue{Remove: true},
 		},
@@ -648,7 +648,7 @@ func TestSuppliedNewTokenIgnoresDescription(t *testing.T) {
 	repoWithToken := func(token common.InlineSecureValue) *provisioning.Repository {
 		return &provisioning.Repository{Secure: provisioning.SecureValues{Token: token}}
 	}
-	describe := ptr.To[string]
+	describe := func(s string) *string { return &s }
 
 	tests := []struct {
 		name string
