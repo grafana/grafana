@@ -256,7 +256,7 @@ describe('<PanelActionsWrapper />', () => {
       expect(within(getToolbar()).queryByRole('button', { name: 'Edit (e)' })).not.toBeInTheDocument();
     });
 
-    test('in edit mode, repeated panels do not offer Edit, Duplicate or Remove', async () => {
+    test('in edit mode, repeated panels show Duplicate and Remove disabled with the reason, and no Edit', async () => {
       const sourcePanel = createPanel({ key: 'panel-1' });
       const clonedPanel = createPanel({ key: getCloneKey('panel-1', 1), repeatSourceKey: 'panel-1' });
       new DashboardScene({
@@ -271,7 +271,18 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(clonedPanel, { isEditing: true });
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(getToolbarLayout()).toEqual(['Settings', '|', 'Expand (v)', 'More actions']);
+      expect(getToolbarLayout()).toEqual([
+        'Settings',
+        '|',
+        "Repeated panels can't be duplicated individually",
+        "Repeated panels can't be deleted individually",
+        '|',
+        'Expand (v)',
+        'More actions',
+      ]);
+      const toolbar = within(getToolbar());
+      expect(toolbar.getByRole('button', { name: "Repeated panels can't be duplicated individually" })).toBeDisabled();
+      expect(toolbar.getByRole('button', { name: "Repeated panels can't be deleted individually" })).toBeDisabled();
     });
 
     test('clicking Expand views the panel and reports the click', async () => {

@@ -159,7 +159,8 @@ function PanelActions({
     dashboard.canEditDashboard() &&
     Boolean(editable) &&
     !isRepeat;
-  const canChangeLayout = Boolean(isEditing) && !isRepeat;
+  // Repeated panels still show the layout actions, disabled, so their tooltips explain why.
+  const showsLayoutActions = Boolean(isEditing);
   const panelId = getPanelIdForVizPanel(panel);
   const titleText = panel.interpolate(title, undefined, 'text');
 
@@ -262,7 +263,7 @@ function PanelActions({
         />
       )}
 
-      {canChangeLayout && (
+      {showsLayoutActions && (
         <>
           {(showsHoverSlotItems || showsPanelActions) && <ActionsSeparator />}
           <DuplicateActionButton
@@ -270,18 +271,20 @@ function PanelActions({
               report('duplicate');
               dashboard.duplicatePanel(panel);
             }}
+            isRepeated={isRepeat}
           />
           <DeleteActionButton
             title={t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel')}
             text={t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?')}
             yesText={t('dashboard-scene.panel-actions-popover.remove-confirm', 'Remove')}
-            tooltip={t('dashboard-scene.panel-actions-popover.remove', 'Remove (p r)')}
+            tooltip={isRepeat ? undefined : t('dashboard-scene.panel-actions-popover.remove', 'Remove (p r)')}
             onConfirm={onRemove}
+            isRepeated={isRepeat}
           />
         </>
       )}
 
-      {(showsHoverSlotItems || showsPanelActions || canChangeLayout) && <ActionsSeparator />}
+      {(showsHoverSlotItems || showsPanelActions || showsLayoutActions) && <ActionsSeparator />}
 
       {hoverHeader && <div ref={onDragHandleSlotChange} className={styles.headerSlot} />}
 
