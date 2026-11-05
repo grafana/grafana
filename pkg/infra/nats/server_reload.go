@@ -8,8 +8,10 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 )
 
-// setRoutes replaces the solicited cluster routes.
+// setRoutes replaces the solicited cluster routes. nats-server only presents
+// the credentials carried in a solicited route's URL.
 func (s *Server) setRoutes(routes []*url.URL) error {
+	routes = withRouteCredentials(routes, s.routeAuth)
 	return s.reload(func(o *natsserver.Options) { o.Routes = routes })
 }
 

@@ -54,6 +54,8 @@ type Server struct {
 	reloadMu sync.Mutex
 	// clusterTLS is nil unless cluster TLS is configured.
 	clusterTLS *clusterTLSWatcher
+	// routeAuth is nil unless secret_key can authenticate routes.
+	routeAuth *url.Userinfo
 }
 
 func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) (*Server, error) {
@@ -79,6 +81,11 @@ func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) 
 	// the embedded server; external/Cloud mode owns nothing here.
 	if !s.IsDisabled() {
 		s.metrics = newServerMetrics(reg)
+
+		s.routeAuth = routeCredentials(cfg.SecretKey)
+		if s.cfg.ListenAddress == "" {
+			s.cfg.ListenAddress = autoListenAddress(s.log, s.cfg, dbDriver(sqlStore), s.routeAuth != nil)
+		}
 
 		// The resolved host feeds both Cluster.Advertise and the registry route URL,
 		// so gossip and discovery hand peers the same address.
@@ -215,7 +222,7 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("create embedded nats server: %w", err)
 	}
-	server.SetLoggerV2(serverLogger{log: s.log}, false, false, false)
+	server.SetLoggerV2(newServerLogger(s.log, s.routeAuth), false, false, false)
 	server.Start()
 	if !server.ReadyForConnections(10 * time.Second) {
 		server.Shutdown()
@@ -250,7 +257,7 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 
 	s.metrics.embeddedServerUp.Set(1)
 	s.log.Info("started embedded nats server", "client_url", clientURL, "client_listen", s.cfg.ClientListen,
-		"route_url", routeURL, "cluster_tls", s.cfg.ClusterTLS.Enabled())
+		"route_url", routeURL, "cluster_tls", s.cfg.ClusterTLS.Enabled(), "route_auth", s.routeAuth != nil)
 	if s.cfg.ClientListen {
 		s.log.Warn("nats client port is open without TLS or authentication; anyone who can reach it can publish and subscribe on every subject",
 			"client_url", clientURL)
@@ -284,7 +291,7 @@ func isLoopbackRouteURL(routeURL string) bool {
 }
 
 func (s *Server) serverOptions() *natsserver.Options {
-	return &natsserver.Options{
+	opts := &natsserver.Options{
 		ServerName:      defaultServerNamePrefix + randomSuffix(),
 		Host:            s.cfg.ListenAddress,
 		Port:            s.cfg.ClientPort,
@@ -310,6 +317,20 @@ func (s *Server) serverOptions() *natsserver.Options {
 			MaxPingsOut:  routeMaxPingsOut,
 		},
 	}
+	if s.routeAuth != nil {
+		// The server checks these on accepted routes and presents them when it
+		// dials a peer it learned through gossip.
+		opts.Cluster.Username = s.routeAuth.Username()
+		opts.Cluster.Password, _ = s.routeAuth.Password()
+	}
+	return opts
+}
+
+func dbDriver(sqlStore db.DB) string {
+	if sqlStore == nil {
+		return ""
+	}
+	return sqlStore.GetDialect().DriverName()
 }
 
 func (s *Server) configureClusterTLS(reg prometheus.Registerer) error {
