@@ -23,14 +23,12 @@ import {
   type NotebookEntryPoint,
 } from '../analytics/types';
 import {
-  assignNotebookCellIds,
   createNotebook,
   NotebookConflictError,
   readNotebookResourceVersion,
   type StoredCell,
   updateNotebook,
 } from '../api/notebookResource';
-import { canEditNotebooks } from '../permissions';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
 
@@ -140,15 +138,6 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private adoptingUid = false;
   /** Set while ids the server gave cells are put on them, which changes no content and must not save. */
   private adoptingIds = false;
-  /** An id migration is tried once per scene: after it, or after it fails, the next open tries again. */
-  private idMigrationAttempted = false;
-  /**
-   * The next save is the id migration: it writes the stored notebook back instead of the scene, even
-   * when nothing differs from `baseline`, because the point is the ids the server adds.
-   */
-  private migratingIds = false;
-  /** The next save is not the user's own, so it must not show as saving, failing or in conflict. */
-  private silentNextWrite = false;
   /** Set by `overwriteConflict` for exactly the one write it forces through. Consumed in `write`. */
   private overwriteNextSave = false;
   /** The save now running, so a caller that reports an outcome can wait for the write to land. */
@@ -191,8 +180,6 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       // reopening the notebook must not save it.
       this.schedule();
     }
-
-    this.migrateCellIds();
 
     this.changeSub = this.scene.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
       if (this.adoptingUid || this.adoptingIds || this.restoringVizConfigs) {
@@ -251,34 +238,47 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     return () => this.stop();
   }
 
+  /** Whether ids written by someone else can be put on the cells now, without clashing with a save of ours. */
+  public canAdoptIds(): boolean {
+    return !this.abandoned && !this.inFlight && !this.changePending;
+  }
+
   /**
-   * Gives the cells of a notebook that predates ids their ids, by saving it once as it is.
+   * Puts the ids a write that did not come from this controller gave the cells onto them, and records
+   * the revision that write produced.
    *
-   * The server assigns an id to every cell that arrives without one, so the write carries no change of
-   * the user's, and it sends the stored notebook back as it read it rather than the scene (see
-   * `assignNotebookCellIds`). It happens on open rather than on the first edit so a notebook nobody edits still has
-   * ids by the time someone wants to comment on it. Only someone allowed to write can do it, and only
-   * once per scene, so a server that does not return ids is not asked again on every activation.
-   *
-   * It stays out of the save status and the conflict prompt: nobody asked for this write, so a conflict
-   * is not a question to put to them. The other writer's save has already given the cells ids, or the
-   * next open tries again.
+   * The id migration is that write (see `migrateNotebookCellIds`). Autosave does not make it, but it
+   * owns what the ids have to be consistent with: the baseline is recorded with them first, because
+   * putting them on the cells changes what serializes, and a baseline without them would read as an
+   * edit and save the notebook again. Does nothing when a save of ours is pending or running, since
+   * that save is about to give the cells their ids itself.
    */
-  private migrateCellIds(): void {
-    if (this.idMigrationAttempted || this.abandoned || !this.scene.state.uid || !canEditNotebooks()) {
+  public adoptStoredCells(
+    stored: StoredCell[] | undefined,
+    version: { generation?: number; resourceVersion?: string }
+  ) {
+    if (!this.canAdoptIds()) {
       return;
     }
 
     const cells = this.scene.state.body.contentCells();
-    // A save already on its way gives the cells their ids itself, so there is nothing to retry here.
-    if (cells.every((cell) => cell.state.id) || this.inFlight || this.changePending) {
+    const adopted = adoptedCellIds(cellIdentities(cells), stored, cells);
+    if (!adopted.size) {
       return;
     }
-    this.idMigrationAttempted = true;
 
-    this.migratingIds = true;
-    this.silentNextWrite = true;
-    this.saveNow();
+    let written: NotebookSpec;
+    try {
+      written = withCellIds(this.buildSpecToSave(), cells, adopted);
+    } catch {
+      return;
+    }
+    this.recordWritten(written, JSON.stringify(written), collectVizPanels(this.scene), cells, new Set());
+    this.adoptCellIds(adopted);
+    this.setState({
+      ...(version.generation !== undefined ? { savedGeneration: version.generation } : {}),
+      savedResourceVersion: version.resourceVersion,
+    });
   }
 
   /**
@@ -897,11 +897,6 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     this.changePending = false;
 
-    const silent = this.silentNextWrite;
-    const migrating = this.migratingIds;
-    this.silentNextWrite = false;
-    this.migratingIds = false;
-
     const timeSettingsEdited = this.timeSettingsEdited;
     const vizConfigsEdited = new Set(this.vizConfigsEdited);
     const cellTimeRangesEdited = new Set(this.cellTimeRangesEdited);
@@ -917,11 +912,6 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     } catch (error) {
       // `hasSomethingToWrite` leaves this for the save to report, because this is the one place with
       // somewhere to say it. A notebook whose spec cannot be built is not going to save.
-      if (silent) {
-        // Nobody asked for this write, so a notebook that cannot be built is not reported as failing to
-        // save just because it was opened.
-        return;
-      }
       this.failedAttempts += 1;
       NotebookAnalytics.autosaveFailed(
         this.scene.state.uid ?? '',
@@ -936,7 +926,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       return;
     }
 
-    if (serialized === this.baseline && !migrating) {
+    if (serialized === this.baseline) {
       // Lots of things change the scene without changing what gets saved. Left on `pending`, the
       // notebook would go on saying it has unsaved changes when it has none. Clear the ownership flags
       // too: this can be a no-op queued behind an in-flight save, and leaving its flag set would let a
@@ -958,9 +948,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.inFlight = true;
     this.inFlightTimeSettingsEdited = timeSettingsEdited;
     this.inFlightCellTimeRangesEdited = cellTimeRangesEdited;
-    if (!silent) {
-      this.setState({ status: 'saving', errorMessage: undefined, isConflict: false });
-    }
+    this.setState({ status: 'saving', errorMessage: undefined, isConflict: false });
 
     // Read here rather than at the top: a notebook with no uid has not been created yet, and its first
     // write is what creates it. Everything either branch does afterwards is the same.
@@ -971,15 +959,16 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     // raise a second overwrite prompt on top of the one this attempt already raised.
     let hitConflict = false;
 
-    // The id migration sends the stored notebook, not the scene: see `assignNotebookCellIds`. `spec` is
-    // still built above, for the baseline and for pairing the ids the server gives back with the cells.
-    const write = migrating && uid ? assignNotebookCellIds(uid) : this.write(uid, spec);
-    this.inFlightSave = write
+    this.inFlightSave = this.write(uid, spec)
       .then(({ generation, resourceVersion, cells: stored }) => {
         // The ids the server just gave cells go into the baseline before they go onto the cells, because
         // putting them on the cells changes what serializes: a baseline without them would read as an
         // edit and save the notebook again.
-        const adopted = adoptedCellIds(spec, stored, cells);
+        const adopted = adoptedCellIds(
+          spec.layout.spec.cells.map((item) => ({ element: item.spec.element.name, id: item.spec.id })),
+          stored,
+          cells
+        );
         const written = adopted.size ? withCellIds(spec, cells, adopted) : spec;
         this.recordWritten(
           written,
@@ -994,13 +983,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         this.setState({
           // Something can have changed while this was in flight, and reporting it saved would claim
           // content that has not been written.
-          // A silent write leaves the status alone unless a change arrived while it ran: it is not the
-          // user's save, so it has no 'saved' to report and no 'error' of theirs to cover.
-          ...(this.changePending || this.saveAgainWhenIdle
-            ? { status: 'pending' as const }
-            : silent
-              ? {}
-              : { status: 'saved' as const }),
+          status: this.changePending || this.saveAgainWhenIdle ? 'pending' : 'saved',
           errorMessage: undefined,
           // Only recorded when the server sent one. `NotebookPageStateManager` decides whether to reuse
           // its cached scene by comparing this, so a number we guessed could make it keep a stale one.
@@ -1024,10 +1007,6 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           this.cellTimeRangesEdited.add(cell);
         }
         this.editedByWriter ||= editedByWriter;
-        if (silent) {
-          // Nothing of the user's was in this write, so nothing is reported.
-          return;
-        }
         this.failedAttempts += 1;
         const isConflict = error instanceof NotebookConflictError;
         hitConflict = isConflict;
@@ -1151,24 +1130,28 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
  * what a server that does not know about ids looks like too.
  */
 function adoptedCellIds(
-  sent: NotebookSpec,
+  sent: StoredCell[],
   storedItems: StoredCell[] | undefined,
   cells: NotebookCellItem[]
 ): Map<NotebookCellItem, string> {
   const adopted = new Map<NotebookCellItem, string>();
-  const sentItems = sent.layout.spec.cells;
-  if (!storedItems || storedItems.length !== sentItems.length || cells.length !== sentItems.length) {
+  if (!storedItems || storedItems.length !== sent.length || cells.length !== sent.length) {
     return adopted;
   }
 
-  sentItems.forEach((item, index) => {
+  sent.forEach((item, index) => {
     const { id, element } = storedItems[index];
-    if (!id || item.spec.id || element !== item.spec.element.name) {
+    if (!id || item.id || element !== item.element) {
       return;
     }
     adopted.set(cells[index], id);
   });
   return adopted;
+}
+
+/** The element and id of each cell as the scene holds them now. */
+function cellIdentities(cells: NotebookCellItem[]): StoredCell[] {
+  return cells.map((cell) => ({ element: cell.state.elementName, id: cell.state.id }));
 }
 
 /**

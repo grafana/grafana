@@ -24,7 +24,6 @@ import {
   NOTEBOOK_ENTRY_POINT,
 } from '../analytics/types';
 import {
-  assignNotebookCellIds,
   createNotebook,
   NotebookConflictError,
   readNotebookResourceVersion,
@@ -44,7 +43,6 @@ import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 // The network write is the only thing stubbed. Everything above it is the real scene, the real layout
 // manager and the real serializer, so the spec these tests assert on is the one that would be sent.
 jest.mock('../api/notebookResource', () => ({
-  assignNotebookCellIds: jest.fn(),
   createNotebook: jest.fn(),
   updateNotebook: jest.fn(),
   readNotebookResourceVersion: jest.fn(),
@@ -261,7 +259,6 @@ describe('NotebookAutosave', () => {
     jest.useFakeTimers();
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     jest.mocked(updateNotebook).mockReset().mockResolvedValue({ generation: 2 });
-    jest.mocked(assignNotebookCellIds).mockReset().mockResolvedValue({ generation: 2 });
     jest
       .mocked(createNotebook)
       .mockReset()
@@ -854,121 +851,72 @@ describe('NotebookAutosave', () => {
       expect(scene.state.body.state.cells[1].state.id).toBeUndefined();
     });
 
-    describe('on a notebook that predates ids', () => {
-      /** What the server stores when the notebook is written back as it was: an id on the one cell. */
-      const withId = { generation: 2, cells: [{ element: 'md1', id: '00000000-0000-4000-8000-0000000000a0' }] };
+    describe('adoptStoredCells', () => {
+      const stored = [{ element: 'md1', id: '00000000-0000-4000-8000-0000000000a0' }];
 
-      it('writes the stored notebook back once when someone who can write opens it, and adopts the ids', async () => {
-        jest.mocked(assignNotebookCellIds).mockResolvedValue(withId);
+      it('puts the ids on the cells, records the revision, and does not save for it', async () => {
         const scene = sceneWithoutIds();
-
         deactivate = scene.activate();
         await jest.advanceTimersByTimeAsync(0);
 
-        expect(assignNotebookCellIds).toHaveBeenCalledTimes(1);
-        expect(assignNotebookCellIds).toHaveBeenCalledWith('nb-1');
-        expect(updateNotebook).not.toHaveBeenCalled();
-        expect(scene.state.body.state.cells[0].state.id).toBe('00000000-0000-4000-8000-0000000000a0');
-
+        scene.autosave.adoptStoredCells(stored, { generation: 5, resourceVersion: '9' });
         await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
-        expect(assignNotebookCellIds).toHaveBeenCalledTimes(1);
+
+        expect(scene.state.body.state.cells[0].state.id).toBe('00000000-0000-4000-8000-0000000000a0');
+        expect(scene.autosave.state.savedResourceVersion).toBe('9');
+        expect(scene.autosave.state.savedGeneration).toBe(5);
         expect(updateNotebook).not.toHaveBeenCalled();
       });
 
-      it('does not show it as a save, since nobody asked for one', async () => {
-        jest.mocked(assignNotebookCellIds).mockResolvedValue(withId);
+      it('sends the adopted ids with the next edit', async () => {
         const scene = sceneWithoutIds();
-        const statuses: string[] = [];
-        scene.autosave.subscribeToState({ next: (state) => statuses.push(state.status) });
+        scene.state.body.setState({}); // no-op, keeps the scene reference used below obvious
+        deactivate = scene.activate();
+        scene.setState({ isEditing: true });
+        await jest.advanceTimersByTimeAsync(0);
+        scene.autosave.adoptStoredCells(stored, { resourceVersion: '9' });
 
+        editFirstCell(scene, 'Edited');
+        await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+        expect(updateNotebook).toHaveBeenCalledTimes(1);
+        expect(jest.mocked(updateNotebook).mock.calls[0][1].layout.spec.cells[0].spec.id).toBe(
+          '00000000-0000-4000-8000-0000000000a0'
+        );
+        expect(jest.mocked(updateNotebook).mock.calls[0][2]).toBe('9');
+      });
+
+      it('adopts nothing when what the server stored does not line up with the cells', async () => {
+        const scene = sceneWithoutIds();
         deactivate = scene.activate();
         await jest.advanceTimersByTimeAsync(0);
 
-        expect(statuses).not.toContain('saving');
-        expect(statuses).not.toContain('pending');
-        expect(statuses).not.toContain('saved');
+        scene.autosave.adoptStoredCells([{ element: 'other', id: '00000000-0000-4000-8000-0000000000a0' }], {
+          resourceVersion: '9',
+        });
+
+        expect(scene.state.body.state.cells[0].state.id).toBeUndefined();
+        expect(scene.autosave.state.savedResourceVersion).not.toBe('9');
       });
 
-      it('does not save it again when it is opened a second time', async () => {
-        const scene = sceneWithoutIds();
-
-        scene.activate()();
+      it('leaves a cell its own id', async () => {
+        const scene = buildScene();
         deactivate = scene.activate();
-        await jest.advanceTimersByTimeAsync(0);
+        const own = scene.state.body.state.cells[0].state.id;
 
-        expect(assignNotebookCellIds).toHaveBeenCalledTimes(1);
+        scene.autosave.adoptStoredCells([{ element: scene.state.body.state.cells[0].state.elementName, id: 'x' }], {});
+
+        expect(scene.state.body.state.cells[0].state.id).toBe(own);
       });
 
-      it('leaves it alone for someone who cannot write', async () => {
-        jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      it('does nothing once abandoned, or while a change is waiting to be saved', async () => {
+        const abandoned = sceneWithoutIds();
+        abandoned.autosave.abandon();
+        expect(abandoned.autosave.canAdoptIds()).toBe(false);
 
-        deactivate = sceneWithoutIds().activate();
-        await jest.advanceTimersByTimeAsync(0);
-
-        expect(assignNotebookCellIds).not.toHaveBeenCalled();
-      });
-
-      it('leaves a notebook whose cells all have ids alone', async () => {
-        deactivate = buildScene().activate();
-        await jest.advanceTimersByTimeAsync(0);
-
-        expect(assignNotebookCellIds).not.toHaveBeenCalled();
-      });
-
-      it('does not write from a scene that was abandoned before it activated, as the PDF render does', async () => {
-        const scene = sceneWithoutIds();
-        scene.autosave.abandon();
-
-        deactivate = scene.activate();
-        await jest.advanceTimersByTimeAsync(0);
-
-        expect(assignNotebookCellIds).not.toHaveBeenCalled();
-      });
-
-      it('says nothing when someone else saved first, since the reader changed nothing', async () => {
-        jest.mocked(assignNotebookCellIds).mockRejectedValue(new NotebookConflictError('conflict'));
-        const publish = jest.spyOn(appEvents, 'publish');
-        const scene = sceneWithoutIds();
-
-        deactivate = scene.activate();
-        await jest.advanceTimersByTimeAsync(0);
-
-        expect(assignNotebookCellIds).toHaveBeenCalledTimes(1);
-        expect(scene.autosave.state.status).toBe('idle');
-        expect(scene.autosave.state.isConflict).not.toBe(true);
-        expect(publish).not.toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
-        expect(NotebookAnalytics.autosaveFailed).not.toHaveBeenCalled();
-      });
-
-      it('does not replace an error the user already has when it succeeds', async () => {
-        jest.mocked(assignNotebookCellIds).mockResolvedValue(withId);
-        const scene = sceneWithoutIds();
-        scene.autosave.setState({ status: 'error', errorMessage: 'earlier failure' });
-
-        deactivate = scene.activate();
-        await jest.advanceTimersByTimeAsync(0);
-
-        expect(scene.autosave.state.status).toBe('error');
-      });
-
-      it('does not report a notebook whose spec cannot be built as failing just because it was opened', async () => {
-        // The first build seeds the baseline on activation; the one the migration makes is the one that fails.
-        jest
-          .mocked(transformNotebookSceneToSaveModel)
-          .mockImplementationOnce(
-            jest.requireActual('../serialization/transformNotebookSceneToSaveModel').transformNotebookSceneToSaveModel
-          )
-          .mockImplementation(() => {
-            throw new Error('cannot build');
-          });
-        const scene = sceneWithoutIds();
-
-        deactivate = scene.activate();
-        await jest.advanceTimersByTimeAsync(0);
-
-        expect(scene.autosave.state.status).not.toBe('error');
-        expect(NotebookAnalytics.autosaveFailed).not.toHaveBeenCalled();
-        expect(assignNotebookCellIds).not.toHaveBeenCalled();
+        const editing = activateEditing();
+        editFirstCell(editing, 'Unsaved');
+        expect(editing.autosave.canAdoptIds()).toBe(false);
       });
     });
   });
