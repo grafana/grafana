@@ -205,11 +205,27 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
 
       [`${hasActiveSelector}, .react-calendar__tile--active, .react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart`]:
         {
-          color: theme.colors.accent.contrastText,
+          // The refreshed theme matches the selected item in the main nav: subtle accent background with accent text
+          color: theme.flags.visualDesignRefresh ? theme.colors.accent.text : theme.colors.accent.contrastText,
           fontWeight: theme.typography.fontWeightMedium,
-          background: theme.colors.accent.main,
-          border: '0px',
+          background: theme.flags.visualDesignRefresh ? theme.colors.accent.subtleBackground : theme.colors.accent.main,
+          // On the refreshed theme the range is outlined as one pill: top/bottom borders on every tile,
+          // side borders only on the ends (see the rules below)
+          ...(theme.flags.visualDesignRefresh
+            ? { border: `1px solid ${theme.colors.accent.text}`, borderLeftWidth: 0, borderRightWidth: 0 }
+            : { border: '0px' }),
         },
+
+      // Refreshed theme: only the first/last tile of the range gets a side border (the rest are square, so differing
+      // widths don't taper). These must come after the rule above: a partial-day range matches both through
+      // `hasActiveSelector` with equal specificity, so the later rule wins.
+      // While picking a range the clicked tile carries --hover too, so --hoverStart/--hoverEnd mark the outer edge.
+      ...(theme.flags.visualDesignRefresh && {
+        [`${hasActiveSelector}, .react-calendar__tile--rangeStart:not(.react-calendar__tile--hover), .react-calendar__tile--rangeStart.react-calendar__tile--hoverStart`]:
+          { borderLeftWidth: 1 },
+        [`${hasActiveSelector}, .react-calendar__tile--rangeEnd:not(.react-calendar__tile--hover), .react-calendar__tile--rangeEnd.react-calendar__tile--hoverEnd`]:
+          { borderRightWidth: 1 },
+      }),
     }),
   };
 };
