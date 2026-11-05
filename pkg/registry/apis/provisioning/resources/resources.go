@@ -304,6 +304,10 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 		return "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
 
+	if err := checkSecureValues(parsed); err != nil {
+		return "", parsed.GVK, err
+	}
+
 	// Check if the resource already exists
 	id := resourceID{
 		Name:     parsed.Obj.GetName(),

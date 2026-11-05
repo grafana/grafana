@@ -106,6 +106,60 @@ func TestIntegrationGitFiles_RemoveSecureValueRejected(t *testing.T) {
 	helper.RequireRepoFileNotFound(t, repoName, "dashboard.json")
 }
 
+// TestIntegrationGitFiles_DeleteSecureValueFileAllowed covers a repository that
+// already carries a secret, committed outside Grafana or before the guard
+// existed. The file has to be removable, or the repository can never be cleaned
+// up -- the delete path reads it only to learn which resource it refers to.
+func TestIntegrationGitFiles_DeleteSecureValueFileAllowed(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	const repoName = "secure-value-delete-allowed"
+	_, _ = helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"dashboard.json": dashboardWithSecureValue(t, "secure-delete-dash", map[string]any{
+			"apiKey": map[string]any{"create": plaintextSecret},
+		}),
+	}, "write")
+
+	result := helper.AdminREST.Delete().
+		Namespace("default").
+		Resource("repositories").
+		Name(repoName).
+		SubResource("files", "dashboard.json").
+		Param("message", "Remove the file that carries a secret").
+		Do(t.Context())
+
+	require.NoError(t, result.Error(), "a file carrying a secret must still be deletable")
+	helper.RequireRepoFileNotFound(t, repoName, "dashboard.json")
+}
+
+// TestIntegrationGitFiles_CorrectSecureValueToReferenceAllowed covers fixing a
+// committed secret by replacing it with a reference. The update reads the
+// superseded revision, which still carries the plaintext payload.
+func TestIntegrationGitFiles_CorrectSecureValueToReferenceAllowed(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	const repoName = "secure-value-correction-allowed"
+	_, _ = helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"dashboard.json": dashboardWithSecureValue(t, "secure-fix-dash", map[string]any{
+			"apiKey": map[string]any{"create": plaintextSecret},
+		}),
+	}, "write")
+
+	result := helper.AdminREST.Put().
+		Namespace("default").
+		Resource("repositories").
+		Name(repoName).
+		SubResource("files", "dashboard.json").
+		Param("message", "Replace the secret with a reference").
+		Body(dashboardWithSecureValue(t, "secure-fix-dash", map[string]any{
+			"apiKey": map[string]any{"name": "an-existing-secure-value"},
+		})).
+		SetHeader("Content-Type", "application/json").
+		Do(t.Context())
+
+	require.NoError(t, result.Error(), "replacing a committed secret with a reference must be allowed")
+}
+
 func TestIntegrationProvisioning_FullSync_SecureValueIsWarning(t *testing.T) {
 	helper := sharedGitHelper(t)
 

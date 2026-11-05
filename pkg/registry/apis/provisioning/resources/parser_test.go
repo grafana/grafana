@@ -1177,102 +1177,41 @@ func TestExistingFolderCanonicalRoot(t *testing.T) {
 	require.Empty(t, parsed.ExistingFolder(), "root must not become an orphan-folder cleanup target")
 }
 
-func TestParserSecureValues(t *testing.T) {
-	datasourceGVK := schema.GroupVersionKind{
-		Group:   "prometheus.datasource.grafana.app",
-		Version: "v0alpha1",
-		Kind:    "DataSource",
-	}
-	datasourceGVR := schema.GroupVersionResource{
-		Group:    datasourceGVK.Group,
-		Version:  datasourceGVK.Version,
-		Resource: "datasources",
+// TestParserAcceptsSecureValuesForIdentityReads pins that the secure-value guard
+// is not in Parse: a file that already carries a secret must still parse, or it
+// could never be deleted or superseded.
+func TestParserAcceptsSecureValuesForIdentityReads(t *testing.T) {
+	gvk := schema.GroupVersionKind{Group: "prometheus.datasource.grafana.app", Version: "v0alpha1", Kind: "DataSource"}
+	gvr := schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "datasources"}
+
+	clients := NewMockResourceClients(t)
+	clients.On("ForKind", mock.Anything, gvk).Return(nil, gvr, nil).Maybe()
+	clients.On("SupportedResources").Return(SupportedProvisioningResources).Maybe()
+
+	p := &parser{
+		repo: provisioning.ResourceRepositoryInfo{
+			Type:      provisioning.GitHubRepositoryType,
+			Namespace: "xxx",
+			Name:      "repo",
+		},
+		clients: clients,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
+			Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+		},
 	}
 
-	fileWithSecure := func(secure string) []byte {
-		return []byte(`apiVersion: ` + datasourceGVK.GroupVersion().String() + `
+	parsed, err := p.Parse(context.Background(), &repository.FileInfo{
+		Path: "datasource.yaml",
+		Data: []byte(`apiVersion: ` + gvk.GroupVersion().String() + `
 kind: DataSource
 metadata:
   name: my-ds
-spec:
-  url: http://localhost:9090
 secure:
-` + secure)
-	}
-
-	tests := []struct {
-		name     string
-		repoType provisioning.RepositoryType
-		secure   string
-		wantErr  string
-	}{
-		{
-			name:     "plaintext value is rejected",
-			repoType: provisioning.GitHubRepositoryType,
-			secure:   "  basicAuthPassword:\n    create: super-secret\n",
-			wantErr:  "secure values (basicAuthPassword) cannot be created or removed from a github repository",
-		},
-		{
-			name:     "every offending value is listed",
-			repoType: provisioning.GitRepositoryType,
-			secure:   "  token:\n    create: a\n  basicAuthPassword:\n    create: b\n",
-			wantErr:  "secure values (basicAuthPassword, token) cannot be created or removed from a git repository",
-		},
-		{
-			name:     "plaintext value is allowed in a local repository",
-			repoType: provisioning.LocalRepositoryType,
-			secure:   "  basicAuthPassword:\n    create: super-secret\n",
-		},
-		{
-			name:     "reference is allowed -- it only reads an existing value",
-			repoType: provisioning.GitHubRepositoryType,
-			secure:   "  basicAuthPassword:\n    name: ds-my-ds-basic-auth\n",
-		},
-		{
-			name:     "removal is rejected -- it deletes a value the file never owned",
-			repoType: provisioning.GitHubRepositoryType,
-			secure:   "  basicAuthPassword:\n    remove: true\n",
-			wantErr:  "secure values (basicAuthPassword) cannot be created or removed from a github repository",
-		},
-		{
-			name:     "removal is allowed in a local repository",
-			repoType: provisioning.LocalRepositoryType,
-			secure:   "  basicAuthPassword:\n    remove: true\n",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			clients := NewMockResourceClients(t)
-			clients.On("ForKind", mock.Anything, datasourceGVK).Return(nil, datasourceGVR, nil).Maybe()
-			clients.On("SupportedResources").Return(SupportedProvisioningResources).Maybe()
-
-			p := &parser{
-				repo: provisioning.ResourceRepositoryInfo{
-					Type:      tt.repoType,
-					Namespace: "xxx",
-					Name:      "repo",
-				},
-				clients: clients,
-				config: &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
-					Spec:       provisioning.RepositorySpec{Type: tt.repoType},
-				},
-			}
-
-			_, err := p.Parse(context.Background(), &repository.FileInfo{
-				Path: "datasource.yaml",
-				Data: fileWithSecure(tt.secure),
-			})
-			if tt.wantErr == "" {
-				require.NoError(t, err)
-				return
-			}
-
-			var validationErr *ResourceValidationError
-			require.ErrorAs(t, err, &validationErr)
-			require.Contains(t, err.Error(), tt.wantErr)
-			require.NotContains(t, err.Error(), "super-secret")
-		})
-	}
+  basicAuthPassword:
+    create: super-secret
+`),
+	})
+	require.NoError(t, err)
+	require.Equal(t, "my-ds", parsed.Obj.GetName())
 }
