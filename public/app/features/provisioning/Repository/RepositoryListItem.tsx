@@ -12,6 +12,7 @@ import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { PROVISIONING_URL } from '../constants';
+import { exportResourceAsJson } from '../utils/export';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
@@ -116,6 +117,14 @@ export function RepositoryListItem({ repository }: Props) {
             <Trans i18nKey="provisioning.repository-card.view">View</Trans>
           </LinkButton>
           <SyncRepository repository={repository} />
+          <Button
+            variant="secondary"
+            icon="download-alt"
+            size="md"
+            onClick={() => exportResourceAsJson(repository, 'Repository')}
+          >
+            <Trans i18nKey="provisioning.repository-card.export">Export</Trans>
+          </Button>
           <LinkButton
             variant="secondary"
             icon="cog"

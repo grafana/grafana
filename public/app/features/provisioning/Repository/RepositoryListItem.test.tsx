@@ -2,7 +2,11 @@ import { render, screen } from 'test/test-utils';
 
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
+import { exportResourceAsJson } from '../utils/export';
+
 import { RepositoryListItem } from './RepositoryListItem';
+
+jest.mock('../utils/export', () => ({ exportResourceAsJson: jest.fn() }));
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
@@ -174,6 +178,17 @@ describe('RepositoryListItem', () => {
 
       expect(screen.queryByRole('link', { name: /widgets/ })).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: '3 widgets' })).toBeDisabled();
+    });
+  });
+
+  describe('export', () => {
+    it('exports the repository when the Export button is clicked', async () => {
+      const repo = createMockRepository();
+      const { user } = render(<RepositoryListItem repository={repo} />);
+
+      await user.click(screen.getByRole('button', { name: /export/i }));
+
+      expect(exportResourceAsJson).toHaveBeenCalledWith(repo, 'Repository');
     });
   });
 });

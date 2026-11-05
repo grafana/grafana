@@ -1,12 +1,13 @@
 import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
+import { Button, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { type RepoType } from '../Wizard/types';
 import { CONNECTIONS_URL } from '../constants';
 import { connectionProviderType, isOAuthConnectionType } from '../utils/connectionOAuth';
+import { exportResourceAsJson } from '../utils/export';
 
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';
 
@@ -55,6 +56,14 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
           <LinkButton icon="eye" href={`${CONNECTIONS_URL}/${name}/edit`} variant="primary" size="md">
             <Trans i18nKey="provisioning.connections.view">View</Trans>
           </LinkButton>
+          <Button
+            variant="secondary"
+            icon="download-alt"
+            size="md"
+            onClick={() => exportResourceAsJson(connection, 'Connection')}
+          >
+            <Trans i18nKey="provisioning.connections.export">Export</Trans>
+          </Button>
         </Card.Actions>
       )}
     </Card>
