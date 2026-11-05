@@ -1,6 +1,9 @@
 package extras
 
 import (
+	"path/filepath"
+	"slices"
+
 	"github.com/prometheus/client_golang/prometheus"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -48,7 +51,7 @@ func ProvideProvisioningOSSRepositoryExtras(
 	return []repository.Extra{
 		local.Extra(
 			cfg.HomePath,
-			cfg.PermittedProvisioningPaths,
+			PermittedLocalPaths(cfg),
 			operationMetrics,
 		),
 		git.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics, userAgent),
@@ -62,6 +65,23 @@ func ProvideProvisioningOSSRepositoryExtras(
 			userAgent,
 		),
 	}
+}
+
+// PermittedLocalPaths returns the prefixes a local repository may read. The bootstrap
+// path is permitted on the strength of being configured: Grafana registers the repository
+// over it itself, so requiring it in permitted_provisioning_paths as well would only fail
+// the bootstrap at admission with nothing for an operator to act on.
+func PermittedLocalPaths(cfg *setting.Cfg) []string {
+	if cfg.ProvisioningBootstrapPath == "" {
+		return cfg.PermittedProvisioningPaths
+	}
+	// The prefixes are absolute; the resolver resolves a relative repository path against
+	// the home path before matching, so the prefix has to be resolved the same way.
+	path := cfg.ProvisioningBootstrapPath
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(cfg.HomePath, path)
+	}
+	return append(slices.Clone(cfg.PermittedProvisioningPaths), path)
 }
 
 func ProvideProvisioningOSSConnectionExtras(

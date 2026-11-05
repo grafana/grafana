@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -48,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -64,6 +66,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -172,6 +175,10 @@ type APIBuilder struct {
 	// handler on each notification; the controllers re-fetch from the API in their
 	// reconcile. Otherwise the controllers use the apiserver informer.
 	natsSubscriber nats.Subscriber
+
+	// bootstrapConfig is the read-only local repository registered from
+	// [provisioning] bootstrap_path, empty when none is configured.
+	bootstrapConfig bootstrap.Config
 
 	// keysOnlyReList makes the connection informer's periodic re-list ask storage
 	// for keys instead of whole objects. Off by default: it changes what the
@@ -382,6 +389,11 @@ func RegisterAPIService(
 	keysOnlyReList := provisioningSec.Key("keys_only_relist").MustBool(false)
 	repoValidatorOpts := []repository.ValidatorOption{repository.WithURLValidator(urlValidator)}
 
+	bootstrapConfig, err := bootstrapConfigFromSettings(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
 		schema.GroupVersion{
@@ -420,6 +432,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	builder.repoValidatorOpts = repoValidatorOpts
+	builder.bootstrapConfig = bootstrapConfig
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
@@ -480,6 +493,28 @@ func RegisterAPIService(
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
 	return builder, nil
+}
+
+// bootstrapConfigFromSettings builds the bootstrap repository configuration from
+// [provisioning] bootstrap_path. It fails startup when the path is set but the local
+// repository type is disabled: silently enabling it would widen what the instance
+// accepts, and silently ignoring the path would leave the instance unprovisioned.
+func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
+	if cfg.ProvisioningBootstrapPath == "" {
+		return bootstrap.Config{}, nil
+	}
+	if len(cfg.ProvisioningRepositoryTypes) > 0 &&
+		!slices.Contains(cfg.ProvisioningRepositoryTypes, string(provisioning.LocalRepositoryType)) {
+		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q repository type to be enabled", provisioning.LocalRepositoryType)
+	}
+
+	// The bootstrap repository belongs to the instance, so it lives in the default org's
+	// namespace. Files cannot target another namespace: the parser rejects a manifest whose
+	// namespace is not the repository's.
+	return bootstrap.Config{
+		Path:      cfg.ProvisioningBootstrapPath,
+		Namespace: request.GetNamespaceMapper(cfg)(cfg.DefaultOrgID()),
+	}, nil
 }
 
 // TODO: Move specific endpoint authorization together with the rest of the logic.
@@ -1028,6 +1063,14 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// since the repository already passed admission validation when it was created/updated.
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
+
+			if b.bootstrapConfig.Enabled() {
+				// Never fatal: a rejected bootstrap repository must not keep the instance down.
+				if err := bootstrap.Ensure(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.bootstrapConfig); err != nil {
+					logging.FromContext(postStartHookCtx.Context).Error("failed to register bootstrap repository",
+						"path", b.bootstrapConfig.Path, "namespace", b.bootstrapConfig.Namespace, "error", err)
+				}
+			}
 
 			// if running solely CRUD or not the preferred version, skip controllers/workers setup
 			if b.onlyApiServer || !b.isPreferredVersion {
