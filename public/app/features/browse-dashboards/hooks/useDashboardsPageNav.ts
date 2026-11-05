@@ -44,7 +44,7 @@ export function useDashboardsPageNav(activeTabId: NavId, pageId: NavId = NavID.d
     return {
       ...page,
       subTitle: pageId === NavID.dashboards ? activeTab?.subTitle : page.subTitle,
-      children: tabs,
+      children: tabs.length > 1 ? tabs : undefined,
     };
   }, [activeTabId, isInfoArchRefresh, page, pageId, section]);
 }

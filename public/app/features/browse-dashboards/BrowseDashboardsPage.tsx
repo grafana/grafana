@@ -186,7 +186,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       pageNav={navModel}
       onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
       renderTitle={renderTitle}
-      actions={<FolderDetailsActions folderDTO={folderDTO} showRecentlyDeleted={!tabsNav} />}
+      actions={<FolderDetailsActions folderDTO={folderDTO} showRecentlyDeleted={!tabsNav?.children} />}
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />

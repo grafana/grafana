@@ -112,6 +112,16 @@ describe('useDashboardsPageNav', () => {
     expect(tabs.map((tab) => tab.id)).not.toContain(NavID.dashboardsVariables);
   });
 
+  it('hides the tab bar when Dashboards is the only available tab', () => {
+    setTestFlags({ [INFO_ARCH_REFRESH_FLAG]: true });
+    const withoutTabPages = {
+      ...dashboardsSection,
+      children: dashboardsSection.children?.filter((child) => child.id === 'dashboards/playlists'),
+    };
+
+    expect(renderNav(NavID.dashboards, withoutTabPages).result.current?.children).toBeUndefined();
+  });
+
   it('gives no tab bar when the section itself is missing', () => {
     setTestFlags({ [INFO_ARCH_REFRESH_FLAG]: true });
 
