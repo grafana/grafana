@@ -16053,11 +16053,11 @@
     "stacked": {
       "exit": "Exit stacked view",
       "exit-aria-label": "Exit stacked view",
-      "hidden-aria-label": "Hidden",
+      "heading": "{{type}} {{name}}",
+      "heading-with-detail": "{{type}} {{name}}, {{detail}}",
       "scroll-area-aria-label": "Stacked editor items",
       "showing-items_one": "Showing {{count}} items",
-      "showing-items_other": "Showing {{count}} items",
-      "transformation": "Transformation"
+      "showing-items_other": "Showing {{count}} items"
     },
     "transformation-debug": {
       "copy-input-data": "Copy input data to clipboard",
