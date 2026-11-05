@@ -204,6 +204,13 @@ func (r RepositoryType) IsGit() bool {
 	return r == GitRepositoryType || r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
 }
 
+// AllowsSecureValues reports whether files in a repository of this type may
+// create secure values from a plaintext payload. A secret committed to git
+// stays in a history we cannot redact.
+func (r RepositoryType) AllowsSecureValues() bool {
+	return !r.IsGit()
+}
+
 // GitHub || GitHubEnterprise
 func (r RepositoryType) IsGitHub() bool {
 	return r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType

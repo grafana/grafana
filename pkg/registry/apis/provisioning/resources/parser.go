@@ -209,6 +209,10 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		}
 	}
 
+	if err := r.checkSecureValues(parsed.Obj.Object); err != nil {
+		return nil, err
+	}
+
 	// Remove the internal dashboard UID, version and id if they exist. The
 	// deprecated internal ID is likewise owned by the storage layer, not the
 	// repository file, so strip its label too. Otherwise a repo-authored ID
@@ -281,6 +285,26 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	return parsed, nil
+}
+
+// checkSecureValues rejects secure values carrying a plaintext payload in a
+// repository type that does not allow them. A reference to an existing secure
+// value is never rejected.
+func (r *parser) checkSecureValues(obj map[string]any) error {
+	if r.repo.Type.AllowsSecureValues() {
+		return nil
+	}
+
+	keys := plaintextSecureValueKeys(obj)
+	if len(keys) == 0 {
+		return nil
+	}
+
+	return NewResourceValidationError(field.Forbidden(
+		field.NewPath(secureValuesField),
+		fmt.Sprintf("secure values (%s) cannot be created from a %s repository; reference an existing secure value by name instead",
+			strings.Join(keys, ", "), r.repo.Type),
+	))
 }
 
 // resolveFolderID derives the folder annotation value for a folder-contained
