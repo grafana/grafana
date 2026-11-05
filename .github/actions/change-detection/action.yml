@@ -23,6 +23,9 @@ outputs:
   frontend-dependencies:
     description: Whether the frontend dependencies or self have changed in any way
     value: ${{ steps.changed-files.outputs.frontend_dependencies_any_modified || 'true' }}
+  openapi:
+    description: Whether the OpenAPI snapshots, the generated OpenAPI package or self have changed
+    value: ${{ steps.changed-files.outputs.openapi_any_modified || 'true' }}
   frontend-packages:
     description: Whether any frontend packages have changed
     value: ${{ steps.changed-files.outputs.frontend_packages_any_modified || 'true' }}
@@ -269,6 +272,11 @@ runs:
             - 'packages/**'
             - './scripts/validate-npm-packages.sh'
             - '${{ inputs.self }}'
+          openapi:
+            - 'pkg/tests/apis/openapi_snapshots/**'
+            - 'packages/grafana-openapi/**'
+            - '.github/actions/change-detection/**'
+            - '${{ inputs.self }}'
           e2e:
             - 'e2e/**'
             - 'e2e-playwright/**'
@@ -340,6 +348,8 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.frontend_src_all_modified_files }}"
         echo "Frontend packages: ${{ steps.changed-files.outputs.frontend_packages_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.frontend_packages_all_modified_files }}"
+        echo "OpenAPI: ${{ steps.changed-files.outputs.openapi_any_modified || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.openapi_all_modified_files }}"
         echo "E2E: ${{ steps.changed-files.outputs.e2e_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.e2e_all_modified_files }}"
         echo " --> ${{ steps.changed-files.outputs.backend_all_modified_files }}"
