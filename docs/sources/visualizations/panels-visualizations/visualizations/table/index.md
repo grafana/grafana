@@ -219,7 +219,7 @@ Whenever you show, hide, reorder, or filter a column, the table visualization di
 
 Depending on your permissions, you can either save or remove these changes by clicking the drop-down list next to the icon and selecting the appropriate option:
 
-- **Save changes**: Dashboard editors. In dashboard edit mode only.
+- **Save changes**: Dashboard editors only
 - **Remove changes**: Dashboard editors and viewers
 
 Saving changes adds a transformation to the panel that reflects the change you made.
