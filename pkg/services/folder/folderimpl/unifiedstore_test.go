@@ -1744,10 +1744,9 @@ func (c *folderSearchAccessClient) BatchCheck(_ context.Context, _ claims.AuthIn
 func newFolderIndexSearchStore(t testing.TB, count int, cfg search.PostRankAuthzConfig, parents ...string) (*FolderUnifiedStoreImpl, *folderIndexSearchClient) {
 	t.Helper()
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        100,
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
+		Root:          t.TempDir(),
+		FileThreshold: 100,
+		PostRankAuthz: cfg,
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
