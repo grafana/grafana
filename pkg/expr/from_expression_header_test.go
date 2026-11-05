@@ -43,67 +43,73 @@ func TestDatasourceRequestsAreMarkedAsFromExpression(t *testing.T) {
 		TimeRange:  AbsoluteTimeRange{},
 	}
 
+	alertHeaders := map[string]string{"FromAlert": "true", "http_X-Rule-Uid": "rule-1"}
+
+	// The ungrouped expression path is covered by TestQueryDataFromExpressionHeader
+	// in pkg/services/query.
 	tests := []struct {
 		name    string
 		queries []Query
 		headers map[string]string
+		grouped bool
 	}{
 		{
-			name:    "math expression",
+			name:    "math expression grouped by data source",
 			queries: []Query{dsQuery, mathQuery},
+			grouped: true,
 		},
 		{
 			// Alert rules send every query through the expression service, even
 			// a single data source query with no expression.
 			name:    "alert rule evaluation",
 			queries: []Query{dsQuery},
-			headers: map[string]string{"FromAlert": "true", "http_X-Rule-Uid": "rule-1"},
+			headers: alertHeaders,
+		},
+		{
+			name:    "alert rule evaluation grouped by data source",
+			queries: []Query{dsQuery},
+			headers: alertHeaders,
+			grouped: true,
 		},
 	}
 
-	for _, grouped := range []bool{false, true} {
-		for _, tt := range tests {
-			name := tt.name
-			if grouped {
-				name += " grouped by data source"
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			frame := data.NewFrame("",
+				data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+				data.NewField("value", nil, []*float64{new(2.0)}),
+			)
+			resp := map[string]backend.DataResponse{"A": {Frames: data.Frames{frame}}}
+			s, req := newMockQueryService(resp, tt.queries)
+			endpoint := &recordingEndpoint{mockEndpoint: mockEndpoint{Responses: resp}}
+			s.dataService = endpoint
+			var flags []any
+			if tt.grouped {
+				flags = append(flags, featuremgmt.FlagSseGroupByDatasource)
 			}
-			t.Run(name, func(t *testing.T) {
-				frame := data.NewFrame("",
-					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-					data.NewField("value", nil, []*float64{new(2.0)}),
-				)
-				resp := map[string]backend.DataResponse{"A": {Frames: data.Frames{frame}}}
-				s, req := newMockQueryService(resp, tt.queries)
-				endpoint := &recordingEndpoint{mockEndpoint: mockEndpoint{Responses: resp}}
-				s.dataService = endpoint
-				var flags []any
-				if grouped {
-					flags = append(flags, featuremgmt.FlagSseGroupByDatasource)
-				}
-				s.features = featuremgmt.WithFeatures(flags...)
+			s.features = featuremgmt.WithFeatures(flags...)
 
-				if tt.headers != nil {
-					req.Headers = maps.Clone(tt.headers)
-				}
+			if tt.headers != nil {
+				req.Headers = maps.Clone(tt.headers)
+			}
 
-				pl, err := s.BuildPipeline(t.Context(), req)
-				require.NoError(t, err)
-				_, err = s.ExecutePipeline(context.Background(), time.Now(), pl)
-				require.NoError(t, err)
+			pl, err := s.BuildPipeline(t.Context(), req)
+			require.NoError(t, err)
+			_, err = s.ExecutePipeline(context.Background(), time.Now(), pl)
+			require.NoError(t, err)
 
-				require.Len(t, endpoint.requests, 1)
-				dsReq := endpoint.requests[0]
-				require.Equal(t, "true", dsReq.GetHTTPHeader(HeaderFromExpression))
-				// Some plugins, such as the AWS SDK async data sources and IoT SiteWise,
-				// read this raw map key instead of calling GetHTTPHeader.
-				require.Equal(t, "true", dsReq.Headers["http_X-Grafana-From-Expr"])
-				for k, v := range tt.headers {
-					require.Equal(t, v, dsReq.Headers[k], "incoming header %q must reach the data source", k)
-				}
-				if tt.headers != nil {
-					require.Equal(t, tt.headers, req.Headers, "the expression request's headers must not change")
-				}
-			})
-		}
+			require.Len(t, endpoint.requests, 1)
+			dsReq := endpoint.requests[0]
+			require.Equal(t, "true", dsReq.GetHTTPHeader(HeaderFromExpression))
+			// Some plugins, such as the AWS SDK async data sources and IoT SiteWise,
+			// read this raw map key instead of calling GetHTTPHeader.
+			require.Equal(t, "true", dsReq.Headers["http_X-Grafana-From-Expr"])
+			for k, v := range tt.headers {
+				require.Equal(t, v, dsReq.Headers[k], "incoming header %q must reach the data source", k)
+			}
+			if tt.headers != nil {
+				require.Equal(t, tt.headers, req.Headers, "the expression request's headers must not change")
+			}
+		})
 	}
 }
