@@ -159,12 +159,22 @@ func (pm *ProviderManager) cleanupExpired() {
 // callerIdentity returns the service identity of the caller (from its access token),
 // or "unknown" if the request carries no service identity (e.g. an end-user session).
 func callerIdentity(ctx context.Context) string {
+	return extraIdentity(ctx, authn.ServiceIdentityKey)
+}
+
+// originCallerIdentity returns the innermost service identity of the request, i.e. the first
+// service in the token chain. It equals callerIdentity when the caller is not acting on behalf of another service.
+func originCallerIdentity(ctx context.Context) string {
+	return extraIdentity(ctx, authn.InnermostServiceIdentityKey)
+}
+
+func extraIdentity(ctx context.Context, key string) string {
 	authInfo, ok := authtypes.AuthInfoFrom(ctx)
 	if !ok || authInfo == nil {
 		return "unknown"
 	}
 
-	identities := authInfo.GetExtra()[authn.ServiceIdentityKey]
+	identities := authInfo.GetExtra()[key]
 	if len(identities) == 0 {
 		return "unknown"
 	}
