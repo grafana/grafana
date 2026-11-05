@@ -278,7 +278,7 @@ describe('AlertRulesPage folder names', () => {
       expect.objectContaining({
         labelSelector: HAS_RULES,
         where: { filter: { field: 'title', operator: 'In', values: ['Alerts'] } },
-        limit: 100,
+        limit: 500,
       }),
     ]);
     expect(backend.ruleSearches.map((body) => body.where)).toEqual([
@@ -329,6 +329,35 @@ describe('AlertRulesPage folder names', () => {
     expect(screen.queryByText('No alert rules match this folder')).not.toBeInTheDocument();
     expect(backend.ruleSearches).toHaveLength(1);
   });
+
+  it.each([
+    { folderCount: 500, empty: false, limited: false },
+    { folderCount: 501, empty: false, limited: true },
+    { folderCount: 501, empty: true, limited: true },
+  ])(
+    'warns only when folders are omitted ($folderCount folders, empty: $empty)',
+    async ({ folderCount, empty, limited }) => {
+      const folders = Array.from({ length: folderCount }, (_, index) =>
+        folderFactory.build({ metadata: { name: `folder-${index}` }, spec: { title: 'Shared' } })
+      );
+      backend = setupRuleListBackend({
+        folders,
+        alertRules: folders.map((folder) =>
+          alertRuleFactory.inFolder(folder.metadata.name!).build({ spec: { title: `Rule in ${folder.metadata.name}` } })
+        ),
+      });
+      renderWithSearch(`folder:Shared${empty ? ' label:team=missing' : ''}`, 'list');
+
+      expect(await screen.findByText(empty ? 'No alert rules found' : 'Rule in folder-0')).toBeInTheDocument();
+      if (limited) {
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          'Showing results from only the first 500 matching folders. Narrow your search criteria to see results from other folders.'
+        );
+      } else {
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      }
+    }
+  );
 
   it('shows the empty state and sends no rule search when no folder has that name', async () => {
     renderWithSearch('folder:Alert', 'list');

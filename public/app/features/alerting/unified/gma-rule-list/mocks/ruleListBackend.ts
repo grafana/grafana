@@ -88,7 +88,7 @@ export function setupRuleListBackend({
     return interceptor.respond();
   }
 
-  function page<T>(items: T[], body: SearchBody, size = body.limit ?? items.length) {
+  function page<T>(items: T[], body: SearchBody, size = Math.min(body.limit ?? items.length, SEARCH_MAX_LIMIT)) {
     const start = body.continue ? Number(body.continue) : 0;
     const end = start + size;
     return { items: items.slice(start, end), metadata: end < items.length ? { continue: String(end) } : {} };
@@ -272,3 +272,6 @@ function ruleHit(kind: RuleKind, rule: RuleResource) {
     },
   };
 }
+
+// The real search caps every request at this many items.
+const SEARCH_MAX_LIMIT = 500;

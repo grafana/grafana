@@ -41,6 +41,7 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
 
   return {
     apiArgs,
+    folderLimitReached: lookUp && Boolean(lookupResult?.metadata.continue),
     isLookingUp: lookUp && !lookedUpUids && !folderLookup.isError,
     lookupError: folderLookup.isError ? folderLookup.error : undefined,
     retryLookup: () => {
@@ -50,5 +51,5 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
   };
 }
 
-// One page: more than 100 folders sharing an exact name is unlikely.
-const FOLDER_NAME_LOOKUP_LIMIT = 100;
+// The search API returns at most 500 items per request.
+export const FOLDER_NAME_LOOKUP_LIMIT = 500;

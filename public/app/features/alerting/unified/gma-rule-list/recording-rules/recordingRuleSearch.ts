@@ -72,9 +72,12 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
 const { useSearchRecordingRulesInfiniteQuery } = recordingRuleSearchAPI;
 
 export function useRecordingRuleSearch(filter: RecordingRuleFilter, { inFolderUid }: { inFolderUid?: string } = {}) {
-  const { apiArgs, isLookingUp, lookupError, retryLookup, noMatchingFolder } = useRuleSearchApiArgs(filter, {
-    inFolderUid,
-  });
+  const { apiArgs, isLookingUp, lookupError, retryLookup, noMatchingFolder, folderLimitReached } = useRuleSearchApiArgs(
+    filter,
+    {
+      inFolderUid,
+    }
+  );
   const query = useSearchRecordingRulesInfiniteQuery(apiArgs ?? skipToken);
   const { currentData, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = query;
   // Missing from the result type of a query that has not started.
@@ -91,6 +94,7 @@ export function useRecordingRuleSearch(filter: RecordingRuleFilter, { inFolderUi
   return {
     items,
     noMatchingFolder,
+    folderLimitReached,
     isLoading: isLookingUp || (apiArgs !== undefined && !hasLoaded && !isError),
     // A failed first page replaces the list; a later failure keeps the loaded rows and shows `failure` below them.
     error: lookupError ?? firstPageError,
