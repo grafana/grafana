@@ -128,7 +128,7 @@ describe('RoutingSettings timings', () => {
     expect(screen.getByPlaceholderText('12h')).toBe(timingInputs().repeatInterval);
   });
 
-  it('rejects a zero group interval and repeat interval, which the backend rejects too', async () => {
+  it('rejects a zero group interval and repeat interval', async () => {
     const { user } = render(<FormWrapper overrideTimings />);
 
     await user.type(timingInputs().groupInterval, '0s');
@@ -146,7 +146,7 @@ describe('RoutingSettings timings', () => {
     expect(screen.queryByText(/invalid duration|greater than zero/i)).not.toBeInTheDocument();
   });
 
-  it('rejects milliseconds, which the rules API has no unit for', async () => {
+  it('rejects milliseconds', async () => {
     const { user } = render(<FormWrapper overrideTimings />);
 
     await user.type(timingInputs().groupWait, '500ms');

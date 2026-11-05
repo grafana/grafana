@@ -14,7 +14,7 @@ beforeEach(() => {
   mockComboboxRect();
 });
 
-function Harness({ receiver }: { receiver: string }) {
+function FormWrapper({ receiver }: { receiver: string }) {
   const form = useForm<RuleFormValues>({
     defaultValues: {
       ...getDefaultFormValues(),
@@ -42,7 +42,7 @@ function Harness({ receiver }: { receiver: string }) {
 
 describe('ContactPointSelector', () => {
   it('highlights the saved contact point when the menu opens', async () => {
-    const { user } = render(<Harness receiver="provisioned-contact-point" />);
+    const { user } = render(<FormWrapper receiver="provisioned-contact-point" />);
 
     await waitFor(async () => {
       await user.click(screen.getByRole('combobox'));
@@ -54,7 +54,7 @@ describe('ContactPointSelector', () => {
   });
 
   it('reports a saved contact point that no longer exists', async () => {
-    render(<Harness receiver="deleted-contact-point" />);
+    render(<FormWrapper receiver="deleted-contact-point" />);
 
     expect(await screen.findByText('Contact point "deleted-contact-point" could not be found')).toBeInTheDocument();
   });
