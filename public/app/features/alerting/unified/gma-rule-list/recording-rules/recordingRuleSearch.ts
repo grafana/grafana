@@ -6,6 +6,7 @@ import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1'
 import { type ResultTotal } from '../rule-row/ResultCount';
 import { type FilterIssue } from '../rule-search/parser';
 import { getRejectionIssues } from '../rule-search/searchRejection';
+import { type RuleListMode } from '../rule-search/useRuleListSearchState';
 import { type PagedFailure } from '../shared/PagedFailureAlert';
 
 import { type RecordingRuleFilter } from './recordingRuleFilters';
@@ -97,13 +98,15 @@ export function useRecordingRuleSearch(filter: RecordingRuleFilter) {
 }
 
 /**
- * The issues of a search the rule search refused as invalid, for the search input. It reads the same cached
- * search as the list, so it sends no request of its own.
+ * List view only: the issues of the List's search that the backend refused as invalid, for the search input.
+ * It shares the List's cached search, so it sends no request of its own.
  */
 export function useRecordingRuleSearchRejection(
   filter: RecordingRuleFilter,
-  { skip }: { skip: boolean }
+  { parseIssues, mode }: { parseIssues: FilterIssue[]; mode: RuleListMode }
 ): FilterIssue[] {
+  // There is no List search in Folders mode or for a query that doesn't parse, so skip rather than send one.
+  const skip = parseIssues.length > 0 || mode === 'folders';
   const { error } = useSearchRecordingRulesInfiniteQuery(filter, { skip });
   return useMemo(
     () => (skip ? [] : (getRejectionIssues(error, buildRecordingRuleLeaves(filter)) ?? [])),

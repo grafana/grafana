@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-const subscriberName = "nats-subscriber"
+const SubscriberServiceName = "nats-subscriber"
 
 // MessageHandler receives a message delivered to a subscribed subject. It
 // mirrors Publish's (subject, data) shape so callers never touch nats.go types.
@@ -34,6 +34,9 @@ type Subscriber interface {
 	// running subscriber receives its own copy; pass WithQueueGroup to
 	// load-balance delivery across a group instead.
 	Subscribe(ctx context.Context, subject string, handler MessageHandler, opts ...SubscribeOption) (Subscription, error)
+	// Started is closed once the subscriber can subscribe; Subscribe fails
+	// until then. Callers built before the service starts wait on it.
+	Started() <-chan struct{}
 }
 
 // subscribeConfig holds the resolved options for a Subscribe call.
@@ -71,7 +74,7 @@ type SubscriberService struct {
 func newSubscriber(logger log.Logger, m *subscriberMetrics, config *Config) *SubscriberService {
 	conn := newConnection(roleSubscriber, logger, m.connectionMetrics, config, config.SubscriberCredentials)
 	s := &SubscriberService{connection: conn, metrics: m}
-	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(subscriberName)
+	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(SubscriberServiceName)
 	return s
 }
 

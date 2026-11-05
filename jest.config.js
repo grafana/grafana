@@ -55,7 +55,7 @@ module.exports = {
     customExportConditions: ['@grafana-app/source', 'browser'],
   },
   transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
+    '^.+\\.(ts|tsx|js|jsx|mjs)$': [require.resolve('ts-jest')],
   },
   transformIgnorePatterns: [
     // Transform listed ESM packages at the top level or nested under another package

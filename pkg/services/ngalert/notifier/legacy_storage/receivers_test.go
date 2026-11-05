@@ -348,14 +348,14 @@ func TestGetReceivers(t *testing.T) {
 			}
 		}
 	})
-	t.Run("should filter by uids", func(t *testing.T) {
+	t.Run("should filter by names", func(t *testing.T) {
 		receivers, err := rev.GetReceivers([]string{"not-found-1", "not-found-2"})
 		require.NoError(t, err)
 		require.Empty(t, receivers)
-		receivers, err = rev.GetReceivers([]string{NameToUid("receiver1")})
+		receivers, err = rev.GetReceivers([]string{"receiver1"})
 		require.NoError(t, err)
 		require.Len(t, receivers, 1)
-		expected, err := rev.GetReceiver(NameToUid("receiver1"))
+		expected, err := rev.GetReceiver(receivers[0].UID)
 		require.NoError(t, err)
 		require.Equal(t, expected, receivers[0])
 	})

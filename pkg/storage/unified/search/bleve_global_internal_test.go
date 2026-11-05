@@ -774,6 +774,102 @@ func TestGlobalSearchFolderPathsDetachUnavailableAncestors(t *testing.T) {
 	}
 }
 
+// verbAccessClient reads everything. Of the other verbs it allows update in the
+// folder "team" and set_permissions on the object named "cpu", and it fails any
+// batch that checks set_permissions on folders, as when the calling service may
+// not check that on the caller's behalf.
+type verbAccessClient struct{}
+
+func (verbAccessClient) allowed(c authlib.BatchCheckItem) bool {
+	switch c.Verb {
+	case utils.VerbGet:
+		return true
+	case utils.VerbUpdate:
+		return c.Folder == "team"
+	case utils.VerbSetPermissions:
+		return c.Name == "cpu"
+	}
+	return false
+}
+
+func (verbAccessClient) Check(context.Context, authlib.AuthInfo, authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: true}, nil
+}
+
+func (verbAccessClient) Compile(context.Context, authlib.AuthInfo, authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(string, string) bool { return true }, authlib.NoopZookie{}, nil
+}
+
+func (c verbAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, check := range req.Checks {
+		if check.Resource == folderResource && check.Verb == utils.VerbSetPermissions {
+			return authlib.BatchCheckResponse{}, errors.New("the service may not check this on the caller's behalf")
+		}
+		// A playlist has no folder, so it must be checked without one.
+		if check.Resource == "playlists" && check.Folder != "" {
+			return authlib.BatchCheckResponse{}, fmt.Errorf("playlist %s checked in folder %q", check.Name, check.Folder)
+		}
+		results[check.CorrelationID] = authlib.BatchCheckResult{Allowed: c.allowed(authlib.BatchCheckItem{Verb: check.Verb, Name: check.Name, Folder: check.Folder})}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
+}
+
+// A search can say, for each returned row, whether the caller may update,
+// delete or set permissions on it. Each row is checked in its own folder, even
+// when the search does not return the folder field, and a verb that cannot be
+// checked for a type is left out rather than answered no.
+func TestSearchReturnsRowAccess(t *testing.T) {
+	// Both authorization paths build the rows differently.
+	t.Run("in-searcher authz", func(t *testing.T) { testSearchReturnsRowAccess(t) })
+	t.Run("post-rank authz", func(t *testing.T) { testSearchReturnsRowAccess(t, withPostRankAuthzEnabled()) })
+}
+
+func testSearchReturnsRowAccess(t *testing.T, options ...setupOption) {
+	backend, _ := setupBleveBackend(t, options...)
+	key := resource.GlobalSearchKey("default")
+	index := buildFolderTreeIndex(t, backend, key,
+		folderTreeDoc(key, "folders", "top", ""),
+		folderTreeDoc(key, "folders", "team", "top"),
+		folderTreeDoc(key, "dashboards", "cpu", "team"),
+		folderTreeDoc(key, "dashboards", "memory", "top"),
+		// Of a type that has no folders: checked without one, like its reads.
+		folderTreeDoc(key, "playlists", "tv", ""),
+	)
+	fields := []string{resource.SEARCH_FIELD_TITLE}
+	search := func(verbs ...string) map[string]map[string]bool {
+		ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
+		rsp, err := index.Search(ctx, verbAccessClient{}, &resourcepb.ResourceSearchRequest{
+			Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "default"}},
+			Fields:      fields,
+			Limit:       100,
+			AccessVerbs: verbs,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		access := map[string]map[string]bool{}
+		for _, row := range rsp.Rows {
+			access[row.Key.Resource+"/"+row.Key.Name] = row.Access
+		}
+		return access
+	}
+
+	want := map[string]map[string]bool{
+		"dashboards/cpu":    {"update": true, "delete": false, "set_permissions": true},
+		"dashboards/memory": {"update": false, "delete": false, "set_permissions": false},
+		"folders/team":      {"update": false, "delete": false},
+		"folders/top":       {"update": false, "delete": false},
+		"playlists/tv":      {"update": false, "delete": false, "set_permissions": false},
+	}
+	require.Equal(t, want, search(utils.VerbUpdate, utils.VerbDelete, utils.VerbSetPermissions))
+	fields = []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_FOLDER}
+	require.Equal(t, want, search(utils.VerbUpdate, utils.VerbDelete, utils.VerbSetPermissions), "with the folders the search returned")
+
+	require.Equal(t, map[string]map[string]bool{
+		"dashboards/cpu": nil, "dashboards/memory": nil, "folders/team": nil, "folders/top": nil, "playlists/tv": nil,
+	}, search(), "nothing is checked unless asked")
+}
+
 // The tree is read from the index, so an index reopened from disk answers too.
 func TestGlobalIndexFolderTreeSurvivesReopening(t *testing.T) {
 	dir := t.TempDir()

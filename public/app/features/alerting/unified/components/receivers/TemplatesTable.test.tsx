@@ -1,3 +1,4 @@
+import { EditorView } from '@codemirror/view';
 import { render, screen, within } from 'test/test-utils';
 
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
@@ -69,6 +70,29 @@ describe('TemplatesTable', () => {
       AccessControlAction.AlertingNotificationsExternalRead,
       AccessControlAction.AlertingNotificationsExternalWrite,
     ]);
+  });
+
+  it('expands unwrapped template content with automatic height inside a constrained read-only editor', async () => {
+    const { user } = renderWithProvider([
+      { ...mockTemplates[3], content: `${'x'.repeat(600)}\nSecond line\nThird line` },
+    ]);
+    const row = screen.getByRole('row', { name: /no-provenance-template/i });
+    await user.click(within(row).getByRole('button', { expanded: false }));
+    const editor = await screen.findByRole('textbox', { name: 'Template content' });
+
+    expect(EditorView.findFromDOM(editor)?.state.doc.lines).toBe(3);
+    expect(editor).toHaveTextContent('Second lineThird line');
+    expect(EditorView.findFromDOM(editor)?.state.readOnly).toBe(true);
+    // The editor's sizing and gutter are not exposed through accessible roles.
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(editor.closest('.cm-editor')).toHaveStyle({ height: 'auto' });
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(editor.closest('.cm-editor')?.querySelector('.cm-lineNumbers')).not.toBeInTheDocument();
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(editor.closest('.cm-editor')?.parentElement?.parentElement?.parentElement).toHaveStyle({
+      minWidth: 0,
+      contain: 'inline-size',
+    });
   });
 
   it('shows "Imported" badge for templates with converted_prometheus provenance', () => {

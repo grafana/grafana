@@ -31,7 +31,9 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardControls, type DashboardControlsState } from './DashboardControls';
+import { DashboardDataLayerSet } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -312,6 +314,18 @@ describe('DashboardControls', () => {
         expectedHidden: ['otherSectionVar'],
       },
       {
+        title: 'should include edited panel ancestor section annotations in panel edit mode',
+        sceneBuilder: () => buildPanelModeAnnotationsScene('edit'),
+        expectedVisible: ['ancestorAnnotation'],
+        expectedHidden: ['hiddenAnnotation', 'otherSectionAnnotation'],
+      },
+      {
+        title: 'should include viewed panel ancestor section annotations in panel view mode',
+        sceneBuilder: () => buildPanelModeAnnotationsScene('view'),
+        expectedVisible: ['ancestorAnnotation'],
+        expectedHidden: ['hiddenAnnotation', 'otherSectionAnnotation'],
+      },
+      {
         title: 'should hide repeat local section variables in panel edit mode',
         sceneBuilder: buildPanelEditSceneWithRepeatVariable,
         expectedVisible: ['repeatSource'],
@@ -324,6 +338,17 @@ describe('DashboardControls', () => {
         expectedHidden,
         expectedUnique,
       });
+    });
+
+    it('updates the viewed panel section annotation controls when the section annotations change', async () => {
+      const { controls, ancestorSet } = buildPanelModeAnnotationsScene('view');
+      renderInGrafanaContext(<controls.Component model={controls} />);
+      expect(await screen.findByText('ancestorAnnotation')).toBeInTheDocument();
+
+      act(() => ancestorSet.setState({ annotationLayers: [sectionAnnotation('addedAnnotation')] }));
+
+      expect(await screen.findByText('addedAnnotation')).toBeInTheDocument();
+      expect(screen.queryByText('ancestorAnnotation')).not.toBeInTheDocument();
     });
 
     it('still mounts ScopesVariable.Component when panel edit variables override is active', async () => {
@@ -638,6 +663,19 @@ describe('DashboardControls', () => {
       renderInGrafanaContext(<controls.Component model={controls} />);
 
       expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
+    });
+
+    it.each([
+      [false, 'not show'],
+      [true, 'show'],
+    ])('should %2$s save button when Composer is over %1$s Editing', (composerEditing) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const controls = buildTestSceneWithEditable({ canSave: true, canEdit: true, isEditing: true });
+      getDashboard(controls).setState({ mode: 'composer', composerEditing, isDirty: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      const save = screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton);
+      expect(Boolean(save)).toBe(composerEditing);
     });
   });
 
@@ -1120,6 +1158,39 @@ function buildPanelViewVariablesScene() {
   dashboard.setState({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
 
   return { controls };
+}
+
+function sectionAnnotation(name: string, isHidden = false) {
+  return new DashboardAnnotationsDataLayer({
+    name,
+    isHidden,
+    isEnabled: false,
+    query: { name, enable: false, iconColor: 'red' },
+  });
+}
+
+function buildPanelModeAnnotationsScene(mode: 'edit' | 'view') {
+  const ancestorSet = new DashboardDataLayerSet({
+    annotationLayers: [sectionAnnotation('ancestorAnnotation'), sectionAnnotation('hiddenAnnotation', true)],
+  });
+  const { dashboard, controls, editedPanel } = buildPanelEditControlsScene({
+    uid: `panel-${mode}-annotations`,
+    editedPanelKey: 'edited-panel',
+    rows: [
+      new RowItem({ title: 'Ancestor row', $data: ancestorSet }),
+      new RowItem({
+        title: 'Other row',
+        $data: new DashboardDataLayerSet({ annotationLayers: [sectionAnnotation('otherSectionAnnotation')] }),
+      }),
+    ],
+    dashboardVariables: [],
+  });
+
+  if (mode === 'view') {
+    dashboard.setState({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
+  }
+
+  return { controls, ancestorSet };
 }
 
 function buildPanelEditSceneWithRepeatVariable() {

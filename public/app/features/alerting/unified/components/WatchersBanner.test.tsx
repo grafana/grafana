@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { byRole } from 'testing-library-selector';
 
 import { config, reportInteraction } from '@grafana/runtime';
+import { useFlagAlertingWatchersBanner } from '@grafana/runtime/internal';
 
 import { usePluginBridge } from '../hooks/usePluginBridge';
 
@@ -12,6 +13,12 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
 }));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagAlertingWatchersBanner: jest.fn(),
+}));
+const mockUseWatchersBannerFlag = jest.mocked(useFlagAlertingWatchersBanner);
 
 jest.mock('../hooks/usePluginBridge');
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
@@ -29,6 +36,7 @@ describe('WatchersBanner', () => {
     jest.mocked(reportInteraction).mockClear();
     localStorage.removeItem(dismissedKey);
     mockUsePluginBridge.mockReturnValue({ loading: false, installed: true });
+    mockUseWatchersBannerFlag.mockReturnValue(true);
   });
 
   it('renders the banner with a CTA to the Watchers page', () => {
@@ -36,6 +44,14 @@ describe('WatchersBanner', () => {
 
     expect(ui.banner.get()).toBeInTheDocument();
     expect(ui.openButton.get()).toHaveAttribute('href', expect.stringContaining('/a/grafana-assistant-app/watchers'));
+  });
+
+  it('does not render when the watchers banner flag is off', () => {
+    mockUseWatchersBannerFlag.mockReturnValue(false);
+
+    render(<WatchersBanner />);
+
+    expect(ui.banner.query()).not.toBeInTheDocument();
   });
 
   it('does not render when the Assistant plugin is not installed', () => {
