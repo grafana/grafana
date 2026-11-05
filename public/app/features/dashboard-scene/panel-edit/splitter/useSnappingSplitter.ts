@@ -143,7 +143,7 @@ export function useSnappingSplitter({
     [initialSize, usePixels, collapsePrimary, collapseBelowPixels, onPaneSizeChanged]
   );
 
-  const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
+  const splitter = useSplitter({
     direction: direction,
     dragPosition: dragPosition,
     handleSize: handleSize,
@@ -155,24 +155,29 @@ export function useSnappingSplitter({
     onSizeChanged,
   });
 
+  const containerProps = { ...splitter.containerProps };
+  const primaryProps = { ...splitter.primaryProps, style: { ...splitter.primaryProps.style } };
+  const secondaryProps = { ...splitter.secondaryProps, style: { ...splitter.secondaryProps.style } };
+  const splitterProps = { ...splitter.splitterProps, style: { ...splitter.splitterProps.style } };
+
   // Reopening mid-drag drops the closed-pane override, so the render puts back the configured size
   // over the one the drag already wrote, and the pane jumps until the next move. Write the drag's
   // size again before paint.
   useLayoutEffect(() => {
     const live = liveResize.current;
-    const primary = primaryProps.ref.current;
-    const secondary = secondaryProps.ref.current;
+    const primary = splitter.primaryProps.ref.current;
+    const secondary = splitter.secondaryProps.ref.current;
     if (state.collapsed || !live || !primary || !secondary) {
       return;
     }
 
     if (usePixels) {
-      (collapsePrimary ? primary : secondary).style.flexBasis = `${live.panePixels}px`;
+      (collapsePrimary ? primary : secondary).style.setProperty('flex-basis', `${live.panePixels}px`);
     } else {
-      primary.style.flexGrow = `${live.flexSize}`;
-      secondary.style.flexGrow = `${1 - live.flexSize}`;
+      primary.style.setProperty('flex-grow', `${live.flexSize}`);
+      secondary.style.setProperty('flex-grow', `${1 - live.flexSize}`);
     }
-  }, [state.collapsed, usePixels, collapsePrimary, primaryProps.ref, secondaryProps.ref]);
+  }, [state.collapsed, usePixels, collapsePrimary, splitter.primaryProps.ref, splitter.secondaryProps.ref]);
 
   const onToggleCollapse = useCallback(() => {
     liveResize.current = null;

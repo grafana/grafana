@@ -80,7 +80,7 @@ test.describe('Query Editor Next: Accessibility', { tag: ['@panels', '@queryEdit
   }) => {
     await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
-    await addQueryOrExpressionButton(page).click();
+    await moreAddOptionsButton(page).click();
     await page.getByRole('menuitem', { name: 'Add expression' }).click();
     await page.getByRole('button', { name: 'Math', exact: true }).click();
     await expect(page.locator('[data-query-sidebar-card="B"]')).toBeVisible();
