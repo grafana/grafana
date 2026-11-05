@@ -1268,9 +1268,6 @@
     }
   },
   "public/app/core/components/SuggestionsInput/SuggestionsInput.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    },
     "react-hooks/refs": {
       "count": 1
     }
