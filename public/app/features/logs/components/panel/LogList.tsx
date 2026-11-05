@@ -396,7 +396,6 @@ const LogListComponent = ({
         grammar
       )
     );
-    virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
   }, [
     forceEscape,
@@ -410,6 +409,12 @@ const LogListComponent = ({
     virtualization,
     wrapLogMessage,
   ]);
+
+  // Only wipe the cached row heights when something that can change how an already-rendered line looks changes.
+  useEffect(() => {
+    virtualization.resetLogLineSizes();
+    listRef.current?.resetAfterIndex(0);
+  }, [forceEscape, otelLogsFormattingEnabled, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
