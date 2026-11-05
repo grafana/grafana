@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type ReactElement, useCallback, useEffect, useMemo } from 'react';
+import { type ReactElement, useCallback, useEffect, useSyncExternalStore } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,7 +10,13 @@ import {
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
 } from '@grafana/runtime/internal';
-import { sceneGraph, type SceneVariable, useSceneObjectState, type VizPanel } from '@grafana/scenes';
+import {
+  sceneGraph,
+  SceneObjectStateChangedEvent,
+  type SceneVariable,
+  useSceneObjectState,
+  type VizPanel,
+} from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -253,7 +259,6 @@ interface ViewPanelControlsButtonProps {
 
 function ViewPanelControlsButton({ dashboard, viewPanel, active, onClick }: ViewPanelControlsButtonProps) {
   const isActionsPopoverEnabled = useFlagGrafanaPanelActionsPopover();
-  const panel = useMemo(() => findVizPanelByPathId(dashboard, viewPanel), [dashboard, viewPanel]);
 
   const button = (
     <Sidebar.Button
@@ -269,7 +274,39 @@ function ViewPanelControlsButton({ dashboard, viewPanel, active, onClick }: View
     return button;
   }
 
-  return panel ? <ViewPanelControlsButtonForPanel panel={panel}>{button}</ViewPanelControlsButtonForPanel> : null;
+  return (
+    <ViewPanelControlsButtonForPathId dashboard={dashboard} viewPanel={viewPanel}>
+      {button}
+    </ViewPanelControlsButtonForPathId>
+  );
+}
+
+function ViewPanelControlsButtonForPathId({
+  dashboard,
+  viewPanel,
+  children,
+}: {
+  dashboard: DashboardScene;
+  viewPanel: string;
+  children: ReactElement;
+}) {
+  const panel = useVizPanelByPathId(dashboard, viewPanel);
+
+  return panel ? <ViewPanelControlsButtonForPanel panel={panel}>{children}</ViewPanelControlsButtonForPanel> : null;
+}
+
+function useVizPanelByPathId(dashboard: DashboardScene, pathId: string): VizPanel | null {
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      // The panel can be added after the first render, e.g. a repeat clone once its variable resolves.
+      // State changes anywhere in the dashboard bubble up to it, so any of them can be that addition.
+      const sub = dashboard.subscribeToEvent(SceneObjectStateChangedEvent, onChange);
+      return () => sub.unsubscribe();
+    },
+    [dashboard]
+  );
+
+  return useSyncExternalStore(subscribe, () => findVizPanelByPathId(dashboard, pathId));
 }
 
 function ViewPanelControlsButtonForPanel({ panel, children }: { panel: VizPanel; children: ReactElement }) {
