@@ -395,9 +395,9 @@ describe('listing a collection kind', () => {
     );
   }
 
-  function datasources(group: string, version: string, names: string[]) {
+  function datasources(group: string, version: string, names: string[], spec: Record<string, unknown> = {}) {
     return http.get(`/apis/${group}/${version}/namespaces/:namespace/datasources`, () =>
-      HttpResponse.json({ items: names.map((name) => ({ metadata: { name }, spec: { title: name } })) })
+      HttpResponse.json({ items: names.map((name) => ({ metadata: { name }, spec: { title: name, ...spec } })) })
     );
   }
 
@@ -463,6 +463,19 @@ describe('listing a collection kind', () => {
         { group: 'loki.datasource.grafana.app', kind: 'DataSource' },
       ])
     ).resolves.toEqual([logs]);
+  });
+
+  // Classic file provisioning marks a data source read-only and leaves no manager annotation, so
+  // the annotation check alone would offer a resource no write can take over.
+  it('reports a read-only member as managed, keeping it out of migration', async () => {
+    server.use(
+      discovery([{ name: 'prometheus.datasource.grafana.app', version: 'v0alpha1', resource: 'datasources' }]),
+      datasources('prometheus.datasource.grafana.app', 'v0alpha1', ['file-prom'], { readOnly: true })
+    );
+
+    await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([
+      { uid: 'file-prom', title: 'file-prom', managed: true, group: 'prometheus.datasource.grafana.app' },
+    ]);
   });
 
   it('lists nothing when no group serves the collection', async () => {

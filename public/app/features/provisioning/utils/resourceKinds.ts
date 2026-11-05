@@ -35,7 +35,7 @@ export interface ListedResource {
   title: string;
   /** Immediate parent folder UID; undefined for root or non-folder-scoped kinds. */
   parentUid?: string;
-  /** Already owned by a manager (Git Sync, Terraform, …) — not a migration target. */
+  /** Owned by a manager (Git Sync, Terraform, …), or otherwise not writable — no migration target. */
   managed: boolean;
   /**
    * The API group serving this resource, for a kind whose registry group is a collection and so
@@ -492,7 +492,7 @@ async function listViaSearch(searchKind: string): Promise<ListedResource[]> {
 
 interface ApiserverListItem {
   metadata?: { name?: string; annotations?: Record<string, string> };
-  spec?: { title?: string };
+  spec?: { title?: string; readOnly?: boolean };
 }
 
 /**
@@ -508,7 +508,9 @@ function toListedResources(items: ApiserverListItem[] | undefined): ListedResour
     .map((item) => ({
       uid: item.metadata?.name ?? '',
       title: item.spec?.title || item.metadata?.name || '',
-      managed: isManaged(item),
+      // Classic file provisioning marks a data source read-only without a manager annotation, so
+      // the annotation alone would offer a resource no write can take over.
+      managed: isManaged(item) || item.spec?.readOnly === true,
     }))
     .filter((row) => row.uid);
 }
@@ -526,6 +528,9 @@ async function listViaApiserver(group: string, version: string, resource: string
  *
  * Membership is already established, so a declaration covers the member only by naming the
  * collection or the member itself -- a sibling's group covers nothing here.
+ *
+ * A pattern restricted to some of a collection's members is reported as the plain collection, so
+ * the members it excludes cannot be told from the ones it covers and are listed too.
  */
 function actsOnMember(
   collection: string,
