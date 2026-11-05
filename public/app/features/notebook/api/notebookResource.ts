@@ -167,6 +167,48 @@ export async function updateNotebookSpec(
 }
 
 /**
+ * Writes a notebook back exactly as the server holds it, so the server gives its cells ids.
+ *
+ * Built from a fresh read rather than from a scene, because the scene is not the stored notebook: a
+ * panel still waiting on its plugin's migration has had its original settings moved into the scene, and
+ * serializing it would overwrite them with the unmigrated panel. The read's resourceVersion goes back
+ * with the write, so a notebook someone saved in between is a conflict, not an overwrite.
+ */
+export async function assignNotebookCellIds(
+  uid: string
+): Promise<{ generation?: number; resourceVersion?: string; cells?: StoredCell[] }> {
+  const read = await dispatch(
+    dashboardAPIv2beta1.endpoints.getNotebook.initiate({ name: uid }, { subscribe: false, forceRefetch: true })
+  );
+
+  if ('error' in read && read.error) {
+    throw new Error(extractErrorMessage(read.error, 'Failed to read the notebook.'));
+  }
+  if (!read.data) {
+    throw new Error('The notebook could not be read, so the ids were not assigned.');
+  }
+
+  const result = await dispatch(
+    dashboardAPIv2beta1.endpoints.replaceNotebook.initiate({ name: uid, notebook: read.data }, { track: false })
+  );
+
+  if ('error' in result && result.error) {
+    if (isConflict(result.error)) {
+      throw new NotebookConflictError(
+        extractErrorMessage(result.error, 'The notebook changed while you were editing.')
+      );
+    }
+    throw new Error(extractErrorMessage(result.error, 'Failed to save the notebook.'));
+  }
+
+  return {
+    generation: result.data?.metadata?.generation,
+    resourceVersion: result.data?.metadata?.resourceVersion,
+    cells: storedCellsOf(result.data?.spec),
+  };
+}
+
+/**
  * The resourceVersion the server holds for a notebook right now, or undefined when it cannot be read.
  *
  * Uncached for the same reason as `updateNotebookSpec`'s read: a version left over from an earlier fetch

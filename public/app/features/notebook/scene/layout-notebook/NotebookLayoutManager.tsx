@@ -1122,6 +1122,8 @@ export class NotebookLayoutManager
     const cells = this.state.cells.map((cell) =>
       cell.clone({
         key: undefined,
+        // A copy of the layout is a copy of its cells, which are new cells with ids of their own.
+        id: undefined,
         body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
         ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
         ...(cell.state.$timeRange ? { $timeRange: cell.state.$timeRange.clone({ key: undefined }) } : {}),

@@ -596,6 +596,16 @@ describe('NotebookLayoutManager', () => {
         undefined,
       ]);
     });
+
+    it('gives every cell of a duplicated layout no id, since the copy is a new set of cells', () => {
+      const manager = buildManager(buildNarrativeCells(['a', 'b']), true);
+      manager.state.cells[0].setState({ id: '00000000-0000-4000-8000-000000000001' });
+
+      const copy = manager.duplicate();
+
+      expect(copy.state.cells.map((cell) => cell.state.id)).toEqual([undefined, undefined, undefined]);
+      expect(manager.state.cells[0].state.id).toBe('00000000-0000-4000-8000-000000000001');
+    });
   });
 
   describe('reporting the blocks people insert', () => {

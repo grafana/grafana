@@ -9,7 +9,7 @@ import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { codeCell, markdownCell, notebookSpec } from '../mutation-api/test-utils';
 import { type Spec as NotebookSpec } from '../types';
 
-import { createNotebook, NotebookConflictError, updateNotebook } from './notebookResource';
+import { assignNotebookCellIds, createNotebook, NotebookConflictError, updateNotebook } from './notebookResource';
 
 // The write dispatches through the app store; route that dispatch to a test store carrying the dashboard
 // v2beta1 API so the real RTK mutation, and the real base query that decides the patch content type, both
@@ -223,5 +223,53 @@ describe('createNotebook', () => {
       resourceVersion: '1755',
       cells: cellsOf(spec),
     });
+  });
+});
+
+describe('assignNotebookCellIds', () => {
+  beforeEach(() => {
+    testStore = createTestStore();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('reads the notebook and writes it back whole, carrying the version it read', async () => {
+    const spec = notebookSpec();
+    const fetch = jest
+      .fn()
+      .mockReturnValueOnce(of(createFetchResponse(savedNotebook(spec))))
+      .mockReturnValueOnce(of(createFetchResponse(savedNotebook(spec, 3))));
+    setBackendSrv({ fetch } as unknown as BackendSrv);
+
+    const result = await assignNotebookCellIds('nb-1');
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const [read, write] = fetch.mock.calls.map(([request]) => request);
+    expect(read.method).toBe('GET');
+    expect(write.method).toBe('PUT');
+    expect(write.data.spec).toEqual(spec);
+    expect(write.data.metadata.resourceVersion).toBe('1755');
+    expect(result).toEqual({ generation: 3, resourceVersion: '1755', cells: cellsOf(spec) });
+  });
+
+  it('does not write when the notebook cannot be read', async () => {
+    const fetch = jest.fn().mockReturnValue(throwError(() => ({ status: 404, data: { message: 'not found' } })));
+    setBackendSrv({ fetch } as unknown as BackendSrv);
+
+    await expect(assignNotebookCellIds('nb-1')).rejects.toThrow();
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a conflict as one, so a caller can tell it from a failure', async () => {
+    const spec = notebookSpec();
+    const fetch = jest
+      .fn()
+      .mockReturnValueOnce(of(createFetchResponse(savedNotebook(spec))))
+      .mockReturnValueOnce(throwError(() => ({ status: 409, data: { message: 'the object has been modified' } })));
+    setBackendSrv({ fetch } as unknown as BackendSrv);
+
+    await expect(assignNotebookCellIds('nb-1')).rejects.toBeInstanceOf(NotebookConflictError);
   });
 });

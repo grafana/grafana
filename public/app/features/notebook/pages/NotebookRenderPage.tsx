@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
@@ -80,11 +80,17 @@ interface NotebookRenderDocumentProps {
 }
 
 function NotebookRenderDocument({ scene, reportRenderComplete }: NotebookRenderDocumentProps) {
+  // This tab photographs the notebook, so it must not write to it or re-query underneath itself.
+  // `abandon` is one-way, which is why the page evicts this scene from the cache on unmount. A layout
+  // effect, because activation is when autosave starts and a write it begins there cannot be called
+  // back by an abandon that comes after it: the scene's own component activates it in a passive effect,
+  // and those run before this component's, so an abandon placed beside them would be too late.
+  useLayoutEffect(() => {
+    scene.autosave.abandon();
+  }, [scene]);
+
   useEffect(() => {
     const deactivate = scene.activate();
-    // This tab photographs the notebook, so it must not write to it or re-query underneath itself.
-    // `abandon` is one-way, which is why the page evicts this scene from the cache on unmount.
-    scene.autosave.abandon();
     scene.state.refreshPicker.setState({ refresh: '' });
     // The sheet has no time picker, so the header has to say which range the panels show.
     scene.state.body.setState({ showTimeRange: true });
