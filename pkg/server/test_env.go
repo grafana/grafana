@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -43,7 +42,6 @@ func ProvideTestEnv(
 	decryptService decrypt.DecryptService,
 	quotaGetter quotas.QuotaGetter,
 	natsConfig *infranats.Config,
-	restConfigProvider apiserver.RestConfigProvider,
 ) (*TestEnv, error) {
 	return &TestEnv{
 		TestingT:                testingT,
@@ -63,7 +61,6 @@ func ProvideTestEnv(
 		DecryptService:          decryptService,
 		QuotaGetter:             quotaGetter,
 		NATSConfig:              natsConfig,
-		RestConfigProvider:      restConfigProvider,
 	}, nil
 }
 
@@ -90,6 +87,4 @@ type TestEnv struct {
 	QuotaGetter             quotas.QuotaGetter
 	// NATSConfig lets a test dial its own client to the embedded NATS server.
 	NATSConfig *infranats.Config
-
-	RestConfigProvider apiserver.RestConfigProvider
 }

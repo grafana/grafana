@@ -98,7 +98,7 @@ func TestIntegrationGetUserTeamMembershipsByUIDWithoutUsersAPI(t *testing.T) {
 					}, 10*time.Second, 100*time.Millisecond)
 
 					t.Run("background helper", func(t *testing.T) {
-						cfg, err := helper.GetEnv().RestConfigProvider.GetRestConfig(t.Context())
+						cfg, err := org.Admin.GetRestConfig(t.Context())
 						require.NoError(t, err)
 						cfg = dynamic.ConfigFor(clientrest.CopyConfig(cfg))
 						cfg.GroupVersion = &iamv0alpha1.GroupVersion
