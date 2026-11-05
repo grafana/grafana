@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/clientauth"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -400,6 +401,40 @@ func TestManifestWatcher_EmptyListKeepsPreviousSet(t *testing.T) {
 		return true, &unstructured.UnstructuredList{}, nil
 	})
 	w.runPollCycle(t.Context())
+	require.Len(t, w.Manifests(), 1)
+}
+
+func TestManifestWatcher_EmptyListWarnsOnceThenDebug(t *testing.T) {
+	// #137058: an install with no app manifests is empty for as long as it
+	// runs. The first empty poll warns (both the per-source line and the
+	// cycle line); later ones log at debug until a list comes back non-empty.
+	empty := func(k8stesting.Action) (bool, runtime.Object, error) {
+		return true, &unstructured.UnstructuredList{}, nil
+	}
+	client := fakeManifestClient()
+	client.PrependReactor("list", "appmanifests", empty)
+	logger := &logtest.Fake{}
+	w := newManifestWatcher(appManifestSources(client), 0, nil, logger, nil)
+
+	w.runPollCycle(t.Context())
+	require.Equal(t, 2, logger.WarnLogs.Calls)
+	require.Equal(t, 0, logger.DebugLogs.Calls)
+
+	w.runPollCycle(t.Context())
+	w.runPollCycle(t.Context())
+	require.Equal(t, 2, logger.WarnLogs.Calls, "an empty list must not warn on every poll")
+	require.Equal(t, 4, logger.DebugLogs.Calls)
+
+	// A non-empty list resets it, so a later empty list is worth a warning again.
+	client2 := fakeManifestClient(
+		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
+	)
+	w.sources = appManifestSources(client2)
+	w.runPollCycle(t.Context())
+	require.Len(t, w.Manifests(), 1)
+	client2.PrependReactor("list", "appmanifests", empty)
+	w.runPollCycle(t.Context())
+	require.Equal(t, 4, logger.WarnLogs.Calls)
 	require.Len(t, w.Manifests(), 1)
 }
 
