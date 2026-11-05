@@ -6622,6 +6622,20 @@
     },
     {
       "metadata": {
+        "name": "writeBodyTargetGuard",
+        "resourceVersion": "1793919021805",
+        "creationTimestamp": "2026-11-05T22:50:21Z"
+      },
+      "spec": {
+        "description": "Guard write body target",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "zanzana",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2024-06-19T13:59:47Z"
