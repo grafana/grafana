@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"encoding/json"
+	"path"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -15,10 +16,13 @@ func TestIntegrationProvisioning_LocalRepositoryAllowsSecureValues(t *testing.T)
 	helper := sharedHelper(t)
 
 	const repo = "local-secure-values"
+	// Its own directory and folder scope: an instance-scoped repository over the
+	// shared provisioning path outlives this test on the shared server and claims
+	// resources other tests expect to be unmanaged.
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:       repo,
-		LocalPath:  helper.ProvisioningPath,
-		SyncTarget: "instance",
+		LocalPath:  path.Join(helper.ProvisioningPath, repo),
+		SyncTarget: "folder",
 		Workflows:  []string{"write"},
 	})
 
