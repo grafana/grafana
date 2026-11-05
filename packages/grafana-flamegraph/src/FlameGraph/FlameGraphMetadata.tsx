@@ -5,6 +5,7 @@ import { getValueFormat, type GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { type ClickedItemData } from '../types';
+import { getProfilePercentage } from '../utils';
 
 import { type FlameGraphDataContainer } from './dataTransform';
 
@@ -52,7 +53,7 @@ const FlameGraphMetadata = memo(
     );
 
     if (sandwichedLabel) {
-      const percentValue = percentOfTotal(totalTicks, totalProfileTicks);
+      const percentValue = getProfilePercentage({ value: totalTicks, total: totalProfileTicks });
 
       parts.push(
         <Tooltip key={'sandwich'} content={sandwichedLabel} placement="top">
@@ -76,7 +77,7 @@ const FlameGraphMetadata = memo(
     }
 
     if (focusedItem) {
-      const percentValue = percentOfTotal(focusedItem.item.value, totalTicks);
+      const percentValue = getProfilePercentage({ value: focusedItem.item.value, total: totalTicks });
       const iconName = percentValue > 0 ? 'eye' : 'exclamation-circle';
 
       parts.push(
@@ -131,9 +132,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: '8px 0',
   }),
 });
-
-function percentOfTotal(value: number, total: number) {
-  return total > 0 ? Math.round(10000 * (value / total)) / 100 : 0;
-}
 
 export default FlameGraphMetadata;
