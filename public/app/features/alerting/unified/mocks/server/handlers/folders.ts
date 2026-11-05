@@ -57,13 +57,19 @@ const toAccessInfo = (folder: FolderDTO): FolderAccessInfo => ({
   accessControl: folder.accessControl ?? {},
 });
 
-/** The `.../folders/:name/parents` response. The chain ends with the folder itself. */
-const toParents = (folder: FolderDTO): FolderInfoList => ({
-  kind: 'FolderInfoList',
-  apiVersion: API_VERSION,
-  metadata: {},
-  items: [{ name: folder.uid, title: folder.title, parent: folder.parentUid }],
-});
+/** The `.../folders/:name/parents` response: the configured ancestors root-first, ending with the folder itself. */
+const toParents = (folder: FolderDTO): FolderInfoList => {
+  const ancestors = folder.parents ?? [];
+  return {
+    kind: 'FolderInfoList',
+    apiVersion: API_VERSION,
+    metadata: {},
+    items: [
+      ...ancestors.map(({ uid, title }, index) => ({ name: uid, title, parent: ancestors[index - 1]?.uid })),
+      { name: folder.uid, title: folder.title, parent: folder.parentUid ?? ancestors.at(-1)?.uid },
+    ],
+  };
+};
 
 /**
  * Folder/access/parents handlers for a single folder. Missing fields are filled from `mockFolder`. Scoped to the
@@ -79,7 +85,10 @@ export const getFolderHandlers = (folder: Partial<FolderDTO>) => {
   ];
 };
 
-/** Access handler that reports the given access control for every folder. */
+/**
+ * Access handler that reports the given access control for every folder. Only `/access` is overridden: the folder
+ * itself must exist, either in `DEFAULT_FOLDERS` or seeded with `getFolderHandlers`, or the facade reports a 404.
+ */
 export const getFolderAccessHandler = (accessControl: FolderDTO['accessControl']) =>
   http.get(`${FOLDER_BY_NAME}/access`, () => HttpResponse.json(toAccessInfo(mockFolder({ accessControl }))));
 

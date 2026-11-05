@@ -66,7 +66,8 @@ export const setAlertmanagerChoices = (alertmanagersChoice: AlertmanagerChoice, 
 };
 
 /**
- * Makes the mock server respond with different folder access control settings
+ * Makes the mock server report the given access control for every folder. Only access is overridden: a folder outside
+ * `DEFAULT_FOLDERS` still has to be seeded with `setFolderResponse`, or the folder facade reports it as missing.
  */
 export const setFolderAccessControl = (accessControl: FolderDTO['accessControl']) => {
   server.use(getFolderAccessHandler(accessControl));
