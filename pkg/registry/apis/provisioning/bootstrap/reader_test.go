@@ -112,3 +112,70 @@ secure:
 		assert.Equal(t, "tok-from-env", list[0], "references inside slices are expanded")
 	})
 }
+
+// One malformed document used to discard every object already read and abort the directory scan,
+// so a single bad file blocked the whole bootstrap.
+func TestReadManifests_ReturnsValidObjectsAlongsideErrors(t *testing.T) {
+	fsys := fstest.MapFS{
+		"a-good.yaml": {Data: []byte(`
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: good-a
+spec:
+  title: A
+`)},
+		"b-bad.yaml": {Data: []byte("this: [is: not valid yaml\n")},
+		"c-mixed.yaml": {Data: []byte(`
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: good-c
+---
+kind: Repository
+metadata:
+  name: missing-api-version
+`)},
+		"d-good.yaml": {Data: []byte(`
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Connection
+metadata:
+  name: good-d
+`)},
+	}
+
+	objs, err := ReadManifests(fsys, ".")
+	require.Error(t, err, "the failures must still be reported")
+
+	names := make([]string, 0, len(objs))
+	for _, obj := range objs {
+		names = append(names, obj.GetName())
+	}
+	assert.Equal(t, []string{"good-a", "good-c", "good-d"}, names,
+		"files after the bad one, and valid documents beside an invalid one, must survive")
+}
+
+func TestReadManifests_ReportsUnresolvableSecretReference(t *testing.T) {
+	fsys := fstest.MapFS{
+		"a-bad.yaml": {Data: []byte(`
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: bad
+secure:
+  token:
+    create: "$__file{/no/such/file}"
+`)},
+		"b-good.yaml": {Data: []byte(`
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: good
+`)},
+	}
+
+	objs, err := ReadManifests(fsys, ".")
+	require.Error(t, err)
+	require.Len(t, objs, 1)
+	assert.Equal(t, "good", objs[0].GetName())
+}

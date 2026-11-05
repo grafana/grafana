@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -203,4 +205,177 @@ func TestApply_OneFailureDoesNotAbortBatch(t *testing.T) {
 	})
 
 	assert.True(t, applied["r"], "repository should still be applied after the connection fails")
+}
+
+func withSecureCreate(obj *unstructured.Unstructured, key, value string) *unstructured.Unstructured {
+	if err := unstructured.SetNestedField(obj.Object, value, "secure", key, "create"); err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// A Connection manifest replayed unchanged on every boot used to resend secure.*.create, which
+// admission treats as an OAuth app change: it removes the authorized token and forces reauthorization.
+func TestApply_DoesNotReplayUnchangedSecureValues(t *testing.T) {
+	stored := managed(manifest("Connection", "c"), utils.ManagerKindFileProvisioning, managerIdentity)
+	stored.SetAnnotations(map[string]string{
+		utils.AnnoKeyManagerKind:     string(utils.ManagerKindFileProvisioning),
+		utils.AnnoKeyManagerIdentity: managerIdentity,
+		secureDigestAnnotation:       secureDigest(withSecureCreate(manifest("Connection", "c"), "clientSecret", "same-secret")),
+	})
+
+	applier, client := newApplier(t, stored)
+
+	var updated *unstructured.Unstructured
+	client.PrependReactor("update", "connections", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		updated = action.(k8stesting.UpdateAction).GetObject().(*unstructured.Unstructured)
+		return true, updated, nil
+	})
+
+	applier.Apply(context.Background(), []*unstructured.Unstructured{
+		withSecureCreate(manifest("Connection", "c"), "clientSecret", "same-secret"),
+	})
+
+	require.NotNil(t, updated, "the connection should still be reconciled")
+	_, hasCreate, _ := unstructured.NestedString(updated.Object, "secure", "clientSecret", "create")
+	assert.False(t, hasCreate, "an unchanged secret must not be re-created")
+}
+
+func TestApply_ReplaysChangedSecureValues(t *testing.T) {
+	stored := manifest("Connection", "c")
+	stored.SetAnnotations(map[string]string{
+		utils.AnnoKeyManagerKind:     string(utils.ManagerKindFileProvisioning),
+		utils.AnnoKeyManagerIdentity: managerIdentity,
+		secureDigestAnnotation:       secureDigest(withSecureCreate(manifest("Connection", "c"), "clientSecret", "old-secret")),
+	})
+
+	applier, client := newApplier(t, stored)
+
+	var updated *unstructured.Unstructured
+	client.PrependReactor("update", "connections", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		updated = action.(k8stesting.UpdateAction).GetObject().(*unstructured.Unstructured)
+		return true, updated, nil
+	})
+
+	applier.Apply(context.Background(), []*unstructured.Unstructured{
+		withSecureCreate(manifest("Connection", "c"), "clientSecret", "rotated-secret"),
+	})
+
+	require.NotNil(t, updated)
+	create, _, _ := unstructured.NestedString(updated.Object, "secure", "clientSecret", "create")
+	assert.Equal(t, "rotated-secret", create, "a changed manifest value must still rotate the secret")
+}
+
+func TestApply_RecordsSecureDigestOnCreate(t *testing.T) {
+	applier, client := newApplier(t)
+
+	var created *unstructured.Unstructured
+	client.PrependReactor("create", "connections", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		created = action.(k8stesting.CreateAction).GetObject().(*unstructured.Unstructured)
+		return true, created, nil
+	})
+
+	obj := withSecureCreate(manifest("Connection", "c"), "clientSecret", "s3cret")
+	applier.Apply(context.Background(), []*unstructured.Unstructured{obj})
+
+	require.NotNil(t, created)
+	assert.NotEmpty(t, created.GetAnnotations()[secureDigestAnnotation],
+		"the digest must be stored so the next boot can tell the value is unchanged")
+	create, _, _ := unstructured.NestedString(created.Object, "secure", "clientSecret", "create")
+	assert.Equal(t, "s3cret", create, "the first apply must still create the secret")
+}
+
+func TestSecureDigest_ExcludesReferencesAndSaltsByIdentity(t *testing.T) {
+	assert.Empty(t, secureDigest(manifest("Connection", "c")), "no secure block means no digest")
+
+	refOnly := manifest("Connection", "c")
+	require.NoError(t, unstructured.SetNestedField(refOnly.Object, "some-ref", "secure", "clientSecret", "name"))
+	assert.Empty(t, secureDigest(refOnly), "a reference is not a create directive")
+
+	here := withSecureCreate(manifest("Connection", "c"), "clientSecret", "same")
+	elsewhere := withSecureCreate(manifest("Connection", "c"), "clientSecret", "same")
+	elsewhere.SetNamespace("org-2")
+	assert.NotEqual(t, secureDigest(here), secureDigest(elsewhere),
+		"the same secret on another org must not produce the same digest")
+}
+
+// A Repository kind from an unrelated API group was routed to the provisioning API, because the
+// endpoint was selected by kind alone.
+func TestApply_SkipsSupportedKindFromForeignGroup(t *testing.T) {
+	applier, client := newApplier(t)
+
+	called := false
+	client.PrependReactor("*", "*", func(k8stesting.Action) (bool, runtime.Object, error) {
+		called = true
+		return true, nil, nil
+	})
+
+	obj := manifest("Repository", "r")
+	obj.SetAPIVersion("example.com/v1")
+	applier.Apply(context.Background(), []*unstructured.Unstructured{obj})
+
+	assert.False(t, called, "only provisioning.grafana.app manifests may reach the provisioning API")
+}
+
+func TestApply_RejectsUnservedAPIVersion(t *testing.T) {
+	applier, client := newApplier(t)
+
+	called := false
+	client.PrependReactor("*", "*", func(k8stesting.Action) (bool, runtime.Object, error) {
+		called = true
+		return true, nil, nil
+	})
+
+	obj := manifest("Repository", "r")
+	obj.SetAPIVersion(repoGVR.Group + "/v1beta1")
+	applier.Apply(context.Background(), []*unstructured.Unstructured{obj})
+
+	assert.False(t, called, "a version this Grafana does not serve must not be rewritten to the served one")
+}
+
+// A status patch landing between the read and the write made the copied resource version stale;
+// the conflict was only logged, leaving the configuration change unapplied until the next boot.
+func TestApply_RetriesOnResourceVersionConflict(t *testing.T) {
+	stored := managed(manifest("Repository", "r"), utils.ManagerKindFileProvisioning, managerIdentity)
+	applier, client := newApplier(t, stored)
+
+	attempts := 0
+	client.PrependReactor("update", "repositories", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		attempts++
+		if attempts == 1 {
+			return true, nil, apierrors.NewConflict(repoGVR.GroupResource(), "r", assert.AnError)
+		}
+		return true, action.(k8stesting.UpdateAction).GetObject(), nil
+	})
+
+	applier.Apply(context.Background(), []*unstructured.Unstructured{manifest("Repository", "r")})
+
+	assert.Equal(t, 2, attempts, "a conflicting update must be retried against a fresh read")
+}
+
+func TestApply_RetriesWhenAnotherReplicaCreatesFirst(t *testing.T) {
+	applier, client := newApplier(t)
+
+	client.PrependReactor("create", "repositories", func(k8stesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewAlreadyExists(repoGVR.GroupResource(), "r")
+	})
+
+	gets := 0
+	client.PrependReactor("get", "repositories", func(k8stesting.Action) (bool, runtime.Object, error) {
+		gets++
+		if gets == 1 {
+			return true, nil, apierrors.NewNotFound(repoGVR.GroupResource(), "r")
+		}
+		return true, managed(manifest("Repository", "r"), utils.ManagerKindFileProvisioning, managerIdentity), nil
+	})
+
+	updated := false
+	client.PrependReactor("update", "repositories", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		updated = true
+		return true, action.(k8stesting.UpdateAction).GetObject(), nil
+	})
+
+	applier.Apply(context.Background(), []*unstructured.Unstructured{manifest("Repository", "r")})
+
+	assert.True(t, updated, "losing the create race must fall through to the update path")
 }

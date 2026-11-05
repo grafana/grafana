@@ -148,6 +148,11 @@ func TestIntegrationProvisioningBootstrap(t *testing.T) {
 		assert.False(t, mgr.AllowsEdits, "bootstrap resource should be read-only in the UI")
 	})
 
+	t.Run("records the secure digest so a reapplied manifest does not rotate the token", func(t *testing.T) {
+		assert.NotEmpty(t, ghRepo.GetAnnotations()["provisioning.grafana.app/bootstrap-secure-digest"],
+			"the digest must survive admission; without it every boot re-creates the secret")
+	})
+
 	t.Run("applies multiple repositories across files and documents", func(t *testing.T) {
 		for _, name := range []string{"multi-a", "multi-b"} {
 			require.EventuallyWithT(t, func(c *assert.CollectT) {

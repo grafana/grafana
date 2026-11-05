@@ -29,6 +29,10 @@ const defaultNamespace = "default"
 // ReadManifests reads every *.yaml/*.yml file under dir in fsys, splits multi-document files,
 // decodes each document into an unstructured object, expands secret references in string values,
 // and validates the result. Files are processed in sorted order for deterministic behaviour.
+//
+// Every document is read independently: the objects that parsed are returned even when others
+// failed, so one bad file cannot block the rest of the bootstrap. The returned error joins each
+// failure and is non-nil alongside a non-empty result.
 func ReadManifests(fsys fs.FS, dir string) ([]*unstructured.Unstructured, error) {
 	entries, err := fs.ReadDir(fsys, dir)
 	if err != nil {
@@ -48,46 +52,55 @@ func ReadManifests(fsys fs.FS, dir string) ([]*unstructured.Unstructured, error)
 	sort.Strings(names)
 
 	var objs []*unstructured.Unstructured
+	var errs []error
 	for _, name := range names {
 		data, err := fs.ReadFile(fsys, path.Join(dir, name))
 		if err != nil {
-			return nil, fmt.Errorf("read manifest %q: %w", name, err)
+			errs = append(errs, fmt.Errorf("read manifest %q: %w", name, err))
+			continue
 		}
 		fileObjs, err := decodeManifests(data)
-		if err != nil {
-			return nil, fmt.Errorf("decode manifest %q: %w", name, err)
-		}
 		objs = append(objs, fileObjs...)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("manifest %q: %w", name, err))
+		}
 	}
-	return objs, nil
+	return objs, errors.Join(errs...)
 }
 
 // decodeManifests splits a (possibly multi-document) YAML/JSON byte stream into unstructured
-// objects, interpolating and validating each one.
+// objects, interpolating and validating each one. Documents that fail are reported in the joined
+// error; the ones that succeeded are still returned.
 func decodeManifests(data []byte) ([]*unstructured.Unstructured, error) {
 	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(data), 4096)
 	var objs []*unstructured.Unstructured
-	for {
+	var errs []error
+	for i := 0; ; i++ {
 		var raw map[string]any
 		if err := decoder.Decode(&raw); err != nil {
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			return nil, err
+			// A decode failure leaves the stream position unreliable, so stop reading this file
+			// instead of risking a loop on the same document.
+			errs = append(errs, fmt.Errorf("document %d: %w", i, err))
+			break
 		}
 		if len(raw) == 0 {
 			continue // skip empty documents (e.g. a trailing `---`)
 		}
 		obj := &unstructured.Unstructured{Object: raw}
 		if err := interpolate(obj); err != nil {
-			return nil, err
+			errs = append(errs, fmt.Errorf("document %d: %w", i, err))
+			continue
 		}
 		if err := validate(obj); err != nil {
-			return nil, err
+			errs = append(errs, fmt.Errorf("document %d: %w", i, err))
+			continue
 		}
 		objs = append(objs, obj)
 	}
-	return objs, nil
+	return objs, errors.Join(errs...)
 }
 
 // interpolate walks every string leaf of the object and expands $__env{VAR} / $__file{/path}
