@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 )
 
 func TestReceiverFingerprint(t *testing.T) {
@@ -77,9 +78,28 @@ func TestReceiverFingerprint(t *testing.T) {
 }
 
 func TestNewReceiver(t *testing.T) {
-	r := NewReceiver("my-receiver", nil, models.ProvenanceAPI)
+	r := NewReceiver("custom-uid", "my-receiver", nil, models.ProvenanceAPI)
 
-	assert.Equal(t, ReceiverUID("my-receiver"), r.UID)
+	assert.Equal(t, ResourceUID("custom-uid"), r.UID)
 	assert.Equal(t, ReceiverFingerprint(r), r.Version)
 	assert.Equal(t, models.ProvenanceAPI, r.Provenance)
+}
+
+func TestResolveReceiverUID(t *testing.T) {
+	assert.Equal(t, ResourceUID("persisted"), ResolveReceiverUID("persisted", "name"), "a UID that is stored is used as it is")
+	assert.Equal(t, ReceiverUID("name"), ResolveReceiverUID("", "name"), "without one it is derived from the name")
+}
+
+func TestReceiversToModel_UIDs(t *testing.T) {
+	got := ReceiversToModel([]*store.ReceiverDB{
+		{UID: "persisted", Name: "has uid"},
+		{Name: "no uid"},
+	})
+
+	require.Len(t, got, 2)
+	require.Contains(t, got, ResourceUID("persisted"))
+	assert.Equal(t, "has uid", got["persisted"].Name)
+	assert.Equal(t, ResourceUID("persisted"), got["persisted"].UID)
+	require.Contains(t, got, ReceiverUID("no uid"))
+	assert.Equal(t, ReceiverUID("no uid"), got[ReceiverUID("no uid")].UID)
 }

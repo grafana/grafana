@@ -767,12 +767,28 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
+				b.runGarbageCollectionWithLease(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
 			}
 		}
 	}()
 
 	return nil
+}
+
+func (b *kvStorageBackend) runGarbageCollectionWithLease(ctx context.Context, cutoffTimeStamp int64) {
+	// Own the complete resource and blob pass, including dry runs. This lease
+	// coordinates collectors; it does not fence in-flight storage operations.
+	ctx, release, err := b.acquireStorageLeases(ctx, []string{"garbage-collection"}, lease.WithAutoRenew())
+	if err != nil {
+		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+			b.log.Debug("Garbage collection is running on another instance; skipping this cycle")
+		} else {
+			b.log.Error("Failed to acquire garbage collection lease", "error", err)
+		}
+		return
+	}
+	defer release()
+	b.runGarbageCollection(ctx, cutoffTimeStamp)
 }
 
 func (b *kvStorageBackend) collectBlobs(ctx context.Context) {

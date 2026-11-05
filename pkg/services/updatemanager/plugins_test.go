@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
@@ -56,7 +55,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				},
 			},
 			updateCheckURL: updateCheckURL,
-			updateChecker:  pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+			updateChecker:  pluginchecker.ProvideService(provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 			features:       &featuremgmt.FeatureManager{},
 		}
 
@@ -102,7 +101,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				},
 			},
 			updateCheckURL: updateCheckURL,
-			updateChecker:  pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+			updateChecker:  pluginchecker.ProvideService(provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 		}
 
 		update, exists := svc.HasUpdate(context.Background(), "test-ds")
@@ -219,7 +218,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			log:            log.NewNopLogger(),
 			tracer:         tracing.InitializeTracerForTest(),
 			updateCheckURL: updateCheckURL,
-			updateChecker:  pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+			updateChecker:  pluginchecker.ProvideService(provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 			features:       &featuremgmt.FeatureManager{},
 		}
 
@@ -293,7 +292,7 @@ func TestProvidePluginsService(t *testing.T) {
 			&pluginfakes.FakePluginInstaller{},
 			tracing.InitializeTracerForTest(),
 			&featuremgmt.FeatureManager{},
-			pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+			pluginchecker.ProvideService(provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 		)
 		require.NoError(t, err)
 		require.Equal(t, "token", svc.updateCheckToken)
@@ -405,7 +404,7 @@ func TestPluginsService_PluginsAutoUpdateFlag(t *testing.T) {
 				log:            log.NewNopLogger(),
 				tracer:         tracing.InitializeTracerForTest(),
 				updateCheckURL: updateCheckURL,
-				updateChecker:  pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+				updateChecker:  pluginchecker.ProvideService(provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 				pluginStore:    &pluginstore.FakePluginStore{PluginList: []pluginstore.Plugin{}},
 				pluginInstaller: &pluginfakes.FakePluginInstaller{
 					AddFunc: func(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {

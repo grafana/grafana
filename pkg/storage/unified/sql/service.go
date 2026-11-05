@@ -653,7 +653,6 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
 	for _, desc := range []*grpc.ServiceDesc{
 		&resourcepb.ResourceStore_ServiceDesc,
-		&resourcepb.ResourceStats_ServiceDesc,
 		&resourcepb.BulkStore_ServiceDesc,
 		&resourcepb.BlobStore_ServiceDesc,
 		&resourcepb.BlobStoreStreaming_ServiceDesc,

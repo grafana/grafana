@@ -611,7 +611,7 @@ func TestReceiverService_Create(t *testing.T) {
 					),
 				),
 			)),
-			expectedStored: new(v1.NewReceiver(lineIntegration.Name, []*v1.PostableGrafanaReceiver{
+			expectedStored: new(v1.NewReceiver(v1.ReceiverUID(lineIntegration.Name), lineIntegration.Name, []*v1.PostableGrafanaReceiver{
 				{
 					UID:                   lineIntegration.UID,
 					Name:                  lineIntegration.Name,

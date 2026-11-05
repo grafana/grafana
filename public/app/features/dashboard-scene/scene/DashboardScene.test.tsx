@@ -458,6 +458,37 @@ describe('DashboardScene', () => {
           expect(getDashboardMode(scene.state)).toBe('view');
         });
       });
+
+      describe('onOpenSettings', () => {
+        it('warns instead of opening settings when the viewport is mobile-sized', () => {
+          setTestFlags({ 'grafana.mobileEditDeprecation': true });
+          setMobileViewport();
+          const scene = buildTestScene({ meta: { canEdit: true, canSave: true } });
+          scene.activate();
+          const partialSpy = jest.spyOn(locationService, 'partial');
+          const emitSpy = jest.spyOn(appEvents, 'emit');
+
+          scene.onOpenSettings();
+
+          expect(partialSpy).not.toHaveBeenCalled();
+          expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+            'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+          ]);
+        });
+
+        it('still opens settings for a session already in full editing', () => {
+          const scene = buildTestScene({ meta: { canEdit: true, canSave: true } });
+          scene.activate();
+          scene.onEnterEditMode();
+          setTestFlags({ 'grafana.mobileEditDeprecation': true });
+          setMobileViewport();
+          const partialSpy = jest.spyOn(locationService, 'partial');
+
+          scene.onOpenSettings();
+
+          expect(partialSpy).toHaveBeenCalledWith({ editview: 'settings' });
+        });
+      });
     });
 
     describe('Viewing and Editing modes', () => {

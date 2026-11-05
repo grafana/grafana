@@ -231,9 +231,11 @@ func TestBlobStreamLocalClientErrorResultConversion(t *testing.T) {
 	put, err := client.PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, Value: []byte("data")})
 	require.Nil(t, put)
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Equal(t, int32(403), rpcErrorResult(t, err).GetCode())
 	get, err := client.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, MustProxyBytes: true})
 	require.Nil(t, get)
 	require.Equal(t, codes.NotFound, status.Code(err))
+	require.Equal(t, int32(404), rpcErrorResult(t, err).GetCode())
 }
 
 func TestBlobStreamLocalClientInterceptorWithErrorConversion(t *testing.T) {
@@ -304,9 +306,11 @@ func TestBlobStreamRemoteTransportAndAuthorization(t *testing.T) {
 	require.Equal(t, int64(5<<20), rsp.Size)
 
 	ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
+	// The failure is the terminal CloseAndRecv status, not a response body.
 	denied, err := upload(1)
-	require.NoError(t, err)
-	require.Equal(t, int32(403), denied.Error.Code)
+	require.Nil(t, denied)
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Equal(t, int32(403), rpcErrorResult(t, err).GetCode())
 	ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return allow() }
 	created, err := srv.Create(ctxWithUserInNs("default"), &resourcepb.CreateRequest{
 		Key:   key,
