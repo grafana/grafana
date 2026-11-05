@@ -25,7 +25,7 @@ title: 'Short URL HTTP API '
 
 {{< admonition type="note" >}}
 
-This HTTP API is deprecated since September 2026. Use the [Short URL HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/short_url) instead. 
+This HTTP API is deprecated since September 2026. Use the [Short URL HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/short_url) instead.
 
 Refer to [Migrate from the legacy Short URL API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/short_url/#migrate-from-the-legacy-short-url-api) to learn more about the new API, and how to migrate.
 
