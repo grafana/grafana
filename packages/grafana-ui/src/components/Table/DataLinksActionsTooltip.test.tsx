@@ -54,6 +54,115 @@ describe('DataLinksActionsTooltip', () => {
     expect(mockLink.onClick).toHaveBeenCalledTimes(1);
   });
 
+  describe('with the table refresh enabled', () => {
+    const links = [mockLink, { ...mockLink, title: 'Data Link2', href: 'http://link2.com', target: '_self' as const }];
+    const firstLink = () => screen.getByRole('link', { name: 'Data Link1' });
+
+    const clickIsDefaultPrevented = async (modifier?: string) => {
+      let prevented: boolean | undefined;
+      document.addEventListener('click', (event) => (prevented = event.defaultPrevented), { once: true });
+
+      const user = userEvent.setup();
+      if (modifier) {
+        await user.keyboard(`{${modifier}>}`);
+      }
+      await user.click(firstLink());
+
+      return prevented;
+    };
+
+    it('should render each link once, as a menu item with its url and target', () => {
+      render(<DataLinksActionsTooltip links={links} coords={mockCoords} tableRefreshEnabled />);
+
+      const items = screen.getAllByRole('link');
+      expect(items).toHaveLength(2);
+      expect(items[0]).toHaveAttribute('data-role', 'menuitem');
+      expect(items[0]).toHaveAttribute('href', 'http://link1.com');
+      expect(items[0]).toHaveAttribute('target', '_blank');
+      expect(items[1]).toHaveAttribute('href', 'http://link2.com');
+      expect(items[1]).toHaveAttribute('target', '_self');
+    });
+
+    it('should call the link onClick instead of navigating', async () => {
+      render(<DataLinksActionsTooltip links={links} coords={mockCoords} tableRefreshEnabled />);
+
+      expect(await clickIsDefaultPrevented()).toBe(true);
+      expect(mockLink.onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(['Control', 'Meta', 'Shift'])('should leave a %s click to the browser', async (modifier) => {
+      render(<DataLinksActionsTooltip links={links} coords={mockCoords} tableRefreshEnabled />);
+
+      expect(await clickIsDefaultPrevented(modifier)).toBe(false);
+      expect(mockLink.onClick).not.toHaveBeenCalled();
+    });
+
+    it('should navigate normally when the link has no onClick', async () => {
+      const { onClick, ...plainLink } = mockLink;
+      render(
+        <DataLinksActionsTooltip
+          links={[plainLink, { ...plainLink, title: 'Data Link2' }]}
+          coords={mockCoords}
+          tableRefreshEnabled
+        />
+      );
+
+      expect(await clickIsDefaultPrevented()).toBe(false);
+    });
+
+    it('should call the link onClick once when activated with the space key', async () => {
+      render(<DataLinksActionsTooltip links={links} coords={mockCoords} tableRefreshEnabled />);
+
+      firstLink().focus();
+      await userEvent.keyboard(' ');
+
+      expect(mockLink.onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('should keep actions as buttons that the keyboard can reach', async () => {
+      render(<DataLinksActionsTooltip links={links} actions={[mockAction]} coords={mockCoords} tableRefreshEnabled />);
+
+      firstLink().focus();
+      await userEvent.tab();
+      await userEvent.tab();
+
+      expect(screen.getByRole('button', { name: 'Action1' })).toHaveFocus();
+    });
+
+    it('should keep the footer hint for a one-click link', () => {
+      render(
+        <DataLinksActionsTooltip
+          links={[{ ...mockLink, oneClick: true }, links[1]]}
+          coords={mockCoords}
+          tableRefreshEnabled
+        />
+      );
+
+      expect(screen.queryByRole('link')).not.toBeInTheDocument();
+      expect(screen.getByText(/Click to open/)).toBeInTheDocument();
+    });
+
+    it('should keep the footer hint for a one-click action', () => {
+      render(
+        <DataLinksActionsTooltip
+          links={links}
+          actions={[{ ...mockAction, oneClick: true }]}
+          coords={mockCoords}
+          tableRefreshEnabled
+        />
+      );
+
+      expect(screen.queryByRole('link')).not.toBeInTheDocument();
+      expect(screen.getByText(/Click to/)).toBeInTheDocument();
+    });
+  });
+
+  it('should not render menu items without the table refresh', () => {
+    render(<DataLinksActionsTooltip links={[mockLink, { ...mockLink, title: 'Data Link2' }]} coords={mockCoords} />);
+
+    expect(screen.getByRole('link', { name: 'Data Link1' })).not.toHaveAttribute('data-role');
+  });
+
   it('should render when there is only one action', () => {
     const { container } = render(<DataLinksActionsTooltip links={[]} actions={[mockAction]} coords={mockCoords} />);
     expect(container).toBeInTheDocument();

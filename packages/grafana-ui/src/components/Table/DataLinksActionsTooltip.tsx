@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
+import { MenuItem } from '../Menu/MenuItem';
 import { Portal } from '../Portal/Portal';
 import { VizTooltipFooter } from '../VizTooltip/VizTooltipFooter';
 import { VizTooltipWrapper } from '../VizTooltip/VizTooltipWrapper';
@@ -19,13 +20,22 @@ interface Props {
   value?: ReactNode;
   coords: DataLinksActionsTooltipCoords;
   onTooltipClose?: () => void;
+  /** Styles links as menu items, to match the refreshed cell actions menu. */
+  tableRefreshEnabled?: boolean;
 }
 
 /**
  *
  * @internal
  */
-export const DataLinksActionsTooltip = ({ links, actions, value, coords, onTooltipClose }: Props) => {
+export const DataLinksActionsTooltip = ({
+  links,
+  actions,
+  value,
+  coords,
+  onTooltipClose,
+  tableRefreshEnabled,
+}: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const placement = 'right-start';
@@ -74,6 +84,10 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
     return null;
   }
 
+  // One-click items keep the footer's "Click to open" hint instead of a list.
+  const hasOneClick = links.some((link) => link.oneClick) || Boolean(actions?.some((action) => action.oneClick));
+  const showLinkMenu = tableRefreshEnabled && links.length > 0 && !hasOneClick;
+
   return (
     <>
       {/* TODO: we can remove `value` from this component when TableRT is fully deprecated */}
@@ -88,7 +102,28 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
           data-testid={selectors.components.DataLinksActionsTooltip.tooltipWrapper}
         >
           <VizTooltipWrapper>
-            <VizTooltipFooter dataLinks={links} actions={actions} />
+            {showLinkMenu && (
+              <div className={styles.linkMenu}>
+                {links.map((link, i) => (
+                  <MenuItem
+                    key={i}
+                    role="link"
+                    tabIndex={0}
+                    label={link.title}
+                    url={link.href}
+                    target={link.target}
+                    icon={link.target === '_blank' ? 'external-link-alt' : 'link'}
+                    onClick={(event) => {
+                      if (link.onClick && !(event.ctrlKey || event.metaKey || event.shiftKey)) {
+                        event.preventDefault();
+                        link.onClick(event);
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+            <VizTooltipFooter dataLinks={showLinkMenu ? [] : links} actions={actions} />
           </VizTooltipWrapper>
         </div>
       </Portal>
@@ -123,6 +158,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflowX: 'hidden',
       userSelect: 'text',
       fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    linkMenu: css({
+      fontSize: theme.typography.body.fontSize,
+      maxWidth: `calc(100vw - ${theme.spacing(4)})`,
+      padding: theme.spacing(theme.components.menu.padding),
+      '& a, & a span': {
+        overflowWrap: 'anywhere',
+        whiteSpace: 'normal',
+      },
     }),
   };
 };
