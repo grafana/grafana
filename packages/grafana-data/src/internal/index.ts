@@ -19,6 +19,7 @@ export {
   type VarMappingKind,
 } from '../field/overrides/processors';
 export {
+  clearCustomFieldConfig,
   isThresholdStepVarMappingKey,
   isVarMappingProp,
   splitThresholdStepExpressions,

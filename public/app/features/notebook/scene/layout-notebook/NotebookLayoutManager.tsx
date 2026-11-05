@@ -3,13 +3,8 @@ import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropR
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  AppEvents,
-  filterFieldConfigOverrides,
-  type GrafanaTheme2,
-  isStandardFieldProp,
-  type PanelPluginVisualizationSuggestion,
-} from '@grafana/data';
+import { AppEvents, type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { clearCustomFieldConfig } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
@@ -669,10 +664,7 @@ export class NotebookLayoutManager
         before = panels.map(snapshotVisualization);
         const results = await Promise.allSettled(
           panels.map(async (panel) => {
-            const fieldConfig = {
-              defaults: { ...panel.state.fieldConfig.defaults, custom: {} },
-              overrides: filterFieldConfigOverrides(panel.state.fieldConfig.overrides, isStandardFieldProp),
-            };
+            const fieldConfig = clearCustomFieldConfig(panel.state.fieldConfig);
             const options = suggestion.options && structuredClone(suggestion.options);
             const nextFieldConfig = structuredClone({
               ...(suggestion.fieldConfig ?? fieldConfig),
