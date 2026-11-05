@@ -276,22 +276,42 @@ describe('<PanelActionsWrapper />', () => {
       expect(within(getToolbar()).queryByRole('button', { name: 'Edit visualization (e)' })).not.toBeInTheDocument();
     });
 
-    test('in edit mode, repeated panels show Duplicate and Remove disabled with the reason, and no Edit', async () => {
+    function createRepeatedPanel({ isEditing }: { isEditing: boolean }) {
       const sourcePanel = createPanel({ key: 'panel-1' });
       const clonedPanel = createPanel({ key: getCloneKey('panel-1', 1), repeatSourceKey: 'panel-1' });
       new DashboardScene({
         editable: true,
-        isEditing: true,
+        isEditing,
         meta: { canEdit: true, canSave: true },
         body: DefaultGridLayoutManager.fromGridItems([
           new DashboardGridItem({ body: sourcePanel, repeatedPanels: [clonedPanel] }),
         ]),
       });
+      return clonedPanel;
+    }
 
-      renderWrapper(clonedPanel, { isEditing: true });
+    test('in view mode, repeated panels show Edit disabled with the reason', async () => {
+      renderWrapper(createRepeatedPanel({ isEditing: false }));
       await hoverAndRest(screen.getByTestId('reference-child'));
 
       expect(getToolbarLayout()).toEqual([
+        "Repeated panels can't be edited individually",
+        'Explore (p x)',
+        '|',
+        'Expand (v)',
+        'More actions',
+      ]);
+      expect(
+        within(getToolbar()).getByRole('button', { name: "Repeated panels can't be edited individually" })
+      ).toBeDisabled();
+    });
+
+    test('in edit mode, repeated panels show Edit, Duplicate and Remove disabled with the reason', async () => {
+      renderWrapper(createRepeatedPanel({ isEditing: true }), { isEditing: true });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(getToolbarLayout()).toEqual([
+        "Repeated panels can't be edited individually",
         'Panel settings',
         '|',
         "Repeated panels can't be duplicated individually",
@@ -301,6 +321,7 @@ describe('<PanelActionsWrapper />', () => {
         'More actions',
       ]);
       const toolbar = within(getToolbar());
+      expect(toolbar.getByRole('button', { name: "Repeated panels can't be edited individually" })).toBeDisabled();
       expect(toolbar.getByRole('button', { name: "Repeated panels can't be duplicated individually" })).toBeDisabled();
       expect(toolbar.getByRole('button', { name: "Repeated panels can't be removed individually" })).toBeDisabled();
     });

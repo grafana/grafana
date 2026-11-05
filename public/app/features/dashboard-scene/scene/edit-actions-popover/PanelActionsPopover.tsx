@@ -161,9 +161,8 @@ function PanelActions({
     (canManuallyEditDashboard(dashboardState) || isViewingDashboard(dashboardState)) &&
     dashboard.canEditDashboard() &&
     Boolean(editable) &&
-    !isRepeat &&
     !isEditEntryBlocked;
-  // Repeated panels still show the layout actions, disabled, so their tooltips explain why.
+  // Repeated panels still show Edit and the layout actions, disabled, so their tooltips explain why.
   const showsLayoutActions = Boolean(isEditing);
   const panelId = getPanelIdForVizPanel(panel);
   const titleText = panel.interpolate(title, undefined, 'text');
@@ -239,9 +238,17 @@ function PanelActions({
           name="pen"
           size="md"
           className={actionStyles.action}
-          tooltip={t('dashboard-scene.panel-actions-popover.edit', 'Edit visualization (e)')}
+          tooltip={
+            isRepeat
+              ? t(
+                  'dashboard-scene.panel-actions-popover.edit-tooltip-disabled',
+                  "Repeated panels can't be edited individually"
+                )
+              : t('dashboard-scene.panel-actions-popover.edit', 'Edit visualization (e)')
+          }
           tooltipPlacement="top"
           onClick={onEdit}
+          disabled={isRepeat}
         />
       )}
 
