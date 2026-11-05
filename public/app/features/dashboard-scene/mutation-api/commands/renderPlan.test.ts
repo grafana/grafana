@@ -3,11 +3,16 @@ import { waitFor } from '@testing-library/react';
 import { FieldType, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { type CustomVariable, VizPanel, sceneGraph } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { moveGridItem } from '../../actions/layout/moveGridItem';
+import { reorderRows } from '../../actions/layout/reorderRows';
+import { edit } from '../../actions/utils/edit';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
+import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
@@ -384,6 +389,132 @@ describe('RENDER_PLAN', () => {
       const grid = getGrid(scene);
       await waitFor(() => expect(grid.isDraggable()).toBe(false));
       expect(grid.getDragHooks()).toEqual({});
+      expect(grid.state.isResizable).toBe(false);
+    });
+  });
+
+  describe('with plan editing enabled, the rendered grids can be arranged by hand', () => {
+    const planEditingFlags = {
+      [FlagKeys.GrafanaDashboardPreviewMode]: true,
+      [FlagKeys.GrafanaDashboardComposer]: true,
+      [FlagKeys.AssistantDashboardPlanEditing]: true,
+    };
+
+    beforeEach(() => setTestFlags(planEditingFlags));
+    afterEach(() => setTestFlags({}));
+
+    function getGrid(scene: DashboardScene) {
+      const rows = (scene.state.body as RowsLayoutManager).state.rows;
+      return (rows[0].getLayout() as DefaultGridLayoutManager).state.grid;
+    }
+
+    it('on the marker path, while the scene stays in view mode', async () => {
+      const { scene, client } = setup();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const grid = getGrid(scene);
+      await waitFor(() => expect(grid.isDraggable()).toBe(true));
+      expect(grid.state.isResizable).toBe(true);
+      expect(scene.state.isEditing).toBeFalsy();
+    });
+
+    it('on the fallback path, where exiting edit mode would otherwise turn dragging off again', async () => {
+      const { scene, client } = setup();
+      scene.onEnterEditMode();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const grid = getGrid(scene);
+      await waitFor(() => expect(grid.isDraggable()).toBe(true));
+      expect(grid.state.isResizable).toBe(true);
+      expect(scene.state.isEditing).toBe(false);
+    });
+
+    it('stays fixed without the plan editing flag', async () => {
+      setTestFlags({ ...planEditingFlags, [FlagKeys.AssistantDashboardPlanEditing]: false });
+      const { scene, client } = setup();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const grid = getGrid(scene);
+      await waitFor(() => expect(grid.isDraggable()).toBe(false));
+      expect(grid.state.isResizable).toBe(false);
+    });
+
+    it('accepts moving a section but refuses any other edit', async () => {
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      const deactivateSidebar = scene.state.sidebar.activate();
+
+      try {
+        const layout = scene.state.body as RowsLayoutManager;
+        reorderRows(layout, 0, 1);
+        expect(layout.state.rows.map((row) => row.state.title)).toEqual(['Errors', 'Throughput']);
+
+        const perform = jest.fn();
+        edit({ source: layout, meta: { actionId: 'panel.remove' }, perform, undo: jest.fn() });
+        expect(perform).not.toHaveBeenCalled();
+        expect(scene.state.isEditing).toBeFalsy();
+      } finally {
+        deactivateSidebar();
+      }
+    });
+
+    it('accepts moving a panel into another section', async () => {
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      const deactivateSidebar = scene.state.sidebar.activate();
+
+      try {
+        const [throughput, errors] = (scene.state.body as RowsLayoutManager).state.rows;
+        const requests = throughput.getLayout().getVizPanels()[0];
+        moveGridItem({
+          source: throughput,
+          destination: errors,
+          gridItem: requests.parent as DashboardGridItem,
+          originalIndex: 0,
+        });
+
+        expect(
+          throughput
+            .getLayout()
+            .getVizPanels()
+            .map((panel) => panel.state.title)
+        ).toEqual([]);
+        expect(
+          errors
+            .getLayout()
+            .getVizPanels()
+            .map((panel) => panel.state.title)
+        ).toEqual(['Error rate', 'Requests']);
+      } finally {
+        deactivateSidebar();
+      }
+    });
+
+    it('refuses moving a section without the plan editing flag', async () => {
+      setTestFlags({ ...planEditingFlags, [FlagKeys.AssistantDashboardPlanEditing]: false });
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      const deactivateSidebar = scene.state.sidebar.activate();
+
+      try {
+        const layout = scene.state.body as RowsLayoutManager;
+        reorderRows(layout, 0, 1);
+        expect(layout.state.rows.map((row) => row.state.title)).toEqual(['Throughput', 'Errors']);
+      } finally {
+        deactivateSidebar();
+      }
+    });
+
+    it('stays fixed once the plan is building', async () => {
+      const { scene, client } = setup();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+
+      const grid = (scene.state.body as DefaultGridLayoutManager).state.grid;
+      await waitFor(() => expect(grid.isDraggable()).toBe(false));
       expect(grid.state.isResizable).toBe(false);
     });
   });

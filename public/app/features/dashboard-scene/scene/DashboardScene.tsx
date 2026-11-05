@@ -110,7 +110,7 @@ import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
-import { DashboardStateChangedEvent } from '../sidebar/events';
+import { type DashboardActionMeta, DashboardStateChangedEvent } from '../sidebar/events';
 import { type DashboardSidebarState } from '../sidebar/types';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -179,6 +179,7 @@ import { DashboardPlanningEvent } from './planningEvents';
 import { clearUnsavedDashboardConsent, copyDashboardConsent } from './sandbox-consent/sandboxConsent';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import {
+  isArrangingPlan,
   isFullDashboardEditing,
   isDashboardReviewing,
   type DashboardSceneLike,
@@ -188,6 +189,19 @@ import {
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
 const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
+
+/**
+ * The only edits a plan preview accepts: moving and resizing what the plan already has. Everything
+ * else is refused, so a new edit action stays unavailable during a preview until it is added here.
+ */
+const PLAN_ARRANGE_ACTIONS = new Set<DashboardActionMeta['actionId']>([
+  'panel.move',
+  'panel.moveOrResize',
+  'row.reorder',
+  'row.move',
+  'tab.reorder',
+  'tab.move',
+]);
 
 type PanelStyles = {
   fieldConfig?: { defaults: Partial<FieldConfig> };
@@ -432,7 +446,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
-  public prepareEditAction() {
+  public prepareEditAction(meta?: DashboardActionMeta) {
+    if (isArrangingPlan(this.state)) {
+      return meta !== undefined && PLAN_ARRANGE_ACTIONS.has(meta.actionId);
+    }
     // In Composer only Assistant writes; one over Viewing switches Composer to Editing first.
     if (isComposerMode(this.state)) {
       return this._assistantWrites > 0 && (isComposerEditing(this.state) || this.startComposerEditingForAssistant());

@@ -2,15 +2,16 @@
  * RENDER_PLAN command
  *
  * Renders a whole dashboard plan in one call: rows or tabs (optionally with rows nested inside a
- * tab), each with query-less placeholder panels, plus any stand-in variables. A plan preview renders once and is never edited, so
- * there is nothing to build up incrementally the way ADD_ROW/ADD_TAB/ADD_PANEL do.
+ * tab), each with query-less placeholder panels, plus any stand-in variables. A revision re-renders
+ * the whole plan, so there is nothing to build up incrementally the way ADD_ROW/ADD_TAB/ADD_PANEL do.
  *
  * With phase "building" nothing from the plan renders: the dashboard stays empty behind a loading
  * screen until the build's first write replaces it (see DashboardMutationClient), or END_PLANNING
  * ends it when the build writes nothing.
  *
- * Never calls enterEditModeIfNeeded: the preview is a static, view-mode surface that must never
- * enter edit mode (see refuseWhilePlanning for the few actions still reachable without it).
+ * Never calls enterEditModeIfNeeded: the preview is a view-mode surface that must never enter edit
+ * mode (see refuseWhilePlanning for the few actions still reachable without it). With plan editing
+ * enabled its layout can still be arranged by hand (see canArrangeLayout).
  */
 import type * as z from 'zod';
 
@@ -25,6 +26,7 @@ import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { DashboardPlanningEvent } from '../../scene/planningEvents';
 import { getPlanningPanelData, getPlanningVariableValues } from '../../scene/planningSampleData';
+import { canArrangeLayout } from '../../scene/types/dashboard';
 import { buildVizPanel } from '../../serialization/layoutSerializers/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 
@@ -160,14 +162,6 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
             },
       });
 
-      // DefaultGridLayoutManager hardcodes isDraggable/isResizable true; only editModeChanged
-      // (fired on an edit-mode transition) ever sets them false, and the marker path has no such
-      // transition. Go through editModeChanged rather than the flags directly: it cascades
-      // through Rows/TabsLayoutManager to every inner grid.
-      //
-      // Redundant on the wasEditing path (exitEditModeConfirmed below already calls it) but harmless.
-      body.editModeChanged?.(false);
-
       if (wasEditing) {
         // Installs the new content above, then exits edit mode without restoring the snapshot
         // onEnterEditMode captured (empty, for a fresh dashboard).
@@ -176,6 +170,13 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
         // call time, and anything that flips it back to true first wipes the plan.
         scene.exitEditMode({ skipConfirm: true, restoreInitialState: false });
       }
+
+      // DefaultGridLayoutManager hardcodes isDraggable/isResizable true; only editModeChanged
+      // (fired on an edit-mode transition) sets them, and the marker path has no such transition.
+      // Go through editModeChanged rather than the flags directly: it cascades through
+      // Rows/TabsLayoutManager to every inner grid. Must run after exitEditMode, which turns
+      // dragging off again.
+      body.editModeChanged?.(canArrangeLayout(scene.state));
 
       return { success: true, changes: [{ path: '/', previousValue: null, newValue: payload.title }] };
     } catch (error) {

@@ -9,7 +9,12 @@ import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
-import { dashboardModesEnabled, getDashboardMode, type DashboardMode } from '../dashboardModes';
+import {
+  dashboardModesEnabled,
+  dashboardPlanEditingEnabled,
+  getDashboardMode,
+  type DashboardMode,
+} from '../dashboardModes';
 
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
@@ -100,6 +105,16 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
 export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
   const mode = getDashboardMode(state);
   return Boolean(state.isEditing && mode !== 'composer' && (!dashboardModesEnabled() || mode === 'edit'));
+}
+
+/** A plan preview stays in view mode, but its layout can still be arranged by hand. */
+export function isArrangingPlan(state: Pick<DashboardSceneState, 'planning'>): boolean {
+  return state.planning?.phase === 'preview' && dashboardPlanEditingEnabled();
+}
+
+/** Whether rows, tabs and panels can be dragged, and panels resized. */
+export function canArrangeLayout(state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'planning'>): boolean {
+  return isFullDashboardEditing(state) || isArrangingPlan(state);
 }
 
 export function isDashboardReviewing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
