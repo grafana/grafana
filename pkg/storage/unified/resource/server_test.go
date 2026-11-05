@@ -904,7 +904,7 @@ func TestGetQuotaUsage(t *testing.T) {
 		assert.Equal(t, int64(500), resp.Limit)
 	})
 
-	t.Run("surfaces stats response error on the response", func(t *testing.T) {
+	t.Run("surfaces returned stats error", func(t *testing.T) {
 		tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 		content := `overrides:
   "123":
@@ -920,9 +920,7 @@ func TestGetQuotaUsage(t *testing.T) {
 		require.NoError(t, err)
 
 		searchClient := newFakeResourceIndexClient()
-		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
-			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
-		}
+		searchClient.statsError = rpcError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"})
 
 		s, err := NewResourceServer(ResourceServerOptions{
 			Backend:          &mockStorageBackend{},
@@ -1115,9 +1113,7 @@ func TestCheckQuotas(t *testing.T) {
 			}
 
 			searchClient := newFakeResourceIndexClient()
-			searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
-				Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
-			}
+			searchClient.statsError = rpcError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"})
 
 			if transportError {
 				searchClient.statsResponse = nil
@@ -5535,12 +5531,32 @@ func TestPutBlobReturnsBackendBodyFailureAsError(t *testing.T) {
 	requireRPCError(t, err, want)
 }
 
-// Search servers and the SQL stats fallback may still report failure in the
-// body; GetStats and the quota paths built on it must see it as an error.
-func TestGetStatsReturnsBodyFailureAsError(t *testing.T) {
+type bodyErrorStatsBackend struct {
+	missingReadBackend
+	result *resourcepb.ResourceStatsResponse
+}
+
+func (b *bodyErrorStatsBackend) GetStats(context.Context, *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
+	return b.result, nil
+}
+
+func TestGetStatsReturnsBackendBodyFailureAsError(t *testing.T) {
+	want := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats failed"}
+	backend := &bodyErrorStatsBackend{result: &resourcepb.ResourceStatsResponse{Error: want}}
+	srv, err := NewResourceServer(ResourceServerOptions{Backend: backend})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
+	ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+
+	rsp, err := srv.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default"})
+	require.Nil(t, rsp)
+	requireRPCError(t, err, want)
+}
+
+func TestGetStatsPassesThroughClientResult(t *testing.T) {
 	want := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats failed"}
 	stats := newFakeResourceIndexClient()
-	stats.statsResponse = &resourcepb.ResourceStatsResponse{Error: want}
+	stats.statsError = rpcError(want)
 	srv, err := NewResourceServer(ResourceServerOptions{Backend: &missingReadBackend{}, SearchClient: stats})
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
@@ -5550,7 +5566,10 @@ func TestGetStatsReturnsBodyFailureAsError(t *testing.T) {
 	require.Nil(t, rsp)
 	requireRPCError(t, err, want)
 
-	stats.statsResponse, stats.statsError = nil, errors.New("down")
-	_, err = srv.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default"})
-	require.EqualError(t, err, "down", "a returned error is passed through unchanged")
+	require.Same(t, stats.statsError, err)
+
+	stats.statsResponse, stats.statsError = &resourcepb.ResourceStatsResponse{}, nil
+	rsp, err = srv.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default"})
+	require.NoError(t, err)
+	require.Same(t, stats.statsResponse, rsp)
 }

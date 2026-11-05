@@ -2768,7 +2768,7 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 	}
 
 	if s.searchClient != nil {
-		return statsCallResult(s.searchClient.GetStats(ctx, req))
+		return s.searchClient.GetStats(ctx, req)
 	}
 
 	// TODO: remove this fallback once the SQL backend is phased out; it's not implemented
