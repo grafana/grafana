@@ -179,8 +179,8 @@ func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl 
 
 	// If template was not found, this is assumed to be a create operation except for two cases:
 	// - If a ResourceVersion is provided: we should assume that this was meant to be a conditional update operation.
-	// - If UID is provided: custom UID for templates is not currently supported, so this was meant to be an update
-	// operation without a ResourceVersion.
+	// - If UID is provided: the only caller of this method is the legacy provisioning API, which doesn't support
+	// custom UIDs, so this was meant to be an update operation without a ResourceVersion.
 	if tmpl.Version != "" || tmpl.UID != "" {
 		return v1.TemplateGroup{}, ErrTemplateNotFound.Errorf("")
 	}
@@ -305,7 +305,7 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	updated := revision.SetTemplate(tmpl)
 
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if existing.Title != updated.Title { // if template by was found by UID and it's name is different, then this is the rename operation. The template keeps its UID, so only the provenance, which is keyed by the title, is removed.
+		if existing.Title != updated.Title { // The template keeps its UID, so only the provenance, which is keyed by the title, is removed.
 			err := t.provenanceStore.DeleteProvenance(ctx, &existing, orgID)
 			if err != nil {
 				return err
