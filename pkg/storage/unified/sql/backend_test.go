@@ -1302,11 +1302,16 @@ func TestIntegrationReadHistoryVersions(t *testing.T) {
 	key := func(name, res string, rv int64) historyVersion {
 		return historyVersion{Namespace: "namespace", Group: "group", Resource: res, Name: name, ResourceVersion: rv}
 	}
-	versions := []historyVersion{
+	versions := make([]historyVersion, 0, 5+historyBatchReadSize)
+	versions = append(versions,
 		key("item1", "resource", created), key("item1", "resource", updated), key("item2", "other", other),
 		key("missing", "resource", 1),
 		// No row at this version, but an older one exists.
 		key("item1", "resource", updated-1),
+	)
+	// More versions than one query takes, so batches are split.
+	for i := range historyBatchReadSize {
+		versions = append(versions, key("missing", "resource", int64(i+2)))
 	}
 
 	found, err := b.readHistoryVersions(ctx, versions)
@@ -1316,6 +1321,7 @@ func TestIntegrationReadHistoryVersions(t *testing.T) {
 	row := found[key("item1", "resource", updated)]
 	require.NotNil(t, row)
 	require.Equal(t, int(resourcepb.WatchEvent_MODIFIED), row.Action)
+	require.Equal(t, created, *row.PreviousRV)
 	require.Equal(t, "folderuid", row.Folder)
 	require.Contains(t, string(row.Value), "item1 MODIFIED")
 
