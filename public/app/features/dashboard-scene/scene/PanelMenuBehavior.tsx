@@ -202,7 +202,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    // In edit mode the popover offers Copy, Duplicate and Remove, except on repeated panels.
+    // In edit mode the popover offers Duplicate and Remove, except on repeated panels.
     const popoverHasLayoutActions = hasActionsPopover && isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat;
 
     if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel && !popoverHasLayoutActions) {
@@ -217,7 +217,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (!isEditingPanel && !popoverHasLayoutActions) {
+    if (!isEditingPanel) {
       moreSubMenu.push({
         // Copying a repeated panel copies its source panel together with the repeat options.
         text:

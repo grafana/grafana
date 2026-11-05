@@ -21,7 +21,7 @@ import { canManuallyEditDashboard, dashboardModesEnabled, isViewingDashboard } f
 import { PanelGroupByPicker } from '../panel-actions/PanelGroupByAction/PanelGroupByAction';
 import { isFullDashboardEditing } from '../types/dashboard';
 
-import { CopyActionButton, DeleteActionButton, DuplicateActionButton, getActionStyles } from './EditActions';
+import { DeleteActionButton, DuplicateActionButton, getActionStyles } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
 import { EditActionsPopover } from './EditActionsPopover';
 import {
@@ -33,16 +33,7 @@ import { PanelEditActionsWrapper } from './PanelEditActions';
 
 const POPOVER_OFFSET = { mainAxis: -8, alignmentAxis: 8 };
 
-type PanelActionItem =
-  | 'view'
-  | 'restore'
-  | 'edit'
-  | 'explore'
-  | 'settings'
-  | 'copy'
-  | 'duplicate'
-  | 'delete'
-  | 'more_actions';
+type PanelActionItem = 'view' | 'restore' | 'edit' | 'explore' | 'settings' | 'duplicate' | 'delete' | 'more_actions';
 
 /**
  * Wraps a dashboard panel with its hover actions: the panel actions popover when `grafana.panelActionsPopover`
@@ -274,12 +265,6 @@ function PanelActions({
       {canChangeLayout && (
         <>
           {(showsHoverSlotItems || showsPanelActions) && <ActionsSeparator />}
-          <CopyActionButton
-            onClick={() => {
-              report('copy');
-              dashboard.copyPanel(panel);
-            }}
-          />
           <DuplicateActionButton
             onClick={() => {
               report('duplicate');

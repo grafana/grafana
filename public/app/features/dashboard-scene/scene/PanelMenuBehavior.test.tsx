@@ -279,14 +279,14 @@ describe('panelMenuBehavior', () => {
       expect(moreItemTexts).toContain('Copy');
     });
 
-    it('in edit mode, leaves out View, Edit, Copy, Duplicate and Remove but keeps Explore', async () => {
+    it('in edit mode, leaves out View, Edit, Duplicate and Remove but keeps Explore and Copy', async () => {
       const { itemTexts, moreItemTexts } = await getMenuItems((scene) => scene.setState({ isEditing: true }));
 
       expect(itemTexts).not.toContain('View');
       expect(itemTexts).not.toContain('Edit');
       expect(itemTexts).not.toContain('Remove');
       expect(itemTexts).toContain('Explore');
-      expect(moreItemTexts).not.toContain('Copy');
+      expect(moreItemTexts).toContain('Copy');
       expect(moreItemTexts).not.toContain('Duplicate');
       expect(moreItemTexts).toContain('New library panel');
     });

@@ -206,7 +206,7 @@ describe('<PanelActionsWrapper />', () => {
       expect(getToolbarLayout()).toEqual(['Edit (e)', 'Explore (p x)', '|', 'Expand (v)', 'More actions']);
     });
 
-    test('in edit mode, Edit, Settings, Copy, Duplicate, Remove, Expand and More actions are shown in groups', async () => {
+    test('in edit mode, Edit, Settings, Duplicate, Remove, Expand and More actions are shown in groups', async () => {
       const panel = createPanel();
       createDashboard(panel, { isEditing: true });
 
@@ -217,7 +217,6 @@ describe('<PanelActionsWrapper />', () => {
         'Edit (e)',
         'Settings',
         '|',
-        'Copy to clipboard',
         'Duplicate',
         'Remove (p r)',
         '|',
@@ -257,7 +256,7 @@ describe('<PanelActionsWrapper />', () => {
       expect(within(getToolbar()).queryByRole('button', { name: 'Edit (e)' })).not.toBeInTheDocument();
     });
 
-    test('in edit mode, repeated panels do not offer Edit, Copy, Duplicate or Remove', async () => {
+    test('in edit mode, repeated panels do not offer Edit, Duplicate or Remove', async () => {
       const sourcePanel = createPanel({ key: 'panel-1' });
       const clonedPanel = createPanel({ key: getCloneKey('panel-1', 1), repeatSourceKey: 'panel-1' });
       new DashboardScene({
@@ -341,19 +340,16 @@ describe('<PanelActionsWrapper />', () => {
       expect(dashboard.state.sidebar.getSelectedObject()).toBe(panel);
     });
 
-    test('clicking Copy and Duplicate copy and duplicate the panel via the dashboard', async () => {
+    test('clicking Duplicate duplicates the panel via the dashboard', async () => {
       const panel = createPanel();
       const dashboard = createDashboard(panel, { isEditing: true });
-      const copyPanel = jest.spyOn(dashboard, 'copyPanel').mockImplementation();
       const duplicatePanel = jest.spyOn(dashboard, 'duplicatePanel').mockImplementation();
       const user = userEvent.setup();
 
       renderWrapper(panel, { isEditing: true });
       await hoverAndRest(screen.getByTestId('reference-child'));
-      await user.click(within(getToolbar()).getByRole('button', { name: 'Copy to clipboard' }));
       await user.click(within(getToolbar()).getByRole('button', { name: 'Duplicate' }));
 
-      expect(copyPanel).toHaveBeenCalledWith(panel);
       expect(duplicatePanel).toHaveBeenCalledWith(panel);
     });
 

@@ -137,7 +137,7 @@ test.describe('Panel actions popover', { tag: ['@dashboards'] }, () => {
     });
   });
 
-  test('in edit mode, offers Settings, Copy, Duplicate and Remove', async ({
+  test('in edit mode, offers Settings, Duplicate and Remove', async ({
     gotoDashboardPage,
     controls,
     panels,
@@ -149,7 +149,7 @@ test.describe('Panel actions popover', { tag: ['@dashboards'] }, () => {
     await panels.openActionsPopover(PANEL_TITLE);
 
     const popover = panels.getActionsPopover();
-    await expect(popover.getByRole('button', { name: 'Copy to clipboard' })).toBeVisible();
+    await expect(popover.getByRole('button', { name: 'Copy to clipboard' })).toHaveCount(0);
     await expect(popover.getByRole('button', { name: 'Duplicate' })).toBeVisible();
     await expect(popover.getByRole('button', { name: 'Remove (p r)' })).toBeVisible();
     await expect(popover.getByRole('button', { name: 'Explore (p x)' })).toHaveCount(0);
