@@ -1582,6 +1582,8 @@
         "wildcard-in-text": "Search text cannot contain * or %."
       },
       "shared": {
+        "folder-search-limit": "Folder search limit reached",
+        "folder-search-limit-description": "Showing results from only the first {{limit}} matching folders. Narrow your search criteria to see results from other folders.",
         "load-more": "Load more",
         "load-more-error": "Failed to load more results",
         "loading-rules": "Loading rules",
