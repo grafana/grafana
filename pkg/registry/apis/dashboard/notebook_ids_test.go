@@ -139,12 +139,65 @@ func TestAssignNotebookCellIDs(t *testing.T) {
 	})
 
 	t.Run("an id the stored notebook does not have is kept, as when a version is restored", func(t *testing.T) {
+		sequentialCellIDs(t)
 		stored := notebookWithCells(layoutCell("b", testCellID(2)))
-		nb := notebookWithCells(layoutCell("a", testCellID(1)), layoutCell("b", ""))
+		nb := notebookWithCells(layoutCell("a", testCellID(1)), layoutCell("b", testCellID(2)))
 
 		assignNotebookCellIDs(nb, stored)
 
 		require.Equal(t, []string{testCellID(1), testCellID(2)}, cellIDs(nb))
+	})
+
+	// The editor's counter reissues a deleted cell's name. A client that sends ids has said which cells
+	// are which, so the new cell is not the deleted one just because it has its name.
+	t.Run("a cell without an id in a write that carries ids is new, even under a stored name", func(t *testing.T) {
+		sequentialCellIDs(t)
+		stored := notebookWithCells(layoutCell("paragraph-1", testCellID(1)), layoutCell("paragraph-2", testCellID(2)))
+		nb := notebookWithCells(layoutCell("paragraph-1", testCellID(1)), layoutCell("paragraph-2", ""))
+
+		assignNotebookCellIDs(nb, stored)
+
+		require.Equal(t, []string{testCellID(1), testCellID(100)}, cellIDs(nb))
+	})
+
+	// The limit of matching by name: a client that sends no ids at all gives the server nothing but the
+	// name, so a cell deleted and re-added under it in one write cannot be told from an edit in place.
+	t.Run("a write with no ids at all treats a cell under a stored name as that cell edited in place", func(t *testing.T) {
+		stored := notebookWithCells(layoutCell("paragraph-1", testCellID(1)), layoutCell("paragraph-2", testCellID(2)))
+		// paragraph-2 was deleted and a different cell added, which the counter named paragraph-2 again.
+		nb := notebookWithCells(layoutCell("paragraph-1", ""), layoutCell("paragraph-2", ""))
+
+		assignNotebookCellIDs(nb, stored)
+
+		require.Equal(t, []string{testCellID(1), testCellID(2)}, cellIDs(nb))
+	})
+
+	t.Run("cells that share an element name each keep their own stored id, in order", func(t *testing.T) {
+		stored := notebookWithCells(layoutCell("a", testCellID(1)), layoutCell("a", testCellID(2)), layoutCell("b", testCellID(3)))
+		nb := notebookWithCells(layoutCell("a", ""), layoutCell("a", ""), layoutCell("b", ""))
+
+		assignNotebookCellIDs(nb, stored)
+
+		require.Equal(t, []string{testCellID(1), testCellID(2), testCellID(3)}, cellIDs(nb))
+	})
+
+	t.Run("a write that carries any id inherits nothing by name", func(t *testing.T) {
+		sequentialCellIDs(t)
+		stored := notebookWithCells(layoutCell("a", testCellID(1)), layoutCell("b", testCellID(2)))
+		nb := notebookWithCells(layoutCell("a", ""), layoutCell("b", testCellID(2)))
+
+		generated := assignNotebookCellIDs(nb, stored)
+
+		require.Equal(t, []string{testCellID(100), testCellID(2)}, cellIDs(nb))
+		require.Equal(t, 1, generated)
+	})
+
+	t.Run("reports how many ids it generated, leaving out inherited ones", func(t *testing.T) {
+		stored := notebookWithCells(layoutCell("a", testCellID(1)))
+
+		require.Equal(t, 1, assignNotebookCellIDs(notebookWithCells(layoutCell("a", ""), layoutCell("b", "")), stored))
+		require.Equal(t, 2, assignNotebookCellIDs(notebookWithCells(layoutCell("a", ""), layoutCell("b", "")), nil))
+		require.Zero(t, assignNotebookCellIDs(notebookWithCells(layoutCell("a", testCellID(1))), stored))
 	})
 
 	t.Run("a new id never collides with one already on the notebook", func(t *testing.T) {

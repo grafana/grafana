@@ -174,6 +174,21 @@ func TestIntegrationNotebookCellIDs(t *testing.T) {
 		require.NotEqual(t, deleted, cells[0].id)
 	})
 
+	// The editor's counter can reissue a deleted cell's name, and the delete and the add can land in one
+	// save. A client that sends ids has said which cells are which.
+	t.Run("a cell without an id is new when the write carries other ids, even under a stored name", func(t *testing.T) {
+		created := create(t, cell{element: "a"}, cell{element: "b"})
+		before := cellIDs(t, created)
+
+		saved, err := replaceSpec(ctx, client, created.GetName(), notebookSpec(cell{element: "a", id: before[0].id}, cell{element: "b"}))
+		require.NoError(t, err)
+
+		after := cellIDs(t, saved)
+		require.Equal(t, before[0].id, after[0].id)
+		require.Regexp(t, uuidV4, after[1].id)
+		require.NotEqual(t, before[1].id, after[1].id)
+	})
+
 	t.Run("two cells with the same id are rejected and nothing is saved", func(t *testing.T) {
 		created := create(t, cell{element: "a"}, cell{element: "b"})
 		before := cellIDs(t, created)

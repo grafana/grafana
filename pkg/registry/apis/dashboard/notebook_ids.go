@@ -31,12 +31,21 @@ func notebookCellID(item dashv2beta1.NotebookNotebookLayoutItemKind) string {
 // is what comments can safely point at.
 //
 // An item that arrives with an id keeps it, so renaming a cell's element does not change which cell it
-// is. An item that arrives without one inherits the id of the stored item with the same element name:
-// that is every client that doesn't know about ids yet, and a client that rebuilds the whole spec. Only
-// an item that matches nothing gets a new id. An id is never given to two items.
+// is.
 //
-// old is nil on create.
-func assignNotebookCellIDs(notebook, old *dashv2beta1.Notebook) {
+// An item without one is matched to the stored item with the same element name, and inherits its id,
+// but only when no item in the write carries an id. A write with no ids at all comes from a client that
+// does not know about them (an older editor tab, a script), and the element name is all it has to say
+// which cell is which, so a cell it sends under a stored name is the stored cell edited in place. That
+// is a guess: a cell deleted and a different one added under its name in the same write looks
+// identical, and inherits the deleted cell's id. A client that sends ids says which cells are which, so
+// when any item carries one, an item without is a new cell whatever it is called.
+//
+// An item that matches nothing gets a new id. An id is never given to two items.
+//
+// old is nil on create. It returns how many new ids it generated, which leaves out the ones inherited
+// from old.
+func assignNotebookCellIDs(notebook, old *dashv2beta1.Notebook) int {
 	cells := notebook.Spec.Layout.Spec.Cells
 
 	taken := make(map[string]struct{}, len(cells))
@@ -47,31 +56,26 @@ func assignNotebookCellIDs(notebook, old *dashv2beta1.Notebook) {
 	}
 
 	// By element name rather than by position: a client that reorders cells while saving would
-	// otherwise swap their ids.
-	storedIDs := map[string]string{}
-	if old != nil {
+	// otherwise swap their ids. Every stored id for a name, in layout order, because layout items may
+	// share an element name and each of them has an id to keep.
+	var storedIDs map[string][]string
+	if len(taken) == 0 && old != nil {
+		storedIDs = map[string][]string{}
 		for _, cell := range old.Spec.Layout.Spec.Cells {
-			id := notebookCellID(cell)
-			if id == "" {
-				continue
-			}
-			if _, seen := storedIDs[cell.Spec.Element.Name]; !seen {
-				storedIDs[cell.Spec.Element.Name] = id
+			if id := notebookCellID(cell); id != "" {
+				name := cell.Spec.Element.Name
+				storedIDs[name] = append(storedIDs[name], id)
 			}
 		}
 	}
 
+	generated := 0
 	for i := range cells {
 		if notebookCellID(cells[i]) != "" {
 			continue
 		}
 
-		id, inherited := storedIDs[cells[i].Spec.Element.Name]
-		if _, claimed := taken[id]; inherited && claimed {
-			// The stored id is already on another incoming item, so this one is a different cell that
-			// happens to share the element name.
-			inherited = false
-		}
+		id, inherited := takeStoredID(storedIDs, cells[i].Spec.Element.Name, taken)
 		if !inherited {
 			id = newNotebookCellID()
 			for {
@@ -80,11 +84,42 @@ func assignNotebookCellIDs(notebook, old *dashv2beta1.Notebook) {
 				}
 				id = newNotebookCellID()
 			}
+			generated++
 		}
 
 		taken[id] = struct{}{}
 		cells[i].Spec.Id = &id
 	}
+
+	return generated
+}
+
+// takeStoredID hands out the next stored id for the element name that nothing has claimed, and removes
+// it from the list so a second cell with the same name gets the next one.
+func takeStoredID(storedIDs map[string][]string, name string, taken map[string]struct{}) (string, bool) {
+	ids := storedIDs[name]
+	for len(ids) > 0 {
+		id := ids[0]
+		ids = ids[1:]
+		storedIDs[name] = ids
+		if _, claimed := taken[id]; !claimed {
+			return id, true
+		}
+	}
+	return "", false
+}
+
+// notebookHasCellWithoutID is whether a stored notebook predates cell ids, at least in part.
+func notebookHasCellWithoutID(notebook *dashv2beta1.Notebook) bool {
+	if notebook == nil {
+		return false
+	}
+	for _, cell := range notebook.Spec.Layout.Spec.Cells {
+		if notebookCellID(cell) == "" {
+			return true
+		}
+	}
+	return false
 }
 
 // validateNotebookCellIDs rejects an id that is malformed or on more than one item. An item without an

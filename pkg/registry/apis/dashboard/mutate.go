@@ -47,7 +47,7 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	// UpdateAPIGroupInfo behind FlagDashboardNotebooks (see register.go).
 	// Layout validation happens in Validate.
 	case dashboardV2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
-		return mutateNotebook(a)
+		return mutateNotebook(a, b.notebookMetrics)
 
 	case dashboardV0.LIBRARY_PANEL_RESOURCE:
 		return nil // nothing needed
@@ -230,8 +230,9 @@ const notebookDefaultTitleFormat = "Notebook 2006-01-02 15:04"
 // It also forces `hideTimepicker` off, on create and update. A notebook has no settings UI to show the
 // picker again, so a hidden one could never be recovered by the person looking at it.
 //
-// Finally it gives every layout item an id (see assignNotebookCellIDs), on create and update.
-func mutateNotebook(a admission.Attributes) error {
+// Finally it gives every layout item an id (see assignNotebookCellIDs), on create and update, and
+// reports what that did to metrics, which may be nil.
+func mutateNotebook(a admission.Attributes, metrics *notebookMetrics) error {
 	notebook, ok := a.GetObject().(*dashboardV2beta1.Notebook)
 	if !ok {
 		return fmt.Errorf("mutation error: expected notebook, got %T", a.GetObject())
@@ -254,7 +255,11 @@ func mutateNotebook(a admission.Attributes) error {
 
 	notebook.Spec.TimeSettings.HideTimepicker = false
 
-	assignNotebookCellIDs(notebook, stored)
+	// Read before the assignment: it is the stored notebook that tells a migration apart from an
+	// edit, and the assignment does not touch it.
+	storedWithoutIDs := notebookHasCellWithoutID(stored)
+	generated := assignNotebookCellIDs(notebook, stored)
+	metrics.observeCellIDs(a.GetOperation(), generated, storedWithoutIDs)
 
 	return nil
 }
