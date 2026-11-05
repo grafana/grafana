@@ -156,12 +156,16 @@ func TestDSQueryError(t *testing.T) {
 // One query's response error must not drop the other queries to the same
 // data source, with or without sseGroupByDatasource.
 func TestDSQueryErrorKeepsOtherQueries(t *testing.T) {
-	resp := map[string]backend.DataResponse{
-		"A": {Error: fmt.Errorf("womp womp")},
-		"B": {Frames: data.Frames{data.NewFrame("",
+	frame := func() data.Frames {
+		return data.Frames{data.NewFrame("",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
 			data.NewField("value", nil, []float64{2}),
-		)}},
+		)}
+	}
+	resp := map[string]backend.DataResponse{
+		"A": {Error: fmt.Errorf("womp womp")},
+		"B": {Frames: frame()},
+		"C": {Frames: frame()},
 	}
 	dsQuery := func(refID string) Query {
 		return Query{
@@ -171,9 +175,12 @@ func TestDSQueryErrorKeepsOtherQueries(t *testing.T) {
 			TimeRange:  AbsoluteTimeRange{},
 		}
 	}
+	// The grouped path reads responses in query order. Put the failing query
+	// between two healthy ones so a dropped result shows up either way.
 	queries := []Query{
-		dsQuery("A"),
 		dsQuery("B"),
+		dsQuery("A"),
+		dsQuery("C"),
 		{
 			RefID:      "S",
 			DataSource: dataSourceModel(),
@@ -199,7 +206,10 @@ func TestDSQueryErrorKeepsOtherQueries(t *testing.T) {
 			require.NoError(t, err)
 
 			require.ErrorContains(t, res.Responses["A"].Error, "failed to execute query [A]: womp womp")
-			require.NoError(t, res.Responses["B"].Error)
+			for _, refID := range []string{"B", "C"} {
+				require.NoError(t, res.Responses[refID].Error)
+				require.Len(t, res.Responses[refID].Frames, 1)
+			}
 			require.NoError(t, res.Responses["S"].Error)
 			require.Len(t, res.Responses["S"].Frames, 1)
 			require.Equal(t, 1, res.Responses["S"].Frames[0].Rows())
