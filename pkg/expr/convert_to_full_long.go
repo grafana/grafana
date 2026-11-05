@@ -149,7 +149,7 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 	labelKeysSet := map[string]struct{}{}
 	hasDisplayCol := false
 
-	for _, frame := range frames {
+	for frameIdx, frame := range frames {
 		var timeField *data.Field
 		for _, f := range frame.Fields {
 			// Classic expressions accept a nullable time field, so SQL does too.
@@ -174,7 +174,7 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 			for i := 0; i < f.Len(); i++ {
 				tv, ok := timeField.ConcreteAt(i)
 				if !ok {
-					return nil, fmt.Errorf("time field %q has a null value at row %d", timeField.Name, i)
+					return nil, fmt.Errorf("frame %d: time field %q has a null value at row %d", frameIdx, timeField.Name, i)
 				}
 				t := tv.(time.Time)
 				v, err := f.FloatAt(i)
