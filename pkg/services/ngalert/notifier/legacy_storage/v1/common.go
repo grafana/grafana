@@ -4,15 +4,29 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type ResourceUID string
 
 type ResourceMetadata struct {
-	UID        ResourceUID
-	Version    string
-	Provenance models.Provenance
+	UID     ResourceUID
+	Version string
+	// Manager records which tool manages the resource (e.g. Terraform, kubectl) and its identity.
+	// It is assigned per revision and is not part of the resource fingerprint (Version).
+	Manager utils.ManagerProperties
+}
+
+// Provenance is the legacy, coarse view of Manager.
+func (m ResourceMetadata) Provenance() models.Provenance {
+	return models.ManagerPropertiesToProvenance(m.Manager)
+}
+
+// SetImported marks the resource as imported from an external (converted Prometheus) Alertmanager
+// configuration. Imported resources are not tracked in the provisioning store.
+func (m *ResourceMetadata) SetImported() {
+	m.Manager = models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus)
 }
 
 type Matcher struct {

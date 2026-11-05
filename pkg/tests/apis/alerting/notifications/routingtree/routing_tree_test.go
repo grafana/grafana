@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1/fakes"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -518,6 +519,104 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	})
 }
 
+// TestIntegrationRoutingTreeManagerPropertiesRoundTrip verifies that ManagerProperties set via the
+// k8s API survive a round-trip through legacy storage for both the default and a named routing
+// tree. The default tree is stored in the provenance store under a different key than its UID,
+// so it is covered explicitly.
+func TestIntegrationRoutingTreeManagerPropertiesRoundTrip(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	terraformAnnotations := map[string]string{
+		utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+		utils.AnnoKeyManagerIdentity: "my-terraform-workspace",
+	}
+	requireTerraform := func(t *testing.T, obj *v1beta1.RoutingTree, msg string) {
+		t.Helper()
+		require.Equal(t, string(utils.ManagerKindTerraform), obj.Annotations[utils.AnnoKeyManagerKind], msg)
+		require.Equal(t, "my-terraform-workspace", obj.Annotations[utils.AnnoKeyManagerIdentity], msg)
+		require.Equal(t, string(models.ProvenanceAPI), obj.GetProvenanceStatus(), msg)
+	}
+	findInList := func(t *testing.T, name string) *v1beta1.RoutingTree {
+		t.Helper()
+		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+		require.NoError(t, err)
+		for i := range list.Items {
+			if list.Items[i].Name == name {
+				return &list.Items[i]
+			}
+		}
+		require.Failf(t, "routing tree not listed", "name %q", name)
+		return nil
+	}
+
+	t.Run("default routing tree keeps ManagerKindTerraform", func(t *testing.T) {
+		current, err := adminClient.Get(ctx, defaultTreeIdentifier)
+		require.NoError(t, err)
+		updated := current.Copy().(*v1beta1.RoutingTree)
+		for k, v := range terraformAnnotations {
+			updated.Annotations[k] = v
+		}
+		got, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
+		require.NoError(t, err)
+		requireTerraform(t, got, "update response")
+
+		fresh, err := adminClient.Get(ctx, defaultTreeIdentifier)
+		require.NoError(t, err)
+		requireTerraform(t, fresh, "fresh get")
+		requireTerraform(t, findInList(t, models.DefaultRoutingTreeName), "list")
+
+		legacyRoute := legacyCli.GetRoute(t)
+		require.Equal(t, definitions.Provenance(models.ProvenanceAPI), legacyRoute.Provenance, "terraform manager should map to ProvenanceAPI in legacy API")
+
+		// Relinquish management so other tests are unaffected.
+		reset := fresh.Copy().(*v1beta1.RoutingTree)
+		delete(reset.Annotations, utils.AnnoKeyManagerKind)
+		delete(reset.Annotations, utils.AnnoKeyManagerIdentity)
+		delete(reset.Annotations, v1beta1.ProvenanceStatusAnnotationKey) // SetProvenanceStatus("") is a no-op
+		got, err = adminClient.Update(ctx, reset, resource.UpdateOptions{})
+		require.NoError(t, err)
+		require.Empty(t, got.Annotations[utils.AnnoKeyManagerKind])
+		fresh, err = adminClient.Get(ctx, defaultTreeIdentifier)
+		require.NoError(t, err)
+		require.Empty(t, fresh.Annotations[utils.AnnoKeyManagerKind])
+		require.Empty(t, fresh.GetProvenanceStatus())
+	})
+
+	t.Run("named routing tree created via k8s keeps ManagerKindTerraform", func(t *testing.T) {
+		def, err := adminClient.Get(ctx, defaultTreeIdentifier)
+		require.NoError(t, err)
+		tree := &v1beta1.RoutingTree{
+			ObjectMeta: v1.ObjectMeta{
+				Name:        "mp-terraform",
+				Namespace:   apis.DefaultNamespace,
+				Annotations: terraformAnnotations,
+			},
+			Spec: def.Spec,
+		}
+		created, err := adminClient.Create(ctx, tree, resource.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+		requireTerraform(t, created, "create response")
+
+		fresh, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		requireTerraform(t, fresh, "fresh get")
+		requireTerraform(t, findInList(t, created.Name), "list")
+
+		require.NoError(t, adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}), "delete with matching manager should succeed")
+	})
+}
+
 func TestIntegrationDataConsistency(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -974,13 +1073,14 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		allCreatedRoutes[models.DefaultRoutingTreeName] = k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy)
 
 		for name, route := range allCreatedRoutes {
-			require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
+			require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, models.ProvenanceAPI))
 
 			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 				got, err := adminClient.Get(ctx, nameToIdentifier(name))
 				require.NoError(t, err)
 				expected := route.Copy().(*v1beta1.RoutingTree)
-				expected.SetProvenanceStatus("API")
+				expected.SetProvenanceStatus(string(models.ProvenanceAPI))
+				expected.Annotations[utils.AnnoKeyManagerKind] = string(utils.ManagerKindClassicAPI) //nolint:staticcheck
 				assert.Equal(t, expected, got)
 			})
 		}
@@ -1058,7 +1158,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		t.Run("Update on provisioned should succeed for admin", func(t *testing.T) {
 			for name := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
-					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
+					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, models.ProvenanceAPI))
 
 					_, err := adminClient.Update(ctx, k8sRoute(t, name, policy_exports.Empty()), resource.UpdateOptions{ResourceVersion: ""}) // Bypass version check.
 					require.NoError(t, err)
@@ -1077,17 +1177,6 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 					// Incorrect Version should throw conflict.
 					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: "incorrect-version"}})
 					require.Truef(t, errors.IsConflict(err), "Should get Conflict error but got: %s", err)
-				})
-
-				t.Run("Delete provisioned should fail", func(t *testing.T) {
-					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
-
-					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: ""}})
-					assert.Error(t, err)
-					assert.ErrorContains(t, err, "provenance")
-
-					// Reset provenance.
-					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, ""))
 				})
 
 				t.Run("Correct ResourceVersion should succeed", func(t *testing.T) {
@@ -1111,6 +1200,18 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 					} else {
 						validateGetErr(t, name, v1.StatusReasonNotFound)
 					}
+				})
+
+				_, _ = adminClient.Create(ctx, route, resource.CreateOptions{}) // Not necessary to check error here, downstream will catch.
+
+				t.Run("Delete on provisioned should succeed for admin", func(t *testing.T) {
+					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, models.ProvenanceAPI))
+
+					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: ""}})
+					require.NoError(t, err)
+
+					// Reset provenance.
+					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, ""))
 				})
 			})
 		}
