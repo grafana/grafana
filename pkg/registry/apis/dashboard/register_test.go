@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -29,6 +30,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/client-go/dynamic"
 	kubecommon "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis"
@@ -913,5 +915,34 @@ func TestOtherDashboardGroupResourcesDeclareGVK(t *testing.T) {
 			require.Equal(t, tc.folder, so.EnableFolderSupport)
 			require.False(t, so.RequireFolder)
 		})
+	}
+}
+
+func TestAfterDeleteStopsWaitingForAStalledPermissionDelete(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var client dynamic.NamespaceableResourceInterface = &stalledPermissionClient{}
+		b := &DashboardsAPIBuilder{resourcePermissionsSvc: &client}
+
+		start := time.Now()
+		b.afterDelete(&dashv1.Dashboard{ObjectMeta: metav1.ObjectMeta{Name: "dash-uid", Namespace: "stacks-1"}}, &metav1.DeleteOptions{})
+
+		require.Less(t, time.Since(start), 34*time.Second, "afterDelete held the delete request past the apiserver's 34 s write-handler cap")
+	})
+}
+
+type stalledPermissionClient struct {
+	dynamic.NamespaceableResourceInterface
+}
+
+func (c *stalledPermissionClient) Namespace(string) dynamic.ResourceInterface {
+	return c
+}
+
+func (c *stalledPermissionClient) Delete(ctx context.Context, _ string, _ metav1.DeleteOptions, _ ...string) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(time.Hour):
+		return nil
 	}
 }
