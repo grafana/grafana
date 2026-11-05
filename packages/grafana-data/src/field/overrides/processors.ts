@@ -139,7 +139,7 @@ function interpolateVarMapping(expr: string, context: FieldOverrideContext): str
   const text = context
     .replaceVariables(expr, context.field?.state?.scopedVars, (v: unknown) => {
       if (Array.isArray(v)) {
-        if (v.length > 1) {
+        if (v.length !== 1) {
           multiInvalid = true;
           return '';
         }
@@ -155,7 +155,7 @@ function interpolateVarMapping(expr: string, context: FieldOverrideContext): str
 /**
  * Resolves a `varMappings` expression (e.g. `$myVar`) to a number. Returns `undefined` when there
  * is no `replaceVariables`, the result isn't numeric or is outside the settings' `min`/`max`, or a
- * referenced variable has more than one value selected, so callers can fall back to the stored value.
+ * referenced variable doesn't have exactly one value selected, so callers can fall back to the stored value.
  */
 export function resolveVarMapping(expr: string, context: FieldOverrideContext, settings?: unknown): number | undefined {
   const text = interpolateVarMapping(expr, context);
@@ -246,7 +246,7 @@ export interface ThresholdsFieldConfigSettings {
  * Resolves a threshold step's optional `valueExpr` (a dashboard-variable expression)
  * against the current variable values. Falls back to the numeric `value` when the
  * expression is missing, resolves to something non-numeric, or the variable currently
- * has more than one value selected. The returned step never carries `valueExpr`.
+ * doesn't have exactly one value selected. The returned step never carries `valueExpr`.
  */
 function resolveThreshold(step: Threshold, context: FieldOverrideContext): Threshold {
   const { valueExpr, ...resolved } = step;
