@@ -19,8 +19,8 @@ import { type AppDispatch } from 'app/store/configureStore';
 import { isManaged } from './managedResource';
 
 /**
- * The storage collection every data source plugin's API group is stored in. No API server serves
- * it: each plugin serves its own `{plugin}.datasource.grafana.app`.
+ * The storage collection every data source plugin's API group is stored in; each plugin serves its
+ * own `{plugin}.datasource.grafana.app`.
  */
 const DATASOURCE_COLLECTION_GROUP = 'datasource.grafana.app';
 
@@ -48,6 +48,11 @@ export interface ListedResource {
  * an RTK Query client imperatively. */
 interface ResourceListDeps {
   dispatch: AppDispatch;
+  /**
+   * The backend's declared resources, so a collection kind enumerates only the members provisioning
+   * acts on. Undefined before settings load, which enumerates every member served.
+   */
+  availableResources?: SupportedResource[];
 }
 
 /**
@@ -161,7 +166,8 @@ export const resourceKindInfos = {
     listRoute: '/connections/datasources',
     // Data sources are org-scoped, not folder-contained.
     folderScoped: false,
-    list: () => listCollectionMembers(DATASOURCE_COLLECTION_GROUP, 'datasources'),
+    list: ({ availableResources }: ResourceListDeps) =>
+      listCollectionMembers(DATASOURCE_COLLECTION_GROUP, 'datasources', 'DataSource', availableResources),
     alwaysAvailable: false,
   },
 } as const;
@@ -216,7 +222,7 @@ export interface ResourceKindInfo {
   /**
    * Whether `group` names a storage collection served by one API group per member rather than a
    * served group itself. Data sources are the case: each plugin serves
-   * `{plugin}.datasource.grafana.app`. Such a kind matches any group inside the collection, and is
+   * `{plugin}.datasource.grafana.app`. Such a kind covers any group inside the collection, and is
    * reported to the user as the collection — the plugin that served a resource is not what the
    * kind is called.
    */
@@ -268,11 +274,10 @@ export interface ResourceKindInfo {
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 /**
- * Whether `group` identifies this kind. A collection kind also matches the groups served inside
- * the collection, which is what the backend reports for an individual resource and for a job
- * result.
+ * Whether `group` identifies this kind. A collection kind also covers the groups served inside the
+ * collection, which is what the backend reports for an individual resource and for a job result.
  */
-export function matchesGroup(info: ResourceKindInfo, group: string): boolean {
+export function coversGroup(info: ResourceKindInfo, group: string): boolean {
   return info.group === group || (Boolean(info.collectionGroup) && group.endsWith(`.${info.group}`));
 }
 
@@ -325,7 +330,7 @@ export function getKindInfoByItemType(itemType: string): ResourceKindInfo | unde
  * share an API group, so the group alone does not always identify the kind.
  */
 export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => (group !== undefined && matchesGroup(info, group)) || info.resource === group);
+  return allKindInfos.find((info) => (group !== undefined && coversGroup(info, group)) || info.resource === group);
 }
 
 /**
@@ -337,7 +342,7 @@ export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceK
   if (!group && !kind) {
     return undefined;
   }
-  return allKindInfos.find((info) => (!group || matchesGroup(info, group)) && (!kind || info.kind === kind));
+  return allKindInfos.find((info) => (!group || coversGroup(info, group)) && (!kind || info.kind === kind));
 }
 
 /**
@@ -370,7 +375,7 @@ export function getAvailableResourceKinds(availableResources?: SupportedResource
   }
   return allKindInfos.filter((info) =>
     availableResources.some(
-      (r) => r.group !== undefined && matchesGroup(info, r.group) && r.kind === info.kind && !r.disabled
+      (r) => r.group !== undefined && coversGroup(info, r.group) && r.kind === info.kind && !r.disabled
     )
   );
 }
@@ -515,17 +520,49 @@ async function listViaApiserver(group: string, version: string, resource: string
 }
 
 /**
- * Lists a collection's members, through each of the groups serving the kind. There is no single
- * group to list: a collection is a storage group no API server serves. Discovery is the source, as
- * it is for the backend's own expansion — a plugin can be installed without its group being served,
- * and it is the served group a resource is addressable through.
+ * Whether provisioning acts on a member of a collection it covers. A member declared on its own
+ * wins over the collection, disabled or not: that is the precedence job admission applies, so a
+ * member enumerated against it would be offered for migration and then rejected.
+ *
+ * Membership is already established, so a declaration covers the member only by naming the
+ * collection or the member itself -- a sibling's group covers nothing here.
  */
-async function listCollectionMembers(collection: string, resource: string): Promise<ListedResource[]> {
+function actsOnMember(
+  collection: string,
+  group: string,
+  kind: string,
+  availableResources?: SupportedResource[]
+): boolean {
+  if (!availableResources) {
+    return true;
+  }
+  const declared = availableResources.find((r) => r.kind === kind && r.group === group);
+  if (declared) {
+    return !declared.disabled;
+  }
+  return availableResources.some((r) => r.kind === kind && r.group === collection && !r.disabled);
+}
+
+/**
+ * Lists a collection's members, through each of the groups serving the kind: a member has to be
+ * reported with the group that serves it, which the collection group does not name. Discovery is
+ * the source, as it is for the backend's own expansion, because a plugin can be installed without
+ * its group being served.
+ */
+async function listCollectionMembers(
+  collection: string,
+  resource: string,
+  kind: string,
+  availableResources?: SupportedResource[]
+): Promise<ListedResource[]> {
   const apis = await getAPIGroupDiscoveryList();
   const perGroup = await Promise.all(
     apis.items
       .filter((api) => api.metadata.name.endsWith(`.${collection}`))
       .flatMap((api) => {
+        if (!actsOnMember(collection, api.metadata.name, kind, availableResources)) {
+          return [];
+        }
         // Versions are listed preferred-first.
         const version = api.versions.find((v) => v.resources.some((r) => r.resource === resource));
         return version ? [{ group: api.metadata.name, version: version.version }] : [];

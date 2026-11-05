@@ -17,7 +17,7 @@ import {
   getMigratableKinds,
   getReportedGroup,
   getRepositoryRoute,
-  matchesGroup,
+  coversGroup,
   isResourceKindAvailable,
   readImmediateParent,
 } from './resourceKinds';
@@ -338,18 +338,18 @@ describe('collection groups', () => {
   const testdata = 'grafana-testdata-datasource.datasource.grafana.app';
 
   it('matches a served group inside the collection as well as the collection itself', () => {
-    expect(matchesGroup(resourceKindInfos.datasource, testdata)).toBe(true);
-    expect(matchesGroup(resourceKindInfos.datasource, 'datasource.grafana.app')).toBe(true);
+    expect(coversGroup(resourceKindInfos.datasource, testdata)).toBe(true);
+    expect(coversGroup(resourceKindInfos.datasource, 'datasource.grafana.app')).toBe(true);
   });
 
   it('does not match a group that merely looks similar', () => {
-    expect(matchesGroup(resourceKindInfos.datasource, 'notdatasource.grafana.app')).toBe(false);
-    expect(matchesGroup(resourceKindInfos.datasource, 'datasource.grafana.app.evil')).toBe(false);
+    expect(coversGroup(resourceKindInfos.datasource, 'notdatasource.grafana.app')).toBe(false);
+    expect(coversGroup(resourceKindInfos.datasource, 'datasource.grafana.app.evil')).toBe(false);
   });
 
   it('leaves a kind served under its own group matching exactly', () => {
-    expect(matchesGroup(resourceKindInfos.dashboard, 'dashboard.grafana.app')).toBe(true);
-    expect(matchesGroup(resourceKindInfos.dashboard, 'v2.dashboard.grafana.app')).toBe(false);
+    expect(coversGroup(resourceKindInfos.dashboard, 'dashboard.grafana.app')).toBe(true);
+    expect(coversGroup(resourceKindInfos.dashboard, 'v2.dashboard.grafana.app')).toBe(false);
   });
 
   it('resolves a resource reported under a served group back to the kind', () => {
@@ -401,7 +401,7 @@ describe('listing a collection kind', () => {
     );
   }
 
-  it('lists the members of every group discovery serves the kind under', async () => {
+  const bothServed = () =>
     server.use(
       discovery([
         { name: 'prometheus.datasource.grafana.app', version: 'v0alpha1', resource: 'datasources' },
@@ -414,18 +414,60 @@ describe('listing a collection kind', () => {
       datasources('loki.datasource.grafana.app', 'v1beta1', ['logs'])
     );
 
-    const listed = await resourceKindInfos.datasource.list();
+  const prom = { uid: 'prom', title: 'prom', managed: false, group: 'prometheus.datasource.grafana.app' };
+  const logs = { uid: 'logs', title: 'logs', managed: false, group: 'loki.datasource.grafana.app' };
+
+  function list(availableResources?: SupportedResource[]) {
+    return resourceKindInfos.datasource.list({ dispatch: jest.fn(), availableResources });
+  }
+
+  it('lists the members of every group discovery serves the kind under', async () => {
+    bothServed();
 
     // Each member carries the group that serves it, which is how a job addresses it.
-    expect(listed).toEqual([
-      { uid: 'prom', title: 'prom', managed: false, group: 'prometheus.datasource.grafana.app' },
-      { uid: 'logs', title: 'logs', managed: false, group: 'loki.datasource.grafana.app' },
-    ]);
+    await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([prom, logs]);
+  });
+
+  it('lists every served member before settings declare which ones provisioning acts on', async () => {
+    bothServed();
+
+    await expect(list(undefined)).resolves.toEqual([prom, logs]);
+  });
+
+  // A member declared on its own reaches the frontend verbatim: only a wildcard pattern is reported
+  // as its collection. Enumerating a member provisioning does not act on would offer it for
+  // migration and have the job reject the reference.
+  it('lists only the member declared, when the collection itself is not', async () => {
+    bothServed();
+
+    await expect(list([{ group: 'prometheus.datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([prom]);
+  });
+
+  it('leaves out a member disabled on its own inside an enabled collection', async () => {
+    bothServed();
+
+    await expect(
+      list([
+        { group: 'datasource.grafana.app', kind: 'DataSource' },
+        { group: 'loki.datasource.grafana.app', kind: 'DataSource', disabled: true },
+      ])
+    ).resolves.toEqual([prom]);
+  });
+
+  it('lists a member enabled on its own inside a disabled collection', async () => {
+    bothServed();
+
+    await expect(
+      list([
+        { group: 'datasource.grafana.app', kind: 'DataSource', disabled: true },
+        { group: 'loki.datasource.grafana.app', kind: 'DataSource' },
+      ])
+    ).resolves.toEqual([logs]);
   });
 
   it('lists nothing when no group serves the collection', async () => {
     server.use(discovery([{ name: 'dashboard.grafana.app', version: 'v1beta1', resource: 'dashboards' }]));
 
-    await expect(resourceKindInfos.datasource.list()).resolves.toEqual([]);
+    await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([]);
   });
 });

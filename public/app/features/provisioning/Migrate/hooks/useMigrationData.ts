@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
+import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
 
@@ -238,7 +239,10 @@ function aggregate(folders: ListedResource[], results: KindResult[]): { rows: Fo
  * folder-scoped kinds nest under. When a dedicated backend roll-up endpoint
  * lands, swap the body to consume it.
  */
-export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: () => void } {
+export function useMigrationData(
+  kinds: ResourceKindInfo[],
+  availableResources?: SupportedResource[]
+): State & { refetch: () => void } {
   const dispatch = useDispatch();
   const [state, setState] = useState<State>({
     data: [],
@@ -252,6 +256,9 @@ export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: 
   // Identity-stable dependency: the kinds list is rebuilt each render, so key the
   // effect on the kinds it covers rather than the array reference.
   const kindsKey = kinds.map((kind) => `${kind.group}/${kind.kind}`).join(',');
+  // Enabling or disabling one member of a collection leaves kindsKey unchanged — the kind stays
+  // migratable — but changes which members a collection kind enumerates.
+  const availableKey = availableResources?.map((r) => `${r.group}/${r.kind}/${r.disabled}`).join(',') ?? '';
 
   useEffect(() => {
     let cancelled = false;
@@ -264,7 +271,7 @@ export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: 
       const outcomes = await Promise.allSettled([
         // Folders list through the searcher and ignore dispatch.
         needsFolders ? resourceKindInfos.folder.list() : Promise.resolve<ListedResource[]>([]),
-        ...kinds.map((kind) => kind.list({ dispatch })),
+        ...kinds.map((kind) => kind.list({ dispatch, availableResources })),
       ]);
       if (cancelled) {
         return;
@@ -300,9 +307,9 @@ export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: 
     return () => {
       cancelled = true;
     };
-    // kindsKey captures the meaningful contents of `kinds`; dispatch is stable.
+    // kindsKey and availableKey capture the meaningful contents of their arrays; dispatch is stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kindsKey, reloadToken, dispatch]);
+  }, [kindsKey, availableKey, reloadToken, dispatch]);
 
   // Refetch in the background — we don't flip back to the loading state, so a
   // post-migration refresh doesn't unmount the page (and the drawer that
