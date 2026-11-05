@@ -30,7 +30,7 @@
 // terminal receive error; successful sends do not imply success.
 //
 // Direct Go calls can bypass conversion and return response-embedded errors.
-// Handle both forms there and for supported older servers that require them.
+// Handle both forms on those paths.
 // Use [ErrorFromResponse] for Go callers or [StatusErrorFromResponse] at
 // HTTP/apiserver boundaries. Both prioritize err; check it before accessing a
 // potentially nil response.
