@@ -8,7 +8,7 @@ import { type RepoType } from '../Wizard/types';
 import { ManagedBadge } from '../components/ManagedBadge';
 import { CONNECTIONS_URL } from '../constants';
 import { connectionProviderType, isOAuthConnectionType } from '../utils/connectionOAuth';
-import { getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
+import { getManagerIdentity, getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
 
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';
 
@@ -39,7 +39,9 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
         <Stack gap={2} direction="row" alignItems="center">
           <Text variant="h3">{title}</Text>
           <ConnectionStatusBadge status={status} />
-          {isReadOnly && <ManagedBadge managerKind={getManagerKind(connection)} name={title} />}
+          {isReadOnly && (
+            <ManagedBadge managerKind={getManagerKind(connection)} name={getManagerIdentity(connection)} />
+          )}
         </Stack>
       </Card.Heading>
 

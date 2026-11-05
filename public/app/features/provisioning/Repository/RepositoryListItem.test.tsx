@@ -213,6 +213,18 @@ describe('RepositoryListItem', () => {
       expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
     });
 
+    it('names the owning plugin in the badge tooltip, not the repository', async () => {
+      const repo = managedRepo({
+        [AnnoKeyManagerKind]: ManagerKind.Plugin,
+        [AnnoKeyManagerIdentity]: 'grafana-slo-app',
+      });
+      const { user } = render(<RepositoryListItem repository={repo} />);
+
+      await user.hover(screen.getByTestId('icon-exchange-alt'));
+
+      expect(await screen.findByText('Managed by: Plugin grafana-slo-app')).toBeInTheDocument();
+    });
+
     it('explains why Settings is unavailable on hover', async () => {
       const { user } = render(<RepositoryListItem repository={terraformRepo()} />);
 

@@ -46,6 +46,23 @@ describe('ConnectionListItem', () => {
     expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
+  it('names the owning plugin in the badge tooltip, not the connection', async () => {
+    const connection = createMockConnection({
+      metadata: {
+        name: 'test-connection',
+        annotations: {
+          [AnnoKeyManagerKind]: ManagerKind.Plugin,
+          [AnnoKeyManagerIdentity]: 'grafana-slo-app',
+        },
+      },
+    });
+    const { user } = render(<ConnectionListItem connection={connection} />, { renderWithRouter: true });
+
+    await user.hover(screen.getByTestId('icon-exchange-alt'));
+
+    expect(await screen.findByText('Managed by: Plugin grafana-slo-app')).toBeInTheDocument();
+  });
+
   it('does not show the managed badge for an unmanaged connection', () => {
     render(<ConnectionListItem connection={createMockConnection()} />, { renderWithRouter: true });
 

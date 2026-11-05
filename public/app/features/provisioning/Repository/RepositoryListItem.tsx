@@ -14,7 +14,7 @@ import { ManagedBadge } from '../components/ManagedBadge';
 import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { PROVISIONING_URL } from '../constants';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
-import { getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
+import { getManagerIdentity, getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
 import { getManagedReadOnlyTooltip } from '../utils/tooltip';
@@ -76,7 +76,9 @@ export function RepositoryListItem({ repository }: Props) {
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
           {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} />}
-          {isReadOnly && <ManagedBadge managerKind={getManagerKind(repository)} name={spec?.title} />}
+          {isReadOnly && (
+            <ManagedBadge managerKind={getManagerKind(repository)} name={getManagerIdentity(repository)} />
+          )}
         </Stack>
       </Card.Heading>
 

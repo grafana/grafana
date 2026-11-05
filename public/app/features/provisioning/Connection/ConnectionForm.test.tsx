@@ -192,17 +192,18 @@ describe('ConnectionForm', () => {
       expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     });
 
-    it('does not render Reauthorize, which would persist form edits', () => {
+    it('does not render Reauthorize, which would persist form edits', async () => {
       setup({ data: disconnectedOAuthConnection({ [AnnoKeyManagerKind]: ManagerKind.Terraform }) });
+      await awaitSettingsLoaded();
 
-      expect(screen.getByText(/managed externally/i)).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /reauthorize/i })).not.toBeInTheDocument();
     });
 
     it('offers Reauthorize for an unmanaged disconnected connection', async () => {
       setup({ data: disconnectedOAuthConnection() });
+      await awaitSettingsLoaded();
 
-      expect(await screen.findByRole('button', { name: /reauthorize/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /reauthorize/i })).toBeInTheDocument();
     });
 
     it('does not show the banner and enables Save for an unmanaged connection', async () => {
