@@ -1,6 +1,6 @@
 import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { mockFolder } from 'app/features/alerting/unified/mocks';
 import { setFolderAccessControl, setFolderResponse } from 'app/features/alerting/unified/mocks/server/configure';
@@ -10,15 +10,15 @@ import { DEFAULT_FOLDERS } from './folders';
 
 setupMswServer();
 
-/** Resolves once the facade has settled, with the folder it produced (if any) and whether it errored. */
+/** Resolves once `useGetCombinedFolderQuery` has settled, with the folder it produced (if any) and whether it errored. */
 const loadFolder = async (uid: string) => {
-  const { result } = renderHook(() => useGetFolderQueryFacade(uid), { wrapper: getWrapper({}) });
+  const { result } = renderHook(() => useGetCombinedFolderQuery(uid), { wrapper: getWrapper({}) });
   await waitFor(() => expect(result.current.isLoading).toBe(false));
   return { data: result.current.data, isError: result.current.isError };
 };
 
 describe('alerting folder handlers', () => {
-  it('serves a seeded folder with its configured ancestors through the folder facade', async () => {
+  it('serves a seeded folder with its configured ancestors through useGetCombinedFolderQuery', async () => {
     setFolderResponse(
       mockFolder({
         uid: 'child',

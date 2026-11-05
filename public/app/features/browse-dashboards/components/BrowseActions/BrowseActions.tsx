@@ -14,7 +14,7 @@ import { ShowModalReactEvent } from 'app/types/events';
 import { type FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
 
-import { useMoveMultipleFoldersMutationFacade } from '../../../../api/clients/folder/v1beta1/hooks';
+import { useMoveFolders } from '../../../../api/clients/folder/v1beta1/hooks';
 import {
   useDeleteDashboardsMutation,
   useDeleteFoldersMutation,
@@ -54,7 +54,7 @@ export function BrowseActions({ folderDTO }: Props) {
   const selectedItems = useActionSelectionState();
   const [deleteDashboards] = useDeleteDashboardsMutation();
   const [deleteFolders] = useDeleteFoldersMutation();
-  const [moveFolders] = useMoveMultipleFoldersMutationFacade();
+  const [moveFolders] = useMoveFolders();
   const [moveDashboards] = useMoveDashboardsMutation();
   const [, stateManager] = useSearchStateManager();
   const provisioningEnabled = config.provisioningEnabled;

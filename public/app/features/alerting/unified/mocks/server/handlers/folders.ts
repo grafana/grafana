@@ -87,7 +87,7 @@ export const getFolderHandlers = (folder: Partial<FolderDTO>) => {
 
 /**
  * Access handler that reports the given access control for every folder. Only `/access` is overridden: the folder
- * itself must exist, either in `DEFAULT_FOLDERS` or seeded with `getFolderHandlers`, or the facade reports a 404.
+ * itself must exist, either in `DEFAULT_FOLDERS` or seeded with `getFolderHandlers`, or `useGetCombinedFolderQuery` reports a 404.
  */
 export const getFolderAccessHandler = (accessControl: FolderDTO['accessControl']) =>
   http.get(`${FOLDER_BY_NAME}/access`, () => HttpResponse.json(toAccessInfo(mockFolder({ accessControl }))));

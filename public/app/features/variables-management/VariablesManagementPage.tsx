@@ -8,7 +8,7 @@ import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
 import { Alert, Button, ConfirmModal, EmptyState, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type Variable } from 'app/api/clients/dashboard/v2beta1';
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
@@ -60,7 +60,7 @@ export default function VariablesManagementPage() {
   // and back navigation return there instead of the global list.
   const [searchParams] = useSearchParams();
   const originFolderUid = (isNew || editName ? searchParams.get('folderUid') : null) || undefined;
-  const { data: originFolder } = useGetFolderQueryFacade(originFolderUid);
+  const { data: originFolder } = useGetCombinedFolderQuery(originFolderUid);
   const originFolderNav = useMemo(() => {
     if (!originFolder || originFolder.uid !== originFolderUid) {
       return undefined;

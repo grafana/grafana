@@ -82,7 +82,7 @@ describe('RestoreModal', () => {
     renderRestoreModal({ originCandidate: folderA.item.uid });
 
     // getAutoTarget returns originCandidate for non-404 errors → restoreTarget is set
-    // The FolderPicker's own facade also gets 403, so it can't resolve the title.
+    // The FolderPicker's own folder lookup also gets 403, so it can't resolve the title.
     // But the Restore button should be enabled because restoreTarget !== undefined.
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Restore' })).toBeEnabled();

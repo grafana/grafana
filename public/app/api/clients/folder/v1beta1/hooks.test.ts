@@ -16,12 +16,7 @@ import { type StoreState } from 'app/types/store';
 
 import { AnnoKeyFolder, AnnoKeyGrantPermissions } from '../../../../features/apiserver/types';
 
-import {
-  useGetFolderQueryFacade,
-  useMoveMultipleFoldersMutationFacade,
-  getFolderByUidFacade,
-  getFolderUrl,
-} from './hooks';
+import { useGetCombinedFolderQuery, useMoveFolders, getCombinedFolder, getFolderUrl } from './hooks';
 import { getWrapperWithNotifications, setupCreateFolder, setupUpdateFolder } from './test-utils';
 
 setAppEvents(appEvents);
@@ -39,7 +34,7 @@ const parentUrlSlug = folderA.item.title.toLowerCase().replace(/ /g, '-').replac
 const expectedParentUrl = `/grafana/dashboards/f/${folderA.item.uid}/${parentUrlSlug}`;
 
 const renderFolderHook = async () => {
-  const { result } = renderHook(() => useGetFolderQueryFacade(folderA_folderA.item.uid), {
+  const { result } = renderHook(() => useGetCombinedFolderQuery(folderA_folderA.item.uid), {
     wrapper: getWrapper({}),
   });
   await waitFor(() => {
@@ -119,7 +114,7 @@ afterEach(() => {
   contextSrv.user.permissions = originalPermissions;
 });
 
-describe('useGetFolderQueryFacade', () => {
+describe('useGetCombinedFolderQuery', () => {
   const originalAppSubUrl = String(config.appSubUrl);
   const originalSharedWithMeFolderUID = config.sharedWithMeFolderUID;
 
@@ -191,7 +186,7 @@ describe('useGetFolderQueryFacade', () => {
   });
 
   it('runs a real access query for the root/general virtual folder', async () => {
-    const { result } = renderHook(() => useGetFolderQueryFacade('general'), {
+    const { result } = renderHook(() => useGetCombinedFolderQuery('general'), {
       wrapper: getWrapper({}),
     });
 
@@ -222,7 +217,7 @@ describe('useGetFolderQueryFacade', () => {
   it('runs a real access query for the sharedwithme virtual folder (no access)', async () => {
     config.sharedWithMeFolderUID = 'sharedwithme';
 
-    const { result } = renderHook(() => useGetFolderQueryFacade('sharedwithme'), {
+    const { result } = renderHook(() => useGetCombinedFolderQuery('sharedwithme'), {
       wrapper: getWrapper({}),
     });
 
@@ -243,7 +238,7 @@ describe('useGetFolderQueryFacade', () => {
 
   it('stops reporting a folder once the uid is cleared', async () => {
     const initialProps: { uid?: string } = { uid: folderA_folderA.item.uid };
-    const { result, rerender } = renderHook(({ uid }: { uid?: string }) => useGetFolderQueryFacade(uid), {
+    const { result, rerender } = renderHook(({ uid }: { uid?: string }) => useGetCombinedFolderQuery(uid), {
       wrapper: getWrapper({}),
       initialProps,
     });
@@ -255,10 +250,8 @@ describe('useGetFolderQueryFacade', () => {
   });
 });
 
-describe('useMoveMultipleFoldersMutationFacade', () => {
+describe('useMoveFolders', () => {
   const patchSpy = jest.fn();
-  // RTK Query logs a console.error because the legacy moveFolders queryFn resolves { data: undefined }; the app
-  // platform path has no such noise, so each test pins what it expects on the spy.
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -275,7 +268,7 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
     const folderUIDs = ['uid1', 'uid2'];
     const destinationUID = folderA.item.uid;
     const store = configureStore();
-    const { result } = renderHook(() => useMoveMultipleFoldersMutationFacade(), {
+    const { result } = renderHook(() => useMoveFolders(), {
       wrapper: getWrapperWithNotifications(store),
     });
     await act(async () => {
@@ -421,9 +414,9 @@ describe('useUpdateFolder app-platform starred nav update', () => {
   });
 });
 
-describe('getFolderByUidFacade', () => {
+describe('getCombinedFolder', () => {
   beforeEach(() => {
-    // getFolderByUidFacade dispatches on the global store, so register a fresh one per test
+    // getCombinedFolder dispatches on the global store, so register a fresh one per test
     configureStore();
     folderAPIVersionResolver.set('v1beta1');
   });
@@ -436,7 +429,7 @@ describe('getFolderByUidFacade', () => {
       http.get(folderHandlers.FOLDER_BY_NAME, () => HttpResponse.json({ message: 'Forbidden' }, { status: 403 }))
     );
 
-    await expect(getFolderByUidFacade(folderA_folderA.item.uid)).rejects.toHaveProperty('status', 403);
+    await expect(getCombinedFolder(folderA_folderA.item.uid)).rejects.toHaveProperty('status', 403);
   });
 
   it('throws a generic error when the folder API returns empty bodies', async () => {
@@ -446,7 +439,7 @@ describe('getFolderByUidFacade', () => {
       http.get(`${folderHandlers.FOLDER_BY_NAME}/parents`, () => new HttpResponse(null))
     );
 
-    await expect(getFolderByUidFacade(folderA_folderA.item.uid)).rejects.toThrow(
+    await expect(getCombinedFolder(folderA_folderA.item.uid)).rejects.toThrow(
       'One of the folder responses is undefined'
     );
   });

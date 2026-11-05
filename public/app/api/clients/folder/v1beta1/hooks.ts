@@ -129,7 +129,7 @@ const combineFolderResponses = (
   return newData;
 };
 
-export async function getFolderByUidFacade(uid: string) {
+export async function getCombinedFolder(uid: string) {
   // Root-parented requests carry "" or "general" — serve the virtual root
   // folder for either rather than fetching a folder resource that doesn't exist.
   const isRoot = isRootFolderUID(uid);
@@ -181,7 +181,7 @@ export async function getFolderByUidFacade(uid: string) {
  * parents are separate resources, so the three queries are stitched together.
  * @param uid
  */
-export function useGetFolderQueryFacade(uid?: string) {
+export function useGetCombinedFolderQuery(uid?: string) {
   // "" / undefined and "general" both mean the synthetic root folder —
   // neither is a real folder resource.
   const isRoot = isRootFolderUID(uid);
@@ -260,7 +260,7 @@ export function useGetFolderQueryFacade(uid?: string) {
   }
 }
 
-export function useMoveMultipleFoldersMutationFacade() {
+export function useMoveFolders() {
   const [updateFolder, updateFolderData] = useUpdateFolderMutation();
   const dispatch = useDispatch();
   const refetch = useRefreshFolders();
@@ -399,7 +399,7 @@ export function useUpdateFolder() {
   return [updateFolder, result] as const;
 }
 
-export function useMoveFolderMutationFacade() {
+export function useMoveFolder() {
   const [updateFolder, updateFolderData] = useUpdateFolderMutation();
   const refresh = useRefreshFolders();
   const notify = useAppNotification();
