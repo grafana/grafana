@@ -46,7 +46,7 @@ func TestCountingSearcherRecordsOutcome(t *testing.T) {
 
 			require.Equal(t, tt.err, err, "the call result must pass through unchanged")
 			require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues(countCallerEndpoint, tt.wantOutcome, tt.wantJoin)))
-			require.Equal(t, 1, testutil.CollectAndCount(m.requests))
+			require.Equal(t, 1, recordedSeries(m.requests))
 		})
 	}
 }
@@ -120,7 +120,8 @@ func TestUpdateAPIGroupInfoCountsTheEndpointAsItsOwnCaller(t *testing.T) {
 		_, err := counts.searcher.GetStats(context.Background(), &resourcepb.ResourceStatsRequest{})
 		require.NoError(t, err)
 	}
-	require.Equal(t, 2.0, testutil.ToFloat64(m.requests.WithLabelValues("counts_endpoint", "ok", "enabled")), "one per served version")
+	require.NotEmpty(t, info.VersionedResourcesStorageMap)
+	require.Equal(t, float64(len(info.VersionedResourcesStorageMap)), testutil.ToFloat64(m.requests.WithLabelValues("counts_endpoint", "ok", "enabled")), "one per served version")
 }
 
 func TestWithCountMetricsSetsTheBuilderMetrics(t *testing.T) {

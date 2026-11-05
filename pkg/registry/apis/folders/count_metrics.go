@@ -30,11 +30,17 @@ type countMetrics struct {
 func newCountMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) *countMetrics {
 	requests := promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 		Name: "grafana_folder_counts_requests_total",
-		Help: "Folder content counts, by caller, outcome, and whether counting joined the legacy database",
+		Help: "GetStats calls for folder content counts, by caller, outcome, and whether counting joined the legacy database",
 	}, []string{"caller", "outcome", "legacy_join"})
 	join := "disabled"
 	if legacyJoinEnabled {
 		join = "enabled"
+	}
+	// Created up front so rate() alerts see the first failure.
+	for _, caller := range []string{countCallerEndpoint, countCallerDeleteCheck} {
+		for _, outcome := range []string{countOutcomeOK, countOutcomeError, countOutcomeCanceled} {
+			requests.WithLabelValues(caller, outcome, join).Add(0)
+		}
 	}
 	return &countMetrics{requests: requests, legacyJoin: join}
 }
