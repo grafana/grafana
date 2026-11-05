@@ -49,6 +49,7 @@ declare module "@openfeature/core" {
     | "dashboard.notebooks"
     | "dashboard.notebookComments"
     | "grafana.dashboardComposer"
+    | "grafana.notebookComposer"
     | "grafana.savedDashboardViews"
     | "grafana.dashboardPreviewMode"
     | "dashboardUndoRedo"

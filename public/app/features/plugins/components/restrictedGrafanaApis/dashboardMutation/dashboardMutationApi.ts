@@ -69,6 +69,11 @@ export function getMountedDashboardScene(): DashboardScene | null {
   return client instanceof DashboardMutationClient ? client.getScene() : null;
 }
 
+/** Every notebook with a mounted client, wherever it is drawn (its route, or a host such as the Assistant canvas). */
+export function getMountedNotebookScenes(): NotebookScene[] {
+  return _clients.flatMap((client) => (client instanceof NotebookMutationClient ? [client.getScene()] : []));
+}
+
 /** @internal — exposed only for unit tests that need to inject a mock client. */
 export function setDashboardMutationClientForTests(client: MutationClient | null): void {
   _clients.length = 0;

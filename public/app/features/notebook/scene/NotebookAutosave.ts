@@ -53,6 +53,12 @@ const MAX_WAIT_MS = 15000;
 
 export type NotebookSaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'error';
 
+/** How a held-back save ended: see `NotebookAutosave.resume`. 'unchanged' when nothing was waiting. */
+export interface NotebookSaveOutcome {
+  status: 'saved' | 'save_failed' | 'conflict' | 'unchanged';
+  message?: string;
+}
+
 export interface NotebookAutosaveState {
   status: NotebookSaveStatus;
   errorMessage?: string;
@@ -153,6 +159,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private stopped = false;
   /** Failures in a row since the last save that landed. `autosave_failed` sends this as `attempt`. */
   private failedAttempts = 0;
+  /** Set between `suspend` and `resume`: changes are tracked, but nothing arms the debounce. */
+  private suspended = false;
+  /** Saves that landed, so `resume` can tell a write made while suspended (the page went hidden). */
+  private savesLanded = 0;
+  private savesLandedAtSuspend = 0;
   private entryPoint: NotebookEntryPoint = NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST;
 
   public constructor(private scene: NotebookScene) {
@@ -250,6 +261,24 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
    * precondition for this one write, as `overwriteConflict` does for the modal's answer.
    */
   public async saveDocumentChange({ overwrite = false }: { overwrite?: boolean } = {}): Promise<void> {
+    // Added to, not assigned: the modal's own answer may already be waiting to be used.
+    this.overwriteNextSave ||= overwrite;
+    this.markDocumentChange();
+    try {
+      await this.awaitPendingSave();
+    } finally {
+      // A save that found nothing to write never consumes it, and it must not reach a later one.
+      if (overwrite) {
+        this.overwriteNextSave = false;
+      }
+    }
+  }
+
+  /**
+   * The first half of `saveDocumentChange`: claims the scene as the notebook's own and schedules its save,
+   * without waiting for it. Composer uses it on its own, because its saves are held back until it ends.
+   */
+  public markDocumentChange(): void {
     // These writers hand over a whole document, so everything in the scene now is the notebook's own,
     // and whatever a reader had changed went with the scene this one replaced.
     this.timeSettingsEdited = true;
@@ -262,18 +291,66 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.vizConfigsChangedWhileReading.clear();
     this.vizConfigsBeforeReadingChange.clear();
     this.editedByWriter = true;
-    // Added to, not assigned: the modal's own answer may already be waiting to be used.
-    this.overwriteNextSave ||= overwrite;
     this.schedule();
+  }
 
+  /**
+   * Holds every save back until `resume`, for a Composer session: its edits stay unsaved, as a dashboard's
+   * do, and are written once when it ends. Whatever is already waiting is written first, so the session
+   * starts from a saved notebook.
+   *
+   * Changes are still tracked and reported as pending. A page going hidden still writes them: that is the
+   * last thing a closing tab is sure to see, and holding back then would drop them without a word.
+   */
+  public suspend(): void {
+    this.flush();
+    this.suspended = true;
+    this.savesLandedAtSuspend = this.savesLanded;
+  }
+
+  /** Ends `suspend` and writes what it held back, through the usual save and conflict path. */
+  public async resume(): Promise<NotebookSaveOutcome> {
+    this.suspended = false;
+    const outcome = await this.settlePendingSave();
+    return outcome.status === 'unchanged' && this.savesLanded > this.savesLandedAtSuspend
+      ? { status: 'saved' }
+      : outcome;
+  }
+
+  /**
+   * Tries a failed save again and resolves with how it ended. A conflict is left to the conflict prompt,
+   * which is where overwriting is decided: resending the same revision would only conflict again.
+   */
+  public retrySave(): Promise<NotebookSaveOutcome> {
+    if (this.state.status === 'error' && this.state.isConflict) {
+      return Promise.resolve(this.failureOutcome());
+    }
+    this.retry();
+    return this.settlePendingSave();
+  }
+
+  /** Writes whatever is waiting now, and resolves with how that went. */
+  private async settlePendingSave(): Promise<NotebookSaveOutcome> {
+    if (!this.changePending && !this.inFlightSave && this.state.status !== 'error') {
+      return { status: 'unchanged' };
+    }
+    if (this.changePending) {
+      // Armed so the flush below has a save to run: a suspended schedule never armed one.
+      this.scheduleSave();
+    }
     try {
       await this.awaitPendingSave();
-    } finally {
-      // A save that found nothing to write never consumes it, and it must not reach a later one.
-      if (overwrite) {
-        this.overwriteNextSave = false;
-      }
+      return { status: 'saved' };
+    } catch {
+      return this.failureOutcome();
     }
+  }
+
+  private failureOutcome(): NotebookSaveOutcome {
+    return {
+      status: this.state.isConflict ? 'conflict' : 'save_failed',
+      message: this.state.errorMessage,
+    };
   }
 
   /**
@@ -641,6 +718,14 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   }
 
   private stop(): void {
+    // Leaving never drops what a suspension held back. Composer resumes before the scene stops, so this
+    // only covers a teardown that skipped it.
+    if (this.suspended) {
+      this.suspended = false;
+      if (this.changePending) {
+        this.scheduleSave();
+      }
+    }
     // Set before `flush`, not after: `flush` can itself resolve asynchronously (see `saveNow`), and
     // `stopped` has to already be true by the time that resolution runs.
     this.stopped = true;
@@ -652,6 +737,10 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
   private onVisibilityChange = (): void => {
     if (document.visibilityState === 'hidden') {
+      // Writes what a suspension holds back too: see `suspend`.
+      if (this.suspended && this.changePending) {
+        this.scheduleSave();
+      }
       this.flush();
     }
   };
@@ -670,6 +759,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       this.setState({ status: 'pending', isConflict: false });
     }
 
+    if (this.suspended) {
+      return;
+    }
     this.scheduleSave();
   }
 
@@ -917,6 +1009,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       .then(({ generation, resourceVersion }) => {
         this.recordWritten(spec, serialized, panels, cells, cellTimeRangesEdited);
         this.hasSavedOnce = true;
+        this.savesLanded++;
         this.failedAttempts = 0;
         this.setState({
           // Something can have changed while this was in flight, and reporting it saved would claim

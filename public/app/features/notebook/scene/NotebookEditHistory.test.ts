@@ -171,4 +171,28 @@ describe('NotebookEditHistory', () => {
     expect(undone).toHaveLength(100);
     expect(undone.at(-1)).toBe(1);
   });
+
+  it('counts every change to the history as a revision, and nothing else', () => {
+    const history = new NotebookEditHistory();
+    const action = (label: string) => ({ label, kind: NOTEBOOK_EDIT_KIND.EDIT, perform: () => {}, undo: () => {} });
+    expect(history.revision).toBe(0);
+
+    history.execute(action('a'));
+    const typing = action('b');
+    history.record(typing);
+    history.discard(typing);
+    history.undo();
+    history.redo();
+    expect(history.revision).toBe(5);
+
+    // Nothing to undo or redo changes nothing.
+    history.redo();
+    history.undo();
+    history.undo();
+    expect(history.revision).toBe(6);
+
+    history.clear();
+    history.clear();
+    expect(history.revision).toBe(7);
+  });
 });

@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 
 import { CoreApp, type DataQueryRequest } from '@grafana/data';
@@ -22,6 +22,13 @@ import {
 import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { ComposerOverlay } from 'app/features/dashboard-scene/composer/ComposerOverlay';
+import type { ComposerSession } from 'app/features/dashboard-scene/composer/ComposerSession';
+import {
+  clearPendingComposerEnterRequest,
+  getPendingComposerEnterTarget,
+} from 'app/features/dashboard-scene/composer/composerEntryRequests';
+import { type ComposerNotebookSpec } from 'app/features/dashboard-scene/composer/types';
 import { createMutationClient } from 'app/features/dashboard-scene/mutation-api/clientBridge';
 import { getClosestVizPanel } from 'app/features/dashboard-scene/utils/utils';
 import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
@@ -41,6 +48,7 @@ import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
 import { changedCellTimeRange, changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
 import { NOTEBOOK_EDIT_KIND, NotebookEditHistory, type NotebookEditAction } from './NotebookEditHistory';
+import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
 import { PDF_PAGE_WIDTH_MM } from './NotebookPdfLayout';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -77,7 +85,14 @@ export interface NotebookSceneState extends SceneObjectState {
    * Only the writing is suppressed, so the host is the sole route to persistence.
    */
   isDraft?: boolean;
+  /**
+   * Composer is open on the notebook (see `enterComposer`). Runtime only, and never part of an edit: the
+   * edit history's actions keep whatever it is when they run.
+   */
+  isComposing?: boolean;
 }
+
+type NotebookComposerSession = ComposerSession<ComposerNotebookSpec>;
 
 // Matches CONTENT_EDIT_COALESCE_MS in NotebookLayoutManager: the same run-of-keystrokes-into-one-step
 // coalescing, for the title instead of a cell's content.
@@ -100,6 +115,8 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   // importing this class would make the two files import each other, so it looks for this field.
   public readonly isNotebookScene = true;
   public readonly autosave = new NotebookAutosave(this);
+  /** The Composer slot: the open session, set only while `isComposing`. */
+  private composer?: NotebookComposerSession;
 
   // Edit mode is reflected in the url by this handler rather than by the methods below, so the url
   // stays a projection of the state instead of a second copy of it.
@@ -195,6 +212,13 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       window.addEventListener('pageshow', onPageShow);
 
       return () => {
+        // First, while autosave still runs: leaving ends Composer, which makes its one save. A request to
+        // enter it that Assistant has not taken yet must not fire on whatever page comes next.
+        const pendingComposerTarget = getPendingComposerEnterTarget();
+        if (pendingComposerTarget?.resource === 'notebook' && pendingComposerTarget.uid === this.state.uid) {
+          clearPendingComposerEnterRequest();
+        }
+        this.exitComposer();
         window.removeEventListener('pagehide', onPageHide);
         window.removeEventListener('pageshow', onPageShow);
         this.commitTitleEdit();
@@ -247,6 +271,8 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     if (!canEditNotebooks()) {
       return;
     }
+    // Editing by hand leaves Composer first, which saves what it applied.
+    this.exitComposer();
 
     // Asked before editing begins, so not answering leaves the notebook where it already was.
     const changed = this.autosave.viewOnlyVizChanges();
@@ -265,7 +291,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
    * `NotebookAutosave.saveDocumentChange` treats them, and an add leaves them out of what it saves.
    */
   public enterEditModeForDocumentWrite(source: NotebookEditSessionSource): void {
-    if (this.state.isEditing || !canEditNotebooks()) {
+    if (this.state.isEditing || this.composer || !canEditNotebooks()) {
       return;
     }
     this.startEditing(source);
@@ -500,6 +526,40 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     }
   }
 
+  /**
+   * Opens the Composer slot for `session`. Composer is a mode of its own, not editing: the edit chrome
+   * (cell controls, undo, the title editor) stays hidden, and only the session writes, each apply one step
+   * on `editHistory`. Autosave is paused until `exitComposer`, so the session's edits stay unsaved and are
+   * written once when it ends. Leaves edit mode first, which saves what was typed there.
+   */
+  public enterComposer(session: NotebookComposerSession): boolean {
+    if (this.composer || !this.isActive || !canEditNotebooks() || !this.state.uid || this.state.isDraft) {
+      return false;
+    }
+    if (this.state.isEditing) {
+      this.onExitEditMode();
+    }
+    this.composer = session;
+    this.autosave.suspend();
+    this.setState({ isComposing: true });
+    return true;
+  }
+
+  /** Closes the Composer slot. The session then resumes autosave, which writes what it held back. */
+  public exitComposer(): void {
+    const session = this.composer;
+    if (!session) {
+      return;
+    }
+    this.composer = undefined;
+    this.setState({ isComposing: false });
+    session.close();
+  }
+
+  public getComposerSession(): NotebookComposerSession | undefined {
+    return this.composer;
+  }
+
   public showModal(modal: SceneObject) {
     this.setState({ overlay: modal });
   }
@@ -534,13 +594,18 @@ function buildNotebookVariables(): SceneVariableSet | undefined {
  */
 function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   const styles = useStyles2(getStyles);
-  const { body, overlay } = model.useState();
+  const { body, overlay, isComposing } = model.useState();
+  // Only where the route draws the notebook: the canvas can draw the same scene at the same time.
+  const embedded = useIsNotebookEmbedded();
+  const composerSession = isComposing && !embedded ? model.getComposerSession() : undefined;
 
   return (
-    <div className={styles.container}>
+    <div className={cx(styles.container, composerSession && styles.composing)}>
       <NotebookHiddenVariables model={model} />
       <body.Component model={body} />
       {overlay && <overlay.Component model={overlay} />}
+      {/* The controls row is the page's, outside this container and sticky above it. */}
+      {composerSession && <ComposerOverlay session={composerSession} belowStickyControls />}
     </div>
   );
 }
@@ -581,5 +646,12 @@ const getStyles = () => ({
       maxWidth: `${PDF_PAGE_WIDTH_MM}mm`,
       margin: '0 auto',
     },
+  }),
+  // The Composer overlay covers this container exactly.
+  composing: css({
+    position: 'relative',
+    // A stacking context, as the dashboard's container has: the Composer overlay's z-index then ranks it
+    // within the notebook only, so the extension sidebar and app chrome stay above its pins and outlines.
+    isolation: 'isolate',
   }),
 });
