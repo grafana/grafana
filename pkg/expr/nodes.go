@@ -445,8 +445,8 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 		}
 
-		// make the query with a mt client. data.QueryDataRequest has no headers,
-		// so pass them on the context.
+		// The query service client runs single tenant or multi tenant.
+		// data.QueryDataRequest has no headers, so pass them on the context.
 		resp, err = qsDSClient.QueryData(clientapi.WithRequestHeaders(ctx, req.Headers), *k8sReq)
 
 		// handle error
