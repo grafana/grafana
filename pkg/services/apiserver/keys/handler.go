@@ -137,18 +137,11 @@ func (h *Handler) listKeys(kind kindRef, namespaced bool) http.HandlerFunc {
 		}
 
 		res, err := h.store.List(ctx, req)
-		// AsErrorResult reads the structured result off the gRPC status details, so
-		// the reason and code survive the wire instead of collapsing to Internal.
 		if err != nil {
 			h.log.FromContext(ctx).Error("list-keys failed",
 				"group", kind.group, "resource", kind.resource,
 				"namespace", namespace, "error", err)
-			errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
-			return
-		}
-		// The backend also reports failures in the payload, not only as a transport error.
-		if res.GetError() != nil {
-			errhttp.Write(ctx, resource.StatusError(res.GetError()), w)
+			errhttp.Write(ctx, resource.StatusErrorFromGRPC(err), w)
 			return
 		}
 
