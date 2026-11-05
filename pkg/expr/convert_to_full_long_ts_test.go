@@ -583,3 +583,20 @@ func TestConvertTimeSeriesMultiToFullLongSkipsOtherFrameTypes(t *testing.T) {
 		require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
 	}
 }
+
+func TestConvertTimeSeriesMultiToFullLongMissingTimeFieldNamesFrame(t *testing.T) {
+	series := data.NewFrame("",
+		data.NewField("Time", nil, []time.Time{time.Unix(10, 0)}),
+		data.NewField("rate", data.Labels{"job": "a"}, []float64{1.0}),
+	).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+	exemplars := data.NewFrame("exemplar",
+		data.NewField("Time", nil, []time.Time{time.Unix(15, 0)}),
+		data.NewField("Value", nil, []float64{9.0}),
+	)
+	noTime := data.NewFrame("",
+		data.NewField("rate", data.Labels{"job": "b"}, []float64{2.0}),
+	).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+
+	_, err := ConvertToFullLong(data.Frames{series, exemplars, noTime})
+	require.EqualError(t, err, "frame 2: missing time field")
+}

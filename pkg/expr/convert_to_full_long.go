@@ -159,7 +159,7 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 	labelKeysSet := map[string]struct{}{}
 	hasDisplayCol := false
 
-	for _, frame := range frames {
+	for frameIdx, frame := range frames {
 		// Like the dataplane reader, skip frames of other types, such as untyped
 		// exemplar frames, so they do not become metric rows. Keep numeric-multi
 		// frames, which mix in from Prometheus "Both" queries.
@@ -174,7 +174,7 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 			}
 		}
 		if timeField == nil {
-			return nil, fmt.Errorf("missing time field")
+			return nil, fmt.Errorf("frame %d: missing time field", frameIdx)
 		}
 		for _, f := range frame.Fields {
 			if !f.Type().Numeric() {
