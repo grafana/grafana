@@ -28,22 +28,13 @@ describe('QueryEditorSidebar', () => {
   });
 
   describe('button labels experiment', () => {
-    it('keeps the add buttons icon-only in the control variant', () => {
-      setTestFlags({ [FlagKeys.PaneleditButtonLabels]: false });
+    it.each([false, true])('labels both section header add buttons when the flag is %s', (flagValue) => {
+      setTestFlags({ [FlagKeys.PaneleditButtonLabels]: flagValue });
 
       renderWithQueryEditorProvider(<Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />);
 
-      expect(screen.getByRole('button', { name: 'Add query or expression' })).not.toHaveTextContent('Add');
-      expect(screen.getByRole('button', { name: 'Add transformation' })).not.toHaveTextContent('Add');
-    });
-
-    it('labels the add buttons in the treatment variant', () => {
-      setTestFlags({ [FlagKeys.PaneleditButtonLabels]: true });
-
-      renderWithQueryEditorProvider(<Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />);
-
-      expect(screen.getByRole('button', { name: 'Add query or expression' })).toHaveTextContent('Add');
-      expect(screen.getByRole('button', { name: 'Add transformation' })).toHaveTextContent('Add');
+      expect(screen.getByRole('button', { name: 'Add query' })).toHaveTextContent(/^Add$/);
+      expect(screen.getByRole('button', { name: 'Add transformation' })).toHaveTextContent(/^Add$/);
     });
   });
 

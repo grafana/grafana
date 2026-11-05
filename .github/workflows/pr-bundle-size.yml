@@ -82,7 +82,7 @@ jobs:
       - name: Set up Node.js
         uses: ./.github/actions/setup-node
       - name: Install frontend dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
       - name: Build frontend
         uses: ./.github/actions/build-frontend
 

@@ -3,7 +3,6 @@ import { memo, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useFlagPaneleditButtonLabels } from '@grafana/runtime/internal';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { SegmentedToggle, type SegmentedToggleProps } from '../../SegmentedToggle';
@@ -25,7 +24,6 @@ interface SidebarProps {
 }
 
 export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: SidebarProps) {
-  const showButtonLabels = useFlagPaneleditButtonLabels();
   const { setSelectedAlert, cardType, selectedQuery, selectedTransformation } = useQueryEditorUIContext();
   const { alertRules, loading } = useAlertingContext();
   const styles = useStyles2(getStyles);
@@ -80,7 +78,7 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
           {cardType === QueryEditorType.Alert ? (
             <AlertsView alertRules={alertRules} />
           ) : (
-            <QueriesAndTransformationsView showButtonLabels={showButtonLabels} />
+            <QueriesAndTransformationsView />
           )}
         </div>
       </ScrollContainer>
