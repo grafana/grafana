@@ -4,11 +4,12 @@ import "github.com/prometheus/client_golang/prometheus"
 
 // Fixed label values keep the metric's cardinality bounded.
 const (
-	deleteCheckAllowed            = "allowed"
-	deleteCheckRefusedNotEmpty    = "refused_not_empty"
-	deleteCheckRefusedCountFailed = "refused_count_failed"
-	deleteCheckBypassedForce      = "bypassed_force_delete"
-	blockingKindNone              = "none"
+	deleteCheckAllowed              = "allowed"
+	deleteCheckRefusedNotEmpty      = "refused_not_empty"
+	deleteCheckRefusedCountFailed   = "refused_count_failed"
+	deleteCheckRefusedCountCanceled = "refused_count_canceled"
+	deleteCheckBypassedForce        = "bypassed_force_delete"
+	blockingKindNone                = "none"
 )
 
 // deleteCheckMetrics counts folder delete checks. A nil value records nothing.

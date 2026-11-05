@@ -620,7 +620,11 @@ func validateOnDelete(ctx context.Context,
 	if rawErr != nil {
 		_ = tracing.Error(trace.SpanFromContext(ctx), rawErr)
 		logging.FromContext(ctx).Error("Could not verify if folder is empty", "namespace", f.Namespace, "folder", f.Name, "error", rawErr)
-		metrics.record(deleteCheckRefusedCountFailed, blockingKindNone)
+		outcome := deleteCheckRefusedCountFailed
+		if isCanceled(rawErr) {
+			outcome = deleteCheckRefusedCountCanceled // a caller disconnect, not a backend failure
+		}
+		metrics.record(outcome, blockingKindNone)
 		return publicErr
 	}
 

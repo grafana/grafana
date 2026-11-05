@@ -38,6 +38,8 @@ func TestValidateOnDeleteRecordsOutcome(t *testing.T) {
 		{name: "blocked by alert rules", searcher: stats("alertrules", 3), legacyJoin: true, wantOutcome: "refused_not_empty", wantJoin: "enabled", wantBlocking: "alertrules"},
 		{name: "blocked by library panels", searcher: stats("librarypanels", 1), wantOutcome: "refused_not_empty", wantJoin: "disabled", wantBlocking: "librarypanels"},
 		{name: "count failed", searcher: &mockSearchClient{statsErr: errors.New("boom")}, legacyJoin: true, wantOutcome: "refused_count_failed", wantJoin: "enabled", wantBlocking: "none"},
+		{name: "count canceled by the caller", searcher: &mockSearchClient{statsErr: context.Canceled}, legacyJoin: true, wantOutcome: "refused_count_canceled", wantJoin: "enabled", wantBlocking: "none"},
+		{name: "count timed out is still a failure", searcher: &mockSearchClient{statsErr: context.DeadlineExceeded}, legacyJoin: true, wantOutcome: "refused_count_failed", wantJoin: "enabled", wantBlocking: "none"},
 		{name: "forced cascade delete", searcher: stats("alertrules", 3), options: &metav1.DeleteOptions{GracePeriodSeconds: &zero}, cascade: true, legacyJoin: true, wantOutcome: "bypassed_force_delete", wantJoin: "enabled", wantBlocking: "none"},
 	}
 	for _, tt := range tests {
