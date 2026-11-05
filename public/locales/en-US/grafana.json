@@ -15067,6 +15067,11 @@
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
+    "managed-read-only-banner": {
+      "body": "Its configuration is managed outside Grafana and is read-only here. Change it where it is defined.",
+      "title": "This resource is managed externally"
+    },
+    "managed-read-only-tooltip": "This resource is managed externally and is read-only",
     "message": {
       "show-less": "show less",
       "show-more": "show more",

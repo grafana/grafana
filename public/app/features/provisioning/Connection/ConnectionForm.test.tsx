@@ -5,6 +5,7 @@ import { mockComboboxRect } from '@grafana/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -133,6 +134,38 @@ describe('ConnectionForm', () => {
       setup({ data: createMockConnection() });
 
       expect(screen.getByLabelText(/^Private Key \(PEM\)/)).toHaveValue('configured');
+    });
+  });
+
+  describe('Rendering - externally managed (read-only)', () => {
+    const managedConnection = () =>
+      createMockConnection({
+        metadata: {
+          name: 'test-connection',
+          annotations: {
+            [AnnoKeyManagerKind]: ManagerKind.Terraform,
+            [AnnoKeyManagerIdentity]: 'terraform',
+          },
+        },
+      });
+
+    it('shows a read-only banner and disables Save', () => {
+      setup({ data: managedConnection() });
+
+      expect(screen.getByText(/managed externally/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeDisabled();
+    });
+
+    it('does not render the Delete button', () => {
+      setup({ data: managedConnection() });
+
+      expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    });
+
+    it('does not show the banner for an unmanaged connection', () => {
+      setup({ data: createMockConnection() });
+
+      expect(screen.queryByText(/managed externally/i)).not.toBeInTheDocument();
     });
   });
 

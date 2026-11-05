@@ -1,6 +1,12 @@
 import { render, screen } from 'test/test-utils';
 
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  AnnoKeyManagerAllowsEdits,
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerKind,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 
 import { RepositoryListItem } from './RepositoryListItem';
 
@@ -174,6 +180,48 @@ describe('RepositoryListItem', () => {
 
       expect(screen.queryByRole('link', { name: /widgets/ })).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: '3 widgets' })).toBeDisabled();
+    });
+  });
+
+  describe('externally managed repositories', () => {
+    const managedRepo = (annotations: Record<string, string>) =>
+      createMockRepository({ metadata: { name: 'test-repo', annotations } });
+
+    const terraformRepo = () =>
+      managedRepo({ [AnnoKeyManagerKind]: ManagerKind.Terraform, [AnnoKeyManagerIdentity]: 'terraform' });
+
+    it('disables the Settings action and shows the managed badge', () => {
+      render(<RepositoryListItem repository={terraformRepo()} />);
+
+      expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute('aria-disabled', 'true');
+      expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
+    });
+
+    it('keeps Settings editable and hides the badge for an unmanaged repository', () => {
+      render(<RepositoryListItem repository={createMockRepository()} />);
+
+      expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute('aria-disabled', 'false');
+      expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
+    });
+
+    it('keeps Settings editable when the manager allows edits', () => {
+      const repo = managedRepo({
+        [AnnoKeyManagerKind]: ManagerKind.Terraform,
+        [AnnoKeyManagerIdentity]: 'terraform',
+        [AnnoKeyManagerAllowsEdits]: 'true',
+      });
+
+      render(<RepositoryListItem repository={repo} />);
+
+      expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute('aria-disabled', 'false');
+    });
+
+    it('keeps Settings editable for git-provisioned repositories, which have their own edit flow', () => {
+      const repo = managedRepo({ [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: 'some-repo' });
+
+      render(<RepositoryListItem repository={repo} />);
+
+      expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute('aria-disabled', 'false');
     });
   });
 });

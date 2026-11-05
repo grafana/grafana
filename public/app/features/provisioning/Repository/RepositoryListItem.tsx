@@ -10,11 +10,14 @@ import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
+import { ManagedBadge } from '../components/ManagedBadge';
 import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { PROVISIONING_URL } from '../constants';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
+import { getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
+import { getManagedReadOnlyTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -27,6 +30,8 @@ export function RepositoryListItem({ repository }: Props) {
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
   const styles = useStyles2(getStyles);
+  // Externally managed repositories (terraform, kubectl, ...) are read-only in the UI.
+  const isReadOnly = isManagedResourceReadOnly(repository);
 
   const getRepositoryMeta = (): ReactNode[] => {
     const meta: ReactNode[] = [];
@@ -71,6 +76,7 @@ export function RepositoryListItem({ repository }: Props) {
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
           {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} />}
+          {isReadOnly && <ManagedBadge managerKind={getManagerKind(repository)} name={spec?.title} />}
         </Stack>
       </Card.Heading>
 
@@ -121,6 +127,8 @@ export function RepositoryListItem({ repository }: Props) {
             icon="cog"
             href={`${PROVISIONING_URL}/${name}/edit`}
             size="md"
+            disabled={isReadOnly}
+            tooltip={isReadOnly ? getManagedReadOnlyTooltip() : undefined}
             onClick={() => {
               reportInteraction('grafana_provisioning_repository_settings_opened', {
                 repositoryName: name,
