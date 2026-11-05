@@ -519,6 +519,10 @@ const (
 	// Collect Team LBAC usage through the IAM API instead of legacy datasource JSON
 	FlagTeamlbacUsageFromAppPlatform = "teamlbac.usageFromAppPlatform"
 
+	// FlagTeamlbacApiNoFallback
+	// Return Team LBAC API Kubernetes errors instead of falling back to legacy datasource rules
+	FlagTeamlbacApiNoFallback = "teamlbac.apiNoFallback"
+
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
@@ -1021,10 +1025,6 @@ const (
 	// FlagDatasourcesGatewayGuardrails
 	// Data source query gateway guardrails
 	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
-
-	// FlagDatasourcesQueryGatewaySlimAudit
-	// Only attach query payloads to query gateway audit events when a guardrail fires
-	FlagDatasourcesQueryGatewaySlimAudit = "datasources.queryGatewaySlimAudit"
 
 	// FlagAlertingFolderHasRulesLabel
 	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector

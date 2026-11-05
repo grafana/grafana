@@ -1463,6 +1463,15 @@
         "count-unavailable": "Count unavailable",
         "expand": "Expand {{title}}"
       },
+      "instances": {
+        "error": "error",
+        "firing": "firing",
+        "healthy": "normal",
+        "nodata": "no data",
+        "pending": "pending",
+        "recovering": "recovering",
+        "view-instances": "View instances"
+      },
       "interval": "Evaluated every {{interval}}",
       "labels_one": "{{formatted}} label",
       "labels_other": "{{formatted}} labels",
@@ -1481,6 +1490,11 @@
         "retry-rules-in-folder": "Retry loading rules in {{title}}",
         "rules-error": "Failed to load recording rules",
         "search-issues": "Change the search to see results"
+      },
+      "routing": {
+        "default-policy": "Default policy",
+        "delivered-to": "Delivered to",
+        "policy": "Policy: {{name}}"
       },
       "rule-count": {
         "alert-rules_one": "{{formatted}} alert rule",
@@ -2047,7 +2061,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Apply"
+      "apply": "Apply",
+      "editor-label": "Alert rule YAML"
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5946,6 +5961,9 @@
         "tooltip-remove-property": "Remove property"
       }
     },
+    "edit": {
+      "mobile-not-available": "Dashboard editing is not available on small screens. Switch to a larger screen to continue."
+    },
     "edit-actions": {
       "add": "Add {{typeName}}",
       "add-conditional-rule": "Add {{ruleDescription}} rule",
@@ -6251,7 +6269,6 @@
     },
     "modes": {
       "agent-edit": "Agent editing",
-      "change-mode": "Change dashboard mode",
       "composer": "Composer",
       "composer-description": "Point at anything and ask the Assistant.",
       "composer-no-permission": "You need permission to edit this dashboard.",
@@ -6267,8 +6284,6 @@
       "empty": "This dashboard has no panels.",
       "label": "Dashboard mode",
       "save-before-viewing": "Save the dashboard before switching to Viewing.",
-      "switch-to-editing": "Switch to Editing",
-      "switch-to-viewing": "Switch to Viewing",
       "view": "Viewing",
       "view-changes": "View changes",
       "view-description": "View and explore the dashboard."
@@ -6442,6 +6457,9 @@
           "hide-header": "Hide row header",
           "title": "Title"
         },
+        "section-annotations": {
+          "title": "Annotations"
+        },
         "section-filters": {
           "title": "Filters"
         },
@@ -6523,11 +6541,10 @@
         "data-source": "Data source",
         "display": "Show annotation controls in",
         "display-options": {
-          "above-dashboard": "Above dashboard",
           "controls-menu": "Controls menu",
-          "controls-menu-description": "Can be accessed when the controls menu is open",
+          "controls-menu-description": "Visible when the controls menu is open",
           "hidden": "Hidden",
-          "hidden-description": "Hides the toggle for turning this annotation on or off"
+          "hidden-description": "Only visible in edit mode"
         },
         "enabled": "Enabled",
         "enabled-description": "When enabled the annotation query is issued every dashboard refresh",
@@ -6627,6 +6644,8 @@
         "row": "Row",
         "rows": "Rows",
         "section-filters-set": "Filters",
+        "selected-panels_one": "{{count}} panel",
+        "selected-panels_other": "{{count}} panels",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} variable",
@@ -6809,6 +6828,9 @@
             "description": "Repeat this tab for each value in the selected variable.",
             "title": "Repeat by variable"
           }
+        },
+        "section-annotations": {
+          "title": "Annotations"
         },
         "section-filters": {
           "title": "Filters"
@@ -7585,6 +7607,7 @@
       "error-invalid-json": "Invalid JSON",
       "error-invalid-layout": "Layout JSON did not pass validation. Please check the JSON and try again.",
       "error-invalid-v2-panel": "Panel JSON did not pass validation. Please check the JSON and try again.",
+      "mobile-edit-unavailable": "Editing is unavailable on small screens",
       "validation-error": "Validation error"
     },
     "interval-variable-form": {
@@ -7761,7 +7784,9 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Edit visualization"
+      "edit-visualization": "Edit visualization",
+      "panels-selected_one": "{{count}} panel selected",
+      "panels-selected_other": "{{count}} panels selected"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",
@@ -14019,6 +14044,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Could not find anything matching your query"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "Remove changes",
+    "save-to-dashboard": "Save to dashboard",
+    "tooltip": "This panel has unsaved changes that affect its view",
+    "undo-title": "Save view changes"
   },
   "panel-data-pane": {
     "try-new-editor": {

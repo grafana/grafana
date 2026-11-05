@@ -129,6 +129,10 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/unauthenticated'),
     },
     withAuth({
+      name: 'mt-instant-fallback',
+      testDir: path.join(testDirRoot, '/mt-instant-fallback-suite'),
+    }),
+    withAuth({
       name: 'various',
       testDir: path.join(testDirRoot, '/various-suite'),
     }),

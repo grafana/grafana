@@ -78,7 +78,7 @@ func TestListFolderKeys(t *testing.T) {
 			cfg.SectionWithEnvOverrides("operator").Key("folders_server_url").SetValue(api.URL)
 			cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token").SetValue("test-token")
 			cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token_exchange_url").SetValue(api.URL + "/token")
-			client, err := buildRESTClient(cfg)
+			client, err := buildRESTClient(cfg, "folders_server_url", folderGVR.Group)
 			require.NoError(t, err)
 
 			objs, listRV, err := listFolderKeys(t.Context(), keysapi.NewHTTPLister(client, folderGVR))
