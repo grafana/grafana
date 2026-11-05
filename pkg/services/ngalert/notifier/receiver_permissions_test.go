@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -41,7 +42,7 @@ func TestReceiverService_UpdateReceiverKeepsPermissions(t *testing.T) {
 			}}
 			secrets := fake_secrets.NewFakeSecretsService()
 			sut := createReceiverServiceSut(t, &secrets)
-			receiver, err := sut.GetReceiver(ctx, legacy_storage.NameToUid("grafana-default-email"), false, requester)
+			receiver, err := sut.GetReceiver(ctx, string(v1.ReceiverUID("grafana-default-email")), false, requester)
 			require.NoError(t, err)
 			if tc.rename {
 				receiver.Name = "renamed"
@@ -96,7 +97,7 @@ func TestReceiverService_UpdateReceiverInExistingTransaction(t *testing.T) {
 				},
 			}}
 			ctx := context.WithValue(t.Context(), sqlstore.ContextSessionKey{}, &sqlstore.DBSession{})
-			receiver, err := sut.GetReceiver(ctx, legacy_storage.NameToUid("grafana-default-email"), false, requester)
+			receiver, err := sut.GetReceiver(ctx, string(v1.ReceiverUID("grafana-default-email")), false, requester)
 			require.NoError(t, err)
 			if tc.rename {
 				receiver.Name = "renamed"
@@ -125,7 +126,7 @@ func TestReceiverService_UpdateReceiverAllowsTypedNilSession(t *testing.T) {
 		},
 	}}
 	ctx := context.WithValue(t.Context(), sqlstore.ContextSessionKey{}, (*sqlstore.DBSession)(nil))
-	receiver, err := sut.GetReceiver(ctx, legacy_storage.NameToUid("grafana-default-email"), false, requester)
+	receiver, err := sut.GetReceiver(ctx, string(v1.ReceiverUID("grafana-default-email")), false, requester)
 	require.NoError(t, err)
 	called := false
 	sut.xact = receiverPermissionTransactionFunc(func(ctx context.Context, work func(context.Context) error) error {

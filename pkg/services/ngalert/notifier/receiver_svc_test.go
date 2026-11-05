@@ -53,7 +53,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 
 	t.Run("service gets receiver from AM config", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
-		recv, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("slack receiver"), false, redactedUser)
+		recv, err := sut.GetReceiver(context.Background(), string(v1.ReceiverUID("slack receiver")), false, redactedUser)
 		require.NoError(t, err)
 		require.Equal(t, "slack receiver", recv.Name)
 		require.Len(t, recv.Integrations, 1)
@@ -63,7 +63,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 	t.Run("service returns error when receiver does not exist", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
-		_, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
+		_, err := sut.GetReceiver(context.Background(), string(v1.ReceiverUID("receiver1")), false, redactedUser)
 		require.ErrorIs(t, err, models.ErrReceiverNotFound)
 	})
 
@@ -71,7 +71,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 		t.Run("gets imported receivers", func(t *testing.T) {
 			sut := createReceiverServiceSut(t, secretsService, withImportedIncluded)
 
-			recv, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
+			recv, err := sut.GetReceiver(context.Background(), string(v1.ReceiverUID("receiver1")), false, redactedUser)
 			require.NoError(t, err)
 			assert.Equal(t, models.ResourceOriginImported, recv.Origin)
 			assert.Equal(t, "receiver1", recv.Name)
@@ -82,9 +82,9 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 
 		t.Run("falls to only Grafana if cannot read imported receivers", func(t *testing.T) {
 			sut := createReceiverServiceSut(t, secretsService, withImportedIncluded, withInvalidExtraConfig)
-			_, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
+			_, err := sut.GetReceiver(context.Background(), string(v1.ReceiverUID("receiver1")), false, redactedUser)
 			require.ErrorIs(t, err, models.ErrReceiverNotFound)
-			_, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid("slack receiver"), false, redactedUser)
+			_, err = sut.GetReceiver(context.Background(), string(v1.ReceiverUID("slack receiver")), false, redactedUser)
 			require.NoError(t, err)
 		})
 	})
@@ -315,7 +315,7 @@ func TestIntegrationReceiverService_DecryptRedact(t *testing.T) {
 						var res *models.Receiver
 						var err error
 						if method == "single" {
-							res, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(o.receiver), tc.decrypt, tc.user)
+							res, err = sut.GetReceiver(context.Background(), string(v1.ReceiverUID(o.receiver)), tc.decrypt, tc.user)
 						} else {
 							q := multiQ(1, o.receiver)
 							q.Decrypt = tc.decrypt
@@ -405,7 +405,7 @@ func TestReceiverService_Delete(t *testing.T) {
 		{
 			name:        "delete receiver used by route fails",
 			user:        writer,
-			deleteUID:   legacy_storage.NameToUid("grafana-default-email"),
+			deleteUID:   string(v1.ReceiverUID("grafana-default-email")),
 			version:     "4e43d5834c652a74", // Correct version for grafana-default-email.
 			expectedErr: makeReceiverInUseErr(true, nil),
 		},
@@ -446,7 +446,7 @@ func TestReceiverService_Delete(t *testing.T) {
 		{
 			name:        "delete of receiver with non-Grafana origin fails",
 			user:        writer,
-			deleteUID:   legacy_storage.NameToUid("empty receiver"),
+			deleteUID:   string(v1.ReceiverUID("empty receiver")),
 			expectedErr: models.ErrReceiverOrigin,
 			opts: []createReceiverServiceSutOpt{
 				withImportedIncluded,
@@ -488,9 +488,7 @@ func TestReceiverService_Delete(t *testing.T) {
 				return
 			}
 			// Ensure receiver saved to store is correct.
-			name, err := legacy_storage.UidToName(tc.deleteUID)
-			require.NoError(t, err)
-			_, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(name), false, writer)
+			_, err = sut.GetReceiver(context.Background(), tc.deleteUID, false, writer)
 			assert.ErrorIs(t, err, models.ErrReceiverNotFound)
 
 			provenances, err := sut.provisioningStore.GetProvenances(context.Background(), tc.user.GetOrgID(), (&definitions.EmbeddedContactPoint{}).ResourceType())
@@ -1274,7 +1272,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		sut.ruleNotificationsStore = ruleStore
 
 		newReceiverName = "slack receiver"
-		actual, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(newReceiverName), false, writer)
+		actual, err := sut.GetReceiver(context.Background(), string(v1.ReceiverUID(newReceiverName)), false, writer)
 		require.NoError(t, err)
 		require.Equal(t, models.ResourceOriginGrafana, actual.Origin)
 		require.Equal(t, newReceiverName, actual.Name)
@@ -2064,7 +2062,7 @@ func TestReceiverService_AccessControlMetadata(t *testing.T) {
 		},
 	}}
 
-	r, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, admin)
+	r, err := sut.GetReceiver(context.Background(), string(v1.ReceiverUID("receiver1")), false, admin)
 	require.NoError(t, err)
 
 	t.Run("should override metadata for imported receivers", func(t *testing.T) {
