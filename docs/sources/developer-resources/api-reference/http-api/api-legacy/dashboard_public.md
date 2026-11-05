@@ -31,7 +31,7 @@ refs:
 
 {{< admonition type="note" >}}
 
-To create, read, update, and delete dashboards, use the [Dashboard HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/) instead. It supports both the classic dashboard JSON model (`v1`) and the dashboard schema v2 (`v2`). To learn more, refer to [API versions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/#api-versions).
+This is a legacy API. To create, read, update, and delete dashboards, use the [Dashboard HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/). It supports both the classic dashboard JSON model (`v1`) and the dashboard schema v2 (`v2`). To learn more, refer to [API versions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/#api-versions).
 
 {{< /admonition >}}
 
