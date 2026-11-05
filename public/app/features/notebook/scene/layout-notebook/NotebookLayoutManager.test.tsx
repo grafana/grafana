@@ -580,6 +580,22 @@ describe('NotebookLayoutManager', () => {
       // Plus the trailing-invariant cell appended after 'b'.
       expect(cellNames(manager)).toEqual(['a', 'a-copy-1', 'b', 'paragraph-1']);
     });
+
+    // A copy is a new cell: sharing the original's id would have the server read two cells as one.
+    it('gives the copy no id, and leaves the original its own', () => {
+      const manager = buildManager(buildNarrativeCells(['a', 'b']), true);
+      manager.state.cells[0].setState({ id: '00000000-0000-4000-8000-000000000001' });
+      attachScene(manager);
+
+      manager.duplicateCell(manager.state.cells[0]);
+
+      expect(manager.state.cells.map((cell) => cell.state.id)).toEqual([
+        '00000000-0000-4000-8000-000000000001',
+        undefined,
+        undefined,
+        undefined,
+      ]);
+    });
   });
 
   describe('reporting the blocks people insert', () => {

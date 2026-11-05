@@ -86,7 +86,7 @@ describe('updateNotebook', () => {
     const spec = notebookSpec();
     fetchOf(savedNotebook(spec, 7));
 
-    await expect(updateNotebook('nb-1', spec)).resolves.toEqual({ generation: 7, resourceVersion: '1755' });
+    await expect(updateNotebook('nb-1', spec)).resolves.toEqual({ generation: 7, resourceVersion: '1755', spec });
   });
 
   it('leaves resourceVersion unset when the response carries none', async () => {
@@ -94,7 +94,7 @@ describe('updateNotebook', () => {
     const saved = savedNotebook(spec);
     fetchOf({ ...saved, metadata: { ...saved.metadata, resourceVersion: undefined } });
 
-    await expect(updateNotebook('nb-1', spec)).resolves.toEqual({ generation: 2 });
+    await expect(updateNotebook('nb-1', spec)).resolves.toEqual({ generation: 2, spec });
   });
 
   it('sends only the remaining elements once a cell is deleted', async () => {
@@ -180,7 +180,7 @@ describe('createNotebook', () => {
     // rebuilt from a fetch, so it has to come back rather than being dropped here. The resourceVersion
     // lets a caller that just created the notebook through a live scene (e.g. the mutation-api commands)
     // report its revision without a second read.
-    expect(created).toEqual({ uid: 'nb-1', url: '/notebooks/nb-1', generation: 1, resourceVersion: '1755' });
+    expect(created).toEqual({ uid: 'nb-1', url: '/notebooks/nb-1', generation: 1, resourceVersion: '1755', spec });
   });
 
   it('leaves resourceVersion unset when the response carries none', async () => {
@@ -188,7 +188,7 @@ describe('createNotebook', () => {
     const saved = savedNotebook(spec, 1);
     fetchOf({ ...saved, metadata: { ...saved.metadata, resourceVersion: undefined } });
 
-    await expect(createNotebook(spec)).resolves.toEqual({ uid: 'nb-1', url: '/notebooks/nb-1', generation: 1 });
+    await expect(createNotebook(spec)).resolves.toEqual({ uid: 'nb-1', url: '/notebooks/nb-1', generation: 1, spec });
   });
 
   it('leaves the generation unset when the response carries none', async () => {
@@ -201,6 +201,7 @@ describe('createNotebook', () => {
       uid: 'nb-1',
       url: '/notebooks/nb-1',
       resourceVersion: '1755',
+      spec,
     });
   });
 });

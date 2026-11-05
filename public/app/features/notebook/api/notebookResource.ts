@@ -30,6 +30,8 @@ export interface CreatedNotebook {
   generation?: number;
   /** The resourceVersion the server assigned it, when the response reported one. */
   resourceVersion?: string;
+  /** The spec the server stored, which is where the ids it gave the cells are. */
+  spec?: NotebookSpec;
 }
 
 /**
@@ -85,6 +87,8 @@ export async function createNotebook(spec: NotebookSpec): Promise<CreatedNoteboo
     url: notebookViewUrl(uid),
     generation: result.data?.metadata?.generation,
     resourceVersion: result.data?.metadata?.resourceVersion,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema spec type at the read seam
+    spec: result.data?.spec as unknown as NotebookSpec | undefined,
   };
 }
 
@@ -184,7 +188,7 @@ export async function updateNotebook(
   uid: string,
   spec: NotebookSpec,
   resourceVersion?: string
-): Promise<{ generation?: number; resourceVersion?: string }> {
+): Promise<{ generation?: number; resourceVersion?: string; spec?: NotebookSpec }> {
   const patch = [
     { op: 'replace', path: '/spec', value: spec },
     ...(resourceVersion !== undefined
@@ -213,6 +217,8 @@ export async function updateNotebook(
   return {
     generation: result.data?.metadata?.generation,
     resourceVersion: result.data?.metadata?.resourceVersion,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema spec type at the read seam
+    spec: result.data?.spec as unknown as NotebookSpec | undefined,
   };
 }
 
