@@ -1,4 +1,4 @@
-import { KBarPortal, KBarProvider } from 'kbar';
+import { KBarPortal, KBarProvider, useKBar } from 'kbar';
 import { HttpResponse, http } from 'msw';
 import { act, cleanup, render, screen, userEvent, waitFor } from 'test/test-utils';
 
@@ -14,6 +14,7 @@ import {
 import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { PortalContainer } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -82,6 +83,23 @@ const setup = () => {
 // Advance virtual time between input events so successive queries have distinct timestamps.
 const setupUser = () => userEvent.setup({ advanceTimers: jest.advanceTimersByTime, delay: 1 });
 
+// Window listeners run after the palette's own click handling, so this reads whether the palette cancelled the
+// link's navigation, then cancels it itself because jsdom can't navigate.
+const isNavigationCancelledOnClick = async (element: Element) => {
+  let cancelled: boolean | undefined;
+  const recordAndCancel = (event: MouseEvent) => {
+    cancelled = event.defaultPrevented;
+    event.preventDefault();
+  };
+  window.addEventListener('click', recordAndCancel);
+  try {
+    await setupUser().click(element);
+  } finally {
+    window.removeEventListener('click', recordAndCancel);
+  }
+  return cancelled;
+};
+
 const triggerEmptyState = async () => {
   const user = setupUser();
   // Type a nonsense query to trigger the empty state naturally, rather than relying on
@@ -117,6 +135,34 @@ describe('CommandPalette', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  it('mounts the palette in the shared overlay container when opened', async () => {
+    jest
+      .mocked(KBarPortal)
+      .mockImplementation(jest.requireActual<{ KBarPortal: typeof KBarPortal }>('kbar').KBarPortal);
+
+    function OpenPalette() {
+      const { query } = useKBar();
+      return <button onClick={() => query.toggle()}>Open command palette</button>;
+    }
+
+    const user = setupUser();
+    render(
+      <>
+        <PortalContainer />
+        <KBarProvider>
+          <OpenPalette />
+          <CommandPalette />
+        </KBarProvider>
+      </>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Open command palette' }));
+
+    const input = await screen.findByRole('combobox');
+    const overlayContainer = document.getElementById('grafana-portal-container');
+    expect(overlayContainer).toContainElement(input);
   });
 
   it('reevaluates extension links each time the palette opens', async () => {
@@ -179,6 +225,54 @@ describe('CommandPalette', () => {
     const user = setupUser();
     await user.type(screen.getByPlaceholderText('Search or jump to...'), 'Dynamic extension action');
     expect(await screen.findByText('Dynamic extension action')).toBeInTheDocument();
+  });
+
+  it('lets a path-only extension link navigate to its path when selected', async () => {
+    setPluginLinksHook(() => ({
+      links: [
+        {
+          id: 'test-plugin/path-only-link',
+          type: PluginExtensionTypes.link as const,
+          title: 'Path-only extension link',
+          description: 'Has a path and no onClick',
+          pluginId: 'test-plugin',
+          path: '/a/test-plugin/page',
+        },
+      ],
+      isLoading: false,
+    }));
+    setup();
+
+    await setupUser().type(screen.getByPlaceholderText('Search or jump to...'), 'Path-only extension link');
+    const row = (await screen.findByText('Path-only extension link')).closest('a');
+
+    expect(row).toHaveAttribute('href', '/a/test-plugin/page');
+    expect(await isNavigationCancelledOnClick(row!)).toBe(false);
+  });
+
+  it('calls onClick instead of navigating when an extension link has one', async () => {
+    const onClick = jest.fn();
+    setPluginLinksHook(() => ({
+      links: [
+        {
+          id: 'test-plugin/onclick-link',
+          type: PluginExtensionTypes.link as const,
+          title: 'Click handler extension link',
+          description: 'Has both a path and an onClick',
+          pluginId: 'test-plugin',
+          path: '/a/test-plugin/page',
+          onClick,
+        },
+      ],
+      isLoading: false,
+    }));
+    setup();
+
+    await setupUser().type(screen.getByPlaceholderText('Search or jump to...'), 'Click handler extension link');
+    const row = (await screen.findByText('Click handler extension link')).closest('a');
+
+    expect(await isNavigationCancelledOnClick(row!)).toBe(true);
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   describe('notebook results', () => {

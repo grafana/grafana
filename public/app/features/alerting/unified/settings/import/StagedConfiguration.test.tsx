@@ -8,6 +8,7 @@ import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
+import { convertResponse } from '../../mocks/convertApi';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from '../../mocks/server/utils';
 
 import { StagedConfiguration } from './StagedConfiguration';
@@ -276,7 +277,7 @@ describe('StagedConfiguration', () => {
     });
 
     it('opens the promote modal from the header action', async () => {
-      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json({ status: 'success' })));
+      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json(convertResponse())));
       const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
       await user.click(ui.promoteButton.get());
@@ -305,7 +306,7 @@ describe('StagedConfiguration', () => {
     });
 
     it('warns in the promote modal that the sync stops', async () => {
-      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json({ status: 'success' })));
+      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json(convertResponse())));
       const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert isSyncManaged />);
 
       await user.click(ui.promoteButton.get());
