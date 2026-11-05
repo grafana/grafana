@@ -29,8 +29,8 @@ func TestCountValidatorStats(t *testing.T) {
 		resp *resourcepb.ResourceStatsResponse
 		err  error
 	}{
-		{name: "embedded error", resp: &resourcepb.ResourceStatsResponse{Error: result}},
 		{name: "grpc error", err: structured.Err()},
+		{name: "grpc error with empty response", resp: &resourcepb.ResourceStatsResponse{}, err: structured.Err()},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			eng, err := xorm.NewEngine("sqlite3", ":memory:")
