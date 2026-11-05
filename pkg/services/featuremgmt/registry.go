@@ -1457,6 +1457,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "alerting.watchersBanner",
+			Description:  "Show the Assistant Watchers banner on the alert rule list. Watchers are only available in Grafana Cloud.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "alerting.manualAssistantInvestigation",
 			Description:  "Enable manually starting an Assistant investigation from the alert instance drawer.",
 			Stage:        FeatureStageExperimental,
@@ -1558,6 +1567,15 @@ var (
 			Generate:    Generate{Go: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
+		},
+		{
+			Name:         "teamlbac.apiNoFallback",
+			Description:  "Return Team LBAC API Kubernetes errors instead of falling back to legacy datasource rules",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{Go: true},
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
 		},
 		{
 			Name:        "elasticsearchImprovedParsing",
@@ -1895,7 +1913,7 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: false,
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "preferLibraryPanelTitle",
@@ -2023,14 +2041,6 @@ var (
 		{
 			Name:        "cdnPluginsLoadFirst",
 			Description: "Prioritize loading plugins from the CDN before other sources",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaCatalogSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "cdnPluginsUrls",
-			Description: "Enable loading plugins via declarative URLs",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaCatalogSquad,

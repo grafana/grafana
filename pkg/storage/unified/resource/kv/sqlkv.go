@@ -79,10 +79,6 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "search_snapshot_manifest"
 	case SearchSnapshotDataSection:
 		tableName = "search_snapshot_data"
-	case StatsDailySection:
-		tableName = "resource_stats_daily"
-	case StatsAggregatesSection:
-		tableName = "resource_stats_aggregates"
 	case NATSPeersSection:
 		tableName = "nats_discovery_peers"
 	case VersionPolicySection:
@@ -661,7 +657,23 @@ func (k *SqlKV) batchUpdate(ctx context.Context, conn dbtx, qb *queryBuilder, ke
 }
 
 func (k *SqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
-	return time.Now().Unix(), nil
+	var query string
+	switch k.dialect.Name() {
+	case "mysql":
+		query = "SELECT UNIX_TIMESTAMP()"
+	case "postgres":
+		query = "SELECT FLOOR(EXTRACT(EPOCH FROM statement_timestamp()))::BIGINT"
+	case "sqlite":
+		query = "SELECT unixepoch('now')"
+	default:
+		return 0, fmt.Errorf("unsupported dialect: %s", k.dialect.Name())
+	}
+
+	var timestamp int64
+	if err := k.conn(ctx).QueryRowContext(ctx, query).Scan(&timestamp); err != nil {
+		return 0, fmt.Errorf("failed to get unix timestamp: %w", err)
+	}
+	return timestamp, nil
 }
 
 func closeRows[T any](rows *sql.Rows, yield func(T, error) bool, shouldYield bool) {

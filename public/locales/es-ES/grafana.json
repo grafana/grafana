@@ -2047,7 +2047,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Aplicar"
+      "apply": "Aplicar",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5762,7 +5763,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5944,6 +5946,9 @@
       "render-label": {
         "tooltip-remove-property": "Quitar propiedad"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "Añadir {{typeName}}",
@@ -6441,6 +6446,9 @@
           "hide-header": "Ocultar encabezado de fila",
           "title": "Título"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filtros"
         },
@@ -6522,11 +6530,10 @@
         "data-source": "Fuente de datos",
         "display": "Mostrar controles de anotación en",
         "display-options": {
-          "above-dashboard": "Encima del dashboard",
           "controls-menu": "Menú de controles",
-          "controls-menu-description": "Se puede acceder cuando el menú de controles está abierto",
+          "controls-menu-description": "",
           "hidden": "Oculta",
-          "hidden-description": "Oculta el botón para activar o desactivar esta anotación"
+          "hidden-description": ""
         },
         "enabled": "Habilitada",
         "enabled-description": "Cuando está habilitada, la consulta de anotación se emite cada vez que se actualiza el dashboard",
@@ -6629,7 +6636,9 @@
         "tab": "Pestaña",
         "tabs": "Pestañas",
         "variable": "{{type}} variable",
-        "variable-set": "Variables"
+        "variable-set": "Variables",
+        "selected-panels_one": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Exportar"
@@ -6808,6 +6817,9 @@
             "description": "Repite esta pestaña para cada valor en la variable seleccionada.",
             "title": "Repetir por variable"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filtros"
@@ -7584,6 +7596,7 @@
       "error-invalid-json": "JSON no válido",
       "error-invalid-layout": "El diseño JSON no pasó la validación. Comprueba el JSON e inténtalo de nuevo.",
       "error-invalid-v2-panel": "El panel JSON no pasó la validación. Comprueba el JSON e inténtalo de nuevo.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Error de validación"
     },
     "interval-variable-form": {
@@ -7760,7 +7773,9 @@
       "title-delete-all-transformations": "¿Eliminar todas las transformaciones?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Editar visualización"
+      "edit-visualization": "Editar visualización",
+      "panels-selected_one": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Alternar vista de tabla",
@@ -14016,6 +14031,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "No se ha encontrado nada que coincida con tu consulta"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

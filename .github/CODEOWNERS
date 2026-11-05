@@ -379,6 +379,7 @@
 /Dockerfile @grafana/grafana-backend-services-squad
 /Makefile @grafana/grafana-backend-services-squad
 /scripts/build/ @grafana/grafana-operator-experience-squad
+/scripts/build-frontend.sh @grafana/grafana-frontend-platform
 /scripts/list-release-artifacts.sh @grafana/grafana-operator-experience-squad
 /scripts/releasefinder.sh @baldm0mma
 
@@ -445,6 +446,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/notebooks-suite/ @grafana/sharing-squad
 /e2e-playwright/dashboard-cujs/ @grafana/dashboards-squad
 /e2e-playwright/journey-tracking/ @grafana/dashboards-squad
+/e2e-playwright/mt-instant-fallback-suite/ @grafana/grafana-frontend-platform
 /e2e-playwright/dashboard-cujs/scope-*.spec.ts @grafana/dashboards-squad @grafana/grafana-operator-experience-squad
 /e2e-playwright/utils/scope* @grafana/grafana-operator-experience-squad
 /e2e-playwright/dashboards-search-suite/ @grafana/dashboards-squad
@@ -1050,6 +1052,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
 /public/app/features/dashboard-scene/panel-edit/PanelEditNext/ @grafana/datapro
 /public/app/features/dashboard-scene/panel-edit/PanelStylesSection*.tsx/ @grafana/dataviz-squad
+/public/app/features/dashboard-scene/scene/panel-actions/promote/ @grafana/dataviz-squad
 /public/app/features/dashboard-scene/scene/panel-timerange/timeCompare/ @grafana/dataviz-squad
 /public/app/features/scopes/ @grafana/grafana-operator-experience-squad
 /public/app/features/datasources/ @grafana/grafana-catalog
@@ -1331,6 +1334,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/check-jobs/action.yml @grafana/grafana-frontend-platform
 /.github/actions/setup-enterprise/action.yml @grafana/grafana-operator-experience-squad
 /.github/actions/setup-go/action.yml @grafana/grafana-backend-services-squad
+/.github/actions/setup-grafana-e2e/action.yml @grafana/grafana-frontend-platform
 /.github/actions/report-go-cache-sizes/ @grafana/grafana-operator-experience-squad
 /.github/actions/build-frontend @grafana/grafana-frontend-platform
 /.github/actions/build-go @grafana/grafana-operator-experience-squad
@@ -1340,7 +1344,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/setup-fpm @grafana/grafana-backend-services-squad
 /.github/actions/setup-node @grafana/grafana-frontend-platform
 /.github/actions/setup-playwright/action.yml @grafana/grafana-frontend-platform
-/.github/actions/yarn-install/action.yml @grafana/grafana-frontend-platform
+/.github/actions/install-frontend-deps/action.yml @grafana/grafana-frontend-platform
 /.github/workflows/actionlint-format.txt @grafana/grafana-backend-services-squad
 /.github/workflows/actionlint.yml @grafana/grafana-backend-services-squad
 /.github/workflows/add-to-whats-new.yml @grafana/docs-tooling

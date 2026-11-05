@@ -10,6 +10,7 @@ export enum StPodStatus {
   Ready = 'ready',
   Timeout = 'timeout',
   Error = 'error',
+  Captcha = 'captcha',
 }
 
 enum GatewayState {
@@ -53,7 +54,8 @@ export class StPodReadyService {
   }
 
   getReadyPromise(): Promise<void> {
-    if (this.state.getValue() === StPodStatus.Ready) {
+    const status = this.state.getValue();
+    if (status === StPodStatus.Ready || status === StPodStatus.Captcha) {
       return Promise.resolve();
     }
     return this.ensurePending().promise;
@@ -149,6 +151,9 @@ export class StPodReadyService {
         case StPodStatus.Waiting:
           this.transitionToBusy();
           break;
+        case StPodStatus.Captcha:
+          this.transitionToCaptcha();
+          break;
         case StPodStatus.Error:
         default:
           this.transitionToError();
@@ -169,7 +174,7 @@ export class StPodReadyService {
 
   private schedulePoll(): void {
     const status = this.state.getValue();
-    if (status === StPodStatus.Ready || status === StPodStatus.Error) {
+    if (status === StPodStatus.Ready || status === StPodStatus.Error || status === StPodStatus.Captcha) {
       return;
     }
     this.pollTimer = setTimeout(() => this.poll(), this.nextPollDelayMs);
@@ -213,6 +218,16 @@ export class StPodReadyService {
     this.clearTimers();
   }
 
+  private transitionToCaptcha(): void {
+    if (this.state.getValue() === StPodStatus.Captcha) {
+      return;
+    }
+    this.readyAt = null;
+    this.state.next(StPodStatus.Captcha);
+    this.resolvePending();
+    this.clearTimers();
+  }
+
   private clearTimers(): void {
     if (this.pollTimer !== null) {
       clearTimeout(this.pollTimer);
@@ -253,6 +268,9 @@ export function mapGatewayStatus(raw: string | undefined, httpStatus: number): S
   }
   if (raw === GatewayState.Active) {
     return StPodStatus.Ready;
+  }
+  if (raw === GatewayState.Captcha) {
+    return StPodStatus.Captcha;
   }
   if (raw !== undefined && WAITING_GATEWAY_STATES.has(raw)) {
     return StPodStatus.Waiting;
