@@ -7755,14 +7755,14 @@
     },
     "panel-actions-popover": {
       "aria-label": "Panel actions",
-      "edit": "Edit (e)",
+      "edit": "Edit visualization",
       "expand": "Expand (v)",
       "explore": "Explore (p x)",
       "more-actions": "More actions",
       "remove": "Remove (p r)",
       "remove-confirm": "Remove",
       "restore-size": "Restore size (v)",
-      "settings": "Settings"
+      "settings": "Panel settings"
     },
     "panel-data-alerting-tab": {
       "tab-label": "Alert"

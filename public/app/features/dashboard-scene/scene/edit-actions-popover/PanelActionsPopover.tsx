@@ -236,10 +236,10 @@ function PanelActions({
 
       {canEdit && (
         <IconButton
-          name="edit"
+          name="pen"
           size="md"
           className={actionStyles.action}
-          tooltip={t('dashboard-scene.panel-actions-popover.edit', 'Edit (e)')}
+          tooltip={t('dashboard-scene.panel-actions-popover.edit', 'Edit visualization')}
           tooltipPlacement="top"
           onClick={onEdit}
         />
@@ -261,7 +261,7 @@ function PanelActions({
           name="cog"
           size="md"
           className={actionStyles.action}
-          tooltip={t('dashboard-scene.panel-actions-popover.settings', 'Settings')}
+          tooltip={t('dashboard-scene.panel-actions-popover.settings', 'Panel settings')}
           tooltipPlacement="top"
           onClick={onSettings}
         />

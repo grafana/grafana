@@ -203,7 +203,7 @@ describe('<PanelActionsWrapper />', () => {
       await hoverAndRest(screen.getByTestId('reference-child'));
 
       expect(await within(getToolbar()).findByRole('button', { name: 'Explore (p x)' })).toBeInTheDocument();
-      expect(getToolbarLayout()).toEqual(['Edit (e)', 'Explore (p x)', '|', 'Expand (v)', 'More actions']);
+      expect(getToolbarLayout()).toEqual(['Edit visualization', 'Explore (p x)', '|', 'Expand (v)', 'More actions']);
     });
 
     test('in view mode on a small screen with mobile edit deprecation, Edit is not shown, like in the panel menu', async () => {
@@ -228,8 +228,8 @@ describe('<PanelActionsWrapper />', () => {
       await hoverAndRest(screen.getByTestId('reference-child'));
 
       expect(getToolbarLayout()).toEqual([
-        'Edit (e)',
-        'Settings',
+        'Edit visualization',
+        'Panel settings',
         '|',
         'Duplicate',
         'Remove (p r)',
@@ -257,7 +257,7 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(within(getToolbar()).queryByRole('button', { name: 'Edit (e)' })).not.toBeInTheDocument();
+      expect(within(getToolbar()).queryByRole('button', { name: 'Edit visualization' })).not.toBeInTheDocument();
     });
 
     test('in composer mode, Edit is not shown, like in the panel menu', async () => {
@@ -267,7 +267,7 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(within(getToolbar()).queryByRole('button', { name: 'Edit (e)' })).not.toBeInTheDocument();
+      expect(within(getToolbar()).queryByRole('button', { name: 'Edit visualization' })).not.toBeInTheDocument();
     });
 
     test('in edit mode, repeated panels show Duplicate and Remove disabled with the reason, and no Edit', async () => {
@@ -286,7 +286,7 @@ describe('<PanelActionsWrapper />', () => {
       await hoverAndRest(screen.getByTestId('reference-child'));
 
       expect(getToolbarLayout()).toEqual([
-        'Settings',
+        'Panel settings',
         '|',
         "Repeated panels can't be duplicated individually",
         "Repeated panels can't be deleted individually",
@@ -335,7 +335,7 @@ describe('<PanelActionsWrapper />', () => {
 
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
-      await user.click(within(getToolbar()).getByRole('button', { name: 'Edit (e)' }));
+      await user.click(within(getToolbar()).getByRole('button', { name: 'Edit visualization' }));
 
       expect(mockLocationServicePartial).toHaveBeenCalledWith({ editPanel: 1, viewPanel: undefined });
       expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('edit', 1, 'actions_popover', 'timeseries');
@@ -360,7 +360,7 @@ describe('<PanelActionsWrapper />', () => {
 
       renderWrapper(panel, { isEditing: true });
       await hoverAndRest(screen.getByTestId('reference-child'));
-      await user.click(within(getToolbar()).getByRole('button', { name: 'Settings' }));
+      await user.click(within(getToolbar()).getByRole('button', { name: 'Panel settings' }));
 
       expect(dashboard.state.sidebar.getSelectedObject()).toBe(panel);
     });
@@ -526,7 +526,7 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(getToolbarLayout().slice(0, 2)).toEqual(['|', 'Edit (e)']);
+      expect(getToolbarLayout().slice(0, 2)).toEqual(['|', 'Edit visualization']);
     });
 
     test('for a panel with a hover header whose items render nothing, no separator comes before the panel actions', async () => {
@@ -536,7 +536,7 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(panel, { hasEmptyHeaderItem: true });
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(getToolbarLayout()[0]).toBe('Edit (e)');
+      expect(getToolbarLayout()[0]).toBe('Edit visualization');
     });
 
     test('for a panel with a hover header, its drag handle sits right before Expand, after the separator', async () => {

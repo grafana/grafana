@@ -22,11 +22,11 @@ test.describe('Panel actions popover', { tag: ['@dashboards'] }, () => {
     await panels.openActionsPopover(PANEL_TITLE);
 
     const popover = panels.getActionsPopover();
-    await expect(popover.getByRole('button', { name: 'Edit (e)' })).toBeVisible();
+    await expect(popover.getByRole('button', { name: 'Edit visualization' })).toBeVisible();
     await expect(popover.getByRole('button', { name: 'Explore (p x)' })).toBeVisible();
     await expect(popover.getByRole('button', { name: 'Expand (v)' })).toBeVisible();
     await expect(popover.getByRole('button', { name: 'More actions' })).toBeVisible();
-    await expect(popover.getByRole('button', { name: 'Settings' })).toHaveCount(0);
+    await expect(popover.getByRole('button', { name: 'Panel settings' })).toHaveCount(0);
   });
 
   test('More actions opens the panel menu without the actions in the popover', async ({
@@ -154,7 +154,7 @@ test.describe('Panel actions popover', { tag: ['@dashboards'] }, () => {
     await expect(popover.getByRole('button', { name: 'Remove (p r)' })).toBeVisible();
     await expect(popover.getByRole('button', { name: 'Explore (p x)' })).toHaveCount(0);
 
-    await popover.getByRole('button', { name: 'Settings' }).click();
+    await popover.getByRole('button', { name: 'Panel settings' }).click();
 
     await expect(sidebar.panelOptions.getTitleInput()).toHaveValue(PANEL_TITLE);
   });
