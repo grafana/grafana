@@ -61,6 +61,7 @@ func newMemStore() *memStore {
 	return &memStore{folders: map[string]*memFolder{}, dashboards: map[string]string{}, failDelete: map[string]error{}, gets: map[string]int{}, rvs: map[string]int{}}
 }
 
+// notify delivers a folder change to the handler. The caller holds m.mu.
 func (m *memStore) notify(name string, deleted bool) {
 	if m.handler == nil {
 		return

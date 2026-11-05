@@ -107,6 +107,8 @@ func (h handler) OnAdd(obj any, isInInitialList bool) {
 	h.c.enqueue(obj, false)
 }
 
+// OnUpdate ignores the old object: the NATS informer passes the same one for live changes and
+// resyncs, so only the controller's own record can tell them apart.
 func (h handler) OnUpdate(_, obj any) { h.c.enqueue(obj, false) }
 
 func (h handler) OnDelete(obj any) { h.c.enqueue(obj, true) }
@@ -148,13 +150,14 @@ func (c *Controller) enqueue(obj any, deleted bool) {
 	if !ok {
 		return
 	}
-	if c.isResyncOfUnchanged(key, obj, deleted) {
+	if c.trackEvent(key, obj, deleted) {
 		return
 	}
 	c.queue.Add(key)
 }
 
-func (c *Controller) isResyncOfUnchanged(key string, obj any, deleted bool) bool {
+// trackEvent records the event and reports whether it only repeats the folder's last version.
+func (c *Controller) trackEvent(key string, obj any, deleted bool) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if deleted {
@@ -165,6 +168,7 @@ func (c *Controller) isResyncOfUnchanged(key string, obj any, deleted bool) bool
 	rv := resourceVersion(obj)
 	prev, known := c.seen[key]
 	if rv == "" {
+		delete(c.seen, key)
 		return false
 	}
 	c.seen[key] = rv
