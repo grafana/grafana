@@ -591,6 +591,7 @@ func validateOnDelete(ctx context.Context,
 	searcher resourcepb.ResourceIndexClient,
 	deleteOptions *metav1.DeleteOptions,
 	cascadeDeleteEnabled bool,
+	metrics *deleteCheckMetrics,
 ) error {
 	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 when kubernetesFolderCascadeDelete
 	// is enabled (same pattern as dashboard delete validation). This only bypasses the empty-folder
@@ -606,6 +607,7 @@ func validateOnDelete(ctx context.Context,
 			msg = "folder force-delete bypassing empty check; its child folders and dashboards will be deleted by the cascade controller"
 		}
 		logging.FromContext(ctx).Warn(msg, "folder", f.Name, "namespace", f.Namespace)
+		metrics.record(deleteCheckBypassedForce, blockingKindNone)
 		return nil
 	}
 
@@ -618,6 +620,7 @@ func validateOnDelete(ctx context.Context,
 	if rawErr != nil {
 		_ = tracing.Error(trace.SpanFromContext(ctx), rawErr)
 		logging.FromContext(ctx).Error("Could not verify if folder is empty", "namespace", f.Namespace, "folder", f.Name, "error", rawErr)
+		metrics.record(deleteCheckRefusedCountFailed, blockingKindNone)
 		return publicErr
 	}
 
@@ -625,8 +628,10 @@ func validateOnDelete(ctx context.Context,
 
 	for _, v := range resp.GetStats() {
 		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {
+			metrics.record(deleteCheckRefusedNotEmpty, v.Resource)
 			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d %s", v.Count, v.Resource)
 		}
 	}
+	metrics.record(deleteCheckAllowed, blockingKindNone)
 	return nil
 }

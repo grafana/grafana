@@ -62,6 +62,7 @@ type FolderAPIBuilder struct {
 	parents              parentsGetter
 	searcher             resourcepb.ResourceIndexClient
 	maxNestedFolderDepth int
+	deleteChecks         *deleteCheckMetrics
 
 	// Flags
 	useZanzana          bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -163,6 +164,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
 		contentsDeleter:      contentsDeleter,
+		deleteChecks:         newDeleteCheckMetrics(registerer, true), // the monolith always joins legacy storage
 	}
 
 	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
@@ -180,8 +182,8 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, variableSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int, contentsDeleter FolderContentsDeleter) *FolderAPIBuilder {
-	return &FolderAPIBuilder{
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, variableSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int, contentsDeleter FolderContentsDeleter, opts ...APIServiceOption) *FolderAPIBuilder {
+	b := &FolderAPIBuilder{
 		accessClient:           ac,
 		searcher:               searcher,
 		permissionStore:        NewZanzanaPermissionStore(zanzanaClient),
@@ -192,6 +194,18 @@ func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, fe
 		contentsDeleter:        contentsDeleter,                                     // injected so cascade delete can remove alert rules and library panels in standalone mode
 		useZanzana:             features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
 	}
+	for _, opt := range opts {
+		opt(b)
+	}
+	return b
+}
+
+// APIServiceOption configures NewAPIService.
+type APIServiceOption func(*FolderAPIBuilder)
+
+// WithDeleteCheckMetrics exports the delete-check counter on reg.
+func WithDeleteCheckMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) APIServiceOption {
+	return func(b *FolderAPIBuilder) { b.deleteChecks = newDeleteCheckMetrics(reg, legacyJoinEnabled) }
 }
 
 func (b *FolderAPIBuilder) GetGroupVersions() []schema.GroupVersion {
@@ -605,7 +619,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		return validateOnCreate(ctx, f, newCreateParentsGetter(b.storage), b.maxNestedFolderDepth, a.IsDryRun())
 	case admission.Delete:
 		deleteOptions, _ := a.GetOperationOptions().(*metav1.DeleteOptions)
-		return validateOnDelete(ctx, f, b.searcher, deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx))
+		return validateOnDelete(ctx, f, b.searcher, deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx), b.deleteChecks)
 	case admission.Update:
 		old, ok := a.GetOldObject().(*foldersv1.Folder)
 		if !ok {
