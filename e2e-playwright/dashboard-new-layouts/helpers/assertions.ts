@@ -129,11 +129,13 @@ export async function expectDashboardChangesToContain(
   await test.step('Expect JSON diff in save drawer to contain text', async () => {
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
 
-    await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
+    const changesTab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes'));
+    await changesTab.click();
 
     // CodeMirror only renders lines in the viewport, so read the modified document from the editor
     // state instead of the rendered text
-    const modifiedEditor = page.getByRole('textbox', { name: 'Modified' });
+    const saveDrawer = page.getByRole('dialog').filter({ has: changesTab });
+    const modifiedEditor = saveDrawer.getByRole('textbox', { name: 'Modified' });
     await expect(modifiedEditor).toBeVisible();
     await expect
       .poll(() =>

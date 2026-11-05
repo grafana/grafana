@@ -1,6 +1,7 @@
 import { unifiedMergeView } from '@codemirror/merge';
+import { highlightSelectionMatches, search, searchKeymap } from '@codemirror/search';
 import { Compartment, Text } from '@codemirror/state';
-import { EditorView, drawSelection, lineNumbers as lineNumbersExtension } from '@codemirror/view';
+import { EditorView, drawSelection, keymap, lineNumbers as lineNumbersExtension } from '@codemirror/view';
 import { css } from '@emotion/css';
 import CodeMirror from '@uiw/react-codemirror';
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
@@ -66,6 +67,10 @@ export function DiffEditor({
     () => [
       EditorView.contentAttributes.of({ tabindex: '0' }),
       drawSelection(),
+      // CodeMirror only renders lines in the viewport, so browser find cannot reach the rest of the document.
+      search({ top: true }),
+      highlightSelectionMatches(),
+      keymap.of(searchKeymap),
       ...(lineNumbers ? [lineNumbersExtension()] : []),
       ...(languageExtension ? [languageExtension] : []),
     ],
