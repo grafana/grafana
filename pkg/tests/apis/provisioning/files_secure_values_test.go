@@ -3,6 +3,7 @@ package provisioning
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -53,7 +54,7 @@ func TestIntegrationProvisioning_FileUpdateKeepsSecureValues(t *testing.T) {
 
 	committedFile := func(t *testing.T, path string) map[string]any {
 		t.Helper()
-		data, err := os.ReadFile(filepath.Join(helper.ProvisioningPath, path))
+		data, err := os.ReadFile(filepath.Join(helper.ProvisioningPath, path)) //nolint:gosec // a path the test itself wrote into the provisioning directory
 		require.NoError(t, err, "the committed file should be readable")
 		var file map[string]any
 		require.NoError(t, json.Unmarshal(data, &file), "the committed file should be valid JSON")
@@ -122,4 +123,43 @@ func TestIntegrationProvisioning_FileUpdateKeepsSecureValues(t *testing.T) {
 				"the rest of the update must still land")
 		})
 	}
+
+	t.Run("a move carrying new content keeps the moved file's plaintext", func(t *testing.T) {
+		const (
+			name   = "secure-values-moved"
+			source = "secure-values-move-source.json"
+			target = "secure-values-move-target.json"
+		)
+
+		created := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", source).
+			Body(dashboard(name, "Secure values", map[string]any{
+				"token": map[string]any{"create": plaintext},
+			})).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context())
+		require.NoError(t, created.Error(), "creating the file to move should succeed")
+
+		resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+			TargetPath:   target,
+			OriginalPath: source,
+			Message:      "move with new content",
+			Body: string(dashboard(name, "Secure values moved", map[string]any{
+				"token": map[string]any{"name": "shared-token"},
+			})),
+		})
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "the move should succeed")
+
+		file := committedFile(t, target)
+		require.Equal(t,
+			map[string]any{"token": map[string]any{"create": plaintext}},
+			file["secure"],
+			"the moved file must keep the plaintext of the file it came from")
+		require.Equal(t, "Secure values moved", file["spec"].(map[string]any)["title"])
+	})
 }

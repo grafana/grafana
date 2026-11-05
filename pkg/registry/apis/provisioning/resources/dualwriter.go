@@ -678,7 +678,11 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	}
 
 	if len(opts.Data) > 0 {
-		keepPlaintextSecureValues(parsed.Obj, newParsed.Obj)
+		// Read the original path again on the target ref: parsed is the configured
+		// branch's copy, which can hold a secret the target branch already rotated.
+		if err := r.keepCommittedSecureValues(ctx, newParsed, opts.OriginalPath, opts.Ref); err != nil {
+			return nil, err
+		}
 	}
 
 	// Make sure the new resource is valid
