@@ -41,14 +41,12 @@ export const shouldUseAlertingListViewV2 = () => {
 export const isImportWizardEnabled = () =>
   getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingMigrationWizardUI, false);
 
-// Importing Alertmanager config (the wizard's notifications step, the staged config on the Import
-// settings tab, and auto-sync) goes through the Alertmanager import API, which answers 501 while its
-// flag is off. Rule import doesn't use that API, so the wizard itself only needs its own flag and just
-// locks its notifications step.
-export const isAlertmanagerImportEnabled = () =>
-  isImportWizardEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingImportAlertmanagerAPI, false);
-
-/** React version of {@link isAlertmanagerImportEnabled} that re-renders when either flag changes. */
+/**
+ * Importing Alertmanager config (the wizard's notifications step, the staged config on the Import
+ * settings tab, and auto-sync) goes through the Alertmanager import API, which answers 501 while its
+ * flag is off. Rule import doesn't use that API, so the wizard itself only needs its own flag and just
+ * locks its notifications step.
+ */
 export function useIsAlertmanagerImportEnabled(): boolean {
   const wizardUIEnabled = useFlagAlertingMigrationWizardUI();
   const importAlertmanagerAPIEnabled = useFlagAlertingImportAlertmanagerAPI();

@@ -4,7 +4,7 @@ import { type GrafanaTheme2, formattedValueToString, getValueFormat } from '@gra
 import { Trans, t } from '@grafana/i18n';
 import { Button, FileDropzone, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
-export const YAML_FILE_EXTENSIONS = ['.yaml', '.yml'];
+const YAML_FILE_EXTENSIONS = ['.yaml', '.yml'];
 
 /**
  * FileDropzone only opens the file picker from the area around its text, not from the padding of the
