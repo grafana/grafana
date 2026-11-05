@@ -25,8 +25,7 @@ import (
 // label that is used when all mathexp.Series have 0 labels to make them identifiable by labels. The value of this label is extracted from value field names
 const nameLabelName = "__name__"
 
-// HeaderFromExpression marks data source requests made by the expression
-// service. It matches query.HeaderFromExpression, which pkg/expr cannot import.
+// HeaderFromExpression marks data source requests made by the expression service.
 const HeaderFromExpression = "X-Grafana-From-Expr"
 
 var (
