@@ -4490,13 +4490,12 @@ func TestRepositoryController_process_UnauthorizedTestResultSuppressesHooks(t *t
 	stub := &hookRepoStub{
 		cfg:        repo,
 		hookErrSet: true, hookErr: nil,
-		// Mirrors gitRepository.Test's IsAuthorized(false, nil) path exactly:
-		// apps/provisioning/pkg/repository/git/repository.go's "not authorized" branch.
+		// Mirrors what gitRepository.Test returns when the Git server answers 401.
 		testResults: &provisioning.TestResults{
 			Success: false,
 			Code:    http.StatusUnauthorized,
 			Errors: []provisioning.ErrorDetails{
-				{Detail: "not authorized"},
+				{Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized"},
 			},
 		},
 	}
@@ -5020,7 +5019,7 @@ func TestRepositoryController_process_UnreachableRepoDoesNotRewriteUnchangedStat
 		testResults: &provisioning.TestResults{
 			Success: false,
 			Code:    http.StatusUnauthorized,
-			Errors:  []provisioning.ErrorDetails{{Detail: "not authorized"}},
+			Errors:  []provisioning.ErrorDetails{{Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized"}},
 		},
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)

@@ -5,9 +5,11 @@ import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { type RepoType } from '../Wizard/types';
+import { ManagedBadge } from '../components/ManagedBadge';
 import { CONNECTIONS_URL } from '../constants';
 import { connectionProviderType, isOAuthConnectionType } from '../utils/connectionOAuth';
 import { exportResourceAsJson } from '../utils/export';
+import { getManagerIdentity, getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
 
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';
 
@@ -27,6 +29,8 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
   const kindLabel = isOAuthConnectionType(spec?.type)
     ? t('provisioning.connections.kind-oauth-app', 'OAuth App')
     : t('provisioning.connections.kind-github-app', 'GitHub App');
+  // Externally managed connections (terraform, kubectl, ...) are read-only in the UI.
+  const isReadOnly = isManagedResourceReadOnly(connection);
   return (
     <Card noMargin key={name} isSelected={isSelected} onClick={onClick}>
       <Card.Figure>
@@ -36,6 +40,9 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
         <Stack gap={2} direction="row" alignItems="center">
           <Text variant="h3">{title}</Text>
           <ConnectionStatusBadge status={status} />
+          {isReadOnly && (
+            <ManagedBadge managerKind={getManagerKind(connection)} name={getManagerIdentity(connection)} />
+          )}
         </Stack>
       </Card.Heading>
 
