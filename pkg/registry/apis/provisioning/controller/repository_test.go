@@ -6,9 +6,11 @@ import (
 	"net/http"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -1169,6 +1171,22 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 	assert.True(t, hasQuotaCondition, "expected quota condition in final /status/conditions patch")
 	assert.True(t, hasReadyCondition, "expected ready condition in final /status/conditions patch")
 	assert.Len(t, conditions, 2, "expected exactly 2 conditions (quota + ready)")
+}
+
+func TestRepositoryController_shouldGenerateTokenFromConnection_RemovedToken(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		rc := &RepositoryController{
+			tokenMetrics:   registerRepositoryTokenMetrics(prometheus.NewPedanticRegistry()),
+			resyncInterval: 5 * time.Minute,
+		}
+		repo := &provisioning.Repository{
+			Status: provisioning.RepositoryStatus{Token: provisioning.TokenStatus{
+				LastUpdated: time.Now().UnixMilli(),
+				Expiration:  time.Now().Add(time.Hour).UnixMilli(),
+			}},
+		}
+		assert.True(t, rc.shouldGenerateTokenFromConnection(repo), "a removed token must refresh even if its previous expiration is far away")
+	})
 }
 
 // TestRepositoryController_process_TokenRefreshedWhileOverQuota verifies that auth token
