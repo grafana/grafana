@@ -20,14 +20,18 @@ type scoreResult struct {
 }
 
 // HedgeScores starts one duplicate scoring attempt if the first is still pending
-// after 500 ms. Each attempt must build its own request and honor its context.
+// after 500 ms. The first valid success wins; an early primary error returns
+// immediately. Both attempts share the caller's deadline. Each attempt must
+// build its own request and honor its context.
 func HedgeScores(ctx context.Context, count int, attempt func(context.Context) ([]float64, error)) ([]float64, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, context.Cause(ctx)
 	}
 	ctx, cancel := context.WithCancel(ctx)
+	// Returning cancels any losing request without waiting for its response.
 	defer cancel()
 	span := trace.SpanFromContext(ctx)
+	// A late attempt must be able to publish and exit after its peer wins or the caller cancels.
 	results := make(chan scoreResult, 2)
 	start := func(n int) {
 		attemptCtx, attemptCancel := context.WithCancel(ctx)
@@ -59,55 +63,47 @@ func HedgeScores(ctx context.Context, count int, attempt func(context.Context) (
 	}
 	started, pending := 1, 1
 	var failures []error
-	finish := func() { span.SetAttributes(attribute.Int("rerank.attempt_count", started)) }
-	defer finish()
+	defer func() { span.SetAttributes(attribute.Int("rerank.attempt_count", started)) }()
 	for pending > 0 {
+		var result scoreResult
 		select {
 		case <-ctx.Done():
 			return nil, context.Cause(ctx)
-		case result := <-results:
-			pending--
-			if err := ctx.Err(); err != nil {
-				return nil, context.Cause(ctx)
-			}
-			if result.err == nil {
-				span.SetAttributes(attribute.Int("rerank.winning_attempt", result.attempt))
-				if pending > 0 {
-					span.AddEvent("rerank.losing_attempt_cancelled")
-				}
-				return result.scores, nil
-			}
-			failures = append(failures, fmt.Errorf("attempt %d: %w", result.attempt, result.err))
-			span.AddEvent("rerank.attempt_failed", trace.WithAttributes(attribute.Int("attempt", result.attempt)))
-			if started == 1 {
-				timer.Stop()
-				return nil, failures[0]
-			}
+		case result = <-results:
 		case <-timerC:
 			span.AddEvent("rerank.hedge_timer_elapsed")
-			// A completed primary always wins over a timer that became ready at the same time.
+			// Select does not prioritize ready cases; prefer a queued primary over a duplicate.
 			select {
-			case result := <-results:
-				if err := ctx.Err(); err != nil {
+			case result = <-results:
+			default:
+				if ctx.Err() != nil {
 					return nil, context.Cause(ctx)
 				}
-				if result.err == nil {
-					span.SetAttributes(attribute.Int("rerank.winning_attempt", result.attempt))
-					return result.scores, nil
+				if hasDeadline && !time.Now().Before(deadline) {
+					return nil, context.DeadlineExceeded
 				}
-				span.AddEvent("rerank.attempt_failed", trace.WithAttributes(attribute.Int("attempt", 1)))
-				return nil, fmt.Errorf("attempt 1: %w", result.err)
-			default:
+				started, pending = 2, 2
+				span.AddEvent("rerank.hedge_launched")
+				start(2)
+				continue
 			}
-			if ctx.Err() != nil {
-				return nil, context.Cause(ctx)
+		}
+		pending--
+		// Select may receive a ready result even when cancellation is also ready.
+		if err := ctx.Err(); err != nil {
+			return nil, context.Cause(ctx)
+		}
+		if result.err == nil {
+			span.SetAttributes(attribute.Int("rerank.winning_attempt", result.attempt))
+			if pending > 0 {
+				span.AddEvent("rerank.losing_attempt_cancelled")
 			}
-			if hasDeadline && !time.Now().Before(deadline) {
-				return nil, context.DeadlineExceeded
-			}
-			started, pending = 2, 2
-			span.AddEvent("rerank.hedge_launched")
-			start(2)
+			return result.scores, nil
+		}
+		failures = append(failures, fmt.Errorf("attempt %d: %w", result.attempt, result.err))
+		span.AddEvent("rerank.attempt_failed", trace.WithAttributes(attribute.Int("attempt", result.attempt)))
+		if started == 1 {
+			return nil, failures[0]
 		}
 	}
 	return nil, errors.Join(failures...)
