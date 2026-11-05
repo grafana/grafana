@@ -52,7 +52,7 @@ func TestIntegrationGitFiles_CreateSecureValueRejected(t *testing.T) {
 	require.Error(t, result.Error(), "creating a file with a plaintext secure value should be rejected")
 	require.True(t, apierrors.IsBadRequest(result.Error()),
 		"error should be a BadRequest (validation error), got: %v", result.Error())
-	require.Contains(t, result.Error().Error(), "secure values (apiKey) cannot be created from a git repository")
+	require.Contains(t, result.Error().Error(), "secure values (apiKey) cannot be created or removed from a git repository")
 	require.NotContains(t, result.Error().Error(), plaintextSecret, "the error must not echo the secret")
 
 	helper.RequireRepoFileNotFound(t, repoName, "dashboard.json")
@@ -80,6 +80,32 @@ func TestIntegrationGitFiles_CreateSecureValueReferenceAllowed(t *testing.T) {
 	helper.RequireRepoFileExists(t, repoName, "dashboard.json")
 }
 
+func TestIntegrationGitFiles_RemoveSecureValueRejected(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	const repoName = "secure-value-remove-rejected"
+	_, _ = helper.CreateGitRepo(t, repoName, nil, "write")
+
+	result := helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repoName).
+		SubResource("files", "dashboard.json").
+		Param("message", "Remove a secure value").
+		Body(dashboardWithSecureValue(t, "secure-remove-dash", map[string]any{
+			"apiKey": map[string]any{"remove": true},
+		})).
+		SetHeader("Content-Type", "application/json").
+		Do(t.Context())
+
+	require.Error(t, result.Error(), "a file must not delete a secure value it never owned")
+	require.True(t, apierrors.IsBadRequest(result.Error()),
+		"error should be a BadRequest (validation error), got: %v", result.Error())
+	require.Contains(t, result.Error().Error(), "secure values (apiKey) cannot be created or removed from a git repository")
+
+	helper.RequireRepoFileNotFound(t, repoName, "dashboard.json")
+}
+
 func TestIntegrationProvisioning_FullSync_SecureValueIsWarning(t *testing.T) {
 	helper := sharedGitHelper(t)
 
@@ -100,7 +126,7 @@ func TestIntegrationProvisioning_FullSync_SecureValueIsWarning(t *testing.T) {
 
 	require.Empty(t, jobObj.Status.Errors, "a rejected secure value should warn, not fail the sync")
 	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
-	common.RequireJobWarningContains(t, jobObj, "secure values (apiKey) cannot be created from a git repository")
+	common.RequireJobWarningContains(t, jobObj, "secure values (apiKey) cannot be created or removed from a git repository")
 
 	helper.RequireRepoDashboardCount(t, repoName, 1)
 }

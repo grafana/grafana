@@ -205,8 +205,8 @@ func (r RepositoryType) IsGit() bool {
 }
 
 // AllowsSecureValues reports whether files in a repository of this type may
-// create secure values from a plaintext payload. A secret committed to git
-// stays in a history we cannot redact.
+// create or remove secure values. A secret committed to git stays in a history
+// we cannot redact, and a file should not delete a value it never owned.
 func (r RepositoryType) AllowsSecureValues() bool {
 	return !r.IsGit()
 }

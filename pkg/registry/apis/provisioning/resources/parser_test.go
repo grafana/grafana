@@ -1210,13 +1210,13 @@ secure:
 			name:     "plaintext value is rejected",
 			repoType: provisioning.GitHubRepositoryType,
 			secure:   "  basicAuthPassword:\n    create: super-secret\n",
-			wantErr:  "secure values (basicAuthPassword) cannot be created from a github repository",
+			wantErr:  "secure values (basicAuthPassword) cannot be created or removed from a github repository",
 		},
 		{
-			name:     "every plaintext value is listed",
+			name:     "every offending value is listed",
 			repoType: provisioning.GitRepositoryType,
 			secure:   "  token:\n    create: a\n  basicAuthPassword:\n    create: b\n",
-			wantErr:  "secure values (basicAuthPassword, token) cannot be created from a git repository",
+			wantErr:  "secure values (basicAuthPassword, token) cannot be created or removed from a git repository",
 		},
 		{
 			name:     "plaintext value is allowed in a local repository",
@@ -1224,13 +1224,19 @@ secure:
 			secure:   "  basicAuthPassword:\n    create: super-secret\n",
 		},
 		{
-			name:     "reference is always allowed",
+			name:     "reference is allowed -- it only reads an existing value",
 			repoType: provisioning.GitHubRepositoryType,
 			secure:   "  basicAuthPassword:\n    name: ds-my-ds-basic-auth\n",
 		},
 		{
-			name:     "removal is always allowed",
+			name:     "removal is rejected -- it deletes a value the file never owned",
 			repoType: provisioning.GitHubRepositoryType,
+			secure:   "  basicAuthPassword:\n    remove: true\n",
+			wantErr:  "secure values (basicAuthPassword) cannot be created or removed from a github repository",
+		},
+		{
+			name:     "removal is allowed in a local repository",
+			repoType: provisioning.LocalRepositoryType,
 			secure:   "  basicAuthPassword:\n    remove: true\n",
 		},
 	}

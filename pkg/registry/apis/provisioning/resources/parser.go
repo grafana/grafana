@@ -287,22 +287,22 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	return parsed, nil
 }
 
-// checkSecureValues rejects secure values carrying a plaintext payload in a
-// repository type that does not allow them. A reference to an existing secure
-// value is never rejected.
+// checkSecureValues rejects writes to the secret store from a repository type
+// that does not allow them. A reference to an existing secure value only reads
+// one, so it is never rejected.
 func (r *parser) checkSecureValues(obj map[string]any) error {
 	if r.repo.Type.AllowsSecureValues() {
 		return nil
 	}
 
-	keys := plaintextSecureValueKeys(obj)
+	keys := secureValueWrites(obj)
 	if len(keys) == 0 {
 		return nil
 	}
 
 	return NewResourceValidationError(field.Forbidden(
 		field.NewPath(secureValuesField),
-		fmt.Sprintf("secure values (%s) cannot be created from a %s repository; reference an existing secure value by name instead",
+		fmt.Sprintf("secure values (%s) cannot be created or removed from a %s repository; only references to existing secure values are allowed",
 			strings.Join(keys, ", "), r.repo.Type),
 	))
 }

@@ -6,10 +6,10 @@ import "slices"
 // secure values (common.InlineSecureValues).
 const secureValuesField = "secure"
 
-// plaintextSecureValueKeys returns, sorted, the secure values in obj that carry
-// a plaintext payload. A key holding only a reference or a removal is not a
-// secret, so it is not reported.
-func plaintextSecureValueKeys(obj map[string]any) []string {
+// secureValueWrites returns, sorted, the secure values in obj that write to the
+// secret store: a plaintext payload to create, or a removal. A key holding only
+// a reference reads an existing value, so it is not reported.
+func secureValueWrites(obj map[string]any) []string {
 	secure, ok := obj[secureValuesField].(map[string]any)
 	if !ok {
 		return nil
@@ -21,7 +21,9 @@ func plaintextSecureValueKeys(obj map[string]any) []string {
 		if !ok {
 			continue
 		}
-		if create, ok := sv["create"].(string); ok && create != "" {
+		create, _ := sv["create"].(string)
+		remove, _ := sv["remove"].(bool)
+		if create != "" || remove {
 			keys = append(keys, key)
 		}
 	}
