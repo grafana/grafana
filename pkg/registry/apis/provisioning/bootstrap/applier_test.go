@@ -22,17 +22,20 @@ import (
 const testGroupVersion = "provisioning.grafana.app/v0alpha1"
 
 var (
-	repoGVR = provisioning.RepositoryResourceInfo.GroupVersionResource()
-	connGVR = provisioning.ConnectionResourceInfo.GroupVersionResource()
+	repoGVR     = provisioning.RepositoryResourceInfo.GroupVersionResource()
+	connGVR     = provisioning.ConnectionResourceInfo.GroupVersionResource()
+	repoBetaGVR = schema.GroupVersionResource{Group: repoGVR.Group, Version: "v1beta1", Resource: repoGVR.Resource}
 )
 
 func newScheme() *runtime.Scheme {
 	scheme := runtime.NewScheme()
-	gv := schema.GroupVersion{Group: repoGVR.Group, Version: repoGVR.Version}
-	scheme.AddKnownTypeWithName(gv.WithKind("Repository"), &unstructured.Unstructured{})
-	scheme.AddKnownTypeWithName(gv.WithKind("RepositoryList"), &unstructured.UnstructuredList{})
-	scheme.AddKnownTypeWithName(gv.WithKind("Connection"), &unstructured.Unstructured{})
-	scheme.AddKnownTypeWithName(gv.WithKind("ConnectionList"), &unstructured.UnstructuredList{})
+	for _, version := range []string{repoGVR.Version, "v1beta1"} {
+		gv := schema.GroupVersion{Group: repoGVR.Group, Version: version}
+		scheme.AddKnownTypeWithName(gv.WithKind("Repository"), &unstructured.Unstructured{})
+		scheme.AddKnownTypeWithName(gv.WithKind("RepositoryList"), &unstructured.UnstructuredList{})
+		scheme.AddKnownTypeWithName(gv.WithKind("Connection"), &unstructured.Unstructured{})
+		scheme.AddKnownTypeWithName(gv.WithKind("ConnectionList"), &unstructured.UnstructuredList{})
+	}
 	return scheme
 }
 
@@ -57,10 +60,11 @@ func managed(obj *unstructured.Unstructured, kind utils.ManagerKind, id string) 
 func newApplier(t *testing.T, objs ...runtime.Object) (*Applier, *dynamicfake.FakeDynamicClient) {
 	t.Helper()
 	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(newScheme(), map[schema.GroupVersionResource]string{
-		repoGVR: "RepositoryList",
-		connGVR: "ConnectionList",
+		repoGVR:     "RepositoryList",
+		connGVR:     "ConnectionList",
+		repoBetaGVR: "RepositoryList",
 	}, objs...)
-	return NewApplier(client, log.NewNopLogger()), client
+	return NewApplier(client, []byte("test-digest-key"), log.NewNopLogger()), client
 }
 
 func TestKindPriority(t *testing.T) {
@@ -221,7 +225,7 @@ func TestApply_DoesNotReplayUnchangedSecureValues(t *testing.T) {
 	stored.SetAnnotations(map[string]string{
 		utils.AnnoKeyManagerKind:     string(utils.ManagerKindFileProvisioning),
 		utils.AnnoKeyManagerIdentity: managerIdentity,
-		secureDigestAnnotation:       secureDigest(withSecureCreate(manifest("Connection", "c"), "clientSecret", "same-secret")),
+		secureDigestAnnotation:       storedDigests(t, "Connection", "c", map[string]string{"clientSecret": "same-secret"}),
 	})
 
 	applier, client := newApplier(t, stored)
@@ -246,7 +250,7 @@ func TestApply_ReplaysChangedSecureValues(t *testing.T) {
 	stored.SetAnnotations(map[string]string{
 		utils.AnnoKeyManagerKind:     string(utils.ManagerKindFileProvisioning),
 		utils.AnnoKeyManagerIdentity: managerIdentity,
-		secureDigestAnnotation:       secureDigest(withSecureCreate(manifest("Connection", "c"), "clientSecret", "old-secret")),
+		secureDigestAnnotation:       storedDigests(t, "Connection", "c", map[string]string{"clientSecret": "old-secret"}),
 	})
 
 	applier, client := newApplier(t, stored)
@@ -285,18 +289,28 @@ func TestApply_RecordsSecureDigestOnCreate(t *testing.T) {
 	assert.Equal(t, "s3cret", create, "the first apply must still create the secret")
 }
 
-func TestSecureDigest_ExcludesReferencesAndSaltsByIdentity(t *testing.T) {
-	assert.Empty(t, secureDigest(manifest("Connection", "c")), "no secure block means no digest")
+func TestSecureDigests_ExcludesReferencesAndBindsToIdentity(t *testing.T) {
+	applier, _ := newApplier(t)
+
+	assert.Nil(t, applier.secureDigests(manifest("Connection", "c")), "no secure block means no digests")
 
 	refOnly := manifest("Connection", "c")
 	require.NoError(t, unstructured.SetNestedField(refOnly.Object, "some-ref", "secure", "clientSecret", "name"))
-	assert.Empty(t, secureDigest(refOnly), "a reference is not a create directive")
+	assert.Nil(t, applier.secureDigests(refOnly), "a reference is not a create directive")
 
-	here := withSecureCreate(manifest("Connection", "c"), "clientSecret", "same")
-	elsewhere := withSecureCreate(manifest("Connection", "c"), "clientSecret", "same")
+	both := withSecureCreate(withSecureCreate(manifest("Connection", "c"), "clientSecret", "cs"), "token", "tok")
+	digests := applier.secureDigests(both)
+	assert.Len(t, digests, 2, "each create gets its own digest")
+	assert.NotEqual(t, digests["clientSecret"], digests["token"], "the key is part of the digest")
+
+	elsewhere := withSecureCreate(manifest("Connection", "c"), "clientSecret", "cs")
 	elsewhere.SetNamespace("org-2")
-	assert.NotEqual(t, secureDigest(here), secureDigest(elsewhere),
-		"the same secret on another org must not produce the same digest")
+	assert.NotEqual(t, applier.secureDigests(both)["clientSecret"], applier.secureDigests(elsewhere)["clientSecret"],
+		"the same secret in another org must not produce the same digest")
+
+	other := NewApplier(nil, []byte("another-key"), log.NewNopLogger())
+	assert.NotEqual(t, applier.secureDigests(both)["clientSecret"], other.secureDigests(both)["clientSecret"],
+		"the digest must be keyed, so an identical manifest elsewhere does not match")
 }
 
 // A Repository kind from an unrelated API group was routed to the provisioning API, because the
@@ -327,10 +341,10 @@ func TestApply_RejectsUnservedAPIVersion(t *testing.T) {
 	})
 
 	obj := manifest("Repository", "r")
-	obj.SetAPIVersion(repoGVR.Group + "/v1beta1")
+	obj.SetAPIVersion(repoGVR.Group + "/v9")
 	applier.Apply(context.Background(), []*unstructured.Unstructured{obj})
 
-	assert.False(t, called, "a version this Grafana does not serve must not be rewritten to the served one")
+	assert.False(t, called, "a version this Grafana does not serve must not be rewritten to a served one")
 }
 
 // A status patch landing between the read and the write made the copied resource version stale;
@@ -378,4 +392,119 @@ func TestApply_RetriesWhenAnotherReplicaCreatesFirst(t *testing.T) {
 	applier.Apply(context.Background(), []*unstructured.Unstructured{manifest("Repository", "r")})
 
 	assert.True(t, updated, "losing the create race must fall through to the update path")
+}
+
+// storedDigests builds the annotation a previous apply of these create values would have left.
+func storedDigests(t *testing.T, kind, name string, creates map[string]string) string {
+	t.Helper()
+	applier, _ := newApplier(t)
+	obj := manifest(kind, name)
+	for key, value := range creates {
+		withSecureCreate(obj, key, value)
+	}
+	return marshalDigests(applier.secureDigests(obj))
+}
+
+func withGitHubURL(obj *unstructured.Unstructured, url string) *unstructured.Unstructured {
+	if err := unstructured.SetNestedField(obj.Object, "github", "spec", "type"); err != nil {
+		panic(err)
+	}
+	if err := unstructured.SetNestedField(obj.Object, url, "spec", "github", "url"); err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Rotating only the token on a Connection that also declares a client secret used to resend the
+// unchanged client secret, which admission reads as an OAuth app change: it discards the new token.
+func TestApply_RotatesOneSecureValueWithoutResendingTheOthers(t *testing.T) {
+	stored := managed(manifest("Connection", "c"), utils.ManagerKindFileProvisioning, managerIdentity)
+	annotations := stored.GetAnnotations()
+	annotations[secureDigestAnnotation] = storedDigests(t, "Connection", "c", map[string]string{
+		"clientSecret": "unchanged-secret",
+		"token":        "old-token",
+	})
+	stored.SetAnnotations(annotations)
+
+	applier, client := newApplier(t, stored)
+
+	var updated *unstructured.Unstructured
+	client.PrependReactor("update", "connections", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		updated = action.(k8stesting.UpdateAction).GetObject().(*unstructured.Unstructured)
+		return true, updated, nil
+	})
+
+	desired := withSecureCreate(manifest("Connection", "c"), "clientSecret", "unchanged-secret")
+	withSecureCreate(desired, "token", "rotated-token")
+	applier.Apply(context.Background(), []*unstructured.Unstructured{desired})
+
+	require.NotNil(t, updated)
+	token, _, _ := unstructured.NestedString(updated.Object, "secure", "token", "create")
+	assert.Equal(t, "rotated-token", token, "the changed value must be applied")
+	_, hasClientSecret, _ := unstructured.NestedString(updated.Object, "secure", "clientSecret", "create")
+	assert.False(t, hasClientSecret, "an unchanged client secret must not ride along and drop the token")
+}
+
+// Pointing a repository at another URL with the same PAT used to have its token stripped as
+// unchanged, which admission rejects: it requires an explicit token whenever the URL changes.
+func TestApply_KeepsTokenWhenRepositoryURLChanges(t *testing.T) {
+	stored := withGitHubURL(managed(manifest("Repository", "r"), utils.ManagerKindFileProvisioning, managerIdentity), "https://github.com/acme/old")
+	annotations := stored.GetAnnotations()
+	annotations[secureDigestAnnotation] = storedDigests(t, "Repository", "r", map[string]string{"token": "same-pat"})
+	stored.SetAnnotations(annotations)
+
+	applier, client := newApplier(t, stored)
+
+	var updated *unstructured.Unstructured
+	client.PrependReactor("update", "repositories", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		updated = action.(k8stesting.UpdateAction).GetObject().(*unstructured.Unstructured)
+		return true, updated, nil
+	})
+
+	desired := withSecureCreate(withGitHubURL(manifest("Repository", "r"), "https://github.com/acme/new"), "token", "same-pat")
+	applier.Apply(context.Background(), []*unstructured.Unstructured{desired})
+
+	require.NotNil(t, updated)
+	token, _, _ := unstructured.NestedString(updated.Object, "secure", "token", "create")
+	assert.Equal(t, "same-pat", token, "the token must be resent so the URL change is accepted")
+}
+
+func TestApply_DropsUnchangedTokenWhenURLIsUnchanged(t *testing.T) {
+	stored := withGitHubURL(managed(manifest("Repository", "r"), utils.ManagerKindFileProvisioning, managerIdentity), "https://github.com/acme/same")
+	annotations := stored.GetAnnotations()
+	annotations[secureDigestAnnotation] = storedDigests(t, "Repository", "r", map[string]string{"token": "same-pat"})
+	stored.SetAnnotations(annotations)
+
+	applier, client := newApplier(t, stored)
+
+	var updated *unstructured.Unstructured
+	client.PrependReactor("update", "repositories", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		updated = action.(k8stesting.UpdateAction).GetObject().(*unstructured.Unstructured)
+		return true, updated, nil
+	})
+
+	desired := withSecureCreate(withGitHubURL(manifest("Repository", "r"), "https://github.com/acme/same"), "token", "same-pat")
+	applier.Apply(context.Background(), []*unstructured.Unstructured{desired})
+
+	require.NotNil(t, updated)
+	_, hasToken, _ := unstructured.NestedString(updated.Object, "secure", "token", "create")
+	assert.False(t, hasToken, "an unchanged token on an unchanged URL must not be re-created")
+}
+
+// v1beta1 is registered alongside v0alpha1, so a manifest naming it must reach that endpoint
+// instead of being rejected or silently applied to v0alpha1.
+func TestApply_AppliesServedV1Beta1ToItsOwnEndpoint(t *testing.T) {
+	applier, client := newApplier(t)
+
+	var gotVersion string
+	client.PrependReactor("create", "repositories", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		gotVersion = action.GetResource().Version
+		return true, action.(k8stesting.CreateAction).GetObject(), nil
+	})
+
+	obj := manifest("Repository", "r")
+	obj.SetAPIVersion(repoGVR.Group + "/v1beta1")
+	applier.Apply(context.Background(), []*unstructured.Unstructured{obj})
+
+	assert.Equal(t, "v1beta1", gotVersion, "the manifest's own version selects the endpoint")
 }

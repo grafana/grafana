@@ -1,10 +1,5 @@
-// Package bootstrap applies provisioning manifests from disk to the in-process Grafana apiserver at
-// startup, so Git Sync can be configured as mounted files without an imperative API call or
-// grafanactl ("configuration as code without grafanactl").
-//
-// Manifests are standard Kubernetes-style YAML, but only provisioning.grafana.app Repository and
-// Connection kinds are applied; any other kind is ignored. Once a Repository is configured, Git
-// Sync provisions the remaining resources (dashboards, folders, …) from the repository itself.
+// Package bootstrap applies provisioning Repository and Connection manifests from disk to the
+// in-process Grafana apiserver at startup, so Git Sync can be configured as mounted files.
 package bootstrap
 
 import (
@@ -26,13 +21,9 @@ import (
 // defaultNamespace is used when a manifest does not set metadata.namespace. It maps to org 1.
 const defaultNamespace = "default"
 
-// ReadManifests reads every *.yaml/*.yml file under dir in fsys, splits multi-document files,
-// decodes each document into an unstructured object, expands secret references in string values,
-// and validates the result. Files are processed in sorted order for deterministic behaviour.
-//
-// Every document is read independently: the objects that parsed are returned even when others
-// failed, so one bad file cannot block the rest of the bootstrap. The returned error joins each
-// failure and is non-nil alongside a non-empty result.
+// ReadManifests decodes every *.yaml/*.yml file under dir, in sorted order, expanding secret
+// references. Documents are independent: those that parsed are returned even when the error is
+// non-nil, so one bad file cannot block the rest.
 func ReadManifests(fsys fs.FS, dir string) ([]*unstructured.Unstructured, error) {
 	entries, err := fs.ReadDir(fsys, dir)
 	if err != nil {
@@ -68,9 +59,7 @@ func ReadManifests(fsys fs.FS, dir string) ([]*unstructured.Unstructured, error)
 	return objs, errors.Join(errs...)
 }
 
-// decodeManifests splits a (possibly multi-document) YAML/JSON byte stream into unstructured
-// objects, interpolating and validating each one. Documents that fail are reported in the joined
-// error; the ones that succeeded are still returned.
+// decodeManifests splits a multi-document stream, interpolating and validating each document.
 func decodeManifests(data []byte) ([]*unstructured.Unstructured, error) {
 	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(data), 4096)
 	var objs []*unstructured.Unstructured
@@ -81,8 +70,7 @@ func decodeManifests(data []byte) ([]*unstructured.Unstructured, error) {
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			// A decode failure leaves the stream position unreliable, so stop reading this file
-			// instead of risking a loop on the same document.
+			// The stream position is unreliable after a decode failure, so stop this file here.
 			errs = append(errs, fmt.Errorf("document %d: %w", i, err))
 			break
 		}
@@ -103,8 +91,8 @@ func decodeManifests(data []byte) ([]*unstructured.Unstructured, error) {
 	return objs, errors.Join(errs...)
 }
 
-// interpolate walks every string leaf of the object and expands $__env{VAR} / $__file{/path}
-// references via setting.ExpandVar. This keeps secrets out of the manifest files themselves.
+// interpolate expands $__env{VAR} / $__file{/path} in every string leaf, keeping secrets out of
+// the manifest files.
 func interpolate(obj *unstructured.Unstructured) error {
 	expanded, err := expandValue(obj.Object)
 	if err != nil {

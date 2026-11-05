@@ -2,8 +2,10 @@ package bootstrap
 
 import (
 	"context"
+	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -22,23 +24,21 @@ import (
 // managerIdentity marks resources owned by the provisioning file bootstrap.
 const managerIdentity = "file-provisioning"
 
-// secureDigestAnnotation records a digest of the secure values the manifest last applied, so a
-// reapplied manifest replays secure.*.create only when the value really changed. Replaying it
-// unconditionally rotates the secret, and for an OAuth Connection also drops its authorized token.
+// secureDigestAnnotation holds a per-key digest of the secure values last applied from the manifest.
 const secureDigestAnnotation = "provisioning.grafana.app/bootstrap-secure-digest"
 
-// Only Repository and Connection are managed here. Once a Repository is configured, Git Sync
-// provisions the remaining resources (dashboards, folders, …) from the repository itself, so other
-// kinds are intentionally rejected. Keyed by GroupKind so a same-named kind from an unrelated API
-// group is skipped rather than sent to the provisioning API.
+// Keyed by GroupKind so a same-named kind from another group is skipped, not sent to provisioning.
 var (
 	repositoryGVK = provisioning.RepositoryResourceInfo.GroupVersionKind()
 	connectionGVK = provisioning.ConnectionResourceInfo.GroupVersionKind()
 
-	supportedGVRs = map[schema.GroupKind]schema.GroupVersionResource{
-		repositoryGVK.GroupKind(): provisioning.RepositoryResourceInfo.GroupVersionResource(),
-		connectionGVK.GroupKind(): provisioning.ConnectionResourceInfo.GroupVersionResource(),
+	supportedResources = map[schema.GroupKind]string{
+		repositoryGVK.GroupKind(): provisioning.RepositoryResourceInfo.GetName(),
+		connectionGVK.GroupKind(): provisioning.ConnectionResourceInfo.GetName(),
 	}
+
+	// Both versions are registered as API builders and share the v0alpha1 Go types.
+	servedVersions = map[string]bool{provisioning.VERSION: true, "v1beta1": true}
 )
 
 // kindPriority orders applies so that resources referenced by others are created first.
@@ -50,24 +50,21 @@ func kindPriority(kind string) int {
 	return 10
 }
 
-// Applier applies provisioning Repository and Connection manifests via the dynamic client.
-//
-// It uses unstructured objects rather than the typed client on purpose: the typed
-// common.RawSecureValue redacts secrets when marshalled, so a typed write would persist
-// "[REDACTED]" instead of the real token. The dynamic client sends the manifest JSON verbatim,
-// letting the admission mutator encrypt the real value.
+// Applier applies Repository and Connection manifests via the dynamic client. Unstructured rather
+// than typed on purpose: typed common.RawSecureValue redacts on marshal, so a typed write would
+// persist "[REDACTED]" instead of the real token.
 type Applier struct {
-	dyn    dynamic.Interface
-	logger log.Logger
+	dyn       dynamic.Interface
+	digestKey []byte
+	logger    log.Logger
 }
 
-// NewApplier builds an Applier from a dynamic client.
-func NewApplier(dyn dynamic.Interface, logger log.Logger) *Applier {
-	return &Applier{dyn: dyn, logger: logger}
+// NewApplier builds an Applier. digestKey must be stable across restarts and replicas.
+func NewApplier(dyn dynamic.Interface, digestKey []byte, logger log.Logger) *Applier {
+	return &Applier{dyn: dyn, digestKey: digestKey, logger: logger}
 }
 
-// Apply applies every object, connections first. A failure on a single object is logged and
-// skipped — it never aborts the batch, so one bad manifest cannot block the rest.
+// Apply applies every object, connections first. A single failure is logged, never fatal.
 func (a *Applier) Apply(ctx context.Context, objs []*unstructured.Unstructured) {
 	ordered := make([]*unstructured.Unstructured, len(objs))
 	copy(ordered, objs)
@@ -89,20 +86,21 @@ func (a *Applier) applyOne(ctx context.Context, obj *unstructured.Unstructured) 
 		return fmt.Errorf("parse apiVersion %q: %w", obj.GetAPIVersion(), err)
 	}
 
-	gvr, ok := supportedGVRs[gv.WithKind(obj.GetKind()).GroupKind()]
+	resource, ok := supportedResources[gv.WithKind(obj.GetKind()).GroupKind()]
 	if !ok {
 		a.logger.Warn("skipping unsupported bootstrap manifest: provisioning bootstrap only manages Repository and Connection",
 			"apiVersion", obj.GetAPIVersion(), "kind", obj.GetKind(), "name", obj.GetName())
 		return nil
 	}
-	if gv.Version != gvr.Version {
-		return fmt.Errorf("unsupported apiVersion %q: this Grafana serves %s", obj.GetAPIVersion(), gvr.GroupVersion())
+	if !servedVersions[gv.Version] {
+		return fmt.Errorf("unsupported apiVersion %q", obj.GetAPIVersion())
 	}
 
+	// Apply through the endpoint the manifest names, not a fixed one.
+	gvr := gv.WithResource(resource)
 	ri := a.dyn.Resource(gvr).Namespace(obj.GetNamespace())
 
-	// Another replica can patch status between the read and the write. Each attempt re-reads, so
-	// the ownership check and status merge are redone against the object the update will replace.
+	// Another replica can patch status between the read and the write, so each attempt re-reads.
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		return a.applyAttempt(ctx, gvr, ri, obj.DeepCopy())
 	})
@@ -116,7 +114,6 @@ func (a *Applier) applyAttempt(ctx context.Context, gvr schema.GroupVersionResou
 		return fmt.Errorf("get existing: %w", getErr)
 	}
 
-	// Stamp ownership so the resource is reconciled on future boots and surfaced as managed in the UI.
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return fmt.Errorf("read metadata: %w", err)
@@ -126,15 +123,23 @@ func (a *Applier) applyAttempt(ctx context.Context, gvr schema.GroupVersionResou
 		Identity:    managerIdentity,
 		AllowsEdits: false,
 	})
-	digest := secureDigest(obj)
-	setAnnotation(obj, secureDigestAnnotation, digest)
+
+	digests := a.secureDigests(obj)
+	if len(digests) > 0 {
+		annotations := obj.GetAnnotations()
+		if annotations == nil {
+			annotations = map[string]string{}
+		}
+		annotations[secureDigestAnnotation] = marshalDigests(digests)
+		obj.SetAnnotations(annotations)
+	}
 
 	if apierrors.IsNotFound(getErr) {
 		// Status is owned by controllers and rejected on create; never send it.
 		unstructured.RemoveNestedField(obj.Object, "status")
 		if _, err := ri.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
 			if apierrors.IsAlreadyExists(err) {
-				// Another replica created it between the read and the write; retry into the update path.
+				// Another replica won the create; retry into the update path.
 				return apierrors.NewConflict(gvr.GroupResource(), name, err)
 			}
 			return fmt.Errorf("create: %w", err)
@@ -150,11 +155,7 @@ func (a *Applier) applyAttempt(ctx context.Context, gvr schema.GroupVersionResou
 		return nil
 	}
 
-	// Unchanged secrets are dropped so admission keeps the stored references instead of re-creating
-	// them; a changed manifest value still rotates.
-	if digest != "" && digest == existing.GetAnnotations()[secureDigestAnnotation] {
-		removeSecureCreates(obj)
-	}
+	dropUnchangedSecureCreates(obj, existing, digests)
 
 	// Reconcile spec+secure while preserving controller-owned status.
 	obj.SetResourceVersion(existing.GetResourceVersion())
@@ -178,38 +179,44 @@ func getManager(obj *unstructured.Unstructured) (utils.ManagerProperties, bool) 
 	return meta.GetManagerProperties()
 }
 
-func setAnnotation(obj *unstructured.Unstructured, key, value string) {
-	if value == "" {
-		return
+// dropUnchangedSecureCreates removes each secure.<key>.create the resource already holds, so
+// admission keeps the stored reference: resending one drops an OAuth Connection's authorized token.
+// The token is exempt on a URL change, which admission rejects without an explicit token.
+func dropUnchangedSecureCreates(obj, existing *unstructured.Unstructured, digests map[string]string) {
+	stored := parseDigests(existing.GetAnnotations()[secureDigestAnnotation])
+	urlChanged := repositoryURL(obj) != repositoryURL(existing)
+
+	for key, digest := range digests {
+		if key == "token" && urlChanged {
+			continue
+		}
+		if stored[key] == digest {
+			removeSecureCreate(obj, key)
+		}
 	}
-	annotations := obj.GetAnnotations()
-	if annotations == nil {
-		annotations = map[string]string{}
-	}
-	annotations[key] = value
-	obj.SetAnnotations(annotations)
 }
 
-// secureDigest hashes the inline secret values the manifest asks to create, or returns "" when it
-// asks to create none. The resource identity is mixed in so the digest cannot be used to recognise
-// the same secret on another instance.
-func secureDigest(obj *unstructured.Unstructured) string {
-	secure, found, _ := unstructured.NestedMap(obj.Object, "secure")
-	if !found {
+// repositoryURL mirrors Repository.URL(): the git URL lives under the type-specific spec block.
+func repositoryURL(obj *unstructured.Unstructured) string {
+	repoType, _, _ := unstructured.NestedString(obj.Object, "spec", "type")
+	if repoType == "" {
 		return ""
 	}
+	url, _, _ := unstructured.NestedString(obj.Object, "spec", repoType, "url")
+	return url
+}
 
-	keys := make([]string, 0, len(secure))
-	for key := range secure {
-		keys = append(keys, key)
+// secureDigests returns one digest per secure.<key>.create. They are HMACs over the resource
+// identity under a server-only key, since the annotation holding them is readable by viewers.
+func (a *Applier) secureDigests(obj *unstructured.Unstructured) map[string]string {
+	secure, found, _ := unstructured.NestedMap(obj.Object, "secure")
+	if !found {
+		return nil
 	}
-	sort.Strings(keys)
 
-	hash := sha256.New()
-	_, _ = fmt.Fprintf(hash, "%s/%s\n", obj.GetNamespace(), obj.GetName())
-	creates := 0
-	for _, key := range keys {
-		entry, ok := secure[key].(map[string]any)
+	digests := map[string]string{}
+	for key, value := range secure {
+		entry, ok := value.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -217,33 +224,50 @@ func secureDigest(obj *unstructured.Unstructured) string {
 		if !ok {
 			continue
 		}
-		_, _ = fmt.Fprintf(hash, "%s=%s\n", key, create)
-		creates++
+		mac := hmac.New(sha256.New, a.digestKey)
+		_, _ = fmt.Fprintf(mac, "%s/%s/%s=%s", obj.GetNamespace(), obj.GetName(), key, create)
+		digests[key] = hex.EncodeToString(mac.Sum(nil))
 	}
-	if creates == 0 {
-		return ""
+	if len(digests) == 0 {
+		return nil
 	}
-	return hex.EncodeToString(hash.Sum(nil))
+	return digests
 }
 
-// removeSecureCreates drops every secure.<key>.create directive, leaving any explicit reference in
-// place. An entry that held nothing else is removed, as is an emptied secure block.
-func removeSecureCreates(obj *unstructured.Unstructured) {
+func marshalDigests(digests map[string]string) string {
+	encoded, err := json.Marshal(digests)
+	if err != nil {
+		return ""
+	}
+	return string(encoded)
+}
+
+func parseDigests(encoded string) map[string]string {
+	if encoded == "" {
+		return nil
+	}
+	var digests map[string]string
+	if err := json.Unmarshal([]byte(encoded), &digests); err != nil {
+		return nil
+	}
+	return digests
+}
+
+// removeSecureCreate drops secure.<key>.create, keeping any explicit reference beside it.
+func removeSecureCreate(obj *unstructured.Unstructured, key string) {
 	secure, found, _ := unstructured.NestedMap(obj.Object, "secure")
 	if !found {
 		return
 	}
+	entry, ok := secure[key].(map[string]any)
+	if !ok {
+		return
+	}
 
-	for key, value := range secure {
-		entry, ok := value.(map[string]any)
-		if !ok {
-			continue
-		}
-		delete(entry, "create")
-		if len(entry) == 0 {
-			delete(secure, key)
-			continue
-		}
+	delete(entry, "create")
+	if len(entry) == 0 {
+		delete(secure, key)
+	} else {
 		secure[key] = entry
 	}
 

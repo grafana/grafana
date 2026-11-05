@@ -165,6 +165,7 @@ type APIBuilder struct {
 	webhookSecretRotationInterval time.Duration
 	bootstrapManifestsEnabled     bool
 	bootstrapManifestsPath        string
+	bootstrapDigestKey            []byte
 
 	// controllerResyncInterval is the informer re-list interval for the
 	// repository and connection controllers; historyExpiration is both the
@@ -417,6 +418,7 @@ func RegisterAPIService(
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	builder.bootstrapManifestsEnabled = cfg.ProvisioningBootstrapManifestsEnabled
 	builder.bootstrapManifestsPath = cfg.ProvisioningBootstrapManifestsPath
+	builder.bootstrapDigestKey = []byte(cfg.SecretKey)
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
 	builder.historyExpiration = cfg.ProvisioningHistoryExpiration
@@ -1037,7 +1039,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Apply Repository/Connection manifests mounted on disk (Git Sync bootstrap). Uses the
 			// loopback config so secure values reach admission unredacted. Failures are logged, never fatal.
 			if b.bootstrapManifestsEnabled {
-				bootstrap.Run(postStartHookCtx.Context, config, b.bootstrapManifestsPath, log.New("provisioning.bootstrap"))
+				bootstrap.Run(postStartHookCtx.Context, config, b.bootstrapManifestsPath, b.bootstrapDigestKey, log.New("provisioning.bootstrap"))
 			}
 
 			// Informer resync interval used for health check and reconciliation of
