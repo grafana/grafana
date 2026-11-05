@@ -6,19 +6,62 @@ import {
   type DashboardCursorSync,
   type DataFrame,
   type DataLinkPostProcessor,
+  type DataTransformerConfig,
   type EventBus,
   EventBusSrv,
+  type PanelNotices,
 } from '@grafana/data';
 
 import { type AdHocFilterItem } from '../Table/types';
 
 import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
 
+/** Runtime transformations supplied by a panel host, grouped by owner. @alpha */
+export interface PanelRuntimeTransformations {
+  /** Returns the same immutable snapshot until this owner changes. */
+  get(owner: string): readonly DataTransformerConfig[];
+  /** Replaces one owner's transformations. An empty list removes the owner. */
+  set(owner: string, transformations: readonly DataTransformerConfig[]): void;
+  /** Returns data before this owner's transformations. */
+  getSourceSeries(owner: string): readonly DataFrame[];
+  /** Subscribes to changes for one owner. Returns an unsubscribe function. */
+  subscribe(owner: string, callback: () => void): () => void;
+}
+
+/** Reactive view of one owner's runtime transformations. @alpha */
+export interface AdHocTransformationsState {
+  /** Transformations currently applied after the panel's saved transformations. */
+  transformations: readonly DataTransformerConfig[];
+
+  /** Data before this owner's transformations, including columns they hide. */
+  sourceSeries: readonly DataFrame[];
+
+  /** Replaces this owner's transformations. Pass `[]` to clear them. */
+  setTransformations(transformations: readonly DataTransformerConfig[]): void;
+}
+
 /** @alpha */
 export interface PanelContext {
+  /** Panel-owned notices. Absent on hosts without notice support. @alpha */
+  notices?: PanelNotices;
+  /** Connects host data for the lifetime of a panel status surface. @internal */
+  activateNotices?: () => () => void;
   /** Identifier for the events scope */
   eventsScope: string;
   eventBus: EventBus;
+
+  /**
+   * Experimental one-shot exemplar selection. The caller retains the request until the panel
+   * acknowledges it, so panel remounts cannot replay a handled navigation request.
+   * Frame indexes refer to the supplied annotation frames, including field overrides.
+   * `onHandled` may be called more than once for the same request and should be idempotent.
+   *
+   * @alpha -- experimental
+   */
+  openExemplar?: {
+    getRequest: (exemplars: DataFrame[]) => { requestId: string; frameIndex: number; rowIndex: number } | undefined;
+    onHandled: (requestId: string) => void;
+  };
 
   /** Dashboard panels sync */
   sync?: () => DashboardCursorSync;
@@ -69,6 +112,12 @@ export interface PanelContext {
    */
   onOpenInspector?: () => void;
 
+  /**
+   * Used by the panel header status popover to trigger an AI-assisted investigation of the
+   * panel's query errors and notices.
+   */
+  onInvestigateErrors?: () => void;
+
   /** For instance state that can be shared between panel & options UI  */
   instanceState?: any;
 
@@ -92,6 +141,9 @@ export interface PanelContext {
    * @deprecated Please use DataLinksContext instead. This property will be removed in next major.
    */
   dataLinkPostProcessor?: DataLinkPostProcessor;
+
+  /** Present when the panel host supports ad-hoc transformations. @alpha */
+  adHocTransformations?: PanelRuntimeTransformations;
 }
 
 export const PanelContextRoot = createContext<PanelContext>({

@@ -48,12 +48,6 @@ export interface DashboardLayoutManager<S = {}, TLayout = DashboardV2Spec['layou
   removePanel?(panel: VizPanel): void;
 
   /**
-   * Creates a copy of an existing element and adds it to the layout
-   * @param panel
-   */
-  duplicatePanel?(panel: VizPanel): void;
-
-  /**
    * Gets all the viz panels in the layout
    */
   getVizPanels(): VizPanel[];

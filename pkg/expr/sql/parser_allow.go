@@ -54,8 +54,7 @@ func AllowQuery(refID, rawSQL string) (bool, error) {
 	}
 
 	if err := walkNodes(s); err != nil {
-		var bn *ErrorWithCategory
-		if !errors.As(err, &bn) {
+		if _, ok := errors.AsType[*ErrorWithCategory](err); !ok {
 			return false, fmt.Errorf("failed to parse SQL expression: %w", err)
 		}
 		return false, err

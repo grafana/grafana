@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -20,37 +21,6 @@ const (
 )
 
 func TestGetPluginArchive(t *testing.T) {
-	tcs := []struct {
-		name     string
-		sha      string
-		apiOpSys string
-		apiArch  string
-		apiUrl   string
-		err      error
-	}{
-		{
-			name: "Happy path",
-			sha:  "69f698961b6ea651211a187874434821c4727cc22de022e3a7059116d21c75b1",
-		},
-		{
-			name: "Incorrect SHA returns error",
-			sha:  "1a2b3c",
-			err:  ErrChecksumMismatchBase,
-		},
-		{
-			name:     "Core plugin",
-			sha:      "69f698961b6ea651211a187874434821c4727cc22de022e3a7059116d21c75b1",
-			apiOpSys: "any",
-			apiUrl:   "https://github.com/grafana/grafana/tree/main/public/app/plugins/test",
-			err:      ErrCorePluginBase,
-		},
-		{
-			name:   "Decoupled core plugin",
-			sha:    "69f698961b6ea651211a187874434821c4727cc22de022e3a7059116d21c75b1",
-			apiUrl: "https://github.com/grafana/grafana/tree/main/public/app/plugins/test",
-		},
-	}
-
 	pluginZip := createPluginArchive(t)
 	d, err := os.ReadFile(pluginZip.Name())
 	require.NoError(t, err)
@@ -61,6 +31,40 @@ func TestGetPluginArchive(t *testing.T) {
 		err = os.RemoveAll(pluginZip.Name())
 		require.NoError(t, err)
 	})
+
+	// ZIP compression output can change between Go versions.
+	checksum := fmt.Sprintf("%x", sha256.Sum256(d))
+
+	tcs := []struct {
+		name     string
+		sha      string
+		apiOpSys string
+		apiArch  string
+		apiUrl   string
+		err      error
+	}{
+		{
+			name: "Happy path",
+			sha:  checksum,
+		},
+		{
+			name: "Incorrect SHA returns error",
+			sha:  "1a2b3c",
+			err:  ErrChecksumMismatchBase,
+		},
+		{
+			name:     "Core plugin",
+			sha:      checksum,
+			apiOpSys: "any",
+			apiUrl:   "https://github.com/grafana/grafana/tree/main/public/app/plugins/test",
+			err:      ErrCorePluginBase,
+		},
+		{
+			name:   "Decoupled core plugin",
+			sha:    checksum,
+			apiUrl: "https://github.com/grafana/grafana/tree/main/public/app/plugins/test",
+		},
+	}
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {

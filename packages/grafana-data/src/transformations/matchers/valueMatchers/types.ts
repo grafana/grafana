@@ -18,6 +18,14 @@ export interface BasicValueMatcherOptions<T = any> extends ValueMatcherOptions {
  * @public
  */
 export interface RangeValueMatcherOptions<T = any> extends ValueMatcherOptions {
-  from: T;
-  to: T;
+  from?: T;
+  to?: T;
+  inclusive?: boolean;
+  /** Missing bounds remain non-matching unless explicitly allowed. */
+  allowOpenBounds?: boolean;
+  /**
+   * When set, only finite numbers are compared; all other values match this boolean.
+   * Leave unset to preserve legacy numeric coercion.
+   */
+  includeMissing?: boolean;
 }

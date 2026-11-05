@@ -3,6 +3,12 @@ package plugins
 metaV0Alpha1: {
 	kind:  "Meta"
 	scope: "Namespaced"
+
+	// Plugin metadata is read from the running instance rather than unified
+	// storage, so a search would always come back empty.
+	search: {
+		endpoint: false
+	}
 	schema: {
 		spec: {
 			pluginJson: #JSONData
@@ -67,11 +73,13 @@ metaV0Alpha1: {
 	// +listType=atomic
 	routes?: [...#Route]
 	skipDataQuery?: bool
-	state?:         "alpha" | "beta" | "stable" | "deprecated"
-	streaming?:     bool
-	suggestions?:   bool
-	tracing?:       bool
-	iam?:           #IAM
+	// @alpha Suppress automatic starter queries without disabling explicit queries.
+	skipDefaultQuery?: bool
+	state?:            "alpha" | "beta" | "stable" | "deprecated"
+	streaming?:        bool
+	suggestions?:      bool
+	tracing?:          bool
+	iam?:              #IAM
 	// +listType=atomic
 	roles?: [...#Role]
 	extensions?: #Extensions

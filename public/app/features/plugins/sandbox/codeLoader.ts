@@ -1,5 +1,4 @@
 import { PluginType, patchArrayVectorProrotypeMethods } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { getAppPluginMetas, getDatasourcePluginMeta, getPanelPluginMetas } from '@grafana/runtime/internal';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
@@ -90,10 +89,6 @@ export async function getPluginCode(meta: SandboxPluginMeta): Promise<string> {
 }
 
 async function verifySRI(pluginCode: string, moduleHash?: string): Promise<boolean> {
-  if (!config.featureToggles.pluginsSriChecks) {
-    return true;
-  }
-
   if (!moduleHash || moduleHash.length === 0) {
     return true;
   }

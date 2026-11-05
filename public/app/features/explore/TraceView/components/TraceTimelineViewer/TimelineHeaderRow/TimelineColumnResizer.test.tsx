@@ -13,7 +13,11 @@
 // limitations under the License.
 
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import cx from 'clsx';
+import { StrictMode } from 'react';
+
+import { createTheme } from '@grafana/data';
 
 import TimelineColumnResizer, { getStyles, type TimelineColumnResizerProps } from './TimelineColumnResizer';
 
@@ -40,17 +44,49 @@ describe('<TimelineColumnResizer>', () => {
   });
 
   it('does not render a dragging indicator when not dragging', () => {
-    const styles = getStyles();
+    const styles = getStyles(createTheme());
     expect(screen.getByTestId('TimelineColumnResizer--dragger')).toHaveStyle(`right: ${undefined}`);
     expect(screen.getByTestId('TimelineColumnResizer--dragger')).toHaveClass(styles.dragger);
   });
 
   it('renders a dragging indicator when dragging', () => {
-    const styles = getStyles();
+    const styles = getStyles(createTheme());
     fireEvent.mouseDown(screen.getByTestId('TimelineColumnResizer--dragger'), { clientX: 0 });
     fireEvent.mouseMove(screen.getByTestId('TimelineColumnResizer--dragger'), { clientX: -5 });
     expect(screen.getByTestId('TimelineColumnResizer--dragger')).toHaveClass(
       cx(styles.dragger, styles.draggerDragging, styles.draggerDraggingLeft)
     );
+  });
+});
+
+describe('<TimelineColumnResizer> under StrictMode', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('calls onChange with the dragged position when a drag ends', async () => {
+    jest.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      width: 100,
+      height: 10,
+      right: 100,
+      bottom: 10,
+      toJSON: () => ({}),
+    });
+    const onChange = jest.fn();
+    render(
+      <StrictMode>
+        <TimelineColumnResizer min={0.1} max={0.9} onChange={onChange} position={0.5} columnResizeHandleHeight={10} />
+      </StrictMode>
+    );
+    await userEvent.pointer([
+      { keys: '[MouseLeft>]', target: screen.getByTestId('TimelineColumnResizer--dragger'), coords: { clientX: 50 } },
+      { keys: '[/MouseLeft]', coords: { clientX: 70 } },
+    ]);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith(0.7);
   });
 });

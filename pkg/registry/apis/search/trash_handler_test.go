@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -49,6 +50,7 @@ func TestTrashHandler_RequestsDeletedResources(t *testing.T) {
 	assert.Equal(t, testKind.group, client.got.Options.Key.Group)
 	assert.Equal(t, testKind.resource, client.got.Options.Key.Resource)
 	assert.Equal(t, int64(25), client.got.Limit)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.got.ResultFormat)
 
 	// Federating trash is refused by the backend, so the endpoint must not ask.
 	assert.Empty(t, client.got.Federated)
@@ -84,6 +86,17 @@ func TestTrashHandler_AlwaysReturnsTheDeletedResourceVersion(t *testing.T) {
 	assert.Contains(t, client.got.Fields, resource.SEARCH_FIELD_DELETED_RV)
 }
 
+func TestTrashHandler_RejectsFolderTreeWhenEnabledForLiveSearch(t *testing.T) {
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagSearchPerResourceFolderTree)
+	client := &fakeIndexClient{resp: emptyResponse()}
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+	w := doTrashRequest(t, h, trashBody(`, "where": {"filter": {"field": "folderTree", "operator": "In", "values": ["team-a"]}}`))
+	require.Equal(t, http.StatusUnprocessableEntity, w.Code, w.Body.String())
+	assert.Contains(t, w.Body.String(), "unknown field")
+	assert.Zero(t, client.calls)
+	assert.Nil(t, client.got)
+}
+
 func TestTrashHandler_RejectsBadRequests(t *testing.T) {
 	cases := []struct {
 		name string
@@ -112,11 +125,8 @@ func TestTrashHandler_RejectsBadRequests(t *testing.T) {
 	}
 }
 
-// The backend reports failures in the payload, so a nil transport error is not enough.
 func TestTrashHandler_PropagatesBackendErrorResult(t *testing.T) {
-	client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
-		Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "nope"},
-	}}
+	client := &fakeIndexClient{err: resource.GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "nope"})}
 	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
 
 	w := doTrashRequest(t, h, trashBody(``))

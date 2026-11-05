@@ -24,17 +24,17 @@ weight: 105
 Grafana Cloud users can request this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
 {{< /admonition >}}
 
-Images in notifications helps recipients of alert notifications better understand why an alert has fired or resolved by including a screenshot of the panel associated with the alert.
+Images in notifications help recipients of alert notifications better understand why an alert has fired or resolved by including a screenshot of the panel associated with the alert.
 
 {{< admonition type="note" >}}
 This feature is not supported in Mimir or Loki, or when Grafana is configured to send alerts to other Alertmanagers such as the Prometheus Alertmanager.
 {{< /admonition >}}
 
-When an alert is fired or resolved Grafana takes a screenshot of the panel associated with the alert. This is determined via the Dashboard UID and Panel ID annotations of the rule. Grafana cannot take a screenshot for alerts that are not associated with a panel.
+When an alert is fired or resolved, Grafana takes a screenshot of the panel associated with the alert. This is determined via the Dashboard UID and Panel ID annotations of the rule. Grafana cannot take a screenshot for alerts that are not associated with a panel.
 
-Grafana takes at most two screenshots for each alert: once when the alert fires and again when the alert is resolved. Screenshots are not re-taken over the lifetime of the alert, instead you should open the panel in Grafana to follow the data in real time. In addition, depending on how alerts are grouped in your notification policies, Grafana might send a notification with many screenshots of the same panel. This happens because Grafana does not know how your alerts are grouped at the time a screenshot is taken, and so acts conservatively by taking a screenshot for every alert.
+Grafana takes at most two screenshots for each alert: once when the alert fires and again when the alert is resolved. Screenshots are not re-taken over the lifetime of the alert. Instead, you should open the panel in Grafana to follow the data in real time. In addition, depending on how alerts are grouped in your notification policies, Grafana might send a notification with many screenshots of the same panel. This happens because Grafana does not know how your alerts are grouped at the time a screenshot is taken, and so acts conservatively by taking a screenshot for every alert.
 
-After a screenshot has been taken Grafana can either upload it to a cloud storage service such as Amazon S3, Azure Blob Storage or Google Cloud Storage; upload the screenshot to it's internal web server; or upload it to the service that is receiving the notification, such as Slack. Which option you should choose depends on how your Grafana is managed and which integrations you use. More information on this can be found in Requirements.
+After a screenshot has been taken, Grafana can either upload it to a cloud storage service such as Amazon S3, Azure Blob Storage or Google Cloud Storage; upload the screenshot to its internal web server; or upload it to the service that is receiving the notification, such as Slack. Which option you should choose depends on how your Grafana is managed and which integrations you use. More information on this can be found in Requirements.
 
 Refer to the table at the end of this page for a list of contact points and their support for images in notifications.
 
@@ -42,7 +42,7 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 1. To use images in notifications, Grafana OSS and Enterprise must be set up to use the [Grafana image renderer](https://github.com/grafana/grafana-image-renderer/) service.
 
-2. When a screenshot is taken, it is saved to the [data][paths] folder, even if Grafana is configured to upload screenshots to a cloud storage service. Grafana must have write-access to this folder otherwise screenshots cannot be saved to disk and an error is logged for each failed screenshot attempt.
+2. When a screenshot is taken, it is saved to the [data][paths] folder, even if Grafana is configured to upload screenshots to a cloud storage service. Grafana must have write-access to this folder, otherwise screenshots cannot be saved to disk and an error is logged for each failed screenshot attempt.
 
 3. You should use a cloud storage service unless sending alerts to Discord, email, Pushover, Slack or Telegram. These integrations support either embedding screenshots in the email or attaching screenshots to the notification, while other integrations must link screenshots uploaded to a cloud storage bucket. If a cloud storage service has been configured then integrations that support both link screenshots from the cloud storage bucket instead of embedding or attaching screenshots to the notification.
 
@@ -131,7 +131,7 @@ If Grafana has been set up to send images in notifications, however notification
 2. Enable debug logging in Grafana and look for logs with the logger `ngalert.image`.
 3. If the alert is not associated with a dashboard there are logs for `Cannot take screenshot for alert rule as it is not associated with a dashboard`.
 4. If the alert is associated with a dashboard, but no panel in the dashboard, there are logs for `Cannot take screenshot for alert rule as it is not associated with a panel`.
-5. If images cannot be taken because of mis-configuration or an issue with image rendering there are logs for `Failed to take an image` including the Dashboard UID, Panel ID, and the error message.
+5. If images cannot be taken because of mis-configuration or an issue with image rendering, there are logs for `Failed to take an image` including the Dashboard UID, Panel ID, and the error message.
 6. Check that the contact point supports images in notifications and whether it supports uploading images to the receiving service or referencing images that have been uploaded to a cloud storage service.
 
 ## Monitor

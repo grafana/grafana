@@ -9,6 +9,7 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
 	otelcodes "go.opentelemetry.io/otel/codes"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -59,7 +60,7 @@ func newTestInstrumentedStore(t *testing.T, inner Store) (*instrumentedStore, fu
 
 	reg := prometheus.NewRegistry()
 	m := ProvideMetrics(reg)
-	store := newInstrumentedStore(inner, m, log.NewNopLogger())
+	store := newInstrumentedStore(inner, otel.Tracer("test"), m, log.NewNopLogger())
 	return store, spansSince, reg
 }
 

@@ -50,6 +50,9 @@ type ConnectionFormDataBase = {
   clientID?: string;
   clientSecret?: string;
   workspace?: string;
+  authURL?: string;
+  tokenURL?: string;
+  scopes?: string[];
   webhookDisabled?: boolean;
 };
 
@@ -62,7 +65,12 @@ type GitHubEnterpriseConnectionFormData = ConnectionFormDataBase &
 type OAuthConnectionFormData = ConnectionFormDataBase &
   Partial<GitHubConnectionConfig> & { type: OAuthConnectionType; serverUrl?: string };
 
-export type OAuthConnectionType = 'githubOAuth' | 'githubEnterpriseOAuth' | 'gitlabOAuth' | 'bitbucketOAuth';
+export type OAuthConnectionType =
+  | 'githubOAuth'
+  | 'githubEnterpriseOAuth'
+  | 'gitlabOAuth'
+  | 'bitbucketOAuth'
+  | 'gitOAuth';
 
 export type ConnectionFormData =
   | GitHubConnectionFormData
@@ -74,6 +82,12 @@ export interface ProvisioningPreview {
   repo: string;
   file: string;
   ref?: string;
+}
+
+/** Provisioned preview whose branch was deleted: commit the draft to a fresh branch. */
+export interface RecoverToNewBranch {
+  /** False when the file was born on the deleted branch and never merged, so the save must create it. */
+  fileExistsOnConfiguredBranch: boolean;
 }
 
 export type WorkflowOption = RepositorySpec['workflows'][number];

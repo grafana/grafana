@@ -3,7 +3,7 @@ aliases:
   - ../../../../http_api/annotations/ # /docs/grafana/next/http_api/annotations/
   - ../../../../developers/http_api/annotations/ # /docs/grafana/next/developers/http_api/annotations/
   - ../../../../developer-resources/api-reference/http-api/api-legacy/annotations/ #legacy folder
-canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/annotations/
+canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/annotations/
 description: Grafana Annotations HTTP API
 keywords:
   - grafana
@@ -25,11 +25,15 @@ title: Annotations HTTP API
 
 {{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
+{{< admonition type="note" >}}
+A new [Annotations HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/annotations/) is rolling out gradually in Grafana Cloud, and is available in self-managed Grafana when enabled. Refer to [Migrate from the legacy Annotations API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/annotations/#migrate-from-the-legacy-annotations-api) to learn more about the new API, and how to migrate.
+{{< /admonition >}}
+
+Annotations are saved in the Grafana database (SQLite, MySQL or Postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
 
 ## Requirements
 
-If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Find Annotations
 
@@ -60,7 +64,8 @@ Query Parameters:
 - `from`: epoch datetime in milliseconds. Optional.
 - `to`: epoch datetime in milliseconds. Optional.
 - `limit`: number. Optional - default is 100. Max limit for results returned.
-- `alertId`: number. Optional. Find annotations for a specified alert.
+- `alertUID`: string. Optional. Find annotations for a specified alert rule by its UID.
+- `alertId`: Removed. Use `alertUID` instead. The parameter is ignored if it's sent.
 - `dashboardId`: Deprecated. Use dashboardUID instead.
 - `dashboardUID`: string. Optional. Find annotations that are scoped to a specific dashboard, when dashboardUID presents, dashboardId would be ignored.
 - `panelId`: number. Optional. Find annotations that are scoped to a specific panel
@@ -76,13 +81,10 @@ Content-Type: application/json
 [
     {
         "id": 1124,
-        "alertId": 0,
         "dashboardUID": "uGlb_lG7z",
         "panelId": 2,
         "userId": 1,
         "userName": "",
-        "newState": "",
-        "prevState": "",
         "time": 1507266395000,
         "timeEnd": 1507266395000,
         "text": "test",
@@ -94,13 +96,10 @@ Content-Type: application/json
     },
     {
         "id": 1123,
-        "alertId": 0,
         "dashboardUID": "jcIIG-07z",
         "panelId": 2,
         "userId": 1,
         "userName": "",
-        "newState": "",
-        "prevState": "",
         "time": 1507265111000,
         "text": "test",
         "tags": [
@@ -111,6 +110,10 @@ Content-Type: application/json
     }
 ]
 ```
+
+{{< admonition type="note" >}}
+Alerting fields, `alertUID`, `alertId`, `alertName`, `newState`, `prevState`, are omitted when the annotation isn't tied to an alert. `alertUID` identifies the alert rule. `alertId` is deprecated. Use `alertUID` instead. An annotation with neither field isn't an alert annotation.
+{{< /admonition >}}
 
 > Starting in Grafana v6.4 regions annotations are now returned in one entity that now includes the timeEnd property.
 

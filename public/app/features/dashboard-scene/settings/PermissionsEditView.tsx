@@ -1,20 +1,29 @@
-import { PageLayoutType } from '@grafana/data';
+import { lazy, Suspense } from 'react';
+
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { Permissions } from 'app/core/components/AccessControl/Permissions';
-import { Page } from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
+import { Spinner } from '@grafana/ui';
 
 import { type DashboardScene } from '../scene/DashboardScene';
-import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditViewState } from './utils';
+
+const PermissionsEditViewRenderer = lazy(() =>
+  import('./SettingsRenderers').then((m) => ({ default: m.PermissionsEditViewRenderer }))
+);
+
+function LazyPermissionsEditViewRenderer(props: SceneComponentProps<PermissionsEditView>) {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <PermissionsEditViewRenderer {...props} />
+    </Suspense>
+  );
+}
 
 interface PermissionsEditViewState extends DashboardEditViewState {}
 
 export class PermissionsEditView extends SceneObjectBase<PermissionsEditViewState> implements DashboardEditView {
-  public static Component = PermissionsEditorSettings;
+  public static Component = LazyPermissionsEditViewRenderer;
 
   private get _dashboard(): DashboardScene {
     return getDashboardSceneFor(this);
@@ -27,18 +36,4 @@ export class PermissionsEditView extends SceneObjectBase<PermissionsEditViewStat
   public getDashboard(): DashboardScene {
     return this._dashboard;
   }
-}
-
-function PermissionsEditorSettings({ model }: SceneComponentProps<PermissionsEditView>) {
-  const dashboard = model.getDashboard();
-  const { uid } = dashboard.useState();
-  const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-  const canSetPermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsWrite);
-
-  return (
-    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
-      <NavToolbarActions dashboard={dashboard} />
-      <Permissions resource={'dashboards'} resourceId={uid ?? ''} canSetPermissions={canSetPermissions} />
-    </Page>
-  );
 }

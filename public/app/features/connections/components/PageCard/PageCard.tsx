@@ -44,10 +44,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   evenLogo: css({
     color: theme.colors.success.text,
-    backgroundColor: theme.colors.success.background,
+    backgroundColor: theme.colors.success.subtleBackground,
   }),
   oddLogo: css({
     color: theme.colors.accent.text,
-    backgroundColor: theme.colors.accent.background,
+    backgroundColor: theme.colors.accent.subtleBackground,
   }),
 });

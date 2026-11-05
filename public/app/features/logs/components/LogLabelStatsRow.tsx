@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { IconButton, type IconSize, useStyles2 } from '@grafana/ui';
 
 import { AsyncIconButton } from './panel/AsyncIconButton';
+import { getIconButtonStyles } from './panel/activeIconButtonStyles';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   logsStatsRow: css({
@@ -53,8 +54,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   logStatsActions: css({
     position: 'absolute',
     display: 'inline-block',
-    left: theme.spacing(-5.5),
-    top: theme.spacing(0.75),
+    left: theme.spacing(-7.5),
+    top: 0,
   }),
 });
 
@@ -80,6 +81,7 @@ export const LogLabelStatsRow = ({
   isValueActive,
 }: Props) => {
   const style = useStyles2(getStyles);
+  const iconButtonStyles = useStyles2(getIconButtonStyles);
   const percent = `${Math.round(proportion * 100)}%`;
   const barStyle = { width: percent };
   const className = active ? cx([style.logsStatsRow, style.logsStatsRowActive]) : cx([style.logsStatsRow]);
@@ -90,7 +92,7 @@ export const LogLabelStatsRow = ({
         <div className={style.logStatsActions}>
           {include && (
             <AsyncIconButton
-              name="search-plus"
+              name="filter-plus"
               onClick={() => include(value)}
               isActive={isValueActive ? () => isValueActive(value) : undefined}
               size={iconSize}
@@ -99,7 +101,8 @@ export const LogLabelStatsRow = ({
           )}
           {exclude && (
             <IconButton
-              name="search-minus"
+              className={iconButtonStyles.iconButton}
+              name="filter-minus"
               size={iconSize}
               tooltip={t('logs.log-line-details.fields.filter-out', 'Filter out value')}
               onClick={() => exclude(value)}

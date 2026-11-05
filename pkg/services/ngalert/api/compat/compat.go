@@ -235,12 +235,12 @@ func populateAlertingRuleExportFields(rule models.AlertRule, result *definitions
 
 	result.For = model.Duration(rule.For)
 	if rule.For > 0 {
-		result.ForString = new(model.Duration(rule.For).String())
+		result.ForString = new(definitions.StrfmtDuration(model.Duration(rule.For)))
 	}
 
 	result.KeepFiringFor = model.Duration(rule.KeepFiringFor)
 	if rule.KeepFiringFor > 0 {
-		result.KeepFiringForString = new(model.Duration(rule.KeepFiringFor).String())
+		result.KeepFiringForString = new(definitions.StrfmtDuration(model.Duration(rule.KeepFiringFor)))
 	}
 
 	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve != -1 {

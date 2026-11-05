@@ -157,8 +157,7 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 	resp, err := rs.netClient.Do(req)
 	if err != nil {
 		logger.Error("Failed to send request to remote rendering service", "error", err)
-		var urlErr *url.Error
-		if errors.As(err, &urlErr) {
+		if urlErr, ok := errors.AsType[*url.Error](err); ok {
 			if urlErr.Timeout() {
 				return nil, ErrServerTimeout
 			}
@@ -220,7 +219,7 @@ func (rs *RenderingService) writeResponseToFile(ctx context.Context, resp *http.
 func (rs *RenderingService) getRemotePluginVersionWithRetry(callback func(string, error)) {
 	go func() {
 		var err error
-		for try := uint(0); try < remoteVersionFetchRetries; try++ {
+		for try := range remoteVersionFetchRetries {
 			version, err := rs.getRemotePluginVersion()
 			if err == nil {
 				callback(version, err)

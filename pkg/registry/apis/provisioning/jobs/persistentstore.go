@@ -136,7 +136,7 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 		return nil, nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
 	}
 
-	for attempt := 0; attempt < claimConflictRetries; attempt++ {
+	for range claimConflictRetries {
 		current, err := s.client.Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			// NotFound propagates as-is: the job was completed and deleted before we got here.
@@ -610,6 +610,15 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 		attribute.String("job.repository", repository),
 	)
 
+	// Jobs deleted so far. Recorded on every exit path, errors included: a
+	// clean-up that fails part way through still removed the jobs counted up to
+	// the failure, and the caller reports that same partial count as its
+	// finalizer metric.
+	var deleted int
+	defer func() {
+		span.SetAttributes(attribute.Int("jobs_deleted", deleted))
+	}()
+
 	// Set up the provisioning identity for this namespace.
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
@@ -635,39 +644,100 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 		return 0, apifmt.Errorf("failed to list jobs in '%s': %w", namespace, err)
 	}
 
-	var deleted int
 	for i := range list.Items {
 		job := &list.Items[i]
-		if job.Spec.Repository != repository || IsOrphanCleanupAction(job.Spec.Action) {
+		if !isCleanupCandidate(job, repository) {
 			continue
 		}
 
-		// Guard against the race where a worker claims the job between the List
-		// and the Delete: the ResourceVersion precondition makes the delete fail
-		// with a conflict if the job changed, so an executing job is never removed.
-		rv := job.ResourceVersion
-		err := s.client.Jobs(namespace).Delete(ctx, job.GetName(), metav1.DeleteOptions{
+		removed, err := s.deleteUnclaimedJob(ctx, logger, namespace, repository, job)
+		if err != nil {
+			span.RecordError(err)
+			logger.Warn("cleanup queue incomplete", "deleted", deleted, "job", job.GetName(), "error", err)
+			return deleted, apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), namespace, err)
+		}
+		if removed {
+			deleted++
+		}
+	}
+
+	logger.Info("cleanup queue complete", "deleted", deleted)
+	return deleted, nil
+}
+
+// cleanupConflictRetries bounds the re-fetch/retry loop in deleteUnclaimedJob so
+// a job whose ResourceVersion keeps changing cannot spin forever. Reaching the
+// limit leaves the job in place, which is safe: a leftover pending job is picked
+// up and failed by a worker, whereas deleting a possibly-claimed job is not.
+const cleanupConflictRetries = 3
+
+// isCleanupCandidate reports whether a pending job belongs to the queue being
+// cleaned for repository: it must target that repository and must not be an
+// orphan-cleanup action (those are a recovery path that has to survive
+// termination, see CleanupQueue).
+func isCleanupCandidate(job *provisioning.Job, repository string) bool {
+	return job.Spec.Repository == repository && !IsOrphanCleanupAction(job.Spec.Action)
+}
+
+// deleteUnclaimedJob deletes a single pending job under a ResourceVersion
+// precondition, so a job that gets claimed after the List is never removed.
+//
+// A delete conflict only proves the ResourceVersion moved on, not that the job
+// was claimed: a worker claiming it bumps the RV, but so does an unrelated
+// update to a still-pending job or a delete+recreate of the deterministic job
+// name between our List and Delete. Treating every conflict as "claimed" would
+// leave such an unclaimed job behind for a repository that is being deleted. So
+// on conflict we re-fetch and only retry the delete when the refetched object is
+// still an unclaimed candidate for this cleanup; otherwise we leave it in place.
+//
+// Re-checking the candidate predicate matters because a delete+recreate under
+// the same deterministic name can surface a *different* job — one targeting
+// another repository, or an orphan-cleanup action — which must not be deleted
+// just because it happens to reuse the name and lacks the claim label.
+//
+// Returns true when a job was deleted.
+func (s *persistentStore) deleteUnclaimedJob(ctx context.Context, logger logging.Logger, namespace, repository string, job *provisioning.Job) (bool, error) {
+	name := job.GetName()
+	rv := job.ResourceVersion
+
+	for attempt := 0; attempt < cleanupConflictRetries; attempt++ {
+		err := s.client.Jobs(namespace).Delete(ctx, name, metav1.DeleteOptions{
 			Preconditions: &metav1.Preconditions{ResourceVersion: &rv},
 		})
 		switch {
+		case err == nil:
+			return true, nil
 		case apierrors.IsNotFound(err):
 			// Already completed and removed by a worker; nothing to do.
-			continue
-		case apierrors.IsConflict(err):
-			// Claimed after we listed it; leave it for the worker to finish.
-			logger.Debug("skipping job claimed during queue clean-up", "job", job.GetName())
-			continue
-		case err != nil:
-			span.RecordError(err)
-			return deleted, apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), namespace, err)
+			return false, nil
+		case !apierrors.IsConflict(err):
+			return false, err
 		}
 
-		deleted++
+		// Conflict: re-fetch to tell a genuine claim (or an unrelated job that
+		// reused the name) apart from a job we should still clear.
+		current, getErr := s.client.Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
+		switch {
+		case apierrors.IsNotFound(getErr):
+			return false, nil
+		case getErr != nil:
+			return false, getErr
+		}
+		if _, claimed := current.Labels[LabelJobClaim]; claimed {
+			logger.Info("skipping job claimed during queue clean-up", "job", name)
+			return false, nil
+		}
+		if !isCleanupCandidate(current, repository) {
+			logger.Info("skipping recreated job that is no longer a cleanup candidate",
+				"job", name, "job_repository", current.Spec.Repository, "job_action", current.Spec.Action)
+			return false, nil
+		}
+		// Still an unclaimed candidate: retry the delete against the current RV.
+		rv = current.ResourceVersion
 	}
 
-	span.SetAttributes(attribute.Int("jobs_deleted", deleted))
-	logger.Info("cleanup queue complete", "deleted", deleted)
-	return deleted, nil
+	logger.Warn("leaving job in queue after repeated delete conflicts", "job", name)
+	return false, nil
 }
 
 // generateJobName creates and updates the job's name to one that fits it.

@@ -22,6 +22,14 @@ var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
 var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
+var ErrCountFailed = errutil.Internal("folder.count-failed").MustTemplate(
+	"count failed for {{.Private.resources}}: {{.Error}}",
+	errutil.WithPublic("count failed: could not count {{.Public.resources}}"),
+)
+var ErrDeleteCountFailed = errutil.Internal("folder.delete-count-failed").MustTemplate(
+	"folder delete count failed for {{.Private.resources}}: {{.Error}}",
+	errutil.WithPublic("Folder cannot be deleted: could not count {{.Public.resources}}"),
+)
 var ErrFolderCannotBeMovedToK6 = errutil.BadRequest("folder.cannot-be-moved-to-k6", errutil.WithPublicMessage("Folders cannot be moved into the k6 project"))
 var ErrFolderCannotBeCreatedInK6 = errutil.BadRequest("folder.cannot-be-created-in-k6", errutil.WithPublicMessage("Folders cannot be created inside the k6 project"))
 

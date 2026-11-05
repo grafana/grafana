@@ -48,35 +48,40 @@ func IntegrationToPostableGrafanaReceiver(integration *models.Integration) (*v1.
 	return postable, nil
 }
 
-func ReceiverToPostableApiReceiver(r *models.Receiver) (*v1.PostableApiReceiver, error) {
+func ReceiverToPostableApiReceiver(r *models.Receiver) (v1.PostableApiReceiver, error) {
 	integrations := make([]*v1.PostableGrafanaReceiver, 0, len(r.Integrations))
 	for _, cfg := range r.Integrations {
 		postable, err := IntegrationToPostableGrafanaReceiver(cfg)
 		if err != nil {
-			return nil, err
+			return v1.PostableApiReceiver{}, err
 		}
 		integrations = append(integrations, postable)
 	}
 
-	return &v1.PostableApiReceiver{
+	return v1.PostableApiReceiver{
+		ResourceMetadata: v1.ResourceMetadata{
+			UID:        v1.ResourceUID(r.UID),
+			Version:    r.Version,
+			Provenance: r.Provenance,
+		},
 		Name:                    r.Name,
 		GrafanaManagedReceivers: integrations,
 	}, nil
 }
 
-func PostableApiReceiverToReceiver(postable *v1.PostableApiReceiver, provenance models.Provenance, origin models.ResourceOrigin) (*models.Receiver, error) {
+func PostableApiReceiverToReceiver(postable v1.PostableApiReceiver, origin models.ResourceOrigin) (*models.Receiver, error) {
 	integrations, err := PostableGrafanaReceiversToIntegrations(postable.GrafanaManagedReceivers)
 	if err != nil {
 		return nil, err
 	}
 	r := &models.Receiver{
-		UID:          NameToUid(postable.GetName()), // TODO replace with stable UID.
+		UID:          string(postable.UID),
+		Version:      postable.Version,
 		Name:         postable.GetName(),
 		Integrations: integrations,
-		Provenance:   provenance,
+		Provenance:   postable.Provenance,
 		Origin:       origin,
 	}
-	r.Version = r.Fingerprint()
 	return r, nil
 }
 
@@ -152,7 +157,7 @@ func PostableGrafanaReceiverToIntegration(p *v1.PostableGrafanaReceiver) (*model
 	return integration, nil
 }
 
-func ManagedRouteToRoute(r *ManagedRoute) v1.Route {
+func ManagedRouteToRoute(r *v1.ManagedRoute) v1.Route {
 	groupByAll, groupBy := ToGroupBy(r.GroupBy...)
 
 	// Only need to copy the fields that are valid for a root route.

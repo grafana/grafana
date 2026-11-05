@@ -4,8 +4,8 @@ UPDATE embeddings AS e
         "metadata"   = v.metadata::jsonb,
         "updated_at" = CURRENT_TIMESTAMP
     FROM (VALUES
-        ('chunk/1', 'Thing One', 'folder-uid', '[123 34 101 109 98 101 100 100 101 100 65 116 34 58 49 55 53 48 48 48 48 48 48 48 125]'),
-        ('chunk/2', 'Thing Two', 'folder-uid', '[123 34 101 109 98 101 100 100 101 100 65 116 34 58 49 55 53 48 48 48 48 48 48 48 125]')
+        ('chunk/1', 'Thing One', 'folder-uid', '{"embeddedAt":1750000000}'),
+        ('chunk/2', 'Thing Two', 'folder-uid', '{"embeddedAt":1750000000}')
     ) AS v(subresource, title, folder, metadata)
     WHERE e."resource"  = 'things_external'
     AND e."namespace" = 'stacks-123'

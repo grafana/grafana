@@ -34,6 +34,7 @@ interface LoaderProps extends Required<Pick<DataSourceSectionProps, 'application
   groupFilter?: string;
   namespaceFilter?: string;
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
+  hideEmptyDataSources?: boolean;
 }
 
 export function PaginatedDataSourceLoader({
@@ -42,6 +43,7 @@ export function PaginatedDataSourceLoader({
   groupFilter,
   namespaceFilter,
   onLoadingStateChange,
+  hideEmptyDataSources,
 }: LoaderProps) {
   const key = `${rulesSourceIdentifier.uid}-${groupFilter}-${namespaceFilter}`;
 
@@ -54,6 +56,7 @@ export function PaginatedDataSourceLoader({
       groupFilter={groupFilter}
       namespaceFilter={namespaceFilter}
       onLoadingStateChange={onLoadingStateChange}
+      hideEmptyDataSources={hideEmptyDataSources}
     />
   );
 }
@@ -64,6 +67,7 @@ function PaginatedGroupsLoader({
   groupFilter,
   namespaceFilter,
   onLoadingStateChange,
+  hideEmptyDataSources,
 }: LoaderProps) {
   // If there are filters, we don't want to populate the cache to avoid performance issues
   // Filtering may trigger multiple HTTP requests, which would populate the cache with a lot of groups hurting performance
@@ -122,6 +126,15 @@ function PaginatedGroupsLoader({
   // until we have at least one result. This will provide a cleaner UI whent he user wants to find a specific folder or group.
   // We will have another UI element indicating that we are still searching in other datasources.
   if (hasFilters && isEmpty(groups)) {
+    return null;
+  }
+
+  // Avoid flashing headers for empty sources. Accumulated groups keep headers visible during "Load More".
+  if (!hasFilters && isLoading && isEmpty(groups)) {
+    return null;
+  }
+
+  if (hideEmptyDataSources && !hasFilters && hasNoRules && !error) {
     return null;
   }
 

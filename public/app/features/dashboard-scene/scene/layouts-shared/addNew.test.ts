@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../DashboardScene';
@@ -173,17 +172,6 @@ describe('addNewTabTo', () => {
 });
 
 describe('addNewRowTo', () => {
-  let originalDashboardNewLayouts: boolean | undefined;
-
-  beforeAll(() => {
-    originalDashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
-    config.featureToggles.dashboardNewLayouts = true;
-  });
-
-  afterAll(() => {
-    config.featureToggles.dashboardNewLayouts = originalDashboardNewLayouts;
-  });
-
   describe('when layout has no rows', () => {
     it('should wrap existing content into a single row', () => {
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });

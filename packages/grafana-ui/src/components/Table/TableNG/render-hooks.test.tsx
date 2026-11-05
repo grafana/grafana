@@ -22,22 +22,22 @@ import { type PanelContext } from '../../PanelChrome';
 
 import { type HeaderCell } from './components/HeaderCell';
 import { type TableCellTooltipProps } from './components/TableCellTooltip';
-import { TABLE } from './constants';
+import { FIRST_COLUMN_EXTRA_PADDING, TABLE } from './constants';
 import {
   type ColumnBuildConfig,
   prepareFieldsForDisplay,
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
+import { getColumnSettleStyles, getHeaderCellStyles } from './styles';
 import {
-  type FilterType,
   type NestedRowEntry,
   type TableCellRendererProps,
   type TableColumn,
   type TableRow,
   type TableSummaryRow,
 } from './types';
-import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from './utils';
+import { type ApplyFilterResult, createTypographyContext, getCellColorInlineStylesFactory } from './utils';
 
 // -----------------------------------------------------------------------------
 // useDataGridRows
@@ -279,7 +279,7 @@ describe('useDataGridRows', () => {
  * gives each filter result an identifiable fingerprint to assert on.
  */
 function makeFilterResult(scopedRows: TableRow[] = []): ApplyFilterResult {
-  return applyFilter(scopedRows, {}, []);
+  return { filteredRows: scopedRows, crossFilterOrder: [], crossFilterRows: {}, crossFilterTailRows: scopedRows };
 }
 
 /**
@@ -339,8 +339,6 @@ function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConf
     getTextColorForBackground: memoize(getTextColorForBackground, { maxSize: 100 }),
     rowHeight: 36,
     rowHeightFn: () => 36,
-    filter: {} as FilterType,
-    setFilter: jest.fn(),
     setInspectCell: jest.fn(),
     gridRef: createRef(),
     getCellActions: jest.fn().mockReturnValue([]),
@@ -352,6 +350,7 @@ function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConf
     disableSanitizeHtml: false,
     showTypeIcons: false,
     timeRange: undefined,
+    typographyCtx: createTypographyContext(theme.typography.fontSize, theme.typography.fontFamily),
     ...overrides,
   };
 }
@@ -408,6 +407,15 @@ describe('useColumnBuilderFromFields', () => {
     expect(typeof result.cellRootRenderers['B']).toBe('function');
   });
 
+  it('reserves last-column padding only for the outer grid', () => {
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+    const outer = hook.result.current(frame.fields, [100, 100], frame, rows, rows, 6);
+    const inner = hook.result.current(frame.fields, [100, 100], frame, rows, rows);
+    expect(getCellRendererProps(outer.columns[0], rows[0]).width).toBe(87);
+    expect(getCellRendererProps(outer.columns[1], rows[0]).width).toBe(81);
+    expect(getCellRendererProps(inner.columns[1], rows[0]).width).toBe(87);
+  });
+
   it('marks columns frozen when index is within frozen range', () => {
     const config = makeConfig({ frozenColumns: 1, numFrozenColsFullyInView: 2 });
     const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config });
@@ -434,6 +442,67 @@ describe('useColumnBuilderFromFields', () => {
     const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
     expect(result.columns[0].width).toBe(150);
     expect(result.columns[1].width).toBe(200);
+  });
+
+  describe('table.refresh column reorder', () => {
+    it.each([
+      { reorderable: true, expected: [true, true] },
+      { reorderable: false, expected: [false, false] },
+      { reorderable: undefined, expected: [false, false] },
+    ])('sets dragging for every column when reorderable=$reorderable', ({ reorderable, expected }) => {
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ reorderable }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(result.columns.map((c) => c.draggable)).toEqual(expected);
+    });
+
+    it('adds the settle class to headerCellClass only for settling columns', () => {
+      const theme = createTheme();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ theme, settlingColumnKeys: new Set(['A']) }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(result.columns[0].headerCellClass).toContain(getColumnSettleStyles(theme));
+      expect(result.columns[1].headerCellClass).not.toContain(getColumnSettleStyles(theme));
+    });
+  });
+
+  describe('table.refresh column hide', () => {
+    it('threads onHideColumn into each column, bound to its own display name', () => {
+      const onHideColumn = jest.fn();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ onHideColumn }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+
+      const fieldAProps = getHeaderCellProps(result.columns[0]);
+      const fieldBProps = getHeaderCellProps(result.columns[1]);
+
+      fieldAProps.onHideColumn?.();
+      expect(onHideColumn).toHaveBeenCalledWith('A');
+      fieldBProps.onHideColumn?.();
+      expect(onHideColumn).toHaveBeenCalledWith('B');
+    });
+
+    it('omits onHideColumn when not configured', () => {
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+
+      const headerProps = getHeaderCellProps(result.columns[0]);
+      expect(headerProps.onHideColumn).toBeUndefined();
+    });
+
+    it.each([true, false])('passes configured canHideColumn=%s to the header', (canHideColumn) => {
+      const singleFieldFrame = createDataFrame({ fields: [{ name: 'A', type: FieldType.string, values: ['x'] }] });
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig({ canHideColumn }) });
+      const result = callFromFields(hook, singleFieldFrame.fields, [100], singleFieldFrame, rows, rows);
+
+      expect(getHeaderCellProps(result.columns[0]).canHideColumn).toBe(canHideColumn);
+    });
   });
 
   it('renders a cell tooltip against a prepared copy of the tooltip field', () => {
@@ -468,6 +537,46 @@ describe('useColumnBuilderFromFields', () => {
     const cellChrome = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
     expect(getCellRendererProps(result.columns[0], rows[0]).width).toBe(150 - cellChrome);
     expect(getCellRendererProps(result.columns[1], rows[0]).width).toBe(200 - cellChrome);
+  });
+
+  it("also takes the first column's panel-edge inset off the width it hands that column", () => {
+    // Under `noPanelPadding` the first column is padded further in to line its content up with the
+    // panel title. That padding eats into the content box, so a width-driven cell (sparkline, bar
+    // gauge) sized against the full content width would render that much too wide and clip.
+    const hook = renderColumnBuilderHook({
+      filterResult: makeFilterResult(),
+      config: makeConfig({ firstColumnExtraPadding: FIRST_COLUMN_EXTRA_PADDING }),
+    });
+    const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
+
+    const cellChrome = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+    expect(getCellRendererProps(result.columns[0], rows[0]).width).toBe(150 - cellChrome - FIRST_COLUMN_EXTRA_PADDING);
+    // only the first column carries the inset
+    expect(getCellRendererProps(result.columns[1], rows[0]).width).toBe(200 - cellChrome);
+  });
+
+  describe('header alignment', () => {
+    // Field B is numeric, so it right-aligns by default. table.refresh left-aligns every header
+    // regardless, giving the column menu a stable trailing edge to sit against.
+    function headerClassForNumericField(tableRefreshEnabled: boolean) {
+      const theme = createTheme();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ theme, tableRefreshEnabled }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      return { theme, headerCellClass: result.columns[1].headerCellClass };
+    }
+
+    it('right-aligns a numeric column header by default', () => {
+      const { theme, headerCellClass } = headerClassForNumericField(false);
+      expect(headerCellClass).toBe(getHeaderCellStyles(theme, 'flex-end'));
+    });
+
+    it('left-aligns a numeric column header when table.refresh is on', () => {
+      const { theme, headerCellClass } = headerClassForNumericField(true);
+      expect(headerCellClass).toBe(getHeaderCellStyles(theme, 'flex-start'));
+    });
   });
 
   function makePillFrame({ withMappings }: { withMappings: boolean }): DataFrame {

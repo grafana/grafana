@@ -1,11 +1,14 @@
 import { css, cx } from '@emotion/css';
+import { useId } from 'react';
 
 import { dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Card, TagList, useStyles2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 import { type NotebookRow } from '../list/useNotebooksList';
-import { getNeutralTagListStyle } from '../tagColors';
+
+const RADIO_GROUP_NAME = 'notebook-picker';
 
 interface Props {
   notebook: NotebookRow;
@@ -15,33 +18,39 @@ interface Props {
 
 export function NotebookPickerCard({ notebook, isSelected, onSelect }: Props) {
   const styles = useStyles2(getStyles);
+  const updatedId = useId();
+  const authorId = useId();
 
   return (
-    // Without Card's `isSelected`: it renders an inert radio that stayed focusable however it was
-    // hidden, giving every card a second, invisible tab stop. Card hangs the selected outline on the
-    // same prop, hence drawing it here.
-    <Card
-      noMargin
-      className={isSelected ? styles.selected : undefined}
-      onClick={() => onSelect(notebook.uid)}
-      aria-current={isSelected ? true : undefined}
-    >
-      {/* In the button's own name: aria-current on the wrapper is not announced when the button
-          inside it takes focus, and Card.Heading passes nothing else through. */}
-      <Card.Heading
-        aria-label={
-          isSelected
-            ? t('notebooks.add-panel.card-selected', '{{title}} (selected)', { title: notebook.title })
-            : undefined
-        }
-      >
-        {notebook.title}
-      </Card.Heading>
+    // A native radio per card rather than Card's `onClick` button, so the list is a single tab stop
+    // the browser walks with the arrow keys. Card's own `isSelected` radio can't: each gets a unique
+    // `name`, so they never group. Without `onClick` Card draws no hover or focus, hence drawing them here.
+    <Card noMargin className={cx(styles.card, isSelected && styles.selected)}>
+      <input
+        type="radio"
+        name={RADIO_GROUP_NAME}
+        className={styles.input}
+        checked={isSelected}
+        onChange={() => onSelect(notebook.uid)}
+        aria-label={notebook.title}
+        // Card.Meta takes no id of its own, hence pointing at each entry.
+        aria-describedby={`${updatedId} ${authorId}`}
+      />
+      <Card.Heading>{notebook.title}</Card.Heading>
       {/* Dots rather than the default vertical bar, per the design. */}
       <Card.Meta separator="·">
         {[
-          t('notebooks.add-panel.card-updated', 'Updated {{when}}', { when: dateTimeFormatTimeAgo(notebook.updated) }),
-          t('notebooks.add-panel.card-author', 'By {{author}}', { author: notebook.authorName }),
+          <span key="updated" id={updatedId}>
+            {t('notebooks.add-panel.card-updated', 'Updated {{when}}', {
+              when: dateTimeFormatTimeAgo(notebook.updated),
+            })}
+          </span>,
+          <span key="author" id={authorId}>
+            {t('notebooks.add-panel.card-author', 'By {{author}}', {
+              author: notebook.authorName,
+              interpolation: { escapeValue: false },
+            })}
+          </span>,
         ]}
       </Card.Meta>
       {/* The Description slot rather than Card.Tags: Tags is a right-hand column of the card's grid,
@@ -58,9 +67,23 @@ export function NotebookPickerCard({ notebook, isSelected, onSelect }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // The same neutral grey the list table and the document header use, rather than TagList's own
-  // per-tag colours: a tag is context here, not something to pick out of the card.
-  tagList: cx(getNeutralTagListStyle(theme), css({ justifyContent: 'flex-start' })),
+  // Covers the card, so a click anywhere on it selects.
+  input: css({
+    position: 'absolute',
+    inset: 0,
+    opacity: 0,
+    cursor: 'pointer',
+  }),
+  // What CardContainer draws for a clickable card.
+  card: css({
+    '&:hover': {
+      background: theme.colors.emphasize(theme.components.card.background, 0.03),
+    },
+    '&:has(:focus-visible)': getFocusStyles(theme),
+  }),
+  // TagList right-aligns by default, and this row spans the card, so the tags would otherwise sit
+  // at the far edge instead of under the meta line they belong to.
+  tagList: css({ justifyContent: 'flex-start' }),
   // What CardContainer draws for `isSelected`, so the picker still looks like every selectable card.
   selected: css({
     outline: `solid 1px ${theme.colors.accent.border}`,

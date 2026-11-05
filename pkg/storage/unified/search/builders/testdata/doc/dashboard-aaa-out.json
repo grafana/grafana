@@ -7,6 +7,8 @@
   },
   "name": "aaa",
   "rv": 1234,
+  "_rv": "1234",
+  "groupResource": "dashboard.grafana.app/dashboards",
   "title": "Test title",
   "title_ngram": "Test title",
   "title_phrase": "test title",
@@ -24,6 +26,7 @@
   "folder": "the-folder-uid",
   "created": 1730313054000,
   "createdBy": "user:be2g71ke8yoe8b",
+  "updated": 1730313054000,
   "fields": {
     "ds_types": [
       "my-custom-plugin"

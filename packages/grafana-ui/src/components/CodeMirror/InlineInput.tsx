@@ -183,7 +183,7 @@ const getStyles = (theme: GrafanaTheme2, monospace: boolean) => ({
       // sibling `Input` fields (`alignItems` centers the editor within it), but
       // only as a minimum: a wrapped, multi-line value grows the field downward.
       minHeight: theme.spacing(theme.components.height.md),
-      padding: theme.spacing(0.5, 1),
+      padding: theme.spacing(0.25, 1),
       '&:focus-within': getFocusStyles(theme),
     })
   ),

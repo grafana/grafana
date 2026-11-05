@@ -4,11 +4,11 @@ import { type FolderDTO } from 'app/types/folders';
 interface ReturnBag {
   folder?: FolderDTO;
   loading: boolean;
+  error?: unknown;
 }
 
 /**
  * Returns a folderDTO for the given uid – uses cached values
- * @TODO propagate error state
  */
 export function useFolder(uid?: string): ReturnBag {
   const fetchFolderState = useGetFolderQueryFacade(uid);
@@ -16,6 +16,7 @@ export function useFolder(uid?: string): ReturnBag {
   return {
     loading: fetchFolderState.isLoading,
     folder: fetchFolderState.data,
+    error: fetchFolderState.error,
   };
 }
 

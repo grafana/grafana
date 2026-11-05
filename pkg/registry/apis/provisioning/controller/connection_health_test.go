@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
@@ -340,6 +341,20 @@ func TestClassifyTestResultReason(t *testing.T) {
 			expectedReason: provisioning.ReasonAuthenticationFailed,
 		},
 		{
+			// A write-permission-denied 403 leaves the repository accessible
+			// (isRepositoryAccessible special-cases it), so it must not classify as
+			// AuthenticationFailed alongside a genuine 403 -- job-skip logic
+			// elsewhere keys off this Reason and must not skip a repository that's
+			// actually usable.
+			name: "forbidden (403) with write permission denied is accessible, not an auth failure",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusForbidden,
+				Errors:  []provisioning.ErrorDetails{{Detail: repository.WritePermissionDeniedDetail}},
+			},
+			expectedReason: provisioning.ReasonInvalidSpec,
+		},
+		{
 			name: "not found (404)",
 			testResults: &provisioning.TestResults{
 				Success: false,
@@ -550,7 +565,7 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 			} else {
 				mockTester.EXPECT().TestConnection(mock.Anything, tt.conn).Return(tt.testResults, nil)
 			}
-			mockMetrics.EXPECT().RecordHealthCheck("connection", mock.Anything, mock.Anything).Return()
+			mockMetrics.EXPECT().RecordHealthCheck("connection", mock.Anything, mock.Anything, mock.Anything).Return()
 
 			hc := NewConnectionHealthChecker(mockTester, mockMetrics)
 			result, err := hc.RefreshHealthWithPatchOps(context.Background(), tt.conn)

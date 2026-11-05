@@ -6,7 +6,6 @@ import { useMeasure } from 'react-use';
 import { AlertLabels, StateText } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, type NavModelItem, type UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   Alert,
   LinkButton,
@@ -35,7 +34,11 @@ import { type PromAlertingRuleState, PromRuleType } from 'app/types/unified-aler
 import { logError } from '../../Analytics';
 import { defaultPageNav } from '../../RuleViewer';
 import { useRuleViewExtensionsNav } from '../../enterprise-components/rule-view-page/navigation';
-import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
+import {
+  isNotificationHistoryEnabled,
+  shouldUseAlertingListViewV2,
+  shouldUsePrometheusRulesPrimary,
+} from '../../featureToggles';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
 import { useEnrichmentUrlParams } from '../../hooks/useEnrichmentUrlParams';
@@ -46,6 +49,7 @@ import { useReturnTo } from '../../hooks/useReturnTo';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { normalizeHealth, normalizeState } from '../../rule-list/components/util';
+import { useIsStateHistoryAvailable } from '../../utils/config';
 import { Annotation } from '../../utils/constants';
 import {
   GRAFANA_RULES_SOURCE_NAME,
@@ -474,6 +478,8 @@ function usePageNav(rule: CombinedRule) {
     dataSourceUID,
   };
 
+  const stateHistoryAvailable = useIsStateHistoryAvailable();
+
   const setActiveTabFromString = (tab: string) => {
     if (isValidTab(tab)) {
       setActiveTab(tab);
@@ -507,8 +513,9 @@ function usePageNav(rule: CombinedRule) {
         onClick: () => {
           setActiveTab(ActiveTab.History);
         },
-        // alert state history is only available for Grafana managed alert rules
-        hideFromTabs: !isGrafanaAlertRule,
+        // alert state history is only available for Grafana managed alert rules, and only
+        // when a backend can actually answer history queries
+        hideFromTabs: !isGrafanaAlertRule || !stateHistoryAvailable,
       },
       {
         text: t('alerting.use-page-nav.page-nav.text.notifications', 'Notifications'),
@@ -516,8 +523,8 @@ function usePageNav(rule: CombinedRule) {
         onClick: () => {
           setActiveTab(ActiveTab.Notifications);
         },
-        // notification history is only available for Grafana managed alert rules and requires feature toggles
-        hideFromTabs: !isGrafanaAlertRule || !config.featureToggles.alertingNotificationHistoryRuleViewer,
+        // notification history is only available for Grafana managed alert rules and must be enabled
+        hideFromTabs: !isGrafanaAlertRule || !isNotificationHistoryEnabled(),
       },
       // Enterprise extensions (e.g. Alert enrichment) should appear after routing
       ...useRuleViewExtensionsNav(activeTab, setActiveTabFromString),

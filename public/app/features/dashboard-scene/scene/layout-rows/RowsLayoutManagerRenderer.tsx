@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Droppable, type BeforeCapture, type DropResult } from '@hello-pangea/dnd';
+import { type BeforeCapture, type DropResult } from '@hello-pangea/dnd';
 import { useCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -7,10 +7,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
+import { reorderRows } from '../../actions/layout/reorderRows';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { useDashboardState, getLayoutOrchestratorFor } from '../../utils/utils';
+import { useDashboardState, getLayoutOrchestratorFor, getDashboardSceneFor } from '../../utils/utils';
 import { getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 import { useIsMultiSelection } from '../layouts-shared/useIsMultiSelection';
@@ -22,13 +25,15 @@ import { type RowsLayoutManager } from './RowsLayoutManager';
 
 export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayoutManager>) {
   const { rows, key } = model.useState();
-  const { isEditing } = useDashboardState(model);
+  const dashboardState = useDashboardState(model);
+  const isEditing = isFullDashboardEditing(dashboardState);
   const styles = useStyles2(getStyles);
   const layoutControlsStyles = useStyles2(getLayoutControlsStyles);
   const { hasCopiedRow } = useClipboardState();
   const soloPanelContext = useSoloPanelContext();
   const orchestrator = getLayoutOrchestratorFor(model);
   const isMultiSelection = useIsMultiSelection();
+  const { DragDropContext, Droppable } = useDragAndDrop(isEditing && !soloPanelContext);
 
   // Only act as a drop target when empty (no rows)
   const showAsDropTarget = rows.length === 0;
@@ -48,7 +53,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
       // Stop tracking row drag in orchestrator
       orchestrator?.stopRowDrag();
 
-      if (!result.destination) {
+      if (!isFullDashboardEditing(getDashboardSceneFor(model).state) || !result.destination) {
         return;
       }
 
@@ -56,7 +61,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
         return;
       }
 
-      model.moveRow(result.draggableId, result.source.index, result.destination.index);
+      reorderRows(model, result.source.index, result.destination.index);
     },
     [model, orchestrator]
   );

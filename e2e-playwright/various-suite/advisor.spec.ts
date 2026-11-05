@@ -81,6 +81,9 @@ test.describe(
   },
   () => {
     test('should detect an issue and fix it', async ({ page }) => {
+      // The full flow reloads the advisor page several times and runs all checks, taking ~28s on CI,
+      // too close to the default 30s budget.
+      test.setTimeout(60_000);
       await expectEmptyReport(page);
       const dsName = await createEmptyDatasource(page);
       await runChecks(page);

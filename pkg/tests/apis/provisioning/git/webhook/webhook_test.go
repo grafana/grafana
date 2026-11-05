@@ -1,542 +1,210 @@
 package webhook
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strings"
-	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v82/github"
-	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common/webhooksuite"
 )
 
-// webhookBaseURL is the public base URL the webhook tests configure (matching
-// WithProvisioningPublicRootURL in the shared env). It is both passed to
-// CreateGithubRepo as the repository's spec.webhook.baseUrl and used to predict
-// the webhook URL the reconciler builds, so the mock and the server agree.
-const webhookBaseURL = "https://grafana.example.com"
-
-// githubHealthCheckMocks returns ghmock handlers that satisfy the GitHub
-// branch protection health check (returns 403 — gracefully skipped).
-func githubHealthCheckMocks() []ghmock.MockBackendOption {
-	return []ghmock.MockBackendOption{
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.WriteHeader(http.StatusForbidden)
-			}),
-		),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode([]*github.RepositoryRule{})
-			}),
-		),
-	}
-}
-
-// webhookCreationMocks returns ghmock handlers backing a single immutable
-// webhook, served by the create, list, get-by-id, and delete endpoints —
-// mirroring real GitHub. The hook is built once and only read, so no
-// synchronization is needed.
-//
-// get-by-id must return the same URL and events the reconciler expects so its
-// OnUpdate path is a no-op. If get-by-id is left unmocked it 404s, which the
-// reconciler reads as ErrFileNotFound and so "recreates" the webhook on every
-// reconcile, rotating the webhook secret each time and racing any concurrent job
-// that decrypts it (yielding intermittent "decrypt webhookSecret: not found").
-//
-// delete must also be registered: once get-by-id registers the
-// /repos/.../hooks/{id} path, a DELETE to that same path (from the deletion
-// finalizer's OnDelete) would otherwise match the path but not the method and
-// return 405, which is not tolerated like the unmatched-route 404 — leaving the
-// repository's finalizer stuck and CleanupAllResources timing out.
-func webhookCreationMocks(hookID int64, webhookURL string) []ghmock.MockBackendOption {
-	hook := &github.Hook{
-		ID:     github.Ptr(hookID),
-		Active: github.Ptr(true),
-		Events: []string{"pull_request", "push"}, // == subscribedEvents
-		Config: &github.HookConfig{URL: github.Ptr(webhookURL)},
-	}
-	encode := func(v any) http.HandlerFunc {
-		return func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(v)
-		}
-	}
-	return []ghmock.MockBackendOption{
-		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, encode([]*github.Hook{hook})),
-		ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, encode(hook)),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepoByHookId, encode(hook)),
-		ghmock.WithRequestMatchHandler(
-			ghmock.DeleteReposHooksByOwnerByRepoByHookId,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.WriteHeader(http.StatusNoContent)
-			}),
-		),
-	}
-}
-
-// expectedWebhookURL mirrors the server-side webhook URL builder
-// (buildWebhookURL) so a test can predict the URL the reconciler will compare
-// against. The repository's spec.webhook.baseUrl (set via CreateGithubRepo's
-// webhookBaseURL) is the base; the GVR comes from the same resource info the
-// server uses, so only the path template is duplicated.
-func expectedWebhookURL(baseURL, namespace, repoName string) string {
-	gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-	return fmt.Sprintf("%s/apis/%s/%s/namespaces/%s/%s/%s/webhook",
-		strings.TrimRight(baseURL, "/"), gvr.Group, gvr.Version, namespace, gvr.Resource, repoName)
-}
-
-// waitForWebhook polls until Status.Webhook is populated with the expected ID.
-func waitForWebhook(t *testing.T, helper *common.GitTestHelper, repoName string, expectedID int64) {
-	t.Helper()
-
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-		require.NoError(collect, err)
-		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-		require.NotNil(collect, repo.Status.Webhook, "webhook should be set")
-		require.NotEmpty(collect, repo.Secure.WebhookSecret.Name, "webhook secret should be created")
-		require.Equal(collect, expectedID, repo.Status.Webhook.ID)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "webhook should be created")
-}
-
-func TestIntegrationProvisioning_GithubRepoNoWebhookWhenDisabled(t *testing.T) {
-	helper := sharedGitHelper(t)
-
-	// The package enables a public root URL so webhook delivery can be tested;
-	// this repo opts out explicitly and should not register a webhook.
-	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(githubHealthCheckMocks()...)
-
-	const repoName = "github-webhook-disabled"
-	helper.CreateGithubRepoWithWebhookDisabled(t, repoName, map[string][]byte{
-		"dashboard.json": common.DashboardJSON("gh-dash", "GitHub Dashboard", 1),
-	}, "write")
+func TestIntegrationProvisioning_WebhookNotCreatedWhenDisabled(t *testing.T) {
+	helper := githubHelper(t)
+	repoName := "webhook-disabled"
+	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{WebhookDisabled: true})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
-		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
+		repo, err := common.FromUnstructured[provisioning.Repository](obj)
+		if !assert.NoError(collect, err) {
+			return
+		}
 		assert.Equal(collect, repo.Generation, repo.Status.ObservedGeneration, "controller should have processed the repo")
-		assert.Nil(collect, repo.Status.Webhook, "no webhook should be created without URL")
+		assert.Nil(collect, repo.Status.Webhook, "no webhook should be created when disabled")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repo should be reconciled without webhook")
+	require.Zero(t, githubMock.State(repoName).HookCreates, "webhook must not be registered with the provider")
 }
 
-func TestIntegrationProvisioning_GithubRepoWebhookCreated(t *testing.T) {
-	helper := sharedGitHelper(t)
+func TestIntegrationProvisioning_WebhookRemovedWhenDisabled(t *testing.T) {
+	helper := githubHelper(t)
+	repoName := "webhook-removed-when-disabled"
+	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{})
+	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
 
-	const repoName = "github-with-webhook"
-	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
-
-	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(456, webhookURL)...)
-	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
-
-	helper.CreateGithubRepo(t, repoName, map[string][]byte{
-		"dashboard.json": common.DashboardJSON("gh-webhook-dash", "GitHub Webhook Dashboard", 1),
-	}, webhookBaseURL, "write")
-
-	waitForWebhook(t, helper, repoName, 456)
+	webhooksuite.UpdateSpec(t, helper, repoName, func(spec map[string]any) {
+		spec["webhook"] = map[string]any{"disabled": true}
+	})
+	requireWebhookRemoved(t, helper, repoName)
 }
 
-// TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately verifies
-// that when webhook creation fails, the repository records a HealthFailureHook
-// (not a controller error) and the hook-failure cooldown suppresses an
-// immediate retry rather than hot-looping.
+func TestIntegrationProvisioning_WebhookRemovedWhenWorkflowsCleared(t *testing.T) {
+	helper := githubHelper(t)
+	repoName := "webhook-removed-without-workflows"
+	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{})
+	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
+
+	webhooksuite.UpdateSpec(t, helper, repoName, func(spec map[string]any) {
+		spec["workflows"] = []any{}
+	})
+	requireWebhookRemoved(t, helper, repoName)
+}
+
 func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testing.T) {
-	helper := sharedGitHelper(t)
-
-	const repoName = "webhook-create-failure-cooldown"
-	var webhookCreateCalls atomic.Int32
-
-	mockOpts := append(githubHealthCheckMocks(), ghmock.WithRequestMatchHandler(
-		ghmock.PostReposHooksByOwnerByRepo,
-		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			webhookCreateCalls.Add(1)
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
-				Message: "failed to create webhook",
-			}))
-		}),
-	))
-	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
-
-	// waitForReady is skipped here: the Ready condition never turns true in
-	// this scenario, since webhook creation is designed to keep failing.
-	helper.CreateGithubRepoWithoutWaitingForReady(t, repoName, map[string][]byte{
-		"dashboard.json": common.DashboardJSON("gh-webhook-fail-dash", "GitHub Webhook Failure Dashboard", 1),
-	}, webhookBaseURL, "write")
+	helper := githubHelper(t)
+	repoName := "webhook-create-failure"
+	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{HookCreateFails: true})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "failed to get repository") {
 			return
 		}
-
-		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-		assert.GreaterOrEqual(collect, webhookCreateCalls.Load(), int32(1), "webhook creation should have been attempted")
+		repo, err := common.FromUnstructured[provisioning.Repository](obj)
+		if !assert.NoError(collect, err) {
+			return
+		}
+		assert.GreaterOrEqual(collect, githubMock.State(repoName).HookCreates, 1, "webhook creation should have been attempted")
 		assert.False(collect, repo.Status.Health.Healthy, "repository should remain unhealthy after hook failure")
 		assert.Equal(collect, provisioning.HealthFailureHook, repo.Status.Health.Error, "repository should record hook failure")
 		assert.Nil(collect, repo.Status.Webhook, "webhook status should remain unset when creation fails")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should record the initial webhook failure")
 
-	// The controller reads the repository from its informer cache, so a reconcile
-	// pass that starts before the HealthFailureHook patch has propagated there
-	// still sees a pre-failure status and legitimately re-attempts the create.
-	// That makes "exactly one attempt" the wrong invariant; what must hold is
-	// that attempts stop once the cooldown is visible. Settle first, then require
-	// silence — a controller that hot-loops never settles and fails in
-	// waitForStableCount instead.
-	settled := waitForStableCount(t, &webhookCreateCalls, 2*time.Second, common.WaitTimeoutDefault)
-
+	settled := waitForStableCount(t, func() int { return githubMock.State(repoName).HookCreates }, 2*time.Second, common.WaitTimeoutDefault)
 	require.Never(t, func() bool {
-		return webhookCreateCalls.Load() > settled
+		return githubMock.State(repoName).HookCreates > settled
 	}, 5*time.Second, 100*time.Millisecond, "webhook creation should not be retried while the hook failure cooldown is active")
 }
 
-// waitForStableCount polls counter until it holds the same value for stableFor,
-// and returns that value. It fails the test if the counter is still moving after
-// timeout, which is what a hook-failure hot loop looks like.
-func waitForStableCount(t *testing.T, counter *atomic.Int32, stableFor, timeout time.Duration) int32 {
-	t.Helper()
+func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testing.T) {
+	helper := githubHelper(t)
+	repoName := "webhook-unhealthy-repo"
+	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{HookCreateFails: true, SyncEnabled: true})
+	helper.WaitForUnhealthyRepository(t, repoName)
 
-	const pollInterval = 50 * time.Millisecond
-	deadline := time.Now().Add(timeout)
-	last := counter.Load()
-	stableSince := time.Now()
-
-	for time.Now().Before(deadline) {
-		time.Sleep(pollInterval)
-		switch current := counter.Load(); {
-		case current != last:
-			last, stableSince = current, time.Now()
-		case time.Since(stableSince) >= stableFor:
-			return current
-		}
-	}
-
-	t.Fatalf("webhook creation attempts never stopped: still climbing after %s (last count %d)", timeout, last)
-	return 0
+	header, body := githubPushEvent("git/"+repoName, "refs/heads/main", [][]string{{"dashboard.json"}})
+	githubMock.Sign(header, "any-secret", body)
+	code, job, err := webhooksuite.TryDeliverSignedWebhook(t, helper, repoName, header, body)
+	require.Error(t, err, "a delivery to an unhealthy repository must be rejected")
+	require.Equal(t, http.StatusFailedDependency, code)
+	require.Nil(t, job)
 }
 
-// TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment verifies the
-// end-to-end PR webhook path without a real GitHub PR: a pushed gittest feature
-// branch supplies the diff, the webhook payload supplies PR metadata, and the
-// mocked GitHub comments endpoint captures the PR worker's generated comment.
-func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing.T) {
-	helper := sharedGitHelper(t)
+func TestIntegrationProvisioning_WebhookForceDeleteSkipsProvider(t *testing.T) {
+	helper := githubHelper(t)
+	repoName := "webhook-force-delete"
+	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{})
+	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
 
-	const repoName = "github-pr-comment"
-	const dashboardPath = "dashboard.json"
-	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
+	webhooksuite.RemoveCleanupFinalizer(t, helper, repoName)
+	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repoName, metav1.DeleteOptions{}), "repository delete request should be accepted")
+	helper.WaitForRepositoryDeleted(t, repoName)
 
-	var commentsMu sync.Mutex
-	var comments []string
-	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(654, webhookURL)...)
-	mockOpts = append(mockOpts, ghmock.WithRequestMatchHandler(
-		ghmock.PostReposIssuesCommentsByOwnerByRepoByIssueNumber,
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var comment github.IssueComment
-			if err := json.NewDecoder(r.Body).Decode(&comment); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
+	require.Zero(t, githubMock.State(repoName).HookDeletes, "webhook delete must not be attempted once the cleanup finalizer is removed")
+}
 
-			// Capture the exact PR comment body so the test can verify what the
-			// pull request worker would post to GitHub.
-			commentsMu.Lock()
-			comments = append(comments, comment.GetBody())
-			commentsMu.Unlock()
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusCreated)
-			_ = json.NewEncoder(w).Encode(&github.IssueComment{
-				ID:   github.Ptr(int64(1)),
-				Body: github.Ptr(comment.GetBody()),
-			})
-		}),
-	))
-	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
-
-	_, local := helper.CreateGithubRepo(t, repoName, map[string][]byte{
-		dashboardPath: common.DashboardJSON("gh-pr-comment-dash", "GitHub PR Comment Dashboard", 1),
-	}, webhookBaseURL, "write")
-	waitForWebhook(t, helper, repoName, 654)
+func TestIntegrationProvisioning_WebhookIgnoredEvents(t *testing.T) {
+	helper := githubHelper(t)
+	repoName := "webhook-ignored-events"
+	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{SyncEnabled: true})
+	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
 	helper.SyncAndWait(t, repoName)
 
-	// Ensure the synced dashboard is queryable before opening the PR. The PR
-	// worker's DryRun does a Get-by-name to populate Existing, which is what
-	// produces the [original] link in the comment; SyncAndWait only waits for
-	// job success, not resource visibility, so without this barrier the Get can
-	// race the sync write and drop the [original] link.
-	common.RequireRepoManagedDashboard(t, helper.DashboardsV1, "gh-pr-comment-dash", repoName, dashboardPath)
+	for _, tt := range []struct {
+		name  string
+		event func() (http.Header, []byte)
+	}{
+		{"push to another branch", func() (http.Header, []byte) {
+			return githubPushEvent("git/"+repoName, "refs/heads/other", [][]string{{"dashboard.json"}})
+		}},
+		{"pull request to another branch", func() (http.Header, []byte) {
+			return githubPullRequestEvent(repoName, "opened", "other", 130, "feature", "sha-other-base", map[string]any{"id": 1})
+		}},
+		{"closed pull request", func() (http.Header, []byte) {
+			return githubPullRequestEvent(repoName, "closed", "main", 131, "feature", "sha-closed", map[string]any{"id": 1})
+		}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			header, body := tt.event()
+			code, job := webhooksuite.DeliverWebhook(t, helper, githubMock, repoName, header, body)
+			require.Equal(t, http.StatusOK, code)
+			require.Nil(t, job, "the event must not queue a job")
+		})
+	}
 
-	const branchName = "feature-pr-comment"
-	_, err := local.Git("checkout", "-b", branchName)
-	require.NoError(t, err, "failed to create feature branch")
-	err = local.UpdateFile(dashboardPath, string(common.DashboardJSON("gh-pr-comment-dash", "GitHub PR Comment Dashboard Updated", 2)))
-	require.NoError(t, err, "failed to update dashboard")
-	_, err = local.Git("add", dashboardPath)
-	require.NoError(t, err, "failed to add dashboard")
-	_, err = local.Git("commit", "-m", "Update dashboard")
-	require.NoError(t, err, "failed to commit dashboard update")
-	headSHA, err := local.Git("rev-parse", "HEAD")
-	require.NoError(t, err, "failed to resolve feature branch SHA")
-	_, err = local.Git("push", "-u", "origin", branchName)
+	require.Positive(t, webhooksuite.GetRepository(t, helper, repoName).Status.Webhook.LastEvent, "deliveries should record the last event time")
+}
+
+func TestIntegrationProvisioning_WebhookPushWithSyncDisabledIgnored(t *testing.T) {
+	helper := githubHelper(t)
+	repoName := "webhook-sync-disabled"
+	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{})
+	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
+
+	header, body := githubPushEvent("git/"+repoName, "refs/heads/main", [][]string{{"dashboard.json"}})
+	code, job := webhooksuite.DeliverWebhook(t, helper, githubMock, repoName, header, body)
+	require.Equal(t, http.StatusOK, code)
+	require.Nil(t, job, "a push must not queue a sync when sync is disabled")
+}
+
+func TestIntegrationProvisioning_WebhookRepositoryMismatchRejected(t *testing.T) {
+	helper := githubHelper(t)
+	repoName := "webhook-repository-mismatch"
+	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{SyncEnabled: true})
+	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
+
+	header, body := githubPushEvent("git/another-repository", "refs/heads/main", [][]string{{"dashboard.json"}})
+	code, job, err := webhooksuite.TryDeliverWebhook(t, helper, githubMock, repoName, header, body)
+	require.Error(t, err, "an event for another repository must be rejected")
+	require.Equal(t, http.StatusBadRequest, code)
+	require.Nil(t, job)
+}
+
+func TestIntegrationProvisioning_WebhookReplayedDeliveryDropped(t *testing.T) {
+	helper := githubHelper(t)
+	repoName := "webhook-replayed-delivery"
+	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{SyncEnabled: true})
+	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
+	helper.SyncAndWait(t, repoName)
+
+	header, body, job := pushWhenIdle(t, helper, repoName)
+	helper.AwaitJob(t, job)
+
+	code, job := webhooksuite.DeliverWebhook(t, helper, githubMock, repoName, header.Clone(), body)
+	require.Equal(t, http.StatusOK, code, "a replayed delivery must be acknowledged")
+	require.Nil(t, job, "a replayed delivery must not queue a job")
+}
+
+func TestIntegrationProvisioning_PullRequestMissingRefCompletesWithWarning(t *testing.T) {
+	helper := githubHelper(t)
+	repoName := "pr-missing-ref"
+	dashboardPath := "dashboard.json"
+	local := githubMock.CreateRepo(t, helper, repoName, map[string][]byte{
+		dashboardPath: common.DashboardJSON("pr-missing-ref-dash", "PR Missing Ref Dashboard", 1),
+	}, webhooksuite.RepoOptions{})
+	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
+
+	branchName := "feature-pr-missing-ref"
+	sha := webhooksuite.CommitDashboardOnBranch(t, local, branchName, dashboardPath, common.DashboardJSON("pr-missing-ref-dash", "PR Missing Ref Dashboard Updated", 2))
+	_, err := local.Git("push", "-u", "origin", branchName)
 	require.NoError(t, err, "failed to push feature branch")
+	_, err = local.Git("push", "origin", "--delete", branchName)
+	require.NoError(t, err, "failed to delete feature branch")
 
-	prURL := fmt.Sprintf("https://github.example.com/git/%s/pull/123", repoName)
-	payload, err := json.Marshal(map[string]any{
-		"action": "opened",
-		"repository": map[string]any{
-			"full_name": fmt.Sprintf("git/%s", repoName),
-		},
-		"pull_request": map[string]any{
-			"number":   123,
-			"html_url": prURL,
-			"base": map[string]any{
-				"ref": "main",
-			},
-			"head": map[string]any{
-				"ref": branchName,
-				"sha": strings.TrimSpace(headSHA),
-			},
-		},
-	})
-	require.NoError(t, err, "failed to marshal pull request payload")
+	header, body := githubMock.Event(repoName, webhooksuite.Event{Kind: webhooksuite.PullRequestEvent, Number: 126, Branch: branchName, SHA: sha})
+	completed := helper.AwaitJob(t, webhooksuite.PostWebhook(t, helper, githubMock, repoName, header, body))
 
-	// Sign with the webhook secret Grafana persisted for this repository,
-	// because the webhook handler validates against that decrypted value.
-	obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-	require.NoError(t, err, "failed to read repository")
-	repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-	secretName := repo.Secure.WebhookSecret.Name
-	require.NotEmpty(t, secretName, "webhook secret should be stored")
-
-	decrypted, err := helper.GetEnv().DecryptService.Decrypt(t.Context(), provisioning.GROUP, repo.Namespace, secretName)
-	require.NoError(t, err, "failed to decrypt webhook secret")
-	require.Len(t, decrypted, 1)
-	result, ok := decrypted[secretName]
-	require.True(t, ok, "decrypted webhook secret should be returned")
-	require.NoError(t, result.Error(), "webhook secret decrypt result should not contain an error")
-	value := result.Value()
-	require.NotNil(t, value, "webhook secret value should be present")
-
-	mac := hmac.New(sha256.New, []byte(value.DangerouslyExposeAndConsumeValue()))
-	_, _ = mac.Write(payload)
-	signature := "sha256=" + hex.EncodeToString(mac.Sum(nil))
-
-	// Post the signed PR event and wait for the queued worker before reading
-	// the captured comment.
-	code := 0
-	webhookResult := helper.AdminREST.Post().
-		Namespace(helper.Namespace).
-		Resource("repositories").
-		Name(repoName).
-		SubResource("webhook").
-		Body(payload).
-		SetHeader("Content-Type", "application/json").
-		SetHeader(github.EventTypeHeader, "pull_request").
-		SetHeader(github.DeliveryIDHeader, fmt.Sprintf("%s-delivery", repoName)).
-		SetHeader(github.SHA256SignatureHeader, signature).
-		Do(t.Context()).
-		StatusCode(&code)
-
-	require.NoError(t, webhookResult.Error(), "webhook should accept pull request payload")
-	require.Equal(t, http.StatusAccepted, code, "webhook should queue a pull request job")
-
-	jobObj, err := webhookResult.Get()
-	require.NoError(t, err, "webhook response should include the queued job")
-	job, ok := jobObj.(*unstructured.Unstructured)
-	require.True(t, ok, "webhook response should be an unstructured job, got %T", jobObj)
-	helper.AwaitJobSuccess(t, job)
-
-	commentsMu.Lock()
-	capturedComments := append([]string(nil), comments...)
-	commentsMu.Unlock()
-	require.Len(t, capturedComments, 1, "expected one pull request comment")
-
-	comment := capturedComments[0]
-	require.Contains(t, comment, "Grafana detected dashboard changes in this pull request")
-	require.Contains(t, comment, dashboardPath)
-
-	// Verify the dashboard and preview links the PR worker posted are
-	// well-formed and carry the context needed by the reviewer UI.
-	originalMarker := "[view current]("
-	originalStart := strings.Index(comment, originalMarker)
-	require.NotEqualf(t, -1, originalStart, "comment should contain original link:\n%s", comment)
-	originalRemainder := comment[originalStart+len(originalMarker):]
-	originalEnd := strings.Index(originalRemainder, ")")
-	require.NotEqualf(t, -1, originalEnd, "comment should close original link:\n%s", comment)
-	originalURL, err := url.Parse(originalRemainder[:originalEnd])
-	require.NoError(t, err, "comment should contain a valid original URL")
-	require.Equal(t, "/d/gh-pr-comment-dash/github-pr-comment-dashboard-updated", originalURL.Path)
-
-	previewMarker := "[preview changes]("
-	previewStart := strings.Index(comment, previewMarker)
-	require.NotEqualf(t, -1, previewStart, "comment should contain preview link:\n%s", comment)
-	previewRemainder := comment[previewStart+len(previewMarker):]
-	previewEnd := strings.Index(previewRemainder, ")")
-	require.NotEqualf(t, -1, previewEnd, "comment should close preview link:\n%s", comment)
-	previewURL, err := url.Parse(previewRemainder[:previewEnd])
-	require.NoError(t, err, "comment should contain a valid preview URL")
-	require.Equal(t, fmt.Sprintf("/admin/provisioning/%s/dashboard/preview/%s", repoName, dashboardPath), previewURL.Path)
-	require.Equal(t, branchName, previewURL.Query().Get("ref"))
-	require.Equal(t, url.QueryEscape(prURL), previewURL.Query().Get("pull_request_url"))
-	require.Contains(t, previewURL.RawQuery, "pull_request_url="+url.QueryEscape(url.QueryEscape(prURL)))
-}
-
-func TestIntegrationProvisioning_GithubRepoWebhookRecreatedWhenMissing(t *testing.T) {
-	helper := sharedGitHelper(t)
-
-	const repoName = "github-webhook-restart"
-	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
-
-	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(789, webhookURL)...)
-	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
-
-	helper.CreateGithubRepo(t, repoName, map[string][]byte{
-		"dashboard.json": common.DashboardJSON("restart-dash", "Restart Dashboard", 1),
-	}, webhookBaseURL, "write")
-
-	waitForWebhook(t, helper, repoName, 789)
-
-	// Clear Status.Webhook to simulate restart / state loss. Retry to absorb a
-	// concurrent reconcile that rotates secure.webhookSecret between the
-	// apistore's optimistic read and the resource server's re-read — the stale
-	// secure name makes the server reject this status patch with
-	// "secure value not found" even though the patch itself doesn't touch secure.
-	patch := []byte(`{"status":{"webhook":null}}`)
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		_, err := helper.Repositories.Resource.Patch(t.Context(), repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
-		assert.NoError(collect, err)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "clear webhook status")
-
-	// Trigger reconciliation by updating the spec.
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		latest, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-		if !assert.NoError(collect, err) {
-			return
-		}
-		updated := latest.DeepCopy()
-		updated.Object["spec"].(map[string]any)["title"] = "Restart Dashboard (updated)"
-		_, err = helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
-		assert.NoError(collect, err)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "spec update should succeed")
-
-	// Webhook should be re-created by the controller.
-	waitForWebhook(t, helper, repoName, 789)
-}
-
-func TestIntegrationProvisioning_WebhookLastRotatedSetOnCreation(t *testing.T) {
-	helper := sharedGitHelper(t)
-
-	const repoName = "github-last-rotated"
-	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
-
-	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(100, webhookURL)...)
-	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
-
-	helper.CreateGithubRepo(t, repoName, map[string][]byte{
-		"dashboard.json": common.DashboardJSON("rotated-dash", "Rotated Dashboard", 1),
-	}, webhookBaseURL, "write")
-
-	// Wait for webhook, then check LastRotated.
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-		if !assert.NoError(collect, err) {
-			return
-		}
-		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-		if !assert.NotNil(collect, repo.Status.Webhook) {
-			return
-		}
-		assert.Greater(collect, repo.Status.Webhook.LastRotated, int64(0), "LastRotated should be set on creation")
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "webhook with LastRotated should be created")
-}
-
-func TestIntegrationProvisioning_WebhookSecretRotatedWhenExpired(t *testing.T) {
-	helper := sharedGitHelper(t)
-
-	const repoName = "github-rotation-test"
-	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
-
-	// Mock: health check + webhook create/list/get-by-id + webhook edit for rotation.
-	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(200, webhookURL)...)
-	mockOpts = append(mockOpts,
-		ghmock.WithRequestMatchHandler(
-			ghmock.PatchReposHooksByOwnerByRepoByHookId,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(&github.Hook{
-					ID:     github.Ptr(int64(200)),
-					Events: []string{"pull_request", "push"},
-					Config: &github.HookConfig{URL: github.Ptr(webhookURL)},
-				})
-			}),
-		),
-	)
-	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
-
-	helper.CreateGithubRepo(t, repoName, map[string][]byte{
-		"dashboard.json": common.DashboardJSON("rotation-dash", "Rotation Dashboard", 1),
-	}, webhookBaseURL, "write")
-
-	waitForWebhook(t, helper, repoName, 200)
-
-	// Patch LastRotated to a past value to simulate expired rotation. Retry to
-	// absorb a concurrent reconcile that rotates secure.webhookSecret between
-	// the apistore's optimistic read and the resource server's re-read — the
-	// stale secure name makes the server reject this status patch with
-	// "secure value not found" even though the patch itself doesn't touch secure.
-	expiredTimestamp := int64(1)
-	patch := fmt.Appendf(nil, `{"status":{"webhook":{"id":200,"url":"https://grafana.example.com/hook","subscribedEvents":["pull_request","push"],"lastRotated":%d}}}`, expiredTimestamp)
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		_, err := helper.Repositories.Resource.Patch(t.Context(), repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
-		assert.NoError(collect, err)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "expire LastRotated")
-
-	// Trigger reconciliation.
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		latest, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-		if !assert.NoError(collect, err) {
-			return
-		}
-		updated := latest.DeepCopy()
-		updated.Object["spec"].(map[string]any)["title"] = "Rotation Dashboard (updated)"
-		_, err = helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
-		assert.NoError(collect, err)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "spec update should succeed")
-
-	// Wait for rotation — LastRotated should be updated.
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-		if !assert.NoError(collect, err) {
-			return
-		}
-		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-		if !assert.NotNil(collect, repo.Status.Webhook) {
-			return
-		}
-		assert.Greater(collect, repo.Status.Webhook.LastRotated, expiredTimestamp, "LastRotated should be updated after rotation")
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "webhook secret should be rotated when expired")
+	require.Equal(t, string(provisioning.JobStateWarning), common.MustNestedString(completed.Object, "status", "state"))
+	require.Equal(t, fmt.Sprintf("pull request ref %q no longer exists; preview skipped", branchName), common.MustNestedString(completed.Object, "status", "message"))
+	require.Empty(t, common.MustNestedStringSlice(completed.Object, "status", "errors"))
+	require.Empty(t, githubMock.State(repoName).Comments, "missing-ref preview should not post a pull request comment")
 }

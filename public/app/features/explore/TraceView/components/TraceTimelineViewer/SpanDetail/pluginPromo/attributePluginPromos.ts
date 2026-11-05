@@ -8,6 +8,7 @@ import { useAppPluginMetas } from '@grafana/runtime/internal';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import {
+  isCloudProviderAttribute,
   isDatabaseAttribute,
   isFrontendObservabilityAttribute,
   isKnowledgeGraphAttribute,
@@ -29,7 +30,7 @@ export const MAX_ATTRIBUTE_PLUGIN_PROMOS = 3;
 /**
  * Promos shown on attribute values when the related app plugin is not installed,
  * or is installed but not activated (enabled).
- * Add new entries here as other apps (Knowledge Graph, App O11y, etc.) adopt this pattern.
+ * Add new entries here as other apps (Knowledge Graph, App O11y, Cloud Provider, etc.) adopt this pattern.
  * Cloud-only: never shown on on-prem OSS or Enterprise (`isOnPrem()`).
  */
 export function getAttributePluginPromos(): AttributePluginPromo[] {
@@ -87,6 +88,16 @@ export function getAttributePluginPromos(): AttributePluginPromo[] {
         'Kubernetes Monitoring turns trace attributes into navigation to clusters, namespaces, workloads, and pods — with metrics and health context in one place.'
       ),
       match: isKubernetesAttribute,
+    },
+    {
+      pluginId: 'grafana-csp-app',
+      icon: 'cloud-provider',
+      title: t('explore.trace-view.cloud-provider-promo.title', 'Investigate your cloud services'),
+      body: t(
+        'explore.trace-view.cloud-provider-promo.body',
+        'Cloud Provider Observability maps AWS, Azure, and GCP trace attributes to cloud services, regions, and resources — so you can go from a span to infrastructure health in one place.'
+      ),
+      match: isCloudProviderAttribute,
     },
   ];
 }

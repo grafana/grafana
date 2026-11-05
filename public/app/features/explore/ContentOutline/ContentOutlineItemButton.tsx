@@ -157,7 +157,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string) => {
       alignItems: 'center',
       justifyContent: 'center',
       width: theme.spacing(3),
-      height: theme.spacing(4),
+      height: theme.spacing(3),
       borderRadius: theme.shape.radius.default,
       color: theme.colors.text.secondary,
       background: 'transparent',

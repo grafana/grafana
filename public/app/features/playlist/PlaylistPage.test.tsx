@@ -153,9 +153,9 @@ describe('PlaylistPage', () => {
           setup();
           expect(await screen.findByText('A test playlist'));
           expect(await screen.findByRole('link', { name: /New playlist/i })).toBeInTheDocument();
-          expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
-          expect(await screen.findByRole('link', { name: /Edit playlist/i })).toBeInTheDocument();
-          expect(await screen.findByRole('button', { name: /Delete playlist/i })).toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Start/i })).toBeInTheDocument();
+          expect(await screen.findByRole('link', { name: /Edit/i })).toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Delete/i })).toBeInTheDocument();
         });
       });
 
@@ -166,9 +166,9 @@ describe('PlaylistPage', () => {
           setup();
           expect(await screen.findByText('A test playlist')).toBeInTheDocument();
           expect(screen.queryByRole('link', { name: /New playlist/i })).not.toBeInTheDocument();
-          expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
-          expect(screen.queryByRole('link', { name: /Edit playlist/i })).not.toBeInTheDocument();
-          expect(screen.queryByRole('button', { name: /Delete playlist/i })).not.toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Start/i })).toBeInTheDocument();
+          expect(screen.queryByRole('link', { name: /Edit/i })).not.toBeInTheDocument();
+          expect(screen.queryByRole('button', { name: /Delete/i })).not.toBeInTheDocument();
         });
       });
     });
@@ -181,9 +181,9 @@ describe('PlaylistPage', () => {
           setup();
           expect(await screen.findByText('A test playlist'));
           expect(await screen.findByRole('link', { name: /New playlist/i })).toBeInTheDocument();
-          expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
-          expect(await screen.findByRole('link', { name: /Edit playlist/i })).toBeInTheDocument();
-          expect(await screen.findByRole('button', { name: /Delete playlist/i })).toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Start/i })).toBeInTheDocument();
+          expect(await screen.findByRole('link', { name: /Edit/i })).toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Delete/i })).toBeInTheDocument();
         });
       });
 
@@ -192,9 +192,9 @@ describe('PlaylistPage', () => {
           setup();
           expect(await screen.findByText('A test playlist')).toBeInTheDocument();
           expect(screen.queryByRole('link', { name: /New playlist/i })).not.toBeInTheDocument();
-          expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
-          expect(screen.queryByRole('link', { name: /Edit playlist/i })).not.toBeInTheDocument();
-          expect(screen.queryByRole('button', { name: /Delete playlist/i })).not.toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: /Start/i })).toBeInTheDocument();
+          expect(screen.queryByRole('link', { name: /Edit/i })).not.toBeInTheDocument();
+          expect(screen.queryByRole('button', { name: /Delete/i })).not.toBeInTheDocument();
         });
       });
     });

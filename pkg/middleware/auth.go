@@ -49,8 +49,7 @@ func notAuthorized(c *contextmodel.ReqContext) {
 		writeRedirectCookie(c)
 	}
 
-	var tokenRotationErr authn.TokenNeedsRotationError
-	if errors.As(c.LookupTokenErr, &tokenRotationErr) {
+	if _, ok := errors.AsType[authn.TokenNeedsRotationError](c.LookupTokenErr); ok {
 		if !c.UseSessionStorageRedirect {
 			c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
 			return
@@ -211,8 +210,7 @@ func Auth(options *AuthOptions) web.Handler {
 		requireLogin := !c.AllowAnonymous || forceLogin || options.ReqNoAnonynmous
 
 		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
-			var revokedErr *auth.TokenRevokedError
-			if errors.As(c.LookupTokenErr, &revokedErr) {
+			if revokedErr, ok := errors.AsType[*auth.TokenRevokedError](c.LookupTokenErr); ok {
 				tokenRevoked(c, revokedErr)
 				return
 			}

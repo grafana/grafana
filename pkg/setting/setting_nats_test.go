@@ -2,6 +2,7 @@ package setting
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -25,6 +26,82 @@ func TestReadNATSSettings(t *testing.T) {
 		require.Empty(t, cfg.NATS.ClientURLs)
 		require.False(t, cfg.NATS.TLS.Enabled)
 		require.Equal(t, NATSAuthModeNone, cfg.NATS.Auth.Mode)
+		require.False(t, cfg.NATS.Notifier)
+		require.Zero(t, cfg.NATS.NotifierWatchMaxAge)
+		require.False(t, cfg.NATS.ClientListen)
+		require.Equal(t, "127.0.0.1", cfg.NATS.ClientListenAddress)
+		require.False(t, cfg.NATS.ClusterTLS.Enabled())
+	})
+
+	t.Run("parses client listen and cluster tls", func(t *testing.T) {
+		cfg := NewCfg()
+		f, err := ini.Load([]byte(`
+[nats]
+enabled = true
+client_listen = true
+client_listen_address = 10.0.0.7
+cluster_tls_cert_path = /etc/nats/tls.crt
+cluster_tls_key_path = /etc/nats/tls.key
+cluster_tls_ca_path = /etc/nats/ca.crt
+`))
+		require.NoError(t, err)
+		cfg.Raw = f
+
+		require.NoError(t, readNATSSettings(cfg))
+
+		require.True(t, cfg.NATS.ClientListen)
+		require.Equal(t, "10.0.0.7", cfg.NATS.ClientListenAddress)
+		require.True(t, cfg.NATS.ClusterTLS.Enabled())
+		require.Equal(t, NATSClusterTLSSettings{
+			CertPath: "/etc/nats/tls.crt",
+			KeyPath:  "/etc/nats/tls.key",
+			CAPath:   "/etc/nats/ca.crt",
+		}, cfg.NATS.ClusterTLS)
+	})
+
+	t.Run("rejects a partial cluster tls configuration", func(t *testing.T) {
+		cases := map[string]string{
+			"cert only":    "cluster_tls_cert_path = /c\n",
+			"cert and key": "cluster_tls_cert_path = /c\ncluster_tls_key_path = /k\n",
+			"ca only":      "cluster_tls_ca_path = /ca\n",
+			"key and ca":   "cluster_tls_key_path = /k\ncluster_tls_ca_path = /ca\n",
+		}
+		for name, keys := range cases {
+			t.Run(name, func(t *testing.T) {
+				cfg := NewCfg()
+				f, err := ini.Load([]byte("[nats]\nenabled = true\n" + keys))
+				require.NoError(t, err)
+				cfg.Raw = f
+
+				require.ErrorContains(t, readNATSSettings(cfg), "cluster tls requires")
+			})
+		}
+	})
+
+	t.Run("ignores cluster tls outside an enabled embedded server", func(t *testing.T) {
+		for _, raw := range []string{
+			"[nats]\nenabled = false\ncluster_tls_cert_path = /c\n",
+			"[nats]\nenabled = true\nmode = external\nclient_urls = nats://a:4222\ncluster_tls_cert_path = /c\n",
+		} {
+			cfg := NewCfg()
+			f, err := ini.Load([]byte(raw))
+			require.NoError(t, err)
+			cfg.Raw = f
+
+			require.NoError(t, readNATSSettings(cfg))
+		}
+	})
+
+	t.Run("parses notifier watch max age", func(t *testing.T) {
+		cfg := NewCfg()
+		f, err := ini.Load([]byte("[nats]\nnotifier = true\nnotifier_watch_max_age = 5m\n"))
+		require.NoError(t, err)
+		cfg.Raw = f
+
+		require.NoError(t, readNATSSettings(cfg))
+
+		require.True(t, cfg.NATS.Notifier)
+		require.Equal(t, 5*time.Minute, cfg.NATS.NotifierWatchMaxAge)
 	})
 
 	t.Run("parses overrides", func(t *testing.T) {

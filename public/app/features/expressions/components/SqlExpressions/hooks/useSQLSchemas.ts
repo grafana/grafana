@@ -3,8 +3,7 @@ import { useDeepCompareEffect } from 'react-use';
 
 import { getAPINamespace } from '@grafana/api-clients';
 import { type AdHocVariableFilter, getDefaultTimeRange, type ScopedVars, type TimeRange } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { config, getBackendSrv, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 

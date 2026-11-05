@@ -45,6 +45,20 @@ func TestAPI_Annotations(t *testing.T) {
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
 		},
 		{
+			desc:         "should be able to fetch annotations by alert UID",
+			path:         "/api/annotations?alertUID=rule-uid",
+			method:       http.MethodGet,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
+		},
+		{
+			desc:         "should reject the orphaned alert rule sentinel as an alert UID",
+			path:         "/api/annotations?alertUID=" + annotations.AlertUIDRuleNotFound,
+			method:       http.MethodGet,
+			expectedCode: http.StatusBadRequest,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
+		},
+		{
 			desc:         "should not be able to fetch annotations without correct permission",
 			path:         "/api/annotations",
 			method:       http.MethodGet,
@@ -328,14 +342,14 @@ func TestAPI_Annotations(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				repo := annotationstest.NewFakeAnnotationsRepo()
-				_ = repo.Save(context.Background(), &annotations.Item{ID: 1, DashboardID: 0, DashboardUID: ""})
-				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1, DashboardUID: "dashuid1"})
+				_ = repo.Save(context.Background(), &annotations.Item{ID: 1, DashboardID: 0, DashboardUID: ""})         //nolint:staticcheck // Exercise legacy field compatibility.
+				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1, DashboardUID: "dashuid1"}) //nolint:staticcheck // Exercise legacy field compatibility.
 				hs.annotationsRepo = repo
 				hs.Features = featuremgmt.WithFeatures()
 				dashService := &dashboards.FakeDashboardService{}
-				dashService.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: dashUID, FolderUID: folderUID, FolderID: 1}, nil)
+				dashService.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: dashUID, FolderUID: folderUID, FolderID: 1}, nil) //nolint:staticcheck // Exercise legacy field compatibility.
 				folderService := &foldertest.FakeService{}
-				folderService.ExpectedFolder = &folder.Folder{UID: folderUID, ID: 1}
+				folderService.ExpectedFolder = &folder.Folder{UID: folderUID, ID: 1} //nolint:staticcheck // Exercise legacy field compatibility.
 				hs.DashboardService = dashService
 				hs.folderService = folderService
 				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
@@ -417,8 +431,8 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 	dashSvc.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{UID: rootDash.UID, OrgID: 1}).Return(rootDash, nil)
 	dashSvc.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{UID: folderDash.UID, OrgID: 1}).Return(folderDash, nil)
 
-	rootDashboardAnnotation := annotations.Item{ID: 1, DashboardID: rootDash.ID, DashboardUID: rootDash.UID}
-	folderDashboardAnnotation := annotations.Item{ID: 3, DashboardID: folderDash.ID, DashboardUID: folderDash.UID}
+	rootDashboardAnnotation := annotations.Item{ID: 1, DashboardID: rootDash.ID, DashboardUID: rootDash.UID}       //nolint:staticcheck // Exercise legacy field compatibility.
+	folderDashboardAnnotation := annotations.Item{ID: 3, DashboardID: folderDash.ID, DashboardUID: folderDash.UID} //nolint:staticcheck // Exercise legacy field compatibility.
 	organizationAnnotation := annotations.Item{ID: 2}
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()

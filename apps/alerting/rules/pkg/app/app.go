@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/recordingrule"
@@ -33,10 +34,20 @@ func New(cfg app.Config) (app.App, error) {
 				return nil, err
 			}
 			managedKind := simple.AppManagedKind{
-				Kind:      kind,
-				Validator: validator,
-				Mutator:   buildKindMutator(kind, runtimeCfg),
-				Watcher:   buildKindWatcher(kind, runtimeCfg),
+				Kind:    kind,
+				Watcher: buildKindWatcher(kind, runtimeCfg),
+			}
+			// Assign the validator/mutator only when non-nil: these builders return
+			// concrete pointer types, so assigning a nil result straight into the
+			// KindValidator/KindMutator interface fields would yield a non-nil
+			// interface holding a nil pointer. ValidateManifest would then reject a
+			// validation-only kind (e.g. Config, which has no mutator) as "has a
+			// mutator" and fail app init.
+			if validator != nil {
+				managedKind.Validator = validator
+			}
+			if mutator := buildKindMutator(kind, runtimeCfg); mutator != nil {
+				managedKind.Mutator = mutator
 			}
 			// Only kinds with a watcher run an informer (RuleSequence), so this
 			// scopes that watch to WatchNamespace; empty means all namespaces.
@@ -47,9 +58,15 @@ func New(cfg app.Config) (app.App, error) {
 		}
 	}
 
+	converter := ruleConverter{}
 	c := simple.AppConfig{
 		Name:       "alerting.rules",
 		KubeConfig: cfg.KubeConfig,
+		Converters: map[schema.GroupKind]simple.Converter{
+			v1beta1.AlertRuleKind().GroupVersionKind().GroupKind():     converter,
+			v1beta1.RecordingRuleKind().GroupVersionKind().GroupKind(): converter,
+			v1beta1.RuleSequenceKind().GroupVersionKind().GroupKind():  converter,
+		},
 		InformerConfig: simple.AppInformerConfig{
 			InformerOptions: operator.InformerOptions{
 				ErrorHandler: func(ctx context.Context, err error) {
@@ -74,40 +91,61 @@ func New(cfg app.Config) (app.App, error) {
 	return a, nil
 }
 
-// buildSearchRoutes wires the rule search handler (provided by the registry) to
-// its namespaced POST /searchRules custom route. The route is skipped when the
-// handler is unset so manifest validation without a backing instance does not
-// register a nil handler. The path must match search.RouteResource, which the
-// apiserver authorizer matches on.
+// The rule search routes. The apiserver parses each as a request on a resource
+// with this name, which the rules authorizer relies on to require list on the
+// rule kind it searches.
+const (
+	SearchAlertRulesResource     = "searchAlertRules"
+	SearchRecordingRulesResource = "searchRecordingRules"
+)
+
+// buildSearchRoutes wires the per-kind rule search handlers
+// (provided by the registry) to their namespaced routes. A route
+// is skipped when its handler is unset, so manifest validation without a
+// backing instance does not register a nil handler.
 func buildSearchRoutes(cfg config.RuntimeConfig) map[string]simple.AppVersionRouteHandlers {
-	if cfg.SearchRulesHandler == nil {
-		return nil
+	handlers := simple.AppVersionRouteHandlers{}
+	for path, handler := range map[string]simple.AppCustomRouteHandler{
+		"/" + SearchAlertRulesResource:     cfg.SearchAlertRulesHandler,
+		"/" + SearchRecordingRulesResource: cfg.SearchRecordingRulesHandler,
+	} {
+		if handler == nil {
+			continue
+		}
+		handlers[simple.AppVersionRoute{Namespaced: true, Path: path, Method: simple.AppCustomRouteMethodPost}] = handler
 	}
-	handlers := simple.AppVersionRouteHandlers{
-		simple.AppVersionRoute{Namespaced: true, Path: "/searchRules", Method: simple.AppCustomRouteMethodPost}: cfg.SearchRulesHandler,
+	if len(handlers) == 0 {
+		return nil
 	}
 	return map[string]simple.AppVersionRouteHandlers{"v0alpha1": handlers}
 }
 
+// buildKindValidator types admission on the hub version, converting objects the
+// apiserver hands over in the request version. The object is checked against
+// the hub version's schema for the same reason.
 func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, md app.ManifestData) (*simple.Validator, error) {
-	gk := schema.GroupKind{Group: kind.Group(), Kind: kind.Kind()}
 	switch kind.Kind() {
 	case "AlertRule":
-		return validation.NewBuilder[*v0alpha1.AlertRule]().
-			WithOpenAPIValidation(md, gk).
+		return validation.NewBuilder[*v1beta1.AlertRule]().
+			WithOpenAPIValidation(md, v1beta1.AlertRuleKind().GroupVersionKind()).
 			OnWrite(alertrule.ValidateWrite(cfg)).
 			OnDelete(alertrule.ValidateDelete(cfg)).
 			Build()
 	case "RecordingRule":
-		return validation.NewBuilder[*v0alpha1.RecordingRule]().
-			WithOpenAPIValidation(md, gk).
+		return validation.NewBuilder[*v1beta1.RecordingRule]().
+			WithOpenAPIValidation(md, v1beta1.RecordingRuleKind().GroupVersionKind()).
 			OnWrite(recordingrule.ValidateWrite(cfg)).
 			OnDelete(recordingrule.ValidateDelete(cfg)).
 			Build()
 	case "RuleSequence":
-		return validation.NewBuilder[*v0alpha1.RuleSequence]().
-			WithOpenAPIValidation(md, gk).
+		return validation.NewBuilder[*v1beta1.RuleSequence]().
+			WithOpenAPIValidation(md, v1beta1.RuleSequenceKind().GroupVersionKind()).
 			OnWrite(rulesequence.ValidateWrite(cfg)).
+			Build()
+	case "Config":
+		return validation.NewBuilder[*v0alpha1.Config]().
+			WithOpenAPIValidation(md, v0alpha1.ConfigKind().GroupVersionKind()).
+			OnWrite(config.ValidateConfigWrite(cfg)).
 			Build()
 	}
 	return nil, nil
@@ -125,7 +163,12 @@ func buildKindMutator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Muta
 	return nil
 }
 
+// One informer is enough, on the version the index is typed for: every served
+// version lists the same objects.
 func buildKindWatcher(kind resource.Kind, cfg config.RuntimeConfig) operator.ResourceWatcher {
+	if kind.Version() != v1beta1.APIVersion {
+		return nil
+	}
 	switch kind.Kind() {
 	case "RuleSequence":
 		if idx, ok := cfg.MembershipResolver.(*rulesequence.MembershipIndex); ok {

@@ -164,4 +164,95 @@ describe('mapInternalLinkToExplore', () => {
 
     expect(link.interpolatedParams?.timeRange).toEqual(TIME_RANGE);
   });
+
+  it('calls onClickFn with the original interpolated query', () => {
+    const onClickFn = jest.fn();
+    const dataLink = {
+      url: '',
+      title: '',
+      internal: {
+        datasourceUid: 'uid',
+        datasourceName: 'dsName',
+        query: { query: '12344' },
+      },
+    };
+
+    const link = mapInternalLinkToExplore({
+      link: dataLink,
+      internalLink: dataLink.internal,
+      scopedVars: {},
+      range: TIME_RANGE,
+      field: {
+        name: 'test',
+        type: FieldType.number,
+        config: {},
+        values: [2],
+      },
+      replaceVariables: (val) => val,
+      onClickFn,
+    });
+
+    const event = { preventDefault: jest.fn() };
+    link.onClick?.(event);
+
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(onClickFn).toHaveBeenCalledWith({
+      datasourceUid: 'uid',
+      queries: [
+        {
+          query: '12344',
+          datasource: { uid: 'uid' },
+        },
+      ],
+      panelsState: undefined,
+      correlationHelperData: undefined,
+      range: TIME_RANGE,
+    });
+  });
+
+  it('reads query and datasource from interpolatedParams at click time after they are rewritten', () => {
+    const onClickFn = jest.fn();
+    const dataLink = {
+      url: '',
+      title: '',
+      internal: {
+        datasourceUid: 'uid',
+        datasourceName: 'dsName',
+        query: { query: '12344' },
+      },
+    };
+
+    const link = mapInternalLinkToExplore({
+      link: dataLink,
+      internalLink: dataLink.internal,
+      scopedVars: {},
+      field: {
+        name: 'test',
+        type: FieldType.number,
+        config: {},
+        values: [2],
+      },
+      replaceVariables: (val) => val,
+      onClickFn,
+    });
+
+    const rewrittenQuery = {
+      refId: 'test',
+      query: '{job="api"}',
+      datasource: { uid: 'loki-uid', type: 'loki' },
+    };
+    if (link.interpolatedParams) {
+      link.interpolatedParams.query = rewrittenQuery;
+    }
+
+    link.onClick?.({ preventDefault: jest.fn() });
+
+    expect(onClickFn).toHaveBeenCalledWith({
+      datasourceUid: 'loki-uid',
+      queries: [rewrittenQuery],
+      panelsState: undefined,
+      correlationHelperData: undefined,
+      range: undefined,
+    });
+  });
 });

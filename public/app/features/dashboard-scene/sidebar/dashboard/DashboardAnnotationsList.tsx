@@ -1,22 +1,23 @@
 import { css } from '@emotion/css';
-import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { type SceneDataLayerProvider } from '@grafana/scenes';
 import { useStyles2, useTheme2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
 
 import { edit } from '../../actions/utils/edit';
-import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
+import { type DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { AnnotationEditableElement } from '../../settings/annotations/AnnotationEditableElement';
+import { partitionAnnotationsByDisplay } from '../../settings/annotations/partitionAnnotations';
 import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
 
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
-import { partitionSceneObjects, selectSidebarObject, toDraggableListItemActions } from './helpers';
+import { selectSidebarObject, toDraggableListItemActions } from './helpers';
 
 const ID_VISIBLE_LIST = 'annotations-list-visible';
 const ID_CONTROLS_MENU_LIST = 'annotations-list-controls-menu';
@@ -28,11 +29,20 @@ const DROPPABLE_TO_PLACEMENT: Record<string, { isHidden: boolean; placement?: 'i
   [ID_HIDDEN_LIST]: { isHidden: true, placement: undefined },
 };
 
-export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
+export function DashboardAnnotationsList({
+  dataLayerSet,
+  visibleTitle,
+  hideControlsMenuList = false,
+}: {
+  dataLayerSet: DashboardDataLayerSet;
+  visibleTitle?: string;
+  hideControlsMenuList?: boolean;
+}) {
+  const { DragDropContext } = useDragAndDrop();
   const { annotationLayers } = dataLayerSet.useState();
   const { visible, controlsMenu, hidden } = useMemo(
-    () => partitionAnnotationsByDisplay(annotationLayers),
-    [annotationLayers]
+    () => partitionAnnotationsByDisplay(annotationLayers, { hasControlsMenu: !hideControlsMenuList }),
+    [annotationLayers, hideControlsMenuList]
   );
 
   const annotationActions = toDraggableListItemActions<DashboardAnnotationsDataLayer>(
@@ -80,6 +90,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
       };
 
       edit({
+        meta: { actionId: 'annotation.reorder' },
         source: dataLayerSet,
         description: t('dashboard.sidebar.annotations.reorder-description', 'Reorder annotations list'),
         perform: () => {
@@ -103,17 +114,19 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
         <DraggableList
           items={visible}
           droppableId={ID_VISIBLE_LIST}
-          title={t('dashboard.sidebar.annotations.title-above-dashboard', 'Above dashboard')}
+          title={visibleTitle ?? t('dashboard.sidebar.annotations.title-above-dashboard', 'Above dashboard')}
           renderItemLabel={renderItemLabel}
           {...annotationActions}
         />
-        <DraggableList
-          items={controlsMenu}
-          droppableId={ID_CONTROLS_MENU_LIST}
-          title={t('dashboard.sidebar.annotations.title-controls-menu', 'Controls menu')}
-          renderItemLabel={renderItemLabel}
-          {...annotationActions}
-        />
+        {!hideControlsMenuList && (
+          <DraggableList
+            items={controlsMenu}
+            droppableId={ID_CONTROLS_MENU_LIST}
+            title={t('dashboard.sidebar.annotations.title-controls-menu', 'Controls menu')}
+            renderItemLabel={renderItemLabel}
+            {...annotationActions}
+          />
+        )}
         <DraggableList
           items={hidden}
           droppableId={ID_HIDDEN_LIST}
@@ -186,26 +199,6 @@ export function AddAnnotationButton({ dataLayerSet }: { dataLayerSet: DashboardD
       dataTestId={selectors.components.PanelEditor.ElementEditPane.addAnnotationButton}
     />
   );
-}
-
-export function partitionAnnotationsByDisplay(annotationLayers: SceneDataLayerProvider[]) {
-  const {
-    visible = [],
-    controlsMenu = [],
-    hidden = [],
-  } = partitionSceneObjects(
-    annotationLayers.filter((a) => a instanceof DashboardAnnotationsDataLayer),
-    (a) => {
-      if (a.state.isHidden) {
-        return 'hidden';
-      }
-      if (a.state.placement === 'inControlsMenu') {
-        return 'controlsMenu';
-      }
-      return 'visible';
-    }
-  );
-  return { visible, controlsMenu, hidden };
 }
 
 function getStyles(theme: GrafanaTheme2) {

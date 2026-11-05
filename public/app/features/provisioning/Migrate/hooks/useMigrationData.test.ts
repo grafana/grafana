@@ -135,6 +135,39 @@ describe('useMigrationData (folder-scoped kinds)', () => {
     expect(result.current.data.find((f) => f.uid === 'a')?.path).toEqual(['b']);
   });
 
+  it('returns resource-less ancestors as containers, outside the selectable rows', async () => {
+    // Only `frank` holds dashboards. `users` above it is returned as a container
+    // so the tree can nest it, but it must not become a selectable row.
+    mockSearch([folder('users'), folder('frank', 'users'), dashboard('d1', 'frank')]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.map((f) => f.uid)).toEqual(['frank']);
+    expect(result.current.data[0].parentUid).toBe('users');
+    expect(result.current.containers).toEqual([
+      expect.objectContaining({ uid: 'users', parentUid: undefined, resourceCount: 0, directResources: [] }),
+    ]);
+  });
+
+  it('does not duplicate an ancestor that is already a row', async () => {
+    mockSearch([folder('parent'), folder('child', 'parent'), dashboard('d1', 'parent'), dashboard('d2', 'child')]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.containers).toEqual([]);
+  });
+
+  it('terminates when building containers over a cyclic parent reference', async () => {
+    mockSearch([folder('a', 'b'), folder('b', 'a'), dashboard('d1', 'a')]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.containers.map((f) => f.uid)).toEqual(['b']);
+  });
+
   it('rolls root-level dashboards into a synthetic General row and excludes managed ones', async () => {
     mockSearch([
       folder('a'),

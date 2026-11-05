@@ -254,7 +254,7 @@ func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) respon
 		Kind:             c.QueryInt("kind"),
 		TypeFilter:       c.Query("typeFilter"),
 		ExcludeUID:       c.Query("excludeUid"),
-		FolderFilter:     c.Query("folderFilter"),
+		FolderFilter:     c.Query("folderFilter"), //nolint:staticcheck // Preserve legacy field compatibility.
 		FolderFilterUIDs: c.Query("folderFilterUIDs"),
 	}
 
@@ -406,7 +406,7 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 		connectionID := int64(hash.Sum64() & ((1 << 52) - 1))
 
 		connections = append(connections, model.LibraryElementConnectionDTO{
-			ID:            connectionID,
+			ID:            connectionID, //nolint:staticcheck // Preserve legacy field compatibility.
 			Kind:          int64(model.PanelElement),
 			ElementID:     element.ID,
 			ConnectionID:  dashboard.ID, // nolint:staticcheck
@@ -1154,7 +1154,7 @@ func (lk8s *libraryElementsK8sHandler) resolveFolderFilter(c *contextmodel.ReqCo
 	}
 
 	folderUIDs := make([]string, 0)
-	for _, filter := range strings.Split(query.FolderFilter, ",") { // nolint:staticcheck
+	for filter := range strings.SplitSeq(query.FolderFilter, ",") { // nolint:staticcheck
 		folderID, err := strconv.ParseInt(filter, 10, 64)
 		if err != nil {
 			c.JsonApiErr(http.StatusBadRequest, "invalid folderFilter", err)
@@ -1278,7 +1278,7 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 		return nil, err
 	}
 	id = meta.GetDeprecatedInternalID() // nolint:staticcheck
-	folderUID = meta.GetFolder()
+	folderUID = foldermodel.ToLegacyFolderUID(meta.GetFolder())
 
 	// rebuild the legacy model blob, then re-attach the identifiers the legacy API inlines
 	modelJSON, err := LibraryPanelToLegacyModel(panel)

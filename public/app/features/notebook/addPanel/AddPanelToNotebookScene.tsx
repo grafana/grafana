@@ -6,13 +6,17 @@ import {
   SceneObjectBase,
   type SceneObjectRef,
   type SceneObjectState,
+  sceneGraph,
   type VizPanel,
 } from '@grafana/scenes';
 import { Modal, Spinner, useStyles2 } from '@grafana/ui';
-import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
+import { getDashboardSceneFor, getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/utils';
+
+import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 
 import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from './addPanelModal';
 import { buildPanelElementFromDashboard } from './buildPanelElementFromDashboard';
+import { captureTimeRange, type CapturedTimeRange } from './capturedTimeRange';
 
 // The panel menu loads with every dashboard, so the picker, its API client and its form are split
 // out of the main bundle for the sessions that never open it.
@@ -36,6 +40,25 @@ export class AddPanelToNotebookScene extends SceneObjectBase<AddPanelToNotebookS
   };
 
   public buildPanel = () => buildPanelElementFromDashboard(this.state.panelRef.resolve());
+
+  /**
+   * Read from the panel the user opened this on, not from what buildPanel returns. buildPanel inlines
+   * a loaded library panel, so its element no longer says where the panel came from.
+   */
+  public isLibraryPanel = () => Boolean(getLibraryPanelBehavior(this.state.panelRef.resolve()));
+
+  /**
+   * The window the panel is showing, which is the panel's own range when it has one and the
+   * dashboard's otherwise — the same range the user is looking at, which is the one worth keeping.
+   *
+   * Read from `value.raw` rather than `from`/`to`: PanelTimeRange updates only its value when the
+   * panel's own relative time changes, so its `from`/`to` can still describe the previous override.
+   */
+  public getCapturedTimeRange = (): CapturedTimeRange => {
+    const timeRange = sceneGraph.getTimeRange(this.state.panelRef.resolve());
+
+    return captureTimeRange(timeRange.state.value.raw, timeRange.getTimeZone());
+  };
 }
 
 function AddPanelToNotebookSceneRenderer({ model }: SceneComponentProps<AddPanelToNotebookScene>) {
@@ -44,7 +67,13 @@ function AddPanelToNotebookSceneRenderer({ model }: SceneComponentProps<AddPanel
   return (
     <Modal isOpen={true} className={styles.modal} title={addPanelToNotebookTitle()} onDismiss={model.onDismiss}>
       <Suspense fallback={<Spinner />}>
-        <AddPanelToNotebookModalBody buildPanel={model.buildPanel} onDismiss={model.onDismiss} />
+        <AddPanelToNotebookModalBody
+          buildPanel={model.buildPanel}
+          onDismiss={model.onDismiss}
+          entryPoint={NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL}
+          isLibraryPanel={model.isLibraryPanel()}
+          capturedTimeRange={model.getCapturedTimeRange()}
+        />
       </Suspense>
     </Modal>
   );

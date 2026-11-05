@@ -443,6 +443,7 @@ var sqlCreateUserTemplate = mustTemplate("create_user.sql")
 var sqlCreateOrgUserTemplate = mustTemplate("create_org_user.sql")
 var sqlDeleteUserTemplate = mustTemplate("delete_user.sql")
 var sqlDeleteOrgUserTemplate = mustTemplate("delete_org_user.sql")
+var sqlDeleteUserAuthTemplate = mustTemplate("delete_user_auth.sql")
 var sqlUpdateUserTemplate = mustTemplate("update_user.sql")
 var sqlUpdateOrgUserTemplate = mustTemplate("update_org_user.sql")
 
@@ -643,6 +644,27 @@ func (r deleteOrgUserQuery) Validate() error {
 	return nil
 }
 
+func newDeleteUserAuth(sql *legacysql.LegacyDatabaseHelper, userID int64) deleteUserAuthQuery {
+	return deleteUserAuthQuery{
+		SQLTemplate:   sqltemplate.New(sql.DialectForDriver()),
+		UserAuthTable: sql.Table("user_auth"),
+		UserID:        userID,
+	}
+}
+
+type deleteUserAuthQuery struct {
+	sqltemplate.SQLTemplate
+	UserAuthTable string
+	UserID        int64
+}
+
+func (r deleteUserAuthQuery) Validate() error {
+	if r.UserID == 0 {
+		return fmt.Errorf("user ID is required")
+	}
+	return nil
+}
+
 // DeleteUser implements LegacyIdentityStore.
 func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) error {
 	sql, err := s.getDB(ctx)
@@ -706,6 +728,17 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		_, err = st.Exec(ctx, orgUserDeleteQuery, orgUserReq.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to delete from org_user: %w", err)
+		}
+
+		userAuthReq := newDeleteUserAuth(sql, userID)
+		userAuthDeleteQuery, err := sqltemplate.Execute(sqlDeleteUserAuthTemplate, userAuthReq)
+		if err != nil {
+			return fmt.Errorf("execute user_auth delete template: %w", err)
+		}
+
+		_, err = st.Exec(ctx, userAuthDeleteQuery, userAuthReq.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to delete from user_auth: %w", err)
 		}
 
 		deleteQuery, err := sqltemplate.Execute(sqlDeleteUserTemplate, req)

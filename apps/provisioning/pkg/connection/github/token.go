@@ -16,21 +16,23 @@ const (
 	JWTExpirationMinutes = 10
 )
 
-// GenerateJWTToken creates a GitHub App JWT token from appID and base64-encoded private key.
-// The private key should be base64-encoded PEM format.
-// Returns the signed JWT token string.
-// related to how Github wants their token to be built.
-func GenerateJWTToken(appID string, privateKey common.RawSecureValue) (common.RawSecureValue, error) {
+// GenerateJWTToken mints a GitHub App JWT from the appID and base64-encoded PEM
+// private key. It returns the signed token together with its exact expiration —
+// the value from the signed `exp` claim (truncated to jwt.TimePrecision) — so
+// callers persist precisely when the token stops working rather than a
+// separately computed, higher-precision estimate that could sit after the real
+// claim.
+func GenerateJWTToken(appID string, privateKey common.RawSecureValue) (common.RawSecureValue, time.Time, error) {
 	// Decode base64-encoded private key
 	privateKeyPEM, err := base64.StdEncoding.DecodeString(string(privateKey))
 	if err != nil {
-		return "", fmt.Errorf("failed to decode base64 private key: %w", err)
+		return "", time.Time{}, fmt.Errorf("failed to decode base64 private key: %w", err)
 	}
 
 	// Parse the private key
 	key, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyPEM)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse private key: %w", err)
+		return "", time.Time{}, fmt.Errorf("failed to parse private key: %w", err)
 	}
 
 	// Create the JWT token
@@ -44,10 +46,10 @@ func GenerateJWTToken(appID string, privateKey common.RawSecureValue) (common.Ra
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	signedToken, err := token.SignedString(key)
 	if err != nil {
-		return "", fmt.Errorf("failed to sign JWT token: %w", err)
+		return "", time.Time{}, fmt.Errorf("failed to sign JWT token: %w", err)
 	}
 
-	return common.RawSecureValue(signedToken), nil
+	return common.RawSecureValue(signedToken), claims.ExpiresAt.Time, nil
 }
 
 func parseJWTToken(token, privateKey common.RawSecureValue) (*jwt.RegisteredClaims, error) {

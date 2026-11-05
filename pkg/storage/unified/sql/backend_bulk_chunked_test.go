@@ -77,7 +77,7 @@ func buildMultiVersionBulk(names []string, versions, padBytes int, deleteLatest 
 	expected := map[string][]byte{}
 	for _, name := range names {
 		var lastValue []byte
-		for v := 0; v < versions; v++ {
+		for v := range versions {
 			action := resourcepb.BulkRequest_MODIFIED
 			if v == 0 {
 				action = resourcepb.BulkRequest_ADDED
@@ -271,8 +271,8 @@ type killAfterKBatchIterator struct {
 	idx   int // number of NextBatch calls so far
 }
 
-func (it *killAfterKBatchIterator) NextBatch() bool {
-	if it.idx >= len(it.items) {
+func (it *killAfterKBatchIterator) NextBatch(ctx context.Context) bool {
+	if ctx.Err() != nil || it.idx >= len(it.items) {
 		return false
 	}
 	it.idx++
@@ -289,7 +289,9 @@ func (it *killAfterKBatchIterator) RollbackRequested() bool {
 
 // Next and Request only satisfy the non-batch BulkRequestIterator interface; the
 // chunked path uses NextBatch/Batch/RollbackRequested, so these are unreachable.
-func (it *killAfterKBatchIterator) Next() bool                       { return it.NextBatch() }
+func (it *killAfterKBatchIterator) Next() bool {
+	return it.NextBatch(context.Background())
+}
 func (it *killAfterKBatchIterator) Request() *resourcepb.BulkRequest { return it.Batch()[0] }
 
 // TestIntegrationBulkChunkedKillMidMigrationThenRestart checks cleanup and

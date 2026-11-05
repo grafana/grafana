@@ -2,6 +2,7 @@ package preferences
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -15,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	requestK8s "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/utils/ptr"
 
 	claims "github.com/grafana/authlib/types"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
@@ -42,7 +42,7 @@ func TestListPreferences(t *testing.T) {
 
 	t.Run("returns user, team (sorted), then namespace prefs in inheritance order", func(t *testing.T) {
 		fake := &fakeStorage{items: allItems}
-		store := &preferencesStorage{Storage: fake}
+		store := &preferencesStorage{Storage: fake, accessClient: claims.FixedAccessClient(true)}
 
 		ctx := identity.WithRequester(context.Background(), userABC)
 		list, err := store.ListPreferences(ctx, nil)
@@ -176,7 +176,7 @@ func TestListPreferences_FieldSelector(t *testing.T) {
 			expect:   []string{"team-x"},
 		},
 		{
-			name:     "filters out team the user does not belong to",
+			name:     "filters out team without membership or read permission",
 			selector: fields.OneTermEqualSelector("metadata.name", "team-zzz"),
 			expect:   []string{},
 		},
@@ -200,7 +200,7 @@ func TestListPreferences_FieldSelector(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			fake := &fakeStorage{items: items}
-			store := &preferencesStorage{Storage: fake}
+			store := &preferencesStorage{Storage: fake, accessClient: claims.FixedAccessClient(false)}
 
 			ctx := identity.WithRequester(context.Background(), userABC)
 			list, err := store.ListPreferences(ctx, &internalversion.ListOptions{
@@ -210,6 +210,109 @@ func TestListPreferences_FieldSelector(t *testing.T) {
 			require.Equal(t, tc.expect, names(list))
 		})
 	}
+}
+
+func TestListPreferences_FieldSelector_TeamAccess(t *testing.T) {
+	accessErr := errors.New("access service unavailable")
+	cases := []struct {
+		name         string
+		identityType claims.IdentityType
+		groups       []string
+		allowed      bool
+		checkErr     error
+		wantCheck    bool
+		wantItem     bool
+	}{
+		{
+			name:         "non-member with read permission receives saved preferences",
+			identityType: claims.TypeUser,
+			allowed:      true,
+			wantCheck:    true,
+			wantItem:     true,
+		},
+		{
+			name:         "non-member without read permission cannot read preferences",
+			identityType: claims.TypeUser,
+			wantCheck:    true,
+		},
+		{
+			name:         "permission errors are returned without reading preferences",
+			identityType: claims.TypeUser,
+			checkErr:     accessErr,
+			wantCheck:    true,
+		},
+		{
+			name:         "member reads preferences without an access check",
+			identityType: claims.TypeUser,
+			groups:       []string{"team-uid"},
+			wantItem:     true,
+		},
+		{
+			name:         "non-user remains excluded even with team access",
+			identityType: claims.TypeServiceAccount,
+			groups:       []string{"team-uid"},
+			allowed:      true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			user := &identity.StaticRequester{
+				Type:      tc.identityType,
+				UserUID:   "user-uid",
+				Namespace: "stacks-123",
+				Groups:    tc.groups,
+			}
+			item := newPref("team-team-uid")
+			item.Namespace = user.Namespace
+			item.Spec.HomeDashboardUID = new("saved-dashboard")
+			fake := &fakeStorage{items: map[string]*preferences.Preferences{item.Name: item}}
+			checked := false
+			client := &testAccessClient{
+				check: func(_ context.Context, caller claims.AuthInfo, req claims.CheckRequest, folder string) (claims.CheckResponse, error) {
+					checked = true
+					require.Same(t, user, caller)
+					require.Equal(t, claims.CheckRequest{
+						Verb:      "get",
+						Group:     "iam.grafana.app",
+						Resource:  "teams",
+						Namespace: "stacks-123",
+						Name:      "team-uid",
+					}, req)
+					require.Empty(t, folder)
+					return claims.CheckResponse{Allowed: tc.allowed}, tc.checkErr
+				},
+			}
+			store := &preferencesStorage{Storage: fake, accessClient: client}
+			ctx := identity.WithRequester(context.Background(), user)
+			ctx = requestK8s.WithNamespace(ctx, user.Namespace)
+			list, err := store.ListPreferences(ctx, &internalversion.ListOptions{
+				FieldSelector: fields.OneTermEqualSelector("metadata.name", item.Name),
+			})
+			require.Equal(t, tc.wantCheck, checked)
+			if tc.checkErr != nil {
+				require.ErrorIs(t, err, tc.checkErr)
+				require.Empty(t, fake.calls)
+				return
+			}
+			require.NoError(t, err)
+			if tc.wantItem {
+				require.Equal(t, []preferences.Preferences{*item}, list.Items)
+			} else {
+				require.Empty(t, list.Items)
+				require.Empty(t, fake.calls)
+			}
+		})
+	}
+}
+
+type testAccessClient struct {
+	claims.AccessClient
+	check func(context.Context, claims.AuthInfo, claims.CheckRequest, string) (claims.CheckResponse, error)
+}
+
+func (c *testAccessClient) Check(ctx context.Context, user claims.AuthInfo, req claims.CheckRequest, folder string) (claims.CheckResponse, error) {
+	return c.check(ctx, user, req, folder)
 }
 
 func TestListPreferences_Errors(t *testing.T) {
@@ -329,7 +432,7 @@ func TestPreferencesStorage_Update(t *testing.T) {
 				)
 			}
 			patched := old.DeepCopy()
-			patched.Spec.Theme = ptr.To(theme)
+			patched.Spec.Theme = new(theme)
 			return patched, nil
 		})
 	}
@@ -350,7 +453,7 @@ func TestPreferencesStorage_Update(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, "user-abc", p.Name)
 		require.Equal(t, "default", p.Namespace)
-		require.Equal(t, ptr.To("dark"), p.Spec.Theme)
+		require.Equal(t, new("dark"), p.Spec.Theme)
 
 		require.Equal(t, []string{"user-abc"}, fake.created)
 		require.Empty(t, fake.updated)
@@ -359,7 +462,7 @@ func TestPreferencesStorage_Update(t *testing.T) {
 	t.Run("updates preferences that already exist", func(t *testing.T) {
 		existing := newPref("user-abc")
 		existing.UID = "existing-uid"
-		existing.Spec.Theme = ptr.To("light")
+		existing.Spec.Theme = new("light")
 		fake := &fakeStorage{items: map[string]*preferences.Preferences{"user-abc": existing}}
 		store := newStore(fake)
 
@@ -369,7 +472,7 @@ func TestPreferencesStorage_Update(t *testing.T) {
 
 		p, ok := obj.(*preferences.Preferences)
 		require.True(t, ok)
-		require.Equal(t, ptr.To("dark"), p.Spec.Theme)
+		require.Equal(t, new("dark"), p.Spec.Theme)
 
 		require.Empty(t, fake.created)
 		require.Equal(t, []string{"user-abc"}, fake.updated)
@@ -399,7 +502,7 @@ func TestPreferencesStorage_Update(t *testing.T) {
 
 		p, ok := obj.(*preferences.Preferences)
 		require.True(t, ok)
-		require.Equal(t, ptr.To("dark"), p.Spec.Theme)
+		require.Equal(t, new("dark"), p.Spec.Theme)
 		require.Equal(t, []string{"user-abc"}, fake.updated)
 	})
 

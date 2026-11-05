@@ -5,8 +5,8 @@ import { type GrafanaTheme2, type RelativeTimeRange, getDefaultRelativeTimeRange
 import { Trans, t } from '@grafana/i18n';
 import {
   Button,
+  Field,
   Icon,
-  InlineField,
   RelativeTimeRangePicker,
   Stack,
   Toggletip,
@@ -105,14 +105,16 @@ export const QueryOptions = ({
     <>
       <Toggletip
         content={
-          <div className={styles.queryOptions}>
+          <Stack direction="column" gap={2}>
             {onChangeTimeRange && (
-              <InlineField label={t('alerting.query-options.label-time-range', 'Time Range')}>
-                <RelativeTimeRangePicker
-                  timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
-                  onChange={(range) => onChangeTimeRange(range, index)}
-                />
-              </InlineField>
+              <Stack direction="row" justifyContent="flex-start">
+                <Field label={t('alerting.query-options.label-time-range', 'Time Range')} noMargin>
+                  <RelativeTimeRangePicker
+                    timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
+                    onChange={(range) => onChangeTimeRange(range, index)}
+                  />
+                </Field>
+              </Stack>
             )}
             <MaxDataPointsOption value={localMaxDataPoints} onChange={setLocalMaxDataPoints} />
             <MinIntervalOption
@@ -126,7 +128,7 @@ export const QueryOptions = ({
                 <Trans i18nKey="alerting.query-options.apply-button">Apply</Trans>
               </Button>
             </Stack>
-          </div>
+          </Stack>
         }
         closeButton={true}
         placement="bottom-start"
@@ -176,12 +178,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   const clearButton = clearButtonStyles(theme);
 
   return {
-    queryOptions: css({
-      '> div:not(:last-child)': {
-        justifyContent: 'space-between',
-      },
-    }),
-
     staticValues: css({
       color: theme.colors.text.secondary,
       marginRight: theme.spacing(1),

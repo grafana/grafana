@@ -1,7 +1,7 @@
 package definitions
 
 import (
-	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/config/common"
 )
 
 // swagger:route GET /v1/provisioning/policies provisioning stable RouteGetPolicyTree
@@ -88,8 +88,8 @@ type RouteExport struct {
 	// Deprecated. Remove before v1.0 release.
 	Match map[string]string `yaml:"match,omitempty" json:"match,omitempty"`
 	// Deprecated. Remove before v1.0 release.
-	MatchRE             config.MatchRegexps `yaml:"match_re,omitempty" json:"match_re,omitempty"`
-	Matchers            config.Matchers     `yaml:"matchers,omitempty" json:"matchers,omitempty"`
+	MatchRE             common.MatchRegexps `yaml:"match_re,omitempty" json:"match_re,omitempty"`
+	Matchers            common.Matchers     `yaml:"matchers,omitempty" json:"matchers,omitempty"`
 	ObjectMatchers      ObjectMatchers      `yaml:"object_matchers,omitempty" json:"object_matchers,omitempty"`
 	ObjectMatchersSlice []*MatcherExport    `yaml:"-" json:"-" hcl:"matcher,block"`
 	MuteTimeIntervals   *[]string           `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty" hcl:"mute_timings"`

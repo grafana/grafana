@@ -1,7 +1,9 @@
 import { type SceneObjectState, type SceneObject } from '@grafana/scenes';
 import { type ElementSelectionContextState, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 
-import { type DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
+import { type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
+
+import { type DashboardEditActionEvent, type DashboardEditActionEventPayload, type PaneCloseReason } from './events';
 import { type DashboardOutline } from './outline/DashboardOutline';
 
 export interface DashboardSidebarState extends SceneObjectState {
@@ -11,6 +13,7 @@ export interface DashboardSidebarState extends SceneObjectState {
   redoStack: DashboardEditActionEventPayload[];
   outlinePane?: DashboardOutline;
   openPane?: DashboardSidebarPane;
+  isLoading?: boolean;
   /** Temp hack for Link and LinkSet that are not part of the scene but need to be selected for now  */
   selectedDisconnectedObject?: SceneObject;
   /** Previous state */
@@ -26,18 +29,27 @@ export interface DashboardSidebarState extends SceneObjectState {
  * create circular dependencies through DashboardScene).
  */
 export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState> {
+  beginPaneRequest(): AbortSignal;
+  cancelPaneRequest(): void;
+  runPaneRequest(load: (signal: AbortSignal) => Promise<void>): Promise<void>;
   enableSelection(): void;
   disableSelection(): void;
   clearSelection(noEvent?: boolean): void;
   selectObject(obj: SceneObject, options?: ElementSelectionOnSelectOptions): void;
   openPane(openPane: DashboardSidebarPane): void;
-  closePane(): void;
+  closePane(reason?: PaneCloseReason): void;
+  refreshAfterRebuild(): void;
   getSelectedObject(key?: string): SceneObject | undefined;
   undoAction(): void;
+  undoLastAction(trigger?: string): void;
   redoAction(): void;
+  redoLastAction(trigger?: string): void;
+  pendingChangesHistory(): PendingChangesHistory | undefined;
+  recordCompletedEdit(action: DashboardEditActionEventPayload): void;
+  clearHistory(): void;
   goBackToPrevious(): void;
   fixSelectionOfRemovedObject(): void;
-  addNewPanel(target: SceneObject | undefined): void;
+  addNewPanel(target: SceneObject | undefined): void | Promise<void>;
   pastePanel(target: SceneObject | undefined): void;
   setPanelEditAction(editAction: DashboardEditActionEvent): void;
 }
@@ -65,4 +77,9 @@ export enum SidebarCategoryType {
 
   DashboardLinks = 'dashboard-links',
   DashboardAnnotations = 'dashboard-annotations',
+
+  TabSectionAnnotations = 'tab-section-annotations',
+  TabSectionAnnotationsList = 'tab-section-annotations-list',
+  RowSectionAnnotations = 'dash-row-section-annotations',
+  RowSectionAnnotationsList = 'dash-row-section-annotations-list',
 }

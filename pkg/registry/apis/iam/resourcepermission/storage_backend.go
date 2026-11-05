@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	_ resource.StorageBackend = &ResourcePermSqlBackend{}
+	_ resource.StorageBackend = (*ResourcePermSqlBackend)(nil)
 )
 
 type ResourcePermSqlBackend struct {

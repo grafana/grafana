@@ -1,18 +1,24 @@
 package resource
 
 import (
+	"bufio"
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strconv"
 	"sync"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -25,7 +31,16 @@ import (
 const grpcMetaKeyCollection = "x-gf-batch-collection"
 const grpcMetaKeySkipValidation = "x-gf-batch-skip-validation"
 
-var defaultBulkBatchOptions = BulkBatchOptions{MaxItems: 1000, MaxBytes: 2 * 1024 * 1024, MaxIdle: 5 * time.Millisecond}
+const defaultBulkSpoolMaxBytes int64 = 1024 * 1024 * 1024
+
+var (
+	defaultBulkBatchOptions = BulkBatchOptions{
+		MaxItems: 1000,
+		MaxBytes: 2 * 1024 * 1024,
+		MaxIdle:  5 * time.Millisecond,
+	}
+	sharedBulkSpoolBudget = newBulkSpoolBudget(defaultBulkSpoolMaxBytes)
+)
 
 // BulkBatchOptions controls how incoming bulk requests are grouped before they are processed.
 type BulkBatchOptions struct {
@@ -56,18 +71,27 @@ type BulkRequestIterator interface {
 }
 
 type BulkRequestBatchIterator interface {
-	// NextBatch advances the iterator to the next batch if one exists.
-	NextBatch() bool
+	// NextBatch advances to the next batch, returning false at EOF or on
+	// cancellation. Callers must check ctx.Err() after iteration stops.
+	NextBatch(ctx context.Context) bool
 
-	// Batch returns the current batch. Only valid after NextBatch() returns true.
+	// Batch returns the current batch. Only valid after NextBatch returns true.
 	Batch() []*resourcepb.BulkRequest
 
-	// RollbackRequested returns true if there was an error advancing the iterator. Checked after NextBatch() returns true.
+	// RollbackRequested returns true if there was an error advancing the iterator. Checked after NextBatch returns true.
 	RollbackRequested() bool
 }
 
 type BulkProcessingBackend interface {
 	ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse
+}
+
+type bulkRequestPreflighter interface {
+	Preflight() error
+}
+
+type bulkPreflightBackend interface {
+	RequiresBulkPreflight()
 }
 
 type BulkResourceWriter interface {
@@ -181,8 +205,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 	if err != nil {
 		return sendAndClose(&resourcepb.BulkResponse{
 			Error: &resourcepb.ErrorResult{
-				Message: "error reading settings",
-				Reason:  err.Error(),
+				Message: fmt.Sprintf("error reading settings: %s", err.Error()),
 				Code:    http.StatusPreconditionFailed,
 			},
 		})
@@ -254,9 +277,45 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		})
 	}
 
+	if versions, requested := md[resourcepb.InlineBlobMetadataKey]; requested {
+		if len(versions) != 1 || versions[0] != strconv.Itoa(resourcepb.InlineBlobVersion) {
+			return sendAndClose(&resourcepb.BulkResponse{Error: &resourcepb.ErrorResult{
+				Message: "unsupported bulk inline blob version", Code: http.StatusPreconditionFailed,
+			}})
+		}
+		blob, ok := s.blob.(StreamingBlobSupport)
+		if !ok {
+			return sendAndClose(&resourcepb.BulkResponse{Error: &resourcepb.ErrorResult{
+				Message: "blob backend does not support streaming", Code: http.StatusNotImplemented,
+			}})
+		}
+		runner.blob = blob
+		runner.acquireBlobTransfer = s.acquireBlobTransfer
+		if err := stream.SendHeader(metadata.Pairs(resourcepb.InlineBlobMetadataKey, versions[0])); err != nil {
+			return err
+		}
+	}
+
 	// BulkProcess requests
 	defer runner.stop()
-	rsp := backend.ProcessBulk(ctx, settings, runner)
+	var iter BulkRequestIterator = runner
+	var spool *spooledBulkRequests
+	if runner.blob != nil {
+		// Finish negotiated blob uploads before the backend begins processing. SQL
+		// backends may open a write transaction before consuming the iterator, and
+		// SQL-backed blob uploads need a separate write transaction.
+		var err error
+		spool, err = spoolBulkRequests(ctx, runner, s.bulkBatchOptions, sharedBulkSpoolBudget)
+		if err != nil {
+			if runner.err != nil {
+				err = runner.err
+			}
+			return sendAndClose(&resourcepb.BulkResponse{Error: AsErrorResult(err)})
+		}
+		defer spool.Close()
+		iter = spool
+	}
+	rsp := processBulkWithPreflight(ctx, backend, settings, iter)
 	if rsp == nil {
 		rsp = &resourcepb.BulkResponse{
 			Error: &resourcepb.ErrorResult{
@@ -265,11 +324,25 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 			},
 		}
 	}
+	if spool != nil && spool.err != nil {
+		rsp.Error = AsErrorResult(spool.err)
+	}
 	if runner.err != nil {
 		rsp.Error = AsErrorResult(runner.err)
 	}
 
 	return sendAndClose(rsp)
+}
+
+func processBulkWithPreflight(ctx context.Context, backend BulkProcessingBackend, settings BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+	if _, required := backend.(bulkPreflightBackend); required {
+		if preflighter, ok := iter.(bulkRequestPreflighter); ok {
+			if err := preflighter.Preflight(); err != nil {
+				return &resourcepb.BulkResponse{Error: AsErrorResult(err)}
+			}
+		}
+	}
+	return backend.ProcessBulk(ctx, settings, iter)
 }
 
 var (
@@ -278,15 +351,17 @@ var (
 )
 
 type batchRunner struct {
-	stream    resourcepb.BulkStore_BulkProcessServer
-	rollback  bool
-	request   *resourcepb.BulkRequest
-	batch     []*resourcepb.BulkRequest
-	batchIdx  int
-	err       error
-	checker   map[string]authlib.ItemChecker
-	span      trace.Span
-	batchOpts BulkBatchOptions
+	stream              resourcepb.BulkStore_BulkProcessServer
+	rollback            bool
+	request             *resourcepb.BulkRequest
+	batch               []*resourcepb.BulkRequest
+	batchIdx            int
+	err                 error
+	checker             map[string]authlib.ItemChecker
+	blob                StreamingBlobSupport
+	acquireBlobTransfer func(string) (func(), error)
+	span                trace.Span
+	batchOpts           BulkBatchOptions
 
 	recvOnce sync.Once
 	recvCh   chan batchStreamResult
@@ -302,6 +377,257 @@ type batchStreamResult struct {
 	eof      bool
 }
 
+var (
+	_ BulkRequestIterator      = (*spooledBulkRequests)(nil)
+	_ BulkRequestBatchIterator = (*spooledBulkRequests)(nil)
+)
+
+type spooledBulkRequests struct {
+	file      *os.File
+	reader    *bufio.Reader
+	batchOpts BulkBatchOptions
+	request   *resourcepb.BulkRequest
+	batch     []*resourcepb.BulkRequest
+	rollback  bool
+	eof       bool
+	err       error
+	budget    *bulkSpoolBudget
+	reserved  int64
+}
+
+type bulkSpoolBudget struct {
+	mu        sync.Mutex
+	maxBytes  int64
+	usedBytes int64
+}
+
+func newBulkSpoolBudget(maxBytes int64) *bulkSpoolBudget {
+	return &bulkSpoolBudget{maxBytes: maxBytes}
+}
+
+func (b *bulkSpoolBudget) reserve(bytes int64) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if bytes > b.maxBytes-b.usedBytes {
+		return apierrors.NewRequestEntityTooLargeError(fmt.Sprintf("bulk spool capacity exceeded: limit is %d bytes", b.maxBytes))
+	}
+	b.usedBytes += bytes
+	return nil
+}
+
+func (b *bulkSpoolBudget) release(bytes int64) {
+	b.mu.Lock()
+	b.usedBytes -= bytes
+	b.mu.Unlock()
+}
+
+func (b *bulkSpoolBudget) used() int64 {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.usedBytes
+}
+
+func spoolBulkRequests(ctx context.Context, source BulkRequestBatchIterator, opts BulkBatchOptions, budget *bulkSpoolBudget) (_ *spooledBulkRequests, err error) {
+	file, err := os.CreateTemp("", "grafana-bulk-*.spool")
+	if err != nil {
+		return nil, fmt.Errorf("create bulk spool: %w", err)
+	}
+	spool := &spooledBulkRequests{
+		file:      file,
+		batchOpts: opts,
+		budget:    budget,
+	}
+	cleanup := func() {
+		spool.Close()
+	}
+	defer func() {
+		if err != nil {
+			cleanup()
+		}
+	}()
+
+	writer := bufio.NewWriter(file)
+	var sizeBuf [binary.MaxVarintLen64]byte
+	for source.NextBatch(ctx) {
+		if source.RollbackRequested() {
+			return nil, fmt.Errorf("bulk preprocessing failed")
+		}
+		for _, req := range source.Batch() {
+			data, marshalErr := proto.Marshal(req)
+			if marshalErr != nil {
+				return nil, fmt.Errorf("marshal bulk request: %w", marshalErr)
+			}
+			n := binary.PutUvarint(sizeBuf[:], uint64(len(data)))
+			frameBytes := int64(n + len(data))
+			if err = budget.reserve(frameBytes); err != nil {
+				return nil, err
+			}
+			spool.reserved += frameBytes
+			if _, err = writer.Write(sizeBuf[:n]); err != nil {
+				return nil, fmt.Errorf("write bulk spool: %w", err)
+			}
+			if _, err = writer.Write(data); err != nil {
+				return nil, fmt.Errorf("write bulk spool: %w", err)
+			}
+		}
+	}
+	if err = ctx.Err(); err != nil {
+		return nil, err
+	}
+	if err = writer.Flush(); err != nil {
+		return nil, fmt.Errorf("flush bulk spool: %w", err)
+	}
+	if _, err = file.Seek(0, io.SeekStart); err != nil {
+		return nil, fmt.Errorf("rewind bulk spool: %w", err)
+	}
+	spool.reader = bufio.NewReader(file)
+	return spool, nil
+}
+
+func (s *spooledBulkRequests) Preflight() error {
+	if err := s.rewind(); err != nil {
+		return err
+	}
+	for {
+		_, err := s.readRequest()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("validate bulk spool: %w", err)
+		}
+	}
+	return s.rewind()
+}
+
+func (s *spooledBulkRequests) rewind() error {
+	if _, err := s.file.Seek(0, io.SeekStart); err != nil {
+		return fmt.Errorf("rewind bulk spool: %w", err)
+	}
+	s.reader.Reset(s.file)
+	s.request = nil
+	s.batch = s.batch[:0]
+	s.rollback = false
+	s.eof = false
+	s.err = nil
+	return nil
+}
+
+func (s *spooledBulkRequests) Next() bool {
+	if s.rollback {
+		return true
+	}
+	req, err := s.readRequest()
+	if errors.Is(err, io.EOF) {
+		s.eof = true
+		return false
+	}
+	if err != nil {
+		s.err = err
+		s.rollback = true
+		return true
+	}
+	s.request = req
+	return true
+}
+
+func (s *spooledBulkRequests) Request() *resourcepb.BulkRequest {
+	if s.rollback {
+		return nil
+	}
+	return s.request
+}
+
+func (s *spooledBulkRequests) NextBatch(ctx context.Context) bool {
+	if ctx.Err() != nil {
+		return false
+	}
+	if s.rollback {
+		return true
+	}
+	if s.eof {
+		return false
+	}
+
+	s.batch = s.batch[:0]
+	payloadBytes := 0
+	for {
+		if ctx.Err() != nil {
+			return false
+		}
+		req, err := s.readRequest()
+		if errors.Is(err, io.EOF) {
+			s.eof = true
+			return len(s.batch) > 0
+		}
+		if err != nil {
+			s.batch = s.batch[:0]
+			s.err = err
+			s.rollback = true
+			return true
+		}
+		s.batch = append(s.batch, req)
+		payloadBytes += len(req.Value)
+		if s.batchOpts.MaxItems > 0 && len(s.batch) >= s.batchOpts.MaxItems {
+			return true
+		}
+		if s.batchOpts.MaxBytes > 0 && payloadBytes >= s.batchOpts.MaxBytes {
+			return true
+		}
+	}
+}
+
+func (s *spooledBulkRequests) Batch() []*resourcepb.BulkRequest {
+	if s.rollback {
+		return nil
+	}
+	return s.batch
+}
+
+func (s *spooledBulkRequests) RollbackRequested() bool {
+	if s.rollback {
+		s.rollback = false
+		return true
+	}
+	return false
+}
+
+func (s *spooledBulkRequests) readRequest() (*resourcepb.BulkRequest, error) {
+	size, err := binary.ReadUvarint(s.reader)
+	if err != nil {
+		return nil, err
+	}
+	if size > uint64(int(^uint(0)>>1)) {
+		return nil, fmt.Errorf("bulk spool request is too large: %d", size)
+	}
+	data := make([]byte, int(size))
+	if _, err := io.ReadFull(s.reader, data); err != nil {
+		if errors.Is(err, io.EOF) {
+			err = io.ErrUnexpectedEOF
+		}
+		return nil, fmt.Errorf("read truncated bulk spool record: %w", err)
+	}
+	req := &resourcepb.BulkRequest{}
+	if err := proto.Unmarshal(data, req); err != nil {
+		return nil, fmt.Errorf("unmarshal bulk request: %w", err)
+	}
+	return req, nil
+}
+
+func (s *spooledBulkRequests) Close() {
+	if s.file == nil {
+		return
+	}
+	name := s.file.Name()
+	_ = s.file.Close()
+	_ = os.Remove(name)
+	s.file = nil
+	if s.budget != nil && s.reserved > 0 {
+		s.budget.release(s.reserved)
+		s.reserved = 0
+	}
+}
+
 // Next implements BulkRequestIterator.
 func (b *batchRunner) Next() bool {
 	if b.rollback {
@@ -314,7 +640,7 @@ func (b *batchRunner) Next() bool {
 		return true
 	}
 
-	if !b.NextBatch() {
+	if !b.NextBatch(b.stream.Context()) {
 		return false
 	}
 	if b.rollback {
@@ -332,7 +658,10 @@ func (b *batchRunner) Next() bool {
 	return true
 }
 
-func (b *batchRunner) NextBatch() bool {
+func (b *batchRunner) NextBatch(ctx context.Context) bool {
+	if ctx.Err() != nil {
+		return false
+	}
 	if b.rollback {
 		return true
 	}
@@ -355,7 +684,7 @@ func (b *batchRunner) NextBatch() bool {
 		return false
 	}
 
-	result := b.readNextResult()
+	result := b.readNextResult(ctx)
 	switch {
 	case result.eof:
 		return false
@@ -409,6 +738,8 @@ func (b *batchRunner) NextBatch() bool {
 			}
 		case <-timerC:
 			return true
+		case <-ctx.Done():
+			return false
 		}
 	}
 }
@@ -445,18 +776,22 @@ func (b *batchRunner) recvChannel() <-chan batchStreamResult {
 	return b.recvCh
 }
 
-func (b *batchRunner) readNextResult() batchStreamResult {
+func (b *batchRunner) readNextResult(ctx context.Context) batchStreamResult {
 	if b.pending != nil {
 		result := *b.pending
 		b.pending = nil
 		return result
 	}
 
-	result, ok := <-b.recvChannel()
-	if !ok {
-		return batchStreamResult{eof: true}
+	select {
+	case result, ok := <-b.recvChannel():
+		if !ok {
+			return batchStreamResult{eof: true}
+		}
+		return result
+	case <-ctx.Done():
+		return batchStreamResult{err: ctx.Err(), rollback: true}
 	}
-	return result
 }
 
 func (b *batchRunner) recvLoop() {
@@ -487,6 +822,22 @@ func (b *batchRunner) recvLoop() {
 			return
 		}
 
+		if b.blob != nil && len(req.BlobUploads) > 0 {
+			if frameErr := resourcepb.ValidateBulkBlobFrame(req); frameErr != nil {
+				err = status.Errorf(codes.InvalidArgument, "invalid bulk blob frame: %s", frameErr)
+			} else if failure := verifyRequestKey(req.Key); failure != nil {
+				err = status.Error(codes.InvalidArgument, failure.Message)
+			}
+		} else {
+			err = validateBulkBlobInput(req)
+		}
+		if err != nil {
+			if !b.sendResult(batchStreamResult{err: err, rollback: true}) {
+				return
+			}
+			return
+		}
+
 		key := req.Key
 		k := NSGR(key)
 		checker, ok := b.checker[k]
@@ -509,6 +860,21 @@ func (b *batchRunner) recvLoop() {
 		}
 
 		b.span.AddEvent("next", trace.WithAttributes(attrs...))
+		if len(req.BlobUploads) > 0 {
+			release, err := b.acquireBlobTransfer(key.Namespace)
+			if err != nil {
+				b.sendResult(batchStreamResult{err: err, rollback: true})
+				return
+			}
+			uploadCtx, cancel := context.WithTimeout(b.stream.Context(), blobStreamTimeout)
+			req, err = normalizeBulkBlobUploads(uploadCtx, req, b.blob, b.stream.Recv)
+			cancel()
+			release()
+			if err != nil {
+				b.sendResult(batchStreamResult{err: err, rollback: true})
+				return
+			}
+		}
 		if !b.sendResult(batchStreamResult{request: req}) {
 			return
 		}
@@ -580,16 +946,13 @@ func (x *bulkRV) next(obj metav1.Object) int64 {
 
 	// Use the object's timestamp as the base, but never go below the last
 	// emitted RV so that every value is unique regardless of iterator order.
-	base := ts
-	if base < x.lastRV {
-		base = x.lastRV
-	}
+	base := max(ts, x.lastRV)
 
 	// Increment, keeping the sub-millisecond portion (low 22 bits) under 1000
 	// so that the snowflake ↔ microRV roundtrip (SnowflakeFromRV / RVFromSnowflake)
 	// is lossless.
 	// TODO: remove when backwards compatibility is no longer needed
-	shift := snowflake.NodeBits + snowflake.StepBits
+	shift := resourceVersionTimestampShift
 	subMs := base & ((1 << shift) - 1)
 	if subMs >= 999 {
 		base = ((base >> shift) + 1) << shift

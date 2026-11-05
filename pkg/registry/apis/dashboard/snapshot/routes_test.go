@@ -30,17 +30,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func testReadFromLegacy(context.Context) (bool, error) { return false, nil }
+
+func snapshotCreatorForTest(orgID int64) *user.SignedInUser {
+	return &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
+		orgID: {
+			dashboards.ActionSnapshotsCreate: {""},
+			dashboards.ActionDashboardsRead:  {"dashboards:uid:*"},
+		},
+	}}
+}
 
 func TestCreateSnapshotDashboardValidation(t *testing.T) {
 	setKubernetesSnapshotsToggle(t, true)
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 
-	testUser := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  orgID,
-	}
+	testUser := snapshotCreatorForTest(orgID)
 
 	tests := []struct {
 		name               string
@@ -133,6 +142,8 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 				map[string]common.OpenAPIDefinition{},
 				tt.setupStorageMock(t),
 				dashboardService,
+				nil,
+				testReadFromLegacy,
 			)
 
 			// Find the create handler (first namespace route)
@@ -161,15 +172,54 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 	}
 }
 
+func TestCreateSnapshotDefersBlobUploadToStorage(t *testing.T) {
+	setKubernetesSnapshotsToggle(t, true)
+	const orgID int64 = 1
+	namespace := authlib.OrgNamespaceFormatter(orgID)
+	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
+		UID: "valid-uid", OrgID: orgID,
+	}).Return(&dashboards.Dashboard{UID: "valid-uid", OrgID: orgID}, nil)
+
+	storage := grafanarest.NewMockStorage(t)
+	storage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			snap := args.Get(1).(*dashv0.Snapshot)
+			require.NotNil(t, snap.Blobs.Dashboard.Data)
+			require.Nil(t, snap.Blobs.Dashboard.Uid)
+			require.Equal(t, "valid-uid", dashboardContentForTest(t, snap)["uid"])
+		}).Return(&dashv0.Snapshot{}, nil)
+	blobs := &fakeBlobStore{putRsp: &resourcepb.PutBlobResponse{Uid: "blob-1", MimeType: "application/json"}}
+	unified := false
+	routes := GetRoutes(
+		dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
+		acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+		map[string]common.OpenAPIDefinition{},
+		func() rest.Storage { return storage }, dashboardService, blobs,
+		func(context.Context) (bool, error) { return unified, nil },
+	)
+
+	for _, enabled := range []bool{false, true} {
+		unified = enabled
+		blobs.put = nil
+		body := []byte(`{"dashboard":{"uid":"valid-uid","title":"test"},"name":"test snapshot"}`)
+		req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), snapshotCreatorForTest(orgID)))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+		recorder := httptest.NewRecorder()
+		routes.Namespace[0].Handler(recorder, req)
+		require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+		require.Nil(t, blobs.put)
+	}
+}
+
 func TestCreateSnapshotDuplicateKeyReturns409(t *testing.T) {
 	setKubernetesSnapshotsToggle(t, true)
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 
-	testUser := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  orgID,
-	}
+	testUser := snapshotCreatorForTest(orgID)
 
 	dashboardService := dashboards.NewFakeDashboardService(t)
 	dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
@@ -189,6 +239,8 @@ func TestCreateSnapshotDuplicateKeyReturns409(t *testing.T) {
 		map[string]common.OpenAPIDefinition{},
 		func() rest.Storage { return mockStorage },
 		dashboardService,
+		nil,
+		testReadFromLegacy,
 	)
 
 	require.NotEmpty(t, routes.Namespace)
@@ -271,6 +323,8 @@ func TestCreateSnapshotPublicMode(t *testing.T) {
 				map[string]common.OpenAPIDefinition{},
 				func() rest.Storage { return mockStorage },
 				dashboardService,
+				nil,
+				testReadFromLegacy,
 			)
 
 			bodyBytes, err := json.Marshal(tt.body)
@@ -288,7 +342,7 @@ func TestCreateSnapshotPublicMode(t *testing.T) {
 			dashboardService.AssertNotCalled(t, "GetDashboard", mock.Anything, mock.Anything)
 
 			require.NotNil(t, createdSnapshot)
-			snapshotMeta, _ := createdSnapshot.Spec.Dashboard["snapshot"].(map[string]any)
+			snapshotMeta, _ := dashboardContentForTest(t, createdSnapshot)["snapshot"].(map[string]any)
 			require.NotNil(t, snapshotMeta, "snapshot metadata should be set on the dashboard")
 			assert.Equal(t, "", snapshotMeta["originalUrl"], "originalUrl must be empty in public mode to avoid pointing at the local instance")
 		})
@@ -314,6 +368,8 @@ func TestCreateSnapshotPublicModeRejectsExternal(t *testing.T) {
 		map[string]common.OpenAPIDefinition{},
 		func() rest.Storage { return mockStorage },
 		dashboardService,
+		nil,
+		testReadFromLegacy,
 	)
 
 	body := map[string]any{
@@ -340,10 +396,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 
-	testUser := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  orgID,
-	}
+	testUser := snapshotCreatorForTest(orgID)
 
 	// externalSnapshotsK8SAPIPush ON: handler pushes to the external K8s endpoint.
 	setExternalSnapshotsK8SAPIPushToggle(t, true)
@@ -387,6 +440,8 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
 			dashboardService,
+			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -447,6 +502,8 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return nil },
 			dashboardService,
+			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -491,6 +548,8 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return nil },
 			dashboardService,
+			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -523,6 +582,8 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return nil },
 			dashboardService,
+			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -574,6 +635,8 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
 			dashboardService,
+			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -598,10 +661,7 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 
-	testUser := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  orgID,
-	}
+	testUser := snapshotCreatorForTest(orgID)
 
 	// externalSnapshotsK8SAPIPush OFF: handler pushes to the legacy /api/snapshots
 	// endpoint on the external server.
@@ -649,6 +709,8 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
 			dashboardService,
+			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -702,6 +764,8 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return nil },
 			dashboardService,
+			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -730,12 +794,12 @@ func TestDeleteExternalSnapshotLegacy(t *testing.T) {
 		}))
 		defer server.Close()
 
-		// URL is in K8s format — function must strip the path and rebuild as legacy.
-		err := deleteExternalSnapshotLegacy(server.URL + "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/abc")
+		// Preserve a configured base path while changing the endpoint format.
+		err := deleteExternalSnapshotLegacy(server.URL + "/snapshots/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/abc")
 		require.NoError(t, err)
 		require.NotNil(t, receivedReq)
 		assert.Equal(t, http.MethodGet, receivedReq.Method)
-		assert.Equal(t, "/api/snapshots-delete/abc", receivedReq.URL.Path)
+		assert.Equal(t, "/snapshots/api/snapshots-delete/abc", receivedReq.URL.Path)
 	})
 
 	t.Run("passes through legacy-format URL unchanged", func(t *testing.T) {
@@ -813,14 +877,32 @@ func TestHandleDeleteByKey(t *testing.T) {
 
 		listed := dashv0.Snapshot{}
 		listed.Name = snapshotName
+		listed.Namespace = namespace
+		listed.Spec.DeleteKey = new(deleteKey)
+		require.NoError(t, setDashboardContent(&listed, map[string]any{"uid": "unreadable-source"}))
+		listed.SetCreatedBy("user:another-user")
 
 		mockStorage := grafanarest.NewMockStorage(t)
 		mockStorage.On("List", mock.Anything, mock.MatchedBy(func(opts *internalversion.ListOptions) bool {
 			return opts != nil && opts.FieldSelector != nil &&
 				opts.FieldSelector.String() == "spec.deleteKey="+deleteKey
-		})).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{listed}}, nil)
+		})).Run(func(args mock.Arguments) {
+			info, ok := authlib.AuthInfoFrom(args.Get(0).(context.Context))
+			require.True(t, ok)
+			require.Equal(t, namespace, info.GetNamespace())
+			requester, err := identity.GetRequester(args.Get(0).(context.Context))
+			require.NoError(t, err)
+			require.True(t, requester.IsIdentityType(authlib.TypeAccessPolicy))
+		}).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{listed}}, nil)
 		mockStorage.On("Delete", mock.Anything, snapshotName, mock.Anything, mock.Anything).
-			Return(&dashv0.Snapshot{}, true, nil)
+			Run(func(args mock.Arguments) {
+				info, ok := authlib.AuthInfoFrom(args.Get(0).(context.Context))
+				require.True(t, ok)
+				require.Equal(t, namespace, info.GetNamespace())
+				requester, err := identity.GetRequester(args.Get(0).(context.Context))
+				require.NoError(t, err)
+				require.True(t, requester.IsIdentityType(authlib.TypeAccessPolicy))
+			}).Return(&dashv0.Snapshot{}, true, nil)
 
 		routes := GetRoutes(
 			dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
@@ -828,6 +910,8 @@ func TestHandleDeleteByKey(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
 			dashboards.NewFakeDashboardService(t),
+			nil,
+			testReadFromLegacy,
 		)
 
 		req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/"+deleteKey, nil)
@@ -852,6 +936,8 @@ func TestHandleDeleteByKey(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
 			dashboards.NewFakeDashboardService(t),
+			nil,
+			testReadFromLegacy,
 		)
 
 		req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/missing-key", nil)
@@ -874,6 +960,8 @@ func TestHandleDeleteByKey(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
 			dashboards.NewFakeDashboardService(t),
+			nil,
+			testReadFromLegacy,
 		)
 
 		req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/some-key", nil)
@@ -954,43 +1042,58 @@ func TestStripSensitiveFields(t *testing.T) {
 	dashboard := map[string]any{"uid": "dash-1", "title": "test"}
 
 	t.Run("strips deleteKey and dashboard from snapshot", func(t *testing.T) {
-		snap := &dashv0.Snapshot{
-			Spec: dashv0.SnapshotSpec{
-				DeleteKey: &deleteKey,
-				Dashboard: dashboard,
-			},
-		}
-		result := stripSensitiveFields(snap)
-		stripped := result.(*dashv0.Snapshot)
+		snap := &dashv0.Snapshot{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey}}
+		require.NoError(t, setDashboardContent(snap, dashboard))
+		snap.Spec.ExternalUrl = new("https://example.com/dashboard/snapshot/public-key")
+		snap.Spec.ExternalDeleteUrl = new("https://delete.example.com/private/secret")
+		stripped, err := stripSensitiveFields(snap)
+		require.NoError(t, err)
 		assert.Nil(t, stripped.Spec.DeleteKey)
-		assert.Nil(t, stripped.Spec.Dashboard)
+		assert.Nil(t, stripped.Blobs.Dashboard)
+		assert.Empty(t, stripped.GetExternalDeleteURL())
 	})
 
 	t.Run("does not modify original snapshot", func(t *testing.T) {
-		snap := &dashv0.Snapshot{
-			Spec: dashv0.SnapshotSpec{
-				DeleteKey: &deleteKey,
-				Dashboard: dashboard,
-			},
-		}
-		_ = stripSensitiveFields(snap)
+		snap := &dashv0.Snapshot{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey}}
+		require.NoError(t, setDashboardContent(snap, dashboard))
+		_, err := stripSensitiveFields(snap)
+		require.NoError(t, err)
 		assert.Equal(t, &deleteKey, snap.Spec.DeleteKey)
-		assert.Equal(t, dashboard, snap.Spec.Dashboard)
+		assert.Equal(t, dashboard, dashboardContentForTest(t, snap))
 	})
 
 	t.Run("strips from list", func(t *testing.T) {
 		list := &dashv0.SnapshotList{
 			Items: []dashv0.Snapshot{
-				{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}},
-				{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}},
+				{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey}},
+				{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey}},
 			},
 		}
-		result := stripSensitiveFieldsFromList(list)
-		stripped := result.(*dashv0.SnapshotList)
+		for i := range list.Items {
+			require.NoError(t, setDashboardContent(&list.Items[i], dashboard))
+			list.Items[i].Spec.ExternalUrl = new("https://example.com/dashboard/snapshot/public-key")
+			list.Items[i].Spec.ExternalDeleteUrl = new("https://delete.example.com/private/secret")
+		}
+		stripped, err := stripSensitiveFieldsFromList(list)
+		require.NoError(t, err)
 		for _, item := range stripped.Items {
 			assert.Nil(t, item.Spec.DeleteKey)
-			assert.Nil(t, item.Spec.Dashboard)
+			assert.Nil(t, item.Blobs.Dashboard)
+			assert.Empty(t, item.GetExternalDeleteURL())
 		}
+	})
+
+	// Fail closed: an object that is not a v0alpha1 Snapshot/SnapshotList (for
+	// example if a future version becomes the default served type) must return an
+	// error rather than leaking the unstripped object with its sensitive fields.
+	t.Run("fails closed on wrong Get type", func(t *testing.T) {
+		_, err := stripSensitiveFields(&dashv0.SnapshotList{})
+		require.Error(t, err)
+	})
+
+	t.Run("fails closed on wrong List type", func(t *testing.T) {
+		_, err := stripSensitiveFieldsFromList(&dashv0.Snapshot{})
+		require.Error(t, err)
 	})
 }
 

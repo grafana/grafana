@@ -1,13 +1,14 @@
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { contextSrv } from 'app/core/services/context_srv';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { type DashboardQueryResult, type NestedFolderDTO } from 'app/features/search/service/types';
-import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
+import { type NestedFolderDTO } from 'app/features/search/service/types';
+import { extractManagerId, extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
@@ -22,7 +23,6 @@ import {
   isVirtualStarredFolder,
   isVirtualTeamFolder,
   parseOwnerRef,
-  starredFoldersEnabled,
   teamOwnerRef,
 } from '../utils/dashboards';
 
@@ -37,69 +37,32 @@ async function searchOldAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
   });
 }
 
-const virtualFolderBase = {
-  kind: 'folder',
-  url: '',
-  panel_type: '',
-  tags: [],
-  location: '',
-  ds_uid: [],
-  score: 0,
-  explain: {},
-};
-
-async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) {
-  const searcher = getGrafanaSearcher();
-  const foldersResults = await searcher.search({
+async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<NestedFolderDTO[]> {
+  const results = await getGrafanaSearcher().search({
     kind: ['folder'],
     location: parentUID || 'general',
     from: (page - 1) * pageSize, // our pages are 1-indexed, so we need to -1 to convert that to correct value to skip
     limit: pageSize,
     offset: (page - 1) * pageSize,
   });
+  const folders = results.view
+    .toArray()
+    .map<NestedFolderDTO>(({ uid, name, managedBy }) => ({ uid, title: name, managedBy }));
 
-  let folders: DashboardQueryResult[] = foldersResults.view.toArray();
-
-  // Virtual root folders are only injected at the top level (first page, no parent).
-  if (page === 1 && !parentUID) {
-    // Add shared with me item statically to the array as it is not returned from the
-    // API anymore. This also means we show it every time, whether it has children or not. This is the same as in folder
-    // picker for now. In the future we could to additional request to see if there are any children in it.
-    if (config.sharedWithMeFolderUID) {
-      folders.unshift({
-        ...virtualFolderBase,
-        uid: config.sharedWithMeFolderUID,
-        name: t('browse-dashboards.shared-with-me', 'Shared with me'),
-      });
-    }
-
-    // Add team folders virtual item
-    const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
-    folders.splice(insertIndex, 0, {
-      ...virtualFolderBase,
-      name: t('browse-dashboards.my-team-folders', 'My team folders'),
-      uid: TEAM_FOLDERS_UID,
-    });
-
-    // Add starred folders virtual item after the other virtual roots so root order is
-    // [Shared with me, Team folders, Starred folders, ...real folders]
-    if (starredFoldersEnabled()) {
-      const insertIndex = (config.sharedWithMeFolderUID ? 1 : 0) + 1;
-      folders.splice(insertIndex, 0, {
-        ...virtualFolderBase,
-        name: t('browse-dashboards.starred-folders', 'Starred folders'),
-        uid: STARRED_FOLDERS_UID,
-      });
-    }
+  // Virtual roots only at the top level (first page, no parent), ahead of the real folders.
+  if (page !== 1 || parentUID) {
+    return folders;
   }
-
-  return folders.map<NestedFolderDTO>((item) => {
-    return {
-      uid: item.uid,
-      title: item.name,
-      managedBy: item.managedBy,
-    };
-  });
+  // Shared with me isn't returned by the API, so it's added statically and shown whether or not it
+  // has children, as in the folder picker.
+  const virtualRoots: NestedFolderDTO[] = [
+    ...(config.sharedWithMeFolderUID
+      ? [{ uid: config.sharedWithMeFolderUID, title: t('browse-dashboards.shared-with-me', 'Shared with me') }]
+      : []),
+    { uid: TEAM_FOLDERS_UID, title: t('browse-dashboards.my-team-folders', 'My team folders') },
+    { uid: STARRED_FOLDERS_UID, title: t('browse-dashboards.starred-folders', 'Starred folders') },
+  ];
+  return [...virtualRoots, ...folders];
 }
 
 export async function listFolders(
@@ -110,7 +73,7 @@ export async function listFolders(
 ): Promise<DashboardViewItem[]> {
   let folders: NestedFolderDTO[] = [];
   if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
-    if (config.featureToggles.foldersAppPlatformAPI) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, true)) {
       folders = await searchNewAPI(parentUID, page, pageSize);
     } else {
       folders = await searchOldAPI(parentUID, page, pageSize);
@@ -126,6 +89,7 @@ export async function listFolders(
       parentTitle,
       parentUID,
       managedBy: extractManagerKind(managedBy),
+      managerId: extractManagerId(managedBy),
       url: noUrl
         ? undefined
         : // URLs from the backend come with subUrlPrefix already included, so match that behaviour here

@@ -35,16 +35,14 @@ import (
 )
 
 const (
-	ServiceName        = "tracing"
-	envJaegerAgentHost = "JAEGER_AGENT_HOST"
-	envJaegerAgentPort = "JAEGER_AGENT_PORT"
+	ServiceName = "tracing"
 )
 
 const (
-	jaegerExporter string = "jaeger"
-	otlpExporter   string = "otlp"
-	fileExporter   string = "file"
-	noopExporter   string = "noop"
+	JaegerExporter string = "jaeger"
+	OTLPExporter   string = "otlp"
+	FileExporter   string = "file"
+	NoopExporter   string = "noop"
 
 	jaegerPropagator string = "jaeger"
 	w3cPropagator    string = "w3c"
@@ -232,7 +230,7 @@ func (ots *TracingService) initFileTracerProvider() (tracerProvider, error) {
 // starting.
 func (ots *TracingService) disableFileExporter(err error) (tracerProvider, error) {
 	ots.log.Error("Disabling trace file exporter", "path", ots.cfg.FilePath, "err", err)
-	ots.cfg.enabled = noopExporter
+	ots.cfg.Exporter = NoopExporter
 	return ots.initNoopTracerProvider()
 }
 
@@ -299,18 +297,18 @@ func (ots *TracingService) initNoopTracerProvider() (tracerProvider, error) {
 func (ots *TracingService) initOpentelemetryTracer() error {
 	var tp tracerProvider
 	var err error
-	switch ots.cfg.enabled {
-	case jaegerExporter:
+	switch ots.cfg.Exporter {
+	case JaegerExporter:
 		tp, err = ots.initJaegerTracerProvider()
 		if err != nil {
 			return err
 		}
-	case otlpExporter:
+	case OTLPExporter:
 		tp, err = ots.initOTLPTracerProvider()
 		if err != nil {
 			return err
 		}
-	case fileExporter:
+	case FileExporter:
 		tp, err = ots.initFileTracerProvider()
 		if err != nil {
 			return err
@@ -329,12 +327,12 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 	// Register our TracerProvider as the global so any imported
 	// instrumentation in the future will default to using it
 	// only if tracing is enabled
-	if ots.cfg.enabled != "" {
+	if ots.cfg.Exporter != "" {
 		otel.SetTracerProvider(tp)
 	}
 
 	propagators := []propagation.TextMapPropagator{}
-	for _, p := range strings.Split(ots.cfg.Propagation, ",") {
+	for p := range strings.SplitSeq(ots.cfg.Propagation, ",") {
 		switch p {
 		case w3cPropagator:
 			propagators = append(propagators, propagation.TraceContext{}, propagation.Baggage{})

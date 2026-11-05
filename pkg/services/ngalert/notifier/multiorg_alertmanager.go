@@ -50,6 +50,8 @@ var (
 	ErrSilenceInternal      = errutil.Internal("alerting.notifications.silences.internal")
 	ErrSilenceLimitExceeded = errutil.TooManyRequests("alerting.notifications.silences.limitExceeded", errutil.WithPublicMessage("Maximum number of silences has been reached. Delete some silences before creating new ones."))
 	ErrSilenceSizeExceeded  = errutil.BadRequest("alerting.notifications.silences.sizeExceeded", errutil.WithPublicMessage("Silence size exceeds the maximum allowed size."))
+
+	ErrReceiverStatusesInternal = errutil.Internal("alerting.notifications.receivers.internal")
 )
 
 //go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mock
@@ -81,18 +83,6 @@ type Alertmanager interface {
 	// Lifecycle
 	StopAndWait()
 	Ready() bool
-}
-
-// ExternalState holds nflog entries and silences from an external Alertmanager.
-type ExternalState struct {
-	Silences []byte
-	Nflog    []byte
-	FlushLog []byte
-}
-
-// StateMerger describes a type that is able to merge external state (nflog, silences) with its own.
-type StateMerger interface {
-	MergeState(ExternalState) error
 }
 
 type MultiOrgAlertmanager struct {
@@ -685,6 +675,24 @@ func (moa *MultiOrgAlertmanager) GetSilence(ctx context.Context, orgID int64, id
 	}
 
 	return GettableSilenceToSilence(s), nil
+}
+
+// GetReceiverStatuses returns the receiver statuses (active state and per-integration notification
+// info) for the org provided. Currently, this is a pass-through to the Alertmanager.
+func (moa *MultiOrgAlertmanager) GetReceiverStatuses(ctx context.Context, orgID int64) ([]alertingModels.ReceiverStatus, error) {
+	moa.alertmanagersMtx.RLock()
+	defer moa.alertmanagersMtx.RUnlock()
+
+	orgAM, err := moa.alertmanagerForOrg(orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	statuses, err := orgAM.GetReceivers(ctx)
+	if err != nil {
+		return nil, WithPublicError(ErrReceiverStatusesInternal.Errorf("failed to get receiver statuses: %w", err))
+	}
+	return statuses, nil
 }
 
 // CreateSilence creates a silence in the Alertmanager for the organization provided, returning the silence ID. It will

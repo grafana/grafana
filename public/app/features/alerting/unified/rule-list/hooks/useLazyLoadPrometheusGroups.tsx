@@ -3,7 +3,7 @@ import { useEffectOnce } from 'react-use';
 
 import { type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { isLoading as isLoadingState, useAsync } from '../../hooks/useAsync';
+import { isLoading as isLoadingState, isUninitialized, useAsync } from '../../hooks/useAsync';
 
 /**
  * Provides lazy loading for rule groups.
@@ -53,7 +53,8 @@ export function useLazyLoadPrometheusGroups<TGroup extends PromRuleGroupDTO>(
     fetchMoreGroups();
   });
 
-  const isLoading = isLoadingState(groupsRequestState);
+  // Treat the pre-fetch state as loading so consumers don't mistake it for a confirmed empty result.
+  const isLoading = isLoadingState(groupsRequestState) || isUninitialized(groupsRequestState);
 
   return {
     isLoading,

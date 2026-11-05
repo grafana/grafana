@@ -47,8 +47,7 @@ func New(
 }
 
 func (l *Loader) recordError(ctx context.Context, p *plugins.Plugin, err error) {
-	var pErr *plugins.Error
-	if errors.As(err, &pErr) {
+	if pErr, ok := errors.AsType[*plugins.Error](err); ok {
 		l.errorTracker.Record(ctx, pErr)
 		return
 	}

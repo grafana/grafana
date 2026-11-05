@@ -1,0 +1,8 @@
+{
+  "body": {
+    "accessErrorId": "<accessErrorId>",
+    "message": "You'll need additional permissions to perform this action. Permissions needed: dashboards:read",
+    "title": "Access denied"
+  },
+  "status": 403
+}

@@ -55,6 +55,7 @@ type Service struct {
 	providersList         []string
 	configurableProviders map[string]bool
 	reloadables           map[string]ssosettings.Reloadable
+	defaultsProviders     map[string]ssosettings.DefaultsProvider
 	cachedSSOSettings     []*models.SSOSettings
 	cacheMutex            sync.RWMutex
 
@@ -476,6 +477,23 @@ func (s *Service) RegisterReloadable(provider string, reloadable ssosettings.Rel
 		s.reloadables = make(map[string]ssosettings.Reloadable)
 	}
 	s.reloadables[provider] = reloadable
+
+	if dp, ok := reloadable.(ssosettings.DefaultsProvider); ok {
+		if s.defaultsProviders == nil {
+			s.defaultsProviders = make(map[string]ssosettings.DefaultsProvider)
+		}
+		s.defaultsProviders[provider] = dp
+	}
+}
+
+// GetDefaults returns the default setting values of the provider or nil if
+// the provider doesn't have default values registered.
+func (s *Service) GetDefaults(provider string) map[string]any {
+	dp, ok := s.defaultsProviders[provider]
+	if !ok {
+		return nil
+	}
+	return dp.Defaults()
 }
 
 func (s *Service) RegisterFallbackStrategy(providerRegex string, strategy ssosettings.FallbackStrategy) {

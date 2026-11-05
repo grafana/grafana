@@ -129,7 +129,7 @@ type ResponseAdapter struct {
 	writer      io.WriteCloser
 	buffered    *bufio.ReadWriter
 	ready       chan struct{}
-	wroteHeader int32
+	wroteHeader atomic.Int32
 }
 
 // NewAdapter returns an initialized [ResponseAdapter].
@@ -180,7 +180,7 @@ func (ra *ResponseAdapter) Read(buf []byte) (int, error) {
 
 // WriteHeader implements [http.ResponseWriter].
 func (ra *ResponseAdapter) WriteHeader(code int) {
-	if atomic.CompareAndSwapInt32(&ra.wroteHeader, 0, 1) {
+	if ra.wroteHeader.CompareAndSwap(0, 1) {
 		ra.res.StatusCode = code
 		ra.res.Status = fmt.Sprintf("%03d %s", code, http.StatusText(code))
 		close(ra.ready)

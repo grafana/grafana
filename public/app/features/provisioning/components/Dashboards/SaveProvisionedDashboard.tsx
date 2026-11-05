@@ -1,9 +1,13 @@
+import { useState } from 'react';
+
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
+import { type DashboardRepositoryView } from '../../hooks/useDashboardRepositoryView';
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
+import { type RecoverToNewBranch } from '../../types';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
@@ -13,11 +17,26 @@ export interface SaveProvisionedDashboardProps {
   drawer: SaveDashboardDrawer;
   changeInfo: DashboardChangeInfo;
   saveAsCopy?: boolean;
+  recoverToNewBranch?: RecoverToNewBranch;
 }
 
-export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAsCopy }: SaveProvisionedDashboardProps) {
-  const { isNew, defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
-    useProvisionedDashboardData(dashboard, saveAsCopy);
+interface Props extends SaveProvisionedDashboardProps {
+  view: DashboardRepositoryView;
+}
+
+export function SaveProvisionedDashboard({
+  drawer,
+  changeInfo,
+  dashboard,
+  saveAsCopy,
+  recoverToNewBranch,
+  view,
+}: Props) {
+  // Read once: the draft is what the previous form showed at the swap. Following it per render would recompute the
+  // defaults on every keystroke the form parks and rewrite the path the user is editing
+  const [draft] = useState(() => drawer.saveFormDraft);
+  const { defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
+    useProvisionedDashboardData(dashboard, view, { saveAsCopy, recoverToNewBranch, ...draft });
 
   return (
     <ProvisionedFormGate
@@ -30,12 +49,14 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
         dashboard={dashboard}
         drawer={drawer}
         changeInfo={changeInfo}
-        isNew={isNew || !!saveAsCopy}
+        isNew={view.isNewSave}
         defaultValues={defaultValues!}
         repository={repository}
         canPushToConfiguredBranch={canPushToConfiguredBranch}
         readOnly={readOnly}
         saveAsCopy={saveAsCopy}
+        recoverToNewBranch={recoverToNewBranch}
+        isHeld={view.isHeld}
       />
     </ProvisionedFormGate>
   );

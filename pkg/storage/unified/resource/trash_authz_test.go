@@ -55,19 +55,26 @@ func newRecordingAuthorizer(
 	return a, &calls, &reported
 }
 
+func trashAllowed(t *testing.T, a *TrashAuthorizer, folder, deletedBy string) bool {
+	t.Helper()
+	allowed, err := a.Allowed(t.Context(), folder, deletedBy)
+	require.NoError(t, err)
+	return allowed
+}
+
 // Recognising the deleter is what keeps trash cheap, so it must cost no call.
 func TestTrashAuthorizer_DeleterIsAllowedWithoutAnyCheck(t *testing.T) {
 	a, calls, _ := newRecordingAuthorizer(t, "alice", func(string) bool { return false }, nil)
 
-	assert.True(t, a.Allowed(t.Context(), "folder-1", "user:alice"))
+	assert.True(t, trashAllowed(t, a, "folder-1", "user:alice"))
 	assert.Empty(t, *calls, "recognising the deleter must not call the access client")
 }
 
 func TestTrashAuthorizer_FolderAdminIsAllowed(t *testing.T) {
 	a, calls, _ := newRecordingAuthorizer(t, "carol", func(folder string) bool { return folder == "folder-1" }, nil)
 
-	assert.True(t, a.Allowed(t.Context(), "folder-1", "user:alice"))
-	assert.False(t, a.Allowed(t.Context(), "folder-2", "user:alice"))
+	assert.True(t, trashAllowed(t, a, "folder-1", "user:alice"))
+	assert.False(t, trashAllowed(t, a, "folder-2", "user:alice"))
 
 	require.Len(t, *calls, 2)
 	for _, c := range *calls {
@@ -80,7 +87,7 @@ func TestTrashAuthorizer_FolderAdminIsAllowed(t *testing.T) {
 func TestTrashAuthorizer_OtherUsersDeletionIsDenied(t *testing.T) {
 	a, _, _ := newRecordingAuthorizer(t, "bob", func(string) bool { return false }, nil)
 
-	assert.False(t, a.Allowed(t.Context(), "folder-1", "user:alice"))
+	assert.False(t, trashAllowed(t, a, "folder-1", "user:alice"))
 }
 
 // The same UID may belong to a different person in another namespace.
@@ -94,7 +101,9 @@ func TestTrashAuthorizer_DeleterFromAnotherNamespaceIsDenied(t *testing.T) {
 	a := NewTrashAuthorizer(ac, stranger, trashTestKey(), func(error) {})
 
 	require.Equal(t, "user:alice", stranger.GetUID(), "same UID, another namespace")
-	assert.False(t, a.Allowed(t.Context(), "folder-1", "user:alice"))
+	allowed, err := a.Allowed(t.Context(), "folder-1", "user:alice")
+	require.ErrorIs(t, err, authlib.ErrNamespaceMismatch)
+	assert.False(t, allowed)
 	assert.Len(t, calls, 1, "it falls through to the folder check rather than short-circuiting")
 }
 
@@ -106,14 +115,14 @@ func TestTrashAuthorizer_WildcardNamespaceMatches(t *testing.T) {
 	wildcard := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "alice", Namespace: "*"}
 	a := NewTrashAuthorizer(ac, wildcard, trashTestKey(), func(error) {})
 
-	assert.True(t, a.Allowed(t.Context(), "folder-1", "user:alice"))
+	assert.True(t, trashAllowed(t, a, "folder-1", "user:alice"))
 }
 
 // Otherwise a missing deleter would match a caller with an empty UID.
 func TestTrashAuthorizer_EmptyDeletedByNeverMatches(t *testing.T) {
 	a, calls, _ := newRecordingAuthorizer(t, "", func(string) bool { return false }, nil)
 
-	assert.False(t, a.Allowed(t.Context(), "folder-1", ""))
+	assert.False(t, trashAllowed(t, a, "folder-1", ""))
 	assert.Len(t, *calls, 1, "it must fall through to the folder check, not short-circuit")
 }
 
@@ -121,9 +130,9 @@ func TestTrashAuthorizer_CachesOneCheckPerFolder(t *testing.T) {
 	a, calls, _ := newRecordingAuthorizer(t, "carol", func(string) bool { return true }, nil)
 
 	for range 5 {
-		assert.True(t, a.Allowed(t.Context(), "folder-1", "user:alice"))
+		assert.True(t, trashAllowed(t, a, "folder-1", "user:alice"))
 	}
-	assert.True(t, a.Allowed(t.Context(), "folder-2", "user:alice"))
+	assert.True(t, trashAllowed(t, a, "folder-2", "user:alice"))
 
 	assert.Equal(t, []recordedCheck{
 		{verb: utils.VerbSetPermissions, folder: "folder-1"},
@@ -137,18 +146,19 @@ func TestTrashAuthorizer_CachesDenials(t *testing.T) {
 	a, calls, _ := newRecordingAuthorizer(t, "bob", func(string) bool { return false }, nil)
 
 	for range 5 {
-		assert.False(t, a.Allowed(t.Context(), "folder-1", "user:alice"))
+		assert.False(t, trashAllowed(t, a, "folder-1", "user:alice"))
 	}
 	assert.Len(t, *calls, 1)
 }
 
-// The failure is swallowed, so without a report an authz outage would silently
-// empty everyone's trash.
-func TestTrashAuthorizer_ReportsCheckFailuresAndDenies(t *testing.T) {
+func TestTrashAuthorizer_ReportsCheckFailures(t *testing.T) {
 	boom := errors.New("authz unavailable")
 	a, _, reported := newRecordingAuthorizer(t, "carol", nil, boom)
 
-	assert.False(t, a.Allowed(t.Context(), "folder-1", "user:alice"))
+	allowed, err := a.Allowed(t.Context(), "folder-1", "user:alice")
+	require.ErrorIs(t, err, boom)
+	assert.False(t, allowed)
+	assert.NotContains(t, a.folderAdmin, "folder-1", "a failed check is not a cached denial")
 
 	require.Len(t, *reported, 1)
 	assert.ErrorIs(t, (*reported)[0], boom)
@@ -160,7 +170,7 @@ func TestTrashAuthorizer_FolderlessKindChecksTheWholeNamespace(t *testing.T) {
 		return folder == "" // granted namespace-wide
 	}, nil)
 
-	assert.True(t, a.Allowed(t.Context(), "", "user:alice"))
+	assert.True(t, trashAllowed(t, a, "", "user:alice"))
 
 	require.Len(t, *calls, 1)
 	assert.Equal(t, utils.VerbSetPermissions, (*calls)[0].verb)
@@ -213,17 +223,17 @@ func newBatchAuthorizer(uid string, allow func(folder string) bool) (*TrashAutho
 func TestTrashAuthorizer_PrepareResolvesEveryFolderInOneCall(t *testing.T) {
 	a, ac, _ := newBatchAuthorizer("carol", func(folder string) bool { return folder == "folder-1" })
 
-	a.Prepare(t.Context(), []TrashItem{
+	require.NoError(t, a.Prepare(t.Context(), []TrashItem{
 		{Folder: "folder-1", DeletedBy: "user:alice"},
 		{Folder: "folder-2", DeletedBy: "user:alice"},
 		{Folder: "folder-1", DeletedBy: "user:alice"}, // repeat
-	})
+	}))
 
 	require.Len(t, ac.batches, 1)
 	assert.Equal(t, []string{"folder-1", "folder-2"}, ac.batches[0], "a folder is asked about once")
 
-	assert.True(t, a.Allowed(t.Context(), "folder-1", "user:alice"))
-	assert.False(t, a.Allowed(t.Context(), "folder-2", "user:alice"))
+	assert.True(t, trashAllowed(t, a, "folder-1", "user:alice"))
+	assert.False(t, trashAllowed(t, a, "folder-2", "user:alice"))
 	assert.Len(t, ac.batches, 1, "the answers came from the cache")
 }
 
@@ -232,22 +242,21 @@ func TestTrashAuthorizer_PrepareResolvesEveryFolderInOneCall(t *testing.T) {
 func TestTrashAuthorizer_PrepareSkipsFoldersItDoesNotNeed(t *testing.T) {
 	a, ac, _ := newBatchAuthorizer("alice", func(string) bool { return false })
 
-	a.Prepare(t.Context(), []TrashItem{{Folder: "folder-1", DeletedBy: "user:alice"}})
+	require.NoError(t, a.Prepare(t.Context(), []TrashItem{{Folder: "folder-1", DeletedBy: "user:alice"}}))
 
 	assert.Empty(t, ac.batches)
 }
 
-// A failed batch must leave the folder undecided rather than remembered as denied.
-func TestTrashAuthorizer_PrepareFailureFallsBackToSingleCheck(t *testing.T) {
+func TestTrashAuthorizer_PrepareReportsBatchFailure(t *testing.T) {
 	boom := errors.New("batch failed")
 	a, ac, reported := newBatchAuthorizer("carol", func(string) bool { return true })
 	ac.batchError = boom
 
-	a.Prepare(t.Context(), []TrashItem{{Folder: "folder-1", DeletedBy: "user:alice"}})
+	require.ErrorIs(t, a.Prepare(t.Context(), []TrashItem{{Folder: "folder-1", DeletedBy: "user:alice"}}), boom)
 
 	require.Len(t, *reported, 1)
 	assert.ErrorIs(t, (*reported)[0], boom)
-	assert.True(t, a.Allowed(t.Context(), "folder-1", "user:alice"), "the single check still decides it")
+	assert.NotContains(t, a.folderAdmin, "folder-1")
 }
 
 // authlib denies k6-app in the single check and has no such rule for batches, so
@@ -255,24 +264,20 @@ func TestTrashAuthorizer_PrepareFailureFallsBackToSingleCheck(t *testing.T) {
 func TestTrashAuthorizer_PrepareLeavesK6FolderToTheSingleCheck(t *testing.T) {
 	a, ac, _ := newBatchAuthorizer("carol", func(string) bool { return true })
 
-	a.Prepare(t.Context(), []TrashItem{
+	require.NoError(t, a.Prepare(t.Context(), []TrashItem{
 		{Folder: "k6-app", DeletedBy: "user:alice"},
 		{Folder: "folder-1", DeletedBy: "user:alice"},
-	})
+	}))
 
 	require.Len(t, ac.batches, 1)
 	assert.Equal(t, []string{"folder-1"}, ac.batches[0], "k6-app is not batched")
 }
 
-// A batch that answers some folders with an error leaves them to FolderAdmin, which
-// reports its own failure. Reporting here too would double every line of an outage.
-func TestTrashAuthorizer_PrepareDoesNotReportPerItemErrors(t *testing.T) {
+func TestTrashAuthorizer_PrepareReturnsPerItemErrors(t *testing.T) {
 	boom := errors.New("item failed")
-	a, ac, reported := newBatchAuthorizer("carol", func(string) bool { return true })
+	a, ac, _ := newBatchAuthorizer("carol", func(string) bool { return true })
 	ac.itemError = boom
 
-	a.Prepare(t.Context(), []TrashItem{{Folder: "folder-1", DeletedBy: "user:alice"}})
-
-	assert.Empty(t, *reported)
-	assert.True(t, a.Allowed(t.Context(), "folder-1", "user:alice"), "the single check still decides it")
+	require.ErrorIs(t, a.Prepare(t.Context(), []TrashItem{{Folder: "folder-1", DeletedBy: "user:alice"}}), boom)
+	assert.NotContains(t, a.folderAdmin, "folder-1")
 }

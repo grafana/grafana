@@ -1,0 +1,30 @@
+{
+  "apiVersion": "apps.grafana.app/v1alpha2",
+  "kind": "AppManifest",
+  "metadata": {
+    "name": "test-app-with-sdk-manifest"
+  },
+  "spec": {
+    "appName": "test-app-with-sdk-manifest",
+    "group": "test-app-with-backend.ext.grafana.app",
+    "versions": [
+      {
+        "name": "v1",
+        "routes": {
+          "namespaced": {
+            "/ping": {
+              "get": {
+                "operationId": "getPing",
+                "responses": {
+                  "200": {
+                    "description": "OK"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}
