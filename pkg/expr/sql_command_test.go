@@ -427,7 +427,7 @@ func TestSQLCommandInvalidJSONInput(t *testing.T) {
 		require.NotNil(t, frame.Meta)
 		require.Equal(t, []data.Notice{{
 			Severity: data.NoticeSeverityWarning,
-			Text:     "A: column vb has values that are not valid JSON (1 of 1 rows). They read as NULL.",
+			Text:     "A: column vb has 1 of 1 values that are not valid JSON; they read as NULL if selected.",
 		}}, frame.Meta.Notices)
 	})
 

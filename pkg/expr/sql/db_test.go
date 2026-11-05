@@ -396,13 +396,13 @@ func TestQueryFrames_InvalidJSON(t *testing.T) {
 					require.Equal(t, want, v, "row %d", i)
 				}
 				require.Equal(t, []string{
-					"A: column payload has values that are not valid JSON (2 of 3 rows). They read as NULL.",
+					"A: column payload has 2 of 3 values that are not valid JSON; they read as NULL if selected.",
 				}, noticeTexts(got))
 			})
 		}
 	})
 
-	t.Run("one notice per column, named as SQL names it", func(t *testing.T) {
+	t.Run("one notice per column, named as SQL names it, selected or not", func(t *testing.T) {
 		input := data.NewFrame("A",
 			data.NewField("id", nil, []int64{1, 2}),
 			data.NewField("payload", nil, []json.RawMessage{json.RawMessage(`{"ok":true}`), json.RawMessage(`{"ok":true}`)}),
@@ -415,8 +415,8 @@ func TestQueryFrames_InvalidJSON(t *testing.T) {
 		n, _ := got.Fields[0].ConcreteAt(0)
 		require.EqualValues(t, 2, n)
 		require.Equal(t, []string{
-			"A: column payload_2 has values that are not valid JSON (1 of 2 rows). They read as NULL.",
-			"A: column bin has values that are not valid JSON (2 of 2 rows). They read as NULL.",
+			"A: column payload_2 has 1 of 2 values that are not valid JSON; they read as NULL if selected.",
+			"A: column bin has 2 of 2 values that are not valid JSON; they read as NULL if selected.",
 		}, noticeTexts(got))
 	})
 

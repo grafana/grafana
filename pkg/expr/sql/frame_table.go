@@ -165,6 +165,9 @@ func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 
 // invalidJSONNotices returns one warning for each JSON column that has
 // values that are not valid JSON, since rowIter reads those values as NULL.
+// It checks every JSON column of each input, because finding the columns a
+// query selects would mean walking the analyzed plan, so the text says the
+// values read as NULL only if selected.
 // Empty and whitespace-only values also read as NULL, but get no warning.
 func invalidJSONNotices(frames []*data.Frame) []data.Notice {
 	var notices []data.Notice
@@ -193,7 +196,7 @@ func invalidJSONNotices(frames []*data.Frame) []data.Notice {
 			}
 			notices = append(notices, data.Notice{
 				Severity: data.NoticeSeverityWarning,
-				Text:     fmt.Sprintf("%s: column %s has values that are not valid JSON (%d of %d rows). They read as NULL.", frame.RefID, names[colIndex], count, field.Len()),
+				Text:     fmt.Sprintf("%s: column %s has %d of %d values that are not valid JSON; they read as NULL if selected.", frame.RefID, names[colIndex], count, field.Len()),
 			})
 		}
 	}
