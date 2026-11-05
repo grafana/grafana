@@ -24,6 +24,8 @@ Available in Grafana 12 and later.
 
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
+**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [shorturl.grafana.app/v1beta1](https://play.grafana.org/swagger?api=shorturl.grafana.app-v1beta1) in Swagger.**
+
 The legacy [Short URL API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/short_url/) is still available. Refer to [Migrate from the legacy Short URL API](#migrate-from-the-legacy-short-url-api) to learn how both APIs match.
 {{< /admonition >}}
 
@@ -43,8 +45,6 @@ Short URLs don't use role-based access control actions. Access depends on the or
 Listing is restricted to admins because it exposes every short URL in the organization. Updating and deleting are restricted because they can change or remove short URLs that other users created.
 
 ## Endpoints
-
-**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [shorturl.grafana.app/v1beta1](https://play.grafana.org/swagger?api=shorturl.grafana.app-v1beta1) in Swagger.**
 
 The following table lists the main endpoints. The Swagger documentation also includes endpoints to search short URLs, delete a collection of short URLs, apply partial updates with `PATCH`, and read or update the `status` subresource.
 
