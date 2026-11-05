@@ -42,6 +42,19 @@ describe('QueryEditorMainHeader', () => {
     expect(screen.getByTestId('query-options-bar')).toBeInTheDocument();
   });
 
+  it.each([
+    { enabled: true, count: 1 },
+    { enabled: false, count: 0 },
+  ])('shows $count experimental feedback button(s) when stacked mode enabled is $enabled', ({ enabled, count }) => {
+    renderWithQueryEditorProvider(<QueryEditorMainHeader />, {
+      uiStateOverrides: { stackedMode: makeStackedMode({ enabled }) },
+      actionsOverrides: { onSwitchToClassic: jest.fn() },
+    });
+
+    expect(screen.getByRole('button', { name: 'Stacked view' })).toBeInTheDocument();
+    expect(screen.queryAllByRole('button', { name: 'Experimental feature options' })).toHaveLength(count);
+  });
+
   describe('stacked view toggle', () => {
     it('is not pressed when stacked mode is disabled', () => {
       renderWithQueryEditorProvider(<QueryEditorMainHeader />, {

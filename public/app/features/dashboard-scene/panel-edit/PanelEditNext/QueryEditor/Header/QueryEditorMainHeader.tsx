@@ -4,8 +4,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';
 
-import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
+import { ExperimentalFeedbackButton } from './ExperimentalFeedbackButton';
 import { QueryOptionsBar } from './QueryOptionsBar';
 import { StackedViewToggle } from './StackedViewToggle';
 
@@ -13,6 +14,7 @@ export function QueryEditorMainHeader() {
   const styles = useStyles2(getStyles);
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
+  const { stackedMode } = useQueryEditorUIContext();
   const count = queries.length + transformations.length;
 
   return (
@@ -28,6 +30,8 @@ export function QueryEditorMainHeader() {
         </Text>
       </div>
       <QueryOptionsBar />
+      {/* Stacked items hide their own feedback button, so the stack shows a single one here. */}
+      {stackedMode.enabled && <ExperimentalFeedbackButton />}
     </div>
   );
 }

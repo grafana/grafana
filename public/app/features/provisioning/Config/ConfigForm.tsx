@@ -29,6 +29,7 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
+import { ManagedReadOnlyBanner } from '../components/ManagedReadOnlyBanner';
 import { PROVISIONING_URL } from '../constants';
 import { useConnectionList } from '../hooks/useConnectionList';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
@@ -38,6 +39,7 @@ import { connectionTypesForProvider } from '../utils/connectionData';
 import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions, getRemoteConfig } from '../utils/git';
+import { isManagedResourceReadOnly } from '../utils/managedResource';
 import { getRepositoryTypeConfig, isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
@@ -84,6 +86,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
   });
 
   const isEdit = Boolean(repositoryName);
+  // Externally managed repositories (terraform, kubectl, ...) cannot be edited in the UI.
+  const isReadOnly = data ? isManagedResourceReadOnly(data) : false;
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
@@ -214,6 +218,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
       <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
       <Stack direction="column" gap={2}>
+        {isReadOnly && <ManagedReadOnlyBanner />}
         {submitError && (
           <Alert
             severity="error"
@@ -566,12 +571,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
         )}
 
         <Stack gap={2}>
-          <Button type={'submit'} disabled={isLoading || (usesConnection && allConnectionsLoading)}>
+          <Button type={'submit'} disabled={isLoading || isReadOnly || (usesConnection && allConnectionsLoading)}>
             {isLoading
               ? t('provisioning.config-form.button-saving', 'Saving...')
               : t('provisioning.config-form.button-save', 'Save')}
           </Button>
-          {repositoryName && data && (
+          {repositoryName && data && !isReadOnly && (
             <DeleteRepositoryButton name={repositoryName} repository={data} redirectTo={PROVISIONING_URL} />
           )}
         </Stack>

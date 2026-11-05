@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"path/filepath"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -1473,40 +1474,52 @@ type historyVersion struct {
 	ResourceVersion int64
 }
 
-// readHistoryVersions returns the history rows at the given versions. Missing
-// versions, such as pruned ones, are left out.
-// TODO: read the rows in batches instead of one query each.
+// historyBatchReadSize bounds the bodies one query returns, like readChunkSize
+// for search reads.
+const historyBatchReadSize = 10
+
+// readHistoryVersions returns the history rows at the given versions, with one
+// query per collection and batch. Missing versions, such as pruned ones, are
+// left out.
 func (b *backend) readHistoryVersions(ctx context.Context, versions []historyVersion) (map[historyVersion]*historyPollResponse, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.readHistoryVersions")
 	defer span.End()
 	span.SetAttributes(attribute.Int("versions", len(versions)))
 
+	type collection struct{ group, resource string }
+	byCollection := make(map[collection][]int64)
+	wanted := make(map[historyVersion]bool, len(versions))
+	for _, v := range versions {
+		if !wanted[v] {
+			c := collection{v.Group, v.Resource}
+			byCollection[c] = append(byCollection[c], v.ResourceVersion)
+		}
+		wanted[v] = true
+	}
+
 	found := make(map[historyVersion]*historyPollResponse, len(versions))
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-		for _, v := range versions {
-			key := &resourcepb.ResourceKey{Namespace: v.Namespace, Group: v.Group, Resource: v.Resource, Name: v.Name}
-			row, err := dbutil.QueryRow(ctx, tx, sqlResourceHistoryRead, &sqlResourceHistoryReadRequest{
-				SQLTemplate: sqltemplate.New(b.dialect),
-				Request:     &historyReadRequest{Key: key, ResourceVersion: v.ResourceVersion},
-				Response:    NewHistoryReadResponse(),
-			})
-			if errors.Is(err, sql.ErrNoRows) {
-				continue
-			}
-			if err != nil {
-				return err
-			}
-			// The query falls back to an older version when this one is gone.
-			if row.ResourceVersion != v.ResourceVersion {
-				continue
-			}
-			found[v] = &historyPollResponse{
-				Key:             resourcepb.ResourceKey{Namespace: v.Namespace, Group: v.Group, Resource: v.Resource, Name: v.Name},
-				GUID:            row.GUID,
-				ResourceVersion: row.ResourceVersion,
-				Value:           row.Value,
-				Action:          row.Action,
-				Folder:          row.Folder,
+		for c, rvs := range byCollection {
+			for chunk := range slices.Chunk(rvs, historyBatchReadSize) {
+				rows, err := dbutil.Query(ctx, tx, sqlResourceHistoryBatchRead, &sqlResourceHistoryBatchReadRequest{
+					SQLTemplate:      sqltemplate.New(b.dialect),
+					Group:            c.group,
+					Resource:         c.resource,
+					ResourceVersions: chunk,
+					Response:         &historyPollResponse{},
+				})
+				if err != nil {
+					return err
+				}
+				for _, row := range rows {
+					v := historyVersion{
+						Namespace: row.Key.Namespace, Group: row.Key.Group, Resource: row.Key.Resource,
+						Name: row.Key.Name, ResourceVersion: row.ResourceVersion,
+					}
+					if wanted[v] {
+						found[v] = row
+					}
+				}
 			}
 		}
 		return nil
