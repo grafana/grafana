@@ -50,7 +50,7 @@ func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.O
 		ns := request.NamespaceValue(ctx)
 		// TODO: Add pagination to resource lister
 		rsp, err := s.lister.List(ctx, ns, name)
-		if err := resource.StatusErrorFromResponse(nil, err); err != nil {
+		if err := resource.StatusErrorFromGRPC(err); err != nil {
 			responder.Error(err)
 		} else {
 			responder.Object(200, rsp)

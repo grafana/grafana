@@ -453,9 +453,9 @@ describe('annotations', () => {
     expect(session.getAnnotationAnchor('a')).toBeNull();
   });
 
-  it('hides the anchor while its element is entirely off-screen or no longer resolves', async () => {
+  it('hides a staged anchor while its element is entirely off-screen or no longer resolves', async () => {
     const { session, annotate } = setup();
-    annotate([item()]);
+    annotate([item({ state: 'staged' })]);
     const anchor = session.getAnnotationAnchor('a')!;
     await nextFrame();
     expect(anchor).not.toHaveStyle({ display: 'none' });
@@ -468,13 +468,38 @@ describe('annotations', () => {
     panelRect = { ...panelRect, top: 200 };
     fireEvent.scroll(window);
     await nextFrame();
-    expect(anchor).toHaveStyle({ left: '214px', top: '336px' });
     expect(anchor).not.toHaveStyle({ display: 'none' });
 
-    annotate([item({ ref: { kind: 'panel', panelId: 99 } })]);
+    annotate([item({ state: 'staged', ref: { kind: 'panel', panelId: 99 } })]);
     await nextFrame();
     expect(anchor).toHaveStyle({ display: 'none' });
     expect(anchor).toBeInTheDocument();
+  });
+
+  it('keeps an open comment’s anchor at the nearest visible edge while its element is off-screen', async () => {
+    const { session, annotate } = setup();
+    annotate([item()]);
+    const anchor = session.getAnnotationAnchor('a')!;
+    await nextFrame();
+
+    // Scrolled far above the viewport: the editor stays at its top edge, where the pin is held (28px down).
+    panelRect = { ...panelRect, top: -1000 };
+    fireEvent.scroll(window);
+    await nextFrame();
+    expect(anchor).not.toHaveStyle({ display: 'none' });
+    expect(anchor).toHaveStyle({ left: '214px', top: '14px' });
+
+    // Far below it: at its bottom edge, where the pin is held.
+    panelRect = { ...panelRect, top: 2000 };
+    fireEvent.scroll(window);
+    await nextFrame();
+    expect(anchor).not.toHaveStyle({ display: 'none' });
+    expect(anchor).toHaveStyle({ left: '214px', top: '754px' });
+
+    // A comment that no longer resolves has nothing to point at.
+    annotate([item({ ref: { kind: 'panel', panelId: 99 } })]);
+    await nextFrame();
+    expect(anchor).toHaveStyle({ display: 'none' });
   });
 
   describe('revealAnnotation', () => {
@@ -1776,6 +1801,37 @@ describe('dashboard controls', () => {
     return { controls, save };
   }
   const blocker = () => screen.getByTestId('dashboard-composer-overlay');
+
+  it('clips an outline where its panel scrolls under the controls, and hides a pin that would sit on them', () => {
+    const { annotate } = setup();
+    mountControls();
+    // The controls band ends at 64px; the panel's top 44px are scrolled under it.
+    panelRect = { left: 100, top: 20, width: 400, height: 300 };
+
+    annotate([item({ id: 'a', point: { x: 0.25, y: 0.5 } }), item({ id: 'b', label: '2', point: { x: 0.5, y: 0.1 } })]);
+
+    expect(screen.getByTestId('composer-annotation-outline-a')).toHaveStyle({ clipPath: 'inset(44px -4px -4px)' });
+    // Pin 1 points below the band; pin 2's point, 30px down the panel, is under it.
+    expect(screen.getByRole('button', { name: 'Comment 1' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Comment 2' })).not.toBeInTheDocument();
+  });
+
+  it('draws nothing for a panel the controls cover, keeping an open editor just below them', async () => {
+    const { session, annotate } = setup();
+    mountControls();
+    panelRect = { left: 100, top: -300, width: 400, height: 340 };
+    annotate([item(), item({ id: 'b', label: '2', state: 'staged' })]);
+    const open = session.getAnnotationAnchor('a');
+    const staged = session.getAnnotationAnchor('b');
+    await nextFrame();
+
+    expect(screen.queryByTestId('composer-annotation-outline-a')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Comment/ })).not.toBeInTheDocument();
+    // The open editor stays in view, a spacing step below the controls; a staged preview has no pin to show beside.
+    expect(open).not.toHaveStyle({ display: 'none' });
+    expect(open).toHaveStyle({ top: '72px' });
+    expect(staged).toHaveStyle({ display: 'none' });
+  });
 
   it('lets the pointer through to the controls band and blocks the body again below it', () => {
     const { startPick } = setup();

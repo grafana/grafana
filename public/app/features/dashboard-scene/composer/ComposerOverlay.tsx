@@ -33,9 +33,14 @@ interface Layout {
   /** The overlay's own size, which pins are kept inside. */
   width: number;
   height: number;
+  /**
+   * The bottom of the sticky dashboard controls, relative to the overlay, or -Infinity without them. Content
+   * scrolled above it is under the controls, so its outlines and pins are not drawn over them.
+   */
+  controlsBottom: number;
 }
 
-const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, also: {}, width: 0, height: 0 };
+const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, also: {}, width: 0, height: 0, controlsBottom: -Infinity };
 
 /**
  * A layer over the dashboard controls and body while Composer is active.
@@ -105,12 +110,14 @@ export function ComposerOverlay({
     coverContent(root);
     const rootRect = root.getBoundingClientRect();
     const { highlight, annotations: items } = session.getOverlayState();
+    const controls = root.parentElement?.querySelector(CONTROLS_SELECTOR)?.getBoundingClientRect();
     const next: Layout = {
       highlight: highlight ? session.resolveBox(highlight, rootRect) : null,
       items: {},
       also: {},
       width: rootRect.width,
       height: rootRect.height,
+      controlsBottom: controls ? controls.bottom - rootRect.top : -Infinity,
     };
     for (const item of items) {
       const box = session.resolveBox(item.ref, rootRect);
@@ -128,7 +135,7 @@ export function ComposerOverlay({
     session.getAnchors().forEach((anchor, id) => {
       const item = items.find((candidate) => candidate.id === id);
       const box = next.items[id];
-      const position = item && box ? anchorPosition(box, pinCentre(box, item, next), rootRect) : null;
+      const position = item && box ? anchorPosition(box, item, next, rootRect) : null;
       if (!position) {
         anchor.style.display = 'none';
         return;
@@ -704,6 +711,11 @@ export function ComposerOverlay({
     return () => container.classList.remove(...classNames);
   }, [picking, pickMode, paused, capturing, styles.cursorPicking, styles.cursorInert, styles.cursorPickingVariables]);
 
+  const highlightBox =
+    layout.highlight && overlayState.highlight
+      ? belowControls(overlayState.highlight, layout.highlight, layout.controlsBottom)
+      : null;
+
   return (
     <div
       ref={rootRef}
@@ -717,7 +729,7 @@ export function ComposerOverlay({
         role="presentation"
         aria-hidden
       >
-        {layout.highlight && <div className={cx(styles.box, styles.highlight)} style={layout.highlight} />}
+        {highlightBox && <div className={cx(styles.box, styles.highlight)} style={highlightBox} />}
         {annotations.flatMap(({ id, ref, state }) => {
           // The comment's own element, then the others it covers, each outlined by its kind.
           const outlines = [
@@ -727,7 +739,8 @@ export function ComposerOverlay({
               testId: `composer-annotation-outline-${id}-also-${index}`,
             })),
           ];
-          return outlines.map(({ ref: outlined, box, testId }) => {
+          return outlines.map(({ ref: outlined, box: measured, testId }) => {
+            const box = measured && belowControls(outlined, measured, layout.controlsBottom);
             // Panels are outlined only while active; regions always, faint while staged.
             if (!box || (outlined.kind !== 'region' && state !== 'active')) {
               return null;
@@ -755,7 +768,7 @@ export function ComposerOverlay({
       {annotations.map((item) => {
         const { id, label, state } = item;
         const box = layout.items[id];
-        if (!box) {
+        if (!box || isPinUnderControls(box, item, layout)) {
           return null;
         }
         return (
@@ -847,6 +860,39 @@ function pinTail(box: Box, { point, state }: Pick<ComposerAnnotation, 'point' | 
   };
 }
 
+/**
+ * Whether an element lies in the dashboard body, so content scrolled under the sticky controls covers it.
+ * Variables and annotation layers are in the controls, and a region may be drawn over them.
+ */
+function scrollsUnderControls(ref: ElementRef): boolean {
+  return ref.kind === 'panel' || ref.kind === 'row' || ref.kind === 'tab' || ref.kind === 'cell';
+}
+
+/** How far an outline is drawn outside its box (2px), and room for it when the box is clipped. */
+const OUTLINE_BLEED = 4;
+/** The space between the sticky controls and an open editor held below them: one spacing step. */
+const CONTROLS_GAP = 8;
+
+/**
+ * A body element's box with the part under the sticky controls clipped off, so its outline never draws over
+ * them; null when the controls cover all of it. Anything else is returned as it is.
+ */
+function belowControls(ref: ElementRef, box: Box, controlsBottom: number): (Box & { clipPath?: string }) | null {
+  const covered = controlsBottom - box.top;
+  if (!scrollsUnderControls(ref) || covered <= 0) {
+    return box;
+  }
+  if (covered >= box.height) {
+    return null;
+  }
+  return { ...box, clipPath: `inset(${covered}px -${OUTLINE_BLEED}px -${OUTLINE_BLEED}px)` };
+}
+
+/** Whether a body element's pin would sit on the sticky controls: it is hidden, with its editor anchor. */
+function isPinUnderControls(box: Box, item: Pick<ComposerAnnotation, 'ref' | 'point' | 'state'>, layout: Layout) {
+  return scrollsUnderControls(item.ref) && pinTail(box, item, layout).top - pinSize(item.state) < layout.controlsBottom;
+}
+
 /** The pin's visual centre, where the editor anchor sits: half a pin right of and above the tail tip. */
 function pinCentre(box: Box, item: Pick<ComposerAnnotation, 'point' | 'state'>, overlay: Size) {
   const tail = pinTail(box, item, overlay);
@@ -855,23 +901,33 @@ function pinCentre(box: Box, item: Pick<ComposerAnnotation, 'point' | 'state'>, 
 }
 
 /**
- * The pin's centre, clamped to the viewport, relative to the overlay. Null when no part of the element is
- * in the viewport.
+ * Where an item's editor anchor sits, relative to the overlay: the pin's centre, clamped to what is visible
+ * (the viewport, below the sticky controls for an element in the dashboard body). An active item's anchor
+ * holds the open editor, so it stays at the nearest visible edge however far its element scrolls, and the
+ * editor never disappears mid-comment. A staged item's anchor (a hover preview) is null, and hidden, while
+ * its pin is not shown: its element entirely off-screen, or its pin under the controls.
  */
 function anchorPosition(
   box: Box,
-  pin: { left: number; top: number },
+  item: Pick<ComposerAnnotation, 'ref' | 'point' | 'state'>,
+  layout: Layout,
   root: DOMRect
 ): { left: number; top: number } | null {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   const left = root.left + box.left;
   const top = root.top + box.top;
-  if (left > viewportWidth || top > viewportHeight || left + box.width < 0 || top + box.height < 0) {
+  const offScreen = left > viewportWidth || top > viewportHeight || left + box.width < 0 || top + box.height < 0;
+  if (item.state !== 'active' && (offScreen || isPinUnderControls(box, item, layout))) {
     return null;
   }
+  const minTop =
+    scrollsUnderControls(item.ref) && Number.isFinite(layout.controlsBottom)
+      ? root.top + layout.controlsBottom + CONTROLS_GAP
+      : 0;
+  const pin = pinCentre(box, item, layout);
   const x = clamp(root.left + pin.left, 0, viewportWidth);
-  const y = clamp(root.top + pin.top, 0, viewportHeight);
+  const y = clamp(root.top + pin.top, Math.min(minTop, viewportHeight), viewportHeight);
   return { left: x - root.left, top: y - root.top };
 }
 

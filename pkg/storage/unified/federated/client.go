@@ -38,7 +38,7 @@ func (s *federatedClient) GetStats(ctx context.Context, in *resourcepb.ResourceS
 	defer span.End()
 
 	rsp, err := s.ResourceClient.GetStats(ctx, in, opts...)
-	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+	if err != nil {
 		return nil, tracing.Error(span, err)
 	}
 

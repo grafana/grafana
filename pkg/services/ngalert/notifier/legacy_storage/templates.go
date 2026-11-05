@@ -11,6 +11,16 @@ func (rev *ConfigRevision) HasTemplateWithTitle(title string) bool {
 	return false
 }
 
+// FindTemplate returns the template with the given kind and title, whatever its UID is.
+func (rev *ConfigRevision) FindTemplate(kind v1.TemplateKind, title string) (v1.TemplateGroup, bool) {
+	for _, tmpl := range rev.Config.Templates {
+		if tmpl.Kind == kind && tmpl.Title == title {
+			return tmpl, true
+		}
+	}
+	return v1.TemplateGroup{}, false
+}
+
 func (rev *ConfigRevision) SetTemplate(tmpl v1.TemplateGroup) v1.TemplateGroup {
 	if rev.Config.Templates == nil {
 		rev.Config.Templates = make(map[v1.ResourceUID]v1.TemplateGroup, 1)

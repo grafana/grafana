@@ -185,6 +185,7 @@ func (s *Server) stopping(_ error) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		d.deregister(ctx)
+		d.close()
 	}
 	s.shutdown()
 	return nil
@@ -241,6 +242,7 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 				reload:   s.setRoutes,
 				interval: s.cfg.DiscoveryInterval,
 				ttl:      s.cfg.DiscoveryTTL,
+				metrics:  s.metrics,
 			},
 		)
 	}
