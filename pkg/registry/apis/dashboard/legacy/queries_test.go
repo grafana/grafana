@@ -78,6 +78,15 @@ func TestDashboardQueries(t *testing.T) {
 					}),
 				},
 				{
+					Name: "folders_next_page",
+					Data: getQuery(&DashboardQuery{
+						OrgID:      2,
+						GetFolders: true,
+						MaxRows:    500,
+						LastID:     30,
+					}),
+				},
+				{
 					Name: "export_with_history",
 					Data: getQuery(&DashboardQuery{
 						OrgID:      1,
@@ -91,7 +100,18 @@ func TestDashboardQueries(t *testing.T) {
 						OrgID:         1,
 						GetHistory:    true,
 						AllowFallback: true,
-						Order:         "ASC",
+						MaxRows:       500,
+					}),
+				},
+				{
+					Name: "migration_with_fallback_next_page",
+					Data: getQuery(&DashboardQuery{
+						OrgID:         1,
+						GetHistory:    true,
+						AllowFallback: true,
+						MaxRows:       500,
+						AfterID:       42,
+						AfterVersion:  7,
 					}),
 				},
 				{

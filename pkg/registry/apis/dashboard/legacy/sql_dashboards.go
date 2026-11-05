@@ -51,6 +51,11 @@ type dashboardRow struct {
 	// The token we can use that will start a new connection that includes
 	// this same dashboard
 	token *continueToken
+
+	// Legacy dashboard id and version. keyValid is false when they could not be read.
+	internalID int64
+	version    int64
+	keyValid   bool
 }
 
 type dashboardSqlAccess struct {
@@ -155,14 +160,24 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, helper *legacysql.Lega
 	}, err
 }
 
+// Page bounds for the dashboard migration read. Each page is read fully and its rows
+// closed before anything is sent, so no legacy SELECT stays open while unified storage
+// writes and statement_timeout bounds one page rather than the whole org.
+const (
+	migrationPageMaxRows  = 500
+	migrationPageMaxBytes = 32 * 1024 * 1024
+)
+
 // MigrateDashboards handles the dashboard migration logic
 func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+	if !opts.WithHistory {
+		return fmt.Errorf("dashboard migration requires history")
+	}
 	query := &DashboardQuery{
 		OrgID:         orgId,
-		Limit:         100000000,
-		GetHistory:    opts.WithHistory, // include history
-		AllowFallback: true,             // allow fallback to dashboard table during migration
-		Order:         "ASC",            // oldest first
+		GetHistory:    true,
+		AllowFallback: true, // allow fallback to dashboard table during migration
+		MaxRows:       migrationPageMaxRows,
 	}
 
 	sql, err := a.sql(ctx)
@@ -171,89 +186,40 @@ func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64,
 	}
 
 	opts.Progress(-1, "migrating dashboards...")
-	rows, err := a.getRows(ctx, sql, query)
-	if rows != nil {
-		defer func() {
-			_ = rows.Close()
-		}()
-	}
+	scanned, rejected, err := a.migrateLegacyPages(ctx, sql, query, opts, stream, dashboardBulkRequest, func(page *migrationPage) error {
+		if page.lastID < query.AfterID || (page.lastID == query.AfterID && page.lastVersion <= query.AfterVersion) {
+			return fmt.Errorf("dashboard migration paging did not advance past id %d version %d", query.AfterID, query.AfterVersion)
+		}
+		query.AfterID, query.AfterVersion = page.lastID, page.lastVersion
+		return nil
+	})
 	if err != nil {
 		return err
 	}
 
-	// Now send each dashboard
-	for i := 1; rows.Next(); i++ {
-		dash := rows.row.Dash
-		if dash.APIVersion == "" {
-			dash.APIVersion = fmt.Sprintf("%s/v0alpha1", dashboardV1.GROUP)
-		}
-		dash.SetNamespace(opts.Namespace)
-		dash.SetResourceVersion("") // it will be filled in by the backend
-
-		body, err := json.Marshal(dash)
-		if err != nil {
-			err = fmt.Errorf("error reading json from: %s // %w", rows.row.Dash.Name, err)
-			return err
-		}
-
-		req := &resourcepb.BulkRequest{
-			Key: &resourcepb.ResourceKey{
-				Namespace: opts.Namespace,
-				Group:     dashboardV1.GROUP,
-				Resource:  dashboardV1.DASHBOARD_RESOURCE,
-				Name:      rows.Name(),
-			},
-			Value:  body,
-			Folder: rows.row.FolderUID,
-			Action: resourcepb.BulkRequest_ADDED,
-		}
-		if dash.Generation > 1 {
-			req.Action = resourcepb.BulkRequest_MODIFIED
-		} else if dash.Generation < 0 {
-			req.Action = resourcepb.BulkRequest_DELETED
-		}
-
-		opts.Progress(i, fmt.Sprintf("[v:%2d] %s (size:%d / %d|%d)", dash.Generation, dash.Name, len(req.Value), i, rows.count))
-
-		err = stream.Send(req)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				opts.Progress(i, fmt.Sprintf("stream EOF/cancelled. index=%d", i))
-				err = nil
-			}
-			return err
-		}
+	for _, row := range rejected {
+		id := row.Dash.Labels[utils.LabelKeyDeprecatedInternalID]
+		a.log.Warn("rejected dashboard",
+			"namespace", opts.Namespace,
+			"dashboard", row.Dash.Name,
+			"uid", row.Dash.UID,
+			"id", id,
+			"version", row.Dash.Generation,
+		)
+		opts.Progress(-2, fmt.Sprintf("rejected: id:%s, uid:%s", id, row.Dash.Name))
 	}
 
-	if len(rows.rejected) > 0 {
-		for _, row := range rows.rejected {
-			id := row.Dash.Labels[utils.LabelKeyDeprecatedInternalID]
-			a.log.Warn("rejected dashboard",
-				"namespace", opts.Namespace,
-				"dashboard", row.Dash.Name,
-				"uid", row.Dash.UID,
-				"id", id,
-				"version", row.Dash.Generation,
-			)
-			opts.Progress(-2, fmt.Sprintf("rejected: id:%s, uid:%s", id, row.Dash.Name))
-		}
-	}
-
-	if rows.Error() != nil {
-		return rows.Error()
-	}
-
-	opts.Progress(-2, fmt.Sprintf("finished dashboards... (%d)", rows.count))
-	return err
+	opts.Progress(-2, fmt.Sprintf("finished dashboards... (%d)", scanned))
+	return nil
 }
 
 // MigrateFolders handles the folder migration logic
 func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+	// Folders are listed by descending id, so each page continues below the last id
 	query := &DashboardQuery{
 		OrgID:      orgId,
-		Limit:      100000000,
 		GetFolders: true,
-		Order:      "ASC",
+		MaxRows:    migrationPageMaxRows,
 	}
 
 	sql, err := a.sql(ctx)
@@ -262,72 +228,215 @@ func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, op
 	}
 
 	opts.Progress(-1, "migrating folders...")
-	rows, err := a.getRows(ctx, sql, query)
+	scanned, _, err := a.migrateLegacyPages(ctx, sql, query, opts, stream, folderBulkRequest, func(page *migrationPage) error {
+		if page.lastID <= 0 || (query.LastID > 0 && page.lastID >= query.LastID) {
+			return fmt.Errorf("folder migration paging did not advance past id %d", query.LastID)
+		}
+		query.LastID = page.lastID
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	opts.Progress(-2, fmt.Sprintf("finished folders... (%d)", scanned))
+	return nil
+}
+
+// migrateLegacyPages sends query's rows page by page. next moves query past a page
+// that may be followed by more rows, or fails if the keyset did not advance.
+func (a *dashboardSqlAccess) migrateLegacyPages(
+	ctx context.Context,
+	helper *legacysql.LegacyDatabaseHelper,
+	query *DashboardQuery,
+	opts migrations.MigrateOptions,
+	stream resourcepb.BulkStore_BulkProcessClient,
+	build migrationRequestBuilder,
+	next func(page *migrationPage) error,
+) (scanned int, rejected []dashboardRow, err error) {
+	sent := 0
+	for {
+		page, err := a.readMigrationPage(ctx, helper, query, opts, rejected, build)
+		if err != nil {
+			return scanned, rejected, err
+		}
+		rejected = page.rejected
+		scanned += page.scanned
+
+		for _, item := range page.items {
+			sent++
+			opts.Progress(sent, fmt.Sprintf("[v:%2d] %s (size:%d / %d|%d)", item.generation, item.req.Key.Name, len(item.req.Value), sent, scanned))
+			if err := stream.Send(item.req); err != nil {
+				if errors.Is(err, io.EOF) {
+					opts.Progress(sent, fmt.Sprintf("stream EOF/cancelled. index=%d", sent))
+					return scanned, rejected, nil
+				}
+				return scanned, rejected, err
+			}
+		}
+
+		if !page.more {
+			return scanned, rejected, nil
+		}
+		if err := next(page); err != nil {
+			return scanned, rejected, err
+		}
+	}
+}
+
+// migrationRequestBuilder turns the current legacy row into the request written to unified storage.
+type migrationRequestBuilder func(rows *rowsWrapper, namespace string) (*resourcepb.BulkRequest, error)
+
+func dashboardBulkRequest(rows *rowsWrapper, namespace string) (*resourcepb.BulkRequest, error) {
+	dash := rows.row.Dash
+	if dash.APIVersion == "" {
+		dash.APIVersion = fmt.Sprintf("%s/v0alpha1", dashboardV1.GROUP)
+	}
+	dash.SetNamespace(namespace)
+	dash.SetResourceVersion("") // it will be filled in by the backend
+
+	body, err := json.Marshal(dash)
+	if err != nil {
+		return nil, fmt.Errorf("error reading json from: %s // %w", dash.Name, err)
+	}
+
+	return &resourcepb.BulkRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: namespace,
+			Group:     dashboardV1.GROUP,
+			Resource:  dashboardV1.DASHBOARD_RESOURCE,
+			Name:      rows.Name(),
+		},
+		Value:  body,
+		Folder: rows.row.FolderUID,
+		Action: bulkAction(dash.Generation),
+	}, nil
+}
+
+func folderBulkRequest(rows *rowsWrapper, namespace string) (*resourcepb.BulkRequest, error) {
+	dash := rows.row.Dash
+	dash.APIVersion = foldersV1beta1.APIVERSION
+	dash.Kind = "Folder"
+	dash.SetNamespace(namespace)
+	dash.SetResourceVersion("") // it will be filled in by the backend
+
+	spec := map[string]any{
+		"title": dash.Spec.Object["title"],
+	}
+	description := dash.Spec.Object["description"]
+	if description != nil {
+		spec["description"] = description
+	}
+	dash.Spec.Object = spec
+
+	body, err := json.Marshal(dash)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resourcepb.BulkRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: namespace,
+			Group:     "folder.grafana.app",
+			Resource:  "folders",
+			Name:      rows.Name(),
+		},
+		Value:  body,
+		Folder: rows.row.FolderUID,
+		Action: bulkAction(dash.Generation),
+	}, nil
+}
+
+func bulkAction(generation int64) resourcepb.BulkRequest_Action {
+	switch {
+	case generation > 1:
+		return resourcepb.BulkRequest_MODIFIED
+	case generation < 0:
+		return resourcepb.BulkRequest_DELETED
+	default:
+		return resourcepb.BulkRequest_ADDED
+	}
+}
+
+type migrationItem struct {
+	req        *resourcepb.BulkRequest
+	generation int64
+}
+
+type migrationPage struct {
+	items    []migrationItem
+	rejected []dashboardRow
+	scanned  int // rows read, including rejected ones
+
+	// Keyset of the last scanned row; the next page starts after it
+	lastID      int64
+	lastVersion int64
+
+	// The page was cut by the row or byte limit, so more rows may follow
+	more bool
+}
+
+func (a *dashboardSqlAccess) readMigrationPage(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query *DashboardQuery, opts migrations.MigrateOptions, rejected []dashboardRow, build migrationRequestBuilder) (*migrationPage, error) {
+	if opts.StatementTimeout <= 0 {
+		return a.queryMigrationPage(ctx, helper, query, opts.Namespace, rejected, build)
+	}
+	// executeQuery reuses the transaction from ctx, so the override covers only this page query
+	var page *migrationPage
+	err := helper.DB.InTransaction(ctx, func(ctx context.Context) error {
+		if err := helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			_, err := sess.Exec(migrations.StatementTimeoutSQL(opts.StatementTimeout))
+			return err
+		}); err != nil {
+			return err
+		}
+		var err error
+		page, err = a.queryMigrationPage(ctx, helper, query, opts.Namespace, rejected, build)
+		return err
+	})
+	return page, err
+}
+
+func (a *dashboardSqlAccess) queryMigrationPage(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query *DashboardQuery, namespace string, rejected []dashboardRow, build migrationRequestBuilder) (*migrationPage, error) {
+	rows, err := a.getRows(ctx, helper, query)
 	if rows != nil {
 		defer func() {
 			_ = rows.Close()
 		}()
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
+	rows.rejected = rejected
+	return collectMigrationPage(rows, namespace, query.MaxRows, migrationPageMaxBytes, build)
+}
 
-	// Now send each dashboard
-	for i := 1; rows.Next(); i++ {
-		dash := rows.row.Dash
-		dash.APIVersion = foldersV1beta1.APIVERSION
-		dash.Kind = "Folder"
-		dash.SetNamespace(opts.Namespace)
-		dash.SetResourceVersion("") // it will be filled in by the backend
-
-		spec := map[string]any{
-			"title": dash.Spec.Object["title"],
-		}
-		description := dash.Spec.Object["description"]
-		if description != nil {
-			spec["description"] = description
-		}
-		dash.Spec.Object = spec
-
-		body, err := json.Marshal(dash)
+func collectMigrationPage(rows *rowsWrapper, namespace string, maxRows, maxBytes int, build migrationRequestBuilder) (*migrationPage, error) {
+	page := &migrationPage{}
+	size := 0
+	for rows.Next() {
+		req, err := build(rows, namespace)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		page.items = append(page.items, migrationItem{req: req, generation: rows.row.Dash.Generation})
 
-		req := &resourcepb.BulkRequest{
-			Key: &resourcepb.ResourceKey{
-				Namespace: opts.Namespace,
-				Group:     "folder.grafana.app",
-				Resource:  "folders",
-				Name:      rows.Name(),
-			},
-			Value:  body,
-			Folder: rows.row.FolderUID,
-			Action: resourcepb.BulkRequest_ADDED,
-		}
-		if dash.Generation > 1 {
-			req.Action = resourcepb.BulkRequest_MODIFIED
-		} else if dash.Generation < 0 {
-			req.Action = resourcepb.BulkRequest_DELETED
-		}
-
-		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", dash.Generation, dash.Name, len(req.Value)))
-
-		err = stream.Send(req)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				err = nil
-			}
-			return err
+		size += len(req.Value)
+		if size >= maxBytes {
+			page.more = true
+			break
 		}
 	}
-
-	if rows.Error() != nil {
-		return rows.Error()
+	if err := rows.Error(); err != nil {
+		return nil, err
 	}
 
-	opts.Progress(-2, fmt.Sprintf("finished folders... (%d)", rows.count))
-	return err
+	page.scanned = rows.count
+	page.rejected = rows.rejected
+	page.lastID, page.lastVersion = rows.lastID, rows.lastVersion
+	if rows.count >= maxRows {
+		page.more = true
+	}
+	return page, nil
 }
 
 // MigrateLibraryPanels handles the library panel migration logic
@@ -417,6 +526,11 @@ type rowsWrapper struct {
 
 	// max 100 rejected?
 	rejected []dashboardRow
+
+	// Key of the last scanned row with a readable key, including rejected rows, so the next
+	// page does not read and count the same rejections again
+	lastID      int64
+	lastVersion int64
 }
 
 func (r *rowsWrapper) Close() error {
@@ -440,6 +554,9 @@ func (r *rowsWrapper) Next() bool {
 		r.count++
 
 		r.row, err = r.a.scanRow(r.rows, r.history)
+		if r.row != nil && r.row.keyValid {
+			r.lastID, r.lastVersion = r.row.internalID, r.row.version
+		}
 		if err != nil {
 			r.a.log.Error("error scanning dashboard", "error", err)
 			if len(r.rejected) > 100 || r.row == nil {
@@ -511,6 +628,40 @@ func (a *dashboardSqlAccess) parseDashboard(dash *dashboardV1.Dashboard, data []
 	return nil
 }
 
+// scanRowKey reads the dashboard id and version of the current row without type conversion,
+// for rows whose typed Scan failed. The positions follow the column order in scanRow.
+func scanRowKey(rows *sql.Rows) (id int64, version int64, ok bool) {
+	cols, err := rows.Columns()
+	if err != nil || len(cols) <= 17 {
+		return 0, 0, false
+	}
+	values := make([]any, len(cols))
+	dest := make([]any, len(cols))
+	for i := range values {
+		dest[i] = &values[i]
+	}
+	if err := rows.Scan(dest...); err != nil {
+		return 0, 0, false
+	}
+	id, idOK := asInt64(values[1])
+	version, versionOK := asInt64(values[17])
+	return id, version, idOK && versionOK
+}
+
+func asInt64(v any) (int64, bool) {
+	switch x := v.(type) {
+	case int64:
+		return x, true
+	case []byte:
+		n, err := strconv.ParseInt(string(x), 10, 64)
+		return n, err == nil
+	case string:
+		n, err := strconv.ParseInt(x, 10, 64)
+		return n, err == nil
+	}
+	return 0, false
+}
+
 func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRow, error) {
 	dash := &dashboardV1.Dashboard{
 		TypeMeta:   dashboardV1.DashboardResourceInfo.TypeMeta(),
@@ -548,6 +699,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		&updated, &updatedBy, &updatedByID,
 		&version, &message, &data, &apiVersion,
 	)
+	row.internalID, row.version, row.keyValid = dashboard_id, version, err == nil
+	if err != nil {
+		row.internalID, row.version, row.keyValid = scanRowKey(rows)
+	}
 
 	switch apiVersion.String {
 	case "":

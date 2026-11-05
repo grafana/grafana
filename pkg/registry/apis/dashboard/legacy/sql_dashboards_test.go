@@ -724,9 +724,9 @@ func TestDashboardMigrationQuery(t *testing.T) {
 		require.Contains(t, sql, "COALESCE(dashboard_version.message, '')",
 			"Migration SQL should contain COALESCE for message with empty string fallback")
 
-		// Verify ORDER BY uses COALESCE as well
-		require.Contains(t, sql, "COALESCE(dashboard_version.created, dashboard.updated) ASC",
-			"Migration SQL should ORDER BY COALESCED created timestamp")
+		// Migration pages by (dashboard id, version), which the indexes can serve
+		require.Contains(t, sql, "dashboard.id ASC,",
+			"Migration SQL should ORDER BY dashboard id")
 		require.Contains(t, sql, "COALESCE(dashboard_version.version, dashboard.version) ASC",
 			"Migration SQL should ORDER BY COALESCED version")
 
@@ -768,31 +768,128 @@ func TestDashboardMigrationQuery(t *testing.T) {
 	})
 }
 
-func TestMigrateDashboardsConfiguration(t *testing.T) {
-	// Test the actual migration function configuration
+func TestCollectMigrationPage(t *testing.T) {
+	store := &dashboardSqlAccess{
+		namespacer:   func(_ int64) string { return "default" },
+		provisioning: provisioning.NewProvisioningServiceMock(context.Background()),
+		log:          log.New("test"),
+	}
+	columns := []string{"orgId", "dashboard_id", "name", "title", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
+	now := time.Now()
+	type dbRow struct {
+		id      int64
+		version int64
+		created any // a value that is not a time fails Scan, which rejects the row
+	}
+	collect := func(t *testing.T, rows []dbRow, maxRows, maxBytes int) *migrationPage {
+		t.Helper()
+		mockDB, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = mockDB.Close() })
 
-	t.Run("Migration options should configure query correctly", func(t *testing.T) {
-		// Test the migration configuration as used in real migration
-		opts := migrations.MigrateOptions{
-			WithHistory: true, // Migration includes history
+		mockRows := sqlmock.NewRows(columns)
+		for _, r := range rows {
+			mockRows.AddRow(1, r.id, fmt.Sprintf("uid-%d", r.id), "title", "", nil, "", "", "", "", 0, r.created, "", 0, now, "", 0, r.version, "", []byte(`{"title":"title"}`), "v1")
 		}
+		mock.ExpectQuery("SELECT").WillReturnRows(mockRows)
+		sqlRows, err := mockDB.Query("SELECT")
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = sqlRows.Close() })
 
-		// This simulates what happens in migrateDashboards function
-		expectedQuery := &DashboardQuery{
-			OrgID:         1,
-			Limit:         100000000,
-			GetHistory:    opts.WithHistory, // Should be true
-			AllowFallback: true,             // Should be true for migration
-			Order:         "ASC",            // Should be ASC for migration
-		}
+		page, err := collectMigrationPage(&rowsWrapper{a: store, rows: sqlRows, history: true}, "default", maxRows, maxBytes, dashboardBulkRequest)
+		require.NoError(t, err)
+		return page
+	}
 
-		// Verify the configuration matches what migration sets up
-		require.True(t, expectedQuery.GetHistory, "Migration should enable GetHistory")
-		require.True(t, expectedQuery.AllowFallback, "Migration should enable AllowFallback")
-		require.Equal(t, "ASC", expectedQuery.Order, "Migration should use ascending order")
-		require.Equal(t, 100000000, expectedQuery.Limit, "Migration should use large limit")
-
-		// Verify UseHistoryTable logic
-		require.True(t, expectedQuery.UseHistoryTable(), "Migration query should use history table")
+	t.Run("full page continues after the last row", func(t *testing.T) {
+		page := collect(t, []dbRow{{1, 1, now}, {1, 2, now}, {2, 1, now}}, 3, migrationPageMaxBytes)
+		require.True(t, page.more)
+		require.Equal(t, 3, page.scanned)
+		require.Equal(t, int64(2), page.lastID)
+		require.Equal(t, int64(1), page.lastVersion)
+		require.Len(t, page.items, 3)
+		require.Equal(t, resourcepb.BulkRequest_ADDED, page.items[0].req.Action)
+		require.Equal(t, resourcepb.BulkRequest_MODIFIED, page.items[1].req.Action)
+		require.Equal(t, "uid-2", page.items[2].req.Key.Name)
 	})
+
+	t.Run("short page is the last page", func(t *testing.T) {
+		page := collect(t, []dbRow{{1, 1, now}, {2, 1, now}}, 3, migrationPageMaxBytes)
+		require.False(t, page.more)
+		require.Len(t, page.items, 2)
+	})
+
+	t.Run("byte limit cuts the page after the row that reaches it", func(t *testing.T) {
+		page := collect(t, []dbRow{{1, 1, now}, {1, 2, now}, {2, 1, now}}, 3, 1)
+		require.True(t, page.more)
+		require.Len(t, page.items, 1)
+		require.Equal(t, int64(1), page.lastID)
+		require.Equal(t, int64(1), page.lastVersion)
+	})
+
+	t.Run("rejected rows still advance the keyset", func(t *testing.T) {
+		page := collect(t, []dbRow{{1, 1, now}, {2, 1, now}, {3, 4, "not a time"}}, 3, migrationPageMaxBytes)
+		require.True(t, page.more)
+		require.Len(t, page.items, 2)
+		require.Len(t, page.rejected, 1)
+		require.Equal(t, int64(3), page.lastID)
+		require.Equal(t, int64(4), page.lastVersion)
+	})
+
+	t.Run("rejected page tail is not carried into the next page", func(t *testing.T) {
+		rows := make([]dbRow, 0, 500)
+		for i := int64(1); i <= 500; i++ {
+			created := any(now)
+			if i > 400 {
+				created = "not a time"
+			}
+			rows = append(rows, dbRow{i, 1, created})
+		}
+		page := collect(t, rows, 500, migrationPageMaxBytes)
+		require.True(t, page.more)
+		require.Len(t, page.items, 400)
+		require.Len(t, page.rejected, 100)
+		// The next page starts after the last rejected row, so the 100 rejections are not read again
+		require.Equal(t, int64(500), page.lastID)
+		require.Equal(t, int64(1), page.lastVersion)
+	})
+}
+
+func TestCollectMigrationPageFolders(t *testing.T) {
+	store := &dashboardSqlAccess{
+		namespacer:   func(_ int64) string { return "default" },
+		provisioning: provisioning.NewProvisioningServiceMock(context.Background()),
+		log:          log.New("test"),
+	}
+	columns := []string{"orgId", "dashboard_id", "name", "title", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
+	now := time.Now()
+
+	mockDB, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = mockDB.Close() })
+	// Folders are listed by descending id
+	mockRows := sqlmock.NewRows(columns).
+		AddRow(1, 30, "folder-30", "Thirty", "parent", nil, "", "", "", "", 0, now, "", 0, now, "", 0, 2, "", []byte(`{"title":"Thirty","description":"d","panels":[]}`), "").
+		AddRow(1, 20, "folder-20", "Twenty", "", nil, "", "", "", "", 0, now, "", 0, now, "", 0, 1, "", []byte(`{"title":"Twenty"}`), "")
+	mock.ExpectQuery("SELECT").WillReturnRows(mockRows)
+	sqlRows, err := mockDB.Query("SELECT")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = sqlRows.Close() })
+
+	page, err := collectMigrationPage(&rowsWrapper{a: store, rows: sqlRows}, "default", 2, migrationPageMaxBytes, folderBulkRequest)
+	require.NoError(t, err)
+	require.True(t, page.more)
+	require.Equal(t, int64(20), page.lastID)
+	require.Len(t, page.items, 2)
+
+	req := page.items[0].req
+	require.Equal(t, "folder.grafana.app", req.Key.Group)
+	require.Equal(t, "folders", req.Key.Resource)
+	require.Equal(t, "folder-30", req.Key.Name)
+	require.Equal(t, "parent", req.Folder)
+	require.Equal(t, resourcepb.BulkRequest_MODIFIED, req.Action)
+	var obj map[string]any
+	require.NoError(t, json.Unmarshal(req.Value, &obj))
+	require.Equal(t, map[string]any{"title": "Thirty", "description": "d"}, obj["spec"])
+	require.Equal(t, resourcepb.BulkRequest_ADDED, page.items[1].req.Action)
 }
