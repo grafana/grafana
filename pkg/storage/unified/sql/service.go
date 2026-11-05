@@ -653,7 +653,6 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
 	for _, desc := range []*grpc.ServiceDesc{
 		&resourcepb.ResourceStore_ServiceDesc,
-		&resourcepb.ResourceStats_ServiceDesc,
 		&resourcepb.BulkStore_ServiceDesc,
 		&resourcepb.BlobStore_ServiceDesc,
 		&resourcepb.BlobStoreStreaming_ServiceDesc,
@@ -685,14 +684,11 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 }
 
 func (s *service) withErrorResultConversion(desc *grpc.ServiceDesc) *grpc.ServiceDesc {
-	if s.cfg != nil && s.cfg.UnifiedStorageGRPCErrorResultToStatus {
-		var streamInterceptor grpc.StreamServerInterceptor
-		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
-			streamInterceptor = resource.BlobStreamErrorResultInterceptor()
-		}
-		return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), streamInterceptor)
+	var streamInterceptor grpc.StreamServerInterceptor
+	if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
+		streamInterceptor = resource.BlobStreamErrorResultInterceptor()
 	}
-	return desc
+	return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), streamInterceptor)
 }
 
 // BuildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV

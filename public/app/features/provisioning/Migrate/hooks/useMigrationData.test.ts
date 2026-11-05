@@ -277,6 +277,38 @@ describe('useMigrationData (non-folder kinds)', () => {
     expect(row.directResources.every((r) => r.kind.kind === 'Playlist')).toBe(true);
   });
 
+  // A data source is listed through the group its plugin serves, and the row has to keep that
+  // group: the collection the registry entry names is not a group a job can address.
+  it('keeps the serving group on each member of a collection kind', async () => {
+    mockSearch([]);
+    server.use(
+      http.get('/apis', () =>
+        HttpResponse.json({
+          items: ['prometheus', 'loki'].map((plugin) => ({
+            metadata: { name: `${plugin}.datasource.grafana.app` },
+            versions: [{ version: 'v0alpha1', resources: [{ resource: 'datasources', responseKind: {} }] }],
+          })),
+        })
+      ),
+      http.get('/apis/:group/v0alpha1/namespaces/:namespace/datasources', ({ params }) =>
+        HttpResponse.json({
+          items: [{ metadata: { name: `${String(params.group).split('.')[0]}-uid` }, spec: {} }],
+        })
+      )
+    );
+
+    const available: SupportedResource[] = [{ group: 'datasource.grafana.app', kind: 'DataSource' }];
+    const { result } = renderHook(() => useMigrationData(getMigratableKinds(available), available), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const [row] = result.current.data;
+    expect(row.title).toBe('Data sources');
+    expect(row.directResources).toEqual([
+      expect.objectContaining({ uid: 'prometheus-uid', group: 'prometheus.datasource.grafana.app' }),
+      expect.objectContaining({ uid: 'loki-uid', group: 'loki.datasource.grafana.app' }),
+    ]);
+  });
+
   it('skips the folder listing entirely when no kind is folder-scoped', async () => {
     // Playlists are the only kind here and aren't folder-scoped, so the hook
     // never lists folders. A search failure must not matter — nothing depends

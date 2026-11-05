@@ -522,6 +522,7 @@
         "save": "Guardar"
       },
       "error-title": "Error al guardar la regla de alerta",
+      "form-errors": "",
       "no-group-success": "Regla añadida correctamente"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Métrica",
       "label-name": "Nombre",
       "message": {
-        "must-enter-a-metric-name": "Debe introducirse un nombre de métrica",
-        "must-enter-a-name": "Debe introducirse un nombre",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "Selecciona una fuente de datos"
       },
       "metric-aria-label-metric": "métrica",
@@ -586,6 +587,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Sí, restablecer la configuración",
+      "editor-label": "",
       "gma-manual-configuration-description": "La configuración interna de Grafana Alertmanager no se puede cambiar manualmente. Para cambiar esta configuración, edita los recursos individuales a través de la interfaz de usuario.",
       "gma-manual-configuration-is-not-supported": "No se admiten cambios de configuración manual",
       "message": {
@@ -1097,6 +1099,7 @@
         "body": "¿Seguro que quieres restaurar esta definición de regla de alerta eliminada?",
         "confirm": "Sí, restaurar la regla eliminada",
         "error": "No se ha podido restaurar la regla de alerta eliminada",
+        "preview-aria-label": "",
         "title": "Restaurar la regla de alerta eliminada"
       },
       "table": {
@@ -1314,7 +1317,7 @@
     "folder-selector": {
       "description-select-folder": "Selecciona una carpeta para almacenar tu regla.",
       "message": {
-        "select-a-folder": "Seleccionar una carpeta"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1466,7 +1469,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -1568,11 +1578,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Cargando grupos...",
       "message": {
-        "must-be-a-positive-integer": "El valor debe ser un número entero positivo.",
-        "must-enter-a-group-name": "Debe introducirse un nombre del grupo"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "El valor debe ser un número entero positivo."
       },
       "missing-series-resolve-placeholder": "Predeterminado: 2",
-      "or": "o...",
       "placeholder-select-an-evaluation-group": "Selecciona un grupo de evaluación...",
       "text-configure-no-data-and-error-handling": "Configurar la gestión de errores y falta de datos",
       "title-set-evaluation-behavior": "Definir comportamiento de evaluación"
@@ -1866,6 +1875,7 @@
         "will-import-rules-count_one": "Se importará {{count}} regla",
         "will-import-rules-count_other": "Se importarán {{count}} reglas"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "Reglas existentes gestionadas por la fuente de datos",
         "datasource-description": "Importar reglas de fuentes de datos existentes",
@@ -2037,7 +2047,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Aplicar"
+      "apply": "Aplicar",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -2998,7 +3009,7 @@
           "alerting": "Activa para pausar la evaluación de esta regla de alerta.",
           "recording": "Activa para pausar la evaluación de esta regla de registro."
         },
-        "select-folder-before": "Selecciona una carpeta antes de establecer el grupo de evaluación y el intervalo",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "Esta acción es irreversible. Después de guardar, no podrás volver a añadirlo a un grupo.",
         "ungroup-warning-title": "Esta acción eliminará la regla de alerta de su grupo"
       },
@@ -3672,6 +3683,9 @@
       "switch-to-data-source-managed": "La fuente de datos seleccionada en tu consulta admite la gestión de reglas de alerta. Cambia a la gestión de la fuente de datos si quieres que la fuente de datos gestione la regla de alerta en lugar de Grafana.",
       "switch-to-grafana-managed": "Cambia a la gestión de Grafana para utilizar expresiones, consultas múltiples, imágenes en notificaciones y otras funciones.",
       "title-alert-rule-types": "Tipos de reglas de alerta"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -5321,6 +5335,9 @@
       "preferences": "Preferencias",
       "recent-dashboards": "Paneles de control recientes",
       "recent-scopes": "Ámbitos recientes"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -5746,7 +5763,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5928,6 +5946,9 @@
       "render-label": {
         "tooltip-remove-property": "Quitar propiedad"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "Añadir {{typeName}}",
@@ -6238,6 +6259,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -6424,6 +6446,9 @@
           "hide-header": "Ocultar encabezado de fila",
           "title": "Título"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filtros"
         },
@@ -6505,11 +6530,10 @@
         "data-source": "Fuente de datos",
         "display": "Mostrar controles de anotación en",
         "display-options": {
-          "above-dashboard": "Encima del dashboard",
           "controls-menu": "Menú de controles",
-          "controls-menu-description": "Se puede acceder cuando el menú de controles está abierto",
+          "controls-menu-description": "",
           "hidden": "Oculta",
-          "hidden-description": "Oculta el botón para activar o desactivar esta anotación"
+          "hidden-description": ""
         },
         "enabled": "Habilitada",
         "enabled-description": "Cuando está habilitada, la consulta de anotación se emite cada vez que se actualiza el dashboard",
@@ -6612,7 +6636,9 @@
         "tab": "Pestaña",
         "tabs": "Pestañas",
         "variable": "{{type}} variable",
-        "variable-set": "Variables"
+        "variable-set": "Variables",
+        "selected-panels_one": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Exportar"
@@ -6791,6 +6817,9 @@
             "description": "Repite esta pestaña para cada valor en la variable seleccionada.",
             "title": "Repetir por variable"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filtros"
@@ -7313,11 +7342,14 @@
         "keep-working": "",
         "save": "Guardar",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "¿Quieres guardar los cambios?"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "Cambios sin guardar"
         }
@@ -7564,6 +7596,7 @@
       "error-invalid-json": "JSON no válido",
       "error-invalid-layout": "El diseño JSON no pasó la validación. Comprueba el JSON e inténtalo de nuevo.",
       "error-invalid-v2-panel": "El panel JSON no pasó la validación. Comprueba el JSON e inténtalo de nuevo.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Error de validación"
     },
     "interval-variable-form": {
@@ -7633,17 +7666,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -7737,7 +7773,9 @@
       "title-delete-all-transformations": "¿Eliminar todas las transformaciones?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Editar visualización"
+      "edit-visualization": "Editar visualización",
+      "panels-selected_one": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Alternar vista de tabla",
@@ -10710,6 +10748,8 @@
       "clear-button": "Eliminar selección"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "No se ha podido cargar el editor de CodeMirror",
       "language-load-failed": "No se ha podido cargar el resaltado de sintaxis",
       "language-load-failed-description": "El editor continuará sin características específicas del lenguaje.",
@@ -11516,13 +11556,8 @@
       "severity-low": "Baja",
       "severity-minor": "Menor",
       "severity-unknown": "Desconocido",
-      "title": "Alertas de activación",
       "view-all": "Ver todas las alertas de activación",
-      "view-rules": "Ver todas las reglas de alerta",
-      "critical-count_one": "{{count}} crítica",
-      "critical-count_other": "{{count}} críticas",
-      "high-count_one": "{{count}} alta",
-      "high-count_other": "{{count}} altas"
+      "view-rules": "Ver todas las reglas de alerta"
     },
     "header-actions": {
       "active-incidents": "Incidentes activos",
@@ -11548,21 +11583,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "No se han podido cargar los incidentes activos",
-      "title": "Incidentes activos",
       "view-all": "Ver todos los incidentes"
     },
     "learn-more": "Más información",
     "most-used-dashboards-tab": {
       "empty": "Los dashboards más usados aparecerán aquí.",
-      "empty-description": "Una vez que tu organización tenga dashboards y se hayan recopilado los datos de uso, los dashboards con más visualizaciones en los últimos 30 días se mostrarán aquí.",
       "error-title": "No se han podido cargar los dashboards más usados",
       "loading": "Cargando los dashboards más usados..."
-    },
-    "news-card": {
-      "empty": "No hay publicaciones recientes en el blog.",
-      "error-title": "No se han podido cargar las publicaciones recientes en el blog",
-      "read-more": "Leer más en el blog de Grafana Labs",
-      "title": "Últimas publicaciones del blog"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11917,7 +11944,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Tus dashboards destacados aparecerán aquí.",
-      "empty-description": "Puedes destacar tus dashboards favoritos haciendo clic en <1></1> en la página del dashboard.",
       "error-title": "No se han podido cargar los dashboards destacados",
       "loading": "Cargando dashboards destacados..."
     },
@@ -12391,7 +12417,6 @@
       "copy-log-line-json": "Copiar el contenido del log como JSON",
       "copy-shortlink": "Copiar enlace corto",
       "copy-to-clipboard": "Copiar al portapapeles",
-      "displayed-fields-section": "Organizar los campos mostrados",
       "fields": {
         "adhoc-statistics": "Estadísticas específicas",
         "copy-value-to-clipboard": "Copiar valor al portapapeles",
@@ -12415,14 +12440,11 @@
       "log-attributes-field": "Atributos del log",
       "log-line-field": "Línea de log",
       "log-line-section": "Línea de log",
-      "move-displayed-field-down": "Bajar",
-      "move-displayed-field-up": "Subir",
       "no-details": "No hay campos que mostrar.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Anclar log",
       "prettify": "Embellecer",
-      "remove-displayed-field": "Eliminar campo",
       "remove-log": "Eliminar log",
       "scroll-to-logline": "Desplazarse a la línea de log",
       "search": {
@@ -13730,6 +13752,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -14008,6 +14031,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "No se ha encontrado nada que coincida con tu consulta"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {
@@ -15788,20 +15817,8 @@
     "explain-or-modify": "Explicar o modificar",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "Cancelar",
-    "feedback-description": "Tus comentarios ayudan a mejorar la experiencia de la consulta en Grafana.",
-    "feedback-error": "No se han podido enviar los comentarios. Vuelve a intentarlo.",
     "feedback-helpful": "Útil",
-    "feedback-label": "Compartir comentarios",
-    "feedback-negative-placeholder": "Describe qué no ha ido bien y qué esperabas.",
-    "feedback-negative-title": "¿Qué ha ido mal?",
     "feedback-not-helpful": "Nada útil",
-    "feedback-positive-placeholder": "¿Qué te ha gustado? ¿Cómo se podría mejorar?",
-    "feedback-positive-title": "¿Qué ha ido bien?",
-    "feedback-privacy": "",
-    "feedback-recipient": "Tus comentarios se enviarán a los equipos que trabajan en las consultas.",
-    "feedback-send": "Enviar",
-    "feedback-sending": "Enviando...",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -17008,6 +17025,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",

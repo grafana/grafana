@@ -206,12 +206,15 @@ func (p *privateCacheWriter) Write(b []byte) (int, error) {
 
 // backendDiscovery asks a backend for its group's aggregated discovery.
 // complete is false when any version could not be read and is marked stale.
-func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ apidiscoveryv2.APIGroupDiscovery, complete bool) {
+// A failure the group's backend reports while it is read is counted under the
+// group, as a client request's would be: failed is called with its plugin ID
+// and reason.
+func backendDiscovery(req *http.Request, name string, entry servingEntry, failed func(pluginID, reason string)) (_ apidiscoveryv2.APIGroupDiscovery, complete bool) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		entry.serve(name, w, r)
 	})
 	var list apidiscoveryv2.APIGroupDiscoveryList
-	status, err := readDiscovery(req, handler, apisPrefix, aggregatedDiscoveryJSON, &list)
+	status, err := readDiscoveryReporting(req, handler, apisPrefix, aggregatedDiscoveryJSON, &list, failed)
 	if err == nil && list.Kind == "APIGroupDiscoveryList" {
 		for _, group := range list.Items {
 			if group.Name == name {
@@ -233,7 +236,7 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ api
 		// read would fail at once and count against the breaker again.
 		if (status == http.StatusOK || status == http.StatusNotFound) && req.Context().Err() == nil {
 			var resources metav1.APIResourceList
-			if _, err := readDiscovery(req, handler, apisPrefix+"/"+gv.GroupVersion, "application/json", &resources); err == nil && resources.Kind == "APIResourceList" {
+			if _, err := readDiscoveryReporting(req, handler, apisPrefix+"/"+gv.GroupVersion, "application/json", &resources, failed); err == nil && resources.Kind == "APIResourceList" {
 				if converted, err := endpoints.ConvertGroupVersionIntoToDiscovery(resources.APIResources); err == nil {
 					version.Resources = converted
 					version.Freshness = apidiscoveryv2.DiscoveryFreshnessCurrent
@@ -323,14 +326,34 @@ func (r *GrafanaRouter) readRootDiscovery(req *http.Request, path, accept string
 	// not hold discovery open when the defaults are available.
 	ctx, cancel := context.WithTimeoutCause(req.Context(), discoveryFetchTimeout, errRouterDeadline)
 	defer cancel()
-	_, err := readDiscovery(req.WithContext(ctx), source, path, accept, into)
+	_, err := readDiscoveryReporting(req.WithContext(ctx), source, path, accept, into, func(pluginID, reason string) {
+		if r.onBackendFailure != nil {
+			r.onBackendFailure("", pluginID, reason)
+		}
+	})
 	return err
 }
 
 var errNoDiscoverySource = errors.New("no source for groups the router does not serve")
 
 func readDiscovery(req *http.Request, handler http.Handler, path, accept string, into any) (int, error) {
-	proxyReq := req.Clone(withoutRequestOutcome(req.Context()))
+	return readDiscoveryReporting(req, handler, path, accept, into, nil)
+}
+
+// readDiscoveryReporting is readDiscovery, calling failed, if not nil, when the
+// handler records a backend failure. The read has an outcome of its own, so a
+// failure is never attributed to the request that caused the read, which may
+// run several reads at once.
+func readDiscoveryReporting(req *http.Request, handler http.Handler, path, accept string, into any, failed func(pluginID, reason string)) (int, error) {
+	outcome := &requestOutcome{}
+	if failed != nil {
+		defer func() {
+			if outcome.failure != "" {
+				failed(outcome.pluginID, outcome.failure)
+			}
+		}()
+	}
+	proxyReq := req.Clone(context.WithValue(req.Context(), requestOutcomeKey{}, outcome))
 	proxyReq.Method = http.MethodGet
 	proxyReq.Body = nil
 	proxyReq.ContentLength = 0

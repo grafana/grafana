@@ -26,25 +26,26 @@ function TabEditActions({ tab }: { tab: TabItem }) {
 
   return (
     <>
-      <SettingsActionButton onClick={onClickEdit} />
+      <SettingsActionButton
+        onClick={onClickEdit}
+        tooltip={t('dashboard-scene.control-edit-actions.settings', 'Settings')}
+      />
       <div className={styles.actionsDivider} />
       <CopyActionButton
         onClick={() => tab.onCopy()}
         disabled={isRepeated}
-        tooltip={
-          isRepeated
-            ? t('dashboard-scene.tab-edit-actions.copy-disabled', "Repeated tabs can't be copied individually")
-            : undefined
-        }
+        disabledTooltip={t(
+          'dashboard-scene.tab-edit-actions.copy-disabled',
+          "Repeated tabs can't be copied individually"
+        )}
       />
       <DuplicateActionButton
         onClick={() => tab.onDuplicate()}
         disabled={isRepeated}
-        tooltip={
-          isRepeated
-            ? t('dashboard-scene.tab-edit-actions.duplicate-disabled', "Repeated tabs can't be duplicated individually")
-            : undefined
-        }
+        disabledTooltip={t(
+          'dashboard-scene.tab-edit-actions.duplicate-disabled',
+          "Repeated tabs can't be duplicated individually"
+        )}
       />
       <DeleteActionButton
         title={t('dashboard.tabs-layout.delete-tab-title', 'Delete tab?')}
@@ -56,11 +57,10 @@ function TabEditActions({ tab }: { tab: TabItem }) {
         confirm={tab.getLayout().getVizPanels().length > 0}
         onConfirm={() => tab.onDelete()}
         disabled={isRepeated}
-        tooltip={
-          isRepeated
-            ? t('dashboard-scene.tab-edit-actions.delete-disabled', "Repeated tabs can't be deleted individually")
-            : undefined
-        }
+        disabledTooltip={t(
+          'dashboard-scene.tab-edit-actions.delete-disabled',
+          "Repeated tabs can't be deleted individually"
+        )}
       />
     </>
   );

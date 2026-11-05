@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useMergeRefs } from '@floating-ui/react';
 import { type DraggableProvided } from '@hello-pangea/dnd';
 import { type ReactNode, useCallback, useId, useState } from 'react';
 
@@ -7,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
-import { SectionVariableControls } from '../VariableControls';
+import { SectionControlsRow } from '../SectionAnnotationControls';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { isFullDashboardEditing } from '../types/dashboard';
@@ -55,13 +56,11 @@ export function RowContainer({
   const [selectableHighlight, setSelectableHighlight] = useState(false);
   const onHeaderEnter = useCallback(() => setSelectableHighlight(true), []);
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
+  const containerRef = useMergeRefs([dragProvided.innerRef, model.containerRef]);
 
   return (
     <div
-      ref={(ref) => {
-        dragProvided.innerRef(ref);
-        model.containerRef.current = ref;
-      }}
+      ref={containerRef}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: isDashboardLayoutGrid(layout) ? model.state.key : undefined }}
       className={cx(
         styles.wrapper,
@@ -110,7 +109,7 @@ export function RowContainer({
       )}
       {!isCollapsed && (
         <div className={styles.rowLayoutWrapper} id={contentId}>
-          {rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
+          <SectionControlsRow variableSet={rowVariablesSet} data={model.state.$data} />
           <layout.Component model={layout} />
         </div>
       )}

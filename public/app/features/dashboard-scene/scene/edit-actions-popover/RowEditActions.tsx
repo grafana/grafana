@@ -26,25 +26,26 @@ function RowEditActions({ row }: { row: RowItem }) {
 
   return (
     <>
-      <SettingsActionButton onClick={onClickEdit} />
+      <SettingsActionButton
+        onClick={onClickEdit}
+        tooltip={t('dashboard-scene.control-edit-actions.settings', 'Settings')}
+      />
       <div className={styles.actionsDivider} />
       <CopyActionButton
         onClick={() => row.onCopy()}
         disabled={isRepeated}
-        tooltip={
-          isRepeated
-            ? t('dashboard-scene.row-edit-actions.copy-disabled', "Repeated rows can't be copied individually")
-            : undefined
-        }
+        disabledTooltip={t(
+          'dashboard-scene.row-edit-actions.copy-disabled',
+          "Repeated rows can't be copied individually"
+        )}
       />
       <DuplicateActionButton
         onClick={() => row.onDuplicate()}
         disabled={isRepeated}
-        tooltip={
-          isRepeated
-            ? t('dashboard-scene.row-edit-actions.duplicate-disabled', "Repeated rows can't be duplicated individually")
-            : undefined
-        }
+        disabledTooltip={t(
+          'dashboard-scene.row-edit-actions.duplicate-disabled',
+          "Repeated rows can't be duplicated individually"
+        )}
       />
       <DeleteActionButton
         title={t('dashboard.rows-layout.delete-row-title', 'Delete row?')}
@@ -56,11 +57,10 @@ function RowEditActions({ row }: { row: RowItem }) {
         confirm={row.getLayout().getVizPanels().length > 0}
         onConfirm={() => row.onDelete()}
         disabled={isRepeated}
-        tooltip={
-          isRepeated
-            ? t('dashboard-scene.row-edit-actions.delete-disabled', "Repeated rows can't be deleted individually")
-            : undefined
-        }
+        disabledTooltip={t(
+          'dashboard-scene.row-edit-actions.delete-disabled',
+          "Repeated rows can't be deleted individually"
+        )}
       />
     </>
   );
@@ -83,7 +83,6 @@ export function RowEditActionsWrapper({
     <EditActionsPopover
       content={<RowEditActions row={row} />}
       disabled={disabled || !isPopoverSupported}
-      placement="top-end"
       portalRoot={getPortalRoot}
       zIndex={theme.zIndex.dropdown}
       shiftPadding={getSidebarShiftPadding}

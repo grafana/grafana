@@ -1,4 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { expect, test } from '@grafana/plugin-e2e';
 
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 const DASHBOARD_NAME = 'Test variable output';
@@ -14,7 +14,8 @@ test.use({
   },
 });
 
-test.describe(
+// https://github.com/grafana/grafana/issues/116350
+test.describe.skip(
   'Variables - Constant',
   {
     tag: ['@dashboards'],

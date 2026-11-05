@@ -522,6 +522,7 @@
         "save": "Spara"
       },
       "error-title": "Det gick inte att spara larmregel",
+      "form-errors": "",
       "no-group-success": "Regeln lades till korrekt"
     },
     "alert-rule-name-and-metric": {
@@ -530,8 +531,8 @@
       "label-metric": "Mått",
       "label-name": "Namn",
       "message": {
-        "must-enter-a-metric-name": "Måste ange ett måttnamn",
-        "must-enter-a-name": "Måste ange ett namn",
+        "metric-name-required": "",
+        "name-required": "",
         "please-select-a-data-source": "Välj en datakälla"
       },
       "metric-aria-label-metric": "mått",
@@ -586,6 +587,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Ja, återställ konfigurationen",
+      "editor-label": "",
       "gma-manual-configuration-description": "Den interna konfigurationen för Grafana Alertmanager kan inte ändras manuellt. Ändra den här konfigurationen genom att redigera de enskilda resurserna via användargränssnittet.",
       "gma-manual-configuration-is-not-supported": "Manuella konfigurationsändringar stöds inte",
       "message": {
@@ -1097,6 +1099,7 @@
         "body": "Är du säker på att du vill återställa denna raderade larmregeldefinitionen?",
         "confirm": "Ja, återställ raderad regel",
         "error": "Kunde inte återställa raderad larmregel",
+        "preview-aria-label": "",
         "title": "Återställ raderad larmregel"
       },
       "table": {
@@ -1314,7 +1317,7 @@
     "folder-selector": {
       "description-select-folder": "Välj en mapp där du vill spara regeln.",
       "message": {
-        "select-a-folder": "Välj en mapp"
+        "folder-required": ""
       }
     },
     "folderAndGroup": {
@@ -1466,7 +1469,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -1568,11 +1578,10 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Laddar grupper …",
       "message": {
-        "must-be-a-positive-integer": "Måste vara ett positivt heltal.",
-        "must-enter-a-group-name": "Måste ange ett gruppnamn"
+        "evaluation-group-required": "",
+        "must-be-a-positive-integer": "Måste vara ett positivt heltal."
       },
       "missing-series-resolve-placeholder": "Standard: 2",
-      "or": "eller",
       "placeholder-select-an-evaluation-group": "Välj en utvärderingsgrupp …",
       "text-configure-no-data-and-error-handling": "Konfigurera hanteringen av inga data och fel",
       "title-set-evaluation-behavior": "Ange utvärderingsbeteende"
@@ -1866,6 +1875,7 @@
         "will-import-rules-count_one": "Kommer att importera {{count}} regler för",
         "will-import-rules-count_other": "Kommer att importera {{count}} regler för"
       },
+      "rules-preview": "",
       "source": {
         "datasource": "Befintliga regler hanterade av datakälla",
         "datasource-description": "Importera regler från befintliga datakällor",
@@ -2037,7 +2047,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Tillämpa"
+      "apply": "Tillämpa",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -2998,7 +3009,7 @@
           "alerting": "Aktivera om du vill pausa utvärderingen för den här varningsregeln.",
           "recording": "Aktivera om du vill pausa utvärderingen för den här inspelningsregeln."
         },
-        "select-folder-before": "Välj en mapp innan du anger utvärderingsgrupp och intervall",
+        "select-folder-first-tooltip": "",
         "ungroup-warning": "Denna åtgärd är oåterkallelig. När du har sparat kommer du inte att kunna lägga till den i en grupp på nytt.",
         "ungroup-warning-title": "Det kommer att ta bort larmregeln från dess grupp"
       },
@@ -3672,6 +3683,9 @@
       "switch-to-data-source-managed": "Datakällan som valts i din fråga stöder hantering av larmregler. Byt till datakällehanterad om du vill att varningsregeln ska hanteras av datakällan istället för av Grafana.",
       "switch-to-grafana-managed": "Byt till Grafana-hanterad om du vill använda uttryck, flera frågor, bilder i aviseringar och olika andra funktioner.",
       "title-alert-rule-types": "Typer av larmregler"
+    },
+    "sql-query-preview": {
+      "aria-label": ""
     },
     "state-history": {
       "columns": {
@@ -5321,6 +5335,9 @@
       "preferences": "Inställningar",
       "recent-dashboards": "Senaste paneler",
       "recent-scopes": "Senaste omfattningar"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -5746,7 +5763,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5928,6 +5946,9 @@
       "render-label": {
         "tooltip-remove-property": "Ta bort egenskap"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "Lägg till {{typeName}}",
@@ -6238,6 +6259,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -6424,6 +6446,9 @@
           "hide-header": "Dölj radrubrik",
           "title": "Titel"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filter"
         },
@@ -6505,11 +6530,10 @@
         "data-source": "Datakälla",
         "display": "Visa kommentar-kontroller i",
         "display-options": {
-          "above-dashboard": "Ovanför instrumentpanel",
           "controls-menu": "Kontrollmeny",
-          "controls-menu-description": "Kan nås när kontrollmenyn är öppen",
+          "controls-menu-description": "",
           "hidden": "Dolt",
-          "hidden-description": "Döljer växlingen för att aktivera eller inaktivera denna kommentar"
+          "hidden-description": ""
         },
         "enabled": "Aktiverad",
         "enabled-description": "När aktiverat utfärdas kommentarsfrågan vid varje uppdatering av instrumentpanelen",
@@ -6612,7 +6636,9 @@
         "tab": "Flik",
         "tabs": "Flikar",
         "variable": "{{type}}-variabel",
-        "variable-set": "Variabler"
+        "variable-set": "Variabler",
+        "selected-panels_one": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Exportera"
@@ -6791,6 +6817,9 @@
             "description": "Upprepa den här fliken för varje värde i den valda variabeln.",
             "title": "Upprepa per variabel"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filter"
@@ -7313,11 +7342,14 @@
         "keep-working": "",
         "save": "Spara",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "Vill du spara dina ändringar?"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "Ändringar som inte sparats"
         }
@@ -7564,6 +7596,7 @@
       "error-invalid-json": "Ogiltig JSON",
       "error-invalid-layout": "JSON-koden för layout kunde inte valideras. Kontrollera JSON och försök igen.",
       "error-invalid-v2-panel": "Panelens JSON-kod kunde inte valideras. Kontrollera JSON och försök igen.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Valideringsfel"
     },
     "interval-variable-form": {
@@ -7633,17 +7666,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -7737,7 +7773,9 @@
       "title-delete-all-transformations": "Radera alla transformeringar?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Redigera visualisering"
+      "edit-visualization": "Redigera visualisering",
+      "panels-selected_one": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Växla tabellvy",
@@ -10710,6 +10748,8 @@
       "clear-button": "Rensa val"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "CodeMirror-redigeraren kunde inte laddas",
       "language-load-failed": "Det gick inte att läsa in syntaxmarkeringen",
       "language-load-failed-description": "Redigeraren kommer att fortsätta utan språkspecifika funktioner.",
@@ -11516,13 +11556,8 @@
       "severity-low": "Låg",
       "severity-minor": "Lindrig",
       "severity-unknown": "Okänt",
-      "title": "Utlösningslarm",
       "view-all": "Visa alla utlösningslarm",
-      "view-rules": "Visa alla larmregler",
-      "critical-count_one": "{{count}} kritiska",
-      "critical-count_other": "{{count}} kritiska",
-      "high-count_one": "{{count}} hög",
-      "high-count_other": "{{count}} hög"
+      "view-rules": "Visa alla larmregler"
     },
     "header-actions": {
       "active-incidents": "Aktiva incidenter",
@@ -11548,21 +11583,13 @@
       "empty": "",
       "empty-selected-team": "",
       "error-title": "Det gick inte att ladda aktiva incidenter",
-      "title": "Aktiva incidenter",
       "view-all": "Visa alla incidenter"
     },
     "learn-more": "Läs mer",
     "most-used-dashboards-tab": {
       "empty": "Mest använda instrumentpaneler visas här.",
-      "empty-description": "När din organisation har instrumentpaneler och användningsdata har samlats in kommer de instrumentpaneler med flest visningar under de senaste 30 dagarna att visas här.",
       "error-title": "Det gick inte att ladda de mest använda instrumentpanelerna",
       "loading": "Laddar de mest använda instrumentpanelerna …"
-    },
-    "news-card": {
-      "empty": "Inga senaste blogginlägg.",
-      "error-title": "Kunde inte ladda senaste blogginlägg",
-      "read-more": "Läs mer från Grafana Labs blogg",
-      "title": "Senaste från bloggen"
     },
     "on-call-card": {
       "current-shift": "",
@@ -11917,7 +11944,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Dina stjärnmärkta paneler visas här.",
-      "empty-description": "Du kan stjärnmärka dina favoritinstrumentpaneler genom att klicka på <1></1> på instrumentpanelsidan.",
       "error-title": "Det gick inte att ladda stjärnmärkta instrumentpaneler",
       "loading": "Laddar stjärnmärkta instrumentpaneler …"
     },
@@ -12391,7 +12417,6 @@
       "copy-log-line-json": "Kopiera logginnehåll som JSON",
       "copy-shortlink": "Kopiera kortlänk",
       "copy-to-clipboard": "Kopiera till urklippet",
-      "displayed-fields-section": "Organisera visade fält",
       "fields": {
         "adhoc-statistics": "Ad hoc-statistik",
         "copy-value-to-clipboard": "Kopiera värde till klippbordet",
@@ -12415,14 +12440,11 @@
       "log-attributes-field": "Loggattribut",
       "log-line-field": "Loggrad",
       "log-line-section": "Loggrad",
-      "move-displayed-field-down": "Flytta ner",
-      "move-displayed-field-up": "Flytta upp",
       "no-details": "Fält som ska visas.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Fäst logg",
       "prettify": "Gör snyggare",
-      "remove-displayed-field": "Ta bort fält",
       "remove-log": "Ta bort logg",
       "scroll-to-logline": "Skrolla till loggrad",
       "search": {
@@ -13730,6 +13752,7 @@
       "add-title": "",
       "change-visualization": "",
       "edit-query": "",
+      "edit-with-assistant": "",
       "hide-query": "",
       "open-explore": "",
       "rename": "",
@@ -14008,6 +14031,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Kunde inte hitta något som matchar din fråga"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {
@@ -15788,20 +15817,8 @@
     "explain-or-modify": "Förklara eller ändra",
     "explain-query": "",
     "explaining": "",
-    "feedback-cancel": "Avbryt",
-    "feedback-description": "Din feedback hjälper till att förbättra frågeupplevelsen i Grafana.",
-    "feedback-error": "Feedback kunde inte skickas. Försök igen.",
     "feedback-helpful": "Hjälpsam",
-    "feedback-label": "Dela feedback",
-    "feedback-negative-placeholder": "Beskriv vad som inte gick bra och vad du förväntade dig istället.",
-    "feedback-negative-title": "Vad var det som gick snett?",
     "feedback-not-helpful": "Inte till hjälp",
-    "feedback-positive-placeholder": "Vad tyckte du om? Hur kunde det ha varit ännu bättre?",
-    "feedback-positive-title": "Vad gick bra?",
-    "feedback-privacy": "",
-    "feedback-recipient": "Din feedback kommer att skickas till de team som arbetar med frågor.",
-    "feedback-send": "Skicka",
-    "feedback-sending": "Skickar …",
     "focus": "",
     "follow-up-label": "",
     "follow-up-placeholder": "",
@@ -17008,6 +17025,8 @@
       "failures-description": "",
       "filter-placeholder": "",
       "filtered": "",
+      "internal": "",
+      "internal-description": "",
       "last-failed": "",
       "load-failures": "",
       "never": "",

@@ -15,7 +15,7 @@ import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useI
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
-import { SectionVariableControls } from '../VariableControls';
+import { SectionControlsRow } from '../SectionAnnotationControls';
 import { TabEditActionsWrapper } from '../edit-actions-popover/TabEditActions';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
@@ -133,6 +133,12 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
                 });
                 observer.observe(document.body, { childList: true, subtree: true });
 
+                // An embedded dashboard isn't synced with the page URL, which belongs to the page around
+                // it: switch the tab here instead.
+                if (dashboard.state.meta.isEmbedded) {
+                  parentLayout.switchToTab(model);
+                  return;
+                }
                 locationService.partial({ [urlKey]: mySlug });
               }}
               onPointerDown={(evt) => {
@@ -187,7 +193,7 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
       className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
-      {tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
+      <SectionControlsRow variableSet={tabVariablesSet} data={tab.state.$data} />
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>

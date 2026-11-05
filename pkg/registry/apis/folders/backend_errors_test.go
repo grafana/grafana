@@ -324,7 +324,7 @@ func TestSubtreeSearchHidesBackendDiagnostics(t *testing.T) {
 		code  int
 		retry string
 	}{
-		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{Code: 503, Message: backendDiagnostic, Details: &resourcepb.ErrorDetails{Name: backendDiagnostic, RetryAfterSeconds: 7}}}, code: 503, retry: "7"},
+		{name: "status with details", err: mustStatusErr(t, codes.Unavailable, &resourcepb.ErrorResult{Code: 503, Message: backendDiagnostic, Details: &resourcepb.ErrorDetails{Name: backendDiagnostic, RetryAfterSeconds: 7}}), code: 503, retry: "7"},
 		{name: "transport", err: status.Error(codes.PermissionDenied, backendDiagnostic), code: 403},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

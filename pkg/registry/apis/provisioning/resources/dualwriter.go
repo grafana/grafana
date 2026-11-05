@@ -373,6 +373,10 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		return nil, err
 	}
 
+	if err := checkSecureValues(parsed); err != nil {
+		return nil, err
+	}
+
 	// Make sure the value is valid
 	if !opts.SkipDryRun {
 		if err := parsed.DryRun(ctx); err != nil {
@@ -667,6 +671,13 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	newParsed, err := r.parser.Parse(ctx, newInfo)
 	if err != nil {
 		return nil, fmt.Errorf("parse new file: %w", err)
+	}
+
+	// This path writes the resource to storage below, so it is guarded whether or
+	// not the caller supplied content: relocating a file that already carries a
+	// secret would otherwise replay its create or remove against the secret store.
+	if err := checkSecureValues(newParsed); err != nil {
+		return nil, err
 	}
 
 	// Make sure the new resource is valid

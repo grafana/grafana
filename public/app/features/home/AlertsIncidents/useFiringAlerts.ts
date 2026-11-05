@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { getBackendSrv } from '@grafana/runtime';
+import { useFlagGrafanaMultiTenantHomepage } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
@@ -69,31 +70,34 @@ function resolveMatchers(scope: FilterScope, userTeamNames: string[]) {
   }
 }
 
-// Exported so the homepage skeleton reserves the card slot using the same gate.
-export const canViewFiringAlerts = () => contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
-
 export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
 
 /**
- * All data fetching and derived state for the homepage Firing alerts view,
- * shared between the old-layout card and the redesigned tabs.
+ * All data fetching and derived state for the homepage Firing alerts view.
  *
  * When `selectedFilter` names a label (from the filter dropdown) it overrides the default
  * filter of the user's own teams.
  */
 export function useFiringAlerts(selectedFilter: FilterSelection = '') {
-  // The hook gates its own fetching so it's safe to call unconditionally,
-  // e.g. from the tabs component when only incidents are available.
-  const enabled = canViewFiringAlerts();
+  // The hook gates its own fetching so it's safe to call unconditionally, e.g. from the tabs component
+  // when only incidents are available. Alert instances (/api/alertmanager) and user teams (/api/user/teams)
+  // have no /apis equivalent yet, so on a multi-tenant stack the view has nothing to show and is hidden
+  // like a missing plugin.
+  const multiTenant = useFlagGrafanaMultiTenantHomepage();
+  const enabled = !multiTenant && contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
 
-  // Fetched once — teams change at login granularity. A failed fetch leaves teams
-  // undefined, so the card intentionally shows all org alerts unfiltered.
+  // Fetched once — teams change at login granularity. A failed fetch toasts like any other API error and
+  // leaves teams undefined, so the view falls back to all org alerts unfiltered.
   const shouldLoadTeams = enabled && contextSrv.isSignedIn;
 
-  const { value: teams, loading: teamsLoading } = useAsync(
-    () => (shouldLoadTeams ? getBackendSrv().get<Team[]>('/api/user/teams') : Promise.resolve<Team[]>([])),
-    [shouldLoadTeams]
-  );
+  const { value: teams, loading: teamsLoading } = useAsync(async (): Promise<Team[]> => {
+    if (!shouldLoadTeams) {
+      return [];
+    }
+    const result = await getBackendSrv().get<Team[]>('/api/user/teams');
+    // A proxy may answer 200 with an HTML page; don't let the row mapping crash on it.
+    return Array.isArray(result) ? result : [];
+  }, [shouldLoadTeams]);
 
   const teamNames = (teams ?? []).map((t) => t.name);
   const hasTeams = teamNames.length > 0;
@@ -121,7 +125,7 @@ export function useFiringAlerts(selectedFilter: FilterSelection = '') {
   const loading = enabled && (teamsLoading || alertsLoading);
 
   // Severity and timestamp are derived once per alert so the sort comparator,
-  // the badge counts, and the rows don't recompute them.
+  // the header's severity counts, and the rows don't recompute them.
   const { visibleAlerts, criticalCount, highCount } = useMemo(() => {
     let criticalCount = 0;
     let highCount = 0;
@@ -136,7 +140,7 @@ export function useFiringAlerts(selectedFilter: FilterSelection = '') {
     });
     // Most severe first, most recent first within the same severity
     decorated.sort((a, b) => b.rank - a.rank || b.startedAt - a.startedAt);
-    // Cap the rendered rows; counts above are over every alert so the badges stay accurate.
+    // Cap the rendered rows; counts above are over every alert so the header pills stay accurate.
     return { visibleAlerts: decorated.slice(0, HOME_CARD_MAX_ITEMS), criticalCount, highCount };
   }, [alerts]);
 

@@ -5,7 +5,7 @@ import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
 import { type QueryEditorUIState } from '../QueryEditorContext';
-import { makeStackedMode, renderWithQueryEditorProvider } from '../testUtils';
+import { makeStackedMode, mockQueryOptionsState, renderWithQueryEditorProvider } from '../testUtils';
 import { type Transformation } from '../types';
 
 import { StackedEditorRenderer } from './StackedEditorRenderer';
@@ -88,12 +88,6 @@ describe('StackedEditorRenderer', () => {
     ]);
   });
 
-  it('shows the total item count in the header', () => {
-    renderStackedEditor();
-
-    expect(screen.getByText('Showing 3 items')).toBeInTheDocument();
-  });
-
   it('shows datasource errors in stacked mode', () => {
     renderStackedEditor({}, { dsError: new Error('Failed to load datasource: Prometheus') });
 
@@ -134,13 +128,17 @@ describe('StackedEditorRenderer', () => {
     expect(headingIds.every((id) => id && id.length > 0)).toBe(true);
   });
 
-  it('clicking the exit button exits stacked mode', async () => {
-    const exit = jest.fn();
-    const { user } = renderStackedEditor({ stackedMode: makeStackedMode({ enabled: true, exit }) });
+  it('shows the query options sidebar over the stack when query options are open', () => {
+    renderStackedEditor({ queryOptions: { ...mockQueryOptionsState, isQueryOptionsOpen: true } });
 
-    await user.click(screen.getByRole('button', { name: /exit stacked view/i }));
+    expect(screen.getByLabelText('Max data points')).toBeInTheDocument();
+    expect(screen.getByLabelText('Relative time')).toBeInTheDocument();
+  });
 
-    expect(exit).toHaveBeenCalledTimes(1);
+  it('hides the query options sidebar when query options are closed', () => {
+    renderStackedEditor();
+
+    expect(screen.queryByLabelText('Max data points')).not.toBeInTheDocument();
   });
 
   it('opens positioned on the selected card, not the first card', () => {
