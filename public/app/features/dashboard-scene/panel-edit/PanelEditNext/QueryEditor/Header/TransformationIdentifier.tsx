@@ -6,6 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { usePreviousTransformationOutput } from '../hooks/usePreviousTransformationOutput';
 import { useTransformationGeneratedRefId } from '../hooks/useTransformationGeneratedRefId';
+import { framesForTopic } from '../hooks/useTransformedFrames';
 import { type Transformation } from '../types';
 import { truncatedTextStyles } from '../utils';
 
@@ -19,9 +20,6 @@ interface TransformationIdentifierProps {
   fallbackName: string;
   onUpdate: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
 }
-
-/** Stable identity for "no query data yet", so it does not re-run the replays below. */
-const NO_SERIES: PanelData['series'] = [];
 
 /**
  * The transformation's name in a header: editable for the transformations that produce a frame of
@@ -71,7 +69,7 @@ function EditableIdentifier({
   data,
   onUpdate,
 }: Omit<TransformationIdentifierProps, 'fallbackName'>) {
-  const rawData = data?.series ?? NO_SERIES;
+  const rawData = framesForTopic(data, transformation);
 
   const dynamicRefId = useTransformationGeneratedRefId({ transformation, transformations, rawData });
 

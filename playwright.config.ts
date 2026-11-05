@@ -92,10 +92,6 @@ export default defineConfig<PluginOptions>({
       dependencies: ['createUserAndAuthenticate'],
     },
     withAuth({
-      name: 'mysql',
-      testDir: path.join(pluginDirRoot, '/mysql'),
-    }),
-    withAuth({
       name: 'extensions-test-app',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-extensionstest-app'),
     }),
@@ -125,10 +121,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/graphite'),
     }),
     withAuth({
-      name: 'influxdb',
-      testDir: path.join(pluginDirRoot, '/influxdb'),
-    }),
-    withAuth({
       name: 'canvas',
       testDir: path.join(testDirRoot, '/canvas'),
     }),
@@ -136,6 +128,10 @@ export default defineConfig<PluginOptions>({
       name: 'unauthenticated',
       testDir: path.join(testDirRoot, '/unauthenticated'),
     },
+    withAuth({
+      name: 'mt-instant-fallback',
+      testDir: path.join(testDirRoot, '/mt-instant-fallback-suite'),
+    }),
     withAuth({
       name: 'various',
       testDir: path.join(testDirRoot, '/various-suite'),

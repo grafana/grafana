@@ -1,6 +1,9 @@
 {
   extends: ["config:recommended", "security:gomodIndirectSecurityUpdates", "group:goOpenapi"],
   enabledManagers: ["npm", "docker-compose", "gomod", "github-actions"],
+  gitIgnoredAuthors: [
+    "192050657+grafana-go-workspace-bot[bot]@users.noreply.github.com", // pushes `make update-workspace` commits to Go update PRs
+  ],
   ignorePresets: [
     "github>grafana/grafana-renovate-config//presets/labels",
   ],

@@ -1,4 +1,5 @@
 import { waitFor } from '@testing-library/react';
+import { testWithFeatureToggles } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -16,9 +17,66 @@ import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VizPanelEditableElement } from './VizPanelEditableElement';
+
+function buildSelectedPanelsScene() {
+  const panels = [1, 2, 3].map((id) => new VizPanel({ key: `panel-${id}`, pluginId: 'timeseries' }));
+  const layout = new AutoGridLayoutManager({
+    layout: new AutoGridLayout({ children: panels.map((panel) => new AutoGridItem({ body: panel })) }),
+  });
+  const scene = new DashboardScene({ body: layout, isEditing: true });
+  const elements = panels.slice(0, 2).map((panel) => new VizPanelEditableElement(panel));
+  const selection = elements[0].createMultiSelectedElement(elements);
+
+  return { scene, layout, selection };
+}
+
+describe('VizPanelEditableElement with dashboardNewLayouts enabled', () => {
+  testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
+
+  it('when a sidebar selection is deleted, only selected panels are removed in one undoable action with edit-pane tracking', () => {
+    const { scene, layout, selection } = buildSelectedPanelsScene();
+    const track = jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+    const deactivate = activateFullSceneTree(scene);
+
+    try {
+      selection.onDelete();
+
+      expect(layout.getVizPanels().map((panel) => panel.state.key)).toEqual(['panel-3']);
+      expect(
+        scene.state.sidebar.state.undoStack.map((action) => ({
+          description: action.description,
+          meta: action.meta,
+        }))
+      ).toEqual([{ description: 'Remove panels (2)', meta: { actionId: 'panel.remove', scope: 'multiple' } }]);
+      expect(track.mock.calls).toEqual([
+        ['delete', 1, 'edit_pane'],
+        ['delete', 2, 'edit_pane'],
+      ]);
+
+      scene.state.sidebar.undoAction();
+
+      expect(
+        layout
+          .getVizPanels()
+          .map((panel) => panel.state.key)
+          .sort()
+      ).toEqual(['panel-1', 'panel-2', 'panel-3']);
+      expect(scene.state.sidebar.state.undoStack).toEqual([]);
+
+      scene.state.sidebar.redoAction();
+
+      expect(layout.getVizPanels().map((panel) => panel.state.key)).toEqual(['panel-3']);
+      expect(scene.state.sidebar.state.redoStack).toEqual([]);
+    } finally {
+      deactivate();
+      track.mockRestore();
+    }
+  });
+});
 
 describe('VizPanelEditableElement', () => {
   describe('getEditableElementInfo', () => {

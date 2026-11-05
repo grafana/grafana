@@ -1469,7 +1469,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -2040,7 +2047,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Anwenden"
+      "apply": "Anwenden",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5327,6 +5335,9 @@
       "preferences": "Einstellungen",
       "recent-dashboards": "Kürzliche Dashboards",
       "recent-scopes": "Aktuelle Bereiche"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -5752,7 +5763,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5934,6 +5946,9 @@
       "render-label": {
         "tooltip-remove-property": "Eigenschaft entfernen"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "{{typeName}} hinzufügen",
@@ -6244,6 +6259,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -6430,6 +6446,9 @@
           "hide-header": "Kopfzeile ausblenden",
           "title": "Titel"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filter"
         },
@@ -6511,11 +6530,10 @@
         "data-source": "Datenquelle",
         "display": "Anmerkungssteuerung anzeigen in",
         "display-options": {
-          "above-dashboard": "Über dem Dashboard",
           "controls-menu": "Steuerungsmenü",
-          "controls-menu-description": "Kann aufgerufen werden, wenn das Steuerungsmenü geöffnet ist",
+          "controls-menu-description": "",
           "hidden": "Ausgeblendet",
-          "hidden-description": "Blendet den Schalter zum Ein- oder Ausschalten dieser Anmerkung aus"
+          "hidden-description": ""
         },
         "enabled": "Aktiviert",
         "enabled-description": "Wenn dies aktiviert ist, wird bei jeder Aktualisierung des Dashboards eine Annotationsabfrage ausgegeben",
@@ -6618,7 +6636,9 @@
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} Variable",
-        "variable-set": "Variablen"
+        "variable-set": "Variablen",
+        "selected-panels_one": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Exportieren"
@@ -6797,6 +6817,9 @@
             "description": "Wiederholen Sie diese Registerkarte für jeden Wert in der ausgewählten Variable.",
             "title": "Nach Variable wiederholen"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filter"
@@ -7319,11 +7342,14 @@
         "keep-working": "",
         "save": "Speichern",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "Möchten Sie Ihre Änderungen speichern?"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "Nicht gespeicherte Änderungen"
         }
@@ -7570,6 +7596,7 @@
       "error-invalid-json": "Ungültiges JSON",
       "error-invalid-layout": "Layout-JSON hat die Validierung nicht bestanden. Bitte überprüfen Sie die JSON und versuchen Sie es erneut.",
       "error-invalid-v2-panel": "Panel-JSON hat die Validierung nicht bestanden. Bitte überprüfen Sie die JSON-Datei und versuchen Sie es erneut.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Validierungsfehler"
     },
     "interval-variable-form": {
@@ -7639,17 +7666,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -7743,7 +7773,9 @@
       "title-delete-all-transformations": "Alle Transformationen löschen?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Visualisierung bearbeiten"
+      "edit-visualization": "Visualisierung bearbeiten",
+      "panels-selected_one": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Tabellenansicht umschalten",
@@ -10716,6 +10748,8 @@
       "clear-button": "Auswahl löschen"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "Laden des Editors CodeMirror fehlgeschlagen",
       "language-load-failed": "Laden der Syntaxhervorhebung fehlgeschlagen",
       "language-load-failed-description": "Der Editor wird ohne sprachspezifische Funktionen fortfahren.",
@@ -12383,7 +12417,6 @@
       "copy-log-line-json": "Log-Inhalte als JSON kopieren",
       "copy-shortlink": "Shortlink kopieren",
       "copy-to-clipboard": "In die Zwischenablage kopieren",
-      "displayed-fields-section": "Angezeigte Felder organisieren",
       "fields": {
         "adhoc-statistics": "Ad-hoc-Statistiken",
         "copy-value-to-clipboard": "Wert in die Zwischenablage kopieren",
@@ -12407,14 +12440,11 @@
       "log-attributes-field": "Log-Attribute",
       "log-line-field": "Log-Zeile",
       "log-line-section": "Log-Linie",
-      "move-displayed-field-down": "Nach unten",
-      "move-displayed-field-up": "Nach oben",
       "no-details": "Keine anzuzeigenden Felder.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Log anheften",
       "prettify": "Formatieren",
-      "remove-displayed-field": "Feld entfernen",
       "remove-log": "Log entfernen",
       "scroll-to-logline": "Zur Logzeile scrollen",
       "search": {
@@ -14001,6 +14031,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Es konnte nichts gefunden werden, was Ihrer Abfrage entspricht"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

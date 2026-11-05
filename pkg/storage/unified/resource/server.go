@@ -30,14 +30,12 @@ import (
 	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
-	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/usagestats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -118,7 +116,6 @@ const maxKeysPageSize = 10000
 type ResourceServer interface {
 	SearchServer
 	resourcepb.ResourceStoreServer
-	resourcepb.ResourceStatsServer
 	resourcepb.BulkStoreServer
 	resourcepb.BlobStoreServer
 	resourcepb.BlobStoreStreamingServer
@@ -337,6 +334,10 @@ type ResourceStats struct {
 
 	Count           int64
 	ResourceVersion int64
+
+	// LastSearchedAt is when a global index was last searched before a restart,
+	// so its idle time carries on. Zero when unknown.
+	LastSearchedAt time.Time
 }
 
 // This interface is not exposed to end users directly
@@ -433,6 +434,11 @@ type SearchOptions struct {
 	// defaultGlobalIndexBuildWait; only tests change it.
 	GlobalIndexBuildWait time.Duration
 
+	// GlobalIndexIdleTimeout is how long a global index may go unsearched before
+	// it is closed. Startup does not reopen one that was idle that long before
+	// the restart.
+	GlobalIndexIdleTimeout time.Duration
+
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
 	// hash from it and triggers a rebuild when either differs from the values
@@ -487,6 +493,7 @@ type SearchOptions struct {
 	// Vector API collection allowlists: "group/resource" entries; empty allows nothing.
 	AllowedInternalCollections []string
 	AllowedExternalCollections []string
+	SharedExternalCollections  []string
 	AllowedReadServices        map[string][]string
 }
 
@@ -531,9 +538,6 @@ type ResourceServerOptions struct {
 	Reg prometheus.Registerer
 
 	StorageMetrics *StorageMetrics
-
-	// GRPCErrorResultToStatus enables conversion of embedded ErrorResults on in-process calls.
-	GRPCErrorResultToStatus bool
 
 	IndexMetrics *BleveIndexMetrics
 
@@ -588,11 +592,6 @@ type ResourceServerOptions struct {
 	// VectorReconciler, when non-nil, is launched after Init. The reconciler
 	// owns the backfiller and runs it. nil = reconciler feature off.
 	VectorReconciler Runnable
-
-	// UsageStatsEnabled turns on the usage stats ingestion path (RecordEvent /
-	// GetResourceDailyStats). It requires a KV-backed StorageBackend so the
-	// ingester can share its KV store and lease manager.
-	UsageStatsEnabled bool
 }
 
 // Runnable is anything the server can launch in a goroutine and that
@@ -737,7 +736,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		ctx:                            ctx,
 		cancel:                         cancel,
 		storageMetrics:                 opts.StorageMetrics,
-		grpcErrorResultToStatus:        opts.GRPCErrorResultToStatus,
 		maxPageSizeBytes:               opts.MaxPageSizeBytes,
 		authorizeBeforeFetchEnabled:    opts.AuthorizeBeforeFetchEnabled,
 		reg:                            opts.Reg,
@@ -771,25 +769,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 	// Access to search is required when checking quotas.
 	if opts.OverridesService != nil && s.search == nil && opts.SearchClient == nil {
 		return nil, fmt.Errorf("overrides service requires search for quota checking")
-	}
-
-	if opts.UsageStatsEnabled {
-		kvBackend, ok := opts.Backend.(KVBackend)
-		if !ok {
-			return nil, fmt.Errorf("usage stats require a KV-backed storage backend")
-		}
-		// The flush loop relies on a lease to serialize the read-add-write per
-		// namespace; without one, concurrent flushes across pods would lose
-		// increments. NewIngester rejects a nil lease manager.
-		s.statsIngester, err = usagestats.NewIngester(usagestats.IngesterOptions{
-			Store:  usagestats.NewStore(kvBackend.KV()),
-			Leases: kvBackend.LeaseManager(),
-			Reg:    opts.Reg,
-			Log:    logger,
-		})
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return s, nil
@@ -835,24 +814,23 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 var _ ResourceServer = (*server)(nil)
 
 type server struct {
-	log                     log.Logger
-	backend                 StorageBackend
-	vectorBackend           vector.VectorBackend
-	bulkBatchOptions        BulkBatchOptions
-	blob                    BlobSupport
-	blobTransfers           *blobTransfers
-	secure                  secrets.InlineSecureValueSupport
-	search                  *searchServer
-	searchClient            resourcepb.ResourceIndexClient
-	diagnostics             resourcepb.DiagnosticsServer //nolint:staticcheck
-	access                  claims.AccessClient
-	writeHooks              WriteAccessHooks
-	now                     func() int64
-	mostRecentRV            atomic.Int64 // The most recent resource version seen by the server
-	storageMetrics          *StorageMetrics
-	grpcErrorResultToStatus bool
-	overridesService        *OverridesService
-	quotasConfig            QuotasConfig
+	log              log.Logger
+	backend          StorageBackend
+	vectorBackend    vector.VectorBackend
+	bulkBatchOptions BulkBatchOptions
+	blob             BlobSupport
+	blobTransfers    *blobTransfers
+	secure           secrets.InlineSecureValueSupport
+	search           *searchServer
+	searchClient     resourcepb.ResourceIndexClient
+	diagnostics      resourcepb.DiagnosticsServer //nolint:staticcheck
+	access           claims.AccessClient
+	writeHooks       WriteAccessHooks
+	now              func() int64
+	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics   *StorageMetrics
+	overridesService *OverridesService
+	quotasConfig     QuotasConfig
 	// Kind declarations from the manifests, refreshed by the manifest watcher. List
 	// reads the selectable fields from it before asking an index about a selector.
 	// May be nil.
@@ -899,10 +877,6 @@ type server struct {
 	vectorWriteReconciler Runnable
 	embeddingBuilders     embed.BuilderProvider
 	indexersWG            sync.WaitGroup
-
-	// statsIngester buffers and flushes usage stats events. nil when the
-	// usage stats feature is off or the backend is not KV-backed.
-	statsIngester *usagestats.Ingester
 }
 
 // Init implements ResourceServer.
@@ -933,10 +907,6 @@ func (s *server) Init(ctx context.Context) error {
 		// and Stop() joins them via indexersWG.
 		if s.initErr == nil {
 			s.startVectorIndexers()
-		}
-
-		if s.initErr == nil && s.statsIngester != nil {
-			s.initErr = services.StartAndAwaitRunning(s.ctx, s.statsIngester)
 		}
 
 		if s.initErr != nil {
@@ -1019,12 +989,6 @@ func (s *server) Stop(ctx context.Context) error {
 	}
 
 	var stopFailed bool
-
-	if s.statsIngester != nil {
-		if err := services.StopAndAwaitTerminated(ctx, s.statsIngester); err != nil {
-			s.log.Warn("usage stats ingester failed to stop cleanly", "error", err)
-		}
-	}
 
 	if s.search != nil {
 		s.search.stop()
@@ -1267,6 +1231,10 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		return rsp, nil
 	}
 
+	if _, _, err := decodeReferenceOnlyBlobBody(req.Value); err != nil {
+		return nil, err
+	}
+
 	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
@@ -1393,6 +1361,10 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 			Code:    http.StatusUnauthorized,
 		}
 		return rsp, nil
+	}
+
+	if _, _, err := decodeReferenceOnlyBlobBody(req.Value); err != nil {
+		return nil, err
 	}
 
 	var (
@@ -1660,90 +1632,6 @@ func (s *server) authorizeRead(ctx context.Context, user claims.AuthInfo, key *r
 	}
 	if !a.Allowed {
 		return &resourcepb.ErrorResult{Code: http.StatusForbidden}
-	}
-	return nil
-}
-
-func (s *server) checkStatsReadAccess(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey) error {
-	// must be able to read object in order to read its stats
-	rsp := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
-	if rsp.Error != nil {
-		if rsp.Error.Code == http.StatusNotFound {
-			return status.Error(codes.NotFound, rsp.Error.Message)
-		}
-		return status.Error(codes.Internal, rsp.Error.Message)
-	}
-
-	a, err := s.access.Check(ctx, user, claims.CheckRequest{
-		Verb:      "get",
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-		Name:      key.Name,
-	}, rsp.Folder)
-	if err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-	if !a.Allowed {
-		return status.Error(codes.PermissionDenied, "not allowed to access object stats")
-	}
-	return nil
-}
-
-func (s *server) RecordEvent(ctx context.Context, req *resourcepb.RecordEventRequest) (*resourcepb.RecordEventResponse, error) {
-	ctx, span := tracer.Start(ctx, "resource.server.RecordEvent")
-	defer span.End()
-
-	if s.statsIngester == nil {
-		return nil, status.Error(codes.Unimplemented, "usage stats are not enabled")
-	}
-
-	// deliberately require only that a caller identity is present, with
-	// no object-level authz. The client emits events for objects the user is
-	// already viewing (having passed a read check at the API layer), so the
-	// per-object permission was effectively enforced upstream.
-	if user, ok := claims.AuthInfoFrom(ctx); !ok || user == nil {
-		return nil, status.Error(codes.Unauthenticated, "no user found in context")
-	}
-	if r := verifyRequestKey(req.Key); r != nil {
-		return nil, status.Error(codes.InvalidArgument, r.Message)
-	}
-
-	if err := s.statsIngester.RecordEvent(ctx, req.Key, req.Events); err != nil {
-		if errors.Is(err, usagestats.ErrInvalidEvent) {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	return &resourcepb.RecordEventResponse{}, nil
-}
-
-func (s *server) GetResourceDailyStats(req *resourcepb.GetResourceDailyStatsRequest, stream resourcepb.ResourceStats_GetResourceDailyStatsServer) error {
-	ctx, span := tracer.Start(stream.Context(), "resource.server.GetResourceDailyStats")
-	defer span.End()
-
-	if s.statsIngester == nil {
-		return status.Error(codes.Unimplemented, "usage stats are not enabled")
-	}
-
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok || user == nil {
-		return status.Error(codes.Unauthenticated, "no user found in context")
-	}
-	if r := verifyRequestKey(req.Key); r != nil {
-		return status.Error(codes.InvalidArgument, r.Message)
-	}
-	if err := s.checkStatsReadAccess(ctx, user, req.Key); err != nil {
-		return err
-	}
-
-	for day, err := range s.statsIngester.GetResourceDailyStats(ctx, req.Key, req.FromDay, req.ToDay) {
-		if err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-		if err := stream.Send(day); err != nil {
-			return err
-		}
 	}
 	return nil
 }
@@ -2399,12 +2287,12 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	s.broadcaster = NewBroadcaster(s.ctx, out, s.storageMetrics.Broadcaster, func(e *WrittenEvent) string {
+	s.broadcaster = newBroadcasterWithSizes(s.ctx, out, watchChanSize, defaultOverflowCap, s.storageMetrics.Broadcaster, func(e *WrittenEvent) string {
 		if e == nil || e.Key == nil {
 			return ""
 		}
 		return e.Key.Resource
-	})
+	}, &seededCacheConfig[*WrittenEvent]{identity: writtenEventIdentity})
 	return nil
 }
 
@@ -2417,6 +2305,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	// Capture before setup: invalidations during subscription or snapshot reads must
 	// expire this watch too, even if it has not entered the live loop yet.
+	cached, _ := s.broadcaster.(*broadcaster[*WrittenEvent])
+	waitsForStartup := cached != nil && cached.cache.identity != nil && cached.starting()
 	watchExpiryC := s.watchExpiry.WatchInvalidation()
 
 	// Treat a closed client transport and cancellation of this watch's context
@@ -2471,12 +2361,23 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 	name := fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace)
 	var stream <-chan *WrittenEvent
-	if s.watchStartup != nil {
+	if b := cached; b != nil && b.cache.identity != nil {
+		// Invalidations before capture starts, such as the one when it first
+		// starts, predate the stream a waiting watch subscribes to. Later ones,
+		// even before the cache is ready, still expire it.
+		if waitsForStartup {
+			if err := b.ensureReady(ctx); err != nil {
+				return err
+			}
+			if expiry := s.watchStartup.expiryAtCapture(); expiry != nil {
+				watchExpiryC = expiry
+			}
+		}
 		var resume *watchResume
 		if req.Since > 0 && !req.SendInitialEvents {
 			resume = &watchResume{groupResource: GroupResource{Group: key.Group, Resource: key.Resource}, since: requestedSince, requestedRV: req.Since}
 		}
-		stream, err = s.watchStartup.broadcaster.subscribeWatch(ctx, name, key.Resource, resume)
+		stream, err = b.subscribeWatch(ctx, name, key.Resource, resume)
 	} else {
 		stream, err = s.broadcaster.Subscribe(ctx, name, key.Resource)
 	}

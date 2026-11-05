@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,10 +16,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -83,8 +87,8 @@ func TestSearchErrorStatus(t *testing.T) {
 	st, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(failure)
 	require.NoError(t, err)
 	for name, client := range map[string]*MockClient{
-		"embedded":  {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: failure}}},
-		"transport": {MockError: fmt.Errorf("search: %w", st.Err())},
+		"grpc":         {MockError: st.Err()},
+		"wrapped grpc": {MockError: fmt.Errorf("search: %w", st.Err())},
 	} {
 		t.Run(name, func(t *testing.T) {
 			handler := NewSearchHandler(tracing.NewNoopTracerService(), client, nil)
@@ -98,6 +102,67 @@ func TestSearchErrorStatus(t *testing.T) {
 			require.Equal(t, resource.StatusError(failure).(apierrors.APIStatus).Status(), got)
 		})
 	}
+
+	t.Run("permission denied is not served as empty results", func(t *testing.T) {
+		denied := &resourcepb.ErrorResult{Code: http.StatusForbidden, Reason: string(metav1.StatusReasonForbidden), Message: "search denied"}
+		client := &MockClient{MockError: resource.GRPCStatusError(denied)}
+		handler := NewSearchHandler(tracing.NewNoopTracerService(), client, nil)
+		req := httptest.NewRequest("GET", "/search", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		recorder := httptest.NewRecorder()
+		handler.DoSearch(recorder, req)
+		require.Equal(t, http.StatusForbidden, recorder.Code)
+		var got metav1.Status
+		require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))
+		require.Equal(t, resource.StatusError(denied).(apierrors.APIStatus).Status(), got)
+	})
+}
+
+type searchStatusServer struct {
+	resourcepb.UnimplementedResourceIndexServer
+	failure *resourcepb.ErrorResult
+}
+
+func (s *searchStatusServer) Search(context.Context, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	return nil, resource.GRPCStatusError(s.failure)
+}
+
+func TestSearchErrorStatusOverGRPC(t *testing.T) {
+	failure := &resourcepb.ErrorResult{
+		Code: http.StatusUnprocessableEntity, Reason: string(metav1.StatusReasonInvalid), Message: "invalid search",
+		Details: &resourcepb.ErrorDetails{
+			Name: "dashboard", Group: "dashboard.grafana.app", Kind: "dashboards", Uid: "uid", RetryAfterSeconds: 12,
+			Causes: []*resourcepb.ErrorCause{{Reason: "FieldValueInvalid", Field: "query", Message: "invalid value"}},
+		},
+	}
+	listener := bufconn.Listen(1024 * 1024)
+	t.Cleanup(func() { _ = listener.Close() })
+	server := grpc.NewServer()
+	resourcepb.RegisterResourceIndexServer(server, &searchStatusServer{failure: failure})
+	t.Cleanup(server.Stop)
+	go func() { _ = server.Serve(listener) }()
+	conn, err := grpc.NewClient("passthrough:///bufnet",
+		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) { return listener.DialContext(ctx) }),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+
+	handler := NewSearchHandler(tracing.NewNoopTracerService(), resource.NewAuthlessResourceClient(conn), nil)
+	req := httptest.NewRequest(http.MethodGet, "/search", nil)
+	req = req.WithContext(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "test"}))
+	recorder := httptest.NewRecorder()
+	handler.DoSearch(recorder, req)
+
+	require.Equal(t, http.StatusUnprocessableEntity, recorder.Code)
+	var got metav1.Status
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))
+	require.Equal(t, metav1.Status{
+		Status: metav1.StatusFailure, Code: http.StatusUnprocessableEntity, Reason: metav1.StatusReasonInvalid, Message: "invalid search",
+		Details: &metav1.StatusDetails{
+			Name: "dashboard", Group: "dashboard.grafana.app", Kind: "dashboards", UID: types.UID("uid"), RetryAfterSeconds: 12,
+			Causes: []metav1.StatusCause{{Type: metav1.CauseTypeFieldValueInvalid, Field: "query", Message: "invalid value"}},
+		},
+	}, got)
 }
 
 func TestVectorSearch(t *testing.T) {
@@ -183,6 +248,21 @@ func TestVectorSearch(t *testing.T) {
 		require.Len(t, mockClient.LastVectorSearchRequest.Filters, 1)
 		assert.Equal(t, "folder", mockClient.LastVectorSearchRequest.Filters[0].Key)
 		assert.Equal(t, []string{""}, mockClient.LastVectorSearchRequest.Filters[0].Values)
+	})
+
+	t.Run("preserves attached error details", func(t *testing.T) {
+		denied := &resourcepb.ErrorResult{
+			Code: http.StatusForbidden, Reason: string(metav1.StatusReasonForbidden), Message: "vector search denied",
+			Details: &resourcepb.ErrorDetails{Group: "dashboard.grafana.app", Kind: "dashboards"},
+		}
+		mockClient := &MockClient{VectorSearchErr: resource.GRPCStatusError(denied)}
+
+		rr := doRequest(newHandler(mockClient), "query=cpu")
+
+		require.Equal(t, http.StatusForbidden, rr.Code)
+		var got metav1.Status
+		require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &got))
+		require.Equal(t, resource.StatusError(denied).(apierrors.APIStatus).Status(), got)
 	})
 
 	t.Run("maps gRPC status codes to HTTP statuses instead of 500", func(t *testing.T) {
@@ -526,6 +606,42 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		require.Len(t, mockClient.MockCalls, 2)
 		for _, request := range mockClient.MockCalls {
 			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.ResultFormat)
+		}
+	})
+
+	t.Run("returns status errors from either permission lookup", func(t *testing.T) {
+		denied := &resourcepb.ErrorResult{Code: http.StatusForbidden, Reason: string(metav1.StatusReasonForbidden), Message: "lookup denied"}
+		dashboardHits := &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields:       []*resourcepb.ResourceSearchField{{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING}},
+			Rows: []*resourcepb.ResourceSearchRow{{
+				Key:    &resourcepb.ResourceKey{Name: "dashboard-private", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"private-folder"}}},
+			}},
+		}
+		requester := &user.SignedInUser{
+			Namespace: "test",
+			OrgID:     1,
+			Permissions: map[int64]map[string][]string{1: {
+				dashboards.ActionDashboardsRead: {"dashboards:uid:dashboard-private"},
+			}},
+		}
+		for name, mockClient := range map[string]*MockClient{
+			"dashboard lookup": {MockErrors: []error{resource.GRPCStatusError(denied)}},
+			// A failed folder lookup must not make every dashboard look shared.
+			"folder lookup": {
+				MockResponses: []*resourcepb.ResourceSearchResponse{dashboardHits, {}},
+				MockErrors:    []error{nil, resource.GRPCStatusError(denied)},
+			},
+		} {
+			t.Run(name, func(t *testing.T) {
+				searchHandler := SearchHandler{client: mockClient}
+
+				shared, err := searchHandler.getDashboardsUIDsSharedWithUser(t.Context(), requester, dashboardaccess.PERMISSION_VIEW)
+
+				require.Empty(t, shared)
+				require.Equal(t, resource.StatusError(denied), err)
+			})
 		}
 	})
 
@@ -1684,6 +1800,9 @@ type MockClient struct {
 	MockCalls     []*resourcepb.ResourceSearchRequest
 	CallCount     int
 
+	// MockErrors returns a per-call error alongside the matching MockResponses entry.
+	MockErrors []error
+
 	LastVectorSearchRequest *resourcepb.VectorSearchRequest
 	VectorSearchResponse    *resourcepb.VectorSearchResponse
 	VectorSearchErr         error
@@ -1747,18 +1866,16 @@ func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRe
 	if m.CallCount < len(m.MockResponses) {
 		response = m.MockResponses[m.CallCount]
 	}
+	var err error
+	if m.CallCount < len(m.MockErrors) {
+		err = m.MockErrors[m.CallCount]
+	}
 
 	m.CallCount = m.CallCount + 1
 
-	return response, nil
+	return response, err
 }
 func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) RecordEvent(ctx context.Context, in *resourcepb.RecordEventRequest, opts ...grpc.CallOption) (*resourcepb.RecordEventResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) GetResourceDailyStats(ctx context.Context, in *resourcepb.GetResourceDailyStatsRequest, opts ...grpc.CallOption) (resourcepb.ResourceStats_GetResourceDailyStatsClient, error) {
 	return nil, nil
 }
 func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
