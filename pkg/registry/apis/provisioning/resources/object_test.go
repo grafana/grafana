@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,11 +29,7 @@ func TestResourceListerFromSearch_ListErrors(t *testing.T) {
 	for _, tc := range resourceErrorCases(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
-			var response *resourcepb.ListManagedObjectsResponse
-			if tc.result != nil {
-				response = &resourcepb.ListManagedObjectsResponse{Error: tc.result}
-			}
-			store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(response, tc.err).Once()
+			store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
 			got, err := NewResourceLister(store, nil, nil).List(context.Background(), "default", "repo")
 			require.Nil(t, got)
 			tc.assertError(t, err)
@@ -46,11 +41,7 @@ func TestResourceListerFromSearch_CountErrors(t *testing.T) {
 	for _, tc := range resourceErrorCases(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
-			var response *resourcepb.CountManagedObjectsResponse
-			if tc.result != nil {
-				response = &resourcepb.CountManagedObjectsResponse{Error: tc.result}
-			}
-			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(response, tc.err).Once()
+			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
 			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default", "")
 			require.Nil(t, got)
 			tc.assertError(t, err)
@@ -63,11 +54,7 @@ func TestResourceListerFromSearch_GetStatsErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
 			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{}, nil).Once()
-			var response *resourcepb.ResourceStatsResponse
-			if tc.result != nil {
-				response = &resourcepb.ResourceStatsResponse{Error: tc.result}
-			}
-			store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(response, tc.err).Once()
+			store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
 			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default", "")
 			require.Nil(t, got)
 			tc.assertError(t, err)
@@ -76,10 +63,8 @@ func TestResourceListerFromSearch_GetStatsErrors(t *testing.T) {
 }
 
 type resourceErrorCase struct {
-	name   string
-	result *resourcepb.ErrorResult
-	err    error
-	want   metav1.Status
+	name string
+	err  error
 }
 
 func resourceErrorCases(t *testing.T) []resourceErrorCase {
@@ -87,9 +72,7 @@ func resourceErrorCases(t *testing.T) []resourceErrorCase {
 	result := &resourcepb.ErrorResult{Code: http.StatusNotFound, Reason: string(metav1.StatusReasonNotFound), Message: "not found"}
 	st, err := status.New(codes.Internal, "outer error").WithDetails(result)
 	require.NoError(t, err)
-	want := resource.StatusError(result).(apierrors.APIStatus).Status()
 	return []resourceErrorCase{
-		{name: "embedded", result: result, want: want},
 		{name: "grpc details", err: st.Err()},
 		{name: "wrapped grpc", err: fmt.Errorf("storage: %w", st.Err())},
 		{name: "unstructured grpc", err: status.Error(codes.Unavailable, "backend connection failed")},
@@ -99,13 +82,8 @@ func resourceErrorCases(t *testing.T) []resourceErrorCase {
 
 func (tc resourceErrorCase) assertError(t *testing.T, err error) {
 	t.Helper()
-	if tc.err != nil {
-		require.Same(t, tc.err, err)
-		return
-	}
-	apiStatus, ok := err.(apierrors.APIStatus)
-	require.True(t, ok)
-	require.Equal(t, tc.want, apiStatus.Status())
+	// Go callers get the returned error untouched, keeping its gRPC status and details.
+	require.Same(t, tc.err, err)
 }
 
 func TestResourceListerFromSearch_ListsCollectionMembersThroughClients(t *testing.T) {

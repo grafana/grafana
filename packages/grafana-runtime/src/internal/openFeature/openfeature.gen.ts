@@ -32,6 +32,8 @@ export const FlagKeys = {
   AlertingRuleReviews: "alerting.ruleReviews",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
+  /** Show the Assistant Watchers banner on the alert rule list. Watchers are only available in Grafana Cloud. */
+  AlertingWatchersBanner: "alerting.watchersBanner",
   /** Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking */
   AlertingAlertListPanelEnhancements: "alertingAlertListPanelEnhancements",
   /** Rule backtesting API for alerting */
@@ -505,6 +507,17 @@ export const useFlagAlertingRuleReviews = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.syncExternalAlertmanager", false, options).value;
+};
+
+/**
+ * Show the Assistant Watchers banner on the alert rule list. Watchers are only available in Grafana Cloud.
+ *
+ * **Details:**
+ * - flag key: `alerting.watchersBanner`
+ * - default value: `false`
+ */
+export const useFlagAlertingWatchersBanner = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.watchersBanner", false, options).value;
 };
 
 /**

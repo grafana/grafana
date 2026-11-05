@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"path/filepath"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -132,7 +133,7 @@ func WithNatsNotifierShadow(s resource.EventSubscriber) StorageBackendOption {
 
 // WithNatsNotifier feeds the watch pipeline directly from the NATS bus instead
 // of polling. Delivery is at-most-once; the backend falls back to polling when
-// the subscriber is disabled. KV backend only.
+// the subscriber is disabled.
 func WithNatsNotifier(s resource.EventSubscriber, invalidator resource.Invalidator) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) {
 		o.EventSubscriber = s
@@ -201,6 +202,9 @@ func NewStorageBackend(
 
 			EventPublisher:            kvOpts.EventPublisher,
 			WatchNotificationMetadata: kvOpts.WatchNotificationMetadata,
+			WatchSubscriber:           natsWatchSubscriber(kvOpts),
+			WatchSettleDelay:          cfg.NotifierSettleDelay,
+			WatchInvalidator:          kvOpts.WatchInvalidator,
 		})
 	}
 
@@ -233,6 +237,14 @@ func NewStorageBackend(
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
+}
+
+// natsWatchSubscriber ignores the shadow notifier, which is KV only.
+func natsWatchSubscriber(o resource.KVBackendOptions) resource.EventSubscriber {
+	if !o.EnableNatsNotifier {
+		return nil
+	}
+	return o.EventSubscriber
 }
 
 func newKVGrpcBackend(cfg *setting.Cfg, reg prometheus.Registerer, disableStorageServices bool, kvStore kv.KV, gcGate *resource.GCGate, opts ...StorageBackendOption) (resource.StorageBackend, error) {
@@ -321,6 +333,11 @@ type BackendOptions struct {
 
 	// WatchNotificationMetadata adds allowlisted object metadata to notifications.
 	WatchNotificationMetadata bool
+
+	// WatchSubscriber, when enabled, feeds watches from NATS instead of polling.
+	WatchSubscriber  resource.EventSubscriber
+	WatchInvalidator resource.Invalidator
+	WatchSettleDelay time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -368,6 +385,9 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 
 		watchPublisher:            resource.NewWatchNotificationPublisher(opts.EventPublisher, opts.Reg, logging.DefaultLogger.With("logger", "sql-resource-server")),
 		watchNotificationMetadata: opts.WatchNotificationMetadata,
+		watchSubscriber:           opts.WatchSubscriber,
+		watchInvalidator:          opts.WatchInvalidator,
+		watchSettleDelay:          opts.WatchSettleDelay,
 	}
 	if err := backend.Init(ctx); err != nil {
 		return nil, err
@@ -430,6 +450,9 @@ type backend struct {
 
 	watchPublisher            *resource.WatchNotificationPublisher
 	watchNotificationMetadata bool
+	watchSubscriber           resource.EventSubscriber
+	watchInvalidator          resource.Invalidator
+	watchSettleDelay          time.Duration
 
 	garbageCollection GarbageCollectionConfig
 	gcGate            *resource.GCGate
@@ -506,6 +529,11 @@ func (b *backend) initLocked(ctx context.Context) error {
 		done:            b.done,
 		db:              b.db,
 		dialect:         b.dialect,
+		subscriber:      b.watchSubscriber,
+		invalidator:     b.watchInvalidator,
+		readHistory:     b.readHistoryVersions,
+		settleDelay:     b.watchSettleDelay,
+		reg:             b.reg,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create notifier: %w", err)
@@ -1437,6 +1465,71 @@ func (b *backend) readHistory(ctx context.Context, key *resourcepb.ResourceKey, 
 	return res.ReadResponse()
 }
 
+// historyVersion identifies one resource_history row.
+type historyVersion struct {
+	Namespace       string
+	Group           string
+	Resource        string
+	Name            string
+	ResourceVersion int64
+}
+
+// historyBatchReadSize bounds the bodies one query returns, like readChunkSize
+// for search reads.
+const historyBatchReadSize = 10
+
+// readHistoryVersions returns the history rows at the given versions, with one
+// query per collection and batch. Missing versions, such as pruned ones, are
+// left out.
+func (b *backend) readHistoryVersions(ctx context.Context, versions []historyVersion) (map[historyVersion]*historyPollResponse, error) {
+	ctx, span := tracer.Start(ctx, "sql.backend.readHistoryVersions")
+	defer span.End()
+	span.SetAttributes(attribute.Int("versions", len(versions)))
+
+	type collection struct{ group, resource string }
+	byCollection := make(map[collection][]int64)
+	wanted := make(map[historyVersion]bool, len(versions))
+	for _, v := range versions {
+		if !wanted[v] {
+			c := collection{v.Group, v.Resource}
+			byCollection[c] = append(byCollection[c], v.ResourceVersion)
+		}
+		wanted[v] = true
+	}
+
+	found := make(map[historyVersion]*historyPollResponse, len(versions))
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		for c, rvs := range byCollection {
+			for chunk := range slices.Chunk(rvs, historyBatchReadSize) {
+				rows, err := dbutil.Query(ctx, tx, sqlResourceHistoryBatchRead, &sqlResourceHistoryBatchReadRequest{
+					SQLTemplate:      sqltemplate.New(b.dialect),
+					Group:            c.group,
+					Resource:         c.resource,
+					ResourceVersions: chunk,
+					Response:         &historyPollResponse{},
+				})
+				if err != nil {
+					return err
+				}
+				for _, row := range rows {
+					v := historyVersion{
+						Namespace: row.Key.Namespace, Group: row.Key.Group, Resource: row.Key.Resource,
+						Name: row.Key.Name, ResourceVersion: row.ResourceVersion,
+					}
+					if wanted[v] {
+						found[v] = row
+					}
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("read history versions: %w", err)
+	}
+	return found, nil
+}
+
 // getHistory fetches the resource history from the resource_history table.
 func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.getHistory")
@@ -1521,10 +1614,14 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 	return iter.listRV, err
 }
 
-// WatchWrittenKeys is not supported: only the KV backend reads written keys
-// from NATS.
-func (b *backend) WatchWrittenKeys(context.Context, []schema.GroupResource, func(string)) (<-chan *resource.WrittenEvent, error) {
-	return nil, resource.ErrWrittenKeysUnsupported
+// WatchWrittenKeys reads written keys from NATS, as on KV, when watches come
+// from the bus, so global search learns of lost keys and reconciles them.
+func (b *backend) WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(string)) (<-chan *resource.WrittenEvent, error) {
+	n, ok := b.notifier.(*natsNotifier)
+	if !ok {
+		return nil, resource.ErrWrittenKeysUnsupported
+	}
+	return resource.WatchWrittenKeysFromBus(ctx, n.subscriber, types, onLost, b.log)
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {

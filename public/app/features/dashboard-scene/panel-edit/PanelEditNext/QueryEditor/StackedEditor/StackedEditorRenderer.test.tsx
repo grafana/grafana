@@ -143,6 +143,18 @@ describe('StackedEditorRenderer', () => {
     expect(exit).toHaveBeenCalledTimes(1);
   });
 
+  it('shows the experimental feedback button once in the top bar', () => {
+    renderWithQueryEditorProvider(<StackedEditorRenderer />, {
+      queries,
+      transformations,
+      selectedQuery: queries[0],
+      uiStateOverrides: { stackedMode: makeStackedMode({ enabled: true }) },
+      actionsOverrides: { onSwitchToClassic: jest.fn() },
+    });
+
+    expect(screen.getAllByRole('button', { name: /experimental feature options/i })).toHaveLength(1);
+  });
+
   it('opens positioned on the selected card, not the first card', () => {
     // jsdom doesn't implement scrollIntoView, so it can't be spied — stub it and restore after.
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;

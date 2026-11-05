@@ -534,15 +534,15 @@ func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Conte
 
 func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
 	resp, err := dr.k8sclient.GetStats(ctx, orgID)
-	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
+	if err != nil {
 		return 0, err
 	}
 
-	if len(resp.Stats) != 1 {
-		return 0, fmt.Errorf("expected 1 stat, got %d", len(resp.Stats))
+	if len(resp.GetStats()) != 1 {
+		return 0, fmt.Errorf("expected 1 stat, got %d", len(resp.GetStats()))
 	}
 
-	return resp.Stats[0].Count, nil
+	return resp.GetStats()[0].Count, nil
 }
 
 func (dr *DashboardServiceImpl) CountProvisionedDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
@@ -1661,10 +1661,10 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *das
 		Limit:        0, // Only tag counts are needed; dashboard rows would be discarded.
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
+	if err != nil {
 		return nil, err
 	}
-	facet, ok := res.Facet["tags"]
+	facet, ok := res.GetFacet()["tags"]
 	if !ok {
 		return []*dashboards.DashboardTagCloudItem{}, nil
 	}
@@ -2151,7 +2151,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
-	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
+	if err != nil {
 		return dashboardv0.SearchResults{}, err
 	}
 

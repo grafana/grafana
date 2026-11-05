@@ -250,8 +250,8 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		r.SetBranch(branch)
 	}
 
-	// Check authorization
-	if ok, err := r.client.CanRead(ctx); err != nil || !ok {
+	// Check authorization. A missing repository is reported by the existence check below.
+	if ok, err := r.client.CanRead(ctx); (err != nil || !ok) && !errors.Is(err, client.ErrRepositoryNotFound) {
 		// Map nanogit errors to repository errors for proper HTTP status codes
 		if err != nil {
 			err = mapNanogitError(err)
@@ -1219,7 +1219,7 @@ func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults 
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
 				Field:  field.NewPath("secure", "token").String(),
-				Detail: "authentication failed",
+				Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized",
 			}},
 		}
 	}
@@ -1231,7 +1231,7 @@ func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults 
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
 				Field:  field.NewPath("secure", "token").String(),
-				Detail: "permission denied",
+				Detail: "permission denied: the Git server returned HTTP 403 Forbidden",
 			}},
 		}
 	}

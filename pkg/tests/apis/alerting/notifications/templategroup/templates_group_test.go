@@ -134,6 +134,30 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 
 		require.Equal(t, newTemplateWithOverlappingName.Spec, actual.Spec) // This is the new template, not the default one.
 	})
+
+	t.Run("resource is addressed by its name and not by the title of another", func(t *testing.T) {
+		target, err := client.Create(ctx, newTemplate.Copy().(*v1beta1.TemplateGroup), resource.CreateOptions{})
+		require.NoError(t, err)
+
+		// A template that is titled with the name of the first one.
+		decoy := newTemplate.Copy().(*v1beta1.TemplateGroup)
+		decoy.Spec.Title = target.Name
+		decoy, err = client.Create(ctx, decoy, resource.CreateOptions{})
+		require.NoError(t, err)
+
+		actual, err := client.Get(ctx, target.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, target.Name, actual.Name)
+		require.Equal(t, target.Spec.Title, actual.Spec.Title)
+
+		require.NoError(t, client.Delete(ctx, target.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+
+		_, err = client.Get(ctx, target.GetStaticMetadata().Identifier())
+		require.Truef(t, errors.IsNotFound(err), "Expected NotFound but got %s", err)
+		actual, err = client.Get(ctx, decoy.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, decoy.Spec.Title, actual.Spec.Title)
+	})
 }
 
 func TestIntegrationAccessControl(t *testing.T) {

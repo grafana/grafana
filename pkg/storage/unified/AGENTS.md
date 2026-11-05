@@ -26,5 +26,5 @@ The CI check `pr-unified-storage-compatibility.yml` fails PRs changing both side
 
 ### Unified storage RPC errors
 
-- For unified storage/search clients and their callers, verify that failures are handled both as returned gRPC errors and as the response's legacy `Error` field. The `Error` field is intended for deprecation, but clients must keep supporting it while older servers are deployed. Handle a returned error before dereferencing a potentially nil response; do not treat a nil gRPC error alone as success.
-- Review error-helper selection and error classification against the error-handling guidance in [resource/doc.go](resource/doc.go). Expect tests for both error representations when changing error handling.
+- For unary unified storage/search gRPC calls, handle failures through the returned error, not the response's legacy `Error` field. Handle the error before dereferencing a potentially nil response. Do not add response-field checks to status-only RPC paths.
+- Review error-helper selection and classification against [resource/doc.go](resource/doc.go). Test returned errors, preserved HTTP status/details, and nil-response safety. BulkProcess and direct Go calls that bypass conversion can still need legacy response-error handling; retain and test both forms on those paths until their producers are migrated.
