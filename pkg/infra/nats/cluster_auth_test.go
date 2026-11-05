@@ -1,12 +1,14 @@
 package nats
 
 import (
+	"encoding/hex"
 	"net/url"
 	"testing"
 
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/argon2"
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -34,6 +36,49 @@ func TestRouteCredentials(t *testing.T) {
 		other, _ := routeCredentials("test-secret-b").Password()
 		require.NotEqual(t, pass, other)
 	})
+
+	t.Run("production derives argon2id with the purpose as salt", func(t *testing.T) {
+		lowered := routeKeyCost
+		t.Cleanup(func() { routeKeyCost = lowered })
+		routeKeyCost = argon2Cost{time: routeKeyTime, memoryKiB: routeKeyMemoryKiB, threads: routeKeyThreads}
+
+		pass, _ := routeCredentials("test-secret-a").Password()
+		want := argon2.IDKey([]byte("test-secret-a"), []byte("grafana-nats-cluster-route-auth-v1"), 3, 64*1024, 4, 32)
+		require.Equal(t, hex.EncodeToString(want), pass)
+	})
+}
+
+func TestWarnExposedClusterPort(t *testing.T) {
+	tlsCfg := setting.NATSClusterTLSSettings{CertPath: "/c", KeyPath: "/k", CAPath: "/ca"}
+	cases := []struct {
+		name          string
+		listen        string
+		tls           setting.NATSClusterTLSSettings
+		authenticated bool
+		want          string
+	}{
+		{name: "credentials in clear text on all interfaces", listen: "0.0.0.0", authenticated: true, want: "clear text"},
+		{name: "credentials in clear text on a routable address", listen: "10.9.0.1", authenticated: true, want: "clear text"},
+		{name: "no credentials on a routable address", listen: "10.9.0.1", want: "accepts routes from any host"},
+		{name: "no credentials on ipv6 all interfaces", listen: "::", want: "accepts routes from any host"},
+		{name: "cluster tls with credentials", listen: "0.0.0.0", tls: tlsCfg, authenticated: true},
+		{name: "cluster tls without credentials", listen: "10.9.0.1", tls: tlsCfg},
+		{name: "loopback without credentials", listen: "127.0.0.1"},
+		{name: "ipv6 loopback without credentials", listen: "[::1]"},
+		{name: "localhost without credentials", listen: "localhost"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fake := &logtest.Fake{}
+			warnExposedClusterPort(fake, setting.NATSSettings{ListenAddress: tc.listen, ClusterTLS: tc.tls}, tc.authenticated)
+			if tc.want == "" {
+				require.Zero(t, fake.WarnLogs.Calls)
+				return
+			}
+			require.Equal(t, 1, fake.WarnLogs.Calls)
+			require.Contains(t, fake.WarnLogs.Message, tc.want)
+		})
+	}
 }
 
 func TestAutoListenAddress(t *testing.T) {

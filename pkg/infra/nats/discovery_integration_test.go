@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -181,6 +182,40 @@ func TestIntegrationDiscoverySQL(t *testing.T) {
 	tick(a)
 	require.ElementsMatch(t, peersOf(a), registeredPeers(t, store))
 	require.Empty(t, a.discovery.routes)
+}
+
+// TestIntegrationServerAutoListenAddress checks the cluster port binds every
+// interface only on a database instances on other hosts can share.
+func TestIntegrationServerAutoListenAddress(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.NewTestStore(t)
+	cfg := newEmbeddedTestCfg("", "")
+	cfg.SecretKey = "test-secret-a"
+	s, err := ProvideServer(cfg, sqlStore, prometheus.NewRegistry())
+	require.NoError(t, err)
+	require.NoError(t, s.starting(t.Context()))
+	t.Cleanup(func() { _ = s.stopping(nil) })
+
+	bound := s.server.ClusterAddr().IP
+	switch driver := sqlStore.GetDialect().DriverName(); driver {
+	case migrator.MySQL, migrator.Postgres:
+		require.Equal(t, wildcardListenAddress, s.opts.Cluster.Host)
+		// Go reports a dual-stack wildcard listener as "::".
+		require.True(t, bound.IsUnspecified(), "cluster port bound to %s", bound)
+	case migrator.SQLite:
+		require.Equal(t, loopbackListenAddress, s.opts.Cluster.Host)
+		require.True(t, bound.IsLoopback(), "cluster port bound to %s", bound)
+	default:
+		t.Fatalf("unexpected database %q", driver)
+	}
+	require.Equal(t, routeAuthUser, s.opts.Cluster.Username)
+
+	require.NotNil(t, s.discovery, "ProvideServer did not wire the SQL registry")
+	s.discovery.tick(t.Context())
+	u, err := url.Parse(registeredRouteURL(t, s))
+	require.NoError(t, err)
+	require.Nil(t, u.User, "registry row carries credentials")
 }
 
 // nodeCfg bundles a node's full Cfg with the Server it drives, so callers can

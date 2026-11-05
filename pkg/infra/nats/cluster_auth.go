@@ -1,10 +1,11 @@
 package nats
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
 	"encoding/hex"
+	"net"
 	"net/url"
+
+	"golang.org/x/crypto/argon2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -18,12 +19,31 @@ const (
 
 	// routeAuthPurpose separates the route credential from every other value
 	// derived from secret_key, so it reveals nothing that is reused elsewhere.
+	// It is also the argon2id salt: a per-instance salt would give every
+	// instance a different password.
 	routeAuthPurpose = "grafana-nats-cluster-route-auth-v1"
 	routeAuthUser    = "grafana"
+
+	// The route password crosses the network in clear text without cluster TLS,
+	// so argon2id makes each secret_key guess against a sniffed password cost
+	// 64 MiB and a fraction of a second. It is derived once at startup.
+	routeKeyTime      = 3
+	routeKeyMemoryKiB = 64 * 1024
+	routeKeyThreads   = 4
+	routeKeyLen       = 32
 
 	loopbackListenAddress = "127.0.0.1"
 	wildcardListenAddress = "0.0.0.0"
 )
+
+type argon2Cost struct {
+	time      uint32
+	memoryKiB uint32
+	threads   uint8
+}
+
+// routeKeyCost is only lowered by tests, which start many servers.
+var routeKeyCost = argon2Cost{time: routeKeyTime, memoryKiB: routeKeyMemoryKiB, threads: routeKeyThreads}
 
 // routeCredentials derives the cluster route user and password from
 // secret_key, which every HA instance must already share, so a host without it
@@ -33,9 +53,9 @@ func routeCredentials(secretKey string) *url.Userinfo {
 	if secretKey == "" || secretKey == publishedSecretKey {
 		return nil
 	}
-	mac := hmac.New(sha256.New, []byte(secretKey))
-	mac.Write([]byte(routeAuthPurpose))
-	return url.UserPassword(routeAuthUser, hex.EncodeToString(mac.Sum(nil)))
+	c := routeKeyCost
+	key := argon2.IDKey([]byte(secretKey), []byte(routeAuthPurpose), c.time, c.memoryKiB, c.threads, routeKeyLen)
+	return url.UserPassword(routeAuthUser, hex.EncodeToString(key))
 }
 
 // autoListenAddress picks the cluster listen address when listen_address is
@@ -56,6 +76,35 @@ func autoListenAddress(logger log.Logger, cfg setting.NATSSettings, dbDriver str
 	logger.Info("nats cluster port bound to all interfaces so instances on other hosts sharing the database can cluster; "+
 		"routes authenticate with a credential derived from secret_key", "listen_address", wildcardListenAddress, "database", dbDriver)
 	return wildcardListenAddress
+}
+
+// warnExposedClusterPort warns when the cluster port listens beyond loopback
+// without the protection the rest of the configuration assumes. Cluster TLS is
+// always mutual, so it authenticates peers by itself.
+func warnExposedClusterPort(logger log.Logger, cfg setting.NATSSettings, authenticated bool) {
+	if cfg.ClusterTLS.Enabled() || isLoopbackHost(cfg.ListenAddress) {
+		return
+	}
+	if authenticated {
+		logger.Warn("nats cluster port listens beyond loopback without cluster TLS: route credentials cross the network "+
+			"in clear text and can be replayed by anyone who can observe the traffic. Configure cluster TLS "+
+			"(cluster_tls_cert_path, cluster_tls_key_path, cluster_tls_ca_path), or restrict the cluster port to the "+
+			"Grafana instances, for example with firewall rules or a Kubernetes network policy", "listen_address", cfg.ListenAddress)
+		return
+	}
+	logger.Warn("nats cluster port listens beyond loopback without route credentials or cluster TLS: it accepts routes "+
+		"from any host that can reach it. Set a non-default secret_key shared by every instance, or configure cluster TLS",
+		"listen_address", cfg.ListenAddress)
+}
+
+// isLoopbackHost reports whether addr only accepts connections from this host.
+func isLoopbackHost(addr string) bool {
+	host := bareHost(addr)
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 // withRouteCredentials returns copies of routes carrying creds. The registry

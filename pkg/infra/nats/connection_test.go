@@ -24,6 +24,10 @@ import (
 )
 
 func TestMain(m *testing.M) {
+	// Many tests start servers with a secret_key; the production argon2id cost
+	// would add seconds per server under -race. TestRouteCredentials checks the
+	// production cost itself.
+	routeKeyCost = argon2Cost{time: 1, memoryKiB: 64, threads: 1}
 	goleak.VerifyTestMain(m,
 		// OpenFeature starts a process-wide event dispatcher with no shutdown hook.
 		// Match both stack names: the compiler may inline startEventListener into newEventExecutor.

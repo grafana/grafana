@@ -86,6 +86,7 @@ func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) 
 		if s.cfg.ListenAddress == "" {
 			s.cfg.ListenAddress = autoListenAddress(s.log, s.cfg, dbDriver(sqlStore), s.routeAuth != nil)
 		}
+		warnExposedClusterPort(s.log, s.cfg, s.routeAuth != nil)
 
 		// The resolved host feeds both Cluster.Advertise and the registry route URL,
 		// so gossip and discovery hand peers the same address.
