@@ -259,7 +259,7 @@ func mutateNotebook(a admission.Attributes, metrics *notebookMetrics) error {
 	// edit, and the assignment does not touch it.
 	storedWithoutIDs := notebookHasCellWithoutID(stored)
 	generated := assignNotebookCellIDs(notebook, stored)
-	metrics.observeCellIDs(a.GetOperation(), generated, storedWithoutIDs)
+	metrics.observeMigration(generated, storedWithoutIDs)
 
 	return nil
 }

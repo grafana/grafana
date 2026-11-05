@@ -43,44 +43,27 @@ func (h *notebookMetricsHarness) update(nb, stored *dashv2beta1.Notebook) {
 	require.NoError(h.t, h.builder.Mutate(context.Background(), attrs, nil))
 }
 
-func (h *notebookMetricsHarness) assigned(operation string) float64 {
-	return testutil.ToFloat64(h.metrics.cellIDsAssigned.WithLabelValues(operation))
-}
-
 func (h *notebookMetricsHarness) migrated() float64 {
 	return testutil.ToFloat64(h.metrics.notebooksMigrated)
 }
 
 func TestNotebookMetrics(t *testing.T) {
-	t.Run("both counters exist at zero before anything is written", func(t *testing.T) {
+	t.Run("the counter exists at zero before anything is written", func(t *testing.T) {
 		h := newNotebookMetricsHarness(t)
 
-		require.Equal(t, 3, testutil.CollectAndCount(h.registry))
-
-		// Dashboards and alerts query these names, so a rename here is a breaking change.
+		// Dashboards and alerts query this name, so a rename here is a breaking change.
 		families, err := h.registry.Gather()
 		require.NoError(t, err)
-		names := make([]string, 0, len(families))
-		for _, family := range families {
-			names = append(names, family.GetName())
-		}
-		require.ElementsMatch(t, []string{
-			"grafana_notebook_cell_ids_assigned_total",
-			"grafana_notebook_legacy_notebooks_migrated_total",
-		}, names)
-
-		require.Zero(t, h.assigned("create"))
-		require.Zero(t, h.assigned("update"))
+		require.Len(t, families, 1)
+		require.Equal(t, "grafana_notebook_legacy_notebooks_migrated_total", families[0].GetName())
 		require.Zero(t, h.migrated())
 	})
 
-	t.Run("a created notebook counts the ids it was given, and is not a migration", func(t *testing.T) {
+	t.Run("a created notebook is not a migration", func(t *testing.T) {
 		h := newNotebookMetricsHarness(t)
 
 		h.create(notebookWithCells(layoutCell("a", ""), layoutCell("b", "")))
 
-		require.Equal(t, 2.0, h.assigned("create"))
-		require.Zero(t, h.assigned("update"))
 		require.Zero(t, h.migrated())
 	})
 
@@ -90,7 +73,6 @@ func TestNotebookMetrics(t *testing.T) {
 
 		h.update(notebookWithCells(layoutCell("a", ""), layoutCell("b", "")), stored)
 
-		require.Equal(t, 2.0, h.assigned("update"))
 		require.Equal(t, 1.0, h.migrated())
 	})
 
@@ -100,29 +82,28 @@ func TestNotebookMetrics(t *testing.T) {
 
 		h.update(notebookWithCells(layoutCell("a", ""), layoutCell("b", "")), stored)
 
-		require.Equal(t, 1.0, h.assigned("update"), "a's id is inherited, so only b's is new")
+		require.Equal(t, 1.0, h.migrated())
+	})
+
+	t.Run("a notebook counts once, not on every write after it has ids", func(t *testing.T) {
+		h := newNotebookMetricsHarness(t)
+
+		h.update(notebookWithCells(layoutCell("a", ""), layoutCell("b", "")), notebookWithCells(layoutCell("a", ""), layoutCell("b", "")))
+		// What the notebook looks like after that write: every cell has an id.
+		migrated := notebookWithCells(layoutCell("a", testCellID(1)), layoutCell("b", testCellID(2)))
+		h.update(notebookWithCells(layoutCell("a", ""), layoutCell("b", ""), layoutCell("c", "")), migrated)
+
 		require.Equal(t, 1.0, h.migrated())
 	})
 
 	// An older client sends no ids on every save. Counting the ids it gets back would make every one
 	// of its saves look like a migration.
-	t.Run("a write that only inherits ids counts nothing", func(t *testing.T) {
+	t.Run("a write that only inherits ids is not a migration", func(t *testing.T) {
 		h := newNotebookMetricsHarness(t)
 		stored := notebookWithCells(layoutCell("a", testCellID(1)), layoutCell("b", testCellID(2)))
 
 		h.update(notebookWithCells(layoutCell("a", ""), layoutCell("b", "")), stored)
 
-		require.Zero(t, h.assigned("update"))
-		require.Zero(t, h.migrated())
-	})
-
-	t.Run("a cell added to a notebook that already has ids is a new id, not a migration", func(t *testing.T) {
-		h := newNotebookMetricsHarness(t)
-		stored := notebookWithCells(layoutCell("a", testCellID(1)))
-
-		h.update(notebookWithCells(layoutCell("a", ""), layoutCell("new", "")), stored)
-
-		require.Equal(t, 1.0, h.assigned("update"))
 		require.Zero(t, h.migrated())
 	})
 
@@ -132,13 +113,12 @@ func TestNotebookMetrics(t *testing.T) {
 
 		h.update(notebookWithCells(), stored)
 
-		require.Zero(t, h.assigned("update"))
 		require.Zero(t, h.migrated())
 	})
 
 	t.Run("a nil metrics value counts nothing and does not panic", func(t *testing.T) {
 		var metrics *notebookMetrics
 
-		require.NotPanics(t, func() { metrics.observeCellIDs(admission.Create, 3, true) })
+		require.NotPanics(t, func() { metrics.observeMigration(3, true) })
 	})
 }
