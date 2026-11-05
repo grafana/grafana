@@ -42,6 +42,8 @@ export const FlagKeys = {
   AlertingEnrichmentAssistantInvestigations: "alertingEnrichmentAssistantInvestigations",
   /** Enable enrichment per rule in the alerting UI. */
   AlertingEnrichmentPerRule: "alertingEnrichmentPerRule",
+  /** Enables the API to import Alertmanager configuration */
+  AlertingImportAlertmanagerAPI: "alertingImportAlertmanagerAPI",
   /** Enables the new Jira integration for contact points in cloud alert managers. */
   AlertingJiraIntegration: "alertingJiraIntegration",
   /** Enables the new alert list view design */
@@ -556,6 +558,17 @@ export const useFlagAlertingEnrichmentAssistantInvestigations = (options?: React
  */
 export const useFlagAlertingEnrichmentPerRule = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alertingEnrichmentPerRule", false, options).value;
+};
+
+/**
+ * Enables the API to import Alertmanager configuration
+ *
+ * **Details:**
+ * - flag key: `alertingImportAlertmanagerAPI`
+ * - default value: `false`
+ */
+export const useFlagAlertingImportAlertmanagerAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingImportAlertmanagerAPI", false, options).value;
 };
 
 /**

@@ -1403,7 +1403,8 @@
       "metadata": {
         "name": "cdnPluginsUrls",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-08-29T14:46:39Z"
+        "creationTimestamp": "2025-08-29T14:46:39Z",
+        "deletionTimestamp": "2026-11-05T08:33:51Z"
       },
       "spec": {
         "description": "Enable loading plugins via declarative URLs",

@@ -1904,7 +1904,7 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: false,
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "preferLibraryPanelTitle",
@@ -2023,14 +2023,6 @@ var (
 		{
 			Name:        "cdnPluginsLoadFirst",
 			Description: "Prioritize loading plugins from the CDN before other sources",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaCatalogSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "cdnPluginsUrls",
-			Description: "Enable loading plugins via declarative URLs",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaCatalogSquad,

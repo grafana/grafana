@@ -48,20 +48,20 @@ describe('<AnnotationEditActions />', () => {
     jest.clearAllMocks();
   });
 
-  test('renders Settings, Edit query, Duplicate, and Delete controls', () => {
+  test('renders Annotation settings, Edit query, Duplicate, and Delete controls', () => {
     renderAnnotationEditActions();
 
-    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Annotation settings' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit query' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
   });
 
-  describe('when the user clicks on Settings', () => {
+  describe('when the user clicks on Annotation settings', () => {
     test('calls onClickEdit', () => {
       const { onClickEdit } = renderAnnotationEditActions();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Annotation settings' }));
 
       expect(onClickEdit).toHaveBeenCalledTimes(1);
     });

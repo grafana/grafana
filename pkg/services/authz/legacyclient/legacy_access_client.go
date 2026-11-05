@@ -27,7 +27,7 @@ type LegacyCheckRequest struct {
 	// GlobalEvaluation is only supported for embedded instance-global checks.
 	// A nil value selects organization evaluation unless InternalIdentity is set.
 	GlobalEvaluation *LegacyGlobalEvaluation
-	// InternalIdentity asserts a predefined profile on the trusted embedded channel.
+	// InternalIdentity asserts a predefined profile or background grants on the trusted embedded channel.
 	// It cannot be combined with Subject, GlobalEvaluation or Restriction.
 	InternalIdentity *LegacyInternalIdentity
 	// Restriction limits reloaded grants to actions in the caller's effective permission map.
@@ -41,6 +41,14 @@ type LegacyActionRestriction struct {
 
 type LegacyInternalIdentity struct {
 	Profile LegacyInternalIdentityProfile
+	// Background preserves the caller's exact grants and is mutually exclusive with Profile.
+	Background *LegacyBackgroundIdentity
+}
+
+type LegacyBackgroundIdentity struct {
+	Name        string
+	OrgRole     string
+	Permissions map[string][]string
 }
 
 type LegacyInternalIdentityProfile string

@@ -257,12 +257,8 @@ func TestPerKindSearch_rejectedQueryIsUnprocessable(t *testing.T) {
 	assert.Contains(t, rec.Body.String(), "limit")
 }
 
-// The backend reports failures in the payload rather than as a transport error,
-// so a payload error has to be turned back into one.
-func TestPerKindSearch_backendErrorInPayload(t *testing.T) {
-	index := &fakeIndex{resp: &resourcepb.ResourceSearchResponse{
-		Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "bad field"},
-	}}
+func TestPerKindSearch_backendStatusError(t *testing.T) {
+	index := &fakeIndex{err: unifiedresource.GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "bad field"})}
 	h := newUnifiedHandler(index, &fakeIndex{})
 	err := h.SearchAlertRules(context.Background(), httptest.NewRecorder(), &app.CustomRouteRequest{
 		ResourceIdentifier: resource.FullIdentifier{Namespace: "default"},
