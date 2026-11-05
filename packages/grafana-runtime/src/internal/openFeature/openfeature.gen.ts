@@ -42,6 +42,8 @@ export const FlagKeys = {
   AlertingEnrichmentAssistantInvestigations: "alertingEnrichmentAssistantInvestigations",
   /** Enable enrichment per rule in the alerting UI. */
   AlertingEnrichmentPerRule: "alertingEnrichmentPerRule",
+  /** Enables the API to import Alertmanager configuration */
+  AlertingImportAlertmanagerAPI: "alertingImportAlertmanagerAPI",
   /** Enables the new Jira integration for contact points in cloud alert managers. */
   AlertingJiraIntegration: "alertingJiraIntegration",
   /** Enables the new alert list view design */
@@ -98,6 +100,8 @@ export const FlagKeys = {
   CreateAlertRuleFromPanel: "createAlertRuleFromPanel",
   /** Enables Critical User Journey (CUJ) tracking */
   CujTracking: "cujTracking",
+  /** Enables commenting on Notebook cells */
+  DashboardNotebookComments: "dashboard.notebookComments",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -116,6 +120,8 @@ export const FlagKeys = {
   DashboardUndoRedo: "dashboardUndoRedo",
   /** Enables dashboard validator app to run compatibility checks between a dashboard and data source */
   DashboardValidatorApp: "dashboardValidatorApp",
+  /** Stops an open dashboard from subscribing to Grafana Live save notices */
+  DashboardsDisableLiveSaveNotices: "dashboards.disableLiveSaveNotices",
   /** Disables public dashboards for the stack */
   DashboardsDisablePublicDashboards: "dashboards.disablePublicDashboards",
   /** Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out */
@@ -164,6 +170,8 @@ export const FlagKeys = {
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Allow admins to make announcement banners dismissible by users */
   GrafanaAnnouncementBannerDismissible: "grafana.announcementBannerDismissible",
+  /** Shows dashboard tags in the command palette */
+  GrafanaCmdkDashboardTags: "grafana.cmdkDashboardTags",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
   /** Enables using the Config From Query Results transformation's Dynamic Field Name option */
@@ -200,18 +208,16 @@ export const FlagKeys = {
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Adds an experimental Protomaps vector basemap to the geomap panel */
   GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
-  /** Enables PLG-focused growth redesign of the unified homepage */
-  GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
-  /** Deprecated: Toggle displayed fields from Log Details */
-  GrafanaLogDetailsDisplayedFieldControls: "grafana.logDetailsDisplayedFieldControls",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
   /** Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports */
   GrafanaMobileEditDeprecation: "grafana.mobileEditDeprecation",
   /** Enables multi-tenant fallback behavior */
   GrafanaMtFallback: "grafana.mtFallback",
+  /** Hides homepage sections whose only backend is a legacy /api endpoint (firing alerts, IRM incidents and on-call, plugin offers) and skips the legacy datasource health probe, for multi-tenant stacks that do not serve /api */
+  GrafanaMultiTenantHomepage: "grafana.multiTenantHomepage",
   /** Builds the navigation tree client-side instead of reading it from /bootdata */
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
@@ -236,6 +242,8 @@ export const FlagKeys = {
   GrafanaPluginExtensionReactElementProps: "grafana.pluginExtensionReactElementProps",
   /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
   GrafanaPluginPathNesting: "grafana.pluginPathNesting",
+  /** Preserves dashboard names in login tab titles when grafana.preserveLoginTabTitle is enabled */
+  GrafanaPreserveDashboardLoginTabTitle: "grafana.preserveDashboardLoginTabTitle",
   /** Preserves the navigation section label in the browser tab title after session expiry */
   GrafanaPreserveLoginTabTitle: "grafana.preserveLoginTabTitle",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
@@ -254,8 +262,6 @@ export const FlagKeys = {
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service */
   GrafanaSmtpSettingsPage: "grafana.smtpSettingsPage",
-  /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
-  GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
   GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
@@ -270,6 +276,8 @@ export const FlagKeys = {
   GrafanaAPIServerWithExperimentalAPIs: "grafanaAPIServerWithExperimentalAPIs",
   /** Enables the Graphite data source full backend mode */
   GraphiteBackendMode: "graphiteBackendMode",
+  /** Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis */
+  HeatmapNegativeLogBuckets: "heatmapNegativeLogBuckets",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Adds support for Kubernetes correlations */
@@ -292,8 +300,6 @@ export const FlagKeys = {
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
   OtelLogsFormatting: "otelLogsFormatting",
-  /** Enables a new panel time settings drawer */
-  PanelTimeSettings: "panelTimeSettings",
   /** Search for dashboards using panel title */
   PanelTitleSearch: "panelTitleSearch",
   /** Shows text labels on the add and stacked view buttons in PanelEditNext */
@@ -390,8 +396,6 @@ export const FlagKeys = {
   TableSharedCrosshair: "tableSharedCrosshair",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
-  /** Enables time comparison option in supported panels */
-  TimeComparison: "timeComparison",
   /** Show transformation quick-start cards in empty transformations state */
   TransformationsEmptyPlaceholder: "transformationsEmptyPlaceholder",
   /** Enables unified navbars */
@@ -556,6 +560,17 @@ export const useFlagAlertingEnrichmentAssistantInvestigations = (options?: React
  */
 export const useFlagAlertingEnrichmentPerRule = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alertingEnrichmentPerRule", false, options).value;
+};
+
+/**
+ * Enables the API to import Alertmanager configuration
+ *
+ * **Details:**
+ * - flag key: `alertingImportAlertmanagerAPI`
+ * - default value: `false`
+ */
+export const useFlagAlertingImportAlertmanagerAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingImportAlertmanagerAPI", false, options).value;
 };
 
 /**
@@ -867,6 +882,17 @@ export const useFlagCujTracking = (options?: ReactFlagEvaluationOptions): boolea
 };
 
 /**
+ * Enables commenting on Notebook cells
+ *
+ * **Details:**
+ * - flag key: `dashboard.notebookComments`
+ * - default value: `false`
+ */
+export const useFlagDashboardNotebookComments = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.notebookComments", false, options).value;
+};
+
+/**
  * Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
  *
  * **Details:**
@@ -963,6 +989,17 @@ export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagDashboardValidatorApp = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardValidatorApp", false, options).value;
+};
+
+/**
+ * Stops an open dashboard from subscribing to Grafana Live save notices
+ *
+ * **Details:**
+ * - flag key: `dashboards.disableLiveSaveNotices`
+ * - default value: `false`
+ */
+export const useFlagDashboardsDisableLiveSaveNotices = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.disableLiveSaveNotices", false, options).value;
 };
 
 /**
@@ -1230,6 +1267,17 @@ export const useFlagGrafanaAnnouncementBannerDismissible = (options?: ReactFlagE
 };
 
 /**
+ * Shows dashboard tags in the command palette
+ *
+ * **Details:**
+ * - flag key: `grafana.cmdkDashboardTags`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCmdkDashboardTags = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.cmdkDashboardTags", false, options).value;
+};
+
+/**
  * Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette
  *
  * **Details:**
@@ -1428,17 +1476,6 @@ export const useFlagGrafanaGeomapProtomapsBasemap = (options?: ReactFlagEvaluati
 };
 
 /**
- * Enables PLG-focused growth redesign of the unified homepage
- *
- * **Details:**
- * - flag key: `grafana.growthHomepage`
- * - default value: `false`
- */
-export const useFlagGrafanaGrowthHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.growthHomepage", false, options).value;
-};
-
-/**
  * Enables usage of the new annotations API client
  *
  * **Details:**
@@ -1447,17 +1484,6 @@ export const useFlagGrafanaGrowthHomepage = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.kubernetesAnnotationsClient", false, options).value;
-};
-
-/**
- * Deprecated: Toggle displayed fields from Log Details
- *
- * **Details:**
- * - flag key: `grafana.logDetailsDisplayedFieldControls`
- * - default value: `false`
- */
-export const useFlagGrafanaLogDetailsDisplayedFieldControls = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.logDetailsDisplayedFieldControls", false, options).value;
 };
 
 /**
@@ -1491,6 +1517,17 @@ export const useFlagGrafanaMobileEditDeprecation = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaMtFallback = (options?: ReactFlagEvaluationOptions): JsonValue => {
   return useFlag("grafana.mtFallback", {}, options).value;
+};
+
+/**
+ * Hides homepage sections whose only backend is a legacy /api endpoint (firing alerts, IRM incidents and on-call, plugin offers) and skips the legacy datasource health probe, for multi-tenant stacks that do not serve /api
+ *
+ * **Details:**
+ * - flag key: `grafana.multiTenantHomepage`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMultiTenantHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.multiTenantHomepage", false, options).value;
 };
 
 /**
@@ -1626,6 +1663,17 @@ export const useFlagGrafanaPluginPathNesting = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Preserves dashboard names in login tab titles when grafana.preserveLoginTabTitle is enabled
+ *
+ * **Details:**
+ * - flag key: `grafana.preserveDashboardLoginTabTitle`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPreserveDashboardLoginTabTitle = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.preserveDashboardLoginTabTitle", false, options).value;
+};
+
+/**
  * Preserves the navigation section label in the browser tab title after session expiry
  *
  * **Details:**
@@ -1725,17 +1773,6 @@ export const useFlagGrafanaSmtpSettingsPage = (options?: ReactFlagEvaluationOpti
 };
 
 /**
- * Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker
- *
- * **Details:**
- * - flag key: `grafana.starredFolders`
- * - default value: `false`
- */
-export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.starredFolders", false, options).value;
-};
-
-/**
  * Enables using dashboard variables in panel threshold values
  *
  * **Details:**
@@ -1810,6 +1847,17 @@ export const useFlagGrafanaAPIServerWithExperimentalAPIs = (options?: ReactFlagE
  */
 export const useFlagGraphiteBackendMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("graphiteBackendMode", false, options).value;
+};
+
+/**
+ * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
+ *
+ * **Details:**
+ * - flag key: `heatmapNegativeLogBuckets`
+ * - default value: `false`
+ */
+export const useFlagHeatmapNegativeLogBuckets = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("heatmapNegativeLogBuckets", false, options).value;
 };
 
 /**
@@ -1931,17 +1979,6 @@ export const useFlagNewSavedQueriesExperience = (options?: ReactFlagEvaluationOp
  */
 export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("otelLogsFormatting", true, options).value;
-};
-
-/**
- * Enables a new panel time settings drawer
- *
- * **Details:**
- * - flag key: `panelTimeSettings`
- * - default value: `true`
- */
-export const useFlagPanelTimeSettings = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("panelTimeSettings", true, options).value;
 };
 
 /**
@@ -2470,17 +2507,6 @@ export const useFlagTableSharedCrosshair = (options?: ReactFlagEvaluationOptions
  */
 export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("text.newFeatures", false, options).value;
-};
-
-/**
- * Enables time comparison option in supported panels
- *
- * **Details:**
- * - flag key: `timeComparison`
- * - default value: `true`
- */
-export const useFlagTimeComparison = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("timeComparison", true, options).value;
 };
 
 /**

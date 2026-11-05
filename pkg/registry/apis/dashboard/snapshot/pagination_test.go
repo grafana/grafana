@@ -24,7 +24,8 @@ func TestSnapshotListRefillsOwnedPages(t *testing.T) {
 	page := func(next string, creators ...string) *dashv0.SnapshotList {
 		list := &dashv0.SnapshotList{ListMeta: metav1.ListMeta{Continue: next, ResourceVersion: "123", RemainingItemCount: new(int64(10))}}
 		for _, creator := range creators {
-			snap := dashv0.Snapshot{Spec: dashv0.SnapshotSpec{DeleteKey: new("secret"), Dashboard: map[string]any{"title": "private"}}}
+			snap := dashv0.Snapshot{Spec: dashv0.SnapshotSpec{DeleteKey: new("secret")}}
+			require.NoError(t, setDashboardContent(&snap, map[string]any{"title": "private"}))
 			snap.SetCreatedBy("user:" + creator)
 			list.Items = append(list.Items, snap)
 		}
@@ -98,7 +99,7 @@ func TestSnapshotListRefillsOwnedPages(t *testing.T) {
 			}
 			for _, snap := range got.Items {
 				require.Nil(t, snap.Spec.DeleteKey)
-				require.Nil(t, snap.Spec.Dashboard)
+				require.Nil(t, snap.Blobs.Dashboard)
 			}
 			for _, original := range tc.pages {
 				if original != nil {

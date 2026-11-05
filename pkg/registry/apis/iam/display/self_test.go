@@ -16,6 +16,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type fakeResolver struct {
@@ -370,4 +372,73 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 
 		require.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
+}
+
+func TestAccessPolicyDisplayWithoutSearchFallback(t *testing.T) {
+	for _, name := range []string{"service", "381ca354-487e-42e0-bb06-701e4a2c4e2d", "42", "0"} {
+		t.Run(name, func(t *testing.T) {
+			key := "access-policy:" + name
+			store := &fakeLegacyIdentityStore{result: &legacy.ListUserResult{}}
+			search := NewSearchDisplayProvider(resource.NewMockResourceClient(t))
+			handler := NewDisplayHandler(NewLegacyDisplayProvider(store), search)
+			caller := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", Namespace: "default"}
+			req := httptest.NewRequest(http.MethodGet, "/display?key="+key, nil)
+			req = req.WithContext(authlib.WithAuthInfo(t.Context(), caller))
+			rec := httptest.NewRecorder()
+
+			handler.handleDisplay(rec, req)
+			require.Empty(t, store.gotQuery.UIDs)
+			require.Empty(t, store.gotQuery.IDs)
+			require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+			var result iam.DisplayList
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
+			require.Len(t, result.Items, 1)
+			require.Equal(t, iam.IdentityRef{Type: authlib.TypeAccessPolicy, Name: name}, result.Items[0].Identity)
+			require.Equal(t, "Access policy", result.Items[0].DisplayName)
+			require.NotEmpty(t, result.Items[0].AvatarURL)
+			require.Empty(t, unresolvedKeys([]string{key}, result.Items, result.InvalidKeys))
+
+			// Search-only deployments must also resolve these without querying the index.
+			fromSearch, err := search.GetDisplayList(t.Context(), authlib.NamespaceInfo{Value: "default"}, []string{key})
+			require.NoError(t, err)
+			require.Equal(t, result.Items, fromSearch.Items)
+		})
+	}
+}
+
+func TestAccessPolicySelfDisplayName(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		want string
+	}{
+		{name: "Example app", want: "Example app"},
+		{name: "", want: "Access policy"},
+	} {
+		for _, searchOnly := range []bool{false, true} {
+			provider := "legacy"
+			if searchOnly {
+				provider = "search"
+			}
+			t.Run(provider+"/"+tc.want, func(t *testing.T) {
+				search := NewSearchDisplayProvider(resource.NewMockResourceClient(t))
+				handler := NewDisplayHandler(search)
+				if !searchOnly {
+					store := &fakeLegacyIdentityStore{result: &legacy.ListUserResult{}}
+					handler = NewDisplayHandler(NewLegacyDisplayProvider(store), search)
+				}
+				caller := &identity.StaticRequester{
+					Type: authlib.TypeAccessPolicy, UserUID: "policy-id", Name: tc.name, Namespace: "default",
+				}
+				rec := httptest.NewRecorder()
+				handler.handleSelf(rec, selfRequest(t, caller))
+
+				require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+				var got iam.CurrentUserInfo
+				require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
+				require.Equal(t, iam.IdentityRef{Type: authlib.TypeAccessPolicy, Name: "policy-id"}, got.Identity)
+				require.Equal(t, tc.want, got.DisplayName)
+				require.NotEmpty(t, got.AvatarURL)
+			})
+		}
+	}
 }

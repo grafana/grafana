@@ -1209,9 +1209,15 @@ func schema_pkg_apis_dashboard_v0alpha1_SnapshotBlobReference(ref common.Referen
 				Properties: map[string]spec.Schema{
 					"uid": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"data": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Write-only base64-encoded dashboard JSON, replaced by a server-issued reference on write.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"size": {
@@ -1233,7 +1239,6 @@ func schema_pkg_apis_dashboard_v0alpha1_SnapshotBlobReference(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"uid"},
 			},
 		},
 	}
@@ -1441,21 +1446,6 @@ func schema_pkg_apis_dashboard_v0alpha1_SnapshotSpec(ref common.ReferenceCallbac
 							Description: "Snapshot delete key",
 							Type:        []string{"string"},
 							Format:      "",
-						},
-					},
-					"dashboard": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The raw dashboard (unstructured for now)",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
 						},
 					},
 				},

@@ -70,6 +70,23 @@ func TestWithWatchInstrumentation(t *testing.T) {
 		assert.Contains(t, spans[0].Attributes(), attribute.Bool("grafana.watch", true))
 	})
 
+	t.Run("does not record a watch that is refused", func(t *testing.T) {
+		t.Parallel()
+
+		for _, status := range []int{http.StatusNotFound, http.StatusForbidden, http.StatusTooManyRequests} {
+			req, _, endSpan := newRequest(&request.RequestInfo{IsResourceRequest: true, Verb: "watch", APIGroup: "foo.grafana.app", Resource: "nonexistent"})
+			var recorded int
+			handler := WithWatchInstrumentation(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(status)
+				_, _ = w.Write([]byte("refused"))
+			}), func(string, string, time.Duration) { recorded++ })
+
+			handler.ServeHTTP(httptest.NewRecorder(), req)
+			endSpan()
+			require.Zero(t, recorded, "status %d must not add a series for a resource taken from the path", status)
+		}
+	})
+
 	t.Run("records establishment when the handler writes without WriteHeader", func(t *testing.T) {
 		t.Parallel()
 

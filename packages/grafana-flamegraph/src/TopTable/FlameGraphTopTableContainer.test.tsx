@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
+import { act } from 'react';
 
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data';
 import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -55,14 +56,14 @@ describe('FlameGraphTopTableContainer', () => {
     const cells = screen.getAllByRole('cell');
     expect(cells).toHaveLength(60); // 16 rows
     expect(cells[1].textContent).toEqual('net/http.HandlerFunc.ServeHTTP');
-    expect(cells[2].textContent).toEqual('31.7 K');
-    expect(cells[3].textContent).toEqual('5.58 Bil');
+    expect(cells[2].textContent).toEqual('0.00%');
+    expect(cells[3].textContent).toEqual('33.90%');
     expect(cells[5].textContent).toEqual('total');
-    expect(cells[6].textContent).toEqual('16.5 K');
-    expect(cells[7].textContent).toEqual('16.5 Bil');
+    expect(cells[6].textContent).toEqual('0.00%');
+    expect(cells[7].textContent).toEqual('100.00%');
     expect(cells[25].textContent).toEqual('net/http.(*conn).serve');
-    expect(cells[26].textContent).toEqual('5.63 K');
-    expect(cells[27].textContent).toEqual('5.63 Bil');
+    expect(cells[26].textContent).toEqual('0.00%');
+    expect(cells[27].textContent).toEqual('34.20%');
   });
 
   it('should render search and sandwich buttons', async () => {
@@ -131,9 +132,17 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
     // react-data-grid's virtualized role="grid" doesn't have the same fixed row/cell counts as TableRT.
     expect(screen.getByText('net/http.HandlerFunc.ServeHTTP')).toBeInTheDocument();
     expect(screen.getByText('net/http.(*conn).serve')).toBeInTheDocument();
-    expect(screen.getAllByText('31.7 K').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('5.58 Bil').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('5.63 K').length).toBeGreaterThan(0);
+    const handlerCells = within(
+      screen.getByText('net/http.HandlerFunc.ServeHTTP').closest<HTMLElement>('[role="row"]')!
+    ).getAllByRole('gridcell');
+    expect(handlerCells[2]).toHaveTextContent(/^0\.00%$/);
+    expect(handlerCells[3]).toHaveTextContent(/^33\.90%$/);
+
+    const connCells = within(
+      screen.getByText('net/http.(*conn).serve').closest<HTMLElement>('[role="row"]')!
+    ).getAllByRole('gridcell');
+    expect(connCells[2]).toHaveTextContent(/^0\.00%$/);
+    expect(connCells[3]).toHaveTextContent(/^34\.20%$/);
   });
 
   it('uses the table itself as the full-size surface', () => {
@@ -282,6 +291,89 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
     await userEvents.click(actionsHeader);
 
     expect(onTableSort).not.toHaveBeenCalled();
+  });
+});
+
+interface PercentageTableOptions {
+  useTableNG: boolean;
+  matchedLabels?: Set<string>;
+  decimals?: number;
+}
+
+function renderPercentageTable({ useTableNG, matchedLabels, decimals }: PercentageTableOptions) {
+  mockTableSize();
+  const container = new FlameGraphDataContainer(
+    createDataFrame({
+      fields: [
+        { name: 'level', type: FieldType.number, values: [0, 1, 2, 1] },
+        { name: 'label', type: FieldType.string, values: ['root', 'parent', 'leaf', 'sibling'] },
+        { name: 'value', type: FieldType.number, values: [100, 60, 50, 40], config: { unit: 's', decimals } },
+        { name: 'self', type: FieldType.number, values: [0, 10, 50, 40] },
+      ],
+    }),
+    { collapsing: false }
+  );
+
+  return render(
+    <FlameGraphTopTableContainer
+      data={container}
+      onSymbolClick={jest.fn()}
+      onSearch={jest.fn()}
+      onSandwich={jest.fn()}
+      colorScheme={ColorScheme.ValueBased}
+      useTableNG={useTableNG}
+      matchedLabels={matchedLabels}
+    />
+  );
+}
+
+describe.each([false, true])('top-table percentages with useTableNG=%s', (useTableNG) => {
+  function getParentCells() {
+    const row = within(screen.getByTestId('topTable'))
+      .getByText('parent', { exact: true })
+      .closest<HTMLElement>('[role="row"]')!;
+    return within(row).getAllByRole(useTableNG ? 'gridcell' : 'cell');
+  }
+
+  it.each([
+    { column: 'Self', columnIndex: 2, value: '10.00%' },
+    { column: 'Total', columnIndex: 3, value: '60.00%' },
+  ])('should use the value field unit for row details when hovering $column', async ({ columnIndex, value }) => {
+    renderPercentageTable({ useTableNG });
+    await screen.findByText('parent', { exact: true });
+    const trigger = within(getParentCells()[columnIndex]).getByText(value);
+
+    await userEvents.hover(trigger);
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      /parent\s*Count\s*Total: 1(?:\.0+)? min \(60%\)\s*Self: 10(?:\.0+)? s \(10%\)\s*Samples: 60/
+    );
+  });
+
+  it('should preserve value field precision in tooltip totals and self values', async () => {
+    renderPercentageTable({ useTableNG, decimals: 3 });
+    await screen.findByText('parent', { exact: true });
+
+    await userEvents.hover(within(getParentCells()[2]).getByText('10.00%'));
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Total: 1.000 min (60%)');
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Self: 10.000 s (10%)');
+  });
+
+  it('should expose the original value on focus', async () => {
+    renderPercentageTable({ useTableNG });
+    await screen.findByText('parent', { exact: true });
+    const trigger = within(getParentCells()[2]).getByText('10.00%');
+
+    await act(async () => {
+      trigger.focus();
+    });
+
+    await waitFor(() => {
+      expect(trigger).toHaveAccessibleDescription(
+        /parent\s*Count\s*Total: 1(?:\.0+)? min \(60%\)\s*Self: 10(?:\.0+)? s \(10%\)\s*Samples: 60/
+      );
+    });
   });
 });
 

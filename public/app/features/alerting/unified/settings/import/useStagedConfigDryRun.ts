@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { getStatusFromError } from 'app/core/utils/errors';
 
-import { convertToGMAApi } from '../../api/convertToGMAApi';
+import { convertApi } from '../../api/convertToGMAApi';
 import { type DryRunValidationResult } from '../../components/import-to-gma/types';
 import { parseDryRunResponse } from '../../components/import-to-gma/useImport';
 import { stringifyErrorLike } from '../../utils/misc';
@@ -23,21 +23,22 @@ interface StagedConfigDryRun {
  * call the dry-run mutation directly rather than the wizard's signature-keyed dry-run query.
  */
 export function useStagedConfigDryRun(stagedConfig: StagedExtraConfig): StagedConfigDryRun {
-  const [dryRun, { data, isLoading, error }] = convertToGMAApi.useDryRunAlertmanagerConfigMutation();
+  const [dryRun, { data, isLoading, error }] = convertApi.usePostAlertmanagerConfigMutation();
 
   // Captures stagedConfig at mount so a parent passing a new-but-equivalent object on a later
   // render doesn't re-fire the dry-run.
   const configRef = useRef(stagedConfig);
   useEffect(() => {
     const config = configRef.current;
+    // PromoteConfirmModal renders an inline banner for every failure mode; the convert API client
+    // shows no error toast of its own, so nothing duplicates it.
     dryRun({
-      alertmanagerConfig: config.alertmanager_config ?? '',
-      templateFiles: config.template_files,
-      configIdentifier: config.identifier,
+      payload: { alertmanager_config: config.alertmanager_config ?? '', template_files: config.template_files ?? {} },
+      identifier: config.identifier,
+      dryRun: true,
+      // Force-replace so the preview isn't blocked by a 409 from the staged config's own identifier.
+      forceReplace: true,
       promote: true,
-      // PromoteConfirmModal already renders an inline banner for every failure mode
-      // so a global toast would duplicate or contradict it.
-      notificationOptions: { showErrorAlert: false },
     });
   }, [dryRun]);
 
