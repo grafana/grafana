@@ -8,6 +8,7 @@ import (
 
 	discoveryengine "cloud.google.com/go/discoveryengine/apiv1"
 	"cloud.google.com/go/discoveryengine/apiv1/discoveryenginepb"
+	"github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/option"
 )
 
@@ -55,6 +56,7 @@ func (c *rankClient) Rank(ctx context.Context, model, query string, texts []stri
 			Content: t,
 		}
 	}
+	// A hedge is the only extra application attempt; disable SDK retries for this call.
 	resp, err := c.client.Rank(ctx, &discoveryenginepb.RankRequest{
 		RankingConfig: c.rankingConfig,
 		Model:         model,
@@ -63,7 +65,7 @@ func (c *rankClient) Rank(ctx context.Context, model, query string, texts []stri
 		Records:       records,
 		// We only need ids + scores back, not record payloads.
 		IgnoreRecordDetailsInResponse: true,
-	})
+	}, gax.WithRetry(func() gax.Retryer { return nil }))
 	if err != nil {
 		return nil, fmt.Errorf("vertex rerank: rank: %w", err)
 	}

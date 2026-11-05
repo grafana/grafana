@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 )
 
@@ -45,6 +46,9 @@ func (c *invokeClient) Rerank(ctx context.Context, model, query string, document
 		ContentType: aws.String("application/json"),
 		Accept:      aws.String("application/json"),
 		Body:        body,
+	}, func(o *bedrockruntime.Options) {
+		// Keep each hedged operation to one SDK attempt without changing the shared client.
+		o.Retryer = retry.AddWithMaxAttempts(retry.NewStandard(), 1)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("bedrock rerank: invoke: %w", err)

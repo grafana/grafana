@@ -38,18 +38,24 @@ func (r *Reranker) Score(ctx context.Context, query string, texts []string) ([]f
 	callCtx, cancel := context.WithTimeoutCause(ctx, r.callTimeout, rerank.ErrCallTimeout)
 	defer cancel()
 
-	recs, err := r.client.Rank(callCtx, r.model, query, texts)
+	scores, err := rerank.HedgeScores(callCtx, len(texts), func(attemptCtx context.Context) ([]float64, error) {
+		recs, err := r.client.Rank(attemptCtx, r.model, query, texts)
+		if err != nil {
+			return nil, err
+		}
+		scores := make([]float64, len(texts))
+		for _, rec := range recs {
+			if i, convErr := strconv.Atoi(rec.ID); convErr == nil && i >= 0 && i < len(scores) {
+				scores[i] = rec.Score
+			}
+		}
+		return scores, nil
+	})
 	if err != nil {
 		if errors.Is(context.Cause(callCtx), rerank.ErrCallTimeout) {
 			return nil, rerank.ErrCallTimeout
 		}
 		return nil, err
-	}
-	scores := make([]float64, len(texts))
-	for _, rec := range recs {
-		if i, convErr := strconv.Atoi(rec.ID); convErr == nil && i >= 0 && i < len(scores) {
-			scores[i] = rec.Score
-		}
 	}
 	return scores, nil
 }
