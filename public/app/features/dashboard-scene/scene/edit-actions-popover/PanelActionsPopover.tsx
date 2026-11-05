@@ -13,6 +13,7 @@ import { PanelChromeHeaderControlsContext } from '@grafana/ui/internal';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
+import { useIsMobileEditDeprecated } from '../../utils/mobileEditDeprecation';
 import { tryGetExploreUrlForPanel } from '../../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { DashboardScene } from '../DashboardScene';
@@ -153,12 +154,15 @@ function PanelActions({
 
   const isExpanded = Boolean(viewPanel);
   const isRepeat = isRepeatCloneOrChildOf(panel);
+  // Like isEditEntryBlocked, which the panel menu checks: on small screens, editing can't be started from here.
+  const isEditEntryBlocked = useIsMobileEditDeprecated() && !isEditing;
   // Like the panel menu: no Edit in composer mode, where only the Composer session writes.
   const canEdit =
     (canManuallyEditDashboard(dashboardState) || isViewingDashboard(dashboardState)) &&
     dashboard.canEditDashboard() &&
     Boolean(editable) &&
-    !isRepeat;
+    !isRepeat &&
+    !isEditEntryBlocked;
   // Repeated panels still show the layout actions, disabled, so their tooltips explain why.
   const showsLayoutActions = Boolean(isEditing);
   const panelId = getPanelIdForVizPanel(panel);

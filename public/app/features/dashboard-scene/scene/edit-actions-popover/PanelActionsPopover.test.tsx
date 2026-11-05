@@ -206,6 +206,20 @@ describe('<PanelActionsWrapper />', () => {
       expect(getToolbarLayout()).toEqual(['Edit (e)', 'Explore (p x)', '|', 'Expand (v)', 'More actions']);
     });
 
+    test('in view mode on a small screen with mobile edit deprecation, Edit is not shown, like in the panel menu', async () => {
+      await act(async () => {
+        setTestFlags({ [FlagKeys.GrafanaPanelActionsPopover]: true, [FlagKeys.GrafanaMobileEditDeprecation]: true });
+      });
+      const panel = createPanel();
+      createDashboard(panel);
+
+      renderWrapper(panel);
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(await within(getToolbar()).findByRole('button', { name: 'Explore (p x)' })).toBeInTheDocument();
+      expect(getToolbarLayout()).toEqual(['Explore (p x)', '|', 'Expand (v)', 'More actions']);
+    });
+
     test('in edit mode, Edit, Settings, Duplicate, Remove, Expand and More actions are shown in groups', async () => {
       const panel = createPanel();
       createDashboard(panel, { isEditing: true });
