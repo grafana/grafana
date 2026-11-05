@@ -1,5 +1,5 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/saved-queries/
+canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/queries/
 description: Grafana Queries HTTP API
 keywords:
   - grafana

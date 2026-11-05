@@ -25,7 +25,7 @@ title: 'Query History HTTP API '
 
 {{< admonition type="note" >}}
 
-The new [Saved queries HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/saved-queries/) is related to this API, but it isn't a full replacement. It lets you store, share, and manage queries on the server, but it doesn't record the queries you run or support starring. Saved queries are only available in Grafana Enterprise and Grafana Cloud. Refer to [Differences from the legacy Query history API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/saved-queries/#differences-from-the-legacy-query-history-api) to learn how both APIs match.
+The new [Queries HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/queries/) is related to this API, but it isn't a full replacement. It lets you store, share, and manage queries on the server, but it doesn't record the queries you run or support starring. The Queries HTTP API is only available in Grafana Enterprise and Grafana Cloud. Refer to [Differences from the legacy Query history API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/queries/#differences-from-the-legacy-query-history-api) to learn how both APIs match.
 
 {{< /admonition >}}
 
