@@ -199,7 +199,7 @@ func TestIntegrationProvisioning_GitHubAppURLChangeTestEndpoint(t *testing.T) {
 			Sync:       provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 		},
 	}
-	_, err := helper.Repositories.Resource.Create(t.Context(), common.MustToUnstructured(t, repo), metav1.CreateOptions{})
+	_, err = helper.Repositories.Resource.Create(t.Context(), common.MustToUnstructured(t, repo), metav1.CreateOptions{})
 	require.NoError(t, err)
 	helper.WaitForHealthyRepository(t, repo.Name)
 	obj, err := helper.Repositories.Resource.Get(t.Context(), repo.Name, metav1.GetOptions{})
