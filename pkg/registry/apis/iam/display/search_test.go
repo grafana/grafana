@@ -24,9 +24,9 @@ func TestGetDisplayListSearchErrors(t *testing.T) {
 		resp *resourcepb.ResourceSearchResponse
 		err  error
 	}{
-		"embedded": {resp: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+		"detailed": {err: resource.GRPCStatusError(&resourcepb.ErrorResult{
 			Code: http.StatusServiceUnavailable, Message: "index unavailable",
-		}}},
+		})},
 		"transport": {err: status.Error(codes.Unavailable, "index unavailable")},
 		"plain":     {err: plainErr},
 	} {

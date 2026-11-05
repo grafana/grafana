@@ -285,16 +285,6 @@ func TestGlobalSearchIndexStartupBuild(t *testing.T) {
 	}
 }
 
-func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
-	cfg := NewCfg()
-	cfg.setUnifiedStorageConfig()
-	require.False(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
-
-	cfg.Raw.Section("unified_storage").Key("grpc_error_result_to_status").SetValue("true")
-	cfg.setUnifiedStorageConfig()
-	require.True(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
-}
-
 func TestSearchClientForwardAuthEnabled(t *testing.T) {
 	for _, tc := range []struct {
 		name  string

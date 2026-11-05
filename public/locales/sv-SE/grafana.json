@@ -1469,7 +1469,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -2040,7 +2047,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Tillämpa"
+      "apply": "Tillämpa",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5327,6 +5335,9 @@
       "preferences": "Inställningar",
       "recent-dashboards": "Senaste paneler",
       "recent-scopes": "Senaste omfattningar"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -5752,7 +5763,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5934,6 +5946,9 @@
       "render-label": {
         "tooltip-remove-property": "Ta bort egenskap"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "Lägg till {{typeName}}",
@@ -6244,6 +6259,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -6430,6 +6446,9 @@
           "hide-header": "Dölj radrubrik",
           "title": "Titel"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filter"
         },
@@ -6511,11 +6530,10 @@
         "data-source": "Datakälla",
         "display": "Visa kommentar-kontroller i",
         "display-options": {
-          "above-dashboard": "Ovanför instrumentpanel",
           "controls-menu": "Kontrollmeny",
-          "controls-menu-description": "Kan nås när kontrollmenyn är öppen",
+          "controls-menu-description": "",
           "hidden": "Dolt",
-          "hidden-description": "Döljer växlingen för att aktivera eller inaktivera denna kommentar"
+          "hidden-description": ""
         },
         "enabled": "Aktiverad",
         "enabled-description": "När aktiverat utfärdas kommentarsfrågan vid varje uppdatering av instrumentpanelen",
@@ -6618,7 +6636,9 @@
         "tab": "Flik",
         "tabs": "Flikar",
         "variable": "{{type}}-variabel",
-        "variable-set": "Variabler"
+        "variable-set": "Variabler",
+        "selected-panels_one": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Exportera"
@@ -6797,6 +6817,9 @@
             "description": "Upprepa den här fliken för varje värde i den valda variabeln.",
             "title": "Upprepa per variabel"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filter"
@@ -7319,11 +7342,14 @@
         "keep-working": "",
         "save": "Spara",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "Vill du spara dina ändringar?"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "Ändringar som inte sparats"
         }
@@ -7570,6 +7596,7 @@
       "error-invalid-json": "Ogiltig JSON",
       "error-invalid-layout": "JSON-koden för layout kunde inte valideras. Kontrollera JSON och försök igen.",
       "error-invalid-v2-panel": "Panelens JSON-kod kunde inte valideras. Kontrollera JSON och försök igen.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Valideringsfel"
     },
     "interval-variable-form": {
@@ -7639,17 +7666,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -7743,7 +7773,9 @@
       "title-delete-all-transformations": "Radera alla transformeringar?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Redigera visualisering"
+      "edit-visualization": "Redigera visualisering",
+      "panels-selected_one": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Växla tabellvy",
@@ -10716,6 +10748,8 @@
       "clear-button": "Rensa val"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "CodeMirror-redigeraren kunde inte laddas",
       "language-load-failed": "Det gick inte att läsa in syntaxmarkeringen",
       "language-load-failed-description": "Redigeraren kommer att fortsätta utan språkspecifika funktioner.",
@@ -12383,7 +12417,6 @@
       "copy-log-line-json": "Kopiera logginnehåll som JSON",
       "copy-shortlink": "Kopiera kortlänk",
       "copy-to-clipboard": "Kopiera till urklippet",
-      "displayed-fields-section": "Organisera visade fält",
       "fields": {
         "adhoc-statistics": "Ad hoc-statistik",
         "copy-value-to-clipboard": "Kopiera värde till klippbordet",
@@ -12407,14 +12440,11 @@
       "log-attributes-field": "Loggattribut",
       "log-line-field": "Loggrad",
       "log-line-section": "Loggrad",
-      "move-displayed-field-down": "Flytta ner",
-      "move-displayed-field-up": "Flytta upp",
       "no-details": "Fält som ska visas.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Fäst logg",
       "prettify": "Gör snyggare",
-      "remove-displayed-field": "Ta bort fält",
       "remove-log": "Ta bort logg",
       "scroll-to-logline": "Skrolla till loggrad",
       "search": {
@@ -14001,6 +14031,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Kunde inte hitta något som matchar din fråga"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

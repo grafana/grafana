@@ -1462,7 +1462,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -2026,7 +2033,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "套用"
+      "apply": "套用",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5277,6 +5285,9 @@
       "preferences": "偏好設定",
       "recent-dashboards": "最近的儀表板",
       "recent-scopes": "最近的範圍"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -5702,7 +5713,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5884,6 +5896,9 @@
       "render-label": {
         "tooltip-remove-property": "移除屬性"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "新增 {{typeName}}",
@@ -6194,6 +6209,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -6379,6 +6395,9 @@
           "hide-header": "隱藏列標題",
           "title": "標題"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "篩選條件"
         },
@@ -6460,11 +6479,10 @@
         "data-source": "資料來源",
         "display": "在以下方地方顯示註解控制項",
         "display-options": {
-          "above-dashboard": "儀表板上方",
           "controls-menu": "控制選單",
-          "controls-menu-description": "開啟控制選單時可以存取",
+          "controls-menu-description": "",
           "hidden": "隱藏",
-          "hidden-description": "隱藏開啟或關閉此註解的切換"
+          "hidden-description": ""
         },
         "enabled": "已啟用",
         "enabled-description": "啟用後，每次儀表板重新整理時都會發出註解查詢",
@@ -6567,7 +6585,8 @@
         "tab": "分頁",
         "tabs": "分頁",
         "variable": "{{type}}變數",
-        "variable-set": "變數"
+        "variable-set": "變數",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "匯出"
@@ -6746,6 +6765,9 @@
             "description": "對所選變數中的每個值重複此分頁。",
             "title": "依據變數重複"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "篩選條件"
@@ -7266,11 +7288,14 @@
         "keep-working": "",
         "save": "儲存",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "要儲存您的變更嗎？"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "未儲存變更"
         }
@@ -7517,6 +7542,7 @@
       "error-invalid-json": "無效的 JSON",
       "error-invalid-layout": "版面配置 JSON 未通過驗證。請檢查 JSON，然後再試一次。",
       "error-invalid-v2-panel": "面板 JSON 未通過驗證。請檢查 JSON，然後再試一次。",
+      "mobile-edit-unavailable": "",
       "validation-error": "驗證錯誤"
     },
     "interval-variable-form": {
@@ -7585,17 +7611,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -7688,7 +7717,8 @@
       "title-delete-all-transformations": "是否要刪除所有轉換？"
     },
     "panel-edit-actions": {
-      "edit-visualization": "編輯視覺化"
+      "edit-visualization": "編輯視覺化",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "切換表格檢視",
@@ -10634,6 +10664,8 @@
       "clear-button": "清空選項"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "CodeMirror 編輯器無法載入",
       "language-load-failed": "語法醒目提示無法載入",
       "language-load-failed-description": "編輯器將繼續，但不會有特定語言的功能。",
@@ -12279,7 +12311,6 @@
       "copy-log-line-json": "將記錄內容複製為 JSON",
       "copy-shortlink": "複製短連結",
       "copy-to-clipboard": "複製至剪貼簿",
-      "displayed-fields-section": "組織顯示的欄位",
       "fields": {
         "adhoc-statistics": "隨機統計資料",
         "copy-value-to-clipboard": "將此值複製到剪貼簿",
@@ -12303,14 +12334,11 @@
       "log-attributes-field": "記錄屬性",
       "log-line-field": "記錄行",
       "log-line-section": "記錄行",
-      "move-displayed-field-down": "下移",
-      "move-displayed-field-up": "上移",
       "no-details": "沒有要顯示的欄位。",
       "open-assistant": "在 Assistant 中解釋記錄行",
       "open-value-in": "",
       "pin-line": "固定記錄",
       "prettify": "美化",
-      "remove-displayed-field": "移除欄位",
       "remove-log": "移除記錄",
       "scroll-to-logline": "捲動到記錄行",
       "search": {
@@ -13891,6 +13919,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "找不到符合您查詢的內容"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

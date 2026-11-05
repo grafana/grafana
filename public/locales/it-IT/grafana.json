@@ -1469,7 +1469,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -2040,7 +2047,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Applica"
+      "apply": "Applica",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5327,6 +5335,9 @@
       "preferences": "Preferenze",
       "recent-dashboards": "Dashboard recenti",
       "recent-scopes": "Ambiti recenti"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -5752,7 +5763,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5934,6 +5946,9 @@
       "render-label": {
         "tooltip-remove-property": "Rimuovi proprietà"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "Aggiungi {{typeName}}",
@@ -6244,6 +6259,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -6430,6 +6446,9 @@
           "hide-header": "Nascondi intestazione riga",
           "title": "Titolo"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filtri"
         },
@@ -6511,11 +6530,10 @@
         "data-source": "Origine dei dati",
         "display": "Mostra i comandi delle annotazioni in",
         "display-options": {
-          "above-dashboard": "Sopra la dashboard",
           "controls-menu": "Menu comandi",
-          "controls-menu-description": "È possibile accedervi quando il menu dei comandi è aperto",
+          "controls-menu-description": "",
           "hidden": "Nascosto",
-          "hidden-description": "Nasconde l'interruttore per attivare o disattivare questa annotazione"
+          "hidden-description": ""
         },
         "enabled": "Abilitata",
         "enabled-description": "Se abilitata, la query di annotazione viene emessa a ogni aggiornamento della dashboard",
@@ -6618,7 +6636,9 @@
         "tab": "Scheda",
         "tabs": "Schede",
         "variable": "{{type}} variabile",
-        "variable-set": "Variabili"
+        "variable-set": "Variabili",
+        "selected-panels_one": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Esporta"
@@ -6797,6 +6817,9 @@
             "description": "Ripeti questa scheda per ogni valore nella variabile selezionata.",
             "title": "Ripeti per variabile"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filtri"
@@ -7319,11 +7342,14 @@
         "keep-working": "",
         "save": "Salva",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "Desideri salvare le modifiche?"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "Modifiche non salvate"
         }
@@ -7570,6 +7596,7 @@
       "error-invalid-json": "JSON non valido",
       "error-invalid-layout": "Il file JSON del layout non ha superato la convalida. Controlla il file JSON e riprova.",
       "error-invalid-v2-panel": "Il file JSON del pannello non ha superato la convalida. Controlla il file JSON e riprova.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Errore di convalida"
     },
     "interval-variable-form": {
@@ -7639,17 +7666,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -7743,7 +7773,9 @@
       "title-delete-all-transformations": "Eliminare tutte le trasformazioni?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Modifica visualizzazione"
+      "edit-visualization": "Modifica visualizzazione",
+      "panels-selected_one": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Attiva/disattiva visualizzazione tabella",
@@ -10716,6 +10748,8 @@
       "clear-button": "Cancella selezione"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "Impossibile caricare l'editor CodeMirror",
       "language-load-failed": "Impossibile caricare l'evidenziazione della sintassi",
       "language-load-failed-description": "L'editor continuerà senza funzionalità specifiche del linguaggio.",
@@ -12383,7 +12417,6 @@
       "copy-log-line-json": "Copia il contenuto del registro in formato JSON",
       "copy-shortlink": "Copia shortlink",
       "copy-to-clipboard": "Copia negli appunti",
-      "displayed-fields-section": "Organizza i campi visualizzati",
       "fields": {
         "adhoc-statistics": "Statistiche ad hoc",
         "copy-value-to-clipboard": "Copia valore negli appunti",
@@ -12407,14 +12440,11 @@
       "log-attributes-field": "Attributi del registro",
       "log-line-field": "Riga registro",
       "log-line-section": "Riga registro",
-      "move-displayed-field-down": "Sposta in basso",
-      "move-displayed-field-up": "Sposta in alto",
       "no-details": "Nessun campo da visualizzare.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Fissa registro",
       "prettify": "Migliora",
-      "remove-displayed-field": "Rimuovi campo",
       "remove-log": "Rimuovi registro",
       "scroll-to-logline": "Scorri fino alla riga del registro",
       "search": {
@@ -14001,6 +14031,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Non è stato possibile trovare nulla che corrispondesse alla tua query"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

@@ -1462,7 +1462,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -2026,7 +2033,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "적용"
+      "apply": "적용",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5277,6 +5285,9 @@
       "preferences": "기본 설정",
       "recent-dashboards": "최근 대시보드",
       "recent-scopes": "최근 범위"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -5702,7 +5713,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5884,6 +5896,9 @@
       "render-label": {
         "tooltip-remove-property": "속성 제거"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "{{typeName}} 추가",
@@ -6194,6 +6209,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -6379,6 +6395,9 @@
           "hide-header": "행 헤더 숨기기",
           "title": "제목"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "필터"
         },
@@ -6460,11 +6479,10 @@
         "data-source": "데이터 소스",
         "display": "다음에서 주석 제어 표시",
         "display-options": {
-          "above-dashboard": "대시보드 위",
           "controls-menu": "컨트롤 메뉴",
-          "controls-menu-description": "컨트롤 메뉴가 열려 있을 때 접근할 수 있습니다.",
+          "controls-menu-description": "",
           "hidden": "숨김",
-          "hidden-description": "이 주석의 켜기/끄기 토글을 숨깁니다"
+          "hidden-description": ""
         },
         "enabled": "활성화됨",
         "enabled-description": "활성화되면 대시보드를 새로 고칠 때마다 주석 쿼리가 실행됩니다",
@@ -6567,7 +6585,8 @@
         "tab": "탭",
         "tabs": "탭",
         "variable": "{{type}} 변수",
-        "variable-set": "변수"
+        "variable-set": "변수",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "내보내기"
@@ -6746,6 +6765,9 @@
             "description": "선택한 변수의 각 값에 대해 이 탭을 반복합니다.",
             "title": "변수별로 반복"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "필터"
@@ -7266,11 +7288,14 @@
         "keep-working": "",
         "save": "저장",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "변경 사항을 저장하시겠어요?"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "저장되지 않은 변경 사항"
         }
@@ -7517,6 +7542,7 @@
       "error-invalid-json": "유효하지 않은 JSON",
       "error-invalid-layout": "레이아웃 JSON이 유효성 검사를 통과하지 못했습니다. JSON을 확인한 후 다시 시도하세요.",
       "error-invalid-v2-panel": "패널 JSON이 유효성 검사를 통과하지 못했습니다. JSON을 확인한 후 다시 시도하세요.",
+      "mobile-edit-unavailable": "",
       "validation-error": "유효성 검사 오류"
     },
     "interval-variable-form": {
@@ -7585,17 +7611,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -7688,7 +7717,8 @@
       "title-delete-all-transformations": "모든 변환을 삭제하시겠어요?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "시각화 편집"
+      "edit-visualization": "시각화 편집",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "표 보기 토글",
@@ -10634,6 +10664,8 @@
       "clear-button": "선택 초기화"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "CodeMirror 편집기를 로드하지 못했습니다",
       "language-load-failed": "구문 강조 표시를 로드하지 못했습니다",
       "language-load-failed-description": "편집기는 언어별 기능 없이 계속 실행됩니다.",
@@ -12279,7 +12311,6 @@
       "copy-log-line-json": "로그 내용을 JSON 형식으로 복사",
       "copy-shortlink": "단축 링크 복사",
       "copy-to-clipboard": "클립보드로 복사",
-      "displayed-fields-section": "표시된 필드 구성",
       "fields": {
         "adhoc-statistics": "즉석 통계",
         "copy-value-to-clipboard": "값을 클립보드로 복사",
@@ -12303,14 +12334,11 @@
       "log-attributes-field": "로그 속성",
       "log-line-field": "로그 라인",
       "log-line-section": "로그 선",
-      "move-displayed-field-down": "아래로 이동",
-      "move-displayed-field-up": "위로 이동",
       "no-details": "표시할 필드가 없습니다.",
       "open-assistant": "Assistant에서 로그 줄 설명",
       "open-value-in": "",
       "pin-line": "로그 고정",
       "prettify": "보기 좋게 정리",
-      "remove-displayed-field": "필드 제거",
       "remove-log": "로그 제거",
       "scroll-to-logline": "로그 라인으로 스크롤",
       "search": {
@@ -13891,6 +13919,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "쿼리와 일치하는 항목을 찾을 수 없습니다"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

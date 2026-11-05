@@ -1,4 +1,5 @@
 import { TracedError } from '../../utils/TracedError';
+import { NoUserSessionError } from '../user';
 
 /**
  * The data source list failed to load. Every async data source API rejects with this error until
@@ -34,5 +35,9 @@ export class DataSourceSettingsFetchError extends TracedError {
 }
 
 export function isDataSourceLoadError(error: unknown): boolean {
-  return error instanceof DataSourceListFetchError || error instanceof DataSourceSettingsFetchError;
+  return (
+    error instanceof DataSourceListFetchError ||
+    error instanceof DataSourceSettingsFetchError ||
+    error instanceof NoUserSessionError
+  );
 }

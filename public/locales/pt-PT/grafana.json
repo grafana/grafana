@@ -1469,7 +1469,14 @@
         "to": ""
       },
       "recording-rules": {
+        "folder-rules-error": "",
+        "folders-error": "",
+        "load-more-rules-in-folder": "",
+        "loading-folders": "",
         "no-rules": "",
+        "no-rules-in-folder": "",
+        "no-rules-match-folder": "",
+        "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
       },
@@ -2040,7 +2047,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Aplicar"
+      "apply": "Aplicar",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5327,6 +5335,9 @@
       "preferences": "Preferências",
       "recent-dashboards": "Painéis de controlo recentes",
       "recent-scopes": "Âmbitos recentes"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -5752,7 +5763,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5934,6 +5946,9 @@
       "render-label": {
         "tooltip-remove-property": "Remover a propriedade"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "Adicionar {{typeName}}",
@@ -6244,6 +6259,7 @@
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
+      "composer-opening": "",
       "composer-save-first": "",
       "composer-unsupported": "",
       "current": "",
@@ -6430,6 +6446,9 @@
           "hide-header": "Ocultar cabeçalho da linha",
           "title": "Título"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filtros"
         },
@@ -6511,11 +6530,10 @@
         "data-source": "Origem dos dados",
         "display": "Mostrar controlos de anotação em",
         "display-options": {
-          "above-dashboard": "Acima do painel de controlo",
           "controls-menu": "Menu de controlos",
-          "controls-menu-description": "Pode ser acedido quando o menu de controlos está aberto",
+          "controls-menu-description": "",
           "hidden": "Oculto",
-          "hidden-description": "Oculta o botão para ativar ou desativar esta anotação"
+          "hidden-description": ""
         },
         "enabled": "Ativado",
         "enabled-description": "Quando esta opção está ativada, a consulta de anotação é emitida a cada atualização do painel de controlo",
@@ -6618,7 +6636,9 @@
         "tab": "Separador",
         "tabs": "Separadores",
         "variable": "Variável {{type}}",
-        "variable-set": "Variáveis"
+        "variable-set": "Variáveis",
+        "selected-panels_one": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Exportar"
@@ -6797,6 +6817,9 @@
             "description": "Repetir este separador para cada valor na variável selecionada.",
             "title": "Repetir por variável"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filtros"
@@ -7319,11 +7342,14 @@
         "keep-working": "",
         "save": "Guardar",
         "stop-and-leave": "",
+        "stop-and-switch": "",
         "text": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "save-changes-question": "Pretende guardar as suas alterações?"
         },
         "title": {
+          "composer-stop-editing": "",
           "leave-composer": "",
           "unsaved-changes": "Alterações não gravadas"
         }
@@ -7570,6 +7596,7 @@
       "error-invalid-json": "JSON inválido",
       "error-invalid-layout": "O layout JSON não passou na validação. Verifique o JSON e tente novamente.",
       "error-invalid-v2-panel": "O painel JSON não passou na validação. Verifique o JSON e tente novamente.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Erro de validação"
     },
     "interval-variable-form": {
@@ -7639,17 +7666,20 @@
       "discard-pending-failed": "",
       "discard-pending-title": "",
       "draft-body": "",
-      "draft-body-source": "",
+      "draft-discarded": "",
       "draft-title": "",
+      "edited-dashboard": "",
       "highlight-changes": "",
-      "open-to-save": "",
       "pending-body": "",
       "pending-body-source": "",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
       "pending-hint": "",
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
       "rebase": "",
+      "record-pending-change-failed": "",
       "save": "",
       "show-original-dashboard": "",
       "stop-highlighting-changes": "",
@@ -7743,7 +7773,9 @@
       "title-delete-all-transformations": "Eliminar todas as transformações?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Editar visualização"
+      "edit-visualization": "Editar visualização",
+      "panels-selected_one": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Alternar vista de tabela",
@@ -10716,6 +10748,8 @@
       "clear-button": "Limpar a seleção"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "Falha ao carregar o editor CodeMirror",
       "language-load-failed": "Falha ao carregar o realce de sintaxe",
       "language-load-failed-description": "O editor continuará sem funcionalidades específicas da linguagem.",
@@ -12383,7 +12417,6 @@
       "copy-log-line-json": "Copiar conteúdo do registo como JSON",
       "copy-shortlink": "Copiar link curto",
       "copy-to-clipboard": "Copiar para a área de transferência",
-      "displayed-fields-section": "Organizar campos exibidos",
       "fields": {
         "adhoc-statistics": "Estatísticas ad-hoc",
         "copy-value-to-clipboard": "Copiar o valor para a área de transferência",
@@ -12407,14 +12440,11 @@
       "log-attributes-field": "Atributos de registo",
       "log-line-field": "Linha de registo",
       "log-line-section": "Linha de registo",
-      "move-displayed-field-down": "Mover para baixo",
-      "move-displayed-field-up": "Mover para cima",
       "no-details": "Nenhum campo a mostrar.",
       "open-assistant": "",
       "open-value-in": "",
       "pin-line": "Afixar registo",
       "prettify": "Embelezar",
-      "remove-displayed-field": "Remover o campo",
       "remove-log": "Remover registo",
       "scroll-to-logline": "Deslizar para a linha de registo",
       "search": {
@@ -14001,6 +14031,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Não foi possível encontrar nada que corresponda à sua consulta"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {
