@@ -45,7 +45,7 @@ export function OverviewStatCards({ totals }: OverviewStatCardsProps) {
       {totals.map(({ kind, totals }) => (
         <ResourceStatusCard
           key={`${kind.group}/${kind.kind}`}
-          label={kind.pluralLabel()}
+          label={kind.getLabels().plural}
           managed={totals.managed}
           total={totals.instanceTotal}
         />

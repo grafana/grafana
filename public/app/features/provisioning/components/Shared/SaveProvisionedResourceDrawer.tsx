@@ -356,7 +356,7 @@ function ResourceDrawerContent({
 
   // Title combines a shared translated template with the kind's translated noun (interpolated, so
   // translators control word order), instead of a per-kind "Save/Delete provisioned <kind>" string.
-  const resourceLabel = kind.getLabel();
+  const resourceLabel = kind.getLabels().singular;
   const drawerTitle = isDelete
     ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned {{resource}}', {
         resource: resourceLabel,
