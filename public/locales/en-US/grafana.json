@@ -1463,6 +1463,15 @@
         "count-unavailable": "Count unavailable",
         "expand": "Expand {{title}}"
       },
+      "instances": {
+        "error": "error",
+        "firing": "firing",
+        "healthy": "normal",
+        "nodata": "no data",
+        "pending": "pending",
+        "recovering": "recovering",
+        "view-instances": "View instances"
+      },
       "interval": "Evaluated every {{interval}}",
       "labels_one": "{{formatted}} label",
       "labels_other": "{{formatted}} labels",
@@ -1481,6 +1490,11 @@
         "retry-rules-in-folder": "Retry loading rules in {{title}}",
         "rules-error": "Failed to load recording rules",
         "search-issues": "Change the search to see results"
+      },
+      "routing": {
+        "default-policy": "Default policy",
+        "delivered-to": "Delivered to",
+        "policy": "Policy: {{name}}"
       },
       "rule-count": {
         "alert-rules_one": "{{formatted}} alert rule",
@@ -6255,7 +6269,6 @@
     },
     "modes": {
       "agent-edit": "Agent editing",
-      "change-mode": "Change dashboard mode",
       "composer": "Composer",
       "composer-description": "Point at anything and ask the Assistant.",
       "composer-no-permission": "You need permission to edit this dashboard.",
@@ -6271,8 +6284,6 @@
       "empty": "This dashboard has no panels.",
       "label": "Dashboard mode",
       "save-before-viewing": "Save the dashboard before switching to Viewing.",
-      "switch-to-editing": "Switch to Editing",
-      "switch-to-viewing": "Switch to Viewing",
       "view": "Viewing",
       "view-changes": "View changes",
       "view-description": "View and explore the dashboard."

@@ -128,7 +128,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install frontend dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
 
       - name: Install Playwright browsers
         uses: ./.github/actions/setup-playwright
@@ -160,7 +160,7 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
       - name: Install frontend dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
 
       # It's quicker to build them in each test shard then prebuild and upload/download them as artifacts
       - name: Build test plugins
@@ -409,7 +409,7 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
       - name: Install frontend dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
       - name: Download frontend artifacts
         uses: actions/download-artifact@v8
         with:

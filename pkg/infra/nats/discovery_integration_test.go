@@ -2,12 +2,14 @@ package nats
 
 import (
 	"context"
+	"net/url"
 	"testing"
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
+	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -88,6 +90,39 @@ func TestDiscoveryDisabled(t *testing.T) {
 	require.Never(t, func() bool {
 		return numRoutes(a) > 0 || numRoutes(b) > 0
 	}, time.Second, 100*time.Millisecond, "nodes formed a cluster route with discovery disabled")
+}
+
+// TestDiscoveryWakeOnLeave asserts that a node leaving gracefully makes its
+// peers drop its route without waiting for their next tick. The interval is too
+// long for a periodic tick to fire during the test, so after each loop's first
+// tick only the wake can trigger a reload. Deliberately not named
+// TestIntegration*: the registry is in-memory Badger.
+func TestDiscoveryWakeOnLeave(t *testing.T) {
+	store := newSharedTestKV(t)
+	newCfg := func() *setting.Cfg {
+		cfg := newEmbeddedTestCfg("127.0.0.1", "")
+		cfg.NATS.DiscoveryInterval = time.Hour
+		return cfg
+	}
+	a := startSteppedTestServer(t, newCfg(), store)
+	b := startSteppedTestServer(t, newCfg(), store)
+	c := startSteppedTestServer(t, newCfg(), store)
+
+	// The first tick of each loop routes to everyone registered above.
+	reloadsA := runWithReloads(t, a)
+	reloadsB := runWithReloads(t, b)
+	requireReload(t, reloadsA, routeSetOf(b, c))
+	requireReload(t, reloadsB, routeSetOf(a, c))
+	// c sends a single wake when it leaves, so a's and b's interest in the
+	// wake subject must have reached c over its routes first.
+	requireWakeInterest(t, c, 2)
+
+	require.NoError(t, c.stopping(nil))
+
+	requireReload(t, reloadsA, routeSetOf(b))
+	requireReload(t, reloadsB, routeSetOf(a))
+	require.Equal(t, 1.0, promtestutil.ToFloat64(a.metrics.discoveryWakesReceived))
+	require.Equal(t, 1.0, promtestutil.ToFloat64(b.metrics.discoveryWakesReceived))
 }
 
 // TestIntegrationDiscoverySQL runs discovery against the nats_discovery_peers
@@ -267,4 +302,60 @@ func numRoutes(s *Server) int {
 		return 0
 	}
 	return s.server.NumRoutes()
+}
+
+// runWithReloads runs s's discovery loop until the test ends and reports every
+// route set it reloads, so a test can wait on reconciliation instead of polling.
+func runWithReloads(t *testing.T, s *Server) <-chan map[string]struct{} {
+	t.Helper()
+	ctx, cancel := context.WithCancel(t.Context())
+	reloads := make(chan map[string]struct{})
+	reload := s.discovery.reload
+	s.discovery.reload = func(routes []*url.URL) error {
+		err := reload(routes)
+		set := make(map[string]struct{}, len(routes))
+		for _, u := range routes {
+			set[u.String()] = struct{}{}
+		}
+		select {
+		case reloads <- set:
+		case <-ctx.Done():
+		}
+		return err
+	}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_ = s.discovery.run(ctx)
+	}()
+	t.Cleanup(func() {
+		cancel()
+		<-done
+	})
+	return reloads
+}
+
+// requireReload waits for the next route reload and checks its route set. The
+// timer only guards against a hang; no assertion depends on it.
+// requireWakeInterest waits until s sees the wake subscription of the given
+// number of routed peers, besides its own.
+func requireWakeInterest(t *testing.T, s *Server, peers int) {
+	t.Helper()
+	deadline := time.Now().Add(30 * time.Second)
+	for s.server.GlobalAccount().Interest(discoveryWakeSubject) < peers+1 {
+		if time.Now().After(deadline) {
+			t.Fatalf("%s has wake interest from %d peers, want %d", s.opts.ServerName, s.server.GlobalAccount().Interest(discoveryWakeSubject)-1, peers)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func requireReload(t *testing.T, reloads <-chan map[string]struct{}, want map[string]struct{}) {
+	t.Helper()
+	select {
+	case got := <-reloads:
+		require.Equal(t, want, got)
+	case <-time.After(30 * time.Second):
+		t.Fatal("discovery did not reload its routes")
+	}
 }

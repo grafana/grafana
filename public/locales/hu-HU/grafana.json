@@ -2047,7 +2047,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Alkalmaz"
+      "apply": "Alkalmaz",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5762,7 +5763,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5944,6 +5946,9 @@
       "render-label": {
         "tooltip-remove-property": "Tulajdonság eltávolítása"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "{{typeName}} hozzáadása",
@@ -6441,6 +6446,9 @@
           "hide-header": "Sorfejléc elrejtése",
           "title": "Cím"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Szűrők"
         },
@@ -6522,11 +6530,10 @@
         "data-source": "Adatforrás",
         "display": "Jegyzetvezérlők megjelenítése itt:",
         "display-options": {
-          "above-dashboard": "Irányítópult felett",
           "controls-menu": "Vezérlőmenü",
-          "controls-menu-description": "Akkor érhető el, ha a vezérlőmenü meg van nyitva",
+          "controls-menu-description": "",
           "hidden": "Rejtett",
-          "hidden-description": "Elrejti a kapcsolót a jegyzet be- vagy kikapcsolásához"
+          "hidden-description": ""
         },
         "enabled": "Engedélyezve",
         "enabled-description": "Ha engedélyezve van, a jegyzetlekérdezés az irányítópult minden frissítésekor megjelenik",
@@ -6629,7 +6636,9 @@
         "tab": "Lap",
         "tabs": "Lapok",
         "variable": "{{type}} változó",
-        "variable-set": "Változók"
+        "variable-set": "Változók",
+        "selected-panels_one": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Exportálás"
@@ -6808,6 +6817,9 @@
             "description": "Ismételje meg ezt a lapot a kijelölt változó minden értékére.",
             "title": "Ismétlés változó szerint"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Szűrők"
@@ -7584,6 +7596,7 @@
       "error-invalid-json": "Érvénytelen JSON",
       "error-invalid-layout": "Az elrendezés JSON-tartalma nem ment át az érvényesítésen. Ellenőrizze a JSON-tartalmat, és próbálkozzon újra.",
       "error-invalid-v2-panel": "A panel JSON-tartalma nem ment át az érvényesítésen. Ellenőrizze a JSON-tartalmat, és próbálkozzon újra.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Validálási hiba"
     },
     "interval-variable-form": {
@@ -7760,7 +7773,9 @@
       "title-delete-all-transformations": "Törli az összes transzformációt?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Vizualizáció szerkesztése"
+      "edit-visualization": "Vizualizáció szerkesztése",
+      "panels-selected_one": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Táblázatos nézet ki- és bekapcsolása",
@@ -14016,6 +14031,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Nincs találat a lekérdezésre"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

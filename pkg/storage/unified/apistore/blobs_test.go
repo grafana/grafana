@@ -66,7 +66,11 @@ func (c *inlineBlobClient) List(context.Context, *resourcepb.ListRequest, ...grp
 func (c *inlineBlobClient) Update(_ context.Context, req *resourcepb.UpdateRequest, _ ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
 	c.writes++
 	if c.conflict && c.writes == 1 {
-		return &resourcepb.UpdateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"}}, nil
+		st, err := status.New(codes.Aborted, "conflict").WithDetails(&resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
+		if err != nil {
+			return nil, err
+		}
+		return nil, st.Err()
 	}
 	if c.writeError != nil {
 		return nil, c.writeError
@@ -274,11 +278,15 @@ func TestInlineBlobsUploadFailurePreventsWrite(t *testing.T) {
 		"transport": func(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
 			return nil, status.Error(codes.Unavailable, "unavailable")
 		},
-		"embedded": func(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
-			return &resourcepb.PutBlobResponse{Error: failure}, nil
+		"status with details": func(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+			st, err := status.New(codes.Unavailable, failure.Message).WithDetails(failure)
+			if err != nil {
+				return nil, err
+			}
+			return nil, st.Err()
 		},
-		"both": func(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
-			return &resourcepb.PutBlobResponse{Error: failure}, status.Error(codes.PermissionDenied, "denied")
+		"status with partial response": func(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+			return &resourcepb.PutBlobResponse{Uid: "partial", Size: 2, MimeType: "application/json"}, status.Error(codes.PermissionDenied, "denied")
 		},
 		"unsupported": func(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
 			return nil, status.Error(codes.Unimplemented, "unsupported")
