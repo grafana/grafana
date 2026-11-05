@@ -267,7 +267,12 @@ export function prepConfig(opts: PrepConfigOpts) {
               scaleDistribution === ScaleDistribution.Log || scaleDistribution === ScaleDistribution.Symlog;
             if (isLogScale) {
               // Guard against non-positive values — log(0) = -Infinity causes uPlot to crash in logAxisSplits.
-              const safeMin = dataMin > 0 ? dataMin : dataMax / Math.pow(scaleLog, 2);
+              // Deriving the floor from the expanded dataMax can push it above the data entirely, so
+              // prefer the smallest positive bucket bound and keep the ratio only as a last resort.
+              const safeMin =
+                dataMin > 0
+                  ? dataMin
+                  : (smallestPositiveBound(yMinValues, yMaxValues) ?? dataMax / Math.pow(scaleLog, 2));
               [scaleMin, scaleMax] = uPlot.rangeLog(safeMin, dataMax, scaleLog, true);
             } else {
               [scaleMin, scaleMax] = [dataMin, dataMax];
@@ -896,6 +901,33 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
 
     return null;
   };
+}
+
+/**
+ * Finds the smallest positive bucket boundary in the data.
+ * A log y axis cannot draw buckets that reach 0 or below, but it must still show every bucket that
+ * is representable, so the axis floor comes from the data rather than from the expanded maximum.
+ * yMin is preferred because those are the bucket floors; yMax is only consulted when no bucket has
+ * a positive floor.
+ *
+ * @param yMinValues - Array of yMin bucket boundary values
+ * @param yMaxValues - Array of yMax bucket boundary values
+ * @returns The smallest positive boundary, or null when the data has none
+ */
+export function smallestPositiveBound(yMinValues: unknown[], yMaxValues: unknown[]): number | null {
+  for (const values of [yMinValues, yMaxValues]) {
+    let smallest: number | null = null;
+    for (const value of values) {
+      if (typeof value === 'number' && value > 0 && (smallest === null || value < smallest)) {
+        smallest = value;
+      }
+    }
+    if (smallest !== null) {
+      return smallest;
+    }
+  }
+
+  return null;
 }
 
 /**

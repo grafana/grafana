@@ -15,6 +15,7 @@ import {
   heatmapPathsPoints,
   heatmapPathsSparse,
   prepConfig,
+  smallestPositiveBound,
   toLogBase,
   valuesToFills,
 } from './utils';
@@ -788,6 +789,35 @@ describe('prepConfig', () => {
         const result = range(u, 1, 64, scaleKey);
         expect(result[0]).toEqual(2);
         expect(result[1]).toEqual(64);
+      });
+
+      // A histogram whose first bucket starts at 0 used to put the whole axis above the data:
+      // safeMin came from the already-expanded dataMax, so for buckets 0-1/1-4/4-16/16-64 the
+      // floor landed at 64, which is the data maximum, and nothing was drawn at all.
+      it('keeps the data visible on a log scale when the first bucket starts at 0', () => {
+        const dataRef = { current: createSparseHeatmapData() };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+          rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
+        });
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const mockU = {
+          data: [[1000], [null, [0, 1, 4, 16], [1, 4, 16, 64]]],
+          scales: { [scaleKey]: { log: 2 } },
+        } as unknown as uPlot;
+
+        const [scaleMin, scaleMax] = range(mockU, 0, 64, scaleKey);
+
+        // The floor must sit at or below the smallest positive bucket bound, otherwise buckets
+        // that a log axis CAN represent get clipped away with the unrepresentable 0 one.
+        expect(scaleMin).toBeLessThanOrEqual(1);
+        expect(scaleMin).toBeGreaterThan(0);
+        expect(scaleMax).toBeGreaterThanOrEqual(64);
       });
 
       // Regression: rowsToCellsHeatmap with a single bucket starting at 0 produces yMin=yMax=0.
@@ -2106,6 +2136,36 @@ describe('calculateBucketExpansionFactor', () => {
       const yMaxValues = [15, 20, 25];
       const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
       expect(factor).toBe(1.5);
+    });
+  });
+
+  describe('smallestPositiveBound', () => {
+    it('returns the smallest positive yMin', () => {
+      expect(smallestPositiveBound([0, 1, 4, 16], [1, 4, 16, 64])).toBe(1);
+    });
+
+    it('ignores the order the buckets arrive in', () => {
+      expect(smallestPositiveBound([16, 4, 0, 1], [64, 16, 1, 4])).toBe(1);
+    });
+
+    it('falls back to yMax when no bucket has a positive floor', () => {
+      expect(smallestPositiveBound([0, 0, 0], [1, 4, 16])).toBe(1);
+    });
+
+    it('skips zero and negative bounds', () => {
+      expect(smallestPositiveBound([-10, -5, 0, 5], [-5, 0, 5, 10])).toBe(5);
+    });
+
+    it('returns null when nothing is positive', () => {
+      expect(smallestPositiveBound([-4, 0], [-1, 0])).toBeNull();
+    });
+
+    it('returns null for empty arrays', () => {
+      expect(smallestPositiveBound([], [])).toBeNull();
+    });
+
+    it('ignores non-numeric entries', () => {
+      expect(smallestPositiveBound([null, undefined, 8], [null, 16])).toBe(8);
     });
   });
 
