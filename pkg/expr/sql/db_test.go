@@ -443,16 +443,29 @@ func TestQueryFrames_OutputConversionError(t *testing.T) {
 			db := DB{}
 			_, err := db.QueryFrames(t.Context(), &testTracer{}, "b", `SELECT * FROM a`, data.Frames{input})
 
-			require.ErrorContains(t, err, tt.wantText)
+			require.ErrorContains(t, err, "failed to convert the results of sql expression [b] into a data frame: "+tt.wantText)
 			require.NotContains(t, err.Error(), "<unknown>")
 			var gfErr errutil.Error
 			require.ErrorAs(t, err, &gfErr)
-			require.Equal(t, "sse.sql.general_gms_error", gfErr.MessageID)
+			require.Equal(t, "sse.sql.output_conversion", gfErr.MessageID)
 			var catErr *ErrorWithCategory
 			require.ErrorAs(t, err, &catErr)
-			require.Equal(t, ErrCategoryGeneralGMSError, catErr.Category())
+			require.Equal(t, ErrCategoryOutputConversion, catErr.Category())
 		})
 	}
+}
+
+// An error the engine returns while producing a row is not a conversion error.
+func TestQueryFrames_RowErrorIsGMSError(t *testing.T) {
+	input := data.NewFrame("", data.NewField("j", nil, []string{"not json"})).SetRefID("a")
+
+	db := DB{}
+	_, err := db.QueryFrames(t.Context(), &testTracer{}, "b", `SELECT JSON_LENGTH(j) FROM a`, data.Frames{input})
+
+	require.ErrorContains(t, err, "Invalid JSON text")
+	var catErr *ErrorWithCategory
+	require.ErrorAs(t, err, &catErr)
+	require.Equal(t, ErrCategoryGeneralGMSError, catErr.Category())
 }
 
 // The TIMESTAMP range error doesn't read the engine's column context, so only
@@ -468,10 +481,13 @@ func TestConvertToDataFrame_TimestampOutOfRange(t *testing.T) {
 		mysql.NewRow(time.Date(1960, 1, 1, 0, 0, 0, 0, time.UTC)),
 	)
 
-	_, err := convertToDataFrame(mysql.NewEmptyContext(), iter, schema, 0)
+	_, err := convertToDataFrame(mysql.NewEmptyContext(), iter, schema, "b", 0)
 
-	require.ErrorContains(t, err, "row 1, column time: ")
+	require.ErrorContains(t, err, "failed to convert the results of sql expression [b] into a data frame: row 1, column time: ")
 	require.ErrorContains(t, err, "outside of timestamp range")
+	var catErr *ErrorWithCategory
+	require.ErrorAs(t, err, &catErr)
+	require.Equal(t, ErrCategoryOutputConversion, catErr.Category())
 }
 
 type testTracer struct {

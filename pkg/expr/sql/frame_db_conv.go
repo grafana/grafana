@@ -17,7 +17,7 @@ import (
 )
 
 // TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
-func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema, maxOutputCells int64) (*data.Frame, error) {
+func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema, refID string, maxOutputCells int64) (*data.Frame, error) {
 	f := &data.Frame{}
 
 	// Create fields based on the schema
@@ -69,7 +69,7 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 			// of the interface
 			nV, _, err := schema[i].Type.Convert(ctx, val)
 			if err != nil {
-				return nil, outputConvertError(ctx, schema[i], val, rowIdx, err)
+				return nil, MakeOutputConvertError(outputConvertError(ctx, schema[i], val, rowIdx, err), refID)
 			}
 
 			// Run the normalized value through fieldValFromRowVal to normalize
@@ -77,7 +77,7 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 			// values pointers as dataframe expects.
 			fV, err := fieldValFromRowVal(f.Fields[i].Type(), nV)
 			if err != nil {
-				return nil, fmt.Errorf("unexpected type for column %s: %w", schema[i].Name, err)
+				return nil, MakeOutputConvertError(fmt.Errorf("row %d, column %s: %w", rowIdx, schema[i].Name, err), refID)
 			}
 
 			f.Fields[i].Append(fV)

@@ -139,9 +139,9 @@ func TestSQLService(t *testing.T) {
 
 		var sqlErr *sql.ErrorWithCategory
 		require.ErrorAs(t, rsp.Responses["B"].Error, &sqlErr)
-		require.Equal(t, sql.ErrCategoryGeneralGMSError, sqlErr.Category())
+		require.Equal(t, sql.ErrCategoryOutputConversion, sqlErr.Category())
 
-		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryGeneralGMSError))
+		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryOutputConversion))
 	})
 }
 
