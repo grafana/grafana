@@ -2267,6 +2267,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardFieldColor(ref common.ReferenceC
 							Format:      "",
 						},
 					},
+					"reverse": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reverse the order of the colors in a by value color scheme.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"mode"},
 			},
@@ -6073,6 +6080,13 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookFieldColor(ref common.ReferenceCa
 						SchemaProps: spec.SchemaProps{
 							Description: "Some visualizations need to know how to assign a series color from by value color schemes.",
 							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reverse": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reverse the order of the colors in a by value color scheme.",
+							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},

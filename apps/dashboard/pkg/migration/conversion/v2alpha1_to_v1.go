@@ -2190,6 +2190,9 @@ func convertFieldColorToV1(color *dashv2alpha1.DashboardFieldColor) map[string]i
 	if color.SeriesBy != nil {
 		colorMap["seriesBy"] = string(*color.SeriesBy)
 	}
+	if color.Reverse != nil {
+		colorMap["reverse"] = *color.Reverse
+	}
 
 	return colorMap
 }

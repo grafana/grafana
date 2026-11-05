@@ -383,6 +383,7 @@ func convertFieldConfig_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardFieldConfig
 			Mode:       dashv2alpha1.DashboardFieldColorModeId(in.Color.Mode),
 			FixedColor: in.Color.FixedColor,
 			SeriesBy:   (*dashv2alpha1.DashboardFieldColorSeriesByMode)(in.Color.SeriesBy),
+			Reverse:    in.Color.Reverse,
 		}
 	}
 

@@ -488,6 +488,8 @@ export type DashboardFieldColor = {
   gradientColorTo?: string;
   /** The main color scheme mode. */
   mode: string;
+  /** Reverse the order of the colors in a by value color scheme. */
+  reverse?: boolean;
   /** Some visualizations need to know how to assign a series color from by value color schemes. */
   seriesBy?: string;
 };
