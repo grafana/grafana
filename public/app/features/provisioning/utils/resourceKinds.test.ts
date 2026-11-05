@@ -414,14 +414,8 @@ describe('listing a collection kind', () => {
       datasources('loki.datasource.grafana.app', 'v1beta1', ['logs'])
     );
 
-  const prom = {
-    uid: 'prom',
-    title: 'prom',
-    managed: false,
-    readOnly: false,
-    group: 'prometheus.datasource.grafana.app',
-  };
-  const logs = { uid: 'logs', title: 'logs', managed: false, readOnly: false, group: 'loki.datasource.grafana.app' };
+  const prom = { uid: 'prom', title: 'prom', managed: false, group: 'prometheus.datasource.grafana.app' };
+  const logs = { uid: 'logs', title: 'logs', managed: false, group: 'loki.datasource.grafana.app' };
 
   function list(availableResources?: SupportedResource[]) {
     return resourceKindInfos.datasource.list({ dispatch: jest.fn(), availableResources });
@@ -472,21 +466,15 @@ describe('listing a collection kind', () => {
   });
 
   // Classic file provisioning marks a data source read-only and leaves no manager annotation, so
-  // the annotation is not what tells a caller the resource cannot be taken over.
-  it('reports a read-only member, which carries no manager annotation', async () => {
+  // the annotation check alone would offer a resource no write can take over.
+  it('reports a read-only member as managed, keeping it out of migration', async () => {
     server.use(
       discovery([{ name: 'prometheus.datasource.grafana.app', version: 'v0alpha1', resource: 'datasources' }]),
       datasources('prometheus.datasource.grafana.app', 'v0alpha1', ['file-prom'], { readOnly: true })
     );
 
     await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([
-      {
-        uid: 'file-prom',
-        title: 'file-prom',
-        managed: false,
-        readOnly: true,
-        group: 'prometheus.datasource.grafana.app',
-      },
+      { uid: 'file-prom', title: 'file-prom', managed: true, group: 'prometheus.datasource.grafana.app' },
     ]);
   });
 

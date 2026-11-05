@@ -35,13 +35,8 @@ export interface ListedResource {
   title: string;
   /** Immediate parent folder UID; undefined for root or non-folder-scoped kinds. */
   parentUid?: string;
-  /** Already owned by a manager (Git Sync, Terraform, …) — not a migration target. */
+  /** Owned by a manager (Git Sync, Terraform, …), or otherwise not writable — no migration target. */
   managed: boolean;
-  /**
-   * Served read-only, so no write can take it over. Classic file provisioning sets it on a data
-   * source and leaves no manager annotation, so this is the only signal for one.
-   */
-  readOnly?: boolean;
   /**
    * The API group serving this resource, for a kind whose registry group is a collection and so
    * cannot supply it. A job addresses a resource through the group that serves it.
@@ -513,8 +508,9 @@ function toListedResources(items: ApiserverListItem[] | undefined): ListedResour
     .map((item) => ({
       uid: item.metadata?.name ?? '',
       title: item.spec?.title || item.metadata?.name || '',
-      managed: isManaged(item),
-      readOnly: item.spec?.readOnly === true,
+      // Classic file provisioning marks a data source read-only without a manager annotation, so
+      // the annotation alone would offer a resource no write can take over.
+      managed: isManaged(item) || item.spec?.readOnly === true,
     }))
     .filter((row) => row.uid);
 }

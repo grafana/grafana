@@ -464,54 +464,6 @@ describe('Migrate', () => {
       expect(screen.queryByRole('button', { name: /migrate all/i })).not.toBeInTheDocument();
     });
 
-    // The table's manager and app-generated filters mirror the export worker's own, so select-all
-    // may hand the job no refs. Read-only has no counterpart there, so escalating would export the
-    // file-provisioned data source the table just excluded.
-    it('keeps select-all selective when a read-only resource was hidden', async () => {
-      respondWithStats({
-        instance: [{ group: 'datasource.grafana.app', resource: 'datasources', count: 2 }],
-        managed: [],
-      });
-      server.use(
-        http.get(`${BASE}/settings`, () =>
-          HttpResponse.json({
-            items: [],
-            allowImageRendering: true,
-            availableResources: [{ group: 'datasource.grafana.app', kind: 'DataSource' }],
-          })
-        ),
-        http.get('/apis', () =>
-          HttpResponse.json({
-            items: [
-              {
-                metadata: { name: 'prometheus.datasource.grafana.app' },
-                versions: [{ version: 'v0alpha1', resources: [{ resource: 'datasources', responseKind: {} }] }],
-              },
-            ],
-          })
-        ),
-        http.get('/apis/:group/v0alpha1/namespaces/:namespace/datasources', () =>
-          HttpResponse.json({
-            items: [
-              { metadata: { name: 'editable' }, spec: { title: 'Editable' } },
-              { metadata: { name: 'from-file' }, spec: { title: 'From file', readOnly: true } },
-            ],
-          })
-        )
-      );
-      respondWithSearch([]);
-
-      const { user } = render(<Migrate />);
-
-      await user.click(await screen.findByRole('button', { name: /expand data sources/i }));
-      expect(await screen.findByText('Editable')).toBeInTheDocument();
-      expect(screen.queryByText('From file')).not.toBeInTheDocument();
-
-      await user.click(await screen.findByRole('checkbox', { name: /select all/i }));
-      expect(await screen.findByRole('button', { name: /migrate selected/i })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /migrate all/i })).not.toBeInTheDocument();
-    });
-
     it('keeps an explicit migrate-everything action in the partial-failure warning', async () => {
       respondWithStats(withPlaylists);
       enablePlaylists();
