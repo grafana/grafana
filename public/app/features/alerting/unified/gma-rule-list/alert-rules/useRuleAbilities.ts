@@ -6,7 +6,13 @@ import { useFlagAlertEnrichment, useFlagAlertingEnrichmentPerRule } from '@grafa
 import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useEnrichmentAbility } from '../../hooks/abilities/otherAbilities';
 import {
+  buildSilenceAbility,
+  useCanSilenceInFolder,
+  useGrafanaRulesSilenceSupport,
+} from '../../hooks/abilities/rules/ruleAbilities.utils';
+import {
   type Ability,
+  type AsyncAbility,
   EnrichmentAction,
   Granted,
   IsPluginManaged,
@@ -23,7 +29,7 @@ export interface RuleAbilities {
   canPause: Ability;
   canDelete: Ability;
   canDuplicate: Ability;
-  canSilence: Ability;
+  canSilence: AsyncAbility;
   canManageEnrichments: Ability;
 }
 
@@ -62,7 +68,14 @@ function deleteAbility(isProvisioned: boolean, isPlugin: boolean, isManaged: boo
   return canDelete ? Granted : NotSupported;
 }
 
-function getRuleAbilities(rule: RuleMetadata, canCreate: boolean, canManageEnrichmentsAbility: boolean): RuleAbilities {
+function getRuleAbilities(
+  rule: RuleMetadata,
+  canCreate: boolean,
+  canManageEnrichmentsAbility: boolean,
+  silenceLoading: boolean,
+  silenceSupported: boolean,
+  canSilenceInFolder: boolean
+): RuleAbilities {
   const canWrite = getAnnotation(rule, K8sAnnotations.AccessWrite) === 'true';
   const canDelete = getAnnotation(rule, K8sAnnotations.AccessDelete) === 'true';
   const isProvisioned = isK8sEntityProvisioned(rule);
@@ -76,7 +89,7 @@ function getRuleAbilities(rule: RuleMetadata, canCreate: boolean, canManageEnric
     canPause: write,
     canDelete: deleteAbility(isProvisioned, isPlugin, isManaged, canDelete),
     canDuplicate: duplicateAbility(isPlugin, canCreate),
-    canSilence: Granted,
+    canSilence: buildSilenceAbility(silenceLoading, silenceSupported, canSilenceInFolder),
     canManageEnrichments: canManageEnrichmentsAbility ? Granted : NotSupported,
   };
 }
@@ -92,9 +105,28 @@ export function useRuleAbilities(rule: AlertRule): RuleAbilities {
   const canManageEnrichmentsAbility =
     isGranted(enrichmentReadAbility) && alertEnrichmentEnabled && alertingEnrichmentPerRuleEnabled;
 
+  const { silenceSupported, silenceLoading } = useGrafanaRulesSilenceSupport();
+  const canSilenceInFolder = useCanSilenceInFolder(rule.metadata?.namespace);
+
   return useMemo(
-    () => getRuleAbilities(rule, canCreate, canManageEnrichmentsAbility),
+    () =>
+      getRuleAbilities(
+        rule,
+        canCreate,
+        canManageEnrichmentsAbility,
+        silenceLoading,
+        silenceSupported,
+        canSilenceInFolder
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rule.metadata?.annotations, rule.spec?.labels, canCreate, canManageEnrichmentsAbility]
+    [
+      rule.metadata?.annotations,
+      rule.spec?.labels,
+      canCreate,
+      canManageEnrichmentsAbility,
+      silenceLoading,
+      silenceSupported,
+      canSilenceInFolder,
+    ]
   );
 }

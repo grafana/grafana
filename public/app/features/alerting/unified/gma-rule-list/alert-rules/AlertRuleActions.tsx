@@ -135,12 +135,16 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
           onClick={() => setShowEnrichmentDrawer(!showEnrichmentDrawer)}
         />
       )}
-      <Menu.Divider />
-      <Menu.Item
-        label={t('alerting.gma-rule-list.actions.silence', 'Silence notifications')}
-        icon="bell-slash"
-        onClick={() => setShowSilenceDrawer(true)}
-      />
+      {isGranted(abilities.canSilence) && (
+        <>
+          <Menu.Divider />
+          <Menu.Item
+            label={t('alerting.gma-rule-list.actions.silence', 'Silence notifications')}
+            icon="bell-slash"
+            onClick={() => setShowSilenceDrawer(true)}
+          />
+        </>
+      )}
     </Menu>
   );
 

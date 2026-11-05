@@ -2,9 +2,11 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { API_GROUP, API_VERSION, type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { useAlertingAbility } from '../../hooks/useAbilities';
 import { setupMswServer } from '../../mockApi';
+import { grantPermissionsHelper } from '../../test/test-utils';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 import { mockK8sAlertRule } from '../mocks/handlers';
 
@@ -64,6 +66,10 @@ describe('AlertRuleActions', () => {
   beforeEach(() => {
     // Default: org admin has create permission so Duplicate is visible.
     mockUseAlertingAbility.mockReturnValue([true, true]);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('renders Edit and More buttons when canEdit is true', () => {
@@ -176,12 +182,21 @@ describe('AlertRuleActions', () => {
     expect(deleteCalled).toBe(true);
   });
 
-  it('opens the Silence drawer when Silence notifications is clicked', async () => {
+  it('shows and opens the Silence drawer when user has AlertingInstanceCreate permission', async () => {
+    grantPermissionsHelper([AccessControlAction.AlertingInstanceCreate]);
     renderActions(ruleWithPerms());
 
     await userEvent.click(screen.getByRole('button', { name: 'More' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: /Silence notifications/i }));
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('hides Silence when user lacks AlertingInstanceCreate and folder silence permission', async () => {
+    renderActions(ruleWithPerms());
+
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    await screen.findByRole('menuitem', { name: /View/i });
+    expect(screen.queryByRole('menuitem', { name: /Silence/i })).not.toBeInTheDocument();
   });
 });
