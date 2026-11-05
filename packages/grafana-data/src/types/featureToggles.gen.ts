@@ -948,6 +948,11 @@ export interface FeatureToggles {
   */
   pieChartGradientColorScheme?: boolean;
   /**
+  * Enable the option to reverse by value color schemes
+  * @default false
+  */
+  reverseColorScheme?: boolean;
+  /**
   * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
   * @default false
   */

@@ -354,6 +354,8 @@ export const FlagKeys = {
   ReportingFooterSettings: "reportingFooterSettings",
   /** Enables configuration of PDF report settings */
   ReportingHeaderSettings: "reportingHeaderSettings",
+  /** Enable the option to reverse by value color schemes */
+  ReverseColorScheme: "reverseColorScheme",
   /** Enables the new role picker drawer design */
   RolePickerDrawer: "rolePickerDrawer",
   /** Enables Saved queries (query library) RBAC permissions */
@@ -2274,6 +2276,17 @@ export const useFlagReportingFooterSettings = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reportingHeaderSettings", false, options).value;
+};
+
+/**
+ * Enable the option to reverse by value color schemes
+ *
+ * **Details:**
+ * - flag key: `reverseColorScheme`
+ * - default value: `false`
+ */
+export const useFlagReverseColorScheme = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("reverseColorScheme", false, options).value;
 };
 
 /**
