@@ -23,6 +23,10 @@ title: 'Snapshot API'
 
 {{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+{{< admonition type="note" >}}
+This HTTP API is deprecated. Use the [Snapshots HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/snapshots/) instead. To learn how the legacy endpoints map to the new ones, refer to [Migrate from the legacy Snapshot API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/snapshots/#migrate-from-the-legacy-snapshot-api).
+{{< /admonition >}}
+
 ## Create new snapshot
 
 `POST /api/snapshots`
