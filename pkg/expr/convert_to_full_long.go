@@ -457,8 +457,10 @@ type auxColumns struct {
 	// has aux fields, so numeric-only inputs do no extra work.
 	rows []uint64
 	// notices name the fields that were dropped, so users can see why a
-	// column is missing.
+	// column is missing. dropped keeps it to one notice per field, since an
+	// unlabeled field in a wide frame can be dropped from many series.
 	notices []data.Notice
+	dropped map[*data.Field]struct{}
 }
 
 type auxColumn struct {
@@ -508,7 +510,7 @@ func (a *auxColumns) addSeries(fields []*data.Field, series string) int32 {
 	for _, f := range fields {
 		key := strings.ToLower(f.Name)
 		if _, dup := seen[key]; dup {
-			a.drop(fmt.Sprintf("dropped field %q of %s: the series already has a field with that name", f.Name, series))
+			a.dropf(f, "dropped field %q of %s: the series already has a field with that name", f.Name, series)
 			continue
 		}
 
@@ -519,7 +521,7 @@ func (a *auxColumns) addSeries(fields []*data.Field, series string) int32 {
 			a.index[key] = col
 			a.cols = append(a.cols, auxColumn{name: f.Name, typ: typ})
 		} else if a.cols[col].typ != typ {
-			a.drop(fmt.Sprintf("dropped field %q of %s: its type %s does not match type %s of the column from an earlier series", f.Name, series, typ.ItemTypeString(), a.cols[col].typ.ItemTypeString()))
+			a.dropf(f, "dropped field %q of %s: its type %s does not match type %s of the column from an earlier series", f.Name, series, typ.ItemTypeString(), a.cols[col].typ.ItemTypeString())
 			continue
 		}
 		seen[key] = struct{}{}
@@ -529,24 +531,34 @@ func (a *auxColumns) addSeries(fields []*data.Field, series string) int32 {
 	return int32(len(a.series))
 }
 
-func (a *auxColumns) drop(text string) {
-	a.notices = append(a.notices, data.Notice{Severity: data.NoticeSeverityWarning, Text: text})
+func (a *auxColumns) dropf(f *data.Field, format string, args ...any) {
+	if _, done := a.dropped[f]; done {
+		return
+	}
+	if a.dropped == nil {
+		a.dropped = map[*data.Field]struct{}{}
+	}
+	a.dropped[f] = struct{}{}
+	a.notices = append(a.notices, data.Notice{Severity: data.NoticeSeverityWarning, Text: fmt.Sprintf(format, args...)})
 }
 
-// addWideSeries registers the non-numeric fields of a wide frame. In wide
-// frames, a non-numeric field belongs to the series with the same labels. It
-// returns each series' index plus one by its labels, or nil when the frame has
-// no such fields.
+// addWideSeries registers the non-numeric fields of a wide frame. An
+// unlabeled field belongs to the row, like the time field, so it applies to
+// every series. A labeled field applies to the series with the same labels.
+// Each series takes its fields in frame order. It returns each series' index
+// plus one by its labels, or nil when the frame has no such fields.
 func (a *auxColumns) addWideSeries(fields []*data.Field, timeField *data.Field) map[string]int32 {
 	aux := auxFieldsOf(fields, timeField)
 	if len(aux) == 0 {
 		return nil
 	}
-	bySeries := map[string][]*data.Field{}
-	for _, f := range aux {
+	// Positions in aux, by labels. Unlabeled fields have the key "".
+	byLabels := map[string][]int{}
+	for i, f := range aux {
 		key := f.Labels.String()
-		bySeries[key] = append(bySeries[key], f)
+		byLabels[key] = append(byLabels[key], i)
 	}
+	unlabeled := byLabels[""]
 	// Register columns in the order of the value fields, so column order is stable.
 	seriesAux := map[string]int32{}
 	for _, f := range fields {
@@ -557,7 +569,25 @@ func (a *auxColumns) addWideSeries(fields []*data.Field, timeField *data.Field) 
 		if _, done := seriesAux[key]; done {
 			continue
 		}
-		seriesAux[key] = a.addSeries(bySeries[key], fmt.Sprintf("series {%s}", key))
+		var own []int
+		if key != "" {
+			own = byLabels[key]
+		}
+		if len(unlabeled)+len(own) == 0 {
+			seriesAux[key] = 0
+			continue
+		}
+		seriesFields := make([]*data.Field, 0, len(unlabeled)+len(own))
+		for i, j := 0, 0; i < len(unlabeled) || j < len(own); {
+			if j == len(own) || (i < len(unlabeled) && unlabeled[i] < own[j]) {
+				seriesFields = append(seriesFields, aux[unlabeled[i]])
+				i++
+			} else {
+				seriesFields = append(seriesFields, aux[own[j]])
+				j++
+			}
+		}
+		seriesAux[key] = a.addSeries(seriesFields, fmt.Sprintf("series {%s}", key))
 	}
 	return seriesAux
 }

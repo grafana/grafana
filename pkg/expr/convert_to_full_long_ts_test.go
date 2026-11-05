@@ -693,6 +693,74 @@ func TestConvertTimeSeriesToFullLongNonNumericFields(t *testing.T) {
 		require.Equal(t, updatedA[0], updated.At(1))
 	})
 
+	t.Run("wide: an unlabeled field applies to every series", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("note", nil, []string{"x", "y"}),
+				data.NewField("value", data.Labels{"host": "a"}, []float64{1, 2}),
+				data.NewField("value", data.Labels{"host": "b"}, []float64{3, 4}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}),
+		}
+
+		expected := data.NewFrame("",
+			data.NewField("time", nil, []time.Time{times[0], times[0], times[1], times[1]}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(3.0), new(2.0), new(4.0)}),
+			data.NewField(SQLMetricFieldName, nil, []string{"value", "value", "value", "value"}),
+			data.NewField("note", nil, []*string{new("x"), new("x"), new("y"), new("y")}),
+			data.NewField("host", nil, []*string{new("a"), new("b"), new("a"), new("b")}),
+		)
+		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+		}
+	})
+
+	t.Run("wide: a labeled field after an unlabeled field of the same name is dropped with a notice", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times[:1]),
+				data.NewField("note", nil, []string{"x"}),
+				data.NewField("value", data.Labels{"host": "a"}, []float64{1}),
+				data.NewField("note", data.Labels{"host": "a"}, []string{"y"}),
+				data.NewField("value", data.Labels{"host": "b"}, []float64{2}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}),
+		}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		note, idx := output[0].FieldByName("note")
+		require.NotEqual(t, -1, idx)
+		require.Equal(t, []*string{new("x"), new("x")}, []*string{note.At(0).(*string), note.At(1).(*string)})
+		require.Equal(t, []data.Notice{{
+			Severity: data.NoticeSeverityWarning,
+			Text:     `dropped field "note" of series {host=a}: the series already has a field with that name`,
+		}}, output[0].Meta.Notices)
+	})
+
+	t.Run("wide: a dropped unlabeled field gets one notice", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times[:1]),
+				data.NewField("note", nil, []string{"x"}),
+				data.NewField("note", nil, []string{"y"}),
+				data.NewField("value", data.Labels{"host": "a"}, []float64{1}),
+				data.NewField("value", data.Labels{"host": "b"}, []float64{2}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}),
+		}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Equal(t, []data.Notice{{
+			Severity: data.NoticeSeverityWarning,
+			Text:     `dropped field "note" of series {host=a}: the series already has a field with that name`,
+		}}, output[0].Meta.Notices)
+	})
+
 	t.Run("names that clash with generated columns or labels get a field_ prefix", func(t *testing.T) {
 		input := data.Frames{
 			data.NewFrame("",
