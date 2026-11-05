@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
 	infraserverlock "github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -70,6 +71,7 @@ type syncer struct {
 	serverLock          ServerLock
 	restConfigProvider  apiserver.RestConfigProvider
 	pluginsStoreService pluginstore.Store
+	pluginErrors        plugins.ErrorResolver
 	backoffConfig       backoff.Config
 }
 
@@ -87,6 +89,7 @@ func newSyncer(
 	serverLock ServerLock,
 	restConfigProvider apiserver.RestConfigProvider,
 	pluginsStoreService pluginstore.Store,
+	pluginErrors plugins.ErrorResolver,
 ) *syncer {
 	s := syncer{
 		featureToggles:      featureToggles,
@@ -96,6 +99,7 @@ func newSyncer(
 		serverLock:          serverLock,
 		restConfigProvider:  restConfigProvider,
 		pluginsStoreService: pluginsStoreService,
+		pluginErrors:        pluginErrors,
 		backoffConfig:       defaultBackoffConfig,
 	}
 	s.NamedService = services.NewBasicService(nil, s.running, nil).WithName(ServiceName)
@@ -111,6 +115,7 @@ func ProvideSyncer(
 	serverLock ServerLock,
 	restConfigProvider apiserver.RestConfigProvider,
 	pluginsStoreService pluginstore.Store,
+	pluginErrors plugins.ErrorResolver,
 ) (Syncer, error) {
 	cfg, err := cfgProvider.Get(context.Background())
 	if err != nil {
@@ -127,6 +132,7 @@ func ProvideSyncer(
 		serverLock,
 		restConfigProvider,
 		pluginsStoreService,
+		pluginErrors,
 	), nil
 }
 
@@ -307,7 +313,23 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 			Dependencies: pluginDependencyIDs(p),
 		})
 	}
-	return s.installRegistrar.SyncNamespace(ctx, namespace, source, desired)
+	return s.installRegistrar.SyncNamespace(ctx, namespace, source, desired, s.failedPluginIDs(ctx))
+}
+
+// failedPluginIDs returns the plugins that are installed but failed to load.
+// They are missing from the plugin store for this process only, so their
+// install records must not be removed: deleting a record uninstalls the plugin
+// from the stack.
+func (s *syncer) failedPluginIDs(ctx context.Context) []string {
+	if s.pluginErrors == nil {
+		return nil
+	}
+	errs := s.pluginErrors.PluginErrors(ctx)
+	ids := make([]string, 0, len(errs))
+	for _, e := range errs {
+		ids = append(ids, e.PluginID)
+	}
+	return ids
 }
 
 func pluginDependencyIDs(p pluginstore.Plugin) []string {

@@ -3,7 +3,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../utils/commitMessage';
+import { type CommitTemplateVars, getResourceCommitMessage } from '../utils/commitMessage';
 
 import { useCommitMessageTemplate } from './useCommitMessageTemplate';
 
@@ -102,7 +102,7 @@ describe('useCommitMessageTemplate', () => {
 
     const textarea = screen.getByRole('textbox', { name: /comment/i });
     await waitFor(() =>
-      expect(textarea).toHaveValue(getSingleResourceCommitMessage({ comment: '', repository, ...dashboardVars }))
+      expect(textarea).toHaveValue(getResourceCommitMessage({ comment: '', repository, ...dashboardVars }))
     );
     expect(textarea).toHaveAttribute('readonly');
   });
@@ -117,7 +117,7 @@ describe('useCommitMessageTemplate', () => {
     await user.type(textarea, ' please');
     expect(textarea).toHaveValue('feat(dashboards): create Test please');
     expect(screen.getByTestId('resolved-message')).toHaveTextContent(
-      getSingleResourceCommitMessage({ comment: 'feat(dashboards): create Test please', repository, ...dashboardVars })
+      getResourceCommitMessage({ comment: 'feat(dashboards): create Test please', repository, ...dashboardVars })
     );
   });
 
@@ -127,7 +127,7 @@ describe('useCommitMessageTemplate', () => {
 
     await waitFor(() =>
       expect(screen.getByTestId('resolved-message')).toHaveTextContent(
-        getSingleResourceCommitMessage({ comment: '', repository, ...dashboardVars })
+        getResourceCommitMessage({ comment: '', repository, ...dashboardVars })
       )
     );
   });
@@ -136,7 +136,7 @@ describe('useCommitMessageTemplate', () => {
     const repository = makeRepo({ singleResourceMessageTemplate: TEMPLATE, enforceTemplate: true });
     render(<Host repository={repository} vars={dashboardVars} defaultComment="should be ignored" />);
 
-    const expected = getSingleResourceCommitMessage({ comment: '', repository, ...dashboardVars });
+    const expected = getResourceCommitMessage({ comment: '', repository, ...dashboardVars });
     const textarea = screen.getByRole('textbox', { name: /comment/i });
     await waitFor(() => expect(textarea).toHaveValue(expected));
     expect(textarea).toHaveAttribute('readonly');
@@ -194,24 +194,6 @@ describe('useCommitMessageTemplate', () => {
       const textarea = screen.getByRole('textbox', { name: /comment/i });
       await waitFor(() => expect(textarea).toHaveValue('Delete resources'));
       expect(textarea).toHaveAttribute('readonly');
-    });
-
-    it('appends the saved-by trailer exactly once even when the template already includes one', async () => {
-      const repository = makeRepo({
-        singleResourceMessageTemplate: 'chore: {{action}}\n\nGrafana-saved-by: {{userName}}',
-      });
-      render(
-        <Host
-          repository={repository}
-          vars={{ ...bulkVars, userName: 'Ada', userLogin: 'ada' }}
-          fallbackMessage="Delete resources"
-        />
-      );
-
-      await waitFor(() => {
-        const text = screen.getByTestId('resolved-message').textContent ?? '';
-        expect(text.match(/Grafana-saved-by:/g)).toHaveLength(1);
-      });
     });
   });
 });

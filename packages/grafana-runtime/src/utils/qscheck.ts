@@ -33,6 +33,10 @@ function isProblematicAzureAuth(ds: DSSettings): boolean {
   return ds.jsonData.azureCredentials?.authType === 'currentuser';
 }
 
+export function isDatasourceAuthCompatible(ds: DSSettings): boolean {
+  return !isOauthEnabled(ds) && !isProblematicAzureAuth(ds);
+}
+
 type AllowedTypes = {
   types: string[];
 };
@@ -72,11 +76,7 @@ export function isQueryServiceCompatible(datasources: DSSettings[], allowedTypes
   }
 
   for (const ds of datasources) {
-    if (isOauthEnabled(ds)) {
-      return false;
-    }
-
-    if (isProblematicAzureAuth(ds)) {
+    if (!isDatasourceAuthCompatible(ds)) {
       return false;
     }
   }

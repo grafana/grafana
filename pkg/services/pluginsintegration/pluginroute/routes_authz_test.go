@@ -18,6 +18,7 @@ import (
 	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck
 )
 
 type recordingAccessClient struct {
@@ -96,6 +97,7 @@ func TestRouteHandlerDeclaredAccess(t *testing.T) {
 		_, client := serve(t, access, versionRoute, http.MethodGet, "get")
 		require.NotNil(t, client.req)
 		require.Equal(t, []authlib.CheckRequest{{Group: gv.Group, Resource: "reports", Namespace: "org-2", Verb: "list"}}, access.checks)
+		require.True(t, baasbridge.DeclaredAccessChecked(client.ctx), "the plugin is told the route was authorized") //nolint:staticcheck
 	})
 
 	t.Run("HEAD gets the GET operation's check", func(t *testing.T) {
@@ -183,5 +185,6 @@ func TestRouteHandlerDeclaredAccess(t *testing.T) {
 	t.Run("a route without a declared check needs no access client", func(t *testing.T) {
 		_, client := serve(t, nil, testVersionRoute, http.MethodGet, "get")
 		require.NotNil(t, client.req)
+		require.False(t, baasbridge.DeclaredAccessChecked(client.ctx), "the plugin authorizes the route itself") //nolint:staticcheck
 	})
 }

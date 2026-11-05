@@ -2,7 +2,9 @@ import { waitFor } from '@testing-library/react';
 import { createBrowserHistory } from 'history';
 
 import {
+  AppEvents,
   CoreApp,
+  type DataSourceInstanceSettings,
   type GrafanaConfig,
   LiveChannelEventType,
   LoadingState,
@@ -11,7 +13,7 @@ import {
   locationUtil,
   store,
 } from '@grafana/data';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { config, getDataSourceInstanceSettings, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -26,6 +28,7 @@ import {
   SceneDataTransformer,
   LocalValueVariable,
   MultiValueVariable,
+  AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -53,6 +56,7 @@ import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
+import { isEditEntryBlocked } from '../utils/mobileEditDeprecation';
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { createDeferred } from '../utils/test-utils';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
@@ -62,6 +66,7 @@ import { DashboardControls } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { DashboardFiltersOverviewDrawer } from './dashboard-filters-overview/DashboardFiltersOverviewDrawer';
+import { getDashboardMode } from './dashboardModes';
 import { dashboardViews } from './dashboardViewRegistry';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
@@ -70,9 +75,10 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './layout-default/row-actions/RowActions';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
+import { setPendingPlanBuild, takePendingPlanBuild } from './pendingPlanBuild';
 import { DashboardPlanningEvent } from './planningEvents';
 import { allowOrigins, getAllowedOrigins } from './sandbox-consent/sandboxConsent';
-import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
+import { isFullDashboardEditing, type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
 const mockRestoreDashboardVersion = jest.fn();
 
@@ -82,7 +88,6 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   }),
 }));
 jest.mock('../serialization/transformSaveModelToScene');
-jest.mock('../serialization/transformSceneToSaveModel');
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
@@ -290,6 +295,199 @@ describe('DashboardScene', () => {
         expect(scene.state.isEditing).toBeFalsy();
         expect(scene.state.isDirty).toBeFalsy();
         expect(scene.getEditSessionSource()).toBeUndefined();
+      });
+
+      it('opens a plan preview page straight onto a pending building screen, at most once', () => {
+        setPendingPlanBuild({ planId: 'plan-1', planTitle: 'Kafka overview' });
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new?editSource=plan-preview');
+
+        scene.activate();
+
+        expect(scene.state.planning).toEqual({ phase: 'building', planId: 'plan-1', planTitle: 'Kafka overview' });
+        expect(takePendingPlanBuild()).toBeUndefined();
+      });
+
+      it('ignores a pending building screen on a new dashboard that is not a plan preview', () => {
+        setPendingPlanBuild({ planId: 'plan-1', planTitle: 'Kafka overview' });
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new');
+
+        scene.activate();
+
+        expect(scene.state.planning).toBeUndefined();
+        setPendingPlanBuild(undefined);
+      });
+    });
+
+    describe('Mobile edit deprecation', () => {
+      afterEach(() => {
+        setTestFlags({});
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+      });
+
+      function setMobileViewport() {
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      }
+
+      it('auto-enters edit mode normally on /dashboard/new on a mobile viewport when the toggle is off', () => {
+        setMobileViewport();
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new');
+        const replaceSpy = jest.spyOn(locationService, 'replace');
+
+        scene.activate();
+
+        expect(scene.state.isEditing).toBe(true);
+        expect(scene.state.isDirty).toBe(true);
+        expect(replaceSpy).not.toHaveBeenCalled();
+      });
+
+      it('does not enter edit mode and warns instead, when the toggle is on and the viewport is mobile-sized', () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        setMobileViewport();
+        const scene = buildTestScene();
+        scene.activate();
+        const emitSpy = jest.spyOn(appEvents, 'emit');
+
+        scene.onEnterEditMode();
+
+        expect(scene.state.isEditing).toBeFalsy();
+        expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+          'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+        ]);
+      });
+
+      it('enters edit mode normally when the toggle is on but the viewport is not mobile-sized', () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1200 });
+        const scene = buildTestScene();
+        scene.activate();
+
+        scene.onEnterEditMode();
+
+        expect(scene.state.isEditing).toBe(true);
+      });
+
+      it('enters edit mode normally on a mobile viewport when the toggle is off', () => {
+        setMobileViewport();
+        const scene = buildTestScene();
+        scene.activate();
+
+        scene.onEnterEditMode();
+
+        expect(scene.state.isEditing).toBe(true);
+      });
+
+      it('redirects to /dashboards and warns instead of auto-entering edit mode when a new dashboard opens on mobile', () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        setMobileViewport();
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new');
+        const replaceSpy = jest.spyOn(locationService, 'replace');
+        const emitSpy = jest.spyOn(appEvents, 'emit');
+
+        scene.activate();
+
+        expect(scene.state.isEditing).toBeFalsy();
+        expect(scene.state.isDirty).toBeFalsy();
+        expect(replaceSpy).toHaveBeenCalledWith('/dashboards');
+        expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+          'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+        ]);
+      });
+
+      it('blocks switching into edit mode via setDashboardMode when the viewport is mobile-sized', () => {
+        setTestFlags({
+          dashboardNewLayouts: true,
+          'grafana.dashboardPreviewMode': true,
+          'grafana.mobileEditDeprecation': true,
+        });
+        setMobileViewport();
+        const scene = buildTestScene({ meta: { canEdit: true, canSave: true } });
+        scene.activate();
+
+        const result = scene.setDashboardMode('edit');
+
+        expect(result).toBe(false);
+        expect(scene.state.isEditing).toBeFalsy();
+      });
+
+      describe('after the window shrinks mid-session', () => {
+        const modesAndMobile = {
+          dashboardNewLayouts: true,
+          'grafana.dashboardPreviewMode': true,
+          'grafana.mobileEditDeprecation': true,
+        };
+
+        function startEditingOnDesktop() {
+          setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+          const scene = buildTestScene({ meta: { canEdit: true, canSave: true } });
+          scene.activate();
+          scene.onEnterEditMode();
+          return scene;
+        }
+
+        it('keeps an active edit session: re-entering the same mode is not rejected or warned about', () => {
+          const scene = startEditingOnDesktop();
+          const alertSpy = jest.spyOn(appEvents, 'emit');
+          alertSpy.mockClear();
+          setTestFlags(modesAndMobile);
+          setMobileViewport();
+
+          expect(scene.setDashboardMode('edit')).toBe(true);
+          expect(scene.onEnterEditMode()).toBe(true);
+          expect(isEditEntryBlocked(scene)).toBe(false);
+          scene.openFullEditor();
+          expect(isFullDashboardEditing(scene.state)).toBe(true);
+          expect(scene.state.isEditing).toBe(true);
+          expect(alertSpy.mock.calls.filter(([e]) => e === AppEvents.alertWarning)).toEqual([]);
+        });
+
+        it('does not let a Viewing session switch back to Editing', () => {
+          const scene = startEditingOnDesktop();
+          expect(scene.setDashboardMode('view')).toBe(true);
+          expect(scene.state.isEditing).toBe(true);
+          setTestFlags(modesAndMobile);
+          setMobileViewport();
+
+          expect(scene.setDashboardMode('edit')).toBe(false);
+          expect(isEditEntryBlocked(scene)).toBe(true);
+          scene.openFullEditor();
+          expect(isFullDashboardEditing(scene.state)).toBe(false);
+          expect(getDashboardMode(scene.state)).toBe('view');
+        });
+      });
+
+      describe('onOpenSettings', () => {
+        it('warns instead of opening settings when the viewport is mobile-sized', () => {
+          setTestFlags({ 'grafana.mobileEditDeprecation': true });
+          setMobileViewport();
+          const scene = buildTestScene({ meta: { canEdit: true, canSave: true } });
+          scene.activate();
+          const partialSpy = jest.spyOn(locationService, 'partial');
+          const emitSpy = jest.spyOn(appEvents, 'emit');
+
+          scene.onOpenSettings();
+
+          expect(partialSpy).not.toHaveBeenCalled();
+          expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+            'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+          ]);
+        });
+
+        it('still opens settings for a session already in full editing', () => {
+          const scene = buildTestScene({ meta: { canEdit: true, canSave: true } });
+          scene.activate();
+          scene.onEnterEditMode();
+          setTestFlags({ 'grafana.mobileEditDeprecation': true });
+          setMobileViewport();
+          const partialSpy = jest.spyOn(locationService, 'partial');
+
+          scene.onOpenSettings();
+
+          expect(partialSpy).toHaveBeenCalledWith({ editview: 'settings' });
+        });
       });
     });
 
@@ -625,6 +823,38 @@ describe('DashboardScene', () => {
         expect(startSpy).toHaveBeenCalled();
       });
 
+      it('when changes are discarded with a check pending, an old reply cannot mark the restored dashboard dirty', () => {
+        const postMessage = jest.mocked(worker.postMessage);
+        const originalImplementation = postMessage.getMockImplementation()!;
+        postMessage.mockReset().mockImplementation(() => {});
+
+        try {
+          scene.setState({ title: 'Unsaved title' });
+          const oldRequest = postMessage.mock.calls.at(-1)![0];
+
+          scene.discardChangesAndKeepEditing();
+
+          expect(scene.state.title).toBe('hello');
+          expect(scene.state.isDirty).toBe(false);
+
+          worker.onmessage!(
+            new MessageEvent('message', { data: { generation: oldRequest.generation, hasChanges: true } })
+          );
+
+          expect(scene.state.isDirty).toBe(false);
+
+          scene.setState({ title: 'New edit after discard' });
+          const freshRequest = postMessage.mock.calls.at(-1)![0];
+          worker.onmessage!(
+            new MessageEvent('message', { data: { generation: freshRequest.generation, hasChanges: true } })
+          );
+
+          expect(scene.state.isDirty).toBe(true);
+        } finally {
+          postMessage.mockReset().mockImplementation(originalImplementation);
+        }
+      });
+
       it('activateSidebar activates an inactive sidebar and releases it on exit', () => {
         const sidebar = scene.state.sidebar;
         expect(sidebar.isActive).toBe(false);
@@ -665,7 +895,7 @@ describe('DashboardScene', () => {
         scene.setState({ title: 'Updated title' });
         expect(scene.state.isDirty).toBe(true);
 
-        await scene.saveCompleted({} as Dashboard, {
+        await scene.saveCompleted(scene.getSaveModel(), {
           slug: 'slug',
           uid: 'dash-1',
           url: 'sss',
@@ -684,7 +914,7 @@ describe('DashboardScene', () => {
         scene.setState({ uid: '' });
         allowOrigins([{ origin, panelIds: [1] }], 'dashboard');
 
-        await scene.saveCompleted({} as Dashboard, {
+        await scene.saveCompleted(scene.getSaveModel(), {
           slug: 'slug',
           uid: 'new-uid',
           url: 'sss',
@@ -695,9 +925,7 @@ describe('DashboardScene', () => {
         expect(getAllowedOrigins('new-uid', 1)).toEqual([origin]);
       });
 
-      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', async () => {
-        setTestFlags({ dashboardNewLayouts: true });
-
+      it('Should exit edit mode after saving from unsaved changes modal', async () => {
         scene.setState({ meta: { ...scene.state.meta, canSave: true } });
 
         const publishSpy = jest.spyOn(appEvents, 'publish');
@@ -726,13 +954,10 @@ describe('DashboardScene', () => {
         } finally {
           publishSpy.mockRestore();
           hasActualSaveChangesSpy.mockRestore();
-          setTestFlags({});
         }
       });
 
       it('Should not show Save option in unsaved changes modal when user cannot save', () => {
-        setTestFlags({ dashboardNewLayouts: true });
-
         scene.setState({ meta: { ...scene.state.meta, canSave: false } });
 
         const publishSpy = jest.spyOn(appEvents, 'publish');
@@ -751,7 +976,6 @@ describe('DashboardScene', () => {
 
         publishSpy.mockRestore();
         hasActualSaveChangesSpy.mockRestore();
-        setTestFlags({});
       });
 
       it('Should start the detect changes worker', () => {
@@ -1069,16 +1293,33 @@ describe('DashboardScene', () => {
       });
 
       it('Should create and add a new panel to the dashboard', async () => {
-        // addPanel parents the panel through the edit-action bus when new layouts are on, and this scene never activates the sidebar.
-        setTestFlags({ dashboardNewLayouts: false });
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.isEditing).toBe(false);
+        scene.activateSidebar();
 
         const panel = await scene.onCreateNewPanel();
 
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.body.getVizPanels().length).toBe(7);
         expect(panel.state.key).toBe('panel-7');
+      });
+
+      it('does not add the panel to the layout when onEnterEditMode is blocked and never actually enters editing', async () => {
+        // onEnterEditMode can no-op without throwing -- addPanel must check isEditing afterwards
+        // rather than assume entering edit mode always succeeds.
+        // Old layouts, like the sibling test above: the new-layout add path funnels through an
+        // edit-action event that independently no-ops outside editing, which would mask this
+        // specific addPanel() guard.
+        setTestFlags({ dashboardNewLayouts: false });
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.isEditing).toBe(false);
+        const panelCountBefore = scene.state.body.getVizPanels().length;
+        jest.spyOn(scene, 'onEnterEditMode').mockImplementation(() => false);
+
+        await scene.onCreateNewPanel();
+
+        expect(scene.state.isEditing).toBe(false);
+        expect(scene.state.body.getVizPanels().length).toBe(panelCountBefore);
         setTestFlags({});
       });
 
@@ -1090,34 +1331,32 @@ describe('DashboardScene', () => {
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
-        // With new layouts on, a panel with no grid parent throws instead of returning.
-        setTestFlags({ dashboardNewLayouts: false });
         const vizPanel = new VizPanel({
           title: 'Panel Title',
           key: 'panel-5',
           pluginId: 'timeseries',
         });
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-        scene.copyPanel(vizPanel);
-
+        expect(() => scene.copyPanel(vizPanel)).toThrow('Trying to copy a panel that is not DashboardGridItem child');
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
-        setTestFlags({});
+        errorSpy.mockRestore();
       });
 
       it('Should fail to copy a library panel if it does not have a grid item parent', () => {
-        // With new layouts on, a panel with no grid parent throws instead of returning.
-        setTestFlags({ dashboardNewLayouts: false });
         const libVizPanel = new VizPanel({
           title: 'Library Panel',
           pluginId: 'table',
           key: 'panel-4',
           $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
         });
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-        scene.copyPanel(libVizPanel);
-
+        expect(() => scene.copyPanel(libVizPanel)).toThrow(
+          'Trying to copy a panel that is not DashboardGridItem child'
+        );
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
-        setTestFlags({});
+        errorSpy.mockRestore();
       });
 
       it('Should copy a panel', () => {
@@ -1138,51 +1377,84 @@ describe('DashboardScene', () => {
       });
 
       it('Should paste a panel', () => {
-        store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
-        jest.mocked(buildGridItemForPanel).mockReturnValue(
-          new DashboardGridItem({
-            key: 'griditem-9',
-            body: new VizPanel({
-              title: 'Panel A',
-              key: 'panel-9',
-              pluginId: 'table',
-            }),
+        scene.activateSidebar();
+        store.set(
+          LS_PANEL_COPY_KEY,
+          JSON.stringify({
+            elements: {
+              'panel-1': {
+                kind: 'Panel',
+                spec: {
+                  id: 1,
+                  title: 'Panel A',
+                  description: '',
+                  links: [],
+                  data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+                  vizConfig: {
+                    kind: 'VizConfig',
+                    group: 'table',
+                    version: '',
+                    spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+                  },
+                },
+              },
+            },
+            gridItem: {
+              kind: 'GridLayoutItem',
+              spec: {
+                x: 0,
+                y: 0,
+                width: 12,
+                height: 8,
+                element: { kind: 'ElementReference', name: 'panel-1' },
+              },
+            },
           })
         );
 
         scene.pastePanel();
 
-        expect(buildGridItemForPanel).toHaveBeenCalledTimes(1);
-
         const addedPanel = findVizPanelByKey(scene, 'panel-7')!;
         expect(addedPanel).toBeDefined();
+        expect(addedPanel.state.title).toBe('Panel A');
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
       it('Should paste a library viz panel', () => {
-        // New layouts paste through the layout manager, which does not use the buildGridItemForPanel mock.
-        setTestFlags({ dashboardNewLayouts: false });
-        store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
-        jest.mocked(buildGridItemForPanel).mockReturnValue(
-          new DashboardGridItem({
-            body: new VizPanel({
-              title: 'Library Panel',
-              pluginId: 'table',
-              key: 'panel-4',
-              $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
-            }),
+        scene.activateSidebar();
+        store.set(
+          LS_PANEL_COPY_KEY,
+          JSON.stringify({
+            elements: {
+              'library-panel-1': {
+                kind: 'LibraryPanel',
+                spec: {
+                  id: 1,
+                  title: 'Library Panel',
+                  libraryPanel: { uid: 'uid', name: 'libraryPanel' },
+                },
+              },
+            },
+            gridItem: {
+              kind: 'GridLayoutItem',
+              spec: {
+                x: 0,
+                y: 0,
+                width: 12,
+                height: 8,
+                element: { kind: 'ElementReference', name: 'library-panel-1' },
+              },
+            },
           })
         );
 
         scene.pastePanel();
 
-        expect(buildGridItemForPanel).toHaveBeenCalledTimes(1);
-
         const addedPanel = findVizPanelByKey(scene, 'panel-7')!;
         expect(addedPanel).toBeDefined();
         expect(addedPanel.state.key).toBe('panel-7');
+        expect(isLibraryPanel(addedPanel)).toBe(true);
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
-        setTestFlags({});
       });
 
       it('Should do nothing when pasting with an empty clipboard', () => {
@@ -3816,6 +4088,55 @@ describe('DashboardScene', () => {
       expect(variables[0].state).toMatchObject({ query: 'x,y,z' });
     });
 
+    it('should merge a predefined GroupByVariable into the predefined adhoc variable on the same datasource', () => {
+      jest
+        .mocked(getDataSourceInstanceSettings)
+        .mockResolvedValueOnce({ uid: 'prom', meta: {} } as unknown as DataSourceInstanceSettings);
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
+      const origin = toControlSourceRef({ type: 'global' });
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'AdhocVariable' as const,
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: {
+            name: 'globalFilter',
+            baseFilters: [],
+            filters: [],
+            defaultKeys: [],
+            hide: 'dontHide',
+            skipUrlSync: false,
+            allowCustomValue: true,
+            origin,
+          },
+        },
+        {
+          kind: 'GroupByVariable' as const,
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: {
+            name: 'globalGroupBy',
+            current: { text: ['job'], value: ['job'] },
+            options: [],
+            multi: true,
+            hide: 'dontHide',
+            skipUrlSync: false,
+            origin,
+          },
+        },
+      ] as VariableKind[]);
+
+      const variables = sceneGraph.getVariables(scene).state.variables;
+      const filter = variables.find((v) => v.state.name === 'globalFilter');
+      expect(filter).toBeInstanceOf(AdHocFiltersVariable);
+      expect((filter as AdHocFiltersVariable).state.enableGroupBy).toBe(true);
+      expect((filter as AdHocFiltersVariable).state.filters).toEqual([
+        expect.objectContaining({ key: 'job', operator: 'groupBy' }),
+      ]);
+      expect(variables.find((v) => v.state.name === 'globalGroupBy')).toBeUndefined();
+    });
+
     it('should preserve the current selection when refreshing a predefined variable', () => {
       const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
 
@@ -4116,6 +4437,15 @@ describe('DashboardScene', () => {
       expect(pageNav.url).toBe('/subUrl/d/dash-1/dash-1-slug');
     });
 
+    it('links a new dashboard preview to the uid it is proposed under, not to a blank new dashboard', () => {
+      const scene = buildTestScene({ uid: '', meta: { newDashboardUid: 'new-dash' } });
+      const location = { pathname: '/d/new-dash', search: '?pendingChanges=chat-1', hash: '', state: null, key: '' };
+
+      const pageNav = scene.getPageNav(location, {} as NavIndex);
+
+      expect(pageNav.url).toBe('/subUrl/d/new-dash?pendingChanges=chat-1');
+    });
+
     it('prefixes the dashboard parent crumb url with the app sub url when editing a panel', () => {
       const scene = buildTestScene({ meta: { slug: 'dash-1-slug' } });
       const panel = findVizPanelByKey(scene, 'panel-1')!;
@@ -4170,7 +4500,7 @@ describe('DashboardScene', () => {
       const onBuild = jest.fn();
       const onDismiss = jest.fn();
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Kafka overview', onBuild, onDismiss },
+        planning: { phase: 'preview', planId: 'plan-1', planTitle: 'Kafka overview', onBuild, onDismiss },
       });
       const events: unknown[] = [];
       const sub = appEvents.subscribe(DashboardPlanningEvent, (event) => events.push(event.payload));
@@ -4534,10 +4864,11 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
 }
 
 function mockResultsOfDetectChangesWorker({ hasChanges = true }) {
-  jest.mocked(worker.postMessage).mockImplementationOnce(() => {
+  jest.mocked(worker.postMessage).mockImplementationOnce(({ generation }) => {
     worker.onmessage?.({
       data: {
         hasChanges,
+        generation,
       },
     } as unknown as MessageEvent);
   });

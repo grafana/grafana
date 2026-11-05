@@ -9,9 +9,9 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { METRICS_DRILLDOWN_APP_ID } from 'app/core/appPluginIds';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { resolveKubernetesDatasource } from './kubernetesData';
 import { type MetricsDiskScope, type MetricsFilter } from './metricsFilter';
 import { drilldownActiveCta } from './pluginPages';

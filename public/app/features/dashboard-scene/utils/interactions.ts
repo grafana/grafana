@@ -10,7 +10,11 @@ import {
 } from '../serialization/DashboardSceneSerializer';
 
 import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
-import { type DashboardEditSessionTracking, type DashboardModeTrigger } from './dashboardModeTracking';
+import {
+  type DashboardEditPeriodOutcome,
+  type DashboardEditSessionTracking,
+  type DashboardModeTrigger,
+} from './dashboardModeTracking';
 
 let isScenesContextSet = false;
 
@@ -169,15 +173,15 @@ export const DashboardInteractions = {
     reportDashboardInteraction('variable_value_changed', properties);
   },
 
-  // dashboards_global_variables_loaded
+  // dashboards_predefined_variables_loaded
   // after global/folder variables are resolved for a V2 dashboard load
-  globalVariablesLoaded: (properties: {
+  predefinedVariablesLoaded: (properties: {
     global_count: number;
     folder_count: number;
     total_count: number;
     mode?: GlobalVariablesMode;
   }) => {
-    reportDashboardInteraction('global_variables_loaded', properties);
+    reportDashboardInteraction('predefined_variables_loaded', properties);
   },
 
   // dashboards_predefined_variable_toggled
@@ -406,7 +410,7 @@ export const DashboardInteractions = {
   editPeriodEnded: (
     properties: Partial<DashboardEditSessionTracking> & {
       edit_session_id: string;
-      outcome: 'saved' | 'saved_as_copy' | 'discarded';
+      outcome: DashboardEditPeriodOutcome;
       has_unsaved_changes?: boolean;
     }
   ) => {

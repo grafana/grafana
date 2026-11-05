@@ -1,3 +1,4 @@
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { locationService, setPluginComponentHook } from '@grafana/runtime';
@@ -8,6 +9,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { NotebookAnalytics } from '../analytics/main';
 import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
+import { NOTEBOOK_NEW_URL } from '../urls';
 
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
 import { NotebookScenePage } from './NotebookScenePage';
@@ -96,7 +98,7 @@ describe('NotebookScenePage', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
 
-      render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new'] } });
+      render(<NotebookScenePage />, { historyOptions: { initialEntries: [NOTEBOOK_NEW_URL] } });
 
       // The scene rendered, so this is the document rather than the loading or not-found branch.
       expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
@@ -113,7 +115,7 @@ describe('NotebookScenePage', () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
 
       render(<NotebookScenePage />, {
-        historyOptions: { initialEntries: ['/notebooks/new?edit=true&from=now-3h&to=now'] },
+        historyOptions: { initialEntries: [`${NOTEBOOK_NEW_URL}?edit=true&from=now-3h&to=now`] },
       });
       await screen.findByRole('radio', { name: 'Edit' });
 
@@ -137,7 +139,7 @@ describe('NotebookScenePage', () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
 
       render(<NotebookScenePage />, {
-        historyOptions: { initialEntries: ['/notebooks', '/notebooks/new?edit=true'], initialIndex: 1 },
+        historyOptions: { initialEntries: ['/notebooks', `${NOTEBOOK_NEW_URL}?edit=true`], initialIndex: 1 },
       });
       await screen.findByRole('radio', { name: 'Edit' });
 
@@ -157,11 +159,65 @@ describe('NotebookScenePage', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
 
-      render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new'] } });
+      render(<NotebookScenePage />, { historyOptions: { initialEntries: [NOTEBOOK_NEW_URL] } });
       await screen.findByRole('radio', { name: 'Edit' });
 
       expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledTimes(1);
       expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledWith('notebook_list');
+    });
+
+    it('reports the command palette as the launcher and removes it from the saved URL', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+
+      render(<NotebookScenePage />, {
+        historyOptions: { initialEntries: [`${NOTEBOOK_NEW_URL}?edit=true&notebookSource=command_palette`] },
+      });
+      await screen.findByRole('radio', { name: 'Edit' });
+
+      expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledWith('command_palette');
+
+      await act(async () => {
+        getNotebookPageStateManager().state.scene!.setState({ uid: 'nb-new' });
+      });
+      await waitFor(() => expect(locationService.getLocation().pathname).toBe('/notebooks/nb-new'));
+      expect(new URLSearchParams(locationService.getLocation().search).has('notebookSource')).toBe(false);
+    });
+
+    it.each(['view', 'edit'])('starts a fresh notebook from an existing notebook in %s mode', async (mode) => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const stateManager = getNotebookPageStateManager();
+      const existingScene = new NotebookScene({
+        title: 'Existing notebook',
+        uid: 'nb-existing',
+        body: new NotebookLayoutManager({ cells: [] }),
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        timePicker: new SceneTimePicker({}),
+        refreshPicker: new SceneRefreshPicker({}),
+      });
+      jest.spyOn(stateManager, 'loadNotebook').mockImplementation(async () => {
+        stateManager.setState({ scene: existingScene, isLoading: false });
+      });
+
+      render(
+        <Routes>
+          <Route path={NOTEBOOK_NEW_URL} element={<NotebookScenePage />} />
+          <Route path="/notebooks/:uid" element={<NotebookScenePage />} />
+        </Routes>,
+        { historyOptions: { initialEntries: [`/notebooks/nb-existing${mode === 'edit' ? '?edit=true' : ''}`] } }
+      );
+      await screen.findByRole('button', { name: 'Copy link' });
+      expect(stateManager.state.scene).toBe(existingScene);
+
+      await act(async () => {
+        locationService.push(`${NOTEBOOK_NEW_URL}?edit=true&notebookSource=command_palette`);
+      });
+
+      await waitFor(() => expect(locationService.getLocation().pathname).toBe(NOTEBOOK_NEW_URL));
+      expect(stateManager.state.scene?.state.uid).toBeUndefined();
+      expect(screen.getByRole('radio', { name: 'Edit' })).toBeChecked();
+      expect(NotebookAnalytics.newStarted).toHaveBeenCalledWith('command_palette');
     });
 
     // The flag gate is what makes this route real, and a page that renders not-found started nothing.
@@ -169,7 +225,7 @@ describe('NotebookScenePage', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       setTestFlags({ [NOTEBOOKS_FLAG]: false });
 
-      render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new'] } });
+      render(<NotebookScenePage />, { historyOptions: { initialEntries: [NOTEBOOK_NEW_URL] } });
       await screen.findByText('Page not found');
 
       expect(jest.mocked(NotebookAnalytics.newStarted)).not.toHaveBeenCalled();
@@ -179,7 +235,7 @@ describe('NotebookScenePage', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
 
-      render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new?edit=true'] } });
+      render(<NotebookScenePage />, { historyOptions: { initialEntries: [`${NOTEBOOK_NEW_URL}?edit=true`] } });
 
       expect(await screen.findByRole('radio', { name: 'Edit' })).toBeChecked();
     });
@@ -190,7 +246,7 @@ describe('NotebookScenePage', () => {
       jest.restoreAllMocks();
     });
 
-    function buildScene(hideTimeControls = false) {
+    function buildScene() {
       return new NotebookScene({
         title: 'Checkout latency investigation',
         uid: 'nb-1',
@@ -198,7 +254,6 @@ describe('NotebookScenePage', () => {
         $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
         timePicker: new SceneTimePicker({}),
         refreshPicker: new SceneRefreshPicker({}),
-        hideTimeControls,
       });
     }
 
@@ -263,13 +318,56 @@ describe('NotebookScenePage', () => {
     // Edit mode syncs through the scene, so the page has to mount UrlSyncContextProvider for every
     // notebook. It used to skip it when the time controls were hidden, on the grounds that such a
     // notebook had no url state — which stopped being true once edit mode moved onto the scene.
-    it('still honours the url for a notebook with the time controls hidden', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-      const scene = buildScene(true);
+    describe('where the reader came from', () => {
+      function renderRoute(url: string) {
+        setTestFlags({ [NOTEBOOKS_FLAG]: true });
+        const loadNotebook = jest.spyOn(getNotebookPageStateManager(), 'loadNotebook').mockResolvedValue();
 
-      await renderLoaded(scene, '/notebooks/nb-1?edit=true');
+        render(
+          <Routes>
+            <Route path="/notebooks/:uid" element={<NotebookScenePage />} />
+          </Routes>,
+          { historyOptions: { initialEntries: [url] } }
+        );
 
-      expect(scene.state.isEditing).toBe(true);
+        return loadNotebook;
+      }
+
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      it('hands the source the link carried to the load', async () => {
+        const loadNotebook = renderRoute('/notebooks/nb-1?source=notebook_list');
+
+        await waitFor(() => expect(loadNotebook).toHaveBeenCalledWith('nb-1', 'notebook_list'));
+      });
+
+      it('loads as a direct visit when the link said nothing', async () => {
+        const loadNotebook = renderRoute('/notebooks/nb-1');
+
+        await waitFor(() => expect(loadNotebook).toHaveBeenCalledWith('nb-1', 'direct'));
+      });
+
+      // The param is only there to be read: a copied address bar must not carry it to somebody else.
+      it('takes the param off the url, keeping the rest, once it has been read', async () => {
+        jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+        const loadNotebook = renderRoute('/notebooks/nb-1?edit=true&source=explore');
+
+        await waitFor(() => expect(loadNotebook).toHaveBeenCalledWith('nb-1', 'explore'));
+        await waitFor(() => expect(locationService.getLocation().search).not.toContain('source'));
+        expect(locationService.getLocation().search).toContain('edit=true');
+      });
+
+      // Removing the param changes the url, which must not load the notebook a second time as a direct visit.
+      it('loads the notebook once, with the source the link carried', async () => {
+        const loadNotebook = renderRoute('/notebooks/nb-1?source=notebook_list');
+
+        await waitFor(() => expect(locationService.getLocation().search).not.toContain('source'));
+
+        expect(loadNotebook).toHaveBeenCalledTimes(1);
+        expect(loadNotebook).toHaveBeenCalledWith('nb-1', 'notebook_list');
+      });
     });
   });
 });

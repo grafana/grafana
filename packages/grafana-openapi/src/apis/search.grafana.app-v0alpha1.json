@@ -7,7 +7,7 @@
     "/global/search": {
       "post": {
         "tags": ["Search"],
-        "description": "Search resources of several types in a namespace: `dashboard.grafana.app/dashboards`, `folder.grafana.app/folders`. Each result names its own group, resource and kind, and is authorized on its own.\n\nOnly the fields every resource has can be used, plus:\n\n- `groupResource` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type.\n- `created` and `updated`: also filter (including range) and sort, so results of several types can be ordered by time.\n- `folderTree`: filter with `In` only. Matches what is in the named folders or in any folder below them, not the named folders themselves. `general` names the root folder and matches everything; an empty value is rejected.\n\nResults are eventually consistent: just after a change, a search can still return what was there before, and just after a folder moves, a `folderTree` search can still find what was below it in its old place.",
+        "description": "Search resources of several types in a namespace: `dashboard.grafana.app/dashboards`, `folder.grafana.app/folders`, `dashboard.grafana.app/notebooks`, `playlist.grafana.app/playlists`. Each result names its own group, resource and kind, and is authorized on its own. `folderPaths` gives the path of each folder the results are in, listing ancestors before descendants and ending with the containing folder. Like the folder API's parents, the nearest unreadable folder or folder missing from the global index appears first, by name only and marked `detached`. Its ancestors are omitted. `access` in the query, such as `[\"update\", \"delete\", \"set_permissions\"]`, adds to each result whether the caller may do each verb to it; a verb that could not be checked is left out.\n\nOnly the fields every resource has can be used, plus:\n\n- `groupResource` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type. Its facet lists every type the search covers, with a count of 0 for those without results, after the `facetLimit` terms.\n- `folderTree`: filter with `In` only. Matches what is in the named folders or in any folder below them, not the named folders themselves. `general` names the root folder and matches everything; an empty value is rejected.\n\nResults are eventually consistent: just after a change, a search can still return what was there before, and just after a folder moves, a `folderTree` search can still find what was below it in its old place.\n\nA namespace's index is opened when it is first searched, and closed again after some hours without a search. The first search after that can wait a few seconds, or get 503 while the index is still being built; retry it shortly. It can also miss changes made while the index was closed, until the index catches up with storage.",
         "operationId": "listGlobalSearchV0alpha1",
         "parameters": [],
         "requestBody": {
@@ -15,7 +15,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SearchQuery"
+                "$ref": "#/components/schemas/GlobalSearchQuery"
               },
               "example": {
                 "kind": "SearchQuery",
@@ -170,6 +170,50 @@
           }
         }
       },
+      "FolderPathItem": {
+        "description": "FolderPathItem is one folder of a folder path. Folder paths list ancestors before descendants, ending with the containing folder. Like the folder API's parents, the nearest unreadable folder or folder missing from the global index appears first, by name only and marked detached. Its ancestors are omitted.",
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "detached": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "GlobalResultItem": {
+        "description": "GlobalResultItem is one global search hit.",
+        "type": "object",
+        "required": ["resource"],
+        "properties": {
+          "access": {
+            "description": "Access says, for each verb the query's access names, whether the caller may do it to this item. A verb that could not be checked is left out, so a missing verb means unknown rather than no. It reflects permissions only: an item can still refuse an edit, for example when it is provisioned (see the manager fields).",
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "fields": {
+            "description": "Fields holds the JSON values for the requested (or default) fields. Array-typed fields are returned as JSON arrays. Absent fields are omitted.",
+            "$ref": "#/components/schemas/Unstructured"
+          },
+          "resource": {
+            "default": {},
+            "$ref": "#/components/schemas/ResourceRef"
+          },
+          "score": {
+            "description": "Score is present only when a text query was evaluated. A pointer so a real score of 0 is still distinguishable from \"no text query\" (absent).",
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "GlobalResultsMetadata": {
         "description": "GlobalResultsMetadata carries the pagination token, the total hit count, and the types the search left out.",
         "type": "object",
@@ -198,6 +242,67 @@
           }
         }
       },
+      "GlobalSearchQuery": {
+        "description": "GlobalSearchQuery is the request body for POST .../namespaces/{namespace}/global/search: a SearchQuery, and what only the search across resource types offers.",
+        "type": "object",
+        "properties": {
+          "access": {
+            "description": "Access names verbs to check for each returned item against the caller: update, delete and set_permissions. Each item then says, in its access, whether the caller may do them. Only the returned page is checked.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "continue": {
+            "description": "Continue is an opaque pagination token from a previous page.",
+            "type": "string"
+          },
+          "facetLimit": {
+            "description": "FacetLimit caps the number of terms returned per facet. It applies to every entry in Facets. Zero uses the server default; values above the server cap are clamped.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "facets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "labelSelector": {
+            "description": "LabelSelector filters on metadata.labels, ANDed with Where.",
+            "$ref": "#/components/schemas/LabelSelector"
+          },
+          "limit": {
+            "description": "Limit is the page size. Zero uses the default; values above the maximum are clamped.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortField"
+            }
+          },
+          "where": {
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
+            "$ref": "#/components/schemas/WhereNode"
+          }
+        }
+      },
       "GlobalSearchResults": {
         "description": "GlobalSearchResults is the response body for POST .../namespaces/{namespace}/global/search. Each item names its own resource type.",
         "type": "object",
@@ -217,10 +322,20 @@
               }
             }
           },
+          "folderPaths": {
+            "description": "FolderPaths holds the path of each folder the items are in, keyed by the folder's name as items return it in the folder field. Only items that return the folder field are covered, and the root folder has no path. Paths are display data: they are left out when they cannot be found.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/FolderPathItem"
+              }
+            }
+          },
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ResultItem"
+              "$ref": "#/components/schemas/GlobalResultItem"
             }
           },
           "kind": {
@@ -320,7 +435,7 @@
             "default": ""
           },
           "resources": {
-            "description": "Resources is required for global hybrid search and rejected by per-resource routes. It must be nonempty and contain unique group/resource pairs.",
+            "description": "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HybridSearchResource"
@@ -387,6 +502,14 @@
             "type": "number",
             "format": "double",
             "default": 0
+          },
+          "tags": {
+            "description": "Tags from the lexical index. Omitted when unavailable.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "title": {
             "type": "string",
@@ -482,80 +605,6 @@
           "resource": {
             "type": "string",
             "default": ""
-          }
-        }
-      },
-      "ResultItem": {
-        "description": "ResultItem is one search or trash hit. The item shape is identical on both endpoints; only which fields the Fields map can carry differs.",
-        "type": "object",
-        "required": ["resource"],
-        "properties": {
-          "fields": {
-            "description": "Fields holds the JSON values for the requested (or default) fields. Array-typed fields are returned as JSON arrays. Absent fields are omitted.",
-            "$ref": "#/components/schemas/Unstructured"
-          },
-          "resource": {
-            "default": {},
-            "$ref": "#/components/schemas/ResourceRef"
-          },
-          "score": {
-            "description": "Score is present only when a text query was evaluated. A pointer so a real score of 0 is still distinguishable from \"no text query\" (absent).",
-            "type": "number",
-            "format": "double"
-          }
-        }
-      },
-      "SearchQuery": {
-        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "continue": {
-            "description": "Continue is an opaque pagination token from a previous page.",
-            "type": "string"
-          },
-          "facetLimit": {
-            "description": "FacetLimit caps the number of terms returned per facet. It applies to every entry in Facets. Zero uses the server default; values above the server cap are clamped.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "facets": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "fields": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "labelSelector": {
-            "description": "LabelSelector filters on metadata.labels, ANDed with Where.",
-            "$ref": "#/components/schemas/LabelSelector"
-          },
-          "limit": {
-            "description": "Limit is the page size. Zero uses the default; values above the maximum are clamped.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "sort": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SortField"
-            }
-          },
-          "where": {
-            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
-            "$ref": "#/components/schemas/WhereNode"
           }
         }
       },

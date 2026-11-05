@@ -29,12 +29,34 @@ message LegacyCheckRequest {
   // Evaluate without resolving scope attributes or inherited resource scopes,
   // corresponding to AccessControl.WithoutResolvers.
   bool skip_scope_resolution = 8;
+  // Present only for embedded instance-global evaluation. Namespace still selects the tenant.
+  LegacyGlobalEvaluation global_evaluation = 9;
+  // Trusted embedded assertion. Mutually exclusive with subject, global_evaluation and restriction.
+  LegacyInternalIdentity internal_identity = 10;
+  // Trusted caller's effective action limit, applied to both org and global checks.
+  // Absent is unrestricted; present with no actions denies all.
+  LegacyActionRestriction restriction = 11;
+}
+
+message LegacyActionRestriction {
+  // Action keys from the caller's effective permission map after authentication filtering.
+  // Include all effective actions, not only those in the check expression.
+  // The server still verifies grants and scopes.
+  repeated string actions = 1;
 }
 
 message LegacyCheckResponse {
   bool allowed = 1;
   // Populated when evaluation failed. Failures always deny.
   string error = 2;
+  // Classifies evaluation failures without relying on the diagnostic error text.
+  // Servers also populate error so older clients continue to deny on failure.
+  LegacyCheckErrorCode error_code = 3;
+}
+
+enum LegacyCheckErrorCode {
+  LEGACY_CHECK_ERROR_CODE_UNSPECIFIED = 0;
+  LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND = 1;
 }
 
 message LegacyExpression {
@@ -108,4 +130,28 @@ message LegacyUserPermission {
 message LegacyGetUserPermissionsResponse {
   // Preserve duplicates. Clients publish results only after successful EOF.
   repeated LegacyUserPermission permissions = 1;
+}
+
+message LegacyGlobalEvaluation {
+  // Preserve the requester's org for resolver callbacks: 0 (global) or -1 (NoOrgID).
+  // Both evaluate permissions from org 0, never from the transport namespace's org.
+  int64 requester_org_id = 1;
+}
+
+message LegacyInternalIdentity {
+  // Selects server-owned grants; the profile name itself is not authentication.
+  string profile = 1;
+  // Exact background grants, accepted only by the embedded server.
+  // Can not be combined with profile; an empty permission map grants nothing.
+  LegacyBackgroundIdentity background = 2;
+}
+
+message LegacyBackgroundIdentity {
+  string name = 1;
+  string org_role = 2;
+  map<string, LegacyPermissionScopes> permissions = 3;
+}
+
+message LegacyPermissionScopes {
+  repeated string scopes = 1;
 }

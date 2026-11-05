@@ -96,11 +96,11 @@ jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   getDatasourcePluginMeta: jest.fn(),
   refetchDatasourcePluginMetas: jest.fn(() => Promise.resolve()),
-  logPluginMetaError: jest.fn(),
+  syncDatasourcePluginMetas: jest.fn(),
   logPluginMetaWarning: jest.fn(),
 }));
 
-const { getDatasourcePluginMeta, refetchDatasourcePluginMetas, logPluginMetaError, logPluginMetaWarning } =
+const { getDatasourcePluginMeta, refetchDatasourcePluginMetas, syncDatasourcePluginMetas, logPluginMetaWarning } =
   jest.requireMock('@grafana/runtime/internal');
 
 const getBackendSrvGetMock = jest.fn();
@@ -647,7 +647,23 @@ describe('datasource_srv', () => {
         expect(ds).toBe(runtimeDataSource);
       });
 
-      it('should forward the fetched settings to refetchDatasourcePluginMetas to avoid a second /api/frontend/settings request', async () => {
+      it('should reuse an already-fetched payload without a request', async () => {
+        const settings = {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          datasources: { ...dataSourceInit } as any,
+          defaultDatasource: 'aaa',
+        };
+        getBackendSrvGetMock.mockReset();
+        syncDatasourcePluginMetas.mockClear();
+
+        await dataSourceSrv.reload(settings);
+
+        expect(getBackendSrvGetMock).not.toHaveBeenCalled();
+        expect(syncDatasourcePluginMetas).toHaveBeenCalledWith(settings);
+        expect(dataSourceSrv.getInstanceSettings('mmm')?.name).toBe('mmm');
+      });
+
+      it('should sync the plugin metas from the fetched settings without refetching them', async () => {
         const settings = {
           datasources: { ...dataSourceInit },
           defaultDatasource: 'aaa',
@@ -655,11 +671,13 @@ describe('datasource_srv', () => {
         getBackendSrvGetMock.mockReset();
         getBackendSrvGetMock.mockReturnValueOnce(settings);
         refetchDatasourcePluginMetas.mockClear();
+        syncDatasourcePluginMetas.mockClear();
 
         await dataSourceSrv.reload();
 
         expect(getBackendSrvGetMock).toHaveBeenCalledTimes(1);
-        expect(refetchDatasourcePluginMetas).toHaveBeenCalledWith(settings);
+        expect(syncDatasourcePluginMetas).toHaveBeenCalledWith(settings);
+        expect(refetchDatasourcePluginMetas).not.toHaveBeenCalled();
       });
 
       it('should sync the new async instance-settings cache from the same fetched payload', async () => {
@@ -681,21 +699,6 @@ describe('datasource_srv', () => {
         expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
         // ...and the sync added no second /api/frontend/settings request.
         expect(getBackendSrvGetMock).toHaveBeenCalledTimes(1);
-      });
-
-      it('should log via logPluginMetaError when refetchDatasourcePluginMetas rejects', async () => {
-        getBackendSrvGetMock.mockReturnValueOnce({
-          datasources: { ...dataSourceInit },
-          defaultDatasource: 'aaa',
-        });
-        const error = new Error('boom');
-        refetchDatasourcePluginMetas.mockReturnValueOnce(Promise.reject(error));
-        logPluginMetaError.mockClear();
-
-        await dataSourceSrv.reload();
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        expect(logPluginMetaError).toHaveBeenCalledWith('Failed to refresh datasource plugin metadata', error);
       });
     });
 
@@ -986,7 +989,6 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
         filter({
           uid: ds.uid,
           type: ds.type,
-          apiVersion: ds.apiVersion,
           name: ds.name,
           meta: ds.meta,
         }),

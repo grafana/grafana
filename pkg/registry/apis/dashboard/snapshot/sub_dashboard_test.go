@@ -57,12 +57,11 @@ func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
 			require.NoError(t, err)
 			snap := newBlobTestSnapshot()
 			snap.Namespace = namespace
-			snap.Spec.Dashboard = nil
-			snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
+			snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: new("blob-1")}
 			// Exercise blob credentials independently of the remote metadata lookup
 			// covered by TestPublicSnapshotMetadataWithStandaloneRemoteClient.
 			getter := grafanarest.NewMockStorage(t)
-			getter.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
+			getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*snap}}, nil)
 			r, err := NewDashboardREST(getter, client)
 			require.NoError(t, err)
 			ctx := k8srequest.WithNamespace(t.Context(), "default")

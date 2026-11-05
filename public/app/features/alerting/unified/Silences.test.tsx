@@ -14,6 +14,10 @@ import {
   MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
 } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
+import {
+  getAlertRuleHandler,
+  mockK8sAlertRule,
+} from 'app/features/alerting/unified/mocks/server/handlers/k8s/alertRules.k8s';
 import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/server/handlers/silences';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { MatcherOperator, SilenceState } from 'app/plugins/datasource/alertmanager/types';
@@ -292,6 +296,12 @@ describe('Silence create/edit', () => {
     setUserLogged(true);
   });
 
+  it('labels the matchers as matching labels when the silence is not scoped to a rule', async () => {
+    renderSilences(baseUrlPath);
+    expect(await screen.findByText(/^matching labels/i)).toBeInTheDocument();
+    expect(screen.queryByText(/refine affected alerts/i)).not.toBeInTheDocument();
+  });
+
   it('Should not render createdBy if user is logged in and has a name', async () => {
     renderSilences(baseUrlPath);
     await waitFor(() => expect(ui.editor.createdBy.query()).not.toBeInTheDocument());
@@ -414,8 +424,31 @@ describe('Silence create/edit', () => {
     expect(ui.editor.comment.get()).toHaveValue('Happy path silence');
   });
 
+  it(
+    'includes the silence id when saving an existing silence',
+    async () => {
+      const { user } = renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING}/edit`);
+      await waitFor(() => expect(ui.editor.matcherName.get()).toHaveValue('foo'));
+
+      const postRequest = waitForServerRequest(silenceCreateHandler());
+      await user.click(ui.editor.submit.get());
+
+      const createSilenceRequest = await postRequest;
+      const requestBody = await createSilenceRequest.clone().json();
+      expect(requestBody).toMatchObject({
+        id: MOCK_SILENCE_ID_EXISTING,
+        matchers: [{ isEqual: true, isRegex: false, name: 'foo', value: 'bar' }],
+      });
+    },
+    TEST_TIMEOUT
+  );
+
   it('populates form with existing silence information that has __alert_rule_uid__', async () => {
-    mockAlertRuleApi(server).getAlertRule(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, grafanaRulerRule);
+    server.use(
+      getAlertRuleHandler([
+        mockK8sAlertRule({ uid: MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, title: grafanaRulerRule.grafana_alert.title }),
+      ])
+    );
     renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}/edit`);
     expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(grafanaRulerRule.grafana_alert.title);
   });

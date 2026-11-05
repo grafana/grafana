@@ -19,6 +19,12 @@ export function addPanelsOnLoadBehavior(scene: DashboardScene) {
 
     const model = new DashboardModel(dto.dashboard);
 
+    // addPanel silently no-ops when edit mode is blocked (e.g. on mobile). call it immediately so the
+    // user gets the warning and skips the panels rather than reporting them as applied
+    if (model.panels.length > 0 && !scene.state.isEditing && !scene.onEnterEditMode()) {
+      return;
+    }
+
     for (const panel of model.panels) {
       const gridItem = buildGridItemForPanel(panel);
       scene.addPanel(gridItem.state.body);

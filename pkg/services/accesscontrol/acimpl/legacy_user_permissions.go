@@ -33,6 +33,14 @@ func GetLegacyUserPermissions(ctx context.Context, client legacyclient.Service, 
 	if client == nil {
 		return nil, fmt.Errorf("embedded legacy AuthZ client is not configured")
 	}
+	req, err := legacyUserPermissionsRequest(usr, options, cfg)
+	if err != nil {
+		return nil, err
+	}
+	return loadLegacyUserPermissions(ctx, client, req)
+}
+
+func legacyUserPermissionsRequest(usr identity.Requester, options ac.Options, cfg *setting.Cfg) (legacyclient.LegacyGetUserPermissionsRequest, error) {
 	originalNamespace, cacheKey := usr.GetNamespace(), usr.GetCacheKey()
 	namespace := originalNamespace
 	global := usr.GetOrgID() == ac.GlobalOrgID
@@ -55,7 +63,7 @@ func GetLegacyUserPermissions(ctx context.Context, client legacyclient.Service, 
 	}
 	ns, err := authlib.ParseNamespace(namespace)
 	if err != nil || ns.OrgID < 1 || (!global && !noOrgMembership && ns.OrgID != usr.GetOrgID()) {
-		return nil, fmt.Errorf("legacy permission namespace does not match evaluation organization")
+		return legacyclient.LegacyGetUserPermissionsRequest{}, fmt.Errorf("legacy permission namespace does not match evaluation organization")
 	}
 	var internalID *int64
 	if id, err := usr.GetInternalID(); err == nil {
@@ -65,7 +73,7 @@ func GetLegacyUserPermissions(ctx context.Context, client legacyclient.Service, 
 	if cfg.IDUseExternalGroupsForGroupsClaim {
 		groups = usr.GetExternalGroups()
 	}
-	response, err := client.LegacyGetUserPermissions(ctx, legacypermissions.LegacyPermissionCaller(namespace), legacyclient.LegacyGetUserPermissionsRequest{
+	return legacyclient.LegacyGetUserPermissionsRequest{
 		Namespace:        namespace,
 		GlobalOrg:        global,
 		NoOrgMembership:  noOrgMembership,
@@ -77,11 +85,18 @@ func GetLegacyUserPermissions(ctx context.Context, client legacyclient.Service, 
 			TeamIDs: slices.Clone(usr.GetTeams()), Groups: slices.Clone(groups),
 			CacheKey: &cacheKey, RequesterNamespace: &originalNamespace,
 		},
-	})
+	}, nil
+}
+
+func loadLegacyUserPermissions(ctx context.Context, client legacyclient.Service, req legacyclient.LegacyGetUserPermissionsRequest) ([]ac.Permission, error) {
+	if client == nil {
+		return nil, fmt.Errorf("embedded legacy AuthZ client is not configured")
+	}
+	response, err := client.LegacyGetUserPermissions(ctx, legacypermissions.LegacyPermissionCaller(req.Namespace), req)
 	if err != nil {
 		return nil, errors.Join(ctx.Err(), err)
 	}
-	permissions = make([]ac.Permission, len(response.Permissions))
+	permissions := make([]ac.Permission, len(response.Permissions))
 	for i, p := range response.Permissions {
 		permissions[i] = ac.Permission{Action: p.Action, Scope: p.Scope}
 	}

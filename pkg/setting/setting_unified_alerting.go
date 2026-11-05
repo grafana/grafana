@@ -41,6 +41,10 @@ const (
 	}
 }
 `
+	// DefaultDeletedRuleRetention is exported so callers that construct a RuleStore outside the
+	// normal ini-driven Cfg path (e.g. a standalone folder apiserver's cascade delete) can default
+	// to the same retention as a standard deployment instead of duplicating the literal.
+	DefaultDeletedRuleRetention             = 30 * 24 * time.Hour
 	alertingDefaultInitializationTimeout    = 30 * time.Second
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	remoteAlertmanagerDefaultTimeout        = 30 * time.Second
@@ -211,11 +215,10 @@ type RecordingRuleSettings struct {
 // RemoteAlertmanagerSettings contains the configuration needed
 // to disable the internal Alertmanager and use an external one instead.
 type RemoteAlertmanagerSettings struct {
-	URL          string
-	TenantID     string
-	Password     string
-	SyncInterval time.Duration
-	Timeout      time.Duration
+	URL      string
+	TenantID string
+	Password string
+	Timeout  time.Duration
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -286,6 +289,13 @@ func (u *UnifiedAlertingStateHistorySettings) QueriesServedByLoki() bool {
 		return isStateHistoryBackend(u.MultiPrimary, stateHistoryBackendLoki)
 	}
 	return isStateHistoryBackend(u.Backend, stateHistoryBackendLoki)
+}
+
+// HasAlertStateMetrics returns true if a Prometheus data source is set for the alert state metrics.
+// The alert activity page reads them from there. The backend setting is not checked on purpose: on
+// Grafana Cloud a separate ruler service writes these metrics, while this Grafana only writes to Loki.
+func (u *UnifiedAlertingStateHistorySettings) HasAlertStateMetrics() bool {
+	return u.Enabled && u.PrometheusTargetDatasourceUID != ""
 }
 
 // isStateHistoryBackend normalizes the configured value the same way historian.ParseBackendType does.
@@ -533,10 +543,6 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
 		Password: remoteAlertmanager.Key("password").MustString(""),
 	}
-	uaCfgRemoteAM.SyncInterval, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "sync_interval", (schedulerDefaultAdminConfigPollInterval).String()))
-	if err != nil {
-		return err
-	}
 	uaCfgRemoteAM.Timeout, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "timeout", (remoteAlertmanagerDefaultTimeout).String()))
 	if err != nil {
 		return err
@@ -672,7 +678,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		return fmt.Errorf("setting 'rule_status_sync_interval' is invalid, only a positive duration is allowed")
 	}
 
-	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(30 * 24 * time.Hour)
+	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(DefaultDeletedRuleRetention)
 	if uaCfg.DeletedRuleRetention < 0 {
 		return fmt.Errorf("setting 'deleted_rule_retention' is invalid, only 0 or a positive duration are allowed")
 	}

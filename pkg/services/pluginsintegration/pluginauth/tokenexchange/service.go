@@ -29,6 +29,11 @@ import (
 // pluginGroupSuffix is the suffix of the API groups plugins serve.
 const pluginGroupSuffix = ".ext.grafana.app"
 
+// pluginGroupAudience is the audience the cloud API service for plugin groups
+// accepts. Plugins request it to work there; locally Grafana serves those
+// groups itself, so the audience grants nothing more.
+const pluginGroupAudience = "apiextensions.k8s.io"
+
 // maxRequestBytes bounds the request body, which holds at most a subject token.
 const maxRequestBytes = 64 << 10
 
@@ -144,6 +149,7 @@ func policyFor(pluginID string, grafanaAudiences []string, manifest *app.Manifes
 	// Only a plugin group is the plugin's own. A manifest naming another group,
 	// such as a core one, must request it as an access kind.
 	if name, ok := strings.CutSuffix(manifest.Group, pluginGroupSuffix); ok && name != "" {
+		add(&policy.Audiences, pluginGroupAudience) // apiextensions.k8s.io
 		add(&policy.Permissions, manifest.Group+":*")
 	}
 	if manifest.ExtraPermissions != nil {

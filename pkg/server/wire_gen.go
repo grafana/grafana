@@ -67,14 +67,10 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	if err != nil {
 		return nil, err
 	}
-	experimentalKVOptions, err := sql.ProvideExperimentalKV(cfg)
-	if err != nil {
-		return nil, err
-	}
 	storeProvider := store.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
 	stateStore := authz.ProvideDeferredZanzanaReconcilerState()
-	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, vectorMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, kv, experimentalKVOptions, hooksService, storeProvider, v, stateStore)
+	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, vectorMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, kv, hooksService, storeProvider, v, stateStore)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +130,7 @@ var ossBaseCLISet = wire.NewSet(
 
 var moduleServerSet = wire.NewSet(
 	NewModule,
-	ossBaseCLISet, tracingsetting.ProvideTracingConfig, tracing.ProvideService, wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)), resource.ProvideStorageMetrics, resource.ProvideIndexMetrics, resource.ProvideVectorMetrics, ProvideNoopModuleRegisterer, sql.ProvideModuleServerKV, sql.ProvideExperimentalKV, store.ProvideDefaultStoreProvider, authz.ProvideReconcileCRDs, authz.ProvideDeferredZanzanaReconcilerState,
+	ossBaseCLISet, tracingsetting.ProvideTracingConfig, tracing.ProvideService, wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)), resource.ProvideStorageMetrics, resource.ProvideIndexMetrics, resource.ProvideVectorMetrics, ProvideNoopModuleRegisterer, sql.ProvideModuleServerKV, store.ProvideDefaultStoreProvider, authz.ProvideReconcileCRDs, authz.ProvideDeferredZanzanaReconcilerState,
 )
 
 var dashboardStatsSet = wire.NewSet(builders.ProvideDashboardStats, wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)))

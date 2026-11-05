@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { useEffectOnce } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -98,7 +98,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   const {
     setValue,
     getValues,
-    watch,
     formState: { errors },
     control,
   } = useFormContext<RuleFormValues>();
@@ -116,6 +115,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   const dataQueries = useMemo(() => {
     return queries.filter((query) => !isExpressionQuery(query.model));
   }, [queries]);
+  const dataSourceUid = dataQueries[0]?.datasourceUid;
 
   // expression queries only
   const expressionQueries = useMemo(() => {
@@ -131,12 +131,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     }
   });
 
-  const [type, condition, dataSourceName, editorSettings] = watch([
-    'type',
-    'condition',
-    'dataSourceName',
-    'editorSettings',
-  ]);
+  const [type, condition, dataSourceName, editorSettings] = useWatch({
+    control,
+    name: ['type', 'condition', 'dataSourceName', 'editorSettings'],
+  });
   //if its a new rule, look at the local storage
 
   const isGrafanaAlertingType = isGrafanaAlertingRuleByType(type);
@@ -483,7 +481,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
         )}
 
         {/* This is the PromQL Editor for Cloud rules */}
-        {isCloudAlertRuleType && dataSourceName && (
+        {isCloudAlertRuleType && dataSourceUid && (
           <Stack direction="column">
             <Field error={errors.expression?.message} invalid={!!errors.expression?.message} noMargin>
               <Controller
@@ -492,7 +490,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                   return (
                     <ExpressionEditor
                       {...field}
-                      dataSourceName={dataSourceName}
+                      dataSourceUid={dataSourceUid}
                       showPreviewAlertsButton={!isRecordingRuleType}
                       onChange={onChangeExpression}
                     />

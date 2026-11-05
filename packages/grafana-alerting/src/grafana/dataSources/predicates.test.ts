@@ -1,8 +1,10 @@
 import { type DataSourceInstanceSettings } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import {
   SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
   isDataSourceAllowedAsRecordingRulesTarget,
+  isDataSourceManagingAlerts,
   isValidRecordingRulesTarget,
 } from './predicates';
 
@@ -19,6 +21,26 @@ function mockDataSource(partial: Partial<DataSourceInstanceSettings> = {}): Data
     ...partial,
   };
 }
+
+describe('isDataSourceManagingAlerts', () => {
+  const originalToggle = config.defaultDatasourceManageAlertsUiToggle;
+
+  afterEach(() => {
+    config.defaultDatasourceManageAlertsUiToggle = originalToggle;
+  });
+
+  it.each([true, false])('returns %s when manageAlerts is set to it, whatever the config default', (manageAlerts) => {
+    config.defaultDatasourceManageAlertsUiToggle = !manageAlerts;
+
+    expect(isDataSourceManagingAlerts(mockDataSource({ jsonData: { manageAlerts } }))).toBe(manageAlerts);
+  });
+
+  it.each([true, false])('returns the config default (%s) when manageAlerts is undefined', (defaultToggle) => {
+    config.defaultDatasourceManageAlertsUiToggle = defaultToggle;
+
+    expect(isDataSourceManagingAlerts(mockDataSource({ jsonData: {} }))).toBe(defaultToggle);
+  });
+});
 
 describe('isDataSourceAllowedAsRecordingRulesTarget', () => {
   it.each([

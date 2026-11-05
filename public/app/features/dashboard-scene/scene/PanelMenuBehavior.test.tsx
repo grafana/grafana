@@ -13,7 +13,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys, setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import {
   LocalValueVariable,
@@ -25,6 +25,7 @@ import {
 } from '@grafana/scenes';
 import { LegendDisplayMode, type VizLegendOptions } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
@@ -32,6 +33,7 @@ import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
@@ -39,7 +41,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { DashboardScene } from './DashboardScene';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
-import { panelMenuBehavior, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { onRemovePanel, panelMenuBehavior, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const mocks = {
@@ -64,9 +66,32 @@ jest.mock('app/store/store', () => ({
 const getObservablePluginLinksMock = jest.fn().mockReturnValue(of([]));
 setGetObservablePluginLinks(getObservablePluginLinksMock);
 
+describe('onRemovePanel', () => {
+  it('opens the confirmation only after the menu has had a chance to release focus', async () => {
+    const { scene, panel } = await buildTestScene({});
+    const publish = jest.spyOn(appEvents, 'publish').mockImplementation(() => {});
+    jest.useFakeTimers();
+
+    try {
+      onRemovePanel(scene, panel);
+      expect(publish).not.toHaveBeenCalled();
+
+      jest.runOnlyPendingTimers();
+      expect(publish).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+    } finally {
+      jest.useRealTimers();
+      publish.mockRestore();
+    }
+  });
+});
+
 describe('panelMenuBehavior', () => {
   beforeAll(() => {
     locationService.push('/d/dash-1?from=now-5m&to=now');
+  });
+
+  afterEach(() => {
+    setTestFlags({});
   });
 
   it('Given standard panel', async () => {
@@ -81,7 +106,7 @@ describe('panelMenuBehavior', () => {
 
     await new Promise((r) => setTimeout(r, 1));
 
-    expect(menu.state.items?.length).toBe(6);
+    expect(menu.state.items?.length).toBe(7);
     // verify view panel url keeps url params and adds viewPanel=<panel-key>
     expect(menu.state.items?.[0].href).toBe('/d/dash-1?from=now-5m&to=now&viewPanel=a$panel-12');
     // verify edit url keeps url time range
@@ -101,6 +126,8 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[4].subMenu).toBeDefined();
 
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);
+
+    expect(menu.state.items?.[5].text).toBe('Time settings');
   });
 
   it.each(['view', 'agent'] as const)('opens panel editing from the %s menu and enters Editing', async (mode) => {
@@ -152,6 +179,22 @@ describe('panelMenuBehavior', () => {
       expect(moreSubMenu?.find((i) => /legend/.test(i.text))?.text).toBe(expected);
     });
 
+    it.each(['view', 'composer'] as const)('offers the legend toggle and Time settings in %s mode', async (mode) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const { scene, menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      panel.setState({ options: { legend: legend({}) } });
+      scene.setState({ mode, isEditing: true });
+
+      const deactivate = menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+      deactivate();
+
+      const moreSubMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu ?? [];
+      const itemTexts = [...(menu.state.items ?? []), ...moreSubMenu].map((i) => i.text);
+      expect(itemTexts).toEqual(expect.arrayContaining(['Hide legend', 'Time settings']));
+    });
+
     it.each([
       { name: 'hides a visible legend', legend: legend({}), update: { showLegend: false } },
       {
@@ -189,16 +232,17 @@ describe('panelMenuBehavior', () => {
 
     await new Promise((r) => setTimeout(r, 1));
 
-    expect(menu.state.items?.length).toBe(4);
+    expect(menu.state.items?.length).toBe(5);
     expect(menu.state.items?.[0].text).toBe('Share');
     expect(menu.state.items?.[1].text).toBe('Explore');
     expect(menu.state.items?.[2].text).toBe('Inspect');
-    expect(menu.state.items?.[3].text).toBe('More...');
-    expect(menu.state.items?.[3].subMenu).toBeDefined();
+    expect(menu.state.items?.[3].text).toBe('Time settings');
+    expect(menu.state.items?.[4].text).toBe('More...');
+    expect(menu.state.items?.[4].subMenu).toBeDefined();
 
-    expect(menu.state.items?.[3].subMenu?.length).toBe(2);
-    expect(menu.state.items?.[3].subMenu?.[0].text).toBe('New alert rule');
-    expect(menu.state.items?.[3].subMenu?.[1].text).toBe('Get help');
+    expect(menu.state.items?.[4].subMenu?.length).toBe(2);
+    expect(menu.state.items?.[4].subMenu?.[0].text).toBe('New alert rule');
+    expect(menu.state.items?.[4].subMenu?.[1].text).toBe('Get help');
   });
 
   describe('when extending panel menu from plugins', () => {
@@ -227,7 +271,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -266,7 +310,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -306,7 +350,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -348,7 +392,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
       const menuItem = extensionsSubMenu?.find((i) => (i.text = 'Declare incident when...'));
@@ -498,7 +542,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -543,7 +587,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -596,7 +640,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -787,7 +831,7 @@ describe('panelMenuBehavior', () => {
 
         await new Promise((r) => setTimeout(r, 1));
 
-        expect(menu.state.items?.length).toBe(8); // 6 base items + 2 extension menus
+        expect(menu.state.items?.length).toBe(9); // 7 base items + 2 extension menus
 
         const metricsDrilldownMenu = menu.state.items?.find((i) => i.text === 'Metrics drilldown');
         const extensionsMenu = menu.state.items?.find((i) => i.text === 'Extensions');
@@ -1027,6 +1071,14 @@ describe('panelMenuBehavior', () => {
   });
 
   describe('Panel styles menu', () => {
+    let deactivatePanel: (() => void) | undefined;
+    let deactivateSidebar: (() => void) | undefined;
+    afterEach(() => {
+      deactivateSidebar?.();
+      deactivateSidebar = undefined;
+      deactivatePanel?.();
+      deactivatePanel = undefined;
+    });
     async function buildTimeseriesTestScene(isEditing = true) {
       const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
       const panel = new VizPanel({
@@ -1038,7 +1090,7 @@ describe('panelMenuBehavior', () => {
 
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 
-      new DashboardScene({
+      const dashboard = new DashboardScene({
         title: 'My dashboard',
         uid: 'dash-1',
         meta: { canEdit: true },
@@ -1049,7 +1101,7 @@ describe('panelMenuBehavior', () => {
       menu.activate();
       await new Promise((r) => setTimeout(r, 1));
 
-      return { menu, panel };
+      return { menu, panel, dashboard };
     }
 
     afterEach(() => {
@@ -1071,10 +1123,35 @@ describe('panelMenuBehavior', () => {
       const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
       const { menu } = await buildTimeseriesTestScene();
 
-      const pasteItem = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu?.[1];
+      const pasteItem = menu.state.items
+        ?.find((i) => i.text === 'Styles')
+        ?.subMenu?.find((i) => i.text === 'Paste styles');
       pasteItem?.onClick?.({} as never);
 
       expect(spy).toHaveBeenCalledWith('paste', 'timeseries', expect.any(Number));
+    });
+
+    it('should record pasting styles in the undo history', async () => {
+      setPluginImportUtils({
+        getPanelPluginFromCache: () => getPanelPlugin({ id: 'timeseries' }),
+        importPanelPlugin: async () => getPanelPlugin({ id: 'timeseries' }),
+      });
+      store.set(
+        LS_STYLES_COPY_KEY,
+        JSON.stringify({ panelType: 'timeseries', styles: { options: { legend: { showLegend: false } } } })
+      );
+      const { menu, dashboard, panel } = await buildTimeseriesTestScene();
+      deactivatePanel = panel.activate();
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      deactivateSidebar = dashboard.state.sidebar.activate();
+
+      const pasteItem = menu.state.items
+        ?.find((i) => i.text === 'Styles')
+        ?.subMenu?.find((i) => i.text === 'Paste styles');
+      pasteItem?.onClick?.({} as never);
+
+      expect(panel.state.options).toMatchObject({ legend: { showLegend: false } });
+      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
     });
 
     it('should not show styles menu for unsupported panel types', async () => {
@@ -1237,7 +1314,7 @@ describe('panelMenuBehavior', () => {
       const items = await itemsWith({ notebooks: true, permission: true });
 
       expect(items.find((item) => item.text === 'Add to notebook')).toEqual(
-        expect.objectContaining({ iconClassName: 'book' })
+        expect.objectContaining({ iconClassName: 'gf-notebook' })
       );
       expect(items.find((item) => item.text === 'Remove')).toBeUndefined();
     });
@@ -1255,6 +1332,83 @@ describe('panelMenuBehavior', () => {
 
       const texts = (menu.state.items ?? []).map((item) => (item.type === 'divider' ? '---' : item.text));
       expect(texts.slice(-4)).toEqual(['---', 'Add to notebook', '---', 'Remove']);
+    });
+  });
+
+  describe('Copy, blocked on mobile', () => {
+    afterEach(() => {
+      setTestFlags({});
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+    });
+
+    it('offers Copy in the More... submenu outside edit mode when not blocked on mobile', async () => {
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreMenu = menu.state.items?.find((item) => item.text === 'More...');
+      expect(moreMenu?.subMenu?.find((item) => item.text === 'Copy')).toEqual(
+        expect.objectContaining({ shortcut: 'p c' })
+      );
+    });
+
+    it('drops Copy from the More... submenu when blocked on mobile', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreMenu = menu.state.items?.find((item) => item.text === 'More...');
+      expect(moreMenu?.subMenu?.find((item) => item.text === 'Copy')).toBeUndefined();
+    });
+  });
+
+  describe('Edit, blocked on mobile', () => {
+    afterEach(() => {
+      setTestFlags({});
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+    });
+
+    it('offers Edit when not blocked on mobile', async () => {
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeDefined();
+    });
+
+    it('drops Edit from the menu when blocked on mobile', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeUndefined();
+    });
+
+    it('still offers Edit for a session already in full editing', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true, isEditing: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeDefined();
     });
   });
 });

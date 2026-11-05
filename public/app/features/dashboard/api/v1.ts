@@ -19,7 +19,6 @@ import {
   type ResourceClient,
   type ResourceForCreate,
   type ResourceList,
-  type TableResponse,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -36,7 +35,6 @@ import {
   DashboardVersionError,
   type DashboardWithAccessInfo,
   type ListDashboardHistoryOptions,
-  type ListDeletedDashboardsOptions,
 } from './types';
 import { buildRestorePayload, fetchDeletedDashboard, isV2StoredVersion } from './utils';
 
@@ -305,10 +303,6 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       message: `Restored from version ${version}`,
       folderUid: currentDashboard.metadata?.annotations?.[AnnoKeyFolder],
     });
-  }
-
-  async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
-    return this.client.listAsTable({ ...options, labelSelector: 'grafana.app/get-trash=true' });
   }
 
   async getDeletedDashboard(name: string): Promise<Resource<DashboardDataDTO> | undefined> {

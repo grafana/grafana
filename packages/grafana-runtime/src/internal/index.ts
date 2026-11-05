@@ -5,12 +5,12 @@
  * Through the exports declared in package.json we can import this code in core Grafana and the grafana/runtime
  * package will continue to be able to access all code when it's published to npm as it's private to the package.
  *
- * During the yarn pack lifecycle the exports[./internal] property is deleted from the package.json
+ * During the pnpm pack lifecycle the exports[./internal] property is deleted from the package.json
  * preventing the code from being importable by plugins or other npm packages making it truly "internal".
  *
  */
 
-export { LegacyDataSourcePicker, setDataSourcePicker } from '../components/DataSourcePicker';
+export { setDataSourcePicker } from '../components/DataSourcePicker';
 export { setPanelDataErrorView } from '../components/PanelDataErrorView';
 export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
@@ -27,6 +27,11 @@ export {
   setGetObservablePluginLinks,
   type GetObservablePluginLinks,
 } from '../services/pluginExtensions/getObservablePluginLinks';
+export {
+  setGetObservablePluginFunctions,
+  type GetObservablePluginFunctions,
+  type GetObservablePluginFunctionsOptions,
+} from '../services/pluginExtensions/getObservablePluginFunctions';
 
 export { UserStorage, useUserStorage } from '../utils/userStorage';
 
@@ -38,12 +43,19 @@ export {
 } from '../internal/openFeature';
 export * from '../internal/openFeature/openfeature.gen';
 
-export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';
+export {
+  clearAppPluginMetas,
+  getAppPluginMeta,
+  getAppPluginMetas,
+  getAppPluginMetasSync,
+  setAppPluginMetas,
+} from '../services/pluginMeta/apps';
 export {
   getDatasourcePluginMeta,
   getDatasourcePluginMetas,
   setDatasourcePluginMetas,
   refetchDatasourcePluginMetas,
+  syncDatasourcePluginMetas,
   getPluginIdFromDatasourceInstanceType,
 } from '../services/pluginMeta/datasources';
 export {
@@ -76,6 +88,7 @@ export {
   refetchPanelPluginMetas,
 } from '../services/pluginMeta/panels';
 export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
+export { refetchPluginMetasAfterPluginChange } from '../services/pluginMeta/pluginChange';
 export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
 export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
 export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
@@ -95,3 +108,4 @@ export {
   FALLBACK_TO_LEGACY_SETTINGS_WARNING,
 } from '../services/dataSource/constants';
 export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';
+export { isSignedInOrAnonymous } from '../services/user';

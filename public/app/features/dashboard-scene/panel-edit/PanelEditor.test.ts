@@ -1,17 +1,26 @@
+import { act, screen, waitFor } from '@testing-library/react';
+import { createElement, Fragment } from 'react';
 import { of } from 'rxjs';
+import { render } from 'test/test-utils';
 
 import {
   type DataQueryRequest,
   type DataSourceApi,
   type DataTransformerConfig,
+  FieldType,
   LoadingState,
   type PanelPlugin,
   store,
+  standardTransformersRegistry,
+  toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import {
   type CancelActivationHandler,
   CustomVariable,
+  registerRuntimeDataSource,
+  RuntimeDataSource,
+  SceneDataNode,
   SceneDataTransformer,
   sceneGraph,
   SceneGridLayout,
@@ -25,32 +34,42 @@ import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
-import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
+import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { dispatch } from 'app/store/store';
 
+import { edit } from '../actions/utils/edit';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { setupPanelNotices } from '../scene/setupPanelNotices';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { activateFullSceneTree } from '../utils/test-utils';
+import { getLibraryPanelBehavior } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
+import { PanelDataTransformationsTab } from './PanelDataPane/PanelDataTransformationsTab';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
+import { usePanelContext, useQueryEditorUIContext } from './PanelEditNext/QueryEditor/QueryEditorContext';
+import { QueryEditorContextWrapper } from './PanelEditNext/QueryEditor/QueryEditorContextWrapper';
+import { TransformationEditorRenderer } from './PanelEditNext/QueryEditor/TransformationEditorRenderer';
 import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
 import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './PanelEditNext/localStorageWithTTL';
+import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
 import { buildPanelEditScene } from './PanelEditor';
 
-const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
+const loadingResponse = (ds: DataSourceApi, request: DataQueryRequest) => {
   return of({
     state: LoadingState.Loading,
     series: [],
     timeRange: request.range,
   });
-});
+};
+const runRequestMock = jest.fn().mockImplementation(loadingResponse);
 
 let pluginPromise: Promise<PanelPlugin> | undefined;
 
@@ -88,6 +107,17 @@ const dataSources = {
 
 setupDataSources(...Object.values(dataSources));
 
+const RUNTIME_DS_UID = 'panel-editor-runtime-ds';
+
+class RuntimeTestDataSource extends RuntimeDataSource {
+  query() {
+    return of({ data: [] });
+  }
+}
+
+// Runtime datasources skip plugin loading, so query runners reach the mocked runRequest.
+registerRuntimeDataSource({ dataSource: new RuntimeTestDataSource('panel-editor-runtime-ds', RUNTIME_DS_UID) });
+
 jest.mock('app/store/store', () => ({
   ...jest.requireActual('app/store/store'),
   dispatch: jest.fn(),
@@ -96,6 +126,7 @@ jest.mock('app/store/store', () => ({
 let deactivate: CancelActivationHandler | undefined;
 
 describe('PanelEditor', () => {
+  beforeAll(() => standardTransformersRegistry.setInit(getStandardTransformers));
   afterEach(() => {
     if (deactivate) {
       deactivate();
@@ -135,6 +166,66 @@ describe('PanelEditor', () => {
 
   describe('Entering panel edit', () => {
     beforeEach(() => jest.mocked(dispatch).mockClear());
+
+    it('applies panel options and tracks changes after the preview layout item remounts', async () => {
+      const { panelEditor, panel, gridItem, deactivatePanel } = await setup({ activateFullTree: false });
+      let observedDisplayMode = panel.state.displayMode;
+      const subscription = panel.subscribeToState((state) => {
+        observedDisplayMode = state.displayMode;
+      });
+
+      const unmountPreview = gridItem.activate();
+      unmountPreview();
+      deactivatePanel!();
+      const unmountRemountedPreview = gridItem.activate();
+      const unmountRemountedPanel = panel.activate();
+
+      try {
+        edit({
+          meta: { actionId: 'panel.changeBackground' },
+          source: panel,
+          description: 'Change panel background',
+          perform: () => panel.setState({ displayMode: 'transparent' }),
+          undo: () => panel.setState({ displayMode: 'default' }),
+        });
+
+        expect(panel.state.displayMode).toBe('transparent');
+        expect(observedDisplayMode).toBe('transparent');
+        expect(panelEditor.state.isDirty).toBe(true);
+      } finally {
+        subscription.unsubscribe();
+        unmountRemountedPanel();
+        unmountRemountedPreview();
+      }
+
+      deactivate!();
+      deactivate = undefined;
+      expect(gridItem.isActive).toBe(false);
+      expect(panel.isActive).toBe(false);
+    });
+
+    it('releases a replaced data provider, then the replacement when editing ends', async () => {
+      const { panel, deactivatePanel } = await setup({
+        activateFullTree: false,
+        pluginSkipDataQuery: false,
+      });
+      const original = panel.state.$data!;
+      const replacement = new SceneDataNode({
+        data: { state: LoadingState.Done, series: [], timeRange: sceneGraph.getTimeRange(panel).state.value },
+      });
+      const releasePreviewProvider = replacement.activate();
+
+      panel.setState({ $data: replacement });
+      releasePreviewProvider();
+      deactivatePanel!();
+
+      expect(original.isActive).toBe(false);
+      expect(replacement.isActive).toBe(true);
+
+      deactivate!();
+      deactivate = undefined;
+      expect(replacement.isActive).toBe(false);
+    });
 
     it('pauses ad hoc table transformations and restores them on exit', async () => {
       const transformations: DataTransformerConfig[] = [{ id: 'organize', options: { indexByName: { B: 0, A: 1 } } }];
@@ -190,6 +281,134 @@ describe('PanelEditor', () => {
       expect(dashboard.state.sidebar.getSelectedObject()).toBeUndefined();
     });
   });
+
+  describe.each([
+    { useNext: false, noticesFirst: false },
+    { useNext: true, noticesFirst: false },
+    { useNext: false, noticesFirst: true },
+    { useNext: true, noticesFirst: true },
+  ])(
+    'transformation editing with queryEditorNext=$useNext and noticesFirst=$noticesFirst',
+    ({ useNext, noticesFirst }) => {
+      beforeEach(() => {
+        setTestFlags({ queryEditorNext: useNext });
+        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, useNext);
+      });
+
+      afterEach(() => {
+        setTestFlags({});
+        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+        runRequestMock.mockImplementation(loadingResponse);
+      });
+
+      it('keeps format edits synchronized after preview remounts and Table View changes', async () => {
+        const { dashboard, panelEditor, panel, gridItem, deactivatePanel, deactivateNotices } = await setup({
+          activateFullTree: false,
+          pluginSkipDataQuery: false,
+          activateNoticesFirst: noticesFirst,
+        });
+        const transformer = panel.state.$data as SceneDataTransformer;
+        const queryRunner = getQueryRunnerFor(panel)!;
+        const dataPane = panelEditor.state.dataPane!;
+        transformer.setState({
+          transformations: [{ id: 'formatTime', options: { timeField: 'time', outputFormat: '' } }],
+        });
+        const formattedTime = () => transformer.state.data?.series[0]?.fields[0].values[0];
+
+        // Only the query returns the source frame, so each edit must reach the transformer's output: the classic
+        // editor reprocesses the transformations, and the next editor re-runs the query.
+        const sourceFrame = () =>
+          toDataFrame({ fields: [{ name: 'time', type: FieldType.time, values: [Date.UTC(2026, 0, 2, 12)] }] });
+        runRequestMock.mockImplementation((ds: DataSourceApi, request: DataQueryRequest) =>
+          of({ state: LoadingState.Done, series: [sourceFrame()], timeRange: request.range })
+        );
+        queryRunner.setState({ datasource: { uid: RUNTIME_DS_UID } });
+
+        let preview = render(createElement(PanelEditPanelWrapper, { panel, dashboard }));
+        act(() => {
+          deactivatePanel!();
+          deactivateNotices?.();
+        });
+        act(() => {
+          queryRunner.setState({
+            data: {
+              state: LoadingState.Done,
+              series: [sourceFrame()],
+              timeRange: sceneGraph.getTimeRange(panel).state.value,
+            },
+          });
+        });
+        const editor = render(
+          dataPane instanceof PanelDataPaneNext
+            ? createElement(QueryEditorContextWrapper, {
+                dataPane,
+                children: createElement(MountedTransformationEditor),
+              })
+            : createElement(PanelDataTransformationsTab.Component, {
+                model: dataPane.state.tabs.find(
+                  (tab): tab is PanelDataTransformationsTab => tab instanceof PanelDataTransformationsTab
+                )!,
+              })
+        );
+        if (useNext) {
+          await editor.user.click(screen.getByRole('button', { name: 'Edit transformation' }));
+        }
+        const format = await screen.findByRole('textbox', { name: 'Format' });
+        expect(screen.getByRole('region', { name: 'original title' })).toBeInTheDocument();
+
+        if (!noticesFirst) {
+          // The preview's scene activations end while the transformation editor stays mounted.
+          preview.unmount();
+          preview = render(createElement(PanelEditPanelWrapper, { panel, dashboard }));
+        }
+
+        try {
+          await editor.user.type(format, 'YYYY');
+          expect(format).toHaveValue('YYYY');
+          expect(transformer.state.transformations).toEqual([
+            { id: 'formatTime', options: { outputFormat: 'YYYY', timeField: 'time', useTimezone: true } },
+          ]);
+          await waitFor(() => expect(formattedTime()).toBe('2026'));
+
+          act(() => panelEditor.onToggleTableView());
+          preview.rerender(
+            createElement(PanelEditPanelWrapper, { panel, dashboard, tableView: panelEditor.state.tableView })
+          );
+          expect(screen.queryByRole('region', { name: 'original title' })).not.toBeInTheDocument();
+          await editor.user.type(format, '-MM');
+          expect(format).toHaveValue('YYYY-MM');
+          expect(transformer.isActive).toBe(true);
+          expect(queryRunner.isActive).toBe(true);
+          expect(transformer.state.transformations).toEqual([
+            { id: 'formatTime', options: { outputFormat: 'YYYY-MM', timeField: 'time', useTimezone: true } },
+          ]);
+          await waitFor(() => expect(formattedTime()).toBe('2026-01'));
+
+          act(() => panelEditor.onToggleTableView());
+          preview.rerender(
+            createElement(PanelEditPanelWrapper, { panel, dashboard, tableView: panelEditor.state.tableView })
+          );
+          await editor.user.type(format, '-DD');
+          expect(format).toHaveValue('YYYY-MM-DD');
+          expect(transformer.state.transformations).toEqual([
+            { id: 'formatTime', options: { outputFormat: 'YYYY-MM-DD', timeField: 'time', useTimezone: true } },
+          ]);
+          await waitFor(() => expect(formattedTime()).toBe('2026-01-02'));
+          expect(panelEditor.state.isDirty).toBe(true);
+        } finally {
+          editor.unmount();
+          preview.unmount();
+        }
+
+        deactivate!();
+        deactivate = undefined;
+        expect(gridItem.isActive).toBe(false);
+        expect(panel.isActive).toBe(false);
+        expect(transformer.isActive).toBe(false);
+        expect(queryRunner.isActive).toBe(false);
+      });
+    }
+  );
 
   describe('When discarding', () => {
     it('should discard changes revert all changes', async () => {
@@ -360,6 +579,28 @@ describe('PanelEditor', () => {
       expect((gridItem.state.body as VizPanel).state.title).toBe('changed title');
     });
 
+    it('restores the library link when undoing a completed panel edit', async () => {
+      setTestFlags({ dashboardNewLayouts: true });
+      const libraryPanel = new LibraryPanelBehavior({
+        uid: 'lib-uid',
+        name: 'Library panel',
+        isLoaded: true,
+        _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
+      });
+      const { dashboard, panel, panelEditor, gridItem } = await setup({ libraryPanel });
+      panelEditor.onConfirmUnlinkLibraryPanel();
+      expect(getLibraryPanelBehavior(panel)).toBeUndefined();
+      deactivate!();
+      deactivate = undefined;
+      dashboard.setState({ editPanel: undefined });
+      deactivate = activateFullSceneTree(dashboard);
+      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
+      dashboard.state.sidebar.undoAction();
+      expect(getLibraryPanelBehavior(gridItem.state.body)?.state.uid).toBe('lib-uid');
+      dashboard.state.sidebar.redoAction();
+      expect(getLibraryPanelBehavior(gridItem.state.body)).toBeUndefined();
+    });
+
     it('unlinks library panel', () => {
       const libraryPanelModel = {
         title: 'title',
@@ -503,18 +744,23 @@ describe('PanelEditor', () => {
 });
 
 interface SetupOptions {
+  activateFullTree?: boolean;
+  activateNoticesFirst?: boolean;
   isNewPanel?: boolean;
   pluginId?: string;
   pluginSkipDataQuery?: boolean;
   repeatByVariable?: string;
   skipWait?: boolean;
   pluginLoadTime?: number;
+  libraryPanel?: LibraryPanelBehavior;
   initialTableTransformations?: DataTransformerConfig[];
 }
 
 async function setup(options: SetupOptions = {}) {
   const panelPluginId = options.pluginId ?? 'text';
-  const pluginToLoad = getPanelPlugin({ id: panelPluginId, skipDataQuery: options.pluginSkipDataQuery });
+  const pluginToLoad = getPanelPlugin({ id: panelPluginId, skipDataQuery: options.pluginSkipDataQuery }, () =>
+    createElement('div', null, 'Preview visualization')
+  );
   let pluginResolve = (plugin: PanelPlugin) => {};
 
   pluginPromise = new Promise<PanelPlugin>((resolve) => {
@@ -525,6 +771,8 @@ async function setup(options: SetupOptions = {}) {
     key: 'panel-1',
     pluginId: panelPluginId,
     title: 'original title',
+    extendPanelContext: options.activateNoticesFirst ? setupPanelNotices : undefined,
+    $behaviors: options.libraryPanel ? [options.libraryPanel] : undefined,
     $data: new SceneDataTransformer({
       transformations: [],
       $data: new SceneQueryRunner({
@@ -566,7 +814,15 @@ async function setup(options: SetupOptions = {}) {
 
   panelEditor.debounceSaveModelDiff = false;
 
-  deactivate = activateFullSceneTree(dashboard);
+  // Notices can own the provider before the panel activates, as with an existing status surface.
+  const deactivateNotices = options.activateNoticesFirst ? panel.getPanelContext().activateNotices!() : undefined;
+  let deactivatePanel: CancelActivationHandler | undefined;
+  if (options.activateFullTree === false) {
+    deactivatePanel = panel.activate();
+    deactivate = panelEditor.activate();
+  } else {
+    deactivate = activateFullSceneTree(dashboard);
+  }
 
   if (!options.skipWait) {
     //console.log('pluginResolve(pluginToLoad)');
@@ -574,5 +830,16 @@ async function setup(options: SetupOptions = {}) {
     await new Promise((r) => setTimeout(r, 1));
   }
 
-  return { dashboard, panel, gridItem, panelEditor, pluginResolve };
+  return { dashboard, panel, gridItem, panelEditor, pluginResolve, deactivatePanel, deactivateNotices };
+}
+
+function MountedTransformationEditor() {
+  const { transformations } = usePanelContext();
+  const { setSelectedTransformation } = useQueryEditorUIContext();
+  return createElement(
+    Fragment,
+    null,
+    createElement('button', { onClick: () => setSelectedTransformation(transformations[0]) }, 'Edit transformation'),
+    createElement(TransformationEditorRenderer)
+  );
 }

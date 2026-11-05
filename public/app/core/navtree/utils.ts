@@ -1,8 +1,28 @@
 import { type NavModelItem, userHasAnyPermission } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, isSignedInOrAnonymous } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { NavID, type NavId } from './constants';
+import { HOISTED_PAGE_WEIGHT_OFFSET, NavID, type NavId, PLUGIN_SECTION_SHELLS } from './constants';
+
+/** Whether to build the nav tree client-side, covering the static sections only. */
+export function isClientNavTreeEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false);
+}
+
+/** Whether app plugin nav items are fetched and folded in, on top of the client build. */
+function arePluginNavItemsEnabled(): boolean {
+  return isClientNavTreeEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false);
+}
+
+/**
+ * Whether the app metas are there to be read. The metas endpoint needs a session,
+ * so app.ts skips the fetch without one — and the tree must not then read a cache
+ * nobody filled. Both sites go through this, so they cannot drift apart.
+ */
+export function isPluginNavAvailable(): boolean {
+  return arePluginNavItemsEnabled() && isSignedInOrAnonymous();
+}
 
 export const hasAny = (...actions: string[]) => userHasAnyPermission(actions, contextSrv.user);
 export const isSignedIn = () => contextSrv.isSignedIn;
@@ -43,7 +63,10 @@ const PRUNABLE_ADMIN_SECTIONS: NavId[] = [NavID.cfgGeneral, NavID.cfgPlugins, Na
 // Top-level sections built unconditionally as attachment targets, pruned when
 // nothing attached. Mirrors the server's RemoveEmptyConnectionsSection and
 // RemoveEmptyDrilldownSection, plus Administration once its subsections go.
-const PRUNABLE_SECTIONS: NavId[] = [NavID.cfg, NavID.connections, NavID.drilldown];
+//
+// "More apps" is created on demand, so it is only ever empty when an override
+// has moved its last app elsewhere (maintenance windows, under SLO).
+const PRUNABLE_SECTIONS: NavId[] = [NavID.cfg, NavID.connections, NavID.drilldown, NavID.apps];
 
 /** Depth-first search of a nav tree by item id */
 export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | undefined {
@@ -77,7 +100,7 @@ export function findNavByUrl(nodes: NavModelItem[], match: (url: string) => bool
 }
 
 /** Returns a new tree with the matching node (at any depth) replaced by update(node) */
-function updateNavById(
+export function updateNavById(
   nodes: NavModelItem[],
   id: string,
   update: (node: NavModelItem) => NavModelItem
@@ -88,6 +111,13 @@ function updateNavById(
     }
     return node.children ? { ...node, children: updateNavById(node.children, id, update) } : node;
   });
+}
+
+/** Returns a new tree without the matching node (at any depth) */
+export function removeNavById(nodes: NavModelItem[], id: string): NavModelItem[] {
+  return nodes
+    .filter((node) => node.id !== id)
+    .map((node) => (node.children ? { ...node, children: removeNavById(node.children, id) } : node));
 }
 
 /**
@@ -131,9 +161,18 @@ export function applyAppSubUrl(tree: NavModelItem[]): NavModelItem[] {
   }
   return tree.map((node) => ({
     ...node,
-    url: node.url?.startsWith('/') ? `${config.appSubUrl}${node.url}` : node.url,
+    url: withAppSubUrl(node.url),
     children: node.children ? applyAppSubUrl(node.children) : node.children,
   }));
+}
+
+/**
+ * Prefixes a root-relative path with the app sub url. Absolute urls (plugin
+ * assets served from a CDN) and relative ones (which the index page's
+ * `<base href>` already resolves) are left alone.
+ */
+export function withAppSubUrl(path: string | undefined): string | undefined {
+  return path?.startsWith('/') ? `${config.appSubUrl}${path}` : path;
 }
 
 /**
@@ -147,6 +186,27 @@ export function sortNavTree(nodes: NavModelItem[]): NavModelItem[] {
     .map((node, index) => ({ node, index }))
     .sort((a, b) => weightOf(a.node, a.index) - weightOf(b.node, b.index))
     .map(({ node }) => (node.children ? { ...node, children: sortNavTree(node.children) } : node));
+}
+
+/**
+ * Adds a section's shell when the tree has none. This supports finished trees,
+ * where empty attachment targets have already been pruned and URLs prefixed.
+ */
+function ensureSection(tree: NavModelItem[], sectionId: string): NavModelItem[] {
+  if (findNavById(tree, sectionId)) {
+    return tree;
+  }
+  const shell = PLUGIN_SECTION_SHELLS[sectionId]?.shell;
+  if (!shell) {
+    return tree;
+  }
+
+  // Insert at the shell's sorted position without re-sorting the finished tree:
+  // unweighted items have already acquired their effective positions by index.
+  const weightOf = (node: NavModelItem, index: number) => node.sortWeight || index + 1;
+  const found = tree.findIndex((node, index) => weightOf(node, index) > (shell.sortWeight ?? 0));
+  const at = found === -1 ? tree.length : found;
+  return [...tree.slice(0, at), { ...shell, url: withAppSubUrl(shell.url), children: [] }, ...tree.slice(at)];
 }
 
 /**
@@ -174,3 +234,73 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
     })
     .filter((node) => !isPrunable(PRUNABLE_SECTIONS, node));
 }
+
+/** Moves an item by id into a section, optionally hoisting its pages, then re-sorts the section. */
+export function moveNavItemToSection(
+  tree: NavModelItem[],
+  id: string,
+  sectionId: string,
+  { sortWeight, hoistPages = false }: { sortWeight?: number; hoistPages?: boolean } = {}
+): NavModelItem[] {
+  const item = findNavById(tree, id);
+  if (!item) {
+    return tree;
+  }
+
+  const withSection = ensureSection(tree, sectionId);
+  if (!findNavById(withSection, sectionId)) {
+    return tree;
+  }
+
+  const entries =
+    hoistPages && item.children?.length
+      ? hoistAppPages(item)
+      : [{ ...item, ...(sortWeight !== undefined && { sortWeight }) }];
+  const placed = appendIntoSection(removeNavById(withSection, id), sectionId, entries);
+  if (!placed) {
+    return tree;
+  }
+
+  return updateNavById(placed, sectionId, (section) => ({
+    ...section,
+    children: sortNavTree(section.children ?? []),
+  }));
+}
+
+/**
+ * Returns an app's pages as standalone entries with section weights. Only app URLs get standalone
+ * ids, so dashboard includes keep their own routes.
+ */
+export function hoistAppPages(
+  appLink: NavModelItem,
+  { slotWeightByPath = {} }: { slotWeightByPath?: Record<string, number> } = {}
+): NavModelItem[] {
+  const appPrefix = `/a/${appLink.pluginId}`;
+
+  return (appLink.children ?? []).map((child) => {
+    // This runs during store creation, before locationUtil is initialized.
+    const appSubUrl = config.appSubUrl.replace(/\/+$/, '');
+    const url = appSubUrl && child.url?.startsWith(`${appSubUrl}/`) ? child.url.slice(appSubUrl.length) : child.url;
+    const slotWeight = url ? slotWeightByPath[url] : undefined;
+    return {
+      ...child,
+      sortWeight: slotWeight ?? HOISTED_PAGE_WEIGHT_OFFSET + (child.sortWeight ?? 0),
+      ...(url?.startsWith(appPrefix) && { id: hoistedPluginPageId(url) }),
+    };
+  });
+}
+
+/** Nav id of an app plugin's own entry/section (matches the Go builder's ids) */
+export const pluginPageId = (pluginId: string) => `plugin-page-${pluginId}`;
+
+/** Nav id of a plugin page rendered standalone inside a core section */
+export const standalonePluginPageId = (key: string) => `standalone-plugin-page-${key}`;
+
+/**
+ * Nav id of a page hoisted out of its app. The path is flattened rather than
+ * used as-is: an id beginning `standalone-plugin-page-/` tells
+ * app/features/plugins/routes.tsx to route that page by its own url alone, and
+ * a hoisted app needs its app-wide route, since it has no node left to carry it.
+ */
+export const hoistedPluginPageId = (includePath: string) =>
+  standalonePluginPageId(includePath.replace(/^\//, '').replaceAll('/', '-'));

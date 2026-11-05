@@ -136,21 +136,24 @@ func (c authzLimitedClient) checkServicePermission(ctx context.Context, id claim
 
 // Check before scanning so an empty index cannot hide a missing service grant.
 //
-// A global search leaves out the types it cannot search instead of failing, and
-// returns them as {group}/{resource}: otherwise one type without a grant would
-// break the search for every type. It fails only when no type is left.
-func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *resourcepb.ResourceSearchRequest) ([]string, error) {
-	var excluded []string
+// It returns, as {group}/{resource}, the types of resources a search searches
+// and the ones it leaves out. A global search leaves out the types it cannot
+// search instead of failing: otherwise one type without a grant would break the
+// search for every type. It fails only when no type is left.
+func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *resourcepb.ResourceSearchRequest, resources []NamespacedResource) (searched, skipped []string, err error) {
 	id, ok := claims.AuthInfoFrom(ctx)
 	if !ok || id == nil {
 		if s.access == nil {
-			return nil, nil
+			for _, resource := range resources {
+				searched = append(searched, resource.Group+"/"+resource.Resource)
+			}
+			return searched, nil, nil
 		}
-		return nil, apierrors.NewUnauthorized(authz.ErrMissingAuthInfo.Error())
+		return nil, nil, apierrors.NewUnauthorized(authz.ErrMissingAuthInfo.Error())
 	}
 	key := req.Options.Key
 	if !claims.NamespaceMatches(id.GetNamespace(), key.Namespace) {
-		return nil, claims.ErrNamespaceMismatch
+		return nil, nil, claims.ErrNamespaceMismatch
 	}
 	nsr := NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
 	global := nsr.IsGlobal()
@@ -162,13 +165,12 @@ func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *r
 	if req.IsDeleted {
 		verb = utils.VerbSetPermissions
 	}
-	resources := indexSources(nsr)
 	var lastErr error
 	for _, resource := range resources {
 		groupResource := resource.Group + "/" + resource.Resource
 		if global && !s.checksEachResult(resource.Group, resource.Resource) {
 			s.logUncheckedGlobalType(ctx, groupResource)
-			excluded = append(excluded, groupResource)
+			skipped = append(skipped, groupResource)
 			continue
 		}
 		group, name, resourceVerb := resource.Group, resource.Resource, verb
@@ -178,24 +180,26 @@ func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *r
 		}
 		if err := s.checkSearchServicePermission(ctx, id, group, name, resourceVerb); err != nil {
 			if !global {
-				return nil, err
+				return nil, nil, err
 			}
-			excluded = append(excluded, groupResource)
+			skipped = append(skipped, groupResource)
 			lastErr = err
+			continue
 		}
+		searched = append(searched, groupResource)
 	}
-	if global && len(resources) > 0 && len(excluded) == len(resources) {
+	if global && len(resources) > 0 && len(searched) == 0 {
 		if lastErr != nil {
-			return excluded, lastErr
+			return nil, skipped, lastErr
 		}
-		return excluded, errors.New("the global search covers no type whose results this server checks against the user")
+		return nil, skipped, errors.New("the global search covers no type whose results this server checks against the user")
 	}
 	for _, resource := range req.Federated {
 		if err := s.checkSearchServicePermission(ctx, id, resource.Group, resource.Resource, utils.VerbGet); err != nil {
-			return excluded, err
+			return nil, skipped, err
 		}
 	}
-	return excluded, nil
+	return searched, skipped, nil
 }
 
 // checksEachResult reports whether this server checks each result of the type
@@ -260,7 +264,7 @@ func batchSizeBucket(n int) string {
 
 // rbacAllowlist is a map of group to resources that are compatible with RBAC.
 var rbacAllowlist = groupResource{
-	"dashboard.grafana.app": map[string]interface{}{"dashboards": nil, "variables": nil},
+	"dashboard.grafana.app": map[string]interface{}{"dashboards": nil, "variables": nil, "notebooks": nil},
 	"folder.grafana.app":    map[string]interface{}{"folders": nil},
 	"iam.grafana.app":       map[string]interface{}{"users": nil, "teams": nil, "serviceaccounts": nil},
 }

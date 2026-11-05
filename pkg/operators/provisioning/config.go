@@ -39,6 +39,7 @@ import (
 	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -71,6 +72,7 @@ type ControllerConfig struct {
 	decryptService        decrypt.DecryptService
 	registry              prometheus.Registerer
 	relistProjection      *informer.RelistProjectionMetrics
+	freshness             *informer.FreshnessMetrics
 	repositoryFactory     repository.Factory
 	repositoryExtras      []repository.Extra
 	RepositoryExtrasFunc  func() ([]repository.Extra, error)
@@ -210,6 +212,15 @@ func (c *ControllerConfig) UnifiedStorageClient() (resources.ResourceStore, erro
 	return unified, nil
 }
 
+// SupportedResources is the configured provisionable set, which may name collections as wildcards.
+func (c *ControllerConfig) SupportedResources() ([]resources.SupportedResource, error) {
+	supported, err := resources.ParseSupportedResources(c.Settings.ProvisioningResources)
+	if err != nil {
+		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
+	}
+	return supported, nil
+}
+
 // Clients Clients are clients that are used to connect to the different API servers.
 func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	if c.clients != nil {
@@ -246,30 +257,32 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		provisioning.GROUP:                provisioningServerURL,
 	}
 
-	supportedResources, err := resources.ParseSupportedResources(c.Settings.ProvisioningResources)
+	supportedResources, err := c.SupportedResources()
 	if err != nil {
-		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
+		return nil, err
 	}
 
-	// Dashboards and folders have dedicated server URLs; everything else is served by the
-	// aggregated API server. Skip the built-in groups, then ensure every other active
-	// resource's group resolves to the aggregated server — failing loudly if a resource needs
-	// it and it is unset, rather than hitting "no clients provider for group" at request time.
+	// Dashboards and folders have dedicated server URLs; every other active resource must
+	// resolve to the aggregated server — failing loudly when it is unset, rather than hitting
+	// "no clients provider for group" at request time. A collection is registered under the
+	// collection group, not its members: those cannot be discovered before there is a client to
+	// discover through.
 	for _, r := range supportedResources {
 		if !r.IsActive() {
 			continue
 		}
-		switch r.Group {
+		group := provisioningresources.CollectionGroup(r.Group)
+		switch group {
 		case resources.DashboardResource.Group, resources.FolderResource.Group, provisioning.GROUP:
 			continue // built-in groups with dedicated server URLs
 		}
-		if _, ok := apiServerURLs[r.Group]; ok {
+		if _, ok := apiServerURLs[group]; ok {
 			continue
 		}
 		if aggregatedServerURL == "" {
 			return nil, fmt.Errorf("aggregated_server_url is required in [operator] section to serve resource %s/%s", r.Group, r.Kind)
 		}
-		apiServerURLs[r.Group] = aggregatedServerURL
+		apiServerURLs[group] = aggregatedServerURL
 	}
 
 	configProviders := make(map[string]apiserver.RestConfigProvider)
@@ -457,6 +470,16 @@ func (c *ControllerConfig) RelistProjectionMetrics() *informer.RelistProjectionM
 	}
 
 	return c.relistProjection
+}
+
+// FreshnessMetrics returns the process's reconcile read-freshness metrics.
+// Memoized for the same reason as RelistProjectionMetrics.
+func (c *ControllerConfig) FreshnessMetrics() *informer.FreshnessMetrics {
+	if c.freshness == nil {
+		c.freshness = informer.NewFreshnessMetrics(c.Registry())
+	}
+
+	return c.freshness
 }
 
 // ProvisioningKeysLister returns a keys lister for one kind when [provisioning]
@@ -681,12 +704,13 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	// http:// URLs with a token are only allowed in development or when explicitly opted in,
 	// since the token would otherwise travel in cleartext.
 	allowInsecure := c.Settings.Env == setting.Dev || provisioningSec.Key("allow_insecure").MustBool(false)
+	userAgent := gitrepo.UserAgent(c.Settings.BuildVersion)
 
 	extras := make([]repository.Extra, 0)
 	for _, t := range repoTypes {
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
-			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics))
+			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics, userAgent))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
@@ -700,7 +724,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 					),
 				)
 			}
-			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics, clientMetrics))
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics, clientMetrics, userAgent))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {

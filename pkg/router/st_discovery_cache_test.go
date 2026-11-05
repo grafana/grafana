@@ -105,20 +105,18 @@ func TestStackDiscoveryIsSharedByTheStacksCallers(t *testing.T) {
 
 func TestStackDiscoveryCacheKeepsRepresentationsApart(t *testing.T) {
 	st, calls := cachingFallback(t, func(req *http.Request) *http.Response {
-		return discoveryResponse(nil, req.Header.Get("Accept")+"?"+req.URL.RawQuery)
+		return discoveryResponse(nil, req.Header.Get("Accept"))
 	})
 	for range 2 {
 		for _, accept := range []string{"application/json", aggregatedDiscoveryJSON} {
-			for _, path := range []string{"/openapi/v3/apis/example/v1?hash=one", "/openapi/v3/apis/example/v1?hash=two"} {
-				req := requestAs("alice", "stacks-123", path)
-				req.Header.Set("Accept", accept)
-				res := httptest.NewRecorder()
-				st.ServeHTTP(res, req)
-				require.Equal(t, accept+"?"+req.URL.RawQuery, res.Body.String())
-			}
+			req := requestAs("alice", "stacks-123", "/openapi/v3/apis/example/v1")
+			req.Header.Set("Accept", accept)
+			res := httptest.NewRecorder()
+			st.ServeHTTP(res, req)
+			require.Equal(t, accept, res.Body.String())
 		}
 	}
-	require.Len(t, calls(), 4)
+	require.Len(t, calls(), 2)
 }
 
 func TestStackDiscoveryCacheStoresOnlySharedResponses(t *testing.T) {
@@ -217,10 +215,18 @@ func TestStackDiscoveryCacheByteBudget(t *testing.T) {
 	// Replacing an entry accounts for the old one.
 	c.add("a", entry("12"))
 	require.Equal(t, 2*size-2, c.bytes)
-	// An entry larger than the budget evicts everything, itself included.
+	// An entry larger than the budget is never stored, so it can't evict
+	// every other stack's entries.
 	c.add("d", entry(strings.Repeat("x", 2*size)))
-	require.Zero(t, c.entries.Len())
-	require.Zero(t, c.bytes)
+	_, ok = c.get("d")
+	require.False(t, ok)
+	require.Equal(t, 2, c.entries.Len())
+	require.Equal(t, 2*size-2, c.bytes)
+	// Replacing an entry with one too large drops the stale one.
+	c.add("a", entry(strings.Repeat("x", 2*size)))
+	_, ok = c.get("a")
+	require.False(t, ok)
+	require.Equal(t, size, c.bytes)
 }
 
 func TestStackDiscoveryCacheCountsKeysAndHeaders(t *testing.T) {
@@ -243,17 +249,15 @@ func TestStackDiscoveryCacheCountsKeysAndHeaders(t *testing.T) {
 	require.LessOrEqual(t, small.bytes, small.limit)
 }
 
-func TestStackDiscoveryCacheOnlyKeysOnHash(t *testing.T) {
+func TestStackDiscoveryCacheIgnoresHash(t *testing.T) {
 	st, calls := cachingFallback(t, func(*http.Request) *http.Response { return discoveryResponse(nil, "ok") })
 	for _, tc := range []struct {
 		path   string
 		cached bool
 	}{
 		{"/apis/example/v1", true},
-		{"/openapi/v3/apis/example/v1?hash=abc", true},
 		{"/apis/example/v1?x=1", false},
 		{"/openapi/v3/apis/example/v1?hash=abc&x=1", false},
-		{"/openapi/v3/apis/example/v1?hash=a&hash=b", false},
 	} {
 		for range 2 {
 			st.ServeHTTP(httptest.NewRecorder(), requestAs("alice", "stacks-123", tc.path))
@@ -263,6 +267,43 @@ func TestStackDiscoveryCacheOnlyKeysOnHash(t *testing.T) {
 			want = 1
 		}
 		require.Len(t, calls(), want, tc.path)
+	}
+
+	// Every hash, or none, shares one entry.
+	for _, path := range []string{
+		"/openapi/v3/apis/example/v1?hash=abc",
+		"/openapi/v3/apis/example/v1?hash=def",
+		"/openapi/v3/apis/example/v1?hash=a&hash=b",
+		"/openapi/v3/apis/example/v1",
+	} {
+		st.ServeHTTP(httptest.NewRecorder(), requestAs("alice", "stacks-123", path))
+	}
+	require.Len(t, calls(), 1)
+}
+
+// A stack redirects an OpenAPI hash that is no longer its document's, as
+// kube-openapi does, and the router would reject the redirect as a 502.
+func TestStackOpenAPIStaleHashIsNotForwarded(t *testing.T) {
+	for name, cached := range map[string]bool{"cached": true, "uncached": false} {
+		t.Run(name, func(t *testing.T) {
+			st, _ := cachingFallback(t, func(req *http.Request) *http.Response {
+				if req.URL.Query().Has("hash") {
+					return &http.Response{
+						StatusCode: http.StatusMovedPermanently,
+						Header:     http.Header{"Location": {req.URL.Path + "?hash=new"}},
+						Body:       http.NoBody,
+					}
+				}
+				return discoveryResponse(nil, "doc")
+			})
+			if !cached {
+				st.discoveryDocs = nil
+			}
+			rec := httptest.NewRecorder()
+			st.ServeHTTP(rec, requestAs("alice", "stacks-123", "/openapi/v3/apis/example/v1?hash=old"))
+			require.Equal(t, http.StatusOK, rec.Code)
+			require.Equal(t, "doc", rec.Body.String())
+		})
 	}
 }
 
@@ -370,7 +411,7 @@ func TestRouterRootDiscoveryIsSharedByTheStacksCallers(t *testing.T) {
 		return discoveryResponse(http.Header{"Content-Type": {"application/json"}},
 			`{"kind":"APIGroupList","apiVersion":"v1","groups":[{"name":"`+group+`","versions":[{"groupVersion":"`+group+`/v1","version":"v1"}]}]}`)
 	})
-	router := NewGrafanaRouter(st, nil)
+	router := NewGrafanaRouter(fallbackLoader{st}, nil)
 	router.unregisteredGroupHandler = st
 	pollDiscovery(t, st)
 	require.NoError(t, router.reconcile(t.Context()))
@@ -380,7 +421,7 @@ func TestRouterRootDiscoveryIsSharedByTheStacksCallers(t *testing.T) {
 		req := requestAs(user, "stacks-123", apisPrefix)
 		req.Header.Set("Accept", "application/json")
 		res := httptest.NewRecorder()
-		router.HandleFunc(res, req, http.NotFoundHandler())
+		router.HandleFunc(res, req)
 		require.Equal(t, http.StatusOK, res.Code)
 		require.Contains(t, res.Body.String(), "stack.grafana.app")
 		require.NotContains(t, res.Body.String(), "default.grafana.app")
@@ -397,7 +438,7 @@ func TestRouterRevalidatesCallerScopedOpenAPI(t *testing.T) {
 		}
 		return discoveryResponse(nil, "document")
 	})
-	router := NewGrafanaRouter(st, nil)
+	router := NewGrafanaRouter(fallbackLoader{st}, nil)
 	router.unregisteredGroupHandler = st
 	pollDiscovery(t, st)
 	require.NoError(t, router.reconcile(t.Context()))
@@ -410,7 +451,7 @@ func TestRouterRevalidatesCallerScopedOpenAPI(t *testing.T) {
 			req.Header.Set("If-None-Match", etag)
 		}
 		res := httptest.NewRecorder()
-		router.HandleFunc(res, req, http.NotFoundHandler())
+		router.HandleFunc(res, req)
 		return res
 	}
 	first := serve("alice", "")

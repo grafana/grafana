@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import { partition } from 'lodash';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2, dateMath } from '@grafana/data';
+import { type GrafanaTheme2, type UrlQueryMap, dateMath } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -79,37 +80,24 @@ const SilencesTable = () => {
 
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
-  const filteredSilencesNotExpired = useFilteredSilences(silences, false);
-  const filteredSilencesExpired = useFilteredSilences(silences, true);
+  const filteredSilences = useFilteredSilences(silences, queryParams);
 
   const { silenceState: silenceStateInParams } = getSilenceFiltersFromUrlParams(queryParams);
   const showExpiredFromUrl = silenceStateInParams === SilenceState.Expired;
 
-  const itemsNotExpired = useMemo((): SilenceTableItemProps[] => {
-    const findSilencedAlerts = (id: string) => {
-      return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
-    };
-    return filteredSilencesNotExpired.map((silence) => {
-      const silencedAlerts = canPreview ? findSilencedAlerts(silence.id) : undefined;
-      return {
-        id: silence.id,
-        data: { ...silence, silencedAlerts },
-      };
-    });
-  }, [filteredSilencesNotExpired, alertManagerAlerts, canPreview]);
+  const [itemsExpired, itemsNotExpired] = useMemo(() => {
+    const items = filteredSilences.map<SilenceTableItemProps>((silence) => ({
+      id: silence.id,
+      data: {
+        ...silence,
+        silencedAlerts: canPreview
+          ? alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(silence.id))
+          : undefined,
+      },
+    }));
 
-  const itemsExpired = useMemo((): SilenceTableItemProps[] => {
-    const findSilencedAlerts = (id: string) => {
-      return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
-    };
-    return filteredSilencesExpired.map((silence) => {
-      const silencedAlerts = canPreview ? findSilencedAlerts(silence.id) : undefined;
-      return {
-        id: silence.id,
-        data: { ...silence, silencedAlerts },
-      };
-    });
-  }, [filteredSilencesExpired, alertManagerAlerts, canPreview]);
+    return partition(items, ({ data }) => data.status.state === SilenceState.Expired);
+  }, [filteredSilences, alertManagerAlerts, canPreview]);
 
   if (isLoading || amAlertsIsLoading) {
     return <LoadingPlaceholder text={t('alerting.silences-table.text-loading-silences', 'Loading silences...')} />;
@@ -224,40 +212,27 @@ function SilenceList({
   }
 }
 
-const useFilteredSilences = (silences: Silence[], expired = false) => {
-  const [queryParams] = useQueryParams();
+const useFilteredSilences = (silences: Silence[], queryParams: UrlQueryMap) => {
   return useMemo(() => {
     const { queryString } = getSilenceFiltersFromUrlParams(queryParams);
-    const silenceIdsString = queryParams?.silenceIds;
+    const silenceIds = typeof queryParams.silenceIds === 'string' ? queryParams.silenceIds.split(',') : undefined;
+    const matchers = queryString ? parsePromQLStyleMatcherLooseSafe(queryString) : [];
+
     return silences.filter((silence) => {
-      if (typeof silenceIdsString === 'string') {
-        const idsIncluded = silenceIdsString.split(',').includes(silence.id);
-        if (!idsIncluded) {
-          return false;
-        }
+      if (silenceIds && !silenceIds.includes(silence.id)) {
+        return false;
       }
-      if (queryString) {
-        const matchers = parsePromQLStyleMatcherLooseSafe(queryString);
-        const matchersMatch = matchers.every((matcher) =>
-          silence.matchers?.some(
-            ({ name, value, isEqual, isRegex }) =>
-              matcher.name === name &&
-              matcher.value === value &&
-              matcher.isEqual === isEqual &&
-              matcher.isRegex === isRegex
-          )
-        );
-        if (!matchersMatch) {
-          return false;
-        }
-      }
-      if (expired) {
-        return silence.status.state === SilenceState.Expired;
-      } else {
-        return silence.status.state !== SilenceState.Expired;
-      }
+      return matchers.every((matcher) =>
+        silence.matchers?.some(
+          ({ name, value, isEqual, isRegex }) =>
+            matcher.name === name &&
+            matcher.value === value &&
+            matcher.isEqual === isEqual &&
+            matcher.isRegex === isRegex
+        )
+      );
     });
-  }, [queryParams, silences, expired]);
+  }, [queryParams, silences]);
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({

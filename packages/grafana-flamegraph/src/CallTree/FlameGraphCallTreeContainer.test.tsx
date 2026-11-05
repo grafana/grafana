@@ -172,6 +172,30 @@ describe('FlameGraphCallTreeContainer', () => {
     expect(columnHeaders[2].textContent).toContain('Total');
   });
 
+  it('should allow horizontal scrolling so nested function names are not clipped', async () => {
+    await setup();
+
+    const scrollContainer = screen.getByTestId('call-tree-scroll-container');
+    expect(scrollContainer).toHaveStyle({ overflow: 'auto' });
+
+    const columnHeaders = screen.getAllByRole('columnheader');
+    const functionHeader = columnHeaders[1];
+    // jsdom drops the max-content width, so assert the column is not locked to a pixel width.
+    expect(functionHeader.style.width).not.toMatch(/^\d/);
+    expect(functionHeader.style.minWidth).toBe('1054px');
+    expect(functionHeader.style.whiteSpace).toBe('nowrap');
+
+    const firstRowCells = within(screen.getAllByRole('row')[1]).getAllByRole('cell');
+    for (const [index, right] of [
+      [2, '300px'],
+      [3, '150px'],
+      [4, '0px'],
+    ] as const) {
+      expect(columnHeaders[index]).toHaveStyle({ position: 'sticky', right });
+      expect(firstRowCells[index]).toHaveStyle({ position: 'sticky', right });
+    }
+  });
+
   it('should enter focus mode when Focus on callees is clicked', async () => {
     // Use search to make runtime.mallocgc visible in the tree
     await setup({ search: 'runtime.mallocgc' });
@@ -274,5 +298,21 @@ describe('FlameGraphCallTreeContainer', () => {
     consoleError.mockRestore();
     // Restore fake timers for other tests
     jest.useFakeTimers();
+  });
+
+  it('paints pinned value cells with the row background', async () => {
+    await setup({ search: 'runtime.mallocgc' });
+
+    const rows = screen.getAllByRole('row').slice(1);
+    const pinned = rows.flatMap((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .filter((cell) => cell.style.position === 'sticky')
+    );
+
+    // Color Bar, Self, and Total on every body row, including the search match.
+    expect(pinned).toHaveLength(rows.length * 3);
+    // jsdom reports the inherit keyword instead of the row fill it resolves to.
+    expect(pinned.map((cell) => window.getComputedStyle(cell).backgroundColor)).toEqual(pinned.map(() => 'inherit'));
   });
 });

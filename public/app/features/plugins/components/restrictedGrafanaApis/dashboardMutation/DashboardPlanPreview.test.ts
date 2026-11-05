@@ -1,5 +1,7 @@
 import { locationService } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import type { MutationClient, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
+import { takePendingPlanBuild } from 'app/features/dashboard-scene/scene/pendingPlanBuild';
 
 import { DashboardPlanPreview } from './DashboardPlanPreview';
 
@@ -24,11 +26,23 @@ describe('DashboardPlanPreview', () => {
     client = null;
     preview = new DashboardPlanPreview(() => client);
     locationService.replace('/explore?orgId=1#origin');
+    setTestFlags({ 'assistant.dashboardPlanBuildingScreen': true });
   });
 
   afterEach(() => {
+    setTestFlags({});
     jest.useRealTimers();
     jest.restoreAllMocks();
+  });
+
+  it('refuses a building screen while its feature flag is off, before navigating', async () => {
+    setTestFlags({ 'assistant.dashboardPlanBuildingScreen': false });
+
+    const result = await preview.render({ ...plan, phase: 'building' });
+
+    expect(result.success).toBe(false);
+    expect(locationService.getLocation().pathname).toBe('/explore');
+    expect(takePendingPlanBuild()).toBeUndefined();
   });
 
   async function openPlan() {
@@ -39,6 +53,39 @@ describe('DashboardPlanPreview', () => {
     expect(await rendering).toEqual(success);
     return mounted;
   }
+
+  it('leaves a building screen for the new dashboard to open on, and clears it once rendered', async () => {
+    const rendering = preview.render({ ...plan, phase: 'building' });
+    expect(takePendingPlanBuild()).toEqual({ planId: 'plan-1', planTitle: 'Service overview' });
+
+    client = createClient();
+    await jest.advanceTimersByTimeAsync(50);
+    expect(await rendering).toEqual(success);
+    expect(takePendingPlanBuild()).toBeUndefined();
+  });
+
+  it('keeps a newer building screen when the preview it replaced gives up', async () => {
+    // A preview still opening /dashboard/new when Build is clicked.
+    const previewing = preview.render(plan);
+    const building = preview.render({ ...plan, phase: 'building' });
+
+    await jest.advanceTimersByTimeAsync(50);
+    expect((await previewing).success).toBe(false);
+    expect(takePendingPlanBuild()).toEqual({ planId: 'plan-1', planTitle: 'Service overview' });
+
+    client = createClient();
+    await jest.advanceTimersByTimeAsync(50);
+    expect(await building).toEqual(success);
+  });
+
+  it('clears an unclaimed building screen when the render fails', async () => {
+    const rendering = preview.render({ ...plan, phase: 'building' });
+    locationService.replace('/explore');
+    await jest.advanceTimersByTimeAsync(50);
+
+    expect((await rendering).success).toBe(false);
+    expect(takePendingPlanBuild()).toBeUndefined();
+  });
 
   it('opens a new dashboard and waits for its client before rendering', async () => {
     const previous = createClient();
@@ -57,7 +104,7 @@ describe('DashboardPlanPreview', () => {
     client = mounted;
     await jest.advanceTimersByTimeAsync(50);
     expect(await rendering).toEqual(success);
-    expect(mounted.execute).toHaveBeenCalledWith({ type: 'RENDER_PLAN', payload: plan });
+    expect(mounted.execute).toHaveBeenCalledWith({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'preview' } });
   });
 
   it('reuses an already mounted new dashboard', async () => {
@@ -66,7 +113,7 @@ describe('DashboardPlanPreview', () => {
     client = mounted;
 
     expect(await preview.render(plan)).toEqual(success);
-    expect(mounted.execute).toHaveBeenCalledWith({ type: 'RENDER_PLAN', payload: plan });
+    expect(mounted.execute).toHaveBeenCalledWith({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'preview' } });
   });
 
   it('returns to the original page including query and hash when dismissed', async () => {

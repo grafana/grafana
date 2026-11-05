@@ -6,17 +6,26 @@ const dashboards = [{ uid: `login-title-a-${suffix}`, title: `API Latency ${suff
 test.use({
   httpCredentials: undefined,
   featureToggles: { useSessionStorageForRedirection: true },
-  openFeature: { flags: { 'grafana.preserveLoginTabTitle': true } },
+  openFeature: { flags: { 'grafana.preserveLoginTabTitle': true, 'grafana.preserveDashboardLoginTabTitle': false } },
 });
 
 test.describe('Section titles after session expiry', { tag: ['@dashboards'] }, () => {
   // Context routes also apply to tabs created with context.newPage().
-  test.beforeEach(async ({ context }) => {
+  test.beforeEach(async ({ context, openFeature }) => {
     await context.route('**/ofrep/v1/evaluate/flags', async (route) => {
+      // Plugins like the assistant serve their own OFREP endpoint, which isn't set up in CI. Only override Grafana's.
+      if (new URL(route.request().url()).pathname.startsWith('/api/plugins/')) {
+        await route.fallback();
+        return;
+      }
       const response = await route.fetch();
+      if (!response.ok()) {
+        await route.fulfill({ response });
+        return;
+      }
       const body = await response.json();
-      body.flags = body.flags.filter((flag: { key: string }) => flag.key !== 'grafana.preserveLoginTabTitle');
-      body.flags.push({ key: 'grafana.preserveLoginTabTitle', value: true, reason: 'STATIC' });
+      body.flags = body.flags.filter((flag: { key: string }) => !(flag.key in openFeature.flags));
+      body.flags.push(...Object.entries(openFeature.flags).map(([key, value]) => ({ key, value, reason: 'STATIC' })));
       await route.fulfill({ response, json: body });
     });
   });

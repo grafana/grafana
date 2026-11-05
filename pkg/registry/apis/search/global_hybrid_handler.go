@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,14 +17,20 @@ import (
 
 // GlobalHybridSearchFor retains known API authorization policies while the
 // backend checks manifest opt-in, collection enrollment, and result access.
-func (h *HybridHandler) GlobalHybridSearchFor(targets map[schema.GroupResource]schema.GroupVersionKind, auth authorizer.Authorizer) http.HandlerFunc {
-	kinds := make(map[schema.GroupResource]string, len(targets))
+// kinds names the results. targets only names types kinds lacks, because it
+// holds the versions this process serves, and the name must not depend on that.
+func (h *HybridHandler) GlobalHybridSearchFor(targets map[schema.GroupResource]schema.GroupVersionKind, kinds map[schema.GroupResource]string, auth authorizer.Authorizer, defaultResources []searchv0.HybridSearchResource) http.HandlerFunc {
+	names := make(map[schema.GroupResource]string, len(kinds)+len(targets))
 	for gr, gvk := range targets {
-		kinds[gr] = gvk.Kind
+		names[gr] = gvk.Kind
 	}
+	maps.Copy(names, kinds)
 	gvr := GlobalSearchGVR()
-	kind := kindRef{group: gvr.Group, version: gvr.Version, resource: gvr.Resource, kinds: kinds}
+	kind := kindRef{group: gvr.Group, version: gvr.Version, resource: gvr.Resource, kinds: names}
 	return h.hybridSearchFor(kind, func(ctx context.Context, q *searchv0.HybridSearchQuery, namespace string) (*resourcepb.HybridSearchRequest, error) {
+		if len(q.Resources) == 0 {
+			q.Resources = defaultResources
+		}
 		req, errs := TranslateGlobalHybridSearchQuery(q, namespace)
 		if len(errs) > 0 {
 			return nil, apierrors.NewInvalid(schema.GroupKind{Group: searchv0.GROUP, Kind: searchv0.KindHybridSearchQuery}, "", errs)

@@ -4,9 +4,17 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { getNavTitle } from '../utils/navBarItem-translations';
 
-import { RedirectToUrlKey } from './context_srv';
+import { contextSrv, RedirectToUrlKey } from './context_srv';
 
 const storageKey = 'grafana.loginSection';
+
+function readSavedSection() {
+  try {
+    return JSON.parse(window.sessionStorage.getItem(storageKey) ?? 'null');
+  } catch {
+    return undefined;
+  }
+}
 
 export function rememberLoginSectionTitle(node: NavModelItem | undefined, pathname: string) {
   // Only catalogue labels are retained; node.text can contain user-created names.
@@ -16,15 +24,47 @@ export function rememberLoginSectionTitle(node: NavModelItem | undefined, pathna
 
   try {
     if (node?.id) {
+      const saved = readSavedSection();
+      // Chrome updates must not erase a dashboard name captured by its renderer.
+      const dashboard =
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPreserveDashboardLoginTabTitle, false) &&
+        saved?.navId === node.id &&
+        saved.pathname === pathname &&
+        saved.appSubUrl === config.appSubUrl &&
+        saved.dashboard?.orgId === contextSrv.user.orgId
+          ? saved.dashboard
+          : undefined;
       window.sessionStorage.setItem(
         storageKey,
-        JSON.stringify({ navId: node.id, pathname, appSubUrl: config.appSubUrl })
+        JSON.stringify({ navId: node.id, pathname, appSubUrl: config.appSubUrl, dashboard })
       );
     } else {
       clearLoginSectionTitle();
     }
   } catch {
     // Remembering a tab label must not prevent navigation when storage is unavailable.
+  }
+}
+
+export function rememberLoginDashboardTitle(title: string, pathname: string) {
+  if (
+    !getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPreserveLoginTabTitle, false) ||
+    !getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPreserveDashboardLoginTabTitle, false) ||
+    !contextSrv.user.isSignedIn
+  ) {
+    return;
+  }
+
+  try {
+    const saved = readSavedSection();
+    if (saved?.navId === 'dashboards/browse' && saved.pathname === pathname && saved.appSubUrl === config.appSubUrl) {
+      window.sessionStorage.setItem(
+        storageKey,
+        JSON.stringify({ ...saved, dashboard: { title, orgId: contextSrv.user.orgId } })
+      );
+    }
+  } catch {
+    // Remembering a dashboard name must not prevent rendering when storage is unavailable.
   }
 }
 
@@ -36,13 +76,15 @@ export function clearLoginSectionTitle() {
   }
 }
 
-export function getLoginSectionTitle(): string | undefined {
+export function getLoginSectionTitle(
+  preserveDashboardTitle = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPreserveDashboardLoginTabTitle, false)
+): string | undefined {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPreserveLoginTabTitle, false)) {
     return undefined;
   }
 
   try {
-    const saved = JSON.parse(window.sessionStorage.getItem(storageKey) ?? 'null');
+    const saved = readSavedSection();
     const redirect = window.sessionStorage.getItem(RedirectToUrlKey);
     if (!saved || !redirect || typeof saved.navId !== 'string' || saved.appSubUrl !== config.appSubUrl) {
       return undefined;
@@ -59,7 +101,19 @@ export function getLoginSectionTitle(): string | undefined {
     // Section metadata is saved during navigation, independently of the login redirect.
     // Section metadata is saved during navigation, independently of the login redirect because we need navigationNode.navId to build the title.
     // We only use it when the saved pathname matches the actual redirect destination. It may not match in case user is not logged out from Grafana but when opening a new tab and trying to access a new page while logged out. In that case nothing updated the `grafana.loginSection` yet and so we don't show any title, which is expected.
-    return pathname === saved.pathname ? getNavTitle(saved.navId) : undefined;
+    if (pathname !== saved.pathname) {
+      return undefined;
+    }
+    if (
+      preserveDashboardTitle &&
+      saved.navId === 'dashboards/browse' &&
+      typeof saved.dashboard?.title === 'string' &&
+      saved.dashboard.title &&
+      (!url.searchParams.has('orgId') || Number(url.searchParams.get('orgId')) === saved.dashboard.orgId)
+    ) {
+      return saved.dashboard.title;
+    }
+    return getNavTitle(saved.navId);
   } catch {
     return undefined;
   }

@@ -2,22 +2,29 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
+import {
+  useFlagGrafanaPreserveDashboardLoginTabTitle,
+  useFlagGrafanaPreserveLoginTabTitle,
+} from '@grafana/runtime/internal';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { rememberLoginDashboardTitle } from 'app/core/services/loginSectionTitle';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
+import { ComposerOverlay } from '../composer/ComposerOverlay';
 import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
 
 import { DashboardOverlay } from './DashboardOverlay';
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
+import { PlanBuildingOverlay } from './PlanBuildingOverlay';
 import { PlanningControls } from './new-toolbar/PlanningControls';
 import { SandboxConsentBanner } from './sandbox-consent/SandboxConsentBanner';
 
@@ -34,8 +41,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     isEditing,
     layoutOrchestrator,
     planning,
+    mode,
     uid,
+    title,
   } = model.useState();
+  const composerSession = mode === 'composer' ? model.getComposerSession() : undefined;
 
   const scopesServices = useScopesServices();
 
@@ -60,6 +70,19 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const { type } = useParams();
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
+  const preserveLoginTitle = useFlagGrafanaPreserveLoginTabTitle();
+  const preserveDashboardTitle = useFlagGrafanaPreserveDashboardLoginTabTitle();
+  useEffect(() => {
+    if (
+      preserveLoginTitle &&
+      preserveDashboardTitle &&
+      uid &&
+      (location.pathname === `/d/${uid}` || location.pathname.startsWith(`/d/${uid}/`))
+    ) {
+      rememberLoginDashboardTitle(title, location.pathname);
+    }
+  }, [preserveLoginTitle, preserveDashboardTitle, uid, title, location.pathname, model]);
+
   const pageNav = model.getPageNav(location, navIndex);
   const navModel =
     type === 'snapshot'
@@ -111,6 +134,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   function renderBody() {
+    // The body is empty until the builder's first write, so the loading screen takes its place.
+    if (planning?.phase === 'building') {
+      return <PlanBuildingOverlay />;
+    }
+
     if (!viewPanel && (panelSearch || panelsPerRow)) {
       return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
     }
@@ -133,7 +161,9 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
    */
   function renderControls() {
     if (planning) {
-      return isDashboardNewLayoutsEnabled() ? <PlanningControls dashboard={model} planning={planning} /> : null;
+      return isDashboardNewLayoutsEnabled() && planning.phase === 'preview' ? (
+        <PlanningControls dashboard={model} planning={planning} />
+      ) : null;
     }
 
     return controls && <controls.Component model={controls} />;
@@ -149,9 +179,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           <DashboardSidebarSplitter
             dashboard={model}
             isEditing={isFullDashboardEditing(model.state)}
-            isPlanning={Boolean(planning)}
+            // Only the preview gets the planning canvas; the building screen sits on a plain one.
+            isPlanning={planning?.phase === 'preview'}
             controls={renderControls()}
             body={renderBody()}
+            overlay={composerSession && <ComposerOverlay session={composerSession} />}
           />
         )}
         <DashboardOverlay dashboard={model} />

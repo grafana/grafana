@@ -35,11 +35,13 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { pastePanelStyles } from '../actions/panel/pastePanelStyles';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { DashboardInteractions } from '../utils/interactions';
+import { isEditEntryBlocked, isMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { getPanelStyleConfig } from '../utils/panelStyleConfigs';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
@@ -97,13 +99,14 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       dashboard.canEditDashboard() &&
       dashboard.state.editable &&
       !isReadOnlyRepeat &&
-      !isEditingPanel
+      !isEditingPanel &&
+      !isEditEntryBlocked(dashboard)
     ) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({
         text: t('panel.header-menu.edit', `Edit`),
-        iconClassName: 'edit',
+        iconClassName: 'pen',
         shortcut: 'e',
         href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
         onClick: () => {
@@ -193,7 +196,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (!isEditingPanel) {
+    if (!isEditingPanel && !isMobileEditDeprecated()) {
       moreSubMenu.push({
         text: t('panel.header-menu.copy', `Copy`),
         iconClassName: 'copy',
@@ -253,7 +256,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (canManuallyEditDashboard(dashboard.state) && hasLegendOptions(panel.state.options) && !isEditingPanel) {
+    if (hasLegendOptions(panel.state.options) && !isEditingPanel) {
       moreSubMenu.push({
         text: shouldShowLegend(panel.state.options.legend)
           ? t('panel.header-menu.hide-legend', 'Hide legend')
@@ -305,16 +308,14 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    if (config.featureToggles.panelTimeSettings && canManuallyEditDashboard(dashboard.state)) {
-      items.push({
-        text: t('panel.header-menu.time-settings', 'Time settings'),
-        iconClassName: 'clock-nine',
-        onClick: (e) => {
-          e.preventDefault();
-          dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
-        },
-      });
-    }
+    items.push({
+      text: t('panel.header-menu.time-settings', 'Time settings'),
+      iconClassName: 'clock-nine',
+      onClick: (e) => {
+        e.preventDefault();
+        dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
+      },
+    });
 
     const extensions = await firstValueFrom(
       getObservablePluginLinks({
@@ -366,7 +367,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
               panel.state.pluginId,
               getPanelIdForVizPanel(panel) ?? -1
             );
-            dashboard.pastePanelStyles(panel);
+            pastePanelStyles(dashboard, panel);
           },
         });
       }
@@ -404,7 +405,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
       items.push({
         text: t('panel.header-menu.add-to-notebook', 'Add to notebook'),
-        iconClassName: 'book',
+        iconClassName: 'gf-notebook',
         onClick: () => {
           dashboard.showModal(new AddPanelToNotebookScene({ panelRef: panel.getRef() }));
         },
@@ -578,14 +579,18 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
 }
 
 export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
-  appEvents.publish(
-    new ShowConfirmModalEvent({
-      title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
-      text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
-      yesText: 'Remove',
-      onConfirm: () => dashboard.removePanel(panel),
-    })
-  );
+  // Let the menu close and release focus before mounting the confirmation modal.
+  // Otherwise its aria-hidden ancestor still contains the focused trigger.
+  setTimeout(() => {
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
+        text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
+        yesText: 'Remove',
+        onConfirm: () => dashboard.removePanel(panel),
+      })
+    );
+  }, 0);
 }
 
 const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
@@ -646,9 +651,6 @@ const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
 };
 
 export function toggleVizPanelLegend(vizPanel: VizPanel): void {
-  if (dashboardModesEnabled() && !canManuallyEditDashboard(getDashboardSceneFor(vizPanel).state)) {
-    return;
-  }
   const options = vizPanel.state.options;
   if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
     if (shouldShowLegend(options.legend)) {

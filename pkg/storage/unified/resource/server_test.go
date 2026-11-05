@@ -671,17 +671,20 @@ func TestRunInQueue(t *testing.T) {
 	})
 
 	t.Run("should time out if a task is sitting in the queue beyond the timeout", func(t *testing.T) {
-		s, _ := newTestServerWithQueue(t, 1, 1)
-		executed := make(chan struct{}, 1)
-		runnable := func(ctx context.Context) {
-			time.Sleep(1 * time.Second)
-			executed <- struct{}{}
-		}
+		synctest.Test(t, func(t *testing.T) {
+			s, _ := newTestServerWithQueue(t, 1, 1)
+			executed := make(chan struct{})
+			runnable := func(ctx context.Context) {
+				<-ctx.Done()
+				close(executed)
+			}
 
-		err := s.runInQueue(context.Background(), testTenantID, "read", runnable)
-		require.Error(t, err)
-		assert.Equal(t, context.DeadlineExceeded, err)
-		<-executed
+			err := s.runInQueue(t.Context(), testTenantID, "read", runnable)
+			require.ErrorIs(t, err, errQueueTimeout)
+			require.NotErrorIs(t, err, context.DeadlineExceeded)
+			require.NoError(t, t.Context().Err())
+			<-executed
+		})
 	})
 
 	t.Run("should use cluster-scoped tenant for empty tenantID", func(t *testing.T) {
@@ -804,14 +807,28 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 type fakeResourceIndexClient struct {
 	resourcepb.ResourceIndexClient
 	statsResponse *resourcepb.ResourceStatsResponse
+	statsError    error
+	statsRequests []*resourcepb.ResourceStatsRequest
+}
+
+type quotaLogRecorder struct {
+	log.Logger
+	messages []string
+}
+
+func (l *quotaLogRecorder) FromContext(context.Context) log.Logger { return l }
+
+func (l *quotaLogRecorder) Info(message string, _ ...any) {
+	l.messages = append(l.messages, message)
 }
 
 func newFakeResourceIndexClient() *fakeResourceIndexClient {
 	return &fakeResourceIndexClient{}
 }
 
-func (f *fakeResourceIndexClient) GetStats(context.Context, *resourcepb.ResourceStatsRequest, ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
-	return f.statsResponse, nil
+func (f *fakeResourceIndexClient) GetStats(_ context.Context, req *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	f.statsRequests = append(f.statsRequests, req)
+	return f.statsResponse, f.statsError
 }
 
 func TestGetQuotaUsage(t *testing.T) {
@@ -934,18 +951,22 @@ func TestCheckQuotas(t *testing.T) {
 		name              string
 		limit             int
 		enforcedResources map[string]bool
+		loggedResources   map[string]bool
+		expectStats       int
 		expectError       bool
 	}{
 		{
 			name:              "enforced resource returns error if quota exceeded",
 			limit:             1,
 			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
 			expectError:       true,
 		},
 		{
 			name:              "enforced resource returns nil if within quota",
 			limit:             2,
 			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
 			expectError:       false,
 		},
 		{
@@ -959,6 +980,44 @@ func TestCheckQuotas(t *testing.T) {
 			limit:             1,
 			enforcedResources: nil,
 			expectError:       false,
+		},
+		{
+			name:            "log-only resource counts and logs without enforcement",
+			limit:           1,
+			loggedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:     1,
+		},
+		{
+			name:            "log-only resource within quota counts without logging an exceeded quota",
+			limit:           2,
+			loggedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:     1,
+		},
+		{
+			name:              "enforced and logged resource counts once and enforces",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			loggedResources:   map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
+			expectError:       true,
+		},
+		{
+			name:              "zero quota is still enforced",
+			limit:             0,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
+			expectError:       true,
+		},
+		{
+			name:              "false entries do not request counts",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": false},
+			loggedResources:   map[string]bool{"grafana.dashboard.app/dashboards": false},
+		},
+		{
+			name:            "same resource name in another group is not selected",
+			limit:           1,
+			loggedResources: map[string]bool{"other.group/dashboards": true},
 		},
 	}
 
@@ -1000,14 +1059,26 @@ func TestCheckQuotas(t *testing.T) {
 				Backend:          &mockStorageBackend{},
 				SearchClient:     searchClient,
 				OverridesService: overridesService,
-				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources},
+				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources, LoggedResources: tt.loggedResources},
 			})
 			require.NoError(t, err)
 			t.Cleanup(func() {
 				_ = server.Stop(ctx)
 			})
 
+			logger := &quotaLogRecorder{Logger: log.NewNopLogger()}
+			server.log = logger
 			err = server.checkQuota(ctx, nsr)
+			require.Len(t, searchClient.statsRequests, tt.expectStats)
+			if tt.expectStats > 0 {
+				require.Equal(t, nsr.Namespace, searchClient.statsRequests[0].Namespace)
+				require.Equal(t, []string{nsr.GroupResource()}, searchClient.statsRequests[0].Kinds)
+			}
+			if tt.expectStats > 0 && tt.limit <= 1 {
+				require.Equal(t, []string{"Quota exceeded on create"}, logger.messages)
+			} else {
+				require.Empty(t, logger.messages)
+			}
 			if tt.expectError {
 				require.Error(t, err)
 				return
@@ -1016,52 +1087,148 @@ func TestCheckQuotas(t *testing.T) {
 		})
 	}
 
-	t.Run("stats response error fails open (no quota error returned)", func(t *testing.T) {
-		ctx := t.Context()
+	for _, transportError := range []bool{false, true} {
+		t.Run(fmt.Sprintf("stats error fails open (transport=%v)", transportError), func(t *testing.T) {
+			ctx := t.Context()
 
-		overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
-		overrides := `overrides:
+			overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
+			overrides := `overrides:
   "123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 1
 `
-		require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
+			require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
 
-		tcr := tracing.NewNoopTracerService()
-		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
-			FilePath: overridesFile,
+			tcr := tracing.NewNoopTracerService()
+			overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
+				FilePath: overridesFile,
+			})
+			require.NoError(t, err)
+
+			nsr := NamespacedResource{
+				Namespace: "stacks-123",
+				Group:     "grafana.dashboard.app",
+				Resource:  "dashboards",
+			}
+
+			searchClient := newFakeResourceIndexClient()
+			searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+				Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
+			}
+
+			if transportError {
+				searchClient.statsResponse = nil
+				searchClient.statsError = status.Error(codes.Unavailable, "stats unavailable")
+			}
+
+			metrics := ProvideStorageMetrics(prometheus.NewRegistry())
+			server, err := NewResourceServer(ResourceServerOptions{
+				Backend:          &mockStorageBackend{},
+				SearchClient:     searchClient,
+				OverridesService: overridesService,
+				StorageMetrics:   metrics,
+				QuotasConfig:     QuotasConfig{EnforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true}},
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = server.Stop(ctx)
+			})
+
+			require.NoError(t, server.checkQuota(ctx, nsr))
+			require.Equal(t, float64(1), testutil.ToFloat64(
+				metrics.DegradedOperations.WithLabelValues("check_quota", "stats_error", nsr.Group, nsr.Resource)))
+			require.Len(t, searchClient.statsRequests, 1)
 		})
-		require.NoError(t, err)
+	}
+}
 
-		nsr := NamespacedResource{
-			Namespace: "stacks-123",
-			Group:     "grafana.dashboard.app",
-			Resource:  "dashboards",
-		}
-
-		searchClient := newFakeResourceIndexClient()
-		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
-			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
-		}
-
-		metrics := ProvideStorageMetrics(prometheus.NewRegistry())
-		server, err := NewResourceServer(ResourceServerOptions{
-			Backend:          &mockStorageBackend{},
-			SearchClient:     searchClient,
-			OverridesService: overridesService,
-			StorageMetrics:   metrics,
-			QuotasConfig:     QuotasConfig{EnforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true}},
+func TestCheckQuotaSkipsUnselectedKindsBeforeLookup(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		config QuotasConfig
+		key    NamespacedResource
+	}{
+		{
+			name:   "plugin kind not selected",
+			config: QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+			key:    NamespacedResource{Namespace: "stacks-123", Group: "plugins.grafana.app", Resource: "plugins"},
+		},
+		{
+			name: "no kinds selected",
+			key:  NamespacedResource{Namespace: "stacks-123", Group: "plugins.grafana.app", Resource: "plugins"},
+		},
+		{
+			name:   "namespace missing even for selected kind",
+			config: QuotasConfig{LoggedResources: map[string]bool{"plugins.grafana.app/plugins": true}},
+			key:    NamespacedResource{Group: "plugins.grafana.app", Resource: "plugins"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// An uninitialized overrides service would fail if the lookup were reached.
+			s := &server{quotasConfig: tc.config, overridesService: &OverridesService{}}
+			require.NoError(t, s.checkQuota(t.Context(), tc.key))
 		})
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			_ = server.Stop(ctx)
-		})
+	}
+}
 
-		require.NoError(t, server.checkQuota(ctx, nsr))
-		require.Equal(t, float64(1), testutil.ToFloat64(
-			metrics.DegradedOperations.WithLabelValues("check_quota", "stats_error", nsr.Group, nsr.Resource)))
-	})
+func TestQuotaSelectionOnCreate(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		config    QuotasConfig
+		wantStats int
+		wantCode  int32
+	}{
+		{
+			name:   "ignored plugin create is stored without stats",
+			config: QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+		},
+		{
+			name:      "log-only plugin create is stored despite zero quota",
+			config:    QuotasConfig{LoggedResources: map[string]bool{"plugins.grafana.app/plugins": true}},
+			wantStats: 1,
+		},
+		{
+			name:      "enforced plugin create is rejected at zero quota",
+			config:    QuotasConfig{EnforcedResources: map[string]bool{"plugins.grafana.app/plugins": true}},
+			wantStats: 1,
+			wantCode:  http.StatusForbidden,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := identity.WithServiceIdentityForSingleNamespaceContext(t.Context(), "stacks-123")
+			db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, db.Close()) })
+			backend, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
+			require.NoError(t, err)
+			file := filepath.Join(t.TempDir(), "overrides.yaml")
+			require.NoError(t, os.WriteFile(file, []byte("overrides:\n  \"123\":\n    quotas:\n      plugins.grafana.app/plugins:\n        limit: 0\n"), 0o600))
+			overrides, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tracing.NewNoopTracerService(), ReloadOptions{FilePath: file})
+			require.NoError(t, err)
+			stats := newFakeResourceIndexClient()
+			stats.statsResponse = &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{{Group: "plugins.grafana.app", Resource: "plugins"}}}
+			s, err := NewResourceServer(ResourceServerOptions{Backend: backend, SearchClient: stats, OverridesService: overrides, QuotasConfig: tc.config})
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, s.Stop(context.WithoutCancel(ctx))) })
+			key := &resourcepb.ResourceKey{Namespace: "stacks-123", Group: "plugins.grafana.app", Resource: "plugins", Name: "test-plugin"}
+			response, err := s.Create(ctx, &resourcepb.CreateRequest{
+				Key:   key,
+				Value: []byte(`{"apiVersion":"plugins.grafana.app/v0alpha1","kind":"Plugin","metadata":{"name":"test-plugin","namespace":"stacks-123"},"spec":{"id":"test-plugin"}}`),
+			})
+			require.NoError(t, err)
+			require.Equal(t, tc.wantCode, response.GetError().GetCode())
+			require.Len(t, stats.statsRequests, tc.wantStats)
+			read, err := s.Read(ctx, &resourcepb.ReadRequest{Key: key})
+			require.NoError(t, err)
+			if tc.wantCode != 0 {
+				require.Equal(t, int32(http.StatusNotFound), read.GetError().GetCode())
+			} else {
+				require.Nil(t, read.Error)
+				require.NotEmpty(t, read.Value)
+			}
+		})
+	}
 }
 
 func TestNewResourceServer_RequiresStatsSourceWhenQuotasEnabled(t *testing.T) {
@@ -1708,14 +1875,20 @@ func startBookmarkWatch(t *testing.T, req *resourcepb.WatchRequest, configure fu
 	t.Cleanup(func() {
 		cancel()
 		srv.cancel()
+
+		// Finish watch cancellation before checking that the watch goroutine returned.
 		synctest.Wait()
+
 		select {
 		case err := <-done:
 			assert.NoError(t, err)
 		default: // An error-path test already consumed the result.
 		}
 	})
+
+	// Start the watch and its bookmark timer before returning control to the test.
 	synctest.Wait()
+
 	return events, stream, done
 }
 
@@ -1740,7 +1913,10 @@ func bookmarkWrittenEvent(rv int64) *WrittenEvent {
 
 func requireBookmarkEvent(t *testing.T, stream *bookmarkWatchServer, eventType resourcepb.WatchEvent_Type, rv int64) {
 	t.Helper()
+
+	// Finish pending watch delivery before reading the expected event or bookmark.
 	synctest.Wait()
+
 	require.NotEmpty(t, stream.events, "expected %s at RV %d", eventType, rv)
 	event := <-stream.events
 	require.Equal(t, eventType, event.Type)
@@ -1764,6 +1940,8 @@ func TestWatchPreviousReadError(t *testing.T) {
 		event.Type = resourcepb.WatchEvent_MODIFIED
 		event.PreviousRV = 150
 		events <- event
+
+		// Process the failed previous-version read before checking that the watch remains open.
 		synctest.Wait()
 
 		require.Empty(t, done, "watch should remain open after the previous version read fails")
@@ -1819,6 +1997,8 @@ func TestWatchDeleteRetainsPreviousJobRevisionAfterPruning(t *testing.T) {
 			PreviousRV:      previousRV,
 			Value:           objectToJSONBytes(t, previous),
 		}
+
+		// Finish the previous-version lookup and its error handling before checking watch shutdown.
 		synctest.Wait()
 
 		select {
@@ -1866,13 +2046,22 @@ func TestIncrementalBookmarksProgressLag(t *testing.T) {
 				}
 
 				time.Sleep(10 * time.Second)
+
+				// Finish the bookmark tick before verifying that elapsed time alone establishes no progress.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "the clock alone must not establish progress")
 
 				events <- filteredEvent(rvAt(time.Now()) + 1)
+
+				// Consume the filtered write before testing the bookmark's lag window.
 				synctest.Wait()
+
 				time.Sleep(20 * time.Second)
+
+				// Finish the lagged bookmark tick before checking that it cannot precede Since.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "lagged progress must not precede Since")
 				time.Sleep(10 * time.Second)
 				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rvAt(time.Now().Add(-time.Minute)))
@@ -1881,7 +2070,10 @@ func TestIncrementalBookmarksProgressLag(t *testing.T) {
 				// postponing all progress until the newest event is a minute old.
 				for range 2 {
 					events <- filteredEvent(rvAt(time.Now()) + 1)
+
+					// Consume each filtered write before advancing the next bookmark interval.
 					synctest.Wait()
+
 					time.Sleep(10 * time.Second)
 					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rvAt(time.Now().Add(-time.Minute)))
 				}
@@ -1907,7 +2099,10 @@ func TestIncrementalBookmarksLagDoesNotDelayObjects(t *testing.T) {
 		filtered := bookmarkWrittenEvent(objectRV + 1)
 		filtered.Key.Name = "other"
 		events <- filtered
+
+		// Consume the filtered write before checking that it cannot move progress past the delivered object.
 		synctest.Wait()
+
 		time.Sleep(10 * time.Second)
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, objectRV)
 
@@ -1916,7 +2111,10 @@ func TestIncrementalBookmarksLagDoesNotDelayObjects(t *testing.T) {
 		events <- bookmarkWrittenEvent(olderRV)
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, olderRV)
 		time.Sleep(10 * time.Second)
+
+		// Finish the next bookmark tick before checking that an older event cannot repeat progress.
 		synctest.Wait()
+
 		require.Empty(t, stream.events)
 	})
 }
@@ -1934,12 +2132,18 @@ func TestIncrementalBookmarksLaggedResume(t *testing.T) {
 		foreign := bookmarkWrittenEvent(snowflakeFromTime(now))
 		foreign.Key.Resource = "other"
 		events <- foreign
+
+		// Process the foreign collection's write before measuring progress for the watched collection.
 		synctest.Wait()
+
 		time.Sleep(10 * time.Second)
 		resumeRV := snowflakeFromTime(time.Now().Add(-time.Minute))
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, resumeRV)
 		close(events)
+
+		// Finish watch shutdown after its input closes before checking its returned error.
 		synctest.Wait()
+
 		require.NoError(t, <-done)
 
 		// The lagged bookmark leaves a late lower-RV notification eligible.
@@ -2001,12 +2205,18 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 					tt.filter(event)
 				}
 				events <- event
+
+				// Process the filtered object before checking that only its progress can produce a bookmark.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "filtered objects must not be sent")
 				time.Sleep(time.Second)
 				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 101)
 				time.Sleep(2 * time.Second)
+
+				// Finish later bookmark ticks before checking that unchanged progress is not repeated.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "unchanged progress must not repeat")
 			})
 		})
@@ -2019,9 +2229,15 @@ func TestIncrementalBookmarksLegacySQLCollectionOrdering(t *testing.T) {
 		foreign := bookmarkWrittenEvent(300)
 		foreign.Key.Resource = "other"
 		events <- foreign
+
+		// Consume the foreign collection's event before checking SQL watch progress.
 		synctest.Wait()
+
 		time.Sleep(2 * time.Second)
+
+		// Finish bookmark ticks before verifying that another collection cannot establish progress.
 		synctest.Wait()
+
 		require.Empty(t, stream.events, "other collections cannot establish SQL progress")
 
 		events <- bookmarkWrittenEvent(110)
@@ -2033,7 +2249,10 @@ func TestIncrementalBookmarksLegacySQLCollectionOrdering(t *testing.T) {
 		events <- bookmarkWrittenEvent(105)
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 105)
 		time.Sleep(time.Second)
+
+		// Finish the bookmark tick before checking that progress cannot regress.
 		synctest.Wait()
+
 		require.Empty(t, stream.events, "bookmarks must not regress")
 	})
 }
@@ -2062,7 +2281,10 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 					}
 				})
 				events <- bookmarkWrittenEvent(101)
+
+				// Enter the blocked Send before supplying the next pending event.
 				synctest.Wait()
+
 				select {
 				case <-entered:
 				default:
@@ -2072,11 +2294,17 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				pending.Key.Resource = "other"
 				events <- pending
 				time.Sleep(2 * time.Second)
+
+				// Finish bookmark ticks while Send is blocked before checking that pending events are not covered.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "blocked events must not be covered")
 
 				close(release)
+
+				// Finish the released Send and its error handling before inspecting the watch result.
 				synctest.Wait()
+
 				if fail {
 					require.ErrorIs(t, <-done, sendErr)
 					require.Empty(t, stream.events)
@@ -2084,7 +2312,10 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				}
 
 				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 101)
+
+				// Finish the pending bookmark after the delivered object before reading it.
 				synctest.Wait()
+
 				require.NotEmpty(t, stream.events)
 				bookmark := <-stream.events
 				require.Equal(t, resourcepb.WatchEvent_BOOKMARK, bookmark.Type)
@@ -2135,9 +2366,15 @@ func TestIncrementalBookmarksInitialBackfill(t *testing.T) {
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 2)
 
 		events <- bookmarkWrittenEvent(initialRV + 1)
+
+		// Consume the live write while the initial-list bookmark is still blocked.
 		synctest.Wait()
+
 		time.Sleep(2 * time.Second)
+
+		// Finish bookmark ticks before checking that live delivery is held behind the initial list.
 		synctest.Wait()
+
 		require.Empty(t, stream.events, "live events must wait for backfill")
 
 		close(release)
@@ -2417,7 +2654,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	}
 	watchLatency, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
 	require.NoError(t, err)
-	readyLatency, err := metrics.WatchEventReadyLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+	readyLatency, err := metrics.WatchEventReadyLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource, watchEventPhaseLive)
 	require.NoError(t, err)
 	sendDuration, err := metrics.WatchEventSendDuration.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
 	require.NoError(t, err)
@@ -2435,6 +2672,124 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 		"total watch latency should comprise upstream ready latency plus send duration")
 }
 
+type initialListBackend struct {
+	StorageBackend
+	names []string
+	rv    int64
+}
+
+func (b *initialListBackend) ListIterator(_ context.Context, _ *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+	return b.rv, cb(&namedListIterator{names: b.names, rv: b.rv})
+}
+
+func requireReadyPhaseCounts(t *testing.T, metrics *StorageMetrics, initialList, live uint64) {
+	t.Helper()
+	for phase, want := range map[string]uint64{watchEventPhaseInitialList: initialList, watchEventPhaseLive: live} {
+		observer, err := metrics.WatchEventReadyLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource, phase)
+		require.NoError(t, err)
+		m := &dto.Metric{}
+		require.NoError(t, observer.(prometheus.Metric).Write(m))
+		assert.Equal(t, want, m.GetHistogram().GetSampleCount(), "phase %s", phase)
+	}
+}
+
+// TestWatchEventMetricsPhaseIncludesInitialBookmark checks that a write made while the
+// initial-events bookmark is being sent is labeled phase=initial_list, and a later one live.
+func TestWatchEventMetricsPhaseIncludesInitialBookmark(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		listedAt := advanceBookmarkClock()
+		req := bookmarkWatchRequest()
+		req.Since = 0
+		req.SendInitialEvents = true
+		var metrics *StorageMetrics
+		var wroteAt time.Time
+		events, _, _ := startBookmarkWatch(t, req, func(srv *server, stream *bookmarkWatchServer) {
+			metrics = srv.storageMetrics
+			srv.backend = &initialListBackend{names: []string{"a", "b"}, rv: snowflakeFromTime(listedAt)}
+			stream.beforeSend = func(evt *resourcepb.WatchEvent) error {
+				if evt.Type == resourcepb.WatchEvent_BOOKMARK && wroteAt.IsZero() {
+					time.Sleep(time.Second)
+					wroteAt = time.Now()
+					time.Sleep(time.Second)
+				}
+				return nil
+			}
+		})
+		// Let the blocked bookmark send finish.
+		time.Sleep(3 * time.Second)
+
+		// Finish the released initial-list bookmark before inspecting its write timestamp.
+		synctest.Wait()
+
+		require.False(t, wroteAt.IsZero())
+
+		events <- bookmarkWrittenEvent(snowflakeFromTime(wroteAt))
+		events <- bookmarkWrittenEvent(snowflakeFromTime(time.Now()))
+
+		// Process the writes on both sides of readiness before comparing their metric phases.
+		synctest.Wait()
+
+		requireReadyPhaseCounts(t, metrics, 1, 1)
+	})
+}
+
+// TestWatchEventMetricsPhaseWithStorageBackend checks phase=initial_list end to end, with a
+// real write landing during a real initial list.
+func TestWatchEventMetricsPhaseWithStorageBackend(t *testing.T) {
+	const initialItems = 3
+
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	srv := newWatchTestServer(t, watchTestServerOpts{StorageMetrics: metrics})
+
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+	defer cancel()
+
+	require.NoError(t, srv.watchStartup.broadcaster.waitReady(ctx))
+	for range initialItems {
+		require.NoError(t, createTestPlaylist(ctx, srv))
+	}
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), initialItems)
+
+	wroteDuringList := false
+	stream := &bookmarkWatchServer{mockWatchServer: newMockWatchServer(ctx)}
+	stream.beforeSend = func(evt *resourcepb.WatchEvent) error {
+		// The first ADDED send is an initial-list item, so the list has already captured its RV.
+		if evt.Type == resourcepb.WatchEvent_ADDED && !wroteDuringList {
+			wroteDuringList = true
+			assert.NoError(t, createTestPlaylist(ctx, srv))
+		}
+		return nil
+	}
+	var eg errgroup.Group
+	eg.Go(func() error {
+		return srv.Watch(&resourcepb.WatchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+			},
+			SendInitialEvents: true,
+		}, stream)
+	})
+
+	received := 0
+	timeout := time.After(10 * time.Second)
+	for received < initialItems+1 {
+		select {
+		case evt := <-stream.events:
+			if evt.Type == resourcepb.WatchEvent_ADDED {
+				received++
+			}
+		case <-timeout:
+			t.Fatalf("timed out waiting for events: got %d, want %d", received, initialItems+1)
+		}
+	}
+
+	cancel()
+	require.NoError(t, eg.Wait())
+	require.True(t, wroteDuringList)
+	requireReadyPhaseCounts(t, metrics, 1, 0)
+}
+
 func TestWatchEventMetricsDropClockSkewedSample(t *testing.T) {
 	metrics := ProvideStorageMetrics(prometheus.NewPedanticRegistry())
 	sendStartedAt := time.Now()
@@ -2445,18 +2800,17 @@ func TestWatchEventMetricsDropClockSkewedSample(t *testing.T) {
 	metrics.observeWatchEvent(
 		watchTestGroup,
 		watchTestResource,
+		watchEventPhaseLive,
 		sendStartedAt.Add(5*time.Millisecond),
 		sendStartedAt,
 		sendStartedAt.Add(10*time.Millisecond),
 	)
 
-	for name, collector := range map[string]*prometheus.HistogramVec{
-		"total": metrics.WatchEventLatency,
-		"ready": metrics.WatchEventReadyLatency,
-		"send":  metrics.WatchEventSendDuration,
+	for name, observer := range map[string]prometheus.Observer{
+		"total": metrics.WatchEventLatency.WithLabelValues(watchTestGroup, watchTestResource),
+		"ready": metrics.WatchEventReadyLatency.WithLabelValues(watchTestGroup, watchTestResource, watchEventPhaseLive),
+		"send":  metrics.WatchEventSendDuration.WithLabelValues(watchTestGroup, watchTestResource),
 	} {
-		observer, err := collector.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
-		require.NoError(t, err)
 		metric := &dto.Metric{}
 		require.NoError(t, observer.(prometheus.Metric).Write(metric))
 		assert.Zero(t, metric.GetHistogram().GetSampleCount(), "%s must drop the clock-skewed event", name)
@@ -4692,54 +5046,160 @@ func TestResourceServerQOSTenantIsolation(t *testing.T) {
 		require.Nil(t, rsp.Error)
 		keys[namespace] = key
 	}
-	q := scheduler.NewQueue(&scheduler.QueueOptions{MaxConcurrentPerTenant: 4})
-	startQOSTestService(t, q)
-	worker, err := scheduler.NewScheduler(q, &scheduler.Config{NumWorkers: 32})
-	require.NoError(t, err)
-	startQOSTestService(t, worker)
-	srv.queue = q
-	srv.queueConfig.Timeout = 5 * time.Second
+	synctest.Test(t, func(t *testing.T) {
+		q := scheduler.NewQueue(&scheduler.QueueOptions{MaxConcurrentPerTenant: 4})
+		startQOSTestService(t, q)
+		worker, err := scheduler.NewScheduler(q, &scheduler.Config{NumWorkers: 32})
+		require.NoError(t, err)
+		startQOSTestService(t, worker)
+		srv.queue = q
+		srv.queueConfig.Timeout = 5 * time.Second
 
-	started := make(chan struct{}, 5)
-	release := make(chan struct{})
-	unblock := sync.OnceFunc(func() { close(release) })
-	t.Cleanup(unblock)
-	access.fn = func(req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
-		if req.Namespace == "slow" {
-			started <- struct{}{}
-			<-release
+		started := make(chan struct{}, 5)
+		release := make(chan struct{})
+		unblock := sync.OnceFunc(func() { close(release) })
+		t.Cleanup(unblock)
+		access.fn = func(req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+			if req.Namespace == "slow" {
+				started <- struct{}{}
+				<-release
+			}
+			return authlib.CheckResponse{Allowed: true}, nil
 		}
-		return authlib.CheckResponse{Allowed: true}, nil
-	}
-	type result struct {
-		rsp *resourcepb.ReadResponse
-		err error
-	}
-	read := func(namespace string) result {
-		rsp, err := srv.Read(ctxFor(namespace), &resourcepb.ReadRequest{Key: keys[namespace]})
-		return result{rsp: rsp, err: err}
-	}
-	assertRead := func(r result) {
-		t.Helper()
-		require.NoError(t, r.err)
-		require.NotNil(t, r.rsp)
-		require.Nil(t, r.rsp.Error)
-		require.NotEmpty(t, r.rsp.Value)
-	}
-	slowResults := make(chan result, 5)
-	for range 5 {
-		go func() { slowResults <- read("slow") }()
-	}
-	for range 4 {
-		awaitQOSTestResult(t, started)
-	}
-	require.Eventually(t, func() bool { return q.Len() == 1 }, time.Second, time.Millisecond)
-	assertRead(read("healthy"))
-	require.Equal(t, 1, q.Len())
-	require.Empty(t, started, "fifth authorization must stay queued")
-	unblock()
-	for range 5 {
-		assertRead(awaitQOSTestResult(t, slowResults))
+		type result struct {
+			rsp *resourcepb.ReadResponse
+			err error
+		}
+		read := func(namespace string) result {
+			rsp, err := srv.Read(ctxFor(namespace), &resourcepb.ReadRequest{Key: keys[namespace]})
+			return result{rsp: rsp, err: err}
+		}
+		assertRead := func(r result) {
+			t.Helper()
+			require.NoError(t, r.err)
+			require.NotNil(t, r.rsp)
+			require.Nil(t, r.rsp.Error)
+			require.NotEmpty(t, r.rsp.Value)
+		}
+		slowResults := make(chan result, 5)
+		for range 5 {
+			go func() { slowResults <- read("slow") }()
+		}
+		for range 4 {
+			awaitQOSTestResult(t, started)
+		}
+
+		// Finish queue admission while execution remains blocked.
+		synctest.Wait()
+
+		require.Equal(t, 1, q.Len())
+		assertRead(read("healthy"))
+		require.Equal(t, 1, q.Len())
+		require.Empty(t, started, "fifth authorization must stay queued")
+		unblock()
+		for range 5 {
+			assertRead(awaitQOSTestResult(t, slowResults))
+		}
+	})
+}
+
+func TestResourceServerQOSTimeoutStatus(t *testing.T) {
+	for _, mode := range []string{"enqueue", "queued", "executing", "inline"} {
+		t.Run(mode, func(t *testing.T) {
+			for _, tc := range []struct {
+				name     string
+				httpCode int32
+				grpcCode codes.Code
+			}{
+				{"server timeout", http.StatusInternalServerError, codes.Internal},
+				{"caller deadline", http.StatusGatewayTimeout, codes.DeadlineExceeded},
+				{"caller cancellation", 499, codes.Canceled},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					synctest.Test(t, func(t *testing.T) {
+						access := &callbackAccessClient{}
+						srv := &server{
+							backend:     &internalReadBackend{},
+							access:      access,
+							log:         log.NewNopLogger(),
+							queueConfig: QueueConfig{Timeout: time.Second, MinBackoff: time.Second, MaxBackoff: time.Second, MaxRetries: 10},
+						}
+						ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
+						key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace, Name: "timeout-test"}
+						if mode == "inline" {
+							srv.queue = scheduler.NewNoopQueue()
+						} else {
+							q := scheduler.NewQueue(&scheduler.QueueOptions{MaxSizePerTenant: 1})
+							startQOSTestService(t, q)
+							srv.queue = q
+							if mode == "enqueue" {
+								require.NoError(t, q.Enqueue(t.Context(), watchTestNamespace, func() { t.Error("queued work ran") }))
+							}
+							if mode == "executing" {
+								worker, err := scheduler.NewScheduler(q, &scheduler.Config{NumWorkers: 1})
+								require.NoError(t, err)
+								startQOSTestService(t, worker)
+							}
+						}
+
+						release := make(chan struct{})
+						unblock := sync.OnceFunc(func() { close(release) })
+						t.Cleanup(unblock)
+						started := make(chan struct{}, 1)
+						access.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+							started <- struct{}{}
+							<-release
+							return authlib.CheckResponse{Allowed: true}, nil
+						}
+						callerCtx, cancel := context.WithCancel(ctx)
+						defer cancel()
+						if tc.name == "caller deadline" {
+							var deadlineCancel context.CancelFunc
+							callerCtx, deadlineCancel = context.WithTimeout(callerCtx, 100*time.Millisecond)
+							defer deadlineCancel()
+						}
+						type result struct {
+							rsp *resourcepb.ReadResponse
+							err error
+						}
+						results := make(chan result, 1)
+						go func() {
+							rsp, err := srv.Read(callerCtx, &resourcepb.ReadRequest{Key: key})
+							results <- result{rsp, err}
+						}()
+						synctest.Wait()
+						if mode == "executing" || mode == "inline" {
+							require.Len(t, started, 1)
+						} else {
+							require.Empty(t, started)
+						}
+						if tc.name == "caller cancellation" {
+							cancel()
+						}
+
+						// Keep execution blocked until the server budget has expired too.
+						time.Sleep(2 * time.Second)
+						if tc.name == "server timeout" {
+							require.NoError(t, callerCtx.Err())
+							_, hasDeadline := callerCtx.Deadline()
+							require.False(t, hasDeadline)
+						}
+						unblock()
+						r := awaitQOSTestResult(t, results)
+						require.NoError(t, r.err)
+						require.NotNil(t, r.rsp)
+						require.NotNil(t, r.rsp.Error)
+						require.Equal(t, tc.httpCode, r.rsp.Error.Code)
+						_, err := UnaryErrorResultInterceptor()(callerCtx, nil, nil, func(context.Context, any) (any, error) {
+							return r.rsp, nil
+						})
+						require.Equal(t, tc.grpcCode, status.Code(err))
+						require.True(t, proto.Equal(r.rsp.Error, AsErrorResult(err)))
+						synctest.Wait()
+					})
+				})
+			}
+		})
 	}
 }
 
@@ -4771,25 +5231,35 @@ func TestResourceServerQOSQueueWaitSpan(t *testing.T) {
 		require.Contains(t, spans[0].Attributes(), attribute.String("stack", "cs"))
 	})
 	t.Run("ends on queued cancellation", func(t *testing.T) {
-		recorder := newQOSTestSpanRecorder(t)
-		q := scheduler.NewQueue(&scheduler.QueueOptions{})
-		startQOSTestService(t, q)
-		srv := &server{queue: q, queueConfig: QueueConfig{Timeout: time.Minute}}
-		ctx, cancel := context.WithCancel(t.Context())
-		defer cancel()
-		result := make(chan error, 1)
-		go func() {
-			result <- srv.runInQueue(ctx, "stack-a", "read", func(context.Context) { t.Error("canceled work ran") })
-		}()
-		require.Eventually(t, func() bool { return q.Len() == 1 }, time.Second, time.Millisecond)
-		cancel()
-		require.ErrorIs(t, awaitQOSTestResult(t, result), context.Canceled)
-		spans := recorder.Ended()
-		require.Len(t, spans, 1)
-		require.Equal(t, otelcodes.Error, spans[0].Status().Code)
-		require.Len(t, spans[0].Events(), 1)
-		require.Equal(t, "exception", spans[0].Events()[0].Name)
-		require.Eventually(t, func() bool { return q.Len() == 0 }, time.Second, time.Millisecond)
+		synctest.Test(t, func(t *testing.T) {
+			recorder := newQOSTestSpanRecorder(t)
+			q := scheduler.NewQueue(&scheduler.QueueOptions{})
+			startQOSTestService(t, q)
+			srv := &server{queue: q, queueConfig: QueueConfig{Timeout: time.Minute}}
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			result := make(chan error, 1)
+			go func() {
+				result <- srv.runInQueue(ctx, "stack-a", "read", func(context.Context) { t.Error("canceled work ran") })
+			}()
+
+			// Finish queue admission while execution remains blocked.
+			synctest.Wait()
+
+			require.Equal(t, 1, q.Len())
+			cancel()
+			require.ErrorIs(t, awaitQOSTestResult(t, result), context.Canceled)
+			spans := recorder.Ended()
+			require.Len(t, spans, 1)
+			require.Equal(t, otelcodes.Error, spans[0].Status().Code)
+			require.Len(t, spans[0].Events(), 1)
+			require.Equal(t, "exception", spans[0].Events()[0].Name)
+
+			// Let the queued cancellation callback release its queue slot.
+			synctest.Wait()
+
+			require.Zero(t, q.Len())
+		})
 	})
 	t.Run("execution cancellation leaves the completed wait successful", func(t *testing.T) {
 		recorder := newQOSTestSpanRecorder(t)

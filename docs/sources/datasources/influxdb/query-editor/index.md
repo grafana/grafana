@@ -30,6 +30,10 @@ The editor supports three query languages: SQL, InfluxQL, and Flux. Each has its
 
 For general information about Grafana query editors, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
+To compare InfluxQL and SQL queries for the same data, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="Influx: Bar Charts and Time Series using Mixed queries" url="https://play.grafana.org/d/dea43745-7fac-4bf4-85d0-d06b168de92b/" >}}
+
 ## Before you begin
 
 - Ensure you have [configured the InfluxDB data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure/).

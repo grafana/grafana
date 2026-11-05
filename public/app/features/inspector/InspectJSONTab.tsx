@@ -8,12 +8,17 @@ import { AppEvents, type PanelData, type SelectableValue, LoadingState } from '@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, Field, Select, useStyles2, CodeMirrorEditor } from '@grafana/ui';
+import { Alert, Button, Field, Select, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { appEvents } from 'app/core/app_events';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { getPanelDataFrames } from '../dashboard/components/HelpWizard/utils';
+import {
+  mobileEditNotAvailableMessage,
+  useIsMobileEditDeprecated,
+} from '../dashboard-scene/utils/mobileEditDeprecation';
 import { getPanelInspectorStyles2 } from '../inspector/styles';
 import { reportPanelInspectInteraction } from '../search/page/reporting';
 
@@ -64,6 +69,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
     []
   );
   const styles = useStyles2(getPanelInspectorStyles2);
+  const isMobileBlocked = useIsMobileEditDeprecated();
   const jsonOptions = useMemo(() => {
     if (panel) {
       if (panel.plugin?.meta.skipDataQuery) {
@@ -134,7 +140,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
           />
         </Field>
         {panel && isPanelJSON && canEdit && (
-          <Button className={styles.toolbarItem} onClick={onApplyPanelModel}>
+          <Button className={styles.toolbarItem} onClick={onApplyPanelModel} disabled={isMobileBlocked}>
             <Trans i18nKey="inspector.inspect-jsontab.apply">Apply</Trans>
           </Button>
         )}
@@ -145,6 +151,18 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
         )}
       </div>
 
+      {isMobileBlocked && panel && isPanelJSON && canEdit && (
+        <Alert
+          severity="warning"
+          title={t(
+            'dashboard-scene.inspect-json-tab.mobile-edit-unavailable',
+            'Editing is unavailable on small screens'
+          )}
+        >
+          <p>{mobileEditNotAvailableMessage()}</p>
+        </Alert>
+      )}
+
       <div className={styles.content}>
         <AutoSizer disableWidth>
           {({ height }) => (
@@ -153,7 +171,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
               language="json"
               aria-label={t('dashboard.inspect-json.editor-label', 'JSON content')}
               value={text || ''}
-              readOnly={!isPanelJSON}
+              readOnly={!isPanelJSON || isMobileBlocked}
               onChange={setText}
               onBlur={setText}
             />

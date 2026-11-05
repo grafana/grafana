@@ -73,6 +73,29 @@ export function initSystemJSHooks() {
   systemJSPrototype.onload = decorateSystemJsOnload;
 }
 
+function getMonitoredPackages(packages: string[]) {
+  // A null value tracks every export; a set tracks only the selected exports.
+  const monitoredPackages = new Map<string, Set<string> | null>();
+  for (const entry of packages) {
+    const separator = entry.indexOf(':');
+    if (separator === -1) {
+      monitoredPackages.set(entry, null);
+      continue;
+    }
+
+    const dependencyName = entry.slice(0, separator);
+    const importName = entry.slice(separator + 1);
+    if (!dependencyName || !importName || monitoredPackages.get(dependencyName) === null) {
+      continue;
+    }
+
+    const imports = monitoredPackages.get(dependencyName) ?? new Set<string>();
+    imports.add(importName);
+    monitoredPackages.set(dependencyName, imports);
+  }
+  return monitoredPackages;
+}
+
 // Compiled System.register setters expose named imports as namespace property reads.
 // Wraps the setters for monitored dependencies in a Proxy to report when a plugin
 // accesses a shared dependency import.
@@ -90,9 +113,9 @@ export async function decorateSystemJSInstantiate(
   }
 
   // Abort early if the plugin is not using any monitored dependencies to avoid unnecessary overhead.
-  const monitoredPackages = config.pluginImportTelemetryPackages;
+  const monitoredPackages = getMonitoredPackages(config.pluginImportTelemetryPackages);
   const [dependencies, declare, metadata] = registration;
-  if (!dependencies.some((dependency) => monitoredPackages.includes(dependency))) {
+  if (!dependencies.some((dependency) => monitoredPackages.has(dependency))) {
     return registration;
   }
 
@@ -106,9 +129,9 @@ export async function decorateSystemJSInstantiate(
 
       for (let index = 0; index < dependencies.length; index++) {
         const dependencyName = dependencies[index];
-        const isMonitoredDependency = monitoredPackages.includes(dependencyName);
+        const monitoredImports = monitoredPackages.get(dependencyName);
         const setter = declaration.setters[index];
-        if (!isMonitoredDependency || !setter) {
+        if (monitoredImports === undefined || !setter) {
           continue;
         }
 
@@ -118,7 +141,11 @@ export async function decorateSystemJSInstantiate(
         declaration.setters[index] = function (dependency) {
           dependencyProxy ??= new Proxy(dependency, {
             get(target, property, receiver) {
-              if (typeof property === 'string' && !ignoredInteropExports[property]) {
+              if (
+                typeof property === 'string' &&
+                !ignoredInteropExports[property] &&
+                (monitoredImports === null || monitoredImports.has(property))
+              ) {
                 reportSharedDependencyImport(pluginId, dependencyName, property);
               }
               return Reflect.get(target, property, receiver);

@@ -4,6 +4,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import { NewSceneObjectAddedEvent, SceneQueryRunner, UrlSyncManager, VizPanel } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 import * as libraryPanels from 'app/features/library-panels/state/api';
 
 import * as panelEditor from '../panel-edit/openPanelEditor';
@@ -70,6 +71,43 @@ describe('DashboardSceneUrlSync', () => {
         }
       }
     );
+
+    describe('when entering edit mode is blocked on mobile', () => {
+      testWithFlags({ 'grafana.mobileEditDeprecation': true });
+
+      beforeEach(() => {
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      });
+
+      afterEach(() => {
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+      });
+
+      it('does not wait on an unloaded library panel or start loading the editor', () => {
+        const pending = createDeferred<LibraryPanel>();
+        const fetchPanel = jest.spyOn(libraryPanels, 'getLibraryPanel').mockReturnValue(pending.promise);
+        const behavior = new LibraryPanelBehavior({ uid: 'library-a', name: 'Library A' });
+        const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', $behaviors: [behavior] });
+        const scene = new DashboardScene({ body: DefaultGridLayoutManager.fromVizPanels([panel]) });
+        const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+        try {
+          scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+
+          expect(onEnterEditMode).not.toHaveBeenCalled();
+          expect(scene.state.isEditing).toBeFalsy();
+          expect(scene.state.loadingView).toBeUndefined();
+          expect(scene.state.editPanel).toBeUndefined();
+          expect(scene.urlSync?.getUrlState().editPanel).toBeUndefined();
+          // Nothing is left waiting: the library panel is neither fetched nor kept active
+          expect(fetchPanel).not.toHaveBeenCalled();
+          expect(behavior.isActive).toBeFalsy();
+          expect(panel.isActive).toBeFalsy();
+        } finally {
+          scene.cancelPendingViews();
+          fetchPanel.mockRestore();
+        }
+      });
+    });
   });
   describe('Given a standard scene', () => {
     it('Should set UNSAFE_fitPanels when url has autofitpanels', () => {
@@ -318,6 +356,215 @@ describe('DashboardSceneUrlSync', () => {
       expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
       expect(scrollIntoViewSpy.mock.instances[0]).toBe(cloneC.containerRef.current);
     });
+
+    describe('while the layout settles after load', () => {
+      const originalResizeObserver = global.ResizeObserver;
+      let resizeObservers: ControlledResizeObserver[];
+
+      // Lets tests decide when layouts resize, unlike the global mock that reports once per observe()
+      class ControlledResizeObserver {
+        public observed: Element[] = [];
+
+        public constructor(public callback: ResizeObserverCallback) {
+          resizeObservers.push(this);
+        }
+
+        public observe(target: Element) {
+          this.observed.push(target);
+        }
+
+        public unobserve() {}
+
+        public disconnect() {
+          this.observed = [];
+        }
+      }
+
+      function resizeLayout() {
+        for (const observer of resizeObservers) {
+          if (observer.observed.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            observer.callback([], observer as unknown as ResizeObserver);
+          }
+        }
+      }
+
+      beforeEach(() => {
+        jest.useFakeTimers();
+        resizeObservers = [];
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        global.ResizeObserver = ControlledResizeObserver as unknown as typeof ResizeObserver;
+      });
+
+      afterEach(() => {
+        global.ResizeObserver = originalResizeObserver;
+        jest.useRealTimers();
+      });
+
+      it('scrolls the row back into view when the layout above it renders', () => {
+        const { scene, element } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+        expect(scrollIntoViewSpy.mock.instances[1]).toBe(element);
+      });
+
+      it('watches the ancestors of the row, since content above it grows those', () => {
+        const { scene, element } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+
+        expect(resizeObservers[0].observed).toEqual([element, document.body, document.documentElement]);
+      });
+
+      it('waits for the row to render before following it', () => {
+        const row = new RowItem({ title: 'Metrics' });
+        const scene = new DashboardScene({
+          title: 'hello',
+          uid: 'dash-1',
+          body: new RowsLayoutManager({ rows: [row] }),
+        });
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        expect(resizeObservers).toHaveLength(0);
+
+        const element = document.createElement('div');
+        document.body.appendChild(element);
+        row.containerRef.current = element;
+        jest.advanceTimersByTime(16);
+        expect(resizeObservers[0].observed[0]).toBe(element);
+
+        scrollIntoViewSpy.mockClear();
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+        expect(scrollIntoViewSpy.mock.instances[0]).toBe(element);
+      });
+
+      it('stops following the row once the layout has settled', () => {
+        const { scene } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        resizeLayout();
+        jest.advanceTimersByTime(1000);
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+      });
+
+      it('keeps following the row while the layout is still resizing', () => {
+        const { scene } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        for (let i = 0; i < 3; i++) {
+          resizeLayout();
+          jest.advanceTimersByTime(900);
+        }
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(5);
+      });
+
+      it('keeps following the row when the dashboard is deactivated and activated again', () => {
+        // StrictMode does this in development right after url sync handled the row link
+        const { scene } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        const deactivate = scene.activate();
+        deactivate();
+        scene.activate();
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+      });
+
+      it('stops following the row once it is removed from the page', () => {
+        const { scene, element } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        element.remove();
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+        expect(resizeObservers[0].observed).toEqual([]);
+      });
+
+      it('stops following the row and its running scroll animation once the user scrolls', () => {
+        const { scene } = buildTestSceneWithRow('Metrics');
+        const scrollToSpy = jest.spyOn(Element.prototype, 'scrollTo');
+        document.documentElement.scrollTop = 120;
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        window.dispatchEvent(new WheelEvent('wheel'));
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+        expect(scrollToSpy.mock.contexts).toEqual([document.body, document.documentElement]);
+        expect(scrollToSpy).toHaveBeenLastCalledWith({ top: 120, left: 0, behavior: 'instant' });
+        scrollToSpy.mockRestore();
+        document.documentElement.scrollTop = 0;
+      });
+
+      it('stops following the row when the user presses a key that scrolls the page', () => {
+        const { scene } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageUp' }));
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+      });
+
+      it('keeps following the row when the user presses a key that does not scroll the page', () => {
+        const { scene } = buildTestSceneWithRow('Metrics');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Meta' }));
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+      });
+
+      it('lets the last scroll animation finish once the layout has settled', () => {
+        const { scene } = buildTestSceneWithRow('Metrics');
+        const scrollToSpy = jest.spyOn(Element.prototype, 'scrollTo');
+
+        scene.urlSync?.updateFromUrl({ drow: 'Metrics' });
+        resizeLayout();
+        jest.advanceTimersByTime(1000);
+        window.dispatchEvent(new WheelEvent('wheel'));
+
+        expect(scrollToSpy).not.toHaveBeenCalled();
+        scrollToSpy.mockRestore();
+      });
+
+      it('stops following the previous row when a new row link arrives', () => {
+        const first = new RowItem({ title: 'First' });
+        const second = new RowItem({ title: 'Second' });
+        const scene = new DashboardScene({
+          title: 'hello',
+          uid: 'dash-1',
+          body: new RowsLayoutManager({ rows: [first, second] }),
+        });
+        for (const row of [first, second]) {
+          const element = document.createElement('div');
+          document.body.appendChild(element);
+          row.containerRef.current = element;
+        }
+
+        scene.urlSync?.updateFromUrl({ drow: 'First' });
+        scene.urlSync?.updateFromUrl({ drow: 'Second' });
+        scrollIntoViewSpy.mockClear();
+        resizeLayout();
+
+        expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+        expect(scrollIntoViewSpy.mock.instances[0]).toBe(second.containerRef.current);
+      });
+    });
   });
 
   describe('entering edit mode', () => {
@@ -390,6 +637,161 @@ describe('DashboardSceneUrlSync', () => {
       await waitFor(() => expect(scene.state.editview?.getUrlKey()).toBe('variables'));
     });
 
+    describe('direct ?editview= url load, not already editing', () => {
+      it('enters edit mode and opens the editview pane once onEnterEditMode succeeds', async () => {
+        const scene = buildTestScene();
+        scene.setState({
+          editable: true,
+          isEditing: false,
+          meta: { ...scene.state.meta, canEdit: true },
+        });
+
+        scene.urlSync?.updateFromUrl({ editview: 'links' });
+
+        await waitFor(() => expect(scene.state.isEditing).toBe(true));
+        expect(scene.state.editview?.getUrlKey()).toBe('links');
+      });
+
+      describe('on a mobile viewport', () => {
+        testWithFlags({ 'grafana.mobileEditDeprecation': true });
+
+        beforeEach(() => {
+          Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+        });
+
+        afterEach(() => {
+          Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+        });
+
+        it('does not enter edit mode or open the editview pane on mobile', async () => {
+          const scene = buildTestScene();
+          scene.setState({
+            editable: true,
+            isEditing: false,
+            meta: { ...scene.state.meta, canEdit: true },
+          });
+          const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+
+          scene.urlSync?.updateFromUrl({ editview: 'links' });
+          // The honoured path enters edit mode in a setTimeout, so wait a tick before asserting it never happened.
+          await new Promise((resolve) => setTimeout(resolve));
+
+          expect(onEnterEditMode).not.toHaveBeenCalled();
+          expect(scene.state.isEditing).toBe(false);
+          expect(scene.state.editview).toBeUndefined();
+        });
+
+        it('removes ?editview= from the url once entering edit mode is blocked on mobile', async () => {
+          locationService.push('/d/test/test?editview=links');
+          const scene = buildTestScene();
+          scene.setState({
+            editable: true,
+            isEditing: false,
+            meta: { ...scene.state.meta, canEdit: true },
+          });
+          const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+          const urlSync = new UrlSyncManager();
+          try {
+            urlSync.initSync(scene);
+
+            await waitFor(() => expect(locationService.getSearchObject().editview).toBeUndefined());
+            expect(onEnterEditMode).not.toHaveBeenCalled();
+          } finally {
+            urlSync.cleanUp(scene);
+          }
+        });
+
+        it('does not start the panel editor when entering edit mode is blocked on mobile', () => {
+          const scene = buildTestScene();
+          scene.setState({ isEditing: false });
+          const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+
+          scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+
+          expect(onEnterEditMode).not.toHaveBeenCalled();
+          expect(scene.state.isEditing).toBe(false);
+          expect(scene.state.editPanel).toBeUndefined();
+          expect(scene.state.loadingView).toBeUndefined();
+          expect(scene.urlSync?.getUrlState().editPanel).toBeUndefined();
+        });
+
+        it('removes ?editPanel= from the url once entering edit mode is blocked on mobile', async () => {
+          locationService.push('/d/test/test?editPanel=1');
+          const scene = buildTestScene();
+          scene.setState({ isEditing: false });
+          const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+          const urlSync = new UrlSyncManager();
+          try {
+            urlSync.initSync(scene);
+
+            await waitFor(() => expect(locationService.getSearchObject().editPanel).toBeUndefined());
+            expect(onEnterEditMode).not.toHaveBeenCalled();
+          } finally {
+            urlSync.cleanUp(scene);
+          }
+        });
+
+        it('still applies the other url updates from the same pass when entering edit mode is blocked on mobile', () => {
+          const scene = buildTestScene();
+          scene.setState({ isEditing: false });
+          const grid = (scene.state.body as DefaultGridLayoutManager).state.grid;
+          expect(grid.state.UNSAFE_fitPanels).toBeFalsy();
+
+          scene.urlSync?.updateFromUrl({ editPanel: 'panel-1', autofitpanels: '' });
+
+          expect(scene.state.editPanel).toBeUndefined();
+          expect(grid.state.UNSAFE_fitPanels).toBe(true);
+        });
+
+        it('still opens the editview pane for a session already in full editing on a mobile viewport', async () => {
+          const scene = buildTestScene();
+          scene.setState({ editable: true, isEditing: true, meta: { ...scene.state.meta, canEdit: true } });
+
+          scene.urlSync?.updateFromUrl({ editview: 'links' });
+
+          await waitFor(() => expect(scene.state.editview?.getUrlKey()).toBe('links'));
+        });
+
+        it('does not open the editview pane for a Viewing session on a mobile viewport', async () => {
+          setTestFlags({
+            dashboardNewLayouts: true,
+            'grafana.dashboardPreviewMode': true,
+            'grafana.mobileEditDeprecation': true,
+          });
+          const scene = buildTestScene();
+          scene.setState({
+            editable: true,
+            isEditing: true,
+            mode: 'view',
+            meta: { ...scene.state.meta, canEdit: true },
+          });
+
+          scene.urlSync?.updateFromUrl({ editview: 'links' });
+          // The honoured path enters edit mode in a setTimeout, so wait a tick before asserting it never happened.
+          await new Promise((resolve) => setTimeout(resolve));
+
+          expect(scene.state.editview).toBeUndefined();
+        });
+      });
+    });
+
+    // must click "Make editable" first -- so ?editview= must not open a pane.
+    it('removes ?editview= from the url when the dashboard can be edited but is not yet editable', async () => {
+      locationService.push('/d/test/test?editview=links');
+      const scene = buildTestScene();
+      scene.setState({ editable: false, isEditing: false, meta: { ...scene.state.meta, canEdit: true } });
+      const urlSync = new UrlSyncManager();
+      try {
+        urlSync.initSync(scene);
+
+        await waitFor(() => expect(locationService.getSearchObject().editview).toBeUndefined());
+        expect(scene.state.editview).toBeUndefined();
+        expect(scene.state.isEditing).toBe(false);
+      } finally {
+        urlSync.cleanUp(scene);
+      }
+    });
+
     it('opens the editor when the same URL update closes panel view and already-closed settings', async () => {
       const scene = buildTestScene();
       scene.setState({ isEditing: false });
@@ -427,6 +829,7 @@ describe('DashboardSceneUrlSync', () => {
 
   describe('while planning', () => {
     const planning = {
+      phase: 'preview' as const,
       planId: 'plan-1',
       planTitle: 'Kafka overview',
       onBuild: jest.fn(),

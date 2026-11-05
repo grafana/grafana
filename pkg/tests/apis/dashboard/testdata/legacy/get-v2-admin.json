@@ -1,0 +1,59 @@
+{
+  "body": {
+    "dashboard": {
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": "<id>",
+      "preload": false,
+      "refresh": "",
+      "schemaVersion": 42,
+      "tags": [
+        "golden"
+      ],
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "title": "Golden v2",
+      "uid": "golden-v2",
+      "version": 1
+    },
+    "meta": {
+      "annotationsPermissions": {
+        "dashboard": {
+          "canAdd": true,
+          "canDelete": true,
+          "canEdit": true
+        }
+      },
+      "apiVersion": "v0alpha1",
+      "canAdmin": true,
+      "canDelete": true,
+      "canEdit": true,
+      "canSave": true,
+      "canStar": true,
+      "created": "<timestamp>",
+      "createdBy": "grafana-admin",
+      "expires": "0001-01-01T00:00:00Z",
+      "folderId": 0,
+      "folderTitle": "General",
+      "folderUid": "",
+      "folderUrl": "",
+      "hasAcl": false,
+      "isFolder": false,
+      "provisioned": false,
+      "provisionedExternalId": "",
+      "slug": "golden-v2",
+      "type": "db",
+      "updated": "<timestamp>",
+      "updatedBy": "grafana-admin",
+      "url": "/d/golden-v2/golden-v2",
+      "version": 1
+    }
+  },
+  "status": 200
+}

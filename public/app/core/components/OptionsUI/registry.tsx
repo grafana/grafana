@@ -512,7 +512,11 @@ export const getAllStandardFieldConfigs = () => {
   const filterable: FieldConfigPropertyItem<FieldConfig, boolean | undefined, {}> = {
     id: 'filterable',
     path: 'filterable',
-    name: t('options-ui.registry.standard-field-configs.name-ad-hoc', 'Filterable'),
+    name: t('options-ui.registry.standard-field-configs.name-ad-hoc', 'Filter from values'),
+    description: t(
+      'options-ui.registry.standard-field-configs.description-ad-hoc',
+      'Allow viewers to update dashboard filters by interacting with this panel.'
+    ),
     hideFromDefaults: true,
     editor: standardEditorsRegistry.get('boolean').editor,
     override: standardEditorsRegistry.get('boolean').editor,

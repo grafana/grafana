@@ -74,6 +74,8 @@ export type FieldConfigEditorProps<TValue, TSettings extends {}> = StandardEdito
 /** @deprecated Use StandardEditorProps instead */
 export type FieldOverrideEditorProps<TValue, TSettings extends {}> = StandardEditorProps<TValue, TSettings>;
 
+type ArrayOverrideStrategy = 'merge' | 'replace';
+
 export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any, TContextOptions = unknown>
   extends OptionEditorConfig<TOptions, TSettings, TValue, TContextOptions> {
   /**
@@ -87,6 +89,12 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
 
   /** Indicates that option should not be available for the overrides */
   hideFromOverrides?: boolean;
+
+  /**
+   * How an override with an array value combines with the value the field inherits from the panel
+   * or the data source. See {@link FieldConfigPropertyItem.arrayOverrideStrategy}.
+   */
+  arrayOverrideStrategy?: ArrayOverrideStrategy;
 
   /**
    * Controls whether this option is offered in the "Add override property" picker, based on the
@@ -142,6 +150,17 @@ export interface FieldConfigPropertyItem<
 
   /** Indicates that option should not be available for the overrides */
   hideFromOverrides?: boolean;
+
+  /**
+   * How an override with an array value combines with the value the field inherits from the panel
+   * or the data source:
+   * - `'merge'` (default): the override values are added before the inherited values.
+   * - `'replace'`: the override values replace the inherited values.
+   *
+   * Either way, when several overrides set this option on the same field, the later override's
+   * values are added before the earlier ones.
+   */
+  arrayOverrideStrategy?: ArrayOverrideStrategy;
 
   /**
    * Controls whether this option is offered in the "Add override property" picker, based on the
