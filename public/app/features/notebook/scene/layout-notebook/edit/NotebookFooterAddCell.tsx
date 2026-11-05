@@ -1,8 +1,9 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, ButtonGroup, Divider, Dropdown, Menu, Stack } from '@grafana/ui';
+import { useSavedQueriesAvailable } from 'app/features/notebook/utils';
 
-import { getNotebookBlockTypeOptions, type NotebookBlockType, useSavedQueriesAvailable } from './NotebookBlockTypeMenu';
+import { getNotebookBlockTypeOptions, type NotebookBlockType } from './NotebookBlockTypeMenu';
 
 interface Props {
   onAdd: (type: NotebookBlockType) => void;

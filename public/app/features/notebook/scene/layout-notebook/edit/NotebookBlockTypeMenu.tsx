@@ -2,8 +2,7 @@ import { type KeyboardEvent, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Menu, type IconName } from '@grafana/ui';
-import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
-import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
+import { useSavedQueriesAvailable } from 'app/features/notebook/utils';
 
 /** The block types the add-block menu offers. Insertion itself belongs to edit mode. */
 export type NotebookBlockType = 'heading' | 'paragraph' | 'code' | 'visualization';
@@ -28,12 +27,6 @@ interface Props {
   onPick?: (type: NotebookBlockType) => void;
   /** Visualization submenu entry, only offered when saved queries are available. */
   onPickSavedQuery?: () => void;
-}
-
-/** Shared by the block menu and the footer's split button so both hide saved-query entries together. */
-export function useSavedQueriesAvailable(): boolean {
-  const { queryLibraryEnabled } = useQueryLibraryContext();
-  return queryLibraryEnabled && hasSavedQueryReadPermissions();
 }
 
 export function NotebookBlockTypeMenu({ onPick, onPickSavedQuery }: Props) {
