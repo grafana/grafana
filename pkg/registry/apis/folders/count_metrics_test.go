@@ -1,0 +1,93 @@
+package folders
+
+import (
+	"context"
+	"errors"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/admission"
+
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+)
+
+func TestCountingSearcherRecordsOutcome(t *testing.T) {
+	tests := []struct {
+		name        string
+		err         error
+		legacyJoin  bool
+		wantOutcome string
+		wantJoin    string
+	}{
+		{name: "success", legacyJoin: true, wantOutcome: "ok", wantJoin: "enabled"},
+		{name: "success without the legacy join", wantOutcome: "ok", wantJoin: "disabled"},
+		{name: "failure", err: errors.New("boom"), legacyJoin: true, wantOutcome: "error", wantJoin: "enabled"},
+		{name: "timeout is a failure", err: context.DeadlineExceeded, legacyJoin: true, wantOutcome: "error", wantJoin: "enabled"},
+		{name: "caller went away", err: context.Canceled, legacyJoin: true, wantOutcome: "canceled", wantJoin: "enabled"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := newCountMetrics(prometheus.NewRegistry(), tt.legacyJoin)
+			searcher := m.wrap(&mockSearchClient{stats: &resourcepb.ResourceStatsResponse{}, statsErr: tt.err}, countCallerEndpoint)
+
+			_, err := searcher.GetStats(context.Background(), &resourcepb.ResourceStatsRequest{})
+
+			require.Equal(t, tt.err, err, "the call result must pass through unchanged")
+			require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues(countCallerEndpoint, tt.wantOutcome, tt.wantJoin)))
+			require.Equal(t, 1, testutil.CollectAndCount(m.requests))
+		})
+	}
+}
+
+func TestCountMetricsLabelTheCaller(t *testing.T) {
+	m := newCountMetrics(prometheus.NewRegistry(), true)
+	search := &mockSearchClient{stats: &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{}}}
+
+	handler, err := (&subCountREST{
+		getter:   &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn"}}},
+		searcher: m.wrap(search, countCallerEndpoint),
+	}).Connect(newChildrenCtx(), "nnn", nil, &recordingResponder{})
+	require.NoError(t, err)
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/nnn/counts", nil))
+
+	folder := &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn"}}
+	require.NoError(t, validateOnDelete(context.Background(), folder, m.wrap(search, countCallerDeleteCheck), nil, false, nil))
+
+	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("counts_endpoint", "ok", "enabled")))
+	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("delete_check", "ok", "enabled")))
+}
+
+func TestCountMetricsNilIsTransparent(t *testing.T) {
+	search := &mockSearchClient{}
+	var m *countMetrics
+	require.Same(t, search, m.wrap(search, countCallerEndpoint))
+
+	require.NotNil(t, newCountMetrics(nil, true), "a nil registerer still counts, unregistered")
+	reg := prometheus.NewRegistry()
+	newCountMetrics(reg, true)
+	require.Panics(t, func() { newCountMetrics(reg, true) }, "a duplicate registration fails loudly")
+}
+
+func TestValidateCountsDeleteChecksAsTheirOwnCaller(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, false)
+	m := newCountMetrics(prometheus.NewRegistry(), true)
+	b := &FolderAPIBuilder{
+		searcher:     &mockSearchClient{stats: &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{}}},
+		countMetrics: m,
+	}
+	obj := &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn", Namespace: "default"}}
+
+	err := b.Validate(context.Background(), admission.NewAttributesRecord(nil, obj,
+		folders.SchemeGroupVersion.WithKind("folder"), obj.Namespace, obj.Name,
+		folders.SchemeGroupVersion.WithResource("folders"), "", admission.Delete,
+		&metav1.DeleteOptions{}, false, &user.SignedInUser{}), nil)
+
+	require.NoError(t, err)
+	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("delete_check", "ok", "enabled")))
+}
