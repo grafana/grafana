@@ -133,8 +133,11 @@ func TestCheckSecureValues(t *testing.T) {
 
 			var validationErr *ResourceValidationError
 			require.ErrorAs(t, err, &validationErr)
+			require.ErrorIs(t, err, ErrSecureValuesNotAllowed)
 			require.Contains(t, err.Error(), tt.wantErr)
 			require.NotContains(t, err.Error(), "super-secret", "the error must not echo the secret")
+			require.NotContains(t, err.Error(), ErrSecureValuesNotAllowed.Error(),
+				"the sentinel is for callers to match on, not for the message the API returns")
 		})
 	}
 }

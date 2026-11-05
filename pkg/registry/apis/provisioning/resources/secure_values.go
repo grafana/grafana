@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -11,6 +12,20 @@ import (
 // secureValuesField is the top-level object field where kinds declare inline
 // secure values (common.InlineSecureValues).
 const secureValuesField = "secure"
+
+// ErrSecureValuesNotAllowed matches a rejection by checkSecureValues. Callers
+// that reserve quota ahead of a write use it to tell this pre-write rejection,
+// which creates nothing, from a failure that may have written.
+var ErrSecureValuesNotAllowed = errors.New("secure values not allowed in this repository type")
+
+// secureValuesRejection tags the rejection for ErrSecureValuesNotAllowed while
+// delegating Error to the wrapped validation error, so the message the API
+// returns is unchanged.
+type secureValuesRejection struct{ error }
+
+func (secureValuesRejection) Is(target error) bool { return target == ErrSecureValuesNotAllowed }
+
+func (e secureValuesRejection) Unwrap() error { return e.error }
 
 // checkSecureValues rejects content that writes to the secret store when the
 // repository type does not allow it.
@@ -29,11 +44,11 @@ func checkSecureValues(parsed *ParsedResource) error {
 		return nil
 	}
 
-	return NewResourceValidationError(field.Forbidden(
+	return secureValuesRejection{NewResourceValidationError(field.Forbidden(
 		field.NewPath(secureValuesField),
 		fmt.Sprintf("secure values (%s) cannot be created or removed from a %s repository; only references to existing secure values are allowed",
 			strings.Join(keys, ", "), parsed.Repo.Type),
-	))
+	))}
 }
 
 // secureValueWrites returns, sorted, the secure values in obj that write to the
