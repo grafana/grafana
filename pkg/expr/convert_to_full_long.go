@@ -179,10 +179,7 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 		}
 		var frameAux int32
 		if aux := auxFieldsOf(frame.Fields, timeField); len(aux) > 0 {
-			var err error
-			if frameAux, err = auxCols.addSeries(aux); err != nil {
-				return nil, err
-			}
+			frameAux = auxCols.addSeries(aux, fmt.Sprintf("frame %d", frameIdx))
 		}
 		for _, f := range frame.Fields {
 			if !f.Type().Numeric() {
@@ -271,7 +268,7 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 	}
 
 	out := data.NewFrame("", fields...)
-	out.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+	out.Meta = &data.FrameMeta{Type: timeseriesFullLongType, Notices: auxCols.notices}
 	return data.Frames{out}, nil
 }
 
@@ -307,10 +304,7 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 		auxCols       = newAuxColumns()
 	)
 
-	seriesAux, err := auxCols.addWideSeries(frame.Fields, timeField)
-	if err != nil {
-		return nil, err
-	}
+	seriesAux := auxCols.addWideSeries(frame.Fields, timeField)
 
 	// Collect all label keys
 	for _, f := range frame.Fields {
@@ -411,7 +405,7 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 	}
 
 	out := data.NewFrame("", fields...)
-	out.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+	out.Meta = &data.FrameMeta{Type: timeseriesFullLongType, Notices: auxCols.notices}
 	return data.Frames{out}, nil
 }
 
@@ -462,6 +456,9 @@ type auxColumns struct {
 	// (index plus one, 0 for none) and source index. It stays nil until a row
 	// has aux fields, so numeric-only inputs do no extra work.
 	rows []uint64
+	// notices name the fields that were dropped, so users can see why a
+	// column is missing.
+	notices []data.Notice
 }
 
 type auxColumn struct {
@@ -496,20 +493,24 @@ func auxFieldsOf(fields []*data.Field, timeField *data.Field) []*data.Field {
 	return out
 }
 
-// addSeries registers the non-numeric fields of one series. It returns the
-// series' index plus one, or 0 when the series has no such fields.
-func (a *auxColumns) addSeries(fields []*data.Field) (int32, error) {
+// addSeries registers the non-numeric fields of one series, named by series in
+// notices. It returns the series' index plus one, or 0 when the series has no
+// such fields. A field whose name the series already has, or whose type
+// differs from the type of its column, is dropped with a warning notice. The
+// conversion keeps going, since these inputs converted before aux columns
+// existed.
+func (a *auxColumns) addSeries(fields []*data.Field, series string) int32 {
 	if len(fields) == 0 {
-		return 0, nil
+		return 0
 	}
 	var refs []auxRef
 	seen := map[string]struct{}{}
 	for _, f := range fields {
 		key := strings.ToLower(f.Name)
 		if _, dup := seen[key]; dup {
-			return 0, fmt.Errorf("field %q appears more than once in one series", f.Name)
+			a.drop(fmt.Sprintf("dropped field %q of %s: the series already has a field with that name", f.Name, series))
+			continue
 		}
-		seen[key] = struct{}{}
 
 		typ := f.Type().NullableType()
 		col, ok := a.index[key]
@@ -518,22 +519,28 @@ func (a *auxColumns) addSeries(fields []*data.Field) (int32, error) {
 			a.index[key] = col
 			a.cols = append(a.cols, auxColumn{name: f.Name, typ: typ})
 		} else if a.cols[col].typ != typ {
-			return 0, fmt.Errorf("field %q has type %s in one series and %s in another", f.Name, a.cols[col].typ, typ)
+			a.drop(fmt.Sprintf("dropped field %q of %s: its type %s does not match type %s of the column from an earlier series", f.Name, series, typ.ItemTypeString(), a.cols[col].typ.ItemTypeString()))
+			continue
 		}
+		seen[key] = struct{}{}
 		refs = append(refs, auxRef{col: col, field: f})
 	}
 	a.series = append(a.series, refs)
-	return int32(len(a.series)), nil
+	return int32(len(a.series))
+}
+
+func (a *auxColumns) drop(text string) {
+	a.notices = append(a.notices, data.Notice{Severity: data.NoticeSeverityWarning, Text: text})
 }
 
 // addWideSeries registers the non-numeric fields of a wide frame. In wide
 // frames, a non-numeric field belongs to the series with the same labels. It
 // returns each series' index plus one by its labels, or nil when the frame has
 // no such fields.
-func (a *auxColumns) addWideSeries(fields []*data.Field, timeField *data.Field) (map[string]int32, error) {
+func (a *auxColumns) addWideSeries(fields []*data.Field, timeField *data.Field) map[string]int32 {
 	aux := auxFieldsOf(fields, timeField)
 	if len(aux) == 0 {
-		return nil, nil
+		return nil
 	}
 	bySeries := map[string][]*data.Field{}
 	for _, f := range aux {
@@ -550,13 +557,9 @@ func (a *auxColumns) addWideSeries(fields []*data.Field, timeField *data.Field) 
 		if _, done := seriesAux[key]; done {
 			continue
 		}
-		series, err := a.addSeries(bySeries[key])
-		if err != nil {
-			return nil, err
-		}
-		seriesAux[key] = series
+		seriesAux[key] = a.addSeries(bySeries[key], fmt.Sprintf("series {%s}", key))
 	}
-	return seriesAux, nil
+	return seriesAux
 }
 
 func (a *auxColumns) addRow(rowIdx int, series int32, srcIdx int) {

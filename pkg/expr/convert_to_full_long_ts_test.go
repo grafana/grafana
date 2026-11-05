@@ -761,7 +761,7 @@ func TestConvertTimeSeriesToFullLongNonNumericFields(t *testing.T) {
 		})
 	}
 
-	t.Run("one field name with two types errors", func(t *testing.T) {
+	t.Run("one field name with two types keeps the first type and adds a notice", func(t *testing.T) {
 		input := data.Frames{
 			data.NewFrame("",
 				data.NewField("time", nil, times[:1]),
@@ -775,8 +775,40 @@ func TestConvertTimeSeriesToFullLongNonNumericFields(t *testing.T) {
 			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
 		}
 
-		_, err := ConvertToFullLong(input)
-		require.ErrorContains(t, err, `field "updated" has type`)
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		updated, idx := output[0].FieldByName("updated")
+		require.NotEqual(t, -1, idx)
+		require.Equal(t, data.FieldTypeNullableString, updated.Type())
+		require.Equal(t, []*string{new("x"), nil}, []*string{updated.At(0).(*string), updated.At(1).(*string)})
+		require.Equal(t, []data.Notice{{
+			Severity: data.NoticeSeverityWarning,
+			Text:     `dropped field "updated" of frame 1: its type *time.Time does not match type *string of the column from an earlier series`,
+		}}, output[0].Meta.Notices)
+	})
+
+	t.Run("a second field with the same name in one series is dropped with a notice", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times[:1]),
+				data.NewField("value", data.Labels{"host": "a"}, []float64{1}),
+				data.NewField("note", nil, []string{"x"}),
+				data.NewField("Note", nil, []string{"y"}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+		}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		names := make([]string, 0, len(output[0].Fields))
+		for _, f := range output[0].Fields {
+			names = append(names, f.Name)
+		}
+		require.Equal(t, []string{"time", SQLValueFieldName, SQLMetricFieldName, "note", "host"}, names)
+		require.Equal(t, new("x"), output[0].Fields[3].At(0))
+		require.Equal(t, []data.Notice{{
+			Severity: data.NoticeSeverityWarning,
+			Text:     `dropped field "Note" of frame 0: the series already has a field with that name`,
+		}}, output[0].Meta.Notices)
 	})
 }
 
