@@ -83,6 +83,33 @@ function mockIntersectionObserver() {
   };
 }
 
+// The global fake only reports once on observe; this one lets a test resize the content on demand.
+function mockResizeObserver() {
+  const callbacks: ResizeObserverCallback[] = [];
+  const original = global.ResizeObserver;
+
+  class FakeResizeObserver {
+    constructor(cb: ResizeObserverCallback) {
+      callbacks.push(cb);
+    }
+    observe = jest.fn();
+    unobserve = jest.fn();
+    disconnect = jest.fn();
+  }
+  global.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+
+  return {
+    resize: () => {
+      act(() => {
+        callbacks.forEach((cb) => cb([], {} as ResizeObserver));
+      });
+    },
+    restore: () => {
+      global.ResizeObserver = original;
+    },
+  };
+}
+
 describe('useStackedItemScroll', () => {
   let scrollIntoViewSpy: jest.Mock;
   let originalScrollIntoView: typeof HTMLElement.prototype.scrollIntoView;
@@ -164,6 +191,31 @@ describe('useStackedItemScroll', () => {
     io.fireDominant('C');
     expect(onActiveItemChange).toHaveBeenCalledTimes(1);
     expect(onActiveItemChange).toHaveBeenLastCalledWith(queryRef('C'));
+  });
+
+  it('ignores a dominant section that changed because content resized, until the user scrolls again', () => {
+    const ro = mockResizeObserver();
+    try {
+      const items = [makeQueryItem('A'), makeQueryItem('B'), makeQueryItem('C')];
+      const onActiveItemChange = jest.fn();
+      const { getByTestId } = render(
+        <Stack items={items} selectedItem={queryRef('A')} onActiveItemChange={onActiveItemChange} />
+      );
+      fireEvent.wheel(getByTestId('scroll-container'));
+
+      // A card grows (e.g. its data source help opens) and a neighbour becomes dominant without any scrolling.
+      ro.resize();
+      io.fireDominant('B');
+      expect(onActiveItemChange).not.toHaveBeenCalled();
+
+      // Once the user scrolls, the same dominant section is reported again and followed.
+      fireEvent.wheel(getByTestId('scroll-container'));
+      io.fireDominant('B');
+      expect(onActiveItemChange).toHaveBeenCalledTimes(1);
+      expect(onActiveItemChange).toHaveBeenLastCalledWith(queryRef('B'));
+    } finally {
+      ro.restore();
+    }
   });
 
   it('treats keyboard scrolling of the region as user intent, but not typing inside a section', () => {

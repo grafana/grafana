@@ -468,7 +468,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
-	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"

@@ -37,6 +37,7 @@ interface ActionsProps {
     duplicate: number;
     hide: number;
   };
+  source?: CardActionSource;
 }
 
 const getToggleLabel = (item: ActionItem, labels: Record<string, string>) => {
@@ -66,6 +67,7 @@ export function Actions({
   onDuplicate,
   onToggleHide,
   order,
+  source,
 }: ActionsProps) {
   const theme = useTheme2();
   const typeConfig = useQueryEditorTypeConfig();
@@ -73,7 +75,7 @@ export function Actions({
   const { confirmingDeleteActionKey, setConfirmingDeleteActionKey } = useQueryEditorUIContext();
   const typeLabel = typeConfig[item.type].getLabel();
   const requiresDeleteConfirmation = typeConfig[item.type].deleteConfirmation;
-  const cardActionSource: CardActionSource = contentHeader ? 'content_header' : 'sidebar_card';
+  const cardActionSource: CardActionSource = source ?? (contentHeader ? 'content_header' : 'sidebar_card');
   const itemKey = getActionItemKey(item);
   const confirmationKey = `${cardActionSource}:${itemKey}`;
   const showDeleteConfirmation = confirmingDeleteActionKey === confirmationKey;
