@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { isNumber } from 'lodash';
+import { isNumber, omit } from 'lodash';
 import { type ChangeEvent, memo, useContext, useEffect, useRef, useState } from 'react';
 
 import {
@@ -36,7 +36,8 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
   const fieldConfigExpressions = useContext(FieldConfigExpressionsContext);
   const interpolationEnabled = thresholdsInterpolation || fieldConfigExpressions;
 
-  const [inputRevisions, setInputRevisions] = useState<Record<number, number>>({});
+  // Text being typed into a step, which can read differently from the step's value (e.g. `5.`)
+  const [drafts, setDrafts] = useState<Record<number, string>>({});
   const stepsRef = useRef(steps);
   stepsRef.current = steps;
 
@@ -142,6 +143,11 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
     setSteps(withThresholdValue(steps, threshold, rawValue));
   }
 
+  function onChangeThresholdText(threshold: ThresholdWithKey, rawValue: string) {
+    setDrafts((current) => ({ ...current, [threshold.key]: rawValue }));
+    onChangeThresholdValue(threshold, rawValue);
+  }
+
   function onChangeThresholdColor(threshold: ThresholdWithKey, color: string) {
     const newThresholds = steps.map((t) => {
       if (t.key === threshold.key) {
@@ -168,15 +174,11 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
     commitSteps(steps);
   }
 
-  // SuggestionsInput commits on blur and when a variable is picked, which sets the text without an edit
+  // SuggestionsInput commits on blur and when a variable is picked. It reads the latest steps from
+  // the ref because a pick reports the edit and the commit in one handler.
   function onCommitThresholdValue(threshold: ThresholdWithKey, rawValue: string) {
-    const committed = commitSteps(withThresholdValue(stepsRef.current, threshold, rawValue)).find(
-      (step) => step.key === threshold.key
-    );
-    // SuggestionsInput keeps its own text, so remount it when the committed value reads differently
-    if (committed && String(committed.valueExpr ?? committed.value) !== rawValue) {
-      setInputRevisions((revisions) => ({ ...revisions, [threshold.key]: (revisions[threshold.key] ?? 0) + 1 }));
-    }
+    commitSteps(withThresholdValue(stepsRef.current, threshold, rawValue));
+    setDrafts((current) => omit(current, threshold.key));
   }
 
   function onModeChanged(value?: ThresholdsMode) {
@@ -242,10 +244,10 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
       // a text input that suggests dashboard variables, so expressions (e.g. $myVar) can be typed
       return (
         <SuggestionsInput
-          key={`${isPercent}-${inputRevisions[threshold.key] ?? 0}`}
-          value={threshold.valueExpr ?? threshold.value}
+          key={isPercent.toString()}
+          value={drafts[threshold.key] ?? threshold.valueExpr ?? threshold.value}
           suggestions={variableSuggestions}
-          onInputChange={(rawValue) => onChangeThresholdValue(threshold, rawValue)}
+          onInputChange={(rawValue) => onChangeThresholdText(threshold, rawValue)}
           onChange={(rawValue) => onCommitThresholdValue(threshold, rawValue)}
           aria-label={ariaLabel}
           inputRef={idx === 0 ? latestThresholdInputRef : null}

@@ -272,7 +272,8 @@ describe('VarMappingNumberValueEditor', () => {
       <VarMappingNumberValueEditor value={5} onChange={onChange} item={varItem} context={{ data: [] }} id="n22" />
     );
 
-    fireEvent.blur(screen.getByRole('textbox'), { target: { value: 'abc' } });
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'abc' } });
+    fireEvent.blur(screen.getByRole('textbox'));
     expect(screen.getByRole('textbox')).toHaveValue('5');
 
     rerender(
