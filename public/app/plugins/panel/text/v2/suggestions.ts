@@ -1,9 +1,5 @@
-import { of } from 'rxjs';
-
 import {
   type DataFrame,
-  type DataTransformerConfig,
-  DataTransformerID,
   type Field,
   FieldType,
   getFieldDisplayName,
@@ -14,7 +10,6 @@ import {
   VisualizationSuggestionScore,
   type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
-import { mergeTransformer } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 
 import { type Options, RenderMode, TextMode } from '../panelcfg.gen';
@@ -23,7 +18,6 @@ import { isTextNewFeaturesEnabled } from './utils';
 
 export const MAX_TEMPLATE_FIELDS = 50;
 export const MAX_LIST_ROWS = 50;
-export const MAX_MERGED_FRAMES = 50;
 
 const DEDICATED_VISUALIZATIONS: PreferredVisualisationType[] = ['logs', 'trace', 'nodeGraph', 'flamegraph'];
 
@@ -44,15 +38,14 @@ export const textSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> 
   if (
     !isTextNewFeaturesEnabled() ||
     !dataSummary.hasData ||
-    frames.length === 0 ||
+    frames.length !== 1 ||
     DEDICATED_VISUALIZATIONS.some((type) => dataSummary.hasPreferredVisualisationType(type))
   ) {
     return;
   }
 
   const isInstant = dataSummary.isInstant === true;
-  const suggestions =
-    frames.length === 1 ? getFrameSuggestions(frames[0], isInstant) : getMergedSuggestions(frames, isInstant);
+  const suggestions = getFrameSuggestions(frames[0], isInstant);
 
   return suggestions?.map((suggestion) => ({ ...suggestion, score: VisualizationSuggestionScore.OK }));
 };
@@ -81,130 +74,6 @@ function getFrameSuggestions(frame: DataFrame, isInstant: boolean): TextSuggesti
   const samples = getFieldTemplate(frame, numberFields, QUOTABLE_IN_REDUCER);
 
   return getSummarySuggestions(samples, hasSeveralValues(numberFields) ? samples : undefined);
-}
-
-/**
- * Text renders one frame at a time, so several frames are offered through a Merge series/tables
- * transformation, and the templates read the frame it produces like any other.
- */
-function getMergedSuggestions(frames: DataFrame[], isInstant: boolean): TextSuggestion[] | undefined {
-  // Merge slows down with the square of the frame count, and would run for each preview and refresh.
-  const timeField = frames.length <= MAX_MERGED_FRAMES ? getMergeTimeField(frames) : undefined;
-
-  if (timeField === undefined) {
-    return;
-  }
-
-  const merged = mergeFrames(frames);
-  const sortField = merged ? getSortField(merged, timeField) : undefined;
-
-  if (!merged || sortField === undefined || !keepsSeriesNames(frames, merged)) {
-    return;
-  }
-
-  return getFrameSuggestions(merged, isInstant)?.map((suggestion) => ({
-    ...suggestion,
-    description: t(
-      'textng.suggestions.merged-description',
-      '{{name}}: adds transformations that merge the series into one table',
-      { name: suggestion.name }
-    ),
-    transformations: getMergeTransformations(sortField),
-  }));
-}
-
-/**
- * The time field to merge `frames` on, if merging leaves each series whole. Merge joins rows on the
- * fields every frame has, and collapses any other repeated name into a single column.
- */
-function getMergeTimeField(frames: DataFrame[]): string | undefined {
-  const framesWithFields = frames.filter((frame) => frame.fields.length > 0);
-  const timeField = framesWithFields[0]?.fields.find(
-    ({ name, type }) =>
-      type === FieldType.time &&
-      framesWithFields.every((frame) =>
-        frame.fields.some((field) => field.name === name && field.type === FieldType.time)
-      )
-  );
-
-  if (!timeField) {
-    return;
-  }
-
-  const fields = framesWithFields.flatMap((frame) => frame.fields);
-  const joined = fields.filter((field) => field.name === timeField.name);
-  const others = fields.filter((field) => field.name !== timeField.name).map((field) => field.name);
-
-  return joined.length === framesWithFields.length &&
-    new Set(others).size === others.length &&
-    // A repeated timestamp would merge another frame's row into each of its rows, skewing that series.
-    joined.every(({ values }) => new Set(values).size === values.length)
-    ? timeField.name
-    : undefined;
-}
-
-function mergeFrames(frames: DataFrame[]): DataFrame | undefined {
-  let merged: DataFrame[] = [];
-
-  mergeTransformer
-    .operator(
-      {},
-      { interpolate: (value) => value }
-    )(of(frames))
-    .subscribe((result) => {
-      merged = result;
-    });
-
-  return merged.length === 1 ? merged[0] : undefined;
-}
-
-/**
- * The name Sort by will find the time field under. It matches display names, which Merge can leave
- * different from the field's name, and takes the first match if another field displays the same.
- */
-function getSortField(merged: DataFrame, timeField: string): string | undefined {
-  const names = merged.fields.map((field) => getFieldDisplayName(field, merged));
-  const name = names[merged.fields.findIndex((field) => field.name === timeField)];
-
-  return names.indexOf(name) === names.lastIndexOf(name) ? name : undefined;
-}
-
-/**
- * Merge drops labels, frame names and display name overrides, so a series named by any of them would
- * come out called something else. A series read by its index could also come to show another series'
- * value, as the index moves when an earlier series is missing from a later query.
- */
-function keepsSeriesNames(frames: DataFrame[], merged: DataFrame): boolean {
-  const names = new Set<string>();
-
-  for (const frame of frames) {
-    for (const field of frame.fields.filter(isValueField)) {
-      const name = getFieldDisplayName(field, frame, frames);
-      const mergedField = merged.fields.find((candidate) => candidate.name === field.name);
-
-      if (
-        names.has(name) ||
-        !mergedField ||
-        getFieldDisplayName(mergedField, merged) !== name ||
-        !getNamePath(field.name, QUOTABLE_IN_REDUCER)
-      ) {
-        return false;
-      }
-
-      names.add(name);
-    }
-  }
-
-  return true;
-}
-
-function getMergeTransformations(sortField: string): DataTransformerConfig[] {
-  return [
-    { id: DataTransformerID.merge, options: {} },
-    // Merge orders rows by when it first meets each timestamp. A timestamp only a later frame has lands
-    // after that frame's newest row, where lastNotNull would read it as the latest value.
-    { id: DataTransformerID.sortBy, options: { sort: [{ field: sortField }] } },
-  ];
 }
 
 function getSummarySuggestions(

@@ -8,38 +8,9 @@ import {
   getDefaultTimeRange,
 } from '@grafana/data';
 
-import { getDefaultSuggestion, showDefaultSuggestion, hasData } from './utils';
+import { showDefaultSuggestion, hasData } from './utils';
 
 describe('Suggestions utils', () => {
-  describe('getDefaultSuggestion', () => {
-    const merged = { name: 'merged', transformations: [{ id: 'merge', options: {} }] };
-
-    it('should return the first suggestion', () => {
-      const first = { name: 'first' };
-
-      expect(getDefaultSuggestion([first, { name: 'second' }])).toBe(first);
-    });
-
-    it('should pass over a suggestion with transformations', () => {
-      const plain = { name: 'plain' };
-
-      expect(getDefaultSuggestion([merged, plain])).toBe(plain);
-    });
-
-    it('should accept a suggestion with an empty list of transformations', () => {
-      const empty = { name: 'empty', transformations: [] };
-
-      expect(getDefaultSuggestion([empty])).toBe(empty);
-    });
-
-    it.each([
-      { name: 'there are no suggestions', suggestions: [] },
-      { name: 'every suggestion has transformations', suggestions: [merged] },
-    ])('should return undefined when $name', ({ suggestions }) => {
-      expect(getDefaultSuggestion(suggestions)).toBeUndefined();
-    });
-  });
-
   describe('showDefaultSuggestion', () => {
     it('should return [{}] when fn returns true', () => {
       const fn = (panelDataSummary: PanelDataSummary) => panelDataSummary.hasFieldType(FieldType.string);

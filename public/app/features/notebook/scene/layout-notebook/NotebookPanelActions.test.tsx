@@ -234,38 +234,6 @@ describe('NotebookPanelActions', () => {
     expect(await screen.findByRole('button', { name: 'Table' })).toBeInTheDocument();
   });
 
-  it('does not offer a suggestion with transformations, which would take the query editor from the cell', async () => {
-    const { cell, panel } = buildPanelCell();
-    const runner = panel.state.$data as SceneQueryRunner;
-    runner.setState({
-      data: {
-        state: LoadingState.Done,
-        series: [toDataFrame({ fields: [{ name: 'value', values: [1] }] })],
-        timeRange: getDefaultTimeRange(),
-      },
-    });
-    jest.mocked(getAllSuggestions).mockResolvedValue({
-      suggestions: [
-        {
-          name: 'Text - summary',
-          pluginId: 'text',
-          hash: 'merged',
-          options: {},
-          transformations: [{ id: 'merge', options: {} }],
-        },
-        { name: 'Table', pluginId: 'table', hash: 'table', options: {} },
-      ],
-      hasErrors: false,
-    });
-    const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
-
-    act(() => screen.getByRole('button', { name: 'Change visualization' }).focus());
-    await user.keyboard('{Enter}');
-
-    expect(await screen.findByRole('button', { name: 'Table' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Text - summary' })).not.toBeInTheDocument();
-  });
-
   it('lets users retry a failed visualization change', async () => {
     const { cell, panel } = buildPanelCell();
     const runner = panel.state.$data as SceneQueryRunner;

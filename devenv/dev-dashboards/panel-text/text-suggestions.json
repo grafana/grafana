@@ -668,7 +668,7 @@
         "spec": {
           "id": 11,
           "title": "Two queries",
-          "description": "Each query returns its own frame. Offers Text - summary and Text - statistics, which merge the frames with Merge series/tables and Sort by transformations, then read CPU and Memory from the result.",
+          "description": "Multiple frames: no Text suggestion. Text suggestions currently support a single frame only.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -750,7 +750,7 @@
         "spec": {
           "id": 12,
           "title": "Several series from one query",
-          "description": "Random walk returns five frames with distinct field names. Offers Text - summary and Text - statistics through the same transformations, with an entry for each series.",
+          "description": "Multiple frames: no Text suggestion. Text suggestions currently support a single frame only.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -813,7 +813,7 @@
         "spec": {
           "id": 13,
           "title": "Two queries after a transformation",
-          "description": "A transformation already keeps only queries A and B. Text - summary and Text - statistics add theirs after it, and read CPU and Memory but not Disk.",
+          "description": "Multiple frames: no Text suggestion. Text suggestions currently support a single frame only.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -924,7 +924,7 @@
         "spec": {
           "id": 14,
           "title": "Two queries with different timestamps",
-          "description": "Memory has a sample that CPU does not. Text - summary still shows the newest value of each: CPU 75 and Memory 65, because its transformations sort the merged rows by time.",
+          "description": "Multiple frames: no Text suggestion. Text suggestions currently support a single frame only.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1006,7 +1006,7 @@
         "spec": {
           "id": 15,
           "title": "Series told apart only by labels",
-          "description": "Both series are named Value and differ only in their host label, which Merge drops, collapsing them into one column. Text is not offered.",
+          "description": "Multiple frames: no Text suggestion. Text suggestions currently support a single frame only.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1088,7 +1088,7 @@
         "spec": {
           "id": 16,
           "title": "Series sharing a name",
-          "description": "Both queries return a field named CPU, which Merge would collapse into one column. Text is not offered.",
+          "description": "Multiple frames: no Text suggestion. Text suggestions currently support a single frame only.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1170,7 +1170,7 @@
         "spec": {
           "id": 17,
           "title": "Two queries without a shared field",
-          "description": "Merge needs a field every frame has to join rows on, and leaves these frames apart. Text is not offered.",
+          "description": "Multiple frames: no Text suggestion. Text suggestions currently support a single frame only.",
           "links": [],
           "data": {
             "kind": "QueryGroup",

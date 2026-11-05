@@ -88,18 +88,6 @@ describe('getVizSuggestionForQuery', () => {
     expect(result).toBe(suggestion);
   });
 
-  it('passes over a suggestion with transformations, as nobody asked to change the data', async () => {
-    const merged = { ...makeSuggestion('text'), transformations: [{ id: 'merge', options: {} }] };
-    const suggestion = makeSuggestion('table');
-
-    mockRunRequest.mockReturnValue(
-      of({ state: LoadingState.Done, series: [], timeRange: {} as never, request: {} as never })
-    );
-    mockGetAllSuggestions.mockResolvedValue({ suggestions: [merged, suggestion], hasErrors: false });
-
-    expect(await getVizSuggestionForQuery(makeQuery())).toBe(suggestion);
-  });
-
   it('returns undefined when there are no suggestions', async () => {
     mockRunRequest.mockReturnValue(
       of({ state: LoadingState.Done, series: [], timeRange: {} as never, request: {} as never })

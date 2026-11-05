@@ -1,23 +1,10 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { map } from 'rxjs';
 import { render } from 'test/test-utils';
 
-import {
-  type DataFrame,
-  type DataTransformerConfig,
-  DataTransformerID,
-  type DataTransformerInfo,
-  FieldType,
-  getDefaultTimeRange,
-  LoadingState,
-  type PanelData,
-  type PanelPlugin,
-  toDataFrame,
-} from '@grafana/data';
-import { mergeTransformer, mockTransformationsRegistry, sortByTransformer } from '@grafana/data/internal';
+import { type PanelPlugin } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { SceneDataNode, SceneDataTransformer, VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -323,135 +310,6 @@ describe('PanelOptionsPane', () => {
       });
 
       expect(mockOnFieldConfigChange).not.toHaveBeenCalled();
-    });
-
-    describe('with a suggestion that has transformations', () => {
-      const merge: DataTransformerConfig = { id: DataTransformerID.merge, options: {} };
-      const sort: DataTransformerConfig = { id: DataTransformerID.sortBy, options: { sort: [{ field: 'Time' }] } };
-      const dropFrameC: DataTransformerInfo = {
-        id: 'dropFrameC',
-        name: 'Drop frame C',
-        description: '',
-        operator: () => (source) => source.pipe(map((frames) => frames.filter(({ refId }) => refId !== 'C'))),
-      };
-      const existing: DataTransformerConfig = { id: dropFrameC.id, options: {} };
-
-      function frame(refId: string, name: string, values: number[]): DataFrame {
-        return toDataFrame({
-          refId,
-          fields: [
-            { name: 'Time', type: FieldType.time, values: [1000, 2000] },
-            { name, type: FieldType.number, values },
-          ],
-        });
-      }
-
-      function panelData(series: DataFrame[]): PanelData {
-        return { series, state: LoadingState.Done, timeRange: getDefaultTimeRange() };
-      }
-
-      function setupWithData(series: DataFrame[], transformations: DataTransformerConfig[] = []) {
-        const source = new SceneDataNode({ data: panelData(series) });
-        const transformer = new SceneDataTransformer({ $data: source, transformations });
-        const panel = new VizPanel({
-          key: 'panel-1',
-          pluginId: 'TestPanel',
-          title: 'Test',
-          fieldConfig: { defaults: {}, overrides: [] },
-          $data: transformer,
-        });
-        new DashboardGridItem({ body: panel });
-        const optionsPane = new PanelOptionsPane({
-          panelRef: panel.getRef(),
-          listMode: OptionFilter.All,
-          searchQuery: '',
-        });
-        source.activate();
-        transformer.activate();
-
-        return { optionsPane, panel, source, transformer };
-      }
-
-      function columns(series?: DataFrame[]) {
-        return series?.map((frame) => frame.fields.map((field) => [field.name, ...field.values]));
-      }
-
-      beforeAll(() => {
-        mockTransformationsRegistry([mergeTransformer, sortByTransformer, dropFrameC]);
-      });
-
-      it('runs the panel through them', async () => {
-        const { optionsPane, transformer } = setupWithData([frame('A', 'CPU', [1, 2]), frame('B', 'Memory', [3, 4])]);
-
-        expect(transformer.state.data?.series).toHaveLength(2);
-
-        optionsPane.onChangePanel({ pluginId: 'TestPanel', transformations: [merge, sort] });
-
-        expect(transformer.state.transformations).toEqual([merge, sort]);
-        await waitFor(() =>
-          expect(columns(transformer.state.data?.series)).toEqual([
-            [
-              ['Time', 1000, 2000],
-              ['CPU', 1, 2],
-              ['Memory', 3, 4],
-            ],
-          ])
-        );
-      });
-
-      it('runs them after the transformations the panel already has, which it keeps', async () => {
-        const { optionsPane, transformer } = setupWithData(
-          [frame('A', 'CPU', [1, 2]), frame('B', 'Memory', [3, 4]), frame('C', 'Disk', [5, 6])],
-          [existing]
-        );
-        await waitFor(() => expect(transformer.state.data?.series).toHaveLength(2));
-
-        optionsPane.onChangePanel({ pluginId: 'TestPanel', transformations: [merge, sort] });
-
-        expect(transformer.state.transformations).toEqual([existing, merge, sort]);
-        await waitFor(() =>
-          expect(columns(transformer.state.data?.series)).toEqual([
-            [
-              ['Time', 1000, 2000],
-              ['CPU', 1, 2],
-              ['Memory', 3, 4],
-            ],
-          ])
-        );
-      });
-
-      it('keeps running them over new query results', async () => {
-        const { optionsPane, source, transformer } = setupWithData([
-          frame('A', 'CPU', [1, 2]),
-          frame('B', 'Memory', [3, 4]),
-        ]);
-
-        optionsPane.onChangePanel({ pluginId: 'TestPanel', transformations: [merge, sort] });
-        await waitFor(() => expect(transformer.state.data?.series).toHaveLength(1));
-
-        source.setState({ data: panelData([frame('A', 'CPU', [7, 8]), frame('B', 'Memory', [9, 10])]) });
-
-        await waitFor(() =>
-          expect(columns(transformer.state.data?.series)).toEqual([
-            [
-              ['Time', 1000, 2000],
-              ['CPU', 7, 8],
-              ['Memory', 9, 10],
-            ],
-          ])
-        );
-      });
-
-      it('leaves the transformations alone for a suggestion without any', () => {
-        const { optionsPane, transformer } = setupWithData([frame('A', 'CPU', [1, 2])], [existing]);
-        const { transformations } = transformer.state;
-        const reprocess = jest.spyOn(transformer, 'reprocessTransformations');
-
-        optionsPane.onChangePanel({ pluginId: 'TestPanel', options: {} });
-
-        expect(transformer.state.transformations).toBe(transformations);
-        expect(reprocess).not.toHaveBeenCalled();
-      });
     });
   });
 
