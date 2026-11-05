@@ -1,11 +1,13 @@
 import { HttpResponse, http } from 'msw';
 import { act, render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
+import { AppEvents } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui/unstable';
+import { appEvents } from 'app/core/app_events';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -346,6 +348,7 @@ describe('ImportToGMA wizard — stage analytics', () => {
           : HttpResponse.json({ message: 'unsupported scheme "" for URL' }, { status: 500 })
       )
     );
+    const emitSpy = jest.spyOn(appEvents, 'emit');
     const store = configureStore();
     const { user } = render(<ImportWizardGate />, { store });
 
@@ -353,7 +356,14 @@ describe('ImportToGMA wizard — stage analytics', () => {
 
     const dialog = await screen.findByRole('dialog');
     expect(await within(dialog).findByText(/unsupported scheme "" for URL/)).toBeInTheDocument();
+    // backendSrv raises its global toast 50ms after a failed request settles, so wait for it before asserting.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+    expect(emitSpy).not.toHaveBeenCalledWith(AppEvents.alertError, expect.anything());
+    expect(emitSpy).not.toHaveBeenCalledWith(AppEvents.alertWarning, expect.anything());
     expect(Object.values(store.getState().appNotifications.byId)).toHaveLength(0);
+    emitSpy.mockRestore();
   });
 });
 
