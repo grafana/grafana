@@ -30,9 +30,9 @@ export function StackedSection({ item, isCurrent, headingId }: StackedSectionPro
       data-stacked-editor-item-type={item.type}
     >
       {item.type === QueryEditorType.Transformation ? (
-        <StackedTransformationItem transformation={item.transformation} headingId={headingId} />
+        <StackedTransformationItem transformation={item.transformation} headingId={headingId} isCurrent={isCurrent} />
       ) : (
-        <StackedQueryItem query={item.query} headingId={headingId} />
+        <StackedQueryItem query={item.query} headingId={headingId} isCurrent={isCurrent} />
       )}
     </section>
   );

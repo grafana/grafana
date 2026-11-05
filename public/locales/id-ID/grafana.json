@@ -2033,7 +2033,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Terapkan"
+      "apply": "Terapkan",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5712,7 +5713,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5894,6 +5896,9 @@
       "render-label": {
         "tooltip-remove-property": "Hapus properti"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "Tambahkan {{typeName}}",
@@ -6390,6 +6395,9 @@
           "hide-header": "Sembunyikan header baris",
           "title": "Judul"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filter"
         },
@@ -6471,11 +6479,10 @@
         "data-source": "Sumber data",
         "display": "Tampilkan kontrol anotasi di",
         "display-options": {
-          "above-dashboard": "Di atas dasbor",
           "controls-menu": "Menu kontrol",
-          "controls-menu-description": "Dapat diakses saat menu kontrol terbuka",
+          "controls-menu-description": "",
           "hidden": "Tersembunyi",
-          "hidden-description": "Menyembunyikan tombol geser untuk mengaktifkan atau menonaktifkan anotasi ini"
+          "hidden-description": ""
         },
         "enabled": "Diaktifkan",
         "enabled-description": "Ketika diaktifkan, kueri anotasi dikeluarkan setiap memuat ulang dasbor",
@@ -6578,7 +6585,8 @@
         "tab": "Tab",
         "tabs": "Tab",
         "variable": "Variabel {{type}}",
-        "variable-set": "Variabel"
+        "variable-set": "Variabel",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Ekspor"
@@ -6757,6 +6765,9 @@
             "description": "Ulangi tab ini untuk setiap nilai dalam variabel yang dipilih.",
             "title": "Ulangi menurut variabel"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filter"
@@ -7531,6 +7542,7 @@
       "error-invalid-json": "JSON tidak valid",
       "error-invalid-layout": "JSON tata letak tidak lolos validasi. Harap periksa JSON dan coba lagi.",
       "error-invalid-v2-panel": "JSON Panel tidak lolos validasi. Harap periksa JSON dan coba lagi.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Kesalahan validasi"
     },
     "interval-variable-form": {
@@ -7705,7 +7717,8 @@
       "title-delete-all-transformations": "Hapus semua transformasi?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Edit visualisasi"
+      "edit-visualization": "Edit visualisasi",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Alihkan tombol tampilan tabel",
@@ -13906,6 +13919,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Tidak dapat menemukan sesuatu yang cocok dengan kueri Anda"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

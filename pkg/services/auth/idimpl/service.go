@@ -236,9 +236,25 @@ func (s *Service) cacheDisabled(ctx context.Context) bool {
 // getCacheKey must include every input of the signed claims that can differ between two
 // authentications of the same identity. authenticatedBy is one of them: a render (for example a
 // scheduled report) and the user's browser session sign in as the same user, and without it in
-// the key one would get the other's token.
+// the key one would get the other's token. The same goes for the user attributes (email, login,
+// name): a changed value must produce a new key.
 func (s *Service) getCacheKey(ident identity.Requester) string {
-	return cachePrefix + ident.GetCacheKey() + string(ident.GetOrgRole()) + ident.GetAuthenticatedBy() + hashGroups(s.resolveGroupsClaim(ident))
+	return cachePrefix + ident.GetCacheKey() + string(ident.GetOrgRole()) + ident.GetAuthenticatedBy() +
+		hashGroups(s.resolveGroupsClaim(ident)) + hashUserClaims(ident)
+}
+
+// hashUserClaims covers the claims that are only set for users, see SignIdentity.
+func hashUserClaims(ident identity.Requester) string {
+	if !ident.IsIdentityType(claims.TypeUser) {
+		return ""
+	}
+
+	h := xxhash.New()
+	for _, v := range []string{ident.GetEmail(), strconv.FormatBool(ident.GetEmailVerified()), ident.GetLogin(), ident.GetName()} {
+		_, _ = h.WriteString(v)
+		_, _ = h.Write([]byte{0})
+	}
+	return strconv.FormatUint(h.Sum64(), 16)
 }
 
 func shouldLogErr(err error) bool {

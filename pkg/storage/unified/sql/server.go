@@ -90,7 +90,6 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withSearchClient,
 		withQuotaConfig,
 		withStorageMetrics,
-		withUsageStats,
 		withSeededWatches,
 		withNatsWatchMaxAge,
 	)
@@ -144,9 +143,8 @@ func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceSe
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
-		Reg:                     opts.Reg,
-		SecureValues:            opts.SecureValues,
-		GRPCErrorResultToStatus: opts.Cfg != nil && opts.Cfg.UnifiedStorageGRPCErrorResultToStatus,
+		Reg:          opts.Reg,
+		SecureValues: opts.SecureValues,
 	}
 	for _, optFn := range withOpts {
 		if err := optFn(opts, serverOptions); err != nil {
@@ -221,12 +219,6 @@ func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceSe
 
 func withAuthorizeBeforeFetch(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.AuthorizeBeforeFetchEnabled = opts.Cfg.AuthorizeBeforeFetchEnabled
-	return nil
-}
-
-func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
-	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
 	return nil
 }
 

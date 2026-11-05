@@ -2033,7 +2033,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "적용"
+      "apply": "적용",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -5712,7 +5713,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5894,6 +5896,9 @@
       "render-label": {
         "tooltip-remove-property": "속성 제거"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "{{typeName}} 추가",
@@ -6390,6 +6395,9 @@
           "hide-header": "행 헤더 숨기기",
           "title": "제목"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "필터"
         },
@@ -6471,11 +6479,10 @@
         "data-source": "데이터 소스",
         "display": "다음에서 주석 제어 표시",
         "display-options": {
-          "above-dashboard": "대시보드 위",
           "controls-menu": "컨트롤 메뉴",
-          "controls-menu-description": "컨트롤 메뉴가 열려 있을 때 접근할 수 있습니다.",
+          "controls-menu-description": "",
           "hidden": "숨김",
-          "hidden-description": "이 주석의 켜기/끄기 토글을 숨깁니다"
+          "hidden-description": ""
         },
         "enabled": "활성화됨",
         "enabled-description": "활성화되면 대시보드를 새로 고칠 때마다 주석 쿼리가 실행됩니다",
@@ -6578,7 +6585,8 @@
         "tab": "탭",
         "tabs": "탭",
         "variable": "{{type}} 변수",
-        "variable-set": "변수"
+        "variable-set": "변수",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "내보내기"
@@ -6757,6 +6765,9 @@
             "description": "선택한 변수의 각 값에 대해 이 탭을 반복합니다.",
             "title": "변수별로 반복"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "필터"
@@ -7531,6 +7542,7 @@
       "error-invalid-json": "유효하지 않은 JSON",
       "error-invalid-layout": "레이아웃 JSON이 유효성 검사를 통과하지 못했습니다. JSON을 확인한 후 다시 시도하세요.",
       "error-invalid-v2-panel": "패널 JSON이 유효성 검사를 통과하지 못했습니다. JSON을 확인한 후 다시 시도하세요.",
+      "mobile-edit-unavailable": "",
       "validation-error": "유효성 검사 오류"
     },
     "interval-variable-form": {
@@ -7705,7 +7717,8 @@
       "title-delete-all-transformations": "모든 변환을 삭제하시겠어요?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "시각화 편집"
+      "edit-visualization": "시각화 편집",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "표 보기 토글",
@@ -13906,6 +13919,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "쿼리와 일치하는 항목을 찾을 수 없습니다"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {

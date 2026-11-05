@@ -56,12 +56,17 @@ type RuleGroupCounter interface {
 	CountRuleGroups(ctx context.Context, orgID int64) (int64, error)
 }
 
+// RuleGetter gets a rule by its UID
+type RuleGetter interface {
+	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
+}
+
 // RuleReader reads rules and rule groups.
 type RuleReader interface {
-	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) ([]*ngmodels.AlertRule, error)
 	ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodels.AlertRule, error)
 	RuleLister
+	RuleGetter
 }
 
 // RulePageReader is the paginated read surface.

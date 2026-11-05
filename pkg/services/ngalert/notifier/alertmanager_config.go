@@ -373,11 +373,20 @@ func (moa *MultiOrgAlertmanager) activeSyncIdentifier(ctx context.Context, orgID
 	if moa.externalAMSyncer == nil { // nil in tests that bypass NewMultiOrgAlertmanager
 		return "", nil
 	}
-	uid, _, err := moa.externalAMSyncer.resolveExternalAMUIDForOrg(ctx, orgID)
+	target, err := moa.externalAMSyncer.resolveSyncTarget(ctx, orgID)
 	if err != nil {
 		return "", fmt.Errorf("resolve external alertmanager sync identifier: %w", err)
 	}
-	return uid, nil
+	if target.uid == "" {
+		return "", nil
+	}
+	if target.identifierUnknown {
+		// Fail closed like other resolution errors. The UID would make a name-based import deletable.
+		return "", fmt.Errorf("resolve external alertmanager sync identifier: recorded identifier unavailable")
+	}
+	// Sync imports under the recorded name. Comparing against the UID would read its own import as
+	// manual and allow deleting it while sync is active.
+	return target.identifierOrUID(), nil
 }
 
 // isOwnedByActiveSync reports whether sync wrote the config and still writes to its identifier.

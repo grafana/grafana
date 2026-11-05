@@ -10,8 +10,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -381,6 +379,11 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		}
 	}
 
+	// Guard what will be written, so the restored values are checked too.
+	if err := checkSecureValues(parsed); err != nil {
+		return nil, err
+	}
+
 	// Make sure the value is valid
 	if !opts.SkipDryRun {
 		if err := parsed.DryRun(ctx); err != nil {
@@ -683,6 +686,13 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		keepPlaintextSecureValues(parsed.Obj, newParsed.Obj)
 	}
 
+	// This path writes the resource to storage below, so it is guarded whether or
+	// not the caller supplied content: relocating a file that already carries a
+	// secret would otherwise replay its create or remove against the secret store.
+	if err := checkSecureValues(newParsed); err != nil {
+		return nil, err
+	}
+
 	// Make sure the new resource is valid
 	if !opts.SkipDryRun {
 		if err := newParsed.DryRun(ctx); err != nil {
@@ -901,48 +911,4 @@ func (r *DualReadWriter) keepCommittedSecureValues(ctx context.Context, parsed *
 	keepPlaintextSecureValues(obj, parsed.Obj)
 
 	return nil
-}
-
-// keepPlaintextSecureValues copies every plaintext secure value of committed into
-// updated, unless the update sets its own value for that key.
-func keepPlaintextSecureValues(committed, updated *unstructured.Unstructured) {
-	previous, ok := committed.Object["secure"].(map[string]any)
-	if !ok {
-		return
-	}
-
-	current, _ := updated.Object["secure"].(map[string]any)
-	for key, value := range previous {
-		secureValue, ok := value.(map[string]any)
-		if !ok {
-			continue
-		}
-		if create, ok := secureValue["create"].(string); !ok || create == "" {
-			continue
-		}
-		if setsOwnSecureValue(current[key]) {
-			continue
-		}
-
-		if current == nil {
-			current = map[string]any{}
-			updated.Object["secure"] = current
-		}
-		current[key] = runtime.DeepCopyJSON(secureValue)
-	}
-}
-
-// setsOwnSecureValue reports whether an update declares the value itself, either
-// as a new plaintext or as a removal.
-func setsOwnSecureValue(value any) bool {
-	secureValue, ok := value.(map[string]any)
-	if !ok {
-		return false
-	}
-	if create, ok := secureValue["create"].(string); ok && create != "" {
-		return true
-	}
-	remove, _ := secureValue["remove"].(bool)
-
-	return remove
 }

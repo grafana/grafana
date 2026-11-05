@@ -1,0 +1,68 @@
+name: 'Install frontend dependencies'
+description: 'Install frontend dependencies with cache enabled'
+inputs:
+  cwd:
+    description: "Changes node's process.cwd() if the project is not located on the root. Default to process.cwd()"
+    required: false
+    default: '.'
+  cache-prefix:
+    description: 'Add a specific cache-prefix'
+    required: false
+    default: 'default'
+  cache-node-modules:
+    description: 'Cache node_modules, might speed up link step (invalidated on lockfile/os/arch)'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    # Fix the store location so the cache can be restored before pnpm is installed. The runner
+    # temp directory is on the same disk as the checkout, so pnpm can hardlink from the store.
+    # GITHUB_ENV keeps the store for later pnpm steps in the job. The value is the runner's own
+    # temp path, not user input.
+    - name: Configure pnpm store
+      shell: bash
+      run: | # zizmor: ignore[github-env]
+        echo "pnpm_config_store_dir=$RUNNER_TEMP/pnpm-store" >> "$GITHUB_ENV"
+
+    # Restore-only on a key match, saved once per lockfile. pnpm/setup's own store cache saves a
+    # new entry on every run, which many parallel jobs would push past the repository cache limit.
+    - name: Restore pnpm store
+      id: pnpm-store
+      uses: actions/cache@v5
+      with:
+        path: ${{ runner.temp }}/pnpm-store
+        key: pnpm-store-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles(format('{0}/pnpm-lock.yaml', inputs.cwd), format('{0}/pnpm-workspace.yaml', inputs.cwd)) }}
+        restore-keys: |
+          pnpm-store-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ runner.arch }}-
+
+    - name: Restore node_modules
+      if: inputs.cache-node-modules == 'true'
+      uses: actions/cache@v5
+      with:
+        path: ${{ inputs.cwd }}/**/node_modules
+        key: pnpm-node-modules-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles(format('{0}/pnpm-lock.yaml', inputs.cwd), format('{0}/pnpm-workspace.yaml', inputs.cwd)) }}
+
+    # Installs pnpm's native binary at the packageManager version and runs a frozen install.
+    # It also caches pnpm's lockfile verification result, so an unchanged lockfile is not
+    # re-checked against the registry. Node.js comes from setup-node, not from pnpm.
+    - name: Install pnpm and dependencies
+      uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+      env:
+        PUPPETEER_SKIP_DOWNLOAD: true
+        CYPRESS_INSTALL_BINARY: 0
+      with:
+        working-directory: ${{ inputs.cwd }}
+        node-version-file: false
+        cache: false
+        require-lockfile: true
+
+    # The restore key carries packages from older lockfiles, and pnpm never drops them on install.
+    # Prune before the post-step save, so a cache miss does not grow the store with each lockfile.
+    # pnpm keeps only hard-linked store files, so skip the prune when node_modules came from cache.
+    - name: Prune pnpm store
+      if: steps.pnpm-store.outputs.cache-hit != 'true' && inputs.cache-node-modules != 'true'
+      shell: bash
+      working-directory: ${{ inputs.cwd }}
+      run: pnpm store prune
