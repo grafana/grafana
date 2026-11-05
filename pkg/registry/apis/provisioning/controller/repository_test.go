@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -3140,6 +3141,22 @@ func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t
 			assert.Equal(t, tt.wantExpired, counterValue(t, reg, "grafana_provisioning_repository_tokens_expired_total"))
 		})
 	}
+}
+
+func TestRepositoryController_shouldGenerateTokenFromConnection_RemovedToken(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		rc := &RepositoryController{
+			tokenMetrics:   registerRepositoryTokenMetrics(prometheus.NewPedanticRegistry()),
+			resyncInterval: 5 * time.Minute,
+		}
+		repo := &provisioning.Repository{
+			Status: provisioning.RepositoryStatus{Token: provisioning.TokenStatus{
+				LastUpdated: time.Now().UnixMilli(),
+				Expiration:  time.Now().Add(time.Hour).UnixMilli(),
+			}},
+		}
+		assert.True(t, rc.shouldGenerateTokenFromConnection(repo), "a removed token must refresh even if its previous expiration is far away")
+	})
 }
 
 // TestRepositoryController_process_NotFoundIsNoOp verifies that a key whose
