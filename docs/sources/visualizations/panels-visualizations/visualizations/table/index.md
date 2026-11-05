@@ -211,22 +211,39 @@ To enable cell filters, follow these steps:
 
 For more information about applying filters this way, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
 
-## Reset or save column changes
+## Save or remove view changes
 
-Whenever you show, hide, or reorder column, a table displays an unsaved changes (eye) icon to indicate this.
-<!--TODO: What kinds of changes make this happen? Column management stuff or filtering as well?-->
-Click the icon
+Whenever you show, hide, reorder, or filter a column, the table visualization displays an unsaved changes (eye) icon to indicate this:
 
-<!--TODO: screenshot of a table with the eye -->
-<!-- TODO: What happens on click vs hover -->
-When you click the drop-down list next to the icon, one or both of the following options are displayed:
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-unsaved-changes-icon-ann-v13.3.png" max-width="700px" alt="Table header with unsaved changes icon displayed" >}}
 
-- **Save changes**: Save the changes to the dashboard. Only for users with permission to edit the dashboard.
-- **Remove changes**: View the table without the changes. Dashboard editors and viewers.
+Depending on your permissions, you can either save or remove these changes by clicking the drop-down list next to the icon and selecting the appropriate option:
 
-Saving the change creates a transformation that reflects the change you made using filters.
+- **Save changes**: Dashboard editors. In dashboard edit mode only.
+- **Remove changes**: Dashboard editors and viewers
 
-<!--TODO: screenshot of transformations new query editor-->
+Saving changes adds a transformation to the panel that reflects the change you made.
+This is helpful since you aren't required to build a transformation from scratch.
+
+The icon also reminds dashboard editors and viewers that changes have been applied and provides a way to reset the panel to its original version.
+This can be especially helpful when you share a panel with changes applied.
+The recipient can just remove the changes or make their own view changes.
+
+### Example
+
+In the following image, the `Min` column has been hidden, as shown in the column management sidebar:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-unsaved-table-changes-2-v13.3.png" max-width="650px" alt="Table with hidden column and unsaved changes icon displayed" >}}
+
+After saving the changes, the table now has an **Organize fields by name** transformation that hides the column so it no longer has to be hidden by viewers of the table:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-as-transformation-v13.3.png" max-width="650px" alt="Table change saved as a Organize fields by name transformation" >}}
+
+The `Min` column no longer appears in the table's column management sidebar:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-updated-from-save-v13.3.png" max-width="650px" alt="Table updated from saved changes" >}}
+
+
 
 ## Column sorting
 
