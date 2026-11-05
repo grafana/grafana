@@ -1,8 +1,11 @@
+import { readFileSync } from 'fs';
 import { LineString, Point } from 'ol/geom';
+import { join } from 'path';
 
 import { FieldType, toDataFrame } from '@grafana/data';
 import { getCenterPointWGS84 } from 'app/features/transformers/spatial/utils';
 
+import { frameFromGeoJSON } from '../format/geojson';
 import { pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
 
 import { frameAsGazetter, getGazetteer, GAZETTEER_OPTIONS } from './gazetteer';
@@ -124,6 +127,29 @@ describe('Placename lookup from geojson format', () => {
         2,
       ]
     `);
+  });
+});
+
+describe('airports gazetteer data', () => {
+  // Built directly rather than through getGazetteer, which caches by path and is fed mock data above.
+  const airports = JSON.parse(readFileSync(join(__dirname, '../../../../gazetteer/airports.geojson'), 'utf8'));
+  const gaz = frameAsGazetter(frameFromGeoJSON(airports), { path: 'airports' });
+
+  // These airports used to share MultiPoint features, so half of them could not be looked up
+  // and the other half resolved to a point between two cities.
+  it.each([
+    ['MCI', 'KMCI', [-94.715915, 39.297896]],
+    ['ICT', 'KICT', [-97.428739, 37.652928]],
+    ['BHM', 'KBHM', [-86.752377, 33.561867]],
+    ['BHX', 'EGBB', [-1.733732, 52.452909]],
+    ['GYE', 'SEGU', [-79.88701, -2.158338]],
+    ['CCS', 'SVMI', [-67.005749, 10.597355]],
+  ])('resolves %s and %s to their own airport', (iata, icao, expected) => {
+    for (const key of [iata, icao]) {
+      const [lon, lat] = getCenterPointWGS84(gaz.find(key)?.geometry()) ?? [];
+      expect(lon).toBeCloseTo(expected[0], 5);
+      expect(lat).toBeCloseTo(expected[1], 5);
+    }
   });
 });
 
