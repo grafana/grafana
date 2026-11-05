@@ -165,7 +165,9 @@ const getStyles = (theme: GrafanaTheme2): Record<'wrapper' | 'container', string
     minHeight: 0,
     '.cm-theme-none, .cm-merge-theme': { height: '100%' },
     '.cm-mergeView': { height: '100%', overflow: 'auto' },
-    '.cm-mergeViewEditor': { minWidth: 0 },
+    // The merge theme's overflow: hidden makes each pane a scroll container, so the sticky find panel
+    // would scroll away with the document instead of staying at the top of .cm-mergeView.
+    '.cm-mergeViewEditor': { minWidth: 0, overflow: 'clip' },
     '.cm-mergeViewEditor + .cm-mergeViewEditor': { borderLeft: `1px solid ${theme.colors.border.weak}` },
   }),
 });
