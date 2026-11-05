@@ -75,6 +75,12 @@ interface State {
    * the full set (e.g. before treating "select all" as "migrate everything").
    */
   failedKinds: ResourceKindInfo[];
+  /**
+   * Whether the table dropped resources a migrate-everything job would still export. Its other
+   * two filters mirror the export worker's own, so "select all" can send no refs and let the
+   * worker enumerate; read-only has no counterpart there, so that equivalence does not hold.
+   */
+  hiddenFromBulkExport: boolean;
 }
 
 interface KindResult {
@@ -156,7 +162,10 @@ function collectContainers(rows: FolderRow[], folderByUid: Map<string, ListedRes
  * actually migrate. Folders with nothing to migrate are left out of `rows`, apart
  * from the ancestors of folders that do have something, returned as `containers`.
  */
-function aggregate(folders: ListedResource[], results: KindResult[]): { rows: FolderRow[]; containers: FolderRow[] } {
+function aggregate(
+  folders: ListedResource[],
+  results: KindResult[]
+): { rows: FolderRow[]; containers: FolderRow[]; hiddenFromBulkExport: boolean } {
   const folderByUid = new Map(
     folders.filter((folder) => !isAppGeneratedResource(folder.uid)).map((folder) => [folder.uid, folder])
   );
@@ -164,8 +173,10 @@ function aggregate(folders: ListedResource[], results: KindResult[]): { rows: Fo
   const rootResources: MigratableResource[] = [];
   const syntheticRows: FolderRow[] = [];
 
+  let hiddenFromBulkExport = false;
   for (const { kind, raw } of results) {
-    const unmanaged = raw.filter((r) => !r.managed && !isAppGeneratedResource(r.uid));
+    const unmanaged = raw.filter((r) => !r.managed && !isAppGeneratedResource(r.uid) && !r.readOnly);
+    hiddenFromBulkExport ||= raw.some((r) => r.readOnly && !r.managed && !isAppGeneratedResource(r.uid));
 
     if (!kind.folderScoped) {
       if (unmanaged.length > 0) {
@@ -228,7 +239,7 @@ function aggregate(folders: ListedResource[], results: KindResult[]): { rows: Fo
     // eslint-disable-next-line @grafana/no-locale-compare
     return a.title.localeCompare(b.title);
   });
-  return { rows, containers };
+  return { rows, containers, hiddenFromBulkExport };
 }
 
 /**
@@ -250,6 +261,7 @@ export function useMigrationData(
     isLoading: true,
     isError: false,
     failedKinds: [],
+    hiddenFromBulkExport: false,
   });
   const [reloadToken, setReloadToken] = useState(0);
 
@@ -295,13 +307,16 @@ export function useMigrationData(
       // there were kinds to load and every one of them failed; a partial success
       // still renders what loaded (with failedKinds reported for awareness).
       const isError = kinds.length > 0 && results.length === 0;
-      const { rows, containers } = isError ? { rows: [], containers: [] } : aggregate(folders, results);
+      const { rows, containers, hiddenFromBulkExport } = isError
+        ? { rows: [], containers: [], hiddenFromBulkExport: false }
+        : aggregate(folders, results);
       setState({
         data: rows,
         containers,
         isLoading: false,
         isError,
         failedKinds,
+        hiddenFromBulkExport,
       });
     })();
     return () => {

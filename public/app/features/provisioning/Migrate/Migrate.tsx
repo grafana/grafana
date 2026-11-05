@@ -45,6 +45,7 @@ export function Migrate() {
     isLoading: isFoldersLoading,
     isError: isFoldersError,
     failedKinds,
+    hiddenFromBulkExport,
     refetch: refetchFolders,
   } = useMigrationData(contentKinds, availableResources);
   const [repos] = useRepositoryList({ watch: true });
@@ -106,7 +107,9 @@ export function Migrate() {
   // selective migration of what's shown rather than silently migrating resources
   // the user never saw. The partial-failure warning offers an explicit
   // migrate-everything action instead.
-  const listComplete = failedKinds.length === 0;
+  // A row the table hid that migrate-everything would still export makes the displayed list
+  // understate the job just as a failed kind does, so "select all" stays selective there too.
+  const listComplete = failedKinds.length === 0 && !hiddenFromBulkExport;
   const migrateAllUnmanaged = allSelected && listComplete;
   // The migrate-everything job is stats-driven (no refs); a selective migration
   // needs at least one resolved resource ref to send.

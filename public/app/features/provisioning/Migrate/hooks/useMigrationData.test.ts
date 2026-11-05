@@ -309,6 +309,50 @@ describe('useMigrationData (non-folder kinds)', () => {
     ]);
   });
 
+  // The table's manager and app-generated filters mirror the export worker's own, so "select all"
+  // may send no refs; read-only has no counterpart there, so a hidden row has to be reported or
+  // migrate-everything would export what the table said it excluded.
+  it('reports a read-only row it hid, which a migrate-everything job would still export', async () => {
+    mockSearch([]);
+    server.use(
+      http.get('/apis', () =>
+        HttpResponse.json({
+          items: [
+            {
+              metadata: { name: 'prometheus.datasource.grafana.app' },
+              versions: [{ version: 'v0alpha1', resources: [{ resource: 'datasources', responseKind: {} }] }],
+            },
+          ],
+        })
+      ),
+      http.get('/apis/:group/v0alpha1/namespaces/:namespace/datasources', () =>
+        HttpResponse.json({
+          items: [
+            { metadata: { name: 'editable' }, spec: {} },
+            { metadata: { name: 'from-file' }, spec: { readOnly: true } },
+          ],
+        })
+      )
+    );
+
+    const available: SupportedResource[] = [{ group: 'datasource.grafana.app', kind: 'DataSource' }];
+    const { result } = renderHook(() => useMigrationData(getMigratableKinds(available), available), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data[0].directResources.map((r) => r.uid)).toEqual(['editable']);
+    expect(result.current.hiddenFromBulkExport).toBe(true);
+  });
+
+  it('reports nothing hidden when every listed resource is writable', async () => {
+    mockSearch([]);
+    mockPlaylists([playlist('p1', 'Morning rotation')]);
+
+    const { result } = renderHook(() => useMigrationData([resourceKindInfos.playlist]), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.hiddenFromBulkExport).toBe(false);
+  });
+
   it('skips the folder listing entirely when no kind is folder-scoped', async () => {
     // Playlists are the only kind here and aren't folder-scoped, so the hook
     // never lists folders. A search failure must not matter — nothing depends
