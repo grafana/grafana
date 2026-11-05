@@ -11,15 +11,33 @@ test('Happy DOM configuration uses the pinned Sucrase adapter without changing o
   const { transform: baseTransform, testEnvironment: baseEnvironment, ...baseRest } = base;
   assert.deepEqual(rest, baseRest);
   assert.equal(baseEnvironment, 'jsdom');
-  assert.equal(baseTransform['^.+\\.(ts|tsx|js|jsx)$'][0], require.resolve('ts-jest'));
+  const pattern = '^.+\\.(ts|tsx|js|jsx|mjs)$';
+  assert.equal(baseTransform[pattern][0], require.resolve('ts-jest'));
   assert.equal(testEnvironment, '<rootDir>/public/test/happy-dom-environment.js');
-  assert.deepEqual(Object.keys(transform), ['^.+\\.(ts|tsx|js|jsx)$']);
-  const [adapter, options] = transform['^.+\\.(ts|tsx|js|jsx)$'];
+  assert.deepEqual(Object.keys(transform), Object.keys(baseTransform));
+  const [adapter, options] = transform[pattern];
   assert.equal(adapter, require.resolve('@sucrase/jest-plugin'));
   assert.equal(createRequire(adapter).resolve('sucrase'), require.resolve('sucrase'));
   assert.deepEqual(options, {
     jsxRuntime: 'automatic', production: true, disableESTransforms: false, preserveDynamicImport: false,
   });
+});
+
+test('Happy DOM transforms mjs imports and exports through its configured adapter', () => {
+  const config = require('../../../jest.happy-dom.config');
+  const filename = 'fixture.mjs';
+  const entry = Object.entries(config.transform).find(([pattern]) => new RegExp(pattern).test(filename));
+  assert.ok(entry, 'The Happy DOM configuration must transform .mjs files');
+  const [adapter, transformerConfig] = entry[1];
+  const result = require(adapter).process('import { value } from "dependency"; export const answer = value + 2;', filename, {
+    supportsStaticESM: false, supportsDynamicImport: false, transformerConfig,
+  });
+  const module = { exports: {} };
+  new Function('require', 'module', 'exports', result.code)((name) => {
+    assert.equal(name, 'dependency');
+    return { value: 40 };
+  }, module, module.exports);
+  assert.equal(module.exports.answer, 42);
 });
 
 function modules(sources) {
