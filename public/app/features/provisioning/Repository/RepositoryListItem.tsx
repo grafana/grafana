@@ -122,22 +122,28 @@ export function RepositoryListItem({ repository }: Props) {
             <Trans i18nKey="provisioning.repository-card.view">View</Trans>
           </LinkButton>
           <SyncRepository repository={repository} />
-          <LinkButton
-            variant="secondary"
-            icon="cog"
-            href={`${PROVISIONING_URL}/${name}/edit`}
-            size="md"
-            disabled={isReadOnly}
-            tooltip={isReadOnly ? getManagedReadOnlyTooltip() : undefined}
-            onClick={() => {
-              reportInteraction('grafana_provisioning_repository_settings_opened', {
-                repositoryName: name,
-                repositoryType: spec?.type ?? 'unknown',
-              });
-            }}
-          >
-            <Trans i18nKey="provisioning.repository-card.settings">Settings</Trans>
-          </LinkButton>
+          {isReadOnly ? (
+            // Not a disabled LinkButton: that keeps its href and Tooltip restores tabIndex, so the
+            // link stays reachable by keyboard, while pointerEvents:none hides the explanation.
+            <Button variant="secondary" icon="cog" size="md" disabled tooltip={getManagedReadOnlyTooltip()}>
+              <Trans i18nKey="provisioning.repository-card.settings">Settings</Trans>
+            </Button>
+          ) : (
+            <LinkButton
+              variant="secondary"
+              icon="cog"
+              href={`${PROVISIONING_URL}/${name}/edit`}
+              size="md"
+              onClick={() => {
+                reportInteraction('grafana_provisioning_repository_settings_opened', {
+                  repositoryName: name,
+                  repositoryType: spec?.type ?? 'unknown',
+                });
+              }}
+            >
+              <Trans i18nKey="provisioning.repository-card.settings">Settings</Trans>
+            </LinkButton>
+          )}
         </Stack>
       </Card.Actions>
     </Card>

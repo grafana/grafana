@@ -255,7 +255,7 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
                 severity="error"
                 title={t('provisioning.connection.disconnected-title', 'Disconnected')}
                 action={
-                  isOAuthConnectionType(data?.spec?.type) && selectedTypeAvailable ? (
+                  isOAuthConnectionType(data?.spec?.type) && selectedTypeAvailable && !isReadOnly ? (
                     <Button variant="secondary" onClick={handleReauthorize}>
                       {t('provisioning.connection-form.reauthorize-button', 'Reauthorize')}
                     </Button>

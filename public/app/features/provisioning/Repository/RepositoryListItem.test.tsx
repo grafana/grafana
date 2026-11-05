@@ -190,21 +190,45 @@ describe('RepositoryListItem', () => {
     const terraformRepo = () =>
       managedRepo({ [AnnoKeyManagerKind]: ManagerKind.Terraform, [AnnoKeyManagerIdentity]: 'terraform' });
 
-    it('disables the Settings action and shows the managed badge', () => {
+    // A disabled LinkButton keeps its href and stays keyboard-reachable, so assert the settings
+    // route is unreachable rather than just that the control looks disabled.
+    const expectSettingsUnreachable = () => {
+      expect(screen.queryByRole('link', { name: /settings/i })).not.toBeInTheDocument();
+      const settings = screen.getByRole('button', { name: /settings/i });
+      expect(settings).toHaveAttribute('aria-disabled', 'true');
+      expect(settings).not.toHaveAttribute('href');
+    };
+
+    const expectSettingsReachable = () => {
+      expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute(
+        'href',
+        '/admin/provisioning/test-repo/edit'
+      );
+    };
+
+    it('makes the Settings route unreachable and shows the managed badge', () => {
       render(<RepositoryListItem repository={terraformRepo()} />);
 
-      expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute('aria-disabled', 'true');
+      expectSettingsUnreachable();
       expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
     });
 
-    it('keeps Settings editable and hides the badge for an unmanaged repository', () => {
+    it('explains why Settings is unavailable on hover', async () => {
+      const { user } = render(<RepositoryListItem repository={terraformRepo()} />);
+
+      await user.hover(screen.getByRole('button', { name: /settings/i }));
+
+      expect(await screen.findByText('This resource is managed externally and is read-only')).toBeInTheDocument();
+    });
+
+    it('keeps Settings reachable and hides the badge for an unmanaged repository', () => {
       render(<RepositoryListItem repository={createMockRepository()} />);
 
-      expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute('aria-disabled', 'false');
+      expectSettingsReachable();
       expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
     });
 
-    it('keeps Settings editable when the manager allows edits', () => {
+    it('keeps Settings reachable when the manager allows edits', () => {
       const repo = managedRepo({
         [AnnoKeyManagerKind]: ManagerKind.Terraform,
         [AnnoKeyManagerIdentity]: 'terraform',
@@ -213,15 +237,15 @@ describe('RepositoryListItem', () => {
 
       render(<RepositoryListItem repository={repo} />);
 
-      expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute('aria-disabled', 'false');
+      expectSettingsReachable();
     });
 
-    it('keeps Settings editable for git-provisioned repositories, which have their own edit flow', () => {
+    it('keeps Settings reachable for git-provisioned repositories, which have their own edit flow', () => {
       const repo = managedRepo({ [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: 'some-repo' });
 
       render(<RepositoryListItem repository={repo} />);
 
-      expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute('aria-disabled', 'false');
+      expectSettingsReachable();
     });
   });
 });
