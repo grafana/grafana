@@ -8,6 +8,8 @@ import (
 	"strconv"
 
 	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -17,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -132,6 +135,12 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	// Always query legacy as the baseline — not all permissions are migrated to Zanzana yet.
 	permissions, err := api.Service.SearchUsersPermissions(ctx, c.SignedInUser, searchOptions)
 	if err != nil {
+		if status.Code(err) == codes.PermissionDenied {
+			return response.Error(http.StatusForbidden, "permission search denied", err)
+		}
+		if status.Code(err) == codes.InvalidArgument || errors.Is(err, legacyclient.ErrInvalidLegacySearchUsersPermissionsRequest) {
+			return response.Error(http.StatusBadRequest, "invalid permission search request", err)
+		}
 		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)
 	}
 

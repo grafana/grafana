@@ -37,6 +37,7 @@ type loadSettings struct {
 // MigratedPermissions resolves only Zanzana grants, never legacy RBAC grants.
 type MigratedPermissions interface {
 	ResolveCurrentUserPermissions(context.Context, identity.Requester) ([]ac.Permission, error)
+	SearchUsersPermissions(context.Context, identity.Requester, int64, ac.SearchOptions) (map[int64][]ac.Permission, error)
 }
 
 type Loader struct {
@@ -49,6 +50,7 @@ type Loader struct {
 	openFeatureClient *openfeature.Client
 	license           licensing.Licensing
 	zanzana           MigratedPermissions
+	search            *LegacySearchService
 	flight            singleflight.Group
 	log               log.Logger
 }
@@ -57,7 +59,7 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	license licensing.Licensing, zanzana MigratedPermissions,
 ) *Loader {
-	return &Loader{
+	loader := &Loader{
 		store:             permissionStore{sql},
 		catalog:           catalog,
 		actions:           actionResolver,
@@ -69,6 +71,8 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 		zanzana:           zanzana,
 		log:               log.New("authz.legacypermissions"),
 	}
+	loader.search = newLoaderSearchService(loader)
+	return loader
 }
 
 var _ ac.UserPermissionsEvaluator = (*Loader)(nil)

@@ -120,3 +120,7 @@ func TestRoleCatalogSnapshots(t *testing.T) {
 	catalog.Replace(nil)
 	require.Empty(t, catalog.Permissions("Viewer"))
 }
+
+func (r *migratedGrants) SearchUsersPermissions(context.Context, identity.Requester, int64, ac.SearchOptions) (map[int64][]ac.Permission, error) {
+	return nil, nil
+}

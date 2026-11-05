@@ -10,6 +10,13 @@ import (
 	"testing"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
+	authzstore "github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -23,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -48,7 +54,16 @@ func TestMain(m *testing.M) {
 type searchPermissionsResponse map[int64]map[string][]string
 
 func TestIntegrationSearchUsersPermissions_Assignments(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_Assignments(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_Assignments(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	alice := f.createUser(t, user.CreateUserCommand{UID: "alice", OrgID: f.orgID, DefaultOrgRole: "Viewer"})
 	bob := f.createUser(t, user.CreateUserCommand{UID: "bob", OrgID: f.orgID, DefaultOrgRole: "Editor"})
 	noRole := f.createUser(t, user.CreateUserCommand{UID: "no-role", OrgID: f.orgID, DefaultOrgRole: "None"})
@@ -114,7 +129,16 @@ func TestIntegrationSearchUsersPermissions_Assignments(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_BasicRoles(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_BasicRoles(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_BasicRoles(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	viewer := f.createUser(t, user.CreateUserCommand{UID: "viewer", OrgID: f.orgID, DefaultOrgRole: "Viewer"})
 	editor := f.createUser(t, user.CreateUserCommand{UID: "editor", OrgID: f.orgID, DefaultOrgRole: "Editor"})
 	admin := f.createUser(t, user.CreateUserCommand{UID: "admin", OrgID: f.orgID, DefaultOrgRole: "Admin"})
@@ -174,7 +198,16 @@ func TestIntegrationSearchUsersPermissions_BasicRoles(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_Scopes(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_Scopes(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_Scopes(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	users := map[string]int64{}
 	for i, scope := range []string{"*", "tests:*", "tests:id:*", "tests:id:one", "tests:id:two", "tests:uid:one", "other:id:one", ""} {
 		usr := f.createUser(t, user.CreateUserCommand{UID: fmt.Sprintf("scope-%d", i), OrgID: f.orgID, DefaultOrgRole: "None"})
@@ -225,7 +258,16 @@ func TestIntegrationSearchUsersPermissions_Scopes(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_StaticScopes(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_StaticScopes(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_StaticScopes(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	viewer := f.createUser(t, user.CreateUserCommand{UID: "viewer", OrgID: f.orgID, DefaultOrgRole: "Viewer"})
 	require.NoError(t, f.service.DeclareFixedRoles(accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{Name: "fixed:test:scopes", Permissions: []accesscontrol.Permission{
@@ -261,7 +303,16 @@ func TestIntegrationSearchUsersPermissions_StaticScopes(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_RolePrefixes(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_RolePrefixes(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_RolePrefixes(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	usr := f.createUser(t, user.CreateUserCommand{UID: "member", OrgID: f.orgID, DefaultOrgRole: "None"})
 	for _, kind := range []string{"managed", "extsvc", "custom", "fixed", "basic"} {
 		role := f.createRole(t, f.orgID, kind+":test", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:" + kind}})
@@ -277,7 +328,16 @@ func TestIntegrationSearchUsersPermissions_RolePrefixes(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_ActionSets(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_ActionSets(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_ActionSets(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	alice := f.createUser(t, user.CreateUserCommand{UID: "alice", OrgID: f.orgID, DefaultOrgRole: "None"})
 	require.NoError(t, f.orgs.AddOrgUser(context.Background(), &org.AddOrgUserCommand{OrgID: f.otherOrgID, UserID: alice.ID, Role: org.RoleNone}))
 	f.actions.StoreActionSet("dashboards:edit", []string{"dashboards:read", "dashboards:write", "dashboards.permissions:read"})
@@ -319,7 +379,16 @@ func TestIntegrationSearchUsersPermissions_ActionSets(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_Identities(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_Identities(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_Identities(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	all := searchPermissionsResponse{}
 	for _, typ := range []string{"user", "service-account"} {
 		t.Run(typ, func(t *testing.T) {
@@ -343,7 +412,16 @@ func TestIntegrationSearchUsersPermissions_Identities(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_Visibility(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_Visibility(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_Visibility(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	alice := f.createUser(t, user.CreateUserCommand{UID: "alice", OrgID: f.orgID, DefaultOrgRole: "None"})
 	bob := f.createUser(t, user.CreateUserCommand{UID: "bob", OrgID: f.orgID, DefaultOrgRole: "None"})
 	role := f.createRole(t, f.orgID, "managed:read", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}})
@@ -358,6 +436,10 @@ func TestIntegrationSearchUsersPermissions_Visibility(t *testing.T) {
 		{"resource wildcard", []string{"users:*"}, all},
 		{"attribute wildcard", []string{"users:id:*"}, all},
 		{"global wildcard", []string{"*"}, all},
+		{"global users wildcard", []string{"global.users:*"}, all},
+		{"global users attribute wildcard", []string{"global.users:id:*"}, all},
+		{"global user ID", []string{fmt.Sprintf("global.users:id:%d", alice.ID)}, searchPermissionsResponse{alice.ID: all[alice.ID]}},
+		{"mixed local and global user IDs", []string{fmt.Sprintf("users:id:%d", alice.ID), fmt.Sprintf("global.users:id:%d", bob.ID)}, all},
 		{"one visible user", []string{fmt.Sprintf("users:id:%d", alice.ID)}, searchPermissionsResponse{alice.ID: all[alice.ID]}},
 		{"multiple visible users", []string{fmt.Sprintf("users:id:%d", alice.ID), fmt.Sprintf("users:id:%d", bob.ID)}, all},
 		{"duplicate visibility scopes", []string{fmt.Sprintf("users:id:%d", alice.ID), fmt.Sprintf("users:id:%d", alice.ID)}, searchPermissionsResponse{alice.ID: all[alice.ID]}},
@@ -382,7 +464,16 @@ func TestIntegrationSearchUsersPermissions_Visibility(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_Validation(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_Validation(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_Validation(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	usr := f.createUser(t, user.CreateUserCommand{UID: "member", OrgID: f.orgID, DefaultOrgRole: "None"})
 	outsider := f.createUser(t, user.CreateUserCommand{UID: "outsider", OrgID: f.otherOrgID, DefaultOrgRole: "None"})
 	tests := []struct {
@@ -415,7 +506,16 @@ func TestIntegrationSearchUsersPermissions_Validation(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_CacheIsolation(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_CacheIsolation(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_CacheIsolation(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	alice := f.createUser(t, user.CreateUserCommand{UID: "alice", OrgID: f.orgID, DefaultOrgRole: "None"})
 	bob := f.createUser(t, user.CreateUserCommand{UID: "bob", OrgID: f.orgID, DefaultOrgRole: "None"})
 	require.NoError(t, f.orgs.AddOrgUser(context.Background(), &org.AddOrgUserCommand{OrgID: f.otherOrgID, UserID: alice.ID, Role: org.RoleNone}))
@@ -456,6 +556,13 @@ func TestIntegrationSearchUsersPermissions_CacheIsolation(t *testing.T) {
 }
 
 type searchPermissionsFixture struct {
+	t                 *testing.T
+	useGRPC           bool
+	callers           int
+	rpcCalls          *atomic.Int64
+	legacyCalls       *atomic.Int64
+	legacyClient      legacyclient.Service
+	cfg               *setting.Cfg
 	sql               *sqlstore.SQLStore
 	service           *acimpl.Service
 	users             user.Service
@@ -467,13 +574,17 @@ type searchPermissionsFixture struct {
 	orgID, otherOrgID int64
 }
 
-func newSearchPermissionsFixture(t *testing.T) *searchPermissionsFixture {
+func newSearchPermissionsFixture(t *testing.T, useGRPC bool) *searchPermissionsFixture {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	cfg := setting.NewCfg()
 	sql := db.NewTestStore(t, sqlstore.WithCfg(cfg))
 	features := featuremgmt.WithFeatures()
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagAuthzUserPermissionsSearch: {State: memprovider.Enabled, Variants: map[string]any{"value": useGRPC}, DefaultVariant: "value"},
+	})))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 	tracer := tracing.InitializeTracerForTest()
 	provider := legacysql.NewDatabaseProvider(sql)
 
@@ -499,13 +610,19 @@ func newSearchPermissionsFixture(t *testing.T) *searchPermissionsFixture {
 	registry.RegisterPluginScope("tests:id:")
 	cache := localcache.ProvideService()
 	store := &searchPermissionsStore{Store: database.ProvideService(sql)}
-	service := acimpl.ProvideOSSService(cfg, store, actions, cache,
-		features, tracer, sql, registry, nil, iam.Features{}, nil, legacypermissions.NewRoleCatalog())
+	rpcCalls, legacyCalls := &atomic.Int64{}, &atomic.Int64{}
+	catalog := legacypermissions.NewRoleCatalog()
+	searchStore := &countingAuthzSearchStore{SearchPermissionStore: authzstore.NewSQLPermissionStore(provider, tracer, false), searches: &store.searches}
+	loader := legacypermissions.NewLoader(sql, catalog, actions, cache, cfg, features, &licensing.OSSLicensingService{}, nil).WithSearchPermissionStore(searchStore)
+	client := &countingLegacyPermissionsClient{Service: legacypermissions.NewEmbeddedClient(loader, cfg), searchCalls: rpcCalls, getCalls: legacyCalls}
+	service := acimpl.ProvideOSSService(cfg, store, actions, cache, features, tracer, sql, registry, nil, iam.Features{}, client, catalog)
+	store.rejectLegacySearch = useGRPC
 
 	routes := routing.NewRouteRegister()
 	api.NewAccessControlAPI(routes, acimpl.ProvideAccessControl(features), service, users).RegisterAPIEndpoints()
 
 	return &searchPermissionsFixture{
+		t: t, useGRPC: useGRPC, rpcCalls: rpcCalls, legacyCalls: legacyCalls, legacyClient: client, cfg: cfg,
 		sql: sql, service: service, users: users, orgs: orgs, actions: actions, cache: cache, store: store,
 		server: webtest.NewServer(t, routes), orgID: orgID, otherOrgID: otherOrgID,
 	}
@@ -563,7 +680,18 @@ func (f *searchPermissionsFixture) assignTeam(t *testing.T, orgID, roleID int64,
 }
 
 func (f *searchPermissionsFixture) caller(orgID int64, scopes ...string) *user.SignedInUser {
-	return &user.SignedInUser{UserID: 1000, OrgID: orgID, Permissions: map[int64]map[string][]string{
+	id, uid := int64(1000), ""
+	if f.useGRPC {
+		f.callers++
+		uid = fmt.Sprintf("caller-%d", f.callers)
+		caller := f.createUser(f.t, user.CreateUserCommand{UID: uid, OrgID: orgID, DefaultOrgRole: "None"})
+		id = caller.ID
+		for i, scope := range scopes {
+			role := f.createRole(f.t, orgID, fmt.Sprintf("managed:%s-%d", uid, i), []accesscontrol.Permission{{Action: accesscontrol.ActionUsersPermissionsRead, Scope: scope}})
+			f.assignUser(f.t, orgID, id, role)
+		}
+	}
+	return &user.SignedInUser{UserID: id, UserUID: uid, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {accesscontrol.ActionUsersPermissionsRead: scopes},
 	}}
 }
@@ -572,11 +700,18 @@ func (f *searchPermissionsFixture) request(t *testing.T, caller *user.SignedInUs
 	t.Helper()
 	req := f.server.NewGetRequest("/api/access-control/users/permissions/search?" + query)
 	webtest.RequestWithSignedInUser(req, caller)
+	before := f.rpcCalls.Load()
 	res, err := f.server.Send(req)
 	require.NoError(t, err)
 	defer func() { require.NoError(t, res.Body.Close()) }()
 	body, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
+	if f.useGRPC && res.StatusCode == http.StatusOK {
+		require.Equal(t, before+1, f.rpcCalls.Load(), "flag-on HTTP requests must call the search RPC, including warm requests")
+	}
+	if !f.useGRPC {
+		require.Zero(t, f.rpcCalls.Load(), "legacy requests must not call gRPC")
+	}
 	return res.StatusCode, body
 }
 
@@ -605,11 +740,49 @@ func (f *searchPermissionsFixture) assertSearch(t *testing.T, caller *user.Signe
 
 // Count search queries to distinguish a cache hit from an identical database result.
 type searchPermissionsStore struct {
+	rejectLegacySearch bool
 	accesscontrol.Store
 	searches atomic.Int64
 }
 
 func (s *searchPermissionsStore) SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	if s.rejectLegacySearch {
+		return nil, fmt.Errorf("flag-on search called the legacy permission store")
+	}
 	s.searches.Add(1)
 	return s.Store.SearchUsersPermissions(ctx, orgID, options)
+}
+
+func (s *searchPermissionsStore) GetUsersBasicRoles(ctx context.Context, users []int64, orgID int64) (map[int64][]string, error) {
+	if s.rejectLegacySearch {
+		return nil, fmt.Errorf("flag-on search called the legacy basic-role store")
+	}
+	return s.Store.GetUsersBasicRoles(ctx, users, orgID)
+}
+
+type countingAuthzSearchStore struct {
+	authzstore.SearchPermissionStore
+	searches *atomic.Int64
+}
+
+func (s *countingAuthzSearchStore) SearchUsersPermissions(ctx context.Context, ns authlib.NamespaceInfo, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	if options.Action != accesscontrol.ActionUsersPermissionsRead {
+		s.searches.Add(1)
+	}
+	return s.SearchPermissionStore.SearchUsersPermissions(ctx, ns, options)
+}
+
+type countingLegacyPermissionsClient struct {
+	legacyclient.Service
+	searchCalls, getCalls *atomic.Int64
+}
+
+func (c *countingLegacyPermissionsClient) LegacyGetUserPermissions(ctx context.Context, caller authlib.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
+	c.getCalls.Add(1)
+	return c.Service.LegacyGetUserPermissions(ctx, caller, req)
+}
+
+func (c *countingLegacyPermissionsClient) LegacySearchUsersPermissions(ctx context.Context, caller authlib.AuthInfo, req legacyclient.LegacySearchUsersPermissionsRequest) (legacyclient.LegacySearchUsersPermissionsResponse, error) {
+	c.searchCalls.Add(1)
+	return c.Service.(legacyclient.SearchService).LegacySearchUsersPermissions(ctx, caller, req)
 }

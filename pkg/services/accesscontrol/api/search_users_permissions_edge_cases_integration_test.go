@@ -17,7 +17,16 @@ import (
 )
 
 func TestIntegrationSearchUsersPermissions_TargetAuthorization(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_TargetAuthorization(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_TargetAuthorization(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	usr := f.createUser(t, user.CreateUserCommand{UID: "target", OrgID: f.orgID, DefaultOrgRole: "None"})
 	role := f.createRole(t, f.orgID, "managed:target", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}})
 	f.assignUser(t, f.orgID, usr.ID, role)
@@ -28,8 +37,8 @@ func TestIntegrationSearchUsersPermissions_TargetAuthorization(t *testing.T) {
 				want := searchPermissionsResponse{usr.ID: {"test:read": {"tests:id:one"}}}
 				f.assertSearch(t, f.caller(f.orgID, "users:*"), query, want)
 				scoped := f.caller(f.orgID, fmt.Sprintf("users:id:%d", usr.ID))
-				scoped.UserID = 1001
 				f.assertSearch(t, scoped, query, want)
+				f.assertSearch(t, f.caller(f.orgID, fmt.Sprintf("global.users:id:%d", usr.ID)), query, want)
 				for _, permissions := range []map[int64]map[string][]string{
 					{}, {f.orgID: {"test:read": {"*"}}},
 					{f.otherOrgID: {accesscontrol.ActionUsersPermissionsRead: {"users:*"}}},
@@ -43,7 +52,16 @@ func TestIntegrationSearchUsersPermissions_TargetAuthorization(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_NonPositiveTargetsWithFilters(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_NonPositiveTargetsWithFilters(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_NonPositiveTargetsWithFilters(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	want := searchPermissionsResponse{}
 	for _, uid := range []string{"alice", "bob"} {
 		usr := f.createUser(t, user.CreateUserCommand{UID: uid, OrgID: f.orgID, DefaultOrgRole: "None"})
@@ -64,7 +82,16 @@ func TestIntegrationSearchUsersPermissions_NonPositiveTargetsWithFilters(t *test
 }
 
 func TestIntegrationSearchUsersPermissions_UnfilteredActionSets(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_UnfilteredActionSets(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_UnfilteredActionSets(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	usr := f.createUser(t, user.CreateUserCommand{UID: "target", OrgID: f.orgID, DefaultOrgRole: "None"})
 	f.actions.StoreActionSet("dashboards:edit", []string{"dashboards:read", "dashboards:write"})
 	role := f.createRole(t, f.orgID, "managed:sets", []accesscontrol.Permission{
@@ -91,7 +118,16 @@ func TestIntegrationSearchUsersPermissions_UnfilteredActionSets(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_ActionPrefixCharacters(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) { testIntegrationSearchUsersPermissions_ActionPrefixCharacters(t, mode.grpc) })
+	}
+}
+
+func testIntegrationSearchUsersPermissions_ActionPrefixCharacters(t *testing.T, useGRPC bool) {
+	f := newSearchPermissionsFixture(t, useGRPC)
 	usr := f.createUser(t, user.CreateUserCommand{UID: "viewer", OrgID: f.orgID, DefaultOrgRole: "Viewer"})
 	require.NoError(t, f.service.DeclareFixedRoles(accesscontrol.RoleRegistration{
 		Role:   accesscontrol.RoleDTO{Name: "fixed:test:prefix", Permissions: []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:static"}}},
@@ -131,88 +167,189 @@ func TestIntegrationSearchUsersPermissions_ActionPrefixCharacters(t *testing.T) 
 	}
 }
 
-func TestIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T) {
-	const (
-		grantChange                = "grant"
-		revokeChange               = "revoke"
-		teamMembershipChange       = "team membership"
-		removeTeamMembershipChange = "remove team membership"
-		basicRoleChange            = "basic role"
-		downgradeBasicRoleChange   = "downgrade basic role"
-	)
+const (
+	grantChange                = "grant"
+	revokeChange               = "revoke"
+	teamMembershipChange       = "team membership"
+	removeTeamMembershipChange = "remove team membership"
+	basicRoleChange            = "basic role"
+	downgradeBasicRoleChange   = "downgrade basic role"
+)
 
-	for _, change := range []string{grantChange, revokeChange, teamMembershipChange, removeTeamMembershipChange, basicRoleChange, downgradeBasicRoleChange} {
+var searchPermissionMutationChanges = []string{
+	grantChange, revokeChange, teamMembershipChange, removeTeamMembershipChange, basicRoleChange, downgradeBasicRoleChange,
+}
+
+func TestIntegrationSearchUsersPermissions_GRPCMutationVisibility(t *testing.T) {
+	for _, change := range searchPermissionMutationChanges {
 		t.Run(change, func(t *testing.T) {
-			f := newSearchPermissionsFixture(t)
-			usr := f.createUser(t, user.CreateUserCommand{UID: "target", OrgID: f.orgID, DefaultOrgRole: "None"})
-			role := f.createRole(t, f.orgID, "managed:read", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}})
+			testCase := newSearchPermissionMutationCase(t, true, change)
+			testCase.assertSearch(t, testCase.before)
+			testCase.mutate(t)
+			testCase.assertSearch(t, testCase.after)
+		})
+	}
+}
 
-			before, after := map[string][]string{}, map[string][]string{"test:read": {"tests:id:one"}}
-			if change == revokeChange {
-				f.assignUser(t, f.orgID, usr.ID, role)
-				before, after = after, before
-			}
-			if change == removeTeamMembershipChange {
-				f.assignTeam(t, f.orgID, role, usr.ID)
-				before, after = after, before
-			}
-			if change == basicRoleChange || change == downgradeBasicRoleChange {
-				f.assignBuiltin(t, f.orgID, string(org.RoleViewer), role)
-			}
-			if change == downgradeBasicRoleChange {
-				require.NoError(t, f.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
-					_, err := sess.Exec("UPDATE org_user SET role = ? WHERE org_id = ? AND user_id = ?", string(org.RoleViewer), f.orgID, usr.ID)
-					return err
-				}))
-				before, after = after, before
-			}
-
-			query := fmt.Sprintf("namespacedId=user:%d&action=test:read", usr.ID)
-			caller := f.caller(f.orgID, "users:*")
-			f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: before})
-			calls := f.store.searches.Load()
+func TestIntegrationSearchUsersPermissions_LegacyCacheExpiry(t *testing.T) {
+	for _, change := range searchPermissionMutationChanges {
+		t.Run(change, func(t *testing.T) {
+			testCase := newSearchPermissionMutationCase(t, false, change)
+			testCase.assertSearch(t, testCase.before)
+			calls := testCase.fixture.store.searches.Load()
 			require.Positive(t, calls)
-			f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: before})
-			require.Equal(t, calls, f.store.searches.Load(), "warm request must avoid a store search")
+			testCase.assertSearch(t, testCase.before)
+			require.Equal(t, calls, testCase.fixture.store.searches.Load(), "warm legacy request must avoid a store search")
 
-			switch change {
-			case grantChange:
-				f.assignUser(t, f.orgID, usr.ID, role)
-			case teamMembershipChange:
-				f.assignTeam(t, f.orgID, role, usr.ID)
-			case removeTeamMembershipChange:
-				require.NoError(t, f.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
-					_, err := sess.Exec("DELETE FROM team_member WHERE org_id = ? AND user_id = ?", f.orgID, usr.ID)
-					return err
-				}))
-			case revokeChange:
-				require.NoError(t, f.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
-					_, err := sess.Exec("DELETE FROM user_role WHERE user_id = ? AND role_id = ?", usr.ID, role)
-					return err
-				}))
-			case basicRoleChange, downgradeBasicRoleChange:
-				nextRole := org.RoleViewer
-				if change == downgradeBasicRoleChange {
-					nextRole = org.RoleNone
-				}
-				require.NoError(t, f.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
-					_, err := sess.Exec("UPDATE org_user SET role = ? WHERE org_id = ? AND user_id = ?", string(nextRole), f.orgID, usr.ID)
-					return err
-				}))
-			default:
-				t.Fatalf("unsupported change case: %s", change)
-			}
-
+			testCase.mutate(t)
 			// Raw store changes bypass mutation hooks; expiry must still refresh cached results.
-			items := f.cache.Items()
+			items := testCase.fixture.cache.Items()
 			require.NotEmpty(t, items)
 			for key, item := range items {
-				f.cache.Set(key, item.Object, time.Nanosecond)
-				require.Eventually(t, func() bool { _, ok := f.cache.Get(key); return !ok }, time.Second, time.Millisecond)
+				testCase.fixture.cache.Set(key, item.Object, time.Nanosecond)
+				require.Eventually(t, func() bool { _, ok := testCase.fixture.cache.Get(key); return !ok }, time.Second, time.Millisecond)
 			}
 
-			f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: after})
-			require.Greater(t, f.store.searches.Load(), calls, "expired results must be reloaded")
+			testCase.assertSearch(t, testCase.after)
+			require.Greater(t, testCase.fixture.store.searches.Load(), calls, "expired results must be reloaded")
 		})
+	}
+}
+
+type searchPermissionMutationCase struct {
+	fixture       *searchPermissionsFixture
+	change        string
+	targetID      int64
+	roleID        int64
+	caller        *user.SignedInUser
+	query         string
+	before, after map[string][]string
+}
+
+func newSearchPermissionMutationCase(t *testing.T, useGRPC bool, change string) *searchPermissionMutationCase {
+	t.Helper()
+	f := newSearchPermissionsFixture(t, useGRPC)
+	usr := f.createUser(t, user.CreateUserCommand{UID: "target", OrgID: f.orgID, DefaultOrgRole: "None"})
+	role := f.createRole(t, f.orgID, "managed:read", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}})
+	before, after := map[string][]string{}, map[string][]string{"test:read": {"tests:id:one"}}
+	switch change {
+	case revokeChange:
+		f.assignUser(t, f.orgID, usr.ID, role)
+		before, after = after, before
+	case removeTeamMembershipChange:
+		f.assignTeam(t, f.orgID, role, usr.ID)
+		before, after = after, before
+	case basicRoleChange, downgradeBasicRoleChange:
+		f.assignBuiltin(t, f.orgID, string(org.RoleViewer), role)
+		if change == downgradeBasicRoleChange {
+			require.NoError(t, f.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+				_, err := sess.Exec("UPDATE org_user SET role = ? WHERE org_id = ? AND user_id = ?", string(org.RoleViewer), f.orgID, usr.ID)
+				return err
+			}))
+			before, after = after, before
+		}
+	}
+	return &searchPermissionMutationCase{
+		fixture: f, change: change, targetID: usr.ID, roleID: role, caller: f.caller(f.orgID, "users:*"),
+		query: fmt.Sprintf("namespacedId=user:%d&action=test:read", usr.ID), before: before, after: after,
+	}
+}
+
+func (tc *searchPermissionMutationCase) assertSearch(t *testing.T, want map[string][]string) {
+	t.Helper()
+	tc.fixture.assertSearch(t, tc.caller, tc.query, searchPermissionsResponse{tc.targetID: want})
+}
+
+func (tc *searchPermissionMutationCase) mutate(t *testing.T) {
+	t.Helper()
+	f := tc.fixture
+	switch tc.change {
+	case grantChange:
+		f.assignUser(t, f.orgID, tc.targetID, tc.roleID)
+	case teamMembershipChange:
+		f.assignTeam(t, f.orgID, tc.roleID, tc.targetID)
+	case removeTeamMembershipChange:
+		require.NoError(t, f.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Exec("DELETE FROM team_member WHERE org_id = ? AND user_id = ?", f.orgID, tc.targetID)
+			return err
+		}))
+	case revokeChange:
+		require.NoError(t, f.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Exec("DELETE FROM user_role WHERE user_id = ? AND role_id = ?", tc.targetID, tc.roleID)
+			return err
+		}))
+	case basicRoleChange, downgradeBasicRoleChange:
+		nextRole := org.RoleViewer
+		if tc.change == downgradeBasicRoleChange {
+			nextRole = org.RoleNone
+		}
+		require.NoError(t, f.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Exec("UPDATE org_user SET role = ? WHERE org_id = ? AND user_id = ?", string(nextRole), f.orgID, tc.targetID)
+			return err
+		}))
+	default:
+		t.Fatalf("unsupported change case: %s", tc.change)
+	}
+}
+
+func TestIntegrationSearchUsersPermissions_LegacyCallerIdentities(t *testing.T) {
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) {
+			f := newSearchPermissionsFixture(t, mode.grpc)
+			target := f.createUser(t, user.CreateUserCommand{UID: "target", OrgID: f.orgID, DefaultOrgRole: "None"})
+			grant := f.createRole(t, f.orgID, "managed:target", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}})
+			f.assignUser(t, f.orgID, target.ID, grant)
+			visibility := f.createRole(t, f.orgID, "managed:caller", []accesscontrol.Permission{{Action: accesscontrol.ActionUsersPermissionsRead, Scope: "users:*"}})
+			f.assignBuiltin(t, f.orgID, string(org.RoleAdmin), visibility)
+			want := searchPermissionsResponse{target.ID: {"test:read": {"tests:id:one"}}}
+			for _, tc := range []struct {
+				name   string
+				caller user.SignedInUser
+			}{
+				{"anonymous", user.SignedInUser{IsAnonymous: true}},
+				{"renderer", user.SignedInUser{AuthenticatedBy: "render"}},
+				{"API key", user.SignedInUser{ApiKeyID: target.ID}},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					caller := tc.caller
+					caller.OrgID, caller.OrgRole = f.orgID, org.RoleAdmin
+					caller.Permissions = map[int64]map[string][]string{f.orgID: {accesscontrol.ActionUsersPermissionsRead: {"users:*"}}}
+					f.assertSearch(t, &caller, "action=test:read", want)
+					f.assertSearch(t, &caller, fmt.Sprintf("namespacedId=user:%d&action=test:read", target.ID), want)
+				})
+			}
+		})
+	}
+}
+
+func TestIntegrationSearchUsersPermissions_GRPCAdminRolesStayInOrganization(t *testing.T) {
+	f := newSearchPermissionsFixture(t, true)
+	member := f.createUser(t, user.CreateUserCommand{UID: "admin-member", IsAdmin: true, SkipOrgSetup: true})
+	outsider := f.createUser(t, user.CreateUserCommand{UID: "admin-outsider", IsAdmin: true, SkipOrgSetup: true})
+	f.insert(t, "org_user", &org.OrgUser{OrgID: f.orgID, UserID: member.ID, Role: org.RoleViewer, Created: time.Now(), Updated: time.Now()})
+	f.insert(t, "org_user", &org.OrgUser{OrgID: f.otherOrgID, UserID: member.ID, Role: org.RoleEditor, Created: time.Now(), Updated: time.Now()})
+	f.insert(t, "org_user", &org.OrgUser{OrgID: f.otherOrgID, UserID: outsider.ID, Role: org.RoleEditor, Created: time.Now(), Updated: time.Now()})
+	for _, grant := range []struct{ role, action string }{
+		{string(org.RoleViewer), "test:read"},
+		{string(org.RoleEditor), "test:write"},
+		{accesscontrol.RoleGrafanaAdmin, "test:server"},
+	} {
+		require.NoError(t, f.service.DeclareFixedRoles(accesscontrol.RoleRegistration{
+			Role:   accesscontrol.RoleDTO{Name: "fixed:" + grant.action, Permissions: []accesscontrol.Permission{{Action: grant.action, Scope: "tests:*"}}},
+			Grants: []string{grant.role},
+		}))
+	}
+	require.NoError(t, f.service.RegisterFixedRoles(t.Context()))
+	caller := f.caller(f.orgID, "users:*")
+	want := searchPermissionsResponse{
+		member.ID:   {"test:read": {"tests:*"}, "test:server": {"tests:*"}},
+		outsider.ID: {"test:server": {"tests:*"}},
+	}
+	f.assertSearch(t, caller, "actionPrefix=test:", want)
+	for id, permissions := range want {
+		f.assertSearch(t, caller, fmt.Sprintf("namespacedId=user:%d&actionPrefix=test:", id), searchPermissionsResponse{id: permissions})
 	}
 }
