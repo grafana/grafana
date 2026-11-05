@@ -1,6 +1,7 @@
 import { type JSX, useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaPanelActionsPopover } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -77,12 +78,13 @@ export function RowEditActionsWrapper({
 }) {
   const theme = useTheme2();
   const isPopoverSupported = useHoverPopoverSupported();
+  const panelActionsPopover = useFlagGrafanaPanelActionsPopover();
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
 
   return (
     <EditActionsPopover
       content={<RowEditActions row={row} />}
-      disabled={disabled || !isPopoverSupported}
+      disabled={!panelActionsPopover || disabled || !isPopoverSupported}
       portalRoot={getPortalRoot}
       zIndex={theme.zIndex.dropdown}
       shiftPadding={getSidebarShiftPadding}

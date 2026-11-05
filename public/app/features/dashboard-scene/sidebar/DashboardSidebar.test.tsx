@@ -14,7 +14,7 @@ import {
   TestVariable,
   VizPanel,
 } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { groupSelectionInto } from '../actions/layout/groupSelectionInto';
@@ -1671,3 +1671,92 @@ function setupWithTwoRows(): {
   activateFullSceneTree(dashboard);
   return { dashboard, row1, row2, row1Viz: panel, sidebar: dashboard.state.sidebar };
 }
+
+function buildPopoverSelectionScene() {
+  const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'First panel' });
+  const secondPanel = new VizPanel({ key: 'panel-2', pluginId: 'text', title: 'Second panel' });
+  const row = new RowItem({
+    key: 'row-1',
+    title: 'Overview row',
+    layout: DefaultGridLayoutManager.fromVizPanels([panel, secondPanel]),
+  });
+  const tab = new TabItem({ key: 'tab-1', title: 'Overview', layout: new RowsLayoutManager({ rows: [row] }) });
+  const tabs = new TabsLayoutManager({ tabs: [tab] });
+  const dashboard = new DashboardScene({ isEditing: true, body: tabs });
+  tabs.setState({ currentTabSlug: tab.getSlug() });
+
+  return { sidebar: dashboard.state.sidebar, panel, secondPanel, row, tab };
+}
+
+describe.each([
+  { enabled: false, state: 'disabled' },
+  { enabled: true, state: 'enabled' },
+])('DashboardSidebar with grafana.panelActionsPopover $state', ({ enabled }) => {
+  testWithFlags({ 'grafana.panelActionsPopover': enabled });
+
+  it.each(['panel', 'row', 'tab'] as const)(
+    `when selecting a %s with the sidebar closed, settings ${enabled ? 'stay closed' : 'open'}`,
+    (kind) => {
+      const scene = buildPopoverSelectionScene();
+      const { sidebar } = scene;
+
+      sidebar.selectObject(scene[kind]);
+
+      expect(sidebar.state.selectionContext.selected).toEqual([{ id: scene[kind].state.key }]);
+      if (enabled) {
+        expect(sidebar.state.openPane).toBeUndefined();
+      } else {
+        expect(sidebar.state.openPane).toBeInstanceOf(ElementEditPane);
+      }
+    }
+  );
+
+  it(`when reselecting an element with the sidebar closed, ${enabled ? 'selection clears' : 'settings reopen'}`, () => {
+    const { sidebar, panel } = buildPopoverSelectionScene();
+    sidebar.setState({ selectionContext: { ...sidebar.state.selectionContext, selected: [{ id: panel.state.key! }] } });
+
+    sidebar.selectObject(panel);
+
+    if (enabled) {
+      expect(sidebar.state.selectionContext.selected).toEqual([]);
+      expect(sidebar.state.openPane).toBeUndefined();
+    } else {
+      expect(sidebar.state.selectionContext.selected).toEqual([{ id: panel.state.key }]);
+      expect(sidebar.state.openPane).toBeInstanceOf(ElementEditPane);
+    }
+  });
+
+  it('when selecting another element with settings open, settings follow the selection', () => {
+    const { sidebar, panel, row } = buildPopoverSelectionScene();
+    sidebar.openElementSettings(panel);
+
+    sidebar.selectObject(row);
+
+    expect(sidebar.getSelectedObject()).toBe(row);
+    expect(sidebar.state.openPane).toBeInstanceOf(ElementEditPane);
+  });
+
+  it('when adding a panel to the selection, both panels stay selected', () => {
+    const { sidebar, panel, secondPanel } = buildPopoverSelectionScene();
+    sidebar.selectObject(panel);
+
+    sidebar.selectObject(secondPanel, { multi: true });
+
+    expect(sidebar.state.selectionContext.selected).toEqual([{ id: panel.state.key }, { id: secondPanel.state.key }]);
+    if (enabled) {
+      expect(sidebar.state.openPane).toBeUndefined();
+    } else {
+      expect(sidebar.state.openPane).toBeInstanceOf(ElementEditPane);
+    }
+  });
+
+  it.each(['panel', 'row', 'tab'] as const)('when explicitly opening settings for a %s, the sidebar opens', (kind) => {
+    const scene = buildPopoverSelectionScene();
+    const { sidebar } = scene;
+
+    sidebar.openElementSettings(scene[kind]);
+
+    expect(sidebar.getSelectedObject()).toBe(scene[kind]);
+    expect(sidebar.state.openPane).toBeInstanceOf(ElementEditPane);
+  });
+});

@@ -1,6 +1,7 @@
 import { isEqual } from 'lodash';
 
 import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   type SceneObject,
@@ -605,8 +606,10 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       selectedDisconnectedObject = obj;
     }
 
-    // Keep the selection when switching from another pane to element settings.
-    if (this.state.openPane && this.state.openPane.getId() !== 'element') {
+    const panelActionsPopover = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, false);
+
+    // Keep the selection when opening element settings from a closed sidebar or another pane.
+    if ((!panelActionsPopover || this.state.openPane) && this.state.openPane?.getId() !== 'element') {
       force = true;
     }
 
@@ -672,10 +675,13 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       document.activeElement.blur();
     }
 
+    const panelActionsPopover = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, false);
+    const shouldOpenPane = selected.length > 0 && (!panelActionsPopover || Boolean(this.state.openPane));
+
     const newState: DashboardSidebarState = {
       ...this.state,
       selectionContext: { ...this.state.selectionContext, selected },
-      openPane: selected.length && this.state.openPane ? new ElementEditPane({}) : undefined,
+      openPane: shouldOpenPane ? new ElementEditPane({}) : undefined,
       isNewElement: false,
       selectedDisconnectedObject,
     };
