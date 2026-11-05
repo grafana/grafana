@@ -1,4 +1,4 @@
-import { mergeWith, isArray, isObject, set, unset, isEqual } from 'lodash';
+import { mergeWith, isArray, isObject, set, unset, isEqual, pickBy } from 'lodash';
 
 import { type FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { fieldColorModeRegistry } from '../field/fieldColor';
@@ -227,9 +227,20 @@ export function restoreCustomOverrideRules(current: FieldConfigSource, old: Fiel
     overrides: [...current.overrides],
   };
 
+  // Expressions for custom options belong to the custom config, so they're restored with it
+  const varMappings = {
+    ...pickBy(current.defaults.varMappings, (_, key) => !isCustomFieldId(key)),
+    ...pickBy(old.defaults.varMappings, (_, key) => isCustomFieldId(key)),
+  };
+  if (Object.keys(varMappings).length) {
+    result.defaults.varMappings = varMappings;
+  } else {
+    delete result.defaults.varMappings;
+  }
+
   for (const override of old.overrides) {
     for (const prop of override.properties) {
-      if (isCustomFieldProp(prop)) {
+      if (isCustomFieldProp(prop) || (isVarMappingProp(prop) && isCustomFieldId(unwrapVarMappingPropId(prop.id)))) {
         const currentOverride = result.overrides.find((o) => isEqual(o.matcher, override.matcher));
         if (currentOverride) {
           if (currentOverride !== override) {
@@ -250,7 +261,11 @@ export function restoreCustomOverrideRules(current: FieldConfigSource, old: Fiel
  * @internal
  */
 export function isCustomFieldProp(prop: DynamicConfigValue): boolean {
-  return prop.id.startsWith('custom.');
+  return isCustomFieldId(prop.id);
+}
+
+function isCustomFieldId(id: string): boolean {
+  return id.startsWith('custom.');
 }
 
 /**

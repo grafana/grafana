@@ -285,6 +285,10 @@ describe('resolveVarMappingString', () => {
     expect(resolveVarMappingString('$unit', makeContext({ unit: ['bytes', 'percent'] }))).toBeUndefined();
   });
 
+  it('falls back for a multi-value variable with no selected value', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: [] }))).toBeUndefined();
+  });
+
   it('falls back for an unknown variable, alone or next to a known one', () => {
     expect(resolveVarMappingString('$nope', makeContext({}))).toBeUndefined();
     expect(resolveVarMappingString('${unit}$nope', makeContext({ unit: 'bytes' }))).toBeUndefined();

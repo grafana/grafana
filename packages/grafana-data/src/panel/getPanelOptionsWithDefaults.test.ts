@@ -471,6 +471,29 @@ describe('restoreCustomOverrideRules', () => {
     expect(result.overrides[1].properties.length).toBe(1);
     expect(result.overrides[1].matcher.options).toBe('SeriesB');
   });
+
+  it('should add back expressions for custom options', () => {
+    const current = {
+      defaults: { unit: 'bytes', varMappings: { unit: '$unit', 'custom.other': '$other' } },
+      overrides: [],
+    };
+    const old = {
+      defaults: { custom: { lineWidth: 1 }, varMappings: { 'custom.lineWidth': '$width', decimals: '$dec' } },
+      overrides: [
+        {
+          matcher: { id: 'byName', options: 'SeriesA' },
+          properties: [
+            { id: 'varMappings.custom.lineWidth', value: '$seriesWidth' },
+            { id: 'varMappings.decimals', value: '$seriesDec' },
+          ],
+        },
+      ],
+    };
+
+    const result = restoreCustomOverrideRules(current, old);
+    expect(result.defaults.varMappings).toEqual({ unit: '$unit', 'custom.lineWidth': '$width' });
+    expect(result.overrides).toEqual(old.overrides);
+  });
 });
 
 interface ScenarioOptions {
