@@ -43,9 +43,10 @@ function prepareDataSourceQueries(
 }
 
 /**
- * Prepares each data source query the way a panel's request prepares it before it reaches
- * the backend, so callers (the expression query path, the SQL Expressions schema inspector
- * and field autocomplete) send the same queries the panel execution path would.
+ * Prepares each data source query with the same per-data-source hooks a panel request uses
+ * (`applyTemplateVariables`, or `prepareBackendQueries` when defined), so the expression
+ * query path, the SQL Expressions schema inspector and field autocomplete prepare queries
+ * the same way.
  *
  * - Resolves each query's datasource via `getDataSourceInstance()`.
  * - Uses the data source's `prepareBackendQueries` when it has one. Otherwise uses

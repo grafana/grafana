@@ -241,7 +241,7 @@ describe('ExpressionDatasourceApi', () => {
       });
     });
 
-    describe('prepares data source queries as a panel does', () => {
+    describe('prepares data source queries with the panel hooks', () => {
       type PromLikeQuery = DataQuery & { expr: string; legendFormat?: string };
       const asExpressionQuery = (query: PromLikeQuery) => query as unknown as ExpressionQuery;
       const replace = (text: string | undefined, scopedVars: ScopedVars) =>
