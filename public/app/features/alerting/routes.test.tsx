@@ -80,6 +80,32 @@ describe('alerting route guards', () => {
       expect(guard()).toEqual(['Admin']);
     });
   });
+
+  describe('Import data source managed rules route', () => {
+    const path = '/alerting/import-datasource-managed-rules';
+    const importPermissions = {
+      [AccessControlAction.AlertingRuleCreate]: true,
+      [AccessControlAction.AlertingProvisioningSetStatus]: true,
+    };
+
+    afterEach(() => {
+      setTestFlags();
+    });
+
+    it('is admin-only while the wizard is on, since it redirects to the admin-only Settings > Import tab', () => {
+      setTestFlags({ [FlagKeys.AlertingMigrationWizardUI]: true });
+      contextSrv.user.permissions = importPermissions;
+
+      expect(getRouteRolesGuard(path)()).toEqual(['Admin']);
+    });
+
+    it('keeps the permission check for the rules-only page while the wizard is off', () => {
+      setTestFlags({ [FlagKeys.AlertingMigrationWizardUI]: false });
+      contextSrv.user.permissions = importPermissions;
+
+      expect(getRouteRolesGuard(path)()).toEqual([]);
+    });
+  });
 });
 
 describe('data source managed route proxies', () => {

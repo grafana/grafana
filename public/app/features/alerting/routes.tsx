@@ -313,10 +313,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/import-datasource-managed-rules',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingRuleCreate,
-        AccessControlAction.AlertingProvisioningSetStatus,
-      ]),
+      // With the wizard on this only redirects to the admin-only Settings > Import tab.
+      roles: migrationWizardEnabled
+        ? () => ['Admin']
+        : evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingProvisioningSetStatus]),
       component: migrationWizardEnabled
         ? () => <Navigate replace to={`${ALERTING_IMPORT_SETTINGS_URL}?step=rules`} />
         : importAlertingComponent(
