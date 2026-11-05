@@ -57,15 +57,12 @@ describe('resourceKinds registry', () => {
     }
   });
 
-  it('returns localized singular and plural labels for each kind', () => {
-    expect(resourceKindInfos.folder.getLabels()).toEqual({ singular: 'folder', plural: 'Folders' });
-    expect(resourceKindInfos.dashboard.getLabels()).toEqual({ singular: 'dashboard', plural: 'Dashboards' });
-    expect(resourceKindInfos.playlist.getLabels()).toEqual({ singular: 'playlist', plural: 'Playlists' });
-    expect(resourceKindInfos.librarypanel.getLabels()).toEqual({
-      singular: 'library panel',
-      plural: 'Library panels',
-    });
-    expect(resourceKindInfos.datasource.getLabels()).toEqual({ singular: 'data source', plural: 'Data sources' });
+  it('returns a localized collection label for each kind', () => {
+    expect(resourceKindInfos.folder.getLabel()).toBe('Folders');
+    expect(resourceKindInfos.dashboard.getLabel()).toBe('Dashboards');
+    expect(resourceKindInfos.playlist.getLabel()).toBe('Playlists');
+    expect(resourceKindInfos.librarypanel.getLabel()).toBe('Library panels');
+    expect(resourceKindInfos.datasource.getLabel()).toBe('Data sources');
   });
 
   it('treats the search-served kinds, and only those, as folder-scoped', () => {

@@ -49,10 +49,7 @@ export type ResourceSource =
  */
 const kindDefinitions = {
   folder: {
-    getLabels: () => ({
-      singular: t('provisioning.resource-kind.folder', 'folder'),
-      plural: t('provisioning.resource-kind.folders', 'Folders'),
-    }),
+    getLabel: () => t('provisioning.resource-kind.folders', 'Folders'),
     group: FOLDER_API_GROUP,
     kind: 'Folder',
     resource: 'folders',
@@ -61,10 +58,7 @@ const kindDefinitions = {
     source: { via: 'search' },
   },
   dashboard: {
-    getLabels: () => ({
-      singular: t('provisioning.resource-kind.dashboard', 'dashboard'),
-      plural: t('provisioning.resource-kind.dashboards', 'Dashboards'),
-    }),
+    getLabel: () => t('provisioning.resource-kind.dashboards', 'Dashboards'),
     group: DASHBOARD_API_GROUP,
     kind: 'Dashboard',
     resource: 'dashboards',
@@ -73,10 +67,7 @@ const kindDefinitions = {
     source: { via: 'search' },
   },
   playlist: {
-    getLabels: () => ({
-      singular: t('provisioning.resource-kind.playlist', 'playlist'),
-      plural: t('provisioning.resource-kind.playlists', 'Playlists'),
-    }),
+    getLabel: () => t('provisioning.resource-kind.playlists', 'Playlists'),
     group: PLAYLIST_API_GROUP,
     kind: 'Playlist',
     resource: 'playlists',
@@ -92,10 +83,7 @@ const kindDefinitions = {
     source: { via: 'custom', list: ({ dispatch }: ResourceListDeps) => listPlaylists(dispatch) },
   },
   librarypanel: {
-    getLabels: () => ({
-      singular: t('provisioning.resource-kind.library-panel', 'library panel'),
-      plural: t('provisioning.resource-kind.library-panels', 'Library panels'),
-    }),
+    getLabel: () => t('provisioning.resource-kind.library-panels', 'Library panels'),
     // Library panels share the dashboards API group but are keyed by their own
     // GroupResource (librarypanels.dashboard.grafana.app).
     group: DASHBOARD_API_GROUP,
@@ -109,10 +97,7 @@ const kindDefinitions = {
     source: { via: 'apiserver', version: 'v0alpha1' },
   },
   datasource: {
-    getLabels: () => ({
-      singular: t('provisioning.resource-kind.datasource', 'data source'),
-      plural: t('provisioning.resource-kind.datasources', 'Data sources'),
-    }),
+    getLabel: () => t('provisioning.resource-kind.datasources', 'Data sources'),
     // The collection every data source plugin's own group is stored in, not a served group —
     // see `isCollectionGroup`.
     group: DATASOURCE_COLLECTION_GROUP,
@@ -156,13 +141,12 @@ export interface ResourceKindInfo {
    */
   key: ResourceKindKey;
   /**
-   * Returns the localized singular noun (interpolated into copy such as "Save provisioned
-   * {{resource}}") and the pluralized label shown wherever a kind is named to the user. A function
-   * rather than strings because i18n must resolve at render time, not at module load — and the
-   * literal `t()` calls inside it are what the i18n extractor needs, so each kind contributes its
-   * translated nouns right here on the entry.
+   * Translated collection label (e.g. "Dashboards"), shown wherever a kind is named to the user —
+   * stat cards, the synthetic per-kind migrate row. A function because i18n must resolve at render
+   * time, not at module load; the literal `t()` call inside it is what the extractor needs, so each
+   * kind contributes its translated noun right here on the entry.
    */
-  getLabels: () => { singular: string; plural: string };
+  getLabel: () => string;
   /** API group, e.g. `dashboard.grafana.app`. */
   group: string;
   /** Kubernetes Kind, e.g. `Dashboard`. Also the kind's label in the files/resources tree. */
