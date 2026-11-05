@@ -117,6 +117,14 @@ export interface FieldConfig<TOptions = any> {
 
   // Calculate min max per field
   fieldMinMax?: boolean;
+
+  /**
+   * Variable expressions keyed by field config property id (e.g. `min`, `unit`, `custom.lineWidth`,
+   * or `thresholds.steps.<index>` for a threshold step), resolved by `applyFieldOverrides` in place
+   * of the stored value. The stored value is the fallback when an expression doesn't resolve to a
+   * valid value for the property. Processed field configs don't carry `varMappings`.
+   */
+  varMappings?: Record<string, string>;
 }
 
 export interface FieldTypeConfig {

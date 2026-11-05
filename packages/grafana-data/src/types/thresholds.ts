@@ -6,6 +6,8 @@ export interface Threshold {
    *  `applyFieldOverrides`; the numeric `value` is the fallback used when the
    *  expression cannot be resolved to a single finite number. Resolved
    *  (runtime) configs never carry this property.
+   *
+   *  @deprecated Use `FieldConfig.varMappings` with the key `thresholds.steps.<index>` instead.
    */
   valueExpr?: string;
   /**
