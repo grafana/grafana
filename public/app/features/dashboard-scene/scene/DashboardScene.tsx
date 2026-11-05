@@ -163,6 +163,7 @@ import {
   isComposerMode,
   type DashboardMode,
 } from './dashboardModes';
+import { readPlanLayout } from './dashboardPlan';
 import { dashboardViews, dashboardViewChanged, type DashboardViewRequest } from './dashboardViewRegistry';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
@@ -175,7 +176,7 @@ import { promotePanelAdHocChanges } from './panel-actions/promote/promotePanelAd
 import { PromotePanelAdHocChangesEvent } from './panel-actions/promote/utils';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { takePendingPlanBuild } from './pendingPlanBuild';
-import { DashboardPlanningEvent } from './planningEvents';
+import { DashboardPlanChangedEvent, DashboardPlanningEvent } from './planningEvents';
 import { clearUnsavedDashboardConsent, copyDashboardConsent } from './sandbox-consent/sandboxConsent';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import {
@@ -391,6 +392,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public recordEditAction(actionId: string) {
+    if (isArrangingPlan(this.state)) {
+      this.syncPlanLayout();
+      return;
+    }
     if (!this.state.isEditing) {
       return;
     }
@@ -399,6 +404,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const counts = this._assistantWrites > 0 ? this._editSession.aiEdits : this._editSession.manualEdits;
       counts.set(actionId, (counts.get(actionId) ?? 0) + 1);
     }
+  }
+
+  /**
+   * Feeds a layout arranged by hand back into the plan the preview owns. Only layout moves reach
+   * here while arranging (see PLAN_ARRANGE_ACTIONS), and only the layout is read back.
+   */
+  private syncPlanLayout() {
+    const { planning } = this.state;
+    if (planning?.phase !== 'preview' || !planning.editable) {
+      return;
+    }
+    const plan = readPlanLayout(this.state.body, planning.editable.plan);
+    if (isEqual(plan, planning.editable.plan)) {
+      return;
+    }
+    const revision = planning.editable.revision + 1;
+    this.setState({ planning: { ...planning, editable: { plan, revision } } });
+    appEvents.publish(new DashboardPlanChangedEvent({ planId: planning.planId, revision }));
   }
 
   private serializeForChangeTracking(): string | null {
@@ -636,7 +659,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       // closed) never got a Build or Dismiss decision — report that honestly as 'closed' rather
       // than leaving the caller holding a stale reference to a preview nothing is showing.
       if (this.state.planning) {
-        appEvents.publish(new DashboardPlanningEvent({ planId: this.state.planning.planId, action: 'closed' }));
+        const { planning } = this.state;
+        const editable = planning.phase === 'preview' ? planning.editable : undefined;
+        appEvents.publish(new DashboardPlanningEvent({ planId: planning.planId, action: 'closed', ...editable }));
         // Lifecycle hygiene, not a cache fix: a fresh /dashboard/new always builds an uncached
         // scene with no planning state, so this only matters if that ever changes.
         this.setState({ planning: undefined });

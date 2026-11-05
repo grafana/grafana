@@ -32,6 +32,9 @@ export function dashboardPlanEditingEnabled(): boolean {
   );
 }
 
+/** The mutation commands that exist only for plan editing. */
+export const PLAN_EDITING_COMMANDS: ReadonlySet<string> = new Set(['GET_PLAN']);
+
 export function getDashboardMode(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): DashboardMode {
   return state.mode ?? (state.isEditing ? 'edit' : 'view');
 }

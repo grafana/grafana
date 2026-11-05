@@ -15,6 +15,7 @@ import {
   getDashboardMode,
   type DashboardMode,
 } from '../dashboardModes';
+import { type EditablePlan } from '../dashboardPlan';
 
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
@@ -136,6 +137,11 @@ export interface DashboardPlanPreviewState extends DashboardPlanningBase {
   onBuild: () => void;
   /** Discard the plan and remove its scaffolded panels. */
   onDismiss: () => void;
+  /**
+   * With plan editing on, the preview owns the plan: arranging the layout by hand changes it here,
+   * and Build makes the dashboard from it.
+   */
+  editable?: EditablePlan;
 }
 
 /**
