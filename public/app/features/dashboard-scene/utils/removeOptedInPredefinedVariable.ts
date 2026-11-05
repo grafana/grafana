@@ -13,7 +13,7 @@ import { getVariableName } from '../variables/utils';
 
 import { type PredefinedVariableScope, type ScopeSelection } from './crossDashboardVariablesSelection';
 import { parseUseCrossDashboardVariablesFromHost } from './persistUseCrossDashboardVariables';
-import { fetchPredefinedVariables, getPredefinedOrigin } from './predefinedVariables';
+import { fetchPredefinedVariables, getPredefinedOrigin, isPredefinedOrigin } from './predefinedVariables';
 import { getDashboardSceneFor } from './utils';
 
 /**
@@ -101,11 +101,22 @@ export async function removeOptedInPredefinedVariable(variable: SceneVariable): 
     namesOnDashboard(dashboard, origin.type),
     scopeSelection
   );
-  if (allNamesInScope === undefined) {
+  if (fetched === null || allNamesInScope === undefined) {
     return;
   }
 
-  updateDashboardScopeVariable(dashboard, origin.type, variable.state.name, false, allNamesInScope);
+  // Same dependency context as the checkbox, so a `ds` this variable pulled in stays selected.
+  updateDashboardScopeVariable(dashboard, origin.type, variable.state.name, false, allNamesInScope, {
+    candidates: fetched,
+    localVariableNames: localVariableNames(dashboard),
+  });
+}
+
+function localVariableNames(dashboard: ReturnType<typeof getDashboardSceneFor>): string[] {
+  return sceneGraph
+    .getVariables(dashboard)
+    .state.variables.filter((candidate) => !isPredefinedOrigin(candidate.state.origin))
+    .map((candidate) => candidate.state.name);
 }
 
 function namesInScope(fetched: VariableKind[], scope: PredefinedVariableScope): string[] {

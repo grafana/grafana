@@ -178,19 +178,21 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   );
 
   const canReferenceDatasource = canReferenceDatasourceVariable(sceneVariable);
-  const { variables: datasourceVariables, hasLoaded: isSceneReady } = useReferenceableDatasourceVariables(
-    folderUid,
-    logicalName,
-    canReferenceDatasource
-  );
+  const {
+    variables: datasourceVariables,
+    fetchFailed: datasourceVariablesFetchFailed,
+    hasLoaded: isSceneReady,
+  } = useReferenceableDatasourceVariables(folderUid, logicalName, canReferenceDatasource);
   const referencedDatasourceName =
     canReferenceDatasource && 'datasource' in variableState
       ? getDatasourceVariableName(variableState.datasource)
       : undefined;
-  // A `${ds}` that isn't global or in the chosen folder would be broken on every dashboard.
+  // Only a warning: a dashboard's own `ds` wins over a predefined one, so relying on each
+  // dashboard to define it is valid. Skipped when the fetch failed, since the list is unknown.
   const missingDatasourceVariable =
     referencedDatasourceName &&
     datasourceVariables &&
+    !datasourceVariablesFetchFailed &&
     !datasourceVariables.some((v) => v.spec.name === referencedDatasourceName)
       ? referencedDatasourceName
       : undefined;
@@ -229,7 +231,6 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   const isRecreate = isRecreateVariableSave(source, logicalName, folderUid);
   const canSave =
     datasourceVariables !== undefined &&
-    !missingDatasourceVariable &&
     !isBusy &&
     !hasNameError &&
     !collisionError &&
@@ -377,16 +378,6 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
       <Field
         noMargin
         className={styles.folderField}
-        invalid={Boolean(missingDatasourceVariable)}
-        error={
-          missingDatasourceVariable
-            ? t(
-                'variables-management.editor.missing-datasource-variable',
-                "Data source variable ${{name}} isn't global or in this folder",
-                { name: missingDatasourceVariable }
-              )
-            : undefined
-        }
         label={t('variables-management.editor.folder-label', 'Folder')}
         description={
           allowGlobalScope || folderUid === ''
@@ -412,6 +403,18 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
           excludeUIDs={getVariableFolderPickerExcludeUIDs()}
         />
       </Field>
+
+      {missingDatasourceVariable && (
+        <Alert
+          className={styles.folderField}
+          severity="warning"
+          title={t(
+            'variables-management.editor.missing-datasource-variable',
+            "${{name}} isn't global or in this folder, so it only resolves on dashboards that define their own {{name}}",
+            { name: missingDatasourceVariable }
+          )}
+        />
+      )}
 
       {isSceneReady ? (
         <VariableEditorForm
@@ -476,20 +479,23 @@ function useReferenceableDatasourceVariables(folderUid: string | undefined, excl
     if (!enabled) {
       return [];
     }
-    const variables = (await fetchPredefinedVariables(folderUid || undefined)) ?? [];
-    return variables.filter((v) => v.kind === 'DatasourceVariable');
+    const variables = await fetchPredefinedVariables(folderUid || undefined);
+    return variables === null ? null : variables.filter((v) => v.kind === 'DatasourceVariable');
   }, [folderUid, enabled]);
 
+  // The name commits on every keystroke. Only a name that matches a loaded variable changes the
+  // list, so typing doesn't rebuild the scene's datasource variables or re-run the preview query.
+  const excludedName = value?.some((v) => v.spec.name === excludeName) ? excludeName : undefined;
   const variables = useMemo(
-    () => (loading ? undefined : (value ?? []).filter((v) => v.spec.name !== excludeName)),
-    [loading, value, excludeName]
+    () => (loading ? undefined : (value ?? []).filter((v) => v.spec.name !== excludedName)),
+    [loading, value, excludedName]
   );
   const [hasLoaded, setHasLoaded] = useState(!enabled);
   if (!hasLoaded && variables !== undefined) {
     setHasLoaded(true);
   }
 
-  return { variables, hasLoaded };
+  return { variables, fetchFailed: !loading && value === null, hasLoaded };
 }
 
 function canReferenceDatasourceVariable(variable: SceneVariable): boolean {

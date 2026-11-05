@@ -109,6 +109,7 @@ describe('removeOptedInPredefinedVariable', () => {
               query: 'a,b',
               origin: toControlSourceRef({ type: 'global' }),
             }),
+            new CustomVariable({ name: 'cluster', query: 'a,b' }),
           ],
         },
       },
@@ -149,10 +150,9 @@ describe('removeOptedInPredefinedVariable', () => {
     expect(updateDashboardScopeVariable).not.toHaveBeenCalled();
   });
 
-  it('opts out using the fetched sibling list', async () => {
-    jest
-      .mocked(fetchPredefinedVariables)
-      .mockResolvedValue([makeCandidate('env', 'global'), makeCandidate('region', 'global')]);
+  it('opts out using the fetched sibling list and keeps datasource dependencies selected', async () => {
+    const candidates = [makeCandidate('env', 'global'), makeCandidate('region', 'global')];
+    jest.mocked(fetchPredefinedVariables).mockResolvedValue(candidates);
 
     await removeOptedInPredefinedVariable(
       new CustomVariable({
@@ -162,7 +162,10 @@ describe('removeOptedInPredefinedVariable', () => {
       })
     );
 
-    expect(updateDashboardScopeVariable).toHaveBeenCalledWith(dashboard, 'global', 'env', false, ['env', 'region']);
+    expect(updateDashboardScopeVariable).toHaveBeenCalledWith(dashboard, 'global', 'env', false, ['env', 'region'], {
+      candidates,
+      localVariableNames: ['cluster'],
+    });
   });
 
   it('does not opt out a variable another opted-in variable uses as its datasource', async () => {

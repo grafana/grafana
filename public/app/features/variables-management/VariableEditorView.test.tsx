@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { sceneGraph } from '@grafana/scenes';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -199,6 +199,10 @@ function getSceneContextVariableNames() {
   return sceneGraph.getVariables(window.__grafanaSceneContext).state.variables.map((v) => v.state.name);
 }
 
+function getSceneContextVariable(name: string) {
+  return sceneGraph.getVariables(window.__grafanaSceneContext).state.variables.find((v) => v.state.name === name);
+}
+
 describe('VariableEditorView datasource variable references', () => {
   beforeEach(() => {
     jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
@@ -237,13 +241,40 @@ describe('VariableEditorView datasource variable references', () => {
     expect(await screen.findByRole('button', { name: 'Save' })).toBeEnabled();
   });
 
-  it('blocks Save when the referenced datasource variable is not available in the scope', async () => {
+  it('warns but allows Save when the referenced datasource variable is not available in the scope', async () => {
     fetchPredefinedVariablesMock.mockResolvedValue([]);
 
     render(<VariableEditorView source={queryVariable} onBack={jest.fn()} />);
 
-    expect(await screen.findByText("Data source variable $ds isn't global or in this folder")).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(
+      await screen.findByText(
+        "$ds isn't global or in this folder, so it only resolves on dashboards that define their own ds"
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+  });
+
+  it('does not warn about the datasource reference when the fetch fails', async () => {
+    fetchPredefinedVariablesMock.mockResolvedValue(null);
+
+    render(<VariableEditorView source={queryVariable} onBack={jest.fn()} />);
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled());
+    expect(screen.queryByText(/isn't global or in this folder/)).not.toBeInTheDocument();
+  });
+
+  it('does not rebuild the datasource variables while the name is typed', async () => {
+    fetchPredefinedVariablesMock.mockResolvedValue([predefined('DatasourceVariable', 'ds')]);
+    render(<VariableEditorView source={queryVariable} onBack={jest.fn()} />);
+    await screen.findByTestId('variable-editor-form');
+    const dsBefore = getSceneContextVariable('ds');
+
+    // The name field commits each keystroke straight to the scene variable.
+    act(() => getSceneContextVariable('labels')!.setState({ name: 'labelsx' }));
+
+    await waitFor(() => expect(getSceneContextVariableNames()).toEqual(['ds', 'labelsx']));
+    // Compare identity as a boolean: printing two scene objects on failure crashes the jest worker.
+    expect(getSceneContextVariable('ds') === dsBefore).toBe(true);
   });
 
   it("drops the previous folder's datasource variables while the new folder's list loads", async () => {
