@@ -15,12 +15,12 @@ func ReceiverUID(name string) ResourceUID {
 	return ResourceUID(models.NameToUid(name))
 }
 
-// NewReceiver creates a new PostableApiReceiver with the given name, integrations, and provenance, with
-// UID and Version derived from its content (see ReceiverUID, ReceiverFingerprint).
-func NewReceiver(name string, integrations []*PostableGrafanaReceiver, provenance models.Provenance) PostableApiReceiver {
+// NewReceiver creates a new PostableApiReceiver with the given UID, name, integrations, and provenance, with
+// Version derived from its content (see ReceiverFingerprint).
+func NewReceiver(uid ResourceUID, name string, integrations []*PostableGrafanaReceiver, provenance models.Provenance) PostableApiReceiver {
 	r := PostableApiReceiver{
 		ResourceMetadata: ResourceMetadata{
-			UID:        ReceiverUID(name),
+			UID:        uid,
 			Provenance: provenance,
 		},
 		Name:                    name,

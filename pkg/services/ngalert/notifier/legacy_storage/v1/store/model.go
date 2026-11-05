@@ -390,8 +390,10 @@ func validateInhibitRuleLabelNames(sourceMatch, targetMatch map[string]string, e
 	return nil
 }
 
-// ReceiverDB is the persisted representation of a receiver/contact point.
+// ReceiverDB is the persisted representation of a receiver/contact point. A receiver with no UID
+// resolves to the one derived from its name.
 type ReceiverDB struct {
+	UID                     string                       `yaml:"uid,omitempty" json:"uid,omitempty"`
 	Name                    string                       `json:"name" yaml:"name"`
 	GrafanaManagedReceivers []*PostableGrafanaReceiverDB `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }
