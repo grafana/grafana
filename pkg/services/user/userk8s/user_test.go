@@ -1699,6 +1699,34 @@ func TestUserK8sService_Update(t *testing.T) {
 	}
 }
 
+func TestUserK8sService_Update_RejectsPasswordChanges(t *testing.T) {
+	pw := user.Password("new-password-1")
+
+	tests := []struct {
+		name string
+		cmd  *user.UpdateUserCommand
+	}{
+		{name: "new password", cmd: &user.UpdateUserCommand{UserID: 42, Password: &pw}},
+		{name: "old password only", cmd: &user.UpdateUserCommand{UserID: 42, OldPassword: &pw}},
+		{name: "old and new password", cmd: &user.UpdateUserCommand{UserID: 42, OldPassword: &pw, Password: &pw}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				requesterOrgID: 1,
+				serverResponse: func(w http.ResponseWriter, r *http.Request) {
+					t.Errorf("unexpected request to the API server: %s %s", r.Method, r.URL.Path)
+				},
+			})
+
+			err := svc.Update(ctx, tt.cmd)
+
+			require.ErrorIs(t, err, ErrPasswordUpdateNotSupported)
+		})
+	}
+}
+
 func TestUserK8sService_Delete(t *testing.T) {
 	tests := []struct {
 		name           string

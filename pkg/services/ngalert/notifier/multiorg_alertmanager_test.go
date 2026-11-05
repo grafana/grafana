@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -11,9 +13,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -323,6 +327,85 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration_LegacyTimeInterval
 	require.Len(t, stored.AlertmanagerConfig.TimeIntervals, 1)
 	require.Equal(t, "Business Hours", stored.AlertmanagerConfig.TimeIntervals[0].Name)
 	require.Equal(t, string(v1.TimeIntervalUID("Business Hours")), stored.AlertmanagerConfig.TimeIntervals[0].UID)
+}
+
+func TestExtractReceiverUIDs(t *testing.T) {
+	t.Run("honors a persisted uid", func(t *testing.T) {
+		raw := `{"alertmanager_config":{"receivers":[{"uid":"my-custom-uid","name":"receiver1"}]}}`
+		uids, err := extractReceiverUIDs(raw)
+		require.NoError(t, err)
+		require.Equal(t, sets.New("my-custom-uid"), uids)
+	})
+
+	t.Run("falls back to a name-derived uid when none is persisted", func(t *testing.T) {
+		raw := `{"alertmanager_config":{"receivers":[{"name":"receiver1"}]}}`
+		uids, err := extractReceiverUIDs(raw)
+		require.NoError(t, err)
+		require.Equal(t, sets.New(string(v1.ReceiverUID("receiver1"))), uids)
+	})
+}
+
+func TestMultiOrgAlertmanager_cleanPermissions(t *testing.T) {
+	config := func(receivers ...string) *models.AlertConfiguration {
+		return &models.AlertConfiguration{AlertmanagerConfiguration: `{"alertmanager_config":{"receivers":[` + strings.Join(receivers, ",") + `]}}`}
+	}
+	receiver := func(uid, name string) string {
+		return fmt.Sprintf(`{"uid":%q,"name":%q}`, uid, name)
+	}
+
+	for _, tc := range []struct {
+		name     string
+		previous *models.AlertConfiguration
+		next     *models.AlertConfiguration
+		deleted  []string
+		defaults []string
+	}{
+		{
+			name:     "removed and added receivers",
+			previous: config(receiver("a", "A"), receiver("b", "B")),
+			next:     config(receiver("b", "B"), receiver("c", "C")),
+			deleted:  []string{"a"},
+			defaults: []string{"c"},
+		},
+		{
+			name:     "a renamed receiver keeps its permissions",
+			previous: config(receiver("a", "A")),
+			next:     config(receiver("a", "renamed")),
+		},
+		{
+			name:     "a recreated receiver with the same name is replaced",
+			previous: config(receiver("a", "A")),
+			next:     config(receiver("b", "A")),
+			deleted:  []string{"a"},
+			defaults: []string{"b"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			permissions := &receiverPermissionRecorder{FakeReceiverPermissionsService: ngfakes.NewFakeReceiverPermissionsService()}
+			moa := &MultiOrgAlertmanager{receiverResourcePermissions: permissions}
+
+			newUIDs, err := extractReceiverUIDs(tc.next.AlertmanagerConfiguration)
+			require.NoError(t, err)
+			require.NoError(t, moa.cleanPermissions(context.Background(), 1, tc.previous, newUIDs))
+
+			require.ElementsMatch(t, tc.deleted, permissions.deleted)
+			require.ElementsMatch(t, tc.defaults, permissions.defaults)
+		})
+	}
+}
+
+type receiverPermissionRecorder struct {
+	*ngfakes.FakeReceiverPermissionsService
+	deleted, defaults []string
+}
+
+func (r *receiverPermissionRecorder) DeleteResourcePermissions(_ context.Context, _ int64, uid string) error {
+	r.deleted = append(r.deleted, uid)
+	return nil
+}
+
+func (r *receiverPermissionRecorder) SetDefaultPermissions(_ context.Context, _ int64, _ identity.Requester, uid string) {
+	r.defaults = append(r.defaults, uid)
 }
 
 func TestMultiOrgAlertmanager_Silences(t *testing.T) {

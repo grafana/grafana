@@ -198,9 +198,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	// validate input
 	for _, key := range r.Keys {
 		if r.Namespace != key.Namespace {
-			return &resourcepb.RebuildIndexesResponse{
-				Error: NewBadRequestError("key namespace does not match request namespace"),
-			}, nil
+			return nil, GRPCStatusError(NewBadRequestError("key namespace does not match request namespace"))
 		}
 	}
 
@@ -289,16 +287,16 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	// Determine if all instances were contacted
 	contactedAllInstances := contactedInstances == expectedInstances && expectedInstances > 0
 
-	response := &resourcepb.RebuildIndexesResponse{
+	// Partial results are not returned with the error, as with the conversion interceptor.
+	if len(errs) > 0 {
+		return nil, GRPCStatusError(AsErrorResult(errors.Join(errs...)))
+	}
+	return &resourcepb.RebuildIndexesResponse{
 		RebuildCount:          totalRebuildCount,
 		Details:               details,
 		BuildTimes:            buildTimes,
 		ContactedAllInstances: contactedAllInstances,
-	}
-	if len(errs) > 0 {
-		response.Error = AsErrorResult(errors.Join(errs...))
-	}
-	return response, nil
+	}, nil
 }
 
 func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {

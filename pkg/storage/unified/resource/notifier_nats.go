@@ -354,22 +354,27 @@ func (n *natsNotifier) Publish(_ Event) {}
 
 // ErrWrittenKeysUnsupported is returned by WatchWrittenKeys from a backend, or a
 // configuration, that cannot report written keys.
-var ErrWrittenKeysUnsupported = errors.New("watching written keys needs the KV backend with the NATS notifier ([nats] enabled and notifier = true)")
+var ErrWrittenKeysUnsupported = errors.New("watching written keys needs the NATS notifier ([nats] enabled and notifier = true)")
 
 // writtenKeysBufferSize is how many keys can wait for the consumer before more
 // are dropped.
 const writtenKeysBufferSize = 10000
 
-// WatchWrittenKeys subscribes to NATS directly, one subscription per type, so
-// other types' notifications are never received.
 func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *WrittenEvent, error) {
-	if k.keysSubscriber == nil || !k.keysSubscriber.Enabled() {
+	return WatchWrittenKeysFromBus(ctx, k.keysSubscriber, types, onLost, k.log)
+}
+
+// WatchWrittenKeysFromBus implements StorageBackend.WatchWrittenKeys for any
+// backend that publishes its writes to NATS. It subscribes directly, one
+// subscription per type, so other types' notifications are never received.
+func WatchWrittenKeysFromBus(ctx context.Context, subscriber EventSubscriber, types []schema.GroupResource, onLost func(namespace string), log logging.Logger) (<-chan *WrittenEvent, error) {
+	if subscriber == nil || !subscriber.Enabled() {
 		return nil, ErrWrittenKeysUnsupported
 	}
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
-	case <-subscriberStarted(k.keysSubscriber):
+	case <-subscriberStarted(subscriber):
 	}
 
 	keys := make(chan *WrittenEvent, writtenKeysBufferSize)
@@ -378,7 +383,7 @@ func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.
 		var notification resourcepb.WatchNotification
 		if err := proto.Unmarshal(data, &notification); err != nil {
 			if _, ok := dropLog.next("unmarshal"); ok {
-				k.log.Warn("failed to unmarshal a watch notification for written keys", "subject", subject, "error", err)
+				log.Warn("failed to unmarshal a watch notification for written keys", "subject", subject, "error", err)
 			}
 			return
 		}
@@ -395,7 +400,7 @@ func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.
 		case keys <- written:
 		default:
 			if suppressed, ok := dropLog.next("full"); ok {
-				k.log.Warn("dropped written keys, the consumer is not keeping up", "subject", subject, "alsoDropped", suppressed)
+				log.Warn("dropped written keys, the consumer is not keeping up", "subject", subject, "alsoDropped", suppressed)
 			}
 			onLost(notification.Namespace)
 		}
@@ -420,7 +425,7 @@ func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.
 	}
 	for _, gr := range types {
 		subject := resourcewatch.Subject(schema.GroupVersionResource{Group: gr.Group, Resource: gr.Resource}, "")
-		sub, err := k.keysSubscriber.Subscribe(ctx, subject, handler, signal)
+		sub, err := subscriber.Subscribe(ctx, subject, handler, signal)
 		if err != nil {
 			unsubscribe()
 			return nil, err

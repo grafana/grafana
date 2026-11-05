@@ -586,6 +586,10 @@ const (
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
 
+	// FlagAuthzDelegationChecks
+	// Use AuthZ Check and LegacyCheck for single-org IAM delegation checks (resolved at startup)
+	FlagAuthzDelegationChecks = "authzDelegationChecks"
+
 	// FlagKubernetesAuthzZanzanaSync
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
 	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
@@ -669,10 +673,6 @@ const (
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
-
-	// FlagCdnPluginsUrls
-	// Enable loading plugins via declarative URLs
-	FlagCdnPluginsUrls = "cdnPluginsUrls"
 
 	// FlagPluginInstallAPISync
 	// Enable syncing plugin installations to the installs API
