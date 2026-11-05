@@ -35,5 +35,6 @@ Panel "Requests" was updated (2 changes) · field config
   [Field config]
     Override "errors" › Standard options › Unit: set to Percent (0-100)
     + Override "latency"
+      · Standard options › Unit: ms
 `,
 };

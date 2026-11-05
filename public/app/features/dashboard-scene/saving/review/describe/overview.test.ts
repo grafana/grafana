@@ -1,50 +1,56 @@
-import { type ReviewNode } from '../types';
+import { named, richToPlain } from '../richText';
+import { type ReviewNode, type RichText } from '../types';
 
 import { countChanges, describeMetadata, nodeStatusText, nodeSummary, overviewLine } from './overview';
 
 describe('overviewLine', () => {
   it.each([
-    [true, 0, 0, 'Changes to the dashboard'],
-    [false, 0, 1, 'Changes to 1 panel'],
-    [true, 0, 1, 'Changes to the dashboard and 1 panel'],
-    [true, 2, 4, 'Changes to the dashboard, 2 sections, and 4 panels'],
-    [false, 1, 0, 'Changes to 1 section'],
-    [false, 0, 0, ''],
-  ])('dashboard %s, %s sections, %s panels', (dashboard, sections, panels, line) => {
-    expect(overviewLine(dashboard, sections, panels)).toBe(line);
+    [true, 0, 0, 0, 'Changes to the dashboard'],
+    [false, 0, 0, 1, 'Changes to 1 panel'],
+    [false, 0, 1, 0, 'Changes to 1 tab'],
+    [true, 0, 0, 1, 'Changes to the dashboard and 1 panel'],
+    [true, 2, 0, 4, 'Changes to the dashboard, 2 rows, and 4 panels'],
+    [false, 1, 0, 0, 'Changes to 1 row'],
+    [false, 0, 0, 0, ''],
+  ])('dashboard %s, %s rows, %s tabs, %s panels', (dashboard, rows, tabs, panels, line) => {
+    expect(overviewLine(dashboard, { rows, tabs, panels })).toBe(line);
   });
 });
 
 describe('overviewLine for a new dashboard', () => {
   it.each([
-    [true, 0, 2, 'The dashboard and 2 panels'],
-    [true, 1, 2, 'The dashboard, 1 section, and 2 panels'],
-    [false, 0, 2, '2 panels'],
-  ])('dashboard %s, %s sections, %s panels', (dashboard, sections, panels, line) => {
-    expect(overviewLine(dashboard, sections, panels, true)).toBe(line);
+    [true, 0, 0, 2, 'The dashboard and 2 panels'],
+    [true, 0, 1, 2, 'The dashboard, 1 tab, and 2 panels'],
+    [false, 0, 0, 2, '2 panels'],
+  ])('dashboard %s, %s rows, %s tabs, %s panels', (dashboard, rows, tabs, panels, line) => {
+    expect(overviewLine(dashboard, { rows, tabs, panels }, true)).toBe(line);
   });
 });
 
+const plain = (text: RichText | undefined) => (text ? richToPlain(text) : undefined);
+
 describe('nodeStatusText', () => {
   it('says how many lines changed, with plurals', () => {
-    expect(nodeStatusText(undefined, undefined, 1)).toBe('was updated (1 change)');
-    expect(nodeStatusText(undefined, undefined, 3)).toBe('was updated (3 changes)');
+    expect(plain(nodeStatusText(undefined, undefined, 1))).toBe('was updated (1 change)');
+    expect(plain(nodeStatusText(undefined, undefined, 3))).toBe('was updated (3 changes)');
   });
 
   it('adds the update to the move text', () => {
-    const move = { text: 'moved after Panel "Latency"' };
+    const move = { text: ['moved after ', named('panel', 'Latency')] };
 
-    expect(nodeStatusText('moved', move, 0)).toBe('moved after Panel "Latency"');
-    expect(nodeStatusText('moved', move, 1)).toBe('moved after Panel "Latency" and was updated (1 change)');
+    expect(plain(nodeStatusText('moved', move, 0))).toBe('moved after Panel "Latency"');
+    expect(plain(nodeStatusText('moved', move, 1))).toBe('moved after Panel "Latency" and was updated (1 change)');
   });
 
   it("ends an ambiguous node's move with its new position", () => {
-    const move = { text: 'moved before Panel "New panel"', position: 1 };
+    const move = { text: ['moved before ', named('panel', 'New panel')], position: 1 };
 
-    expect(nodeStatusText('moved', move, 0)).toBe('moved before Panel "New panel", at position 1');
-    expect(nodeStatusText('moved', move, 2)).toBe(
+    expect(plain(nodeStatusText('moved', move, 0))).toBe('moved before Panel "New panel", at position 1');
+    expect(plain(nodeStatusText('moved', move, 2))).toBe(
       'moved before Panel "New panel", at position 1, and was updated (2 changes)'
     );
+    // The neighbour stays a named element, so the UI can show its icon.
+    expect(nodeStatusText('moved', move, 0)).toEqual(['moved before ', named('panel', 'New panel'), ', at position 1']);
   });
 
   it('has none for added, removed and header-only nodes', () => {
@@ -69,7 +75,7 @@ describe('countChanges', () => {
       {
         kind: 'dashboard',
         id: 'dashboard',
-        label: 'Dashboard',
+        label: ['Dashboard'],
         summary: '',
         claims: [],
         categories: [{ category: 'properties', label: 'Properties', changes: [change('changed'), change('added')] }],
@@ -78,13 +84,29 @@ describe('countChanges', () => {
         kind: 'section',
         sectionKind: 'row',
         id: 'row',
-        label: "'API' row",
+        label: [named('row', 'API')],
         summary: '',
         claims: [],
         categories: [],
         children: [
-          { kind: 'panel', id: 'p1', label: "'A'", status: 'moved', summary: '', claims: [], categories: [] },
-          { kind: 'panel', id: 'p2', label: "'B'", status: 'removed', summary: '', claims: [], categories: [] },
+          {
+            kind: 'panel',
+            id: 'p1',
+            label: [named('panel', 'A')],
+            status: 'moved',
+            summary: '',
+            claims: [],
+            categories: [],
+          },
+          {
+            kind: 'panel',
+            id: 'p2',
+            label: [named('panel', 'B')],
+            status: 'removed',
+            summary: '',
+            claims: [],
+            categories: [],
+          },
         ],
       },
     ];

@@ -102,7 +102,7 @@ describe('describeNamedList', () => {
     ).toEqual(['+ Custom variable "env"', '+ Ad hoc filters "filters"', '+ Group by variable "by"']);
   });
 
-  it('shows an added variable by its type, with its configuration on demand but not its resolved options', () => {
+  it('shows an added variable by its type, with what it is set to but not its resolved options', () => {
     const variable = {
       kind: 'QueryVariable',
       spec: { name: 'query0', query: 'label_values(job)', options: [{ text: 'api', value: 'api' }] },
@@ -111,10 +111,30 @@ describe('describeNamedList', () => {
     const [change] = describeNamedList(['list'], [], [variable], diffs, listItemsOf('variables', ctx), noDefaults);
 
     expect(change).toMatchObject({ kind: 'added', subject: 'variable', text: 'Query variable "query0"' });
-    expect(JSON.parse(change.details?.after ?? '')).toEqual({
-      kind: 'QueryVariable',
-      spec: { name: 'query0', query: 'label_values(job)' },
-    });
+    expect(change.properties).toEqual([{ label: 'Query', value: 'label_values(job)' }]);
+    expect(change.details).toBeUndefined();
+  });
+
+  it('groups several changed fields of one item under its name, each worded without the name', () => {
+    const before = { kind: 'CustomVariable', spec: { name: 'env', label: 'Env', includeAll: false } };
+    const after = { kind: 'CustomVariable', spec: { name: 'env', label: 'Environment', includeAll: true } };
+    const diffs = Object.values(jsonDiff({ list: [before] }, { list: [after] })).flat();
+    const [change, ...rest] = describeNamedList(
+      ['list'],
+      [before],
+      [after],
+      diffs,
+      listItemsOf('variables', ctx),
+      noDefaults
+    );
+
+    expect(rest).toEqual([]);
+    expect(change).toMatchObject({ kind: 'changed', text: 'Custom variable "env"', statusText: '(2 changes)' });
+    expect(change.changes?.map((inner) => inner.text)).toEqual([
+      'Include All option: turned on',
+      'Label: "Env" → "Environment"',
+    ]);
+    expect(change.claims).toEqual(expect.arrayContaining(['list/0/spec/label', 'list/0/spec/includeAll']));
   });
 
   it('matches overrides by matcher and words their properties by field config label', () => {

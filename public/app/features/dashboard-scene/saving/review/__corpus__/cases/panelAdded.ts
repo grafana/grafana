@@ -21,6 +21,10 @@ export const panelAdded: ReviewCorpusCase = {
 Changes to 1 panel
 Counts: 1 added, 0 changed, 0 removed, 0 moved
 
-+ Panel "Saturation"
++ Added Panel "Saturation"
+  · Visualization: timeseries
+  · Queries (1) [Show]
+  · Plugin options [Show]
+  · Field config [Show]
 `,
 };

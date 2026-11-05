@@ -113,11 +113,10 @@ Panel "Latency" was updated (2 changes) · layout, conditional rendering
   [Layout]
     Fit content: turned on
   [Conditional rendering]
-    Conditional rendering: added
-      before: (none)
-      after: Panel visibility: Hide
-        Match rules: Match all
-        Template variable "env": Equals "prod"
+    Conditional rendering: added (1 rule)
+      · Panel visibility: Hide
+      · Match rules: Match all
+      · Template variable "env": Equals "prod"
 `,
 };
 
@@ -137,7 +136,7 @@ export const visibilityAndMatchChanged: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to 1 section
+Changes to 1 row
 Counts: 0 added, 2 changed, 0 removed, 0 moved
 
 Row "API" was updated (2 changes) · conditional rendering
@@ -182,14 +181,14 @@ export const variableRulesAddedRemovedChanged: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to 1 section
+Changes to 1 row
 Counts: 1 added, 1 changed, 1 removed, 0 moved
 
 Row "DB" was updated (3 changes) · conditional rendering
-  [Conditional rendering]
+  [Conditional rendering (Match all)]
     Template variable "env": Equals "prod" → Matches "prod|staging"
-    - Template variable "region" Equals "eu-west"
-    + Template variable "cluster" Equals "blue"
+    - Rule removed: Template variable "region" Equals "eu-west"
+    + Rule added: Template variable "cluster" Equals "blue"
 `,
 };
 
@@ -211,16 +210,15 @@ export const ruleSetAddedToTab: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to 1 section
+Changes to 1 tab
 Counts: 1 added, 0 changed, 0 removed, 0 moved
 
 Tab "DB" was updated (1 change) · conditional rendering
   [Conditional rendering]
-    Conditional rendering: added
-      before: (none)
-      after: Tab visibility: Show
-        Match rules: Match all
-        Query result: Has data
+    Conditional rendering: added (1 rule)
+      · Tab visibility: Show
+      · Match rules: Match all
+      · Query result: Has data
 `,
 };
 
@@ -246,16 +244,15 @@ export const ruleSetRemovedFromTab: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to 1 section
+Changes to 1 tab
 Counts: 0 added, 0 changed, 1 removed, 0 moved
 
 Tab "DB" was updated (1 change) · conditional rendering
   [Conditional rendering]
-    Conditional rendering: removed
-      before: Tab visibility when the rules match: Hide
-        Match rules: Match any
-        Query result: No data
-        Time range less than: 7 days
-      after: (none)
+    Conditional rendering: removed (2 rules)
+      · Tab visibility when the rules match: Hide
+      · Match rules: Match any
+      · Query result: No data
+      · Time range less than: 7 days
 `,
 };

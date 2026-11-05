@@ -26,7 +26,7 @@ export const untitledAndDuplicateSections: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to 2 panels
+Changes to 2 rows
 Counts: 0 added, 2 changed, 0 removed, 0 moved
 
 Row "Backend" at position 2

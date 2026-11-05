@@ -22,6 +22,10 @@ export const gridItemRemovedFromMiddle: ReviewCorpusCase = {
 Changes to 1 panel
 Counts: 0 added, 0 changed, 1 removed, 0 moved
 
-- Panel "Errors"
+- Removed Panel "Errors"
+  · Visualization: timeseries
+  · Queries (1) [Show]
+  · Plugin options [Show]
+  · Field config [Show]
 `,
 };

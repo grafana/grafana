@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { upperFirst } from 'lodash';
 import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -20,7 +19,8 @@ import { type ChangeKind, type ReviewNode, type ReviewSummary } from '../types';
 
 import { ReviewChangeList } from './ReviewChangeList';
 import { ReviewDisclosure } from './ReviewDisclosure';
-import { ReviewNodeView, needsMarkerColumn, nodeKey, removedContentsKey } from './ReviewNodeView';
+import { AddRemoveMarker, RichTextView, isAddedOrRemoved } from './ReviewMarks';
+import { ReviewNodeView, nodeKey, removedContentsKey } from './ReviewNodeView';
 import { useReviewExpansion } from './useReviewExpansion';
 import { type ReviewSummaryState } from './useReviewSummary';
 
@@ -66,7 +66,11 @@ export function ReviewTab({ state, onBackToDetails, onShowChanges }: ReviewTabPr
 function ReviewSummaryView({ summary }: { summary: ReviewSummary }) {
   const styles = useStyles2(getStyles);
   const collapsedByDefault = useMemo(
-    () => new Set(summary.collapsePanelsByDefault ? collapsibleKeys(summary.tree) : []),
+    () =>
+      new Set([
+        ...detailOnlyKeys(summary.tree),
+        ...(summary.collapsePanelsByDefault ? collapsibleKeys(summary.tree) : []),
+      ]),
     [summary]
   );
   const expansion = useReviewExpansion(
@@ -81,7 +85,6 @@ function ReviewSummaryView({ summary }: { summary: ReviewSummary }) {
   }
 
   const counts = COUNT_ORDER.filter((kind) => overview.counts[kind] > 0);
-  const markerColumn = needsMarkerColumn(tree);
 
   return (
     <Stack direction="column" gap={2}>
@@ -104,7 +107,9 @@ function ReviewSummaryView({ summary }: { summary: ReviewSummary }) {
           {counts.length > 0 && (
             <ul className={styles.counts}>
               {counts.map((kind) => (
-                <li key={kind}>
+                <li key={kind} className={styles.count}>
+                  {/* The same + and − that mark added and removed items below; the text says the word */}
+                  {isAddedOrRemoved(kind) && <AddRemoveMarker kind={kind} decorative />}
                   <Text color="secondary">{formatCount(kind, overview.counts[kind])}</Text>
                 </li>
               ))}
@@ -136,7 +141,7 @@ function ReviewSummaryView({ summary }: { summary: ReviewSummary }) {
       {tree.length > 0 && (
         <div className={styles.tree}>
           {tree.map((node) => (
-            <ReviewNodeView key={node.id} node={node} level={3} expansion={expansion} markerColumn={markerColumn} />
+            <ReviewNodeView key={node.id} node={node} level={3} expansion={expansion} />
           ))}
         </div>
       )}
@@ -185,7 +190,7 @@ function ReviewSummaryView({ summary }: { summary: ReviewSummary }) {
               {systemDefaults.map((group, index) => (
                 <div key={index} className={styles.defaultsGroup}>
                   <div role="heading" aria-level={4} className={styles.groupHeading}>
-                    {upperFirst(group.label)}
+                    <RichTextView text={group.label} capitalize />
                   </div>
                   <ReviewChangeList changes={group.changes} />
                 </div>
@@ -268,6 +273,22 @@ function collapsibleKeys(nodes: ReviewNode[]): string[] {
   });
 }
 
+/**
+ * Added and removed nodes whose content is only what they are set to (and, for a new section, what moved into it):
+ * the header says what happened, the details are one click away.
+ */
+function detailOnlyKeys(nodes: ReviewNode[]): string[] {
+  return nodes.flatMap((node) => {
+    const children = node.kind === 'section' ? node.children : [];
+    const detailOnly =
+      (node.status === 'added' || node.status === 'removed') &&
+      node.categories.length === 0 &&
+      children.length === 0 &&
+      !(node.kind === 'section' && node.removedContents?.length);
+    return [...(detailOnly ? [nodeKey(node)] : []), ...detailOnlyKeys(children)];
+  });
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   toolbar: css({
     display: 'flex',
@@ -283,6 +304,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     listStyle: 'none',
     margin: 0,
     padding: 0,
+  }),
+  count: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.75),
   }),
   tree: css({
     display: 'flex',

@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 
 import { type Diff } from '../../../settings/version-history/utils';
-import { type PathKey, pathKey, type ReviewChange } from '../types';
+import { type PathKey, pathKey, type ReviewChange, type ReviewProperty } from '../types';
 
 import { added, describeValue, removed, type Worded } from './formatters';
 import { type NamedListItems, describeNamedList, type ListContext } from './namedLists';
@@ -26,9 +26,17 @@ export function describeShowHideRules(
 ): ReviewChange[] {
   const label = t('dashboard-scene.review.field.conditional-rendering', 'Conditional rendering');
   if (isUnset(before) || isUnset(after)) {
-    const worded: Worded = isUnset(before)
-      ? { ...added(label), details: { after: ruleSetLines(owner, after) } }
-      : { ...removed(label), details: { before: ruleSetLines(owner, before) } };
+    // Progressive disclosure: one line saying a rule set was added or removed, its settings one click away.
+    const group = isUnset(before) ? after : before;
+    const worded: Worded = {
+      ...(isUnset(before) ? added(label) : removed(label)),
+      statusText: t('dashboard-scene.review.status.rules', '', {
+        count: ruleCount(group),
+        defaultValue_one: '({{count}} rule)',
+        defaultValue_other: '({{count}} rules)',
+      }),
+      properties: ruleSetProperties(owner, group),
+    };
     return [{ ...worded, claims }];
   }
 
@@ -67,7 +75,36 @@ export function describeShowHideRules(
     ruleItems,
     list
   );
-  lines.push(...rules);
+  // An added or removed rule says so. Which way the rules combine decides what it does; that holds for the whole
+  // rule set, so it is said once, next to the category label.
+  const logic = displayCondition(condition(after));
+  lines.push(
+    ...rules.map((change) =>
+      change.subject === 'rule' && (change.kind === 'added' || change.kind === 'removed')
+        ? {
+            ...change,
+            text:
+              change.kind === 'added'
+                ? t('dashboard-scene.review.change.rule-added', 'Rule added: {{rule}}', {
+                    rule: change.text,
+                    interpolation: noEscape,
+                  })
+                : t('dashboard-scene.review.change.rule-removed', 'Rule removed: {{rule}}', {
+                    rule: change.text,
+                    interpolation: noEscape,
+                  }),
+            ...(logic
+              ? {
+                  categoryNote: t('dashboard-scene.review.status.rule-logic', '({{logic}})', {
+                    logic,
+                    interpolation: noEscape,
+                  }),
+                }
+              : {}),
+          }
+        : change
+    )
+  );
 
   if (!lines.length) {
     return [{ ...describeValue(label, before, after, { type: 'long' }), claims }];
@@ -82,22 +119,27 @@ export function describeShowHideRules(
   return lines.map(({ part, ...change }) => change);
 }
 
-/** Readable lines for a whole rule set, never JSON: visibility, match rules, then one line per rule. */
-function ruleSetLines(owner: ShowHideOwner, group: unknown): string {
+/** A whole rule set in the rules editor's words, never JSON: visibility, match rules, then one per rule. */
+export function ruleSetProperties(owner: ShowHideOwner, group: unknown): ReviewProperty[] {
   const items = asArray(valueAt(group, ['spec', 'items']));
+  const entry = (label: string, value: string | undefined): ReviewProperty | undefined =>
+    value === undefined ? undefined : { label, value };
   return [
-    lineOf(visibilityLabel(owner, items.length), displayVisibility(valueAt(group, ['spec', 'visibility']))),
-    lineOf(matchRulesLabel(), displayCondition(valueAt(group, ['spec', 'condition']))),
-    ...items.map((item, index) => lineOf(ruleItems.nameOf(item, index, items), ruleValue(item))),
-  ]
-    .filter((line): line is string => line !== undefined)
+    entry(visibilityLabel(owner, items.length), displayVisibility(valueAt(group, ['spec', 'visibility']))),
+    entry(matchRulesLabel(), displayCondition(valueAt(group, ['spec', 'condition']))),
+    ...items.map((item, index) => entry(ruleItems.nameOf(item, index, items), ruleValue(item))),
+  ].filter((item): item is ReviewProperty => item !== undefined);
+}
+
+/** The same, as lines of text: what an added element's property list shows behind Show. */
+export function ruleSetText(owner: ShowHideOwner, group: unknown): string {
+  return ruleSetProperties(owner, group)
+    .map(({ label, value }) => lineOf(label, value))
     .join('\n');
 }
 
-function lineOf(label: string, value: string | undefined): string | undefined {
-  return value === undefined
-    ? undefined
-    : t('dashboard-scene.review.value.rule-line', '{{label}}: {{value}}', { label, value, interpolation: noEscape });
+function lineOf(label: string, value: string | undefined): string {
+  return t('dashboard-scene.review.value.rule-line', '{{label}}: {{value}}', { label, value, interpolation: noEscape });
 }
 
 const ruleItems: NamedListItems = {

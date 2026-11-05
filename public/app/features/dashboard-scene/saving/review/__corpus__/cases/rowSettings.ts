@@ -34,7 +34,7 @@ export const rowSettings: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to 1 section
+Changes to 1 row
 Counts: 1 added, 3 changed, 0 removed, 0 moved
 
 Row "API" was updated (4 changes) · properties, repeat, conditional rendering
@@ -44,10 +44,9 @@ Row "API" was updated (4 changes) · properties, repeat, conditional rendering
   [Repeat]
     Repeat by variable: set to env
   [Conditional rendering]
-    Conditional rendering: added
-      before: (none)
-      after: Row visibility: Show
-        Match rules: Match all
-        Template variable "env": Equals "prod"
+    Conditional rendering: added (1 rule)
+      · Row visibility: Show
+      · Match rules: Match all
+      · Template variable "env": Equals "prod"
 `,
 };

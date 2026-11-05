@@ -1,4 +1,5 @@
-import { type ChangeKind, type ReviewChange, type ReviewNode, type ReviewSummary } from './types';
+import { richToPlain } from './richText';
+import { type ChangeKind, type ReviewChange, type ReviewNode, type ReviewProperty, type ReviewSummary } from './types';
 
 /** Stand-ins for the UI's green + and red − markers. */
 const MARKERS: Record<ChangeKind, string> = { added: '+ ', removed: '- ', changed: '', moved: '' };
@@ -13,12 +14,25 @@ export function renderReviewText(summary: ReviewSummary, { details = true }: { d
 
   const pushChange = (depth: number, change: ReviewChange) => {
     const marker = change.subject ? MARKERS[change.kind] : '';
-    push(depth, marker + change.text);
+    push(depth, marker + change.text + (change.statusText ? ` ${change.statusText}` : ''));
+    change.properties?.forEach((item) => pushProperty(depth + 1, item));
+    change.changes?.forEach((inner) => pushChange(depth + 1, inner));
     if (details && change.details) {
       pushValue(depth + 1, 'before', change.details.before);
       pushValue(depth + 1, 'after', change.details.after);
     }
   };
+
+  // A property's JSON is checked by unit tests; here only that there is something to Show.
+  const pushProperty = (depth: number, item: ReviewProperty) =>
+    push(
+      depth,
+      item.value !== undefined
+        ? `· ${item.label}: ${item.value}`
+        : item.details !== undefined
+          ? `· ${item.label} [Show]`
+          : `· ${item.label}`
+    );
 
   const pushValue = (depth: number, name: string, value: string | undefined) => {
     const [first, ...rest] = (value ?? '(none)').split('\n');
@@ -27,21 +41,34 @@ export function renderReviewText(summary: ReviewSummary, { details = true }: { d
   };
 
   const pushNode = (depth: number, node: ReviewNode) => {
-    let header = (node.status ? MARKERS[node.status] : '') + node.label;
+    let header = (node.status ? MARKERS[node.status] : '') + richToPlain(node.label);
     if (node.statusText) {
-      header += ` ${node.statusText}`;
+      header += ` ${richToPlain(node.statusText)}`;
     }
     if (node.summary) {
       header += ` · ${node.summary}`;
     }
     push(depth, header);
+    node.properties?.forEach((item) => pushProperty(depth + 1, item));
     for (const group of node.categories) {
-      push(depth + 1, `[${group.label}]`);
+      push(depth + 1, `[${group.label}${group.note ? ` ${group.note}` : ''}]`);
       group.changes.forEach((change) => pushChange(depth + 2, change));
     }
     if (node.kind === 'section') {
-      node.removedContents?.forEach((name) => push(depth + 1, `removed with it: ${name}`));
-      node.children.forEach((child) => pushNode(depth + 1, child));
+      // A moved-in element that also changed is shown once, as its node, in its place in the list.
+      const childById = new Map(node.children.map((child) => [child.id, child]));
+      const placed = new Set<string>();
+      node.movedInContents?.forEach((name, index) => {
+        const child = childById.get(node.movedInNodeIds?.[index] ?? '');
+        if (child) {
+          placed.add(child.id);
+          pushNode(depth + 1, child);
+        } else {
+          push(depth + 1, `• ${richToPlain(name)}`);
+        }
+      });
+      node.removedContents?.forEach((name) => push(depth + 1, `removed with it: ${richToPlain(name)}`));
+      node.children.filter((child) => !placed.has(child.id)).forEach((child) => pushNode(depth + 1, child));
     }
   };
 
@@ -82,7 +109,7 @@ export function renderReviewText(summary: ReviewSummary, { details = true }: { d
     lines.push('');
     push(0, `System defaults (${count})`);
     for (const group of summary.systemDefaults) {
-      push(1, group.label);
+      push(1, richToPlain(group.label));
       group.changes.forEach((change) => pushChange(2, change));
     }
   }

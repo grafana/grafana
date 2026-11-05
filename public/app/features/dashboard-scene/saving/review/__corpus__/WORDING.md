@@ -10,9 +10,10 @@ named **type first, then its name**: `Panel "Latency"`, `Row "EU Cluster"`, `Tab
 `Query variable "env"`, `Query "B"`. This applies everywhere a name appears: node headers, section paths, change
 lines, move texts, `removed with it`, System defaults owners.
 
-**Added and removed elements are not worded "added"/"removed".** A node header, or a change line about one
-element (one with a `subject`, see §8), carries only the element's name; the UI shows a green + or a red −
-(the corpus text shows `+ ` / `- `): `+ Panel "Saturation"`, `- Row "DB"`, `+ Query "B"`,
+**Added and removed elements are marked + / −.** The UI shows a green + or a red − (the corpus text shows
+`+ ` / `- `). A node header (panel, row, tab) also says what happened: `+ Added Panel "Saturation"`,
+`- Removed Row "DB"` (§3). A change line about one element (one with a `subject`, see §8) carries only the
+element's name: `+ Query "B"`,
 `- Variable "region"`, `+ Tag "slo"`, `- Override "errors"`,
 `+ Template variable "cluster" Equals "blue"`. Every element that can be added or removed has a subject
 (§8), so no line says "added" or "removed" about an element; only values do (`Description: added`).
@@ -68,30 +69,51 @@ A whitespace-only title counts as no title. Library panels are named the same wa
 | Where                                                  | Form                                                                                                                                                                                                             |
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Panel node header (the tree shows its section)         | the name above: `Panel "Errors"`, `Panel (unnamed) at position 3`                                                                                                                                                |
-| Section node header                                    | full path from the root, segments joined with `›`: `Tab "Cluster" › Row "Backend" at position 2`                                                                                                                 |
+| Section node header                                    | its own segment, plus ` under <parent path>` when the tree doesn't show it right under its direct parent (see below): `Row "Backend" at position 2`, `Row "Nodes" under Tab "Cluster"`                           |
 | `removed with it` (under the removed section's header) | the name above, from the baseline: `removed with it: Panel "New panel" at position 2`                                                                                                                            |
 | System defaults owner (no tree context)                | the name above, plus `in <section path>` when the title isn't unique in the whole dashboard: `Panel "Errors" in Tab "DB"`, `Panel "New panel" at position 2` (root), `Panel (unnamed) at position 3 in Tab "DB"` |
 | Move texts                                             | see §3                                                                                                                                                                                                           |
 
 **Path compression.** A section with no changes of its own and no changed panels directly inside it is not
-shown; its changed descendant sections take its place (each still with its full path). A section with no
-own changes that directly contains a changed panel is shown as a header only.
+shown; its changed descendant sections take its place. A section with no own changes that directly contains a
+changed panel is shown as a header only.
+
+**The "under" rule.** A section header adds ` under <parent path>` (the full path of its direct parent,
+segments joined with `›`) when its parent in the tree is not its direct parent: path compression hid an
+intermediate section, or the parent isn't shown at all. It is dropped when the tree parent is the direct
+parent, since the indentation already shows where it sits. Root-level sections never get it, and panels never
+do (their section is always shown, or they sit at the root).
+
+| Tree                                                                    | Header                                                                             |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `Row "Nodes"` shown as a child of the `Tab "Cluster"` node              | `Row "Nodes"`                                                                      |
+| `Tab "Cluster"` not shown (no own changes)                              | `Row "Nodes" under Tab "Cluster"`                                                  |
+| `Tab "Cluster"` shown, `Row "Nodes"` compressed, `Tab "Disk"` inside it | `Tab "Disk" under Tab "Cluster" › Row "Nodes"` (child of the `Tab "Cluster"` node) |
+
+**Icons in the UI.** Wherever a panel, row or tab is named (node headers, move texts and their neighbours,
+`removed with it`, System defaults owners), the UI shows the kind as an icon instead of the word, followed by
+the quoted name: `↗"CPU"`, `≡"Nodes"`, `⧉"Cluster"`. Each icon carries the word as its aria-label. A header's
+own name has no icon of its own, because the header's leading icon already shows it. Change lines and
+before/after details stay plain text. The corpus shows every name with its word (`Row "Nodes"`), the header's
+own name included. `the top level of the dashboard` stays text.
 
 ## 3. Node status texts
 
 The header is the label, then (after a space) the status text, then `·` and the summary.
 
-| Node                         | Header                                                                                                       |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| added                        | `+ Panel "Saturation"` (marker only, no status text)                                                         |
-| removed                      | `- Row "DB"` (marker only)                                                                                   |
-| updated                      | `Panel "Errors" was updated (2 changes) · properties, data`; `Dashboard was updated (1 change) · properties` |
-| moved                        | `Panel "Errors" moved after Panel "Latency"`                                                                 |
-| moved and updated            | `Panel "Errors" moved after Panel "Latency" and was updated (1 change) · layout`                             |
-| header only (no own changes) | `Row "DB"` (no status text, no summary)                                                                      |
+| Node                         | Header                                                                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| added                        | `+ Added Panel "Saturation"`, `+ Added Row "New row" under Tab "Tab 1"` (no status text)                                                                                        |
+| removed                      | `- Removed Tab "Tab 2"`, `- Removed Row "DB" under Tab "Tab 1"`                                                                                                                 |
+| updated                      | `Panel "Errors" was updated (2 changes) · properties, data`; `Row "DB" under Tab "Tab 1" was updated (2 changes) · properties`; `Dashboard was updated (1 change) · properties` |
+| moved                        | `Panel "Errors" moved after Panel "Latency"`                                                                                                                                    |
+| moved and updated            | `Panel "Errors" moved after Panel "Latency" and was updated (1 change) · layout`                                                                                                |
+| header only (no own changes) | `Row "DB"` (no status text, no summary)                                                                                                                                         |
 
-`was updated (N changes)` counts the node's change lines (all categories), with i18n plurals
-(`1 property`, `2 properties`).
+Added and removed nodes of every kind (panels, rows, tabs) say so with a verb before the name, and keep the
+
+- / − marker; the "under" rule applies to them too. `was updated (N changes)` counts the node's change lines
+  (all categories), with i18n plurals (`1 change`, `2 changes`).
 
 **Moves are stated relative to a neighbour** in the payload's reading order, among the node's siblings in
 its (new) section:
@@ -123,8 +145,55 @@ gets a Layout `Position` line (§7).
 A removed section lists what was removed with it, one entry per panel or nested section, in baseline
 reading order (depth-first): `removed with it: Panel "Queries"`.
 
-An added section shows its panels as child nodes, each `+ Panel "…"` (or with a move text when an existing
+An added section shows its panels as child nodes, each `+ Added Panel "…"` (or with a move text when an existing
 panel was moved into it). An added or removed node lists no categories.
+
+A layout change that puts existing panels or sections into a new section (grouping a grid into rows or tabs,
+wrapping rows in a tab) doesn't mark them moved: the `Layout:` line accounts for them. The new section's header
+counts them, naming the kind, and lists them one level deep in payload reading order, one `• ` line each:
+
+```
++ Added Row "New row" (3 panels moved to it)
+  • Panel "P1"
+  • Panel "P2"
+  • Panel "P4"
+```
+
+An added or removed element lists what it is set to, one `· ` line per property, under its header (in the UI,
+behind its +/− toggle). Only what's set: empty values, `false` and schema or plugin defaults are left out. Literal
+values follow the label (`· Description: "Cache hits"`, `· Multi-value: Yes`); lists and objects are JSON behind
+Show, which the text marks `[Show]` (`· Queries (1) [Show]`). The title is the header's name and isn't repeated.
+Every added or removed element is reviewable: when nothing differs from the defaults, the list shows what it is
+set to, defaults and `No` included (a switch variable at its defaults), and `· No settings` when even that is
+empty. A section whose toggle already reveals panels or moved-in elements doesn't list its defaults.
+
+A rule set added or removed is one line with its rule count, its settings listed under it:
+`Conditional rendering: added (1 rule)` then `· Panel visibility: Hide`, `· Match rules: Match all`,
+`· Template variable "env": Equals "prod"`. A rule added to or removed from an existing set says so, and the category
+label recalls how the rules combine, since that holds for the whole set: `[Conditional rendering (Match all)]` then
+`+ Rule added: Time range less than 30 minutes`.
+
+Several changed fields of one list item (a variable, a query, …) read as one line naming it, with the changes
+indented under it and worded without the name:
+
+```
+Custom variable "env" (3 changes)
+  Label: "Env" → "Environment"
+  Include All option: turned on
+  Description: set to "Where the service runs"
+```
+
+A moved-in element that also changed is not a bullet: its node is shown in the bullet's place. An added section's
+header also counts its new direct children: `(4 panels moved to it, 1 panel added)`, or `(1 panel added)` alone.
+A new section's layout is listed only when it isn't an auto grid.
+
+The kind is `panels`, `rows` or `tabs`; `elements` if they were ever mixed. The entries are not counted as
+changes. A panel moved in from a section that exists on both sides keeps its own move line instead. In the UI
+the + is the toggle, and a section whose only content is this list starts collapsed.
+
+When a section's own layout type changes (e.g. its auto grid becomes rows), its `Layout: changed from auto grid
+to rows` line covers the panels the new sections take over: they are not listed as moved, and the new sections
+holding them are `+ Added` with no panel children for them.
 
 ## 4. Collapsed summary (`summary`)
 
@@ -138,11 +207,12 @@ Empty for nodes with no categories (added, removed, moved without other changes,
 in this order and only when non-zero:
 
 - `the dashboard` — the Dashboard node is in the tree;
-- `1 section` / `<n> sections` — section nodes with their own changes or a status (header-only sections don't count);
-- `1 panel` / `<n> panels` — panel nodes in the tree.
+- `1 row` / `<n> rows`, `1 tab` / `<n> tabs` — top-level sections holding a change at any depth (a change inside
+  a tab is a change to the tab), including the section a panel moved out of;
+- `1 panel` / `<n> panels` — top-level panels in the tree.
 
-Examples: `Changes to the dashboard`, `Changes to 1 panel`, `Changes to the dashboard and 1 panel`,
-`Changes to the dashboard, 2 sections, and 4 panels`. Empty when the tree is empty.
+Examples: `Changes to the dashboard`, `Changes to 1 tab`, `Changes to the dashboard and 1 panel`,
+`Changes to the dashboard, 2 rows, and 1 panel`. Empty when the tree is empty.
 
 **New dashboard** (`mode: 'new'`): the UI intro already says "This creates a new dashboard with:", so the line
 is the bare list with its first letter capitalized, same items and plurals: `The dashboard and 2 panels`,

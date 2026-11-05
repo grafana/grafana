@@ -1,33 +1,32 @@
 import { t } from '@grafana/i18n';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { type PathKey } from '../types';
+import { joinPath, named, noEscape, rich } from '../richText';
+import { type PathKey, type RichText } from '../types';
 
-import { type SectionKind, type WalkedLayout, type WalkedSection } from './walkLayout';
-
-const noEscape = { escapeValue: false };
+import { type WalkedLayout, type WalkedSection } from './walkLayout';
 
 /** How one element is named among its siblings. */
 export interface ElementName {
-  /** Type and title only: `Panel "Errors"`, `Row (unnamed)`. */
-  name: string;
+  /** Kind and title only: `Panel "Errors"`, `Row (unnamed)`. */
+  name: RichText;
   /** True when a sibling shares the title (or, untitled, another sibling is untitled too). */
   ambiguous: boolean;
   /** 1-based position in reading order among all siblings in its section. */
   position: number;
   /** The name, plus `at position N` when ambiguous. */
-  label: string;
+  label: RichText;
 }
 
 export interface SideNames {
-  /** Full path label by section path, e.g. `Tab "Cluster" › Row "Backend" at position 2`. */
-  sections: Map<PathKey, string>;
+  /** Full path by section path, e.g. `Tab "Cluster" › Row "Backend" at position 2`. */
+  sections: Map<PathKey, RichText>;
   /** A section's own segment among its siblings. */
   segments: Map<PathKey, ElementName>;
   /** By element name, for every element of that side. */
   panels: Map<string, ElementName>;
   /** By element name: the panel label for places with no tree around it (System defaults owners). */
-  owners: Map<string, string>;
+  owners: Map<string, RichText>;
 }
 
 type Element = DashboardV2Spec['elements'][string];
@@ -43,7 +42,7 @@ export function panelTitle(element: Element | undefined): string {
 }
 
 /**
- * Names every section and panel of one side the way a person would point at it: type and title, plus its
+ * Names every section and panel of one side the way a person would point at it: kind and title, plus its
  * position among its siblings when the title alone doesn't tell it apart.
  */
 export function nameSide(walked: WalkedLayout, elements: DashboardV2Spec['elements'] | undefined): SideNames {
@@ -52,14 +51,13 @@ export function nameSide(walked: WalkedLayout, elements: DashboardV2Spec['elemen
   for (const section of walked.sections) {
     const siblings = siblingsOf(section, walked);
     const segment = nameAmong(
-      section.title,
+      [named(section.kind, section.title)],
       siblings.indexOf(section),
-      siblings.filter((s) => s.title === section.title).length,
-      (title) => sectionName(section.kind, title)
+      siblings.filter((s) => s.title === section.title).length
     );
     names.segments.set(section.path, segment);
-    const parentLabel = section.parentPath ? names.sections.get(section.parentPath) : undefined;
-    names.sections.set(section.path, parentLabel ? joinPath(parentLabel, segment.label) : segment.label);
+    const parentPath = section.parentPath ? names.sections.get(section.parentPath) : undefined;
+    names.sections.set(section.path, parentPath ? joinPath(parentPath, segment.label) : segment.label);
   }
 
   const allElements = elements ?? {};
@@ -81,25 +79,23 @@ export function nameSide(walked: WalkedLayout, elements: DashboardV2Spec['elemen
       if (names.panels.has(placement.elementName)) {
         return;
       }
-      const panel = nameAmong(titles[index], index, titleCounts.get(titles[index]) ?? 0, panelName);
+      const panel = nameAmong([named('panel', titles[index])], index, titleCounts.get(titles[index]) ?? 0);
       names.panels.set(placement.elementName, panel);
       const uniqueInDashboard = (dashboardCounts.get(titles[index]) ?? 0) <= 1;
       names.owners.set(
         placement.elementName,
         uniqueInDashboard || !sectionPath
           ? panel.label
-          : t('dashboard-scene.review.name.in-section', '{{name}} in {{section}}', {
-              name: panel.label,
-              section: sectionPath,
-              interpolation: noEscape,
-            })
+          : rich({ name: panel.label, section: sectionPath }, (p) =>
+              t('dashboard-scene.review.name.in-section', '{{name}} in {{section}}', { ...p, interpolation: noEscape })
+            )
       );
     });
   }
 
   for (const name of Object.keys(allElements)) {
     if (!names.panels.has(name)) {
-      const label = panelName(titleOf(name));
+      const label = [named('panel', titleOf(name))];
       names.panels.set(name, { name: label, ambiguous: false, position: 1, label });
       names.owners.set(name, label);
     }
@@ -107,22 +103,11 @@ export function nameSide(walked: WalkedLayout, elements: DashboardV2Spec['elemen
   return names;
 }
 
-/** A segment relative to an ancestor, for entries listed under that ancestor's header. */
-export function joinPath(parent: string, child: string): string {
-  return t('dashboard-scene.review.name.section-path', '{{parent}} › {{child}}', {
-    parent,
-    child,
-    interpolation: noEscape,
-  });
-}
-
-/** The name ending with `at position N` (for a moved element, whose header shows the name only). */
-export function withPosition(name: string, position: number): string {
-  return t('dashboard-scene.review.name.at-position', '{{name}} at position {{position}}', {
-    name,
-    position,
-    interpolation: noEscape,
-  });
+/** The name ending with `at position N`. */
+export function withPosition(name: RichText, position: number): RichText {
+  return rich({ name, position: String(position) }, (p) =>
+    t('dashboard-scene.review.name.at-position', '{{name}} at position {{position}}', { ...p, interpolation: noEscape })
+  );
 }
 
 function siblingsOf(section: WalkedSection, walked: WalkedLayout): WalkedSection[] {
@@ -130,31 +115,8 @@ function siblingsOf(section: WalkedSection, walked: WalkedLayout): WalkedSection
   return parent?.sections ?? [section];
 }
 
-function nameAmong(
-  title: string,
-  index: number,
-  sameTitleCount: number,
-  nameOf: (title: string) => string
-): ElementName {
+function nameAmong(name: RichText, index: number, sameTitleCount: number): ElementName {
   const ambiguous = sameTitleCount > 1;
-  const name = nameOf(title);
   const position = index + 1;
   return { name, ambiguous, position, label: ambiguous ? withPosition(name, position) : name };
-}
-
-function sectionName(kind: SectionKind, title: string): string {
-  if (!title) {
-    return kind === 'row'
-      ? t('dashboard-scene.review.name.unnamed-row', 'Row (unnamed)')
-      : t('dashboard-scene.review.name.unnamed-tab', 'Tab (unnamed)');
-  }
-  return kind === 'row'
-    ? t('dashboard-scene.review.name.titled-row', 'Row "{{title}}"', { title, interpolation: noEscape })
-    : t('dashboard-scene.review.name.titled-tab', 'Tab "{{title}}"', { title, interpolation: noEscape });
-}
-
-function panelName(title: string): string {
-  return title
-    ? t('dashboard-scene.review.name.titled-panel', 'Panel "{{title}}"', { title, interpolation: noEscape })
-    : t('dashboard-scene.review.name.unnamed-panel', 'Panel (unnamed)');
 }

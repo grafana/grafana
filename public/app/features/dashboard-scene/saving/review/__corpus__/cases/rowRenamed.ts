@@ -18,7 +18,7 @@ export const rowRenamed: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to 1 section
+Changes to 1 row
 Counts: 0 added, 1 changed, 0 removed, 0 moved
 
 Row "API v2" was updated (1 change) · properties

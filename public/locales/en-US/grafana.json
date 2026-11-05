@@ -7958,6 +7958,8 @@
         "removed": "{{label}}: removed",
         "row-collapsed": "Row: collapsed",
         "row-expanded": "Row: expanded",
+        "rule-added": "Rule added: {{rule}}",
+        "rule-removed": "Rule removed: {{rule}}",
         "set-to": "{{label}}: set to {{value}}",
         "set-to-text": "{{label}}: set to \"{{value}}\"",
         "size": "Size: {{changes, list}}",
@@ -8086,6 +8088,7 @@
         "link-tooltip": "Tooltip",
         "link-type": "Type",
         "link-url": "URL",
+        "other": "Other settings",
         "query-body": "Query",
         "query-datasource": "Data source",
         "query-hidden": "Hide response",
@@ -8120,6 +8123,11 @@
         "transformations": "Transformation order",
         "variables": "Variable order"
       },
+      "kind": {
+        "panel": "Panel",
+        "row": "Row",
+        "tab": "Tab"
+      },
       "label": {
         "list-item": "Item {{number}}",
         "path": "{{parent}} › {{child}}"
@@ -8135,20 +8143,22 @@
       },
       "metadata-heading_one": "Metadata ({{count}})",
       "metadata-heading_other": "Metadata ({{count}})",
+      "moved-in-heading": "Moved to it",
       "name": {
         "at-position": "{{name}} at position {{position}}",
         "in-section": "{{name}} in {{section}}",
         "section-path": "{{parent}} › {{child}}",
-        "titled-panel": "Panel \"{{title}}\"",
-        "titled-row": "Row \"{{title}}\"",
-        "titled-tab": "Tab \"{{title}}\"",
-        "unnamed-panel": "Panel (unnamed)",
-        "unnamed-row": "Row (unnamed)",
-        "unnamed-tab": "Tab (unnamed)"
+        "titled": "\"{{title}}\"",
+        "unnamed": "(unnamed)"
       },
       "node": {
+        "added": "Added {{name}}",
+        "added-under": "Added {{name}} under {{parent}}",
         "dashboard": "Dashboard",
-        "summary": "{{categories, list(type: unit; style: short)}}"
+        "removed": "Removed {{name}}",
+        "removed-under": "Removed {{name}} under {{parent}}",
+        "summary": "{{categories, list(type: unit; style: short)}}",
+        "under": "{{name}} under {{parent}}"
       },
       "only-outside-content": "No changes to the dashboard content. Expand the sections below to see what else will be saved.",
       "overview": {
@@ -8160,15 +8170,47 @@
         "panels_other": "{{count}} panels",
         "panels-first_one": "{{count}} panel",
         "panels-first_other": "{{count}} panels",
-        "sections_one": "{{count}} section",
-        "sections_other": "{{count}} sections",
-        "sections-first_one": "{{count}} section",
-        "sections-first_other": "{{count}} sections"
+        "rows_one": "{{count}} row",
+        "rows_other": "{{count}} rows",
+        "rows-first_one": "{{count}} row",
+        "rows-first_other": "{{count}} rows",
+        "tabs_one": "{{count}} tab",
+        "tabs_other": "{{count}} tabs",
+        "tabs-first_one": "{{count}} tab",
+        "tabs-first_other": "{{count}} tabs"
+      },
+      "plain": {
+        "panel": "Panel {{name}}",
+        "row": "Row {{name}}",
+        "tab": "Tab {{name}}"
+      },
+      "property": {
+        "collapsed": "Collapsed",
+        "count": "{{label}} ({{total}})",
+        "links": "Links",
+        "names": "{{names, list(type: unit; style: short)}}",
+        "no": "No",
+        "no-settings": "No settings",
+        "queries": "Queries",
+        "query-options": "Query options",
+        "quoted": "\"{{value}}\"",
+        "transformations": "Transformations",
+        "yes": "Yes"
       },
       "removed-contents_one": "Removed with it ({{count}})",
       "removed-contents_other": "Removed with it ({{count}})",
       "show-details": "Show",
       "status": {
+        "added-elements_one": "{{count}} element added",
+        "added-elements_other": "{{count}} elements added",
+        "added-panels_one": "{{count}} panel added",
+        "added-panels_other": "{{count}} panels added",
+        "added-rows_one": "{{count}} row added",
+        "added-rows_other": "{{count}} rows added",
+        "added-tabs_one": "{{count}} tab added",
+        "added-tabs_other": "{{count}} tabs added",
+        "item-changes_one": "({{count}} change)",
+        "item-changes_other": "({{count}} changes)",
         "moved-after": "moved after {{node}}",
         "moved-and-updated_one": "{{move}} and was updated ({{count}} change)",
         "moved-and-updated_other": "{{move}} and was updated ({{count}} changes)",
@@ -8179,6 +8221,18 @@
         "moved-between": "moved from {{source}} to {{destination}}",
         "moved-between-after": "moved from {{source}} to {{destination}}, after {{node}}",
         "moved-between-before": "moved from {{source}} to {{destination}}, before {{node}}",
+        "moved-in-elements_one": "{{count}} element moved to it",
+        "moved-in-elements_other": "{{count}} elements moved to it",
+        "moved-in-panels_one": "{{count}} panel moved to it",
+        "moved-in-panels_other": "{{count}} panels moved to it",
+        "moved-in-rows_one": "{{count}} row moved to it",
+        "moved-in-rows_other": "{{count}} rows moved to it",
+        "moved-in-tabs_one": "{{count}} tab moved to it",
+        "moved-in-tabs_other": "{{count}} tabs moved to it",
+        "rule-logic": "({{logic}})",
+        "rules_one": "({{count}} rule)",
+        "rules_other": "({{count}} rules)",
+        "section-contents": "({{parts, list(type: unit; style: short)}})",
         "top-level": "the top level of the dashboard",
         "updated_one": "was updated ({{count}} change)",
         "updated_other": "was updated ({{count}} changes)"

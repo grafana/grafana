@@ -263,7 +263,8 @@ function withoutPlacement<T extends { placement?: unknown }>(value: T): Omit<T, 
   return rest;
 }
 
-function variableDefault(kind: unknown): unknown {
+/** A variable kind's schema defaults, as `{ spec }`. */
+export function variableDefault(kind: unknown): unknown {
   switch (kind) {
     case 'QueryVariable':
       return { spec: defaultQueryVariableSpec() };

@@ -21,6 +21,10 @@ export const panelRemoved: ReviewCorpusCase = {
 Changes to 1 panel
 Counts: 0 added, 0 changed, 1 removed, 0 moved
 
-- Panel "Latency"
+- Removed Panel "Latency"
+  · Visualization: timeseries
+  · Queries (1) [Show]
+  · Plugin options [Show]
+  · Field config [Show]
 `,
 };

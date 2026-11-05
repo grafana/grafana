@@ -12,11 +12,13 @@ interface Props {
   /** Undefined renders a plain header: there is nothing to reveal. */
   expanded?: boolean;
   onToggle?: () => void;
+  /** Shown where the chevron is (e.g. the +/− marker); on a collapsible header it replaces the chevron as the toggle. */
+  lead?: ReactNode;
   children?: ReactNode;
 }
 
 /** A heading whose button shows or hides the content below it. */
-export function ReviewDisclosure({ level, header, expanded, onToggle, children }: Props) {
+export function ReviewDisclosure({ level, header, expanded, onToggle, lead, children }: Props) {
   const styles = useStyles2(getStyles);
   const contentId = useId();
   const collapsible = expanded !== undefined && onToggle !== undefined;
@@ -32,12 +34,16 @@ export function ReviewDisclosure({ level, header, expanded, onToggle, children }
             aria-controls={contentId}
             onClick={onToggle}
           >
-            <Icon name={expanded ? 'angle-down' : 'angle-right'} className={styles.chevron} />
+            {lead ? (
+              <span className={styles.chevronSpacer}>{lead}</span>
+            ) : (
+              <Icon name={expanded ? 'angle-down' : 'angle-right'} className={styles.chevron} />
+            )}
             <span className={styles.header}>{header}</span>
           </button>
         ) : (
           <span className={styles.plain}>
-            <span className={styles.chevronSpacer} />
+            <span className={styles.chevronSpacer}>{lead}</span>
             <span className={styles.header}>{header}</span>
           </span>
         )}
@@ -89,9 +95,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginTop: '2px',
     color: theme.colors.text.secondary,
   }),
+  // As tall as the first line of text, so a marker in place of the chevron is centred on it
   chevronSpacer: css({
+    display: 'inline-flex',
+    alignItems: 'center',
     flexShrink: 0,
     width: theme.spacing(2),
+    height: `calc(${theme.typography.body.fontSize} * ${theme.typography.body.lineHeight})`,
   }),
   header: css({
     display: 'flex',

@@ -23,7 +23,7 @@ export const overviewMixed: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to the dashboard, 2 sections, and 4 panels
+Changes to the dashboard and 2 rows
 Counts: 1 added, 6 changed, 0 removed, 0 moved
 
 Dashboard was updated (1 change) · properties
@@ -46,6 +46,11 @@ Row "DB" was updated (1 change) · properties
   Panel "Queries" was updated (1 change) · data
     [Data]
       + Query "B"
+        · Data source: prometheus-main
+        · Editor mode: code
+        · Query text: pg_stat_activity_count
+        · Legend format: "__auto"
+        · Range: Yes
   Panel "Connections" was updated (1 change) · data
     [Data]
       Max data points: set to 500

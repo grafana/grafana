@@ -85,7 +85,7 @@ export const sectionsReordered: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to 1 section
+Changes to 1 tab
 Counts: 0 added, 0 changed, 0 removed, 1 moved
 
 Tab "Memory" moved before Tab "CPU"
@@ -113,7 +113,7 @@ export const panelMovedBetweenTabs: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to 1 panel
+Changes to 2 tabs
 Counts: 0 added, 0 changed, 0 removed, 1 moved
 
 Tab "Tab 1"

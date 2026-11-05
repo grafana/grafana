@@ -18,10 +18,15 @@ export const rowAdded: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to 1 section and 1 panel
+Changes to 1 row
 Counts: 2 added, 0 changed, 0 removed, 0 moved
 
-+ Row "Cache"
-  + Panel "Hit rate"
++ Added Row "Cache" (1 panel added)
+  · Layout: custom grid
+  + Added Panel "Hit rate"
+    · Visualization: timeseries
+    · Queries (1) [Show]
+    · Plugin options [Show]
+    · Field config [Show]
 `,
 };

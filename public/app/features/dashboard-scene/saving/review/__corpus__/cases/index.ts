@@ -1,5 +1,6 @@
 import { type ReviewCorpusCase } from '../types';
 
+import { addedPanelProperties } from './addedElementProperties';
 import { annotationsAndLinks } from './annotationsAndLinks';
 import { autoGridSettings } from './autoGridSettings';
 import {
@@ -29,7 +30,25 @@ import { gridItemRemovedFromMiddle } from './gridItemRemovedFromMiddle';
 import { libraryPanelCreated } from './libraryPanel';
 import { manyPanels } from './manyPanels';
 import { folderMoved, predefinedVariablesChanged } from './metadataOnly';
+import {
+  gridGroupedIntoTabs,
+  groupedIntoRowsThenMovedToNewRow,
+  movedInPanelAlsoChanged,
+  newPanelAlongsideMovedIn,
+  rowsGroupedIntoTab,
+} from './movedInByLayoutChange';
 import { panelMovedBetweenTabs, panelMovedToFirst, panelPositionOnly, sectionsReordered } from './moves';
+import {
+  autoGridToRowsScenario,
+  rowsSwappedAtDepth1,
+  rowsSwappedAtDepth2,
+  rowsSwappedAtDepth3,
+  tabsSwappedAtDepth1,
+  tabsSwappedAtDepth2,
+  tabsSwappedAtDepth3,
+  underDroppedForDirectParent,
+  underKeptForCompressedParent,
+} from './nestedHeaders';
 import { newDashboard } from './newDashboard';
 import { newDashboardAutoGrid } from './newDashboardAutoGrid';
 import { noChanges } from './noChanges';
@@ -81,7 +100,7 @@ import { unconfiguredToGauge, unconfiguredToGaugeWithoutPlugin } from './unconfi
 import { unknownLayoutKind } from './unknownLayoutKind';
 import { untitledAndDuplicatePanels } from './untitledAndDuplicatePanels';
 import { untitledAndDuplicateSections } from './untitledAndDuplicateSections';
-import { variablesByName } from './variablesByName';
+import { variableFieldsGrouped, variablesByName } from './variablesByName';
 import { visualizationChanged } from './visualizationChanged';
 
 /** Every corpus case, in the order the runner reports them. */
@@ -92,6 +111,8 @@ export const corpusCases: ReviewCorpusCase[] = [
   dashboardProperties,
   timeRangeAndRefresh,
   variablesByName,
+  variableFieldsGrouped,
+  addedPanelProperties,
   annotationsAndLinks,
   autoGridSettings,
   // Panel edits
@@ -132,6 +153,20 @@ export const corpusCases: ReviewCorpusCase[] = [
   rowsToTabs,
   sectionsReordered,
   deepNesting,
+  rowsSwappedAtDepth1,
+  tabsSwappedAtDepth1,
+  rowsSwappedAtDepth2,
+  tabsSwappedAtDepth2,
+  rowsSwappedAtDepth3,
+  tabsSwappedAtDepth3,
+  underDroppedForDirectParent,
+  underKeptForCompressedParent,
+  autoGridToRowsScenario,
+  groupedIntoRowsThenMovedToNewRow,
+  movedInPanelAlsoChanged,
+  gridGroupedIntoTabs,
+  rowsGroupedIntoTab,
+  newPanelAlongsideMovedIn,
   untitledAndDuplicatePanels,
   untitledAndDuplicateSections,
   duplicateMovedFirst,

@@ -82,7 +82,7 @@ describe('collectClaims', () => {
             kind: 'section',
             sectionKind: 'row',
             id: 's1',
-            label: "'API' row",
+            label: [{ kind: 'row', name: '"API"', self: true }],
             summary: '',
             claims: ['layout/spec/rows/0'],
             categories: [],
@@ -90,7 +90,7 @@ describe('collectClaims', () => {
               {
                 kind: 'panel',
                 id: 'p1',
-                label: "'Errors'",
+                label: [{ kind: 'panel', name: '"Errors"', self: true }],
                 summary: 'properties',
                 claims: [],
                 categories: [
@@ -106,7 +106,7 @@ describe('collectClaims', () => {
         ],
         systemDefaults: [
           {
-            label: "'Errors'",
+            label: [{ kind: 'panel', name: '"Errors"' }],
             changes: [
               {
                 kind: 'added',

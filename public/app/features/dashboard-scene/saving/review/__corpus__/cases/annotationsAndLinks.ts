@@ -24,39 +24,11 @@ Dashboard was updated (3 changes) · controls
   [Controls]
     Annotation "Deploys" › Enabled: turned off
     + Annotation "Incidents"
-      before: (none)
-      after: {
-          "kind": "AnnotationQuery",
-          "spec": {
-            "builtIn": false,
-            "enable": true,
-            "hide": false,
-            "iconColor": "orange",
-            "name": "Incidents",
-            "query": {
-              "datasource": {
-                "name": "prometheus-main"
-              },
-              "group": "prometheus",
-              "kind": "DataQuery",
-              "spec": {},
-              "version": "v0"
-            }
-          }
-        }
+      · Enabled: Yes
+      · Color: orange
+      · Query [Show]
     + Link "Runbook"
-      before: (none)
-      after: {
-          "asDropdown": false,
-          "icon": "",
-          "includeVars": false,
-          "keepTime": false,
-          "tags": [],
-          "targetBlank": true,
-          "title": "Runbook",
-          "tooltip": "",
-          "type": "link",
-          "url": "https://runbooks.example.com/api"
-        }
+      · Open in new tab: Yes
+      · URL: "https://runbooks.example.com/api"
 `,
 };

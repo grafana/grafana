@@ -1,4 +1,5 @@
 import { type Diff } from '../../../settings/version-history/utils';
+import { richToPlain } from '../richText';
 import { claimCovers, pathKey, type PathKey, type ReviewChange, type ReviewNode, type ReviewSummary } from '../types';
 
 /** A claim and where it came from, so a failure can say which part of the summary made it. */
@@ -31,15 +32,15 @@ export function collectClaims(summary: ReviewSummary): OwnedClaim[] {
     );
 
   const visit = (node: ReviewNode) => {
-    node.claims.forEach((claim) => claims.push({ claim, owner: `${node.label} (node)` }));
-    node.categories.forEach((group) => addChanges(`${node.label} [${group.label}]`, group.changes));
+    node.claims.forEach((claim) => claims.push({ claim, owner: `${richToPlain(node.label)} (node)` }));
+    node.categories.forEach((group) => addChanges(`${richToPlain(node.label)} [${group.label}]`, group.changes));
     if (node.kind === 'section') {
       node.children.forEach(visit);
     }
   };
 
   summary.tree.forEach(visit);
-  summary.systemDefaults.forEach((group) => addChanges(`System defaults › ${group.label}`, group.changes));
+  summary.systemDefaults.forEach((group) => addChanges(`System defaults › ${richToPlain(group.label)}`, group.changes));
   addChanges('Metadata', summary.metadata);
   summary.bookkeeping.forEach((claim) => claims.push({ claim, owner: 'bookkeeping' }));
   return claims;
@@ -86,19 +87,34 @@ export function formatCompletenessReport(report: CompletenessReport): string {
   return lines.join('\n');
 }
 
+function changeTexts(change: ReviewChange): string[] {
+  return [
+    change.text,
+    change.statusText ?? '',
+    ...(change.properties ?? []).flatMap((item) => [item.label, item.value ?? '']),
+    ...(change.changes ?? []).flatMap(changeTexts),
+  ];
+}
+
+function propertyTexts(node: ReviewNode): string[] {
+  return (node.properties ?? []).flatMap((item) => [item.label, item.value ?? '']);
+}
+
 /** Every user-facing text of a summary except the details (before/after values are shown as stored). */
 export function collectTexts(summary: ReviewSummary): string[] {
   const texts: string[] = [summary.overview.line];
   const visit = (node: ReviewNode) => {
-    texts.push(node.label, node.statusText ?? '', node.summary);
-    node.categories.forEach((group) => texts.push(group.label, ...group.changes.map((change) => change.text)));
+    texts.push(richToPlain(node.label), richToPlain(node.statusText ?? ''), node.summary, ...propertyTexts(node));
+    node.categories.forEach((group) => texts.push(group.label, ...group.changes.flatMap(changeTexts)));
     if (node.kind === 'section') {
-      texts.push(...(node.removedContents ?? []));
+      texts.push(...(node.removedContents ?? []).map(richToPlain), ...(node.movedInContents ?? []).map(richToPlain));
       node.children.forEach(visit);
     }
   };
   summary.tree.forEach(visit);
-  summary.systemDefaults.forEach((group) => texts.push(group.label, ...group.changes.map((change) => change.text)));
+  summary.systemDefaults.forEach((group) =>
+    texts.push(richToPlain(group.label), ...group.changes.map((change) => change.text))
+  );
   texts.push(...summary.metadata.map((change) => change.text));
   return texts.filter(Boolean);
 }

@@ -92,7 +92,7 @@ describe('Review QA edge cases', () => {
       expectReview(
         save(baseline, payload),
         text`
-Changes to 2 panels
+Changes to 2 rows
 Counts: 0 added, 0 changed, 0 removed, 2 moved
 
 Row "API"
@@ -117,13 +117,17 @@ Row "DB"
       expectReview(
         save(baseline, payload),
         text`
-Changes to 1 section and 1 panel
+Changes to 1 row
 Counts: 1 added, 1 changed, 0 removed, 0 moved
 
 Row "Gateway" was updated (1 change) · properties
   [Properties]
     Title: "API" → "Gateway"
-  + Panel "Saturation"
+  + Added Panel "Saturation"
+    · Visualization: timeseries
+    · Queries (1) [Show]
+    · Plugin options [Show]
+    · Field config [Show]
 `
       );
     });
@@ -143,15 +147,25 @@ Row "Gateway" was updated (1 change) · properties
       expectReview(
         save(baseline, payload),
         text`
-Changes to 2 sections and 4 panels
+Changes to 3 rows
 Counts: 3 added, 0 changed, 1 removed, 2 moved
 
-- Row "API"
+- Removed Row "API"
+  · Layout: custom grid
 
-+ Row "Gateway"
++ Added Row "Gateway" (2 panels added)
+  · Layout: custom grid
   Panel "Requests" moved from Row "API" to Row "Gateway", before Panel "Saturation"
-  + Panel "Saturation"
-  + Panel "Utilization"
+  + Added Panel "Saturation"
+    · Visualization: timeseries
+    · Queries (1) [Show]
+    · Plugin options [Show]
+    · Field config [Show]
+  + Added Panel "Utilization"
+    · Visualization: timeseries
+    · Queries (1) [Show]
+    · Plugin options [Show]
+    · Field config [Show]
 
 Row "DB"
   Panel "Errors" moved from Row "API" to Row "DB", after Panel "Connections"
@@ -172,7 +186,7 @@ Row "DB"
       expectReview(
         save(baseline, payload),
         text`
-Changes to 2 panels
+Changes to 2 rows
 Counts: 0 added, 2 changed, 0 removed, 0 moved
 
 Row (unnamed) at position 1
@@ -262,41 +276,11 @@ Counts: 1 added, 0 changed, 1 removed, 0 moved
 Dashboard was updated (2 changes) · controls
   [Controls]
     - Custom variable "env"
-      before: {
-          "kind": "CustomVariable",
-          "spec": {
-            "allowCustomValue": true,
-            "current": {
-              "text": "prod",
-              "value": "prod"
-            },
-            "hide": "dontHide",
-            "includeAll": false,
-            "multi": false,
-            "name": "env",
-            "query": "prod,staging",
-            "skipUrlSync": false
-          }
-        }
-      after: (none)
+      · Current value: "prod"
+      · Query: "prod,staging"
     + Custom variable "environment"
-      before: (none)
-      after: {
-          "kind": "CustomVariable",
-          "spec": {
-            "allowCustomValue": true,
-            "current": {
-              "text": "prod",
-              "value": "prod"
-            },
-            "hide": "dontHide",
-            "includeAll": false,
-            "multi": false,
-            "name": "environment",
-            "query": "prod,staging",
-            "skipUrlSync": false
-          }
-        }
+      · Current value: "prod"
+      · Query: "prod,staging"
 `
       );
     });
@@ -322,7 +306,8 @@ Dashboard was updated (2 changes) · controls
 Changes to 1 panel
 Counts: 0 added, 0 changed, 1 removed, 0 moved
 
-- Panel "Shared"
+- Removed Panel "Shared"
+  · Library panel: "Shared lib"
 `
       );
     });
@@ -505,7 +490,7 @@ Panel "Requests 2" was updated (1 change) · properties
       expectReview(
         save(inRow(rule([timeRange('6h')])), inRow(rule([timeRange('3h')]))),
         text`
-Changes to 1 panel
+Changes to 1 row
 Counts: 0 added, 1 changed, 0 removed, 0 moved
 
 Row "Memory"
@@ -556,7 +541,7 @@ Panel "Latency" was updated (1 change) · conditional rendering
       expectReview(
         save(baseline, payload),
         text`
-Changes to 1 section
+Changes to 1 row
 Counts: 0 added, 1 changed, 0 removed, 0 moved
 
 Row "DB" was updated (1 change) · properties
@@ -577,10 +562,10 @@ Changes to 1 panel
 Counts: 1 added, 2 changed, 0 removed, 0 moved
 
 Panel "Latency" was updated (3 changes) · conditional rendering
-  [Conditional rendering]
+  [Conditional rendering (Match any)]
     Panel visibility when the rules match: Show → Hide
     Match rules: Match all → Match any
-    + Template variable "cluster" Equals "blue"
+    + Rule added: Template variable "cluster" Equals "blue"
 `
       );
     });
@@ -618,22 +603,23 @@ Panel "Latency" was updated (3 changes) · conditional rendering
       expectReview(
         save(nested, payload),
         text`
-Changes to 2 sections and 2 panels
+Changes to 2 rows
 Counts: 0 added, 2 changed, 1 removed, 1 moved
 
-Row "Credit" › Row "Credit Usage" › Tab "us-east-1"
+Tab "us-east-1" under Row "Credit" › Row "Credit Usage"
   Panel "Renamed" was updated (1 change) · properties
     [Properties]
       Title: "EC2 Credit Usage for one instance" → "Renamed"
 
-Row "Credit" › Row "Credit Usage" › Tab "us-west-1" was updated (1 change) · properties
+Tab "us-west-1" under Row "Credit" › Row "Credit Usage" was updated (1 change) · properties
   [Properties]
     Title: "us-east-2" → "us-west-1"
 
-- Row "Credit" › Row "EC2 credit usage" › Row "duplicated CPU"
+- Removed Row "duplicated CPU" under Row "Credit" › Row "EC2 credit usage"
+  · Layout: custom grid
   removed with it: Panel "EC2 Credit Usage for one instance"
 
-Row "CPU" › Row "GF-ds" › Tab "tab with test data"
+Tab "tab with test data" under Row "CPU" › Row "GF-ds"
   Panel "GF datasource" moved from Row "CPU" › Row "GF-ds" › Tab "CW" to Row "CPU" › Row "GF-ds" › Tab "tab with test data", after Panel "random 1"
 `
       );
@@ -706,7 +692,7 @@ Row "Renamed row" was updated (1 change) · properties
       expect(renderReviewText(summary)).toContain(
         'Panel "Host 1" moved from Row "Row 1" to Row "Row 2", after Panel "Host 20" and was updated (2 changes) · properties, data'
       );
-      expect(summary.overview.line).toBe('Changes to 1 section and 140 panels');
+      expect(summary.overview.line).toBe('Changes to 13 rows');
       expect(elapsed).toBeLessThan(2000);
     });
   });

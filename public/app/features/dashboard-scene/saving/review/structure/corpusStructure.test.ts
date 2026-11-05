@@ -3,6 +3,7 @@ import { join } from 'path';
 
 import { type ReviewCorpusCase } from '../__corpus__/types';
 import { emptyBaselineFor } from '../describe/emptyBaseline';
+import { richToPlain } from '../richText';
 
 import { buildStructure } from './buildStructure';
 import { claimProblems, layoutDiffsOf, moveStatusText } from './testUtils';
@@ -25,20 +26,26 @@ function expectedStatusLines(expected: string): string[] {
         line
           .trim()
           .replace(/ · .*$/, '')
+          // What an added section holds is describe/'s: "(3 panels moved to it, 1 panel added)".
+          .replace(/ \(\d+ [^()]*(?:moved to it|added)\)$/, '')
           .replace(/,? and was updated \(.*\)$/, '')
+          // Header composition ("Added", "under <path>") is describe/'s; structure gives the name and move text.
+          .replace(/^([+-] )(Added|Removed) /, '$1')
+          .replace(/ under .*?(?= moved |$)/, '')
       )
       .filter(
         (line) =>
           /^[+-] (Panel|Row|Tab)\b/.test(line) ||
           /^(Panel|Row|Tab)\b.* moved (after|before|from) /.test(line) ||
-          line.startsWith('removed with it: ')
+          line.startsWith('removed with it: ') ||
+          line.startsWith('• ')
       )
   );
 }
 
 /**
  * Structure's share of every corpus case, checked without describe/: the claim invariant over its diffs,
- * and the node statuses and removed contents the expected text shows.
+ * and the node statuses, removed contents and moved-in contents the expected text shows.
  */
 describe('buildStructure over the corpus', () => {
   it('claims every layout diff exactly once and shows the expected statuses', async () => {
@@ -52,15 +59,21 @@ describe('buildStructure over the corpus', () => {
       const structure = buildStructure(baseline, input.payload, diffs);
       problems.push(...claimProblems(structure, diffs).map((problem) => `${name}: ${problem}`));
 
-      const actual = structure.nodes.flatMap((node) => [
-        ...(node.status === 'moved' ? [`${node.label} ${moveStatusText(node)}`] : []),
-        ...(node.status === 'added' ? [`+ ${node.label}`] : []),
-        ...(node.status === 'removed' ? [`- ${node.label}`] : []),
-        ...(node.removedContents ?? []).map((content) => `removed with it: ${content}`),
-      ]);
+      const actual = structure.nodes.flatMap((node) => {
+        const name = richToPlain(node.name ?? []);
+        return [
+          ...(node.status === 'moved' ? [`${name} ${moveStatusText(node)}`] : []),
+          ...(node.status === 'added' ? [`+ ${name}`] : []),
+          ...(node.status === 'removed' ? [`- ${name}`] : []),
+          ...(node.removedContents ?? []).map((content) => `removed with it: ${richToPlain(content)}`),
+          ...(node.movedInContents ?? []).map((content) => `• ${richToPlain(content)}`),
+        ];
+      });
       const wanted = expectedStatusLines(expected);
-      if (JSON.stringify([...actual].sort()) !== JSON.stringify([...wanted].sort())) {
-        problems.push(`${name}: statuses ${JSON.stringify(actual)}, expected ${JSON.stringify(wanted)}`);
+      // A moved-in element that also changed is shown as its node instead of a bullet: only the bullets shown count.
+      const shown = actual.filter((line) => !line.startsWith('• ') || wanted.includes(line));
+      if (JSON.stringify([...shown].sort()) !== JSON.stringify([...wanted].sort())) {
+        problems.push(`${name}: statuses ${JSON.stringify(shown)}, expected ${JSON.stringify(wanted)}`);
       }
     }
     expect(problems).toEqual([]);

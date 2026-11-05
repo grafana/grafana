@@ -1,13 +1,13 @@
 # Dashboard change review plan
 
-Status: phase 1 implemented locally on branch `grafakus/human-friendly-diffs`
-(uncommitted), behind the feature toggle `grafana.humanFriendlyDashDiffs`; the
-product owner's feedback rounds are being worked through. See
+Status: phase 1 implemented on branch `grafakus/human-friendly-diffs`, behind
+the feature toggle `grafana.humanFriendlyDashDiffs`; the product owner's
+feedback rounds are being worked through. See
 [Implementation status](#implementation-status) and
 [Team and working process](#team-and-working-process) to resume.
-Agreed on: 2026-11-04. Revised on: 2026-11-04 after code review, a design pass
-on the Review layout, and four rounds of product owner feedback during
-implementation.
+Agreed on: 2026-11-04. Revised on: 2026-11-05 after code review, a design pass
+on the Review layout, the names-with-icons plan (PLAN-ICON-NAMES.md, folded in
+below), and 27 rounds of product owner feedback during implementation.
 
 Where the wording in this plan and
 `public/app/features/dashboard-scene/saving/review/__corpus__/WORDING.md`
@@ -69,23 +69,52 @@ Follow Shneiderman's mantra: overview first, then zoom and filter, then details
 on demand. The first version covers overview, zoom, and details on demand;
 filtering comes later (see [Later: filters](#later-filters)).
 
+### Principles for every decision
+
+These come from the product owner and apply to every change to Review, now and
+later. When a formatting or structure choice is open, they decide it.
+
+- **Understood at a glance, in natural language.** The goal of the feature is
+  that a person grasps what they are about to save without reading JSON. Prefer
+  the editor's words over spec keys, say what something is and where it went,
+  and never leave an element without a way to see what it holds.
+- **Progressive disclosure.** Each element gets one line that says what
+  happened; detail sits one click deeper, never inline by default:
+  - an element with several changed fields is one line with a count,
+    `Query variable "number" (8 changes)`, its changes behind a chevron,
+    worded without repeating the name;
+  - an added or removed element is `+ Added "New panel"`, its +/− the toggle
+    that lists what it is set to;
+  - a rule set added or removed is `Conditional rendering: added (1 rule)`,
+    its visibility, match logic and rules behind a chevron;
+  - inside any list, literal values sit inline and lists or objects wait
+    behind Show.
+- **Every added or removed element is reviewable.** Its toggle always lists
+  something: what is set beyond the defaults, or, when nothing is, what it is
+  set to (defaults included), or "No settings". Tags and single rules are the
+  exception: their line already says everything.
+
 ### Overview first
 
 The top of Review answers “how much changed, and where?” at a glance:
 
-- A one-line summary, for example “Changes to the dashboard, 2 sections, and
-  4 panels”.
-- Change-type counts (added, changed, removed, moved), shown as plain text.
+- A one-line summary naming the top-level elements that hold changes, for
+  example “Changes to the dashboard and 2 rows” or “Changes to 1 tab”: a change
+  inside a tab is a change to the tab.
+- Change-type counts (added, changed, removed, moved) as plain text, “added”
+  and “removed” with the same green + and red − that mark items in the tree.
 
 ### Zoom
 
 - **Hierarchy:** changes are grouped by concern, following the dashboard's own
   structure: the dashboard, then its sections (rows and tabs), then the panels
   inside each section. See [Change tree](#change-tree).
-- **Collapsible nodes:** every section and panel node can be collapsed. Each
-  node header shows its full path (for example `'Cluster' tab › 'Nodes' row`)
-  and, when collapsed, a one-line summary of the categories that changed (for
-  example “CPU usage · data, field config”).
+- **Collapsible nodes:** every section and panel node with content can be
+  collapsed. Each node header names the node and, when collapsed, adds a
+  one-line summary of the categories that changed (for example “CPU usage ·
+  data, field config”). The indentation shows where a node sits; a header adds
+  `under <path>` only when the tree skips sections in between (see
+  [Naming items](#naming-items)).
 - **Default expansion:** small edits start fully expanded. Above a threshold
   (starting point: 10 changed panels), panel nodes start collapsed, showing their
   one-line summaries. This is a display default, not a cutoff: nothing is hidden.
@@ -98,6 +127,9 @@ The top of Review answers “how much changed, and where?” at a glance:
 - Values that are long or structured (a query, a threshold list, a JSON blob)
   show “changed” with a “Show” toggle that reveals the before and after values
   inline.
+- An added or removed element's +/− toggle lists what it is set to; an
+  element with several changed fields is one line whose chevron lists them.
+  See [Principles](#principles-for-every-decision).
 - The Changes tab remains the place for the exact JSON.
 
 ### Review layout
@@ -180,16 +212,22 @@ only, to give the panel its context.
 | Panel | Properties (title, description, subtitle, links, transparency); Layout (position, size, repeat); Conditional rendering (show/hide rules from its layout item); Data (queries, transformations, query options); Visualization (plugin type); Plugin options (`vizConfig.options`); Field config (defaults and overrides) |
 
 Sections nest without limit: rows and tabs can contain each other at any depth,
-regardless of what the layout managers allow today. Each section node shows its
-full path from the dashboard root, so the tree stays readable at any depth.
+regardless of what the layout managers allow today. Sections without changes of
+their own and without a changed panel directly inside are left out of the tree
+(path compression); a node whose direct parent was left out names its full
+parent path with `under`, so the tree stays readable at any depth.
 
 ### Structural changes
 
-- **Added** items are prefixed with a green + marker, with no “added” wording.
-  A new panel or section doesn't list its every setting; its header is enough,
-  with details on demand.
-- **Removed** items are prefixed with a red − marker. A removed section has a
-  collapsible list of the panels and nested sections removed with it.
+- **Added** items are prefixed with a green + marker, and node headers say so:
+  `Added "New row"`. A new panel or section doesn't list its every setting; its
+  header is enough, with details on demand.
+- **Removed** items are prefixed with a red − marker, and node headers read
+  `Removed "Tab 2"` (“Removed”, not “Deleted”, to match the counts and the
+  “Removed with it” list). A removed section has a collapsible list of the
+  panels and nested sections removed with it.
+- On an added or removed node with content, the +/− marker is the toggle in
+  place of the chevron.
 - **Moved** panels and sections are listed under their new section and say
   where they now sit relative to a neighbour: `Panel "P3" moved after Panel
   "P2"`; when the section changed, also where from and to: `Panel "P3" moved
@@ -198,8 +236,11 @@ full path from the dashboard root, so the tree stays readable at any depth.
 - **Updated** nodes say so in their header: `Panel "Latency" was updated
   (3 changes)`.
 - **Restructures:** when the layout type changes (for example from rows to
-  tabs), show one Dashboard › Layout entry, “changed from rows to tabs”, instead
-  of a move entry for every panel.
+  tabs), show one Layout entry on the layout's owner, “changed from rows to
+  tabs”, instead of a move entry for every panel. A new section the restructure
+  filled with existing elements counts them in its header, `Added "New row"
+  (3 panels moved to it)`, and lists them one level deep, so the review still
+  says where they went.
 
 ### Identity
 
@@ -214,14 +255,39 @@ full path from the dashboard root, so the tree stays readable at any depth.
 ### Naming items
 
 Name items the way a person would point at them: element type first, then the
-title in double quotes, for example `Tab "Memory"`, `Row "EU Cluster"`,
-`Panel "Latency"`, `Variable "env"`, `Query "A"`; section paths read
-`Tab "Cluster" › Row "Nodes"`. Untitled items read `Panel (unnamed)`. When a
-name is ambiguous among its siblings (a shared title, or several untitled
-siblings), add its 1-based position in reading order: `Panel "New panel" at
-position 2`. Removed items use their baseline position. Where no tree shows the
-section (System defaults), add it: `Panel "Errors" at position 2 in Tab "DB"`.
-The UI prefixes each node and element line with the content outline's icon.
+title in double quotes. Panels, rows and tabs show their type as the content
+outline's icon instead of the word (panel `chart-line`, row `list-ul`, tab
+`layers`); other items keep the word: `Query variable "env"`, `Query "A"`.
+Below, `↗` stands for the panel icon, `≡` for the row icon and `⧉` for the tab
+icon.
+
+- **Where icons replace the word:** everywhere a panel, row or tab is named:
+  node headers; move texts, including the source, the destination and the
+  after/before neighbour (`moved from ⧉"Tab 2" to ⧉"Tab 1", after ↗"P2"`); the
+  “Removed with it” and “moved to it” lists; and System defaults owner
+  headings (`↗"CPU" in ⧉"A" › ≡"B"`). Change lines (`Title: "Nodes" →
+  "Hosts"`) and before/after details stay plain text, and so does “the top
+  level of the dashboard”.
+- **The leading icon appears once:** a header starts with its node's icon and
+  doesn't repeat it before the name: `+ ≡ Added "New row" under ⧉"Tab 1"`.
+- **Headers:** `Added {name}` and `Removed {name}` for added and removed panels
+  and sections; the bare name for updated or moved ones, followed by the status
+  (`≡ "DB" was updated (2 changes)`).
+- **“under”:** a section header adds `under <full parent path>` (joined with
+  `›`) only when its parent in the tree isn't its direct parent, because path
+  compression hid sections in between: `Added "New row" under ⧉"Tab 1" ›
+  ≡"Row A"`. Root-level sections and panels never get it.
+- **Untitled and ambiguous names:** untitled items read `(unnamed)`. When a
+  name is ambiguous among its siblings (a shared title, or several untitled
+  siblings), add its 1-based position in reading order: `↗"New panel" at
+  position 2`. Removed items use their baseline position. Where no tree shows
+  the section (System defaults), add it: `↗"Errors" at position 2 in ⧉"DB"`.
+- **Screen readers** hear the word: each icon in a name has the aria-label
+  “Panel”, “Row” or “Tab”. The +/− marker is silent where the label already
+  says “Added” or “Removed”.
+- **Plain text** (the corpus and `renderReviewText`) renders the word instead of
+  the icon, including for the header's own element: `+ Added Row "New row"
+  under Tab "Tab 1"`.
 
 ### Ordering
 
@@ -361,8 +427,9 @@ Acceptance checks:
 - Review provides no Save action and offers a return to Details.
 - The overview line and change-type counts summarize the whole change before any
   detail.
-- Changes are grouped as Dashboard, then sections, then panels, with each section
-  showing its full path at any nesting depth.
+- Changes are grouped as Dashboard, then sections, then panels, and every node's
+  place is clear at any nesting depth (indentation, or `under <path>` where
+  sections in between are hidden).
 - Every section and panel node is collapsible; collapsed nodes show a one-line
   summary; large edits start with panels collapsed.
 - Field changes read “from → to”; long or structured values reveal before and
@@ -464,8 +531,11 @@ starting points, not a claim about what is deployed or a prescribed architecture
 
 ## Implementation status
 
-As of 2026-11-04, phase 1 is implemented on the local branch
-`grafakus/human-friendly-diffs`. Nothing is committed or pushed.
+As of 2026-11-05, phase 1 is implemented on the branch
+`grafakus/human-friendly-diffs`. The first version, the `/simplify` pass and
+DESIGN-DIFFING.md are committed and pushed (up to `fd7f217a987`); the
+names-with-icons work and feedback rounds 17–27 are uncommitted. Commit only
+when the user asks.
 
 - **Feature toggle:** `grafana.humanFriendlyDashDiffs` in
   `pkg/services/featuremgmt/registry.go`, with the generated files. It is on
@@ -478,9 +548,11 @@ As of 2026-11-04, phase 1 is implemented on the local branch
     claims for every `layout` diff.
   - `describe/`: diffing (`flatDiff`, equivalent to `jsonDiff` without line
     numbers), the attribution rule table, formatters, labels, named lists,
-    show/hide rules, system defaults and the overview.
+    show/hide rules, system defaults, the overview, and `properties.ts` (what
+    an added or removed element is set to).
   - `ui/`: the Review tab, the async `useReviewSummary` hook, and the lazy pane
     behind an error boundary.
+  - `richText.ts`: rich text (names with icons) and its i18n helpers.
   - `renderReviewText.ts`: the plain-text rendering the corpus is written in
     (test-only).
   - `__corpus__/`: `WORDING.md`, the builders, the real-plugin harness, and the
@@ -538,6 +610,20 @@ exact phrasing.
   - Common query text keys read "Query text".
   - Sizes read in words ("wider and taller") and threshold details as readable
     steps.
+- **Names as rich text** (see [Naming items](#naming-items) for the rules):
+  - `types.ts` has `NamedElement` (`kind`: panel, row or tab; `name`: the
+    quoted title or `(unnamed)`; `self` for the header's own element) and
+    `RichText = Array<string | NamedElement>`. Node labels and status texts,
+    `removedContents`, `movedInContents` and System defaults owner labels are
+    `RichText`.
+  - Each sentence stays one translatable `t()` call with a literal key, so
+    `make i18n-extract` finds it. `rich(parts, render)` in `richText.ts` passes
+    sentinel placeholders to `t()` and splices the rich parts back in, so
+    translators can reorder them. `richToPlain` renders the kind words for
+    tests.
+  - Structure nodes carry their own `name` and `parentPath`, not a finished
+    header. `buildTree` composes the header (“Added”, “Removed”, “under”),
+    because only it knows which ancestors the tree shows.
 - **Show/hide rules** are described part by part in the editor's words:
   visibility, match rules, and each rule matched by kind and variable name.
 - **New dashboards:**
@@ -573,14 +659,62 @@ exact phrasing.
 14. Headers and change lines are aligned in columns: chevron, +/− marker,
     icon, label. The marker column is reserved for a list of siblings when any
     of them is added or removed, and the icon column for change lines when any
-    line has an icon.
+    line has an icon. The marker column was replaced in round 18.
 15. Variables are named by their type, as the variable editor names it:
     `Query variable "query0"`, `Custom variable "env"`. An added or removed
     variable has a Show toggle revealing its configuration as JSON, without
-    `options` (the values it last resolved to).
+    `options` (the values it last resolved to). Replaced by round 20.
 16. Added or removed ad hoc filters, annotation queries and links (dashboard
     and panel links) get the same Show toggle with their configuration as
     JSON.
+17. Names carry icons instead of the words "Panel", "Row" and "Tab", and
+    headers say what happened: `Added "New row" under ⧉"Tab 1"`,
+    `Removed "Tab 2"`. Panels get the verb too. The rules are in
+    [Naming items](#naming-items) and the implementation under
+    [Decisions](#decisions-made-during-implementation); PLAN-ICON-NAMES.md was
+    the working plan.
+18. The +/− marker of an added or removed node is the toggle in place of
+    the chevron when the node has content, so markers always share the
+    chevron column (this replaced the separate marker column of round 14).
+19. A new section that a layout change filled with existing elements (group
+    into rows or tabs) says so in its header, `Added "New row" (3 panels
+    moved to it)`, and its toggle reveals a flat list of those elements, with
+    icons and no toggles of their own. Panels really moved in from a surviving
+    section keep their move line. A section with only this list starts
+    collapsed.
+20. Every added or removed element is reviewable: its +/− toggle reveals what
+    it is set to, one property per line. Only what's set is listed (empty
+    values, `false` and schema or plugin defaults are left out), in the
+    editor's words. Literal values sit inline (`Description: "Cache hits"`,
+    `Multi-value: Yes`), a few short names too (`Tags: "prod", "eu"`), and
+    lists and objects wait behind Show as JSON (`Queries (1)`). The title is
+    the header's name and isn't repeated. This covers panels, rows, tabs,
+    variables, annotations, links, queries, transformations and overrides;
+    removed elements read from the saved version. Nodes with only this list
+    start collapsed.
+21. Progressive disclosure: several changed fields of one element read as
+    one line naming it, `Query variable "number" (8 changes)`, whose chevron
+    reveals the changes worded without the name. A single field change stays
+    one line, `Query variable "number" › Query: changed`. The counts count
+    each field change.
+22. A moved-in element that also changed is listed once: its node takes its
+    bullet's place in the "moved to it" list. A new section's layout is
+    listed only when it isn't the auto grid every new row or tab starts with.
+23. An added section's header counts what it holds: `(3 panels moved to it,
+    1 panel added)`, `(1 panel added)`.
+24. The overview line names the top-level elements that hold changes, by
+    kind: a change inside a tab is a change to the tab (`Changes to 1 tab`,
+    `Changes to the dashboard and 2 rows`). A panel moved between sections
+    counts for both ends. The change counts below it still count every change.
+25. Every added or removed element is reviewable, a switch variable at its
+    defaults included (see [Principles](#principles-for-every-decision)).
+26. Progressive disclosure for conditional rendering: an added or removed
+    rule set is one line with a rule count, its settings behind a chevron. An
+    added or removed rule says so, and the category heading recalls the match
+    logic, which holds for the whole set: `Conditional rendering (Match all)`
+    then `+ Rule added: Time range less than 30 minutes`.
+27. The header's “N added” and “N removed” counts carry the same + and −
+    markers as the items in the tree.
 
 QA re-verified rounds 3–12 in the app; see [Open items](#open-items).
 
@@ -604,13 +738,10 @@ QA re-verified rounds 3–12 in the app; see [Open items](#open-items).
   - rare duplicate query refIds;
   - a renamed variable reads as a removal plus an addition;
   - the predefined variables label comes from the existing formatter.
-- **Later: list what's set instead of JSON.** An added or removed variable, ad
-  hoc filter, annotation query or link currently shows its configuration as
-  JSON behind Show. Replace it with readable lines of what's set, in each
-  editor's words, as Review already does for a changed item's fields:
-  - variables: type, data source, query, refresh, multi-value, include All, …
-  - annotations: data source, query, color, show in, …
-  - links: type, URL, tooltip, icon, open in new tab, …
+- **Later: word what's behind Show.** Queries, plugin options and field config
+  of an added element are JSON behind Show. They could be listed one level
+  deeper in the editor's words (round 20 stops at the first level). Enum values
+  (`Refresh: onDashboardLoad`) are shown as stored.
 - **Category names** stay "Plugin options" and "Field config", as in this
   plan, although QA suggested the editor's terms.
 - **A drawer test** waits 300 ms of real time.
@@ -627,7 +758,7 @@ Each agent writes only to its own files and reads anything.
 
 | Role | Owns | Responsibility |
 | --- | --- | --- |
-| Orchestrator | `review/types.ts`, `review/renderReviewText.ts`, `conf/`, `public/locales/**`, this plan, git | Turns feedback into decisions and contract changes, briefs and sequences the agents, relays questions, runs `make i18n-extract` and the gate, verifies in the app. Only the orchestrator commits, and only when the user asks. |
+| Orchestrator | `review/types.ts`, `review/richText.ts`, `review/renderReviewText.ts`, `conf/`, `public/locales/**`, this plan, git | Turns feedback into decisions and contract changes, briefs and sequences the agents, relays questions, runs `make i18n-extract` and the gate, verifies in the app. Only the orchestrator commits, and only when the user asks. |
 | Corpus author | `review/__corpus__/**`, `corpus.test.ts`, `completeness.test.ts` | Writes the expected wording in WORDING.md and as example cases, from the plan and the feedback, never from the implementation. It never writes engine code. |
 | Engine A (structure) | `review/structure/**` | Identity, naming, ordering, moves and restructures, and the claims for `layout` diffs. |
 | Engine B (describe) | `review/describe/**`, `review/summarizeDashboardChanges.ts` | Attribution, formatters, labels, system defaults, overview, node status text, and the final assembly. |

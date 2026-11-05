@@ -14,17 +14,23 @@ import { listItemsOf } from './describe/listKinds';
 import { type ListContext } from './describe/namedLists';
 import {
   categoryLabel,
+  changeCount,
   countChanges,
   describeMetadata,
   type NodeMove,
+  type TopLevelCounts,
+  sectionContentsText,
   nodeStatusText,
   nodeSummary,
   overviewLine,
 } from './describe/overview';
 import { asArray, isUnset, safely, unescapeSegment, valueAt } from './describe/paths';
+import { type IsDefault, panelProperties, sectionProperties } from './describe/properties';
 import { attribute, type AttributionContext, fieldConfigFormat, type FieldTarget, typeChanged } from './describe/rules';
+import { ruleSetText } from './describe/showHideRules';
 import { describeRawChange, rawFieldDefault } from './describe/structureChanges';
 import { isDefaultValue, isSystemDefault, type DefaultsContext } from './describe/systemDefaults';
+import { asSelf, noEscape, rich } from './richText';
 import { buildStructure } from './structure/buildStructure';
 import {
   CATEGORY_ORDER,
@@ -38,14 +44,14 @@ import {
   type ReviewChange,
   type ReviewInput,
   type ReviewNode,
+  type ReviewProperty,
   type ReviewSummary,
+  type RichText,
   type SectionReviewNode,
   type Structure,
   type StructureNode,
   type SystemDefaultGroup,
 } from './types';
-
-const noEscape = { escapeValue: false };
 
 /** Above this many changed panels, panel nodes start collapsed. */
 const COLLAPSE_PANELS_ABOVE = 10;
@@ -71,8 +77,14 @@ export function summarizeDashboardChanges(input: ReviewInput): ReviewSummary {
 
   const getPlugin = (id: string): PanelPlugin | undefined => safely(() => input.getPlugin?.(id));
   const defaultsCtx: DefaultsContext = { baseline, payload, getPlugin };
+  // Read from the element's own side: a removed element's defaults are judged against the saved dashboard.
+  const isDefaultOn = (side: DashboardV2Spec): IsDefault => {
+    const ctx = side === payload ? defaultsCtx : { ...defaultsCtx, payload: side };
+    return (path, value) => isDefaultValue(path, 'add', value, () => false, ctx);
+  };
   const listCtx: ListContext = {
     isDefault: (path, value, baselineHas) => isDefaultValue(path, 'add', value, baselineHas, defaultsCtx),
+    isDefaultOn: (side) => isDefaultOn(side === 'payload' ? payload : baseline),
   };
   const labelsByElement = new Map<string, PanelLabels>();
   const attributionCtx: AttributionContext = {
@@ -216,12 +228,31 @@ export function summarizeDashboardChanges(input: ReviewInput): ReviewSummary {
     }
   }
 
-  const tree = buildTree(structure, entriesByNode, input.mode === 'new');
+  const propertiesOf = (node: StructureNode): ReviewProperty[] => {
+    const side = node.status === 'removed' ? baseline : payload;
+    if (node.kind === 'panel' && node.elementName !== undefined) {
+      return panelProperties(
+        side,
+        node.elementName,
+        node.itemPath,
+        isDefaultOn(side),
+        attributionCtx.pluginName,
+        ruleSetText
+      );
+    }
+    if (node.kind !== 'section' || node.itemPath === undefined) {
+      return [];
+    }
+    const hasContents =
+      Boolean(node.movedInContents?.length || node.removedContents?.length) ||
+      structure.nodes.some((other) => other.parentId === node.id);
+    return sectionProperties(side, node.itemPath, ruleSetText, hasContents);
+  };
+  const tree = buildTree(structure, entriesByNode, input.mode === 'new', propertiesOf);
   const metadata = describeMetadata(input.metadata);
   const systemDefaults = groupDefaults(structure.nodes, defaultsByNode);
   const flat = flatten(tree);
   const panels = flat.filter((node) => node.kind === 'panel').length;
-  const sections = flat.filter((node) => node.kind === 'section' && (node.status || node.categories.length)).length;
 
   return {
     mode: input.mode,
@@ -230,8 +261,7 @@ export function summarizeDashboardChanges(input: ReviewInput): ReviewSummary {
     overview: {
       line: overviewLine(
         flat.some((node) => node.kind === 'dashboard'),
-        sections,
-        panels,
+        topLevelCounts(tree, structure),
         input.mode === 'new'
       ),
       counts: countChanges(tree, metadata),
@@ -391,7 +421,12 @@ function isRawDefault(raw: RawChange, diffIndex: DiffIndex): boolean {
   return covered.length > 0 && covered.every((diff) => diff.op === 'add');
 }
 
-function buildTree(structure: Structure, entriesByNode: Map<string, NodeEntry[]>, isNew: boolean): ReviewNode[] {
+function buildTree(
+  structure: Structure,
+  entriesByNode: Map<string, NodeEntry[]>,
+  isNew: boolean,
+  propertiesOf: (node: StructureNode) => ReviewProperty[]
+): ReviewNode[] {
   const nodeById = new Map(structure.nodes.map((node) => [node.id, node]));
   const removedAncestor = (node: StructureNode): StructureNode | undefined => {
     let parent = node.parentId ? nodeById.get(node.parentId) : undefined;
@@ -434,7 +469,14 @@ function buildTree(structure: Structure, entriesByNode: Map<string, NodeEntry[]>
     if (node.status || categories.length || claims.length) {
       hasOwn.add(node.id);
     }
-    reviewNodes.set(node.id, toReviewNode(node, categories, claims, isNew));
+    const reviewNode = toReviewNode(node, categories, claims, isNew);
+    if (node.status === 'added' || node.status === 'removed') {
+      const properties = propertiesOf(node);
+      if (properties.length) {
+        reviewNode.properties = properties;
+      }
+    }
+    reviewNodes.set(node.id, reviewNode);
   }
 
   // A section is shown with its own changes, or as a header for a changed panel directly inside it.
@@ -455,11 +497,20 @@ function buildTree(structure: Structure, entriesByNode: Map<string, NodeEntry[]>
     while (parentId && !shown.has(parentId)) {
       parentId = nodeById.get(parentId)?.parentId;
     }
+    reviewNode.label = nodeHeader(node, parentId === node.parentId);
     const parent = parentId ? reviewNodes.get(parentId) : undefined;
     if (parent?.kind === 'section' && reviewNode.kind !== 'dashboard') {
       parent.children.push(reviewNode);
     } else {
       tree.push(reviewNode);
+    }
+  }
+  for (const node of reviewNodes.values()) {
+    if (node.kind === 'section' && node.status === 'added') {
+      const added = node.children
+        .filter((child) => child.status === 'added' && nodeById.get(child.id)?.parentId === node.id)
+        .map((child) => (child.kind === 'section' ? child.sectionKind : 'panel'));
+      node.statusText = sectionContentsText(node.movedInContents ?? [], added);
     }
   }
   const dashboard = tree.filter((node) => node.kind === 'dashboard');
@@ -470,15 +521,57 @@ function groupByCategory(node: StructureNode, entries: NodeEntry[]): ReviewCateg
   const order: readonly ReviewCategory[] = CATEGORY_ORDER[node.kind];
   const known = new Set<ReviewCategory>(order);
   return [...order, ...[...new Set(entries.map((entry) => entry.category))].filter((c) => !known.has(c))]
-    .map((category) => ({
-      category,
-      label: categoryLabel(category),
-      changes: entries
+    .map((category) => {
+      const changes = entries
         .filter((entry) => entry.category === category)
         .sort((a, b) => a.order - b.order || compareKeys(a.key, b.key) || a.sequence - b.sequence)
-        .map((entry) => entry.change),
-    }))
+        .map((entry) => entry.change);
+      const note = changes.find((change) => change.categoryNote)?.categoryNote;
+      return { category, label: categoryLabel(category), ...(note && { note }), changes };
+    })
     .filter((group) => group.changes.length > 0);
+}
+
+/**
+ * A node's header: its own name, "Added"/"Removed" when it was, and "under <its section>" when the tree shows it
+ * somewhere other than directly in that section (a compressed ancestor). Panels never need "under": their
+ * section is always shown, or they sit at the top level.
+ */
+function nodeHeader(node: StructureNode, inDirectParent: boolean): RichText {
+  if (node.kind === 'dashboard') {
+    return [t('dashboard-scene.review.node.dashboard', 'Dashboard')];
+  }
+  const name = asSelf(node.name ?? []);
+  const parent = node.kind === 'section' && !inDirectParent ? node.parentPath : undefined;
+  if (node.status === 'added') {
+    return parent
+      ? rich({ name, parent }, (p) =>
+          t('dashboard-scene.review.node.added-under', 'Added {{name}} under {{parent}}', {
+            ...p,
+            interpolation: noEscape,
+          })
+        )
+      : rich({ name }, (p) =>
+          t('dashboard-scene.review.node.added', 'Added {{name}}', { ...p, interpolation: noEscape })
+        );
+  }
+  if (node.status === 'removed') {
+    return parent
+      ? rich({ name, parent }, (p) =>
+          t('dashboard-scene.review.node.removed-under', 'Removed {{name}} under {{parent}}', {
+            ...p,
+            interpolation: noEscape,
+          })
+        )
+      : rich({ name }, (p) =>
+          t('dashboard-scene.review.node.removed', 'Removed {{name}}', { ...p, interpolation: noEscape })
+        );
+  }
+  return parent
+    ? rich({ name, parent }, (p) =>
+        t('dashboard-scene.review.node.under', '{{name}} under {{parent}}', { ...p, interpolation: noEscape })
+      )
+    : name;
 }
 
 function moveOf(node: StructureNode): NodeMove | undefined {
@@ -491,12 +584,16 @@ function toReviewNode(
   claims: PathKey[],
   isNew: boolean
 ): ReviewNode {
-  const lines = categories.reduce((total, group) => total + group.changes.length, 0);
+  const lines = categories.reduce(
+    (total, group) => total + group.changes.reduce((sum, change) => sum + changeCount(change), 0),
+    0
+  );
   const base = {
     id: node.id,
-    label: node.label,
+    label: nodeHeader(node, true),
     status: node.status,
     // In a new dashboard everything is new: "was updated" would say nothing.
+    // An added section's contents are counted once its children are known (buildTree).
     statusText: isNew && node.kind === 'dashboard' ? undefined : nodeStatusText(node.status, moveOf(node), lines),
     summary: nodeSummary(categories.map((group) => group.category)),
     categories,
@@ -509,6 +606,8 @@ function toReviewNode(
       sectionKind: node.sectionKind ?? 'row',
       children: [],
       removedContents: node.removedContents,
+      movedInContents: node.movedInContents,
+      movedInNodeIds: node.movedInNodeIds,
     };
     return section;
   }
@@ -533,8 +632,43 @@ function groupDefaults(nodes: StructureNode[], defaultsByNode: Map<string, NodeE
             a.sequence - b.sequence
         )
         .map((entry) => entry.change);
-      return { label: node.ownerLabel ?? node.label, changes };
+      return { label: node.ownerLabel ?? nodeHeader(node, true), changes };
     });
+}
+
+/**
+ * The top-level rows, tabs and panels the tree shows changes in. A node shown at the root under a compressed
+ * parent ("Added Row "Cache" under Tab "Tab 1"") counts as a change to that top-level parent, and a panel moved
+ * between sections as a change to both ends.
+ */
+function topLevelCounts(tree: ReviewNode[], structure: Structure): TopLevelCounts {
+  const nodeById = new Map(structure.nodes.map((node) => [node.id, node]));
+  const topLevel = new Map<string, StructureNode>();
+  const add = (id: string) => {
+    let node = nodeById.get(id);
+    while (node?.parentId && nodeById.has(node.parentId)) {
+      node = nodeById.get(node.parentId);
+    }
+    if (node && node.kind !== 'dashboard') {
+      topLevel.set(node.id, node);
+    }
+  };
+  for (const node of flatten(tree)) {
+    if (tree.includes(node)) {
+      add(node.id);
+    }
+    // The section a node moved out of lost it: a change there too.
+    const movedFrom = nodeById.get(node.id)?.movedFromId;
+    if (movedFrom) {
+      add(movedFrom);
+    }
+  }
+  const nodes = [...topLevel.values()];
+  return {
+    rows: nodes.filter((node) => node.kind === 'section' && node.sectionKind === 'row').length,
+    tabs: nodes.filter((node) => node.kind === 'section' && node.sectionKind === 'tab').length,
+    panels: nodes.filter((node) => node.kind === 'panel').length,
+  };
 }
 
 function flatten(tree: ReviewNode[]): ReviewNode[] {

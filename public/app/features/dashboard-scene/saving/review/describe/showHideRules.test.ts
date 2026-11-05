@@ -23,7 +23,15 @@ function lines(before: unknown, after: unknown) {
   for (const claim of claims) {
     expect(changes.filter((change) => change.claims.some((own) => claimCovers(own, claim)))).toHaveLength(1);
   }
-  return changes.map(({ text, kind, subject, details }) => ({ text, kind, subject, details }));
+  return changes.map(({ text, kind, subject, details, statusText, properties, categoryNote }) => ({
+    text,
+    kind,
+    subject,
+    ...(details && { details }),
+    ...(statusText && { statusText }),
+    ...(properties && { properties }),
+    ...(categoryNote && { categoryNote }),
+  }));
 }
 
 describe('describeShowHideRules', () => {
@@ -48,8 +56,19 @@ describe('describeShowHideRules', () => {
 
     expect(lines(before, after)).toEqual([
       { text: 'Template variable "env": Equals "prod" → Matches "prod|staging"', kind: 'changed', subject: 'rule' },
-      { text: 'Template variable "region" Equals "eu-west"', kind: 'removed', subject: 'rule' },
-      { text: 'Template variable "cluster" Equals "blue"', kind: 'added', subject: 'rule' },
+      // An added or removed rule says so; how the rules combine is said once, next to the category label
+      {
+        text: 'Rule removed: Template variable "region" Equals "eu-west"',
+        kind: 'removed',
+        subject: 'rule',
+        categoryNote: '(Match all)',
+      },
+      {
+        text: 'Rule added: Template variable "cluster" Equals "blue"',
+        kind: 'added',
+        subject: 'rule',
+        categoryNote: '(Match all)',
+      },
     ]);
   });
 
@@ -61,7 +80,7 @@ describe('describeShowHideRules', () => {
     );
   });
 
-  it('gives a whole rule set added readable details, never JSON', () => {
+  it('words a whole rule set added as one line, its settings listed behind it, never JSON', () => {
     const after = group('show', 'and', [{ kind: 'ConditionalRenderingData', spec: { value: true } }]);
 
     expect(lines(undefined, after)).toEqual([
@@ -69,7 +88,12 @@ describe('describeShowHideRules', () => {
         text: 'Conditional rendering: added',
         kind: 'added',
         subject: undefined,
-        details: { after: 'Row visibility: Show\nMatch rules: Match all\nQuery result: Has data' },
+        statusText: '(1 rule)',
+        properties: [
+          { label: 'Row visibility', value: 'Show' },
+          { label: 'Match rules', value: 'Match all' },
+          { label: 'Query result', value: 'Has data' },
+        ],
       },
     ]);
   });

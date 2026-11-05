@@ -16,6 +16,21 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 
 export type ReviewMode = 'save' | 'new' | 'saveAsCopy';
 
+/**
+ * A dashboard element named inside a translated text. The UI shows its kind as an icon (with the kind word for
+ * screen readers); plain text renders it as the word, e.g. `Row "DB"`.
+ */
+export interface NamedElement {
+  kind: 'panel' | 'row' | 'tab';
+  /** The quoted title or `(unnamed)`, without the kind word, e.g. `"CPU"`. */
+  name: string;
+  /** The header's own node: the UI skips its icon because the header's leading icon already shows it. */
+  self?: boolean;
+}
+
+/** Translated text with named elements in it. Build it with `rich()` from `richText.ts`, never by concatenation. */
+export type RichText = Array<string | NamedElement>;
+
 export interface ReviewInput {
   mode: ReviewMode;
   /** The serializer's initial save model. Null for a brand-new dashboard: everything is an addition. */
@@ -117,6 +132,19 @@ export type ReviewElementKind =
   | 'override'
   | 'rule';
 
+/**
+ * One property of an added or removed element, listed when its toggle is opened: what the element is set to,
+ * not what changed. Only what's set is listed: empty values and defaults are left out.
+ */
+export interface ReviewProperty {
+  /** Translated, e.g. "Title", "Queries (2)". */
+  label: string;
+  /** A literal value, shown next to the label: `"Cache hits"`, `5`, `Yes`, `Time series`. */
+  value?: string;
+  /** An object or array, pretty-printed JSON revealed by a "Show" button. */
+  details?: string;
+}
+
 export interface ReviewChange {
   kind: ChangeKind;
   /**
@@ -129,6 +157,16 @@ export interface ReviewChange {
   subject?: ReviewElementKind;
   /** Long or structured values, revealed by a "Show" toggle. Pretty-printed; absent side means none. */
   details?: { before?: string; after?: string };
+  /** Added or removed element: what it is set to, revealed by its +/− toggle. */
+  properties?: ReviewProperty[];
+  /**
+   * An element with several changed fields: one line naming it (`text` is its name, `statusText` the count,
+   * "(3 changes)"), its field changes revealed by a chevron. The group claims what its changes account for.
+   */
+  changes?: ReviewChange[];
+  statusText?: string;
+  /** Said once, next to its category's label rather than on the line: e.g. how the show/hide rules combine. */
+  categoryNote?: string;
   /** Diff paths this change accounts for. Metadata changes claim nothing (they are outside the spec). */
   claims: PathKey[];
 }
@@ -137,6 +175,8 @@ export interface ReviewCategoryGroup {
   category: ReviewCategory;
   /** Translated category label, e.g. "Field config". */
   label: string;
+  /** Translated, read after the label: what holds for every change in the group, e.g. "(Match all)". */
+  note?: string;
   changes: ReviewChange[];
 }
 
@@ -146,11 +186,13 @@ export type NodeStatus = 'added' | 'removed' | 'moved';
 interface ReviewNodeBase {
   id: string;
   /**
-   * Translated header, element type first, then the name in double quotes. Dashboard: "Dashboard".
-   * Section: its full path from the root, e.g. `Tab "Cluster" › Row "Nodes"`. Panel: how a person would
-   * point at it, e.g. `Panel "CPU usage"`. The UI prefixes the node kind's icon.
+   * Translated header. Dashboard: `["Dashboard"]`. Sections and panels: the node's own name (`self`, so the UI
+   * shows only the leading icon), `Added`/`Removed` before it when added or removed, and `under <parent path>`
+   * when the tree doesn't show its direct parent as the node's parent. In plain text:
+   * `Added Row "New row" under Tab "Tab 1"`, `Removed Tab "Tab 2"`, `Panel "CPU" at position 2`.
+   * The UI prefixes the node kind's icon.
    */
-  label: string;
+  label: RichText;
   /** Set when the node itself was added, removed or moved. Added and removed are shown as a + or − marker. */
   status?: NodeStatus;
   /**
@@ -158,11 +200,13 @@ interface ReviewNodeBase {
    * `moved after Panel "Latency"`, `was updated (3 changes)`, `moved after Panel "Latency" and was updated (1 change)`.
    * Absent for added, removed and header-only nodes.
    */
-  statusText?: string;
+  statusText?: RichText;
   /** Translated one-line summary shown when collapsed: changed category labels as a list, e.g. "data, field config". */
   summary: string;
   /** Non-empty groups only, in CATEGORY_ORDER. An added or removed node lists none: its header is enough. */
   categories: ReviewCategoryGroup[];
+  /** Added or removed panel or section: what it is set to, revealed by its +/− toggle. */
+  properties?: ReviewProperty[];
   /** Diff paths accounted for by the node's status (e.g. the whole added element and its layout item). */
   claims: PathKey[];
 }
@@ -181,14 +225,24 @@ export interface SectionReviewNode extends ReviewNodeBase {
   /** Panels and nested sections with changes, in reading order. A section with no own changes is a header only. */
   children: Array<SectionReviewNode | PanelReviewNode>;
   /** Removed section only: translated names of the panels and sections removed with it, in baseline reading order. */
-  removedContents?: string[];
+  removedContents?: RichText[];
+  /**
+   * Added section only: translated names of the panels and sections that already existed and were placed in it
+   * by a layout change (no move of their own), in reading order. Not counted as changes: the layout change is.
+   */
+  movedInContents?: RichText[];
+  /**
+   * Node ids of `movedInContents`, entry for entry. An entry whose element also changed is one of `children`:
+   * it is shown in the entry's place, as its own collapsible line, and nowhere else.
+   */
+  movedInNodeIds?: string[];
 }
 
 export type ReviewNode = DashboardReviewNode | SectionReviewNode | PanelReviewNode;
 
 export interface SystemDefaultGroup {
-  /** Translated owner, e.g. "Dashboard" or a panel label. */
-  label: string;
+  /** Translated owner, e.g. `["Dashboard"]` or a panel's owner label (`Panel "CPU" in Tab "A"`). */
+  label: RichText;
   changes: ReviewChange[];
 }
 
@@ -255,8 +309,16 @@ export interface StructureNode {
   id: string;
   kind: ReviewNodeKind;
   sectionKind?: 'row' | 'tab';
-  /** Translated header, as in ReviewNodeBase.label. */
-  label: string;
+  /**
+   * Sections and panels: the node's own name, e.g. `Row "API"`, plus ` at position N` when ambiguous (except a
+   * moved node, whose move text carries its position). Absent for the dashboard. describe/ composes the header.
+   */
+  name?: RichText;
+  /**
+   * Nodes inside a section: the full path of that section, e.g. `Tab "Cluster" › Row "Nodes"`. describe/ adds
+   * `under <parentPath>` to the header when the tree doesn't show that section as the node's parent.
+   */
+  parentPath?: RichText;
   /** Parent node id; undefined for the dashboard and for root-level sections and panels. */
   parentId?: string;
   status?: NodeStatus;
@@ -264,17 +326,27 @@ export interface StructureNode {
    * Moved nodes: the move text, without the node's own position, e.g.
    * `moved from Tab "Tab 2" to Tab "Tab 1", after Panel "P2"`. describe/ composes the final statusText.
    */
-  moveText?: string;
+  moveText?: RichText;
   /** Moved nodes with an ambiguous name: their new 1-based position, appended by describe/ ("at position 1"). */
   movePosition?: number;
   /** Panel nodes: the element name (key in `elements`). */
   elementName?: string;
   /**
+   * Spec path of the row or tab, or of the panel's layout item, on the node's own side (the baseline for a
+   * removed node, the payload otherwise). describe/ reads an added or removed node's properties from it.
+   */
+  itemPath?: PathKey;
+  /**
    * Panel nodes: the label where no tree shows the section (System defaults owners): the name, plus
    * `in <section path>` when the title isn't unique in the dashboard.
    */
-  ownerLabel?: string;
-  removedContents?: string[];
+  ownerLabel?: RichText;
+  removedContents?: RichText[];
+  movedInContents?: RichText[];
+  /** Node ids of `movedInContents`, entry for entry. */
+  movedInNodeIds?: string[];
+  /** A node moved out of another section: that section's node id (it lost the node, so it changed too). */
+  movedFromId?: string;
   claims: PathKey[];
 }
 

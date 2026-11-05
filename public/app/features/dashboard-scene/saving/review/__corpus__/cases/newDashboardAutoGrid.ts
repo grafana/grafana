@@ -24,30 +24,23 @@ Dashboard · properties, controls
     Title: set to "Checkout"
   [Controls]
     + Annotation "Annotations & Alerts"
-      before: (none)
-      after: {
-          "kind": "AnnotationQuery",
-          "spec": {
-            "builtIn": true,
-            "enable": true,
-            "hide": true,
-            "iconColor": "rgba(0, 211, 255, 1)",
-            "name": "Annotations & Alerts",
-            "query": {
-              "datasource": {
-                "name": "-- Grafana --"
-              },
-              "group": "grafana",
-              "kind": "DataQuery",
-              "spec": {},
-              "version": "v0"
-            }
-          }
-        }
+      · Built in: Yes
+      · Enabled: Yes
+      · Hidden: Yes
+      · Color: rgba(0, 211, 255, 1)
+      · Query [Show]
 
-+ Panel "Orders"
++ Added Panel "Orders"
+  · Visualization: timeseries
+  · Queries (1) [Show]
+  · Plugin options [Show]
+  · Field config [Show]
 
-+ Panel "Payment errors"
++ Added Panel "Payment errors"
+  · Visualization: timeseries
+  · Queries (1) [Show]
+  · Plugin options [Show]
+  · Field config [Show]
 
 System defaults (1)
   Dashboard

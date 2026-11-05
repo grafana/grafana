@@ -1,13 +1,25 @@
-import { omit } from 'lodash';
+import { isEqual } from 'lodash';
 
 import { standardTransformersRegistry } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isRecord } from 'app/core/utils/isRecord';
 
+import { type ReviewProperty } from '../types';
+
 import { displayShort, type ValueFormat } from './formatters';
 import { humanizeKey, humanizePath } from './labels';
 import { type ItemField, type NamedListItems } from './namedLists';
 import { safely, unescapeSegment, untilIndex, valueAt } from './paths';
+import {
+  everything,
+  type IsDefault,
+  property,
+  type PropertyFormat,
+  quoted,
+  recordProperties,
+  withoutDefaults,
+} from './properties';
+import { variableDefault } from './systemDefaults';
 
 export type NamedListKind =
   | 'variables'
@@ -91,7 +103,14 @@ function nameOf(item: unknown, path: string[]): string {
 const variables: NamedListItems = {
   keyOf: (item) => nameOf(item, ['spec', 'name']),
   nameOf: (item) => variableName(valueAt(item, ['kind']), nameOf(item, ['spec', 'name'])),
-  detailsOf: (item) => variableConfig(item),
+  // `options` holds the values the variable last resolved to, which can be a long list.
+  propertiesOf: (item, path, isDefault) => [
+    ...recordProperties(valueAt(item, ['spec']), [...path, 'spec'], withKindDefaults(item, path, isDefault), {
+      labels: variableLabels(),
+      formats: { ...quotedFormats(variableTextFormats(valueAt(item, ['kind']))), current: { display: currentText } },
+      skip: ['name', 'options'],
+    }),
+  ],
   fieldOf: (path, before, after) => {
     if (path[0] === 'kind') {
       return {
@@ -117,6 +136,24 @@ const variables: NamedListItems = {
   orderLabel: () => t('dashboard-scene.review.item-order.variables', 'Variable order'),
   subjectOf: (item) => (valueAt(item, ['kind']) === 'AdhocVariable' ? 'adHocFilter' : 'variable'),
 };
+
+/**
+ * A variable's schema defaults by its kind, wherever it is: the path-based defaults only know the dashboard's
+ * own variables, not a row's or a tab's.
+ */
+function withKindDefaults(item: unknown, path: string[], isDefault: IsDefault): IsDefault {
+  if (isDefault === everything) {
+    return isDefault;
+  }
+  const defaults = variableDefault(valueAt(item, ['kind']));
+  return (absolute, value) => {
+    if (isDefault(absolute, value)) {
+      return true;
+    }
+    const expected = valueAt(defaults, absolute.slice(path.length));
+    return expected !== undefined && isEqual(expected, value);
+  };
+}
 
 /** A variable named by its type, as the variable editor calls it: `Query variable "env"`. */
 function variableName(kind: unknown, name: string): string {
@@ -145,20 +182,27 @@ function variableName(kind: unknown, name: string): string {
   }
 }
 
-/** The configuration of an added or removed item, as JSON until its settings are listed one by one. */
-function configJson(item: unknown): string | undefined {
-  return isRecord(item) ? JSON.stringify(item, null, 2) : undefined;
-}
-
-/** `options` is left out: it holds the values the variable last resolved to, which can be a long list. */
-function variableConfig(item: unknown): string | undefined {
-  if (!isRecord(item)) {
-    return undefined;
-  }
-  return configJson(isRecord(item.spec) ? { ...item, spec: omit(item.spec, 'options') } : item);
-}
-
 const text: ValueFormat = { type: 'auto', quoted: true };
+
+/** Fields worded with quotes are shown with quotes in a property list too. */
+function quotedFormats(formats: Record<string, ValueFormat>): Record<string, PropertyFormat> {
+  const quoted: Record<string, PropertyFormat> = {};
+  for (const [key, format] of Object.entries(formats)) {
+    if ('quoted' in format && format.quoted) {
+      quoted[key] = { quoted: true };
+    }
+  }
+  return quoted;
+}
+
+/** A variable's current value by what the picker shows: its text, or the texts of a multi-value selection. */
+function currentText(current: unknown): string | undefined {
+  const value = valueAt(current, ['text']);
+  if (typeof value === 'string') {
+    return quoted(value);
+  }
+  return Array.isArray(value) ? value.map((item) => quoted(String(item))).join(', ') : undefined;
+}
 
 /** Variable settings typed into a text box; a query is one only for custom, text box and constant variables. */
 function variableTextFormats(kind: unknown): Record<string, ValueFormat> {
@@ -227,7 +271,11 @@ const annotations: NamedListItems = {
       name: nameOf(item, ['spec', 'name']),
       interpolation: noEscape,
     }),
-  detailsOf: configJson,
+  propertiesOf: (item, path, isDefault) =>
+    recordProperties(valueAt(item, ['spec']), [...path, 'spec'], isDefault, {
+      labels: annotationLabels(),
+      skip: ['name'],
+    }),
   fieldOf: (path) => keyedField(path, ['spec'], annotationLabels) ?? fallbackField(path),
   orderLabel: () => t('dashboard-scene.review.item-order.annotations', 'Annotation order'),
   subjectOf: () => 'annotation',
@@ -250,7 +298,12 @@ const links: NamedListItems = {
       title: nameOf(item, ['title']),
       interpolation: noEscape,
     }),
-  detailsOf: configJson,
+  propertiesOf: (item, path, isDefault) =>
+    recordProperties(item, path, isDefault, {
+      labels: linkLabels(),
+      formats: { url: { quoted: true }, tooltip: { quoted: true } },
+      skip: ['title'],
+    }),
   fieldOf: (path) => keyedField(path, [], linkLabels, { url: text, tooltip: text }),
   orderLabel: () => t('dashboard-scene.review.item-order.links', 'Link order'),
   subjectOf: () => 'link',
@@ -322,6 +375,20 @@ const queries: NamedListItems = {
     }
     return fallbackField(path, path[1] === 'query' ? 2 : 1);
   },
+  propertiesOf: (item, path, isDefault) => {
+    const datasource = valueAt(item, ['spec', 'query', 'datasource', 'name']);
+    return [
+      property(
+        t('dashboard-scene.review.item-field.query-datasource', 'Data source'),
+        typeof datasource === 'string' && datasource ? datasource : valueAt(item, ['spec', 'query', 'group'])
+      ),
+      ...recordProperties(valueAt(item, ['spec', 'query', 'spec']), [...path, 'spec', 'query', 'spec'], isDefault, {
+        labels: queryTextLabels(),
+        formats: { legendFormat: { quoted: true } },
+      }),
+      property(t('dashboard-scene.review.item-field.query-hidden', 'Hide response'), valueAt(item, ['spec', 'hidden'])),
+    ].filter((entry): entry is ReviewProperty => entry !== undefined);
+  },
   orderLabel: () => t('dashboard-scene.review.item-order.queries', 'Query order'),
   subjectOf: () => 'query',
 };
@@ -364,6 +431,11 @@ const transformations: NamedListItems = {
     }
     return keyedField(path, ['spec'], transformationLabels) ?? fallbackField(path);
   },
+  propertiesOf: (item, path, isDefault) =>
+    recordProperties(valueAt(item, ['spec']), [...path, 'spec'], isDefault, {
+      labels: { ...transformationLabels(), options: t('dashboard-scene.review.field.options', 'Options') },
+      skip: ['id'],
+    }),
   orderLabel: () => t('dashboard-scene.review.item-order.transformations', 'Transformation order'),
   subjectOf: () => 'transformation',
 };
@@ -411,6 +483,15 @@ function overrides(ctx: ListKindContext): NamedListItems {
         .map((key) => fallbackField([key]));
       return [...ids.map(propertyField), ...others];
     },
+    propertiesOf: (item, path, isDefault) =>
+      propertyIds(item)
+        .map((id, index) =>
+          property(
+            ctx.fieldConfigLabel(id),
+            withoutDefaults(propertyValue(item, id), [...path, 'properties', String(index), 'value'], isDefault)
+          )
+        )
+        .filter((entry): entry is ReviewProperty => entry !== undefined),
     orderLabel: () => t('dashboard-scene.review.item-order.overrides', 'Override order'),
     subjectOf: () => 'override',
   };

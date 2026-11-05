@@ -13,6 +13,7 @@ Row "API"  moved after Row "DB"
   Panel "Latency"  was updated (2 changes)
     Visualization   Visualization: Time series → Gauge
     Field config    Unit: set to "ms"
+  + Added "Errors"      ← its + opens what it is set to
 System defaults (3)   ← values Grafana filled in, not edits you made
 Metadata (1)          ← e.g. folder
 ```
@@ -37,7 +38,7 @@ It's a pure, synchronous function from `ReviewInput` to `ReviewSummary`, with a 
  │        ├── layout/* + elements/<x> ─► structure/buildStructure       │
  │        │     walkLayout    walk both layouts → sections, placements  │
  │        │     matchSections pair rows/tabs across sides               │
- │        │     naming        "Panel "CPU"", "Row "API" › Tab "Inner""  │
+ │        │     naming        rich names: Panel "CPU", parent paths     │
  │        │     lcs           which panels moved vs kept their order    │
  │        │   ─► Structure { nodes, changes: RawChange[], panelNodeId } │
  │        │                                                             │
@@ -79,7 +80,12 @@ It's a pure, synchronous function from `ReviewInput` to `ReviewSummary`, with a 
 - **System defaults.** Serializers and plugins fill in values the user never touched. `systemDefaults.ts` spots them using schema defaults and the plugin's own defaults, so they go into their own section instead of cluttering the review. A visualization type change gets special treatment: the new plugin's defaults collapse to one line, "Plugin options: set to the Gauge defaults".
 - **Index-shift noise.** Removing panel #2 from a grid makes `compare` report every later `items[i]` as changed. `buildStructure` records "array events" and assigns that noise to the nearest real event, so you see "1 removed" instead of 40 changes.
 - **Moves.** A move is "outside the longest common subsequence of reading order". When there's a tie, the LCS keeps panels whose grid coordinates didn't change.
-- **Names are positional when ambiguous.** Two panels titled "CPU" become `Panel "CPU" (2nd)` and so on, counted per container.
+- **Names are rich text with icons.** Wherever a panel, row or tab is named (headers, move texts, "removed with it", System defaults owners), the text is `RichText`: strings plus named elements, built with `rich()` from `richText.ts` so each sentence stays one translatable `t()` call. The UI shows each element's kind as its outline icon, announced to screen readers as the word; the corpus renders it as the word (`Row "API"`). Change lines stay plain text.
+- **Headers say what happened.** Added and removed nodes read `Added "New row" under ⧉"Tab 1"` and `Removed "Tab 2"`. "under <parent path>" appears only when the tree doesn't show the node's direct parent as its parent (path compression hid it); `buildTree` decides this, because only it knows which ancestors are shown.
+- **Layout changes explain where panels went, and new sections list them.** Grouping a grid into rows doesn't mark each panel moved: the `Layout:` line accounts for it. So that the review still shows where they landed, `buildStructure` gives each added section `movedInContents`, the existing elements a restructure placed directly in it, and the header reads `Added "New row" (3 panels moved to it)`.
+- **Progressive disclosure, everywhere.** One line per element says what happened; detail is one click deeper. An added or removed element carries `properties` (from `describe/properties.ts`): what it is set to without defaults, literal values inline and objects behind Show, falling back to its defaults so nothing is unreviewable. Several field changes of one list item become one `ReviewChange` with nested `changes`. A rule set added or removed lists its settings as `properties`.
+- **The overview line names top-level elements.** `topLevelCounts` rolls every node up to its top-level row, tab or panel, plus the section a panel moved out of, so a panel added in a tab reads "Changes to 1 tab".
+- **Names are positional when ambiguous.** Two panels titled "CPU" become `Panel "CPU" at position 2` and so on, counted per container.
 - **`flatDiff` instead of `jsonDiff`.** It does the same diff without the line numbers, which are expensive. Path segments stay JSON-pointer-escaped, so use `unescapeSegment` and `valueAt`.
 - **Plugins are optional and untrusted.** `getPlugin` may return nothing (the label falls back to a humanized key) or throw (wrapped in `safely()`).
 - **The hook reads options through a ref.** The drawer rebuilds its options on every render, so keying an effect on them would loop forever.

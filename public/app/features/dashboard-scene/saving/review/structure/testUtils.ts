@@ -8,7 +8,8 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { type Diff, jsonDiff } from '../../../settings/version-history/utils';
-import { claimCovers, pathKey, type Structure, type StructureNode } from '../types';
+import { richToPlain } from '../richText';
+import { claimCovers, pathKey, type RichText, type Structure, type StructureNode } from '../types';
 
 import { buildStructure } from './buildStructure';
 import { type LayoutKind } from './walkLayout';
@@ -140,18 +141,76 @@ export function outline(structure: Structure): string[] {
     depth.set(node.id, d);
     const marker = node.status === 'added' ? '+ ' : node.status === 'removed' ? '- ' : '';
     const status = node.moveText ? ` ${moveStatusText(node)}` : '';
-    return `${'  '.repeat(d)}${marker}${node.label}${status}`;
+    return `${'  '.repeat(d)}${marker}${plainLabel(node)}${status}`;
   });
+}
+
+/**
+ * A node's name in plain text, sections with their full path (`Tab "Cluster" › Row "Nodes"`) so a test names
+ * a node unambiguously without depending on which ancestors describe/ shows.
+ */
+export function plainLabel(node: StructureNode): string {
+  if (node.kind === 'dashboard') {
+    return 'Dashboard';
+  }
+  const name = richToPlain(node.name ?? []);
+  return node.kind === 'section' && node.parentPath ? `${richToPlain(node.parentPath)} › ${name}` : name;
+}
+
+/** A node with its rich texts as plain strings, for assertions; `label` is `plainLabel`. */
+export interface PlainNode
+  extends Omit<
+    StructureNode,
+    'name' | 'parentPath' | 'moveText' | 'ownerLabel' | 'removedContents' | 'movedInContents'
+  > {
+  label: string;
+  name?: string;
+  parentPath?: string;
+  moveText?: string;
+  ownerLabel?: string;
+  removedContents?: string[];
+  movedInContents?: string[];
+}
+
+export function plainNode(node: StructureNode): PlainNode {
+  const {
+    name,
+    parentPath,
+    moveText,
+    ownerLabel,
+    removedContents,
+    movedInContents,
+    movedInNodeIds,
+    movedFromId,
+    itemPath,
+    ...rest
+  } = node;
+  const plain = (text: RichText | undefined) => (text ? richToPlain(text) : undefined);
+  return {
+    ...rest,
+    label: plainLabel(node),
+    ...(name ? { name: plain(name) } : {}),
+    ...(parentPath ? { parentPath: plain(parentPath) } : {}),
+    ...(moveText ? { moveText: plain(moveText) } : {}),
+    ...(ownerLabel ? { ownerLabel: plain(ownerLabel) } : {}),
+    ...(removedContents ? { removedContents: removedContents.map(richToPlain) } : {}),
+    ...(movedInContents ? { movedInContents: movedInContents.map(richToPlain) } : {}),
+  };
+}
+
+export function plainNodes(structure: Structure): PlainNode[] {
+  return structure.nodes.map(plainNode);
 }
 
 /** The move part of a header as describe/ composes it: the move text, then the new position when ambiguous. */
 export function moveStatusText(node: StructureNode): string {
-  return node.movePosition !== undefined ? `${node.moveText}, at position ${node.movePosition}` : (node.moveText ?? '');
+  const text = richToPlain(node.moveText ?? []);
+  return node.movePosition !== undefined ? `${text}, at position ${node.movePosition}` : text;
 }
 
 /** Compact view of the changes: "node label: field [kind]" or the change's own text. */
 export function changeList(structure: Structure): string[] {
-  const label = new Map(structure.nodes.map((node) => [node.id, node.label]));
+  const label = new Map(structure.nodes.map((node) => [node.id, plainLabel(node)]));
   return structure.changes.map(
     (change) => `${label.get(change.nodeId)}: ${change.text ?? `${change.field} ${change.kind}`}`
   );

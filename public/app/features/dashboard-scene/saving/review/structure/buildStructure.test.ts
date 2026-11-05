@@ -8,7 +8,7 @@ import {
   dashboard,
   grid,
   layoutDiffsOf,
-  moveStatusText,
+  plainNodes,
   outline,
   row,
   rows,
@@ -25,7 +25,7 @@ function only(...names: Array<keyof typeof panels>): Record<string, string> {
 }
 
 function nodeByLabel(structure: ReturnType<typeof structureOf>, label: string) {
-  const node = structure.nodes.find((n) => n.label === label);
+  const node = plainNodes(structure).find((n) => n.label === label);
   if (!node) {
     throw new Error(`No node labelled ${label}: ${outline(structure).join(' | ')}`);
   }
@@ -454,7 +454,11 @@ describe('buildStructure', () => {
       const structure = structureOf(before, after);
 
       // Title matching pairs the k-th 'Dup' with the k-th, so only their panels moved.
-      expect(structure.nodes.filter((n) => n.status).map((n) => `${n.label} ${moveStatusText(n)}`)).toEqual([
+      expect(
+        plainNodes(structure)
+          .filter((n) => n.status)
+          .map((n) => `${n.label} ${n.moveText}${n.movePosition ? `, at position ${n.movePosition}` : ''}`)
+      ).toEqual([
         'Panel "Memory" moved from Row "Dup" at position 2 to Row "Dup" at position 1',
         'Panel "CPU" moved from Row "Dup" at position 1 to Row "Dup" at position 2',
       ]);
@@ -462,7 +466,11 @@ describe('buildStructure', () => {
       const tabbed = (order: string[]) =>
         dashboard(tabs(tab('Cluster', rows(...order.map((title) => row(title, grid()))))), {});
       const moved = structureOf(tabbed(['X', 'Dup', 'Dup']), tabbed(['Dup', 'X', 'Dup']));
-      expect(moved.nodes.filter((n) => n.status).map((n) => `${n.label} ${moveStatusText(n)}`)).toEqual([
+      expect(
+        plainNodes(moved)
+          .filter((n) => n.status)
+          .map((n) => `${n.label} ${n.moveText}${n.movePosition ? `, at position ${n.movePosition}` : ''}`)
+      ).toEqual([
         // On a tie the earlier baseline section (X) stays put.
         'Tab "Cluster" › Row "Dup" moved before Row "X", at position 1',
       ]);
@@ -475,7 +483,7 @@ describe('buildStructure', () => {
         tab('DB', grid(['b', 0, 0], ['c', 0, 8], ['e', 0, 16]))
       );
       const structure = structureOf(dashboard(layout, titles), dashboard(layout, titles));
-      const owner = (name: string) => structure.nodes.find((n) => n.elementName === name)?.ownerLabel;
+      const owner = (name: string) => plainNodes(structure).find((n) => n.elementName === name)?.ownerLabel;
 
       expect(['a', 'b', 'c', 'd', 'e'].map(owner)).toEqual([
         'Panel "Errors" in Tab "API"',
@@ -489,9 +497,11 @@ describe('buildStructure', () => {
         dashboard(grid(['a', 0, 0], ['b', 0, 8]), titles),
         dashboard(grid(['a', 0, 0], ['b', 0, 8]), titles)
       );
-      expect(root.nodes.filter((n) => n.kind === 'panel').map((n) => n.ownerLabel)).toEqual(
-        expect.arrayContaining(['Panel "Errors" at position 1', 'Panel "Errors" at position 2'])
-      );
+      expect(
+        plainNodes(root)
+          .filter((n) => n.kind === 'panel')
+          .map((n) => n.ownerLabel)
+      ).toEqual(expect.arrayContaining(['Panel "Errors" at position 1', 'Panel "Errors" at position 2']));
     });
 
     it('names nested sections removed with a section relative to it, and panels by their baseline name', () => {
@@ -526,7 +536,7 @@ describe('buildStructure', () => {
       });
       expect(structure.changes[0].claims.sort()).toEqual(['layout/kind', 'layout/spec/rows', 'layout/spec/tabs']);
       // The reorder still reads as a move; its diffs are part of the restructure.
-      expect(structure.nodes.filter((n) => n.status)).toMatchObject([
+      expect(plainNodes(structure).filter((n) => n.status)).toMatchObject([
         { label: 'Tab "DB"', status: 'moved', moveText: 'moved before Tab "API"', claims: [] },
       ]);
     });
@@ -549,7 +559,11 @@ describe('buildStructure', () => {
       const structure = structureOf(before, after);
 
       expect(changeList(structure)).toEqual(['Dashboard: Layout: changed from rows to tabs']);
-      expect(structure.nodes.filter((n) => n.status).map((n) => n.label)).toEqual(['Tab "New tab"']);
+      expect(
+        plainNodes(structure)
+          .filter((n) => n.status)
+          .map((n) => n.label)
+      ).toEqual(['Tab "New tab"']);
     });
 
     it('keeps the identity of rows unwrapped from a removed tab', () => {
@@ -561,7 +575,7 @@ describe('buildStructure', () => {
       const structure = structureOf(before, after);
 
       expect(changeList(structure)).toEqual(['Dashboard: Layout: changed from tabs to rows']);
-      expect(structure.nodes.filter((n) => n.status)).toMatchObject([
+      expect(plainNodes(structure).filter((n) => n.status)).toMatchObject([
         { label: 'Tab "Wrapper"', status: 'removed', removedContents: [] },
       ]);
     });
@@ -653,7 +667,11 @@ describe('buildStructure', () => {
 
       expect(structure.changes).toEqual([]);
       expect(nodeByLabel(structure, 'Panel "CPU"').claims).toContain('layout/spec/items/3');
-      expect(structure.nodes.filter((n) => n.claims.length).map((n) => n.label)).toEqual(['Panel "CPU"']);
+      expect(
+        plainNodes(structure)
+          .filter((n) => n.claims.length)
+          .map((n) => n.label)
+      ).toEqual(['Panel "CPU"']);
     });
 
     it('does not report panels pushed down by an inserted panel', () => {
@@ -662,7 +680,11 @@ describe('buildStructure', () => {
       const structure = structureOf(before, after);
 
       expect(structure.changes).toEqual([]);
-      expect(structure.nodes.filter((n) => n.claims.length).map((n) => n.label)).toEqual(['Panel "Disk"']);
+      expect(
+        plainNodes(structure)
+          .filter((n) => n.claims.length)
+          .map((n) => n.label)
+      ).toEqual(['Panel "Disk"']);
     });
 
     it('claims shifted rows with the removed row', () => {
@@ -674,7 +696,11 @@ describe('buildStructure', () => {
       const structure = structureOf(before, after);
 
       expect(structure.changes).toEqual([]);
-      expect(structure.nodes.filter((n) => n.claims.length).map((n) => n.label)).toEqual(['Row "A"']);
+      expect(
+        plainNodes(structure)
+          .filter((n) => n.claims.length)
+          .map((n) => n.label)
+      ).toEqual(['Row "A"']);
     });
 
     it('claims shifted auto grid items with the inserted panel', () => {
@@ -794,7 +820,7 @@ describe('buildStructure', () => {
       const structure = structureOf(before, after);
 
       expect(changeList(structure)).toEqual(['Panel "Memory": position changed']);
-      expect(structure.nodes.filter((n) => n.status)).toEqual([]);
+      expect(plainNodes(structure).filter((n) => n.status)).toEqual([]);
     });
 
     it('keeps the panel whose coordinates did not change in place on a tie', () => {
@@ -949,14 +975,14 @@ describe('buildStructure', () => {
         });
         const structure = structureOf(before, after);
 
-        expect(structure.nodes.find((n) => n.elementName === name)).toMatchObject({
+        expect(plainNodes(structure).find((n) => n.elementName === name)).toMatchObject({
           label: 'Panel "Odd"',
           status: 'added',
         });
         expect(structure.changes).toEqual([]);
 
         const removed = structureOf(after, before);
-        expect(removed.nodes.find((n) => n.elementName === name)).toMatchObject({ status: 'removed' });
+        expect(plainNodes(removed).find((n) => n.elementName === name)).toMatchObject({ status: 'removed' });
         expect(removed.changes).toEqual([]);
       }
     );

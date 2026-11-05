@@ -1,16 +1,31 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type DashboardReviewNode, type PanelReviewNode, type ReviewSummary, type SectionReviewNode } from '../types';
+import {
+  type DashboardReviewNode,
+  type NamedElement,
+  type PanelReviewNode,
+  type ReviewSummary,
+  type SectionReviewNode,
+} from '../types';
 
 import { ReviewTab } from './ReviewTab';
 import { type ReviewSummaryState } from './useReviewSummary';
+
+function named(kind: NamedElement['kind'], name: string): NamedElement {
+  return { kind, name };
+}
+
+/** The header's own element: named without an icon, since the header starts with it. */
+function own(kind: NamedElement['kind'], name: string): NamedElement {
+  return { kind, name, self: true };
+}
 
 function buildDashboardNode(): DashboardReviewNode {
   return {
     kind: 'dashboard',
     id: 'dashboard',
-    label: 'Dashboard',
+    label: ['Dashboard'],
     summary: 'properties',
     claims: [],
     categories: [
@@ -27,7 +42,7 @@ function buildChangedPanel(): PanelReviewNode {
   return {
     kind: 'panel',
     id: 'panel-1',
-    label: 'Panel "CPU usage"',
+    label: [own('panel', '"CPU usage"')],
     summary: 'data, field config',
     claims: [],
     categories: [
@@ -62,7 +77,7 @@ function buildAddedPanel(): PanelReviewNode {
   return {
     kind: 'panel',
     id: 'panel-2',
-    label: 'Panel "Errors"',
+    label: ['Added ', own('panel', '"Errors"')],
     status: 'added',
     summary: '',
     categories: [],
@@ -75,7 +90,7 @@ function buildRowWithPanels(): SectionReviewNode {
     kind: 'section',
     sectionKind: 'row',
     id: 'row-api',
-    label: 'Row "API"',
+    label: [own('row', '"API"')],
     summary: '',
     categories: [],
     children: [buildChangedPanel(), buildAddedPanel()],
@@ -88,12 +103,12 @@ function buildRemovedTab(): SectionReviewNode {
     kind: 'section',
     sectionKind: 'tab',
     id: 'tab-legacy',
-    label: 'Tab "Legacy"',
+    label: ['Removed ', own('tab', '"Legacy"')],
     status: 'removed',
     summary: '',
     categories: [],
     children: [],
-    removedContents: ['Panel "Old latency"', 'the 2nd unnamed panel in Tab "Legacy"'],
+    removedContents: [[named('panel', '"Old latency"')], [named('panel', '(unnamed)'), ' at position 2']],
     claims: ['layout/spec/tabs/1'],
   };
 }
@@ -110,7 +125,7 @@ function buildSummary(overrides: Partial<ReviewSummary> = {}): ReviewSummary {
     metadata: [{ kind: 'changed', text: 'Folder: General → Operations', claims: [] }],
     systemDefaults: [
       {
-        label: 'Panel "CPU usage"',
+        label: [named('panel', '"CPU usage"')],
         changes: [
           { kind: 'added', text: 'Plugin version: 12.1.0', claims: ['elements/panel-1/spec/vizConfig/version'] },
           { kind: 'added', text: 'Legend › Mode: list', claims: ['elements/panel-1/spec/vizConfig/spec/options'] },
@@ -169,6 +184,17 @@ describe('<ReviewTab />', () => {
       expect(screen.getByText('3 changed')).toBeInTheDocument();
       expect(screen.getByText('1 removed')).toBeInTheDocument();
       expect(screen.queryByText('0 moved')).not.toBeInTheDocument();
+    });
+
+    test('when there are additions and removals, their counts carry the same + and − as the items below', () => {
+      renderReviewTab(ready(buildSummary()));
+
+      const added = screen.getByText('1 added').closest('li');
+      const removed = screen.getByText('1 removed').closest('li');
+      const changed = screen.getByText('3 changed').closest('li');
+      expect(added && within(added).getByTestId('icon-plus')).toBeInTheDocument();
+      expect(removed && within(removed).getByTestId('icon-minus')).toBeInTheDocument();
+      expect(changed && within(changed).queryByTestId('icon-plus')).not.toBeInTheDocument();
     });
 
     test('when the dashboard is new, it opens with the creation intro', () => {
@@ -234,61 +260,106 @@ describe('<ReviewTab />', () => {
       expect(screen.queryByText('Unit: none → percent')).not.toBeInTheDocument();
     });
 
-    test('when a label starts in lowercase, node headers, owners and removed items start with a capital', async () => {
-      const unnamed = { ...buildChangedPanel(), label: 'the 2nd unnamed panel in Row "API"' };
-      const { elements, actions } = renderReviewTab(
-        ready(
-          buildSummary({
-            tree: [{ ...buildRowWithPanels(), children: [unnamed] }, buildRemovedTab()],
-            systemDefaults: [
-              { label: unnamed.label, changes: [{ kind: 'added', text: 'Plugin version: 12.1.0', claims: [] }] },
-            ],
-          })
-        )
-      );
+    describe('names in headers', () => {
+      const addedRow: SectionReviewNode = {
+        kind: 'section',
+        sectionKind: 'row',
+        id: 'row-new',
+        label: ['added ', own('row', '"new row"'), ' under ', named('tab', '"tab 1"')],
+        status: 'added',
+        summary: '',
+        categories: [],
+        children: [],
+        claims: ['layout/spec/tabs/0/spec/layout/spec/rows/1'],
+      };
 
-      await actions.click('System defaults (1)');
+      test('when a header names another element, its icon is shown and named by its kind word', () => {
+        renderReviewTab(ready(buildSummary({ tree: [addedRow] })));
 
-      expect(screen.getByRole('button', { name: /^The 2nd unnamed panel in Row "API"/ })).toBeInTheDocument();
-      expect(
-        within(controlledBy(elements.toggle('System defaults (1)'))).getByRole('heading', {
-          name: 'The 2nd unnamed panel in Row "API"',
-        })
-      ).toBeInTheDocument();
-      expect(screen.getByText('The 2nd unnamed panel in Tab "Legacy"')).toBeInTheDocument();
+        const header = screen.getByRole('heading', { name: 'Added Row "new row" under Tab "tab 1"' });
+        const tabIcon = within(header).getByRole('img', { name: 'Tab' });
+        expect(tabIcon).toHaveAttribute('data-testid', 'icon-layers');
+        expect(within(header).getByText('"tab 1"')).toBeInTheDocument();
+      });
+
+      test('when a header names its own element, only the leading icon shows it', () => {
+        renderReviewTab(ready(buildSummary({ tree: [addedRow] })));
+
+        const header = screen.getByRole('heading', { name: 'Added Row "new row" under Tab "tab 1"' });
+        expect(within(header).getAllByTestId('icon-list-ul')).toHaveLength(1);
+        expect(within(header).queryByRole('img', { name: 'Row' })).not.toBeInTheDocument();
+      });
+
+      test('when a label starts with a lowercase string, only that first string is capitalized', () => {
+        // A later string that starts with a letter shows the rule: it stays as the engine wrote it
+        const row: SectionReviewNode = {
+          ...addedRow,
+          label: ['added ', own('row', '"new row"'), 'under ', named('tab', '"tab 1"')],
+        };
+        renderReviewTab(ready(buildSummary({ tree: [row] })));
+
+        const header = screen.getByRole('heading', { name: /^Added Row "new row"/ });
+        expect(header).toHaveTextContent('Added Row "new row"under "tab 1"');
+      });
+
+      test('when a System defaults owner and a removed item are rich text, they show icons and a capital', async () => {
+        const { elements, actions } = renderReviewTab(
+          ready(
+            buildSummary({
+              systemDefaults: [
+                {
+                  label: [named('panel', '"CPU"'), ' in ', named('tab', '"A"')],
+                  changes: [{ kind: 'added', text: 'Plugin version: 12.1.0', claims: [] }],
+                },
+              ],
+            })
+          )
+        );
+
+        await actions.click('System defaults (1)');
+
+        const owner = within(controlledBy(elements.toggle('System defaults (1)'))).getByRole('heading', {
+          name: 'Panel "CPU" in Tab "A"',
+        });
+        expect(within(owner).getByRole('img', { name: 'Panel' })).toBeInTheDocument();
+        const removedItem = screen.getByText('"Old latency"').closest('li');
+        expect(removedItem).toHaveTextContent('"Old latency"');
+        expect(within(removedItem!).getByRole('img', { name: 'Panel' })).toBeInTheDocument();
+      });
     });
 
     test('when a node was added and has nothing to reveal, its header is marked Added and has no toggle', () => {
       renderReviewTab(ready(buildSummary()));
 
+      // The label says "Added", so the + marker is silent rather than saying it twice
       const header = screen.getByRole('heading', { name: 'Added Panel "Errors"' });
-      expect(within(header).getByRole('img', { name: 'Added' })).toContainElement(
-        within(header).getByTestId('icon-plus')
-      );
+      expect(within(header).getByTestId('icon-plus')).toBeInTheDocument();
+      expect(within(header).queryByRole('img', { name: 'Added' })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /Panel "Errors"/ })).not.toBeInTheDocument();
-      expect(screen.queryByText('added')).not.toBeInTheDocument();
     });
 
     test('when a node was moved, its header reads the label followed by where it moved', () => {
       const moved: PanelReviewNode = {
         ...buildAddedPanel(),
         id: 'panel-3',
-        label: 'Panel "New panel"',
+        label: [own('panel', '"New panel"')],
         status: 'moved',
-        statusText: 'moved after Panel "Latency"',
+        statusText: ['moved after ', named('panel', '"Latency"')],
       };
       renderReviewTab(ready(buildSummary({ tree: [moved] })));
 
       const header = screen.getByRole('heading', { name: 'Panel "New panel" moved after Panel "Latency"' });
-      expect(within(header).queryByRole('img')).not.toBeInTheDocument();
+      expect(within(header).getByRole('img', { name: 'Panel' })).toBeInTheDocument();
+      expect(within(header).queryByTestId('icon-plus')).not.toBeInTheDocument();
+      expect(within(header).queryByTestId('icon-minus')).not.toBeInTheDocument();
     });
 
     test('when a node was updated, its header reads the label followed by how much changed', () => {
       const updated: PanelReviewNode = {
         ...buildChangedPanel(),
         id: 'panel-errors',
-        label: 'Panel "Errors"',
-        statusText: 'was updated (2 changes)',
+        label: [own('panel', '"Errors"')],
+        statusText: ['was updated (2 changes)'],
       };
       const { elements } = renderReviewTab(
         ready(buildSummary({ tree: [{ ...buildRowWithPanels(), children: [updated] }] }))
@@ -332,7 +403,7 @@ describe('<ReviewTab />', () => {
     test.each([
       { kind: 'dashboard', label: 'Dashboard', icon: 'icon-apps' },
       { kind: 'row', label: 'Row "API"', icon: 'icon-list-ul' },
-      { kind: 'tab', label: 'Tab "Legacy"', icon: 'icon-layers' },
+      { kind: 'tab', label: 'Removed Tab "Legacy"', icon: 'icon-layers' },
       { kind: 'panel', label: 'Panel "CPU usage"', icon: 'icon-chart-line' },
     ])('when the tree has a $kind node, its header starts with the $icon icon', ({ label, icon }) => {
       renderReviewTab(ready(buildSummary()));
@@ -346,8 +417,195 @@ describe('<ReviewTab />', () => {
 
       expect(elements.toggle('Removed Tab "Legacy"')).toHaveAttribute('aria-expanded', 'true');
       expect(elements.toggle('Removed with it (2)')).toHaveAttribute('aria-expanded', 'true');
-      expect(screen.getByText('Panel "Old latency"')).toBeInTheDocument();
-      expect(screen.getByText('The 2nd unnamed panel in Tab "Legacy"')).toBeInTheDocument();
+      const items = within(controlledBy(elements.toggle('Removed with it (2)'))).getAllByRole('listitem');
+      expect(items.map((item) => item.textContent?.trim())).toEqual(['"Old latency"', '(unnamed) at position 2']);
+    });
+
+    test('when a section was removed and has contents, its − marker is the toggle in place of the chevron', () => {
+      const { elements } = renderReviewTab(ready(buildSummary()));
+
+      const toggle = elements.toggle('Removed Tab "Legacy"');
+      expect(within(toggle).getByTestId('icon-minus')).toBeInTheDocument();
+      expect(within(toggle).queryByTestId('icon-angle-down')).not.toBeInTheDocument();
+    });
+
+    describe('what an added element is set to', () => {
+      const addedPanel: PanelReviewNode = {
+        ...buildAddedPanel(),
+        properties: [
+          { label: 'Description', value: '"Cache hits during last week"' },
+          { label: 'Queries (1)', details: '[\n  { "refId": "A" }\n]' },
+        ],
+      };
+
+      test('when an added panel has properties, it starts collapsed and its + is the toggle', () => {
+        const { elements } = renderReviewTab(ready(buildSummary({ tree: [addedPanel] })));
+
+        const toggle = elements.toggle('Added Panel "Errors"');
+        expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        expect(within(toggle).getByTestId('icon-plus')).toBeInTheDocument();
+        expect(screen.queryByText('"Cache hits during last week"')).not.toBeInTheDocument();
+      });
+
+      test('when its + is clicked, literal values show inline and lists and objects wait behind Show', async () => {
+        const { elements, actions } = renderReviewTab(ready(buildSummary({ tree: [addedPanel] })));
+
+        await actions.click('Added Panel "Errors"');
+
+        const content = controlledBy(elements.toggle('Added Panel "Errors"'));
+        const items = within(content).getAllByRole('listitem');
+        expect(items[0]).toHaveTextContent('Description: "Cache hits during last week"');
+        expect(within(items[0]).queryByRole('button')).not.toBeInTheDocument();
+        expect(screen.queryByText(/"refId": "A"/)).not.toBeInTheDocument();
+
+        await actions.click('Show');
+
+        expect(screen.getByText(/"refId": "A"/)).toBeInTheDocument();
+      });
+
+      test('when an added list item has properties, its + is the toggle that reveals them', async () => {
+        const dashboard: DashboardReviewNode = {
+          ...buildDashboardNode(),
+          categories: [
+            {
+              category: 'controls',
+              label: 'Controls',
+              changes: [
+                {
+                  kind: 'added',
+                  subject: 'variable',
+                  text: 'Custom variable "env"',
+                  properties: [{ label: 'Query', value: '"prod,staging"' }],
+                  claims: ['variables/0'],
+                },
+              ],
+            },
+          ],
+        };
+        const { elements, actions } = renderReviewTab(ready(buildSummary({ tree: [dashboard] })));
+
+        const toggle = elements.toggle('Added Custom variable "env"');
+        expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+        await actions.click('Added Custom variable "env"');
+
+        expect(within(controlledBy(toggle)).getByRole('listitem')).toHaveTextContent('Query: "prod,staging"');
+      });
+
+      test('when several fields of one element changed, one line names it and its chevron reveals the changes', async () => {
+        const dashboard: DashboardReviewNode = {
+          ...buildDashboardNode(),
+          categories: [
+            {
+              category: 'controls',
+              label: 'Controls',
+              changes: [
+                {
+                  kind: 'changed',
+                  subject: 'variable',
+                  text: 'Query variable "number"',
+                  statusText: '(2 changes)',
+                  changes: [
+                    { kind: 'changed', text: 'Include All option: turned off', claims: [] },
+                    { kind: 'changed', text: 'Refresh: set to onDashboardLoad', claims: [] },
+                  ],
+                  claims: ['variables/0/spec/includeAll', 'variables/0/spec/refresh'],
+                },
+              ],
+            },
+          ],
+        };
+        const { elements, actions } = renderReviewTab(ready(buildSummary({ tree: [dashboard] })));
+
+        const toggle = elements.toggle('Query variable "number" (2 changes)');
+        expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        expect(within(toggle).getByTestId('icon-angle-right')).toBeInTheDocument();
+        expect(screen.queryByText('Include All option: turned off')).not.toBeInTheDocument();
+
+        await actions.click('Query variable "number" (2 changes)');
+
+        const lines = within(controlledBy(toggle)).getAllByRole('listitem');
+        expect(lines.map((line) => line.textContent?.trim())).toEqual([
+          'Include All option: turned off',
+          'Refresh: set to onDashboardLoad',
+        ]);
+      });
+    });
+
+    describe('elements a layout change moved into a new section', () => {
+      const newRow: SectionReviewNode = {
+        kind: 'section',
+        sectionKind: 'row',
+        id: 'row-new',
+        label: ['Added ', own('row', '"New row 1"')],
+        status: 'added',
+        statusText: ['(2 panels moved to it)'],
+        summary: '',
+        categories: [],
+        children: [],
+        movedInContents: [[named('panel', '"P3"')], [named('panel', '"P4"')]],
+        claims: [],
+      };
+
+      test('when the section has nothing else to show, it starts collapsed with the count in its header', () => {
+        const { elements } = renderReviewTab(ready(buildSummary({ tree: [newRow] })));
+
+        const toggle = elements.toggle('Added Row "New row 1" (2 panels moved to it)');
+        expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        expect(within(toggle).getByTestId('icon-plus')).toBeInTheDocument();
+        expect(within(toggle).queryByTestId('icon-angle-right')).not.toBeInTheDocument();
+        expect(screen.queryByText('"P3"')).not.toBeInTheDocument();
+      });
+
+      test('when its + is clicked, it lists the moved elements with their icons and no toggles of their own', async () => {
+        const { elements, actions } = renderReviewTab(ready(buildSummary({ tree: [newRow] })));
+
+        await actions.click('Added Row "New row 1" (2 panels moved to it)');
+
+        const content = controlledBy(elements.toggle('Added Row "New row 1" (2 panels moved to it)'));
+        const items = within(content).getAllByRole('listitem');
+        expect(items.map((item) => item.textContent?.trim())).toEqual(['"P3"', '"P4"']);
+        expect(within(items[0]).getByRole('img', { name: 'Panel' })).toBeInTheDocument();
+        expect(within(content).queryByRole('button')).not.toBeInTheDocument();
+      });
+
+      test('when a moved-in element also changed, it is listed once, as its own line in its place', () => {
+        const changed = buildChangedPanel();
+        const { elements } = renderReviewTab(
+          ready(
+            buildSummary({
+              tree: [
+                {
+                  ...newRow,
+                  movedInContents: [[named('panel', '"P3"')], [named('panel', '"CPU usage"')]],
+                  movedInNodeIds: ['panel-3', changed.id],
+                  children: [changed],
+                },
+              ],
+            })
+          )
+        );
+
+        // It has a changed child, so it starts expanded
+
+        const items = within(
+          controlledBy(elements.toggle('Added Row "New row 1" (2 panels moved to it)'))
+        ).getAllByRole('listitem');
+        expect(items[0]).toHaveTextContent('"P3"');
+        expect(within(items[1]).getByRole('button', { name: /^Panel "CPU usage"/ })).toBeInTheDocument();
+        expect(screen.getAllByRole('button', { name: /^Panel "CPU usage"/ })).toHaveLength(1);
+      });
+
+      test('when the section also has changes of its own, it starts expanded', () => {
+        const { elements } = renderReviewTab(
+          ready(buildSummary({ tree: [{ ...newRow, children: [buildAddedPanel()] }] }))
+        );
+
+        expect(elements.toggle('Added Row "New row 1" (2 panels moved to it)')).toHaveAttribute(
+          'aria-expanded',
+          'true'
+        );
+      });
     });
 
     test('when a line is added above an open value after a recompute, the value stays open on its own line', async () => {

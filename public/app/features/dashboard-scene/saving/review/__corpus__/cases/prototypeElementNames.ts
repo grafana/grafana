@@ -24,8 +24,16 @@ export const prototypeElementNames: ReviewCorpusCase = {
 Changes to 2 panels
 Counts: 2 added, 0 changed, 0 removed, 0 moved
 
-+ Panel "Builds"
++ Added Panel "Builds"
+  · Visualization: timeseries
+  · Queries (1) [Show]
+  · Plugin options [Show]
+  · Field config [Show]
 
-+ Panel "Deploys"
++ Added Panel "Deploys"
+  · Visualization: timeseries
+  · Queries (1) [Show]
+  · Plugin options [Show]
+  · Field config [Show]
 `,
 };

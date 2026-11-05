@@ -1,12 +1,15 @@
 import { compare } from 'fast-json-patch';
 import { isEqual } from 'lodash';
 
+import { t } from '@grafana/i18n';
+
 import { type Diff } from '../../../settings/version-history/utils';
-import { type PathKey, pathKey, type ReviewElementKind } from '../types';
+import { type PathKey, pathKey, type ReviewElementKind, type ReviewProperty } from '../types';
 
 import { changed, describeValue, type ValueFormat, type Worded } from './formatters';
 import { joinLabel } from './labels';
 import { hasValueAt, isUnset, valueAt } from './paths';
+import { everything, type IsDefault } from './properties';
 
 /** A field of a list item: changes inside it are worded as one line. */
 export interface ItemField {
@@ -33,17 +36,26 @@ export interface NamedListItems {
   subjectOf(item: unknown): ReviewElementKind;
   /** What an added or removed item reads as, when more than its name (a show / hide rule with its value). */
   elementText?(item: unknown, index: number, all: unknown[]): string;
-  /** The whole configuration of an added or removed item, revealed on demand. */
-  detailsOf?(item: unknown): string | undefined;
+  /**
+   * What an added or removed item is set to, revealed by its toggle. `path` is the item's absolute path on its
+   * own side; `isDefault` tells what Grafana filled in there.
+   */
+  propertiesOf?(item: unknown, path: string[], isDefault: IsDefault): ReviewProperty[];
 }
 
 export interface ListContext {
   /** Whether an `add` at `path` (absolute) is a system default, given what the baseline has. */
   isDefault(path: string[], value: unknown, baselineHas: (path: string[]) => boolean): boolean;
+  /** Whether a value of a new element is a default, judged on the side the element is on. */
+  isDefaultOn?(side: 'baseline' | 'payload'): IsDefault;
 }
 
 interface Slot {
   worded: Worded;
+  /** A field change worded without the item's name, for when it is listed under the item. */
+  inner?: Worded;
+  /** Field changes: the index of the item in the payload. */
+  index?: number;
   claims: PathKey[];
   /** Field key for field changes of a matched item. */
   field?: string;
@@ -72,6 +84,17 @@ export function describeNamedList(
   const afterIndexByKey = new Map(afterKeys.map((key, index) => [key, index]));
   const matchedBefore: Array<number | undefined> = afterKeys.map((key) => beforeIndexByKey.get(key));
 
+  // Every added or removed element can be reviewed: when nothing differs from the defaults, the defaults are
+  // what it is set to.
+  const propertiesOf = (item: unknown, index: number, side: 'baseline' | 'payload') => {
+    const path = [...listPath, String(index)];
+    if (!items.propertiesOf) {
+      return [];
+    }
+    const set = items.propertiesOf(item, path, ctx.isDefaultOn?.(side) ?? everything);
+    const all = set.length ? set : items.propertiesOf(item, path, everything);
+    return all.length ? all : [{ label: t('dashboard-scene.review.property.no-settings', 'No settings') }];
+  };
   const addedSlots = new Map<number, Slot>();
   const fieldSlots = new Map<number, Slot[]>();
   const removedSlots = new Map<number, Slot>();
@@ -81,13 +104,13 @@ export function describeNamedList(
     const name = items.nameOf(item, index, after);
     if (beforeIndex === undefined) {
       const text = items.elementText?.(item, index, after) ?? name;
-      const config = items.detailsOf?.(item);
+      const properties = propertiesOf(item, index, 'payload');
       addedSlots.set(index, {
         worded: {
           kind: 'added',
           text,
           subject: items.subjectOf(item),
-          ...(config !== undefined && { details: { after: config } }),
+          ...(properties.length > 0 && { properties }),
         },
         claims: [],
         position: index,
@@ -104,6 +127,8 @@ export function describeNamedList(
         ...describeValue(joinLabel([name, field.label]), field.read(beforeItem), field.read(item), field.format),
         subject: items.subjectOf(item),
       },
+      inner: describeValue(field.label, field.read(beforeItem), field.read(item), field.format),
+      index,
       claims: [],
       field: field.key,
       position: index + order / 1e3,
@@ -117,13 +142,13 @@ export function describeNamedList(
     if (afterIndexByKey.has(beforeKeys[index])) {
       return;
     }
-    const config = items.detailsOf?.(item);
+    const properties = propertiesOf(item, index, 'baseline');
     removedSlots.set(index, {
       worded: {
         kind: 'removed',
         text: items.elementText?.(item, index, before) ?? items.nameOf(item, index, before),
         subject: items.subjectOf(item),
-        ...(config !== undefined && { details: { before: config } }),
+        ...(properties.length > 0 && { properties }),
       },
       claims: [],
       position: positionOfRemoved(index, beforeKeys, afterIndexByKey),
@@ -187,6 +212,8 @@ export function describeNamedList(
       // A difference no field accounts for: show it rather than drop it.
       const slot: Slot = {
         worded: { ...changed(items.nameOf(after[index], index, after)), subject: items.subjectOf(after[index]) },
+        inner: changed(t('dashboard-scene.review.item-field.other', 'Other settings')),
+        index,
         claims: [key],
         position: index + 0.999,
       };
@@ -194,6 +221,27 @@ export function describeNamedList(
     } else {
       firstChange().claims.push(key);
     }
+  }
+
+  /** Several field changes of one item read as one line naming it, with the changes listed under it. */
+  function groupOf(slots: Slot[]): Slot {
+    const index = slots[0].index!;
+    const item = after[index];
+    return {
+      worded: {
+        kind: 'changed',
+        text: items.nameOf(item, index, after),
+        subject: items.subjectOf(item),
+        statusText: t('dashboard-scene.review.status.item-changes', '', {
+          count: slots.length,
+          defaultValue_one: '({{count}} change)',
+          defaultValue_other: '({{count}} changes)',
+        }),
+        changes: slots.map((slot) => ({ ...(slot.inner ?? slot.worded), claims: [] })),
+      },
+      claims: slots.flatMap((slot) => slot.claims),
+      position: slots[0].position,
+    };
   }
 
   function fieldSlotFor(diff: Diff, index: number): Slot | undefined {
@@ -208,7 +256,7 @@ export function describeNamedList(
 
   return [
     ...addedSlots.values(),
-    ...[...fieldSlots.values()].flat(),
+    ...[...fieldSlots.values()].map((slots) => (slots.length > 1 ? groupOf(slots) : slots[0])),
     ...removedSlots.values(),
     ...(reorder ? [reorder] : []),
     ...extra,

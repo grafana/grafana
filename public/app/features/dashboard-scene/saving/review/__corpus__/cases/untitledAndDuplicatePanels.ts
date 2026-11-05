@@ -24,7 +24,7 @@ export const untitledAndDuplicatePanels: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to 2 panels
+Changes to 1 tab
 Counts: 0 added, 2 changed, 0 removed, 0 moved
 
 Tab "DB"

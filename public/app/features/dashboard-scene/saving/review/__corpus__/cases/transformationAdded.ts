@@ -23,5 +23,6 @@ Counts: 1 added, 0 changed, 0 removed, 0 moved
 Panel "Requests" was updated (1 change) · data
   [Data]
     + Transformation "Organize fields by name"
+      · Options [Show]
 `,
 };

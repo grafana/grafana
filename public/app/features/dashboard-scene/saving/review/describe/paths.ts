@@ -5,6 +5,11 @@ export function unescapeSegment(segment: string): string {
   return segment.replace(/~1/g, '/').replace(/~0/g, '~');
 }
 
+/** The escaped path segment for an object key, as jsonDiff writes it. */
+export function escapeSegment(key: string): string {
+  return key.replace(/~/g, '~0').replace(/\//g, '~1');
+}
+
 /** Reads the value at escaped path segments. */
 export function valueAt(root: unknown, path: ReadonlyArray<string | number>): unknown {
   let current: unknown = root;

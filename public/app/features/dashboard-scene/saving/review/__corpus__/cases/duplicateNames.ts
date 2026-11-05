@@ -117,10 +117,11 @@ export const duplicatesRemovedWithRow: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to 1 section
+Changes to 1 row
 Counts: 0 added, 0 changed, 1 removed, 0 moved
 
-- Row "API"
+- Removed Row "API"
+  · Layout: custom grid
   removed with it: Panel "New panel" at position 1
   removed with it: Panel "New panel" at position 2
 `,

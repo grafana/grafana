@@ -18,7 +18,7 @@ const baseline = dashboard({
   ]),
 });
 
-// The sections above 'Details' have nothing of their own to show, so 'Details' stands in for them with its full path.
+// The sections above 'Details' have nothing of their own to show, so 'Details' says where it sits.
 export const deepNesting: ReviewCorpusCase = {
   name: 'deep nesting (tab › row › tab, full path in the header)',
   input: {
@@ -30,10 +30,10 @@ export const deepNesting: ReviewCorpusCase = {
     }),
   },
   expected: text`
-Changes to 1 panel
+Changes to 1 tab
 Counts: 0 added, 1 changed, 0 removed, 0 moved
 
-Tab "Cluster" › Row "Nodes" › Tab "Details"
+Tab "Details" under Tab "Cluster" › Row "Nodes"
   Panel "CPU usage" was updated (1 change) · properties
     [Properties]
       Title: "CPU" → "CPU usage"

@@ -1421,7 +1421,7 @@ describe('SaveDashboardDrawer with grafana.humanFriendlyDashDiffs enabled', () =
         {
           kind: 'dashboard',
           id: 'dashboard',
-          label: 'Dashboard',
+          label: ['Dashboard'],
           summary: 'properties',
           claims: [],
           categories: [

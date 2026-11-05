@@ -5,12 +5,14 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 
 import { type Diff } from '../../../settings/version-history/utils';
 import { unescapeSegment } from '../describe/paths';
+import { joinPath, noEscape, rich } from '../richText';
 import {
   type ChangeKind,
   DASHBOARD_NODE_ID,
   type PathKey,
   type RawChange,
   type ReviewCategory,
+  type RichText,
   type Structure,
   type StructureFieldKey,
   settingRank,
@@ -19,19 +21,16 @@ import {
 
 import { longestCommonSubsequence } from './lcs';
 import { matchSections, type SectionMatching } from './matchSections';
-import { joinPath, nameSide, type SideNames } from './naming';
+import { nameSide, type SideNames } from './naming';
 import {
   childArrayKey,
   isPanelLayoutKind,
-  type LayoutKindName,
   type WalkedContainer,
   type WalkedLayout,
   type WalkedPlacement,
   type WalkedSection,
   walkLayout,
 } from './walkLayout';
-
-const noEscape = { escapeValue: false };
 
 type Side = 'baseline' | 'payload';
 
@@ -175,7 +174,6 @@ class StructureBuilder {
     this.addNode({
       id: DASHBOARD_NODE_ID,
       kind: 'dashboard',
-      label: t('dashboard-scene.review.node.dashboard', 'Dashboard'),
       claims: [],
     });
 
@@ -185,9 +183,13 @@ class StructureBuilder {
         id: this.sectionId('payload', section.path),
         kind: 'section',
         sectionKind: section.kind,
-        label: this.payloadLabel(this.sectionId('payload', section.path)),
+        name: this.payloadLabel(this.sectionId('payload', section.path)),
+        itemPath: section.path,
+        ...this.parentPathOf('payload', section.parentPath),
         parentId: this.parentOf('payload', section.parentPath),
-        ...(matched ? this.moveStatus(this.sectionId('payload', section.path)) : { status: 'added' as const }),
+        ...(matched
+          ? this.moveStatus(this.sectionId('payload', section.path))
+          : { status: 'added' as const, ...this.movedIn(section) }),
         claims: [],
       });
     }
@@ -202,7 +204,9 @@ class StructureBuilder {
         id: this.sectionId('baseline', section.path),
         kind: 'section',
         sectionKind: section.kind,
-        label: this.names.baseline.sections.get(section.path)!,
+        name: this.names.baseline.segments.get(section.path)!.label,
+        itemPath: section.path,
+        ...this.parentPathOf('baseline', section.parentPath),
         parentId: this.parentOf('baseline', section.parentPath),
         ...(parentRemoved ? {} : { status: 'removed' as const, removedContents: this.removedContents(section) }),
         claims: [],
@@ -217,7 +221,9 @@ class StructureBuilder {
         id: this.panelId(name),
         kind: 'panel',
         elementName: name,
-        label: this.payloadLabel(this.panelId(name)),
+        name: this.payloadLabel(this.panelId(name)),
+        ...(placement ? { itemPath: placement.path } : {}),
+        ...this.parentPathOf('payload', placement?.sectionPath),
         ownerLabel: this.names.payload.owners.get(name),
         parentId: this.parentOf('payload', placement?.sectionPath),
         claims: [],
@@ -241,7 +247,9 @@ class StructureBuilder {
         id: this.panelId(name),
         kind: 'panel',
         elementName: name,
-        label: this.names.baseline.panels.get(name)!.label,
+        name: this.names.baseline.panels.get(name)!.label,
+        ...(placement ? { itemPath: placement.path } : {}),
+        ...this.parentPathOf('baseline', placement?.sectionPath),
         ownerLabel: this.names.baseline.owners.get(name),
         parentId,
         ...(inRemovedSection ? {} : { status: 'removed' as const }),
@@ -252,36 +260,44 @@ class StructureBuilder {
   }
 
   /**
-   * A payload node's header. A moved node whose name is ambiguous drops its position from the header:
-   * the move text ends with its new position instead.
+   * A payload node's own name. A moved node whose name is ambiguous drops its position: describe/ appends its
+   * new position to the move text instead.
    */
-  private payloadLabel(nodeId: string): string {
-    const moved = this.moves.has(nodeId);
-    if (nodeId.startsWith('panel:')) {
-      const panel = this.names.payload.panels.get(nodeId.slice('panel:'.length))!;
-      return moved ? panel.name : panel.label;
-    }
-    const path = nodeId.slice('section:'.length);
-    if (!moved) {
-      return this.names.payload.sections.get(path)!;
-    }
-    const segment = this.names.payload.segments.get(path)!;
-    const parentPath = this.walked.payload.sectionByPath.get(path)?.parentPath;
-    return parentPath !== undefined
-      ? joinPath(this.names.payload.sections.get(parentPath)!, segment.name)
-      : segment.name;
+  private payloadLabel(nodeId: string): RichText {
+    const own = this.payloadName(nodeId)!;
+    return this.moves.has(nodeId) ? own.name : own.label;
+  }
+
+  /** The full path of the section a node sits in, if any. */
+  private parentPathOf(side: Side, sectionPath: PathKey | undefined): Pick<StructureNode, 'parentPath'> {
+    return sectionPath === undefined ? {} : { parentPath: this.names[side].sections.get(sectionPath)! };
   }
 
   private addNode(node: StructureNode) {
     this.nodeById.set(node.id, node);
   }
 
+  /**
+   * Panels and sections that already existed and sit directly in an added section, in payload reading order,
+   * without a move of their own: a restructure put them there (e.g. grouping a grid into rows), so nothing else
+   * says where they went. Real moves keep their own node and move text.
+   */
+  private movedIn(section: WalkedSection): Pick<StructureNode, 'movedInContents' | 'movedInNodeIds'> {
+    const baselineElements = this.baseline.elements ?? {};
+    const existed = (id: string) =>
+      id.startsWith('panel:')
+        ? Object.hasOwn(baselineElements, id.slice('panel:'.length))
+        : this.isMatchedSectionId(id);
+    const ids = this.readingOrder(section.container, 'payload').filter((id) => existed(id) && !this.moves.has(id));
+    return { movedInContents: ids.map((id) => this.payloadName(id)!.label), movedInNodeIds: ids };
+  }
+
   /** Panels deleted with a removed section and its nested sections, in baseline reading order. */
-  private removedContents(section: WalkedSection): string[] {
+  private removedContents(section: WalkedSection): RichText[] {
     const payloadElements = this.payload.elements ?? {};
-    const contents: string[] = [];
+    const contents: RichText[] = [];
     // Listed under the removed section's header, so nested sections are named relative to it.
-    const visit = (container: WalkedContainer, prefix?: string) => {
+    const visit = (container: WalkedContainer, prefix?: RichText) => {
       for (const placement of container.placements) {
         if (!Object.hasOwn(payloadElements, placement.elementName)) {
           contents.push(this.names.baseline.panels.get(placement.elementName)!.label);
@@ -384,15 +400,17 @@ class StructureBuilder {
    * A moved node's status: the move text, and its new position when its name is ambiguous (its header then
    * shows the name only). describe/ composes the final statusText from both.
    */
-  private moveStatus(nodeId: string): Pick<StructureNode, 'status' | 'moveText' | 'movePosition'> {
+  private moveStatus(nodeId: string): Pick<StructureNode, 'status' | 'moveText' | 'movePosition' | 'movedFromId'> {
     const move = this.moves.get(nodeId);
     if (!move) {
       return {};
     }
     const own = this.payloadName(nodeId);
+    const from = move.sameSection ? undefined : move.fromSectionPath;
     return {
       status: 'moved',
       moveText: this.moveRelation(nodeId, move),
+      ...(from !== undefined ? { movedFromId: this.sectionId('baseline', from) } : {}),
       ...(own?.ambiguous ? { movePosition: own.position } : {}),
     };
   }
@@ -401,7 +419,7 @@ class StructureBuilder {
   private moveRelation(
     nodeId: string,
     move: { sameSection: true } | { sameSection: false; fromSectionPath?: PathKey }
-  ): string {
+  ): RichText {
     const siblings = this.payloadSiblings(nodeId);
     const index = siblings.indexOf(nodeId);
     const previous = index > 0 ? this.neighbourName(siblings[index - 1]) : undefined;
@@ -409,51 +427,54 @@ class StructureBuilder {
 
     if (move.sameSection) {
       return previous !== undefined
-        ? t('dashboard-scene.review.status.moved-after', 'moved after {{node}}', {
-            node: previous,
-            interpolation: noEscape,
-          })
-        : t('dashboard-scene.review.status.moved-before', 'moved before {{node}}', {
-            node: next ?? '',
-            interpolation: noEscape,
-          });
+        ? rich({ node: previous }, (p) =>
+            t('dashboard-scene.review.status.moved-after', 'moved after {{node}}', { ...p, interpolation: noEscape })
+          )
+        : rich({ node: next ?? [] }, (p) =>
+            t('dashboard-scene.review.status.moved-before', 'moved before {{node}}', { ...p, interpolation: noEscape })
+          );
     }
 
     const source = this.sourceLabel(move.fromSectionPath);
     const destination = this.destinationLabel(nodeId);
     if (previous !== undefined) {
-      return t(
-        'dashboard-scene.review.status.moved-between-after',
-        'moved from {{source}} to {{destination}}, after {{node}}',
-        { source, destination, node: previous, interpolation: noEscape }
+      return rich({ source, destination, node: previous }, (p) =>
+        t(
+          'dashboard-scene.review.status.moved-between-after',
+          'moved from {{source}} to {{destination}}, after {{node}}',
+          { ...p, interpolation: noEscape }
+        )
       );
     }
     if (next !== undefined) {
-      return t(
-        'dashboard-scene.review.status.moved-between-before',
-        'moved from {{source}} to {{destination}}, before {{node}}',
-        { source, destination, node: next, interpolation: noEscape }
+      return rich({ source, destination, node: next }, (p) =>
+        t(
+          'dashboard-scene.review.status.moved-between-before',
+          'moved from {{source}} to {{destination}}, before {{node}}',
+          { ...p, interpolation: noEscape }
+        )
       );
     }
-    return t('dashboard-scene.review.status.moved-between', 'moved from {{source}} to {{destination}}', {
-      source,
-      destination,
-      interpolation: noEscape,
-    });
+    return rich({ source, destination }, (p) =>
+      t('dashboard-scene.review.status.moved-between', 'moved from {{source}} to {{destination}}', {
+        ...p,
+        interpolation: noEscape,
+      })
+    );
   }
 
   /** The new section's full path, or the top level for the root. */
-  private destinationLabel(nodeId: string): string {
+  private destinationLabel(nodeId: string): RichText {
     const sectionPath = nodeId.startsWith('panel:')
       ? this.walked.payload.placementByElement.get(nodeId.slice('panel:'.length))?.sectionPath
       : this.walked.payload.sectionByPath.get(nodeId.slice('section:'.length))?.parentPath;
-    return sectionPath === undefined ? topLevel() : this.names.payload.sections.get(sectionPath)!;
+    return sectionPath === undefined ? [topLevel()] : this.names.payload.sections.get(sectionPath)!;
   }
 
   /** The old section's full path: its current name when it still exists, its baseline name when removed. */
-  private sourceLabel(sectionPath: PathKey | undefined): string {
+  private sourceLabel(sectionPath: PathKey | undefined): RichText {
     if (sectionPath === undefined) {
-      return topLevel();
+      return [topLevel()];
     }
     const payloadPath = this.matching.baselineToPayload.get(sectionPath);
     return payloadPath !== undefined
@@ -481,11 +502,8 @@ class StructureBuilder {
   }
 
   /** A neighbour's name, without a position: being next to the moved node identifies it. */
-  private neighbourName(id: string): string {
-    if (id.startsWith('panel:')) {
-      return this.names.payload.panels.get(id.slice('panel:'.length))?.name ?? '';
-    }
-    return this.names.payload.segments.get(id.slice('section:'.length))?.name ?? '';
+  private neighbourName(id: string): RichText {
+    return this.payloadName(id)?.name ?? [];
   }
 
   /** The moved node's own name among its new siblings. */
@@ -982,7 +1000,7 @@ function topLevel(): string {
   return t('dashboard-scene.review.status.top-level', 'the top level of the dashboard');
 }
 
-function layoutKindName(kind: LayoutKindName): string {
+export function layoutKindName(kind: string): string {
   switch (kind) {
     case 'GridLayout':
       return t('dashboard-scene.review.structure.layout-kind.grid', 'custom grid');
