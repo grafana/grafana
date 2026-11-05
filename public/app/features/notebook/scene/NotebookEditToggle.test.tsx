@@ -47,7 +47,7 @@ describe('NotebookEditToggle', () => {
 
     expect(screen.getAllByRole('menuitemradio').map((item) => item.textContent)).toEqual([
       'ViewingView and explore the notebook.',
-      'EditingEdit cells, panels, and the title.',
+      'EditingEdit text and panels.',
     ]);
   });
 

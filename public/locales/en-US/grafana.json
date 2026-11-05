@@ -13798,7 +13798,7 @@
       "available-once-created": "Available once you write something",
       "copy-link": "Copy link",
       "mode-current": "Notebook mode: {{mode}}",
-      "mode-edit-description": "Edit cells, panels, and the title.",
+      "mode-edit-description": "Edit text and panels.",
       "mode-editing": "Editing",
       "mode-label": "Notebook mode",
       "mode-view-description": "View and explore the notebook.",

@@ -35,7 +35,7 @@ export function NotebookEditToggle({ notebook }: { notebook: NotebookScene }) {
     {
       editing: true,
       label: t('notebooks.view.mode-editing', 'Editing'),
-      description: t('notebooks.view.mode-edit-description', 'Edit cells, panels, and the title.'),
+      description: t('notebooks.view.mode-edit-description', 'Edit text and panels.'),
       icon: 'pen',
     },
   ];
