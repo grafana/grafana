@@ -226,8 +226,6 @@ Saving changes adds a transformation to the panel that reflects the change you m
 This is helpful since you aren't required to build a transformation from scratch.
 
 The icon also reminds dashboard editors and viewers that changes have been applied and provides a way to reset the panel to its original version.
-This can be especially helpful when you share a panel with changes applied.
-The recipient can just remove the changes or make their own view changes.
 
 ### Example
 
