@@ -69,7 +69,7 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 			// of the interface
 			nV, _, err := schema[i].Type.Convert(ctx, val)
 			if err != nil {
-				return nil, MakeOutputConvertError(outputConvertError(ctx, schema[i], val, rowIdx, err), refID)
+				return nil, MakeOutputConvertError(cellConvertError(ctx, schema[i], val, rowIdx, err), refID)
 			}
 
 			// Run the normalized value through fieldValFromRowVal to normalize
@@ -87,14 +87,17 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 	return f, nil
 }
 
-// outputConvertError adds the column and row to an error from col.Type.Convert.
-// The engine names the column '<unknown>' in charset errors unless the context
-// carries the column and row, so on failure it converts val once more with them.
-func outputConvertError(ctx *mysql.Context, col *mysql.Column, val interface{}, rowIdx int, err error) error {
-	colCtx := context.WithValue(ctx.Context, types.ColumnNameKey, col.Name)
-	colCtx = context.WithValue(colCtx, types.RowNumberKey, int64(rowIdx))
-	if _, _, retryErr := col.Type.Convert(ctx.WithContext(colCtx), val); retryErr != nil {
-		err = retryErr
+// cellConvertError names the row and column of a value that failed col.Type.Convert.
+// The engine's charset error already has a column and row in its text, but they
+// read '<unknown>' and 0 unless the context carries them. Setting them on every
+// cell costs allocations, so only a failed value is converted again with them.
+func cellConvertError(ctx *mysql.Context, col *mysql.Column, val interface{}, rowIdx int, err error) error {
+	if types.ErrBadCharsetString.Is(err) {
+		colCtx := context.WithValue(ctx.Context, types.ColumnNameKey, col.Name)
+		colCtx = context.WithValue(colCtx, types.RowNumberKey, int64(rowIdx))
+		if _, _, retryErr := col.Type.Convert(ctx.WithContext(colCtx), val); retryErr != nil {
+			return retryErr
+		}
 	}
 	return fmt.Errorf("row %d, column %s: %w", rowIdx, col.Name, err)
 }

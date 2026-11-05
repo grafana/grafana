@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"math"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -426,12 +427,12 @@ func TestQueryFrames_OutputConversionError(t *testing.T) {
 		{
 			name:     "invalid UTF-8 in the first row",
 			field:    data.NewField("bin", nil, []string{"\x01\x02\xff", "ok"}),
-			wantText: "row 0, column bin: Incorrect string value: '\\xFF' for column 'bin' at row 0",
+			wantText: "Incorrect string value: '\\xFF' for column 'bin' at row 0",
 		},
 		{
 			name:     "invalid UTF-8 in a later row of a nullable field",
 			field:    data.NewField("bin", nil, []*string{new("ok"), nil, new("\xde\xad\xbe\xef")}),
-			wantText: "row 2, column bin: Incorrect string value: '\\xBE\\xEF' for column 'bin' at row 2",
+			wantText: "Incorrect string value: '\\xBE\\xEF' for column 'bin' at row 2",
 		},
 	}
 
@@ -444,7 +445,7 @@ func TestQueryFrames_OutputConversionError(t *testing.T) {
 			_, err := db.QueryFrames(t.Context(), &testTracer{}, "b", `SELECT * FROM a`, data.Frames{input})
 
 			require.ErrorContains(t, err, "failed to convert the results of sql expression [b] into a data frame: "+tt.wantText)
-			require.NotContains(t, err.Error(), "<unknown>")
+			require.Equal(t, 1, strings.Count(err.Error(), "bin"), "the column is named once")
 			var gfErr errutil.Error
 			require.ErrorAs(t, err, &gfErr)
 			require.Equal(t, "sse.sql.output_conversion", gfErr.MessageID)
