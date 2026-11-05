@@ -37,14 +37,13 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "url-change-app", Namespace: "default"},
 		Spec: provisioning.ConnectionSpec{
 			Title: "URL change App", Type: provisioning.GithubConnectionType,
-			GitHub:  &provisioning.GitHubConnectionConfig{AppID: "123456", InstallationID: "454545"},
-			Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
+			GitHub: &provisioning.GitHubConnectionConfig{AppID: "123456", InstallationID: "454545"},
 		},
 		Secure: provisioning.ConnectionSecure{PrivateKey: commonapi.InlineSecureValue{
 			Create: commonapi.RawSecureValue(base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))),
 		}},
 	}
-	_, err := helper.CreateGithubConnection(t, common.MustToUnstructured(t, conn))
+	_, err := helper.CreateGithubConnection(t, t.Context(), common.MustToUnstructured(t, conn))
 	require.NoError(t, err)
 	repo := &provisioning.Repository{
 		TypeMeta:   metav1.TypeMeta{APIVersion: provisioning.APIVERSION, Kind: "Repository"},
@@ -53,7 +52,6 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 			Title: "URL change repository", Type: provisioning.GitHubRepositoryType,
 			GitHub:     &provisioning.GitHubRepositoryConfig{URL: "https://github.com/grafana/old", Branch: "main"},
 			Connection: &provisioning.ConnectionInfo{Name: conn.Name},
-			Webhook:    &provisioning.WebhookConfig{Disabled: true},
 			Sync:       provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 		},
 		Secure: provisioning.SecureValues{
@@ -182,7 +180,6 @@ func TestIntegrationProvisioning_GitHubAppURLChangeTestEndpoint(t *testing.T) {
 			Title: "URL change test repository", Type: provisioning.GitHubRepositoryType,
 			GitHub:     &provisioning.GitHubRepositoryConfig{URL: gitServer.URL + "/grafana/old", Branch: "main"},
 			Connection: &provisioning.ConnectionInfo{Name: conn.GetName()},
-			Webhook:    &provisioning.WebhookConfig{Disabled: true},
 			Sync:       provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 		},
 	}
@@ -269,7 +266,7 @@ func TestIntegrationProvisioning_ConnectionRepositoryURLChange(t *testing.T) {
 			},
 		},
 	}}
-	_, err := helper.CreateGithubConnection(t, connection)
+	_, err := helper.CreateGithubConnection(t, t.Context(), connection)
 	require.NoError(t, err, "failed to create connection")
 
 	repo := &unstructured.Unstructured{Object: map[string]any{

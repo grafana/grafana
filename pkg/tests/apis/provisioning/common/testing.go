@@ -1728,7 +1728,7 @@ func (h *ProvisioningTestHelper) GithubConnectionObject(name string) *unstructur
 // removes it when the test ends.
 func (h *ProvisioningTestHelper) CreateNamedGithubConnection(t *testing.T, name string) *unstructured.Unstructured {
 	t.Helper()
-	created, err := h.CreateGithubConnection(t, h.GithubConnectionObject(name))
+	created, err := h.CreateGithubConnection(t, t.Context(), h.GithubConnectionObject(name))
 	require.NoError(t, err, "failed to create connection %q", name)
 	t.Cleanup(func() {
 		_ = h.Connections.Resource.Delete(context.WithoutCancel(t.Context()), created.GetName(), metav1.DeleteOptions{})
