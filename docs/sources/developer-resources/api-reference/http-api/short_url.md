@@ -35,59 +35,18 @@ Use this API to create shortened URLs. A short URL represents a longer URL conta
 
 ## Endpoints
 
-
-
-To determine the `{namespace}` for your instance, refer to [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+These are the available endpoints:
 
 | Method | Summary                                       | URI                                                                          |
 | ------ | --------------------------------------------- | ---------------------------------------------------------------------------- |
 | POST   | [Create a short URL](#create-a-short-url)     | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls`        |
 | GET    | [Retrieve a short URL](#retrieve-a-short-url) | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}` |
 
+To determine the `{namespace}` for your instance, refer to [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
 ## Create a short URL
 
 
-
-## Create short URL
-
-`POST /api/short-urls`
-
-Creates a short URL.
-
-**Example request:**
-
-```http
-POST /api/short-urls HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
-
-{
-  "path": "d/TxKARsmGz/new-dashboard?orgId=1&from=1599389322894&to=1599410922894"
-}
-```
-
-JSON body schema:
-
-- **path** – The path to shorten, relative to the Grafana [root_url](/docs/grafana/latest/setup-grafana/configure-grafana/#root_url).
-
-**Example response:**
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "uid": AT76wBvGk,
-  "url": http://localhost:3000/goto/AT76wBvGk?orgId=1
-}
-
-```
-
-Status codes:
-
-- **200** – Created
-- **400** – Errors (invalid JSON, missing or invalid fields)
 
 
 
