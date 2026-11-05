@@ -453,7 +453,8 @@ describe('VarMappingToggleEditor with a variable source', () => {
   });
 
   it('offers an existing variable named after the property, and maps it', async () => {
-    const { source } = makeSource({}, [...variables, { name: 'drawStyle', current: 'line' }]);
+    const drawStyle = { name: 'drawStyle', current: 'line', values: [{ value: 'line', label: 'line' }] };
+    const { source } = makeSource({}, [...variables, drawStyle]);
     const { onChange } = renderRadio({ variables: source });
 
     await userEvent.click(screen.getByRole('button', { name: 'Use variable' }));
@@ -461,6 +462,19 @@ describe('VarMappingToggleEditor with a variable source', () => {
     await userEvent.click(await screen.findByRole('option', { name: /Use existing variable drawStyle/ }));
 
     expect(onChange).toHaveBeenCalledWith('${drawStyle}');
+  });
+
+  it('names the new variable apart from a same-named one with other values', async () => {
+    const drawStyle = { name: 'drawStyle', current: 'x', values: [{ value: 'x', label: 'x' }] };
+    const { source } = makeSource({}, [...variables, drawStyle, { name: 'drawStyle_2', current: 'q' }]);
+    const { onChange } = renderRadio({ variables: source });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Use variable' }));
+    expect(screen.queryByRole('option', { name: /Use existing variable/ })).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('option', { name: /New variable with these values/ }));
+
+    expect(source.createVariable).toHaveBeenCalledWith(expect.objectContaining({ name: 'drawStyle_3' }));
+    expect(onChange).toHaveBeenCalledWith('${drawStyle_3}');
   });
 
   it('does not map a variable that could not be created', async () => {
