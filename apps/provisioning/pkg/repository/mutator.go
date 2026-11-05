@@ -70,15 +70,16 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		r.Spec.Webhook.BaseURL = strings.TrimRight(r.Spec.Webhook.BaseURL, "/")
 	}
 
+	// Extra mutators from factory
+	if err := m.factory.Mutate(ctx, r, a.GetOldObject()); err != nil {
+		return fmt.Errorf("failed to mutate repository: %w", err)
+	}
+
+	// After the factory, so the comparison uses the normalized URL that will be stored.
 	if a.GetOperation() == admission.Update {
 		if oldRepo, ok := a.GetOldObject().(*provisioning.Repository); ok {
 			InvalidateConnectionTokenOnURLChange(r, oldRepo)
 		}
-	}
-
-	// Extra mutators from factory
-	if err := m.factory.Mutate(ctx, r, a.GetOldObject()); err != nil {
-		return fmt.Errorf("failed to mutate repository: %w", err)
 	}
 
 	return nil

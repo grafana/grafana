@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -569,4 +570,66 @@ func TestInvalidateConnectionTokenDoesNotBypassHostCheck(t *testing.T) {
 	hostChange := connectionRepo("https://ghe.example.com/grafana/old", common.InlineSecureValue{})
 	InvalidateConnectionTokenOnURLChange(hostChange, old)
 	assert.True(t, RequiresNewTokenForURLChange(hostChange, old), "host change must still require a token")
+}
+
+// The provider mutator normalizes the URL (trailing "/" and ".git"), so invalidation has to
+// run after it. Otherwise an update that only adds ".git" reads as a move and discards a
+// usable token, leaving the repository without credentials until the controller re-mints.
+func TestAdmissionMutator_Mutate_InvalidatesAfterURLNormalization(t *testing.T) {
+	newRepoAt := func(url string) *provisioning.Repository {
+		return &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{CleanFinalizer}},
+			Spec: provisioning.RepositorySpec{
+				Type:       provisioning.GitHubRepositoryType,
+				GitHub:     &provisioning.GitHubRepositoryConfig{URL: url},
+				Connection: &provisioning.ConnectionInfo{Name: "gh-app"},
+				Sync:       provisioning.SyncOptions{IntervalSeconds: 60},
+			},
+		}
+	}
+
+	tests := []struct {
+		name      string
+		newURL    string
+		wantToken common.InlineSecureValue
+	}{
+		{
+			name:      "same repository with a .git suffix leaves the token alone",
+			newURL:    "https://github.com/grafana/repo.git",
+			wantToken: common.InlineSecureValue{},
+		},
+		{
+			name:      "same repository with a trailing slash leaves the token alone",
+			newURL:    "https://github.com/grafana/repo/",
+			wantToken: common.InlineSecureValue{},
+		},
+		{
+			name:      "a different repository still invalidates",
+			newURL:    "https://github.com/grafana/other.git",
+			wantToken: common.InlineSecureValue{Remove: true},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			oldRepo := newRepoAt("https://github.com/grafana/repo")
+			oldRepo.Secure.Token = common.InlineSecureValue{Name: "old-token"}
+			newRepo := newRepoAt(tt.newURL)
+
+			factory := NewMockFactory(t)
+			factory.EXPECT().Mutate(mock.Anything, mock.Anything, mock.Anything).
+				RunAndReturn(func(_ context.Context, obj runtime.Object, _ runtime.Object) error {
+					r := obj.(*provisioning.Repository)
+					r.Spec.GitHub.URL = strings.TrimSuffix(strings.TrimRight(r.Spec.GitHub.URL, "/"), ".git")
+					return nil
+				}).Once()
+
+			m := NewAdmissionMutator(factory, 60*time.Second)
+			attr := newMutatorTestAttributes(newRepo, oldRepo, admission.Update)
+
+			require.NoError(t, m.Mutate(context.Background(), attr, nil))
+			// A zero token means the mutator left it alone, so storage keeps the stored one.
+			assert.Equal(t, tt.wantToken, newRepo.Secure.Token)
+		})
+	}
 }
