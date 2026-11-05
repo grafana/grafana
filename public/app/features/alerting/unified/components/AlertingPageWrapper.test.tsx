@@ -254,8 +254,9 @@ describe('AlertmanagerPageWrapper', () => {
         }
       );
 
-    it('shows the import banner when an external Alertmanager is selected and the user can import notifications', async () => {
+    it('shows the import banner when an external Alertmanager is selected and an admin can import notifications', async () => {
       const externalAm = setupExternalAlertmanager();
+      grantUserRole(OrgRole.Admin);
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
@@ -287,6 +288,21 @@ describe('AlertmanagerPageWrapper', () => {
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
+      ]);
+
+      renderWithSelectedAlertmanager(externalAm.name);
+
+      expect(await screen.findByText('Test content')).toBeInTheDocument();
+      expect(importBanner.query()).not.toBeInTheDocument();
+    });
+
+    it('does not show the import banner to a non-admin who can write notifications, since it links to the admin-only Import tab', async () => {
+      const externalAm = setupExternalAlertmanager();
+      grantUserRole(OrgRole.Editor);
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        AccessControlAction.AlertingNotificationsWrite,
       ]);
 
       renderWithSelectedAlertmanager(externalAm.name);

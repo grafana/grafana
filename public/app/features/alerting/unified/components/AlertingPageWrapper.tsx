@@ -8,6 +8,7 @@ import { useIsAlertmanagerImportEnabled } from '../featureToggles';
 import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
 import { AlertmanagerProvider, useAlertmanager } from '../state/AlertmanagerContext';
 import { getAlertManagerDataSourcesByPermission } from '../utils/datasource';
+import { isAdmin } from '../utils/environment';
 
 import { AlertManagerPicker } from './AlertManagerPicker';
 import { NoAlertManagerWarning } from './NoAlertManagerWarning';
@@ -104,6 +105,7 @@ function ImportToGMABannerForAlertmanager() {
     alertmanagerImportEnabled &&
     !isGrafanaAlertmanager &&
     canImportNotifications &&
+    isAdmin() &&
     !isEditOrNewForm &&
     !importDisabled &&
     !importStateLoading;
