@@ -93,6 +93,27 @@ describe('VarMappingNumberValueEditor', () => {
     expect(onChange).toHaveBeenCalledWith(3);
   });
 
+  it('shows the floored number when it equals the stored value', () => {
+    const onChange = jest.fn();
+    const integerVarItem = { settings: { integer: true } } as Parameters<typeof VarMappingNumberValueEditor>[0]['item'];
+    render(
+      <VarMappingNumberValueEditor
+        value={3}
+        onChange={onChange}
+        item={integerVarItem}
+        context={{ data: [] }}
+        id="n7b"
+      />
+    );
+
+    const input = screen.getByRole('textbox');
+    fireEvent.change(input, { target: { value: '3.7' } });
+    fireEvent.blur(input);
+
+    expect(onChange).toHaveBeenCalledWith(3);
+    expect(input).toHaveValue('3');
+  });
+
   it('clears the value (calls onChange with undefined) when the text is emptied', () => {
     const onChange = jest.fn();
     render(
