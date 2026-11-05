@@ -1,0 +1,363 @@
+import { of } from 'rxjs';
+
+import {
+  FieldType,
+  LoadingState,
+  type PanelData,
+  ThresholdsMode,
+  getDefaultTimeRange,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+  toDataFrame,
+} from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { CustomVariable, SceneQueryRunner, SceneVariableSet, VizPanel, sceneGraph } from '@grafana/scenes';
+import { type LibraryPanel } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
+import * as libraryPanelsApi from 'app/features/library-panels/state/api';
+
+import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
+
+import { DashboardScene } from './DashboardScene';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+
+// use the real standard field config registry so min/max/decimals run through the real
+// numberOverrideProcessor, not a test double
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
+
+setPluginImportUtils({
+  // useFieldConfig() pulls in the standard field config properties (incl. min/max/decimals)
+  importPanelPlugin: () => Promise.resolve(getPanelPlugin({}).useFieldConfig()),
+  getPanelPluginFromCache: () => undefined,
+});
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      get: jest.fn().mockResolvedValue({ getRef: () => ({ uid: 'ds1' }) }),
+      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+    };
+  },
+}));
+
+setRunRequest(
+  jest.fn().mockReturnValue(
+    of<PanelData>({
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      series: [
+        toDataFrame({
+          fields: [{ name: 'value', type: FieldType.number, values: [1, 50, 100] }],
+        }),
+      ],
+    })
+  )
+);
+
+function buildPanel(fieldConfigDefaults: VizPanel['state']['fieldConfig']['defaults']) {
+  return new VizPanel({
+    title: 'Panel',
+    pluginId: 'timeseries',
+    key: 'panel-1',
+    $data: new SceneQueryRunner({
+      datasource: { uid: 'ds1' },
+      queries: [{ refId: 'A' }],
+    }),
+    fieldConfig: { defaults: fieldConfigDefaults, overrides: [] },
+  });
+}
+
+function buildScene(panel: VizPanel, variables: SceneVariableSet, serializerVersion: 'v1' | 'v2' = 'v1') {
+  return new DashboardScene(
+    {
+      title: 'Test dashboard',
+      uid: 'test-uid',
+      $variables: variables,
+      body: DefaultGridLayoutManager.fromVizPanels([panel]),
+    },
+    serializerVersion
+  );
+}
+
+async function tick() {
+  await new Promise((r) => setTimeout(r, 1));
+}
+
+describe('Variables in panel field config via varMappings (dashboard scene)', () => {
+  it('resolves defaults.varMappings.min through the real sceneGraph.interpolate path and reacts to variable change', async () => {
+    // CustomVariable rather than ConstantVariable + setState: only changeValueTo publishes the
+    // SceneVariableValueChangedEvent that VizPanel's field config cache invalidation listens for.
+    const varVariable = new CustomVariable({ name: 'myVar', query: '50,75', value: '50', text: '50' });
+    const panel = buildPanel({
+      min: 0,
+      varMappings: { min: '$myVar' },
+    });
+    const scene = buildScene(panel, new SceneVariableSet({ variables: [varVariable] }));
+
+    const deactivate = activateFullSceneTree(scene);
+    await tick();
+
+    const data = sceneGraph.getData(panel).state.data!;
+    expect(data.series).toHaveLength(1);
+
+    const processed = panel.applyFieldConfig(data);
+    const config = processed.series[0].fields[0].config;
+
+    // $myVar resolved to 50, varMappings stripped from the resolved config
+    expect(config.min).toEqual(50);
+    expect(config.varMappings).toBeUndefined();
+
+    // Changing the variable must re-process the field config even though the data is unchanged,
+    // which relies on VizPanel clearing its field config cache on referenced variable changes.
+    varVariable.changeValueTo('75', '75');
+    await tick();
+
+    const reprocessed = panel.applyFieldConfig(sceneGraph.getData(panel).state.data!);
+    expect(reprocessed.series[0].fields[0].config.min).toEqual(75);
+
+    deactivate();
+  });
+
+  it('resolves a mapped threshold step and updates it on variable change', async () => {
+    const variable = new CustomVariable({ name: 'warn', query: '30,90', value: '30', text: '30' });
+    const panel = buildPanel({
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 50, color: 'orange' },
+          { value: 80, color: 'red' },
+        ],
+      },
+      varMappings: { 'thresholds.steps.1': '$warn' },
+    });
+    const scene = buildScene(panel, new SceneVariableSet({ variables: [variable] }));
+
+    const deactivate = activateFullSceneTree(scene);
+    await tick();
+
+    const stepValues = () =>
+      panel
+        .applyFieldConfig(sceneGraph.getData(panel).state.data!)
+        .series[0].fields[0].config.thresholds?.steps.map((step) => step.value);
+
+    expect(stepValues()).toEqual([-Infinity, 30, 80]);
+
+    variable.changeValueTo('90', '90');
+    await tick();
+
+    expect(stepValues()).toEqual([-Infinity, 80, 90]);
+
+    deactivate();
+  });
+
+  it('resolves a unit expression and updates the displayed unit on variable change', async () => {
+    const variable = new CustomVariable({ name: 'u', query: 'percent,bytes,$bad', value: 'percent', text: 'percent' });
+    const panel = buildPanel({ unit: 'short', varMappings: { unit: '$u' } });
+    const scene = buildScene(panel, new SceneVariableSet({ variables: [variable] }));
+
+    const deactivate = activateFullSceneTree(scene);
+    await tick();
+
+    const field = () => panel.applyFieldConfig(sceneGraph.getData(panel).state.data!).series[0].fields[0];
+
+    expect(field().config.unit).toBe('percent');
+    expect(field().display!(50).suffix).toBe('%');
+
+    variable.changeValueTo('bytes', 'bytes');
+    await tick();
+    expect(field().config.unit).toBe('bytes');
+
+    // a value that is itself variable syntax doesn't resolve, so the stored unit is used
+    variable.changeValueTo('$bad', '$bad');
+    await tick();
+    expect(field().config.unit).toBe('short');
+
+    deactivate();
+  });
+
+  it('falls back to the stored numeric value for a multi-value variable with more than one selection', async () => {
+    const multiVariable = new CustomVariable({
+      name: 'multi',
+      query: '1,2,3',
+      isMulti: true,
+      value: ['1', '2'],
+      text: ['1', '2'],
+    });
+    const panel = buildPanel({
+      max: 100,
+      varMappings: { max: '$multi' },
+    });
+    const scene = buildScene(panel, new SceneVariableSet({ variables: [multiVariable] }));
+
+    const deactivate = activateFullSceneTree(scene);
+    await tick();
+
+    const processed = panel.applyFieldConfig(sceneGraph.getData(panel).state.data!);
+    // more than one value selected: falls back to the stored numeric value, never a broken render
+    expect(processed.series[0].fields[0].config.max).toEqual(100);
+
+    // narrowing the selection to a single value makes the expression resolvable again
+    multiVariable.changeValueTo(['2'], ['2']);
+    await tick();
+
+    const reprocessed = panel.applyFieldConfig(sceneGraph.getData(panel).state.data!);
+    expect(reprocessed.series[0].fields[0].config.max).toEqual(2);
+
+    deactivate();
+  });
+
+  it('resolves each repeated panel against its own repeat value', async () => {
+    const source = buildPanel({ min: 0, varMappings: { min: '$server' } });
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0 }, source);
+
+    const deactivate = activateFullSceneTree(scene);
+    const panels = [repeater.state.body, ...(repeater.state.repeatedPanels ?? [])] as VizPanel[];
+    // activateFullSceneTree doesn't reach repeat clones
+    const deactivateClones = panels.slice(1).map((panel) => activateFullSceneTree(panel));
+    await tick();
+
+    const mins = panels.map(
+      (panel) => panel.applyFieldConfig(sceneGraph.getData(panel).state.data!).series[0].fields[0].config.min
+    );
+
+    // the dashboard-level $server has every value selected, so only the per-repeat scope resolves
+    expect(mins).toEqual([1, 2, 3, 4, 5]);
+
+    deactivateClones.forEach((deactivateClone) => deactivateClone());
+    deactivate();
+  });
+
+  async function loadLibraryPanel(
+    fieldConfig: LibraryPanel['model']['fieldConfig'],
+    serializerVersion: 'v1' | 'v2' = 'v2'
+  ) {
+    const libraryPanel: LibraryPanel = {
+      name: 'Library panel',
+      uid: 'lib-1',
+      type: 'timeseries',
+      model: {
+        title: 'Library panel',
+        type: 'timeseries',
+        fieldConfig,
+        datasource: { uid: 'ds1' },
+        targets: [{ refId: 'A' }],
+      },
+      version: 1,
+    };
+    jest.spyOn(libraryPanelsApi, 'getLibraryPanel').mockResolvedValue(libraryPanel);
+
+    const panel = new VizPanel({
+      title: 'Library panel',
+      pluginId: 'lib-panel-loading',
+      key: 'panel-1',
+      $behaviors: [new LibraryPanelBehavior({ name: libraryPanel.name, uid: libraryPanel.uid })],
+    });
+    const scene = buildScene(
+      panel,
+      new SceneVariableSet({
+        variables: [new CustomVariable({ name: 'myVar', query: '50', value: '50', text: '50' })],
+      }),
+      serializerVersion
+    );
+
+    const deactivate = activateFullSceneTree(scene);
+    await tick();
+    // loading replaces the panel's data provider, which the earlier tree walk didn't activate
+    const deactivateData = activateFullSceneTree(panel.state.$data!);
+    await tick();
+
+    return {
+      panel,
+      cleanup: () => {
+        deactivateData();
+        deactivate();
+      },
+    };
+  }
+
+  it('keeps varMappings when a library panel is loaded and saved', async () => {
+    const fieldConfig = {
+      defaults: { min: 0, varMappings: { min: '$myVar' } },
+      overrides: [
+        {
+          matcher: { id: 'byName', options: 'value' },
+          properties: [
+            { id: 'max', value: 100 },
+            { id: 'varMappings.max', value: '$myVar' },
+          ],
+        },
+      ],
+    };
+    const { panel, cleanup } = await loadLibraryPanel(fieldConfig);
+
+    const config = panel.applyFieldConfig(sceneGraph.getData(panel).state.data!).series[0].fields[0].config;
+    expect(config.min).toEqual(50);
+    expect(config.max).toEqual(50);
+
+    const saved = libraryPanelsApi.libraryVizPanelToSaveModel(panel).model.fieldConfig;
+    expect(saved?.defaults).toMatchObject(fieldConfig.defaults);
+    expect(saved?.overrides).toEqual(fieldConfig.overrides);
+
+    cleanup();
+  });
+
+  describe('library panel threshold valueExpr migration', () => {
+    const withValueExpr = (): LibraryPanel['model']['fieldConfig'] => ({
+      defaults: {
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 80, color: 'red', valueExpr: '$myVar' },
+          ],
+        },
+      },
+      overrides: [],
+    });
+
+    afterEach(() => {
+      setTestFlags();
+    });
+
+    it('moves valueExpr into varMappings with the flag on, and the save model has no valueExpr', async () => {
+      setTestFlags({ [FlagKeys.GrafanaPanelOptionInterpolation]: true });
+      const { panel, cleanup } = await loadLibraryPanel(withValueExpr());
+
+      expect(panel.state.fieldConfig.defaults.varMappings).toEqual({ 'thresholds.steps.1': '$myVar' });
+      const config = panel.applyFieldConfig(sceneGraph.getData(panel).state.data!).series[0].fields[0].config;
+      expect(config.thresholds?.steps.map((step) => step.value)).toEqual([-Infinity, 50]);
+
+      const saved = libraryPanelsApi.libraryVizPanelToSaveModel(panel).model;
+      expect(saved.fieldConfig?.defaults).toMatchObject({ varMappings: { 'thresholds.steps.1': '$myVar' } });
+      expect(JSON.stringify(saved)).not.toContain('valueExpr');
+
+      cleanup();
+    });
+
+    it('keeps valueExpr in a v1 dashboard, even with the flag on', async () => {
+      setTestFlags({ [FlagKeys.GrafanaPanelOptionInterpolation]: true });
+      const { panel, cleanup } = await loadLibraryPanel(withValueExpr(), 'v1');
+
+      expect(panel.state.fieldConfig.defaults.varMappings).toBeUndefined();
+      expect(panel.state.fieldConfig.defaults.thresholds?.steps[1].valueExpr).toBe('$myVar');
+
+      cleanup();
+    });
+
+    it('keeps valueExpr with the flag off', async () => {
+      const { panel, cleanup } = await loadLibraryPanel(withValueExpr());
+
+      expect(panel.state.fieldConfig.defaults.varMappings).toBeUndefined();
+      expect(panel.state.fieldConfig.defaults.thresholds?.steps[1].valueExpr).toBe('$myVar');
+
+      cleanup();
+    });
+  });
+});

@@ -2,7 +2,9 @@ import { useMemo } from 'react';
 import * as React from 'react';
 
 import { type PanelData } from '@grafana/data';
+import { useFlagGrafanaPanelOptionInterpolation } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
+import { FieldConfigExpressionsContext } from 'app/core/components/OptionsUI/fieldConfigExpressions';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import {
@@ -11,7 +13,7 @@ import {
 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
-import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
+import { getLibraryPanelBehavior, isInV2Dashboard, isLibraryPanel } from '../utils/utils';
 
 import { getPanelFrameOptions, getPanelStylesOptions } from './getPanelFrameOptions';
 
@@ -24,6 +26,8 @@ interface Props {
 
 export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, data }) => {
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
+  // Expressions are only stored in the v2 schema, so only v2 dashboards get the expression editors
+  const varMappingsEnabled = useFlagGrafanaPanelOptionInterpolation() && isInV2Dashboard(panel);
 
   const panelFrameOptions = useMemo(() => getPanelFrameOptions(panel), [panel]);
   const panelStylesOptions = useMemo(() => getPanelStylesOptions(panel), [panel]);
@@ -43,8 +47,9 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
       currentOptions: options,
       currentFieldConfig: fieldConfig,
       reportInteractionUI: 'panel-edit',
+      varMappingsEnabled,
     });
-  }, [data, panel, options, fieldConfig, _pluginInstanceState]);
+  }, [data, panel, options, fieldConfig, _pluginInstanceState, varMappingsEnabled]);
 
   const libraryPanelOptions = useMemo(() => {
     if (panel instanceof VizPanel && isLibraryPanel(panel)) {
@@ -69,9 +74,10 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
         (newConfig) => {
           panel.onFieldConfigChange(newConfig, true);
         },
-        options
+        options,
+        varMappingsEnabled
       ),
-    [data, searchQuery, panel, fieldConfig, options]
+    [data, searchQuery, panel, fieldConfig, options, varMappingsEnabled]
   );
 
   const isSearching = searchQuery.length > 0;
@@ -119,7 +125,11 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
     }
   }
 
-  return mainBoxElements;
+  return (
+    <FieldConfigExpressionsContext.Provider value={varMappingsEnabled}>
+      {mainBoxElements}
+    </FieldConfigExpressionsContext.Provider>
+  );
 });
 
 PanelOptions.displayName = 'PanelOptions';

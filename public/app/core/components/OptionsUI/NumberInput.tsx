@@ -65,6 +65,13 @@ function getRangeText(min?: number, max?: number) {
   return undefined;
 }
 
+export function getOutOfRangeText(min?: number, max?: number) {
+  const rangeText = getRangeText(min, max);
+  return rangeText
+    ? t('options-ui.number-input.error-out-of-range', 'Out of range. {{range}}', { range: rangeText })
+    : t('options-ui.number-input.error-out-of-range-generic', 'Out of range');
+}
+
 /**
  * This is an Input field that will call `onChange` for blur and enter.
  * In-range values also emit after a short debounce so panel options can preview
@@ -201,9 +208,7 @@ export const NumberInput = memo(function NumberInput({
 
   const localDescribedBy = showCorrectionError ? errorId : rangeText ? rangeId : undefined;
   const describedBy = [fieldContext['aria-describedby'], localDescribedBy].filter(Boolean).join(' ') || undefined;
-  const errorMessage = rangeText
-    ? t('options-ui.number-input.error-out-of-range', 'Out of range. {{range}}', { range: rangeText })
-    : t('options-ui.number-input.error-out-of-range-generic', 'Out of range');
+  const errorMessage = getOutOfRangeText(min, max);
 
   return (
     <div>
