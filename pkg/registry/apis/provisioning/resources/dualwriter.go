@@ -682,7 +682,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		return nil, fmt.Errorf("parse new file: %w", err)
 	}
 
-	if len(opts.Data) > 0 {
+	if len(opts.Data) > 0 && newParsed.Repo.Type.AllowsSecureValues() {
 		keepPlaintextSecureValues(parsed.Obj, newParsed.Obj)
 	}
 
@@ -893,6 +893,13 @@ func (r *DualReadWriter) readWithRefFallback(ctx context.Context, path, ref stri
 // returned carries only the reference, which would otherwise drop the secret from
 // the repository and leave the file unable to provision the resource again.
 func (r *DualReadWriter) keepCommittedSecureValues(ctx context.Context, parsed *ParsedResource, path, ref string) error {
+	// A repository type that cannot hold secure values has nothing worth keeping:
+	// checkSecureValues rejects such content and sync refuses the file, so the
+	// plaintext is inert there and this would only cost a read.
+	if !parsed.Repo.Type.AllowsSecureValues() {
+		return nil
+	}
+
 	committed, err := r.readWithRefFallback(ctx, path, ref)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) || errors.Is(err, repository.ErrRefNotFound) || apierrors.IsNotFound(err) {

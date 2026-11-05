@@ -2183,3 +2183,47 @@ func TestMoveFile_SecureValues(t *testing.T) {
 		rw.AssertNotCalled(t, "Move", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 }
+
+func TestKeepCommittedSecureValues_RepositoryTypeGate(t *testing.T) {
+	const path = "datasource.json"
+
+	parsedFor := func(repoType provisioning.RepositoryType) *ParsedResource {
+		return &ParsedResource{
+			Repo: provisioning.ResourceRepositoryInfo{Type: repoType},
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+				"kind":       "DataSource",
+				"metadata":   map[string]any{"name": "ds-1"},
+				"spec":       map[string]any{"title": "DS"},
+			}},
+		}
+	}
+
+	t.Run("a git repository is not read at all", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+
+		dw := &DualReadWriter{repo: rw}
+		parsed := parsedFor(provisioning.GitHubRepositoryType)
+		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, ""))
+		require.NotContains(t, parsed.Obj.Object, "secure")
+		rw.AssertNotCalled(t, "Read", mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("a repository that allows secure values is read", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, path, "").Return(&repository.FileInfo{Path: path, Data: []byte(`{
+			"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+			"kind": "DataSource",
+			"metadata": {"name": "ds-1"},
+			"spec": {"title": "DS"},
+			"secure": {"password": {"create": "hunter2"}}
+		}`)}, nil)
+
+		dw := &DualReadWriter{repo: rw}
+		parsed := parsedFor(provisioning.LocalRepositoryType)
+		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, ""))
+		require.Equal(t,
+			map[string]any{"password": map[string]any{"create": "hunter2"}},
+			parsed.Obj.Object["secure"])
+	})
+}
