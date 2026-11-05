@@ -5778,10 +5778,14 @@
     },
     "composer": {
       "annotation-pin": "Comment {{label}}",
+      "annotation-pin-remove": "Comment {{label}}, marked for removal",
       "apply-undo-title": "Assistant Composer edit",
       "overlay": {
+        "hint-not-removable": "Built-in layers can't be removed",
         "hint-panel": "Click to comment on a panel, or drag to draw a region",
         "hint-region": "Drag to draw a region",
+        "hint-remove": "Click to mark for removal",
+        "hint-text": "Select text to comment on it",
         "hint-variable": "Click to comment on a variable, or drag to draw a region"
       },
       "region": "Region",
