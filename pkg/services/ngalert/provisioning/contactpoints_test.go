@@ -1011,6 +1011,18 @@ func TestIntegrationAuthorization(t *testing.T) {
 	integration1 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g1, models.ProvenanceAPI)
 	integration2 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g2, models.ProvenanceAPI)
 	integration3 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g3, models.ProvenanceAPI)
+	// Receivers are identified by a UID that need not be derived from their name, so look it up in the stored configuration.
+	uidOf := func(name string) string {
+		rev, err := sut.configStore.Get(context.Background(), user.OrgID)
+		require.NoError(t, err)
+		for uid, r := range rev.Config.Receivers {
+			if r.Name == name {
+				return string(uid)
+			}
+		}
+		require.Failf(t, "receiver not found", "no receiver named %q", name)
+		return ""
+	}
 	t.Run("CreateContactPoint", func(t *testing.T) {
 		t.Run("authorize create if receiver is new", func(t *testing.T) {
 			authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
@@ -1027,7 +1039,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 			authz.Reset()
 			authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
 				assert.Equal(t, user, requester)
-				assert.Equal(t, models.NameToUid(receiverA), uid)
+				assert.Equal(t, uidOf(receiverA), uid)
 				return nil
 			}
 			var err error
@@ -1047,7 +1059,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 			authz.Reset()
 			authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
 				assert.Equal(t, user, requester)
-				assert.Equal(t, models.NameToUid(receiverA), uid)
+				assert.Equal(t, uidOf(receiverA), uid)
 				return nil
 			}
 			err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
@@ -1060,7 +1072,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 				authz.Reset()
 				authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
 					assert.Equal(t, user, requester)
-					assert.Equal(t, models.NameToUid(receiverA), uid)
+					assert.Equal(t, uidOf(receiverA), uid)
 					return nil
 				}
 				authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
@@ -1087,7 +1099,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
 				require.NoError(t, err)
 				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
-				assert.ElementsMatch(t, []string{models.NameToUid(receiverA), models.NameToUid(receiverB)}, checked)
+				assert.ElementsMatch(t, []string{uidOf(receiverA), uidOf(receiverB)}, checked)
 				integration2 = newVersion
 			})
 
@@ -1095,7 +1107,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 				authz.Reset()
 				authz.AuthorizeDeleteByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
 					assert.Equal(t, user, requester)
-					assert.Equal(t, models.NameToUid(receiverA), uid)
+					assert.Equal(t, uidOf(receiverA), uid)
 					return nil
 				}
 				authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
@@ -1113,12 +1125,12 @@ func TestIntegrationAuthorization(t *testing.T) {
 				authz.Reset()
 				authz.AuthorizeDeleteByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
 					assert.Equal(t, user, requester)
-					assert.Equal(t, models.NameToUid(receiverC), uid)
+					assert.Equal(t, uidOf(receiverC), uid)
 					return nil
 				}
 				authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
 					assert.Equal(t, user, requester)
-					assert.Equal(t, models.NameToUid(receiverB), uid)
+					assert.Equal(t, uidOf(receiverB), uid)
 					return nil
 				}
 				newVersion := integration3
@@ -1135,7 +1147,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 			authz.Reset()
 			authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
 				assert.Equal(t, user, requester)
-				assert.Equal(t, models.NameToUid(receiverB), uid)
+				assert.Equal(t, uidOf(receiverB), uid)
 				return nil
 			}
 			err := sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration3.UID)
@@ -1148,7 +1160,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 			authz.Reset()
 			authz.AuthorizeDeleteByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
 				assert.Equal(t, user, requester)
-				assert.Equal(t, models.NameToUid(receiverB), uid)
+				assert.Equal(t, uidOf(receiverB), uid)
 				return nil
 			}
 			err := sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration1.UID)

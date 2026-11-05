@@ -109,8 +109,9 @@ func (rev *ConfigRevision) GetReceiver(uid string) (*models.Receiver, error) {
 	return recv, nil
 }
 
-func (rev *ConfigRevision) GetReceivers(uids []string) ([]*models.Receiver, error) {
-	capacity := len(uids)
+// GetReceivers returns receivers whose name is in names, or all receivers if names is empty.
+func (rev *ConfigRevision) GetReceivers(names []string) ([]*models.Receiver, error) {
+	capacity := len(names)
 	if capacity == 0 {
 		capacity = len(rev.Config.Receivers)
 	}
@@ -119,7 +120,7 @@ func (rev *ConfigRevision) GetReceivers(uids []string) ([]*models.Receiver, erro
 		if r == nil {
 			continue
 		}
-		if len(uids) > 0 && !slices.Contains(uids, string(r.UID)) {
+		if len(names) > 0 && !slices.Contains(names, r.Name) {
 			continue
 		}
 		recv, err := PostableApiReceiverToReceiver(*r, models.ResourceOriginGrafana)

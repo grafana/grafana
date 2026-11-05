@@ -8,7 +8,7 @@ import { InspectTab } from 'app/features/inspector/types';
 
 import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
 import { getDashboardSceneFor } from '../../../../utils/utils';
-import { FOOTER_HEIGHT, TIME_OPTION_PLACEHOLDER } from '../../constants';
+import { TIME_OPTION_PLACEHOLDER } from '../../constants';
 import { trackQueryMenuAction, trackQueryOptionsToggle } from '../../tracking';
 import {
   useDatasourceContext,
@@ -18,14 +18,14 @@ import {
 } from '../QueryEditorContext';
 import { QueryOptionField } from '../types';
 
-interface FooterLabelValue {
+interface QueryOptionItem {
   id: QueryOptionField;
   label: string;
   value: string;
   isActive?: boolean;
 }
 
-export function QueryEditorFooter() {
+export function QueryOptionsBar() {
   const styles = useStyles2(getStyles);
 
   const { queryOptions, cardType } = useQueryEditorUIContext();
@@ -40,41 +40,42 @@ export function QueryEditorFooter() {
     trackQueryMenuAction('open_inspector', cardType);
   }, [panel, cardType]);
 
-  // Compute footer items from actual query options
+  // Compute option items from actual query options
   // Items with isActive=true have non-default (user-set) values and are highlighted
-  const items: FooterLabelValue[] = useMemo(() => {
+  const items: QueryOptionItem[] = useMemo(() => {
     const realMaxDataPoints = data?.request?.maxDataPoints;
     const realInterval = data?.request?.interval;
-    const minIntervalOnDs = datasource?.interval ?? t('query-editor-next.footer.placeholder.no-limit', 'No limit');
+    const minIntervalOnDs =
+      datasource?.interval ?? t('query-editor-next.query-options-bar.placeholder.no-limit', 'No limit');
 
     return [
       {
         id: QueryOptionField.maxDataPoints,
-        label: t('query-editor-next.footer.label.max-data-points', 'Max data points'),
+        label: t('query-editor-next.query-options-bar.label.max-data-points', 'Max data points'),
         value: options.maxDataPoints != null ? String(options.maxDataPoints) : String(realMaxDataPoints ?? '-'),
         isActive: options.maxDataPoints != null,
       },
       {
         id: QueryOptionField.minInterval,
-        label: t('query-editor-next.footer.label.min-interval', 'Min interval'),
+        label: t('query-editor-next.query-options-bar.label.min-interval', 'Min interval'),
         value: options.minInterval ?? minIntervalOnDs,
         isActive: options.minInterval != null,
       },
       {
         id: QueryOptionField.interval,
-        label: t('query-editor-next.footer.label.interval', 'Interval'),
+        label: t('query-editor-next.query-options-bar.label.interval', 'Interval'),
         value: realInterval ?? '-',
         isActive: false, // Interval is always computed, never user-set
       },
       {
         id: QueryOptionField.relativeTime,
-        label: t('query-editor-next.footer.label.relative-time', 'Relative time'),
+        label: t('query-editor-next.query-options-bar.label.relative-time', 'Relative time'),
         value: options.timeRange?.from ?? TIME_OPTION_PLACEHOLDER,
         isActive: options.timeRange?.from != null,
       },
       {
         id: QueryOptionField.timeShift,
-        label: t('query-editor-next.footer.label.time-shift', 'Time shift'),
+        label: t('query-editor-next.query-options-bar.label.time-shift', 'Time shift'),
         value: options.timeRange?.shift ?? TIME_OPTION_PLACEHOLDER,
         isActive: options.timeRange?.shift != null,
       },
@@ -105,10 +106,10 @@ export function QueryEditorFooter() {
           fill="text"
           size="sm"
           onClick={(e) => handleItemClick(e)}
-          aria-label={t('query-editor-next.footer.query-options', 'Query options')}
+          aria-label={t('query-editor-next.query-options-bar.query-options', 'Query options')}
         >
           <Stack direction="row" alignItems="center" gap={0.5}>
-            <Trans i18nKey="query-editor-next.footer.query-options">Query options</Trans>
+            <Trans i18nKey="query-editor-next.query-options-bar.query-options">Query options</Trans>
             <Icon name="angle-down" className={cx(styles.chevron, { [styles.chevronOpen]: isQueryOptionsOpen })} />
           </Stack>
         </Button>
@@ -122,7 +123,7 @@ export function QueryEditorFooter() {
               size="sm"
               className={styles.itemButton}
               onClick={(e) => handleItemClick(e, item.id)}
-              aria-label={t('query-editor-next.footer.edit-option', 'Edit {{label}}', { label: item.label })}
+              aria-label={t('query-editor-next.query-options-bar.edit-option', 'Edit {{label}}', { label: item.label })}
             >
               {item.isActive && <span className={styles.activeIndicator} />}
               <span className={styles.label}>{item.label}</span>
@@ -132,16 +133,17 @@ export function QueryEditorFooter() {
         ))}
       </ul>
 
-      <div className={styles.footerActions}>
+      <div className={styles.actions}>
+        <span className={styles.separator} />
         <Button
           fill="text"
           size="sm"
           icon="crosshair"
           variant="secondary"
           onClick={onOpenInspector}
-          aria-label={t('query-editor-next.footer.query-inspector', 'Query inspector')}
+          aria-label={t('query-editor-next.query-options-bar.query-inspector', 'Query inspector')}
         >
-          <Trans i18nKey="query-editor-next.footer.inspect-queries">Inspect queries</Trans>
+          <Trans i18nKey="query-editor-next.query-options-bar.inspect-queries">Inspect queries</Trans>
         </Button>
       </div>
     </div>
@@ -151,18 +153,12 @@ export function QueryEditorFooter() {
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
-      position: 'sticky',
-      bottom: 0,
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'flex-end',
       gap: theme.spacing(1),
-      backgroundColor: theme.colors.background.primary,
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      borderBottomLeftRadius: theme.shape.radius.default,
-      borderBottomRightRadius: theme.shape.radius.default,
-      padding: theme.spacing(0, 0.5, 0, 1.5),
-      zIndex: theme.zIndex.navbarFixed,
-      height: FOOTER_HEIGHT,
+      flex: 1,
+      minWidth: 0,
     }),
     itemsList: css({
       display: 'flex',
@@ -171,8 +167,9 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       listStyle: 'none',
       margin: 0,
-      padding: 0,
-      flex: 1,
+      // The fade sits over this padding, so it only covers pills once they overflow.
+      padding: theme.spacing(0, 3, 0, 0),
+      flex: '0 1 auto',
       minWidth: 0,
       overflow: 'hidden',
       whiteSpace: 'nowrap',
@@ -183,7 +180,7 @@ function getStyles(theme: GrafanaTheme2) {
         right: 0,
         top: 0,
         bottom: 0,
-        width: theme.spacing(4),
+        width: theme.spacing(3),
         background: `linear-gradient(to right, transparent, ${theme.colors.background.primary})`,
         pointerEvents: 'none',
       },
@@ -231,10 +228,16 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
     }),
-    footerActions: css({
+    actions: css({
       flexShrink: 0,
       display: 'flex',
       alignItems: 'center',
+      gap: theme.spacing(1),
+    }),
+    separator: css({
+      width: 1,
+      height: theme.spacing(2),
+      background: theme.colors.border.medium,
     }),
   };
 }
