@@ -465,3 +465,102 @@ func TestCopySecureValues(t *testing.T) {
 		})
 	}
 }
+
+func TestInvalidateConnectionTokenOnURLChange(t *testing.T) {
+	connectionRepo := func(url string, token common.InlineSecureValue) *provisioning.Repository {
+		return &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type:       provisioning.GitHubRepositoryType,
+				GitHub:     &provisioning.GitHubRepositoryConfig{URL: url},
+				Connection: &provisioning.ConnectionInfo{Name: "gh-app"},
+			},
+			Secure: provisioning.SecureValues{Token: token},
+		}
+	}
+
+	tests := []struct {
+		name      string
+		new       *provisioning.Repository
+		old       *provisioning.Repository
+		wantToken common.InlineSecureValue
+	}{
+		{
+			name:      "marks a stored token for removal when the url changes",
+			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{}),
+			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"}),
+			wantToken: common.InlineSecureValue{Remove: true},
+		},
+		{
+			name:      "keeps the token when the url is unchanged",
+			new:       connectionRepo("https://github.com/grafana/repo", common.InlineSecureValue{}),
+			old:       connectionRepo("https://github.com/grafana/repo", common.InlineSecureValue{Name: "old-token"}),
+			wantToken: common.InlineSecureValue{},
+		},
+		{
+			name:      "keeps the token when the host changes",
+			new:       connectionRepo("https://ghe.example.com/grafana/old", common.InlineSecureValue{}),
+			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"}),
+			wantToken: common.InlineSecureValue{},
+		},
+		{
+			name:      "keeps a caller-supplied token",
+			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{Create: "caller-token"}),
+			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"}),
+			wantToken: common.InlineSecureValue{Create: "caller-token"},
+		},
+		{
+			name:      "does nothing when no token is stored",
+			new:       connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{}),
+			old:       connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{}),
+			wantToken: common.InlineSecureValue{},
+		},
+		{
+			name: "leaves a token-authenticated repository alone",
+			new: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:   provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://github.com/grafana/new"},
+				},
+			},
+			old: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:   provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://github.com/grafana/old"},
+				},
+				Secure: provisioning.SecureValues{Token: common.InlineSecureValue{Name: "old-token"}},
+			},
+			wantToken: common.InlineSecureValue{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			InvalidateConnectionTokenOnURLChange(tt.new, tt.old)
+			assert.Equal(t, tt.wantToken, tt.new.Secure.Token)
+		})
+	}
+}
+
+// The mutator marks the token for removal, which makes it non-zero. A host change must
+// still be rejected afterwards rather than slipping through as "a token was supplied".
+func TestInvalidateConnectionTokenDoesNotBypassHostCheck(t *testing.T) {
+	connectionRepo := func(url string, token common.InlineSecureValue) *provisioning.Repository {
+		return &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type:       provisioning.GitHubRepositoryType,
+				GitHub:     &provisioning.GitHubRepositoryConfig{URL: url},
+				Connection: &provisioning.ConnectionInfo{Name: "gh-app"},
+			},
+			Secure: provisioning.SecureValues{Token: token},
+		}
+	}
+	old := connectionRepo("https://github.com/grafana/old", common.InlineSecureValue{Name: "old-token"})
+
+	sameHost := connectionRepo("https://github.com/grafana/new", common.InlineSecureValue{})
+	InvalidateConnectionTokenOnURLChange(sameHost, old)
+	assert.False(t, RequiresNewTokenForURLChange(sameHost, old), "same-host move should be allowed")
+
+	hostChange := connectionRepo("https://ghe.example.com/grafana/old", common.InlineSecureValue{})
+	InvalidateConnectionTokenOnURLChange(hostChange, old)
+	assert.True(t, RequiresNewTokenForURLChange(hostChange, old), "host change must still require a token")
+}

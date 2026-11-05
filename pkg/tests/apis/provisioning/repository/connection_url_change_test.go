@@ -76,51 +76,76 @@ func TestIntegrationProvisioning_ConnectionRepositoryURLChange(t *testing.T) {
 
 	// The controller mints the token from the connection and stores it by reference, which
 	// is the state a Terraform-driven update starts from.
+	var mintedAt int64
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		current, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(collect, err)
 		stored := common.MustFromUnstructured[provisioning.Repository](t, current)
 		require.NotEmpty(collect, stored.Secure.Token.Name, "token should be minted from the connection")
+		require.NotZero(collect, stored.Status.Token.LastUpdated, "token status should be stamped")
+		mintedAt = stored.Status.Token.LastUpdated
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "connection token should be generated")
 
 	t.Run("allows url change on the same host without a new token", func(t *testing.T) {
-		updated := updateRepositoryURL(t, helper, repoName, "https://github.com/grafana/repo-b")
-
-		result, err := helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
+		result, err := updateRepositoryURL(t, helper, repoName, "https://github.com/grafana/repo-b")
 		require.NoError(t, err)
 
 		stored := common.MustFromUnstructured[provisioning.Repository](t, result)
 		assert.Equal(t, "https://github.com/grafana/repo-b", stored.Spec.GitHub.URL)
-		assert.NotEmpty(t, stored.Secure.Token.Name, "existing token reference should be preserved")
+
+		// A GitHub App token is scoped to the repository it was minted for, so the old one
+		// cannot reach repo-b. The controller has to replace it rather than keep it.
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			current, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+			require.NoError(collect, err)
+			reconciled := common.MustFromUnstructured[provisioning.Repository](t, current)
+			require.NotEmpty(collect, reconciled.Secure.Token.Name, "a token should be stored again")
+			require.Greater(collect, reconciled.Status.Token.LastUpdated, mintedAt,
+				"token should be re-minted for the new repository")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "token should be regenerated after the url change")
 	})
 
+	// A host change is never silently accepted. Which guard rejects it first depends on
+	// whether the host resolves, so the exact message is pinned by the unit tests instead.
 	t.Run("rejects host change without a new token", func(t *testing.T) {
-		updated := updateRepositoryURL(t, helper, repoName, "https://ghe.example.com/grafana/repo-b")
-
-		_, err := helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
+		_, err := updateRepositoryURL(t, helper, repoName, "https://ghe.example.com/grafana/repo-b")
 		require.Error(t, err)
 		require.True(t, apierrors.IsInvalid(err), "expected invalid repository update, got %v", err)
-		assert.ErrorContains(t, err, "secure.token")
-		assert.ErrorContains(t, err, "a new token is required when changing the repository URL")
+
+		current, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		stored := common.MustFromUnstructured[provisioning.Repository](t, current)
+		assert.Equal(t, "https://github.com/grafana/repo-b", stored.Spec.GitHub.URL, "url must not have moved host")
 	})
 }
 
-// updateRepositoryURL returns the stored repository with a new URL and no secure values,
-// mirroring a client that only ever sends the spec.
+// updateRepositoryURL repoints the stored repository at url, sending no secure values at
+// all, which mirrors a client that only ever sends the spec. The repository is re-read on
+// conflict because the controller patches status concurrently.
 func updateRepositoryURL(
 	t *testing.T,
 	helper *common.ProvisioningTestHelper,
 	name string,
 	url string,
-) *unstructured.Unstructured {
+) (*unstructured.Unstructured, error) {
 	t.Helper()
 
-	current, err := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
-	require.NoError(t, err)
+	var result *unstructured.Unstructured
+	err := common.RetryOnConflict(t, func() error {
+		current, err := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
 
-	updated := current.DeepCopy()
-	require.NoError(t, unstructured.SetNestedField(updated.Object, url, "spec", "github", "url"))
-	unstructured.RemoveNestedField(updated.Object, "secure")
+		updated := current.DeepCopy()
+		if err := unstructured.SetNestedField(updated.Object, url, "spec", "github", "url"); err != nil {
+			return err
+		}
+		unstructured.RemoveNestedField(updated.Object, "secure")
 
-	return updated
+		result, err = helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
+		return err
+	})
+
+	return result, err
 }
