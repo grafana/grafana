@@ -82,10 +82,6 @@ func (s *Service) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 	return s.sql.GetRuleGroupInterval(ctx, orgID, namespaceUID, ruleGroup)
 }
 
-func (s *Service) GetRuleByID(ctx context.Context, query ngmodels.GetAlertRuleByIDQuery) (*ngmodels.AlertRule, error) {
-	return s.sql.GetRuleByID(ctx, query)
-}
-
 func (s *Service) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error) {
 	return s.sql.ListAlertRulesByGroup(ctx, query)
 }

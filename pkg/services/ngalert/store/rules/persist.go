@@ -41,11 +41,6 @@ type RuleGroupReader interface {
 	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error)
 }
 
-// RuleByIDReader looks a rule up by its numeric ID.
-type RuleByIDReader interface {
-	GetRuleByID(ctx context.Context, query ngmodels.GetAlertRuleByIDQuery) (*ngmodels.AlertRule, error)
-}
-
 // RuleCounter counts rules for quota reporting.
 type RuleCounter interface {
 	Count(ctx context.Context, orgID int64) (int64, error)
@@ -146,7 +141,6 @@ type Store interface {
 	NamespaceStore
 	RuleReader
 	RulePageReader
-	RuleByIDReader
 	RuleGroupReader
 	RuleCounter
 	RuleGroupCounter
