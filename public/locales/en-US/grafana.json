@@ -1099,6 +1099,7 @@
         "body": "Are you sure you want to restore this deleted alert rule definition?",
         "confirm": "Yes, restore deleted rule",
         "error": "Could not restore deleted alert rule",
+        "preview-aria-label": "Deleted alert rule JSON",
         "title": "Restore deleted alert rule"
       },
       "table": {
@@ -1479,7 +1480,14 @@
         "to": "to"
       },
       "recording-rules": {
+        "folder-rules-error": "Failed to load rules",
+        "folders-error": "Failed to load folders",
+        "load-more-rules-in-folder": "Load more rules in {{title}}",
+        "loading-folders": "Loading folders...",
         "no-rules": "No recording rules found",
+        "no-rules-in-folder": "No recording rules in this folder",
+        "no-rules-match-folder": "No recording rules match this folder",
+        "retry-rules-in-folder": "Retry loading rules in {{title}}",
         "rules-error": "Failed to load recording rules",
         "search-issues": "Change the search to see results"
       },
@@ -1885,6 +1893,7 @@
         "will-import-rules-count_one": "Will import {{count}} rules",
         "will-import-rules-count_other": "Will import {{count}} rules"
       },
+      "rules-preview": "Alert rules preview",
       "source": {
         "datasource": "Existing data source-managed rules",
         "datasource-description": "Import rules from existing data sources",
@@ -2052,7 +2061,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Apply"
+      "apply": "Apply",
+      "editor-label": "Alert rule YAML"
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -3687,6 +3697,9 @@
       "switch-to-data-source-managed": "The data source selected in your query supports alert rule management. Switch to data source-managed if you want the alert rule to be managed by the data source instead of Grafana.",
       "switch-to-grafana-managed": "Switch to Grafana-managed to use expressions, multiple queries, images in notifications and various other features.",
       "title-alert-rule-types": "Alert rule types"
+    },
+    "sql-query-preview": {
+      "aria-label": "SQL query preview"
     },
     "state-history": {
       "columns": {
@@ -5336,6 +5349,9 @@
       "preferences": "Preferences",
       "recent-dashboards": "Recent dashboards",
       "recent-scopes": "Recent scopes"
+    },
+    "tags": {
+      "label": "Tags"
     }
   },
   "common": {
@@ -5761,7 +5777,8 @@
       "apply-undo-title": "Assistant Composer edit",
       "overlay": {
         "hint-panel": "Click to comment on a panel, or drag to draw a region",
-        "hint-region": "Drag to draw a region"
+        "hint-region": "Drag to draw a region",
+        "hint-variable": "Click to comment on a variable, or drag to draw a region"
       },
       "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
@@ -5943,6 +5960,9 @@
       "render-label": {
         "tooltip-remove-property": "Remove property"
       }
+    },
+    "edit": {
+      "mobile-not-available": "Dashboard editing is not available on small screens. Switch to a larger screen to continue."
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
@@ -6251,8 +6271,9 @@
       "agent-edit": "Agent editing",
       "change-mode": "Change dashboard mode",
       "composer": "Composer",
-      "composer-description": "Point at anything and ask Assistant to change it.",
+      "composer-description": "Point at anything and ask the Assistant.",
       "composer-no-permission": "You need permission to edit this dashboard.",
+      "composer-opening": "Opening Composer…",
       "composer-save-first": "Save the dashboard before using Composer.",
       "composer-unsupported": "Composer is not available for this dashboard right now.",
       "current": "Dashboard mode: {{mode}}",
@@ -6439,6 +6460,9 @@
           "hide-header": "Hide row header",
           "title": "Title"
         },
+        "section-annotations": {
+          "title": "Annotations"
+        },
         "section-filters": {
           "title": "Filters"
         },
@@ -6520,11 +6544,10 @@
         "data-source": "Data source",
         "display": "Show annotation controls in",
         "display-options": {
-          "above-dashboard": "Above dashboard",
           "controls-menu": "Controls menu",
-          "controls-menu-description": "Can be accessed when the controls menu is open",
+          "controls-menu-description": "Visible when the controls menu is open",
           "hidden": "Hidden",
-          "hidden-description": "Hides the toggle for turning this annotation on or off"
+          "hidden-description": "Only visible in edit mode"
         },
         "enabled": "Enabled",
         "enabled-description": "When enabled the annotation query is issued every dashboard refresh",
@@ -6624,6 +6647,8 @@
         "row": "Row",
         "rows": "Rows",
         "section-filters-set": "Filters",
+        "selected-panels_one": "{{count}} panel",
+        "selected-panels_other": "{{count}} panels",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} variable",
@@ -6806,6 +6831,9 @@
             "description": "Repeat this tab for each value in the selected variable.",
             "title": "Repeat by variable"
           }
+        },
+        "section-annotations": {
+          "title": "Annotations"
         },
         "section-filters": {
           "title": "Filters"
@@ -7328,11 +7356,14 @@
         "keep-working": "Keep working",
         "save": "Save",
         "stop-and-leave": "Stop and leave",
+        "stop-and-switch": "Stop and switch",
         "text": {
+          "composer-stop-editing": "Assistant is still making changes to this dashboard. Switching to Viewing stops it. Changes it has already made stay.",
           "leave-composer": "Assistant is still making changes to this dashboard. Leaving Composer stops it. Changes it has already made stay.",
           "save-changes-question": "Do you want to save your changes?"
         },
         "title": {
+          "composer-stop-editing": "Switch to Viewing?",
           "leave-composer": "Leave Composer?",
           "unsaved-changes": "Unsaved changes"
         }
@@ -7579,6 +7610,7 @@
       "error-invalid-json": "Invalid JSON",
       "error-invalid-layout": "Layout JSON did not pass validation. Please check the JSON and try again.",
       "error-invalid-v2-panel": "Panel JSON did not pass validation. Please check the JSON and try again.",
+      "mobile-edit-unavailable": "Editing is unavailable on small screens",
       "validation-error": "Validation error"
     },
     "interval-variable-form": {
@@ -7650,17 +7682,20 @@
       "discard-pending-failed": "Couldn't discard the changes. Try again.",
       "discard-pending-title": "Discard your pending changes?",
       "draft-body": "Previewing a new dashboard, only you can see it until you save it.",
-      "draft-body-source": "Previewing a new dashboard {{source}}, only you can see it until you save it.",
+      "draft-discarded": "Draft discarded",
       "draft-title": "Draft",
+      "edited-dashboard": "Edit dashboard",
       "highlight-changes": "Highlight changes on the dashboard",
-      "open-to-save": "Open to save",
       "pending-body": "Previewing pending changes, only you can see them.",
       "pending-body-source": "Previewing pending changes {{source}}, only you can see them.",
+      "pending-changes-changed": "These pending changes changed",
+      "pending-changes-changed-text": "Your last change was not saved. Showing the latest pending changes.",
       "pending-hint": "You’re viewing the saved dashboard. It has pending changes that only you can see.",
       "pending-stale": "Dashboard has been updated since your changes were made",
       "pending-title": "Pending changes",
       "preview-changes": "Preview changes",
       "rebase": "Rebase",
+      "record-pending-change-failed": "Your change could not be saved",
       "save": "Save",
       "show-original-dashboard": "Show original dashboard",
       "stop-highlighting-changes": "Stop highlighting changes"
@@ -7752,7 +7787,9 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Edit visualization"
+      "edit-visualization": "Edit visualization",
+      "panels-selected_one": "{{count}} panel selected",
+      "panels-selected_other": "{{count}} panels selected"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",
@@ -10727,6 +10764,8 @@
       "clear-button": "Clear selection"
     },
     "code-mirror": {
+      "diff-modified": "Modified",
+      "diff-original": "Original",
       "error-label": "CodeMirror editor failed to load",
       "language-load-failed": "Syntax highlighting failed to load",
       "language-load-failed-description": "The editor will continue without language-specific features.",
@@ -11524,20 +11563,15 @@
     },
     "firing-alerts-card": {
       "create": "Create an alert rule",
-      "critical-count_one": "{{count}} critical",
-      "critical-count_other": "{{count}} critical",
       "empty": "All clear! No alerts are firing.",
       "empty-selected-label": "All clear! No alerts are firing with {{label}}.",
       "empty-teams": "All clear! No alerts are firing for your teams.",
       "error-title": "Could not load firing alerts",
-      "high-count_one": "{{count}} high",
-      "high-count_other": "{{count}} high",
       "severity-critical": "Critical",
       "severity-high": "High",
       "severity-low": "Low",
       "severity-minor": "Minor",
       "severity-unknown": "Unknown",
-      "title": "Firing alerts",
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
     },
@@ -11565,21 +11599,13 @@
       "empty": "All quiet! No active incidents.",
       "empty-selected-team": "All quiet! No active incidents for {{team}}.",
       "error-title": "Could not load active incidents",
-      "title": "Active incidents",
       "view-all": "View all incidents"
     },
     "learn-more": "Learn more",
     "most-used-dashboards-tab": {
       "empty": "Most used dashboards will appear here.",
-      "empty-description": "Once your organization has dashboards and usage data has been collected, dashboards with the most views over the last 30 days will be displayed here.",
       "error-title": "Could not load most used dashboards",
       "loading": "Loading most used dashboards..."
-    },
-    "news-card": {
-      "empty": "No recent blog posts.",
-      "error-title": "Could not load recent blog posts",
-      "read-more": "Read more from the Grafana Labs blog",
-      "title": "Latest from the blog"
     },
     "on-call-card": {
       "current-shift": "You're on call until {{end}}",
@@ -11934,7 +11960,6 @@
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
-      "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
       "loading": "Loading starred dashboards..."
     },
@@ -12408,7 +12433,6 @@
       "copy-log-line-json": "Copy log contents as JSON",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
-      "displayed-fields-section": "Organize displayed fields",
       "fields": {
         "adhoc-statistics": "Ad-hoc statistics",
         "copy-value-to-clipboard": "Copy value to clipboard",
@@ -12432,14 +12456,11 @@
       "log-attributes-field": "Log attributes",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
-      "move-displayed-field-down": "Move down",
-      "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
       "open-assistant": "Explain log line in Assistant",
       "open-value-in": "Open value in",
       "pin-line": "Pin log",
       "prettify": "Prettify",
-      "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
       "scroll-to-logline": "Scroll to log line",
       "search": {
@@ -14026,6 +14047,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Could not find anything matching your query"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "Remove changes",
+    "save-to-dashboard": "Save to dashboard",
+    "tooltip": "This panel has unsaved changes that affect its view",
+    "undo-title": "Save view changes"
   },
   "panel-data-pane": {
     "try-new-editor": {
@@ -15806,20 +15833,8 @@
     "explain-or-modify": "Explain or modify",
     "explain-query": "Explain this query",
     "explaining": "Explaining query…",
-    "feedback-cancel": "Cancel",
-    "feedback-description": "Your feedback helps improve the query experience in Grafana.",
-    "feedback-error": "Feedback could not be sent. Try again.",
     "feedback-helpful": "Helpful",
-    "feedback-label": "Share feedback",
-    "feedback-negative-placeholder": "Describe what didn't go well and what you expected instead.",
-    "feedback-negative-title": "What went wrong?",
     "feedback-not-helpful": "Not helpful",
-    "feedback-positive-placeholder": "What did you like? How could it have been even better?",
-    "feedback-positive-title": "What went well?",
-    "feedback-privacy": "Your rating, comment, whether this was a proposal or handoff, and the selected option rank and count are sent. Your query, prompt, and Assistant response are not included.",
-    "feedback-recipient": "Your feedback will be sent to the teams working on querying.",
-    "feedback-send": "Send",
-    "feedback-sending": "Sending…",
     "focus": "Focus",
     "follow-up-label": "Ask a follow up",
     "follow-up-placeholder": "Ask a follow up…",

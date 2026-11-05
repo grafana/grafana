@@ -704,12 +704,11 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage                        map[string]UnifiedStorageConfig
-	UnifiedStorageClusterSlug             string
-	UnifiedStorageAuthzExemptionEnabled   bool
-	UnifiedStorageAuthzExemptResources    []string
-	HybridSearchDefaultResources          []string
-	UnifiedStorageGRPCErrorResultToStatus bool
+	UnifiedStorage                      map[string]UnifiedStorageConfig
+	UnifiedStorageClusterSlug           string
+	UnifiedStorageAuthzExemptionEnabled bool
+	UnifiedStorageAuthzExemptResources  []string
+	HybridSearchDefaultResources        []string
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -864,6 +863,7 @@ type Cfg struct {
 	QuotasErrorMessageSupportInfo string
 
 	EnableSQLKVBackend                bool
+	KeyPathReconciliationEnabled      bool
 	KVLeaseTTL                        time.Duration
 	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool

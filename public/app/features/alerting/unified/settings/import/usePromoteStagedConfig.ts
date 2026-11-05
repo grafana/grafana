@@ -5,7 +5,7 @@ import { useDispatch } from 'app/types/store';
 import { logError } from '../../Analytics';
 import { ALERTMANAGER_PROVIDED_ENTITY_TAGS, alertmanagerApi } from '../../api/alertmanagerApi';
 import { CONFIG_SINGLETON_NAME, configApi, useAutoSyncConfigQuery } from '../../api/configApi';
-import { convertToGMAApi } from '../../api/convertToGMAApi';
+import { convertApi } from '../../api/convertToGMAApi';
 import { deriveSyncSource } from '../../utils/autoSync';
 import { stringifyErrorLike } from '../../utils/misc';
 
@@ -31,7 +31,7 @@ export function usePromoteStagedConfig(
 ): UsePromoteStagedConfigResult {
   const notifyApp = useAppNotification();
   const dispatch = useDispatch();
-  const [promote, { isLoading: isPromoting }] = convertToGMAApi.usePromoteAlertmanagerConfigMutation();
+  const [promote, { isLoading: isPromoting }] = convertApi.usePromoteAlertmanagerConfigMutation();
   const [updateConfig, { isLoading: isClearingAutoSync }] = configApi.useUpdateConfigMutation();
   const { currentData: configResource } = useAutoSyncConfigQuery();
 
@@ -106,7 +106,7 @@ export function usePromoteStagedConfig(
 
   const onConfirm = async () => {
     try {
-      await promote({ configIdentifier: stagedConfig.identifier }).unwrap();
+      await promote({ identifier: stagedConfig.identifier }).unwrap();
     } catch (err) {
       logError(new Error(stringifyErrorLike(err)));
       notifyApp.error(

@@ -1,11 +1,11 @@
 import { HttpResponse, http } from 'msw';
-import { act, getByLabelText, render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { act, cleanup, getByLabelText, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setBackendSrv } from '@grafana/runtime';
 import { PROVISIONING_API_BASE } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -242,6 +242,17 @@ describe('browse-dashboards BrowseView', () => {
         <BrowseView permissions={mockPermissions} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />
       );
       expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
+    });
+
+    it('does not show the Create dashboard CTA on mobile when mobileEditDeprecation is enabled', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      render(
+        <BrowseView permissions={mockPermissions} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />
+      );
+      expect(await screen.findByText("This folder doesn't have any dashboards yet")).toBeInTheDocument();
+      expect(screen.queryByText('Create dashboard')).not.toBeInTheDocument();
+      cleanup();
+      setTestFlags({});
     });
 
     it('shows a simple message if the user has viewer rights', async () => {

@@ -1,5 +1,13 @@
 // Package resource creates a ResourceServer that handles generic storage operations.
 //
+// # Blob write transport
+//
+// Create and Update accept blob references only in resource bodies. Upload bytes
+// separately through the blob store before issuing a resource write. BulkProcess
+// may also upload bytes through negotiated chunk framing, never inline body data.
+// The reference-only check is independent of schema validation and also applies
+// to no-op updates so inline data cannot bypass the write boundary.
+//
 // # Error handling
 //
 // Unified storage calls can report failure through a response-embedded ErrorResult
@@ -10,6 +18,8 @@
 //     validation hooks): use [StatusErrorFromResponse] so the final response has
 //     the intended HTTP status. Return it unwrapped on the apiserver path so it
 //     can recognize APIStatus. errhttp.Write supports wrapped errors via errors.As.
+//     If the RPC has no Error field, or you only have the returned error, use
+//     [StatusErrorFromGRPC](err) instead of StatusErrorFromResponse(nil, err).
 //   - Returning to another Go caller outside that response boundary: use
 //     [ErrorFromResponse] to resolve the two failure signals into one error.
 //     It gives the transport error precedence and

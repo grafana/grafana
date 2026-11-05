@@ -505,6 +505,24 @@ Set to `true` to add metrics and tracing for database queries. The default value
 
 <hr />
 
+### `[unified_storage]`
+
+Controls unified resource storage in Grafana.
+
+#### `key_path_reconciliation_enabled`
+
+Enables a background job that fills missing `key_path` values in `resource_history` rows written by older Grafana instances during a rolling upgrade. The default value is `true`.
+
+This setting applies only when you enable the SQL KV storage backend with `[unified_storage] enable_sqlkv_backend = true`. It has no effect on file or remote storage backends.
+
+The job starts after startup migrations complete, with one instance reconciling at a time. It processes up to 100 rows per batch, with a one-second pause between batches. After it finds no missing paths, it waits one hour before checking again. If it encounters an error or another instance is reconciling, it retries after one minute.
+
+Search checks for affected indexes every five minutes. As with imports, clock skew or concurrent index builds can leave search stale until another rebuild.
+
+You can optionally set this value to `false` after all Grafana instances that write to the database have been upgraded and a subsequent pass logs `Key path reconciliation succeeded; no missing key paths remain`. Keep the job enabled until the upgrade finishes, even if an earlier pass reports success.
+
+<hr />
+
 ### `[remote_cache]`
 
 Caches authentication tokens and other temporary authentication-related data in the configured database, Redis, or Memcached. This setting doesn't configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).
@@ -2275,6 +2293,21 @@ This setting should be expressed as a duration. Examples: 6h (hours), 10d (days)
 #### `max_annotations_to_keep`
 
 Configures max number of API annotations that Grafana keeps. Default value is 0, which keeps all API annotations.
+
+### `[annotations.app_platform]`
+
+Configures the new annotations API, which is served at `/apis/annotation.grafana.app`. For more information, refer to the [Annotations HTTP API](../../developer-resources/api-reference/http-api/annotations/).
+
+#### `enabled`
+
+Set to `true` to enable the new annotations API. The default is `false`.
+
+#### `max_age`
+
+Rejects new annotations with a `time` older than this duration. The default is 0, which disables the check.
+This setting should be expressed as a duration. Examples: 24h (hours), 720h (30 days).
+
+This setting doesn't delete stored annotations. To configure how long Grafana stores annotations, refer to the existing `[annotations.dashboard]` and `[annotations.api]` settings.
 
 <hr>
 

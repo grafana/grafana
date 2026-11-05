@@ -337,6 +337,10 @@ type ResourceStats struct {
 
 	Count           int64
 	ResourceVersion int64
+
+	// LastSearchedAt is when a global index was last searched before a restart,
+	// so its idle time carries on. Zero when unknown.
+	LastSearchedAt time.Time
 }
 
 // This interface is not exposed to end users directly
@@ -433,6 +437,11 @@ type SearchOptions struct {
 	// defaultGlobalIndexBuildWait; only tests change it.
 	GlobalIndexBuildWait time.Duration
 
+	// GlobalIndexIdleTimeout is how long a global index may go unsearched before
+	// it is closed. Startup does not reopen one that was idle that long before
+	// the restart.
+	GlobalIndexIdleTimeout time.Duration
+
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
 	// hash from it and triggers a rebuild when either differs from the values
@@ -487,6 +496,7 @@ type SearchOptions struct {
 	// Vector API collection allowlists: "group/resource" entries; empty allows nothing.
 	AllowedInternalCollections []string
 	AllowedExternalCollections []string
+	SharedExternalCollections  []string
 	AllowedReadServices        map[string][]string
 }
 
@@ -531,9 +541,6 @@ type ResourceServerOptions struct {
 	Reg prometheus.Registerer
 
 	StorageMetrics *StorageMetrics
-
-	// GRPCErrorResultToStatus enables conversion of embedded ErrorResults on in-process calls.
-	GRPCErrorResultToStatus bool
 
 	IndexMetrics *BleveIndexMetrics
 
@@ -737,7 +744,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		ctx:                            ctx,
 		cancel:                         cancel,
 		storageMetrics:                 opts.StorageMetrics,
-		grpcErrorResultToStatus:        opts.GRPCErrorResultToStatus,
 		maxPageSizeBytes:               opts.MaxPageSizeBytes,
 		authorizeBeforeFetchEnabled:    opts.AuthorizeBeforeFetchEnabled,
 		reg:                            opts.Reg,
@@ -835,24 +841,23 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 var _ ResourceServer = (*server)(nil)
 
 type server struct {
-	log                     log.Logger
-	backend                 StorageBackend
-	vectorBackend           vector.VectorBackend
-	bulkBatchOptions        BulkBatchOptions
-	blob                    BlobSupport
-	blobTransfers           *blobTransfers
-	secure                  secrets.InlineSecureValueSupport
-	search                  *searchServer
-	searchClient            resourcepb.ResourceIndexClient
-	diagnostics             resourcepb.DiagnosticsServer //nolint:staticcheck
-	access                  claims.AccessClient
-	writeHooks              WriteAccessHooks
-	now                     func() int64
-	mostRecentRV            atomic.Int64 // The most recent resource version seen by the server
-	storageMetrics          *StorageMetrics
-	grpcErrorResultToStatus bool
-	overridesService        *OverridesService
-	quotasConfig            QuotasConfig
+	log              log.Logger
+	backend          StorageBackend
+	vectorBackend    vector.VectorBackend
+	bulkBatchOptions BulkBatchOptions
+	blob             BlobSupport
+	blobTransfers    *blobTransfers
+	secure           secrets.InlineSecureValueSupport
+	search           *searchServer
+	searchClient     resourcepb.ResourceIndexClient
+	diagnostics      resourcepb.DiagnosticsServer //nolint:staticcheck
+	access           claims.AccessClient
+	writeHooks       WriteAccessHooks
+	now              func() int64
+	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics   *StorageMetrics
+	overridesService *OverridesService
+	quotasConfig     QuotasConfig
 	// Kind declarations from the manifests, refreshed by the manifest watcher. List
 	// reads the selectable fields from it before asking an index about a selector.
 	// May be nil.
@@ -1267,6 +1272,10 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		return rsp, nil
 	}
 
+	if _, _, err := decodeReferenceOnlyBlobBody(req.Value); err != nil {
+		return nil, err
+	}
+
 	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
@@ -1393,6 +1402,10 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 			Code:    http.StatusUnauthorized,
 		}
 		return rsp, nil
+	}
+
+	if _, _, err := decodeReferenceOnlyBlobBody(req.Value); err != nil {
+		return nil, err
 	}
 
 	var (
@@ -2399,12 +2412,12 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	s.broadcaster = NewBroadcaster(s.ctx, out, s.storageMetrics.Broadcaster, func(e *WrittenEvent) string {
+	s.broadcaster = newBroadcasterWithSizes(s.ctx, out, watchChanSize, defaultOverflowCap, s.storageMetrics.Broadcaster, func(e *WrittenEvent) string {
 		if e == nil || e.Key == nil {
 			return ""
 		}
 		return e.Key.Resource
-	})
+	}, &seededCacheConfig[*WrittenEvent]{identity: writtenEventIdentity})
 	return nil
 }
 
@@ -2417,6 +2430,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	// Capture before setup: invalidations during subscription or snapshot reads must
 	// expire this watch too, even if it has not entered the live loop yet.
+	cached, _ := s.broadcaster.(*broadcaster[*WrittenEvent])
+	waitsForStartup := cached != nil && cached.cache.identity != nil && cached.starting()
 	watchExpiryC := s.watchExpiry.WatchInvalidation()
 
 	// Treat a closed client transport and cancellation of this watch's context
@@ -2471,12 +2486,23 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 	name := fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace)
 	var stream <-chan *WrittenEvent
-	if s.watchStartup != nil {
+	if b := cached; b != nil && b.cache.identity != nil {
+		// Invalidations before capture starts, such as the one when it first
+		// starts, predate the stream a waiting watch subscribes to. Later ones,
+		// even before the cache is ready, still expire it.
+		if waitsForStartup {
+			if err := b.ensureReady(ctx); err != nil {
+				return err
+			}
+			if expiry := s.watchStartup.expiryAtCapture(); expiry != nil {
+				watchExpiryC = expiry
+			}
+		}
 		var resume *watchResume
 		if req.Since > 0 && !req.SendInitialEvents {
 			resume = &watchResume{groupResource: GroupResource{Group: key.Group, Resource: key.Resource}, since: requestedSince, requestedRV: req.Since}
 		}
-		stream, err = s.watchStartup.broadcaster.subscribeWatch(ctx, name, key.Resource, resume)
+		stream, err = b.subscribeWatch(ctx, name, key.Resource, resume)
 	} else {
 		stream, err = s.broadcaster.Subscribe(ctx, name, key.Resource)
 	}

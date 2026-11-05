@@ -78,7 +78,7 @@ grafana cli -v
 
 ### Override default plugin directory
 
-`--pluginsDir value` overrides the path to where your local Grafana instance stores plugins. Use this option if you want to install, update, or remove a plugin somewhere other than the default directory ("/var/lib/grafana/plugins") [$GF_PLUGIN_DIR].
+`--pluginsDir value` overrides the path to where your local Grafana instance stores plugins. Use this option if you want to install, update, or remove a plugin somewhere other than the default directory (`/var/lib/grafana/plugins`). You can also set this option with the `GF_PLUGIN_DIR` environment variable.
 
 **Example:**
 
@@ -88,7 +88,7 @@ grafana cli --pluginsDir "/var/lib/grafana/devplugins" plugins install <plugin-i
 
 ### Override default plugin repo URL
 
-`--repo value` allows you to download and install or update plugins from a repository other than the default Grafana repo.
+`--repo value` allows you to download and install or update plugins from a repository other than the default Grafana repo. You can also set this option with the `GF_PLUGIN_REPO` environment variable.
 
 **Example:**
 
@@ -98,7 +98,7 @@ grafana cli --repo "https://example.com/plugins" plugins install <plugin-id>
 
 ### Override default plugin .zip URL
 
-`--pluginUrl value` allows you to download a .zip file containing a plugin from a local URL instead of downloading it from the default Grafana source.
+`--pluginUrl value` allows you to download a .zip file containing a plugin from a local URL instead of downloading it from the default Grafana source. You can also set this option with the `GF_PLUGIN_URL` environment variable.
 
 **Example:**
 
@@ -120,7 +120,7 @@ grafana cli --insecure --pluginUrl https://company.com/grafana/plugins/<plugin-i
 
 ### Enable debug logging
 
-`--debug` or `-d` enables debug logging. Debug output is returned and shown in the terminal.
+`--debug` enables debug logging. Debug output is returned and shown in the terminal.
 
 **Example:**
 
@@ -152,12 +152,12 @@ grafana cli --homepath "/usr/share/grafana" admin reset-admin-password <new pass
 
 ### Override config file
 
-`--config value` overrides the default location where Grafana expects the configuration file. Refer to [Configuration](../setup-grafana/configure-grafana/) for more information about configuring Grafana and default configuration file locations.
+`--config value` overrides the default location where Grafana expects the configuration file. The value must be the path to a configuration file, not a directory. Refer to [Configuration](../setup-grafana/configure-grafana/) for more information about configuring Grafana and default configuration file locations.
 
 **Example:**
 
 ```bash
-grafana cli --config "/etc/configuration/" admin reset-admin-password mynewpassword
+grafana cli --config "/etc/grafana/grafana.ini" admin reset-admin-password mynewpassword
 ```
 
 ## Plugins commands
@@ -171,6 +171,16 @@ All listed commands apply to the Grafana default repositories and directories. Y
 ```bash
 grafana cli plugins list-remote
 ```
+
+### List available versions of a plugin
+
+To list the versions of a plugin that are available in the plugin repository, run:
+
+```sh
+grafana cli plugins list-versions <plugin-id>
+```
+
+Replace _`<plugin-id>`_ with the ID of the plugin.
 
 ### Install the latest version of a plugin
 
@@ -210,7 +220,7 @@ grafana cli plugins remove <plugin-id>
 
 ## Admin commands
 
-Admin commands are only available in Grafana 4.1 and later.
+Admin commands let you reset the admin password and migrate data in your database.
 
 ### Show all admin commands
 
@@ -221,6 +231,14 @@ grafana cli admin
 ### Reset admin password
 
 `grafana cli admin reset-admin-password <new password>` resets the password for the admin user using the CLI. You might need to do this if you lose the admin password. By default, this command uses the default ID of the admin user, which is 1. If you know the ID of the admin user, you can use the `--user-id` flag to specify the user ID. If the `--user-id` flag is not specified and the command cannot find the admin user, it returns the list of current admin users' username and ID. From that list you can determine the ID of the admin user and run the command again with the `--user-id` flag.
+
+To keep the new password out of your shell history and the process list, use the `--password-from-stdin` flag to read the password from standard input instead of passing it as an argument. The command reads only the first line of input and ignores any password argument when you set this flag. For example, to read the new password from a file, redirect the file to standard input:
+
+```sh
+grafana cli admin reset-admin-password --password-from-stdin < <PASSWORD_FILE>
+```
+
+Replace _`<PASSWORD_FILE>`_ with the path to a file that contains the new password on its first line.
 
 If there are two flags being used to set the homepath and the config file path, then running the command returns this error:
 
@@ -234,7 +252,7 @@ grafana cli --homepath "/usr/share/grafana" admin reset-admin-password <new pass
 
 If you have not lost the admin password, we recommend that you change the user password either in the User Preferences or in the **Server Admin > User** tab.
 
-If you need to set the password in a script, then you can use the [Grafana User API](../developers/http_api/user/#change-password).
+If you need to set the password in a script, then you can use the `--password-from-stdin` flag or the [Grafana User API](../developers/http_api/user/#change-password).
 
 #### Reset admin password
 

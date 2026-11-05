@@ -64,7 +64,7 @@ type BlobEntry struct {
 // for rewriting reference entries: unknown reference fields must be preserved.
 // Limits apply to inline-bearing objects only, leaving legacy references alone.
 func DecodeBlobEntries(value json.RawMessage) (map[string]BlobEntry, error) {
-	entries, err := decodeBlobObject(value)
+	entries, err := DecodeBlobObject(value)
 	if err != nil {
 		return nil, fmt.Errorf("blobs: %w", err)
 	}
@@ -94,7 +94,7 @@ func DecodeBlobEntries(value json.RawMessage) (map[string]BlobEntry, error) {
 }
 
 func decodeBlobEntry(raw json.RawMessage) (BlobEntry, bool, error) {
-	fields, err := decodeBlobObject(raw)
+	fields, err := DecodeBlobObject(raw)
 	if err != nil {
 		return BlobEntry{}, false, err
 	}
@@ -171,9 +171,10 @@ func decodeInlineBlobData(raw json.RawMessage, maxSize int) ([]byte, error) {
 	return data, nil
 }
 
+// DecodeBlobObject decodes a JSON object, rejecting duplicate keys and trailing content.
 // Duplicate names could otherwise validate one value and persist another when
 // downstream JSON implementations disagree about which occurrence wins.
-func decodeBlobObject(raw json.RawMessage) (map[string]json.RawMessage, error) {
+func DecodeBlobObject(raw json.RawMessage) (map[string]json.RawMessage, error) {
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	token, err := decoder.Token()
 	if err != nil || token != json.Delim('{') {

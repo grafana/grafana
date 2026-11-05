@@ -45,38 +45,29 @@ type distributorTestProvider struct {
 func (p distributorTestProvider) GetServer() *grpc.Server { return p.server }
 
 func TestSearchDistributorConvertsOwnErrors(t *testing.T) {
-	for _, enabled := range []bool{false, true} {
-		t.Run(fmt.Sprintf("enabled=%t", enabled), func(t *testing.T) {
-			srv := grpc.NewServer()
-			_, err := ProvideSearchDistributorServer(noop.NewTracerProvider().Tracer("test"),
-				&setting.Cfg{UnifiedStorageGRPCErrorResultToStatus: enabled}, nil, nil,
-				distributorTestProvider{server: srv})
-			require.NoError(t, err)
+	srv := grpc.NewServer()
+	_, err := ProvideSearchDistributorServer(noop.NewTracerProvider().Tracer("test"),
+		&setting.Cfg{}, nil, nil,
+		distributorTestProvider{server: srv})
+	require.NoError(t, err)
 
-			listener := bufconn.Listen(1024 * 1024)
-			t.Cleanup(srv.Stop)
-			go func() { _ = srv.Serve(listener) }()
-			conn, err := grpc.NewClient("passthrough:///bufnet",
-				grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }),
-				grpc.WithTransportCredentials(insecure.NewCredentials()))
-			require.NoError(t, err)
-			t.Cleanup(func() { _ = conn.Close() })
+	listener := bufconn.Listen(1024 * 1024)
+	t.Cleanup(srv.Stop)
+	go func() { _ = srv.Serve(listener) }()
+	conn, err := grpc.NewClient("passthrough:///bufnet",
+		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
 
-			resp, err := resourcepb.NewResourceIndexClient(conn).RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
-				Namespace: "default", Keys: []*resourcepb.ResourceKey{{Namespace: "other"}},
-			})
-			want := NewBadRequestError("key namespace does not match request namespace")
-			if !enabled {
-				require.NoError(t, err)
-				require.True(t, proto.Equal(want, resp.GetError()))
-				return
-			}
-			require.Equal(t, codes.InvalidArgument, status.Code(err))
-			details := status.Convert(err).Details()
-			require.Len(t, details, 1)
-			require.True(t, proto.Equal(want, details[0].(*resourcepb.ErrorResult)))
-		})
-	}
+	_, err = resourcepb.NewResourceIndexClient(conn).RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
+		Namespace: "default", Keys: []*resourcepb.ResourceKey{{Namespace: "other"}},
+	})
+	want := NewBadRequestError("key namespace does not match request namespace")
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+	details := status.Convert(err).Details()
+	require.Len(t, details, 1)
+	require.True(t, proto.Equal(want, details[0].(*resourcepb.ErrorResult)))
 }
 
 func TestSearchRingReadOpReplicaSetExtension(t *testing.T) {

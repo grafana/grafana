@@ -117,6 +117,12 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	if err != nil {
 		return nil, err
 	}
+	if cached && !settings.enforcementEnabled {
+		// Catalog grants must stay outside caches and singleflight: a request
+		// joining an older SQL assembly still needs the current complete batch.
+		static := l.catalog.Permissions(ac.GetOrgRoles(user)...)
+		permissions = append(static, permissions...)
+	}
 	// Enterprise's unlicensed fallback has no Zanzana resolver. OSS itself
 	// still merges Zanzana grants even though enforcement is always disabled.
 	if l.zanzana == nil || (!settings.enforcementEnabled && l.license.Edition() != licensing.OpenSourceEdition) {
@@ -182,7 +188,7 @@ func (l *Loader) uncached(ctx context.Context, user identity.Requester, p loadSe
 func (l *Loader) assemble(ctx context.Context, user identity.Requester, options ac.Options, p loadSettings) ([]ac.Permission, error) {
 	var permissions []ac.Permission
 	for _, role := range ac.GetOrgRoles(user) {
-		basic, err := l.cached(ctx, ac.GetBasicRolePermissionCacheKey(role, user.GetOrgID()), options, func() ([]ac.Permission, error) {
+		load := func() ([]ac.Permission, error) {
 			q := queryFor(user.GetOrgID(), p)
 			q.Roles = []string{role}
 			// Both old basic-role stores drop this flag; preserve that asymmetry.
@@ -191,12 +197,19 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 			if err != nil {
 				return nil, err
 			}
-			stored = l.actions.ExpandActionSets(stored)
-			if p.enforcementEnabled {
-				return stored, nil
-			}
-			return append(l.catalog.Permissions(role), stored...), nil
-		})
+			return l.actions.ExpandActionSets(stored), nil
+		}
+		var basic []ac.Permission
+		var err error
+		if p.enforcementEnabled {
+			basic, err = l.cached(ctx, ac.GetBasicRolePermissionCacheKey(role, user.GetOrgID()), options, load)
+		} else {
+			// Local readers cache catalog and SQL grants together under this key.
+			// This path adds fresh catalog grants separately, so it needs SQL-only
+			// grants. The cached value includes catalog grants, and replacing it with
+			// SQL-only grants would make local readers lose their catalog grants.
+			basic, err = load()
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -228,8 +241,8 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 	if err != nil {
 		return nil, err
 	}
-	// Allocate once for the complete snapshot. The exact capacity also forces
-	// Zanzana merging to detach from concurrent OSS assemblies' shared result.
+	// Detach from cached slices. The exact capacity also prevents a later
+	// Zanzana merge from mutating an assembly shared by concurrent callers.
 	snapshot := make([]ac.Permission, 0, len(permissions)+len(teams)+len(direct))
 	snapshot = append(snapshot, permissions...)
 	snapshot = append(snapshot, teams...)
