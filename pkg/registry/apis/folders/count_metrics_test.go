@@ -10,9 +10,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/admission"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -90,4 +96,37 @@ func TestValidateCountsDeleteChecksAsTheirOwnCaller(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("delete_check", "ok", "enabled")))
+}
+
+func TestUpdateAPIGroupInfoCountsTheEndpointAsItsOwnCaller(t *testing.T) {
+	m := newCountMetrics(prometheus.NewRegistry(), true)
+	b := &FolderAPIBuilder{
+		searcher:     &mockSearchClient{stats: &resourcepb.ResourceStatsResponse{}},
+		countMetrics: m,
+	}
+	scheme := runtime.NewScheme()
+	require.NoError(t, b.InstallSchema(scheme))
+	optsGetter, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{
+		Codec: serializer.NewCodecFactory(scheme).LegacyCodec(folders.FolderResourceInfo.GroupVersion()),
+	}, nil)
+	require.NoError(t, err)
+	info := genericapiserver.NewDefaultAPIGroupInfo(folders.GROUP, scheme, metav1.ParameterCodec, serializer.NewCodecFactory(scheme))
+
+	require.NoError(t, b.UpdateAPIGroupInfo(&info, apiserverbuilder.APIGroupOptions{Scheme: scheme, OptsGetter: optsGetter}))
+
+	for version, storage := range info.VersionedResourcesStorageMap {
+		counts, ok := storage["folders/counts"].(*subCountREST)
+		require.True(t, ok, "version %s", version)
+		_, err := counts.searcher.GetStats(context.Background(), &resourcepb.ResourceStatsRequest{})
+		require.NoError(t, err)
+	}
+	require.Equal(t, 2.0, testutil.ToFloat64(m.requests.WithLabelValues("counts_endpoint", "ok", "enabled")), "one per served version")
+}
+
+func TestWithCountMetricsSetsTheBuilderMetrics(t *testing.T) {
+	b := &FolderAPIBuilder{}
+	WithCountMetrics(prometheus.NewRegistry(), false)(b)
+
+	require.NotNil(t, b.countMetrics)
+	require.Equal(t, "disabled", b.countMetrics.legacyJoin)
 }
