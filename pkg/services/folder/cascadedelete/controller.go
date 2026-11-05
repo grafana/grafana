@@ -119,11 +119,21 @@ func (c *Controller) record(obj any) {
 	if !ok {
 		return
 	}
-	if rv := resourceVersion(obj); rv != "" {
-		c.mu.Lock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.remember(key, resourceVersion(obj))
+}
+
+// remember stores the folder's version and returns the one it replaced. A folder with no version is
+// forgotten, so a stale one cannot match a later event. The caller holds c.mu.
+func (c *Controller) remember(key, rv string) (prev string, known bool) {
+	prev, known = c.seen[key]
+	if rv == "" {
+		delete(c.seen, key)
+	} else {
 		c.seen[key] = rv
-		c.mu.Unlock()
 	}
+	return prev, known
 }
 
 func eventKey(obj any) (string, bool) {
@@ -166,12 +176,10 @@ func (c *Controller) trackEvent(key string, obj any, deleted bool) bool {
 		return false
 	}
 	rv := resourceVersion(obj)
-	prev, known := c.seen[key]
+	prev, known := c.remember(key, rv)
 	if rv == "" {
-		delete(c.seen, key)
 		return false
 	}
-	c.seen[key] = rv
 	_, waiting := c.waiting[key]
 	return known && prev == rv && !waiting
 }

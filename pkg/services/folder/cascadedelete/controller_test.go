@@ -545,3 +545,19 @@ func TestController_FolderTerminatingAtStartWaitsForItsNextChange(t *testing.T) 
 		require.False(t, m.exists("a"))
 	})
 }
+
+func TestController_EventWithoutVersionForgetsTheRecordedOne(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		c, stop := startController(t, m, 100)
+		defer stop()
+
+		withVersion := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: "a", ResourceVersion: "1"}}
+		c.Handler().OnAdd(withVersion, true)
+		c.Handler().OnAdd(folderObj("a"), true)
+		c.Handler().OnUpdate(withVersion, withVersion)
+		synctest.Wait()
+		require.Equal(t, 1, m.getCount("a"), "a version recorded before a versionless list entry must not match later")
+	})
+}
