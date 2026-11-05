@@ -22,7 +22,9 @@ export function QueryOptionsOverlay({ children }: QueryOptionsOverlayProps) {
 
   return (
     <div className={styles.container}>
-      <div className={cx(styles.content, { [styles.contentBlurred]: isQueryOptionsOpen })}>{children}</div>
+      <div className={cx(styles.content, { [styles.contentBlurred]: isQueryOptionsOpen })} inert={isQueryOptionsOpen}>
+        {children}
+      </div>
       <CSSTransition
         classNames={styles.sidebarTransition}
         in={isQueryOptionsOpen}
@@ -66,7 +68,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     contentBlurred: css({
       filter: 'blur(10px)',
-      pointerEvents: 'none',
     }),
     sidebar: css({
       position: 'absolute',
