@@ -215,6 +215,25 @@ function fixThresholds(thresholds: ThresholdsConfig) {
 }
 
 /**
+ * Removes the custom options, which belong to the previous visualization, and their expressions.
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function clearCustomFieldConfig(fieldConfig: FieldConfigSource): FieldConfigSource {
+  const { varMappings, ...defaults } = fieldConfig.defaults;
+  const standardVarMappings = pickBy(varMappings, (_, key) => !isCustomFieldId(key));
+
+  return {
+    defaults: {
+      ...defaults,
+      custom: {},
+      ...(Object.keys(standardVarMappings).length ? { varMappings: standardVarMappings } : {}),
+    },
+    overrides: filterFieldConfigOverrides(fieldConfig.overrides, isStandardFieldProp),
+  };
+}
+
+/**
  * Used internally, not intended for external use.
  * @internal
  */
@@ -240,7 +259,7 @@ export function restoreCustomOverrideRules(current: FieldConfigSource, old: Fiel
 
   for (const override of old.overrides) {
     for (const prop of override.properties) {
-      if (isCustomFieldProp(prop) || (isVarMappingProp(prop) && isCustomFieldId(unwrapVarMappingPropId(prop.id)))) {
+      if (isCustomFieldProp(prop)) {
         const currentOverride = result.overrides.find((o) => isEqual(o.matcher, override.matcher));
         if (currentOverride) {
           if (currentOverride !== override) {
@@ -261,7 +280,8 @@ export function restoreCustomOverrideRules(current: FieldConfigSource, old: Fiel
  * @internal
  */
 export function isCustomFieldProp(prop: DynamicConfigValue): boolean {
-  return isCustomFieldId(prop.id);
+  // An expression for a custom option is part of the custom config too
+  return isCustomFieldId(isVarMappingProp(prop) ? unwrapVarMappingPropId(prop.id) : prop.id);
 }
 
 function isCustomFieldId(id: string): boolean {

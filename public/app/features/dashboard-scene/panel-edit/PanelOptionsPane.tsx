@@ -4,14 +4,13 @@ import { useToggle } from 'react-use';
 
 import {
   type FieldConfigSource,
-  filterFieldConfigOverrides,
   getPanelOptionsWithDefaults,
   type GrafanaTheme2,
-  isStandardFieldProp,
   type PanelPluginMeta,
   restoreCustomOverrideRules,
   type SelectableValue,
 } from '@grafana/data';
+import { clearCustomFieldConfig } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
@@ -102,13 +101,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     );
 
     // clear custom options
-    let newFieldConfig: FieldConfigSource = {
-      defaults: {
-        ...prevFieldConfig.defaults,
-        custom: {},
-      },
-      overrides: filterFieldConfigOverrides(prevFieldConfig.overrides, isStandardFieldProp),
-    };
+    let newFieldConfig: FieldConfigSource = clearCustomFieldConfig(prevFieldConfig);
 
     this._cachedPluginOptions[prevPluginId] = { options: prevOptions, fieldConfig: prevFieldConfig };
 

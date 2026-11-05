@@ -7,7 +7,11 @@ import { type ConfigOverrideRule, FieldConfigProperty, type FieldConfigSource } 
 import { ThresholdsMode } from '../types/thresholds';
 
 import { type PanelPlugin, type StandardOptionConfig } from './PanelPlugin';
-import { getPanelOptionsWithDefaults, restoreCustomOverrideRules } from './getPanelOptionsWithDefaults';
+import {
+  clearCustomFieldConfig,
+  getPanelOptionsWithDefaults,
+  restoreCustomOverrideRules,
+} from './getPanelOptionsWithDefaults';
 
 standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
 standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
@@ -421,6 +425,51 @@ describe('getPanelOptionsWithDefaults', () => {
 
       expect(result.fieldConfig.overrides[0].properties).toEqual([]);
     });
+  });
+});
+
+describe('clearCustomFieldConfig', () => {
+  it('removes custom options and their expressions, keeping standard ones', () => {
+    const result = clearCustomFieldConfig({
+      defaults: {
+        unit: 'bytes',
+        custom: { lineWidth: 5 },
+        varMappings: { unit: '$unit', 'custom.lineWidth': '$width' },
+      },
+      overrides: [
+        {
+          matcher: { id: 'byName', options: 'SeriesA' },
+          properties: [
+            { id: 'custom.lineWidth', value: 2 },
+            { id: 'varMappings.custom.lineWidth', value: '$seriesWidth' },
+            { id: 'decimals', value: 1 },
+            { id: 'varMappings.decimals', value: '$dec' },
+          ],
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      defaults: { unit: 'bytes', custom: {}, varMappings: { unit: '$unit' } },
+      overrides: [
+        {
+          matcher: { id: 'byName', options: 'SeriesA' },
+          properties: [
+            { id: 'decimals', value: 1 },
+            { id: 'varMappings.decimals', value: '$dec' },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('drops varMappings when only custom options had expressions', () => {
+    const result = clearCustomFieldConfig({
+      defaults: { custom: { lineWidth: 5 }, varMappings: { 'custom.lineWidth': '$width' } },
+      overrides: [],
+    });
+
+    expect(result.defaults).toEqual({ custom: {} });
   });
 });
 
