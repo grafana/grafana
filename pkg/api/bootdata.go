@@ -266,6 +266,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Angular:                   plugin.Angular,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
 			LoadingStrategy:           plugin.LoadingStrategy,
+			Extensions:                plugin.Extensions,
 			Translations:              plugin.Translations,
 		}
 
@@ -347,6 +348,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					// ModuleHash: hs.pluginAssets.ModuleHash(c.Req.Context(), ds),
 					BaseURL:      ds.BaseURL,
 					Angular:      ds.Angular,
+					Extensions:   ds.Extensions,
 					Translations: ds.Translations,
 				},
 			}
@@ -373,22 +375,23 @@ func (hs *HTTPServer) getFSPanels(c *contextmodel.ReqContext, availablePanels ma
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
-			ID:              panel.ID,
-			Name:            panel.Name,
-			AliasIDs:        panel.AliasIDs,
-			Info:            panel.Info,
-			Module:          panel.Module,
-			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
-			BaseURL:         panel.BaseURL,
-			SkipDataQuery:   panel.SkipDataQuery,
-			Suggestions:     panel.Suggestions,
-			HideFromList:    panel.HideFromList,
-			ReleaseState:    string(panel.State),
-			Signature:       string(panel.Signature),
-			Sort:            getPanelSort(panel.ID),
-			Angular:         panel.Angular,
-			LoadingStrategy: panel.LoadingStrategy,
-			Translations:    panel.Translations,
+			ID:               panel.ID,
+			Name:             panel.Name,
+			AliasIDs:         panel.AliasIDs,
+			Info:             panel.Info,
+			Module:           panel.Module,
+			ModuleHash:       hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
+			BaseURL:          panel.BaseURL,
+			SkipDataQuery:    panel.SkipDataQuery,
+			SkipDefaultQuery: panel.SkipDefaultQuery,
+			Suggestions:      panel.Suggestions,
+			HideFromList:     panel.HideFromList,
+			ReleaseState:     string(panel.State),
+			Signature:        string(panel.Signature),
+			Sort:             getPanelSort(panel.ID),
+			Angular:          panel.Angular,
+			LoadingStrategy:  panel.LoadingStrategy,
+			Translations:     panel.Translations,
 		}
 	}
 

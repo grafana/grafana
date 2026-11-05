@@ -175,6 +175,19 @@ describe('classifyErrorAttributes', () => {
     });
   });
 
+  it.each(['code.stacktrace', 'code_stacktrace', 'codeStacktrace'])(
+    'leaves the OTel source-location attribute %s out of the error groups',
+    (key) => {
+      const item = { key, value: 'Form.Call : CommonForm.Module.Refresh' };
+
+      expect(classifyErrorAttributes([item], getKey)).toEqual({
+        messages: [],
+        stacktraces: [],
+        other: [],
+      });
+    }
+  );
+
   it.each(['tech_stack', 'techStack', 'full_stack', 'stack', 'addedInfo'])(
     'leaves %s out of the error groups',
     (key) => {

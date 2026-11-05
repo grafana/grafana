@@ -177,6 +177,9 @@ const (
 	// defaultCacheSize is the ring buffer size for replaying recent events to new subscribers.
 	defaultCacheSize = 500
 
+	// defaultCacheMaxBytes bounds retained event memory independently of event count.
+	defaultCacheMaxBytes = 100 * 1024 * 1024
+
 	// watchChanSize is the per-subscriber event delivery channel buffer.
 	// Must be larger than defaultCacheSize so that readInto never fills the
 	// channel completely, leaving headroom for new events.
@@ -292,6 +295,18 @@ func (b *broadcaster[T]) ensureReady(ctx context.Context) error {
 		}
 	}
 	return b.waitForInitialization(ctx, attempt)
+}
+
+// starting reports whether the cache has not been initialized yet.
+func (b *broadcaster[T]) starting() bool {
+	b.initMu.Lock()
+	defer b.initMu.Unlock()
+	select {
+	case <-b.initAttempt.done:
+		return b.initAttempt.err != nil
+	default:
+		return true
+	}
 }
 
 func (b *broadcaster[T]) waitForInitialization(ctx context.Context, attempt *initializationAttempt) error {

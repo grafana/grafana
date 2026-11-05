@@ -2,6 +2,7 @@ package nats
 
 import (
 	"context"
+	"net/url"
 	"sync"
 	"testing"
 	"time"
@@ -91,7 +92,12 @@ func newTestDiscovery(t *testing.T, reg peerRegistry, self peer) *discovery {
 	go srv.Start()
 	require.True(t, srv.ReadyForConnections(5*time.Second), "test nats server not ready")
 	t.Cleanup(srv.Shutdown)
-	return newDiscovery(log.NewNopLogger(), srv, reg, self, discoveryOptions{baseOpts: opts})
+	reload := func(routes []*url.URL) error {
+		next := opts
+		next.Routes = routes
+		return srv.ReloadOptions(&next)
+	}
+	return newDiscovery(log.NewNopLogger(), srv, reg, self, discoveryOptions{reload: reload})
 }
 
 func TestDiscoveryReconcile(t *testing.T) {

@@ -94,6 +94,11 @@ export const versionedComponents = {
       '13.3.0': 'data-testid ControlsAddButton trigger button',
     },
   },
+  DashboardFiltersOverview: {
+    row: {
+      '13.3.0': 'data-testid DashboardFiltersOverview row',
+    },
+  },
   /**
    * @deprecated use DashboardSidebarSplitter instead
    */
@@ -624,6 +629,9 @@ export const versionedComponents = {
       },
       PanelGroupByHeaderAction: {
         '12.4.0': 'data-testid Panel group by header action',
+      },
+      PanelAdHocChangesHeaderAction: {
+        '13.3.0': 'data-testid Panel ad hoc changes header action',
       },
     },
     Visualization: {

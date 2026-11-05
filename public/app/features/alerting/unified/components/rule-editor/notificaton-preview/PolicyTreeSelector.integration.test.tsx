@@ -315,6 +315,25 @@ describe('PolicyTreeSelector', () => {
       });
       expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
     });
+
+    it('previews routing through the policy picked after the form loaded', async () => {
+      mockPreviewApiResponse(server, [mockAlertmanagerAlert({ labels: { severity: 'critical' } })]);
+
+      const { user } = renderRuleEditor();
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await selectFolderAndGroup(user);
+
+      // The default policy's catch-all route sends the alert to provisioned-contact-point
+      await user.click(screen.getByRole('button', { name: /preview routing/i }));
+      expect(await screen.findByText(/delivered to provisioned-contact-point/i)).toBeInTheDocument();
+
+      // This policy overrides routing for critical alerts
+      await user.click(await policyTreeUi.changeButton.find());
+      await selectPolicyOption(user, /Managed Policy - Override \+ Inherit/i);
+      await user.click(screen.getByRole('button', { name: /preview routing/i }));
+
+      expect(await screen.findByText(/delivered to lotsa-emails/i)).toBeInTheDocument();
+    });
   });
 
   // Regression test for bug #1 from PR #124697:

@@ -183,8 +183,10 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       '> div > div:last-child': {
         pointerEvents: 'none',
       },
+      // A value wider than the input reads as cut off, not clipped mid-letter; the open list shows it in full.
       '& input': {
         cursor: 'pointer',
+        textOverflow: 'ellipsis',
       },
       '& input:focus': {
         cursor: 'text',

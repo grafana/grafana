@@ -1,10 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
 import { setEchoSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { configureStore } from 'app/store/configureStore';
@@ -37,7 +39,11 @@ const setup = (children: ReactNode, queries: DataQuery[] = [{ refId: 'A' }]) => 
     } as unknown as ExploreState,
   });
 
-  return render(<Provider store={store}>{children}</Provider>);
+  return render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <Provider store={store}>{children}</Provider>
+    </OpenFeatureProvider>
+  );
 };
 
 const openModal = async (nameOverride?: string) => {
@@ -82,6 +88,21 @@ describe('AddToDashboardButton', () => {
 
       await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Mobile edit deprecation', () => {
+    afterEach(() => {
+      cleanup();
+      setTestFlags({});
+    });
+
+    it('renders nothing when blocked on mobile', () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+
+      const { container } = setup(<AddToDashboard exploreId={'left'} />);
+
+      expect(container).toBeEmptyDOMElement();
     });
   });
 });
