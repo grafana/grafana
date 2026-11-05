@@ -62,7 +62,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-node
       - name: Install JS dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
       - name: Build frontend
         run: pnpm run build
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
