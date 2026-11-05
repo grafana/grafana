@@ -146,8 +146,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	frontendSettings.Datasources = dataSources
 	frontendSettings.Panels = panels
 
-	frontendSettings.PluginCatalogManagedPlugins = hs.managedPluginsService.ManagedPlugins(c.Req.Context())
-
 	for n, ds := range dataSources {
 		if ds.IsDefault {
 			frontendSettings.DefaultDatasource = n
