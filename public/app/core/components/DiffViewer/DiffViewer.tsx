@@ -3,7 +3,7 @@ import { type ReactElement } from 'react';
 import { Box, Stack } from '@grafana/ui';
 import { CodeMirrorDiffEditor as DiffEditor, type CodeMirrorDiffEditorProps } from '@grafana/ui/unstable';
 
-import { InlineDiffToggle, useInlineDiffPreference } from '../MonacoDiffEditor/inlineDiffPreference';
+import { InlineDiffToggle, useInlineDiffPreference } from './inlineDiffPreference';
 
 /** Read-only CodeMirror diff with the shared, persisted view preference. */
 export function DiffViewer({ height, inline, ...props }: CodeMirrorDiffEditorProps): ReactElement {

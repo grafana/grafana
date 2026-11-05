@@ -49,8 +49,8 @@ jest.mock(require.resolve('codemirror-json-schema').replace('index.js', 'utils/m
   renderMarkdown: (text: string) => text,
 }));
 
-jest.mock('app/core/components/MonacoDiffEditor/MonacoDiffEditor', () => ({
-  MonacoDiffEditor: () => <div data-testid="diff-viewer" />,
+jest.mock('app/core/components/DiffViewer/DiffViewer', () => ({
+  DiffViewer: () => <div data-testid="diff-viewer" />,
 }));
 
 jest.mock('./codePaneUtils', () => ({
