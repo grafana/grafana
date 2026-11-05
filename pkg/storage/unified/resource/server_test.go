@@ -803,7 +803,7 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 
 	// Failed operations should return without sleeping
 	check(t, false, errors.New("some error"))
-	check(t, false, rpcError(AsErrorResult(errors.New("some error"))))
+	check(t, false, GRPCStatusError(AsErrorResult(errors.New("some error"))))
 }
 
 type fakeResourceIndexClient struct {
@@ -920,7 +920,7 @@ func TestGetQuotaUsage(t *testing.T) {
 		require.NoError(t, err)
 
 		searchClient := newFakeResourceIndexClient()
-		searchClient.statsError = rpcError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"})
+		searchClient.statsError = GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"})
 
 		s, err := NewResourceServer(ResourceServerOptions{
 			Backend:          &mockStorageBackend{},
@@ -1113,7 +1113,7 @@ func TestCheckQuotas(t *testing.T) {
 			}
 
 			searchClient := newFakeResourceIndexClient()
-			searchClient.statsError = rpcError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"})
+			searchClient.statsError = GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"})
 
 			if transportError {
 				searchClient.statsResponse = nil
@@ -5383,7 +5383,7 @@ func errorResultDetail(err error) *resourcepb.ErrorResult {
 }
 
 func TestRPCError(t *testing.T) {
-	require.NoError(t, rpcError(nil))
+	require.NoError(t, GRPCStatusError(nil))
 
 	conflict := &resourcepb.ErrorResult{
 		Message: "conflict",
@@ -5391,12 +5391,12 @@ func TestRPCError(t *testing.T) {
 		Reason:  string(metav1.StatusReasonConflict),
 		Details: &resourcepb.ErrorDetails{Name: "a", Causes: []*resourcepb.ErrorCause{{Field: "spec"}}},
 	}
-	err := rpcError(conflict)
+	err := GRPCStatusError(conflict)
 	requireRPCError(t, err, conflict)
 	require.Equal(t, codes.Aborted, status.Code(err))
 
 	invalid := &resourcepb.ErrorResult{Code: http.StatusUnprocessableEntity, Reason: string(metav1.StatusReasonInvalid)}
-	requireRPCError(t, rpcError(invalid), invalid)
+	requireRPCError(t, GRPCStatusError(invalid), invalid)
 }
 
 func TestRPCErrorFrom(t *testing.T) {
@@ -5406,7 +5406,7 @@ func TestRPCErrorFrom(t *testing.T) {
 		plain := status.Error(codes.Unavailable, "down")
 		require.Same(t, plain, rpcErrorFrom(plain))
 
-		detailed := rpcError(NewNotFoundError(&resourcepb.ResourceKey{Resource: "dashboards", Name: "a"}))
+		detailed := GRPCStatusError(NewNotFoundError(&resourcepb.ResourceKey{Resource: "dashboards", Name: "a"}))
 		require.Same(t, detailed, rpcErrorFrom(detailed))
 
 		wrapped := fmt.Errorf("context: %w", plain)
@@ -5449,8 +5449,8 @@ func TestRPCErrorKeepsHTTPSemantics(t *testing.T) {
 		"server error":              {Message: "storage failed", Code: http.StatusInternalServerError},
 	} {
 		t.Run(name, func(t *testing.T) {
-			require.Equal(t, StatusError(res), StatusErrorFromGRPC(rpcError(res)))
-			require.Equal(t, StatusError(res), StatusErrorFromResponse(nil, rpcError(res)))
+			require.Equal(t, StatusError(res), StatusErrorFromGRPC(GRPCStatusError(res)))
+			require.Equal(t, StatusError(res), StatusErrorFromResponse(nil, GRPCStatusError(res)))
 		})
 	}
 }
@@ -5556,7 +5556,7 @@ func TestGetStatsReturnsBackendBodyFailureAsError(t *testing.T) {
 func TestGetStatsPassesThroughClientResult(t *testing.T) {
 	want := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats failed"}
 	stats := newFakeResourceIndexClient()
-	stats.statsError = rpcError(want)
+	stats.statsError = GRPCStatusError(want)
 	srv, err := NewResourceServer(ResourceServerOptions{Backend: &missingReadBackend{}, SearchClient: stats})
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })

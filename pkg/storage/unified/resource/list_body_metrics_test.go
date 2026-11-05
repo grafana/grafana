@@ -186,7 +186,7 @@ func TestRecordListBodyStatsAnnotatesSpan(t *testing.T) {
 			rsp := &resourcepb.ListResponse{Items: []*resourcepb.ResourceWrapper{{}, {}, {}}}
 			var err error
 			if failed {
-				rsp, err = nil, rpcError(&resourcepb.ErrorResult{Code: 500, Message: "read failed"})
+				rsp, err = nil, GRPCStatusError(&resourcepb.ErrorResult{Code: 500, Message: "read failed"})
 			}
 			(&server{}).recordListBodyStats(span, stats, listPathStoreAuthorizeFirst, rsp, err)
 			span.End()

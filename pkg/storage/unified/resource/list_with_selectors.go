@@ -26,7 +26,7 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 	s.reportSearchListBodies(ctx)
 
 	if req.Options.Key.Namespace == "" {
-		return nil, rpcError(NewBadRequestError("namespace must be specified for list with filter"))
+		return nil, GRPCStatusError(NewBadRequestError("namespace must be specified for list with filter"))
 	}
 
 	for _, v := range req.Options.Fields {
@@ -42,7 +42,7 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 
 	page, errRes, err := s.executeSearchListPage(ctx, req, srq, span)
 	if errRes != nil {
-		return nil, rpcError(errRes)
+		return nil, GRPCStatusError(errRes)
 	}
 	searchErr := err
 	if searchErr == nil {
@@ -58,7 +58,7 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		if err != nil {
 			return nil, err
 		}
-		return nil, rpcError(result)
+		return nil, GRPCStatusError(result)
 	}
 
 	rsp := &resourcepb.ListResponse{
@@ -69,7 +69,7 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return nil, rpcError(&resourcepb.ErrorResult{
+		return nil, GRPCStatusError(&resourcepb.ErrorResult{
 			Code:    http.StatusUnauthorized,
 			Message: "no user found in context",
 		})
@@ -79,19 +79,19 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 	if s.authorizeBeforeFetchEnabled && page.folderIndexed {
 		rows, errRes = s.authorizeSearchRows(ctx, page.rows)
 		if errRes != nil {
-			return nil, rpcError(errRes)
+			return nil, GRPCStatusError(errRes)
 		}
 	}
 	stopped, errRes := s.consumeSearchRows(ctx, user, req, rows, s.readSearchRows(ctx, rows), page.resourceVersion, rsp)
 	if errRes != nil {
-		return nil, rpcError(errRes)
+		return nil, GRPCStatusError(errRes)
 	}
 	if stopped {
 		return rsp, nil
 	}
 
 	if errRes := setSearchListContinueToken(req, page.response, page.rows, page.resourceVersion, false, rsp); errRes != nil {
-		return nil, rpcError(errRes)
+		return nil, GRPCStatusError(errRes)
 	}
 
 	return rsp, nil

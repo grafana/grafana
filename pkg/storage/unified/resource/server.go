@@ -65,7 +65,7 @@ func watchSendError(err error) error {
 // tenant queue is reported as 429/ResourceExhausted.
 func queueRPCError(err error) error {
 	if errors.Is(err, scheduler.ErrTenantQueueFull) {
-		return rpcError(NewTooManyRequestsError("tenant queue is full, please try again later"))
+		return GRPCStatusError(NewTooManyRequestsError("tenant queue is full, please try again later"))
 	}
 	return rpcErrorFrom(err)
 }
@@ -73,7 +73,7 @@ func queueRPCError(err error) error {
 // rpcFailure logs res if it is a server error and returns it as the call's gRPC error.
 func (s *server) rpcFailure(ctx context.Context, op string, key *resourcepb.ResourceKey, res *resourcepb.ErrorResult) error {
 	s.logIfServerError(ctx, op, key, res)
-	return rpcError(res)
+	return GRPCStatusError(res)
 }
 
 // logIfServerError logs errRes at Error level if it represents a 5xx (server) error.
@@ -1280,7 +1280,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return nil, rpcError(&resourcepb.ErrorResult{
+		return nil, GRPCStatusError(&resourcepb.ErrorResult{
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
 		})
@@ -1301,7 +1301,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		if quotaErr, ok := errors.AsType[QuotaExceededError](err); ok {
 			msg = quotaErr.Message()
 		}
-		return nil, rpcError(&resourcepb.ErrorResult{
+		return nil, GRPCStatusError(&resourcepb.ErrorResult{
 			Message: msg,
 			Code:    http.StatusForbidden,
 		})
@@ -1391,7 +1391,7 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return nil, rpcError(&resourcepb.ErrorResult{
+		return nil, GRPCStatusError(&resourcepb.ErrorResult{
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
 		})
@@ -1445,7 +1445,7 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 			return nil, s.rpcFailure(ctx, op, req.Key, AsErrorResult(err))
 		}
 		if !a.Allowed {
-			return nil, rpcError(&resourcepb.ErrorResult{
+			return nil, GRPCStatusError(&resourcepb.ErrorResult{
 				Message: "not allowed to update resource",
 				Code:    http.StatusForbidden,
 			})
@@ -1483,7 +1483,7 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return nil, rpcError(&resourcepb.ErrorResult{
+		return nil, GRPCStatusError(&resourcepb.ErrorResult{
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
 		})
@@ -1528,7 +1528,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		return nil, s.rpcFailure(ctx, op, req.Key, AsErrorResult(err))
 	}
 	if !access.Allowed {
-		return nil, rpcError(&resourcepb.ErrorResult{
+		return nil, GRPCStatusError(&resourcepb.ErrorResult{
 			Code: http.StatusForbidden,
 		})
 	}
@@ -1583,7 +1583,7 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return nil, rpcError(&resourcepb.ErrorResult{
+		return nil, GRPCStatusError(&resourcepb.ErrorResult{
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
 		})
@@ -1776,24 +1776,24 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 	// The history + trash queries do not yet support additional filters
 	if req.Source != resourcepb.ListRequest_STORE {
 		if len(req.Options.Fields) > 0 || len(req.Options.Labels) > 0 {
-			return nil, rpcError(NewBadRequestError("unexpected field/label selector for history query"))
+			return nil, GRPCStatusError(NewBadRequestError("unexpected field/label selector for history query"))
 		}
 	}
 
 	// Trash authorizes by decoding the object (see listFromTrash), so neither it
 	// nor history can be served from keys alone.
 	if req.KeysOnly && req.Source != resourcepb.ListRequest_STORE {
-		return nil, rpcError(NewBadRequestError("keys_only is only supported for the store source"))
+		return nil, GRPCStatusError(NewBadRequestError("keys_only is only supported for the store source"))
 	}
 
 	if errRes := requireListIdentity(ctx, req); errRes != nil {
-		return nil, rpcError(errRes)
+		return nil, GRPCStatusError(errRes)
 	}
 
 	// Do not allow label query for trash/history
 	for _, v := range req.Options.Labels {
 		if v.Key == utils.LabelKeyGetHistory || v.Key == utils.LabelKeyGetTrash {
-			return nil, rpcError(NewBadRequestError("history and trash must be requested as source"))
+			return nil, GRPCStatusError(NewBadRequestError("history and trash must be requested as source"))
 		}
 	}
 
@@ -1817,7 +1817,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 	// re-apply those against the decoded object, which a keys-only response
 	// lacks, so a dropped selector would look like it matched.
 	if req.KeysOnly && (len(req.Options.Fields) > 0 || len(req.Options.Labels) > 0) {
-		return nil, rpcError(NewBadRequestError("keys_only cannot be combined with field/label selectors"))
+		return nil, GRPCStatusError(NewBadRequestError("keys_only cannot be combined with field/label selectors"))
 	}
 
 	req = filterSelectors(req)
@@ -1849,7 +1849,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 
 	if req.NextPageToken != "" {
 		if token, err := GetContinueToken(req.NextPageToken); err == nil && tokenFromOtherListPath(token, false) {
-			return nil, rpcError(NewBadRequestError("continue token was issued for a search-backed list"))
+			return nil, GRPCStatusError(NewBadRequestError("continue token was issued for a search-backed list"))
 		}
 	}
 
@@ -2241,7 +2241,7 @@ func (s *server) listLimitStopReason(req *resourcepb.ListRequest, rsp *resourcep
 func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return nil, rpcError(&resourcepb.ErrorResult{
+		return nil, GRPCStatusError(&resourcepb.ErrorResult{
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
 		})
@@ -2786,7 +2786,7 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 // native errors.
 func statsCallResult(rsp *resourcepb.ResourceStatsResponse, err error) (*resourcepb.ResourceStatsResponse, error) {
 	if err == nil && rsp.GetError() != nil {
-		return nil, rpcError(rsp.GetError())
+		return nil, GRPCStatusError(rsp.GetError())
 	}
 	return rsp, err
 }
@@ -2817,7 +2817,7 @@ func requireUserNamespace(ctx context.Context, namespace string) *resourcepb.Err
 // Do not route end-user traffic here directly.
 func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
-		return nil, rpcError(errRes)
+		return nil, GRPCStatusError(errRes)
 	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
@@ -2831,7 +2831,7 @@ func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListMan
 // Do not route end-user traffic here directly.
 func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
 	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
-		return nil, rpcError(errRes)
+		return nil, GRPCStatusError(errRes)
 	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
@@ -2850,7 +2850,7 @@ func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckReque
 // Do not route end-user traffic here directly.
 func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
 	if failure := s.authorizeBlobPut(ctx, req); failure != nil {
-		return nil, rpcError(failure)
+		return nil, GRPCStatusError(failure)
 	}
 	rsp, err := s.blob.PutResourceBlob(ctx, req)
 	if err != nil {
@@ -2858,7 +2858,7 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	}
 	// Blob backends may still report failure in the body.
 	if rsp.GetError() != nil {
-		return nil, rpcError(rsp.GetError())
+		return nil, GRPCStatusError(rsp.GetError())
 	}
 	return rsp, nil
 }
@@ -2913,7 +2913,7 @@ func (s *server) authorizeBlobPut(ctx context.Context, req *resourcepb.PutBlobRe
 
 func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest) (*resourcepb.QuotaUsageResponse, error) {
 	if s.overridesService == nil {
-		return nil, rpcError(&resourcepb.ErrorResult{
+		return nil, GRPCStatusError(&resourcepb.ErrorResult{
 			Message: "overrides service not configured on resource server",
 			Code:    http.StatusNotImplemented,
 		})
@@ -2974,7 +2974,7 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
 	info, failure := s.resolveBlobGet(ctx, req)
 	if failure != nil {
-		return nil, rpcError(failure)
+		return nil, GRPCStatusError(failure)
 	}
 	rsp, err := s.blob.GetResourceBlob(ctx, req.Resource, info, req.MustProxyBytes)
 	if err != nil {
@@ -2982,7 +2982,7 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 	}
 	// Blob backends may still report failure in the body.
 	if rsp.GetError() != nil {
-		return nil, rpcError(rsp.GetError())
+		return nil, GRPCStatusError(rsp.GetError())
 	}
 	return rsp, nil
 }
@@ -3154,7 +3154,7 @@ func (s *server) runInQueue(ctx context.Context, tenantID, operation string, run
 // Do not route end-user traffic here directly.
 func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
 	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
-		return nil, rpcError(errRes)
+		return nil, GRPCStatusError(errRes)
 	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
