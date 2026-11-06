@@ -3,7 +3,10 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
+	"testing/synctest"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -386,6 +389,135 @@ func TestFactory_Build(t *testing.T) {
 		require.NoError(t, err)
 		localExtra.AssertExpectations(t)
 	})
+}
+
+func TestFactory_Build_Timeout(t *testing.T) {
+	for _, tt := range []struct {
+		name           string
+		waitForContext bool
+		parentTimeout  time.Duration
+		wantTimeout    time.Duration
+	}{
+		{name: "success", wantTimeout: 30 * time.Second},
+		{name: "build timeout", waitForContext: true, wantTimeout: 30 * time.Second},
+		{name: "shorter parent deadline", parentTimeout: time.Second, waitForContext: true, wantTimeout: time.Second},
+		{name: "longer parent deadline", parentTimeout: time.Minute, waitForContext: true, wantTimeout: 30 * time.Second},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ctx := t.Context()
+				if tt.parentTimeout > 0 {
+					var cancel context.CancelFunc
+					ctx, cancel = context.WithTimeout(ctx, tt.parentTimeout)
+					defer cancel()
+				}
+				cfg := &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+				}
+				built := NewMockRepository(t)
+				extra := NewMockExtra(t)
+				extra.EXPECT().Type().Return(cfg.Spec.Type)
+				start := time.Now()
+				var receivedContext context.Context
+				extra.EXPECT().Build(mock.Anything, cfg).RunAndReturn(func(ctx context.Context, _ *provisioning.Repository) (Repository, error) {
+					receivedContext = ctx
+					deadline, ok := ctx.Deadline()
+					require.True(t, ok)
+					assert.Equal(t, start.Add(tt.wantTimeout), deadline)
+					if tt.waitForContext {
+						<-ctx.Done()
+						assert.Equal(t, tt.wantTimeout, time.Since(start))
+					}
+					return built, ctx.Err()
+				}).Once()
+				factory, err := ProvideFactory(
+					map[provisioning.RepositoryType]struct{}{cfg.Spec.Type: {}},
+					[]Extra{extra},
+				)
+				require.NoError(t, err)
+
+				got, err := factory.Build(ctx, cfg)
+				if !tt.waitForContext {
+					require.NoError(t, err)
+					assert.Same(t, built, got)
+				} else {
+					require.ErrorIs(t, err, context.DeadlineExceeded)
+					assert.ErrorIs(t, err, ErrServerUnavailable)
+					assert.Nil(t, got)
+				}
+				assert.Error(t, receivedContext.Err(), "the build context must be released when Build returns")
+				if tt.parentTimeout == 0 || tt.parentTimeout > tt.wantTimeout {
+					assert.NoError(t, ctx.Err(), "the caller's context must remain usable for status updates")
+				}
+			})
+		})
+	}
+}
+
+func TestFactory_Build_DeadlineFailures(t *testing.T) {
+	classifiedErr := fmt.Errorf("%w: %w", ErrServerUnavailable, context.DeadlineExceeded)
+	for _, tt := range []struct {
+		name            string
+		buildErr        error
+		waitForDeadline bool
+		cancelContext   bool
+		wantUnavailable bool
+	}{
+		{name: "provider deadline", buildErr: context.DeadlineExceeded, wantUnavailable: true},
+		{name: "wrapped provider deadline", buildErr: fmt.Errorf("get project: %w", context.DeadlineExceeded), wantUnavailable: true},
+		{name: "already classified deadline", buildErr: classifiedErr, wantUnavailable: true},
+		{name: "context deadline", waitForDeadline: true, buildErr: context.DeadlineExceeded, wantUnavailable: true},
+		{name: "cancellation after deadline", waitForDeadline: true, buildErr: context.Canceled, wantUnavailable: true},
+		{name: "success after deadline", waitForDeadline: true, wantUnavailable: true},
+		{name: "caller cancellation", cancelContext: true},
+		{name: "provider cancellation", buildErr: context.Canceled},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ctx, cancel := context.WithCancel(t.Context())
+				defer cancel()
+				if tt.waitForDeadline {
+					var cancelDeadline context.CancelFunc
+					ctx, cancelDeadline = context.WithTimeout(ctx, time.Second)
+					defer cancelDeadline()
+				}
+				if tt.cancelContext {
+					cancel()
+				}
+
+				cfg := &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+				}
+				extra := NewMockExtra(t)
+				extra.EXPECT().Type().Return(cfg.Spec.Type)
+				extra.EXPECT().Build(mock.Anything, cfg).RunAndReturn(func(buildCtx context.Context, _ *provisioning.Repository) (Repository, error) {
+					if tt.waitForDeadline {
+						<-buildCtx.Done()
+					}
+					return &MockConfigRepository{}, tt.buildErr
+				}).Once()
+				factory, err := ProvideFactory(
+					map[provisioning.RepositoryType]struct{}{cfg.Spec.Type: {}},
+					[]Extra{extra},
+				)
+				require.NoError(t, err)
+
+				got, err := factory.Build(ctx, cfg)
+				require.Error(t, err)
+				assert.Nil(t, got)
+				if tt.buildErr != nil {
+					assert.ErrorIs(t, err, tt.buildErr)
+				}
+				if ctx.Err() != nil {
+					assert.ErrorIs(t, err, ctx.Err())
+				}
+				assert.Equal(t, tt.wantUnavailable, errors.Is(err, ErrServerUnavailable))
+				if errors.Is(tt.buildErr, classifiedErr) {
+					assert.Same(t, classifiedErr, err, "an already classified deadline must not be wrapped again")
+				}
+			})
+		})
+	}
 }
 
 func TestFactory_Types_EnabledFiltering(t *testing.T) {
