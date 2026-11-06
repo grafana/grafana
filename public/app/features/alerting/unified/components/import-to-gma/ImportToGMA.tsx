@@ -522,6 +522,7 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
     setValue('step1Completed', false);
     setValue('step1Skipped', false);
     setValue('selectedRoutingTree', '');
+    autoFilledTreeRef.current = '';
     return true;
   }, [setValue]);
 
@@ -529,6 +530,7 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
     setValue('step1Completed', false);
     setValue('step1Skipped', true);
     setValue('selectedRoutingTree', '');
+    autoFilledTreeRef.current = '';
     setStep1Snapshot(undefined);
     trackImportToGMAWizardStepSkipped({ step: 'notifications' });
   }, [setValue]);
