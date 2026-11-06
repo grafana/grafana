@@ -27,7 +27,7 @@ Use a sandbox branch that users can push to directly, without opening a pull req
 
 A sandbox is a branch in the same repository, synced to Grafana with the [`write` workflow](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-code/#configuration-parameters) enabled. With the `write` workflow, saving a dashboard commits directly to the sandbox branch, so the editing experience feels close to using Grafana without Git Sync. The difference is that Git Sync still commits every change to Git, so you don't lose any work and Git keeps the full history.
 
-This scenario uses a single **shared** sandbox branch that everyone works in. A shared sandbox uses only one Repository connection regardless of how many users work in it, which keeps you well within the per-stack limit of 10 repository connections. If you need stricter isolation, you can instead give each user their own sandbox branch. Refer to [Individual or shared sandboxes](#individual-or-shared-sandboxes).
+This scenario uses a single **shared** sandbox branch that everyone works in. A shared sandbox uses only one Repository connection regardless of how many users work in it, which keeps you well within your repository connection limit. If you need stricter isolation, you can instead give each user their own sandbox branch. Refer to [Individual or shared sandboxes](#individual-or-shared-sandboxes).
 
 Before you begin, ensure you have the following:
 
@@ -109,7 +109,7 @@ Dashboards
         └── Test Dashboard
 ```
 
-- A folder named `grafana-manifests`, after the repository, contains the dashboards synced from the sandbox branch.
+- A folder titled `grafana-manifests`, the Repository resource's display name, contains the dashboards synced from the sandbox branch.
 - Users can create subfolders inside it, such as `alice/` and `bob/`, to keep their work separate within the shared branch. Subfolders map to subdirectories under the synced path, so you don't need an extra Repository connection.
 - Only dashboards on the configured branch and path appear in the instance.
 - Saving a dashboard commits directly to the sandbox branch.
@@ -151,10 +151,10 @@ If you enable only the `write` workflow, saving a dashboard always commits direc
 
 ## Individual or shared sandboxes
 
-You can share a sandbox with everyone or scope it to a single user. Each sandbox is a branch synced through its own Repository connection, so the per-stack limit of 10 repository connections shapes the choice. Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits/) for details.
+You can share a sandbox with everyone or scope it to a single user. Each sandbox is a branch synced through its own Repository connection, so your repository connection limit shapes the choice: 1 on Grafana Cloud Free, 10 on other Grafana Cloud tiers, and 10 by default on self-managed Grafana, where you can change it with `max_repositories`. On Grafana Cloud Free, the sandbox uses your only connection, so you can't also sync `main` in the same stack. Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits/) for details.
 
 - **Shared sandbox (recommended)**: Use a single branch, such as `sandbox`, synced through one Repository connection that all users share. This uses only one connection regardless of how many users work in it, so it scales to any number of users. Separate users' work with subfolders (for example, `alice/`, `bob/`) if you want some organization within the shared branch. The trade-off is less isolation, since everyone commits to the same branch. This is the setup described above.
-- **Individual sandboxes**: Give each user their own branch, such as `sandbox/alice` and `sandbox/bob`, each synced through a separate Repository connection. This provides the most isolation, but every sandbox consumes one of your 10 connections, so per-user sandboxes don't scale to many users. Reserve them for a small number of active users or short-lived projects, and delete the branch and its connection when you finish the work to free the connection.
+- **Individual sandboxes**: Give each user their own branch, such as `sandbox/alice` and `sandbox/bob`, each synced through a separate Repository connection. This provides the most isolation, but every sandbox consumes one of your connections, so per-user sandboxes don't scale to many users. Reserve them for a small number of active users or short-lived projects, and delete the branch and its connection when you finish the work to free the connection.
 
 Both approaches promote to `main` the same way. Refer to [Promote a sandbox to main](#promote-a-sandbox-to-main).
 

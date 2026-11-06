@@ -107,7 +107,7 @@ Dashboards
 ```
 
 - Grafana creates two separate folders, one per Repository resource.
-- Grafana names each folder after its repository.
+- Grafana titles each folder with its Repository resource's display name.
 - Each team has complete control over its own repository.
 - Teams can independently manage permissions, branches, and workflows in their repositories.
 - All teams can view each other's dashboards in Grafana but manage only their own.

@@ -108,7 +108,7 @@ Dashboards
     └── Approved Dashboard
 ```
 
-- Both instances create a folder named `grafana-manifests`, after the repository.
+- Both instances create a folder titled `grafana-manifests`, the display name of each instance's Repository resource.
 - Each instance only shows dashboards from its configured path (`dev/` or `prod/`).
 - Dashboards appear with their titles from the JSON files.
 

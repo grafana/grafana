@@ -94,7 +94,8 @@ Dashboards
     └── Dashboard 3
 ```
 
-- A folder named `grafana-manifests`, after the repository, contains all synced dashboards.
+- A folder titled `grafana-manifests` contains all synced dashboards. The folder takes its title from the Repository resource's **Display name**, or `spec.title` if you configure Git Sync as code. In the setup wizard, the display name defaults to the repository path, for example `your-org/grafana-manifests`. This example uses the shorter `grafana-manifests`.
+- If you choose folderless sync instead, Grafana doesn't create this folder and places the dashboards at the top level of **Dashboards**. Refer to [Sync targets](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts/#sync-targets).
 - Each JSON file becomes a dashboard, displayed in the folder with its title.
 - Users browse dashboards organized under this folder structure.
 
