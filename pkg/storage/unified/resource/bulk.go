@@ -936,8 +936,8 @@ func newBulkRV() *bulkRV {
 }
 
 // next returns the RV for the next version of the object identified by key. The RV follows the
-// object's own timestamp, so it keeps its age whatever order objects arrive in, but never goes below
-// the object's previous version and is never reused.
+// object's own timestamp (its deletion time for a deletion), so it keeps its age whatever order
+// objects arrive in, but never goes below the object's previous version and is never reused.
 func (x *bulkRV) next(key string, obj metav1.Object) int64 {
 	ts := snowflakeFromTime(obj.GetCreationTimestamp().Time)
 	anno := obj.GetAnnotations()
@@ -947,6 +947,10 @@ func (x *bulkRV) next(key string, obj metav1.Object) int64 {
 		if err == nil {
 			ts = snowflakeFromTime(t)
 		}
+	}
+	// Garbage collection ages a deletion by its RV, so a deletion takes its deletion time
+	if deleted := obj.GetDeletionTimestamp(); deleted != nil {
+		ts = snowflakeFromTime(deleted.Time)
 	}
 	if ts > x.max || ts < 1e18 {
 		ts = x.max

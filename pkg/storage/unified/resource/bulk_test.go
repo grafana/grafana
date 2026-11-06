@@ -515,6 +515,14 @@ func TestBulkRV(t *testing.T) {
 		require.WithinDuration(t, now.Add(-90*24*time.Hour), rvTime(deleted), time.Second)
 	})
 
+	t.Run("a deletion takes its deletion time, not its last edit", func(t *testing.T) {
+		g := newBulkRV()
+		obj := object(now.Add(-2 * 365 * 24 * time.Hour))
+		deletedAt := metav1.NewTime(now.Add(-24 * time.Hour))
+		obj.SetDeletionTimestamp(&deletedAt)
+		require.WithinDuration(t, deletedAt.Time, rvTime(g.next("a", obj)), time.Second)
+	})
+
 	t.Run("versions of one object keep increasing when timestamps go back", func(t *testing.T) {
 		g := newBulkRV()
 		first := g.next("a", object(now.Add(-time.Hour)))

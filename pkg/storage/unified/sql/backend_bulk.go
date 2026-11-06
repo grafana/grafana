@@ -78,6 +78,10 @@ func (x *bulkRV) next(obj metav1.Object) int64 {
 			ts = t.UnixMicro()
 		}
 	}
+	// Garbage collection ages a deletion by its RV, so a deletion takes its deletion time
+	if deleted := obj.GetDeletionTimestamp(); deleted != nil {
+		ts = deleted.UnixMicro()
+	}
 	if ts > x.max || ts < 10000000 {
 		ts = x.max
 	}

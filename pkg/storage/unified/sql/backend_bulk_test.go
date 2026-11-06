@@ -8,7 +8,9 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -421,6 +423,19 @@ func TestProcessBulkChunkedRollbackRequested(t *testing.T) {
 	require.NotNil(t, rsp.Error)
 	require.Contains(t, rsp.Error.Message, "rollback requested")
 	require.NoError(t, b.SQLMock.ExpectationsWereMet())
+}
+
+func TestBulkRVUsesDeletionTime(t *testing.T) {
+	now := time.Now()
+	obj := &metav1.ObjectMeta{Annotations: map[string]string{
+		utils.AnnoKeyUpdatedTimestamp: now.Add(-2 * 365 * 24 * time.Hour).UTC().Format(time.RFC3339),
+	}}
+	deletedAt := metav1.NewTime(now.Add(-24 * time.Hour))
+	obj.SetDeletionTimestamp(&deletedAt)
+
+	rv := newBulkRV().next(obj)
+	// RVs are microseconds, bucketed to 10s with a counter in the low digits
+	require.InDelta(t, deletedAt.UnixMicro(), rv, float64(20*time.Second/time.Microsecond))
 }
 
 func TestBulkHistoryInsertRowLimit(t *testing.T) {
