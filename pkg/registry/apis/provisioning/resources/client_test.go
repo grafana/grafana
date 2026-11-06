@@ -402,6 +402,47 @@ func TestExpandCollections(t *testing.T) {
 	})
 }
 
+func TestStorageGroup(t *testing.T) {
+	configured, err := ParseSupportedResources([]string{
+		"*.datasource.grafana.app/DataSource",
+		"dashboard.grafana.app/Dashboard",
+	})
+	require.NoError(t, err)
+
+	tests := []struct {
+		name  string
+		given schema.GroupKind
+		want  string
+	}{
+		{
+			name:  "a member resolves to its collection",
+			given: schema.GroupKind{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
+			want:  "datasource.grafana.app",
+		},
+		{
+			name:  "a declared group is its own",
+			given: schema.GroupKind{Group: "dashboard.grafana.app", Kind: "Dashboard"},
+			want:  "dashboard.grafana.app",
+		},
+		{
+			name:  "the kind must match the collection",
+			given: schema.GroupKind{Group: "prometheus.datasource.grafana.app", Kind: "Dashboard"},
+			want:  "prometheus.datasource.grafana.app",
+		},
+		{
+			name:  "an unconfigured group is its own",
+			given: schema.GroupKind{Group: "playlist.grafana.app", Kind: "Playlist"},
+			want:  "playlist.grafana.app",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, StorageGroup(configured, tt.given))
+		})
+	}
+}
+
 func TestMultiResourceClientsClientsFor(t *testing.T) {
 	collection := NewMockResourceClients(t)
 	plugins := NewMockResourceClients(t)

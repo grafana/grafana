@@ -69,6 +69,11 @@ func buildDriver(
 		repoFactory,
 		provisioningClient.ProvisioningV0alpha1(),
 	)
+
+	supportedResources, err := controllerCfg.SupportedResources()
+	if err != nil {
+		return nil, fmt.Errorf("get supported resources: %w", err)
+	}
 	// This is basically our own JobQueue system
 	return jobs.NewConcurrentJobDriver(
 		dc.concurrentDrivers,
@@ -81,6 +86,7 @@ func buildDriver(
 		registry,
 		metrics,
 		nats.Enabled(controllerCfg.natsSubscriber),
+		supportedResources,
 		workers...,
 	)
 }
