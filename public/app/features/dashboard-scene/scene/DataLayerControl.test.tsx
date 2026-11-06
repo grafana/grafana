@@ -1,19 +1,17 @@
 import { act, render } from '@testing-library/react';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import { seedDataSources } from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { SceneDataLayerBase, type SceneDataLayerProvider, type SceneDataLayerProviderState } from '@grafana/scenes';
 
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DataLayerControl } from './DataLayerControl';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(() => ({
-    get: jest.fn().mockResolvedValue({}),
-    getList: jest.fn(),
-    getInstanceSettings: jest.fn(),
-    reload: jest.fn(),
-  })),
-}));
+beforeEach(() => {
+  const settings = makeDataSourceSettings('default-ds', 'Default', 'default-ds-type', { isDefault: true });
+  seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
+});
 
 class TestDataLayer extends SceneDataLayerBase<SceneDataLayerProviderState> implements SceneDataLayerProvider {
   public onEnable(): void {}

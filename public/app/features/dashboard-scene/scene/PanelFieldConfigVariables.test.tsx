@@ -1,4 +1,7 @@
 import { of } from 'rxjs';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import { seedDataSources } from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
   FieldType,
@@ -37,15 +40,10 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => {
-    return {
-      get: jest.fn().mockResolvedValue({ getRef: () => ({ uid: 'ds1' }) }),
-      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
-    };
-  },
-}));
+beforeEach(() => {
+  const settings = makeDataSourceSettings('ds1', 'ds1', 'test', { isDefault: true });
+  seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
+});
 
 setRunRequest(
   jest.fn().mockReturnValue(

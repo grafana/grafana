@@ -1,5 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { of } from 'rxjs';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import { seedDataSources } from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
   FieldType,
@@ -71,14 +74,6 @@ jest.mock('@grafana/runtime', () => ({
   getPluginLinkExtensions: jest.fn(() => ({
     extensions: [],
   })),
-  getDataSourceSrv: () => {
-    return {
-      get: jest.fn().mockResolvedValue({
-        getRef: () => ({ uid: 'ds1' }),
-      }),
-      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
-    };
-  },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     defaultDatasource: 'ds1',
@@ -126,6 +121,11 @@ const runRequestMock = jest.fn().mockReturnValue(
 );
 
 setRunRequest(runRequestMock);
+
+beforeEach(() => {
+  const settings = makeDataSourceSettings('abcdef', 'abcdef', 'abcdef-type', { isDefault: true });
+  seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
+});
 
 describe('InspectJsonTab', () => {
   it('Can show panel json', async () => {
