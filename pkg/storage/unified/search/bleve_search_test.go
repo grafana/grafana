@@ -2409,7 +2409,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, []string{"allowed"}, res.Rows[0].Values[0].StringValues)
 	})
 
-	t.Run("stale SearchAfter cursor requires a new search", func(t *testing.T) {
+	t.Run("PreRank SearchAfter cursor continues on PostRank", func(t *testing.T) {
 		// A PreRank cursor lacks the document-ID tie-breaker.
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{
@@ -2418,11 +2418,30 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			newDoc("doc-c", "allowed"),
 		})
 		ac := &countingAccessClient{allowAll: true}
-		q := listQuery(10)
+		q := listQuery(1)
 		q.SearchAfter = []string{"doc-a", "doc-a"}
-		res := searchResponse(t, index, ac, q)
-		require.Equal(t, "BadRequest", res.Error.Reason)
-		require.Contains(t, res.Error.Message, "start a new search")
+		names, res := searchNames(t, index, ac, q)
+		require.Equal(t, []string{"doc-b"}, names)
+		require.Equal(t, []string{"doc-a", "doc-a"}, q.SearchAfter, "the request cursor must not be changed")
+		require.Len(t, res.Rows[0].SortFields, 3)
+		q.SearchAfter = res.Rows[0].SortFields
+		names, _ = searchNames(t, index, ac, q)
+		require.Equal(t, []string{"doc-c"}, names)
+	})
+
+	t.Run("PreRank cursor supports descending sort and name before another field", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-a", "allowed"), newDoc("doc-b", "allowed"), newDoc("doc-c", "allowed"),
+		})
+		q := listQuery(10)
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{
+			{Field: resource.SEARCH_FIELD_NAME, Desc: true},
+			{Field: resource.SEARCH_FIELD_TITLE, Desc: true},
+		}
+		q.SearchAfter = []string{"doc-c", "doc-c"}
+		names, _ := searchNames(t, index, &countingAccessClient{allowAll: true}, q)
+		require.Equal(t, []string{"doc-b", "doc-a"}, names)
 	})
 
 	t.Run("SearchAfter cursor matching neither sort order is rejected", func(t *testing.T) {
@@ -2434,6 +2453,16 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		q.SearchAfter = []string{"a", "b", "c", "d"}
 		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
 		res, err := index.Search(authlib.WithAuthInfo(context.Background(), requester), ac, q, nil, nil)
+		require.Nil(t, res)
+		require.Equal(t, int32(http.StatusBadRequest), resourceutil.ErrorResultFromGRPCDetails(err).GetCode())
+	})
+
+	t.Run("PreRank cursor without a document name is rejected", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		q := listQuery(10)
+		q.SearchAfter = []string{"doc-a", ""}
+		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
+		res, err := index.Search(authlib.WithAuthInfo(context.Background(), requester), &countingAccessClient{allowAll: true}, q, nil, nil)
 		require.Nil(t, res)
 		require.Equal(t, int32(http.StatusBadRequest), resourceutil.ErrorResultFromGRPCDetails(err).GetCode())
 	})
@@ -2966,7 +2995,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, []string{"doc-12", "doc-14", "doc-16"}, names)
 	})
 
-	t.Run("stale SearchBefore cursor requires a new search", func(t *testing.T) {
+	t.Run("PreRank SearchBefore cursor continues on PostRank", func(t *testing.T) {
 		// A PreRank SearchBefore cursor lacks the document-ID tie-breaker.
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{
@@ -2977,9 +3006,10 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		ac := &countingAccessClient{allowAll: true}
 		q := listQuery(10)
 		q.SearchBefore = []string{"doc-c", "doc-c"}
-		res := searchResponse(t, index, ac, q)
-		require.Equal(t, "BadRequest", res.Error.Reason)
-		require.Contains(t, res.Error.Message, "start a new search")
+		names, res := searchNames(t, index, ac, q)
+		require.Equal(t, []string{"doc-a", "doc-b"}, names)
+		require.Equal(t, []string{"doc-c", "doc-c"}, q.SearchBefore, "the request cursor must not be changed")
+		require.Len(t, res.Rows[0].SortFields, 3)
 	})
 }
 
@@ -3230,6 +3260,19 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 			{"folders", "f-zzz"},
 		}, got)
 		require.Equal(t, int64(4), res.TotalHits, "TotalHits is the unfiltered merged match count")
+	})
+
+	t.Run("PreRank cursor cannot identify a federated resource", func(t *testing.T) {
+		dash := newTestDashboardsIndexPostRank(t, 2)
+		folder := newTestFoldersIndexPostRank(t, 2, search.PostRankAuthzConfig{})
+		q := federatedQuery(10)
+		q.SearchAfter = []string{"aaa", "shared-name"}
+		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: dashKey.Namespace}
+		ctx := authlib.WithAuthInfo(context.Background(), requester)
+		res, err := dash.Search(ctx, search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true}), q,
+			&resource.SearchIndexes{Federated: []resource.ResourceIndex{folder}}, nil)
+		require.Nil(t, res)
+		require.Equal(t, int32(http.StatusBadRequest), resourceutil.ErrorResultFromGRPCDetails(err).GetCode())
 	})
 
 	t.Run("respects permissions per resource type", func(t *testing.T) {
