@@ -230,6 +230,12 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * either stops that turn.
    */
   setPaused(paused: boolean): void;
+  /**
+   * The Assistant runs a turn while picking and pins stay available, so comments made meanwhile wait for
+   * the next message. Turning Composer off or switching to Viewing asks for confirmation, as when paused.
+   * Picks and pins follow the elements the turn moves; a pin whose element the turn removes is not drawn.
+   */
+  setWorking(working: boolean): void;
 
   /**
    * Replaces the drawn annotations. Each is a comment-bubble pin whose tail (its square bottom-left corner)
