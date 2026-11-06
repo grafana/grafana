@@ -226,7 +226,6 @@ func NewAPIBuilder(
 	folderMetadataEnabled bool,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	maxFileSize int64,
-	maxJobBodySize int64,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -281,8 +280,6 @@ func NewAPIBuilder(
 		incrementalPolicy:                   incrementalPolicy,
 		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
 		maxFileSize: maxFileSize,
-		// Request body cap for job creation. Non-positive (<=0) uses the default.
-		maxJobBodySize: maxJobBodySize,
 	}
 
 	for _, builder := range extraBuilders {
@@ -294,6 +291,11 @@ func NewAPIBuilder(
 
 func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
 	b.repoValidatorOpts = opts
+}
+
+func (b *APIBuilder) SetMaxJobBodySize(maxJobBodySize int64) {
+	// Non-positive (<=0) uses the default request body cap for job creation.
+	b.maxJobBodySize = maxJobBodySize
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -367,7 +369,6 @@ func RegisterAPIService(
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	maxFileSize := cfg.ProvisioningMaxFileSize
-	maxJobBodySize := cfg.ProvisioningMaxJobBodySize
 	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
 
@@ -414,11 +415,11 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		incrementalPolicy,
 		maxFileSize,
-		maxJobBodySize,
 	)
 	if err != nil {
 		return nil, err
 	}
+	builder.SetMaxJobBodySize(cfg.ProvisioningMaxJobBodySize)
 	builder.repoValidatorOpts = repoValidatorOpts
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
@@ -462,11 +463,11 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		incrementalPolicy,
 		maxFileSize,
-		maxJobBodySize,
 	)
 	if err != nil {
 		return nil, err
 	}
+	v1beta1Builder.SetMaxJobBodySize(cfg.ProvisioningMaxJobBodySize)
 	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
