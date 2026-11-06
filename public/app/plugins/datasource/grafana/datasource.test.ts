@@ -1,3 +1,5 @@
+import { lastValueFrom } from 'rxjs';
+
 import {
   type AnnotationQueryRequest,
   type DataQueryRequest,
@@ -96,7 +98,7 @@ describe('grafana data source', () => {
           }
           const options = setupAnnotationQueryOptions({ type: annotationType, tags: ['tag1'] }, { uid: 'DSNdW0gVk' });
 
-          await ds.getAnnotations(options);
+          await lastValueFrom(ds.getAnnotations(options));
 
           expect(getMock).toHaveBeenCalledWith(
             '/api/annotations',
@@ -128,8 +130,10 @@ describe('grafana data source', () => {
       ])('uses annotation type $expectedType when value is "$value"', async ({ value, expectedType }) => {
         locationService.replace(`/d/dashboard-uid/test?disableAlertHistory=${value}`);
 
-        await ds.getAnnotations(
-          setupAnnotationQueryOptions({ type: GrafanaAnnotationType.Dashboard }, { uid: 'dashboard-uid' })
+        await lastValueFrom(
+          ds.getAnnotations(
+            setupAnnotationQueryOptions({ type: GrafanaAnnotationType.Dashboard }, { uid: 'dashboard-uid' })
+          )
         );
 
         expect(getMock).toHaveBeenCalledWith(
@@ -145,7 +149,7 @@ describe('grafana data source', () => {
       const options = setupAnnotationQueryOptions({ tags: ['tag1:$var'] });
 
       beforeEach(() => {
-        return ds.getAnnotations(options);
+        return lastValueFrom(ds.getAnnotations(options));
       });
 
       it('should interpolate template variables in tags in query options', () => {
@@ -157,7 +161,7 @@ describe('grafana data source', () => {
       const options = setupAnnotationQueryOptions({ tags: ['$var2'] });
 
       beforeEach(() => {
-        return ds.getAnnotations(options);
+        return lastValueFrom(ds.getAnnotations(options));
       });
 
       it('should interpolate template variables in tags in query options', () => {
@@ -176,7 +180,7 @@ describe('grafana data source', () => {
       );
 
       beforeEach(() => {
-        return ds.getAnnotations(options);
+        return lastValueFrom(ds.getAnnotations(options));
       });
 
       it('should remove tags from query options', () => {

@@ -1,5 +1,7 @@
-import { type AnnotationEvent, type DataFrame, toDataFrame } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { catchError, defer, endWith, from, map, merge, type Observable, of, switchMap } from 'rxjs';
+
+import { type AnnotationEvent, type DataQueryResponse, LoadingState, toDataFrame } from '@grafana/data';
+import { getBackendSrv, toDataQueryError } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { annotationK8sClient } from 'app/api/clients/annotation/v0alpha1';
 import { type StateHistoryItem } from 'app/types/unified-alerting';
@@ -8,7 +10,7 @@ import { isAnnotationApiAvailable } from './isAnnotationApiAvailable';
 import { type AnnotationTagsResponse } from './types';
 
 export interface AnnotationServer {
-  query(params: Record<string, unknown>, requestId: string): Promise<DataFrame>;
+  query(params: Record<string, unknown>, requestId: string): Observable<DataQueryResponse>;
   forAlert(alertUID: string): Promise<StateHistoryItem[]>;
   save(annotation: AnnotationEvent, scopes?: string[]): Promise<AnnotationEvent>;
   update(annotation: AnnotationEvent, scopes?: string[]): Promise<unknown>;
@@ -17,10 +19,10 @@ export interface AnnotationServer {
 }
 
 class LegacyAnnotationServer implements AnnotationServer {
-  query(params: unknown, requestId: string): Promise<DataFrame> {
-    return getBackendSrv()
-      .get('/api/annotations', params, requestId)
-      .then((v) => toDataFrame(v));
+  query(params: unknown, requestId: string): Observable<DataQueryResponse> {
+    return from(getBackendSrv().get('/api/annotations', params, requestId)).pipe(
+      map((v) => ({ data: [toDataFrame(v)], state: LoadingState.Done }))
+    );
   }
 
   forAlert(alertUID: string) {
@@ -72,25 +74,36 @@ function fetchLegacyAlertAnnotations(params: Record<string, unknown>, requestId:
   return getBackendSrv().get<AnnotationEvent[]>('/api/annotations', { ...rest, type: 'alert' }, `${requestId}-alert`);
 }
 
+// Each source is its own keyed packet so runRequest accumulates them and a slow or failing
+// source does not block or discard the others.
+function toPacket(key: string, events: Promise<AnnotationEvent[]>): Observable<DataQueryResponse> {
+  return from(events).pipe(
+    map((e) => ({ key, data: [toDataFrame(e)], state: LoadingState.Loading })),
+    catchError((e) => of({ key, data: [], errors: [toDataQueryError(e)] }))
+  );
+}
+
 // Single server that dispatches each operation to either the k8s API or the
 // legacy /api/annotations endpoint based on the runtime gate. `forAlert` is
 // always legacy because the k8s /search endpoint cannot filter by alertUID.
 class K8sAnnotationServer implements AnnotationServer {
   private legacy = new LegacyAnnotationServer();
 
-  async query(params: Record<string, unknown>, requestId: string): Promise<DataFrame> {
-    if (!(await isK8sAnnotationsClientEnabled())) {
-      return this.legacy.query(params, requestId);
-    }
-    // The k8s annotation API does not serve alert-state annotations — so we also fire
-    // the legacy one with type='alert' and merge results unless the type is specifically
-    // scoped to only annotations.
-    const wantsAlertAnnotations = params.type !== 'annotation';
-    const [manualEvents, alertEvents] = await Promise.all([
-      annotationK8sClient.search(params, requestId),
-      wantsAlertAnnotations ? fetchLegacyAlertAnnotations(params, requestId) : Promise.resolve<AnnotationEvent[]>([]),
-    ]);
-    return toDataFrame([...manualEvents, ...alertEvents]);
+  query(params: Record<string, unknown>, requestId: string): Observable<DataQueryResponse> {
+    return defer(() => isK8sAnnotationsClientEnabled()).pipe(
+      switchMap((enabled) => {
+        if (!enabled) {
+          return this.legacy.query(params, requestId);
+        }
+        // The k8s annotation API does not serve alert-state annotations — so we also fire
+        // the legacy one with type='alert' unless the type is specifically scoped to only annotations.
+        const sources = [toPacket('manual', annotationK8sClient.search(params, requestId))];
+        if (params.type !== 'annotation') {
+          sources.push(toPacket('alerts', fetchLegacyAlertAnnotations(params, requestId)));
+        }
+        return merge(...sources).pipe(endWith({ key: 'done', data: [], state: LoadingState.Done }));
+      })
+    );
   }
 
   forAlert(alertUID: string): Promise<StateHistoryItem[]> {

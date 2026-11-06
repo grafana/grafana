@@ -1,3 +1,6 @@
+import { lastValueFrom, toArray } from 'rxjs';
+
+import { type DataFrame, LoadingState } from '@grafana/data';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
@@ -171,32 +174,32 @@ describe('annotationServer with FE flag ON and API group available', () => {
     expect(tags).toEqual([{ term: 'a', count: 3 }]);
   });
 
-  it('query hits the k8s /search sub-resource and merges legacy alert annotations', async () => {
-    getFn.mockImplementation((url: string) => {
-      if (url === `${baseURL}/search`) {
-        return Promise.resolve({
-          kind: 'AnnotationList',
-          apiVersion: 'annotation.grafana.app/v0alpha1',
-          metadata: {},
-          items: [
-            {
-              apiVersion: 'annotation.grafana.app/v0alpha1',
-              kind: 'Annotation',
-              metadata: { name: 'a-7', resourceVersion: '1', creationTimestamp: '' },
-              spec: { text: 'manual', time: 100, dashboardUID: 'd' },
-            },
-          ],
-        });
-      }
-      if (url === '/api/annotations') {
-        return Promise.resolve([{ id: 9, text: 'alerting', time: 200, dashboardUID: 'd', newState: 'alerting' }]);
-      }
-      return Promise.resolve(null);
-    });
+  const searchResponse = {
+    kind: 'AnnotationList',
+    apiVersion: 'annotation.grafana.app/v0alpha1',
+    metadata: {},
+    items: [
+      {
+        apiVersion: 'annotation.grafana.app/v0alpha1',
+        kind: 'Annotation',
+        metadata: { name: 'a-7', resourceVersion: '1', creationTimestamp: '' },
+        spec: { text: 'manual', time: 100, dashboardUID: 'd' },
+      },
+    ],
+  };
+  const alertResponse = [{ id: 9, text: 'alerting', time: 200, dashboardUID: 'd', newState: 'alerting' }];
+  const textsOf = (frame: DataFrame) => frame.fields.find((f) => f.name === 'text')?.values;
+  const query = () => annotationServer().query({ from: 1, to: 2, dashboardUID: 'd' }, 'req-1');
+  const mockSources = (manual: Promise<unknown>, alerts: Promise<unknown>) =>
+    getFn.mockImplementation((url: string) => (url === `${baseURL}/search` ? manual : alerts));
 
-    const frame = await annotationServer().query(
-      { from: 1, to: 2, dashboardUID: 'd', limit: 100, matchAny: false, scopes: ['s-1'] },
-      'req-1'
+  it('query hits the k8s /search sub-resource and legacy alert annotations, then completes', async () => {
+    mockSources(Promise.resolve(searchResponse), Promise.resolve(alertResponse));
+
+    const packets = await lastValueFrom(
+      annotationServer()
+        .query({ from: 1, to: 2, dashboardUID: 'd', limit: 100, matchAny: false, scopes: ['s-1'] }, 'req-1')
+        .pipe(toArray())
     );
 
     expect(getFn).toHaveBeenCalledWith(
@@ -209,14 +212,44 @@ describe('annotationServer with FE flag ON and API group available', () => {
       { from: 1, to: 2, dashboardUID: 'd', limit: 100, matchAny: false, type: 'alert' },
       'req-1-alert'
     );
-    expect(frame.length).toBe(2);
-    const texts = frame.fields.find((f) => f.name === 'text')?.values;
-    expect(texts).toEqual(['manual', 'alerting']);
+    const done = packets[packets.length - 1];
+    expect(done).toMatchObject({ key: 'done', state: LoadingState.Done });
+    expect(packets.slice(0, -1).map((p) => [p.key, p.state, textsOf(p.data[0])])).toEqual(
+      expect.arrayContaining([
+        ['manual', LoadingState.Loading, ['manual']],
+        ['alerts', LoadingState.Loading, ['alerting']],
+      ])
+    );
+  });
+
+  it('query emits each source as it settles, without waiting for the other', async () => {
+    let resolveAlerts!: (v: unknown) => void;
+    mockSources(Promise.resolve(searchResponse), new Promise((r) => (resolveAlerts = r)));
+    const keys: unknown[] = [];
+    query().subscribe((p) => keys.push(p.key));
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(keys).toEqual(['manual']);
+
+    resolveAlerts(alertResponse);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(keys).toEqual(['manual', 'alerts', 'done']);
+  });
+
+  it('query keeps the other source and reports the error when one source fails', async () => {
+    const error = new Error('alert history unavailable');
+    mockSources(Promise.resolve(searchResponse), Promise.reject(error));
+
+    const packets = await lastValueFrom(query().pipe(toArray()));
+
+    expect(textsOf(packets.find((p) => p.key === 'manual')!.data[0])).toEqual(['manual']);
+    expect(packets.find((p) => p.key === 'alerts')?.errors).toHaveLength(1);
+    expect(packets[packets.length - 1].state).toBe(LoadingState.Done);
   });
 
   it('query skips the alert fetch when caller explicitly filters to type=annotation', async () => {
     getFn.mockResolvedValue({ kind: 'AnnotationList', items: [] });
-    await annotationServer().query({ from: 1, to: 2, dashboardUID: 'd', type: 'annotation' }, 'req-1');
+    await lastValueFrom(annotationServer().query({ from: 1, to: 2, dashboardUID: 'd', type: 'annotation' }, 'req-1'));
 
     expect(getFn).toHaveBeenCalledTimes(1);
     expect(getFn).toHaveBeenCalledWith(`${baseURL}/search`, expect.any(Object), 'req-1');
