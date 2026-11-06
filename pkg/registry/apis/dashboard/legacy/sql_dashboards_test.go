@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type recordingLibraryPanelStream struct {
@@ -1069,4 +1070,155 @@ func TestMigrateDashboardsSQLiteReadKeepsWritersOut(t *testing.T) {
 	require.Equal(t, "delete", mode)
 	require.Len(t, stream.requests, count)
 	require.Error(t, stream.lockErr, "the read must hold its lock while rows are sent")
+}
+
+// sendHookStream records requests and runs onSend before each one.
+type sendHookStream struct {
+	recordingLibraryPanelStream
+	onSend func()
+}
+
+func (s *sendHookStream) Send(req *resourcepb.BulkRequest) error {
+	if s.onSend != nil {
+		s.onSend()
+	}
+	return s.recordingLibraryPanelStream.Send(req)
+}
+
+func TestIntegrationMigrateLegacyPages(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	store := db.NewTestStore(t)
+	ctx := t.Context()
+	engine := store.GetEngine()
+	isPostgres := store.GetDialect().DriverName() == "postgres"
+	now := time.Now().UTC().Format("2006-01-02 15:04:05")
+
+	insertDashboard := func(uid string, version int, isFolder bool) int64 {
+		t.Helper()
+		_, err := engine.Exec(`INSERT INTO dashboard (org_id, uid, slug, title, data, created, updated, version, is_folder, folder_id, created_by, updated_by, has_acl, is_public)
+			VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, 1, ?, ?)`, uid, uid, uid, `{"title":"`+uid+`"}`, now, now, version, isFolder, false, false)
+		require.NoError(t, err)
+		var id int64
+		_, err = engine.SQL("SELECT id FROM dashboard WHERE org_id = 1 AND uid = ?", uid).Get(&id)
+		require.NoError(t, err)
+		return id
+	}
+
+	// Dashboards with up to 4 versions and dashboards with no history rows: more rows than
+	// one page, and the two row shapes interleaved by id
+	want := map[string]bool{}
+	for i := range 300 {
+		uid := fmt.Sprintf("dash-%d", i)
+		if i%3 == 0 {
+			insertDashboard(uid, 1, false)
+			want[fmt.Sprintf("%s@1", uid)] = true
+			continue
+		}
+		versions := 1 + i%4
+		id := insertDashboard(uid, versions, false)
+		for v := 1; v <= versions; v++ {
+			_, err := engine.Exec(`INSERT INTO dashboard_version (dashboard_id, parent_version, restored_from, version, created, created_by, message, data, api_version)
+				VALUES (?, ?, 0, ?, ?, 1, '', ?, '')`, id, v-1, v, now, `{"title":"`+uid+`"}`)
+			require.NoError(t, err)
+			want[fmt.Sprintf("%s@%d", uid, v)] = true
+		}
+	}
+	// One long history, so pages also break inside a single dashboard's versions
+	longID := insertDashboard("dash-long", 1200, false)
+	for v := 1; v <= 1200; v++ {
+		_, err := engine.Exec(`INSERT INTO dashboard_version (dashboard_id, parent_version, restored_from, version, created, created_by, message, data, api_version)
+			VALUES (?, ?, 0, ?, ?, 1, '', ?, '')`, longID, v-1, v, now, `{"title":"dash-long"}`)
+		require.NoError(t, err)
+		want[fmt.Sprintf("dash-long@%d", v)] = true
+	}
+	wantFolders := map[string]bool{}
+	for i := range migrationPageMaxRows + 20 {
+		uid := fmt.Sprintf("folder-%d", i)
+		insertDashboard(uid, 1, true)
+		wantFolders[uid] = true
+	}
+
+	var timeoutBefore string
+	if isPostgres {
+		_, err := engine.SQL("SHOW statement_timeout").Get(&timeoutBefore)
+		require.NoError(t, err)
+	}
+	opts := migrations.MigrateOptions{Namespace: "default", WithHistory: true, Progress: func(int, string) {}}
+	if isPostgres {
+		opts.StatementTimeout = 15 * time.Minute
+	}
+	openTx := func() {
+		if !isPostgres {
+			return
+		}
+		var open int
+		_, err := engine.SQL("SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() AND state LIKE 'idle in transaction%' AND pid <> pg_backend_pid()").Get(&open)
+		require.NoError(t, err)
+		require.Zero(t, open, "no page transaction may stay open while rows are sent")
+	}
+
+	access := NewMigratorAccess(legacysql.NewDatabaseProvider(store), provisioning.NewProvisioningServiceMock(ctx), nil)
+
+	t.Run("every dashboard version is sent once", func(t *testing.T) {
+		stream := &sendHookStream{onSend: openTx}
+		require.NoError(t, access.MigrateDashboards(ctx, 1, opts, stream))
+		got := map[string]int{}
+		for _, req := range stream.requests {
+			var obj struct {
+				Metadata struct {
+					Generation int64 `json:"generation"`
+				} `json:"metadata"`
+			}
+			require.NoError(t, json.Unmarshal(req.Value, &obj))
+			got[fmt.Sprintf("%s@%d", req.Key.Name, obj.Metadata.Generation)]++
+		}
+		require.Len(t, got, len(want))
+		for key, n := range got {
+			require.True(t, want[key], "unexpected row %s", key)
+			require.Equal(t, 1, n, "row %s sent %d times", key, n)
+		}
+	})
+
+	t.Run("every folder is sent once", func(t *testing.T) {
+		stream := &sendHookStream{onSend: openTx}
+		require.NoError(t, access.MigrateFolders(ctx, 1, opts, stream))
+		got := map[string]int{}
+		for _, req := range stream.requests {
+			got[req.Key.Name]++
+		}
+		require.Len(t, got, len(wantFolders))
+		for uid, n := range got {
+			require.True(t, wantFolders[uid], "unexpected folder %s", uid)
+			require.Equal(t, 1, n, "folder %s sent %d times", uid, n)
+		}
+	})
+
+	t.Run("the timeout override applies inside page reads only", func(t *testing.T) {
+		if !isPostgres {
+			t.Skip("statement_timeout is Postgres only")
+		}
+		helper, err := legacysql.NewDatabaseProvider(store)(ctx)
+		require.NoError(t, err)
+		var inside []string
+		_, err = access.readMigrationPage(ctx, helper, opts, func(ctx context.Context) (*migrationPage, error) {
+			for range 2 {
+				rows, err := access.executeQuery(ctx, helper, "SHOW statement_timeout")
+				require.NoError(t, err)
+				require.True(t, rows.Next())
+				var v string
+				require.NoError(t, rows.Scan(&v))
+				require.NoError(t, rows.Close())
+				inside = append(inside, v)
+			}
+			return &migrationPage{}, nil
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"15min", "15min"}, inside)
+
+		var after string
+		_, err = engine.SQL("SHOW statement_timeout").Get(&after)
+		require.NoError(t, err)
+		require.Equal(t, timeoutBefore, after)
+	})
 }
