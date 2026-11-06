@@ -27,7 +27,7 @@ import Trigger from './Trigger';
 import { useFoldersQuery } from './useFoldersQuery';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 import { useTreeInteractions } from './useTreeInteractions';
-import { getRootFolderItem, toReadOnlyTreeItem } from './utils';
+import { getRootFolderItem } from './utils';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -71,20 +71,12 @@ export interface NestedFolderPickerProps {
 
 const debouncedSearch = debounce(getSearchResults, 300);
 
-type SearchResults = QueryResponse & {
-  items: DashboardViewItem[];
-  /** Results the server marked as not creatable, when read only folders are shown */
-  readOnlyUIDs: Set<string>;
-};
-
-async function getSearchResults(searchQuery: string, permission?: PermissionLevel, showReadOnly?: boolean) {
+async function getSearchResults(searchQuery: string, permission?: PermissionLevel) {
   const queryResponse = await getGrafanaSearcher().search({
     query: searchQuery,
     kind: ['folder'],
     limit: 100,
     permission,
-    // Keep the permission filter, so a server that ignores `include` still only lists folders the user can pick
-    includePathToCreatable: showReadOnly,
   });
 
   const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
@@ -111,6 +103,7 @@ export function NestedFolderPicker({
   const isFolderEditAccessEnabled = useFlagGrafanaFolderPickerFolderEditAccess();
   // Read only folders come from the search API, which only backs the picker with the app platform folder API
   const isFoldersAppPlatformAPIEnabled = useFlagFoldersAppPlatformAPI();
+  // Only when browsing: a read only search result has no way into the folders below it
   const showReadOnly = isFolderEditAccessEnabled && isFoldersAppPlatformAPIEnabled && permission === 'edit';
 
   // user might not have access to the folder, but they have access to the dashboard
@@ -119,7 +112,7 @@ export function NestedFolderPicker({
   const isForbidden = getStatusFromError(getSelectedFolderResult.error) === 403;
 
   const [search, setSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
+  const [searchResults, setSearchResults] = useState<(QueryResponse & { items: DashboardViewItem[] }) | null>(null);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
 
   const [autoFocusButton, setAutoFocusButton] = useState(false);
@@ -166,20 +159,19 @@ export function NestedFolderPicker({
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
 
-    debouncedSearch(search, permission, showReadOnly).then((queryResponse) => {
+    debouncedSearch(search, permission).then((queryResponse) => {
       // Only keep the results if it's was issued after the most recently resolved search.
       // This prevents results showing out of order if first request is slower than later ones.
       // We don't need to worry about clearing the isFetching state either - if there's a later
       // request in progress, this will clear it for us
       if (timestamp > lastSearchTimestamp.current) {
         const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
-        const readOnlyUIDs = new Set(queryResponse.view.filter((v) => v.canCreate === false).map((v) => v.uid));
-        setSearchResults({ ...queryResponse, items, readOnlyUIDs });
+        setSearchResults({ ...queryResponse, items });
         setIsFetchingSearchResults(false);
         lastSearchTimestamp.current = timestamp;
       }
     });
-  }, [search, permission, showReadOnly]);
+  }, [search, permission]);
 
   // the order of middleware is important!
   const middleware = [
@@ -275,10 +267,7 @@ export function NestedFolderPicker({
         flatTree = [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
       }
     } else {
-      flatTree = (searchResults?.items ?? []).map((item) => {
-        const treeItem = { isOpen: false, level: 0, item };
-        return searchResults?.readOnlyUIDs.has(item.uid) ? toReadOnlyTreeItem(treeItem) : treeItem;
-      });
+      flatTree = (searchResults?.items ?? []).map((item) => ({ isOpen: false, level: 0, item }));
     }
 
     return filterItems(flatTree, excludeUIDs, folderFilter);
@@ -288,7 +277,6 @@ export function NestedFolderPicker({
     folderFilter,
     isBrowsing,
     searchResults?.items,
-    searchResults?.readOnlyUIDs,
     showRootFolder,
     teamFolderTreeItems,
     starredFolderTreeItems,

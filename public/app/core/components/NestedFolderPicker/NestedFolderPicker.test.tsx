@@ -646,20 +646,7 @@ describe('NestedFolderPicker', () => {
       expect(mockOnChange).not.toHaveBeenCalled();
     });
 
-    it('marks typed search results the user cannot create in as read only', async () => {
-      setTestFlags(readOnlyFlags);
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
-      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
-      fireEvent.change(screen.getByPlaceholderText('Search folders'), { target: { value: 'Folder' } });
-
-      const readOnlyRow = await screen.findByRole('treeitem', { name: new RegExp(folderC.item.title) });
-      expect(within(readOnlyRow).getByRole('img', { name: 'Read only' })).toBeInTheDocument();
-      expect(
-        within(screen.getByRole('treeitem', { name: folderA.item.title })).queryByRole('img', { name: 'Read only' })
-      ).not.toBeInTheDocument();
-    });
-
-    it('only lists folders the user can pick when the server ignores include', async () => {
+    it('keeps the permission filter, and leaves read only folders out of typed search', async () => {
       setTestFlags(readOnlyFlags);
       const requests: URLSearchParams[] = [];
       // A server without include support filters by permission and never sets canCreate
@@ -677,14 +664,14 @@ describe('NestedFolderPicker', () => {
       const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
       expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
+      expect(screen.queryByLabelText(folderC.item.title)).not.toBeInTheDocument();
+
       fireEvent.change(screen.getByPlaceholderText('Search folders'), { target: { value: 'Folder' } });
       await waitFor(() => expect(requests.some((params) => params.get('query') === 'Folder')).toBe(true));
 
-      expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
-      expect(screen.queryByLabelText(folderC.item.title)).not.toBeInTheDocument();
       for (const params of requests) {
         expect(params.get('permission')).toBe('edit');
-        expect(params.get('include')).toBe('pathToCreatable');
+        expect(params.get('include')).toBe(params.has('query') ? null : 'pathToCreatable');
       }
     });
 
