@@ -111,6 +111,19 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 			"a repeated sync must not report the resources it already provisioned")
 	})
 
+	t.Run("forbids instance-target repositories", func(t *testing.T) {
+		// An instance-target repository may only exist where no other repository does, so
+		// the bootstrap repository rules it out. The target is dropped from the allowed
+		// set, which is what the caller and the UI see.
+		instance := &unstructured.Unstructured{Object: nestedRepository(nestedPath)}
+		instance.SetName("instance-target")
+		instance.Object["spec"].(map[string]any)["sync"].(map[string]any)["target"] = "instance"
+
+		_, err := helper.Repositories.Resource.Create(t.Context(), instance, metav1.CreateOptions{})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "sync target is not supported")
+	})
+
 	t.Run("the resources it provisions stay editable", func(t *testing.T) {
 		nested := requireRepository(t, helper, "nested")
 		nested.Object["spec"].(map[string]any)["title"] = "Edited through the API"

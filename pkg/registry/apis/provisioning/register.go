@@ -361,10 +361,11 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	allowedTargets := make([]provisioning.SyncTargetType, 0, len(cfg.ProvisioningAllowedTargets))
-	for _, target := range cfg.ProvisioningAllowedTargets {
-		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
+	bootstrapConfig, err := bootstrapConfigFromSettings(cfg)
+	if err != nil {
+		return nil, err
 	}
+	allowedTargets := allowedSyncTargets(cfg.ProvisioningAllowedTargets, bootstrapConfig.Enabled())
 
 	supportedResources, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
 	if err != nil {
@@ -388,11 +389,6 @@ func RegisterAPIService(
 	urlValidator := repository.NewURLValidator(allowlist, net.DefaultResolver.LookupIPAddr)
 	keysOnlyReList := provisioningSec.Key("keys_only_relist").MustBool(false)
 	repoValidatorOpts := []repository.ValidatorOption{repository.WithURLValidator(urlValidator)}
-
-	bootstrapConfig, err := bootstrapConfigFromSettings(cfg)
-	if err != nil {
-		return nil, err
-	}
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
@@ -493,6 +489,21 @@ func RegisterAPIService(
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
 	return builder, nil
+}
+
+// allowedSyncTargets returns the sync targets a repository may be created with. An
+// instance-target repository can only exist where no other repository does, so a bootstrap
+// repository rules it out: dropping the target says so at admission and on the settings
+// endpoint, rather than leaving a caller to hit the existing-repository conflict.
+func allowedSyncTargets(configured []string, bootstrapEnabled bool) []provisioning.SyncTargetType {
+	targets := make([]provisioning.SyncTargetType, 0, len(configured))
+	for _, target := range configured {
+		if bootstrapEnabled && provisioning.SyncTargetType(target) == provisioning.SyncTargetTypeInstance {
+			continue
+		}
+		targets = append(targets, provisioning.SyncTargetType(target))
+	}
+	return targets
 }
 
 // bootstrapConfigFromSettings builds the bootstrap repository configuration from

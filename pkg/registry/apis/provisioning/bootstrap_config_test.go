@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -55,4 +56,13 @@ func TestBootstrapConfigFromSettings(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestAllowedSyncTargets(t *testing.T) {
+	configured := []string{"folder", "instance", "folderless"}
+
+	assert.Equal(t, []provisioning.SyncTargetType{"folder", "instance", "folderless"},
+		allowedSyncTargets(configured, false))
+	assert.Equal(t, []provisioning.SyncTargetType{"folder", "folderless"},
+		allowedSyncTargets(configured, true))
 }
