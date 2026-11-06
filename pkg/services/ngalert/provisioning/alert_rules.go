@@ -25,6 +25,7 @@ import (
 type ruleAccessControlService interface {
 	AuthorizeRuleGroupRead(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error
+	AuthorizeNotificationSettings(ctx context.Context, user identity.Requester, receivers []accesscontrol.ReceiverRef) error
 	AuthorizeRuleRead(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 	// CanReadAllRules returns true if the user has full access to read rules via provisioning API and bypass regular checks
 	CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error)
@@ -522,9 +523,16 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	}
 	rule.Updated = time.Now()
 	if rule.NotificationSettings != nil {
+		// The receivers are authorized, and then validated, against the same configuration. In that order so that who
+		// cannot use a receiver is not told whether it exists.
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
 			return models.AlertRule{}, err
+		}
+		if !canWriteAllRules {
+			if err := service.authz.AuthorizeNotificationSettings(ctx, user, accesscontrol.ReceiverRefs(validator.Config(), *rule.NotificationSettings)); err != nil {
+				return models.AlertRule{}, err
+			}
 		}
 		if err := validator.Validate(*rule.NotificationSettings); err != nil {
 			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
@@ -744,9 +752,16 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 
 	newOrUpdatedNotificationSettings := delta.NewOrUpdatedNotificationSettings()
 	if len(newOrUpdatedNotificationSettings) > 0 {
+		// The receivers are authorized, and then validated, against the same configuration. In that order so that who
+		// cannot use a receiver is not told whether it exists.
 		validator, err := service.nsValidatorProvider.Validator(ctx, delta.GroupKey.OrgID)
 		if err != nil {
 			return err
+		}
+		if !can {
+			if err := service.authz.AuthorizeNotificationSettings(ctx, user, accesscontrol.ReceiverRefs(validator.Config(), newOrUpdatedNotificationSettings...)); err != nil {
+				return err
+			}
 		}
 		for _, s := range newOrUpdatedNotificationSettings {
 			if err := validator.Validate(s); err != nil {
@@ -949,6 +964,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 // UpdateAlertRule updates an alert rule.
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, manager utils.ManagerProperties) (models.AlertRule, error) {
 	var storedRule *models.AlertRule
+	var changedNotificationSettings []models.NotificationSettings // Needs authorizing unless the user can write all rules.
 	if err := service.ensureNamespace(ctx, user, rule.OrgID, rule.NamespaceUID); err != nil {
 		return models.AlertRule{}, err
 	}
@@ -980,6 +996,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 			// No changes to the rule.
 			return rule, nil
 		}
+		changedNotificationSettings = delta.NewOrUpdatedNotificationSettings()
 		// new rules not allowed in update for a single rule
 		if len(delta.New) > 0 {
 			return models.AlertRule{}, fmt.Errorf("failed to update rule with UID %s because %w", rule.UID, models.ErrAlertRuleNotFound)
@@ -1007,9 +1024,16 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		})
 	}
 	if rule.NotificationSettings != nil {
+		// The receivers are authorized, and then validated, against the same configuration. In that order so that who
+		// cannot use a receiver is not told whether it exists.
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
 			return models.AlertRule{}, err
+		}
+		if len(changedNotificationSettings) > 0 {
+			if err := service.authz.AuthorizeNotificationSettings(ctx, user, accesscontrol.ReceiverRefs(validator.Config(), changedNotificationSettings...)); err != nil {
+				return models.AlertRule{}, err
+			}
 		}
 		if err := validator.Validate(*rule.NotificationSettings); err != nil {
 			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)

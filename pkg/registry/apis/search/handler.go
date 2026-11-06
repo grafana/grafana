@@ -113,7 +113,7 @@ func (h *Handler) GlobalSearchFor(kinds map[schema.GroupResource]string) http.Ha
 	kind := kindRef{group: gvr.Group, version: gvr.Version, resource: gvr.Resource, kinds: kinds}
 	return h.handle(kind, "search.v1.global", searchv0.KindSearchQuery,
 		func(r *http.Request, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList, error) {
-			var q searchv0.SearchQuery
+			var q searchv0.GlobalSearchQuery
 			if err := decodeBody(r, &q); err != nil {
 				return nil, nil, err
 			}
@@ -178,7 +178,7 @@ func (h *Handler) handle(
 		}
 
 		res, err := h.client.Search(ctx, req)
-		if err := resource.StatusErrorFromResponse(res.GetError(), err); err != nil {
+		if err := resource.StatusErrorFromGRPC(err); err != nil {
 			errhttp.Write(ctx, err, w)
 			return
 		}

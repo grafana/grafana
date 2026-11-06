@@ -166,9 +166,6 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if !ok {
 		return nil, fmt.Errorf("expected receiver but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
-	if p.Name != "" { // TODO remove when metadata.name can be defined by user
-		return nil, apierrors.NewBadRequest("object's metadata.name should be empty")
-	}
 	model, _, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, err

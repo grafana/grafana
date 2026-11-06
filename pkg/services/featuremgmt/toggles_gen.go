@@ -239,6 +239,10 @@ const (
 	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
 	FlagDashboardNotebooks = "dashboard.notebooks"
 
+	// FlagDashboardNotebookComments
+	// Enables commenting on Notebook cells
+	FlagDashboardNotebookComments = "dashboard.notebookComments"
+
 	// FlagGrafanaSavedDashboardViews
 	// Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
 	FlagGrafanaSavedDashboardViews = "grafana.savedDashboardViews"
@@ -403,6 +407,10 @@ const (
 	// Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.
 	FlagAuthzUseLegacyCheck = "authz.useLegacyCheck"
 
+	// FlagAuthzUseLegacyCheckShadow
+	// Compare local access-control evaluations with the AuthZ LegacyCheck RPC in the background.
+	FlagAuthzUseLegacyCheckShadow = "authz.useLegacyCheckShadow"
+
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
@@ -511,6 +519,10 @@ const (
 	// Collect Team LBAC usage through the IAM API instead of legacy datasource JSON
 	FlagTeamlbacUsageFromAppPlatform = "teamlbac.usageFromAppPlatform"
 
+	// FlagTeamlbacApiNoFallback
+	// Return Team LBAC API Kubernetes errors instead of falling back to legacy datasource rules
+	FlagTeamlbacApiNoFallback = "teamlbac.apiNoFallback"
+
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
@@ -573,6 +585,10 @@ const (
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
+
+	// FlagAuthzDelegationChecks
+	// Use AuthZ Check and LegacyCheck for single-org IAM delegation checks (resolved at startup)
+	FlagAuthzDelegationChecks = "authzDelegationChecks"
 
 	// FlagKubernetesAuthzZanzanaSync
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
@@ -658,10 +674,6 @@ const (
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
 
-	// FlagCdnPluginsUrls
-	// Enable loading plugins via declarative URLs
-	FlagCdnPluginsUrls = "cdnPluginsUrls"
-
 	// FlagPluginInstallAPISync
 	// Enable syncing plugin installations to the installs API
 	FlagPluginInstallAPISync = "pluginInstallAPISync"
@@ -693,10 +705,6 @@ const (
 	// FlagExcludeRedundantManagedPermissions
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
 	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
-
-	// FlagPanelTimeSettings
-	// Enables a new panel time settings drawer
-	FlagPanelTimeSettings = "panelTimeSettings"
 
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
@@ -789,6 +797,10 @@ const (
 	// FlagKubernetesUsersRedirect
 	// Redirects the requests of the user service to the app platform APIs
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
+
+	// FlagIdTokenCacheDisabled
+	// Disables the remote cache for signed ID tokens; a new token is signed on every authentication
+	FlagIdTokenCacheDisabled = "idTokenCacheDisabled"
 
 	// FlagKubernetesUsersRedirectNoFallback
 	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
@@ -1017,10 +1029,6 @@ const (
 	// FlagDatasourcesGatewayGuardrails
 	// Data source query gateway guardrails
 	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
-
-	// FlagDatasourcesQueryGatewaySlimAudit
-	// Only attach query payloads to query gateway audit events when a guardrail fires
-	FlagDatasourcesQueryGatewaySlimAudit = "datasources.queryGatewaySlimAudit"
 
 	// FlagAlertingFolderHasRulesLabel
 	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector

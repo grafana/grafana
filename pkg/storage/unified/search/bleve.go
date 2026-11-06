@@ -2294,14 +2294,10 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 		return nil, fmt.Errorf("next page not implemented yet")
 	}
 	if req.Kind == "" {
-		return &resourcepb.ListManagedObjectsResponse{
-			Error: resource.NewBadRequestError("empty manager kind"),
-		}, nil
+		return nil, resource.GRPCStatusError(resource.NewBadRequestError("empty manager kind"))
 	}
 	if req.Id == "" {
-		return &resourcepb.ListManagedObjectsResponse{
-			Error: resource.NewBadRequestError("empty manager id"),
-		}, nil
+		return nil, resource.GRPCStatusError(resource.NewBadRequestError("empty manager id"))
 	}
 
 	start := time.Now()
@@ -2433,21 +2429,21 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.Se
 	return vals, nil
 }
 
-func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
+func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, *resourcepb.ErrorResult) {
 	if req.Options == nil || req.Options.Key == nil {
-		return &resourcepb.ResourceSearchResponse{
-			Error: resource.NewBadRequestError("missing query key"),
-		}
+		return nil, resource.NewBadRequestError("missing query key")
+	}
+	if errRes := b.verifyKey(req.Options.Key); errRes != nil {
+		return nil, errRes
 	}
 	response := &resourcepb.ResourceSearchResponse{
-		Error:        b.verifyKey(req.Options.Key),
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 	// A global index combines independent listings and writes, not one revision.
 	if !b.key.IsGlobal() {
 		response.ResourceVersion = b.resourceVersion.Load()
 	}
-	return response
+	return response, nil
 }
 
 func (b *bleveIndex) SearchFieldDefinitions() []resource.SearchFieldDefinition {
@@ -2478,7 +2474,7 @@ func (b *bleveIndex) Search(
 
 	response, err := b.search(ctx, access, req, indexes, stats)
 	// Clients show where each result is, and the global index holds every folder.
-	if err == nil && response.Error == nil && b.key.IsGlobal() && !req.IsDeleted {
+	if err == nil && b.key.IsGlobal() && !req.IsDeleted {
 		b.addFolderPaths(ctx, access, response)
 	}
 	return response, err
@@ -2491,9 +2487,9 @@ func (b *bleveIndex) search(
 	indexes *resource.SearchIndexes,
 	stats *resource.SearchStats,
 ) (response *resourcepb.ResourceSearchResponse, resultErr error) {
-	response = b.initialSearchResponse(req)
-	if response.Error != nil {
-		return response, nil
+	response, errRes := b.initialSearchResponse(req)
+	if errRes != nil {
+		return nil, resource.GRPCStatusError(errRes)
 	}
 
 	index, folderIndex, err := b.getIndexes(ctx, req, indexes)
@@ -2510,6 +2506,9 @@ func (b *bleveIndex) search(
 	// the match set, otherwise Bleve's unfiltered count with
 	// TotalHitsExact=false.
 	postRank := b.postRankAuthzEnabled && access != nil
+	// Not observed: checking access to the returned rows is not part of the
+	// search's own authorization.
+	rowAccess := access
 	access, authMetrics := withSearchAuthObservation(access, b.indexMetrics)
 	cursorFallback := false
 
@@ -2520,11 +2519,10 @@ func (b *bleveIndex) search(
 		user, ok := authlib.AuthInfoFrom(ctx)
 		if !ok || user == nil {
 			// Falling through would apply the read check, which is more permissive.
-			response.Error = &resourcepb.ErrorResult{
+			return nil, resource.GRPCStatusError(&resourcepb.ErrorResult{
 				Message: "no user found in context",
 				Code:    http.StatusUnauthorized,
-			}
-			return response, nil
+			})
 		}
 		trashAuthz = resource.NewTrashAuthorizer(access, user, &resourcepb.ResourceKey{
 			Namespace: b.key.Namespace,
@@ -2539,13 +2537,11 @@ func (b *bleveIndex) search(
 	// Cursor fallback converts the request again; keep the same folder set.
 	filters, e := b.filterQueries(ctx, req, folderIndex)
 	if e != nil {
-		response.Error = e
-		return response, nil
+		return nil, resource.GRPCStatusError(e)
 	}
 	searchrequest, e := b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz, filters)
 	if e != nil {
-		response.Error = e
-		return response, nil
+		return nil, resource.GRPCStatusError(e)
 	}
 
 	// Keep the response fields before ensureSearchFields expands the Bleve load
@@ -2577,25 +2573,21 @@ func (b *bleveIndex) search(
 		cursorFallback = true
 		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz, filters)
 		if e != nil {
-			response.Error = e
-			return response, nil
+			return nil, resource.GRPCStatusError(e)
 		}
 		if err := b.ensureSearchFields(searchrequest, req); err != nil {
 			return nil, err
 		}
 	}
 	if cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
-		response.Error = resource.NewBadRequestError("search cursor does not match the current sort order")
-		return response, nil
+		return nil, resource.GRPCStatusError(resource.NewBadRequestError("search cursor does not match the current sort order"))
 	}
 
 	var fieldValueSchema *fieldValueResultSchema
 	if response.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		fieldValueSchema, err = b.resolveFieldValueSchema(selectFields)
 		if err != nil {
-			return &resourcepb.ResourceSearchResponse{
-				Error: resource.NewBadRequestError(err.Error()),
-			}, nil
+			return nil, resource.GRPCStatusError(resource.NewBadRequestError(err.Error()))
 		}
 	}
 	observeAuth := authMetrics.start(req, access, postRank, cursorFallback)
@@ -2606,7 +2598,7 @@ func (b *bleveIndex) search(
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
 	if postRank {
-		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, fieldValueSchema, stats, response, trashAuthz)
+		return b.runPostFilterAuthz(ctx, access, rowAccess, req, index, searchrequest, selectFields, fieldValueSchema, stats, response, trashAuthz)
 	}
 
 	res, err := searchInContext(ctx, index, searchrequest)
@@ -2628,6 +2620,7 @@ func (b *bleveIndex) search(
 	if err := b.setSearchResults(response, fieldValueSchema, res.Hits, searchrequest.Sort); err != nil {
 		return nil, err
 	}
+	b.addRowAccess(ctx, rowAccess, req.AccessVerbs, response, res.Hits)
 
 	// parse the facet fields
 	for k, v := range res.Facets {
