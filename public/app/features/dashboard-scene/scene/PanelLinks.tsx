@@ -8,7 +8,7 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
-import { Dropdown, Icon, Menu, PanelChrome, ToolbarButton } from '@grafana/ui';
+import { Dropdown, Icon, Menu, PanelChrome } from '@grafana/ui';
 
 import { getPanelLinks } from './PanelMenuBehavior';
 import { usePanelActionsOverlayOpenChange } from './edit-actions-popover/PanelActionsOverlayContext';
@@ -60,11 +60,11 @@ function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {
       }}
       onVisibleChange={onLinksMenuOpenChange}
     >
-      <ToolbarButton
-        icon="external-link-alt"
-        iconSize="md"
+      <PanelChrome.TitleItem
         aria-label={t('dashboard-scene.viz-panel-links-renderer.aria-label-panel-links', 'Panel links')}
-      />
+      >
+        <Icon name="external-link-alt" size="md" />
+      </PanelChrome.TitleItem>
     </Dropdown>
   );
 }

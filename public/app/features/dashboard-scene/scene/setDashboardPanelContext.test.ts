@@ -219,7 +219,7 @@ describe('setDashboardPanelContext', () => {
     });
   });
 
-  describe('isSeriesLimitShown', () => {
+  describe('forceVisibleHeader', () => {
     function setSeriesCount(vizPanel: VizPanel, count: number) {
       const series = Array.from({ length: count }, () => toDataFrame({ fields: [] }));
       sceneGraph.getData(vizPanel).setState({
@@ -230,7 +230,7 @@ describe('setDashboardPanelContext', () => {
     it('is not provided while the panel actions popover flag is off', () => {
       const { context } = buildTestScene({});
 
-      expect(context.isSeriesLimitShown).toBeUndefined();
+      expect(context.forceVisibleHeader).toBeUndefined();
     });
 
     it.each([
@@ -246,7 +246,7 @@ describe('setDashboardPanelContext', () => {
       vizPanel.setState({ seriesLimit });
       setSeriesCount(vizPanel, seriesCount);
 
-      expect(context.isSeriesLimitShown?.()).toBe(expected);
+      expect(context.forceVisibleHeader?.()).toBe(expected);
     });
   });
 

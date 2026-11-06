@@ -1,4 +1,3 @@
-import { useContext } from 'react';
 import { type Unsubscribable } from 'rxjs';
 
 import {
@@ -11,7 +10,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { PanelChromeHeaderControlsContext } from '@grafana/ui/internal';
+import { usePanelChromeHeaderControls } from '@grafana/ui/internal';
 
 import { PanelAdHocChangesAction } from './panel-actions/PanelAdHocChangesAction';
 import { PanelGroupByAction } from './panel-actions/PanelGroupByAction/PanelGroupByAction';
@@ -185,7 +184,7 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
 function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<VizPanelHeaderActions>) {
   const { isGroupByActionSupported } = model.useState();
   // The panel actions popover offers group by from the panel menu instead.
-  const hasExternalHeaderControls = Boolean(useContext(PanelChromeHeaderControlsContext)?.external);
+  const hasExternalHeaderControls = Boolean(usePanelChromeHeaderControls()?.external);
   const { groupByVariable, adhocGroupByVariable } = model.getGroupByVariables();
   const queryRunner = model.getQueryRunner();
   const queries = queryRunner?.state.queries ?? [];
