@@ -50,11 +50,9 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
   },
 }));
 
-// Monaco can't boot web workers in jsdom
-jest.mock('app/core/components/MonacoDiffEditor/MonacoDiffEditor', () => ({
-  MonacoDiffEditor: ({ modified }: { modified: string }) => (
-    <div data-testid="schema-diff-editor" data-modified={modified} />
-  ),
+// Stub the diff so tests can read the modified JSON directly
+jest.mock('app/core/components/DiffViewer/DiffViewer', () => ({
+  DiffViewer: ({ modified }: { modified: string }) => <div data-testid="schema-diff-editor" data-modified={modified} />,
 }));
 
 const saveDashboardMutationMock = jest.fn();

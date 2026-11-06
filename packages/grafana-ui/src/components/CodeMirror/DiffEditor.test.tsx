@@ -109,6 +109,23 @@ describe('CodeMirror DiffEditor', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
+  it.each([false, true])('searches the whole read-only document (inline: %s)', async (inline) => {
+    const user = userEvent.setup();
+    const lines = Array.from({ length: 500 }, (_, index) => `line ${index}`);
+    render(<DiffEditor original={lines.join('\n')} modified={[...lines, 'needle'].join('\n')} inline={inline} />);
+    const modified = screen.getByRole('textbox', { name: 'Modified' });
+
+    await user.click(modified);
+    await user.keyboard('{Control>}f{/Control}');
+    const searchField = await screen.findByRole('textbox', { name: 'Find' });
+    // jsdom key events carry no keyCode, which the panel's Enter handler relies on.
+    await user.type(searchField, 'needle{F3}');
+
+    const state = EditorView.findFromDOM(modified)?.state;
+    expect(state?.sliceDoc(state.selection.main.from, state.selection.main.to)).toBe('needle');
+    expect(screen.queryByRole('textbox', { name: 'Replace' })).not.toBeInTheDocument();
+  });
+
   it.each([false, true])('updates supplied values, language and line numbers (inline: %s)', async (inline) => {
     const { container, rerender } = render(
       <DiffEditor original='{"value":1}' modified='{"value":2}' language="json" inline={inline} height="240px" />
