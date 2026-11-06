@@ -1404,9 +1404,6 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 		os.Exit(1)
 		return nil, err
 	}
-	// Register the optional key in memory so normal env, CLI, and expansion handling applies without a defaults.ini entry.
-	parsedFile.Section("vector_reranker").Key("hedge_delay")
-
 	// command line props
 	cfg.commandLineProps = cfg.getCommandLineProperties(args.Args)
 	// load default overrides

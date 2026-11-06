@@ -12,7 +12,7 @@ Add a Go duration to your custom configuration:
 hedge_delay = 750ms
 ```
 
-You can also set `GF_VECTOR_RERANKER_HEDGE_DELAY=750ms` in the server environment.
+You can also set `GF_VECTOR_RERANKER_HEDGE_DELAY=750ms` in the server environment when your configuration includes a `[vector_reranker]` section.
 Restart the server that runs search to apply the change.
 
 The default is `500ms` when the setting is absent, empty, or invalid.

@@ -73,10 +73,12 @@ func TestRerankHedgeDelayExpandsEnvironmentValue(t *testing.T) {
 	require.Equal(t, 850*time.Millisecond, cfg.RerankHedgeDelay)
 }
 
-func TestRerankHedgeDelayEnvironmentWithoutINISection(t *testing.T) {
+func TestRerankHedgeDelayEnvironmentAddsKeyToExistingSection(t *testing.T) {
 	t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "750ms")
+	path := filepath.Join(t.TempDir(), "custom.ini")
+	require.NoError(t, os.WriteFile(path, []byte("[vector_reranker]\nprovider = vertex\n"), 0600))
 	cfg := NewCfg()
-	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"}))
+	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: path}))
 	require.Equal(t, 750*time.Millisecond, cfg.RerankHedgeDelay)
 }
 
