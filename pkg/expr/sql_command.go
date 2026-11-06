@@ -211,6 +211,11 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	gr.logger.Debug("Done Executing query", "query", gr.query, "rows", frame.Rows())
 
+	// QueryFrames builds a new frame, so carry over the input notices, tagged with their RefID.
+	if notices := frameNotices(allFrames, true); len(notices) > 0 {
+		frame.AppendNotices(notices...)
+	}
+
 	if frame.Rows() == 0 {
 		rsp.Values = mathexp.Values{
 			mathexp.NoData{Frame: frame},
@@ -430,6 +435,11 @@ func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forR
 			return result, true
 		}
 
+		// The conversion builds new frames, so carry over the input notices.
+		if notices := frameNotices(dataFrames, false); len(notices) > 0 {
+			convertedFrames[0].AppendNotices(notices...)
+		}
+
 		result.Values = mathexp.Values{
 			mathexp.TableData{Frame: convertedFrames[0]},
 		}
@@ -464,6 +474,29 @@ func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forR
 		mathexp.TableData{Frame: first},
 	}
 	return result, false
+}
+
+// frameNotices returns the notices of all frames in order, without duplicates.
+// If withRefID is true, each notice text starts with its frame's RefID.
+func frameNotices(frames []*data.Frame, withRefID bool) []data.Notice {
+	var notices []data.Notice
+	seen := map[data.Notice]struct{}{}
+	for _, f := range frames {
+		if f == nil || f.Meta == nil {
+			continue
+		}
+		for _, n := range f.Meta.Notices {
+			if withRefID {
+				n.Text = f.RefID + ": " + n.Text
+			}
+			if _, ok := seen[n]; ok {
+				continue
+			}
+			seen[n] = struct{}{}
+			notices = append(notices, n)
+		}
+	}
+	return notices
 }
 
 func categorizeFrameInputType(dataFrames data.Frames) string {
