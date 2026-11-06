@@ -2,6 +2,7 @@ package caching
 
 import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -11,7 +12,7 @@ const (
 	QueryDashboard = "dashboard"
 )
 
-var QueryCachingRequestHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+var QueryCachingRequestHistogram = metricutil.NewHistogramVec(prometheus.HistogramOpts{
 	Namespace: metrics.ExporterName,
 	Subsystem: "caching",
 	Name:      "query_caching_request_duration_seconds",
