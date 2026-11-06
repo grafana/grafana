@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { isEmpty } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { shallowEqual } from 'react-redux';
 import { useDebounce } from 'react-use';
@@ -442,6 +442,8 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
     }
   }, [dryRunState, setStepErrors]);
 
+  const autoFilledTreeRef = useRef('');
+
   // Step 1 handlers
   // Note: WizardStep and NextButton handle stepper state (completed, skipped, visited, navigation)
   // These handlers only need to update form values and control whether to proceed.
@@ -490,8 +492,11 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
       snapshot.notificationsSource
     );
     const createdTreeName = autoSyncSelected ? autoSyncIdentifier : snapshot.policyTreeName;
-    if (createdTreeName && !getValues('selectedRoutingTree')) {
+    // Replace only what this step filled in earlier, so a tree picked on the rules step is kept.
+    const currentTree = getValues('selectedRoutingTree');
+    if (createdTreeName && (!currentTree || currentTree === autoFilledTreeRef.current)) {
       setValue('selectedRoutingTree', createdTreeName);
+      autoFilledTreeRef.current = createdTreeName;
     }
     return true;
   }, [trigger, triggerDryRunCheck, setValue, getValues, autoSyncIdentifier]);

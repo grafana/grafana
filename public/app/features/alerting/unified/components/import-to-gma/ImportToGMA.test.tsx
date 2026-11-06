@@ -1204,6 +1204,34 @@ describe('dry-run wiring (wizard-level)', () => {
     expect(identifiersSeen.at(-1)).toBe('prometheus-prod2');
   });
 
+  it('routes imported rules to the policy tree name from the latest Next, not an earlier one', async () => {
+    mockSeedRulesSource = true;
+    let rulesRequestHeaders = '';
+    server.use(
+      http.post(CONVERT_URL, () => HttpResponse.json(convertResponse())),
+      http.post('/api/convert/prometheus/config/v1/rules', ({ request }) => {
+        rulesRequestHeaders = request.headers.get('X-Grafana-Alerting-Notification-Settings') ?? '';
+        return HttpResponse.json(convertResponse());
+      })
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification configuration/i });
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import rules/i });
+    await user.click(screen.getByTestId('wizard-prev-button'));
+    await user.type(await screen.findByPlaceholderText(/prometheus-prod/i), '-2');
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import rules/i });
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await user.click(await screen.findByRole('button', { name: /start import/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /start import/i }));
+
+    await waitFor(() => expect(rulesRequestHeaders).not.toBe(''));
+    expect(rulesRequestHeaders).toContain('prometheus-prod-2');
+  });
+
   it('disables the step 1 inputs while the click-time check runs, then re-enables them on failure', async () => {
     let previewDone = false;
     let failCheck: (() => void) | undefined;
