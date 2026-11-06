@@ -1,3 +1,7 @@
+# 0.8.0 (2026-11-06)
+
+Stop importing `@grafana/runtime/unstable`. Plugin bundles externalize it, so plugins using an earlier release failed to load on hosts older than Grafana 11.6, which don't register that entry point. Every function now uses the host's stable `@grafana/runtime` export when available and otherwise falls back to the legacy `getDataSourceSrv()` and `getBackendSrv()` APIs. Hosts that expose the async APIs only under `unstable` (Grafana 13.1 and 13.2) now use the legacy fallback. Rebuild plugins that bundle an earlier release to pick up the fix.
+
 # 0.7.0 (2026-11-03)
 
 Add `getAppPluginHealth` function.
