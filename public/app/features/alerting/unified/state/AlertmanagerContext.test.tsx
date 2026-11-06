@@ -2,7 +2,6 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import * as React from 'react';
 import { Provider } from 'react-redux';
 
-import { AlertManagerImplementation } from '@grafana/alerting/internal';
 import { store } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
@@ -15,12 +14,7 @@ import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
 import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
 import { type AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-import {
-  AlertmanagerProvider,
-  getOrgAlertmanagerLocalStorageKey,
-  isAlertManagerWithConfigAPI,
-  useAlertmanager,
-} from './AlertmanagerContext';
+import { AlertmanagerProvider, getOrgAlertmanagerLocalStorageKey, useAlertmanager } from './AlertmanagerContext';
 
 const externalAmProm: AlertManagerDataSource = {
   name: 'PrometheusAm',
@@ -251,24 +245,4 @@ describe('useAlertmanager and the hand-over to the Prometheus Alerting plugin', 
       await waitFor(() => expect(result.current.selectedAlertmanager).toBe(externalAmProm.name));
     });
   });
-});
-
-test('isAlertManagerWithConfigAPI', () => {
-  expect(
-    isAlertManagerWithConfigAPI({
-      implementation: undefined,
-    })
-  ).toBe(true);
-
-  expect(
-    isAlertManagerWithConfigAPI({
-      implementation: AlertManagerImplementation.mimir,
-    })
-  ).toBe(true);
-
-  expect(
-    isAlertManagerWithConfigAPI({
-      implementation: AlertManagerImplementation.prometheus,
-    })
-  ).toBe(false);
 });
