@@ -189,7 +189,7 @@ To enable cross-filtering, follow these steps:
 1. In the filter field at the top of the dashboard, do the following as needed:
   
    - Filter out the value by changing the operator to `!=`. 
-   - Choose from any of the following operators: `=~`, `!~`, `<`, `<=`, `>`, `>=`.
+   - Change the operator to any of the following: `=~`, `!~`, `<`, `<=`, `>`, `>=`.
    - Delete the filter.
 
 For more information, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
