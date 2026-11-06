@@ -22,8 +22,6 @@ const server = setupMswServer();
 describe('RecordingRuleListEntry', () => {
   beforeEach(() => {
     mockUseAlertingAbility.mockReturnValue([true, true]);
-  });
-  beforeEach(() => {
     // Provide a default no-badge rule so requests don't go unhandled in tests that don't care about badges.
     server.use(getRecordingRuleHandler());
   });
