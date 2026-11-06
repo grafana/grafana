@@ -94,13 +94,28 @@ We recommend that you only use one dataset in a bar chart because using multiple
 
 ## Cross-filter from a bar
 
-In bar charts, you can apply filters directly from the visualization.
+In bar charts, you can apply dashboard cross-filters directly from the visualization.
 Filters are available when the x-axis field is filterable and the data source supports dashboard filters, such as Prometheus or Loki.
-To enable filtering, add a field override for the x-axis field, select **Standard options > Cross-filter**, and enable the **Cross-filter** switch.
 
-To display the filter button, hover your cursor over the bar that has the value for which you want to filter and click the bar:
+To enable cross-filtering, follow these steps:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The filter button in a bar chart tooltip">}}
+1. Add a field override for the x-axis field, and select **Standard options > Cross-filter**.
+1. Toggle on the **Cross-filter** switch.
+1. Click the bar that has the value you want to filter to display the filter control:
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The filter button in a bar chart tooltip">}}
+
+1. In the tooltip, click the **Filter for...** button.
+
+   A filter to include that field is added and displayed at the top of the dashboard:
+
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-added-cross-filter-v13.3.png" max-width="505px" alt="The filter button in a bar chart tooltip">}}
+
+1. In the filter field at the top of the dashboard, do the following as needed:
+  
+   - Filter out the value by changing the operator to `!=`. 
+   - Choose from any of the following operators: `=~`, `!~`, `<`, `<=`, `>`, `>=`.
+   - Delete the filter.
 
 For more information about applying filters this way, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
 
