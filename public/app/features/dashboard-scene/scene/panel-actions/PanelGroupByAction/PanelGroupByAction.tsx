@@ -12,6 +12,9 @@ import {
   type VariableValueSingle,
 } from '@grafana/scenes';
 import { Button, Icon, Popover } from '@grafana/ui';
+import { type TooltipPlacement } from '@grafana/ui/internal';
+
+import { usePanelActionsOverlayOpenChange } from '../../edit-actions-popover/PanelActionsOverlayContext';
 
 import { PanelGroupByActionPopover } from './PanelGroupByActionPopover';
 
@@ -22,15 +25,73 @@ interface Props {
 }
 
 export function PanelGroupByAction({ groupByVariable, adhocGroupByVariable, queries }: Props) {
-  const [options, setOptions] = useState<VariableValueOption[]>([]);
-  const [selectedValues, setSelectedValues] = useState<VariableValueSingle[]>([]);
-  const [searchValue, setSearchValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
+  const onPopoverOpenChange = usePanelActionsOverlayOpenChange();
+
+  useEffect(() => {
+    onPopoverOpenChange(isPopoverVisible);
+  }, [isPopoverVisible, onPopoverOpenChange]);
 
   const ref = useRef<HTMLButtonElement>(null);
 
+  if (!groupByVariable && !adhocGroupByVariable) {
+    return null;
+  }
+
+  return (
+    <Button
+      variant="secondary"
+      size="sm"
+      fill="text"
+      data-testid={selectors.components.Panels.Panel.PanelGroupByHeaderAction}
+      ref={ref}
+      onClick={(ev) => {
+        setPopoverVisible(true);
+        ev.stopPropagation();
+      }}
+      onPointerDown={(ev) => ev.stopPropagation()}
+      onPointerUp={(ev) => ev.stopPropagation()}
+    >
+      <Trans i18nKey="panel-group-by.button">Group by</Trans>
+      <Icon name="angle-down" />
+      {isPopoverVisible && ref.current && (
+        <PanelGroupByPicker
+          groupByVariable={groupByVariable}
+          adhocGroupByVariable={adhocGroupByVariable}
+          queries={queries}
+          referenceElement={ref.current}
+          onClose={() => setPopoverVisible(false)}
+        />
+      )}
+    </Button>
+  );
+}
+
+interface PanelGroupByPickerProps extends Props {
+  referenceElement: HTMLElement;
+  onClose: () => void;
+  placement?: TooltipPlacement;
+}
+
+/**
+ * The panel group by picker: lists the group by keys that apply to the panel's queries and applies the selection to
+ * the dashboard's group by variable.
+ */
+export function PanelGroupByPicker({
+  groupByVariable,
+  adhocGroupByVariable,
+  queries,
+  referenceElement,
+  onClose,
+  placement = 'bottom-start',
+}: PanelGroupByPickerProps) {
   const activeVariable = groupByVariable ?? adhocGroupByVariable;
+  const [options, setOptions] = useState<VariableValueOption[]>([]);
+  const [selectedValues, setSelectedValues] = useState<VariableValueSingle[]>(() =>
+    activeVariable ? getGroupByValue(activeVariable) : []
+  );
+  const [searchValue, setSearchValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchOptions = useCallback(async () => {
     if (!activeVariable) {
@@ -66,10 +127,8 @@ export function PanelGroupByAction({ groupByVariable, adhocGroupByVariable, quer
   }, [activeVariable, groupByVariable, adhocGroupByVariable, queries]);
 
   useEffect(() => {
-    if (isPopoverVisible) {
-      fetchOptions();
-    }
-  }, [fetchOptions, isPopoverVisible]);
+    fetchOptions();
+  }, [fetchOptions]);
 
   const filteredOptions = useMemo(() => {
     if (!searchValue) {
@@ -83,14 +142,7 @@ export function PanelGroupByAction({ groupByVariable, adhocGroupByVariable, quer
 
   const onCancel = () => {
     setSearchValue('');
-    setPopoverVisible(false);
-  };
-
-  const openPopover = () => {
-    if (activeVariable) {
-      setSelectedValues(getGroupByValue(activeVariable));
-    }
-    setPopoverVisible(true);
+    onClose();
   };
 
   if (!activeVariable) {
@@ -98,47 +150,41 @@ export function PanelGroupByAction({ groupByVariable, adhocGroupByVariable, quer
   }
 
   return (
-    <Button
-      variant="secondary"
-      size="sm"
-      fill="text"
-      data-testid={selectors.components.Panels.Panel.PanelGroupByHeaderAction}
-      ref={ref}
-      onClick={(ev) => {
-        openPopover();
-        ev.stopPropagation();
-      }}
-      onPointerDown={(ev) => ev.stopPropagation()}
-      onPointerUp={(ev) => ev.stopPropagation()}
-    >
-      <Trans i18nKey="panel-group-by.button">Group by</Trans>
-      <Icon name="angle-down" />
-      {isPopoverVisible && ref.current && (
-        <Popover
-          content={
-            <PanelGroupByActionPopover
-              groupByVariable={activeVariable}
-              onCancel={onCancel}
-              isLoading={isLoading}
-              searchValue={searchValue}
-              setSearchValue={setSearchValue}
-              options={filteredOptions}
-              values={selectedValues}
-              onValuesChange={setSelectedValues}
-            />
-          }
-          onKeyDown={(event) => {
-            if (event.key === ' ') {
-              event.stopPropagation();
-            }
-          }}
-          placement="bottom-start"
-          referenceElement={ref.current}
-          show
+    <Popover
+      content={
+        <PanelGroupByActionPopover
+          groupByVariable={activeVariable}
+          onCancel={onCancel}
+          isLoading={isLoading}
+          searchValue={searchValue}
+          setSearchValue={setSearchValue}
+          options={filteredOptions}
+          values={selectedValues}
+          onValuesChange={setSelectedValues}
         />
-      )}
-    </Button>
+      }
+      onKeyDown={(event) => {
+        if (event.key === ' ') {
+          event.stopPropagation();
+        }
+        if (event.key === 'Escape') {
+          // Closes only the picker, so a popover it was opened from stays open with focus back on its trigger.
+          event.stopPropagation();
+          onCancel();
+          getFocusTarget(referenceElement)?.focus();
+        }
+      }}
+      placement={placement}
+      referenceElement={referenceElement}
+      show
+    />
   );
+}
+
+/** The reference element itself when it takes focus, otherwise the first control inside it. */
+function getFocusTarget(element: HTMLElement): HTMLElement | null {
+  const focusable = 'button, a[href], [tabindex]';
+  return element.matches(focusable) ? element : element.querySelector<HTMLElement>(focusable);
 }
 
 function metricFindValuesToOptions(values: MetricFindValue[]): VariableValueOption[] {
