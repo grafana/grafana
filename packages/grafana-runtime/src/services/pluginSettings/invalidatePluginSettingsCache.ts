@@ -1,8 +1,7 @@
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { invalidateCachedPromise } from '../../utils/getCachedPromise';
-
-import { getLegacyCacheKey, getCacheKey } from './utils';
+import { getLegacyCacheKey, getCacheKey } from '../pluginUtils';
 
 /**
  * Invalidate the cached plugin settings for a plugin so the next call to

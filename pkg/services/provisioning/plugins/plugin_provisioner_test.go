@@ -101,7 +101,7 @@ func TestPluginProvisioner(t *testing.T) {
 		}
 
 		err := ap.applyChanges(context.Background(), "")
-		require.ErrorIs(t, err, pluginsettings.ErrPluginSettingJSONDataTooLarge)
+		require.ErrorIs(t, err, pluginsettings.ErrPluginSettingDataTooLarge)
 		require.Empty(t, store.updateRequests)
 	})
 
@@ -177,7 +177,7 @@ func (m *mockStore) GetPluginSettingByPluginID(_ context.Context, args *pluginse
 
 func (m *mockStore) UpdatePluginSetting(_ context.Context, args *pluginsettings.UpdateArgs) error {
 	if args.PluginID == m.tooLargePluginID {
-		return pluginsettings.ErrPluginSettingJSONDataTooLarge.Errorf("too large")
+		return pluginsettings.ErrPluginSettingDataTooLarge.Errorf("too large")
 	}
 	m.updateRequests = append(m.updateRequests, args)
 	return nil

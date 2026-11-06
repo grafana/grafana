@@ -155,10 +155,9 @@ func TestGetConnectionByUIDLegacy(t *testing.T) {
 			expectedResult: &dsV0.DataSourceConnectionList{
 				Items: []dsV0.DataSourceConnection{
 					{
-						Name:       "uid",
-						APIGroup:   "type.datasource.grafana.app",
-						APIVersion: "v0alpha1",
-						Plugin:     "type",
+						Name:     "uid",
+						APIGroup: "type.datasource.grafana.app",
+						Plugin:   "type",
 					},
 				},
 			},

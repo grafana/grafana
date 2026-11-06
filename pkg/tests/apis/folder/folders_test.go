@@ -206,6 +206,8 @@ func TestIntegrationFolderStatusSubresource(t *testing.T) {
 		AppModeProduction:    true,
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
+		// The finalizer is server-owned, so it can only get onto a folder through a flag-on create.
+		EnableFeatureToggles: []string{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController},
 	})
 
 	for _, version := range []string{"v1", "v1beta1"} {
@@ -223,14 +225,14 @@ func TestIntegrationFolderStatusSubresource(t *testing.T) {
 				"spec":       map[string]any{"title": "Status test " + version},
 			}}, metav1.CreateOptions{})
 			require.NoError(t, err)
+			require.Equal(t, []string{folders.CascadeDeleteFinalizer}, created.GetFinalizers())
 
 			got, err := admin.Resource.Get(ctx, name, metav1.GetOptions{}, "status")
 			require.NoError(t, err)
 			_, found, _ := unstructured.NestedMap(got.Object, "status", "cascadeDelete")
 			require.False(t, found, "new folder should have no cascadeDelete status")
 
-			// Finalizer and label set through the main resource.
-			created.SetFinalizers([]string{folders.CascadeDeleteFinalizer})
+			// Label set through the main resource.
 			created.SetLabels(map[string]string{"a": "b"})
 			updated, err := admin.Resource.Update(ctx, created, metav1.UpdateOptions{})
 			require.NoError(t, err)
@@ -305,15 +307,111 @@ func TestIntegrationFolderStatusSubresource(t *testing.T) {
 			state, _, _ = unstructured.NestedString(got.Object, "status", "cascadeDelete", "state")
 			require.Equal(t, "InProgress", state)
 
-			// Cleanup: finalizer-driven delete is not wired yet, so drop the finalizer first.
-			got, err = admin.Resource.Get(ctx, name, metav1.GetOptions{})
-			require.NoError(t, err)
-			got.SetFinalizers(nil)
-			_, err = admin.Resource.Update(ctx, got, metav1.UpdateOptions{})
-			require.NoError(t, err)
+			// Cleanup: no controller removes the finalizer yet, and clients may only drop it once the
+			// folder is terminating.
 			require.NoError(t, admin.Resource.Delete(ctx, name, metav1.DeleteOptions{}))
+			_, err = admin.Resource.Patch(ctx, name, types.MergePatchType, dropFinalizersPatch, metav1.PatchOptions{})
+			require.NoError(t, err)
 		})
 	}
+}
+
+var dropFinalizersPatch = []byte(`{"metadata":{"finalizers":null}}`)
+
+func newFolderObject(apiVersion, name string, finalizers ...string) *unstructured.Unstructured {
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": apiVersion,
+		"kind":       "Folder",
+		"metadata":   map[string]any{"name": name},
+		"spec":       map[string]any{"title": name},
+	}}
+	if len(finalizers) > 0 {
+		obj.SetFinalizers(finalizers)
+	}
+	return obj
+}
+
+func TestIntegrationFolderCascadeDeleteFinalizer(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	ctx := context.Background()
+
+	t.Run("flag off strips a client-sent finalizer", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			EnableFeatureToggles: []string{},
+		})
+		client := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvr})
+
+		created, err := client.Resource.Create(ctx, newFolderObject(gvr.GroupVersion().String(), "flag-off", folders.CascadeDeleteFinalizer), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.Empty(t, created.GetFinalizers())
+
+		require.NoError(t, client.Resource.Delete(ctx, "flag-off", metav1.DeleteOptions{}))
+		_, err = client.Resource.Get(ctx, "flag-off", metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
+	})
+
+	t.Run("flag on stamps and protects the finalizer", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			EnableFeatureToggles: []string{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController},
+		})
+		client := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvr})
+		expected := []string{folders.CascadeDeleteFinalizer}
+
+		created, err := client.Resource.Create(ctx, newFolderObject(gvr.GroupVersion().String(), "flag-on"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, expected, created.GetFinalizers())
+
+		t.Run("v1beta1 create is stamped too", func(t *testing.T) {
+			gvrBeta := schema.GroupVersionResource{Group: gvr.Group, Version: "v1beta1", Resource: gvr.Resource}
+			betaClient := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvrBeta})
+			beta, err := betaClient.Resource.Create(ctx, newFolderObject(gvrBeta.GroupVersion().String(), "flag-on-beta"), metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, expected, beta.GetFinalizers())
+		})
+
+		t.Run("a PUT without finalizers keeps it", func(t *testing.T) {
+			current, err := client.Resource.Get(ctx, "flag-on", metav1.GetOptions{})
+			require.NoError(t, err)
+			current.SetFinalizers(nil)
+			current.Object["spec"].(map[string]any)["title"] = "flag-on renamed"
+			updated, err := client.Resource.Update(ctx, current, metav1.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, expected, updated.GetFinalizers())
+			require.Equal(t, "flag-on renamed", updated.Object["spec"].(map[string]any)["title"])
+		})
+
+		t.Run("a merge patch dropping finalizers keeps it", func(t *testing.T) {
+			patched, err := client.Resource.Patch(ctx, "flag-on", types.MergePatchType, dropFinalizersPatch, metav1.PatchOptions{})
+			require.NoError(t, err)
+			require.Equal(t, expected, patched.GetFinalizers())
+		})
+
+		t.Run("delete leaves it terminating until the finalizer is removed", func(t *testing.T) {
+			require.NoError(t, client.Resource.Delete(ctx, "flag-on", metav1.DeleteOptions{}))
+
+			terminating, err := client.Resource.Get(ctx, "flag-on", metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, terminating.GetDeletionTimestamp())
+			require.Equal(t, expected, terminating.GetFinalizers())
+
+			_, err = client.Resource.Patch(ctx, "flag-on", types.MergePatchType, dropFinalizersPatch, metav1.PatchOptions{})
+			require.NoError(t, err)
+
+			_, err = client.Resource.Get(ctx, "flag-on", metav1.GetOptions{})
+			require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
+		})
+	})
 }
 
 // Validates that folder delete checks alert_rule stats and blocks deletion

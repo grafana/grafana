@@ -539,6 +539,48 @@ describe('QueryEditorRow', () => {
       expect(onScrollIntoView).not.toHaveBeenCalled();
     });
 
+    it('reports back when the row unmounts mid-pin, so the owner flag is cleared', async () => {
+      const onScrollIntoView = jest.fn();
+      const { unmount } = render(
+        <QueryEditorRow {...props(data)} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+      expect(onScrollIntoView).not.toHaveBeenCalled();
+
+      // Switching data pane tabs unmounts the row while it is still pinned.
+      unmount();
+
+      expect(onScrollIntoView).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not report again on unmount once the pin has finished', async () => {
+      const onScrollIntoView = jest.fn();
+      const { unmount } = render(
+        <QueryEditorRow {...props(data)} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      fireEvent.wheel(window);
+      unmount();
+
+      expect(onScrollIntoView).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not report on unmount after the scroll was retargeted at another row', async () => {
+      const onScrollIntoView = jest.fn();
+      const initialProps = props(data);
+      const { rerender, unmount } = render(
+        <QueryEditorRow {...initialProps} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView={false} onScrollIntoView={onScrollIntoView} />);
+      unmount();
+
+      // Reporting would clear the owner's new scroll target.
+      expect(onScrollIntoView).not.toHaveBeenCalled();
+    });
+
     it('pins again if the row is retargeted later', async () => {
       const initialProps = props(data);
       const { rerender } = render(<QueryEditorRow {...initialProps} scrollIntoView />);

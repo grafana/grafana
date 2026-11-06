@@ -139,6 +139,10 @@ func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req 
 	if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING) {
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING)
 	}
+	// Checking access to the returned rows needs each hit's folder.
+	if len(req.AccessVerbs) > 0 && !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER) {
+		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER)
+	}
 	return nil
 }
 
@@ -473,6 +477,7 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 func (b *bleveIndex) runPostFilterAuthz(
 	ctx context.Context,
 	access authlib.AccessClient,
+	rowAccess authlib.AccessClient,
 	req *resourcepb.ResourceSearchRequest,
 	index bleve.Index,
 	firstReq *bleve.SearchRequest,
@@ -657,8 +662,12 @@ windows:
 		authorized = max(authorized, facetAuthorized)
 		exhausted = facetExhausted
 	}
-	return response, b.finalizePostFilter(ctx, response, page.documents(), selectFields, fieldValueSchema, firstReq.Sort, req, firstRes,
+	docs := page.documents()
+	err = b.finalizePostFilter(ctx, response, docs, selectFields, fieldValueSchema, firstReq.Sort, req, firstRes,
 		authorized, exhausted, reverseSort, wantFacets, trashAuthz != nil, agg, stats)
+	// A response that failed to finalize is discarded with its error.
+	b.addRowAccess(ctx, rowAccess, req.AccessVerbs, response, docs)
+	return response, err
 }
 
 // authorizeHits filters ranked hits by the trash rule when trashAuthz is set,
@@ -1016,4 +1025,129 @@ func (a *facetAggregator) build() map[string]*resourcepb.ResourceSearchResponse_
 		}
 	}
 	return out
+}
+
+// accessCheck is one verb to check for one returned row.
+type accessCheck struct {
+	row  *resourcepb.ResourceSearchRow
+	verb string
+}
+
+// addRowAccess answers, for each returned row, whether the caller may do each
+// of verbs to it. The rows are checked in one batch. If that fails, as it does
+// when the calling service may not check a verb of a type on the caller's
+// behalf, each type and verb is checked on its own, and the ones that still fail
+// are left out rather than answered no.
+func (b *bleveIndex) addRowAccess(ctx context.Context, access authlib.AccessClient, verbs []string, response *resourcepb.ResourceSearchResponse, hits search.DocumentMatchCollection) {
+	if len(verbs) == 0 || len(response.Rows) == 0 {
+		return
+	}
+	ctx, span := tracer.Start(ctx, "search.bleveIndex.addRowAccess")
+	defer span.End()
+	logger := b.logger.FromContext(ctx)
+
+	checks := make([]accessCheck, 0, len(response.Rows)*len(verbs))
+	for _, row := range response.Rows {
+		for _, verb := range verbs {
+			checks = append(checks, accessCheck{row: row, verb: verb})
+		}
+	}
+	// Without an access client the search checks nothing, so nothing is refused.
+	if access == nil {
+		recordAccess(checks, nil)
+		return
+	}
+	// A permission granted on a folder applies to what is in it. The search loads
+	// each hit's folder for this, whether or not it returns the folder field.
+	folders := make(map[string]string, len(hits))
+	for _, hit := range hits {
+		folders[hit.ID], _ = hit.Fields[resource.SEARCH_FIELD_FOLDER].(string)
+	}
+	check := func(c accessCheck) authz.BatchCheckItem {
+		return authz.BatchCheckItem{
+			Name:      c.row.Key.Name,
+			Folder:    folders[resource.SearchID(c.row.Key)],
+			Verb:      c.verb,
+			Group:     c.row.Key.Group,
+			Resource:  c.row.Key.Resource,
+			Namespace: c.row.Key.Namespace,
+		}
+	}
+	ctx = withUserToReportTo(ctx, checks)
+	checkAll := func(checks []accessCheck) error {
+		allowed := make(map[accessCheck]bool, len(checks))
+		for c, err := range authz.FilterAuthorized(ctx, access, slices.Values(checks), check, authz.WithTracer(tracer), authz.WithSizeHint(len(checks))) {
+			if err != nil {
+				return err
+			}
+			allowed[c] = true
+		}
+		recordAccess(checks, allowed)
+		return nil
+	}
+	err := checkAll(checks)
+	if err == nil {
+		return
+	}
+	// Expected when the calling service may not check some type and verb, so not
+	// a warning: each type and verb is checked on its own next.
+	span.RecordError(err)
+	logger.Debug("Failed to check access to search results in one batch, checking each type and verb", "error", err)
+
+	var groups []string
+	byGroup := map[string][]accessCheck{}
+	for _, c := range checks {
+		group := c.row.Key.Group + "/" + c.row.Key.Resource + ":" + c.verb
+		if _, ok := byGroup[group]; !ok {
+			groups = append(groups, group)
+		}
+		byGroup[group] = append(byGroup[group], c)
+	}
+	for _, group := range groups {
+		if err := checkAll(byGroup[group]); err != nil {
+			logger.Warn("Failed to check access to search results", "check", group, "error", err)
+		}
+	}
+}
+
+// userToReportTo is the user a search reports access to. The service checks are
+// for a service acting on a user's behalf: whether it may do the verb for the
+// user. The search only tells the user what they may do, so the user is given
+// the delegated permissions the checks need, and authz checks the user. The
+// calling service still had to be allowed to read each type to get the results.
+type userToReportTo struct {
+	authlib.AuthInfo
+	permissions []string
+}
+
+func (u userToReportTo) GetTokenDelegatedPermissions() []string {
+	return u.permissions
+}
+
+// withUserToReportTo puts the caller in ctx as a user to report to. A service
+// acting for itself is still checked on its own permissions, which delegated
+// permissions do not change.
+func withUserToReportTo(ctx context.Context, checks []accessCheck) context.Context {
+	user, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return ctx
+	}
+	var permissions []string
+	for _, c := range checks {
+		permission := c.row.Key.Group + "/" + c.row.Key.Resource + ":" + c.verb
+		if !slices.Contains(permissions, permission) {
+			permissions = append(permissions, permission)
+		}
+	}
+	return authlib.WithAuthInfo(ctx, userToReportTo{AuthInfo: user, permissions: permissions})
+}
+
+// recordAccess sets each check's answer on its row: allowed when allowed is nil.
+func recordAccess(checks []accessCheck, allowed map[accessCheck]bool) {
+	for _, c := range checks {
+		if c.row.Access == nil {
+			c.row.Access = map[string]bool{}
+		}
+		c.row.Access[c.verb] = allowed == nil || allowed[c]
+	}
 }

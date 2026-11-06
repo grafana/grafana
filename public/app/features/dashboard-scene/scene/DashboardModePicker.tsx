@@ -1,43 +1,36 @@
-import { css, cx } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { css } from '@emotion/css';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
-import { FeatureState, type GrafanaTheme2, store } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ButtonGroup, Dropdown, FeatureBadge, Icon, Menu, ToolbarButton, useStyles2, type IconName } from '@grafana/ui';
-import { AssistantSparkleGradient } from 'app/core/components/AppChrome/FullscreenWorkspace/AssistantToolbarButtons';
+import { Dropdown, Icon, Menu, ToolbarButton, Tooltip, useStyles2, type IconName } from '@grafana/ui';
 
 import { canEnterComposer } from '../composer/composerAccess';
+import { getPendingComposerEnterTarget, subscribeToComposerEnterRequests } from '../composer/composerEntryRequests';
 import { useAssistantComposerEntry } from '../composer/useAssistantComposerEntry';
 import { isNewDashboard } from '../saving/shared';
+import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 
 import { type DashboardScene } from './DashboardScene';
 import {
   dashboardComposerEnabled,
   dashboardModesEnabled,
   getDashboardMode,
+  getPickerMode,
+  isComposerMode,
   type DashboardMode,
 } from './dashboardModes';
-
-const COMPOSER_ICON_GRADIENT_ID = 'grafana-assistant-composer-mode-icon-gradient';
-
-/** Set once Composer has been entered in this browser: the picker stops marking it as new. */
-export const COMPOSER_SEEN_KEY = 'grafana.dashboard.composer.seen';
 
 export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }) {
   const state = dashboard.useState();
   const styles = useStyles2(getStyles);
-  const [buttonGroup, setButtonGroup] = useState<HTMLDivElement | null>(null);
-  const [isCaretMenuOpen, setIsCaretMenuOpen] = useState(false);
-  const mode = getDashboardMode(state);
-  const [composerSeen, setComposerSeen] = useState(() => store.getBool(COMPOSER_SEEN_KEY, false));
-  useEffect(() => {
-    if (mode === 'composer' && !composerSeen) {
-      store.set(COMPOSER_SEEN_KEY, true);
-      setComposerSeen(true);
-    }
-  }, [mode, composerSeen]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // In Composer the picker shows and switches the mode Composer is over; Composer stays on.
+  const mode = getPickerMode(state);
+  const inComposer = isComposerMode(state);
   const composer = useComposerOption(dashboard);
-  const nextMode = mode === 'view' ? 'edit' : 'view';
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
+  const editBlockedOnMobile = isMobileEditDeprecated && mode === 'view';
   const saveRequired = isNewDashboard(state);
   const hidden =
     !dashboardModesEnabled() ||
@@ -75,20 +68,11 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
     },
   ];
   const current =
-    mode === 'composer'
-      ? { label: t('dashboard.modes.composer', 'Composer'), icon: 'ai-sparkle' as const }
-      : mode === 'agent'
-        ? { label: t('dashboard.modes.agent-edit', 'Agent editing'), icon: 'pen' as const }
-        : options.find((option) => option.value === mode)!;
-  // From Composer, Viewing and Editing first end the session, as its own exit does.
+    mode === 'agent'
+      ? { label: t('dashboard.modes.agent-edit', 'Agent editing'), icon: 'pen' as const }
+      : options.find((option) => option.value === mode)!;
   const choose = (value: 'view' | 'edit') =>
-    mode === 'composer' ? dashboard.switchFromComposer(value) : dashboard.setDashboardMode(value, 'picker');
-
-  // The current mode is ticked; until Composer has been entered, it is marked as new instead.
-  let composerBadge: typeof NewMode | undefined = composerSeen ? undefined : NewMode;
-  if (mode === 'composer') {
-    composerBadge = SelectedMode;
-  }
+    inComposer ? dashboard.setComposerEditing(value === 'edit') : dashboard.setDashboardMode(value, 'picker');
 
   const menu = (
     <div className={styles.menu}>
@@ -107,69 +91,54 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             onClick={() => choose(option.value === 'view' ? 'view' : 'edit')}
           />
         ))}
-        {composer && (
-          <Menu.Item
-            label={t('dashboard.modes.composer', 'Composer')}
-            description={
-              composer.disabledReason ??
-              t('dashboard.modes.composer-description', 'Point at anything and ask Assistant to change it.')
-            }
-            // The Assistant sparkle in the Chat button's colours; disabled, it greys out like the others.
-            icon="ai-sparkle"
-            role="menuitemradio"
-            ariaChecked={mode === 'composer'}
-            disabled={composer.disabledReason !== undefined}
-            className={cx(styles.item, composer.disabledReason === undefined && styles.assistantIcon)}
-            component={composerBadge}
-            // Already in Composer: nothing to do.
-            onClick={mode === 'composer' ? undefined : composer.request}
-          />
-        )}
       </Menu>
     </div>
   );
 
   return (
     <>
-      {/* Outside the group: a child there would end the main button's :first-child rounding. */}
-      {(composer || mode === 'composer') && <AssistantSparkleGradient id={COMPOSER_ICON_GRADIENT_ID} />}
-      <ButtonGroup ref={setButtonGroup}>
+      <Dropdown
+        placement="bottom-end"
+        onVisibleChange={(visible) => {
+          setIsMenuOpen(visible);
+          if (visible) {
+            dashboard.trackModePickerOpened();
+          }
+        }}
+        overlay={menu}
+      >
         <ToolbarButton
           variant="canvas"
           icon={current.icon}
-          className={cx(mode === 'composer' && styles.assistantIcon)}
+          isOpen={isMenuOpen}
           aria-label={t('dashboard.modes.current', 'Dashboard mode: {{mode}}', { mode: current.label })}
-          tooltip={
-            saveRequired && nextMode === 'view'
-              ? saveBeforeViewing
-              : nextMode === 'view'
-                ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
-                : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
-          }
-          disabled={!state.editable && nextMode === 'edit'}
-          onClick={() => choose(nextMode)}
+          aria-haspopup="menu"
+          disabled={editBlockedOnMobile}
         >
           {current.label}
         </ToolbarButton>
-        <Dropdown
-          positioningReference={buttonGroup}
-          placement="bottom-end"
-          onVisibleChange={(visible) => {
-            setIsCaretMenuOpen(visible);
-            if (visible) {
-              dashboard.trackModePickerOpened();
-            }
-          }}
-          overlay={menu}
+      </Dropdown>
+      {composer && (inComposer || !isMobileEditDeprecated) && (
+        <Tooltip
+          placement="bottom"
+          content={
+            composer.disabledReason ??
+            (composer.opening
+              ? t('dashboard.modes.composer-opening', 'Opening Composer…')
+              : t('dashboard.modes.composer-description', 'Point at anything and ask the Assistant.'))
+          }
         >
           <ToolbarButton
-            variant="canvas"
-            icon={isCaretMenuOpen ? 'angle-up' : 'angle-down'}
-            aria-label={t('dashboard.modes.change-mode', 'Change dashboard mode')}
-            aria-haspopup="menu"
+            variant={inComposer ? 'active' : 'canvas'}
+            icon={composer.opening ? 'spinner' : 'ai-select'}
+            aria-label={t('dashboard.modes.composer', 'Composer')}
+            aria-pressed={inComposer}
+            aria-busy={composer.opening}
+            disabled={composer.disabledReason !== undefined}
+            onClick={inComposer ? () => dashboard.leaveComposer() : composer.request}
           />
-        </Dropdown>
-      </ButtonGroup>
+        </Tooltip>
+      )}
     </>
   );
 }
@@ -181,8 +150,9 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
  */
 function useComposerOption(dashboard: DashboardScene) {
   const entry = useAssistantComposerEntry('dashboard');
+  const pending = useSyncExternalStore(subscribeToComposerEnterRequests, getPendingComposerEnterTarget);
   if (getDashboardMode(dashboard.state) === 'composer') {
-    return { disabledReason: undefined, request: () => {} };
+    return { disabledReason: undefined, opening: false, request: () => {} };
   }
   if (!dashboardComposerEnabled() || !entry) {
     return undefined;
@@ -199,18 +169,15 @@ function useComposerOption(dashboard: DashboardScene) {
       ? t('dashboard.modes.composer-save-first', 'Save the dashboard before using Composer.')
       : t('dashboard.modes.composer-unsupported', 'Composer is not available for this dashboard right now.');
   }
-  const request = () => entry.request({ resource: 'dashboard', uid: dashboard.state.uid ?? '' });
-  return { disabledReason, request };
-}
-
-/** Composer is a new mode, marked as Grafana marks new items in the navigation. */
-function NewMode() {
-  const styles = useStyles2(getStyles);
-  return (
-    <span className={styles.newBadge}>
-      <FeatureBadge featureState={FeatureState.new} />
-    </span>
-  );
+  const uid = dashboard.state.uid ?? '';
+  // Kept enabled while opening so keyboard focus stays on the button; a second press is ignored.
+  const opening = pending?.resource === 'dashboard' && pending.uid === uid;
+  const request = () => {
+    if (!opening) {
+      entry.request({ resource: 'dashboard', uid });
+    }
+  };
+  return { disabledReason, opening, request };
 }
 
 function SelectedMode() {
@@ -223,19 +190,5 @@ function getStyles(theme: GrafanaTheme2) {
     menu: css({ width: 360, maxWidth: 'calc(100vw - 32px)', '> [role="menu"]': { width: '100%' } }),
     item: css({ padding: theme.spacing(1.5, 5, 1.5, 1.5) }),
     check: css({ position: 'absolute', right: theme.spacing(1.5), top: theme.spacing(1.5) }),
-    // Where the check sits for the current mode, beside the label; it keeps its own colours, not Composer's gradient.
-    newBadge: css({
-      position: 'absolute',
-      right: theme.spacing(1.5),
-      top: theme.spacing(1.5),
-      '&& svg path': { fill: 'currentColor', stroke: 'none' },
-    }),
-    assistantIcon: css({
-      '& svg': { opacity: 1 },
-      '& svg path': {
-        fill: `url(#${COMPOSER_ICON_GRADIENT_ID})`,
-        stroke: `url(#${COMPOSER_ICON_GRADIENT_ID})`,
-      },
-    }),
   };
 }

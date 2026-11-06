@@ -129,15 +129,14 @@ jobs:
 
       - name: Restore or build frontend
         uses: ./.github/actions/build-frontend
+        with:
+          sourcemaps: 'false'
 
       - name: Upload build artifact
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: frontend-preview-build
-          # Both paths share public/ as their root inside the artifact
-          path: |
-            public/build
-            public/fonts
+          path: dist/frontend/
           retention-days: 1
 
   deploy:
@@ -168,7 +167,7 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: frontend-preview-build
-          path: public
+          path: dist/frontend
 
       # The deploy name is the folder users put in the preview assets cookie.
       # It must match the backend's validation: alphanumeric and underscores
@@ -184,32 +183,19 @@ jobs:
       - name: Stage manifests to upload last
         run: |
           mkdir -p preview-manifest
-          mv public/build/assets-manifest*.json preview-manifest/
+          mv dist/frontend/build/assets-manifest*.json preview-manifest/
 
       - name: Upload assets (manifests excluded)
         uses: grafana/shared-workflows/actions/push-to-gcs@main
         with:
           environment: dev
           bucket: ${{ env.BUCKET_NAME }}
-          # Assets live under <deploy-name>/public/build/ to match the layout
-          # the assets manifest and CDN paths expect
-          bucket_path: ${{ steps.deploy-name.outputs.deploy-name }}/public/build
-          path: public/build
+          bucket_path: ${{ steps.deploy-name.outputs.deploy-name }}/public
+          path: dist/frontend
           service_account: github-gf-frontend-preview-dev@grafanalabs-workload-identity.iam.gserviceaccount.com
           parent: false
           # The action's default ACL is rejected by the bucket's uniform
           # bucket-level access. Public read comes from an IAM binding instead.
-          predefinedAcl: ""
-
-      - name: Upload fonts
-        uses: grafana/shared-workflows/actions/push-to-gcs@main
-        with:
-          environment: dev
-          bucket: ${{ env.BUCKET_NAME }}
-          bucket_path: ${{ steps.deploy-name.outputs.deploy-name }}/public/fonts
-          path: public/fonts
-          service_account: github-gf-frontend-preview-dev@grafanalabs-workload-identity.iam.gserviceaccount.com
-          parent: false
           predefinedAcl: ""
 
       - name: Upload manifests to switch the preview to this build

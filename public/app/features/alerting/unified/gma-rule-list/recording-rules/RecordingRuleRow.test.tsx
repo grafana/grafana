@@ -116,4 +116,28 @@ describe('RecordingRuleRow', () => {
 
     expect(screen.queryByText(/label/)).not.toBeInTheDocument();
   });
+
+  it('renders a provisioning badge when the full rule has provenance set', () => {
+    const rule = {
+      apiVersion: 'rules.alerting.grafana.app/v0alpha1',
+      kind: 'RecordingRule' as const,
+      metadata: { name: 'rule-1', annotations: { 'grafana.com/provenance': 'terraform' } },
+      spec: {
+        title: 'cpu:usage:rate5m',
+        metric: 'cpu:usage:rate5m',
+        targetDatasourceUID: 'ds',
+        trigger: { interval: '1m' },
+        expressions: {},
+      },
+    };
+    renderRow({ searchHit: baseHit(), rule });
+
+    expect(screen.getByText('Provisioned')).toBeInTheDocument();
+  });
+
+  it('renders no badge when rule is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
+  });
 });
