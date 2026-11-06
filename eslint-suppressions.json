@@ -4471,11 +4471,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/mixed/MixedDataSource.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/alertlist/AlertInstances.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
