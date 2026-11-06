@@ -119,7 +119,7 @@ Changes made in any region reach the other regions through Git:
 
 Keep the following in mind when you run this scenario:
 
-- **Write conflicts**: If users in different regions modify the same dashboard simultaneously, Git uses last-write-wins.
+- **Write conflicts**: If users in different regions modify the same dashboard simultaneously, the last written changes prevail.
 - **Primary region**: Consider designating one region as the primary location for making dashboard changes.
 - **Propagation time**: Changes propagate to all regions within the configured sync interval, or instantly if you configure webhooks.
 - **Network reliability**: Ensure all regions have reliable connectivity to the Git repository.
