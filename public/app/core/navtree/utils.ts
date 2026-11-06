@@ -126,10 +126,8 @@ export function removeNavById(nodes: NavModelItem[], id: string): NavModelItem[]
  * caller decides what that means — the registry skips the item, while the
  * plugin nav builds the section from its shell. Returns a new tree.
  *
- * `after` names ids to land behind, in preference order: the first one present
- * wins and the items go directly after it. Sections whose children all leave
- * sortWeight unset render in slice order (see sortNavTree), so an appended item
- * would otherwise sit last whatever it belongs next to.
+ * `after` lists ids to go behind, best first: the items land after the first
+ * one found. Needed because a section with no sortWeights keeps slice order.
  */
 export function appendIntoSection(
   tree: NavModelItem[],

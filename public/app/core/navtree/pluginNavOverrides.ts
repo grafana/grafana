@@ -129,8 +129,6 @@ export const PLUGIN_NAV_OVERRIDES: PluginNavOverride[] = [
     apply: (tree) => updateNavById(tree, NavID.help, (help) => ({ ...help, hideFromTabs: true })),
   },
   {
-    // The Assistant's pages section carries its own create action. No constant
-    // for the action: it is an app-platform permission, named as the Go builder names it.
     when: (tree) =>
       Boolean(findNavById(tree, standalonePluginPageId(ASSISTANT_PAGES_PATH))) &&
       contextSrv.hasPermission('assistant.ext.grafana.app/pages:create'),
@@ -140,8 +138,6 @@ export const PLUGIN_NAV_OVERRIDES: PluginNavOverride[] = [
         children: [
           ...(section.children ?? []),
           {
-            // No pluginId: the frontend registers a catch-all app route for every plugin
-            // nav item, which would make this section own every assistant app url
             text: 'New Grafana Page',
             id: 'assistant/pages/new',
             icon: 'plus',
