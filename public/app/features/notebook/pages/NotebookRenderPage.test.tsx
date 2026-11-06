@@ -94,7 +94,7 @@ describe('NotebookRenderPage', () => {
     render(<NotebookRenderPage />);
 
     await waitFor(() => {
-      expect(loadNotebook).toHaveBeenCalledWith('nb1');
+      expect(loadNotebook).toHaveBeenCalledWith('nb1', 'direct', { readOnly: true });
     });
   });
 
@@ -153,26 +153,6 @@ describe('NotebookRenderPage', () => {
 
     await screen.findByText('Findings');
     expect(abandon).toHaveBeenCalled();
-  });
-
-  // Activation is when autosave starts, and a write it begins there cannot be called back by an abandon
-  // that comes after it.
-  it('abandons autosave before the scene activates', async () => {
-    setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    const scene = buildScene();
-    const order: string[] = [];
-    jest.spyOn(scene.autosave, 'abandon').mockImplementation(() => order.push('abandon'));
-    const activate = scene.activate.bind(scene);
-    jest.spyOn(scene, 'activate').mockImplementation(() => {
-      order.push('activate');
-      return activate();
-    });
-    stubStateManager(scene);
-
-    render(<NotebookRenderPage />);
-
-    await screen.findByText('Findings');
-    expect(order.slice(0, 2)).toEqual(['abandon', 'activate']);
   });
 
   it('drops the scene from the shared cache on unmount, rather than leaving it abandoned', async () => {

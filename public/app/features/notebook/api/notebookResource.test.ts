@@ -3,13 +3,14 @@ import { type UnknownAction } from 'redux';
 import { of, throwError } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
+import { type Notebook } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
 import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 
 import { codeCell, markdownCell, notebookSpec } from '../mutation-api/test-utils';
 import { type Spec as NotebookSpec } from '../types';
 
-import { assignNotebookCellIds, createNotebook, NotebookConflictError, updateNotebook } from './notebookResource';
+import { createNotebook, NotebookConflictError, updateNotebook, writeBackWithCellIds } from './notebookResource';
 
 // The write dispatches through the app store; route that dispatch to a test store carrying the dashboard
 // v2beta1 API so the real RTK mutation, and the real base query that decides the patch content type, both
@@ -226,7 +227,12 @@ describe('createNotebook', () => {
   });
 });
 
-describe('assignNotebookCellIds', () => {
+/** The generated client's Notebook, for a fixture built with the schema's spec type. */
+function asNotebook(notebook: ReturnType<typeof savedNotebook>): Notebook {
+  return notebook as unknown as Notebook;
+}
+
+describe('writeBackWithCellIds', () => {
   beforeEach(() => {
     testStore = createTestStore();
   });
@@ -235,41 +241,27 @@ describe('assignNotebookCellIds', () => {
     jest.restoreAllMocks();
   });
 
-  it('reads the notebook and writes it back whole, carrying the version it read', async () => {
+  it('puts the notebook back as fetched, carrying the version it was read at, and returns what the server stored', async () => {
     const spec = notebookSpec();
-    const fetch = jest
-      .fn()
-      .mockReturnValueOnce(of(createFetchResponse(savedNotebook(spec))))
-      .mockReturnValueOnce(of(createFetchResponse(savedNotebook(spec, 3))));
-    setBackendSrv({ fetch } as unknown as BackendSrv);
+    const fetched = savedNotebook(spec);
+    const after = savedNotebook(spec, 3);
+    const fetch = fetchOf({ ...after, metadata: { ...after.metadata, resourceVersion: '1800' } });
 
-    const result = await assignNotebookCellIds('nb-1');
+    const stored = await writeBackWithCellIds('nb-1', asNotebook(fetched));
 
-    expect(fetch).toHaveBeenCalledTimes(2);
-    const [read, write] = fetch.mock.calls.map(([request]) => request);
-    expect(read.method).toBe('GET');
-    expect(write.method).toBe('PUT');
-    expect(write.data.spec).toEqual(spec);
-    expect(write.data.metadata.resourceVersion).toBe('1755');
-    expect(result).toEqual({ generation: 3, resourceVersion: '1755', cells: cellsOf(spec) });
-  });
-
-  it('does not write when the notebook cannot be read', async () => {
-    const fetch = jest.fn().mockReturnValue(throwError(() => ({ status: 404, data: { message: 'not found' } })));
-    setBackendSrv({ fetch } as unknown as BackendSrv);
-
-    await expect(assignNotebookCellIds('nb-1')).rejects.toThrow();
     expect(fetch).toHaveBeenCalledTimes(1);
+    const request = fetch.mock.calls[0][0];
+    expect(request.method).toBe('PUT');
+    expect(request.url).toMatch(/\/notebooks\/nb-1$/);
+    expect(request.data).toEqual(fetched);
+    expect(stored.metadata?.resourceVersion).toBe('1800');
+    expect(stored.metadata?.generation).toBe(3);
   });
 
-  it('reports a conflict as one, so a caller can tell it from a failure', async () => {
-    const spec = notebookSpec();
-    const fetch = jest
-      .fn()
-      .mockReturnValueOnce(of(createFetchResponse(savedNotebook(spec))))
-      .mockReturnValueOnce(throwError(() => ({ status: 409, data: { message: 'the object has been modified' } })));
+  it('fails when the server rejects the write, a conflict included', async () => {
+    const fetch = jest.fn().mockReturnValue(throwError(() => ({ status: 409, data: { message: 'modified' } })));
     setBackendSrv({ fetch } as unknown as BackendSrv);
 
-    await expect(assignNotebookCellIds('nb-1')).rejects.toBeInstanceOf(NotebookConflictError);
+    await expect(writeBackWithCellIds('nb-1', asNotebook(savedNotebook(notebookSpec())))).rejects.toThrow();
   });
 });

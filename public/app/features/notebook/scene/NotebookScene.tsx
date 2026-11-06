@@ -44,7 +44,6 @@ import { NOTEBOOK_EDIT_KIND, NotebookEditHistory, type NotebookEditAction } from
 import { PDF_PAGE_WIDTH_MM } from './NotebookPdfLayout';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
-import { migrateNotebookCellIds } from './migrateNotebookCellIds';
 import { claimSceneContext, releaseSceneContext } from './sceneContextStack';
 
 export interface NotebookSceneState extends SceneObjectState {
@@ -183,9 +182,6 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // Read once, at activation: a document does not become a draft, or stop being one, while it is
       // mounted. Its host decides that before handing it over.
       const stopAutosave = this.state.isDraft ? undefined : this.autosave.start();
-      if (!this.state.isDraft) {
-        void migrateNotebookCellIds(this);
-      }
 
       const onPageHide = () => this.endEditSession(NOTEBOOK_EDIT_SESSION_END_REASON.PAGE_HIDE);
       // A page the browser kept for Back comes back still in edit mode, with the session `pagehide`

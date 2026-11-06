@@ -1,3 +1,4 @@
+import { type Notebook } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
 import { dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
@@ -14,11 +15,48 @@ import {
   type NotebookEntryPoint,
   type NotebookLoadSource,
 } from '../analytics/types';
-import { notebookResourceFor } from '../api/notebookResource';
+import { notebookResourceFor, writeBackWithCellIds } from '../api/notebookResource';
+import { canEditNotebooks } from '../permissions';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookDeletedEvent } from '../scene/events';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
+
+/**
+ * The generated client type mirrors the apiserver Resource<NotebookSpec> at runtime (same OpenAPI source);
+ * bridge at the fetch seam so everything downstream uses the schema types.
+ */
+function toNotebookResource(notebook: Notebook): Resource<NotebookSpec> {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema resource type at the fetch seam
+  return notebook as unknown as Resource<NotebookSpec>;
+}
+
+/**
+ * Gives a notebook that predates cell ids its ids, by writing it back once as fetched, and returns what
+ * the server stored. Comments anchor to the id, so a notebook nobody edits needs one by the time someone
+ * wants to comment on it.
+ *
+ * Done here, while the page is still loading and no scene exists, so nothing can be edited under the
+ * write: the scene is built from exactly what was written, ids and new revision included. Only someone
+ * allowed to write does it, and a failure or conflict is not reported: the notebook as fetched is
+ * still a good notebook, and the next open tries again.
+ */
+async function withCellIds(
+  uid: string,
+  fetched: Notebook,
+  notebook: Resource<NotebookSpec>
+): Promise<Resource<NotebookSpec>> {
+  const cells = notebook.spec.layout?.spec?.cells ?? [];
+  if (!canEditNotebooks() || cells.every((cell) => cell.spec.id)) {
+    return notebook;
+  }
+
+  try {
+    return toNotebookResource(await writeBackWithCellIds(uid, fetched));
+  } catch {
+    return notebook;
+  }
+}
 
 /**
  * A load failure normalized to the fields the error UI needs. RTK rejects with `{ status, data }`
@@ -100,8 +138,17 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
   // throw away the scene someone is typing in, along with its caret and undo history.
   private unsavedScene?: NotebookScene;
 
-  /** `source` is where the reader came from, for the `loaded` event. A caller that knows nothing leaves it off. */
-  public async loadNotebook(uid: string, source: NotebookLoadSource = NOTEBOOK_LOAD_SOURCE.DIRECT): Promise<void> {
+  /**
+   * `source` is where the reader came from, for the `loaded` event. A caller that knows nothing leaves it off.
+   *
+   * `readOnly` is for a page that only looks at the notebook, such as the PDF render, so that opening it
+   * never writes (see `withCellIds`).
+   */
+  public async loadNotebook(
+    uid: string,
+    source: NotebookLoadSource = NOTEBOOK_LOAD_SOURCE.DIRECT,
+    { readOnly = false }: { readOnly?: boolean } = {}
+  ): Promise<void> {
     const seq = ++this.requestSeq;
 
     if (this.adoptUnsavedScene(uid)) {
@@ -123,10 +170,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
         throw new Error('Notebook not found');
       }
 
-      // The generated client type mirrors the apiserver Resource<NotebookSpec> at runtime (same
-      // OpenAPI source); bridge at the fetch seam so everything downstream uses the schema types.
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema resource type at the fetch seam
-      const notebook = result.data as unknown as Resource<NotebookSpec>;
+      const notebook = toNotebookResource(result.data);
 
       const cached = this.cache.get(uid);
       // The generation this was loaded at goes stale the moment the page saves, because autosave advances
@@ -150,13 +194,17 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
       // Panel cells are built synchronously below.
       await getPanelPluginMetasMap();
 
+      // Here rather than before the cache check: writing bumps the generation, which would stop a scene
+      // someone is already editing from being reused.
+      const loaded = readOnly ? notebook : await withCellIds(uid, result.data, notebook);
+
       // RTK Query freezes cached responses (Immer). The scene pipeline mutates nested panel
       // fieldConfig (e.g. threshold base → -Infinity), so clone before transforming.
-      const scene = transformNotebookToScene(structuredClone(notebook));
+      const scene = transformNotebookToScene(structuredClone(loaded));
 
       // Cache even when superseded: the work is already paid for, so a later visit to this uid can
       // reuse it. Only the state write has to be suppressed.
-      this.cacheScene(uid, notebook.metadata.generation, scene);
+      this.cacheScene(uid, loaded.metadata.generation, scene);
 
       if (this.isSuperseded(seq)) {
         return;

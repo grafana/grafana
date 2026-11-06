@@ -238,49 +238,6 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     return () => this.stop();
   }
 
-  /** Whether ids written by someone else can be put on the cells now, without clashing with a save of ours. */
-  public canAdoptIds(): boolean {
-    return !this.abandoned && !this.inFlight && !this.changePending;
-  }
-
-  /**
-   * Puts the ids a write that did not come from this controller gave the cells onto them, and records
-   * the revision that write produced.
-   *
-   * The id migration is that write (see `migrateNotebookCellIds`). Autosave does not make it, but it
-   * owns what the ids have to be consistent with: the baseline is recorded with them first, because
-   * putting them on the cells changes what serializes, and a baseline without them would read as an
-   * edit and save the notebook again. Does nothing when a save of ours is pending or running, since
-   * that save is about to give the cells their ids itself.
-   */
-  public adoptStoredCells(
-    stored: StoredCell[] | undefined,
-    version: { generation?: number; resourceVersion?: string }
-  ) {
-    if (!this.canAdoptIds()) {
-      return;
-    }
-
-    const cells = this.scene.state.body.contentCells();
-    const adopted = adoptedCellIds(cellIdentities(cells), stored, cells);
-    if (!adopted.size) {
-      return;
-    }
-
-    let written: NotebookSpec;
-    try {
-      written = withCellIds(this.buildSpecToSave(), cells, adopted);
-    } catch {
-      return;
-    }
-    this.recordWritten(written, JSON.stringify(written), collectVizPanels(this.scene), cells, new Set());
-    this.adoptCellIds(adopted);
-    this.setState({
-      ...(version.generation !== undefined ? { savedGeneration: version.generation } : {}),
-      savedResourceVersion: version.resourceVersion,
-    });
-  }
-
   /**
    * Saves a change made by a writer that does not go through edit mode, and waits for the write.
    *
@@ -1147,11 +1104,6 @@ function adoptedCellIds(
     adopted.set(cells[index], id);
   });
   return adopted;
-}
-
-/** The element and id of each cell as the scene holds them now. */
-function cellIdentities(cells: NotebookCellItem[]): StoredCell[] {
-  return cells.map((cell) => ({ element: cell.state.elementName, id: cell.state.id }));
 }
 
 /**

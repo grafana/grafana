@@ -773,31 +773,6 @@ describe('NotebookAutosave', () => {
       }));
     }
 
-    /** A notebook saved before ids existed, as a load would build it. */
-    function sceneWithoutIds() {
-      return transformNotebookToScene({
-        apiVersion: 'notebook.grafana.app/v2beta1',
-        kind: 'Notebook',
-        metadata: { name: 'nb-1', resourceVersion: '1', generation: 1, creationTimestamp: '2026-07-01T00:00:00Z' },
-        spec: {
-          ...defaultNotebookSpec(),
-          title: 'My notebook',
-          elements: { md1: { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: 'Hi' } } } } },
-          layout: {
-            kind: 'NotebookLayout',
-            spec: {
-              cells: [
-                {
-                  kind: 'NotebookLayoutItem',
-                  spec: { element: { kind: 'ElementReference', name: 'md1' }, source: 'user' },
-                },
-              ],
-            },
-          },
-        },
-      });
-    }
-
     it('adopts the id the server gave a new cell, and does not save again for it', async () => {
       jest
         .mocked(updateNotebook)
@@ -849,75 +824,6 @@ describe('NotebookAutosave', () => {
 
       expect(updateNotebook).toHaveBeenCalledTimes(1);
       expect(scene.state.body.state.cells[1].state.id).toBeUndefined();
-    });
-
-    describe('adoptStoredCells', () => {
-      const stored = [{ element: 'md1', id: '00000000-0000-4000-8000-0000000000a0' }];
-
-      it('puts the ids on the cells, records the revision, and does not save for it', async () => {
-        const scene = sceneWithoutIds();
-        deactivate = scene.activate();
-        await jest.advanceTimersByTimeAsync(0);
-
-        scene.autosave.adoptStoredCells(stored, { generation: 5, resourceVersion: '9' });
-        await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
-
-        expect(scene.state.body.state.cells[0].state.id).toBe('00000000-0000-4000-8000-0000000000a0');
-        expect(scene.autosave.state.savedResourceVersion).toBe('9');
-        expect(scene.autosave.state.savedGeneration).toBe(5);
-        expect(updateNotebook).not.toHaveBeenCalled();
-      });
-
-      it('sends the adopted ids with the next edit', async () => {
-        const scene = sceneWithoutIds();
-        scene.state.body.setState({}); // no-op, keeps the scene reference used below obvious
-        deactivate = scene.activate();
-        scene.setState({ isEditing: true });
-        await jest.advanceTimersByTimeAsync(0);
-        scene.autosave.adoptStoredCells(stored, { resourceVersion: '9' });
-
-        editFirstCell(scene, 'Edited');
-        await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
-
-        expect(updateNotebook).toHaveBeenCalledTimes(1);
-        expect(jest.mocked(updateNotebook).mock.calls[0][1].layout.spec.cells[0].spec.id).toBe(
-          '00000000-0000-4000-8000-0000000000a0'
-        );
-        expect(jest.mocked(updateNotebook).mock.calls[0][2]).toBe('9');
-      });
-
-      it('adopts nothing when what the server stored does not line up with the cells', async () => {
-        const scene = sceneWithoutIds();
-        deactivate = scene.activate();
-        await jest.advanceTimersByTimeAsync(0);
-
-        scene.autosave.adoptStoredCells([{ element: 'other', id: '00000000-0000-4000-8000-0000000000a0' }], {
-          resourceVersion: '9',
-        });
-
-        expect(scene.state.body.state.cells[0].state.id).toBeUndefined();
-        expect(scene.autosave.state.savedResourceVersion).not.toBe('9');
-      });
-
-      it('leaves a cell its own id', async () => {
-        const scene = buildScene();
-        deactivate = scene.activate();
-        const own = scene.state.body.state.cells[0].state.id;
-
-        scene.autosave.adoptStoredCells([{ element: scene.state.body.state.cells[0].state.elementName, id: 'x' }], {});
-
-        expect(scene.state.body.state.cells[0].state.id).toBe(own);
-      });
-
-      it('does nothing once abandoned, or while a change is waiting to be saved', async () => {
-        const abandoned = sceneWithoutIds();
-        abandoned.autosave.abandon();
-        expect(abandoned.autosave.canAdoptIds()).toBe(false);
-
-        const editing = activateEditing();
-        editFirstCell(editing, 'Unsaved');
-        expect(editing.autosave.canAdoptIds()).toBe(false);
-      });
     });
   });
 
