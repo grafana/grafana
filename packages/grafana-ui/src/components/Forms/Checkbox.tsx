@@ -157,7 +157,7 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
           height: theme.spacing(visualRefreshEnabled ? 1.25 : 1.5),
           border: `solid ${visualRefreshEnabled ? theme.colors.accent.text : theme.colors.accent.contrastText}`,
           borderWidth: visualRefreshEnabled ? '0 2px 2px 0' : '0 3px 3px 0',
-          transform: visualRefreshEnabled ? 'rotate(55deg)' : 'rotate(45deg)',
+          transform: visualRefreshEnabled ? 'rotate(50deg)' : 'rotate(45deg)',
         },
       },
 
