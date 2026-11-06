@@ -141,13 +141,21 @@ func legacyFilter(perms []ac.Permission, action, scope string) []ac.Permission {
 
 // zanzanaResolve runs the Zanzana list → legacy permission mapping for one action.
 func zanzanaResolve(resp *authzv1.ListResponse, action, scope string) ([]ac.Permission, error) {
-	group, resource, subresource, verb := common.TranslateActionToListParams(action)
-	if group == "" || resource == "" {
-		return nil, nil
-	}
 	fake := &fakeZanzanaClient{listResp: resp}
 	r := &ZanzanaPermissionResolver{client: fake}
-	return r.listPermissions(context.Background(), "org:1", "user:parity", nil, group, resource, subresource, verb, action, scope)
+	var permissions []ac.Permission
+	for _, mapping := range common.TranslateActionToListParamsAll(action) {
+		perms, err := r.listPermissions(
+			context.Background(), "org:1", "user:parity", nil,
+			mapping.Group, mapping.Resource, mapping.Subresource, mapping.Verb,
+			action, scope,
+		)
+		if err != nil {
+			return nil, err
+		}
+		permissions = append(permissions, perms...)
+	}
+	return permissions, nil
 }
 
 func TestSearchPermissionsForIdentity_NoActionOrPrefix_ListsAllSupportedActions(t *testing.T) {
@@ -205,6 +213,38 @@ func TestSearchPermissionsForIdentity_WithAction_DoesNotListAll(t *testing.T) {
 	perms := result[42]
 	require.Len(t, perms, 1)
 	require.Equal(t, "dashboards:read", perms[0].Action)
+}
+
+func TestSearchPermissionsForIdentity_WithAnnotationAction_ListsAllResourceMappings(t *testing.T) {
+	client := &capturingZanzanaClient{
+		fakeZanzanaClient: fakeZanzanaClient{
+			listResp: &authzv1.ListResponse{All: true},
+		},
+	}
+	r := &ZanzanaPermissionResolver{client: client}
+
+	result, err := r.searchPermissionsForIdentity(
+		context.Background(),
+		1,
+		42,
+		"user-uid",
+		false,
+		ac.SearchOptions{Action: "annotations:read"},
+	)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []ac.Permission{
+		{Action: "annotations:read", Scope: "annotations:*"},
+		{Action: "annotations:read", Scope: "dashboards:*"},
+		{Action: "annotations:read", Scope: "folders:*"},
+	}, result[42])
+
+	require.Len(t, client.listCalls, 2)
+	requests := map[string]bool{}
+	for _, call := range client.listCalls {
+		requests[call.Group+"/"+call.Resource+"/"+call.Subresource] = true
+	}
+	require.True(t, requests["annotation.grafana.app/annotations/"])
+	require.True(t, requests["dashboard.grafana.app/dashboards/annotations"])
 }
 
 func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
