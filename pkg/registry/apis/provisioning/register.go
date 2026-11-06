@@ -428,7 +428,6 @@ func RegisterAPIService(
 		return nil, err
 	}
 	builder.repoValidatorOpts = repoValidatorOpts
-	builder.bootstrapConfig = bootstrapConfig
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
@@ -437,6 +436,9 @@ func RegisterAPIService(
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
 	builder.keysOnlyReList = keysOnlyReList
+	// Only the preferred version registers the bootstrap repository: it is the one that runs
+	// the post-start hook's controllers, and two of them would race on the same object.
+	builder.bootstrapConfig = bootstrapConfig
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
