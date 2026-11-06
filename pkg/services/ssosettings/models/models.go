@@ -58,6 +58,52 @@ func (s SSOSettings) TableName() string {
 	return "sso_setting"
 }
 
+// NormalizeSettings normalizes keys in settings map from camelCase to snake_case.
+// If both snake_case and camelCase keys are present, non-empty values take precedence
+// and duplicate camelCase keys are removed to maintain consistency and prevent orphaned entries.
+func NormalizeSettings(settings map[string]any) map[string]any {
+	if settings == nil {
+		return nil
+	}
+
+	normalized := make(map[string]any, len(settings))
+	for k, v := range settings {
+		snakeKey := strcase.ToSnake(k)
+		if snakeKey != k {
+			if existing, exists := normalized[snakeKey]; !exists || isEmptyValue(existing) {
+				if !isEmptyValue(v) || !exists {
+					normalized[snakeKey] = v
+				}
+			}
+		} else {
+			if existing, exists := normalized[snakeKey]; exists && !isEmptyValue(existing) && isEmptyValue(v) {
+				continue
+			}
+			normalized[snakeKey] = v
+		}
+	}
+
+	return normalized
+}
+
+func isEmptyValue(v any) bool {
+	if v == nil {
+		return true
+	}
+	switch val := v.(type) {
+	case string:
+		return val == ""
+	case []any:
+		return len(val) == 0
+	case []string:
+		return len(val) == 0
+	case map[string]any:
+		return len(val) == 0
+	default:
+		return false
+	}
+}
+
 // MarshalJSON implements the json.Marshaler interface and converts the s.Settings from map[string]any in snake_case to map[string]any in camelCase
 func (s SSOSettings) MarshalJSON() ([]byte, error) {
 	type Alias SSOSettings
@@ -67,8 +113,9 @@ func (s SSOSettings) MarshalJSON() ([]byte, error) {
 		Alias: (*Alias)(&s),
 	}
 
-	settings := make(map[string]any)
-	for k, v := range aux.Settings {
+	normalized := NormalizeSettings(aux.Settings)
+	settings := make(map[string]any, len(normalized))
+	for k, v := range normalized {
 		settings[strcase.ToLowerCamel(k)] = v
 	}
 
@@ -89,11 +136,6 @@ func (s *SSOSettings) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	settings := make(map[string]any)
-	for k, v := range aux.Settings {
-		settings[strcase.ToSnake(k)] = v
-	}
-
-	s.Settings = settings
+	s.Settings = NormalizeSettings(aux.Settings)
 	return nil
 }

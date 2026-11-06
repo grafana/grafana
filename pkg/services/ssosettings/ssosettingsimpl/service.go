@@ -188,6 +188,7 @@ func (s *Service) GetForProvider(ctx context.Context, provider string) (*models.
 	}
 
 	if dbSettings != nil {
+		dbSettings.Settings = models.NormalizeSettings(dbSettings.Settings)
 		// Settings are coming from the database thus secrets are encrypted
 		dbSettings.Settings, err = s.decryptSecrets(ctx, dbSettings.Settings)
 		if err != nil {
@@ -262,6 +263,7 @@ func (s *Service) List(ctx context.Context) ([]*models.SSOSettings, error) {
 
 		dbSettings := getSettingByProvider(provider, storedSettings)
 		if dbSettings != nil {
+			dbSettings.Settings = models.NormalizeSettings(dbSettings.Settings)
 			// Settings are coming from the database thus secrets are encrypted
 			dbSettings.Settings, err = s.decryptSecrets(ctx, dbSettings.Settings)
 			if err != nil {
@@ -292,6 +294,7 @@ func (s *Service) ListStored(ctx context.Context) ([]*models.SSOSettings, error)
 	}
 
 	for _, setting := range stored {
+		setting.Settings = models.NormalizeSettings(setting.Settings)
 		setting.Settings, err = s.decryptSecrets(ctx, setting.Settings)
 		if err != nil {
 			return nil, err
@@ -336,6 +339,8 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requ
 		return err
 	}
 
+	settings.Settings = models.NormalizeSettings(settings.Settings)
+
 	settingsWithSecrets, err := mergeSecrets(settings.Settings, storedSettings.Settings)
 	if err != nil {
 		return err
@@ -359,7 +364,7 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requ
 
 	// make a copy of current settings for reload operation and apply overrides
 	reloadSettings := *settings
-	reloadSettings.Settings = overrideMaps(storedSettings.Settings, settingsWithSecrets)
+	reloadSettings.Settings = models.NormalizeSettings(overrideMaps(storedSettings.Settings, settingsWithSecrets))
 
 	go s.reload(reloadable, settings.Provider, reloadSettings)
 
@@ -381,9 +386,9 @@ func (s *Service) Patch(ctx context.Context, provider string, data map[string]an
 		return err
 	}
 
-	newSettingsMap := make(map[string]any)
-	maps.Copy(newSettingsMap, storedSettings.Settings)
-	maps.Copy(newSettingsMap, data)
+	normalizedData := models.NormalizeSettings(data)
+	newSettingsMap := models.NormalizeSettings(storedSettings.Settings)
+	maps.Copy(newSettingsMap, normalizedData)
 
 	newSettings := &models.SSOSettings{
 		Provider: provider,
@@ -412,7 +417,7 @@ func (s *Service) Patch(ctx context.Context, provider string, data map[string]an
 	}
 
 	reloadSettings := *newSettings
-	reloadSettings.Settings = overrideMaps(storedSettings.Settings, settingsWithSecrets)
+	reloadSettings.Settings = models.NormalizeSettings(overrideMaps(storedSettings.Settings, settingsWithSecrets))
 
 	go s.reload(reloadable, provider, reloadSettings)
 

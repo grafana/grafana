@@ -218,7 +218,7 @@ func (api *Api) patchProviderSettings(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "At least one setting must be provided", nil)
 	}
 
-	err := api.SSOSettingsService.Patch(c.Req.Context(), key, body.Settings, c.SignedInUser)
+	err := api.SSOSettingsService.Patch(c.Req.Context(), key, models.NormalizeSettings(body.Settings), c.SignedInUser)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch provider settings", err)
 	}
