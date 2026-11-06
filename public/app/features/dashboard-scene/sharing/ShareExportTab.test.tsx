@@ -417,6 +417,29 @@ describe('ShareExportTab', () => {
     });
   });
 
+  describe('onSaveAsFile when the export request fails', () => {
+    beforeEach(() => {
+      setTestFlags({ dashboardNewLayouts: true });
+      jest.mocked(dashboardApiModule.getDashboardAPI).mockImplementation(() => {
+        throw new Error('API down');
+      });
+      jest.mocked(saveAs).mockClear();
+    });
+
+    it.each([ExportFormat.Classic, ExportFormat.V2Resource])(
+      'does not save the error payload as a file for the %s format',
+      async (exportFormat) => {
+        const tab = buildV2DashboardScenario();
+        tab.setState({ exportFormat });
+
+        const saved = await tab.onSaveAsFile();
+
+        expect(saveAs).not.toHaveBeenCalled();
+        expect(saved).toBe(false);
+      }
+    );
+  });
+
   it('downloads a YAML resource after loading the YAML serializer', async () => {
     setTestFlags({ dashboardNewLayouts: true });
     const tab = buildV2DashboardScenario();
