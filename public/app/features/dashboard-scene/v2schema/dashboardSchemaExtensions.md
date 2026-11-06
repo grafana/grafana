@@ -13,19 +13,8 @@ const extensions = createDashboardSchemaExtensions(schema, {
 ```
 
 Memoize extensions per schema, format, and callbacks. JSON extensions include the JSON
-language, schema completion, and syntax/schema diagnostics.
-
-JSON errors appear as informational markers within the scrollbar track, beneath the translucent
-thumb. Marker positions follow rendered line heights, including wrapped lines. Clicking the
-track scrolls to that position without changing the selection. Markers clear when validation
-succeeds. Press F8 to select the next diagnostic, or Cmd/Ctrl+Shift+M to open the lint panel.
-
-`DashboardSchemaEditor` enables the shared `CodeMirrorEditor`'s `overviewRuler` prop for JSON.
-The shared editor owns rendering, positioning, navigation, and lazy loading; this adapter
-only supplies validation diagnostics.
-
-Each editor owns its schema; reconfiguring one editor updates its validation and completion
-together. YAML extensions
+language, schema completion, and syntax/schema diagnostics. Each editor owns its schema;
+reconfiguring one editor updates its validation and completion together. YAML extensions
 validate the displayed buffer using `js-yaml`, then validate its JSON representation against
 the same schema. YAML schema diagnostics use the document start, not offsets from the JSON
 representation. The consumer supplies YAML highlighting through `language="yaml"`.

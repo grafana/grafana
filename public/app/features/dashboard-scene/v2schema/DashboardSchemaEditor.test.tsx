@@ -1,4 +1,3 @@
-import { EditorView } from '@codemirror/view';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { draft07Config } from 'json-schema-library';
@@ -124,70 +123,12 @@ describe('DashboardSchemaEditor with CodeMirror', () => {
       expect(screen.getByRole('radio', { name: 'YAML' })).toBeEnabled();
     });
 
-    it.each([
-      { error: 'schema', invalid: '{\n  "spec": {\n    "title": 123\n  }\n}', selection: { from: 27, to: 30 } },
-      { error: 'syntax', invalid: '{\n  "spec": {\n    "title": "Edited",\n  }\n}', selection: { from: 39, to: 39 } },
-    ])(
-      'shows informational JSON $error markers, navigates diagnostics with F8, and clears markers after a fix',
-      async ({ invalid, selection }) => {
-        const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-        const onValidationChange = jest.fn();
-        const { container } = render(<ControlledEditor onValidationChange={onValidationChange} />);
-        const editor = await screen.findByRole('textbox', { name: 'Dashboard schema' });
-        await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
-
-        await replaceBuffer(user, invalid);
-        await act(async () => jest.advanceTimersByTime(100));
-        await waitFor(() => expect(container.querySelector('.cm-overview-ruler')).toBeVisible());
-        const overview = container.querySelector('.cm-overview-ruler')!;
-        expect(overview).toHaveAttribute('aria-hidden', 'true');
-        expect(overview.querySelector('button')).not.toBeInTheDocument();
-        expect(screen.queryByRole('listbox', { name: 'Diagnostics' })).not.toBeInTheDocument();
-        expect(container.querySelector('.cm-lint-marker-error')).not.toBeInTheDocument();
-
-        await user.keyboard('{F8}');
-        const view = EditorView.findFromDOM(editor)!;
-        expect(view.state.selection.main).toMatchObject(selection);
-        expect(editor).toHaveFocus();
-
-        await replaceBuffer(user, initialValue);
-        await act(async () => jest.advanceTimersByTime(100));
-        expect(onValidationChange).toHaveBeenLastCalledWith(false);
-        await waitFor(() => expect(container.querySelector('.cm-overview-ruler')).not.toBeInTheDocument());
-      }
-    );
-
-    it('remounts the error strip when returning from a diff', async () => {
-      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-      const value = '{"spec":{"title":123}}';
-      const { container, rerender } = render(<DashboardSchemaEditor value={value} />);
-      await screen.findByRole('textbox', { name: 'Dashboard schema' });
-      await waitFor(() => expect(container.querySelector('.cm-overview-ruler')).toBeVisible());
-
-      await act(async () => {
-        rerender(<DashboardSchemaEditor value={value} contentOverride={<div>Dashboard diff</div>} />);
-      });
-      expect(screen.getByText('Dashboard diff')).toBeVisible();
-      expect(container.querySelector('.cm-overview-ruler')).not.toBeInTheDocument();
-
-      await act(async () => {
-        rerender(<DashboardSchemaEditor value={value} />);
-      });
-      const editor = await screen.findByRole('textbox', { name: 'Dashboard schema' });
-      await waitFor(() => expect(container.querySelector('.cm-overview-ruler')).toBeVisible());
-      await user.click(editor);
-      await user.keyboard('{F8}');
-      const view = EditorView.findFromDOM(editor)!;
-      expect(view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to)).toBe('123');
-      expect(editor).toHaveFocus();
-    });
-
     it('preserves the YAML draft, emits JSON, and recovers from invalid YAML', async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       const onChange = jest.fn();
       const onValidationChange = jest.fn();
       const onParseErrorChange = jest.fn();
-      const { container } = render(
+      render(
         <ControlledEditor
           onChange={onChange}
           onValidationChange={onValidationChange}
@@ -209,7 +150,6 @@ describe('DashboardSchemaEditor with CodeMirror', () => {
       await act(async () => jest.advanceTimersByTime(100));
       expect(onValidationChange).toHaveBeenLastCalledWith(true);
       expect(onParseErrorChange).toHaveBeenLastCalledWith(true);
-      expect(container.querySelector('.cm-overview-ruler')).not.toBeInTheDocument();
       expect(screen.getByRole('radio', { name: 'JSON' })).toBeDisabled();
       expect(onChange).not.toHaveBeenCalled();
 
