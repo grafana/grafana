@@ -31,6 +31,7 @@ export function DateRangeFilter({
   onClear,
   onCancel,
 }: RangeFilterProps) {
+  const [now] = useState(Date.now);
   const validationId = useId();
   const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(null);
   const setContainerRef = useCallback((element: HTMLDivElement | null) => {
@@ -101,8 +102,8 @@ export function DateRangeFilter({
             referenceElement: calendarAnchor,
             minDate: Number.isFinite(histogram.min) ? calendarBoundary(histogram.min, timeZone, false) : undefined,
             maxDate: Number.isFinite(histogram.max) ? calendarBoundary(histogram.max, timeZone, true) : undefined,
-            from: dateTimeParse(min ?? (Number.isFinite(histogram.min) ? histogram.min : Date.now()), { timeZone }),
-            to: dateTimeParse(max ?? (Number.isFinite(histogram.max) ? histogram.max : Date.now()), { timeZone }),
+            from: dateTimeParse(min ?? (Number.isFinite(histogram.min) ? histogram.min : now), { timeZone }),
+            to: dateTimeParse(max ?? (Number.isFinite(histogram.max) ? histogram.max : now), { timeZone }),
             timeZone,
             onChange: (from, to) => {
               setLowerDraft({ text: formatInput(from.valueOf()), timeZone });

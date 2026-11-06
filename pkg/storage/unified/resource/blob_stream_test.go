@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net"
 	"strings"
@@ -221,38 +222,24 @@ func TestBlobStreamLocalClient(t *testing.T) {
 }
 
 func TestBlobStreamLocalClientErrorResultConversion(t *testing.T) {
-	for _, enabled := range []bool{false, true} {
-		t.Run(map[bool]string{false: "disabled", true: "enabled"}[enabled], func(t *testing.T) {
-			srv, ac, _ := newBlobAuthzTestServer(t, nil)
-			srv.grpcErrorResultToStatus = enabled
-			srv.blob = &testStreamingBlob{stubBlobSupport: &stubBlobSupport{}}
-			ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
-			client := NewLocalResourceClient(srv)
-			ctx := ctxWithUserInNs("default")
-			key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default", Name: "missing"}
-			put, err := client.PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, Value: []byte("data")})
-			if enabled {
-				require.Nil(t, put)
-				require.Equal(t, codes.PermissionDenied, status.Code(err))
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, int32(403), put.GetError().GetCode())
-			}
-			get, err := client.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, MustProxyBytes: true})
-			if enabled {
-				require.Nil(t, get)
-				require.Equal(t, codes.NotFound, status.Code(err))
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, int32(404), get.GetError().GetCode())
-			}
-		})
-	}
+	srv, ac, _ := newBlobAuthzTestServer(t, nil)
+	srv.blob = &testStreamingBlob{stubBlobSupport: &stubBlobSupport{}}
+	ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
+	client := NewLocalResourceClient(srv)
+	ctx := ctxWithUserInNs("default")
+	key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default", Name: "missing"}
+	put, err := client.PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, Value: []byte("data")})
+	require.Nil(t, put)
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Equal(t, int32(403), rpcErrorResult(t, err).GetCode())
+	get, err := client.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, MustProxyBytes: true})
+	require.Nil(t, get)
+	require.Equal(t, codes.NotFound, status.Code(err))
+	require.Equal(t, int32(404), rpcErrorResult(t, err).GetCode())
 }
 
 func TestBlobStreamLocalClientInterceptorWithErrorConversion(t *testing.T) {
 	srv, _, _ := newBlobAuthzTestServer(t, nil)
-	srv.grpcErrorResultToStatus = true
 	client := NewLocalResourceClient(srv)
 
 	// The in-process token authenticates as the service in namespace "*".
@@ -295,11 +282,18 @@ func TestBlobStreamRemoteTransportAndAuthorization(t *testing.T) {
 			return nil, err
 		}
 		if err := stream.Send(&resourcepb.PutBlobRequest{Resource: key, ContentType: "application/octet-stream"}); err != nil {
+			if errors.Is(err, io.EOF) {
+				return stream.CloseAndRecv()
+			}
 			return nil, err
 		}
 		for remaining := size; remaining > 0; {
 			n := min(remaining, blobStreamChunkSize)
 			if err := stream.Send(&resourcepb.PutBlobRequest{Value: make([]byte, n)}); err != nil {
+				// An early rejection closes the send side before we read the response.
+				if errors.Is(err, io.EOF) {
+					return stream.CloseAndRecv()
+				}
 				return nil, err
 			}
 			remaining -= n
@@ -312,9 +306,11 @@ func TestBlobStreamRemoteTransportAndAuthorization(t *testing.T) {
 	require.Equal(t, int64(5<<20), rsp.Size)
 
 	ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
+	// The failure is the terminal CloseAndRecv status, not a response body.
 	denied, err := upload(1)
-	require.NoError(t, err)
-	require.Equal(t, int32(403), denied.Error.Code)
+	require.Nil(t, denied)
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Equal(t, int32(403), rpcErrorResult(t, err).GetCode())
 	ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return allow() }
 	created, err := srv.Create(ctxWithUserInNs("default"), &resourcepb.CreateRequest{
 		Key:   key,

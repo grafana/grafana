@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -131,5 +132,62 @@ func TestPublisherInTransaction(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.Empty(t, nats.messages)
+	})
+}
+
+func TestContextPublisher(t *testing.T) {
+	t.Run("uses the namespace on the ctx", func(t *testing.T) {
+		nats := &fakeBus{enabled: true}
+		p := NewContextPublisher(nats)
+		p.Publish(k8srequest.WithNamespace(context.Background(), "stacks-7"), Added, users, 99, "u1", 0)
+		p.Publish(k8srequest.WithNamespace(context.Background(), "stacks-8"), Added, users, 99, "u1", 0)
+
+		require.Len(t, nats.messages, 2)
+		require.Equal(t, "legacysql.watch.v1.iam.grafana.app.stacks-7.users", nats.messages[0].subject)
+		require.Equal(t, "legacysql.watch.v1.iam.grafana.app.stacks-8.users", nats.messages[1].subject)
+		var got resourcepb.WatchNotification
+		require.NoError(t, proto.Unmarshal(nats.messages[0].data, &got))
+		require.Equal(t, "stacks-7", got.Namespace)
+	})
+
+	t.Run("drops a write with no namespace", func(t *testing.T) {
+		nats := &fakeBus{enabled: true}
+		NewContextPublisher(nats).Publish(context.Background(), Added, users, 1, "u1", 0)
+		require.Empty(t, nats.messages)
+	})
+
+	t.Run("RegisterListener delivers a bus event with the dispatch ctx namespace", func(t *testing.T) {
+		events := bus.ProvideBus(tracing.InitializeTracerForTest())
+		nats := &fakeBus{enabled: true}
+		NewContextPublisher(nats).RegisterListener(events)
+
+		ctx := k8srequest.WithNamespace(context.Background(), "stacks-3")
+		require.NoError(t, events.Publish(ctx, &LegacyWatchNotification{Type: Modified, Resource: users, OrgID: 1, Name: "u1"}))
+
+		require.Len(t, nats.messages, 1)
+		require.Equal(t, "legacysql.watch.v1.iam.grafana.app.stacks-3.users", nats.messages[0].subject)
+	})
+
+	t.Run("a nil transport drops a dispatched event instead of panicking", func(t *testing.T) {
+		events := bus.ProvideBus(tracing.InitializeTracerForTest())
+		NewContextPublisher(nil).RegisterListener(events)
+
+		ctx := k8srequest.WithNamespace(context.Background(), "stacks-3")
+		require.NoError(t, events.Publish(ctx, &LegacyWatchNotification{Type: Modified, Resource: users, OrgID: 1, Name: "u1"}))
+	})
+
+	t.Run("a disabled transport receives no publish attempts from a dispatched event", func(t *testing.T) {
+		events := bus.ProvideBus(tracing.InitializeTracerForTest())
+		nats := &fakeBus{enabled: false}
+		NewContextPublisher(nats).RegisterListener(events)
+
+		ctx := k8srequest.WithNamespace(context.Background(), "stacks-3")
+		require.NoError(t, events.Publish(ctx, &LegacyWatchNotification{Type: Modified, Resource: users, OrgID: 1, Name: "u1"}))
+		require.Empty(t, nats.messages)
+	})
+
+	t.Run("nil publisher RegisterListener is a no-op", func(t *testing.T) {
+		var p *Publisher
+		p.RegisterListener(bus.ProvideBus(tracing.InitializeTracerForTest()))
 	})
 }

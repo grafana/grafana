@@ -9,17 +9,17 @@ import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
-import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { AlertRulesFoldersView } from './AlertRulesFoldersView';
 import { AlertRulesListView } from './AlertRulesListView';
+import { type AlertRuleFilter, alertRuleSearchSchema } from './alertRuleFilters';
 import { useAlertRuleSearchRejection } from './alertRuleSearch';
 
 function AlertRulesPage() {
-  const { query, filter, parseIssues, filters, mode, hasNonFolderFilters, applyQuery, setMode } =
-    useRuleListSearchState('alert');
+  const { query, filter, parseIssues, filterHelp, mode, hasNonFolderFilters, applyQuery, setMode } =
+    useRuleListSearchState(alertRuleSearchSchema);
   const rejectionIssues = useAlertRuleSearchRejection(filter, { parseIssues, mode });
   const issues = parseIssues.length > 0 ? parseIssues : rejectionIssues;
 
@@ -37,7 +37,7 @@ function AlertRulesPage() {
             <RuleSearchInput
               query={query}
               onApply={applyQuery}
-              filters={filters}
+              filterHelp={filterHelp}
               issues={issues}
               trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
             />
@@ -54,7 +54,7 @@ export default withPageErrorBoundary(AlertRulesPage);
 interface AlertRulesBodyProps {
   hasIssues: boolean;
   mode: RuleListMode;
-  filter: RuleSearchFilter;
+  filter: AlertRuleFilter;
 }
 
 function AlertRulesBody({ hasIssues, mode, filter }: AlertRulesBodyProps) {
