@@ -122,7 +122,12 @@ func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 			// contextual team membership isn't available here, so no teams are passed.
 			perms, err := r.listPermissions(ctx, namespace, subject, nil, entry.Group, entry.Resource, entry.Subresource, entry.Verb, options.Action, options.Scope)
 			if err != nil {
-				return nil, err
+				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+					return nil, err
+				}
+				// Match prefix searches: a failed resource lookup must not discard other grants.
+				zLogger.Warn("failed to list zanzana permissions for action, skipping", "action", entry.Action, "group", entry.Group, "resource", entry.Resource, "subresource", entry.Subresource, "error", err)
+				continue
 			}
 			permissions = append(permissions, perms...)
 		}
@@ -380,6 +385,10 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 				Action: action,
 				Scope:  ac.Scope("folders", "*"),
 			})
+		} else if group == "dashboard.grafana.app" && resource == "dashboards" && subresource == "annotations" {
+			appendIfMatches(ac.Permission{Action: action, Scope: resourceWildcardScope(resource)})
+			// Legacy annotation grants use folders:* for access across all dashboards.
+			appendIfMatches(ac.Permission{Action: action, Scope: ac.Scope("folders", "*")})
 		} else if isTeamRBACAction(action) {
 			appendIfMatches(ac.Permission{
 				Action: action,
