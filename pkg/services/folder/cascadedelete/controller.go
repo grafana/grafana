@@ -46,8 +46,9 @@ func DefaultRateLimiter() workqueue.TypedRateLimiter[string] {
 // after that disappears later with no event naming its parent, so that parent is picked up again
 // only by the event source's periodic resync.
 //
-// The initial list is not a source of work: a folder that is already terminating when the controller
-// starts waits for its next change.
+// The initial list is not a source of work: a folder that was terminating when the controller
+// started, such as after a restart mid-cascade, waits for its next change. This is temporary; see
+// Handler.
 type Controller struct {
 	folders    FolderGetter
 	reconciler *Reconciler
@@ -89,8 +90,12 @@ func NewDefaultController(dyn dynamic.Interface, searcher resourcepb.ResourceInd
 // Handler enqueues the folder behind each event, except a resync repeating a folder's last version
 // when it is not waiting. An event without a resource version is always enqueued.
 //
-// The initial list is only recorded, so starting costs no read per folder. A folder that is already
-// terminating then is not reconciled until it changes again.
+// The initial list is only recorded, so starting costs no read per folder. That list names folders
+// but not which are terminating, so a cascade interrupted by a restart is not resumed until the
+// folder changes again, and resyncs drop it because its version is unchanged.
+//
+// TODO(filewalkwithme): resume such folders, for example with a startup pass over recently changed
+// folders or a slow sweep.
 func (c *Controller) Handler() cache.ResourceEventHandler {
 	return handler{c}
 }

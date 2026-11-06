@@ -518,8 +518,11 @@ func TestController_InitialListIsRecordedWithoutReads(t *testing.T) {
 	})
 }
 
-// A known limitation: the initial list is only recorded, so a folder already terminating at start
-// waits for its next change.
+// A known, temporary limitation: the initial list is only recorded, so a folder already terminating
+// at start waits for its next change.
+//
+// TODO(filewalkwithme): once such folders are resumed at start, this must assert the folder is
+// released with no further change, and be renamed.
 func TestController_FolderTerminatingAtStartWaitsForItsNextChange(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		m := newMemStore()
