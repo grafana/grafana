@@ -21,7 +21,7 @@ export interface AppChromeState {
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
   breadcrumbActions?: React.ReactNode;
-  sidePanel?: React.ReactNode;
+  sidePanel?: { full: React.ReactNode; compact: React.ReactNode };
   megaMenuOpen: boolean;
   megaMenuDocked: boolean;
   /** The undocked mega menu is open only while the pointer rests on its toggle or on the menu itself. */
@@ -128,7 +128,7 @@ export class AppChromeService {
     }
   }
 
-  public setSidePanel = (sidePanel: React.ReactNode) => {
+  public setSidePanel = (sidePanel: AppChromeState['sidePanel']) => {
     const current = this.state.getValue();
     if (current.sidePanel !== sidePanel) {
       this.state.next({ ...current, sidePanel });

@@ -87,7 +87,9 @@ export function AppChrome({ children }: Props) {
   ];
 
   const headerLevels = useChromeHeaderLevels();
-  const showSidePanel = Boolean(state.sidePanel && !state.chromeless && !isScopesDashboardsOpen);
+  const fitsSidePanel = useMediaQueryMinWidth('md');
+  const showSidePanel = Boolean(state.sidePanel && fitsSidePanel && !state.chromeless && !isScopesDashboardsOpen);
+  const showCompactSidePanel = Boolean(state.sidePanel && !fitsSidePanel && !state.chromeless);
   const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight(), visualRefreshEnabled);
   const contentSizeStyles = useStyles2(
     getContentSizeStyles,
@@ -193,7 +195,17 @@ export function AppChrome({ children }: Props) {
                 [styles.sidePanelContainerDocked]: menuDockedAndOpen,
               })}
             >
-              {state.sidePanel}
+              {state.sidePanel?.full}
+            </div>
+          )}
+          {showCompactSidePanel && (
+            <div
+              className={cx({
+                [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
+                [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+              })}
+            >
+              <div className={styles.sidePanelCompact}>{state.sidePanel?.compact}</div>
             </div>
           )}
           <main
@@ -464,6 +476,9 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
         borderTopRightRadius: 'unset',
       }
     ),
+    sidePanelCompact: css({
+      padding: visualRefreshEnabled ? theme.spacing(0.5, 0.5, 1) : theme.spacing(1, 2, 1),
+    }),
     sidePanelContainerDocked: css(
       {
         left: MENU_WIDTH,
