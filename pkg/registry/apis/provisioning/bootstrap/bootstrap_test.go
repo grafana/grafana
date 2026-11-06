@@ -54,12 +54,12 @@ func TestEnsureMarksTheRepositoryNotEditable(t *testing.T) {
 	assert.NotContains(t, repo.Annotations, utils.AnnoKeyManagerAllowsEdits)
 }
 
-func TestEnsureRestoresTheManagerAnnotations(t *testing.T) {
+func TestEnsureTakesBackAllowedEdits(t *testing.T) {
 	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
-		applySpec(&repo.Spec, config.Path)
+		config.apply(repo)
 		metaOf(t, repo).SetManagerProperties(utils.ManagerProperties{
-			Kind:        utils.ManagerKindKubectl,
-			Identity:    "someone-else",
+			Kind:        utils.ManagerKindFileProvisioning,
+			Identity:    Name,
 			AllowsEdits: true,
 		})
 	}))
@@ -69,8 +69,7 @@ func TestEnsureRestoresTheManagerAnnotations(t *testing.T) {
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, err)
 	manager, _ := metaOf(t, repo).GetManagerProperties()
-	assert.Equal(t, Name, manager.Identity)
-	assert.False(t, manager.AllowsEdits)
+	assert.False(t, manager.AllowsEdits, "its configuration still comes from bootstrap_path")
 }
 
 func TestEnsureIsIdempotent(t *testing.T) {
@@ -102,6 +101,7 @@ func TestEnsurePreservesTheClampedSyncInterval(t *testing.T) {
 
 func TestEnsureRepairsADivertedRepository(t *testing.T) {
 	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
+		config.apply(repo)
 		repo.Spec.Type = provisioning.GitHubRepositoryType
 		repo.Spec.GitHub = &provisioning.GitHubRepositoryConfig{URL: "https://github.com/acme/elsewhere"}
 		repo.Spec.Workflows = []provisioning.Workflow{provisioning.BranchWorkflow}
@@ -119,12 +119,57 @@ func TestEnsureRepairsADivertedRepository(t *testing.T) {
 }
 
 func TestEnsureToleratesAnotherReplicaWinningTheCreate(t *testing.T) {
-	client := newClientset()
+	client := newClientset(repositoryWith(config.apply))
 	client.PrependReactor("create", "repositories", func(clienttesting.Action) (bool, runtime.Object, error) {
 		return true, nil, apierrors.NewAlreadyExists(schema.GroupResource{Resource: "repositories"}, Name)
 	})
+	// The object is only in storage after the create was attempted, as it is for the replica
+	// that lost the race.
+	client.PrependReactor("get", "repositories", onceNotFound())
 
 	assert.NoError(t, Ensure(context.Background(), repositories(client), config))
+}
+
+func TestEnsureLeavesAnUnrelatedRepositoryOfTheSameNameAlone(t *testing.T) {
+	unrelated := repositoryWith(func(repo *provisioning.Repository) {
+		repo.Spec.Type = provisioning.LocalRepositoryType
+		repo.Spec.Local = &provisioning.LocalRepositoryConfig{Path: "conf/provisioning/someone-elses"}
+		repo.Spec.Sync = provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeFolderless}
+	})
+	client := newClientset(unrelated)
+
+	err := Ensure(context.Background(), repositories(client), config)
+
+	require.ErrorContains(t, err, "already exists and is not managed by file-provisioning")
+	repo, getErr := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
+	require.NoError(t, getErr)
+	assert.Equal(t, "conf/provisioning/someone-elses", repo.Spec.Local.Path,
+		"repointing it would hand its resources to another source")
+}
+
+func TestEnsureLeavesARepositoryManagedByAnotherSystemAlone(t *testing.T) {
+	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
+		config.apply(repo)
+		metaOf(t, repo).SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindTerraform,
+			Identity: "terraform",
+		})
+	}))
+
+	assert.ErrorContains(t, Ensure(context.Background(), repositories(client), config),
+		"already exists and is not managed by file-provisioning")
+}
+
+// onceNotFound makes the first get report NotFound and lets every later one through.
+func onceNotFound() clienttesting.ReactionFunc {
+	var served bool
+	return func(clienttesting.Action) (bool, runtime.Object, error) {
+		if served {
+			return false, nil, nil
+		}
+		served = true
+		return true, nil, apierrors.NewNotFound(schema.GroupResource{Resource: "repositories"}, Name)
+	}
 }
 
 func TestEnsureReportsAFailedRead(t *testing.T) {

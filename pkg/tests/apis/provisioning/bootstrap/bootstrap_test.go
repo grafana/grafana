@@ -99,6 +99,21 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 		assert.NotContains(t, secure, "create")
 	})
 
+	t.Run("its connection is reconciled", func(t *testing.T) {
+		// A repository-managed connection only accepts writes from the provisioning
+		// identity, so without it the controller cannot record that it observed the spec.
+		helper.TriggerConnectionReconciliation(t, "bootstrapped-connection")
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			conn, err := helper.Connections.Resource.Get(t.Context(), "bootstrapped-connection", metav1.GetOptions{})
+			if !assert.NoError(c, err) {
+				return
+			}
+			observed, _, err := unstructured.NestedInt64(conn.Object, "status", "observedGeneration")
+			assert.NoError(c, err)
+			assert.NotZero(c, observed, "the controller should have recorded the observed generation")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+	})
+
 	t.Run("the repository it provisioned syncs its own content", func(t *testing.T) {
 		helper.AwaitJobs(t, "nested")
 		helper.RequireDashboards(t, "nested-dashboard")

@@ -57,19 +57,25 @@ func (c Config) matches(repo *provisioning.Repository) bool {
 // shape. A repository that already matches is left alone, so its sync is not restarted on boot.
 func Ensure(ctx context.Context, repos Repositories, cfg Config) error {
 	existing, err := repos.Get(ctx, Name, metav1.GetOptions{})
-	if apierrors.IsNotFound(err) {
-		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: Name, Namespace: cfg.Namespace},
+	switch {
+	case apierrors.IsNotFound(err):
+		existing, err = create(ctx, repos, cfg)
+		if err != nil {
+			return err
 		}
-		cfg.apply(repo)
-		// Another replica running the same hook may win the race; its object is ours too.
-		if _, err := repos.Create(ctx, repo, metav1.CreateOptions{}); err != nil && !apierrors.IsAlreadyExists(err) {
-			return fmt.Errorf("create bootstrap repository: %w", err)
+		if existing == nil {
+			return nil
 		}
-		return nil
-	}
-	if err != nil {
+	case err != nil:
 		return fmt.Errorf("read bootstrap repository: %w", err)
+	}
+
+	// The name was not reserved before, so an unrelated repository may hold it. Repointing
+	// that one at the bootstrap directory would hand its resources to another source, and
+	// the next full sync would schedule the ones missing here for deletion.
+	if !owned(existing) {
+		return fmt.Errorf("a repository named %q already exists and is not managed by %s; rename or remove it to use [provisioning] bootstrap_path",
+			Name, utils.ManagerKindFileProvisioning)
 	}
 
 	if cfg.matches(existing) {
@@ -81,6 +87,37 @@ func Ensure(ctx context.Context, repos Repositories, cfg Config) error {
 		return fmt.Errorf("update bootstrap repository: %w", err)
 	}
 	return nil
+}
+
+// create registers the repository. It returns a nil repository when the create succeeded, and
+// the object another writer created when it lost the race — which still has to be vouched for.
+func create(ctx context.Context, repos Repositories, cfg Config) (*provisioning.Repository, error) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: Name, Namespace: cfg.Namespace},
+	}
+	cfg.apply(repo)
+	switch _, err := repos.Create(ctx, repo, metav1.CreateOptions{}); {
+	case err == nil:
+		return nil, nil
+	case !apierrors.IsAlreadyExists(err):
+		return nil, fmt.Errorf("create bootstrap repository: %w", err)
+	}
+
+	existing, err := repos.Get(ctx, Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("read bootstrap repository: %w", err)
+	}
+	return existing, nil
+}
+
+// owned reports whether the repository is this mechanism's to reconcile.
+func owned(repo *provisioning.Repository) bool {
+	meta, err := utils.MetaAccessor(repo)
+	if err != nil {
+		return false
+	}
+	manager, ok := meta.GetManagerProperties()
+	return ok && manager.Kind == utils.ManagerKindFileProvisioning
 }
 
 // apply stamps the configured shape onto repo, leaving the sync interval the server clamps.

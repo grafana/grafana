@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
@@ -74,10 +75,13 @@ func PermittedLocalPaths(cfg *setting.Cfg) []string {
 	if cfg.ProvisioningBootstrapPath == "" {
 		return cfg.PermittedProvisioningPaths
 	}
-	// The resolver resolves a relative repository path against the home path before matching.
+	// Resolved exactly as the resolver resolves a repository's own path, so the prefix and
+	// the candidate it is matched against are the same string.
 	path := cfg.ProvisioningBootstrapPath
-	if !filepath.IsAbs(path) {
-		path = filepath.Join(cfg.HomePath, path)
+	if filepath.IsAbs(path) {
+		path = safepath.Clean(path)
+	} else {
+		path = safepath.Join(safepath.Clean(cfg.HomePath), path)
 	}
 	return append(slices.Clone(cfg.PermittedProvisioningPaths), path)
 }
