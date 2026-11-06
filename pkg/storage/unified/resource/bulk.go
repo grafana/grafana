@@ -921,6 +921,9 @@ type bulkRV struct {
 	lastRV map[string]int64
 	// lastCounter is the highest counter used in each millisecond, so RVs stay unique
 	lastCounter map[int64]int64
+	// nextFree points a full millisecond at a later one that may still have counters left,
+	// so objects sharing a timestamp do not walk the same full milliseconds again
+	nextFree map[int64]int64
 }
 
 // Used when executing a bulk import so that we can generate snowflake RVs in the past.
@@ -932,12 +935,32 @@ func newBulkRV() *bulkRV {
 		max:         t,
 		lastRV:      map[string]int64{},
 		lastCounter: map[int64]int64{},
+		nextFree:    map[int64]int64{},
 	}
 }
 
 // next returns the RV for the next version of the object identified by key. The RV follows the
 // object's own timestamp (its deletion time for a deletion), so it keeps its age whatever order
 // objects arrive in, but never goes below the object's previous version and is never reused.
+// firstFree returns ms, or the first later millisecond that is not known to be full. It shortens
+// the chain of full milliseconds it follows, so later lookups skip it in one step.
+func (x *bulkRV) firstFree(ms int64) int64 {
+	free := ms
+	for {
+		next, ok := x.nextFree[free]
+		if !ok {
+			break
+		}
+		free = next
+	}
+	for ms != free {
+		next := x.nextFree[ms]
+		x.nextFree[ms] = free
+		ms = next
+	}
+	return free
+}
+
 func (x *bulkRV) next(key string, obj metav1.Object) int64 {
 	ts := snowflakeFromTime(obj.GetCreationTimestamp().Time)
 	anno := obj.GetAnnotations()
@@ -966,6 +989,9 @@ func (x *bulkRV) next(key string, obj metav1.Object) int64 {
 	// One past base, so an object's new version is above its previous one
 	counter := base&(1<<shift-1) + 1
 	for {
+		if free := x.firstFree(ms); free != ms {
+			ms, counter = free, 0
+		}
 		// Above every counter already used in this millisecond, so no two objects share an RV
 		if used, ok := x.lastCounter[ms]; ok && counter <= used {
 			counter = used + 1
@@ -974,9 +1000,13 @@ func (x *bulkRV) next(key string, obj metav1.Object) int64 {
 			break
 		}
 		// This millisecond has no counter left, so continue in the next one
+		x.nextFree[ms] = ms + 1
 		ms, counter = ms+1, 0
 	}
 	x.lastCounter[ms] = counter
+	if counter == 999 {
+		x.nextFree[ms] = ms + 1
+	}
 
 	rv := ms<<shift | counter
 	x.lastRV[key] = rv

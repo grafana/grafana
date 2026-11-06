@@ -542,6 +542,37 @@ func TestBulkRV(t *testing.T) {
 		}
 	})
 
+	t.Run("an object whose last version filled a millisecond continues in a later one", func(t *testing.T) {
+		g := newBulkRV()
+		ts := object(now.Add(-time.Hour).Truncate(time.Second))
+		var last int64
+		for i := range 999 {
+			last = g.next(fmt.Sprintf("filler-%d", i), ts)
+		}
+		require.Equal(t, int64(999), last&((1<<resourceVersionTimestampShift)-1), "the millisecond is full")
+		g.lastRV["obj"] = last
+		next := g.next("obj", ts)
+		require.Greater(t, next, last)
+		require.Equal(t, last>>resourceVersionTimestampShift+1, next>>resourceVersionTimestampShift)
+	})
+
+	t.Run("a large cohort with one timestamp stays unique and skips full milliseconds", func(t *testing.T) {
+		g := newBulkRV()
+		at := now.Add(-time.Hour).Truncate(time.Second)
+		seen := map[int64]bool{}
+		prev := int64(0)
+		for i := range 50_000 {
+			rv := g.next(fmt.Sprintf("obj-%d", i), object(at))
+			require.False(t, seen[rv], "duplicate RV %d", rv)
+			require.Greater(t, rv, prev, "a cohort fills milliseconds in order")
+			seen[rv], prev = true, rv
+		}
+		// The cohort's first millisecond points straight at the one still open, so the
+		// next object with this timestamp skips every full millisecond in one step
+		start := snowflakeFromTime(at) >> resourceVersionTimestampShift
+		require.Equal(t, prev>>resourceVersionTimestampShift, g.nextFree[start])
+	})
+
 	t.Run("objects without a usable timestamp get unique RVs below the import start", func(t *testing.T) {
 		g := newBulkRV()
 		a := g.next("a", &metav1.ObjectMeta{})
