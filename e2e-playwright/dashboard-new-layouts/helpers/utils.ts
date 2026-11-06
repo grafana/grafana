@@ -50,43 +50,18 @@ export async function getPanelBox(
   return boundingBox!;
 }
 
-/** Box of every given panel, keyed by title, to compare a whole layout before and after a change */
-export async function getPanelBoxes(
-  panels: Panels,
-  panelTitles: string[]
-): Promise<Record<string, { x: number; y: number; width: number; height: number }>> {
-  const boxes: Record<string, { x: number; y: number; width: number; height: number }> = {};
-  for (const title of panelTitles) {
-    boxes[title] = await getPanelBox(panels, title);
-  }
-
-  return boxes;
-}
-
-/**
- * A point in the left or right half of a panel, a quarter of its width in from that edge and
- * vertically centered: hovering it while dragging aims the drop before or after that panel
- */
-export async function getPanelHalfPoint(panels: Panels, panelTitle: string, half: 'left' | 'right'): Promise<Point> {
-  const box = await getPanelBox(panels, panelTitle);
-
-  return {
-    x: box.x + box.width * (half === 'left' ? 0.25 : 0.75),
-    y: box.y + box.height / 2,
-  };
-}
-
 export async function movePanel(
   page: Page,
   panels: Panels,
   sourcePanel: string | RegExp,
   targetPanel: string | RegExp
 ) {
-  await test.step(`Move panel "${sourcePanel}" onto "${targetPanel}"`, async () => {
-    const drag = await startPointerDrag(page, `panel "${sourcePanel}"`, panels.getHeader(sourcePanel));
-    await drag.moveTo(panels.getHeader(targetPanel));
-    await drag.drop();
-  });
+  await dragAndDrop(
+    page,
+    `Move panel "${sourcePanel}" onto "${targetPanel}"`,
+    panels.getHeader(sourcePanel),
+    panels.getHeader(targetPanel)
+  );
 }
 
 export async function getTabBox(
@@ -144,7 +119,7 @@ export async function moveRow(
   );
 }
 
-type Point = { x: number; y: number };
+export type Point = { x: number; y: number };
 
 /** A drag in progress, started by `startPointerDrag`: the pointer button stays pressed until `drop()` */
 export interface PointerDrag {
@@ -217,6 +192,29 @@ export async function startPointerDrag(
         await page.mouse.up();
       }),
   };
+}
+
+/**
+ * Drags `source` onto `target` and releases it there, as a single named step in the report.
+ * `target` is either a locator, whose center is the drop point, or a callback that measures the
+ * drop point once the drag has started, since starting it may scroll or change the layout.
+ * Drags that need intermediate moves or checks before the release use `startPointerDrag` directly.
+ */
+export async function dragAndDrop(
+  page: Page,
+  description: string,
+  source: Locator,
+  target: Locator | (() => Promise<Point>)
+) {
+  await test.step(description, async () => {
+    const drag = await startPointerDrag(page, 'source', source);
+    if (typeof target === 'function') {
+      await drag.moveToPoint(await target());
+    } else {
+      await drag.moveTo(target);
+    }
+    await drag.drop();
+  });
 }
 
 export async function undockMegaMenu(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {

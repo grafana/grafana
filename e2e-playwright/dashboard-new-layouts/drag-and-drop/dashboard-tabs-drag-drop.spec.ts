@@ -1,8 +1,7 @@
-import v2DashboardWithTabs from '../dashboards/V2DashRowsWithTabs.json';
-
-import { expect, test } from './fixtures';
-import { dragTo, expectNoUnsavedChanges, flows } from './helpers';
-import { type Rows, type Tabs } from './page-objects';
+import v2DashboardWithTabs from '../../dashboards/V2DashRowsWithTabs.json';
+import { expect, test } from '../fixtures';
+import { dragTo, expectNoUnsavedChanges, flows } from '../helpers';
+import { type Rows, type Tabs } from '../page-objects';
 
 test.use({
   // the Undo/Redo toolbar buttons are gated by an OpenFeature flag, not a feature toggle

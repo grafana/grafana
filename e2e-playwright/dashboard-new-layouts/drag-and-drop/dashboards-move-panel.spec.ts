@@ -1,15 +1,13 @@
-import v2DashboardCustomGrid from '../dashboards/V2DashCustomGridDnd.json';
+import { test, expect } from '../fixtures';
+import { expectNoUnsavedChanges, flows, getPanelBox, movePanel } from '../helpers';
 
-import { test, expect } from './fixtures';
-import { expectNoUnsavedChanges, expectPanelBoxesToBe, flows, getPanelBox, getPanelBoxes, movePanel } from './helpers';
+import { buildDashboardCustomGridSpec } from './fixtures/dashboard-custom-grid-spec';
+import { expectPanelBoxesToBe } from './helpers/assertions';
+import { getPanelBoxes } from './helpers/utils';
 
-// Custom grid of V2DashCustomGridDnd.json: two panels per line
 const PANEL_TITLES = ['Panel one', 'Panel two', 'Panel three', 'Panel four'];
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
   // the Undo/Redo toolbar buttons are gated by an OpenFeature flag, not a feature toggle
   openFeature: {
     flags: {
@@ -26,16 +24,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can drag and drop panels', async ({ page, selectors, controls, sidebar, panels }) => {
-      // two drags, each with undo/redo, then save and reload
-      test.slow();
-      await flows.dashboards.importTestDashboard(
-        page,
-        selectors,
-        'Drag and drop panels',
-        JSON.stringify(v2DashboardCustomGrid),
-        { checkPanelsVisible: false, requiresDataSourceSelection: false }
-      );
+    test('can drag and drop panels', async ({ page, request, selectors, controls, sidebar, panels }) => {
+      await flows.dashboards.createAndOpenDashboard({ page, request, selectors, spec: buildDashboardCustomGridSpec });
       await controls.enterEditMode();
       const initialBoxes = await getPanelBoxes(panels, PANEL_TITLES);
 
