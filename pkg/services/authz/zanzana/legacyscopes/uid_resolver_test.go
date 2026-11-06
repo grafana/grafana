@@ -1,4 +1,4 @@
-package legacypermissions
+package legacyscopes
 
 import (
 	"context"
@@ -30,11 +30,11 @@ func iamObject(gvk schema.GroupVersionKind, namespace, uid string, internalID in
 	return obj
 }
 
-// newCountingResolver returns a uidToIDResolver wired to a fake dynamic client (no apiserver),
+// newCountingResolver returns a UIDResolver wired to a fake dynamic client (no apiserver),
 // plus a per-resource "get" counter and a hook to delay each Get (used to force overlap in the
 // single flight test). The configProvider is left nil — it is never reached because the dynamic
 // clients are pre-populated.
-func newCountingResolver(t *testing.T, getDelay time.Duration, objs ...*unstructured.Unstructured) (*uidToIDResolver, *int64) {
+func newCountingResolver(t *testing.T, getDelay time.Duration, objs ...*unstructured.Unstructured) (*UIDResolver, *int64) {
 	t.Helper()
 
 	teamGVK := teamGVR.GroupVersion().WithKind("Team")
@@ -66,7 +66,7 @@ func newCountingResolver(t *testing.T, getDelay time.Duration, objs ...*unstruct
 		return false, nil, nil
 	})
 
-	r := newUIDToIDResolver(nil)
+	r := NewUIDResolver(nil)
 	r.clients[teamGVR] = fake.Resource(teamGVR)
 	r.clients[userGVR] = fake.Resource(userGVR)
 	return r, &getCount

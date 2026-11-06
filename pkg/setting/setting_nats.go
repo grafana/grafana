@@ -45,6 +45,8 @@ type NATSSettings struct {
 	// server is prepended automatically.
 	ClientURLs []string
 
+	// ListenAddress binds the cluster port. Empty lets the embedded server choose
+	// from the database type and whether discovery is on.
 	ListenAddress    string
 	ClientPort       int
 	ClusterPort      int
@@ -181,7 +183,7 @@ func readNATSSettings(cfg *Cfg) error {
 		Enabled:             section.Key("enabled").MustBool(false),
 		Mode:                mode,
 		ClientURLs:          util.SplitString(section.Key("client_urls").MustString("")),
-		ListenAddress:       section.Key("listen_address").MustString("127.0.0.1"),
+		ListenAddress:       section.Key("listen_address").MustString(""),
 		ClientPort:          section.Key("client_port").MustInt(4222),
 		ClusterPort:         section.Key("cluster_port").MustInt(6222),
 		AdvertiseAddress:    section.Key("advertise_address").MustString(""),

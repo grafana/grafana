@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"iter"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -320,6 +321,25 @@ func TestBulkProcessStopsRunnerOnPanic(t *testing.T) {
 	}
 }
 
+// Early rejections are covered by the blob validation tests; this covers a
+// backend's call-level failure, which must become the stream status instead of
+// a response carrying partial results.
+func TestBulkProcessReturnsBackendFailureAsStatus(t *testing.T) {
+	failure := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "bulk import failed"}
+	srv := &server{
+		backend:          &failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1, Error: failure}},
+		access:           authlib.FixedAccessClient(true),
+		bulkBatchOptions: DefaultBulkBatchOptions(),
+	}
+	key := newTestBulkRequest("item").Key
+	settings := BulkSettings{Collection: []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}}}
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1"})
+	stream := &bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: metadata.NewIncomingContext(ctx, settings.ToMD())}}
+
+	requireRPCError(t, srv.BulkProcess(stream), failure)
+	require.Nil(t, stream.response)
+}
+
 func newTestBatchRunner(stream resourcepb.BulkStore_BulkProcessServer, key *resourcepb.ResourceKey, opts BulkBatchOptions) *batchRunner {
 	return &batchRunner{
 		stream: stream,
@@ -371,6 +391,15 @@ func (*preflightTestBackend) RequiresBulkPreflight() {}
 func (b *preflightTestBackend) ProcessBulk(context.Context, BulkSettings, BulkRequestIterator) *resourcepb.BulkResponse {
 	b.called = true
 	return &resourcepb.BulkResponse{}
+}
+
+type failingBulkBackend struct {
+	UnimplementedStorageBackend
+	rsp *resourcepb.BulkResponse
+}
+
+func (b *failingBulkBackend) ProcessBulk(context.Context, BulkSettings, BulkRequestIterator) *resourcepb.BulkResponse {
+	return b.rsp
 }
 
 type testBulkProcessServer struct {

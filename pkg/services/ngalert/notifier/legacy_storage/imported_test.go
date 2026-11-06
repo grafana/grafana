@@ -36,13 +36,13 @@ func TestConfigRevisionImported_GetReceivers(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, receivers, 2)
 		assert.Equal(t, "imported-receiver-1", receivers[0].Name)
-		assert.Equal(t, NameToUid("imported-receiver-1"), receivers[0].UID)
+		assert.Equal(t, string(v1.ReceiverUID("imported-receiver-1")), receivers[0].UID)
 		assert.Equal(t, models.ProvenanceConvertedPrometheus, receivers[0].Provenance)
 		assert.Equal(t, models.ResourceOriginImported, receivers[0].Origin)
 		assert.Len(t, receivers[0].Integrations, 1)
 
 		assert.Equal(t, "imported-receiver-2", receivers[1].Name)
-		assert.Equal(t, NameToUid("imported-receiver-2"), receivers[1].UID)
+		assert.Equal(t, string(v1.ReceiverUID("imported-receiver-2")), receivers[1].UID)
 		assert.Equal(t, models.ProvenanceConvertedPrometheus, receivers[1].Provenance)
 		assert.Equal(t, models.ResourceOriginImported, receivers[1].Origin)
 		assert.Len(t, receivers[1].Integrations, 1)
@@ -52,7 +52,7 @@ func TestConfigRevisionImported_GetReceivers(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, receivers, 1)
 		assert.Equal(t, "imported-receiver-2", receivers[0].Name)
-		assert.Equal(t, NameToUid("imported-receiver-2"), receivers[0].UID)
+		assert.Equal(t, string(v1.ReceiverUID("imported-receiver-2")), receivers[0].UID)
 
 		receivers, err = imported.GetReceivers([]string{"not-found"})
 		require.NoError(t, err)
@@ -77,9 +77,9 @@ receivers:
 		require.NoError(t, err)
 		require.Len(t, result, 2)
 		assert.Equal(t, "receiver1"+expectedDedupSuffix, result[0].Name)
-		assert.Equal(t, models.NameToUid("receiver1"+expectedDedupSuffix), result[0].UID)
+		assert.Equal(t, string(v1.ReceiverUID("receiver1"+expectedDedupSuffix)), result[0].UID)
 		assert.Equal(t, "dupe-receiver"+expectedDedupSuffix, result[1].Name)
-		assert.Equal(t, models.NameToUid("dupe-receiver"+expectedDedupSuffix), result[1].UID)
+		assert.Equal(t, string(v1.ReceiverUID("dupe-receiver"+expectedDedupSuffix)), result[1].UID)
 
 		t.Run("should search by renamed name", func(t *testing.T) {
 			result, err = imported.GetReceivers([]string{"receiver1"})

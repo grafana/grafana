@@ -12,7 +12,7 @@ import {
   useUpdateVariableMutation,
   type Variable,
 } from 'app/api/clients/dashboard/v2beta1';
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -167,10 +167,10 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   const sourceFolderUid = source ? getVariableFolderUid(source) : undefined;
   // Folder CanEdit gates mutations the same way admission does. Skip the root/global
   // uid ('' / undefined) — those use allowGlobalScope instead.
-  const { data: selectedFolder } = useGetFolderQueryFacade(folderUid ? folderUid : undefined);
+  const { data: selectedFolder } = useGetCombinedFolderQuery(folderUid ? folderUid : undefined);
   // Reuse the selected-folder query when the source is still in that folder.
   const needsSeparateSourceFolder = Boolean(sourceFolderUid && sourceFolderUid !== folderUid);
-  const { data: sourceFolder } = useGetFolderQueryFacade(needsSeparateSourceFolder ? sourceFolderUid : undefined);
+  const { data: sourceFolder } = useGetCombinedFolderQuery(needsSeparateSourceFolder ? sourceFolderUid : undefined);
   // Trust canEdit only when the response matches the requested UID — isLoading alone
   // can stay false while data still reflects the previous folder after a switch.
   const selectedFolderMatches = Boolean(folderUid && selectedFolder?.uid === folderUid);
