@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
@@ -19,6 +20,10 @@ export interface ScopesDashboardsTreeFolderItemProps {
   subScopePath?: string[];
   /** Called after a navigation link is clicked, e.g. so an overlay nav menu can close itself. */
   onNavigate?: () => void;
+  /** Whether this item is rendered inside the mega menu section rather than the legacy standalone
+   * docked drawer. Gates the color styles that match the regular mega-menu nav items, so the old
+   * drawer (which renders this same component) keeps its original, unstyled look. */
+  megaMenuStyle?: boolean;
 }
 
 export function ScopesDashboardsTreeFolderItem({
@@ -29,8 +34,10 @@ export function ScopesDashboardsTreeFolderItem({
   folders,
   onFolderUpdate,
   onNavigate,
+  megaMenuStyle,
 }: ScopesDashboardsTreeFolderItemProps) {
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, megaMenuStyle, visualRefreshEnabled);
 
   // get scopesselector service
   const scopesSelectorService = useScopesServices()?.scopesSelectorService ?? undefined;
@@ -97,6 +104,7 @@ export function ScopesDashboardsTreeFolderItem({
             folderPath={folderPath}
             onFolderUpdate={onFolderUpdate}
             onNavigate={onNavigate}
+            megaMenuStyle={megaMenuStyle}
           />
         </div>
       )}
@@ -104,7 +112,7 @@ export function ScopesDashboardsTreeFolderItem({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, megaMenuStyle?: boolean, visualRefreshEnabled?: boolean) => {
   return {
     container: css({
       display: 'flex',
@@ -129,13 +137,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       wordBreak: 'break-word',
       flex: 1,
     }),
+    // Matches the regular nav items' icon tint (MegaMenuItem.tsx) so this tree's icons read as part
+    // of the same nav rather than a visually distinct drawer transplant. Mega-menu-only - the legacy
+    // standalone drawer (which renders this same component) keeps its original, unstyled look.
     icon: css({
       marginTop: theme.spacing(0.25),
+      color: megaMenuStyle && visualRefreshEnabled ? theme.colors.accent.text : undefined,
     }),
+    // Matches the regular nav items' base (non-active) text color (MegaMenuItemText.tsx). Mega-menu-only.
     titleContainer: css({
       display: 'flex',
       alignItems: 'center',
       flex: 1,
+      color: megaMenuStyle ? theme.colors.text.secondary : undefined,
     }),
     exchangeIcon: css({
       opacity: 0.7,

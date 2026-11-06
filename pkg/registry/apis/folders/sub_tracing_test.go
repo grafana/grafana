@@ -15,6 +15,8 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -72,32 +74,40 @@ func (g tracingFolderGetter) Get(ctx context.Context, name string, _ *metav1.Get
 
 type tracingFolderIndexClient struct {
 	resourcepb.ResourceIndexClient
-	span        trace.SpanContext
-	callErr     error
-	responseErr *resourcepb.ErrorResult
+	span    trace.SpanContext
+	callErr error
 }
 
 func (c *tracingFolderIndexClient) Search(ctx context.Context, _ *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	c.span = trace.SpanContextFromContext(ctx)
-	return &resourcepb.ResourceSearchResponse{Error: c.responseErr}, c.callErr
+	if c.callErr != nil {
+		return nil, c.callErr
+	}
+	return &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil
 }
 
 func (c *tracingFolderIndexClient) GetStats(ctx context.Context, _ *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	c.span = trace.SpanContextFromContext(ctx)
-	return &resourcepb.ResourceStatsResponse{Error: c.responseErr}, c.callErr
+	if c.callErr != nil {
+		return nil, c.callErr
+	}
+	return &resourcepb.ResourceStatsResponse{}, nil
 }
 
 func TestFolderIndexHandlerTracing(t *testing.T) {
 	for _, endpoint := range []string{"children", "counts"} {
-		for _, failure := range []string{"none", "call", "response", "lookup"} {
+		for _, failure := range []string{"none", "call", "status", "lookup"} {
 			t.Run(endpoint+"/"+failure, func(t *testing.T) {
 				ctx, recorder, parent := newFolderTrace(t)
 				client := &tracingFolderIndexClient{}
 				if failure == "call" {
 					client.callErr = errors.New("index unavailable")
 				}
-				if failure == "response" {
-					client.responseErr = &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "index unavailable"}
+				if failure == "status" {
+					st, err := grpcstatus.New(grpccodes.Unavailable, "index unavailable").
+						WithDetails(&resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "index unavailable"})
+					require.NoError(t, err)
+					client.callErr = st.Err()
 				}
 				var lookupContext trace.SpanContext
 				var lookupStart, lookupEnd time.Time

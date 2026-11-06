@@ -60,7 +60,8 @@ func onlyAlertingRules(rules []*ngmodels.AlertRule) []*ngmodels.AlertRule {
 }
 
 var (
-	_ grafanarest.Storage = (*legacyStorage)(nil)
+	_ grafanarest.Storage    = (*legacyStorage)(nil)
+	_ rest.CollectionDeleter = (*legacyStorage)(nil)
 )
 
 // toAPIError classifies errors from the alert rule service into the matching apierrors status.
@@ -393,4 +394,10 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	}
 
 	return old, false, nil
+}
+
+func (s *legacyStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
+	// The dual-writer requires this interface even after migration routes
+	// collection deletion to unified storage. Legacy rows use the org SQL sweep.
+	return nil, k8serrors.NewMethodNotSupported(ResourceInfo.GroupResource(), "delete")
 }

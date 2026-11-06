@@ -2,6 +2,7 @@ package team
 
 import (
 	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -26,6 +27,7 @@ func TestUnifiedTeamSearchRequest(t *testing.T) {
 		fields []*resourcepb.Requirement
 		labels []*resourcepb.Requirement
 	}{
+		{name: "member", query: SearchQuery{Member: "user-1"}, fields: []*resourcepb.Requirement{{Key: builders.TEAM_SEARCH_MEMBERS, Operator: string(selection.Equals), Values: []string{"user-1"}}}},
 		{name: "query", query: SearchQuery{Query: "a*b"}},
 		{name: "title and UIDs", query: SearchQuery{Title: "Engineering", UIDs: []string{"one", "two"}}, fields: []*resourcepb.Requirement{
 			{Key: resource.SEARCH_FIELD_TITLE, Operator: string(selection.DoubleEquals), Values: []string{"Engineering"}},
@@ -60,57 +62,85 @@ func TestUnifiedTeamSearchRequest(t *testing.T) {
 	}
 }
 
-func TestUnifiedTeamSearchResponseFormats(t *testing.T) {
-	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
-		resourcepb.ResourceSearchRequest_UNSPECIFIED,
-		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
-		resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	} {
-		t.Run(format.String(), func(t *testing.T) {
-			response := &resourcepb.ResourceSearchResponse{ResultFormat: format, TotalHits: 5, QueryCost: 2, MaxScore: 3}
-			if format == resourcepb.ResourceSearchRequest_FIELD_VALUES {
-				response.Fields = []*resourcepb.ResourceSearchField{
-					{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
-					{Name: "email", Type: resourcepb.ResourceSearchField_STRING},
-					{Name: "provisioned", Type: resourcepb.ResourceSearchField_BOOLEAN},
-					{Name: "externalUID", Type: resourcepb.ResourceSearchField_STRING},
-					{Name: teamsearch.LegacyIDField, Type: resourcepb.ResourceSearchField_STRING},
-				}
-				response.Rows = []*resourcepb.ResourceSearchRow{{
-					Key: &resourcepb.ResourceKey{Name: "team-1"},
-					Values: []*resourcepb.ResourceSearchValue{
-						{FieldIndex: 0, StringValues: []string{"Engineering"}},
-						{FieldIndex: 1, StringValues: []string{"team@example.com"}},
-						{FieldIndex: 2, BooleanValues: []bool{true}},
-						{FieldIndex: 3, StringValues: []string{"external-1"}},
-						{FieldIndex: 4, StringValues: []string{"42"}},
-					},
-				}}
-			} else {
-				response.Results = &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "title"}, {Name: "email"}, {Name: "provisioned"}, {Name: "externalUID"}, {Name: teamsearch.LegacyIDField}},
-					Rows: []*resourcepb.ResourceTableRow{{
-						Key:   &resourcepb.ResourceKey{Name: "team-1"},
-						Cells: [][]byte{[]byte("Engineering"), []byte("team@example.com"), []byte("true"), []byte("external-1"), []byte("42")},
-					}},
-				}
-			}
-			client := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{response, response}}
-			backend := NewUnifiedSearchClient(client)
-			result, err := backend.Search(t.Context(), SearchQuery{Offset: 15})
-			require.NoError(t, err)
-			id := int64(42)
-			require.Equal(t, &iamv0.GetSearchTeamsResponse{GetSearchTeamsBody: iamv0.GetSearchTeamsBody{
-				Offset: 15, TotalHits: 5, QueryCost: 2, MaxScore: 3,
-				Hits: []iamv0.GetSearchTeamsTeamHit{{Name: "team-1", Title: "Engineering", Email: "team@example.com", Provisioned: true, ExternalUID: "external-1", InternalId: &id}},
-			}}, result)
+func TestUnifiedTeamSearchFieldValueResponse(t *testing.T) {
+	response := &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, TotalHits: 5, QueryCost: 2, MaxScore: 3}
+	response.Fields = []*resourcepb.ResourceSearchField{
+		{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+		{Name: "email", Type: resourcepb.ResourceSearchField_STRING},
+		{Name: "provisioned", Type: resourcepb.ResourceSearchField_BOOLEAN},
+		{Name: "externalUID", Type: resourcepb.ResourceSearchField_STRING},
+		{Name: teamsearch.LegacyIDField, Type: resourcepb.ResourceSearchField_STRING},
+	}
+	response.Rows = []*resourcepb.ResourceSearchRow{{
+		Key: &resourcepb.ResourceKey{Name: "team-1"},
+		Values: []*resourcepb.ResourceSearchValue{
+			{FieldIndex: 0, StringValues: []string{"Engineering"}},
+			{FieldIndex: 1, StringValues: []string{"team@example.com"}},
+			{FieldIndex: 2, BooleanValues: []bool{true}},
+			{FieldIndex: 3, StringValues: []string{"external-1"}},
+			{FieldIndex: 4, StringValues: []string{"42"}},
+		},
+	}}
 
-			ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "stacks-1"})
-			obj := &iamv0.Team{ObjectMeta: metav1.ObjectMeta{Name: "new-team"}, Spec: iamv0.TeamSpec{Title: "Engineering"}}
-			err = ValidateOnCreate(ctx, selectorForBackend(backend), obj, legacy.NoopExternalGroupReconciler{})
-			require.True(t, apierrors.IsConflict(err), "expected conflict, got %v", err)
+	client := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{response, response}}
+	backend := NewUnifiedSearchClient(client)
+	result, err := backend.Search(t.Context(), SearchQuery{Offset: 15})
+	require.NoError(t, err)
+	id := int64(42)
+	require.Equal(t, &iamv0.GetSearchTeamsResponse{GetSearchTeamsBody: iamv0.GetSearchTeamsBody{
+		Offset: 15, TotalHits: 5, QueryCost: 2, MaxScore: 3,
+		Hits: []iamv0.GetSearchTeamsTeamHit{{Name: "team-1", Title: "Engineering", Email: "team@example.com", Provisioned: true, ExternalUID: "external-1", InternalId: &id}},
+	}}, result)
+
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "stacks-1"})
+	obj := &iamv0.Team{ObjectMeta: metav1.ObjectMeta{Name: "new-team"}, Spec: iamv0.TeamSpec{Title: "Engineering"}}
+	err = ValidateOnCreate(ctx, selectorForBackend(backend), obj, legacy.NoopExternalGroupReconciler{})
+	require.True(t, apierrors.IsConflict(err), "expected conflict, got %v", err)
+}
+
+func TestUnifiedTeamSearchMemberTotal(t *testing.T) {
+	page := func(total int64, exact bool) *resourcepb.ResourceSearchResponse {
+		return &resourcepb.ResourceSearchResponse{
+			ResultFormat:   resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			TotalHits:      total,
+			TotalHitsExact: exact,
+			Rows:           []*resourcepb.ResourceSearchRow{{Key: &resourcepb.ResourceKey{Name: "team-1"}}},
+		}
+	}
+	for _, tt := range []struct {
+		name      string
+		query     SearchQuery
+		responses []*resourcepb.ResourceSearchResponse
+		wantCalls int
+		wantTotal int64
+	}{
+		{name: "exact total is kept", query: SearchQuery{Member: "user-1"}, responses: []*resourcepb.ResourceSearchResponse{page(7, true)}, wantCalls: 1, wantTotal: 7},
+		{name: "inexact total without member is kept", query: SearchQuery{Query: "eng"}, responses: []*resourcepb.ResourceSearchResponse{page(7, false)}, wantCalls: 1, wantTotal: 7},
+		{name: "inexact member total is recounted", query: SearchQuery{Member: "user-1"}, responses: []*resourcepb.ResourceSearchResponse{page(7, false), {TotalHits: 3, TotalHitsExact: true}}, wantCalls: 2, wantTotal: 3},
+		{name: "inexact recount falls back to seen hits", query: SearchQuery{Member: "user-1", Offset: 4}, responses: []*resourcepb.ResourceSearchResponse{page(7, false), {TotalHits: 7}}, wantCalls: 2, wantTotal: 5},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &MockClient{MockResponses: tt.responses}
+			query := tt.query
+			query.Namespace, query.Limit = "stacks-1", 1
+			result, err := NewUnifiedSearchClient(client).Search(t.Context(), query)
+			require.NoError(t, err)
+			require.Equal(t, tt.wantTotal, result.TotalHits)
+			require.Len(t, client.MockCalls, tt.wantCalls)
+			if tt.wantCalls == 2 {
+				count := client.MockCalls[1]
+				require.Zero(t, count.Limit)
+				require.Zero(t, count.Offset)
+				require.Same(t, client.MockCalls[0].Options, count.Options)
+			}
 		})
 	}
+
+	t.Run("recount error", func(t *testing.T) {
+		client := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{page(7, false), {Error: &resourcepb.ErrorResult{Code: 500, Message: "count failed"}}}}
+		_, err := NewUnifiedSearchClient(client).Search(t.Context(), SearchQuery{Namespace: "stacks-1", Member: "user-1", Limit: 1})
+		require.ErrorContains(t, err, "count failed")
+	})
 }
 
 func TestUnifiedTeamSearchErrors(t *testing.T) {
@@ -118,12 +148,23 @@ func TestUnifiedTeamSearchErrors(t *testing.T) {
 	_, err := NewUnifiedSearchClient(&MockClient{MockError: wantErr}).Search(t.Context(), SearchQuery{})
 	require.ErrorIs(t, err, wantErr)
 
+	t.Run("status detail", func(t *testing.T) {
+		failure := &resourcepb.ErrorResult{
+			Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "index busy",
+			Details: &resourcepb.ErrorDetails{Group: "iam.grafana.app", Kind: "teams", RetryAfterSeconds: 7},
+		}
+		result, err := NewUnifiedSearchClient(&MockClient{MockError: resource.GRPCStatusError(failure)}).Search(t.Context(), SearchQuery{})
+		require.Nil(t, result)
+		require.Equal(t, resource.StatusError(failure), err)
+	})
+
 	for _, tt := range []struct {
 		name     string
 		response *resourcepb.ResourceSearchResponse
 		err      string
 	}{
-		{name: "response error", response: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: "index down"}}, err: "index down"},
+		{name: "unspecified format", response: &resourcepb.ResourceSearchResponse{}, err: "unsupported search result format"},
+		{name: "table format", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE}, err: "unsupported search result format"},
 		{name: "unsupported format", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(99)}, err: "unsupported search result format"},
 		{name: "invalid field value", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, Rows: []*resourcepb.ResourceSearchRow{{}}}, err: "has no resource key"},
 	} {

@@ -11,9 +11,11 @@ import { reportInteraction } from '@grafana/runtime';
 import {
   getObservablePluginComponents,
   getObservablePluginExtensions,
+  getObservablePluginFunctions,
   getObservablePluginLinks,
   getPluginExtensions,
 } from './getPluginExtensions';
+import { loadDependentAppPlugins } from './loadDependentAppPlugins';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
@@ -21,7 +23,7 @@ import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { getPluginExtensionRegistries } from './registry/setup';
-import { isReadOnlyProxy } from './utils';
+import { getExtensionPointPluginDependencies, isReadOnlyProxy } from './utils';
 import { assertPluginExtensionLink } from './validators';
 
 jest.mock('@grafana/runtime', () => {
@@ -46,7 +48,19 @@ jest.mock('./registry/setup', () => ({
   getPluginExtensionRegistries: jest.fn(),
 }));
 
+jest.mock('./loadDependentAppPlugins', () => ({
+  loadDependentAppPlugins: jest.fn().mockResolvedValue(undefined),
+}));
+
 const getPluginExtensionRegistriesMock = jest.mocked(getPluginExtensionRegistries);
+const loadDependentAppPluginsMock = jest.mocked(loadDependentAppPlugins);
+
+// Reset file-wide so call history/implementation overrides from one describe block (e.g. mockRejectedValueOnce)
+// never leak into another.
+beforeEach(() => {
+  loadDependentAppPluginsMock.mockClear();
+  loadDependentAppPluginsMock.mockResolvedValue(undefined);
+});
 
 async function createRegistries(
   preloadResults: Array<{
@@ -609,6 +623,64 @@ describe('getObservablePluginExtensions()', () => {
     });
   });
 
+  it('should request loading of the app plugins contributing to the extension point', async () => {
+    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(first());
+
+    await firstValueFrom(observable);
+
+    expect(loadDependentAppPluginsMock).toHaveBeenCalledWith(extensionPointId, getExtensionPointPluginDependencies);
+  });
+
+  it('should not emit until the app plugins have finished loading', async () => {
+    let resolveLoading: () => void = () => {};
+    loadDependentAppPluginsMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveLoading = resolve;
+        })
+    );
+
+    let emitted = false;
+    const emissionPromise = firstValueFrom(getObservablePluginExtensions({ extensionPointId }).pipe(first()));
+    emissionPromise.then(() => {
+      emitted = true;
+    });
+
+    // Flush pending microtasks. Deterministic, not a timing guess: the loading promise is still
+    // unresolved, so the observable genuinely cannot have emitted yet.
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(emitted).toBe(false);
+
+    resolveLoading();
+
+    const { extensions } = await emissionPromise;
+    expect(extensions).toHaveLength(2);
+  });
+
+  it('should not perform the plugin loading side effect until subscribed to', async () => {
+    getObservablePluginExtensions({ extensionPointId });
+
+    // Give any eagerly-started work a chance to run before asserting it didn't.
+    await Promise.resolve();
+
+    expect(loadDependentAppPluginsMock).not.toHaveBeenCalled();
+  });
+
+  it('should catch and log errors thrown while loading the app plugins for the extension point', async () => {
+    loadDependentAppPluginsMock.mockRejectedValueOnce(new Error('Failed to load plugin'));
+
+    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(first());
+    const { extensions } = await firstValueFrom(observable);
+
+    expect(extensions).toHaveLength(2);
+    expect(log.error).toHaveBeenCalledWith('Failed to load plugin', {
+      extensionPointId,
+      stack: expect.stringContaining('Error: Failed to load plugin'),
+      message: 'Failed to load plugin',
+    });
+  });
+
   it('should emit the initial state when no changes are made to the registries', async () => {
     const observable = getObservablePluginExtensions({ extensionPointId }).pipe(first());
 
@@ -873,5 +945,211 @@ describe('getObservablePluginComponents()', () => {
     const components = await firstValueFrom(observable);
 
     expect(components).toHaveLength(0);
+  });
+});
+
+describe('getObservablePluginFunctions()', () => {
+  const extensionPointId = 'grafana/dashboard/panel/menu/v1';
+  const pluginId = 'grafana-basic-app';
+  let addedLinksRegistry: AddedLinksRegistry;
+  let addedComponentsRegistry: AddedComponentsRegistry;
+  let addedFunctionsRegistry: AddedFunctionsRegistry;
+  let exposedComponentsRegistry: ExposedComponentsRegistry;
+
+  beforeEach(async () => {
+    addedLinksRegistry = new AddedLinksRegistry([]);
+    addedComponentsRegistry = new AddedComponentsRegistry([]);
+    addedFunctionsRegistry = new AddedFunctionsRegistry([]);
+    exposedComponentsRegistry = new ExposedComponentsRegistry([]);
+
+    const registries = {
+      addedComponentsRegistry,
+      addedFunctionsRegistry,
+      addedLinksRegistry,
+      exposedComponentsRegistry,
+    };
+
+    getPluginExtensionRegistriesMock.mockResolvedValue(registries);
+
+    addedFunctionsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Function 1',
+          description: 'Function 1 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+      ],
+    });
+  });
+
+  it('should request loading of the app plugins contributing to the extension point', async () => {
+    const observable = getObservablePluginFunctions({ extensionPointId }).pipe(first());
+
+    await firstValueFrom(observable);
+
+    expect(loadDependentAppPluginsMock).toHaveBeenCalledWith(extensionPointId, getExtensionPointPluginDependencies);
+  });
+
+  it('should only emit the functions', async () => {
+    const observable = getObservablePluginFunctions({ extensionPointId }).pipe(first());
+
+    await expect(observable).toEmitValuesWith((received) => {
+      const functions = received[0];
+      expect(functions).toHaveLength(1);
+      expect(functions[0].pluginId).toBe(pluginId);
+      expect(functions[0].type).toBe(PluginExtensionTypes.function);
+    });
+  });
+
+  it('should be possible to get the last value from the observable', async () => {
+    const observable = getObservablePluginFunctions({ extensionPointId });
+    const functions = await firstValueFrom(observable);
+
+    expect(functions).toHaveLength(1);
+    expect(functions[0].pluginId).toBe(pluginId);
+    expect(functions[0].type).toBe(PluginExtensionTypes.function);
+    expect(typeof functions[0].fn).toBe('function');
+  });
+
+  it('should be possible to receive the last state of the registry', async () => {
+    // Register a new function
+    addedFunctionsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Function 2',
+          description: 'Function 2 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+      ],
+    });
+
+    const observable = getObservablePluginFunctions({ extensionPointId });
+    const functions = await firstValueFrom(observable);
+
+    expect(functions).toHaveLength(2);
+    expect(functions[0].pluginId).toBe(pluginId);
+    expect(functions[0].type).toBe(PluginExtensionTypes.function);
+    expect(functions[1].pluginId).toBe(pluginId);
+    expect(functions[1].type).toBe(PluginExtensionTypes.function);
+  });
+
+  it('should emit the new state when the registry changes', async () => {
+    const observable = getObservablePluginFunctions({ extensionPointId }).pipe(take(2));
+
+    setTimeout(() => {
+      addedFunctionsRegistry.register({
+        pluginId,
+        configs: [
+          {
+            title: 'Function 2',
+            description: 'Function 2 description',
+            targets: extensionPointId,
+            fn: () => {},
+          },
+        ],
+      });
+    }, 0);
+
+    await expect(observable).toEmitValuesWith((received) => {
+      expect(received[0]).toHaveLength(1);
+      expect(received[0][0].title).toBe('Function 1');
+
+      expect(received[1]).toHaveLength(2);
+      expect(received[1][0].title).toBe('Function 1');
+      expect(received[1][1].title).toBe('Function 2');
+    });
+  });
+
+  it('should receive an empty array if there are no functions', async () => {
+    getPluginExtensionRegistriesMock.mockResolvedValue({
+      addedLinksRegistry: new AddedLinksRegistry([]),
+      addedComponentsRegistry: new AddedComponentsRegistry([]),
+      addedFunctionsRegistry: new AddedFunctionsRegistry([]),
+      exposedComponentsRegistry: new ExposedComponentsRegistry([]),
+    });
+
+    const observable = getObservablePluginFunctions({ extensionPointId }).pipe(first());
+    const functions = await firstValueFrom(observable);
+
+    expect(functions).toHaveLength(0);
+  });
+
+  it('should honour the limitPerPlugin arg if its set', async () => {
+    const secondPluginId = 'grafana-extra-app';
+
+    // `pluginId` already has "Function 1" registered in the beforeEach
+    addedFunctionsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Function 2',
+          description: 'Function 2 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+        {
+          title: 'Function 3',
+          description: 'Function 3 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+      ],
+    });
+
+    addedFunctionsRegistry.register({
+      pluginId: secondPluginId,
+      configs: [
+        {
+          title: 'Other 1',
+          description: 'Other 1 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+        {
+          title: 'Other 2',
+          description: 'Other 2 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+        {
+          title: 'Other 3',
+          description: 'Other 3 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+      ],
+    });
+
+    const observable = getObservablePluginFunctions({ extensionPointId, limitPerPlugin: 2 });
+    const functions = await firstValueFrom(observable);
+
+    expect(functions).toHaveLength(4);
+    expect(functions.filter((extension) => extension.pluginId === pluginId)).toHaveLength(2);
+    expect(functions.filter((extension) => extension.pluginId === secondPluginId)).toHaveLength(2);
+  });
+
+  it('should apply the caller-provided signature to the returned functions', async () => {
+    type GreetFn = (name: string) => string;
+
+    addedFunctionsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Greet',
+          description: 'Greets the given name',
+          targets: extensionPointId,
+          fn: (name: string) => `hello ${name}`,
+        },
+      ],
+    });
+
+    const functions = await firstValueFrom(getObservablePluginFunctions<GreetFn>({ extensionPointId }));
+    const greet = functions.find((extension) => extension.title === 'Greet');
+
+    expect(greet?.fn('world')).toBe('hello world');
   });
 });

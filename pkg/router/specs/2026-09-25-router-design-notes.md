@@ -93,7 +93,7 @@ Both cases were found in PR review, in two passes.
 
 ## Two transports per aggregate target
 
-`ProvideCloudRoutesLoaderFactory` builds two `newAggregateBaseTransport` clones per aggregate
+`NewCloudRoutesLoader` builds two `newAggregateBaseTransport` clones per aggregate
 target:
 
 - **The discovery client.** One clone becomes `rest.Config.Transport`, wrapped by
@@ -105,10 +105,10 @@ target:
 Each clone owns its connection pool instead of sharing the process-wide `http.DefaultTransport`,
 which allows only 2 idle connections per host.
 
-## Why `group_regex` patterns are globs
+## Why `group_patterns` are globs
 
 `*` is the only special character, and everything else goes through `regexp.QuoteMeta`. An earlier
 version escaped only `.`, which left `+`, `(`, `[` and the rest live. That *widened* matches: for
-example, `foo+.grafana.app` matched `foooo.grafana.app`. `group_regex` is a narrowing allowlist, so
+example, `foo+.grafana.app` matched `foooo.grafana.app`. `group_patterns` is a narrowing allowlist, so
 over-matching is the wrong way to fail. A side effect is that pattern compilation can't fail, so
 `compileGroupPatterns` returns no error.

@@ -21,8 +21,12 @@ function editPanelUrl() {
   return new URLSearchParams({ editPanel: PANEL_ID });
 }
 
-function addQueryOrExpressionButton(page: Page) {
-  return page.getByLabel('Add query or expression');
+function addQueryButton(page: Page) {
+  return page.getByRole('button', { name: 'Add query', exact: true });
+}
+
+function moreAddOptionsButton(page: Page) {
+  return page.getByRole('button', { name: 'More add options' });
 }
 
 function addTransformationButton(page: Page) {
@@ -139,8 +143,7 @@ test.describe('Query Editor Next: Sidebar Query Management', { tag: ['@panels', 
   test('can add a new query via the sidebar', async ({ gotoDashboardPage, page }) => {
     await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
-    await addQueryOrExpressionButton(page).click();
-    await page.getByRole('menuitem', { name: 'Add query' }).click();
+    await addQueryButton(page).click();
 
     await expect(page.locator('[data-query-sidebar-card="B"]')).toBeVisible();
   });
@@ -148,8 +151,7 @@ test.describe('Query Editor Next: Sidebar Query Management', { tag: ['@panels', 
   test('can select different queries by clicking sidebar cards', async ({ gotoDashboardPage, page }) => {
     await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
-    await addQueryOrExpressionButton(page).click();
-    await page.getByRole('menuitem', { name: 'Add query' }).click();
+    await addQueryButton(page).click();
 
     const cardA = page.locator('[data-query-sidebar-card="A"]');
     const cardB = page.locator('[data-query-sidebar-card="B"]');
@@ -166,8 +168,7 @@ test.describe('Query Editor Next: Sidebar Query Management', { tag: ['@panels', 
   test('can delete a query from the sidebar', async ({ gotoDashboardPage, page }) => {
     await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
-    await addQueryOrExpressionButton(page).click();
-    await page.getByRole('menuitem', { name: 'Add query' }).click();
+    await addQueryButton(page).click();
 
     const cardB = page.locator('[data-query-sidebar-card="B"]');
     await expect(cardB).toBeVisible();
@@ -239,7 +240,7 @@ test.describe('Query Editor Next: Datasource Switching', { tag: ['@panels', '@qu
     const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
     await ensureTestDataDatasource(dashboardPage, page, selectors);
 
-    await addQueryOrExpressionButton(page).click();
+    await moreAddOptionsButton(page).click();
     await page.getByRole('menuitem', { name: 'Add expression' }).click();
     await page.getByRole('button', { name: 'Math', exact: true }).click();
 
@@ -323,7 +324,7 @@ test.describe('Query Editor Next: Expression Flows', { tag: ['@panels', '@queryE
   test('expression type picker shows all types', async ({ gotoDashboardPage, page }) => {
     await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
-    await addQueryOrExpressionButton(page).click();
+    await moreAddOptionsButton(page).click();
     await page.getByRole('menuitem', { name: 'Add expression' }).click();
 
     // Card.Heading renders as a <button>, not an <h*> element
@@ -339,7 +340,7 @@ test.describe('Query Editor Next: Expression Flows', { tag: ['@panels', '@queryE
   test('can add a Reduce expression and see its editor', async ({ gotoDashboardPage, page }) => {
     await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
-    await addQueryOrExpressionButton(page).click();
+    await moreAddOptionsButton(page).click();
     await page.getByRole('menuitem', { name: 'Add expression' }).click();
     await page.getByRole('button', { name: 'Reduce', exact: true }).click();
 
@@ -349,7 +350,7 @@ test.describe('Query Editor Next: Expression Flows', { tag: ['@panels', '@queryE
   test('SQL expression type is available with sqlExpressions toggle', async ({ gotoDashboardPage, page }) => {
     await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
-    await addQueryOrExpressionButton(page).click();
+    await moreAddOptionsButton(page).click();
     await page.getByRole('menuitem', { name: 'Add expression' }).click();
 
     await expect(page.getByRole('button', { name: 'SQL', exact: true })).toBeVisible();
@@ -371,7 +372,7 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
     await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
     async function addSqlExpression() {
-      await addQueryOrExpressionButton(page).click();
+      await moreAddOptionsButton(page).click();
       await page.getByRole('menuitem', { name: 'Add expression' }).click();
       await page.getByRole('button', { name: 'SQL', exact: true }).click();
       await expect(page.getByTestId('sql-expression-editor')).toBeVisible({ timeout: 15_000 });
@@ -418,8 +419,7 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
     const monacoTextarea = page.locator('.monaco-editor textarea').first();
     await expect(monacoTextarea).toBeVisible({ timeout: 15_000 });
 
-    await addQueryOrExpressionButton(page).click();
-    await page.getByRole('menuitem', { name: 'Add query' }).click();
+    await addQueryButton(page).click();
     await expect(page.locator('[data-query-sidebar-card="B"]')).toBeVisible();
 
     const cardA = page.locator('[data-query-sidebar-card="A"]');
@@ -485,15 +485,14 @@ test.describe('Query Editor Next: Query Options', { tag: ['@panels', '@queryEdit
     await expect(page.getByRole('button', { name: /Edit Relative time/i })).toContainText('1h');
   });
 
-  test('clicking outside closes the query options sidebar', async ({ gotoDashboardPage, page, selectors }) => {
-    const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
+  test('clicking outside closes the query options sidebar', async ({ gotoDashboardPage, page }) => {
+    await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
     await page.getByRole('button', { name: /Query Options/i }).click();
     const maxDataPointsInput = page.getByRole('spinbutton', { name: 'Max data points' });
     await expect(maxDataPointsInput).toBeVisible();
 
-    // Click the viz panel — a stable target outside the sidebar — to trigger the outside-click close.
-    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).click({ force: true });
+    await page.getByTestId('viz-resizer').click({ force: true });
     await expect(maxDataPointsInput).toBeHidden();
   });
 });

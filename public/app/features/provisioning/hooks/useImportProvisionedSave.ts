@@ -1,19 +1,16 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import kbn from 'app/core/utils/kbn';
 import { AnnoKeyFolder, type ResourceForCreate } from 'app/features/apiserver/types';
 import {
   DASHBOARD_API_GROUP,
   dashboardAPIVersionResolver,
 } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
-import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { getResourceCommitMessage } from 'app/features/provisioning/utils/commitMessage';
-import { buildResourceBranchRedirectUrl } from 'app/features/provisioning/utils/redirect';
+import { buildResourceBranchRedirectUrl, getSavedDashboardPath } from 'app/features/provisioning/utils/redirect';
 
 import { getProvisionedRequestError } from '../components/utils/errors';
 import { getRequestRef } from '../utils/workflow';
@@ -116,19 +113,10 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
               // have a dashboard uid to navigate to.
               const dashboardUid = upsert?.metadata?.name;
               if (!dashboardUid) {
-                navigate(
-                  locationUtil.assureBaseUrl(targetFolderUid ? `/dashboards/f/${targetFolderUid}/` : '/dashboards')
-                );
+                navigate(targetFolderUid ? `/dashboards/f/${targetFolderUid}/` : '/dashboards');
                 return;
               }
-              const url = locationUtil.assureBaseUrl(
-                getDashboardUrl({
-                  uid: dashboardUid,
-                  slug: kbn.slugifyForUrl(title),
-                  currentQueryParams: window.location.search,
-                })
-              );
-              navigate(url);
+              navigate(getSavedDashboardPath(dashboardUid, title));
             },
             onBranchSuccess: ({ ref, path }, info) => {
               const url = buildResourceBranchRedirectUrl({

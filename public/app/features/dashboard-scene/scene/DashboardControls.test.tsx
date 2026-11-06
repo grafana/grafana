@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { act, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -31,7 +31,9 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardControls, type DashboardControlsState } from './DashboardControls';
+import { DashboardDataLayerSet } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -312,6 +314,18 @@ describe('DashboardControls', () => {
         expectedHidden: ['otherSectionVar'],
       },
       {
+        title: 'should include edited panel ancestor section annotations in panel edit mode',
+        sceneBuilder: () => buildPanelModeAnnotationsScene('edit'),
+        expectedVisible: ['ancestorAnnotation'],
+        expectedHidden: ['hiddenAnnotation', 'otherSectionAnnotation'],
+      },
+      {
+        title: 'should include viewed panel ancestor section annotations in panel view mode',
+        sceneBuilder: () => buildPanelModeAnnotationsScene('view'),
+        expectedVisible: ['ancestorAnnotation'],
+        expectedHidden: ['hiddenAnnotation', 'otherSectionAnnotation'],
+      },
+      {
         title: 'should hide repeat local section variables in panel edit mode',
         sceneBuilder: buildPanelEditSceneWithRepeatVariable,
         expectedVisible: ['repeatSource'],
@@ -324,6 +338,17 @@ describe('DashboardControls', () => {
         expectedHidden,
         expectedUnique,
       });
+    });
+
+    it('updates the viewed panel section annotation controls when the section annotations change', async () => {
+      const { controls, ancestorSet } = buildPanelModeAnnotationsScene('view');
+      renderInGrafanaContext(<controls.Component model={controls} />);
+      expect(await screen.findByText('ancestorAnnotation')).toBeInTheDocument();
+
+      act(() => ancestorSet.setState({ annotationLayers: [sectionAnnotation('addedAnnotation')] }));
+
+      expect(await screen.findByText('addedAnnotation')).toBeInTheDocument();
+      expect(screen.queryByText('ancestorAnnotation')).not.toBeInTheDocument();
     });
 
     it('still mounts ScopesVariable.Component when panel edit variables override is active', async () => {
@@ -454,6 +479,7 @@ describe('DashboardControls', () => {
     });
 
     afterEach(() => {
+      cleanup();
       jest.clearAllMocks();
     });
 
@@ -465,12 +491,29 @@ describe('DashboardControls', () => {
       expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
     });
 
+    it('should not show EditDashboardSwitch or MakeDashboardEditableButton on mobile when mobileEditDeprecation is enabled', async () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByRole('button', { name: /enter edit mode/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
+    });
+
     it('should show MakeDashboardEditableButton when editable is false', async () => {
       const controls = buildTestSceneWithEditable({ editable: false, canEdit: false, canMakeEditable: true });
       renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(await screen.findByRole('button', { name: /make editable/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument();
+    });
+
+    it('should not show MakeDashboardEditableButton on mobile when mobileEditDeprecation is enabled', async () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+      const controls = buildTestSceneWithEditable({ editable: false, canEdit: false, canMakeEditable: true });
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
     });
 
     it('should not show edit buttons when canEditDashboard returns false', async () => {
@@ -504,6 +547,14 @@ describe('DashboardControls', () => {
       renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+    });
+
+    it('should not show Exit edit for a new dashboard in edit mode', () => {
+      const controls = buildTestSceneWithEditable({ hasUid: false, editable: true, canEdit: true, isEditing: true });
+
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.editButton)).not.toBeInTheDocument();
     });
 
     it('should show playlist nav buttons when hidePlaylistNav is undefined', async () => {
@@ -603,6 +654,28 @@ describe('DashboardControls', () => {
 
       expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
       expect(screen.queryByText('Save as copy')).not.toBeInTheDocument();
+    });
+
+    it('should not show save button in Viewing mode, even with unsaved changes', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const controls = buildTestSceneWithEditable({ canSave: true, canEdit: true, isEditing: true });
+      getDashboard(controls).setState({ mode: 'view', isDirty: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
+    });
+
+    it.each([
+      [false, 'not show'],
+      [true, 'show'],
+    ])('should %2$s save button when Composer is over %1$s Editing', (composerEditing) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const controls = buildTestSceneWithEditable({ canSave: true, canEdit: true, isEditing: true });
+      getDashboard(controls).setState({ mode: 'composer', composerEditing, isDirty: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      const save = screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton);
+      expect(Boolean(save)).toBe(composerEditing);
     });
   });
 
@@ -1091,6 +1164,39 @@ function buildPanelViewVariablesScene() {
   dashboard.setState({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
 
   return { controls };
+}
+
+function sectionAnnotation(name: string, isHidden = false) {
+  return new DashboardAnnotationsDataLayer({
+    name,
+    isHidden,
+    isEnabled: false,
+    query: { name, enable: false, iconColor: 'red' },
+  });
+}
+
+function buildPanelModeAnnotationsScene(mode: 'edit' | 'view') {
+  const ancestorSet = new DashboardDataLayerSet({
+    annotationLayers: [sectionAnnotation('ancestorAnnotation'), sectionAnnotation('hiddenAnnotation', true)],
+  });
+  const { dashboard, controls, editedPanel } = buildPanelEditControlsScene({
+    uid: `panel-${mode}-annotations`,
+    editedPanelKey: 'edited-panel',
+    rows: [
+      new RowItem({ title: 'Ancestor row', $data: ancestorSet }),
+      new RowItem({
+        title: 'Other row',
+        $data: new DashboardDataLayerSet({ annotationLayers: [sectionAnnotation('otherSectionAnnotation')] }),
+      }),
+    ],
+    dashboardVariables: [],
+  });
+
+  if (mode === 'view') {
+    dashboard.setState({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
+  }
+
+  return { controls, ancestorSet };
 }
 
 function buildPanelEditSceneWithRepeatVariable() {

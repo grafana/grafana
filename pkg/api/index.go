@@ -248,7 +248,9 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 }
 
 func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) int {
-	if userID == 0 {
+	// Single-org navigation does not need legacy user or membership rows,
+	// which may be absent when users are stored in unified storage.
+	if userID == 0 || hs.Cfg.RBAC.SingleOrganization {
 		return 1
 	}
 

@@ -167,7 +167,7 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		Spec: secretv1beta1.SecureValueSpec{Description: "Router integration test"},
 	}, "router-test-user")
 	require.NoError(t, err)
-	require.NoError(t, secretStore.SetVersionToActive(t.Context(), xkube.Namespace(namespace), secureValue.Name, secureValue.Status.Version))
+	require.NoError(t, secretStore.SetVersionToActive(t.Context(), xkube.Namespace(namespace), secureValue.Name, secureValue.Status.Version, 0))
 
 	const folderUID = "router-widgets"
 	createFolder(t, t.Context(), helper, folderUID, "Router widgets")
@@ -199,7 +199,7 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	cfg.ExtJWTAuth.JWKSUrl = manifests.URL + "/jwks"
 	cfg.ExtJWTAuth.Audiences = []string{audience}
 	cfg.SectionWithEnvOverrides("cloud_router").Key("plugins_url").SetValue(manifests.URL + "/plugins")
-	loader, err := router.ProvideCloudRoutesLoaderFactory(cfg, router.PluginDependencies{
+	loader, err := router.NewCloudRoutesLoader(cfg, router.PluginDependencies{
 		Cfg: cfg, Unified: helper.GetEnv().ResourceClient,
 		RESTConfigProvider: router.NewLoopbackRestConfigProvider(routerHandler),
 		SecureValues:       secret.NewMockInlineSecureValueSupport(t), Decrypter: decrypter,
