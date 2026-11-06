@@ -856,12 +856,37 @@ describe('AppChrome', () => {
       expect(screen.queryByRole('navigation', { name: 'Administration' })).not.toBeInTheDocument();
     });
 
-    it('does not show below the tablet width', async () => {
-      mockUseMediaQueryMinWidth.mockReturnValue(false);
-      setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+    describe('below the tablet width', () => {
+      beforeEach(() => {
+        mockUseMediaQueryMinWidth.mockReturnValue(false);
+      });
 
-      expect(await screen.findByTestId('page-children')).toBeInTheDocument();
-      expect(screen.queryByRole('navigation', { name: 'Administration' })).not.toBeInTheDocument();
+      it('shows a menu above the page in place of the side panel', async () => {
+        setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+
+        expect(await screen.findByRole('button', { name: /^Menu/ })).toBeInTheDocument();
+        expect(screen.queryByRole('navigation', { name: 'Administration' })).not.toBeInTheDocument();
+      });
+
+      it('lists the groups and destinations when it is opened', async () => {
+        const user = userEvent.setup();
+        setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+
+        await user.click(await screen.findByRole('button', { name: /^Menu/ }));
+        const menu = within(await screen.findByRole('menu', { name: 'Administration' }));
+
+        expect(menu.getByText('General')).toBeInTheDocument();
+        expect(menu.getByText('Users and access')).toBeInTheDocument();
+        expect(menu.getByRole('menuitem', { name: 'Users' })).toHaveAttribute('href', '/admin/users');
+        expect(menu.getByRole('menuitem', { name: 'Default preferences' })).toHaveAttribute('href', '/org');
+      });
+
+      it('shows no menu outside Administration', async () => {
+        setup(<Page navId="child1">Children</Page>, { extraNav: administrationNav });
+
+        expect(await screen.findByTestId('page-children')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /^Menu/ })).not.toBeInTheDocument();
+      });
     });
   });
 });

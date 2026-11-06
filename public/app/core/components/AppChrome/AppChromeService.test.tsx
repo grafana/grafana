@@ -82,9 +82,10 @@ describe('AppChromeService', () => {
     chromeService.update({ sectionNav: { node: { text: 'Teams' }, main: { text: 'Administration' } } });
 
     chromeService.setMatchedRoute({ path: '/other', component: () => null });
-    chromeService.setSidePanel('panel');
+    const sidePanel = { full: 'panel', compact: 'menu' };
+    chromeService.setSidePanel(sidePanel);
 
-    expect(chromeService.state.getValue().sidePanel).toBe('panel');
+    expect(chromeService.state.getValue().sidePanel).toBe(sidePanel);
     expect(chromeService.state.getValue().sectionNav.node.text).toBe('Teams');
 
     chromeService.update({ actions: null });

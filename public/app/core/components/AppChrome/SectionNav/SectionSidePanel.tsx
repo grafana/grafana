@@ -6,6 +6,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { NavID } from 'app/core/navtree/constants';
 
 import { SectionNav } from './SectionNav';
+import { SectionNavMenu } from './SectionNavMenu';
 import { useSectionNav } from './useSectionNav';
 
 /**
@@ -33,7 +34,13 @@ export function SectionSidePanel() {
   const model = owner?.model;
 
   const sidePanel = useMemo(
-    () => (label && model ? <SectionNav label={label} groups={model.groups} activeId={model.activeId} /> : undefined),
+    () =>
+      label && model
+        ? {
+            full: <SectionNav label={label} groups={model.groups} activeId={model.activeId} />,
+            compact: <SectionNavMenu label={label} groups={model.groups} activeId={model.activeId} />,
+          }
+        : undefined,
     [label, model]
   );
 

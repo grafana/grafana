@@ -3,14 +3,9 @@ import { type PropsWithChildren } from 'react';
 import { getWrapper } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
-import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { configureStore } from 'app/store/configureStore';
 
 import { useSectionNav } from './useSectionNav';
-
-jest.mock('app/core/hooks/useMediaQueryMinWidth');
-
-const mockUseMediaQueryMinWidth = jest.mocked(useMediaQueryMinWidth);
 
 const navTree: NavModelItem[] = [
   {
@@ -50,10 +45,6 @@ function render(
 }
 
 describe('useSectionNav', () => {
-  beforeEach(() => {
-    mockUseMediaQueryMinWidth.mockReturnValue(true);
-  });
-
   it('gives the groups of its own section, with the current page marked', () => {
     const model = render('monitoring', { currentPage: pageItem('rules') });
 
@@ -87,12 +78,7 @@ describe('useSectionNav', () => {
     expect(model?.groups.map((group) => group.id)).not.toContain('monitoring/empty');
   });
 
-  it.each([
-    ['it is not enabled', { enabled: false }],
-    ['the screen is too narrow', { narrow: true }],
-  ])('is not shown when %s', (_name, options) => {
-    mockUseMediaQueryMinWidth.mockReturnValue(!('narrow' in options));
-
-    expect(render('monitoring', { enabled: !('enabled' in options), currentPage: pageItem('rules') })).toBeUndefined();
+  it('is not shown when it is not enabled', () => {
+    expect(render('monitoring', { enabled: false, currentPage: pageItem('rules') })).toBeUndefined();
   });
 });
