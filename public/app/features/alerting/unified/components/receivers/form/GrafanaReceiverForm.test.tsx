@@ -695,7 +695,6 @@ describe('GrafanaReceiverForm', () => {
   });
 
   describe('Test contact point', () => {
-
     it('should use the contact point UID when testing an existing contact point', async () => {
       const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
         .withIntegrations((integrationFactory) => [
@@ -1238,7 +1237,7 @@ describe('GrafanaReceiverForm', () => {
               reason: 'BadRequest',
               message: 'receiver is invalid',
               details: {
-                causes: [{ field: 'spec.integrations[0].settings.url', message: 'URL must be valid' }],
+                causes: [{ field: 'spec.integrations[0].settings.addresses', message: 'Email address is not allowed' }],
               },
             },
             { status: 400 }
@@ -1253,20 +1252,23 @@ describe('GrafanaReceiverForm', () => {
         </>
       );
 
-      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
-
-      await clickSelectOption(ui.typeSelector.get(), 'MQTT');
-      await pasteInto(user, screen.getByLabelText(/^name/i), 'broken-mqtt');
-      await pasteInto(user, screen.getByLabelText(/broker url/i), 'tcp://example.com:1883');
-      await pasteInto(user, screen.getByLabelText(/topic/i), 'alerts');
+      const emailField = await screen.findByRole('textbox', { name: /^Addresses/ });
+      await pasteInto(user, screen.getByLabelText(/^name/i), 'broken-email');
+      await pasteInto(user, emailField, 'test@example.com');
       await user.click(ui.saveButton.get());
-
-      // Confirm the request actually fired so we know the form passed validation
-      await capturedRequests;
 
       const toast = await screen.findByRole('alert', { name: /failed to save the contact point/i });
       expect(within(toast).getByText(/receiver is invalid/i)).toBeInTheDocument();
-      expect(within(toast).getByText(/URL must be valid/i)).toBeInTheDocument();
+      expect(within(toast).getByText(/Email address is not allowed/i)).toBeInTheDocument();
+
+      const requests = await capturedRequests;
+      expect(requests).toHaveLength(1);
+      expect(await requests[0].clone().json()).toMatchObject({
+        spec: {
+          title: 'broken-email',
+          integrations: [{ type: 'email', settings: { addresses: 'test@example.com' } }],
+        },
+      });
 
       // 4xx responses are the user's invalid payload, not an app failure → warn, not error
       await waitFor(() => {
@@ -1296,17 +1298,22 @@ describe('GrafanaReceiverForm', () => {
         </>
       );
 
-      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
-
-      await clickSelectOption(ui.typeSelector.get(), 'MQTT');
-      await pasteInto(user, screen.getByLabelText(/^name/i), 'broken-mqtt-5xx');
-      await pasteInto(user, screen.getByLabelText(/broker url/i), 'tcp://example.com:1883');
-      await pasteInto(user, screen.getByLabelText(/topic/i), 'alerts');
+      const emailField = await screen.findByRole('textbox', { name: /^Addresses/ });
+      await pasteInto(user, screen.getByLabelText(/^name/i), 'broken-email-5xx');
+      await pasteInto(user, emailField, 'test@example.com');
       await user.click(ui.saveButton.get());
 
-      await capturedRequests;
+      const toast = await screen.findByRole('alert', { name: /failed to save the contact point/i });
+      expect(within(toast).getByText(/database unavailable/i)).toBeInTheDocument();
 
-      await screen.findByRole('alert', { name: /failed to save the contact point/i });
+      const requests = await capturedRequests;
+      expect(requests).toHaveLength(1);
+      expect(await requests[0].clone().json()).toMatchObject({
+        spec: {
+          title: 'broken-email-5xx',
+          integrations: [{ type: 'email', settings: { addresses: 'test@example.com' } }],
+        },
+      });
 
       await waitFor(() => {
         expect(jest.mocked(logError)).toHaveBeenCalledTimes(1);

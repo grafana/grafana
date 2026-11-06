@@ -124,7 +124,7 @@ describe('SharedPreferences', () => {
     expect(option).not.toBeInTheDocument();
   });
 
-  it('saves the users new preferences', async () => {
+  it('saves the users new preferences and reports the home dashboard as set', async () => {
     const dashboardToSelect = dashbdE.item;
     const capture = captureRequests();
     const { user, themeSelect } = await setup();
@@ -155,6 +155,12 @@ describe('SharedPreferences', () => {
         navbar: { bookmarkUrls: [] },
       },
     });
+    await waitFor(() => {
+      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
+        preferenceType: 'user',
+        action: 'set',
+      });
+    });
   });
 
   it('saves an experimental theme preference', async () => {
@@ -173,13 +179,13 @@ describe('SharedPreferences', () => {
     });
   });
 
-  it('saves the users default preferences', async () => {
+  it('saves the users default preferences and reports the home dashboard as cleared', async () => {
     const capture = captureRequests();
     const { user, themeSelect } = await setup();
     await selectComboboxOptionInTest(user, themeSelect, 'Default');
 
-    // there's no default option in this dropdown - there's a clear selection button
-    // get the parent container, and find the "Clear value" button
+    // The Clear value button only renders once the loaded dashboard (dashbdD) resolves, so awaiting it
+    // guarantees a non-empty starting value to clear.
     const dashboardSelect = screen.getByTestId('User preferences home dashboard drop down');
     await user.click(await within(dashboardSelect).findByRole('button', { name: 'Clear value' }));
 
@@ -201,6 +207,12 @@ describe('SharedPreferences', () => {
         language: '',
         navbar: { bookmarkUrls: [] },
       },
+    });
+    await waitFor(() => {
+      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
+        preferenceType: 'user',
+        action: 'cleared',
+      });
     });
   });
 
@@ -250,52 +262,17 @@ describe('SharedPreferences', () => {
     expect(screen.getByRole('button', { name: 'Save preferences' })).not.toBeDisabled();
   });
 
-  it('fires home_dashboard_changed with action set when a new home dashboard is saved', async () => {
-    const { user } = await setup();
-
-    await selectComboboxOptionInTest(
-      user,
-      await screen.findByRole('combobox', { name: /home dashboard/i }),
-      new RegExp(dashbdE.item.title)
-    );
-    await user.click(screen.getByRole('button', { name: 'Save preferences' }));
-
-    await waitFor(() => {
-      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
-        preferenceType: 'user',
-        action: 'set',
-      });
-    });
-  });
-
   it('does not fire home_dashboard_changed when the home dashboard is unchanged', async () => {
     const { user } = await setup();
 
-    await selectOptionInTest(screen.getByLabelText('Timezone'), 'Sydney');
+    await selectComboboxOptionInTest(user, screen.getByRole('combobox', { name: 'Week start' }), 'Saturday');
     await user.click(screen.getByRole('button', { name: 'Save preferences' }));
 
     await waitFor(() => expect(mockReload).toHaveBeenCalled());
     expect(jest.mocked(homeDashboardChanged)).not.toHaveBeenCalled();
   });
 
-  it('fires home_dashboard_changed with action cleared when the dashboard is cleared', async () => {
-    const { user } = await setup();
-
-    const dashboardSelect = screen.getByTestId('User preferences home dashboard drop down');
-    // The Clear value button only renders once the loaded dashboard (dashbdD) resolves, so awaiting it
-    // guarantees a non-empty starting value to clear.
-    await user.click(await within(dashboardSelect).findByRole('button', { name: 'Clear value' }));
-    await user.click(screen.getByRole('button', { name: 'Save preferences' }));
-
-    await waitFor(() => {
-      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
-        preferenceType: 'user',
-        action: 'cleared',
-      });
-    });
-  });
-
-  it('lists Grafana home first and saves the sentinel when selected', async () => {
+  it('lists Grafana home first, saves the sentinel, and reports set_global_home when selected', async () => {
     const capture = captureRequests();
     const { user } = await setup();
 
@@ -312,18 +289,6 @@ describe('SharedPreferences', () => {
     expect(newPreferences).toMatchObject({
       spec: { homeDashboardUID: GLOBAL_HOME_DASHBOARD_UID },
     });
-  });
-
-  it('fires home_dashboard_changed with action set_global_home when Grafana home is saved', async () => {
-    const { user } = await setup();
-
-    await selectComboboxOptionInTest(
-      user,
-      await screen.findByRole('combobox', { name: /home dashboard/i }),
-      'Grafana home'
-    );
-    await user.click(screen.getByRole('button', { name: 'Save preferences' }));
-
     await waitFor(() => {
       expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
         preferenceType: 'user',

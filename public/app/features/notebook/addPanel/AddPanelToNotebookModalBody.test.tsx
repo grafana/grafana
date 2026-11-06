@@ -488,7 +488,8 @@ describe('AddPanelToNotebookModalBody', () => {
       const { user } = renderModal();
 
       // 'Q2 latency regression' is one of the notebooks the picker is holding.
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'Q2 latency regression');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('Q2 latency regression');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       expect(await screen.findByText('A notebook with this name already exists')).toBeInTheDocument();
@@ -500,7 +501,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('refuses a name that differs only by case or surrounding space', async () => {
       const { user } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), '  q2 LATENCY regression  ');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('  q2 LATENCY regression  ');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       expect(await screen.findByText('A notebook with this name already exists')).toBeInTheDocument();
@@ -512,7 +514,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('will not submit a name that is only whitespace', async () => {
       const { user } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), '   ');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('   ');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       expect(await screen.findByText('A notebook name is required')).toBeInTheDocument();
@@ -557,7 +560,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('creates the notebook with the panel under the trimmed name', async () => {
       const { user, onDismiss } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), '  Checkout latency  ');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('  Checkout latency  ');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>

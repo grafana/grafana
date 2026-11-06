@@ -14,6 +14,7 @@ const harnessFiles = readdirSync(__dirname, { recursive: true })
 function loadConfig(filename) {
   const module = { exports: {} };
   const configRequire = (id) => {
+    if (id === './scripts/cli/env-util.cjs') return { getEnvConfig: () => ({}) };
     assert.ok(['./jest.config', './jest.config.js'].includes(id));
     return loadConfig('jest.config.js');
   };
@@ -21,11 +22,16 @@ function loadConfig(filename) {
     assert.ok(['ts-jest', '@sucrase/jest-plugin'].includes(id));
     return id;
   };
-  vm.runInNewContext(readFileSync(path.join(rootDir, filename), 'utf8'), {
-    module,
-    require: configRequire,
-    process: { env: {} },
-  }, { filename });
+  vm.runInNewContext(
+    readFileSync(path.join(rootDir, filename), 'utf8'),
+    {
+      module,
+      require: configRequire,
+      process: { env: {} },
+      __dirname: rootDir,
+    },
+    { filename }
+  );
   return module.exports;
 }
 
@@ -90,6 +96,9 @@ test('the separate harness configuration selects Jest suites, but not source or 
     'scripts/test-harness/regressions/searchIcons.test.ts',
     'scripts/test-harness/regressions/storeEntryPoint.test.ts',
     'scripts/test-harness/regressions/testWithFeatureToggles.test.ts',
+    'scripts/test-harness/test-utils-lazy-renderer.test.tsx',
+    'scripts/test-harness/test-utils.test.tsx',
+    'scripts/test-harness/theme-registry.test.ts',
   ]);
   for (const file of harnessFiles) {
     assert.equal(selected(config, file), jestFiles.includes(file), file);

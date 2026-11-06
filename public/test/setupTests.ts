@@ -3,13 +3,12 @@ import 'core-js/stable/structured-clone';
 import 'whatwg-fetch';
 import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
-import path from 'node:path';
+
 import { initReactI18next } from 'react-i18next/initReactI18next';
 
 import { matchers } from '@grafana/test-utils';
 
 import { setPluginComponentsHook } from '../../packages/grafana-runtime/src/services/pluginExtensions/usePluginComponents';
-import { getEnvConfig } from '../../scripts/cli/env-util';
 
 import { jestDomMatchers } from './lazyJestDomMatchers';
 
@@ -41,9 +40,18 @@ afterEach(() => {
   }
 });
 
-const config = getEnvConfig(path.resolve(__dirname, '../..'));
+declare const __GRAFANA_TEST_FAIL_ON_CONSOLE__: boolean;
 
-if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
+// Configurations that replace Jest's globals still need the existing developer preference.
+const failTestsOnConsole =
+  process.env.CI ||
+  (typeof __GRAFANA_TEST_FAIL_ON_CONSOLE__ !== 'undefined'
+    ? __GRAFANA_TEST_FAIL_ON_CONSOLE__
+    : (require('../../scripts/cli/env-util.cjs') as typeof import('../../scripts/cli/env-util')).getEnvConfig(
+        `${__dirname}/../..`
+      ).frontend_dev_fail_tests_on_console);
+
+if (failTestsOnConsole) {
   failOnConsole({
     shouldFailOnLog: true,
     shouldFailOnDebug: true,

@@ -1,0 +1,44 @@
+[
+  {
+    "snapshot": "ini@5.0.0",
+    "name": "ini",
+    "version": "5.0.0",
+    "url": "https://registry.npmjs.org/ini/-/ini-5.0.0.tgz",
+    "integrity": "sha512-+N0ngpO3e7cRUWOJAS7qw0IZIVc6XPrW4MlFBdD066F2L4k1L6ker3hLqSq7iXxU5tgS4WGkIUElWn5vogAEnw=="
+  },
+  {
+    "snapshot": "typescript@6.0.2",
+    "name": "typescript",
+    "version": "6.0.2",
+    "url": "https://registry.npmjs.org/typescript/-/typescript-6.0.2.tgz",
+    "integrity": "sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ=="
+  },
+  {
+    "snapshot": "lodash@4.18.1",
+    "name": "lodash",
+    "version": "4.18.1",
+    "url": "https://registry.npmjs.org/lodash/-/lodash-4.18.1.tgz",
+    "integrity": "sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q=="
+  },
+  {
+    "snapshot": "tinycolor2@1.6.0",
+    "name": "tinycolor2",
+    "version": "1.6.0",
+    "url": "https://registry.npmjs.org/tinycolor2/-/tinycolor2-1.6.0.tgz",
+    "integrity": "sha512-XPaBkWQJdsf3pLKJV9p4qN/S+fm2Oj8AIPo1BTUhg5oxkvm9+SVEGFdhyOz7tTdUTfvxMiAs4sp6/eZO2Ew+pw=="
+  },
+  {
+    "snapshot": "zod@4.6.7",
+    "name": "zod",
+    "version": "4.6.7",
+    "url": "https://registry.npmjs.org/zod/-/zod-4.6.7.tgz",
+    "integrity": "sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg=="
+  },
+  {
+    "snapshot": "prettier@3.6.2",
+    "name": "prettier",
+    "version": "3.6.2",
+    "url": "https://registry.npmjs.org/prettier/-/prettier-3.6.2.tgz",
+    "integrity": "sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ=="
+  }
+]
