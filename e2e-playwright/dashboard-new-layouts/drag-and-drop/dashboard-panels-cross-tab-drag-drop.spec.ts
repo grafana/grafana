@@ -21,6 +21,8 @@ test.use({
 const TAB_1_PANELS = ['P1', 'P2', 'P3'];
 // how long a tab has to be hovered during a drag before it opens
 const TAB_ACTIVATION_DELAY_MS = 600;
+// how far ahead of the page clock to pause it, enough to cover the round trips on a slow runner
+const CLOCK_PAUSE_LEAD_MS = 5_000;
 
 async function openDashboard(page: Page, request: APIRequestContext, selectors: E2ESelectorGroups) {
   await flows.dashboards.createAndOpenDashboard({
@@ -154,8 +156,10 @@ test.describe('Dashboard panels cross-tab drag and drop', { tag: ['@dashboards']
     await expect(tabs.getTitle('Tab 1')).toHaveAttribute('aria-selected', 'true');
 
     const drag = await startPointerDrag(page, 'panel "P1"', panels.getHeader('P1'));
+    // The page clock keeps ticking until the pause lands, and pausing in the past throws, so aim
+    // well ahead of it; no tab is hovered yet, so the jump cannot fire an activation timer
     const pageNow = await page.evaluate(() => Date.now());
-    await page.clock.pauseAt(pageNow + 100);
+    await page.clock.pauseAt(pageNow + CLOCK_PAUSE_LEAD_MS);
 
     await test.step('Hover Tab 2 for less than the activation delay, then move away', async () => {
       await drag.moveTo(tabs.getTitle('Tab 2'));
