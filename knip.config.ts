@@ -65,6 +65,9 @@ const config: KnipConfig = {
         // used by coverage script, see jest.config.codeowner.js
         'jest-monocart-coverage',
 
+        // used by jest
+        '@swc-contrib/mut-cjs-exports',
+
         // needed by github actions
         '@grafana/levitate',
         'wait-on',

@@ -210,7 +210,7 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('app/features/dashboard/api/DashboardAPIVersionResolver', () => ({
   dashboardAPIVersionResolver: {
-    resolve: mockResolve,
+    resolve: (...args: unknown[]) => mockResolve(...args),
   },
 }));
 

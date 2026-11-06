@@ -24,7 +24,7 @@ import { PanelQueryRunner, type QueryRunnerOptions } from './PanelQueryRunner';
 jest.mock('@grafana/data', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/data'),
-  applyFieldOverrides: applyFieldOverridesMock,
+  applyFieldOverrides: (...args: unknown[]) => applyFieldOverridesMock(...args),
 }));
 
 jest.mock('app/core/services/backend_srv');

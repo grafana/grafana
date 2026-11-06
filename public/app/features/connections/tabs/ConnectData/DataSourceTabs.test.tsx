@@ -147,7 +147,7 @@ jest.mock('@grafana/runtime', () => {
 describe('DataSourceEditTabs', () => {
   beforeEach(() => {
     process.env.NODE_ENV = 'test';
-    (api.getDataSources as jest.Mock) = jest.fn().mockResolvedValue(mockDatasources);
+    jest.spyOn(api, 'getDataSources').mockResolvedValue(mockDatasources);
     (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
     setDatasourcePluginMetas({
       [mockDatasources[0].type]: {
