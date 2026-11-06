@@ -92,10 +92,6 @@ type ConcurrentJobDriver struct {
 // multiple job workers. resyncInterval is the jobs informer's resync/re-list
 // cadence; the driver uses it as the post-claim cooldown so failed-run recovery
 // tracks the configured pickup interval (non-positive falls back to 30s).
-//
-// tracer starts the root span of every job. Spans that the workers start with
-// tracing.Start only record when a parent span exists, so without this root
-// span they are all dropped. A nil tracer keeps that old behaviour.
 func NewConcurrentJobDriver(
 	numDrivers int,
 	jobTimeout, resyncInterval, leaseRenewalInterval time.Duration,
@@ -105,7 +101,6 @@ func NewConcurrentJobDriver(
 	registry prometheus.Registerer,
 	metrics *JobMetrics,
 	natsBacked bool,
-	tracer tracing.Tracer,
 	workers ...Worker,
 ) (*ConcurrentJobDriver, error) {
 	if numDrivers <= 0 {
@@ -134,7 +129,6 @@ func NewConcurrentJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		metrics:              metrics,
-		tracer:               tracer,
 		processed:            usinformer.NewProcessedMetrics(registry, resourceLabelJobs, natsBacked),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
@@ -160,6 +154,14 @@ func NewConcurrentJobDriver(
 	))
 
 	return driver, nil
+}
+
+// SetTracer sets the tracer that starts the root span of every job.
+// Call it before Run.
+// Spans that the workers start with tracing.Start only record when a parent span exists.
+// Without a tracer, the workers have no parent span, so they drop their spans.
+func (c *ConcurrentJobDriver) SetTracer(tracer tracing.Tracer) {
+	c.tracer = tracer
 }
 
 // EventHandler returns informer event handlers that feed the work queue.
@@ -390,9 +392,9 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				strconv.Itoa(driverID),
 				c.metrics,
 				c.processed,
-				c.tracer,
 				c.workers...,
 			)
+			processor.tracer = c.tracer
 
 			driverLogger.Debug("start job driver")
 			for c.processNextWorkItem(driverCtx, processor) {

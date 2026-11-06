@@ -57,7 +57,8 @@ func processOneJob(t *testing.T, tracer tracing.Tracer) {
 		resourceOpsTotal: prometheus.NewCounterVec(prometheus.CounterOpts{Name: "test_resource_operations_total"},
 			[]string{"action", "operation", "outcome", "reason", "group", "kind"}),
 	}
-	processor := newJobProcessor(time.Minute, time.Minute, store, repoGetter, history, "0", metrics, nil, tracer, worker)
+	processor := newJobProcessor(time.Minute, time.Minute, store, repoGetter, history, "0", metrics, nil, worker)
+	processor.tracer = tracer
 	require.NoError(t, processor.processKey(t.Context(), job.Namespace, job.Name, triggerLive, time.Time{}))
 }
 

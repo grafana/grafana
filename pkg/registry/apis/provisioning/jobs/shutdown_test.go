@@ -123,7 +123,6 @@ func TestConcurrentJobDriver_Run_StopsOnContextCancel(t *testing.T) {
 		prometheus.NewRegistry(),
 		nil,
 		false,
-		nil,
 	)
 	require.NoError(t, err)
 
@@ -187,7 +186,6 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 			prometheus.NewRegistry(),
 			nil,
 			false,
-			nil,
 		)
 		require.NoError(t, err)
 

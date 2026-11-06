@@ -116,11 +116,9 @@ func newJobProcessor(
 	driverID string,
 	metrics *JobMetrics,
 	processed *usinformer.ProcessedMetrics,
-	tracer tracing.Tracer,
 	workers ...Worker,
 ) *jobProcessor {
 	return &jobProcessor{
-		tracer:               tracer,
 		jobTimeout:           jobTimeout,
 		leaseRenewalInterval: leaseRenewalInterval,
 		store:                store,
