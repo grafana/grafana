@@ -166,8 +166,6 @@ export const FlagKeys = {
   FeedbackButton: "feedbackButton",
   /** Renders the flame graph's top table using TableNG instead of the legacy Table */
   FlameGraphTableNg: "flameGraph.tableNg",
-  /** Enables use of app platform API for folders */
-  FoldersAppPlatformAPI: "foldersAppPlatformAPI",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Allow admins to make announcement banners dismissible by users */
@@ -1246,17 +1244,6 @@ export const useFlagFeedbackButton = (options?: ReactFlagEvaluationOptions): boo
  */
 export const useFlagFlameGraphTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("flameGraph.tableNg", false, options).value;
-};
-
-/**
- * Enables use of app platform API for folders
- *
- * **Details:**
- * - flag key: `foldersAppPlatformAPI`
- * - default value: `true`
- */
-export const useFlagFoldersAppPlatformAPI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("foldersAppPlatformAPI", true, options).value;
 };
 
 /**

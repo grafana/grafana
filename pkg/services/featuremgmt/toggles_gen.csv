@@ -45,7 +45,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-14,folderPickerCreatePermission,experimental,@grafana/grafana-search-and-storage,false,false,false
 2026-05-21,kubernetesFolderCascadeDelete,experimental,@grafana/grafana-search-and-storage,false,false,false
 2026-10-28,folder.asyncCascadeDeleteThroughController,experimental,@grafana/grafana-search-and-storage,false,false,false
-2026-09-11,kubernetesFolderCountsLegacyStorage,experimental,@grafana/grafana-search-and-storage,false,true,false
 2026-05-26,grafana.kubernetesAnnotationsClient,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-19,grafana.newPanelQueryErrorsUI,GA,@grafana/dashboards-squad,false,false,true
 2025-08-29,useKubernetesShortURLsAPI,GA,@grafana/sharing-squad,false,false,true
@@ -224,7 +223,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-06-10,alertingImportAlertmanagerAPI,preview,@grafana/alerting-squad,false,false,false
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,true
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/data-sources-plugins,false,false,false
-2025-07-03,foldersAppPlatformAPI,GA,@grafana/grafana-frontend-navigation,false,false,true
 2025-07-16,otelLogsFormatting,GA,@grafana/observability-logs,false,false,true
 2025-07-17,alertingNotificationHistory,GA,@grafana/alerting-squad,false,false,false
 2025-07-31,dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
