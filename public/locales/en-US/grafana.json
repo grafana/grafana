@@ -13559,8 +13559,12 @@
       "code": "Code",
       "heading": "Heading",
       "label": "Click to add above",
+      "more-visualization-options": "More visualization options",
+      "new-from-saved-queries": "New from Saved Queries",
       "paragraph": "Paragraph",
       "prompt": "Type to start writing — press / for blocks",
+      "saved-query-no-suggestion": "No visualization found",
+      "saved-query-no-suggestion-detail": "The query did not return enough data to suggest a visualization type.",
       "visualization": "Visualization"
     },
     "cell": {
