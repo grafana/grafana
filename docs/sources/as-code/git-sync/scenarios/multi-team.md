@@ -141,13 +141,17 @@ Each team works in its own repository, and Grafana shows them side by side:
 
 ## Scale to more teams
 
-Adding more teams is straightforward. For a third team, create a repository and configure:
+To add a team, create a repository and configure another Repository resource:
 
 - **Repository**: `your-org/security-dashboards`
 - **Branch**: `main`
 - **Path**: `grafana/`
 
 This creates a `security-dashboards` folder in the same Grafana instance.
+
+Each Repository resource counts toward your repository connection limit: 1 on Grafana Cloud Free, 10 on other Grafana Cloud tiers, and 10 by default on self-managed Grafana, where you can change it with `max_repositories`. The alternatives on this page also use one connection per team. One connection per team works for a few teams, but it doesn't scale as you add more.
+
+For more than a few teams, shard by capacity instead. Keep all teams in one repository, group them into shard folders of up to about 1,000 resources each, and connect each shard folder separately. Refer to [Shard by capacity, not by team](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits/#shard-by-capacity-not-by-team).
 
 ## Alternative: Shared repository with different paths
 
