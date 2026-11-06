@@ -11,7 +11,8 @@ import { InlineToast } from '../InlineToast/InlineToast';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
-import { VizTooltipColorPlacement, type VizTooltipDelta, type VizTooltipItem } from './types';
+import { useVizTooltipSize } from './VizTooltipContext';
+import { VizTooltipColorPlacement, type VizTooltipDelta, type VizTooltipItem, type VizTooltipSize } from './types';
 
 interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   /** The formatted value to display. Widened from `VizTooltipItem.value` to also accept numbers, null, and ReactNode. */
@@ -60,7 +61,8 @@ export const VizTooltipRow = ({
   isHiddenFromViz,
   delta,
 }: VizTooltipRowProps) => {
-  const styles = useStyles2(getStyles, justify, marginRight);
+  const size = useVizTooltipSize();
+  const styles = useStyles2(getStyles, justify, marginRight, size);
 
   const deltaDisplay = delta == null ? null : `(${delta.numeric > 0 ? '+' : ''}${delta.text})`;
 
@@ -268,7 +270,7 @@ const getDeltaClass = (delta: VizTooltipDelta, styles: ReturnType<typeof getStyl
   return isFavorable ? styles.deltaFavorable : styles.deltaUnfavorable;
 };
 
-const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string) => ({
+const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string, size: VizTooltipSize = 'auto') => ({
   contentWrapper: css({
     display: 'flex',
     maxWidth: '100%',
@@ -289,7 +291,8 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   }),
   labelWrapper: css({
     flexGrow: 1,
-    flexShrink: 0,
+    // In a narrow tooltip the label keeps its width and the value wraps/shrinks instead.
+    flexShrink: size === 'narrow' ? 0 : 1,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     color: theme.colors.text.secondary,
@@ -303,8 +306,8 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   valueWrapper: css({
     display: 'flex',
     alignItems: 'center',
-    flexShrink: 1,
-    minWidth: 0,
+    flexShrink: size === 'narrow' ? 1 : 0,
+    minWidth: size === 'narrow' ? 0 : undefined,
     alignSelf: 'center',
     marginRight,
   }),
