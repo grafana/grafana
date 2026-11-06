@@ -8,18 +8,18 @@ import { logError } from '../../../Analytics';
 // No props needed — the component is self-contained: it generates rule form values and
 // hands them to the existing creation form without saving.
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface AINewAlertRuleButtonProps {}
+export interface AIAlertRuleButtonProps {}
 
-let InternalAINewAlertRuleButtonComponent: ComponentType<AINewAlertRuleButtonProps> | null = null;
+let InternalAIAlertRuleButtonComponent: ComponentType<AIAlertRuleButtonProps> | null = null;
 
 // Rendered in the alert rules page header. Returns null when no Enterprise component is registered.
-export const AINewAlertRuleButtonComponent: ComponentType<AINewAlertRuleButtonProps> = (props) => {
-  if (!InternalAINewAlertRuleButtonComponent) {
+export const AIAlertRuleButtonComponent: ComponentType<AIAlertRuleButtonProps> = (props) => {
+  if (!InternalAIAlertRuleButtonComponent) {
     return null;
   }
 
-  const WrappedComponent = withErrorBoundary(InternalAINewAlertRuleButtonComponent, {
-    title: t('alerting.ai.error-boundary.new-alert-rule-button', 'AI Generate Alert Rule button failed to load'),
+  const WrappedComponent = withErrorBoundary(InternalAIAlertRuleButtonComponent, {
+    title: t('alerting.ai.error-boundary.alert-rule-button', 'AI Generate Alert Rule button failed to load'),
     style: 'alertbox',
     errorLogger: logError,
   });
@@ -27,6 +27,6 @@ export const AINewAlertRuleButtonComponent: ComponentType<AINewAlertRuleButtonPr
   return createElement(WrappedComponent, props);
 };
 
-export function addAINewAlertRuleButton(component: ComponentType<AINewAlertRuleButtonProps> | null) {
-  InternalAINewAlertRuleButtonComponent = component;
+export function addAIAlertRuleButton(component: ComponentType<AIAlertRuleButtonProps> | null) {
+  InternalAIAlertRuleButtonComponent = component;
 }
