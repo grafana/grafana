@@ -155,3 +155,31 @@ describe('notebook checklists', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+it.each(['Enter', 'Shift-Enter'])('exits after a populated task with %s', async (key) => {
+  const text = '- [ ] Check logs';
+  const onSubmit = jest.fn();
+  render(
+    <MarkdownCellEditor content={{ kind: 'Markdown', spec: { text } }} onChange={jest.fn()} onSubmit={onSubmit} />
+  );
+  const editor = await screen.findByRole('textbox', { name: 'Markdown' });
+  const view = EditorView.findFromDOM(editor)!;
+  act(() => view.dispatch({ selection: { anchor: text.length } }));
+  fireEvent.keyDown(editor, { key: 'Enter', code: 'Enter', shiftKey: key === 'Shift-Enter' });
+  fireEvent.keyDown(editor, { key: 'Enter', code: 'Enter', shiftKey: key === 'Shift-Enter' });
+  expect(view.state.doc.toString()).toBe('- [ ] Check logs\n');
+});
+
+describe.each(['**', '*', '`', '~~'])('closing %s markers', (marker) => {
+  it.each(['Enter', 'Shift-Enter'])('preserves closing markers on %s', async (key) => {
+    const text = '- [ ] ' + marker + 'Check logs' + marker;
+    render(
+      <MarkdownCellEditor content={{ kind: 'Markdown', spec: { text } }} onChange={jest.fn()} onSubmit={jest.fn()} />
+    );
+    const editor = await screen.findByRole('textbox', { name: 'Markdown' });
+    const view = EditorView.findFromDOM(editor)!;
+    act(() => view.dispatch({ selection: { anchor: text.length - marker.length } }));
+    fireEvent.keyDown(editor, { key: 'Enter', code: 'Enter', shiftKey: key === 'Shift-Enter' });
+    expect(view.state.doc.toString()).toBe(text + '\n- [ ] ');
+  });
+});
