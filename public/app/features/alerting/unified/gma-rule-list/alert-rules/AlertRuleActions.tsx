@@ -12,12 +12,14 @@ import { ConfirmModal, Dropdown, LinkButton, Menu, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { AnalyzeRuleButton } from 'app/features/alerting/unified/components/assistant/AnalizeRuleButton';
+import { DeclareIncidentMenuItem } from 'app/features/alerting/unified/components/bridges/DeclareIncidentButton';
 import { EnrichmentDrawerExtension } from 'app/features/alerting/unified/components/rule-list/extensions/EnrichmentDrawerExtension';
 import { RedirectToCloneRule } from 'app/features/alerting/unified/components/rules/CloneRule';
 import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/silences/SilenceGrafanaRuleDrawer';
 import { isGranted } from 'app/features/alerting/unified/hooks/abilities/abilityUtils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { isK8sEntityProvisioned } from 'app/features/alerting/unified/utils/k8s/utils';
+import { isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
 import { type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { grafanaRulesNav } from '../../utils/navigation';
@@ -83,6 +85,7 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
   };
 
   const canManageEnrichments = isGranted(abilities.canManageEnrichments);
+  const shouldShowDeclareIncident = (!isOpenSourceEdition() || isLocalDevEnv()) && rule.status?.state === 'Firing';
 
   const menu = (
     <Menu>
@@ -145,6 +148,7 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
           />
         </>
       )}
+      {shouldShowDeclareIncident && <DeclareIncidentMenuItem title={title} url={grafanaRulesNav.viewLink(uid)} />}
     </Menu>
   );
 
