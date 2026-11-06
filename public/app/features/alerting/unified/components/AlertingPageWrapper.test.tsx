@@ -2,9 +2,9 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
+import { type AlertManagerDataSourceJsonData } from '@grafana/alerting/internal';
 import { type NavModelItem, OrgRole, store } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';

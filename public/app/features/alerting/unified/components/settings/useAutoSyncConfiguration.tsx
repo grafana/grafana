@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { type AlertManagerDataSourceJsonData } from '@grafana/alerting/internal';
 import { type DataSourceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useDispatch } from 'app/types/store';
 
