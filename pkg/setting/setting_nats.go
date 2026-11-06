@@ -46,7 +46,7 @@ type NATSSettings struct {
 	ClientURLs []string
 
 	// ListenAddress binds the cluster port. Empty lets the embedded server choose
-	// from the database type and whether secret_key can authenticate routes.
+	// from the database type and whether discovery is on.
 	ListenAddress    string
 	ClientPort       int
 	ClusterPort      int

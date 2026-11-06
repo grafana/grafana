@@ -70,6 +70,8 @@ func loadRouteCredentials(ctx context.Context, store kv.KV, clusterName string) 
 
 func randomRoutePassword() string {
 	var b [32]byte
+	// rand.Read never returns an error: it crashes the program rather than
+	// return fewer or predictable bytes.
 	_, _ = rand.Read(b[:])
 	return hex.EncodeToString(b[:])
 }
