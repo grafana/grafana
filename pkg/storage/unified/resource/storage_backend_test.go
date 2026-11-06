@@ -1305,7 +1305,7 @@ func TestKvStorageBackend_ReadResource_JoinedReadCloseErrors(t *testing.T) {
 			require.NotNil(t, response.Error)
 			require.Contains(t, response.Error.Message, tc.closeErr.Error())
 			require.Equal(t, tc.want, grpcCodeFromErrorResult(response.Error))
-			require.Equal(t, tc.want, status.Code(errorResultStatus(response.Error)))
+			require.Equal(t, tc.want, status.Code(GRPCStatusError(response.Error)))
 		})
 	}
 }
@@ -3234,7 +3234,7 @@ func TestKvStorageBackend_ListModifiedSince_PastEventRetention(t *testing.T) {
 			// Built by hand: the data store cache from newDataStore runs a goroutine that never exits the bubble.
 			kv := setupBadgerKV(t)
 			backend := &kvStorageBackend{
-				dataStore:            &dataStore{kv: kv, metrics: newKVBackendMetrics(nil)},
+				dataStore:            &dataStore{kv: kv},
 				eventStore:           newEventStore(kv),
 				log:                  &logging.NoOpLogger{},
 				metrics:              newKVBackendMetrics(nil),
@@ -4162,7 +4162,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			Resource:        "clusterresources",
 			Name:            "my-cluster-resource",
 			ResourceVersion: rv1,
-			Action:          kv.DataActionCreated,
+			Action:          DataActionCreated,
 		}
 
 		_, err = backend.dataStore.Get(ctx, eventKey1)
@@ -5200,7 +5200,7 @@ func TestListModifiedSinceSingleConnection(t *testing.T) {
 		t.Run(age.String(), func(t *testing.T) {
 			store, pool := setupSqlKVWithDB(t)
 			backend := &kvStorageBackend{
-				dataStore:  newDataStore(store, nil),
+				dataStore:  newDataStore(store),
 				eventStore: newEventStore(store),
 				log:        &logging.NoOpLogger{},
 			}

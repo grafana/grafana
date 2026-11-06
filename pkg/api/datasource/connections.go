@@ -123,10 +123,9 @@ func (cl *legacyConnectionClientImpl) GetConnectionByUID(ctx context.Context, or
 		return &dsV0.DataSourceConnectionList{
 			Items: []dsV0.DataSourceConnection{
 				{
-					APIGroup:   builtinGrafanaDatasourceType + ".datasource.grafana.app",
-					APIVersion: "v0alpha1",
-					Name:       uid,
-					Plugin:     builtinGrafanaDatasourceType,
+					APIGroup: builtinGrafanaDatasourceType + ".datasource.grafana.app",
+					Name:     uid,
+					Plugin:   builtinGrafanaDatasourceType,
 				},
 			},
 		}, nil
@@ -151,10 +150,9 @@ func (cl *legacyConnectionClientImpl) GetConnectionByUID(ctx context.Context, or
 	return &dsV0.DataSourceConnectionList{
 		Items: []dsV0.DataSourceConnection{
 			{
-				APIGroup:   conn.Type + ".datasource.grafana.app",
-				APIVersion: "v0alpha1",
-				Name:       conn.UID,
-				Plugin:     conn.Type,
+				APIGroup: conn.Type + ".datasource.grafana.app",
+				Name:     conn.UID,
+				Plugin:   conn.Type,
 			},
 		},
 	}, nil

@@ -2128,6 +2128,8 @@ export type NotebookElementReference = {
 export type NotebookNotebookLayoutItemSpec = {
   collapsed?: boolean;
   element: NotebookElementReference;
+  /** Assigned by the server on create or update and never changed by clients (a UUID v4). Comments anchor to this rather than to the element name. */
+  id?: string;
   source: string;
 };
 export type NotebookNotebookLayoutItemKind = {

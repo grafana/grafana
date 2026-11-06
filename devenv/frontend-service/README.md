@@ -69,6 +69,29 @@ To simulate the `/bootdata` endpoint being available, there are special control 
 
 When unavailable, the API will return `HTTP 503 Service Unavailable` with a JSON payload.
 
+### Gateway `/_/status` endpoint
+
+The nginx proxy mocks the upstream gateway's `/_/status` endpoint (as per ADR 0014 in the hosted gateway), which the frontend polls for ST pod readiness. It always returns `{"status":"active"}` with `Cache-Control: no-store`. Use browser devtools to simulate other states.
+
+| HTTP | Body                       |
+| ---- | -------------------------- |
+| 200  | `{"status":"active"}`      |
+| 200  | `{"status":"starting"}`    |
+| 200  | `{"status":"captcha"}`     |
+| 200  | `{"status":"migrating"}`   |
+| 200  | `{"status":"restoring"}`   |
+| 200  | `{"status":"archiving"}`   |
+| 200  | `{"status":"migrated"}`    |
+| 200  | `{"status":"suspended"}`   |
+| 200  | `{"status":"deleting"}`    |
+| 200  | `{"status":"outdated"}`    |
+| 200  | `{"status":"unavailable"}` |
+| 404  | `{"status":"not_found"}`   |
+| 500  | `{"status":"error"}`       |
+
+> [!NOTE]
+> `starting` and `migrating` responses may include a `Retry-After: <seconds>` header. Non-GET requests return `405` with `Allow: GET`.
+
 ### Leave service running
 
 By default, Tilt services stay running after you close the CLI, but `make frontend-service` wraps Tilt and auto shuts down the services. Set the environment variable `AUTO_DOWN=false` when running `make frontend-service` to leave the services running after quitting make. This is useful if you're restarting tilt often in quick succession for developing it.

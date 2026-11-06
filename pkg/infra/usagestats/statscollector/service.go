@@ -313,7 +313,7 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 		return false
 	}
 
-	statsResult, err := s.statsService.GetSystemStats(ctx, &stats.GetSystemStatsQuery{})
+	statsResult, err := s.statsService.GetSystemStats(ctx, &stats.GetSystemStatsQuery{SkipProvisionedDashboardCount: true})
 	if err != nil {
 		s.log.Error("Failed to get system stats", "error", err)
 		return false

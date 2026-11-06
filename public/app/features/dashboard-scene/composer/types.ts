@@ -36,8 +36,9 @@ export interface ComposerEnterRequestOptions {
 
 interface ComposerEnterOptions {
   /**
-   * 'floating' (the default) floats the extension sidebar over the document when the session starts, even
-   * with `grafana.extensionSidebarFloating` off. The user may dock it and stay in Composer. When the session
+   * 'floating' (the default) keeps floating a sidebar the entry request opened floating, even with
+   * `grafana.extensionSidebarFloating` off; a sidebar already open keeps its layout. The user may switch
+   * layouts and stay in Composer. When the session
    * ends, the layout from before it comes back, unless the user chose another one since. Closing the
    * sidebar ends the session. 'none' leaves the sidebar alone and does not tie the session to it.
    */
@@ -154,7 +155,10 @@ export interface RegionPick {
 
 export type RegionCapture =
   | { status: 'ready'; image: Blob; width: number; height: number; capturedAt: string }
-  | { status: 'failed'; reason: 'unsupported' | 'too_large' | 'timeout' | 'busy' | 'not_visible' | 'failed' };
+  | {
+      status: 'failed';
+      reason: 'unsupported' | 'too_large' | 'timeout' | 'busy' | 'not_visible' | 'controls' | 'failed';
+    };
 
 export interface ComposerElement {
   ref: ElementRef;
@@ -211,13 +215,20 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * Renders a region as an image, WebP where the browser encodes it, longest edge at most 1568px. One
    * capture runs at a time ('busy' otherwise), and picking and tab switching wait for it. 'not_visible'
    * unless the region is fully in view on a selected tab (reveal it, then retry); scrolling during a
-   * capture also ends it as 'not_visible'. 'too_large' when the dashboard would render past 16 megapixels,
-   * 'unsupported' for tainted or cross-origin content, 'timeout' after 10 s (a late result is dropped).
+   * capture also ends it as 'not_visible'. 'controls' when it overlaps the dashboard's own buttons (time
+   * picker, refresh, share, mode); variables are captured. 'too_large' when the dashboard would render past
+   * 16 megapixels, 'unsupported' for tainted or cross-origin content, 'timeout' after 10 s (a late result is
+   * dropped).
    */
   captureRegion(regionId: string, signal: AbortSignal): Promise<RegionCapture>;
   /** Not supported in M1: returns []. */
   listElements(): ComposerElement[];
   highlight(target: ElementRef | null): void;
+  /**
+   * Paused while the Assistant runs a turn that edits the document: picking and pins are disabled. Turning
+   * Composer off, or switching it to Viewing, asks for confirmation while the session is paused, because
+   * either stops that turn.
+   */
   setPaused(paused: boolean): void;
 
   /**
@@ -236,9 +247,10 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * A stable, zero-size container for the plugin to portal its editor or a read-only preview into. Works
    * for active and staged items alike. It sits at the pin's visual centre (half a pin right of and above
    * the tail on the item's point, clamped to the viewport), so a popover placed beside it sits beside the
-   * pin, and it follows scroll, resize and layout like the pin; it is hidden
-   * (`display: none`) while the element is entirely off-screen. Core does no collision handling and never
-   * reads, styles or clears its content. Null when the item is not set or does not resolve.
+   * pin, and it follows scroll, resize and layout like the pin. An active item's anchor (the open editor)
+   * stays at the nearest visible edge while its element is scrolled away or under the sticky controls; a
+   * staged item's is hidden (`display: none`) then. Core does no collision handling and never reads, styles
+   * or clears its content. Null when the item is not set or does not resolve.
    */
   getAnnotationAnchor(id: string): HTMLElement | null;
   /**
@@ -254,6 +266,14 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    */
   readSpec(): Promise<{ spec: Spec; revision: number }>;
   applySpec(spec: Spec, opts: ComposerApplyOptions): Promise<ApplyOutcome<Spec>>;
+  /**
+   * Whether the dashboard is in Editing, where Composer writes. Over Viewing, an `applySpec` first switches
+   * the dashboard to Editing, as an Assistant edit from Viewing starts Agent editing. False once the
+   * session has ended.
+   */
+  readonly canWrite: boolean;
+  /** Fires when `canWrite` changes (Viewing and Editing switched). Returns an unsubscribe. */
+  onCanWriteChange(listener: (canWrite: boolean) => void): () => void;
 
   /**
    * Leaves Composer. A dashboard session never saves or discards and returns nothing. A notebook keeps its

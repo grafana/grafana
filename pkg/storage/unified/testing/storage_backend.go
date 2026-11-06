@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -50,9 +49,6 @@ const (
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
-
-// NewBackendWithDBFunc creates a backend with database access for testing
-type NewBackendWithDBFunc func(ctx context.Context) (resource.StorageBackend, sqldb.DB)
 
 // TestOptions configures which tests to run
 type TestOptions struct {
@@ -1406,15 +1402,12 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		require.Nil(t, updated.Error)
 
 		rsp := getBlob(v2.Uid, 0)
-		require.Nil(t, rsp.Error)
 		require.Equal(t, "logo v2", string(rsp.Value))
 
-		rsp = getBlob(v1.Uid, 0)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		_, err = server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, Uid: v1.Uid})
+		require.Equal(t, int32(http.StatusNotFound), requireRPCErrorResult(t, err).Code)
 
 		rsp = getBlob(v1.Uid, created.ResourceVersion)
-		require.Nil(t, rsp.Error)
 		require.Equal(t, "logo v1", string(rsp.Value))
 
 		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: v1.Uid}, true)
@@ -1423,9 +1416,8 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 
 		otherKey := &resourcepb.ResourceKey{Namespace: ns, Group: "ggg", Resource: "rrr", Name: "nnn"}
 		rsp, err = server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: otherKey, Uid: v2.Uid})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.Nil(t, rsp)
+		require.Equal(t, int32(http.StatusNotFound), requireRPCErrorResult(t, err).Code)
 	})
 }
 
@@ -1456,12 +1448,12 @@ func runTestIntegrationBackendCreateNewResource(t *testing.T, backend resource.S
 	require.Nil(t, response.Error, "create resource response.Error")
 
 	t.Run("gracefully handles resource already exists error", func(t *testing.T) {
-		response, err := server.Create(ctx, request)
-		require.NoError(t, err, "create resource")
-		require.NotNil(t, response.GetError(), "create resource response.Error")
-		assert.Equal(t, int32(http.StatusConflict), response.GetError().GetCode(), "create resource response.Error.Code")
-		assert.Equal(t, string(metav1.StatusReasonAlreadyExists), response.GetError().GetReason(), "create resource response.Error.Reason")
-		t.Logf("Error: %v", response.GetError()) // only prints on failure, so this is fine
+		_, err := server.Create(ctx, request)
+		responseErr := requireRPCErrorResult(t, err)
+		require.NotNil(t, responseErr, "create resource responseErr")
+		assert.Equal(t, int32(http.StatusConflict), responseErr.GetCode(), "create resource responseErr.Code")
+		assert.Equal(t, string(metav1.StatusReasonAlreadyExists), responseErr.GetReason(), "create resource responseErr.Reason")
+		t.Logf("Error: %v", responseErr) // only prints on failure, so this is fine
 	})
 }
 
@@ -2226,7 +2218,7 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 	}
 
 	t.Run("read nonexistent resource returns 404", func(t *testing.T) {
-		resp, err := server.Read(ctx, &resourcepb.ReadRequest{
+		_, err := server.Read(ctx, &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{
 				Namespace: ns,
 				Group:     group,
@@ -2234,15 +2226,15 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 				Name:      "nonexistent-read",
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, resp.Error, "expected error in response")
-		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
+		respErr := requireRPCErrorResult(t, err)
+		require.NotNil(t, respErr, "expected error in response")
+		require.Equal(t, int32(http.StatusNotFound), respErr.Code)
 
-		require.NotNil(t, resp.Error.Details, "missing error details")
+		require.NotNil(t, respErr.Details, "missing error details")
 
-		require.Equal(t, group, resp.Error.Details.Group)
-		require.Equal(t, res, resp.Error.Details.Kind)
-		require.Equal(t, "nonexistent-read", resp.Error.Details.Name)
+		require.Equal(t, group, respErr.Details.Group)
+		require.Equal(t, res, respErr.Details.Kind)
+		require.Equal(t, "nonexistent-read", respErr.Details.Name)
 	})
 
 	t.Run("create duplicate resource returns 409 AlreadyExists", func(t *testing.T) {
@@ -2264,10 +2256,11 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 
 		// Second create with the same key should fail.
 		resp, err = server.Create(ctx, createReq)
-		require.NoError(t, err)
-		require.NotNil(t, resp.Error, "expected error for duplicate create")
-		require.Equal(t, int32(http.StatusConflict), resp.Error.Code)
-		require.Equal(t, string(metav1.StatusReasonAlreadyExists), resp.Error.Reason)
+		require.Nil(t, resp)
+		respErr := requireRPCErrorResult(t, err)
+		require.NotNil(t, respErr, "expected error for duplicate create")
+		require.Equal(t, int32(http.StatusConflict), respErr.Code)
+		require.Equal(t, string(metav1.StatusReasonAlreadyExists), respErr.Reason)
 	})
 
 	t.Run("update with stale resource version returns 409", func(t *testing.T) {
@@ -2304,14 +2297,15 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 			Value:           makeValue(name),
 			ResourceVersion: originalRV,
 		})
-		require.NoError(t, err)
-		require.NotNil(t, updateResp.Error, "expected error for stale RV update")
-		require.Equal(t, int32(http.StatusConflict), updateResp.Error.Code)
-		require.Equal(t, string(metav1.StatusReasonConflict), updateResp.Error.Reason)
+		require.Nil(t, updateResp)
+		updateRespErr := requireRPCErrorResult(t, err)
+		require.NotNil(t, updateRespErr, "expected error for stale RV update")
+		require.Equal(t, int32(http.StatusConflict), updateRespErr.Code)
+		require.Equal(t, string(metav1.StatusReasonConflict), updateRespErr.Reason)
 	})
 
 	t.Run("delete nonexistent resource returns 404", func(t *testing.T) {
-		resp, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+		_, err := server.Delete(ctx, &resourcepb.DeleteRequest{
 			Key: &resourcepb.ResourceKey{
 				Namespace: ns,
 				Group:     group,
@@ -2319,14 +2313,14 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 				Name:      "nonexistent-delete",
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, resp.Error, "expected error in response")
-		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
+		respErr := requireRPCErrorResult(t, err)
+		require.NotNil(t, respErr, "expected error in response")
+		require.Equal(t, int32(http.StatusNotFound), respErr.Code)
 
-		require.NotNil(t, resp.Error.Details)
-		require.Equal(t, group, resp.Error.Details.Group)
-		require.Equal(t, res, resp.Error.Details.Kind)
-		require.Equal(t, "nonexistent-delete", resp.Error.Details.Name)
+		require.NotNil(t, respErr.Details)
+		require.Equal(t, group, respErr.Details.Group)
+		require.Equal(t, res, respErr.Details.Kind)
+		require.Equal(t, "nonexistent-delete", respErr.Details.Name)
 	})
 
 	t.Run("delete with stale resource version returns 409", func(t *testing.T) {
@@ -2358,14 +2352,14 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 		require.Greater(t, updateResp.ResourceVersion, originalRV)
 
 		// Delete with the now-stale original RV.
-		deleteResp, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+		_, err = server.Delete(ctx, &resourcepb.DeleteRequest{
 			Key:             key,
 			ResourceVersion: originalRV,
 		})
-		require.NoError(t, err)
-		require.NotNil(t, deleteResp.Error, "expected error for stale RV delete")
-		require.Equal(t, int32(http.StatusConflict), deleteResp.Error.Code)
-		require.Equal(t, string(metav1.StatusReasonConflict), deleteResp.Error.Reason)
+		deleteRespErr := requireRPCErrorResult(t, err)
+		require.NotNil(t, deleteRespErr, "expected error for stale RV delete")
+		require.Equal(t, int32(http.StatusConflict), deleteRespErr.Code)
+		require.Equal(t, string(metav1.StatusReasonConflict), deleteRespErr.Reason)
 	})
 
 	t.Run("update without resource version returns 400", func(t *testing.T) {
@@ -2385,14 +2379,14 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 		require.Nil(t, createResp.Error)
 
 		// Attempt to update without sending a resource version.
-		updateResp, err := server.Update(ctx, &resourcepb.UpdateRequest{
+		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:   key,
 			Value: makeValue(name),
 		})
-		require.NoError(t, err)
-		require.NotNil(t, updateResp.Error, "expected error for missing RV update")
-		require.Equal(t, int32(http.StatusBadRequest), updateResp.Error.Code)
-		require.Equal(t, string(metav1.StatusReasonBadRequest), updateResp.Error.Reason)
+		updateRespErr := requireRPCErrorResult(t, err)
+		require.NotNil(t, updateRespErr, "expected error for missing RV update")
+		require.Equal(t, int32(http.StatusBadRequest), updateRespErr.Code)
+		require.Equal(t, string(metav1.StatusReasonBadRequest), updateRespErr.Reason)
 	})
 
 	t.Run("delete without resource version returns 400", func(t *testing.T) {
@@ -2413,17 +2407,17 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 		require.Nil(t, createResp.Error)
 
 		// Attempt to delete without sending a resource version.
-		deleteResp, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+		_, err = server.Delete(ctx, &resourcepb.DeleteRequest{
 			Key: key,
 		})
-		require.NoError(t, err)
-		require.NotNil(t, deleteResp.Error, "expected error for missing RV delete")
-		require.Equal(t, int32(http.StatusBadRequest), deleteResp.Error.Code)
-		require.Equal(t, string(metav1.StatusReasonBadRequest), deleteResp.Error.Reason)
+		deleteRespErr := requireRPCErrorResult(t, err)
+		require.NotNil(t, deleteRespErr, "expected error for missing RV delete")
+		require.Equal(t, int32(http.StatusBadRequest), deleteRespErr.Code)
+		require.Equal(t, string(metav1.StatusReasonBadRequest), deleteRespErr.Reason)
 	})
 
 	t.Run("update nonexistent resource returns 404", func(t *testing.T) {
-		resp, err := server.Update(ctx, &resourcepb.UpdateRequest{
+		_, err := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key: &resourcepb.ResourceKey{
 				Namespace: ns,
 				Group:     group,
@@ -2433,14 +2427,14 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 			Value:           makeValue("nonexistent-update"),
 			ResourceVersion: 1,
 		})
-		require.NoError(t, err)
+		respErr := requireRPCErrorResult(t, err)
 
-		require.NotNil(t, resp.Error, "expected error in response")
-		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
+		require.NotNil(t, respErr, "expected error in response")
+		require.Equal(t, int32(http.StatusNotFound), respErr.Code)
 
-		require.NotNil(t, resp.Error.Details)
-		require.Equal(t, group, resp.Error.Details.Group)
-		require.Equal(t, res, resp.Error.Details.Kind)
-		require.Equal(t, "nonexistent-update", resp.Error.Details.Name)
+		require.NotNil(t, respErr.Details)
+		require.Equal(t, group, respErr.Details.Group)
+		require.Equal(t, res, respErr.Details.Kind)
+		require.Equal(t, "nonexistent-update", respErr.Details.Name)
 	})
 }

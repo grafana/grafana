@@ -13,6 +13,7 @@ var WireSetBase = wire.NewSet(
 	legacypermissions.NewRoleCatalog,
 	ProvideAuthZClients,
 	ProvideAuthZAccessClient,
+	ProvideAuthZLegacyAccessClient,
 	ProvideAuthZUserPermissionsClient,
 	ProvideZanzanaClient,
 	ProvideEmbeddedZanzanaServer,
