@@ -4,6 +4,7 @@ import { getWrapper, testWithFeatureToggles } from 'test/test-utils';
 import { OrgRole } from '@grafana/data';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { useDataSourcesForRules } from '../../hooks/useDataSourcesForRules';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from '../../mocks';
 import { setupAutoSyncConfig } from '../../mocks/server/handlers/k8s/config.k8s';
@@ -45,15 +46,21 @@ describe('useShowImportToGMARulesBanner', () => {
   describe('with alertingMigrationWizardUI enabled', () => {
     testWithFeatureToggles({ enable: ['alertingMigrationWizardUI'] });
 
-    it('shows the banner when the user can import rules and a rule source exists', () => {
+    it('shows the banner when the user can import rules and a rule source exists', async () => {
       const { result } = renderUseShowImportToGMARulesBanner();
-      expect(result.current).toBe(true);
+      await waitFor(() => expect(result.current).toBe(true));
     });
 
-    it('does not show the banner when there are no rule sources', () => {
+    it('does not show the banner when there are no rule sources', async () => {
       setupDataSources(); // replaces the datasource list with an empty one
-      const { result } = renderUseShowImportToGMARulesBanner();
-      expect(result.current).toBe(false);
+      const wrapper = getWrapper({ renderWithRouter: false });
+      const { result } = renderHook(
+        () => ({ showBanner: useShowImportToGMARulesBanner(), rulesSources: useDataSourcesForRules() }),
+        { wrapper }
+      );
+
+      await waitFor(() => expect(result.current.rulesSources.isLoading).toBe(false));
+      expect(result.current.showBanner).toBe(false);
     });
   });
 
