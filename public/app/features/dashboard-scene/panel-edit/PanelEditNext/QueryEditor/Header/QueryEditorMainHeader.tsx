@@ -28,8 +28,10 @@ export function QueryEditorMainHeader() {
           })}
         </Text>
       </div>
-      <QueryOptionsBar />
-      <ExperimentalFeedbackButton />
+      <div className={styles.rightSection}>
+        <QueryOptionsBar />
+        <ExperimentalFeedbackButton />
+      </div>
     </div>
   );
 }
@@ -50,5 +52,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(1),
     flexShrink: 0,
+  }),
+  rightSection: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    flex: 1,
+    minWidth: 0,
   }),
 });
