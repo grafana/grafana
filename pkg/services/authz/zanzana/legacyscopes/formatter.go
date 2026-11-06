@@ -88,7 +88,13 @@ func (r Formatter) Permissions(resource, action, scope string, resp *authzv1.Lis
 
 	// If All is true, the user has access to all resources of this type.
 	if resp.All {
-		if isDashboardRBACAction(action) {
+		if resource == "annotations" {
+			// annotations:* would also authorize dashboard annotations.
+			appendIfMatches(ac.Permission{
+				Action: action,
+				Scope:  ac.ScopeAnnotationsTypeOrganization,
+			})
+		} else if isDashboardRBACAction(action) {
 			// Legacy RBAC sometimes stores scope "*" for org-wide dashboard access. Only add it
 			// when there is no scope filter: with a non-empty filter, "*" would match queries where
 			// legacy rows only had dashboards:* / folders:* (see PermissionMatchesSearchOptions).
