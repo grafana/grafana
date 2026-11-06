@@ -100,9 +100,9 @@ func ReceiverToModel(receiver store.ReceiverDB) PostableApiReceiver {
 	return NewReceiver(ResolveReceiverUID(receiver.UID, receiver.Name), receiver.Name, PostableGrafanaReceiverDBsToModel(receiver.GrafanaManagedReceivers), models.ProvenanceNone)
 }
 
-// ResolveReceiverUID is the one place a receiver's UID is derived from its name: a receiver
-// stored without a UID resolves to the deterministic identity it has always had.
-// Mirrors timeIntervalUIDOrFallback.
+// ResolveReceiverUID is the one place a receiver's UID is derived from its name: a legacy row
+// saved before UID persistence existed has none, so it falls back to the deterministic identity
+// it has always resolved to. Mirrors timeIntervalUIDOrFallback.
 func ResolveReceiverUID(persistedUID, name string) ResourceUID {
 	if persistedUID != "" {
 		return ResourceUID(persistedUID)
@@ -359,6 +359,7 @@ func PostableApiReceiverToDB(in *PostableApiReceiver) *store.ReceiverDB {
 		return nil
 	}
 	return &store.ReceiverDB{
+		UID:                     string(in.UID),
 		Name:                    in.Name,
 		GrafanaManagedReceivers: PostableGrafanaReceiversToDB(in.GrafanaManagedReceivers),
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -38,6 +39,8 @@ var LegacyCountedResources = []string{alertRuleResource, recordingRuleResource}
 type LegacyStatsGetter struct {
 	SQL legacysql.LegacyDatabaseProvider
 	Cfg *setting.Cfg
+
+	metrics *legacyStatsMetrics
 }
 
 // CountError identifies which legacy resource count failed while preserving the underlying error.
@@ -100,6 +103,7 @@ func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper 
 
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	if s.SQL == nil {
+		s.metrics.observeAll(time.Now(), ErrLegacyStatsUnavailable)
 		return nil, &CountError{Resources: LegacyCountedResources, Err: ErrLegacyStatsUnavailable}
 	}
 	info, err := claims.ParseNamespace(in.Namespace)
@@ -110,6 +114,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		return nil, fmt.Errorf("invalid OrgID found in namespace")
 	}
 
+	lookupStart := time.Now()
 	helper, err := s.SQL(ctx)
 	if errors.Is(err, legacysql.ErrNamespaceDeleted) {
 		// The stack was deleted or migrated away and its namespace is being torn down. Fall back
@@ -117,9 +122,13 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// turns every folder delete in that namespace into a 500. Any other lookup failure,
 		// including a stack that is only unavailable (e.g. archived or suspended), still fails:
 		// its legacy rows can come back, so it must not be treated as empty.
+		for _, resource := range legacyResources {
+			s.metrics.skip(resource, legacySkipNamespaceDeleted)
+		}
 		return &resourcepb.ResourceStatsResponse{}, nil
 	}
 	if err != nil {
+		s.metrics.observeAll(lookupStart, err)
 		return nil, &CountError{Resources: LegacyCountedResources, Err: err}
 	}
 
@@ -136,7 +145,10 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 				if extraWhere != "" {
 					where += " AND " + extraWhere
 				}
-				return sess.Table(tableName).Where(where, args...).Count()
+				start := time.Now()
+				c, err := sess.Table(tableName).Where(where, args...).Count()
+				s.metrics.observe(r, start, err)
+				return c, err
 			}
 
 			var total int64
@@ -166,6 +178,17 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// Indicate that this came from the SQL tables
 		group := "sql-fallback"
 
+		// A failed staleness check is a legacy database failure too, so it is recorded as an error.
+		isStale := func(configKey, name string) (bool, error) {
+			start := time.Now()
+			stale, err := s.legacyTableIsStale(sess, helper, configKey)
+			if err != nil {
+				s.metrics.observe(name, start, err)
+				return false, &CountError{Resources: []string{name}, Err: err}
+			}
+			return stale, nil
+		}
+
 		// Legacy alert rule table. Alert rules and recording rules share this table and are
 		// told apart by the `record` column, so count them separately — reporting the whole
 		// table as "alertrules" makes callers that read both kinds count recording rules
@@ -176,37 +199,43 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// NULL has to count as "not a recording rule". Comparing NULL with = or != yields
 		// NULL rather than true, which would drop those rows from both counts and let a
 		// folder that still holds alert rules look empty.
-		alertRulesStale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+		alertRulesStale, err := isStale(alertRuleResource, legacyAlertRules)
 		if err != nil {
-			return &CountError{Resources: []string{"alertrules"}, Err: err}
+			return err
 		}
-		if !alertRulesStale {
-			err = fn("alert_rule", "namespace_uid", group, "alertrules", "(record IS NULL OR record = '')")
+		if alertRulesStale {
+			s.metrics.skip(legacyAlertRules, legacySkipMigrated)
+		} else {
+			err = fn("alert_rule", "namespace_uid", group, legacyAlertRules, "(record IS NULL OR record = '')")
 			if err != nil {
-				return &CountError{Resources: []string{"alertrules"}, Err: err}
+				return &CountError{Resources: []string{legacyAlertRules}, Err: err}
 			}
 		}
 
-		recordingRulesStale, err := s.legacyTableIsStale(sess, helper, recordingRuleResource)
+		recordingRulesStale, err := isStale(recordingRuleResource, legacyRecordingRules)
 		if err != nil {
-			return &CountError{Resources: []string{"recordingrules"}, Err: err}
+			return err
 		}
-		if !recordingRulesStale {
-			err = fn("alert_rule", "namespace_uid", group, "recordingrules", "(record IS NOT NULL AND record != '')")
+		if recordingRulesStale {
+			s.metrics.skip(legacyRecordingRules, legacySkipMigrated)
+		} else {
+			err = fn("alert_rule", "namespace_uid", group, legacyRecordingRules, "(record IS NOT NULL AND record != '')")
 			if err != nil {
-				return &CountError{Resources: []string{"recordingrules"}, Err: err}
+				return &CountError{Resources: []string{legacyRecordingRules}, Err: err}
 			}
 		}
 
 		// Legacy library_elements table
-		libraryPanelsStale, err := s.legacyTableIsStale(sess, helper, libraryPanelResource)
+		libraryPanelsStale, err := isStale(libraryPanelResource, legacyLibraryElements)
 		if err != nil {
-			return &CountError{Resources: []string{"library_elements"}, Err: err}
+			return err
 		}
-		if !libraryPanelsStale {
-			err = fn("library_element", "folder_uid", group, "library_elements", "")
+		if libraryPanelsStale {
+			s.metrics.skip(legacyLibraryElements, legacySkipMigrated)
+		} else {
+			err = fn("library_element", "folder_uid", group, legacyLibraryElements, "")
 			if err != nil {
-				return &CountError{Resources: []string{"library_elements"}, Err: err}
+				return &CountError{Resources: []string{legacyLibraryElements}, Err: err}
 			}
 		}
 		return nil

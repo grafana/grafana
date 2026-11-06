@@ -113,7 +113,6 @@ declare module "@openfeature/core" {
     | "alertEnrichment"
     | "alertingImportAlertmanagerAPI"
     | "preferLibraryPanelTitle"
-    | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "dashboardLevelTimeMacros"
     | "favoriteDatasources"
@@ -205,7 +204,8 @@ declare module "@openfeature/core" {
     | "grafana.geomapProtomapsBasemap"
     | "reporting.removeLogoUrlField"
     | "dashboards.disablePublicDashboards"
-    | "grafana.panelActionsPopover";
+    | "grafana.panelActionsPopover"
+    | "grafana.folderPickerFolderEditAccess";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

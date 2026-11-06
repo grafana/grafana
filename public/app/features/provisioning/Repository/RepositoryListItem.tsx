@@ -13,6 +13,7 @@ import { StatusBadge } from '../Shared/StatusBadge';
 import { ManagedBadge } from '../components/ManagedBadge';
 import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { PROVISIONING_URL } from '../constants';
+import { exportResourceAsJson } from '../utils/export';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import { getManagerIdentity, getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
@@ -124,6 +125,14 @@ export function RepositoryListItem({ repository }: Props) {
             <Trans i18nKey="provisioning.repository-card.view">View</Trans>
           </LinkButton>
           <SyncRepository repository={repository} />
+          <Button
+            variant="secondary"
+            icon="download-alt"
+            size="md"
+            onClick={() => exportResourceAsJson(repository, 'Repository')}
+          >
+            <Trans i18nKey="provisioning.repository-card.export">Export</Trans>
+          </Button>
           {isReadOnly ? (
             // Not a disabled LinkButton: that keeps its href and Tooltip restores tabIndex, so the
             // link stays reachable by keyboard, while pointerEvents:none hides the explanation.

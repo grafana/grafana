@@ -85,7 +85,7 @@ To configure repeating panels, follow these steps:
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the panel to open the sidebar.
 
 {{% shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dashboard/_index.md" id="configure-repeat" %}}
@@ -141,7 +141,7 @@ This ensures that as you change the time range of the dashboard, you only see da
 To configure a show/hide rule, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the panel you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
@@ -161,7 +161,7 @@ To configure a show/hide rule, follow these steps:
 1. When you've finished setting rules, save the dashboard.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save** again.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 Hidden panels aren't visible when the dashboard is in view mode.
 In edit mode, hidden dashboard panels are displayed with an icon or overlay indicating this.
