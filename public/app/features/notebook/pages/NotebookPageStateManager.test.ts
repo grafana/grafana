@@ -445,21 +445,75 @@ describe('NotebookPageStateManager', () => {
       expect(scene?.autosave.state.savedGeneration).toBe(2);
     });
 
-    it('does not write a notebook whose cells all have ids', async () => {
+    /** A notebook with one cell per entry, each with the id given, or none. */
+    function notebookWithCellIds(...ids: Array<string | undefined>): Resource<NotebookSpec> {
+      const notebook = notebookResource();
+      const names = ids.map((_, index) => `md${index + 1}`);
+      return {
+        ...notebook,
+        spec: {
+          ...notebook.spec,
+          elements: Object.fromEntries(
+            names.map((name) => [name, { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: name } } } }])
+          ),
+          layout: {
+            kind: 'NotebookLayout',
+            spec: {
+              cells: names.map((name, index) => ({
+                kind: 'NotebookLayoutItem',
+                spec: { element: { kind: 'ElementReference', name }, source: 'user', id: ids[index] },
+              })),
+            },
+          },
+        },
+      };
+    }
+
+    function serveNotebookWithCellIds(...ids: Array<string | undefined>) {
       written = [];
       server.use(
-        notebookHandler((name) => HttpResponse.json(withId(notebookResource(name)))),
-        http.put(NOTEBOOK_URL, () => {
-          written.push({ name: 'x', body: notebookResource() });
-          return HttpResponse.json(notebookResource());
+        notebookHandler(() => HttpResponse.json(notebookWithCellIds(...ids))),
+        http.put(NOTEBOOK_URL, async ({ params, request }) => {
+          const body = (await request.json()) as Resource<NotebookSpec>;
+          written.push({ name: String(params.name), body });
+          return HttpResponse.json(body);
         })
       );
+    }
+
+    it('does not write a notebook whose cells all have ids, and leaves each cell its own', async () => {
+      const ids = [
+        '00000000-0000-4000-8000-0000000000a1',
+        '00000000-0000-4000-8000-0000000000a2',
+        '00000000-0000-4000-8000-0000000000a3',
+      ];
+      serveNotebookWithCellIds(...ids);
       const manager = new NotebookPageStateManager({ isLoading: false });
 
       await manager.loadNotebook('nb-1');
 
       expect(written).toEqual([]);
-      expect(manager.state.scene?.state.body.state.cells[0].state.id).toBe(ID);
+      expect(manager.state.scene?.state.body.state.cells.map((cell) => cell.state.id)).toEqual(ids);
+    });
+
+    // The reason the check is "every cell has an id" and not "some cell has one": a notebook can be left
+    // half done, for example by a cell an older client added after the ids were assigned.
+    it('writes a notebook in which only some cells have ids', async () => {
+      serveNotebookWithCellIds(
+        '00000000-0000-4000-8000-0000000000a1',
+        undefined,
+        '00000000-0000-4000-8000-0000000000a3'
+      );
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+
+      expect(written).toHaveLength(1);
+      expect(written[0].body.spec.layout.spec.cells.map((cell) => cell.spec.id)).toEqual([
+        '00000000-0000-4000-8000-0000000000a1',
+        undefined,
+        '00000000-0000-4000-8000-0000000000a3',
+      ]);
     });
 
     it('does not write for someone who cannot write', async () => {
