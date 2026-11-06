@@ -195,6 +195,15 @@ describe('<VirtualizedTraceViewImpl>', () => {
     expect(retriedTop - initialTop).toBe(50);
   });
 
+  it('keeps passing the same visibleSpanIds array when rows rebuild without changing the visible spans', () => {
+    const { rerender } = render(<VirtualizedTraceView {...props} trace={trace} findMatchesIDs={new Set()} />);
+    const initialVisibleSpanIds = jest.mocked(SpanTreeOffset).mock.lastCall?.[0].visibleSpanIds;
+
+    rerender(<VirtualizedTraceView {...props} trace={trace} findMatchesIDs={new Set([trace.spans[0].spanID])} />);
+
+    expect(jest.mocked(SpanTreeOffset).mock.lastCall?.[0].visibleSpanIds).toBe(initialVisibleSpanIds);
+  });
+
   it('does not throw or report when scrolling to top with no trace', async () => {
     (reportInteraction as jest.Mock).mockClear();
     render(<VirtualizedTraceView {...{ ...props, trace: null as unknown as Trace }} />);

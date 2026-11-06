@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { css, cx } from '@emotion/css';
+import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
 import { memo, type RefObject, useLayoutEffect, useMemo, useRef } from 'react';
@@ -263,18 +264,17 @@ const VirtualizedTraceView = memo(function VirtualizedTraceView(props: Virtualiz
 
   const childSpansMap = useMemo(() => getChildSpansMap(trace), [trace]);
 
-  // Memoized so the memo'd rows get a stable array while the visible window doesn't change.
+  // Memoized rows (e.g. SpanTreeOffset) need a stable array: rowStates rebuilds on search and detail toggles,
+  // so reuse the previous array whenever the visible span IDs haven't actually changed.
+  const visibleSpanIdsRef = useRef<string[]>([]);
   const getVisibleSpanIds = useMemo(
     () =>
       memoizeOne((start: number, end: number) => {
-        const spanIds = [];
-        for (let i = start; i < end; i++) {
-          const rowState = rowStates[i];
-          if (rowState?.span) {
-            spanIds.push(rowState.span.spanID);
-          }
+        const spanIds = rowStates.slice(start, end).map(({ span }) => span.spanID);
+        if (!isEqual(spanIds, visibleSpanIdsRef.current)) {
+          visibleSpanIdsRef.current = spanIds;
         }
-        return spanIds;
+        return visibleSpanIdsRef.current;
       }),
     [rowStates]
   );
