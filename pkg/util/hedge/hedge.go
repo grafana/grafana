@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime/debug"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -47,14 +48,19 @@ func Do[T any](ctx context.Context, policy Policy, attempt func(context.Context)
 		attemptCtx, attemptCancel := context.WithCancel(ctx)
 		go func() {
 			outcome := result[T]{attempt: n}
+			returned := false
 			defer func() {
 				if recovered := recover(); recovered != nil {
-					outcome.err = fmt.Errorf("hedge attempt %d panicked: %v", n, recovered)
+					outcome.err = fmt.Errorf("hedge attempt %d panicked: %v\n%s", n, recovered, debug.Stack())
+				} else if !returned {
+					// Goexit runs defers without a panic; its zero value must not become a success.
+					outcome.err = fmt.Errorf("hedge attempt %d exited without returning", n)
 				}
 				results <- outcome
 				attemptCancel()
 			}()
 			outcome.value, outcome.err = attempt(attemptCtx)
+			returned = true
 		}()
 	}
 	start(1)
@@ -70,7 +76,7 @@ func Do[T any](ctx context.Context, policy Policy, attempt func(context.Context)
 	var failures []error
 	deadlineCause := func() error {
 		// A context may advertise a deadline before its cancellation is visible.
-		// Wait for its cause, never for an outstanding provider attempt.
+		// Wait for its cause, never for an outstanding attempt.
 		<-ctx.Done()
 		return errors.Join(append(failures, context.Cause(ctx))...)
 	}

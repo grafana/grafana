@@ -63,6 +63,7 @@ type failingRankService struct {
 	discoveryenginepb.UnimplementedRankServiceServer
 	calls               atomic.Int32
 	code                codes.Code
+	message             string
 	succeedAfterFailure bool
 }
 
@@ -70,7 +71,35 @@ func (s *failingRankService) Rank(context.Context, *discoveryenginepb.RankReques
 	if s.calls.Add(1) > 1 && s.succeedAfterFailure {
 		return &discoveryenginepb.RankResponse{Records: []*discoveryenginepb.RankingRecord{{Id: "0", Score: 0.7}}}, nil
 	}
-	return nil, status.Error(s.code, "provider failure")
+	message := s.message
+	if message == "" {
+		message = "provider failure"
+	}
+	return nil, status.Error(s.code, message)
+}
+
+func TestRealSDKCertificateFailureDoesNotRetry(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	server := grpc.NewServer()
+	service := &failingRankService{
+		code:    codes.Unavailable,
+		message: "connection failed: x509: certificate signed by unknown authority",
+	}
+	discoveryenginepb.RegisterRankServiceServer(server, service)
+	go func() { _ = server.Serve(listener) }()
+	t.Cleanup(server.Stop)
+	conn, err := grpc.NewClient(listener.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+	client, err := NewClient(context.Background(), "p", "global", option.WithGRPCConn(conn), option.WithoutAuthentication())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = client.(*rankClient).Close() })
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	_, err = NewReranker(client, "m").Score(ctx, "q", []string{"a"})
+	require.ErrorContains(t, err, "x509: certificate signed by unknown authority")
+	require.EqualValues(t, 1, service.calls.Load())
 }
 
 func TestRealSDKRetryableErrorUsesOneRequest(t *testing.T) {

@@ -15,40 +15,42 @@ import (
 )
 
 func TestProvideReranker_BedrockUsesConfiguredHedgeDelay(t *testing.T) {
-	var calls atomic.Int32
-	release := make(chan struct{})
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if calls.Add(1) == 1 {
-			select {
-			case <-r.Context().Done():
-			case <-release:
-			}
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"results":[{"index":0,"relevance_score":0.7}]}`))
-	}))
-	defer server.Close()
-	defer close(release)
 	t.Setenv("AWS_ACCESS_KEY_ID", "test")
 	t.Setenv("AWS_SECRET_ACCESS_KEY", "test")
 	t.Setenv("AWS_CONFIG_FILE", "/dev/null")
 	t.Setenv("AWS_SHARED_CREDENTIALS_FILE", "/dev/null")
 	t.Setenv("AWS_PROFILE", "")
-	t.Setenv("AWS_ENDPOINT_URL", server.URL)
+	for _, tc := range []struct {
+		name      string
+		delay     time.Duration
+		wantCalls int32
+	}{
+		{name: "disabled", delay: 0, wantCalls: 1},
+		{name: "enabled", delay: time.Second, wantCalls: 2},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var calls atomic.Int32
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls.Add(1)
+				w.WriteHeader(http.StatusServiceUnavailable)
+				_, _ = w.Write([]byte(`{"message":"try again"}`))
+			}))
+			defer server.Close()
+			t.Setenv("AWS_ENDPOINT_URL", server.URL)
 
-	cfg := cfgWith("bedrock")
-	cfg.RerankBedrockRegion = "us-east-1"
-	cfg.RerankBedrockModel = "cohere.rerank-v3-5:0"
-	cfg.RerankHedgeDelay = 50 * time.Millisecond
-	scorer, err := ProvideReranker(cfg, nil)
-	require.NoError(t, err)
-	ctx, cancel := context.WithTimeout(context.Background(), 450*time.Millisecond)
-	defer cancel()
-	scores, err := scorer.Score(ctx, "q", []string{"a"})
-	require.NoError(t, err)
-	require.Equal(t, []float64{0.7}, scores)
-	require.EqualValues(t, 2, calls.Load())
+			cfg := cfgWith("bedrock")
+			cfg.RerankBedrockRegion = "us-east-1"
+			cfg.RerankBedrockModel = "cohere.rerank-v3-5:0"
+			cfg.RerankHedgeDelay = tc.delay
+			scorer, err := ProvideReranker(cfg, nil)
+			require.NoError(t, err)
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			_, err = scorer.Score(ctx, "q", []string{"a"})
+			require.Error(t, err)
+			require.Equal(t, tc.wantCalls, calls.Load())
+		})
+	}
 }
 
 func cfgWith(provider string) *setting.Cfg {

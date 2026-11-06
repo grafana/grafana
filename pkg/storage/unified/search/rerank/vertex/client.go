@@ -60,7 +60,7 @@ func (c *rankClient) Rank(ctx context.Context, model, query string, texts []stri
 			Content: t,
 		}
 	}
-	// A hedge is the only extra application attempt; disable SDK retries for this call.
+	// The hedge helper owns timed duplicates and transient retries; disable SDK retries for this call.
 	resp, err := c.client.Rank(ctx, &discoveryenginepb.RankRequest{
 		RankingConfig: c.rankingConfig,
 		Model:         model,
@@ -71,7 +71,9 @@ func (c *rankClient) Rank(ctx context.Context, model, query string, texts []stri
 		IgnoreRecordDetailsInResponse: true,
 	}, gax.WithRetry(func() gax.Retryer { return nil }))
 	if err != nil {
-		if ctx.Err() == nil && status.Code(err) == codes.Unavailable {
+		// Match GAX's exception for permanent certificate failures within Unavailable.
+		if ctx.Err() == nil && status.Code(err) == codes.Unavailable &&
+			!strings.Contains(err.Error(), "x509: certificate signed by unknown authority") {
 			err = rerank.MarkRetryable(err)
 		}
 		return nil, fmt.Errorf("vertex rerank: rank: %w", err)

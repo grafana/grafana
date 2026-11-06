@@ -3,6 +3,7 @@ package hedge_test
 import (
 	"context"
 	"errors"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -137,6 +138,59 @@ func TestDoRetainsCustomDeadlineCauseAndEarlierFailure(t *testing.T) {
 func TestDoRecoversAttemptPanic(t *testing.T) {
 	_, err := hedge.Do(context.Background(), hedge.Policy{}, func(context.Context) (int, error) { panic("boom") })
 	require.ErrorContains(t, err, "boom")
+	require.ErrorContains(t, err, "hedge_test.go")
+}
+
+func TestDoGoexitCannotReturnSuccessfulZeroValue(t *testing.T) {
+	value, err := hedge.Do(context.Background(), hedge.Policy{}, func(context.Context) (int, error) {
+		runtime.Goexit()
+		return 42, nil
+	})
+	require.ErrorContains(t, err, "exited without returning")
+	require.Zero(t, value)
+}
+
+func TestDoGoexitDoesNotCancelPendingSuccess(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var calls atomic.Int32
+		secondStarted := make(chan struct{})
+		value, err := hedge.Do(context.Background(), hedge.Policy{Delay: time.Second}, func(context.Context) (int, error) {
+			if calls.Add(1) == 1 {
+				<-secondStarted
+				runtime.Goexit()
+				return 0, nil
+			}
+			close(secondStarted)
+			<-time.After(time.Millisecond)
+			return 42, nil
+		})
+		synctest.Wait()
+		require.NoError(t, err)
+		require.Equal(t, 42, value)
+		require.EqualValues(t, 2, calls.Load())
+	})
+}
+
+func TestDoLateLosingGoexitCannotBlock(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var calls atomic.Int32
+		release := make(chan struct{})
+		workerDone := make(chan struct{})
+		value, err := hedge.Do(context.Background(), hedge.Policy{Delay: time.Second}, func(context.Context) (int, error) {
+			if calls.Add(1) == 1 {
+				defer close(workerDone)
+				<-release
+				runtime.Goexit()
+				return 0, nil
+			}
+			return 42, nil
+		})
+		require.NoError(t, err)
+		require.Equal(t, 42, value)
+		close(release)
+		synctest.Wait()
+		<-workerDone
+	})
 }
 
 func TestDoEmitsGenericAttemptDiagnostics(t *testing.T) {
@@ -203,12 +257,11 @@ func TestDoImmediateRetryEmitsRetryDiagnosticsWithoutTimedHedgeEvents(t *testing
 	})
 }
 
-// doHedgeScores retains the historical score-shaped scenarios while exercising Do.
-func doHedgeScores(ctx context.Context, _ int, delay time.Duration, fn func(context.Context) ([]float64, error)) ([]float64, error) {
+func doHedgeScores(ctx context.Context, delay time.Duration, fn func(context.Context) ([]float64, error)) ([]float64, error) {
 	return hedge.Do(ctx, hedge.Policy{Delay: delay}, fn)
 }
 
-const DefaultHedgeDelay = 500 * time.Millisecond
+const fixtureHedgeDelay = 500 * time.Millisecond
 
 type notifyingSpan struct {
 	trace.Span
@@ -226,7 +279,7 @@ func TestDoUsesConfiguredDelay(t *testing.T) {
 		var calls atomic.Int32
 		start := time.Now()
 		var secondStarted time.Time
-		scores, err := doHedgeScores(context.Background(), 1, 750*time.Millisecond, func(ctx context.Context) ([]float64, error) {
+		scores, err := doHedgeScores(context.Background(), 750*time.Millisecond, func(ctx context.Context) ([]float64, error) {
 			if calls.Add(1) == 1 {
 				<-ctx.Done()
 				return nil, ctx.Err()
@@ -248,7 +301,7 @@ func TestDoNonpositiveDelayNeverDuplicates(t *testing.T) {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 				defer cancel()
 				var calls atomic.Int32
-				_, err := doHedgeScores(ctx, 1, delay, func(ctx context.Context) ([]float64, error) {
+				_, err := doHedgeScores(ctx, delay, func(ctx context.Context) ([]float64, error) {
 					calls.Add(1)
 					<-ctx.Done()
 					return nil, ctx.Err()
@@ -265,7 +318,7 @@ func TestDoConfiguredDelayAtDeadlineNeverDuplicates(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 750*time.Millisecond)
 		defer cancel()
 		var calls atomic.Int32
-		_, err := doHedgeScores(ctx, 1, 750*time.Millisecond, func(ctx context.Context) ([]float64, error) {
+		_, err := doHedgeScores(ctx, 750*time.Millisecond, func(ctx context.Context) ([]float64, error) {
 			calls.Add(1)
 			<-ctx.Done()
 			return nil, ctx.Err()
@@ -287,7 +340,7 @@ func TestDoConcurrentDelaysRemainIndependent(t *testing.T) {
 			go func(delay time.Duration) {
 				var calls atomic.Int32
 				start := time.Now()
-				_, err := doHedgeScores(context.Background(), 1, delay, func(ctx context.Context) ([]float64, error) {
+				_, err := doHedgeScores(context.Background(), delay, func(ctx context.Context) ([]float64, error) {
 					if calls.Add(1) == 1 {
 						<-ctx.Done()
 						return nil, ctx.Err()
@@ -321,7 +374,7 @@ func TestDoSlowPrimaryUsesFirstValidSuccess(t *testing.T) {
 			}
 			return []float64{0.7}, nil
 		}
-		scores, err := doHedgeScores(context.Background(), 1, DefaultHedgeDelay, attempt)
+		scores, err := doHedgeScores(context.Background(), fixtureHedgeDelay, attempt)
 		require.NoError(t, err)
 		require.Equal(t, []float64{0.7}, scores)
 		require.EqualValues(t, 2, calls.Load())
@@ -336,7 +389,7 @@ func TestDoEarlyErrorDoesNotRetry(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		boom := errors.New("primary failed")
 		var calls atomic.Int32
-		_, err := doHedgeScores(context.Background(), 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) { calls.Add(1); return nil, boom })
+		_, err := doHedgeScores(context.Background(), fixtureHedgeDelay, func(context.Context) ([]float64, error) { calls.Add(1); return nil, boom })
 		require.ErrorIs(t, err, boom)
 		require.EqualValues(t, 1, calls.Load())
 	})
@@ -349,7 +402,7 @@ func TestDoShortDeadlineDoesNotLaunchDuplicate(t *testing.T) {
 				ctx, cancel := context.WithTimeout(context.Background(), budget)
 				defer cancel()
 				var calls atomic.Int32
-				_, err := doHedgeScores(ctx, 1, DefaultHedgeDelay, func(ctx context.Context) ([]float64, error) {
+				_, err := doHedgeScores(ctx, fixtureHedgeDelay, func(ctx context.Context) ([]float64, error) {
 					calls.Add(1)
 					<-ctx.Done()
 					return nil, ctx.Err()
@@ -365,7 +418,7 @@ func TestDoReturnsBothErrors(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		first, second := errors.New("first"), errors.New("second")
 		var calls atomic.Int32
-		_, err := doHedgeScores(context.Background(), 1, DefaultHedgeDelay, func(ctx context.Context) ([]float64, error) {
+		_, err := doHedgeScores(context.Background(), fixtureHedgeDelay, func(ctx context.Context) ([]float64, error) {
 			if calls.Add(1) == 1 {
 				<-time.After(600 * time.Millisecond)
 				return nil, first
@@ -382,7 +435,7 @@ func TestDoReturnsBothErrors(t *testing.T) {
 func TestDoFastPrimaryUsesOneAttempt(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		var calls atomic.Int32
-		scores, err := doHedgeScores(context.Background(), 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) { calls.Add(1); return []float64{0.4}, nil })
+		scores, err := doHedgeScores(context.Background(), fixtureHedgeDelay, func(context.Context) ([]float64, error) { calls.Add(1); return []float64{0.4}, nil })
 		require.NoError(t, err)
 		require.Equal(t, []float64{0.4}, scores)
 		require.EqualValues(t, 1, calls.Load())
@@ -393,7 +446,7 @@ func TestDoPrimaryCanWinAfterDuplicateStarts(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		var calls atomic.Int32
 		loserCancelled := make(chan struct{})
-		scores, err := doHedgeScores(context.Background(), 1, DefaultHedgeDelay, func(ctx context.Context) ([]float64, error) {
+		scores, err := doHedgeScores(context.Background(), fixtureHedgeDelay, func(ctx context.Context) ([]float64, error) {
 			if calls.Add(1) == 1 {
 				<-time.After(600 * time.Millisecond)
 				return []float64{0.3}, nil
@@ -417,7 +470,7 @@ func TestDoCancellationBeatsLateSuccess(t *testing.T) {
 		release := make(chan struct{})
 		done := make(chan error, 1)
 		go func() {
-			_, err := doHedgeScores(ctx, 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) { close(started); <-release; return []float64{0.9}, nil })
+			_, err := doHedgeScores(ctx, fixtureHedgeDelay, func(context.Context) ([]float64, error) { close(started); <-release; return []float64{0.9}, nil })
 			done <- err
 		}()
 		<-started
@@ -433,7 +486,7 @@ func TestDoLateLoserCompletionCannotBlock(t *testing.T) {
 		var calls atomic.Int32
 		release := make(chan struct{})
 		loserDone := make(chan struct{})
-		scores, err := doHedgeScores(context.Background(), 1, DefaultHedgeDelay, func(ctx context.Context) ([]float64, error) {
+		scores, err := doHedgeScores(context.Background(), fixtureHedgeDelay, func(ctx context.Context) ([]float64, error) {
 			if calls.Add(1) == 1 {
 				defer close(loserDone)
 				<-release
@@ -456,7 +509,7 @@ func TestDoTraceContainsBoundedAttemptMetadata(t *testing.T) {
 		defer func() { _ = provider.Shutdown(context.Background()) }()
 		ctx, span := provider.Tracer("test").Start(context.Background(), "score")
 		var calls atomic.Int32
-		_, err := doHedgeScores(ctx, 1, DefaultHedgeDelay, func(ctx context.Context) ([]float64, error) {
+		_, err := doHedgeScores(ctx, fixtureHedgeDelay, func(ctx context.Context) ([]float64, error) {
 			if calls.Add(1) == 1 {
 				<-ctx.Done()
 				return nil, ctx.Err()
@@ -497,7 +550,7 @@ func TestDoConcurrentCallsKeepResultsIndependent(t *testing.T) {
 			go func(i int) {
 				defer group.Done()
 				var calls atomic.Int32
-				scores, err := doHedgeScores(context.Background(), 1, DefaultHedgeDelay, func(ctx context.Context) ([]float64, error) {
+				scores, err := doHedgeScores(context.Background(), fixtureHedgeDelay, func(ctx context.Context) ([]float64, error) {
 					if calls.Add(1) == 1 {
 						<-ctx.Done()
 						return nil, ctx.Err()
@@ -537,7 +590,7 @@ func TestDoCompletedPrimaryWinsReadyTimer(t *testing.T) {
 					}
 				}}
 				ctx := trace.ContextWithSpan(context.Background(), span)
-				scores, err := doHedgeScores(ctx, 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) {
+				scores, err := doHedgeScores(ctx, fixtureHedgeDelay, func(context.Context) ([]float64, error) {
 					calls.Add(1)
 					<-release
 					return tc.result, tc.err
@@ -556,7 +609,7 @@ func TestDoCompletedPrimaryWinsReadyTimer(t *testing.T) {
 
 func TestDoAttemptPanicReturnsError(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		_, err := doHedgeScores(context.Background(), 1, 0, func(context.Context) ([]float64, error) {
+		_, err := doHedgeScores(context.Background(), 0, func(context.Context) ([]float64, error) {
 			panic("provider panic")
 		})
 		require.ErrorContains(t, err, "provider panic")
@@ -567,7 +620,7 @@ func TestDoLateLosingPanicDoesNotCrash(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		var calls atomic.Int32
 		release := make(chan struct{})
-		scores, err := doHedgeScores(context.Background(), 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) {
+		scores, err := doHedgeScores(context.Background(), fixtureHedgeDelay, func(context.Context) ([]float64, error) {
 			if calls.Add(1) == 1 {
 				<-release
 				panic("late provider panic")
@@ -584,7 +637,7 @@ func TestDoLateLosingPanicDoesNotCrash(t *testing.T) {
 func TestDoPanickingAttemptDoesNotCancelPendingSuccess(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		var calls atomic.Int32
-		scores, err := doHedgeScores(context.Background(), 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) {
+		scores, err := doHedgeScores(context.Background(), fixtureHedgeDelay, func(context.Context) ([]float64, error) {
 			if calls.Add(1) == 1 {
 				<-time.After(600 * time.Millisecond)
 				panic("primary panicked")
@@ -614,7 +667,7 @@ func TestDoExpiredDeadlineRejectsLateSuccessWithCause(t *testing.T) {
 			}
 		}}
 		ctx := trace.ContextWithSpan(deadlineCtx, span)
-		scores, err := doHedgeScores(ctx, 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) {
+		scores, err := doHedgeScores(ctx, fixtureHedgeDelay, func(context.Context) ([]float64, error) {
 			calls.Add(1)
 			<-release
 			return []float64{0.9}, nil
@@ -631,7 +684,7 @@ func TestDoTimeoutRetainsEarlierAttemptFailure(t *testing.T) {
 		ctx, cancel := context.WithTimeoutCause(context.Background(), time.Second, errTestTimeout)
 		defer cancel()
 		var calls atomic.Int32
-		_, err := doHedgeScores(ctx, 1, DefaultHedgeDelay, func(ctx context.Context) ([]float64, error) {
+		_, err := doHedgeScores(ctx, fixtureHedgeDelay, func(ctx context.Context) ([]float64, error) {
 			if calls.Add(1) == 1 {
 				<-time.After(600 * time.Millisecond)
 				return nil, failure
@@ -671,7 +724,7 @@ func TestDoWallDeadlineWaitsForCancellationCause(t *testing.T) {
 			<-time.After(time.Second + time.Millisecond)
 			cancel(cause)
 		}()
-		scores, err := doHedgeScores(ctx, 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) {
+		scores, err := doHedgeScores(ctx, fixtureHedgeDelay, func(context.Context) ([]float64, error) {
 			<-release
 			return []float64{0.9}, nil
 		})
