@@ -72,3 +72,14 @@ export interface VizTooltipItem {
 
 /** @alpha */
 export const DEFAULT_VIZ_TOOLTIP_COLOR_INDICATOR = VizTooltipColorIndicator.series;
+
+/**
+ * Controls how a tooltip sizes itself horizontally.
+ * - `auto` (default): grows to fit its content (the existing behaviour).
+ * - `narrow`: constrains the width (not implemented yet).
+ * @alpha
+ */
+export type VizTooltipSize = 'auto' | 'narrow';
+
+/** @alpha */
+export const DEFAULT_VIZ_TOOLTIP_SIZE: VizTooltipSize = 'auto';

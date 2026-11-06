@@ -7,14 +7,26 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
+import { DEFAULT_VIZ_TOOLTIP_SIZE, type VizTooltipSize } from './types';
+
 /** @alpha */
 export interface VizTooltipWrapperProps extends HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
+  /**
+   * Controls how the tooltip sizes itself horizontally. Defaults to `auto`, which preserves the
+   * existing behaviour of growing to fit content. `narrow` is not implemented yet.
+   */
+  size?: VizTooltipSize;
 }
 
 /** @alpha */
-export const VizTooltipWrapper = ({ children, className }: VizTooltipWrapperProps) => {
+export const VizTooltipWrapper = ({ children, className, size = DEFAULT_VIZ_TOOLTIP_SIZE }: VizTooltipWrapperProps) => {
   const styles = useStyles2(getStyles);
+
+  if (size === 'narrow') {
+    throw new Error("VizTooltipWrapper: size='narrow' is not implemented yet");
+  }
+
   return (
     <div className={clsx(styles, className)} data-testid={selectors.components.Panels.Visualization.Tooltip.Wrapper}>
       {children}

@@ -14,7 +14,9 @@ export {
   VizTooltipColorIndicator,
   VizTooltipColorPlacement,
   type VizTooltipItem,
+  type VizTooltipSize,
   DEFAULT_VIZ_TOOLTIP_COLOR_INDICATOR,
+  DEFAULT_VIZ_TOOLTIP_SIZE,
 } from './types';
 export {
   getFieldDisplayItems,
