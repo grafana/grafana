@@ -342,7 +342,7 @@ describe('PolicyTreeSelector', () => {
   // The selected tree (stored as __grafana_managed_route__ label) was never forwarded,
   // so routing was always evaluated against the default tree.
   describe('notification preview routing (legacy label rule)', () => {
-    const CUSTOM_POLICY_NAME = 'Managed Policy - Empty Provisioned';
+    const CUSTOM_POLICY_NAME = 'Managed Policy - Override + Inherit';
 
     beforeEach(() => {
       setFolderResponse(
@@ -377,31 +377,13 @@ describe('PolicyTreeSelector', () => {
       );
     });
 
-    it('forwards the policy name from the __grafana_managed_route__ label to the routing preview', async () => {
-      // Simulate the preview API returning an instance so the routing tree fetch is triggered
+    it('previews routing through the policy named by the __grafana_managed_route__ label', async () => {
       mockPreviewApiResponse(server, [mockAlertmanagerAlert({ labels: { severity: 'critical' } })]);
-
-      // Capture all GET requests to the k8s routing tree API so we can verify
-      // the preview fetched the named policy tree, not the default root.
-      const capture = captureRequests((r) => r.method === 'GET' && r.url.includes('/routingtrees/'));
 
       renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
 
-      // Wait for the form to load with the custom policy pre-selected
-      await waitFor(() => {
-        expect(policyTreeUi.policySelector.get()).toBeEnabled();
-      });
-
-      const requests = await capture;
-
-      // Before the fix, AutomaticRooting passed policyName={undefined} so the preview
-      // hook always fetched the default root tree (ROOT_ROUTE_NAME), never the named one.
-      // After the fix, it derives the name from the __grafana_managed_route__ label and
-      // the k8s API is called with the encoded policy name in the URL.
-      await waitFor(() => {
-        const routingTreeUrls = requests.map((r) => r.url);
-        expect(routingTreeUrls.some((url) => url.includes(encodeURIComponent(CUSTOM_POLICY_NAME)))).toBe(true);
-      });
+      // The named tree's critical override delivers somewhere the default policy would not.
+      expect(await screen.findByText(/delivered to lotsa-emails/i)).toBeInTheDocument();
     });
   });
 

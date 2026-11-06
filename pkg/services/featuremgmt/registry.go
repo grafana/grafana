@@ -1457,6 +1457,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "alerting.watchersBanner",
+			Description:  "Show the Assistant Watchers banner on the alert rule list. Watchers are only available in Grafana Cloud.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "alerting.manualAssistantInvestigation",
 			Description:  "Enable manually starting an Assistant investigation from the alert instance drawer.",
 			Stage:        FeatureStageExperimental,
@@ -1780,6 +1789,16 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:            "authzDelegationChecks",
+			Description:     "Use AuthZ Check and LegacyCheck for single-org IAM delegation checks (resolved at startup)",
+			Stage:           FeatureStageExperimental,
+			Owner:           identityAccessTeam,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
 		},
 		{
 			Name:         "kubernetesAuthzZanzanaSync",

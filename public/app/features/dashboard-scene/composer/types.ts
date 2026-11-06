@@ -247,9 +247,10 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * A stable, zero-size container for the plugin to portal its editor or a read-only preview into. Works
    * for active and staged items alike. It sits at the pin's visual centre (half a pin right of and above
    * the tail on the item's point, clamped to the viewport), so a popover placed beside it sits beside the
-   * pin, and it follows scroll, resize and layout like the pin; it is hidden
-   * (`display: none`) while the element is entirely off-screen. Core does no collision handling and never
-   * reads, styles or clears its content. Null when the item is not set or does not resolve.
+   * pin, and it follows scroll, resize and layout like the pin. An active item's anchor (the open editor)
+   * stays at the nearest visible edge while its element is scrolled away or under the sticky controls; a
+   * staged item's is hidden (`display: none`) then. Core does no collision handling and never reads, styles
+   * or clears its content. Null when the item is not set or does not resolve.
    */
   getAnnotationAnchor(id: string): HTMLElement | null;
   /**

@@ -2500,6 +2500,7 @@
       "no-condition-tooltip": "Select a query condition to preview routing",
       "permission-warning": "Preview not available",
       "permission-warning-message": "You don't have permission to view notification policies. Preview is not available.",
+      "policy-not-found": "Notification policy \"{{policyName}}\" was not found.",
       "preview-routing": "Preview routing",
       "select-folder-tooltip": "Select a folder to preview routing",
       "text-loading-preview": "Loading preview...",
@@ -2931,6 +2932,10 @@
       "revert-button": "Revert to previous experience",
       "see-activity-button": "See Alert Activity",
       "title": "Revert to previous experience"
+    },
+    "route-timings": {
+      "error-format": "Invalid duration format. Must be {number}{time_unit}",
+      "error-zero": "Must be greater than zero"
     },
     "routing": {
       "routing": "Routing"
@@ -12400,7 +12405,8 @@
     "log-details": {
       "error": {
         "diagnose-with-assistant": "Diagnose with assistant",
-        "error-details": "Error details"
+        "error-details": "Error details",
+        "expand-stacktrace": "Expand stack trace"
       }
     },
     "log-labels": {
@@ -12457,8 +12463,6 @@
       "inline-no-scrolls": "Switch to expanded view",
       "inline-with-scrolls": "Switch to condensed view",
       "link-fallback-label": "Link",
-      "link-value-tooltip": "Link value",
-      "links-section": "Links",
       "log-attributes-field": "Log attributes",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
@@ -13794,8 +13798,12 @@
     "view": {
       "available-once-created": "Available once you write something",
       "copy-link": "Copy link",
-      "mode-edit": "Edit",
-      "mode-view": "View",
+      "mode-current": "Notebook mode: {{mode}}",
+      "mode-edit-description": "Edit text and panels.",
+      "mode-editing": "Editing",
+      "mode-label": "Notebook mode",
+      "mode-view-description": "View and explore the notebook.",
+      "mode-viewing": "Viewing",
       "more-actions": "More actions"
     }
   },
@@ -14799,6 +14807,7 @@
       "delete-confirm": "Are you sure you want to delete this connection? This action cannot be undone.",
       "delete-title": "Delete connection",
       "error-loading": "Failed to load connections",
+      "export": "Export",
       "kind-github-app": "GitHub App",
       "kind-oauth-app": "OAuth App",
       "no-connections": "No connections configured",
@@ -15067,6 +15076,11 @@
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
+    "managed-read-only-banner": {
+      "body": "Its configuration is managed outside Grafana and is read-only here. Change it where it is defined.",
+      "title": "This resource is managed externally"
+    },
+    "managed-read-only-tooltip": "This resource is managed externally and is read-only",
     "message": {
       "show-less": "show less",
       "show-more": "show more",
@@ -15296,6 +15310,7 @@
       "view-folder": "View folder"
     },
     "repository-card": {
+      "export": "Export",
       "last-sync": "Last sync: {{date}}",
       "settings": "Settings",
       "view": "View"
@@ -15403,6 +15418,8 @@
     "resource-kind": {
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
+      "datasource": "data source",
+      "datasources": "Data sources",
       "folder": "folder",
       "folders": "Folders",
       "library-panel": "library panel",
@@ -15980,28 +15997,17 @@
       "give-feedback": "Give feedback",
       "tooltip": "Experimental feature options"
     },
-    "footer": {
-      "edit-option": "Edit {{label}}",
-      "inspect-queries": "Inspect queries",
-      "label": {
-        "interval": "Interval",
-        "max-data-points": "Max data points",
-        "min-interval": "Min interval",
-        "relative-time": "Relative time",
-        "time-shift": "Time shift"
-      },
-      "placeholder": {
-        "no-limit": "No limit"
-      },
-      "query-inspector": "Query inspector",
-      "query-options": "Query options"
-    },
     "header": {
       "alert": "Alert",
+      "enter-stacked-view": "Enter stacked view",
+      "exit-stacked-view": "Exit stacked view",
       "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
       "pending-transformation": "Select a transformation",
       "pending-transformation-cancel": "Cancel",
+      "showing-items_one": "Showing {{count}} item",
+      "showing-items_other": "Showing {{count}} items",
+      "stacked-view": "Stacked view",
       "transformation": "Transformation"
     },
     "help": {
@@ -16019,13 +16025,28 @@
       "add-query": "Add query",
       "message": "Add a query, expression, or transformation to get started"
     },
+    "query-options-bar": {
+      "edit-option": "Edit {{label}}",
+      "inspect-queries": "Inspect queries",
+      "label": {
+        "interval": "Interval",
+        "max-data-points": "Max data points",
+        "min-interval": "Min interval",
+        "relative-time": "Relative time",
+        "time-shift": "Time shift"
+      },
+      "placeholder": {
+        "no-limit": "No limit"
+      },
+      "query-inspector": "Query inspector",
+      "query-options": "Query options"
+    },
     "sidebar": {
       "add": "Add",
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
       "add-expression-disabled": "Expressions are not supported with the Dashboard data source",
       "add-query": "Add query",
-      "add-query-or-expression": "Add query or expression",
       "add-saved-query": "Add saved query",
       "add-transformation": "Add transformation",
       "add-transformation-below": "Add transformation below {{id}}",
@@ -16035,31 +16056,25 @@
       "card-click": "Select card {{id}}",
       "card-multi-select": "Include card {{id}} in bulk selection",
       "data": "Data",
-      "enter-stacked-view": "Enter stacked view",
-      "exit-stacked-view": "Exit stacked view",
       "footer-items_one": "{{count}} items",
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
       "footer-items-alert_other": "{{count}} alerts",
       "footer-select": "Select...",
       "footer-select-label": "Select multiple items",
+      "more-add-options": "More add options",
       "new-type": "New {{type}}",
       "queries-empty": "No queries or expressions",
       "queries-expressions": "Queries & Expressions",
-      "stacked": "Stack",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
       "transformations-empty": "No transformations",
       "view-toggle": "View"
     },
     "stacked": {
-      "exit": "Exit stacked view",
-      "exit-aria-label": "Exit stacked view",
-      "hidden-aria-label": "Hidden",
-      "scroll-area-aria-label": "Stacked editor items",
-      "showing-items_one": "Showing {{count}} items",
-      "showing-items_other": "Showing {{count}} items",
-      "transformation": "Transformation"
+      "heading": "{{type}} {{name}}",
+      "heading-with-detail": "{{type}} {{name}}, {{detail}}",
+      "scroll-area-aria-label": "Stacked editor items"
     },
     "transformation-debug": {
       "copy-input-data": "Copy input data to clipboard",

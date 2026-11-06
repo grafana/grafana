@@ -62,4 +62,25 @@ describe('PolicyTreeSelector error handling', () => {
     expect(screen.getByDisplayValue(SELECTED_POLICY)).toBeInTheDocument();
     expect(screen.queryByText(/failed to load notification policies/i)).not.toBeInTheDocument();
   });
+
+  // An empty list is what a user without access to any tree gets, so a missing name tells us nothing.
+  it('does not warn that the policy is missing when the list is empty', async () => {
+    server.use(
+      http.get(ROUTING_TREES_URL, () =>
+        HttpResponse.json({
+          apiVersion: 'notifications.alerting.grafana.app/v1beta1',
+          kind: 'RoutingTreeList',
+          metadata: {},
+          items: [],
+        })
+      )
+    );
+
+    render(<Harness />, { preloadedState: {} });
+
+    // The selector is disabled until the list has loaded.
+    const selector = await screen.findByRole('combobox', { name: /select notification policy/i });
+    await waitFor(() => expect(selector).toBeEnabled());
+    expect(screen.queryByText(/this policy tree is not in your list/i)).not.toBeInTheDocument();
+  });
 });

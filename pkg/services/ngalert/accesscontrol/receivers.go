@@ -494,6 +494,11 @@ func (s ReceiverAccess[T]) AuthorizeDeleteByUID(ctx context.Context, user identi
 	return s.delete.Authorize(ctx, user, identified{uid: uid})
 }
 
+// AuthorizeReadAll checks if user has access to read all redacted receivers. Returns an error if user does not have access.
+func (s ReceiverAccess[T]) AuthorizeReadAll(ctx context.Context, user identity.Requester) error {
+	return s.read.AuthorizeAll(ctx, user)
+}
+
 // AuthorizeReadByUID checks if user has access to read a redacted receiver by uid. Returns an error if user does not have access.
 func (s ReceiverAccess[T]) AuthorizeReadByUID(ctx context.Context, user identity.Requester, uid string) error {
 	return s.read.Authorize(ctx, user, identified{uid: uid})

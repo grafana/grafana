@@ -168,21 +168,17 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 
 	user, ok := authlib.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return sendAndClose(&resourcepb.BulkResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: "no user found in context",
-				Code:    http.StatusUnauthorized,
-			},
+		return GRPCStatusError(&resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
 		})
 	}
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return sendAndClose(&resourcepb.BulkResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: "unable to read metadata gRPC request",
-				Code:    http.StatusPreconditionFailed,
-			},
+		return GRPCStatusError(&resourcepb.ErrorResult{
+			Message: "unable to read metadata gRPC request",
+			Code:    http.StatusPreconditionFailed,
 		})
 	}
 
@@ -203,31 +199,25 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 	}
 	settings, err := NewBulkSettings(md)
 	if err != nil {
-		return sendAndClose(&resourcepb.BulkResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: fmt.Sprintf("error reading settings: %s", err.Error()),
-				Code:    http.StatusPreconditionFailed,
-			},
+		return GRPCStatusError(&resourcepb.ErrorResult{
+			Message: fmt.Sprintf("error reading settings: %s", err.Error()),
+			Code:    http.StatusPreconditionFailed,
 		})
 	}
 
 	if len(settings.Collection) < 1 {
-		return sendAndClose(&resourcepb.BulkResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: "Missing target collection(s) in request header",
-				Code:    http.StatusBadRequest,
-			},
+		return GRPCStatusError(&resourcepb.ErrorResult{
+			Message: "Missing target collection(s) in request header",
+			Code:    http.StatusBadRequest,
 		})
 	}
 
 	// Verify all collection request keys are valid
 	for _, k := range settings.Collection {
 		if r := verifyRequestKeyCollection(k); r != nil {
-			return sendAndClose(&resourcepb.BulkResponse{
-				Error: &resourcepb.ErrorResult{
-					Message: fmt.Sprintf("invalid request key: %s", r.Message),
-					Code:    http.StatusBadRequest,
-				},
+			return GRPCStatusError(&resourcepb.ErrorResult{
+				Message: fmt.Sprintf("invalid request key: %s", r.Message),
+				Code:    http.StatusBadRequest,
 			})
 		}
 	}
@@ -241,11 +231,9 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 			Verb:      utils.VerbDeleteCollection,
 		}, "")
 		if err != nil || !rsp.Allowed {
-			return sendAndClose(&resourcepb.BulkResponse{
-				Error: &resourcepb.ErrorResult{
-					Message: fmt.Sprintf("Requester must be able to: %s", utils.VerbDeleteCollection),
-					Code:    http.StatusForbidden,
-				},
+			return GRPCStatusError(&resourcepb.ErrorResult{
+				Message: fmt.Sprintf("Requester must be able to: %s", utils.VerbDeleteCollection),
+				Code:    http.StatusForbidden,
 			})
 		}
 
@@ -258,36 +246,32 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 			Verb:      utils.VerbCreate,
 		})
 		if err != nil {
-			return sendAndClose(&resourcepb.BulkResponse{
-				Error: &resourcepb.ErrorResult{
-					Message: "Unable to check `create` permission",
-					Code:    http.StatusForbidden,
-				},
+			return GRPCStatusError(&resourcepb.ErrorResult{
+				Message: "Unable to check `create` permission",
+				Code:    http.StatusForbidden,
 			})
 		}
 	}
 
 	backend, ok := s.backend.(BulkProcessingBackend)
 	if !ok {
-		return sendAndClose(&resourcepb.BulkResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: "The server backend does not support batch processing",
-				Code:    http.StatusNotImplemented,
-			},
+		return GRPCStatusError(&resourcepb.ErrorResult{
+			Message: "The server backend does not support batch processing",
+			Code:    http.StatusNotImplemented,
 		})
 	}
 
 	if versions, requested := md[resourcepb.InlineBlobMetadataKey]; requested {
 		if len(versions) != 1 || versions[0] != strconv.Itoa(resourcepb.InlineBlobVersion) {
-			return sendAndClose(&resourcepb.BulkResponse{Error: &resourcepb.ErrorResult{
+			return GRPCStatusError(&resourcepb.ErrorResult{
 				Message: "unsupported bulk inline blob version", Code: http.StatusPreconditionFailed,
-			}})
+			})
 		}
 		blob, ok := s.blob.(StreamingBlobSupport)
 		if !ok {
-			return sendAndClose(&resourcepb.BulkResponse{Error: &resourcepb.ErrorResult{
+			return GRPCStatusError(&resourcepb.ErrorResult{
 				Message: "blob backend does not support streaming", Code: http.StatusNotImplemented,
-			}})
+			})
 		}
 		runner.blob = blob
 		runner.acquireBlobTransfer = s.acquireBlobTransfer
@@ -310,25 +294,28 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 			if runner.err != nil {
 				err = runner.err
 			}
-			return sendAndClose(&resourcepb.BulkResponse{Error: AsErrorResult(err)})
+			return rpcErrorFrom(err)
 		}
 		defer spool.Close()
 		iter = spool
 	}
 	rsp := processBulkWithPreflight(ctx, backend, settings, iter)
 	if rsp == nil {
-		rsp = &resourcepb.BulkResponse{
-			Error: &resourcepb.ErrorResult{
-				Code:    http.StatusInternalServerError,
-				Message: "Nothing returned from process batch",
-			},
-		}
+		return GRPCStatusError(&resourcepb.ErrorResult{
+			Code:    http.StatusInternalServerError,
+			Message: "Nothing returned from process batch",
+		})
 	}
 	if spool != nil && spool.err != nil {
 		rsp.Error = AsErrorResult(spool.err)
 	}
 	if runner.err != nil {
-		rsp.Error = AsErrorResult(runner.err)
+		return rpcErrorFrom(runner.err)
+	}
+	// Bulk backends report a call-level failure in the response. Partial
+	// results are not sent with it, as with the conversion interceptor.
+	if rsp.Error != nil {
+		return GRPCStatusError(rsp.Error)
 	}
 
 	return sendAndClose(rsp)
