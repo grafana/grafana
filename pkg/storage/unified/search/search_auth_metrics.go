@@ -57,7 +57,7 @@ func searchAuthQueryType(req *resourcepb.ResourceSearchRequest) string {
 
 func (o *searchAuthObservation) observe(mode, queryType string, started time.Time, result *resourcepb.ResourceSearchResponse, err error) {
 	outcome := "success"
-	if err != nil || result == nil || result.Error != nil {
+	if err != nil || result == nil {
 		outcome = "error"
 	} else {
 		o.metrics.SearchAuthReturned.WithLabelValues(mode, queryType).Observe(float64(len(result.Rows)))

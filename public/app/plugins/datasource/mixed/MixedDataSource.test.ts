@@ -15,6 +15,11 @@ import { TemplateSrv } from '../../../features/templating/template_srv';
 
 import { MixedDatasource, MIXED_DATASOURCE_NAME } from './MixedDataSource';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceInstance: jest.fn((ref: DataSourceRef | string) => datasourceSrv.get(ref)),
+}));
+
 const defaultDS = new MockObservableDataSourceApi('DefaultDS', [{ data: ['DDD'] }]);
 const datasourceSrv = new DatasourceSrvMock(defaultDS, {
   '-- Mixed --': new MockObservableDataSourceApi('mixed'),
@@ -133,6 +138,24 @@ describe('MixedDatasource', () => {
       });
     });
 
+    it('should set the variable display name from the loaded data source', async () => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const querySpyB = jest.spyOn(datasourceSrv['datasources'].B, 'query');
+      const querySpyC = jest.spyOn(datasourceSrv['datasources'].C, 'query');
+
+      const request = {
+        targets: [{ refId: 'AA', datasource: { uid: '$ds' } }],
+        scopedVars: {
+          __sceneObject: { value: scene },
+        },
+      } as unknown as DataQueryRequest;
+
+      await lastValueFrom(ds.query(request));
+
+      expect(querySpyB.mock.calls[0][0].scopedVars.ds).toEqual({ value: 'B', text: 'DSB' });
+      expect(querySpyC.mock.calls[0][0].scopedVars.ds).toEqual({ value: 'C', text: 'DSC' });
+    });
+
     it('should run query for picked datasource and template variable datasource', async () => {
       const ds = new MixedDatasource({} as DataSourceInstanceSettings);
       const request = {
@@ -236,6 +259,27 @@ describe('MixedDatasource', () => {
       expect(results[0].key).toBe('mixed-0-');
       expect(results[1].key).toBe('mixed-1-');
       expect(results[1].state).toBe(LoadingState.Done);
+    });
+  });
+
+  it('should return an error only for the batch whose data source fails to load', async () => {
+    const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+    const request = {
+      targets: [
+        { refId: 'QA', datasource: { uid: 'A' } },
+        { refId: 'QX', datasource: { uid: 'missing' } },
+        { refId: 'QB', datasource: { uid: 'B' } },
+      ],
+    } as DataQueryRequest;
+
+    await expect(ds.query(request)).toEmitValuesWith((results) => {
+      expect(results[0].data).toEqual(['AAAA']);
+      expect(results[1].state).toBe(LoadingState.Error);
+      expect(results[1].key).toBe('mixed-1-');
+      expect(results[1].error?.message).toBe('missing: Unknown Datasource: "missing"');
+      expect(results[2].data).toEqual(['BBBB']);
+      // The first error is repeated last so the panel shows it.
+      expect(results[3].state).toBe(LoadingState.Error);
     });
   });
 
