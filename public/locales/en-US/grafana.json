@@ -11828,8 +11828,8 @@
       "switchSolution": "Switch solution",
       "synthetic-monitoring": {
         "action": "Enable Synthetic Monitoring",
-        "context": "End User Observability for your services",
-        "description": "Run browser, API, and network checks from global locations to measure availability, speed, and key user journeys, and get alerted when the experience degrades.",
+        "context": "End-user observability for your services",
+        "description": "Run browser, API, and network checks from global locations to track availability, speed, and key user journeys.",
         "setup-action": "Create your first check",
         "title": "See your app the way your users do"
       },

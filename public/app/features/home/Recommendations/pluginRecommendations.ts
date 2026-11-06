@@ -168,10 +168,10 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       icon: 'globe',
       color: 'blue',
       title: t('home.recommendations.synthetic-monitoring.title', 'See your app the way your users do'),
-      context: t('home.recommendations.synthetic-monitoring.context', 'End User Observability for your services'),
+      context: t('home.recommendations.synthetic-monitoring.context', 'End-user observability for your services'),
       description: t(
         'home.recommendations.synthetic-monitoring.description',
-        'Run browser, API, and network checks from global locations to measure availability, speed, and key user journeys, and get alerted when the experience degrades.'
+        'Run browser, API, and network checks from global locations to track availability, speed, and key user journeys.'
       ),
       action: t('home.recommendations.synthetic-monitoring.action', 'Enable Synthetic Monitoring'),
       setupAction: t('home.recommendations.synthetic-monitoring.setup-action', 'Create your first check'),
