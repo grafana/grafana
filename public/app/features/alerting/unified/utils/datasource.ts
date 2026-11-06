@@ -75,6 +75,9 @@ export interface AlertManagerDataSource {
   handleGrafanaManagedAlerts?: boolean;
 }
 
+/**
+ * @deprecated Reads `config.datasources` synchronously. In React code, use `useDataSourcesForRules`.
+ */
 export function getRulesDataSources() {
   const canView = getExternalGlobalRuleAbility(ExternalRuleAction.ViewAlertRule).granted;
   const canCreate = getExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule).granted;
