@@ -52,6 +52,7 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
   // The v2 built-in annotation layer resolves a datasource on activation; never answer.
   getDataSourceSrv: () => ({ get: () => new Promise(() => {}), getInstanceSettings: jest.fn() }),
+  getDataSourceInstance: () => new Promise(() => {}),
 }));
 
 jest.mock('../saving/createDetectChangesWorker', () => ({

@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { useParams } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import { seedDataSources } from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { type PanelProps, store, systemDateFormats, type SystemDateFormatsState } from '@grafana/data';
@@ -49,12 +52,6 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => {
     return {
       get: (url: string, ...rest: unknown[]) => mockBackendGet(url, ...rest),
-    };
-  },
-  getDataSourceSrv: () => {
-    return {
-      get: jest.fn().mockResolvedValue({}),
-      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
     };
   },
   getAppEvents: () => ({
@@ -114,6 +111,8 @@ panelPlugin.meta.info.logos.small = 'public/build/img/grafana_icon.svg';
 
 beforeEach(() => {
   setPanelPluginMetas({ 'custom-viz-panel': panelPlugin.meta });
+  const grafanaSettings = makeDataSourceSettings('-- Grafana --', 'Grafana', 'grafana');
+  seedDataSources([{ settings: grafanaSettings, api: new MockDataSourceApi(grafanaSettings) }], { legacySrv: 'mock' });
 });
 
 afterEach(() => {
