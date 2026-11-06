@@ -110,7 +110,7 @@ Dashboards
 - Grafana titles each folder with its Repository resource's display name.
 - Each team has complete control over its own repository.
 - Teams can independently manage permissions, branches, and workflows in their repositories.
-- All teams can view each other's dashboards in Grafana but manage only their own.
+- By default, every user with the `Editor` role can edit dashboards in every team's folder, because Git Sync copies organization roles into each provisioned folder. To limit each team to its own folder, set folder-level permissions. Permissions in your Git repositories don't apply to edits made in Grafana. Refer to [Configure folder and dashboard permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/permissions-grafana/#configure-folder-and-dashboard-permissions).
 
 ## Configuration parameters
 
@@ -137,7 +137,7 @@ Each team works in its own repository, and Grafana shows them side by side:
 3. Platform team dashboards sync from the `your-org/platform-dashboards` repository.
 4. Data team dashboards sync from the `your-org/data-dashboards` repository.
 5. Teams can independently manage their repository settings, access controls, and workflows.
-6. All teams can view each other's dashboards in Grafana but edit only their own.
+6. With folder-level permissions set, all teams can view each other's dashboards in Grafana but edit only their own.
 
 ## Scale to more teams
 
