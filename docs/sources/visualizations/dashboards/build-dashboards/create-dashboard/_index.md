@@ -261,7 +261,7 @@ This lets you make these changes directly on the dashboard, without opening the 
 To group or delete multiple panels, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Hold `Shift` and click each panel you want to select.
 
    A dotted blue line surrounds the selected panels.
@@ -279,7 +279,7 @@ To group or delete multiple panels, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 If you hover over a panel that isn't part of your selection, the tooltip displays single-panel options instead.
 
