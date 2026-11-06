@@ -7,6 +7,7 @@ import {
   useDismiss,
   useFloating,
   useInteractions,
+  useMergeRefs,
 } from '@floating-ui/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
@@ -24,7 +25,7 @@ import { type TooltipPlacement } from '../Tooltip/types';
 export interface Props {
   overlay: React.ReactElement | (() => React.ReactElement);
   placement?: TooltipPlacement;
-  children: React.ReactElement<Record<string, unknown>>;
+  children: React.ReactElement<Record<string, unknown> & { ref?: React.Ref<Element> }>;
   root?: HTMLElement;
   /** Position against this element while keeping interactions and focus on the trigger. */
   positioningReference?: HTMLElement | null;
@@ -80,6 +81,7 @@ export const Dropdown = React.memo(
     const click = useClick(context);
     const dismiss = useDismiss(context);
     const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
+    const referenceRef = useMergeRefs([refs.setReference, children.props.ref]);
 
     const animationDuration = 150;
     const animationStyles = useStyles2(getStyles, animationDuration);
@@ -97,7 +99,7 @@ export const Dropdown = React.memo(
     return (
       <>
         {React.cloneElement(children, {
-          ref: refs.setReference,
+          ref: referenceRef,
           ...getReferenceProps(),
           'aria-expanded': show,
         })}
