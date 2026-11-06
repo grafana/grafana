@@ -63,6 +63,7 @@ type FolderAPIBuilder struct {
 	searcher             resourcepb.ResourceIndexClient
 	maxNestedFolderDepth int
 	deleteChecks         *deleteCheckMetrics
+	countMetrics         *countMetrics
 
 	// Flags
 	useZanzana          bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -165,6 +166,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
 		contentsDeleter:      contentsDeleter,
 		deleteChecks:         newDeleteCheckMetrics(registerer, true), // the monolith always joins legacy storage
+		countMetrics:         newCountMetrics(registerer, true),
 	}
 
 	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
@@ -206,6 +208,11 @@ type APIServiceOption func(*FolderAPIBuilder)
 // WithDeleteCheckMetrics exports the delete-check counter on reg.
 func WithDeleteCheckMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) APIServiceOption {
 	return func(b *FolderAPIBuilder) { b.deleteChecks = newDeleteCheckMetrics(reg, legacyJoinEnabled) }
+}
+
+// WithCountMetrics exports the folder count counter on reg.
+func WithCountMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) APIServiceOption {
+	return func(b *FolderAPIBuilder) { b.countMetrics = newCountMetrics(reg, legacyJoinEnabled) }
 }
 
 func (b *FolderAPIBuilder) GetGroupVersions() []schema.GroupVersion {
@@ -319,7 +326,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 	}
 	storage[folders.StoragePath("counts")] = &subCountREST{
 		getter:   b.storage,
-		searcher: b.searcher,
+		searcher: b.countMetrics.wrap(b.searcher, countCallerEndpoint),
 	}
 	storage[folders.StoragePath("access")] = &subAccessREST{
 		getter:       b.storage,
@@ -619,7 +626,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		return validateOnCreate(ctx, f, newCreateParentsGetter(b.storage), b.maxNestedFolderDepth, a.IsDryRun())
 	case admission.Delete:
 		deleteOptions, _ := a.GetOperationOptions().(*metav1.DeleteOptions)
-		return validateOnDelete(ctx, f, b.searcher, deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx), b.deleteChecks.withDryRun(a.IsDryRun()))
+		return validateOnDelete(ctx, f, b.countMetrics.wrap(b.searcher, countCallerDeleteCheck), deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx), b.deleteChecks.withDryRun(a.IsDryRun()))
 	case admission.Update:
 		old, ok := a.GetOldObject().(*foldersv1.Folder)
 		if !ok {

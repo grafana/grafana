@@ -42,6 +42,8 @@ func (e ImportedConfigRevision) GetReceivers(names []string) ([]*models.Receiver
 }
 
 // GetReceiver returns the imported receiver with the given UID, or models.ErrReceiverNotFound if there is none.
+// Imported receivers have no independent identity of their own, so their UID is derived from their (possibly renamed) name.
+// The exception is a collision with an existing UID, which gets a random one that is not stable across calls and so cannot be looked up.
 func (e ImportedConfigRevision) GetReceiver(uid string) (*models.Receiver, error) {
 	result, err := e.receivers(func(r v1.PostableApiReceiver) bool {
 		return string(r.UID) == uid

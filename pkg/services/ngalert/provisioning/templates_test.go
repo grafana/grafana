@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -405,7 +406,9 @@ func TestUpsertTemplate(t *testing.T) {
 		result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
-		require.Equal(t, v1.NewTemplateGroup("",
+		require.NoError(t, v1.ValidateTemplateUID(string(result.UID)), "a new template gets a valid UID")
+		require.NotEqual(t, v1.TemplateUID(tmpl.Kind, tmpl.Title), result.UID, "that is not derived from its title")
+		require.Equal(t, v1.NewTemplateGroup(result.UID,
 			tmpl.Title,
 			tmpl.Content,
 			tmpl.Kind,
@@ -778,7 +781,9 @@ func TestCreateTemplate(t *testing.T) {
 		result, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
-		require.Equal(t, v1.NewTemplateGroup("",
+		require.NoError(t, v1.ValidateTemplateUID(string(result.UID)), "a new template gets a valid UID")
+		require.NotEqual(t, v1.TemplateUID(tmpl.Kind, tmpl.Title), result.UID, "that is not derived from its title")
+		require.Equal(t, v1.NewTemplateGroup(result.UID,
 			tmpl.Title,
 			tmpl.Content,
 			tmpl.Kind,
@@ -796,6 +801,62 @@ func TestCreateTemplate(t *testing.T) {
 		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
 			return t.Title == tmpl.Title
 		}), orgID, models.ProvenanceAPI)
+	})
+
+	t.Run("uses the UID that is given", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: &v1.AMConfigV1{}, ConcurrencyToken: amConfigToken}, nil
+		}
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		given := tmpl
+		given.UID = "chosen-uid"
+		result, err := sut.CreateTemplate(context.Background(), orgID, given)
+
+		require.NoError(t, err)
+		assert.Equal(t, v1.ResourceUID("chosen-uid"), result.UID)
+		saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
+		assert.Contains(t, saved.Config.Templates, v1.ResourceUID("chosen-uid"))
+	})
+
+	t.Run("rejects a UID that is not valid", func(t *testing.T) {
+		sut, store, _ := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: &v1.AMConfigV1{}, ConcurrencyToken: amConfigToken}, nil
+		}
+
+		for _, uid := range []string{"Upper", "a_b", "a:b", strings.Repeat("a", 41)} {
+			given := tmpl
+			given.UID = v1.ResourceUID(uid)
+			_, err := sut.CreateTemplate(context.Background(), orgID, given)
+
+			require.ErrorIs(t, err, ErrTemplateInvalid, uid)
+		}
+		for _, c := range store.Calls {
+			require.NotEqual(t, "Save", c.Method)
+		}
+	})
+
+	t.Run("returns ErrTemplateUidExists if the UID is used by another template", func(t *testing.T) {
+		sut, store, _ := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{
+				Config: &v1.AMConfigV1{Templates: map[v1.ResourceUID]v1.TemplateGroup{
+					"taken-uid": v1.NewTemplateGroup("taken-uid", "other-template", "{{ define \"other\" }}x{{ end }}", v1.TemplateKindGrafana, models.ProvenanceNone),
+				}},
+				ConcurrencyToken: amConfigToken,
+			}, nil
+		}
+
+		given := tmpl
+		given.UID = "taken-uid"
+		_, err := sut.CreateTemplate(context.Background(), orgID, given)
+
+		require.ErrorIs(t, err, ErrTemplateUidExists)
+		for _, c := range store.Calls {
+			require.NotEqual(t, "Save", c.Method)
+		}
 	})
 
 	t.Run("returns ErrTemplateExists if template exists", func(t *testing.T) {
@@ -1035,7 +1096,7 @@ func TestUpdateTemplate(t *testing.T) {
 		})
 	})
 
-	t.Run("creates a new template and delete old one when template is renamed", func(t *testing.T) {
+	t.Run("renames the template and keeps its UID", func(t *testing.T) {
 		sut, store, prov := createTemplateServiceSut()
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return revision(), nil
@@ -1055,7 +1116,7 @@ func TestUpdateTemplate(t *testing.T) {
 		result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
-		assert.Equal(t, v1.NewTemplateGroup("",
+		assert.Equal(t, v1.NewTemplateGroup(tmpl.UID,
 			tmpl.Title,
 			tmpl.Content,
 			tmpl.Kind,
@@ -1066,9 +1127,8 @@ func TestUpdateTemplate(t *testing.T) {
 		require.Equal(t, "Save", store.Calls[1].Method)
 		saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 		assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
-		assert.Contains(t, saved.Config.Templates, result.UID)
-		assert.Equal(t, result, saved.Config.Templates[result.UID])
-		assert.NotContains(t, saved.Config.Templates, v1.TemplateUID(tmpl.Kind, oldName))
+		require.Len(t, saved.Config.Templates, 1)
+		assert.Equal(t, result, saved.Config.Templates[tmpl.UID])
 
 		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
 			return t.Title == oldName
@@ -1808,7 +1868,8 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 		require.NoError(t, err)
 		templates := savedTemplates(t, store)
 		require.Len(t, templates, 1, "the template must not be added next to the one that was stored")
-		assert.Equal(t, update.Content, templates[result.UID].Content)
+		assert.Equal(t, storedUID, result.UID, "the template keeps its UID")
+		assert.Equal(t, update.Content, templates[storedUID].Content)
 	})
 
 	t.Run("renames the template by UID", func(t *testing.T) {
@@ -1822,7 +1883,8 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 		require.NoError(t, err)
 		templates := savedTemplates(t, store)
 		require.Len(t, templates, 1, "the template must not be left under its previous entry")
-		assert.Equal(t, "renamed", templates[result.UID].Title)
+		assert.Equal(t, storedUID, result.UID, "the template keeps its UID when it is renamed")
+		assert.Equal(t, "renamed", templates[storedUID].Title)
 		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
 			return t.Title == stored.Title
 		}), orgID)
@@ -1840,7 +1902,8 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 		require.NoError(t, err)
 		templates := savedTemplates(t, store)
 		require.Len(t, templates, 1, "the template must not be added next to the one that was stored")
-		assert.Equal(t, update.Content, templates[result.UID].Content)
+		assert.Equal(t, storedUID, result.UID, "the template keeps its UID")
+		assert.Equal(t, update.Content, templates[storedUID].Content)
 	})
 
 	t.Run("deletes the template by name", func(t *testing.T) {
