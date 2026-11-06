@@ -24,16 +24,33 @@ func TestSupportedActions_DeterministicAndUnique(t *testing.T) {
 	second := SupportedActions()
 	require.Equal(t, first, second)
 
-	seen := map[string]struct{}{}
+	seen := map[ActionListEntry]struct{}{}
 	for _, entry := range first {
-		if _, ok := seen[entry.Action]; ok {
-			t.Fatalf("duplicate action in supported actions: %s", entry.Action)
+		if _, ok := seen[entry]; ok {
+			t.Fatalf("duplicate action mapping in supported actions: %+v", entry)
 		}
-		seen[entry.Action] = struct{}{}
+		seen[entry] = struct{}{}
 		require.NotEmpty(t, entry.Group)
 		require.NotEmpty(t, entry.Resource)
 		require.NotEmpty(t, entry.Verb)
 	}
+}
+
+func TestTranslateActionToListParamsAll_ReturnsDistinctAnnotationMappings(t *testing.T) {
+	want := []ActionListEntry{
+		{Action: "annotations:read", Group: "annotation.grafana.app", Resource: "annotations", Verb: "get"},
+		{Action: "annotations:read", Group: "dashboard.grafana.app", Resource: "dashboards", Subresource: "annotations", Verb: "get"},
+	}
+
+	require.ElementsMatch(t, want, TranslateActionToListParamsAll("annotations:read"))
+
+	var supported []ActionListEntry
+	for _, entry := range SupportedActions() {
+		if entry.Action == "annotations:read" {
+			supported = append(supported, entry)
+		}
+	}
+	require.ElementsMatch(t, want, supported)
 }
 
 func TestDatasourceLegacyActionsUseSharedResource(t *testing.T) {
