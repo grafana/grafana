@@ -38,7 +38,6 @@ const CUSTOMISE_FLAG = 'grafana.customizableMegaMenu';
 interface MockDashboardsServiceState {
   loading: boolean;
   forScopeNames: string[];
-  dashboards: unknown[];
   scopeNavigations: Array<{ title: string; url: string }>;
   searchQuery: string;
   filteredFolders: Record<string, unknown>;
@@ -55,7 +54,6 @@ const makeScopesServices = (
       state: {
         loading: false,
         forScopeNames: ['scope-a'],
-        dashboards: [],
         scopeNavigations: [{ title: 'Suggested dashboard', url: '/d/abc' }],
         searchQuery: '',
         filteredFolders: {

@@ -46,11 +46,10 @@ export function ScopesDashboardsMegaMenuSection({ onNavigate }: Props) {
   }
 
   const { scopesDashboardsService } = scopeServices;
-  const { loading, forScopeNames, dashboards, scopeNavigations, searchQuery, filteredFolders } =
-    scopesDashboardsService.state;
+  const { loading, forScopeNames, scopeNavigations, searchQuery, filteredFolders } = scopesDashboardsService.state;
   const { changeSearchQuery, updateFolder, clearSearchQuery } = scopesDashboardsService;
 
-  if (!loading && (forScopeNames.length === 0 || (dashboards.length === 0 && scopeNavigations.length === 0))) {
+  if (!loading && (forScopeNames.length === 0 || scopeNavigations.length === 0)) {
     return null;
   }
 
