@@ -6,6 +6,10 @@ on:
       - main
     paths:
       - 'packages/grafana-plugin-compat/**'
+    # The publish workflow tags a release after its pull request merges. Commits that landed before the tag existed were skipped, so
+    # this rebuilds the release pull request once the tag is there. GitHub does not apply the paths filter to tag pushes.
+    tags:
+      - '**@[0-9]*'
   workflow_dispatch:
     inputs:
       groups:
@@ -32,7 +36,8 @@ jobs:
     name: Create or update release PR
     # Merging the release PR changes the package's version and changelog, which also matches the push
     # paths filter above, so the job skips itself instead of rebuilding a release PR with nothing in it.
-    if: "github.repository == 'grafana/grafana' && !startsWith(github.event.head_commit.message, 'Release: Frontend packages')"
+    # A tag push points at that same release commit, so it is let through explicitly.
+    if: "github.repository == 'grafana/grafana' && (startsWith(github.ref, 'refs/tags/') || !startsWith(github.event.head_commit.message, 'Release: Frontend packages'))"
     runs-on: ubuntu-x64
     permissions:
       contents: read
