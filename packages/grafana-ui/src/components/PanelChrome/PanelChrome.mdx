@@ -15,7 +15,15 @@ import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
 
 # PanelChrome
 
-Component used for rendering content wrapped in the same style as Grafana panels.
+`PanelChrome` frames content as a Grafana panel. It renders the title, description, menu, hover header, loading and status, and the header actions.
+
+## When to use
+
+Use `PanelChrome` for any content that should look and behave like a panel.
+
+Pass header actions through `titleItems`, `actions`, and `menu`. Set `hoverHeader` when a panel has no title and those controls should appear on hover.
+
+Do not rebuild the panel frame, menu, or header controls outside `PanelChrome`.
 
 ## Panel notices (alpha)
 
