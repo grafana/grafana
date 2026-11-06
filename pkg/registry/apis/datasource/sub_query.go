@@ -134,13 +134,26 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 				return
 			}
 
+			writer := chunked.NewChunkedHTTPWriter(w)
 			if err = r.builder.client.QueryChunkedData(callCtx, &backend.QueryChunkedDataRequest{
 				Queries:       queries,
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
 				Format:        backend.DataFrameFormat_JSON, // encode directly in the plugin
-			}, chunked.NewChunkedHTTPWriter(w)); err != nil {
-				responder.Error(fmt.Errorf("error running chunked query %w", err))
+			}, writer); err != nil {
+				_ = tracing.Error(reqSpan, err)
+				m.SetError()
+				if writer.Started() {
+					_ = writer.WriteStreamError(err)
+				} else {
+					w.Header().Del("Content-Type")
+					responder.Error(fmt.Errorf("error running chunked query %w", err))
+				}
+				return
+			}
+			if err = writer.Complete(); err != nil {
+				_ = tracing.Error(reqSpan, err)
+				m.SetError()
 			}
 			return
 		}
