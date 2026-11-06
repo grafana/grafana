@@ -55,6 +55,10 @@ export interface TextNGEditorProps {
   /** Whether the panel has a title set. */
   hasTitle?: boolean;
   consent?: TextSandboxProps['consent'];
+  /** Hidden where the view is fixed, such as the dashboard edit pane, which only writes. */
+  showViewToggle?: boolean;
+  /** `above` puts the mode picker on its own left-aligned row, for narrow places like the dashboard edit pane. */
+  modePickerPlacement?: 'inline' | 'above';
 }
 
 const getLanguageLabels = (): Record<CodeLanguage, string> => ({
@@ -93,6 +97,8 @@ export function TextNGEditor({
   transparent,
   hasTitle,
   consent,
+  showViewToggle = true,
+  modePickerPlacement = 'inline',
 }: TextNGEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -280,27 +286,38 @@ export function TextNGEditor({
     );
   };
 
+  const modePickerAbove = modePickerPlacement === 'above';
+  const modePicker = (
+    <Dropdown placement={modePickerAbove ? 'bottom-start' : 'bottom-end'} overlay={renderModeMenu}>
+      <Button
+        className={modePickerAbove ? styles.modePickerAbove : styles.modePicker}
+        fill="text"
+        size="sm"
+        variant="secondary"
+        aria-label={t('textng.editor.aria-label-mode', 'Text mode: {{mode}}', { mode: modeValue })}
+      >
+        <Stack direction="row" alignItems="center" gap={0.5}>
+          <span className={styles.pickerLabel}>{t('textng.editor.mode-picker-label', 'Mode')}</span>
+          {modeValue}
+          <Icon name="angle-down" />
+        </Stack>
+      </Button>
+    </Dropdown>
+  );
+
   return (
     <div className={styles.wrapper} data-testid="TextNGEditor">
-      <div className={cx(!hasTitle && styles.toolbarRowGuard)}>
-        <Stack gap={1} alignItems="center" wrap="wrap" minHeight={theme.components.height.md}>
-          <RadioButtonGroup options={viewOptions} value={view} onChange={onViewChange} size="sm" />
+      {modePickerAbove && modePicker}
+      <div className={cx(!hasTitle && styles.toolbarRowGuard, modePickerAbove && styles.hideWhenEmpty)}>
+        <Stack
+          gap={1}
+          alignItems="center"
+          wrap="wrap"
+          minHeight={modePickerAbove ? undefined : theme.components.height.md}
+        >
+          {showViewToggle && <RadioButtonGroup options={viewOptions} value={view} onChange={onViewChange} size="sm" />}
           {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} />}
-          <Dropdown placement="bottom-end" overlay={renderModeMenu}>
-            <Button
-              className={styles.modePicker}
-              fill="text"
-              size="sm"
-              variant="secondary"
-              aria-label={t('textng.editor.aria-label-mode', 'Text mode: {{mode}}', { mode: modeValue })}
-            >
-              <Stack direction="row" alignItems="center" gap={0.5}>
-                <span className={styles.pickerLabel}>{t('textng.editor.mode-picker-label', 'Mode')}</span>
-                {modeValue}
-                <Icon name="angle-down" />
-              </Stack>
-            </Button>
-          </Dropdown>
+          {!modePickerAbove && modePicker}
           <TextNGFeedbackButton />
         </Stack>
       </div>
@@ -368,6 +385,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   modePicker: css({
     marginLeft: 'auto',
+  }),
+  // Lines the label up with the toolbar and editor below it.
+  modePickerAbove: css({
+    alignSelf: 'flex-start',
+    paddingLeft: 0,
+  }),
+  // Code mode has no format toolbar, so the row can end up with nothing in it.
+  hideWhenEmpty: css({
+    '&:has(> div:empty)': {
+      display: 'none',
+    },
   }),
   pickerMenuItem: css({
     fontSize: theme.typography.bodySmall.fontSize,
