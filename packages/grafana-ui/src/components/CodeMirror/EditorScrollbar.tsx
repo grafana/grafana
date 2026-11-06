@@ -1,10 +1,16 @@
 import { css, cx } from '@emotion/css';
-import { type ReactNode, useLayoutEffect, useRef } from 'react';
+import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+
+export function getScrollbarGeometry(size: number, contentSize: number) {
+  const max = Math.max(0, contentSize - size);
+  const thumbSize = Math.min(size, Math.max(24, (size * size) / Math.max(1, contentSize)));
+  return { max, thumbSize, travel: size - thumbSize };
+}
 
 export function EditorScrollbar({
   scroller,
@@ -29,10 +35,9 @@ export function EditorScrollbar({
   const track = useRef<HTMLDivElement>(null);
   const thumb = useRef<HTMLDivElement>(null);
   const dragStart = useRef<{ pointer: number; position: number } | null>(null);
+  const [pointerFocused, setPointerFocused] = useState(false);
   const vertical = orientation === 'vertical';
-  const max = Math.max(0, contentSize - size);
-  const thumbSize = Math.min(size, Math.max(24, (size * size) / Math.max(1, contentSize)));
-  const travel = size - thumbSize;
+  const { max, thumbSize, travel } = getScrollbarGeometry(size, contentSize);
   const setPosition = (position: number) => {
     scroller.scrollTo({ [vertical ? 'top' : 'left']: Math.max(0, Math.min(max, position)) });
   };
@@ -58,6 +63,7 @@ export function EditorScrollbar({
         if (event.button !== 0 || event.target !== event.currentTarget || max === 0) {
           return;
         }
+        setPointerFocused(true);
         event.preventDefault();
         const rect = event.currentTarget.getBoundingClientRect();
         const offset = vertical ? event.clientY - rect.top : event.clientX - rect.left;
@@ -72,6 +78,7 @@ export function EditorScrollbar({
           className={styles.thumb}
           role="scrollbar"
           tabIndex={0}
+          data-pointer-focus={pointerFocused || undefined}
           aria-label={
             vertical
               ? t('grafana-ui.code-mirror.scroll-vertically', 'Scroll vertically')
@@ -91,6 +98,7 @@ export function EditorScrollbar({
             if (event.button !== 0) {
               return;
             }
+            setPointerFocused(true);
             event.preventDefault();
             event.currentTarget.focus();
             event.currentTarget.setPointerCapture(event.pointerId);
@@ -114,7 +122,9 @@ export function EditorScrollbar({
           onPointerCancel={() => {
             dragStart.current = null;
           }}
+          onBlur={() => setPointerFocused(false)}
           onKeyDown={(event) => {
+            setPointerFocused(false);
             const current = scroller[vertical ? 'scrollTop' : 'scrollLeft'];
             const positions: Record<string, number> = {
               [vertical ? 'ArrowUp' : 'ArrowLeft']: current - 40,
@@ -155,10 +165,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     borderRadius: theme.shape.radius.default,
     background: theme.colors.scrollbar,
-    '&:hover, &:active': { background: theme.colors.emphasize(theme.colors.scrollbar, 0.15) },
-    '&:focus-visible': {
-      outline: `2px solid ${theme.colors.primary.main}`,
-      outlineOffset: -2,
+    outline: 'none',
+    '&:hover, &:active': { background: colorManipulator.alpha(theme.colors.scrollbar, 0.5) },
+    '&:focus-visible:not([data-pointer-focus])': {
+      outline: `1px solid ${theme.colors.text.secondary}`,
+      outlineOffset: -1,
     },
   }),
 });

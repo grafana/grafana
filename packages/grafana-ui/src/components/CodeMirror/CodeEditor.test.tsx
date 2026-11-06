@@ -2,7 +2,7 @@ import { acceptCompletion, autocompletion, startCompletion, type CompletionSourc
 import { diagnosticCount, linter, setDiagnostics } from '@codemirror/lint';
 import { EditorState } from '@codemirror/state';
 import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/view';
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CodeMirror, { EditorView, type ReactCodeMirrorProps } from '@uiw/react-codemirror';
 
@@ -294,6 +294,7 @@ describe('CodeMirror CodeEditor', () => {
 
   describe('overview ruler with a real editor', () => {
     const originalCreateCodeEditorTheme = createCodeEditorThemeMock.getMockImplementation()!;
+    const getOverview = (view: CodeMirrorEditorView) => view.dom.querySelector<HTMLElement>('.cm-overview-ruler');
 
     beforeEach(() => {
       const ActualCodeMirror = jest.requireActual('@uiw/react-codemirror').default;
@@ -318,10 +319,11 @@ describe('CodeMirror CodeEditor', () => {
         view.dispatch(setDiagnostics(view.state, [{ from: 4, to: 7, severity: 'error', message: 'Invalid value' }]));
       });
       expect(diagnosticCount(view.state)).toBe(1);
-      expect(screen.queryByRole('group', { name: 'Errors' })).not.toBeInTheDocument();
+      expect(getOverview(view)).not.toBeInTheDocument();
 
       rerender(<CodeEditor value={'one\ntwo'} onChange={jest.fn()} extensions={extensions} overviewRuler />);
-      expect(await screen.findByRole('button', { name: 'Line 2: Invalid value' })).toBeVisible();
+      await waitFor(() => expect(getOverview(view)).toBeVisible());
+      expect(getOverview(view)).toHaveAttribute('aria-hidden', 'true');
       expect(screen.getByRole('textbox')).toBe(editor);
 
       rerender(
@@ -333,17 +335,17 @@ describe('CodeMirror CodeEditor', () => {
           aria-label="Updated editor"
         />
       );
-      expect(await screen.findByRole('button', { name: 'Line 2: Invalid value' })).toBeVisible();
+      await waitFor(() => expect(getOverview(view)).toBeVisible());
       expect(screen.getByRole('textbox', { name: 'Updated editor' })).toBe(editor);
       expect(diagnosticCount(view.state)).toBe(1);
 
       rerender(<CodeEditor value={'one\ntwo'} onChange={jest.fn()} extensions={extensions} overviewRuler={false} />);
       expect(screen.getByRole('textbox')).toBe(editor);
       expect(diagnosticCount(view.state)).toBe(1);
-      expect(screen.queryByRole('group', { name: 'Errors' })).not.toBeInTheDocument();
+      expect(getOverview(view)).not.toBeInTheDocument();
     });
 
-    it('groups errors by line, ignores warnings, and jumps to positions mapped through edits', async () => {
+    it('groups errors by rendered block, ignores warnings, and keeps lint keyboard navigation through edits', async () => {
       const user = userEvent.setup();
       render(<CodeEditor value={'one\ntwo\nthree\nfour\nfive\nsix'} onChange={jest.fn()} overviewRuler />);
       const editor = await screen.findByRole('textbox');
@@ -358,21 +360,66 @@ describe('CodeMirror CodeEditor', () => {
           ])
         );
       });
-      const overview = within(screen.getByRole('group', { name: 'Errors' }));
-      expect(overview.getAllByRole('button')).toHaveLength(2);
-      expect(overview.getByRole('button', { name: 'Line 2: First error\nSecond error' })).toHaveStyle({ top: '20%' });
-      expect(overview.getByRole('button', { name: 'Line 4: Last error' })).toHaveStyle({ top: '60%' });
+      await waitFor(() => expect(getOverview(view)?.children).toHaveLength(2));
+      expect(getOverview(view)).toHaveAttribute('aria-hidden', 'true');
+      expect(getOverview(view)?.querySelector('button')).not.toBeInTheDocument();
 
       await user.click(editor);
       await user.keyboard('{Control>}{Home}{/Control}{Enter}');
-      const marker = overview.getByRole('button', { name: 'Line 5: Last error' });
-      expect(parseFloat(marker.style.top)).toBeCloseTo(66.67, 1);
-      await user.click(marker);
+      await user.keyboard('{F8}{F8}{F8}{F8}');
       expect(view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to)).toBe('four');
       expect(editor).toHaveFocus();
+      // eslint-disable-next-line testing-library/prefer-user-event -- CodeMirror needs keyCode for shifted letters, which user-event leaves unset.
+      fireEvent.keyDown(editor, { key: 'M', code: 'KeyM', keyCode: 77, ctrlKey: true, shiftKey: true });
+      expect(screen.getByRole('listbox', { name: 'Diagnostics' })).toHaveFocus();
 
       act(() => view.dispatch(setDiagnostics(view.state, [])));
-      expect(screen.queryByRole('group', { name: 'Errors' })).not.toBeInTheDocument();
+      await waitFor(() => expect(getOverview(view)).not.toBeInTheDocument());
+    });
+
+    it('uses rendered height for markers so track clicks reveal wrapped lines without changing selection', async () => {
+      const user = userEvent.setup();
+      render(<CodeEditor value={'one\ntwo\nthree\nfour\nfive\nsix'} onChange={jest.fn()} overviewRuler lineWrapping />);
+      const editor = await screen.findByRole('textbox');
+      const view = EditorView.findFromDOM(editor)!;
+      const scroller = view.scrollDOM;
+      Object.defineProperties(scroller, {
+        clientHeight: { configurable: true, value: 200 },
+        clientWidth: { configurable: true, value: 400 },
+        scrollHeight: { configurable: true, value: 10000 },
+        scrollWidth: { configurable: true, value: 400 },
+      });
+      const lineBlockAt = view.lineBlockAt.bind(view);
+      jest
+        .spyOn(view, 'lineBlockAt')
+        .mockImplementation((from) => Object.create(lineBlockAt(from), { top: { value: 1076 } }));
+      jest.spyOn(view, 'documentPadding', 'get').mockReturnValue({ top: 4, bottom: 4 });
+      jest.spyOn(scroller, 'scrollTo').mockImplementation((leftOrOptions: number | ScrollToOptions, top?: number) => {
+        const options = typeof leftOrOptions === 'number' ? { left: leftOrOptions, top } : leftOrOptions;
+        scroller.scrollTop = options.top ?? scroller.scrollTop;
+        fireEvent.scroll(scroller);
+      });
+      act(() => {
+        view.dispatch(setDiagnostics(view.state, [{ from: 4, to: 7, severity: 'error', message: 'Invalid value' }]));
+      });
+      await waitFor(() => expect(getOverview(view)).toBeVisible());
+      const overview = getOverview(view)!;
+      const marker = overview.firstElementChild as HTMLElement;
+      // The 24px minimum thumb and 4px inset put rendered height 1080 at track offset 29.6.
+      expect(parseFloat(marker.style.top)).toBeCloseTo(25.6);
+      expect(marker).toHaveStyle({ pointerEvents: 'none' });
+      const thumb = screen.getByRole('scrollbar', { name: 'Scroll vertically' });
+      expect(thumb).toHaveStyle({ height: '24px' });
+      const selection = view.state.selection;
+
+      await user.pointer({
+        target: thumb.parentElement!,
+        keys: '[MouseLeft]',
+        coords: { x: 405, y: parseFloat(marker.style.top) + 4 },
+      });
+      expect(scroller.scrollTop).toBeCloseTo(980);
+      expect(view.state.selection).toEqual(selection);
+      expect(thumb).toHaveFocus();
     });
 
     it('scrolls both axes with thumb dragging, track clicks, and the keyboard, including without errors', async () => {
@@ -402,7 +449,7 @@ describe('CodeMirror CodeEditor', () => {
       horizontal.setPointerCapture = jest.fn();
       expect(vertical).toHaveAttribute('aria-controls', scroller.id);
       expect(vertical).toHaveAttribute('aria-valuemax', '1800');
-      expect(screen.queryByRole('group', { name: 'Errors' })).not.toBeInTheDocument();
+      expect(getOverview(view)).not.toBeInTheDocument();
 
       await user.pointer([
         { target: vertical, keys: '[MouseLeft>]', coords: { x: 405, y: 10 } },

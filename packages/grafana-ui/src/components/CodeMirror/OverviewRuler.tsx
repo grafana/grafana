@@ -1,15 +1,16 @@
 import { forEachDiagnostic, setDiagnosticsEffect } from '@codemirror/lint';
 import { EditorView, ViewPlugin } from '@codemirror/view';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useId, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
-import { EditorScrollbar } from './EditorScrollbar';
+import { EditorScrollbar, getScrollbarGeometry } from './EditorScrollbar';
+
+const OVERVIEW_INSET = 4;
 
 export interface OverviewRulerState {
   view: EditorView;
@@ -60,6 +61,7 @@ export function OverviewRuler({ editor }: { editor: OverviewRulerState }) {
     scrollHeight: 0,
     scrollTop: 0,
     scrollLeft: 0,
+    markers: new Map<number, number>(),
   });
 
   useLayoutEffect(() => {
@@ -83,15 +85,33 @@ export function OverviewRuler({ editor }: { editor: OverviewRulerState }) {
         read: () => {
           const editorBounds = view.dom.getBoundingClientRect();
           const scrollerBounds = scroller.getBoundingClientRect();
+          const height = scroller.clientHeight;
+          const scrollHeight = scroller.scrollHeight;
+          const { max, thumbSize, travel } = getScrollbarGeometry(height, scrollHeight);
+          const markers = new Map<number, number>();
+          forEachDiagnostic(view.state, (diagnostic, from) => {
+            if (diagnostic.severity !== 'error') {
+              return;
+            }
+            const block = view.lineBlockAt(from);
+            const renderedTop = block.top + view.documentPadding.top;
+            // Invert track-click positioning, including the minimum thumb size.
+            const trackTop = max > 0 ? thumbSize / 2 + ((renderedTop - height / 2) / max) * travel : renderedTop;
+            markers.set(
+              block.from,
+              Math.max(0, Math.min(Math.max(0, height - OVERVIEW_INSET * 2), trackTop - OVERVIEW_INSET))
+            );
+          });
           return {
             top: scrollerBounds.top - editorBounds.top,
             left: scrollerBounds.left - editorBounds.left,
             width: scroller.clientWidth,
-            height: scroller.clientHeight,
+            height,
             scrollWidth: scroller.scrollWidth,
-            scrollHeight: scroller.scrollHeight,
+            scrollHeight,
             scrollTop: scroller.scrollTop,
             scrollLeft: scroller.scrollLeft,
+            markers,
           };
         },
         write: (bounds) => {
@@ -109,21 +129,6 @@ export function OverviewRuler({ editor }: { editor: OverviewRulerState }) {
     };
   }, [editor, view]);
 
-  const { state } = view;
-  const errors = new Map<number, { from: number; to: number; messages: string[] }>();
-  forEachDiagnostic(state, (diagnostic, from, to) => {
-    if (diagnostic.severity !== 'error') {
-      return;
-    }
-    const line = state.doc.lineAt(from).number;
-    const error = errors.get(line);
-    if (error) {
-      error.messages.push(diagnostic.message);
-    } else {
-      errors.set(line, { from, to, messages: [diagnostic.message] });
-    }
-  });
-
   // Portal outside scrollDOM so off-screen errors stay visible while scrolling.
   return createPortal(
     <>
@@ -136,32 +141,11 @@ export function OverviewRuler({ editor }: { editor: OverviewRulerState }) {
         contentSize={bounds.scrollHeight}
         position={bounds.scrollTop}
       >
-        {errors.size > 0 && (
-          <div
-            className={styles.overview}
-            role="group"
-            aria-label={t('grafana-ui.code-mirror.overview-ruler', 'Errors')}
-          >
-            {Array.from(errors, ([line, { from, to, messages }]) => {
-              const label = `${t('grafana-ui.code-mirror.overview-ruler-line', 'Line')} ${line}: ${messages.join('\n')}`;
-              return (
-                <button
-                  key={line}
-                  type="button"
-                  className={styles.marker}
-                  style={{ top: `${((line - 1) / Math.max(1, state.doc.lines - 1)) * 100}%` }}
-                  title={label}
-                  aria-label={label}
-                  onClick={() => {
-                    view.dispatch({
-                      selection: { anchor: from, head: to },
-                      effects: EditorView.scrollIntoView(from, { y: 'center' }),
-                    });
-                    view.focus();
-                  }}
-                />
-              );
-            })}
+        {bounds.markers.size > 0 && (
+          <div className={cx('cm-overview-ruler', styles.overview)} aria-hidden="true">
+            {Array.from(bounds.markers, ([from, top]) => (
+              <div key={from} className={styles.marker} style={{ top }} />
+            ))}
           </div>
         )}
       </EditorScrollbar>
@@ -184,8 +168,8 @@ export function OverviewRuler({ editor }: { editor: OverviewRulerState }) {
 const getStyles = (theme: GrafanaTheme2) => ({
   overview: css({
     position: 'absolute',
-    top: 4,
-    bottom: 4,
+    top: OVERVIEW_INSET,
+    bottom: OVERVIEW_INSET,
     width: '100%',
     pointerEvents: 'none',
   }),
@@ -193,22 +177,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     left: 0,
     width: '100%',
-    height: 8,
-    padding: '2px 0',
-    border: 0,
-    background: 'transparent',
+    height: 4,
+    background: theme.colors.error.main,
     transform: 'translateY(-50%)',
-    cursor: 'pointer',
-    pointerEvents: 'auto',
-    '&::after': {
-      content: '""',
-      display: 'block',
-      height: 4,
-      background: theme.colors.error.main,
-    },
-    '&:focus-visible': {
-      outline: `2px solid ${theme.colors.primary.main}`,
-      outlineOffset: 1,
-    },
+    pointerEvents: 'none',
   }),
 });

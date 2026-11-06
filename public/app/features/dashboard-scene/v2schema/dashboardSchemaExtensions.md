@@ -15,9 +15,10 @@ const extensions = createDashboardSchemaExtensions(schema, {
 Memoize extensions per schema, format, and callbacks. JSON extensions include the JSON
 language, schema completion, and syntax/schema diagnostics.
 
-JSON errors appear in an overview ruler within the scrollbar track. The ruler shows error locations
-across the whole buffer; clicking a marker selects and scrolls to the error. Markers clear
-when validation succeeds.
+JSON errors appear as informational markers within the scrollbar track, beneath the translucent
+thumb. Marker positions follow rendered line heights, including wrapped lines. Clicking the
+track scrolls to that position without changing the selection. Markers clear when validation
+succeeds. Press F8 to select the next diagnostic, or Cmd/Ctrl+Shift+M to open the lint panel.
 
 `DashboardSchemaEditor` enables the shared `CodeMirrorEditor`'s `overviewRuler` prop for JSON.
 The shared editor owns rendering, positioning, navigation, and lazy loading; this adapter
