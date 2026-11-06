@@ -582,6 +582,116 @@ describe('applyPluginNav', () => {
     });
   });
 
+  describe('path nesting', () => {
+    const nesting = (on: boolean) => setup({ openFeatureFlags: { 'grafana.pluginPathNesting': on } });
+
+    const settingsApp = () =>
+      app('some-app', 'Some app', [
+        page('Usage', '/a/some-app/settings/usage'),
+        page('Settings', '/a/some-app/settings'),
+        page('Advanced settings', '/a/some-app/settings-advanced'),
+      ]);
+
+    it('leaves the pages flat with the flag off', () => {
+      nesting(false);
+
+      expect(childTexts(merge(settingsApp()), 'some-app')).toEqual(['Usage', 'Settings', 'Advanced settings']);
+    });
+
+    // Usage is declared before the parent it nests under, so this also covers the
+    // attachment being a second pass rather than order-dependent
+    it('nests a page under its path ancestor, matching whole segments only', () => {
+      nesting(true);
+
+      const merged = merge(settingsApp());
+
+      expect(childTexts(merged, 'some-app')).toEqual(['Settings', 'Advanced settings']);
+      const settings = findById(merged, 'plugin-page-some-app')?.children?.[0];
+      expect((settings?.children ?? []).map((child) => child.text)).toEqual(['Usage']);
+    });
+
+    it('nests under the deepest ancestor, ignoring query strings', () => {
+      nesting(true);
+
+      const merged = merge(
+        app('some-app', 'Some app', [
+          page('Settings', '/a/some-app/settings'),
+          page('Users', '/a/some-app/settings/org'),
+          page('Invites', '/a/some-app/settings/org/invites?tab=pending'),
+        ])
+      );
+
+      const users = findById(merged, 'plugin-page-some-app')?.children?.[0]?.children?.[0];
+      expect(users?.text).toEqual('Users');
+      expect((users?.children ?? []).map((child) => child.text)).toEqual(['Invites']);
+    });
+
+    it('does not nest a page under the app root', () => {
+      nesting(true);
+
+      const merged = merge(
+        app('some-app', 'Some app', [
+          page('Home', '/a/some-app', { defaultNav: true }),
+          page('Page', '/a/some-app/page'),
+        ])
+      );
+
+      // Home folds into the app link, and Page stays beside it rather than under it
+      expect(childTexts(merged, 'some-app')).toEqual(['Page']);
+    });
+
+    // The Assistant case: /pages is relocated out of the app, and its own pages
+    // nest under it there rather than being left behind in the app section
+    it('nests under a relocated page in the section it moved to', () => {
+      nesting(true);
+      jest
+        .spyOn(appNavConfig, 'appNavPathConfigFor')
+        .mockImplementation((includePath) =>
+          includePath === '/a/some-app/pages' ? { sectionId: NavID.apps, sortWeight: 0 } : undefined
+        );
+
+      const merged = merge(
+        app('some-app', 'Some app', [
+          page('Pages', '/a/some-app/pages'),
+          page('Lab', '/a/some-app/pages/lab'),
+          page('Other', '/a/some-app/other'),
+        ])
+      );
+
+      const relocated = findById(merged, 'standalone-plugin-page-/a/some-app/pages');
+      expect((relocated?.children ?? []).map((child) => child.text)).toEqual(['Lab']);
+      expect(childTexts(merged, 'some-app')).toEqual(['Other']);
+    });
+
+    // 'nonexistent' is how an operator hides a page. Lab would go down with the
+    // page it nested under, so it has to stay in the app instead.
+    it('does not nest under a relocated page the operator sent nowhere', () => {
+      setup({
+        openFeatureFlags: { 'grafana.pluginPathNesting': true },
+        config: { navigation: { appStandalonePages: { '/a/some-app/pages': { sectionId: 'nonexistent' } } } },
+      });
+
+      const merged = merge(
+        app('some-app', 'Some app', [page('Pages', '/a/some-app/pages'), page('Lab', '/a/some-app/pages/lab')])
+      );
+
+      expect(childTexts(merged, 'some-app')).toEqual(['Lab']);
+    });
+
+    it('never nests dashboards', () => {
+      nesting(true);
+
+      const merged = merge(
+        app('some-app', 'Some app', [
+          page('Settings', '/a/some-app/settings'),
+          { type: PluginIncludeType.dashboard, name: 'Board', uid: 'abc', addToNav: true },
+        ])
+      );
+
+      expect(childTexts(merged, 'some-app')).toEqual(['Settings', 'Board']);
+    });
+  });
+
   // The one case that goes through the metas endpoint and the mapper, rather
   // than building AppPluginConfig by hand: everything between the API response
   // and the nav tree.
