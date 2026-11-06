@@ -647,21 +647,26 @@ func TestNatsNotifierRetriedStartHoldsNoResumes(t *testing.T) {
 	})
 }
 
-// A start that fails after the bus reported a gap, here the first capture once
-// a retried subscription succeeds, must not leave every resume held.
+// A start that fails after the bus reported a gap, here a reconnect right
+// after capture, must not leave every resume held.
 func TestNatsNotifierFailedStartReleasesItsHold(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		nt := newNatsNotifierTest(t)
-		nt.bus.failSubscribe = 1
 		nt.history.mu.Lock()
 		nt.history.latestErr = errors.New("database unavailable")
 		nt.history.mu.Unlock()
 
 		floors := &floorRecorder{}
-		_, _, err := nt.notifier.watchWithFloors(t.Context(), floors, func() {})
+		var heldBeforeFailure bool
+		_, _, err := nt.notifier.watchWithFloors(t.Context(), floors, func() {
+			nt.bus.reconnect()
+			synctest.Wait()
+			heldBeforeFailure = floors.isHeld()
+		})
 		require.Error(t, err)
+		require.True(t, heldBeforeFailure, "the reconnect held every resume")
 		synctest.Wait()
-		require.Equal(t, 1, nt.invalidator.invalidations(), "the retried subscription reported a gap")
+		require.Equal(t, 1, nt.invalidator.invalidations())
 		require.False(t, floors.isHeld())
 	})
 }
