@@ -1258,6 +1258,28 @@ describe('instance parity: DatasourceSrv.get vs getDataSourceInstance', () => {
     });
   });
 
+  it('reload() does not keep an instance whose load started before it', async () => {
+    let resolveImport: () => void = () => {};
+    importDataSourceMock.mockImplementationOnce(
+      (meta) =>
+        new Promise((resolve) => {
+          resolveImport = () => resolve(importTestDataSource(meta));
+        })
+    );
+
+    const stale = srv.get('uid-alpha');
+    // Let the load reach the importer before the reload runs.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await srv.reload({ datasources: clone(), defaultDatasource: DEFAULT_NAME });
+    resolveImport();
+    const staleInstance = await stale;
+
+    const fresh = await getDataSourceInstance('uid-alpha');
+    expect(fresh).not.toBe(staleInstance);
+    expect(await srv.get('uid-alpha')).toBe(fresh);
+    expect(importDataSourceMock).toHaveBeenCalledTimes(2);
+  });
+
   it('reload() drops the shared instance for both APIs', async () => {
     const before = await getDataSourceInstance('uid-alpha');
     getBackendSrvGetMock.mockResolvedValueOnce({ datasources: clone(), defaultDatasource: DEFAULT_NAME });

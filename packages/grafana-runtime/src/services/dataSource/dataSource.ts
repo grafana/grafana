@@ -18,12 +18,12 @@ import { FALLBACK_TO_LEGACY_INSTANCE_WARNING } from './constants';
 import { DataSourcePluginImportError, isDataSourceLoadError } from './errors';
 import { getExpressionDataSourceInstance } from './expressionDs';
 import { describeRef, logDataSourceInstanceError, logDataSourceWarning } from './logging';
-import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
+import { getCachedPlugin, getPluginCacheGeneration, setCachedPlugin, setRuntimePlugin } from './pluginCache';
 import { getDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
 import { type ImportDataSourcePluginFn } from './types';
 
 let importDataSourcePlugin: ImportDataSourcePluginFn | undefined;
-const inflightLoads = new Map<string, Promise<DataSourceApi>>();
+const inflightLoads = new Map<string, { generation: number; promise: Promise<DataSourceApi> }>();
 
 /**
  * Register the data source plugin importer. Called once from application boot.
@@ -109,7 +109,8 @@ function normalizeEmptyRef(ref: DataSourceRef | string | null | undefined): Data
  * Load the plugin instance for already-resolved instance settings. This is the single loader and
  * instance cache behind both {@link getDataSourceInstance} and the legacy `DataSourceSrv.get()`,
  * so one data source never has two live instances. Concurrent callers for the same uid share one
- * in-flight load.
+ * in-flight load. A load that started before the cache was cleared (for example by a reload) still
+ * resolves for its callers, but it is not cached and later callers do not join it.
  *
  * On an import or construction failure it logs, shows the `"<name> plugin failed"` alert, and
  * throws {@link DataSourcePluginImportError}. Nothing is cached, so the next call retries.
@@ -130,25 +131,30 @@ export async function loadDataSourceInstanceFromSettings(
     return cached;
   }
 
+  const generation = getPluginCacheGeneration();
   const inflight = inflightLoads.get(cacheUid);
-  if (inflight) {
-    return inflight;
+  if (inflight?.generation === generation) {
+    return inflight.promise;
   }
 
-  const promise = loadDataSourceInstance(cacheUid, settings, importer);
-  inflightLoads.set(cacheUid, promise);
+  const entry = { generation, promise: loadDataSourceInstance(cacheUid, settings, importer, generation) };
+  inflightLoads.set(cacheUid, entry);
 
   try {
-    return await promise;
+    return await entry.promise;
   } finally {
-    inflightLoads.delete(cacheUid);
+    // A load from a newer generation may have replaced this entry. Leave that one in place.
+    if (inflightLoads.get(cacheUid) === entry) {
+      inflightLoads.delete(cacheUid);
+    }
   }
 }
 
 async function loadDataSourceInstance(
   cacheUid: string,
   settings: DataSourceInstanceSettings,
-  importer: ImportDataSourcePluginFn | undefined
+  importer: ImportDataSourcePluginFn | undefined,
+  generation: number
 ): Promise<DataSourceApi> {
   if (!importer) {
     throw new Error('Data source importer has not been set. Call setDataSourcePluginImporter during application boot.');
@@ -210,7 +216,9 @@ async function loadDataSourceInstance(
     throw new DataSourcePluginImportError(settings.uid, error);
   }
 
-  setCachedPlugin(cacheUid, instance);
+  if (generation === getPluginCacheGeneration()) {
+    setCachedPlugin(cacheUid, instance);
+  }
   return instance;
 }
 

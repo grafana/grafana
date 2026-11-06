@@ -708,6 +708,75 @@ describe('plugin', () => {
       expect(mockImport).toHaveBeenCalledTimes(2);
     });
 
+    describe('when the cache is cleared while a load is in flight', () => {
+      // Each import resolves only when the test says so, so a sync can run in between.
+      function setupDeferredImports() {
+        const settings = ds();
+        setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+
+        const resolvers: Array<() => void> = [];
+        const instances: DataSourceApi[] = [];
+        const mockImport = jest.fn(
+          () =>
+            new Promise((resolve) => {
+              const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+              instances.push(instance);
+              resolvers.push(() => resolve({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} }));
+            })
+        );
+        setDataSourcePluginImporter(mockImport);
+
+        const sync = () =>
+          syncDataSourceInstanceSettings({
+            datasources: { [settings.name]: settings },
+            defaultDatasource: settings.name,
+          });
+        // Let pending awaits run, so a started load reaches the importer.
+        const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+        return { settings, mockImport, resolvers, instances, sync, flush };
+      }
+
+      it('still resolves the load, but does not cache the instance it built', async () => {
+        const { settings, mockImport, resolvers, instances, sync, flush } = setupDeferredImports();
+
+        const before = getDataSourceInstance(settings.uid);
+        await flush();
+        await sync();
+        resolvers[0]();
+
+        await expect(before).resolves.toBe(instances[0]);
+        expect(getCachedPlugin(settings.uid)).toBeUndefined();
+
+        const after = getDataSourceInstance(settings.uid);
+        await flush();
+        resolvers[1]();
+        await expect(after).resolves.toBe(instances[1]);
+        expect(mockImport).toHaveBeenCalledTimes(2);
+      });
+
+      it('does not let a later caller join the load that started before the clear', async () => {
+        const { settings, mockImport, resolvers, instances, sync, flush } = setupDeferredImports();
+
+        const before = getDataSourceInstance(settings.uid);
+        await flush();
+        await sync();
+        const after = getDataSourceInstance(settings.uid);
+        await flush();
+        expect(mockImport).toHaveBeenCalledTimes(2);
+
+        // The old load finishes last. It must not replace the instance from the new load, and it
+        // hands its callers that current instance rather than the one built from old settings.
+        resolvers[1]();
+        await expect(after).resolves.toBe(instances[1]);
+        resolvers[0]();
+        await expect(before).resolves.toBe(instances[1]);
+
+        expect(getCachedPlugin(settings.uid)).toBe(instances[1]);
+        await expect(getDataSourceInstance(settings.uid)).resolves.toBe(instances[1]);
+      });
+    });
+
     it('preserves runtime plugin instances across reload', async () => {
       setDataSourceInstanceSettings({}, '');
       const runtime = new TestRuntime('plugin-id', 'runtime-uid');
