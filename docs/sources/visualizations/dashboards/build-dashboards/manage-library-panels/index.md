@@ -53,7 +53,7 @@ To create a library panel, follow these steps:
 1. Click **Save**.
 1. Select **Viewing** in the dashboard mode drop-down list.
 
-Once created, you can modify the library panel using any dashboard on which it appears. After you save the changes, all instances of the library panel reflect these modifications.
+After you've created it, you can modify the library panel using any dashboard on which it appears. After you save the changes, all instances of the library panel reflect these modifications.
 
 ## Add a library panel to a dashboard
 
