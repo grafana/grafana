@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -172,4 +173,100 @@ func TestFederatedGetStatsRecordsLegacyAccessFailures(t *testing.T) {
 			}
 		})
 	}
+}
+
+// recordedLog is one log line captured by recordingLogger.
+type recordedLog struct {
+	level  string
+	msg    string
+	fields map[string]any
+}
+
+// recordingLogger captures log lines; logtest.Fake can't, because its FromContext returns a no-op logger.
+type recordingLogger struct{ lines *[]recordedLog }
+
+func newRecordingLogger() recordingLogger { return recordingLogger{lines: &[]recordedLog{}} }
+
+func (r recordingLogger) record(level, msg string, kv []any) {
+	fields := map[string]any{}
+	for i := 0; i+1 < len(kv); i += 2 {
+		fields[fmt.Sprint(kv[i])] = kv[i+1]
+	}
+	*r.lines = append(*r.lines, recordedLog{level: level, msg: msg, fields: fields})
+}
+
+func (r recordingLogger) New(...any) *log.ConcreteLogger         { return log.NewNopLogger() }
+func (r recordingLogger) Log(...any) error                       { return nil }
+func (r recordingLogger) Debug(msg string, kv ...any)            { r.record("debug", msg, kv) }
+func (r recordingLogger) Info(msg string, kv ...any)             { r.record("info", msg, kv) }
+func (r recordingLogger) Warn(msg string, kv ...any)             { r.record("warn", msg, kv) }
+func (r recordingLogger) Error(msg string, kv ...any)            { r.record("error", msg, kv) }
+func (r recordingLogger) FromContext(context.Context) log.Logger { return r }
+
+// withMsg returns the captured lines with the message.
+func (r recordingLogger) withMsg(msg string) []recordedLog {
+	var out []recordedLog
+	for _, l := range *r.lines {
+		if l.msg == msg {
+			out = append(out, l)
+		}
+	}
+	return out
+}
+
+func TestLegacyStatsLogsLookupFailures(t *testing.T) {
+	in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1", "f2"}}
+	tests := []struct {
+		name      string
+		err       error
+		wantLevel string
+		wantMsg   string
+	}{
+		{name: "failure", err: errors.New("connect: refused"), wantLevel: "error", wantMsg: "Legacy database lookup failed"},
+		{name: "caller went away", err: fmt.Errorf("lookup: %w", context.Canceled), wantLevel: "debug", wantMsg: "Legacy database lookup canceled"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logger := newRecordingLogger()
+			s := &LegacyStatsGetter{
+				SQL:    func(context.Context) (*legacysql.LegacyDatabaseHelper, error) { return nil, tt.err },
+				logger: logger,
+			}
+
+			_, err := s.GetStats(t.Context(), in)
+			require.Error(t, err)
+
+			require.Len(t, *logger.lines, 1)
+			line := (*logger.lines)[0]
+			require.Equal(t, tt.wantLevel, line.level)
+			require.Equal(t, tt.wantMsg, line.msg)
+			require.Equal(t, "stacks-123", line.fields["namespace"])
+			require.Equal(t, "f1", line.fields["folder"], "the first folder is named")
+			require.Equal(t, 2, line.fields["folderCount"])
+			require.Equal(t, tt.err, line.fields["error"])
+			require.NotContains(t, line.fields, "dbServer", "the server isn't known before the lookup succeeds")
+		})
+	}
+}
+
+func TestLegacyStatsLogsSkippedCountsAtDebug(t *testing.T) {
+	logger := newRecordingLogger()
+	s := &LegacyStatsGetter{
+		SQL: func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+			return nil, fmt.Errorf("lookup stack: %w", legacysql.ErrNamespaceDeleted)
+		},
+		logger: logger,
+	}
+
+	_, err := s.GetStats(t.Context(), &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}})
+	require.NoError(t, err)
+
+	lines := logger.withMsg("Skipped legacy count")
+	require.Len(t, lines, 3, "one per resource")
+	for _, l := range lines {
+		require.Equal(t, "debug", l.level)
+		require.Equal(t, legacySkipNamespaceDeleted, l.fields["reason"])
+		require.Equal(t, "stacks-123", l.fields["namespace"])
+	}
+	require.Len(t, *logger.lines, 3, "a deleted namespace is not an error")
 }

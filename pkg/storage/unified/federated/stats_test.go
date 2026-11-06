@@ -385,12 +385,14 @@ func TestIntegrationLegacyStatsRecordMetrics(t *testing.T) {
 			resource: {DualWriterMode: grafanarest.Mode5},
 		}}
 	}
+	logger := newRecordingLogger()
 	run := func(t *testing.T, cfg *setting.Cfg) (*prometheus.Registry, *legacyStatsMetrics) {
 		t.Helper()
+		*logger.lines = nil
 		testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		reg := prometheus.NewRegistry()
 		m := newLegacyStatsMetrics(reg)
-		store := &LegacyStatsGetter{SQL: legacysql.NewDatabaseProvider(testDB), Cfg: cfg, metrics: m}
+		store := &LegacyStatsGetter{SQL: withServer(legacysql.NewDatabaseProvider(testDB), "db-1"), Cfg: cfg, metrics: m, logger: logger}
 		_, err := store.GetStats(request.WithNamespace(context.Background(), "default"), &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: []string{"f1"}})
 		require.NoError(t, err)
 		return reg, m
@@ -401,6 +403,16 @@ func TestIntegrationLegacyStatsRecordMetrics(t *testing.T) {
 		for _, name := range legacyResources {
 			require.Equal(t, uint64(1), observations(t, reg, name, legacyOutcomeOK), name)
 			require.Equal(t, 0.0, tptestutil.ToFloat64(m.skipped.WithLabelValues(name, legacySkipMigrated)), name)
+		}
+		counted := logger.withMsg("Counted legacy resources")
+		require.Len(t, counted, 3)
+		for _, l := range counted {
+			require.Equal(t, "debug", l.level)
+			require.Equal(t, "db-1", l.fields["dbServer"])
+			require.Equal(t, "default", l.fields["namespace"])
+			require.Equal(t, "f1", l.fields["folder"])
+			require.Equal(t, legacyOutcomeOK, l.fields["outcome"])
+			require.Contains(t, l.fields, "duration")
 		}
 	})
 
@@ -440,7 +452,8 @@ func TestIntegrationLegacyStatsRecordsFailedStalenessCheck(t *testing.T) {
 		}}, nil
 	}
 	reg := prometheus.NewRegistry()
-	store := &LegacyStatsGetter{SQL: provider, metrics: newLegacyStatsMetrics(reg)}
+	logger := newRecordingLogger()
+	store := &LegacyStatsGetter{SQL: withServer(provider, "db-1"), metrics: newLegacyStatsMetrics(reg), logger: logger}
 
 	_, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: []string{"f1"}})
 
@@ -449,6 +462,27 @@ func TestIntegrationLegacyStatsRecordsFailedStalenessCheck(t *testing.T) {
 	require.Equal(t, []string{legacyAlertRules}, countErr.Resources)
 	require.Equal(t, uint64(1), observations(t, reg, legacyAlertRules, legacyOutcomeError))
 	require.Equal(t, uint64(0), observations(t, reg, legacyRecordingRules, legacyOutcomeError), "the first failure ends the request")
+
+	failed := logger.withMsg("Legacy count failed")
+	require.Len(t, failed, 1)
+	require.Equal(t, "error", failed[0].level)
+	require.Equal(t, legacyAlertRules, failed[0].fields["resource"])
+	require.Equal(t, "db-1", failed[0].fields["dbServer"])
+	require.Equal(t, legacyOutcomeError, failed[0].fields["outcome"])
+	require.Error(t, failed[0].fields["error"].(error))
+}
+
+// withServer names the database server on the helpers a provider returns.
+func withServer(p legacysql.LegacyDatabaseProvider, server string) legacysql.LegacyDatabaseProvider {
+	return func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		h, err := p(ctx)
+		if err != nil {
+			return nil, err
+		}
+		c := *h
+		c.Server = server
+		return &c, nil
+	}
 }
 
 func TestIntegrationLegacyStatsTimesEachChunkQuery(t *testing.T) {
