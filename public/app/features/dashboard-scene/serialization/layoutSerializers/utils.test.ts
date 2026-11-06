@@ -1,4 +1,4 @@
-import { VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, VizPanel } from '@grafana/scenes';
 import {
   defaultDataQueryKind,
   defaultFieldConfigSource,
@@ -474,6 +474,17 @@ describe('buildVizPanel', () => {
     const viz = buildVizPanel(buildPanelWithQueryOptions({}));
 
     expect(viz.state.$timeRange).toBeUndefined();
+  });
+
+  it('builds the data transformer when a v2 save stored transformations as null', () => {
+    // A dashboard saved at v2 with the list left out of the body is stored with null (#136859)
+    const panel = buildPanelWithQueryOptions({});
+    Object.assign(panel.spec.data.spec, { transformations: null });
+
+    const viz = buildVizPanel(panel);
+
+    expect(viz.state.$data).toBeInstanceOf(SceneDataTransformer);
+    expect((viz.state.$data as SceneDataTransformer).state.transformations).toEqual([]);
   });
 
   describe('hoverHeader interaction with time range', () => {

@@ -219,7 +219,7 @@ export function transformSaveModelSchemaV2ToScene(
       editable: dashboard.editable,
       preload: dashboard.preload,
       isDirty: false,
-      links: [...(options?.defaultLinks ?? []), ...dashboard.links],
+      links: [...(options?.defaultLinks ?? []), ...(dashboard.links ?? [])],
       meta,
       tags: dashboard.tags,
       title: dashboard.title,
