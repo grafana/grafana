@@ -30,6 +30,12 @@ type restClient struct {
 	deployment string
 }
 
+type vectorCountError struct{ got, want int }
+
+func (e *vectorCountError) Error() string {
+	return fmt.Sprintf("azure: got %d vectors for %d inputs", e.got, e.want)
+}
+
 var _ Client = (*restClient)(nil)
 
 // NewClient builds a Client for the given Azure OpenAI resource endpoint and
@@ -38,23 +44,23 @@ var _ Client = (*restClient)(nil)
 // {endpoint}/openai/deployments/{deployment}/embeddings?api-version=... and set
 // the `api-key` header. deployment is the Azure deployment name, not the base
 // model name.
-func NewClient(endpoint, deployment, apiVersion, apiKey string) (Client, error) {
+func NewClient(endpoint, deployment, apiVersion, apiKey string, observer ...embedder.QueryRequestObserver) (Client, error) {
 	if apiKey == "" {
 		return nil, fmt.Errorf("azure: api key is required")
 	}
-	return newClient(endpoint, deployment, apiVersion, azure.WithAPIKey(apiKey))
+	return newClient(endpoint, deployment, apiVersion, azure.WithAPIKey(apiKey), observer...)
 }
 
 // NewClientWithTokenCredential uses Entra ID tokens instead of an API key.
 // The SDK requests the Cognitive Services scope and refreshes tokens as needed.
-func NewClientWithTokenCredential(endpoint, deployment, apiVersion string, credential azcore.TokenCredential) (Client, error) {
+func NewClientWithTokenCredential(endpoint, deployment, apiVersion string, credential azcore.TokenCredential, observer ...embedder.QueryRequestObserver) (Client, error) {
 	if credential == nil {
 		return nil, fmt.Errorf("azure: token credential is required")
 	}
-	return newClient(endpoint, deployment, apiVersion, azure.WithTokenCredential(credential))
+	return newClient(endpoint, deployment, apiVersion, azure.WithTokenCredential(credential), observer...)
 }
 
-func newClient(endpoint, deployment, apiVersion string, auth option.RequestOption) (Client, error) {
+func newClient(endpoint, deployment, apiVersion string, auth option.RequestOption, observer ...embedder.QueryRequestObserver) (Client, error) {
 	if endpoint == "" {
 		return nil, fmt.Errorf("azure: endpoint is required")
 	}
@@ -64,16 +70,27 @@ func newClient(endpoint, deployment, apiVersion string, auth option.RequestOptio
 	if apiVersion == "" {
 		apiVersion = "2024-02-01"
 	}
+	options := []option.RequestOption{azure.WithEndpoint(endpoint, apiVersion), auth}
+	if len(observer) > 0 && observer[0] != nil {
+		options = append(options, option.WithHTTPClient(&embedder.ObservedHTTPClient{Client: http.DefaultClient, Observer: observer[0]}))
+	}
 	return &restClient{
-		client: openai.NewClient(
-			azure.WithEndpoint(endpoint, apiVersion),
-			auth,
-		),
+		client:     openai.NewClient(options...),
 		deployment: deployment,
 	}, nil
 }
 
 func (c *restClient) EmbedTexts(ctx context.Context, texts []string, dimensions int) (EmbedResult, error) {
+	return c.embedTexts(ctx, texts, dimensions, false)
+}
+
+// EmbedTextsHedge keeps the configured endpoint and credentials but disables
+// SDK retries for the one extra embedding request.
+func (c *restClient) EmbedTextsHedge(ctx context.Context, texts []string, dimensions int) (EmbedResult, error) {
+	return c.embedTexts(ctx, texts, dimensions, true)
+}
+
+func (c *restClient) embedTexts(ctx context.Context, texts []string, dimensions int, hedge bool) (EmbedResult, error) {
 	params := openai.EmbeddingNewParams{
 		Model:          c.deployment, // for Azure this is the deployment name
 		Input:          openai.EmbeddingNewParamsInputUnion{OfArrayOfStrings: texts},
@@ -83,25 +100,32 @@ func (c *restClient) EmbedTexts(ctx context.Context, texts []string, dimensions 
 		params.Dimensions = openai.Int(int64(dimensions))
 	}
 
-	resp, err := c.client.Embeddings.New(ctx, params)
+	requestOptions := []option.RequestOption{}
+	if hedge {
+		requestOptions = append(requestOptions, option.WithMaxRetries(0))
+	}
+	resp, err := c.client.Embeddings.New(ctx, params, requestOptions...)
 	if err != nil {
 		return EmbedResult{}, fmt.Errorf("azure: embeddings: %w", retryableError(err, time.Now()))
 	}
-	if len(resp.Data) != len(texts) {
-		return EmbedResult{}, fmt.Errorf("azure: got %d vectors for %d inputs", len(resp.Data), len(texts))
-	}
-
 	// Each datum carries the index of its input; assign positionally so the
 	// output order matches the input order regardless of response ordering.
-	vectors := make([][]float32, len(texts))
+	vectors := make([][]float32, len(resp.Data))
 	for _, d := range resp.Data {
+		if d.Index < 0 || d.Index >= int64(len(vectors)) {
+			return EmbedResult{InputTokens: int(resp.Usage.PromptTokens)}, fmt.Errorf("azure: invalid embedding index %d for %d vectors", d.Index, len(vectors))
+		}
 		v := make([]float32, len(d.Embedding))
 		for i, f := range d.Embedding {
 			v[i] = float32(f)
 		}
 		vectors[d.Index] = v
 	}
-	return EmbedResult{Vectors: vectors, InputTokens: int(resp.Usage.PromptTokens)}, nil
+	result := EmbedResult{Vectors: vectors, InputTokens: int(resp.Usage.PromptTokens)}
+	if len(vectors) != len(texts) {
+		return result, &vectorCountError{got: len(vectors), want: len(texts)}
+	}
+	return result, nil
 }
 
 func retryableError(err error, now time.Time) error {

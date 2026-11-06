@@ -436,6 +436,27 @@ enable_search = true
 The dashboard search page has been set up to search unified storage. Additionally, all legacy search calls (e.g. `/api/search`) will go to
 unified storage when the dual writer mode is set to 3 or greater. When <= 2, the legacy search api calls will go to legacy storage.
 
+### Configure query embedding hedging
+
+In `custom.ini` on the search server, set a delay and a cap for extra query embedding calls:
+
+```ini
+[vector_embedder]
+query_hedge_delay = 1s
+query_hedge_max_concurrent = 4
+```
+
+The binary defaults to a cap of `0`, which leaves hedging off.
+Enable a cap of `4` in dev first, then compare search latency, hedge wins, extra calls, quota errors, and provider billing before promoting it.
+Restart the affected search servers after changing these settings.
+To disable hedging, set `query_hedge_max_concurrent = 0` and restart them.
+
+For an eligible single-text query embedding after a cache miss, a call still pending after the delay can start one extra call to the same provider.
+The cap limits extra calls shared by all query embedding clients in each process; it is not a fleet-wide limit.
+Hedging does not guarantee a response within 20 seconds.
+Watch the `grafana_vector_storage_query_embedding_` metrics for attempts, wins, skipped hedges, extra calls in flight, and reported or unknown token usage.
+Canceled calls can still incur charges, so confirm cost against provider billing.
+
 ### Restrict collection searches to service identities
 
 Externally supplied records may have no corresponding unified-storage resources or user-level authorization rules. When the owning service must apply its own authorization checks before returning results to a user, restrict reads to that service so callers cannot bypass those checks.

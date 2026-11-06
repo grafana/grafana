@@ -664,6 +664,23 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 	})
 }
 
+func TestQueryHedgeSettings(t *testing.T) {
+	cfg := NewCfg()
+	err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+	assert.NoError(t, err)
+	cfg.setUnifiedStorageConfig()
+	assert.Equal(t, time.Second, cfg.QueryHedgeDelay)
+	assert.Equal(t, 0, cfg.QueryHedgeMaxConcurrent)
+	assert.NoError(t, cfg.ValidateQueryHedgeConfig())
+
+	cfg.QueryHedgeMaxConcurrent = 4
+	cfg.QueryHedgeDelay = 0
+	assert.ErrorContains(t, cfg.ValidateQueryHedgeConfig(), "query_hedge_delay")
+	cfg.QueryHedgeDelay = time.Second
+	cfg.QueryHedgeMaxConcurrent = -1
+	assert.ErrorContains(t, cfg.ValidateQueryHedgeConfig(), "query_hedge_max_concurrent")
+}
+
 func TestApplyMigrationEnforcements(t *testing.T) {
 	newCfg := func(t *testing.T) *Cfg {
 		t.Helper()

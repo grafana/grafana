@@ -9,18 +9,26 @@ import (
 )
 
 type VectorMetrics struct {
-	SearchDuration               *prometheus.HistogramVec
-	HybridSearchDuration         *prometheus.HistogramVec
-	EmbedDuration                *prometheus.HistogramVec
-	EmbedTokensTotal             *prometheus.CounterVec
-	EmbedSkippedVersionsTotal    *prometheus.CounterVec
-	RerankDuration               *prometheus.HistogramVec
-	RerankCandidatesTotal        *prometheus.CounterVec
-	RerankDroppedResultsTotal    *prometheus.CounterVec
-	ReconcilerProcessDuration    *prometheus.HistogramVec
-	ReconcilerPendingEvents      prometheus.Gauge
-	ReconcilerRetriesTotal       *prometheus.CounterVec
-	ReconcilerEventsDroppedTotal *prometheus.CounterVec
+	SearchDuration                       *prometheus.HistogramVec
+	HybridSearchDuration                 *prometheus.HistogramVec
+	EmbedDuration                        *prometheus.HistogramVec
+	EmbedTokensTotal                     *prometheus.CounterVec
+	QueryEmbeddingAttemptsStartedTotal   *prometheus.CounterVec
+	QueryEmbeddingAttemptsCompletedTotal *prometheus.CounterVec
+	QueryEmbeddingTransportRequestsTotal *prometheus.CounterVec
+	QueryEmbeddingHedgesSkippedTotal     *prometheus.CounterVec
+	QueryEmbeddingWinnerTotal            *prometheus.CounterVec
+	QueryEmbeddingExtraInFlight          *prometheus.GaugeVec
+	QueryEmbeddingAttemptTokensTotal     *prometheus.CounterVec
+	QueryEmbeddingUnknownTokensTotal     *prometheus.CounterVec
+	EmbedSkippedVersionsTotal            *prometheus.CounterVec
+	RerankDuration                       *prometheus.HistogramVec
+	RerankCandidatesTotal                *prometheus.CounterVec
+	RerankDroppedResultsTotal            *prometheus.CounterVec
+	ReconcilerProcessDuration            *prometheus.HistogramVec
+	ReconcilerPendingEvents              prometheus.Gauge
+	ReconcilerRetriesTotal               *prometheus.CounterVec
+	ReconcilerEventsDroppedTotal         *prometheus.CounterVec
 
 	ReconcilerSubresourcesExtractedTotal *prometheus.CounterVec
 	ReconcilerSubresourcesEmbeddedTotal  *prometheus.CounterVec
@@ -67,6 +75,38 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			Name: "grafana_vector_storage_embed_tokens_total",
 			Help: "Total input tokens sent to the embedding provider, as reported by the provider. Multiply by the model's per-token price for spend.",
 		}, []string{"model", "task"}),
+		QueryEmbeddingAttemptsStartedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_vector_storage_query_embedding_attempts_started_total",
+			Help: "Logical query embedding attempts started, including extra calls that may be canceled before transport dispatch.",
+		}, []string{"provider", "attempt"}),
+		QueryEmbeddingAttemptsCompletedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_vector_storage_query_embedding_attempts_completed_total",
+			Help: "Completed query embedding attempts by bounded outcome.",
+		}, []string{"provider", "attempt", "outcome"}),
+		QueryEmbeddingTransportRequestsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_vector_storage_query_embedding_transport_requests_total",
+			Help: "Provider embedding requests dispatched by the SDK, including retries, by original or extra attempt.",
+		}, []string{"provider", "attempt"}),
+		QueryEmbeddingHedgesSkippedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_vector_storage_query_embedding_hedges_skipped_total",
+			Help: "Query embedding hedges skipped because the process-wide extra-call limit was full.",
+		}, []string{"provider"}),
+		QueryEmbeddingWinnerTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_vector_storage_query_embedding_winner_total",
+			Help: "Valid query embedding attempts selected for the logical response.",
+		}, []string{"provider", "attempt"}),
+		QueryEmbeddingExtraInFlight: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
+			Name: "grafana_vector_storage_query_embedding_extra_in_flight",
+			Help: "Extra query embedding calls still executing, including canceled calls awaiting provider return.",
+		}, []string{"provider"}),
+		QueryEmbeddingAttemptTokensTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_vector_storage_query_embedding_attempt_tokens_total",
+			Help: "Provider-reported input tokens across original and extra query embedding attempts, including late responses.",
+		}, []string{"provider", "attempt"}),
+		QueryEmbeddingUnknownTokensTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_vector_storage_query_embedding_unknown_tokens_total",
+			Help: "Query embedding attempts with no reported input token usage.",
+		}, []string{"provider", "attempt", "outcome"}),
 		EmbedSkippedVersionsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_vector_storage_embed_skipped_versions_total",
 			Help: "Embedding extraction attempts skipped without a matching API version declaration, labeled by group, resource, and version. Missing, invalid, and unsupported API versions use placeholder labels.",

@@ -5,6 +5,7 @@ package vertex
 import (
 	"context"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -13,6 +14,62 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
+
+type heldVertexResponse struct {
+	Client
+	calls     atomic.Int32
+	holdFirst bool
+	firstDone chan struct{}
+}
+
+func (c *heldVertexResponse) PredictEmbeddings(ctx context.Context, model string, texts []string, dim int, task string) (EmbeddingResult, error) {
+	n := c.calls.Add(1)
+	result, err := c.Client.PredictEmbeddings(ctx, model, texts, dim, task)
+	if n == 1 && c.holdFirst && err == nil {
+		<-ctx.Done()
+		close(c.firstDone)
+		return EmbeddingResult{}, ctx.Err()
+	}
+	return result, err
+}
+
+func TestIntegration_QueryHedge_Vertex(t *testing.T) {
+	project := os.Getenv("VERTEX_PROJECT_ID")
+	if project == "" {
+		t.Skip("VERTEX_PROJECT_ID not set; live query hedge unverified")
+	}
+	ctx, cancel := context.WithTimeout(t.Context(), 90*time.Second)
+	defer cancel()
+	client, err := NewClient(ctx, project, envOr("VERTEX_LOCATION", "us-central1"))
+	require.NoError(t, err)
+	if closer, ok := client.(interface{ Close() error }); ok {
+		t.Cleanup(func() { _ = closer.Close() })
+	}
+	hedger, err := embedder.NewQueryHedger(time.Second, 1, nil)
+	require.NoError(t, err)
+	model := envOr("VERTEX_MODEL", "gemini-embedding-001")
+	normal := NewDenseEmbedder(client, model, 768, 50, hedger)
+	query := embedder.EmbedTextInput{Texts: []string{"Production API latency"}, Task: embedder.TaskRetrievalQuery}
+	out, err := normal.EmbedText(ctx, query)
+	require.NoError(t, err)
+	require.NotEmpty(t, out.Embeddings[0].Dense)
+
+	held := &heldVertexResponse{Client: client, holdFirst: true, firstDone: make(chan struct{})}
+	out, err = NewDenseEmbedder(held, model, 768, 50, hedger).EmbedText(ctx, query)
+	require.NoError(t, err)
+	require.NotEmpty(t, out.Embeddings[0].Dense)
+	require.Equal(t, int32(2), held.calls.Load())
+	select {
+	case <-held.firstDone:
+	case <-ctx.Done():
+		t.Fatal("held original did not observe cancellation")
+	}
+
+	document := &heldVertexResponse{Client: client}
+	_, err = NewDenseEmbedder(document, model, 768, 50, hedger).EmbedText(ctx, embedder.EmbedTextInput{Texts: []string{"Production API latency dashboard"}, Task: embedder.TaskRetrievalDocument})
+	require.NoError(t, err)
+	require.Equal(t, int32(1), document.calls.Load())
+}
 
 // Run with:
 //

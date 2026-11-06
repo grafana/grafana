@@ -420,6 +420,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// fields must also be configured.
 	embedSection := cfg.Raw.Section("vector_embedder")
 	cfg.EmbeddingProvider = embedSection.Key("provider").String()
+	cfg.QueryHedgeDelay = embedSection.Key("query_hedge_delay").MustDuration(time.Second)
+	cfg.QueryHedgeMaxConcurrent = embedSection.Key("query_hedge_max_concurrent").MustInt(0)
 	cfg.VertexProjectID = embedSection.Key("vertex_project_id").String()
 	cfg.VertexLocation = embedSection.Key("vertex_location").MustString("us-central1")
 	cfg.VertexModel = embedSection.Key("vertex_model").MustString("gemini-embedding-001")
@@ -446,6 +448,16 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.RerankVertexModel = rerankSection.Key("vertex_model").MustString("semantic-ranker-fast-004")
 	cfg.RerankBedrockRegion = rerankSection.Key("bedrock_region").MustString("us-east-1")
 	cfg.RerankBedrockModel = rerankSection.Key("bedrock_model").MustString("cohere.rerank-v3-5:0")
+}
+
+func (cfg *Cfg) ValidateQueryHedgeConfig() error {
+	if cfg.QueryHedgeMaxConcurrent < 0 {
+		return fmt.Errorf("vector_embedder.query_hedge_max_concurrent must be nonnegative: %d", cfg.QueryHedgeMaxConcurrent)
+	}
+	if cfg.QueryHedgeMaxConcurrent > 0 && cfg.QueryHedgeDelay <= 0 {
+		return fmt.Errorf("vector_embedder.query_hedge_delay must be positive when hedging is enabled: %s", cfg.QueryHedgeDelay)
+	}
+	return nil
 }
 
 func (cfg *Cfg) ValidateSharedVectorConfig() error {

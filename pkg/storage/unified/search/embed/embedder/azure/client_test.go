@@ -7,7 +7,10 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
+	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -19,6 +22,41 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
+
+type azureHTTPFunc func(*http.Request) (*http.Response, error)
+
+func (f azureHTTPFunc) Do(req *http.Request) (*http.Response, error) { return f(req) }
+
+func TestRestClientCancelsSDKRetryAfterThrottleResponse(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var requests atomic.Int32
+		first := make(chan struct{})
+		client := azureHTTPFunc(func(req *http.Request) (*http.Response, error) {
+			if err := req.Context().Err(); err != nil {
+				return nil, err
+			}
+			if requests.Add(1) == 1 {
+				close(first)
+			}
+			return &http.Response{
+				StatusCode: http.StatusTooManyRequests,
+				Header:     http.Header{"Content-Type": {"application/json"}, retryAfterMsHeader: {"59000"}},
+				Body:       io.NopCloser(strings.NewReader(`{"error":{"message":"quota exhausted","type":"rate_limit_error","code":"429"}}`)),
+				Request:    req,
+			}, nil
+		})
+		c := &restClient{client: openai.NewClient(option.WithBaseURL("https://example.test"), option.WithAPIKey("test"), option.WithHTTPClient(client)), deployment: "dep"}
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		done := make(chan error, 1)
+		go func() { _, err := c.EmbedTexts(ctx, []string{"query"}, 1); done <- err }()
+		<-first
+		<-time.After(time.Millisecond)
+		cancel()
+		require.ErrorIs(t, <-done, context.Canceled)
+		require.Equal(t, int32(1), requests.Load())
+	})
+}
 
 // TestRestClient_EmbedTexts drives the SDK-backed client against a stub Azure
 // OpenAI endpoint and verifies our mapping: deployment → URL path, dimensions
@@ -78,8 +116,9 @@ func TestRestClient_EmbedTexts_CountMismatch(t *testing.T) {
 
 	c, err := NewClient(srv.URL, "dep", "2024-02-01", "k")
 	require.NoError(t, err)
-	_, err = c.EmbedTexts(context.Background(), []string{"a", "b"}, 0)
+	result, err := c.EmbedTexts(context.Background(), []string{"a", "b"}, 0)
 	require.Error(t, err)
+	require.Equal(t, 1, result.InputTokens)
 }
 
 func TestNewClient_Validation(t *testing.T) {
@@ -127,6 +166,30 @@ func TestRestClient_EmbedTexts_TokenCredential(t *testing.T) {
 	assert.Equal(t, "/openai/deployments/dep/embeddings", path)
 	assert.Equal(t, "2024-02-01", version)
 	assert.Equal(t, [][]float32{{1, 2}}, res.Vectors)
+}
+
+func TestRestClient_EmbedTextsHedge_TokenCredential(t *testing.T) {
+	credential := &testTokenCredential{}
+	var requests int
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		assert.Equal(t, "Bearer test-entra-token", r.Header.Get("Authorization"))
+		assert.Empty(t, r.Header.Get("api-key"))
+		assert.Equal(t, "/openai/deployments/dep/embeddings", r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":[{"index":0,"embedding":[1,2]}],"usage":{"prompt_tokens":1}}`))
+	}))
+	defer srv.Close()
+
+	client, err := NewClientWithTokenCredential(srv.URL, "dep", "", credential)
+	require.NoError(t, err)
+	rest := client.(*restClient)
+	rest.client = openai.NewClient(append(rest.client.Options, option.WithHTTPClient(srv.Client()))...)
+	res, err := rest.EmbedTextsHedge(t.Context(), []string{"query"}, 0)
+	require.NoError(t, err)
+	assert.Equal(t, 1, requests)
+	assert.Equal(t, [][]float32{{1, 2}}, res.Vectors)
+	assert.Equal(t, []string{"https://cognitiveservices.azure.com/.default"}, credential.options.Scopes)
 }
 
 func TestRestClient_EmbedTexts_TokenCredentialError(t *testing.T) {
@@ -237,4 +300,35 @@ func TestRestClient_EmbedTexts_ReturnsRetryHint(t *testing.T) {
 	var apiErr *openai.Error
 	require.ErrorAs(t, err, &apiErr)
 	assert.Equal(t, http.StatusTooManyRequests, apiErr.StatusCode)
+}
+
+func TestRestClient_HedgeAddsOneRequestWithoutChangingOriginalRetries(t *testing.T) {
+	var requests atomic.Int32
+	var observedOriginal, observedExtra atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(retryAfterMsHeader, "1")
+		w.WriteHeader(http.StatusTooManyRequests)
+		_, _ = w.Write([]byte(`{"error":{"message":"quota exhausted","type":"rate_limit_error","code":"429"}}`))
+	}))
+	defer srv.Close()
+	observed := &embedder.ObservedHTTPClient{Client: srv.Client(), Observer: func(kind embedder.QueryAttemptKind) {
+		switch kind {
+		case embedder.QueryAttemptOriginal:
+			observedOriginal.Add(1)
+		case embedder.QueryAttemptExtra:
+			observedExtra.Add(1)
+		}
+	}}
+	c := &restClient{client: openai.NewClient(option.WithBaseURL(srv.URL), option.WithAPIKey("test"), option.WithHTTPClient(observed)), deployment: "dep"}
+
+	_, err := c.EmbedTextsHedge(embedder.WithQueryAttempt(t.Context(), embedder.QueryAttemptExtra), []string{"query"}, 4)
+	require.Error(t, err)
+	require.Equal(t, int32(1), requests.Load())
+	_, err = c.EmbedTexts(embedder.WithQueryAttempt(t.Context(), embedder.QueryAttemptOriginal), []string{"query"}, 4)
+	require.Error(t, err)
+	require.Equal(t, int32(4), requests.Load())
+	require.Equal(t, int32(1), observedExtra.Load())
+	require.Equal(t, int32(3), observedOriginal.Load())
 }

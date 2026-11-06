@@ -3,8 +3,11 @@ package bedrock
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync/atomic"
 	"time"
+
+	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
@@ -22,17 +25,22 @@ type DenseEmbedder struct {
 	model     string
 	dim       int
 	batchSize int
+	hedger    *embedder.QueryHedger
 }
 
 var _ embedder.TextEmbedder = (*DenseEmbedder)(nil)
 
-func NewDenseEmbedder(client Client, model string, dim, batchSize int) *DenseEmbedder {
-	return &DenseEmbedder{
+func NewDenseEmbedder(client Client, model string, dim, batchSize int, hedger ...*embedder.QueryHedger) *DenseEmbedder {
+	e := &DenseEmbedder{
 		client:    client,
 		model:     model,
 		dim:       dim,
 		batchSize: batchSize,
 	}
+	if len(hedger) > 0 {
+		e.hedger = hedger[0]
+	}
+	return e
 }
 
 // EmbedText splits inputs into batches sized to e.batchSize, calls the
@@ -49,23 +57,74 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 	results, err := embedder.BatchProcess(ctx, input.Texts, e.batchSize, func(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 		callCtx, cancel := context.WithTimeoutCause(ctx, callTimeout, ErrCallTimeout)
 		defer cancel()
+		if e.hedger == nil {
+			res, err := e.client.EmbedTexts(callCtx, e.model, texts, inputType, e.dim)
+			if err != nil {
+				if errors.Is(context.Cause(callCtx), ErrCallTimeout) {
+					return nil, &embedder.RetryableError{Err: ErrCallTimeout}
+				}
+				return nil, err
+			}
+			tokens.Add(int64(res.InputTokens))
+			if input.Normalize {
+				embedder.NormalizeDenseBatch(res.Vectors)
+			}
+			out := make([]embedder.Embedding, len(res.Vectors))
+			for i, v := range res.Vectors {
+				out[i] = embedder.Embedding{Dense: v}
+			}
+			return out, nil
+		}
 
-		res, err := e.client.EmbedTexts(callCtx, e.model, texts, inputType, e.dim)
+		attempt := func(ctx context.Context, extra bool) (embedder.EmbedTextOutput, error) {
+			var res EmbedResult
+			var err error
+			if extra {
+				client, ok := e.client.(interface {
+					EmbedTextsHedge(context.Context, string, []string, string, int) (EmbedResult, error)
+				})
+				if !ok {
+					return embedder.EmbedTextOutput{}, fmt.Errorf("bedrock: client does not support a single-request query hedge")
+				}
+				res, err = client.EmbedTextsHedge(e.hedger.WithEligibleQueryAttempt(ctx, input, embedder.QueryAttemptExtra), e.model, texts, inputType, e.dim)
+			} else {
+				res, err = e.client.EmbedTexts(e.hedger.WithEligibleQueryAttempt(ctx, input, embedder.QueryAttemptOriginal), e.model, texts, inputType, e.dim)
+			}
+			if err != nil {
+				return embedder.EmbedTextOutput{}, err
+			}
+			out := make([]embedder.Embedding, len(res.Vectors))
+			for i, v := range res.Vectors {
+				out[i] = embedder.Embedding{Dense: v}
+			}
+			return embedder.EmbedTextOutput{Embeddings: out, InputTokens: res.InputTokens}, nil
+		}
+		out, err := e.hedger.Run(callCtx, input, "bedrock", func(ctx context.Context) (embedder.EmbedTextOutput, error) {
+			return attempt(ctx, false)
+		}, func(ctx context.Context) (embedder.EmbedTextOutput, error) {
+			return attempt(ctx, true)
+		}, func(err error) embedder.QueryAttemptOutcome {
+			if _, ok := errors.AsType[*types.ThrottlingException](err); ok {
+				return embedder.QueryAttemptQuota
+			}
+			if _, ok := errors.AsType[*types.ServiceQuotaExceededException](err); ok {
+				return embedder.QueryAttemptQuota
+			}
+			return embedder.QueryAttemptError
+		})
+		tokens.Add(int64(out.InputTokens))
 		if err != nil {
 			if errors.Is(context.Cause(callCtx), ErrCallTimeout) {
 				return nil, &embedder.RetryableError{Err: ErrCallTimeout}
 			}
 			return nil, err
 		}
-		tokens.Add(int64(res.InputTokens))
 		if input.Normalize {
-			embedder.NormalizeDenseBatch(res.Vectors)
+			for i := range out.Embeddings {
+				embedder.NormalizeDenseInPlace(out.Embeddings[i].Dense)
+			}
 		}
-		out := make([]embedder.Embedding, len(res.Vectors))
-		for i, v := range res.Vectors {
-			out[i] = embedder.Embedding{Dense: v}
-		}
-		return out, nil
+		return out.Embeddings, nil
 	})
 	if err != nil {
 		// Successful chunks were still billed; surface their tokens with the error.

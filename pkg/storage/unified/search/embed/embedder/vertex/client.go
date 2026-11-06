@@ -12,6 +12,7 @@ import (
 	"cloud.google.com/go/aiplatform/apiv1/aiplatformpb"
 	"google.golang.org/api/option"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -29,9 +30,20 @@ type httpClient struct {
 	endpointFn func(model string) string
 }
 
+type vectorCountError struct{ got, want int }
+
+func (e *vectorCountError) Error() string {
+	return fmt.Sprintf("vertex: got %d predictions for %d inputs", e.got, e.want)
+}
+
 // NewClient builds a Client against Vertex AI's prediction API for the
 // given project/location. Pass option.WithCredentials etc. via opts.
 func NewClient(ctx context.Context, projectID, location string, opts ...option.ClientOption) (Client, error) {
+	return NewClientWithRequestObserver(ctx, projectID, location, nil, opts...)
+}
+
+// NewClientWithRequestObserver counts gRPC Predict requests after SDK routing.
+func NewClientWithRequestObserver(ctx context.Context, projectID, location string, observer embedder.QueryRequestObserver, opts ...option.ClientOption) (Client, error) {
 	if projectID == "" {
 		return nil, fmt.Errorf("vertex: projectID is required")
 	}
@@ -46,6 +58,14 @@ func NewClient(ctx context.Context, projectID, location string, opts ...option.C
 		endpoint = fmt.Sprintf("%s-aiplatform.googleapis.com:443", location)
 	}
 	clientOpts := append([]option.ClientOption{option.WithEndpoint(endpoint)}, opts...)
+	if observer != nil {
+		clientOpts = append(clientOpts, option.WithGRPCDialOption(grpc.WithChainUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, options ...grpc.CallOption) error {
+			if method == "/google.cloud.aiplatform.v1.PredictionService/Predict" {
+				embedder.ObserveQueryRequest(ctx, observer)
+			}
+			return invoker(ctx, method, req, reply, cc, options...)
+		})))
+	}
 
 	pred, err := aiplatform.NewPredictionClient(ctx, clientOpts...)
 	if err != nil {
@@ -92,10 +112,6 @@ func (c *httpClient) PredictEmbeddings(ctx context.Context, model string, texts 
 	if err != nil {
 		return EmbeddingResult{}, fmt.Errorf("vertex: predict: %w", retryableError(err))
 	}
-	if len(resp.GetPredictions()) != len(texts) {
-		return EmbeddingResult{}, fmt.Errorf("vertex: got %d predictions for %d inputs", len(resp.GetPredictions()), len(texts))
-	}
-
 	result := EmbeddingResult{
 		Vectors: make([][]float32, len(resp.GetPredictions())),
 	}
@@ -112,6 +128,9 @@ func (c *httpClient) PredictEmbeddings(ctx context.Context, model string, texts 
 		if stats != nil {
 			result.InputTokens += int(stats.GetFields()["token_count"].GetNumberValue())
 		}
+	}
+	if len(result.Vectors) != len(texts) {
+		return result, &vectorCountError{got: len(result.Vectors), want: len(texts)}
 	}
 	return result, nil
 }

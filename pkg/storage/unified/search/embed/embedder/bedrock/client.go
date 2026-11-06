@@ -59,6 +59,16 @@ type cohereEmbedResponse struct {
 }
 
 func (c *awsClient) EmbedTexts(ctx context.Context, model string, texts []string, inputType string, outputDimension int) (EmbedResult, error) {
+	return c.embedTexts(ctx, model, texts, inputType, outputDimension, false)
+}
+
+// EmbedTextsHedge keeps the client's adaptive retryer and rate limiter while
+// restricting the extra InvokeModel operation to one attempt.
+func (c *awsClient) EmbedTextsHedge(ctx context.Context, model string, texts []string, inputType string, outputDimension int) (EmbedResult, error) {
+	return c.embedTexts(ctx, model, texts, inputType, outputDimension, true)
+}
+
+func (c *awsClient) embedTexts(ctx context.Context, model string, texts []string, inputType string, outputDimension int, hedge bool) (EmbedResult, error) {
 	req := cohereEmbedRequest{
 		Texts:          texts,
 		InputType:      inputType,
@@ -73,12 +83,16 @@ func (c *awsClient) EmbedTexts(ctx context.Context, model string, texts []string
 		return EmbedResult{}, fmt.Errorf("bedrock: marshal embed request: %w", err)
 	}
 
+	var options []func(*bedrockruntime.Options)
+	if hedge {
+		options = append(options, func(o *bedrockruntime.Options) { o.RetryMaxAttempts = 1 })
+	}
 	out, err := c.runtime.InvokeModel(ctx, &bedrockruntime.InvokeModelInput{
 		ModelId:     aws.String(model),
 		ContentType: aws.String("application/json"),
 		Accept:      aws.String("application/json"),
 		Body:        body,
-	})
+	}, options...)
 	if err != nil {
 		return EmbedResult{}, fmt.Errorf("bedrock: invoke: %w", retryableError(err))
 	}
