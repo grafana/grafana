@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/util/osutil"
+	"gopkg.in/ini.v1"
 )
 
 func (cfg *Cfg) readVectorAllowedReadServices() error {
@@ -360,8 +361,12 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
 	// Seeding needs the global write order only the KV backend has. It defaults
 	// on only with the NATS notifier, the combination Grafana Cloud runs.
+	cfg.explicitWatchSettings.seededWatches = explicitlySet(section, "seeded_watches_enabled")
 	cfg.SeededWatchesEnabled = section.Key("seeded_watches_enabled").
 		MustBool(cfg.localStorageBackend() == localStorageBackendKV && cfg.NATSNotifierActive())
+	for _, ignored := range cfg.ignoredWatchSettings() {
+		cfg.Logger.Warn("Watch setting has no effect", "setting", ignored.setting, "reason", ignored.reason)
+	}
 	cfg.KeyPathReconciliationEnabled = section.Key("key_path_reconciliation_enabled").MustBool(true)
 	// TTL for per-resource write leases; 0 uses the backend default (10s).
 	cfg.KVLeaseTTL = section.Key("kv_lease_ttl").MustDuration(0)
@@ -617,6 +622,55 @@ func (cfg *Cfg) NATSNotifierActive() bool {
 	default:
 		return false
 	}
+}
+
+type explicitWatchSettings struct {
+	notifier            bool
+	notifierWatchMaxAge bool
+	seededWatches       bool
+}
+
+type ignoredWatchSetting struct {
+	setting string
+	reason  string
+}
+
+// ignoredWatchSettings lists the watch settings that are set explicitly but
+// that the local storage backend does not use, so a misconfiguration shows up
+// at startup instead of as watches that quietly behave differently. Defaults
+// never show up here: they already follow the backend.
+func (cfg *Cfg) ignoredWatchSettings() []ignoredWatchSetting {
+	backend := cfg.localStorageBackend()
+	if backend == localStorageBackendNone {
+		return nil
+	}
+	natsActive := cfg.NATSNotifierActive()
+	notifierReason := "the NATS notifier is off"
+	switch {
+	case !cfg.NATS.Enabled:
+		notifierReason = "NATS is disabled"
+	case backend == localStorageBackendFile:
+		notifierReason = "the file storage backend does not use NATS"
+	}
+
+	explicit := cfg.explicitWatchSettings
+	var ignored []ignoredWatchSetting
+	if explicit.notifier && cfg.NATS.Notifier && !natsActive {
+		ignored = append(ignored, ignoredWatchSetting{setting: "[nats] notifier", reason: notifierReason})
+	}
+	if explicit.notifierWatchMaxAge && cfg.NATS.NotifierWatchMaxAge > 0 && !natsActive {
+		ignored = append(ignored, ignoredWatchSetting{setting: "[nats] notifier_watch_max_age", reason: notifierReason})
+	}
+	if explicit.seededWatches && cfg.SeededWatchesEnabled && backend == localStorageBackendSQL {
+		ignored = append(ignored, ignoredWatchSetting{setting: "[unified_storage] seeded_watches_enabled", reason: "the legacy SQL backend cannot seed watches"})
+	}
+	return ignored
+}
+
+// explicitlySet reports whether key has a value: conf/defaults.ini ships some
+// keys empty so that their defaults can depend on other settings.
+func explicitlySet(section *ini.Section, key string) bool {
+	return section.HasKey(key) && strings.TrimSpace(section.Key(key).String()) != ""
 }
 
 // UnifiedStorageConfig returns the UnifiedStorageConfig for a resource.

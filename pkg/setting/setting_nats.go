@@ -183,6 +183,8 @@ func readNATSSettings(cfg *Cfg) error {
 		return fmt.Errorf("invalid nats mode %q, expected %q or %q", mode, NATSModeEmbedded, NATSModeExternal)
 	}
 
+	cfg.explicitWatchSettings.notifier = explicitlySet(section, "notifier")
+	cfg.explicitWatchSettings.notifierWatchMaxAge = explicitlySet(section, "notifier_watch_max_age")
 	// The notifier and its max age default on with the bus only, so turning NATS
 	// on is a single setting and nothing changes while it is off.
 	enabled := section.Key("enabled").MustBool(false)
