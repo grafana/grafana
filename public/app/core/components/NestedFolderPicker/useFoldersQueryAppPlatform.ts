@@ -104,9 +104,9 @@ export function useFoldersQueryAppPlatform({
         return;
       }
 
-      // With read only folders shown, the server lists the folders on the way to a creatable one and marks which is which
+      // Keep the permission filter, so a server that ignores `include` still only lists folders the user can pick
       const args = showReadOnly
-        ? ({ folder: finalParentUid, type: 'folder', include: 'pathToCreatable' } as const)
+        ? ({ folder: finalParentUid, type: 'folder', permission, include: 'pathToCreatable' } as const)
         : ({ folder: finalParentUid, type: 'folder', permission } as const);
 
       // Make a request

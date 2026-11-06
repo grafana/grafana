@@ -138,7 +138,12 @@ describe('useFoldersQueryAppPlatform', () => {
       result.current.requestNextPage('parent');
     });
 
-    expect(mockInitiate).toHaveBeenCalledWith({ folder: 'parent', type: 'folder', include: 'pathToCreatable' });
+    expect(mockInitiate).toHaveBeenCalledWith({
+      folder: 'parent',
+      type: 'folder',
+      permission: 'edit',
+      include: 'pathToCreatable',
+    });
     const byUid = (uid: string) => result.current.items.find((treeItem) => treeItem.item.uid === uid);
     expect(byUid('on-the-way')).toMatchObject({ readOnly: true, disabled: true });
     expect(byUid('creatable')).not.toHaveProperty('readOnly');

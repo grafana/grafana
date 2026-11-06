@@ -1,7 +1,8 @@
+import { http, HttpResponse } from 'msw';
 import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -656,6 +657,35 @@ describe('NestedFolderPicker', () => {
       expect(
         within(screen.getByRole('treeitem', { name: folderA.item.title })).queryByRole('img', { name: 'Read only' })
       ).not.toBeInTheDocument();
+    });
+
+    it('only lists folders the user can pick when the server ignores include', async () => {
+      setTestFlags(readOnlyFlags);
+      const requests: URLSearchParams[] = [];
+      // A server without include support filters by permission and never sets canCreate
+      server.use(
+        http.get(searchRoute, ({ request }) => {
+          const params = new URL(request.url).searchParams;
+          requests.push(params);
+          const hits = [{ resource: 'folders', name: folderA.item.uid, title: folderA.item.title }];
+          if (params.get('permission') !== 'edit') {
+            hits.push({ resource: 'folders', name: folderC.item.uid, title: folderC.item.title });
+          }
+          return HttpResponse.json({ totalHits: hits.length, hits });
+        })
+      );
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+      expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
+      fireEvent.change(screen.getByPlaceholderText('Search folders'), { target: { value: 'Folder' } });
+      await waitFor(() => expect(requests.some((params) => params.get('query') === 'Folder')).toBe(true));
+
+      expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
+      expect(screen.queryByLabelText(folderC.item.title)).not.toBeInTheDocument();
+      for (const params of requests) {
+        expect(params.get('permission')).toBe('edit');
+        expect(params.get('include')).toBe('pathToCreatable');
+      }
     });
 
     it.each<{ name: string; flags: Parameters<typeof setTestFlags>[0]; permission?: 'view' | 'edit' }>([

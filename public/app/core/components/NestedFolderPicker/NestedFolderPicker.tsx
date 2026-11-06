@@ -82,8 +82,9 @@ async function getSearchResults(searchQuery: string, permission?: PermissionLeve
     query: searchQuery,
     kind: ['folder'],
     limit: 100,
-    // With read only folders shown, the server lists the folders on the way to a creatable one and marks which is which
-    ...(showReadOnly ? { includePathToCreatable: true } : { permission }),
+    permission,
+    // Keep the permission filter, so a server that ignores `include` still only lists folders the user can pick
+    includePathToCreatable: showReadOnly,
   });
 
   const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
