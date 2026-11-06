@@ -1494,6 +1494,34 @@ Key metrics for monitoring Unified Search:
 - `unified_search_shadow_requests_total`: Shadow traffic request counts
 - `unified_search_ring_members`: Number of active search server instances
 
+#### Compare HybridSearch call latency
+
+Use `grafana_vector_storage_hybrid_search_phase_duration_seconds` to compare calls made during `HybridSearch`.
+Each observation measures one completed call, with `phase` set to `database`, `embedding`, or `reranking` and `status` set to `ok` or `error`.
+The status describes the call's returned error, so a failed cache or reranking call can have `status="error"` even when the search request succeeds.
+
+| Phase | Timed work |
+| --- | --- |
+| `database` | Collection resolution, vector search, external full-text search, and individual query-embedding cache `Get`, `Count`, `EvictOldest`, and `Put` calls. The timer covers the backend call, not only SQL execution. |
+| `embedding` | The query embedding provider's `EmbedText` call after a cache miss. Cache operations have separate `database` observations. |
+| `reranking` | The reranking provider's `Score` call. Candidate preparation, sorting, and filtering are outside this timer. |
+
+Run this PromQL query to compare mean duration per executed call over five minutes:
+
+```promql
+sum by (phase) (rate(grafana_vector_storage_hybrid_search_phase_duration_seconds_sum[5m]))
+/
+sum by (phase) (rate(grafana_vector_storage_hybrid_search_phase_duration_seconds_count[5m]))
+```
+
+Check the `_count` series alongside the averages: one request can make several database calls, while query embedding is shared across resource targets.
+A cache hit records the cache lookup but no embedding call.
+Disabled semantic search, skipped reranking, missing providers, and empty candidate sets produce no observation for calls that don't run.
+
+> **Note:** Calls can overlap across resource targets and parallel search paths.
+> Don't add phase durations or stack them as parts of total request latency.
+> Internal Bleve search, authorization, ranking, enrichment, and orchestration remain outside these phases; use `grafana_vector_storage_hybrid_search_duration_seconds` for total request duration.
+
 ## Data migrations
 
 Unified storage includes an automated migration system that transfers resources from legacy SQL tables to unified storage. Migrations run automatically during Grafana startup when enabled.

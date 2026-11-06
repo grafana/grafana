@@ -1325,12 +1325,15 @@ func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, qu
 	// Embed the query as a retrieval *query* (different task hint than
 	// the retrieval *document* hint used at index time — providers tune
 	// projections per side of the retrieval pair).
-	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
+	input := embedder.EmbedTextInput{
 		Texts:     []string{query},
 		Tenant:    namespace,
 		Normalize: s.embedder.ShouldNormalize(),
 		Task:      embedder.TaskRetrievalQuery,
-	})
+	}
+	embedStart := hybridPhaseStart(ctx)
+	out, err := s.embedder.EmbedText(ctx, input)
+	observeHybridPhase(ctx, "embedding", embedStart, err)
 	if err != nil {
 		// Client disconnects/timeouts must map to Canceled/DeadlineExceeded
 		// per the gRPC spec — reporting Internal here trips error SLOs.
@@ -1356,7 +1359,9 @@ func (s *searchServer) lookupCachedQueryEmbedding(ctx context.Context, namespace
 	if s.queryCache == nil {
 		return nil, false
 	}
+	getStart := hybridPhaseStart(ctx)
 	emb, hit, err := s.queryCache.Get(ctx, namespace, s.embedder.Model, queryHash)
+	observeHybridPhase(ctx, "database", getStart, err)
 	if err != nil {
 		s.log.Warn("vector search: cache lookup failed, falling through", "err", err)
 		return nil, false
@@ -1380,16 +1385,25 @@ func (s *searchServer) storeCachedQueryEmbedding(ctx context.Context, namespace,
 	if s.queryCache == nil || s.queryCacheMaxPerTenant <= 0 {
 		return
 	}
-	if n, err := s.queryCache.Count(ctx, namespace); err == nil && int(n) >= s.queryCacheMaxPerTenant {
+	countStart := hybridPhaseStart(ctx)
+	n, countErr := s.queryCache.Count(ctx, namespace)
+	observeHybridPhase(ctx, "database", countStart, countErr)
+	if countErr == nil && int(n) >= s.queryCacheMaxPerTenant {
 		target := int(float64(s.queryCacheMaxPerTenant) * vectorQueryCacheEvictTargetFraction)
 		evictN := int(n) - target
-		if deleted, err := s.queryCache.EvictOldest(ctx, namespace, evictN); err != nil {
+		evictStart := hybridPhaseStart(ctx)
+		deleted, err := s.queryCache.EvictOldest(ctx, namespace, evictN)
+		observeHybridPhase(ctx, "database", evictStart, err)
+		if err != nil {
 			s.log.Warn("vector search: cache evict failed", "err", err)
 		} else if deleted > 0 {
 			s.vectorMetrics.QueryCacheEvictionsTotal.Add(float64(deleted))
 		}
 	}
-	if err := s.queryCache.Put(ctx, namespace, s.embedder.Model, queryHash, dense); err != nil {
+	putStart := hybridPhaseStart(ctx)
+	err := s.queryCache.Put(ctx, namespace, s.embedder.Model, queryHash, dense)
+	observeHybridPhase(ctx, "database", putStart, err)
+	if err != nil {
 		s.log.Warn("vector search: cache put failed", "err", err)
 	}
 }
