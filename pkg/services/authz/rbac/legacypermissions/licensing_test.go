@@ -25,7 +25,7 @@ import (
 type dashboardGrantClient struct{ client.NoopClient }
 
 func (dashboardGrantClient) List(_ context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
-	if req.Group == "dashboard.grafana.app" && req.Resource == "dashboards" && req.Verb == "get" {
+	if req.Group == "dashboard.grafana.app" && req.Resource == "dashboards" && req.Subresource == "" && req.Verb == "get" {
 		return &authzv1.ListResponse{Items: []string{"zanzana-dash"}}, nil
 	}
 	return &authzv1.ListResponse{}, nil
