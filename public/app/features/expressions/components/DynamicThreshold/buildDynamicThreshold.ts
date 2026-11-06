@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 import { EvalFunction } from '../../../alerting/state/alertDef';
 import { type DynamicThresholdPolicyV1 } from '../../types';
 
-export type DynamicThresholdValidationErrorCode =
+type DynamicThresholdValidationErrorCode =
   | 'inputRefId'
   | 'valueField'
   | 'matchLabel'
@@ -17,7 +17,7 @@ export type DynamicThresholdValidationErrorCode =
   | 'labelColumnCollision'
   | 'queryLength';
 
-export type DynamicThresholdValidationField = keyof DynamicThresholdPolicyV1;
+type DynamicThresholdValidationField = keyof DynamicThresholdPolicyV1;
 
 export interface DynamicThresholdValidationError {
   code: DynamicThresholdValidationErrorCode;
