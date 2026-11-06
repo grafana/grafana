@@ -519,6 +519,10 @@ const (
 	// Collect Team LBAC usage through the IAM API instead of legacy datasource JSON
 	FlagTeamlbacUsageFromAppPlatform = "teamlbac.usageFromAppPlatform"
 
+	// FlagTeamlbacApiNoFallback
+	// Return Team LBAC API Kubernetes errors instead of falling back to legacy datasource rules
+	FlagTeamlbacApiNoFallback = "teamlbac.apiNoFallback"
+
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
@@ -581,6 +585,10 @@ const (
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
+
+	// FlagAuthzDelegationChecks
+	// Use AuthZ Check and LegacyCheck for single-org IAM delegation checks (resolved at startup)
+	FlagAuthzDelegationChecks = "authzDelegationChecks"
 
 	// FlagKubernetesAuthzZanzanaSync
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
@@ -665,10 +673,6 @@ const (
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
-
-	// FlagCdnPluginsUrls
-	// Enable loading plugins via declarative URLs
-	FlagCdnPluginsUrls = "cdnPluginsUrls"
 
 	// FlagPluginInstallAPISync
 	// Enable syncing plugin installations to the installs API
@@ -1025,10 +1029,6 @@ const (
 	// FlagDatasourcesGatewayGuardrails
 	// Data source query gateway guardrails
 	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
-
-	// FlagDatasourcesQueryGatewaySlimAudit
-	// Only attach query payloads to query gateway audit events when a guardrail fires
-	FlagDatasourcesQueryGatewaySlimAudit = "datasources.queryGatewaySlimAudit"
 
 	// FlagAlertingFolderHasRulesLabel
 	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector

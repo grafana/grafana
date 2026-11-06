@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -24,12 +24,12 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
 
   const alertManagerName = alertManager.name;
 
-  const { watch } = useFormContext<RuleFormValues>();
+  const { control } = useFormContext<RuleFormValues>();
 
-  const hasRouteSettings =
-    watch(`contactPoints.${alertManagerName}.overrideGrouping`) ||
-    watch(`contactPoints.${alertManagerName}.overrideTimings`) ||
-    watch(`contactPoints.${alertManagerName}.muteTimeIntervals`)?.length > 0;
+  const overrideGrouping = useWatch({ control, name: `contactPoints.${alertManagerName}.overrideGrouping` });
+  const overrideTimings = useWatch({ control, name: `contactPoints.${alertManagerName}.overrideTimings` });
+  const muteTimeIntervals = useWatch({ control, name: `contactPoints.${alertManagerName}.muteTimeIntervals` });
+  const hasRouteSettings = overrideGrouping || overrideTimings || muteTimeIntervals?.length > 0;
 
   return (
     <Stack direction="column">

@@ -359,32 +359,29 @@ func TestVectorSearch_NoVectorBackendReturnsUnimplemented(t *testing.T) {
 
 func TestVectorSearch_EmptyQueryReturnsBadRequestError(t *testing.T) {
 	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
-	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
 		Key: validKey(), Query: "   ",
 	})
-	require.NoError(t, err)
-	require.NotNil(t, resp.Error)
+	assert.Equal(t, int32(400), rpcErrorResult(t, err).Code)
 }
 
 func TestVectorSearch_QueryTooLongReturnsBadRequestError(t *testing.T) {
 	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
-	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
 		Key:   validKey(),
 		Query: strings.Repeat("a", 1001),
 	})
-	require.NoError(t, err)
-	require.NotNil(t, resp.Error)
-	assert.Equal(t, int32(400), resp.Error.Code)
+	respErr := rpcErrorResult(t, err)
+	assert.Equal(t, int32(400), respErr.Code)
 }
 
 func TestVectorSearch_MissingKeyReturnsBadRequestError(t *testing.T) {
 	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
-	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
 		Key:   &resourcepb.ResourceKey{Namespace: "ns"}, // missing group/resource
 		Query: "q",
 	})
-	require.NoError(t, err)
-	require.NotNil(t, resp.Error)
+	assert.Equal(t, int32(400), rpcErrorResult(t, err).Code)
 }
 
 func TestVectorSearch_EmbedderErrorReturnsInternal(t *testing.T) {
@@ -534,10 +531,9 @@ func TestVectorSearch_NoUserInContextReturnsUnauthenticated(t *testing.T) {
 	resp, err := s.VectorSearch(context.Background(), &resourcepb.VectorSearchRequest{
 		Key: validKey(), Query: "q",
 	})
-	require.NoError(t, err)
-	require.NotNil(t, resp.Error)
-	assert.Equal(t, int32(401), resp.Error.Code)
-	assert.Empty(t, resp.Results)
+	respErr := rpcErrorResult(t, err)
+	assert.Equal(t, int32(401), respErr.Code)
+	assert.Nil(t, resp)
 	assert.Empty(t, backend.gotResource, "backend search must not run")
 }
 
@@ -697,12 +693,11 @@ func TestVectorSearch_UnknownCollectionIsNotFound(t *testing.T) {
 	backend := &fakeVectorBackend{resolveNotFound: true}
 	s := newTestSearchServer(newTestEmbedder(fake), backend)
 
-	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
 		Key: validKey(), Query: "q", Limit: 1,
 	})
-	require.NoError(t, err)
-	require.NotNil(t, resp.Error)
-	assert.Equal(t, int32(404), resp.Error.Code)
+	respErr := rpcErrorResult(t, err)
+	assert.Equal(t, int32(404), respErr.Code)
 	assert.Empty(t, backend.gotResource, "backend search must not run")
 	assert.Empty(t, fake.gotIn.Texts, "query must not be embedded")
 }
@@ -766,13 +761,11 @@ func TestVectorSearch_NamespaceMismatchIsForbidden(t *testing.T) {
 	ctx := authlib.WithAuthInfo(context.Background(),
 		&identity.StaticRequester{UserID: 1, UserUID: "u", Namespace: "other-tenant", Type: authlib.TypeUser},
 	)
-	resp, err := s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{
+	_, err := s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{
 		Key: validKey(), Query: "q", Limit: 1, // validKey() is namespace "ns"
 	})
-	require.NoError(t, err)
-	require.NotNil(t, resp.Error)
-	assert.Equal(t, int32(403), resp.Error.Code)
-	assert.Empty(t, resp.Results)
+	respErr := rpcErrorResult(t, err)
+	assert.Equal(t, int32(403), respErr.Code)
 	assert.Empty(t, backend.gotResource, "backend search must not run")
 }
 
@@ -783,12 +776,11 @@ func TestVectorSearch_CollectionNotInAllowlistIsNotFound(t *testing.T) {
 	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend)
 	s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
 
-	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
 		Key: validKey(), Query: "q", Limit: 1,
 	})
-	require.NoError(t, err)
-	require.NotNil(t, resp.Error)
-	assert.Equal(t, int32(404), resp.Error.Code)
+	respErr := rpcErrorResult(t, err)
+	assert.Equal(t, int32(404), respErr.Code)
 	assert.Empty(t, backend.gotResource, "backend search must not run")
 }
 
@@ -800,12 +792,11 @@ func TestVectorSearch_AllowlistSeparatesInternalAndExternal(t *testing.T) {
 	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend)
 	s.collectionAllowlist = vector.NewCollectionAllowlist([]string{"g/r"}, nil)
 
-	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
 		Key: validKey(), Query: "q", Limit: 1,
 	})
-	require.NoError(t, err)
-	require.NotNil(t, resp.Error)
-	assert.Equal(t, int32(404), resp.Error.Code)
+	respErr := rpcErrorResult(t, err)
+	assert.Equal(t, int32(404), respErr.Code)
 }
 
 func TestVectorSearchSharedCollectionReadableByTwoTenants(t *testing.T) {
@@ -845,9 +836,8 @@ func TestVectorSearchSharedCollectionRejectsUnauthenticatedAndMismatchedNamespac
 			s := newTestSearchServer(newTestEmbedder(embed), backend)
 			s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"docs.example.com/manuals"})
 			response, err := s.VectorSearch(tc.ctx, &resourcepb.VectorSearchRequest{Key: &resourcepb.ResourceKey{Namespace: tc.namespace, Group: "docs.example.com", Resource: "manuals"}, Query: "guide"})
-			require.NoError(t, err)
-			require.Equal(t, tc.code, response.GetError().GetCode())
-			require.Empty(t, response.GetResults())
+			require.Nil(t, response)
+			require.Equal(t, tc.code, rpcErrorResult(t, err).GetCode())
 			require.Zero(t, backend.resolveCalls)
 			require.Empty(t, embed.gotIn.Texts)
 			require.Empty(t, backend.gotNamespace)
@@ -890,8 +880,8 @@ func TestVectorSearchSharedCatalogAndEnrollmentMustAgree(t *testing.T) {
 			}
 			response, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: shared.Group, Resource: shared.Resource}, Query: "guide"})
 			if tc.wantCode == codes.NotFound {
-				require.NoError(t, err)
-				require.EqualValues(t, http.StatusNotFound, response.GetError().GetCode())
+				require.Nil(t, response)
+				require.EqualValues(t, http.StatusNotFound, rpcErrorResult(t, err).GetCode())
 			} else {
 				require.Equal(t, tc.wantCode, status.Code(err))
 				require.Nil(t, response)

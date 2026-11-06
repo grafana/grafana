@@ -701,7 +701,7 @@ describe('AppChrome', () => {
       mockUseMediaQueryMinWidth.mockReturnValue(true);
       const { rerender } = setup(<Page navId="child1">Children</Page>);
       const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
-      expect(container.style.minWidth).toBe('460px');
+      expect(container.style.minWidth).toBe('360px');
 
       mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
       rerender();

@@ -16,10 +16,10 @@ describe('mapGatewayStatus', () => {
     ['archiving', 200, StPodStatus.Waiting],
     ['migrated', 200, StPodStatus.Waiting],
     ['unavailable', 200, StPodStatus.Waiting],
+    ['captcha', 200, StPodStatus.Captcha],
     ['suspended', 200, StPodStatus.Error],
     ['deleting', 200, StPodStatus.Error],
     ['outdated', 200, StPodStatus.Error],
-    ['captcha', 200, StPodStatus.Error],
     ['brand-new-state', 200, StPodStatus.Error],
     ['not_found', 404, StPodStatus.Error],
     ['error', 500, StPodStatus.Error],
@@ -206,9 +206,21 @@ describe('StPodReadyService', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it('transitions to captcha and resolves the pending promise so suspended consumers can re-render', async () => {
+    respondWith({ status: 'captcha' });
+    const pending = service.getReadyPromise();
+
+    service.start();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(service.getStatus()).toBe(StPodStatus.Captcha);
+    await expect(pending).resolves.toBeUndefined();
+  });
+
   it.each<[string, FetchHandler]>([
     ['ready (active)', () => Promise.resolve(gatewayJson({ status: 'active' }))],
     ['terminal error (suspended)', () => Promise.resolve(gatewayJson({ status: 'suspended' }))],
+    ['captcha', () => Promise.resolve(gatewayJson({ status: 'captcha' }))],
   ])('stops polling after reaching a terminal state: %s', async (_label, handler) => {
     const fetchMock = installFetch(handler);
 

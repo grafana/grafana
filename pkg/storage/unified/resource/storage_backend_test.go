@@ -1305,7 +1305,7 @@ func TestKvStorageBackend_ReadResource_JoinedReadCloseErrors(t *testing.T) {
 			require.NotNil(t, response.Error)
 			require.Contains(t, response.Error.Message, tc.closeErr.Error())
 			require.Equal(t, tc.want, grpcCodeFromErrorResult(response.Error))
-			require.Equal(t, tc.want, status.Code(errorResultStatus(response.Error)))
+			require.Equal(t, tc.want, status.Code(GRPCStatusError(response.Error)))
 		})
 	}
 }

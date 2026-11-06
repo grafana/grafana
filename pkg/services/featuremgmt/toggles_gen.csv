@@ -168,6 +168,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,alertingEnrichmentPerRule,experimental,@grafana/alerting-squad,false,false,false
 2025-08-29,alertingEnrichmentAssistantInvestigations,experimental,@grafana/alerting-squad,false,false,false
 2026-09-18,alerting.dataSourceManagedRouteProxy,experimental,@grafana/alerting-squad,false,false,true
+2026-11-04,alerting.watchersBanner,experimental,@grafana/alerting-squad,false,false,true
 2026-07-28,alerting.manualAssistantInvestigation,experimental,@grafana/alerting-squad,false,false,true
 2025-07-16,alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
 2026-10-07,alerting.ruleReviews,experimental,@grafana/alerting-squad,false,false,false
@@ -180,6 +181,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-02,datasources.teamHttpHeadersFromAppPlatformMT,experimental,@grafana/identity-access-team,false,false,false
 2026-10-05,datasources.teamHttpHeadersWriteGuard,experimental,@grafana/identity-access-team,false,false,false
 2026-10-16,teamlbac.usageFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
+2026-10-23,teamlbac.apiNoFallback,experimental,@grafana/identity-access-team,false,false,false
 2025-01-15,elasticsearchImprovedParsing,experimental,@grafana/data-sources-plugins,false,false,false
 2025-01-21,datasourceConnectionsTab,privatePreview,@grafana/grafana-catalog,false,false,true
 2026-07-14,connectionsFilterSidebar,experimental,@grafana/grafana-catalog,false,false,true
@@ -205,6 +207,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-04-22,alertingListViewV2PreviewToggle,preview,@grafana/alerting-squad,false,false,true
 2026-02-05,kubernetesAuthZResourcePermissionsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2025-07-31,kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
+2026-11-02,authzDelegationChecks,experimental,@grafana/identity-access-team,false,true,false
 2025-10-13,kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
 2026-01-15,kubernetesAuthzGlobalRolesApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzRolesApi,experimental,@grafana/identity-access-team,false,false,false
@@ -235,7 +238,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,azureResourcePickerUpdates,GA,@grafana/data-sources-plugins,false,false,true
 2025-07-31,prometheusTypeMigration,deprecated,@grafana/data-sources-plugins,false,true,false
 2025-08-29,cdnPluginsLoadFirst,experimental,@grafana/grafana-catalog,false,false,false
-2025-08-29,cdnPluginsUrls,experimental,@grafana/grafana-catalog,false,false,false
 2025-10-24,pluginInstallAPISync,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-05,grafana.dedicatedGrafanaComProxyAPIToken,experimental,@grafana/grafana-catalog,false,false,false
 2026-07-01,heatmapNegativeLogBuckets,experimental,@grafana/dataviz-squad,false,false,true
@@ -336,9 +338,9 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-17,dashboard.vectorSearch,experimental,@grafana/grafana-search-and-storage,false,false,false
 2026-10-22,search.perResourceFolderTree,experimental,@grafana/grafana-search-and-storage,false,false,false
 2026-10-06,alerting.hybridSearch,experimental,@grafana/grafana-search-and-storage,false,false,false
-2026-07-01,grafana.vectorSearchCmdk,experimental,@grafana/grafana-search-and-storage,false,false,true
-2026-08-20,grafana.cmdkHybridSearch,experimental,@grafana/grafana-search-and-storage,false,false,true
-2026-10-29,grafana.cmdkDashboardTags,experimental,@grafana/search-and-storage,false,false,true
+2026-07-01,grafana.vectorSearchCmdk,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2026-08-20,grafana.cmdkHybridSearch,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2026-10-29,grafana.cmdkDashboardTags,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-07-16,assistant.fullscreenWorkspace,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-10-21,assistant.dashboard.artifacts,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-19,splunk.useLegacyResultsApi,experimental,@grafana/data-sources-plugins,false,false,false
@@ -388,7 +390,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-10,saml.gosaml2Provider,experimental,@grafana/identity-access-team,false,false,false
 2026-09-07,grafana.multiTenantUserPermissions,experimental,@grafana/identity-access-team,false,false,true
 2026-09-10,datasources.gatewayGuardrails,experimental,@grafana/data-sources-plugins,false,false,false
-2026-10-01,datasources.queryGatewaySlimAudit,experimental,@grafana/data-sources-plugins,false,false,false
 2026-09-11,alerting.folderHasRulesLabel,experimental,@grafana/alerting-squad,false,false,false
 2026-09-15,grafana.pluginExtensionReactElementProps,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-09-16,grafana.mtFallback,experimental,@grafana/grafana-frontend-platform,false,false,true

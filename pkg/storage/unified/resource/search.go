@@ -788,15 +788,12 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 	}
 
 	if req.NextPageToken != "" {
-		return &resourcepb.ListManagedObjectsResponse{
-			Error: NewBadRequestError("multiple pages not yet supported"),
-		}, nil
+		return nil, GRPCStatusError(NewBadRequestError("multiple pages not yet supported"))
 	}
 
 	rsp := &resourcepb.ListManagedObjectsResponse{}
 	if req.Namespace == "" {
-		rsp.Error = NewBadRequestError("missing namespace")
-		return rsp, nil
+		return nil, GRPCStatusError(NewBadRequestError("missing namespace"))
 	}
 	nsr := NamespacedResource{
 		Namespace: req.Namespace,
@@ -805,8 +802,7 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 	// managed-object index. Discovery avoids the cost of counting via stats.
 	stored, err := s.storage.ListStoredResources(ctx, nsr)
 	if err != nil {
-		rsp.Error = AsErrorResult(err)
-		return rsp, nil
+		return nil, rpcErrorFrom(err)
 	}
 
 	stats := NewSearchStats("ListManagedObjects")
@@ -819,21 +815,18 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 			Resource:  info.Resource,
 		}, "listManagedObjects")
 		if err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp, nil
+			return nil, rpcErrorFrom(err)
 		}
 
 		kind, err := idx.ListManagedObjects(ctx, req, stats)
 		if err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp, nil
+			return nil, rpcErrorFrom(err)
 		}
 		if kind.NextPageToken != "" {
-			rsp.Error = &resourcepb.ErrorResult{
+			return nil, GRPCStatusError(&resourcepb.ErrorResult{
 				Code:    http.StatusNotImplemented,
 				Message: "Multiple pages are not yet supported",
-			}
-			return rsp, nil
+			})
 		}
 		rsp.Items = append(rsp.Items, kind.Items...)
 	}
@@ -888,8 +881,7 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 
 	rsp := &resourcepb.CountManagedObjectsResponse{}
 	if req.Namespace == "" {
-		rsp.Error = NewBadRequestError("missing namespace")
-		return rsp, nil
+		return nil, GRPCStatusError(NewBadRequestError("missing namespace"))
 	}
 	nsr := NamespacedResource{
 		Namespace: req.Namespace,
@@ -898,8 +890,7 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 	// managed objects from each index. Discovery avoids the cost of counting via stats.
 	stored, err := s.storage.ListStoredResources(ctx, nsr)
 	if err != nil {
-		rsp.Error = AsErrorResult(err)
-		return rsp, nil
+		return nil, rpcErrorFrom(err)
 	}
 
 	for _, info := range stored {
@@ -909,14 +900,12 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 			Resource:  info.Resource,
 		}, "countManagedObjects")
 		if err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp, nil
+			return nil, rpcErrorFrom(err)
 		}
 
 		counts, err := idx.CountManagedObjects(ctx, stats)
 		if err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp, nil
+			return nil, rpcErrorFrom(err)
 		}
 		if req.Id == "" {
 			rsp.Items = append(rsp.Items, counts...)
@@ -969,21 +958,15 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	}
 
 	if req.Options.Key.Namespace == "" || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
-		return &resourcepb.ResourceSearchResponse{
-			Error: NewBadRequestError("missing namespace, group or resource"),
-		}, nil
+		return nil, GRPCStatusError(NewBadRequestError("missing namespace, group or resource"))
 	}
 
 	if req.Limit < 0 {
-		return &resourcepb.ResourceSearchResponse{
-			Error: NewBadRequestError("limit cannot be negative"),
-		}, nil
+		return nil, GRPCStatusError(NewBadRequestError("limit cannot be negative"))
 	}
 
 	if req.Offset < 0 {
-		return &resourcepb.ResourceSearchResponse{
-			Error: NewBadRequestError("offset cannot be negative"),
-		}, nil
+		return nil, GRPCStatusError(NewBadRequestError("offset cannot be negative"))
 	}
 
 	// Trash authorizes each hit against one index's group and resource, so hits
@@ -991,13 +974,11 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	// Refused here rather than further in because resolving a federated index below
 	// can build one.
 	if req.IsDeleted && len(req.Federated) > 0 {
-		return &resourcepb.ResourceSearchResponse{
-			Error: NewBadRequestError("searching deleted resources does not support federated queries"),
-		}, nil
+		return nil, GRPCStatusError(NewBadRequestError("searching deleted resources does not support federated queries"))
 	}
 
 	if err := ValidateAccessVerbs(req); err != nil {
-		return &resourcepb.ResourceSearchResponse{Error: err}, nil
+		return nil, GRPCStatusError(err)
 	}
 
 	for _, field := range req.Options.Fields {
@@ -1005,10 +986,10 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 			continue
 		}
 		if req.IsDeleted {
-			return &resourcepb.ResourceSearchResponse{Error: NewBadRequestError("searching deleted resources does not support " + SEARCH_FIELD_FOLDER_TREE)}, nil
+			return nil, GRPCStatusError(NewBadRequestError("searching deleted resources does not support " + SEARCH_FIELD_FOLDER_TREE))
 		}
 		if err := ValidateFolderTreeRequirement(field); err != nil {
-			return &resourcepb.ResourceSearchResponse{Error: err}, nil
+			return nil, GRPCStatusError(err)
 		}
 	}
 
@@ -1024,7 +1005,7 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 		return s.searchGlobal(ctx, span, stats, req, nsr, prepare)
 	}
 	if _, _, err := s.checkSearchServicePermissions(ctx, req, []NamespacedResource{nsr}); err != nil {
-		return permissionErrorResponse(span, err), nil
+		return nil, permissionError(span, err)
 	}
 	return s.searchIndex(ctx, stats, req, nsr, prepare)
 }
@@ -1057,20 +1038,18 @@ func (s *searchServer) searchGlobal(ctx context.Context, span trace.Span, stats 
 	// Unavailable rather than failed: the API that serves this search is enabled
 	// separately, and may be on before this server builds the index.
 	if !s.globalIndexEnabled {
-		return &resourcepb.ResourceSearchResponse{
-			Error: NewServiceUnavailableError("the global search index is not enabled (global_search_index_enabled)"),
-		}, nil
+		return nil, GRPCStatusError(NewServiceUnavailableError("the global search index is not enabled (global_search_index_enabled)"))
 	}
 	// Read once, so the types checked are the types searched, and the kinds
 	// reported are theirs, even if the coverage changes meanwhile.
 	types, kinds := s.globalCoverage.Snapshot()
 	searched, skipped, err := s.checkSearchServicePermissions(ctx, req, globalSources(nsr.Namespace, types))
 	if err != nil {
-		return permissionErrorResponse(span, err), nil
+		return nil, permissionError(span, err)
 	}
 	// A filter on no types would match every type.
 	if len(searched) == 0 {
-		return permissionErrorResponse(span, errors.New("the global search covers no types")), nil
+		return nil, permissionError(span, errors.New("the global search covers no types"))
 	}
 	// Named rather than the skipped ones left out, so the index also hides a
 	// type it still holds documents of after the coverage dropped it. Cloned so
@@ -1093,19 +1072,17 @@ func (s *searchServer) searchGlobal(ctx context.Context, span trace.Span, stats 
 	return rsp, err
 }
 
-func permissionErrorResponse(span trace.Span, err error) *resourcepb.ResourceSearchResponse {
+func permissionError(span trace.Span, err error) error {
 	span.SetStatus(otelcodes.Error, err.Error())
 	span.RecordError(err)
-	return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}
+	return rpcErrorFrom(err)
 }
 
 // searchIndex searches the index for nsr, with the indexes req federates.
 func (s *searchServer) searchIndex(ctx context.Context, stats *SearchStats, req *resourcepb.ResourceSearchRequest, nsr NamespacedResource, prepare func(ResourceIndex)) (*resourcepb.ResourceSearchResponse, error) {
 	idx, err := s.getOrCreateIndex(ctx, stats, nsr, "search")
 	if err != nil {
-		return &resourcepb.ResourceSearchResponse{
-			Error: AsErrorResult(err),
-		}, nil
+		return nil, rpcErrorFrom(err)
 	}
 
 	indexes := &SearchIndexes{Federated: make([]ResourceIndex, len(req.Federated))}
@@ -1114,9 +1091,7 @@ func (s *searchServer) searchIndex(ctx context.Context, stats *SearchStats, req 
 		key := NamespacedResource{Namespace: nsr.Namespace, Group: f.Group, Resource: f.Resource}
 		indexes.Federated[i], err = s.getOrCreateIndex(ctx, stats, key, "federatedSearch")
 		if err != nil {
-			return &resourcepb.ResourceSearchResponse{
-				Error: AsErrorResult(err),
-			}, nil
+			return nil, rpcErrorFrom(err)
 		}
 		if key == folderKey {
 			indexes.Folders = indexes.Federated[i]
@@ -1131,7 +1106,7 @@ func (s *searchServer) searchIndex(ctx context.Context, stats *SearchStats, req 
 	}) {
 		indexes.Folders, err = s.getOrCreateIndex(ctx, stats, folderKey, "recursiveSearch")
 		if err != nil {
-			return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
+			return nil, rpcErrorFrom(err)
 		}
 	}
 	return idx.Search(ctx, s.access, req, indexes, stats)
@@ -1166,8 +1141,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		code := codes.OK
 		if retErr != nil {
 			code = status.Code(retErr)
-		} else if resp != nil {
-			code = grpcCodeFromErrorResult(resp.Error)
 		}
 		metricutil.ObserveWithExemplar(ctx,
 			s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
@@ -1179,12 +1152,12 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Unimplemented, "vector search not configured")
 	}
 
-	if errResp := validateVectorSearchRequest(req); errResp != nil {
-		return errResp, nil
+	if errRes := validateVectorSearchRequest(req); errRes != nil {
+		return nil, GRPCStatusError(errRes)
 	}
 
 	if errRes := requireUserNamespace(ctx, req.Key.Namespace); errRes != nil {
-		return &resourcepb.VectorSearchResponse{Error: errRes}, nil
+		return nil, GRPCStatusError(errRes)
 	}
 	user, _ := types.AuthInfoFrom(ctx)
 	if err := s.checkAllowedReadService(user, req.Key.Group, req.Key.Resource); err != nil {
@@ -1218,7 +1191,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, s.grpcStatusError(ctx, "vector search: resolve collection", err)
 	}
 	if !collAllowed {
-		return &resourcepb.VectorSearchResponse{Error: NewNotFoundError(req.Key)}, nil
+		return nil, GRPCStatusError(NewNotFoundError(req.Key))
 	}
 
 	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, req.Query)
@@ -1269,26 +1242,20 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	return resp, nil
 }
 
-// validateVectorSearchRequest returns a non-nil response with a
-// BadRequestError when the request fails validation; nil means valid.
+// validateVectorSearchRequest returns a BadRequest error result when the
+// request fails validation; nil means valid.
 // Pulled out of VectorSearch to keep that function under the cyclomatic
 // complexity threshold.
-func validateVectorSearchRequest(req *resourcepb.VectorSearchRequest) *resourcepb.VectorSearchResponse {
+func validateVectorSearchRequest(req *resourcepb.VectorSearchRequest) *resourcepb.ErrorResult {
 	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("missing namespace, group or resource"),
-		}
+		return NewBadRequestError("missing namespace, group or resource")
 	}
 	if strings.TrimSpace(req.Query) == "" {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("query must not be empty"),
-		}
+		return NewBadRequestError("query must not be empty")
 	}
 	// TODO decide on appropriate max query length. Using 1k for now.
 	if len(req.Query) > 1000 {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("query exceeds maximum length of 1000 bytes"),
-		}
+		return NewBadRequestError("query exceeds maximum length of 1000 bytes")
 	}
 	return nil
 }
@@ -1492,9 +1459,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 
 	if req.Namespace == "" {
-		return &resourcepb.ResourceStatsResponse{
-			Error: NewBadRequestError("missing namespace"),
-		}, nil
+		return nil, GRPCStatusError(NewBadRequestError("missing namespace"))
 	}
 
 	stats := NewSearchStats("GetStats")
@@ -1514,13 +1479,11 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 				Resource:  parts[1],
 			}, "getStats")
 			if err != nil {
-				rsp.Error = AsErrorResult(err)
-				return rsp, nil
+				return nil, rpcErrorFrom(err)
 			}
 			count, err := sumDocCount(ctx, index, folderSet, stats)
 			if err != nil {
-				rsp.Error = AsErrorResult(err)
-				return rsp, nil
+				return nil, rpcErrorFrom(err)
 			}
 			rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 				Group:    parts[0],
@@ -1536,9 +1499,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 	resourceStats, err := s.storage.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
-		return &resourcepb.ResourceStatsResponse{
-			Error: AsErrorResult(err),
-		}, nil
+		return nil, rpcErrorFrom(err)
 	}
 	rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(resourceStats))
 
@@ -1561,13 +1522,11 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 			Resource:  stat.Resource,
 		}, "getStats")
 		if err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp, nil
+			return nil, rpcErrorFrom(err)
 		}
 		count, err := sumDocCount(ctx, index, folderSet, stats)
 		if err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp, nil
+			return nil, rpcErrorFrom(err)
 		}
 		rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 			Group:    stat.Group,
@@ -1627,9 +1586,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 	filterKeys := make([]NamespacedResource, 0, len(req.Keys))
 	for _, key := range req.Keys {
 		if req.Namespace != key.Namespace {
-			return &resourcepb.RebuildIndexesResponse{
-				Error: NewBadRequestError("key namespace does not match request namespace"),
-			}, nil
+			return nil, GRPCStatusError(NewBadRequestError("key namespace does not match request namespace"))
 		}
 		filterKeys = append(filterKeys, NamespacedResource{
 			Namespace: key.Namespace,
@@ -1640,9 +1597,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 
 	importTimes, err := s.getLastImportTimes(ctx, filterKeys)
 	if err != nil {
-		return &resourcepb.RebuildIndexesResponse{
-			Error: AsErrorResult(err),
-		}, nil
+		return nil, rpcErrorFrom(err)
 	}
 
 	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false)
@@ -1650,7 +1605,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 	// those are rebuilt.
 	syncChs, err := s.queueTypeSyncs(ctx, filterKeys, nil)
 	if err != nil {
-		return &resourcepb.RebuildIndexesResponse{Error: AsErrorResult(err)}, nil
+		return nil, rpcErrorFrom(err)
 	}
 	completeChs = append(completeChs, syncChs...)
 	rebuildCount := len(completeChs)
@@ -1678,10 +1633,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 			continue
 		}
 		if lastImportTime := importTimes[key]; !lastImportTime.IsZero() && !bi.BuildTime.After(lastImportTime) {
-			return &resourcepb.RebuildIndexesResponse{
-				RebuildCount: int64(rebuildCount),
-				Error:        AsErrorResult(fmt.Errorf("index for %s was not built after last import (%s)", key, lastImportTime)),
-			}, nil
+			return nil, rpcErrorFrom(fmt.Errorf("index for %s was not built after last import (%s)", key, lastImportTime))
 		}
 		if !bi.BuildTime.IsZero() {
 			buildTimes = append(buildTimes, &resourcepb.RebuildIndexesResponse_IndexBuildTime{

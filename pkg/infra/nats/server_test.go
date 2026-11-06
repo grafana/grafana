@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io"
 	"math/big"
 	"net"
 	"path/filepath"
@@ -80,6 +81,26 @@ func TestIsLoopbackRouteURL(t *testing.T) {
 			require.Equal(t, want, isLoopbackRouteURL(routeURL))
 		})
 	}
+}
+
+func TestServerClosesSilentRoute(t *testing.T) {
+	s := startTestTLSServer(t, nil, setting.NATSClusterTLSSettings{})
+	peer, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = peer.Close() })
+
+	start := time.Now()
+	require.NoError(t, s.setRoutes(natsserver.RoutesFromStr("nats-route://"+peer.Addr().String())))
+	conn, err := peer.Accept()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+
+	// The peer reads but never answers, like a half-dead route. The nats-server
+	// defaults would only close it after about a minute.
+	require.NoError(t, conn.SetReadDeadline(start.Add(30*time.Second)))
+	_, err = io.Copy(io.Discard, conn)
+	require.NoError(t, err, "the server should close the silent route")
+	require.Less(t, time.Since(start), 20*time.Second)
 }
 
 func TestServerClusterTLS(t *testing.T) {
