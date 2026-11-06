@@ -164,6 +164,8 @@ type fakeHistory struct {
 	readErr error
 	// latestErr, when set, fails every latest RV read.
 	latestErr error
+	// latestReads counts the latest RV reads.
+	latestReads int
 }
 
 func (h *fakeHistory) add(name string, rv int64, action resourcepb.WatchEvent_Type) {
@@ -206,6 +208,7 @@ func (h *fakeHistory) read(_ context.Context, versions []historyVersion) (map[hi
 func (h *fakeHistory) latest(context.Context) (groupResourceRV, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	h.latestReads++
 	if h.latestErr != nil {
 		return nil, h.latestErr
 	}
@@ -225,6 +228,8 @@ type natsNotifierTest struct {
 	invalidator *countingInvalidator
 	reg         *prometheus.Registry
 	notifier    *natsNotifier
+	// stop stops the backend, as backend.Stop does.
+	stop func()
 }
 
 func newNatsNotifierTest(t *testing.T) *natsNotifierTest {
@@ -233,8 +238,10 @@ func newNatsNotifierTest(t *testing.T) *natsNotifierTest {
 
 func newNatsNotifierTestWithBuffer(t *testing.T, bufferSize int) *natsNotifierTest {
 	done := make(chan struct{})
-	t.Cleanup(func() { close(done) })
+	stop := sync.OnceFunc(func() { close(done) })
+	t.Cleanup(stop)
 	nt := &natsNotifierTest{
+		stop:        stop,
 		bus:         &fakeBus{},
 		history:     &fakeHistory{rows: make(map[historyVersion]*historyPollResponse)},
 		invalidator: &countingInvalidator{},
@@ -689,6 +696,34 @@ func TestNatsNotifierHoldsResumesUntilFloorsCanBeRaised(t *testing.T) {
 		synctest.Wait()
 		require.False(t, floors.isHeld())
 		require.Equal(t, rv+1, floors.get()[gr])
+	})
+}
+
+// The worker that raises the floors after a reconnect ends with the backend,
+// even while the latest RVs cannot be read and the watch context lives on.
+func TestNatsNotifierStopsRaisingFloorsWithTheBackend(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		nt := newNatsNotifierTest(t)
+		_, floors := nt.watch(t)
+		synctest.Wait()
+
+		nt.history.mu.Lock()
+		nt.history.latestErr = errors.New("database unavailable")
+		nt.history.mu.Unlock()
+		nt.bus.reconnect()
+		synctest.Wait()
+		require.True(t, floors.isHeld())
+
+		nt.stop()
+		synctest.Wait()
+		nt.history.mu.Lock()
+		reads := nt.history.latestReads
+		nt.history.mu.Unlock()
+		time.Sleep(time.Minute)
+		synctest.Wait()
+		nt.history.mu.Lock()
+		defer nt.history.mu.Unlock()
+		require.Equal(t, reads, nt.history.latestReads, "latest RVs read after the backend stopped")
 	})
 }
 

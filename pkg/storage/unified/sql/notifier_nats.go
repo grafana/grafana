@@ -201,11 +201,20 @@ func (g *unknownGaps) release(covered int64) {
 // reported, and only then releases the held resumes. It retries until the
 // RVs can be read: until then a resume could miss the lost writes.
 func (n *natsNotifier) raiseFloorsAfterUnknownGaps(ctx context.Context, gaps *unknownGaps) {
+	// ctx is the caller's, which can outlive the backend: the retries below
+	// must end with it too.
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	go func() {
+		select {
+		case <-n.done:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
 	for {
 		select {
 		case <-ctx.Done():
-			return
-		case <-n.done:
 			return
 		case <-gaps.signal:
 		}
