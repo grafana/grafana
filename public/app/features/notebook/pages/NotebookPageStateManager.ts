@@ -22,24 +22,18 @@ import { NotebookDeletedEvent } from '../scene/events';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
 
-/**
- * The generated client type mirrors the apiserver Resource<NotebookSpec> at runtime (same OpenAPI source);
- * bridge at the fetch seam so everything downstream uses the schema types.
- */
+// The generated client type and the schema resource type describe the same object; the spec types come from separate generators.
 function toNotebookResource(notebook: Notebook): Resource<NotebookSpec> {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema resource type at the fetch seam
-  return notebook as unknown as Resource<NotebookSpec>;
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- bridge the generated client type to the schema type at the fetch seam
+  return notebook as Resource<NotebookSpec>;
 }
 
 /**
- * Gives a notebook that predates cell ids its ids, by writing it back once as fetched, and returns what
- * the server stored. Comments anchor to the id, so a notebook nobody edits needs one by the time someone
- * wants to comment on it.
+ * Gives a notebook that predates cell ids its ids by writing it back once as fetched. Comments anchor to
+ * the id, so a notebook nobody edits still needs one.
  *
- * Done here, while the page is still loading and no scene exists, so nothing can be edited under the
- * write: the scene is built from exactly what was written, ids and new revision included. Only someone
- * allowed to write does it, and a failure or conflict is not reported: the notebook as fetched is
- * still a good notebook, and the next open tries again.
+ * Runs before the scene exists, so nothing can be edited under the write. A failure or conflict is
+ * ignored: the notebook as fetched is still good, and the next open tries again.
  */
 async function withCellIds(
   uid: string,
@@ -141,8 +135,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
   /**
    * `source` is where the reader came from, for the `loaded` event. A caller that knows nothing leaves it off.
    *
-   * `readOnly` is for a page that only looks at the notebook, such as the PDF render, so that opening it
-   * never writes (see `withCellIds`).
+   * `readOnly` is for a page that only looks at the notebook, such as the PDF render, and never writes.
    */
   public async loadNotebook(
     uid: string,
@@ -172,9 +165,8 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
       const notebook = toNotebookResource(result.data);
 
-      // The generation a cached scene was loaded at goes stale the moment the page saves, because autosave
-      // advances the server's copy without reloading. Where the scene has saved since, that is the newer
-      // number, and it is what separates this page's own write from somebody else's.
+      // Autosave advances the server's generation without reloading, so a cached scene's own generation goes
+      // stale. Prefer the one it last saved at, which tells this page's writes from somebody else's.
       const reuseCachedScene = (generation: number | undefined): boolean => {
         const cached = this.cache.get(uid);
         const cachedGeneration = cached
@@ -203,13 +195,11 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
       // Panel cells are built synchronously below.
       await getPanelPluginMetasMap();
 
-      // Here rather than before the cache check: writing bumps the generation, which would stop a scene
-      // someone is already editing from being reused.
+      // After the cache check, because writing bumps the generation and would stop an edited scene being reused.
       const loaded = readOnly ? notebook : await withCellIds(uid, result.data, notebook);
 
-      // Again, because everything above is asynchronous and another load of this notebook (the route and
-      // an embed each have their own manager) can have cached its scene meanwhile. Building a second one
-      // would replace it in the cache and leave two scenes, and two autosaves, for one notebook.
+      // Check again: another manager may have cached a scene while this one awaited, and a second scene
+      // would mean two autosaves for one notebook.
       if (reuseCachedScene(loaded.metadata.generation)) {
         return;
       }
