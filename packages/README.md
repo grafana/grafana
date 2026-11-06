@@ -66,7 +66,7 @@ After the release pull request is merged, the `Release NPM independent packages`
 
 Publishing uses npm trusted publishing, so there is no npm token. Each independent package needs a one-time trusted publisher entry on npmjs.com (package settings, "Trusted Publisher", GitHub Actions) with the organization `grafana`, the repository `grafana`, the workflow filename `release-npm-independent-packages.yml` and the environment `npm-publish`. To make another package independent, add it to a release group in `nx.json` with `version.conventionalCommits` enabled, add the `release:independent` tag to its `project.json`, add its path to the `Check plugin-compat pull request title` workflow, create its first release tag, and register its trusted publisher.
 
-Nx finds the changes since the last release from the `@grafana/plugin-compat@<version>` git tag. After publishing, the workflow tags the merged release commit with each published `<name>@<version>`, and `nx release version` fails if a package has no tag at all. Do not delete these tags. If the publish run fails, re-run it from the Actions tab rather than starting a new manual run, because only the run triggered by the merge creates tags.
+Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.7.0`. After publishing, the workflow tags the merged release commit with each published `<name>@<version>`, and `nx release version` fails if a package has no tag at all. Do not delete these tags. If the publish run fails, re-run it from the Actions tab rather than starting a new manual run, because only the run triggered by the merge creates tags.
 
 ### Stable releases
 
