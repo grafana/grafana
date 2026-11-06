@@ -31,6 +31,10 @@ import {
 import { MoveVariablesModal } from './components/MoveVariablesModal';
 import { VariablesTable } from './components/VariablesTable';
 import {
+  getSharedVariablesEntryPoint,
+  SharedVariablesEntryPoint,
+} from './enterprise-components/SharedVariablesEntryPointExtension';
+import {
   buildVariablesTree,
   canManageGlobalVariables,
   canManageVariableScope,
@@ -270,16 +274,22 @@ export default function VariablesManagementPage() {
 
   // An error must never look like "no variables yet" — the CTA would be misleading.
   const isEmpty = !isLoading && !isError && variables.length === 0;
+  const hasSharedVariablesEntryPoint = getSharedVariablesEntryPoint() !== null;
+  const showNewVariable = !isEmpty && canCreate;
 
   return (
     <Page
       navId="dashboards/variables"
       actions={
-        !isEmpty &&
-        canCreate && (
-          <Button icon="plus" onClick={() => locationService.push(`${LIST_URL}/new`)}>
-            <Trans i18nKey="variables-management.page.new-variable">New variable</Trans>
-          </Button>
+        (hasSharedVariablesEntryPoint || showNewVariable) && (
+          <Stack gap={1}>
+            <SharedVariablesEntryPoint />
+            {showNewVariable && (
+              <Button icon="plus" onClick={() => locationService.push(`${LIST_URL}/new`)}>
+                <Trans i18nKey="variables-management.page.new-variable">New variable</Trans>
+              </Button>
+            )}
+          </Stack>
         )
       }
     >
