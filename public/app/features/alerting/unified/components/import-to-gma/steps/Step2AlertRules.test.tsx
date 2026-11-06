@@ -327,9 +327,9 @@ describe('Step2AlertRules', () => {
 
       await user.click(screen.getByPlaceholderText(/select a policy tree/i));
 
-      const options = await screen.findAllByRole('option');
-      expect(options.length).toBeGreaterThan(1);
-      expect(options[0]).toHaveTextContent('brand-new-tree');
+      // The Step 1 option renders at once; the API's trees arrive later.
+      await waitFor(() => expect(screen.getAllByRole('option').length).toBeGreaterThan(1));
+      expect(screen.getAllByRole('option')[0]).toHaveTextContent('brand-new-tree');
     });
 
     it('should render source selection and target settings', () => {
