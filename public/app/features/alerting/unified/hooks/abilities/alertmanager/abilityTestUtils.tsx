@@ -1,10 +1,7 @@
 import { type PropsWithChildren } from 'react';
 import { getWrapper } from 'test/test-utils';
 
-import {
-  type AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-} from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from '@grafana/alerting/internal';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { mockDataSource } from '../../../mocks';

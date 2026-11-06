@@ -1,11 +1,8 @@
 import * as React from 'react';
 
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from '@grafana/alerting/internal';
 import { store } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import {
-  type AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-} from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { useRouteProxyStatus } from '../plugin-proxy/withRouteProxy';
