@@ -543,7 +543,7 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 	}
 
 	// Enabled and accessible, but none of its includes are added to the nav, so
-	// processAppPlugin returns no node. This still lands in
+	// processAppPlugin adds no node. This still lands in
 	// enabledAccessibleAppPluginMap yet never adds an "Application" entry, so the
 	// asserts page must stay visible (exercises the tree lookup over the map).
 	applicationAppNoNav := pluginstore.Plugin{
