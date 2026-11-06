@@ -3,6 +3,7 @@ package federated
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -445,4 +446,23 @@ func TestIntegrationLegacyStatsRecordsFailedStalenessCheck(t *testing.T) {
 	require.Equal(t, []string{legacyAlertRules}, countErr.Resources)
 	require.Equal(t, uint64(1), observations(t, reg, legacyAlertRules, legacyOutcomeError))
 	require.Equal(t, uint64(0), observations(t, reg, legacyRecordingRules, legacyOutcomeError), "the first failure ends the request")
+}
+
+func TestIntegrationLegacyStatsTimesEachChunkQuery(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	reg := prometheus.NewRegistry()
+	store := &LegacyStatsGetter{SQL: legacysql.NewDatabaseProvider(testDB), metrics: newLegacyStatsMetrics(reg)}
+	folders := make([]string, 2*folderBatchSize+1)
+	for i := range folders {
+		folders[i] = fmt.Sprintf("folder-%d", i)
+	}
+
+	_, err := store.GetStats(request.WithNamespace(context.Background(), "default"), &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: folders})
+	require.NoError(t, err)
+
+	for _, name := range legacyResources {
+		require.Equal(t, uint64(3), observations(t, reg, name, legacyOutcomeOK), "%s: one observation per chunk", name)
+	}
 }
