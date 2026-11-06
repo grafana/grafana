@@ -1,6 +1,6 @@
 import { type Locator } from '@playwright/test';
 
-import { expect, test } from './fixtures';
+import { expect, test } from '../fixtures';
 
 // Provisioned from devenv/dev-dashboards/dashboard-auto-grid/content-fit-scenarios.json.
 // Each tab is one content-fit scenario; specs only assert rendered panel heights in view mode.

@@ -1942,15 +1942,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "foldersAppPlatformAPI",
-			Description:  "Enables use of app platform API for folders",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaFrontendNavigation,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:   "true",
-		},
-		{
 			Name:        "otelLogsFormatting",
 			Description: "Applies OTel formatting templates to displayed logs",
 			Stage:       FeatureStageGeneralAvailability,
@@ -3478,6 +3469,15 @@ var (
 			Description:  "Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.folderPickerFolderEditAccess",
+			Description:  "Shows folders the user cannot edit as read only in the folder picker, instead of hiding them",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
