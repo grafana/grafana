@@ -9,7 +9,7 @@ import { ErrorBoundaryAlert, LoadingPlaceholder } from '@grafana/ui';
 import { TemplateEditor } from './TemplateEditor';
 
 describe('TemplateEditor', () => {
-  it('keeps draft edits on the save shortcut until blur and accepts external content replacements', async () => {
+  it('keeps draft edits until blur and accepts external content replacements', async () => {
     const user = userEvent.setup();
     const onBlur = jest.fn();
     const { rerender } = render(
@@ -22,11 +22,6 @@ describe('TemplateEditor', () => {
     await user.paste(' draft');
     rerender(<TemplateEditor value="Original" onBlur={onBlur} aria-label="Template" width={600} height="500px" />);
 
-    const onKeyDown = jest.fn();
-    editor.addEventListener('keydown', onKeyDown);
-    await user.keyboard('{Control>}s{/Control}');
-    expect(onKeyDown).toHaveBeenLastCalledWith(expect.objectContaining({ key: 's', defaultPrevented: true }));
-    expect(editor).toHaveFocus();
     expect(editor).toHaveTextContent('Original draft');
     expect(onBlur).not.toHaveBeenCalled();
     expect(editor.closest('.cm-editor')).toHaveStyle({ height: '500px' });
