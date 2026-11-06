@@ -446,7 +446,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.RerankVertexModel = rerankSection.Key("vertex_model").MustString("semantic-ranker-fast-004")
 	cfg.RerankBedrockRegion = rerankSection.Key("bedrock_region").MustString("us-east-1")
 	cfg.RerankBedrockModel = rerankSection.Key("bedrock_model").MustString("cohere.rerank-v3-5:0")
-	cfg.RerankHedgeDelay = cfg.SectionWithEnvOverrides("vector_reranker").Key("hedge_delay").MustDuration(500 * time.Millisecond)
+	cfg.RerankHedgeDelay = rerankSection.Key("hedge_delay").MustDuration(500 * time.Millisecond)
 }
 
 func (cfg *Cfg) ValidateSharedVectorConfig() error {
