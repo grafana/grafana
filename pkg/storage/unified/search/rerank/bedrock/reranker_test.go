@@ -68,7 +68,6 @@ type fakeClient struct {
 	gotModel string
 	gotQuery string
 	gotDocs  []string
-	sleep    time.Duration
 	respond  func(context.Context, int) ([]RerankResult, error)
 	calls    int
 }
@@ -78,17 +77,10 @@ func (f *fakeClient) Rerank(ctx context.Context, model, query string, documents 
 	f.calls++
 	n := f.calls
 	f.gotModel, f.gotQuery, f.gotDocs = model, query, append([]string(nil), documents...)
-	respond, out, err, sleep := f.respond, f.out, f.err, f.sleep
+	respond, out, err := f.respond, f.out, f.err
 	f.mu.Unlock()
 	if respond != nil {
 		return respond(ctx, n)
-	}
-	if sleep > 0 {
-		select {
-		case <-time.After(sleep):
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		}
 	}
 	return out, err
 }
@@ -177,11 +169,16 @@ func TestReranker_TooManyDocs(t *testing.T) {
 }
 
 func TestReranker_TimeoutMapsToErrCallTimeout(t *testing.T) {
-	c := &fakeClient{sleep: 50 * time.Millisecond}
-	r := NewReranker(c, "m")
-	r.callTimeout = time.Millisecond
-	_, err := r.Score(context.Background(), "q", []string{"a"})
-	require.ErrorIs(t, err, rerank.ErrCallTimeout)
+	synctest.Test(t, func(t *testing.T) {
+		c := &fakeClient{respond: func(ctx context.Context, _ int) ([]RerankResult, error) {
+			<-ctx.Done()
+			return nil, ctx.Err()
+		}}
+		r := NewReranker(c, "m")
+		r.callTimeout = time.Millisecond
+		_, err := r.Score(context.Background(), "q", []string{"a"})
+		require.ErrorIs(t, err, rerank.ErrCallTimeout)
+	})
 }
 
 func TestReranker_ClientErrorPassesThrough(t *testing.T) {

@@ -94,10 +94,7 @@ func Do[T any](ctx context.Context, policy Policy, attempt func(context.Context)
 			select {
 			case completed = <-results:
 			default:
-				if ctx.Err() != nil {
-					return zero, deadlineCause()
-				}
-				if expired() {
+				if ctx.Err() != nil || expired() {
 					return zero, deadlineCause()
 				}
 				started, pending = 2, 2
@@ -108,10 +105,7 @@ func Do[T any](ctx context.Context, policy Policy, attempt func(context.Context)
 		}
 		pending--
 		// Select may receive a ready result even when cancellation is also ready.
-		if err := ctx.Err(); err != nil {
-			return zero, deadlineCause()
-		}
-		if expired() {
+		if ctx.Err() != nil || expired() {
 			return zero, deadlineCause()
 		}
 		if completed.err == nil {
@@ -124,7 +118,14 @@ func Do[T any](ctx context.Context, policy Policy, attempt func(context.Context)
 		failures = append(failures, fmt.Errorf("attempt %d: %w", completed.attempt, completed.err))
 		span.AddEvent("hedge.attempt_failed", trace.WithAttributes(attribute.Int("attempt", completed.attempt)))
 		if started == 1 {
-			if policy.Delay > 0 && policy.IsRetryable != nil && policy.IsRetryable(completed.err) && ctx.Err() == nil && !expired() {
+			retryable := false
+			if policy.Delay > 0 && policy.IsRetryable != nil {
+				retryable = policy.IsRetryable(completed.err)
+			}
+			if ctx.Err() != nil || expired() {
+				return zero, deadlineCause()
+			}
+			if retryable {
 				// A fast transient error consumes the final attempt immediately.
 				timerC = nil
 				started, pending = 2, 1

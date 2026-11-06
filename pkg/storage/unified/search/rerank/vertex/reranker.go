@@ -43,7 +43,7 @@ func (r *Reranker) Score(ctx context.Context, query string, texts []string) ([]f
 	callCtx, cancel := context.WithTimeoutCause(ctx, r.callTimeout, rerank.ErrCallTimeout)
 	defer cancel()
 
-	scores, err := rerank.HedgeScores(callCtx, len(texts), r.hedgeDelay, func(attemptCtx context.Context) ([]float64, error) {
+	return rerank.HedgeScores(callCtx, len(texts), r.hedgeDelay, func(attemptCtx context.Context) ([]float64, error) {
 		recs, err := r.client.Rank(attemptCtx, r.model, query, texts)
 		if err != nil {
 			return nil, err
@@ -63,8 +63,4 @@ func (r *Reranker) Score(ctx context.Context, query string, texts []string) ([]f
 		}
 		return scores, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-	return scores, nil
 }

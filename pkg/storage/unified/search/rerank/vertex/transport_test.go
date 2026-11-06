@@ -23,6 +23,24 @@ type localRankService struct {
 	cancelled chan struct{}
 }
 
+func newTestClient(t *testing.T, service discoveryenginepb.RankServiceServer) Client {
+	t.Helper()
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = listener.Close() })
+	server := grpc.NewServer()
+	t.Cleanup(server.Stop)
+	discoveryenginepb.RegisterRankServiceServer(server, service)
+	go func() { _ = server.Serve(listener) }()
+	conn, err := grpc.NewClient(listener.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+	client, err := NewClient(context.Background(), "p", "global", option.WithGRPCConn(conn), option.WithoutAuthentication())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = client.(*rankClient).Close() })
+	return client
+}
+
 func (s *localRankService) Rank(ctx context.Context, _ *discoveryenginepb.RankRequest) (*discoveryenginepb.RankResponse, error) {
 	if s.calls.Add(1) == 1 {
 		<-ctx.Done()
@@ -33,19 +51,8 @@ func (s *localRankService) Rank(ctx context.Context, _ *discoveryenginepb.RankRe
 }
 
 func TestRealSDKHedgeCancelsSlowRequest(t *testing.T) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	server := grpc.NewServer()
 	service := &localRankService{cancelled: make(chan struct{})}
-	discoveryenginepb.RegisterRankServiceServer(server, service)
-	go func() { _ = server.Serve(listener) }()
-	t.Cleanup(server.Stop)
-	conn, err := grpc.NewClient(listener.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = conn.Close() })
-	client, err := NewClient(context.Background(), "p", "global", option.WithGRPCConn(conn), option.WithoutAuthentication())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = client.(*rankClient).Close() })
+	client := newTestClient(t, service)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	scores, err := NewRerankerWithHedgeDelay(client, "m", 20*time.Millisecond).Score(ctx, "q", []string{"a"})
@@ -79,64 +86,31 @@ func (s *failingRankService) Rank(context.Context, *discoveryenginepb.RankReques
 }
 
 func TestRealSDKCertificateFailureDoesNotRetry(t *testing.T) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	server := grpc.NewServer()
 	service := &failingRankService{
 		code:    codes.Unavailable,
 		message: "connection failed: x509: certificate signed by unknown authority",
 	}
-	discoveryenginepb.RegisterRankServiceServer(server, service)
-	go func() { _ = server.Serve(listener) }()
-	t.Cleanup(server.Stop)
-	conn, err := grpc.NewClient(listener.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = conn.Close() })
-	client, err := NewClient(context.Background(), "p", "global", option.WithGRPCConn(conn), option.WithoutAuthentication())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = client.(*rankClient).Close() })
+	client := newTestClient(t, service)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	_, err = NewReranker(client, "m").Score(ctx, "q", []string{"a"})
+	_, err := NewReranker(client, "m").Score(ctx, "q", []string{"a"})
 	require.ErrorContains(t, err, "x509: certificate signed by unknown authority")
 	require.EqualValues(t, 1, service.calls.Load())
 }
 
 func TestRealSDKRetryableErrorUsesOneRequest(t *testing.T) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	server := grpc.NewServer()
 	service := &failingRankService{code: codes.Unavailable}
-	discoveryenginepb.RegisterRankServiceServer(server, service)
-	go func() { _ = server.Serve(listener) }()
-	t.Cleanup(server.Stop)
-	conn, err := grpc.NewClient(listener.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = conn.Close() })
-	client, err := NewClient(context.Background(), "p", "global", option.WithGRPCConn(conn), option.WithoutAuthentication())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = client.(*rankClient).Close() })
+	client := newTestClient(t, service)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	_, err = NewRerankerWithHedgeDelay(client, "m", 0).Score(ctx, "q", []string{"a"})
+	_, err := NewRerankerWithHedgeDelay(client, "m", 0).Score(ctx, "q", []string{"a"})
 	require.Error(t, err)
 	require.EqualValues(t, 1, service.calls.Load())
 }
 
 func TestRealSDKUnavailableRetriesOnceImmediately(t *testing.T) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	server := grpc.NewServer()
 	service := &failingRankService{code: codes.Unavailable, succeedAfterFailure: true}
-	discoveryenginepb.RegisterRankServiceServer(server, service)
-	go func() { _ = server.Serve(listener) }()
-	t.Cleanup(server.Stop)
-	conn, err := grpc.NewClient(listener.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = conn.Close() })
-	client, err := NewClient(context.Background(), "p", "global", option.WithGRPCConn(conn), option.WithoutAuthentication())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = client.(*rankClient).Close() })
+	client := newTestClient(t, service)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	scores, err := NewReranker(client, "m").Score(ctx, "q", []string{"a"})
@@ -146,22 +120,11 @@ func TestRealSDKUnavailableRetriesOnceImmediately(t *testing.T) {
 }
 
 func TestRealSDKInvalidArgumentDoesNotRetry(t *testing.T) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	server := grpc.NewServer()
 	service := &failingRankService{code: codes.InvalidArgument}
-	discoveryenginepb.RegisterRankServiceServer(server, service)
-	go func() { _ = server.Serve(listener) }()
-	t.Cleanup(server.Stop)
-	conn, err := grpc.NewClient(listener.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = conn.Close() })
-	client, err := NewClient(context.Background(), "p", "global", option.WithGRPCConn(conn), option.WithoutAuthentication())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = client.(*rankClient).Close() })
+	client := newTestClient(t, service)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	_, err = NewReranker(client, "m").Score(ctx, "q", []string{"a"})
+	_, err := NewReranker(client, "m").Score(ctx, "q", []string{"a"})
 	require.Error(t, err)
 	require.EqualValues(t, 1, service.calls.Load())
 }
@@ -189,19 +152,8 @@ func (s *sharedRankService) Rank(ctx context.Context, req *discoveryenginepb.Ran
 }
 
 func TestRealSharedSDKClientKeepsOverlappingPayloadsIndependent(t *testing.T) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	server := grpc.NewServer()
 	service := &sharedRankService{requests: make(map[string][]string)}
-	discoveryenginepb.RegisterRankServiceServer(server, service)
-	go func() { _ = server.Serve(listener) }()
-	t.Cleanup(server.Stop)
-	conn, err := grpc.NewClient(listener.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = conn.Close() })
-	client, err := NewClient(context.Background(), "p", "global", option.WithGRPCConn(conn), option.WithoutAuthentication())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = client.(*rankClient).Close() })
+	client := newTestClient(t, service)
 	scorer := NewRerankerWithHedgeDelay(client, "m", 20*time.Millisecond)
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()

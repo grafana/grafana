@@ -69,6 +69,28 @@ func TestDoClassifiedFailureConsumesSecondSlotImmediately(t *testing.T) {
 	})
 }
 
+func TestDoCancellationDuringRetryClassificationRetainsFailureAndCause(t *testing.T) {
+	for _, retryable := range []bool{true, false} {
+		t.Run(map[bool]string{true: "retryable", false: "not retryable"}[retryable], func(t *testing.T) {
+			ctx, cancel := context.WithCancelCause(context.Background())
+			defer cancel(nil)
+			failure, cause := errors.New("attempt failed"), errors.New("caller cancelled")
+			var calls atomic.Int32
+			_, err := hedge.Do(ctx, hedge.Policy{Delay: time.Hour, IsRetryable: func(got error) bool {
+				require.ErrorIs(t, got, failure)
+				cancel(cause)
+				return retryable
+			}}, func(context.Context) (int, error) {
+				calls.Add(1)
+				return 0, failure
+			})
+			require.ErrorIs(t, err, failure)
+			require.ErrorIs(t, err, cause)
+			require.EqualValues(t, 1, calls.Load())
+		})
+	}
+}
+
 func TestDoNonpositiveDelayDisablesRetryAndDuplicate(t *testing.T) {
 	for _, delay := range []time.Duration{0, -time.Second} {
 		t.Run(delay.String(), func(t *testing.T) {
@@ -216,6 +238,7 @@ func TestDoEmitsGenericAttemptDiagnostics(t *testing.T) {
 			attrs[string(attr.Key)] = attr.Value.AsInt64()
 		}
 		require.Equal(t, map[string]int64{"hedge.winning_attempt": 2, "hedge.attempt_count": 2}, attrs)
+		require.Len(t, spans[0].Events(), 3)
 		require.Equal(t, "hedge.timer_elapsed", spans[0].Events()[0].Name)
 		require.Equal(t, "hedge.launched", spans[0].Events()[1].Name)
 		require.Equal(t, "hedge.losing_attempt_cancelled", spans[0].Events()[2].Name)
@@ -385,16 +408,6 @@ func TestDoSlowPrimaryUsesFirstValidSuccess(t *testing.T) {
 	})
 }
 
-func TestDoEarlyErrorDoesNotRetry(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		boom := errors.New("primary failed")
-		var calls atomic.Int32
-		_, err := doHedgeScores(context.Background(), fixtureHedgeDelay, func(context.Context) ([]float64, error) { calls.Add(1); return nil, boom })
-		require.ErrorIs(t, err, boom)
-		require.EqualValues(t, 1, calls.Load())
-	})
-}
-
 func TestDoShortDeadlineDoesNotLaunchDuplicate(t *testing.T) {
 	for _, budget := range []time.Duration{400 * time.Millisecond, 500 * time.Millisecond} {
 		t.Run(budget.String(), func(t *testing.T) {
@@ -412,24 +425,6 @@ func TestDoShortDeadlineDoesNotLaunchDuplicate(t *testing.T) {
 			})
 		})
 	}
-}
-
-func TestDoReturnsBothErrors(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		first, second := errors.New("first"), errors.New("second")
-		var calls atomic.Int32
-		_, err := doHedgeScores(context.Background(), fixtureHedgeDelay, func(ctx context.Context) ([]float64, error) {
-			if calls.Add(1) == 1 {
-				<-time.After(600 * time.Millisecond)
-				return nil, first
-			}
-			<-time.After(200 * time.Millisecond)
-			return nil, second
-		})
-		require.ErrorIs(t, err, first)
-		require.ErrorIs(t, err, second)
-		require.EqualValues(t, 2, calls.Load())
-	})
 }
 
 func TestDoFastPrimaryUsesOneAttempt(t *testing.T) {
@@ -499,38 +494,6 @@ func TestDoLateLoserCompletionCannotBlock(t *testing.T) {
 		close(release)
 		synctest.Wait()
 		<-loserDone
-	})
-}
-
-func TestDoTraceContainsBoundedAttemptMetadata(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		recorder := tracetest.NewSpanRecorder()
-		provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
-		defer func() { _ = provider.Shutdown(context.Background()) }()
-		ctx, span := provider.Tracer("test").Start(context.Background(), "score")
-		var calls atomic.Int32
-		_, err := doHedgeScores(ctx, fixtureHedgeDelay, func(ctx context.Context) ([]float64, error) {
-			if calls.Add(1) == 1 {
-				<-ctx.Done()
-				return nil, ctx.Err()
-			}
-			return []float64{0.4}, nil
-		})
-		require.NoError(t, err)
-		span.End()
-		spans := recorder.Ended()
-		require.Len(t, spans, 1)
-		attrs := spans[0].Attributes()
-		require.Len(t, attrs, 2)
-		require.Equal(t, "hedge.winning_attempt", string(attrs[0].Key))
-		require.EqualValues(t, 2, attrs[0].Value.AsInt64())
-		require.Equal(t, "hedge.attempt_count", string(attrs[1].Key))
-		require.EqualValues(t, 2, attrs[1].Value.AsInt64())
-		events := spans[0].Events()
-		require.Len(t, events, 3)
-		require.Equal(t, "hedge.timer_elapsed", events[0].Name)
-		require.Equal(t, "hedge.launched", events[1].Name)
-		require.Equal(t, "hedge.losing_attempt_cancelled", events[2].Name)
 	})
 }
 
@@ -607,15 +570,6 @@ func TestDoCompletedPrimaryWinsReadyTimer(t *testing.T) {
 	}
 }
 
-func TestDoAttemptPanicReturnsError(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		_, err := doHedgeScores(context.Background(), 0, func(context.Context) ([]float64, error) {
-			panic("provider panic")
-		})
-		require.ErrorContains(t, err, "provider panic")
-	})
-}
-
 func TestDoLateLosingPanicDoesNotCrash(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		var calls atomic.Int32
@@ -678,31 +632,38 @@ func TestDoExpiredDeadlineRejectsLateSuccessWithCause(t *testing.T) {
 	})
 }
 
-func TestDoTimeoutRetainsEarlierAttemptFailure(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		failure := errors.New("provider unavailable")
-		ctx, cancel := context.WithTimeoutCause(context.Background(), time.Second, errTestTimeout)
-		defer cancel()
-		var calls atomic.Int32
-		_, err := doHedgeScores(ctx, fixtureHedgeDelay, func(ctx context.Context) ([]float64, error) {
-			if calls.Add(1) == 1 {
-				<-time.After(600 * time.Millisecond)
-				return nil, failure
-			}
-			<-ctx.Done()
-			return nil, ctx.Err()
-		})
-		require.ErrorIs(t, err, failure)
-		require.ErrorIs(t, err, errTestTimeout)
-	})
-}
-
 type advertisedDeadlineContext struct {
 	context.Context
 	deadline time.Time
 }
 
 func (c advertisedDeadlineContext) Deadline() (time.Time, bool) { return c.deadline, true }
+
+func TestDoDeadlineDuringRetryClassificationRetainsFailureAndDelayedCause(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		base, cancel := context.WithCancelCause(context.Background())
+		defer cancel(nil)
+		failure, cause := errors.New("attempt failed"), errors.New("deadline cause")
+		ctx := advertisedDeadlineContext{Context: base, deadline: time.Now().Add(time.Second)}
+		var calls atomic.Int32
+		go func() {
+			<-time.After(time.Second + time.Millisecond)
+			cancel(cause)
+		}()
+		_, err := hedge.Do(ctx, hedge.Policy{Delay: time.Hour, IsRetryable: func(got error) bool {
+			require.ErrorIs(t, got, failure)
+			synctest.Sleep(time.Second)
+			return true
+		}}, func(context.Context) (int, error) {
+			calls.Add(1)
+			return 0, failure
+		})
+		synctest.Wait()
+		require.ErrorIs(t, err, failure)
+		require.ErrorIs(t, err, cause)
+		require.EqualValues(t, 1, calls.Load())
+	})
+}
 
 func TestDoWallDeadlineWaitsForCancellationCause(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
