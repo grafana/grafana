@@ -44,6 +44,12 @@ export default [
     treeshake: false,
   },
   {
+    input: 'src/store.ts',
+    plugins: grafanaDataPlugins,
+    output: [cjsOutput(pkg, 'grafana-data'), esmOutput(pkg, 'grafana-data')],
+    treeshake: false,
+  },
+  {
     input: 'src/unstable.ts',
     plugins: grafanaDataPlugins,
     output: [cjsOutput(pkg, 'grafana-data'), esmOutput(pkg, 'grafana-data')],

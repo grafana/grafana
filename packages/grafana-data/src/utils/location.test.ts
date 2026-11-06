@@ -7,12 +7,10 @@ import { locationUtil } from './location';
 describe('locationUtil', () => {
   const win: typeof globalThis = window;
   const { location } = win;
+  let locationSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    // @ts-ignore
-    delete win.location;
-
-    win.location = {
+    locationSpy = jest.spyOn(win, 'location', 'get').mockReturnValue({
       ...location,
       hash: '#hash',
       host: 'www.domain.com:9877',
@@ -23,11 +21,11 @@ describe('locationUtil', () => {
       port: '9877',
       protocol: 'http:',
       search: '?search=a&b=c&d',
-    };
+    });
   });
 
   afterEach(() => {
-    win.location = location;
+    locationSpy.mockRestore();
   });
 
   describe('stripBaseFromUrl', () => {
@@ -107,7 +105,7 @@ describe('locationUtil', () => {
 
     describe('when origin does not have a port in it', () => {
       beforeEach(() => {
-        win.location = {
+        locationSpy.mockReturnValue({
           ...location,
           hash: '#hash',
           host: 'www.domain.com',
@@ -118,7 +116,7 @@ describe('locationUtil', () => {
           port: '',
           protocol: 'http:',
           search: '?search=a&b=c&d',
-        };
+        });
       });
 
       test('relative url', () => {

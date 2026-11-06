@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "groups": [
+    [
+      "public/app/features/inspector/utils/download.test.ts",
+      "public/app/features/inspector/utils/download.jsdom.test.ts"
+    ],
+    [
+      "public/app/plugins/panel/annolist/AnnoListPanel.test.tsx",
+      "public/app/plugins/panel/annolist/AnnoListPanel.jsdom.test.tsx"
+    ],
+    [
+      "public/swagger/schemaAnnotations.test.ts",
+      "public/swagger/schemaAnnotations.jsdom.test.ts"
+    ]
+  ]
+}

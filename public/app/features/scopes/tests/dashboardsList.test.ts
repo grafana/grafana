@@ -5,9 +5,9 @@ import { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_SUB_SCOPE_MIMIR_ITEMS } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { type ScopesApiClient } from '../ScopesApiClient';
+import { ScopesApiClient } from '../ScopesApiClient';
 import { type ScopesService } from '../ScopesService';
-import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 import { type ScopeNavigation } from '../dashboards/types';
 
 import {
@@ -57,11 +57,11 @@ jest.mock('@grafana/runtime', () => ({
 setBackendSrv(backendSrv);
 setupMockServer();
 
+// Separate suites preserve test titles and order without mounting dashboards for service-only cases.
 describe('Dashboards list', () => {
   let fetchDashboardsSpy: jest.SpyInstance;
   let fetchScopeNavigationsSpy: jest.SpyInstance;
   let scopesService: ScopesService;
-  let scopesDashboardsService: ScopesDashboardsService;
   let apiClient: ScopesApiClient;
 
   beforeAll(() => {
@@ -69,9 +69,8 @@ describe('Dashboards list', () => {
   });
 
   beforeEach(async () => {
-    const result = await renderDashboard();
+    const result = await renderDashboard({ panels: [], templating: { list: [] } });
     scopesService = result.scopesService;
-    scopesDashboardsService = result.scopesDashboardsService;
     apiClient = result.client;
     fetchDashboardsSpy = jest.spyOn(apiClient, 'fetchDashboards');
     fetchScopeNavigationsSpy = jest.spyOn(apiClient, 'fetchScopeNavigations');
@@ -273,7 +272,6 @@ describe('Dashboards list', () => {
   });
 
   it('does not redirect when scopes are set programmatically on dashboard not in scope navigation list', async () => {
-    // Render another dashboard, which is not a scope navigation
     const mockNavigations: ScopeNavigation[] = [
       {
         spec: {
@@ -291,7 +289,6 @@ describe('Dashboards list', () => {
     ];
     fetchDashboardsSpy.mockResolvedValue(mockNavigations);
 
-    await renderDashboard();
     expect(locationService.getLocation().pathname).toBe('/');
 
     // When scopes are set programmatically (not through UI), redirects should not happen
@@ -320,6 +317,25 @@ describe('Dashboards list', () => {
 
     await clearNotFound();
     expectDashboardSearchValue('');
+  });
+});
+
+describe('Dashboards list', () => {
+  let scopesDashboardsService: ScopesDashboardsService;
+  let originalLocation: ReturnType<typeof locationService.getLocation>;
+
+  beforeAll(() => {
+    config.featureToggles.scopeFilters = true;
+  });
+
+  beforeEach(() => {
+    originalLocation = locationService.getLocation();
+    locationService.replace('/');
+    scopesDashboardsService = new ScopesDashboardsService(new ScopesApiClient());
+  });
+
+  afterEach(() => {
+    locationService.replace(originalLocation);
   });
 
   describe('groupDashboards', () => {
@@ -514,6 +530,30 @@ describe('Dashboards list', () => {
         },
       });
     });
+  });
+});
+
+describe('Dashboards list', () => {
+  let fetchDashboardsSpy: jest.SpyInstance;
+  let fetchScopeNavigationsSpy: jest.SpyInstance;
+  let scopesService: ScopesService;
+  let apiClient: ScopesApiClient;
+
+  beforeAll(() => {
+    config.featureToggles.scopeFilters = true;
+  });
+
+  beforeEach(async () => {
+    const result = await renderDashboard({ panels: [], templating: { list: [] } });
+    scopesService = result.scopesService;
+    apiClient = result.client;
+    fetchDashboardsSpy = jest.spyOn(apiClient, 'fetchDashboards');
+    fetchScopeNavigationsSpy = jest.spyOn(apiClient, 'fetchScopeNavigations');
+  });
+
+  afterEach(async () => {
+    locationService.replace('');
+    await resetScenes([fetchDashboardsSpy, fetchScopeNavigationsSpy]);
   });
 
   describe('subScopes', () => {
@@ -754,6 +794,25 @@ describe('Dashboards list', () => {
       // Note: This test might need adjustment based on actual implementation
       expect(fetchScopeNavigationsSpy.mock.calls.length).toBeGreaterThanOrEqual(firstCallCount);
     });
+  });
+});
+
+describe('Dashboards list', () => {
+  let scopesDashboardsService: ScopesDashboardsService;
+  let originalLocation: ReturnType<typeof locationService.getLocation>;
+
+  beforeAll(() => {
+    config.featureToggles.scopeFilters = true;
+  });
+
+  beforeEach(() => {
+    originalLocation = locationService.getLocation();
+    locationService.replace('/');
+    scopesDashboardsService = new ScopesDashboardsService(new ScopesApiClient());
+  });
+
+  afterEach(() => {
+    locationService.replace(originalLocation);
   });
 
   describe('filterFolders', () => {

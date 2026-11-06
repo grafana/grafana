@@ -28,6 +28,12 @@
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.cjs"
     },
+    "./notification-policies": {
+      "@grafana-app/source": "./src/notification-policies.ts",
+      "types": "./dist/types/notification-policies.d.ts",
+      "import": "./dist/esm/notification-policies.mjs",
+      "require": "./dist/cjs/notification-policies.cjs"
+    },
     "./unstable": {
       "@grafana-app/source": "./src/unstable.ts",
       "types": "./dist/types/unstable.d.ts",

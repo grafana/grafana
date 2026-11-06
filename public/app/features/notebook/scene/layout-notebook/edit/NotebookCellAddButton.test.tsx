@@ -1,4 +1,5 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { NotebookCellAddButton } from './NotebookCellAddButton';
 import { NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './cellClassNames';
@@ -14,7 +15,8 @@ describe('NotebookCellAddButton', () => {
   // i — an off-by-one here would silently insert blocks in the wrong place.
   it('inserts above its own cell', async () => {
     const onAdd = jest.fn();
-    const { user } = render(<NotebookCellAddButton index={1} onAdd={onAdd} />);
+    const user = userEvent.setup();
+    render(<NotebookCellAddButton index={1} onAdd={onAdd} />);
 
     await user.click(screen.getByRole('button', { name: 'Click to add above' }));
     await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
@@ -27,7 +29,8 @@ describe('NotebookCellAddButton', () => {
   // trigger back out mid-interaction without this. jsdom doesn't evaluate :focus-within anyway, so
   // this pins the explicit override the component applies instead of the collision itself.
   it('stays revealed while its own menu is open', async () => {
-    const { user } = render(<NotebookCellAddButton index={1} />);
+    const user = userEvent.setup();
+    render(<NotebookCellAddButton index={1} />);
     // Grabbed before opening: once the menu is open, Dropdown's FloatingFocusManager marks the
     // trigger aria-hidden (correct modal behaviour), so it's no longer findable by role afterwards.
     const addButton = screen.getByRole('button', { name: 'Click to add above' });

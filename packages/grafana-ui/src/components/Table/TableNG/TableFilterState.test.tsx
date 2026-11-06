@@ -192,6 +192,7 @@ it('restores checkbox controls from JSON and replaces an open draft only when it
 });
 
 it('interprets a new time range bound in the panel timezone', async () => {
+  const user = userEvent.setup();
   const { props, api } = setup();
   const timeZone = 'Pacific/Auckland';
   props.data = applyFieldOverrides({
@@ -206,10 +207,12 @@ it('interprets a new time range bound in the panel timezone', async () => {
     replaceVariables: (s) => s,
   })[0];
   render(<TableNG {...props} timeZone={timeZone} rangeFiltersEnabled />);
-  await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
-  await userEvent.type(screen.getByRole('textbox', { name: 'Start' }), '2026-01-01 13:00:00.000');
-  await userEvent.type(screen.getByRole('textbox', { name: 'End' }), '2026-01-01 13:00:00.000');
-  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  await user.click(screen.getByRole('button', { name: 'Filter Time' }));
+  await user.click(screen.getByRole('textbox', { name: 'Start' }));
+  await user.paste('2026-01-01 13:00:00.000');
+  await user.click(screen.getByRole('textbox', { name: 'End' }));
+  await user.paste('2026-01-01 13:00:00.000');
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
 
   expect(api.get('table')[0].options.filters[0].config).toEqual({
     id: 'between',
@@ -225,6 +228,7 @@ it('interprets a new time range bound in the panel timezone', async () => {
 });
 
 it('keeps time range bounds editable after the panel timezone changes', async () => {
+  const user = userEvent.setup();
   const { props, api } = setup();
   const first = 1767225600000;
   const second = 1767312000000;
@@ -239,20 +243,23 @@ it('keeps time range bounds editable after the panel timezone changes', async ()
   props.data = makeFrame('UTC');
   const { rerender } = render(<TableNG {...props} timeZone="UTC" rangeFiltersEnabled />);
 
-  await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
-  await userEvent.type(screen.getByRole('textbox', { name: 'Start' }), '2026-01-01 00:00:00.000');
-  await userEvent.type(screen.getByRole('textbox', { name: 'End' }), '2026-01-01 00:00:00.000');
-  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  await user.click(screen.getByRole('button', { name: 'Filter Time' }));
+  await user.click(screen.getByRole('textbox', { name: 'Start' }));
+  await user.paste('2026-01-01 00:00:00.000');
+  await user.click(screen.getByRole('textbox', { name: 'End' }));
+  await user.paste('2026-01-01 00:00:00.000');
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
   expect(screen.getAllByRole('row')).toHaveLength(2);
 
   props.data = makeFrame('Pacific/Auckland');
   rerender(<TableNG {...props} timeZone="Pacific/Auckland" rangeFiltersEnabled />);
-  await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
+  await user.click(screen.getByRole('button', { name: 'Filter Time' }));
   expect(screen.getByRole('textbox', { name: 'Start' })).toHaveValue('2026-01-01 13:00:00.000');
   expect(screen.getByRole('textbox', { name: 'End' })).toHaveValue('2026-01-01 13:00:00.000');
-  await userEvent.clear(screen.getByRole('textbox', { name: 'End' }));
-  await userEvent.type(screen.getByRole('textbox', { name: 'End' }), '2026-01-02 13:00:00.000');
-  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  await user.clear(screen.getByRole('textbox', { name: 'End' }));
+  await user.click(screen.getByRole('textbox', { name: 'End' }));
+  await user.paste('2026-01-02 13:00:00.000');
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
 
   expect(screen.getAllByRole('row')).toHaveLength(3);
   expect(api.get('table')[0].options.filters[0].config).toMatchObject({

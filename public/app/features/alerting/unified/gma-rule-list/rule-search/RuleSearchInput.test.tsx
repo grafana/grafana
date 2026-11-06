@@ -1,4 +1,5 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { RuleSearchInput } from './RuleSearchInput';
 import { type FilterHelp } from './filterDefinitions';
@@ -31,7 +32,8 @@ function renderInput(query = '') {
 
 describe('RuleSearchInput', () => {
   it('applies the draft on Enter, not while typing', async () => {
-    const { user, onApply, input } = renderInput();
+    const user = userEvent.setup();
+    const { onApply, input } = renderInput();
 
     await user.type(input, 'cpu');
     expect(onApply).not.toHaveBeenCalled();
@@ -41,7 +43,8 @@ describe('RuleSearchInput', () => {
   });
 
   it('applies the draft on blur', async () => {
-    const { user, onApply, input } = renderInput();
+    const user = userEvent.setup();
+    const { onApply, input } = renderInput();
 
     await user.type(input, 'cpu');
     await user.click(screen.getByRole('button', { name: 'elsewhere' }));
@@ -50,7 +53,8 @@ describe('RuleSearchInput', () => {
   });
 
   it('applies an empty query at once when the clear button empties the input', async () => {
-    const { user, onApply, input } = renderInput('cpu');
+    const user = userEvent.setup();
+    const { onApply, input } = renderInput('cpu');
 
     await user.click(screen.getByRole('button', { name: 'Clear' }));
 
@@ -59,7 +63,8 @@ describe('RuleSearchInput', () => {
   });
 
   it('applies an empty query at once when the applied text is deleted', async () => {
-    const { user, onApply, input } = renderInput('cpu');
+    const user = userEvent.setup();
+    const { onApply, input } = renderInput('cpu');
 
     await user.type(input, '{Backspace}{Backspace}{Backspace}');
 
@@ -67,7 +72,8 @@ describe('RuleSearchInput', () => {
   });
 
   it('does not apply when text that was never applied is deleted', async () => {
-    const { user, onApply, input } = renderInput();
+    const user = userEvent.setup();
+    const { onApply, input } = renderInput();
 
     await user.type(input, 'cp{Backspace}{Backspace}');
 
@@ -75,7 +81,8 @@ describe('RuleSearchInput', () => {
   });
 
   it('lists each filter with an example in the help, and the values it cannot search yet', async () => {
-    const { user } = renderInput();
+    const user = userEvent.setup();
+    renderInput();
 
     await user.click(screen.getByTitle('Search help'));
 

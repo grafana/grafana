@@ -249,9 +249,16 @@ describe('NotebookExportMenu', () => {
       throw new Error('403');
     });
 
+    // userEvent's write stub stores ClipboardItems without resolving their data.
+    // A real clipboard write rejects when the item's data rejects.
+    jest.spyOn(navigator.clipboard, 'write').mockImplementationOnce(async (items) => {
+      await Promise.all(items.map((item) => item.getType('text/plain')));
+    });
+
     await user.click(screen.getByRole('menuitem', { name: 'Copy as Markdown' }));
 
     expect(await screen.findByText('Failed to export notebook')).toBeInTheDocument();
+    expect(screen.queryByText('Notebook copied as Markdown')).not.toBeInTheDocument();
     expect(mockDownloadMarkdown).not.toHaveBeenCalled();
     expect(mockExported).not.toHaveBeenCalled();
   });

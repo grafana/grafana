@@ -11,7 +11,6 @@ import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { type FeatureToggles } from '@grafana/data';
 import {
   config,
   HistoryWrapper,
@@ -19,7 +18,7 @@ import {
   setChromeHeaderHeightHook,
   setLocationService,
 } from '@grafana/runtime';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/feature-flags';
 import { GrafanaContext, type GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
 import { configureStore } from 'app/store/configureStore';
@@ -127,29 +126,7 @@ const customRender = (
   };
 };
 
-/**
- * Enables and disables feature toggles `beforeEach` test, and sets back to empty object `afterEach` test
- */
-export const testWithFeatureToggles = ({
-  enable,
-  disable,
-}: {
-  enable?: Array<keyof FeatureToggles>;
-  disable?: Array<keyof FeatureToggles>;
-}) => {
-  beforeEach(() => {
-    for (const featureToggle of enable || []) {
-      config.featureToggles[featureToggle] = true;
-    }
-    for (const featureToggle of disable || []) {
-      config.featureToggles[featureToggle] = false;
-    }
-  });
-
-  afterEach(() => {
-    config.featureToggles = {};
-  });
-};
+export { testWithFeatureToggles } from './helpers/testWithFeatureToggles';
 
 /**
  * Enables license features `beforeEach` test, and sets back to empty object `afterEach` test

@@ -1,12 +1,5 @@
 import { rangeUtil, setWeekStart } from '@grafana/data';
-import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
-import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
-import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
-
-import { NotebookScene } from '../NotebookScene';
-
-import { NotebookCellItem } from './NotebookCellItem';
-import { NotebookLayoutManager } from './NotebookLayoutManager';
+import { EmbeddedScene, SceneFlexItem, SceneFlexLayout, SceneTimeRange } from '@grafana/scenes';
 import { buildCellSceneTimeRange } from './cellTimeRange';
 
 // A day-rounded ("now/d") preset lands on a different calendar day depending on the timezone it's
@@ -17,17 +10,15 @@ const ANCESTOR_TIME_ZONE = 'Pacific/Kiritimati';
 const NOW = '2024-01-01T20:00:00Z';
 
 function buildActivatedCell(timeZone: string, weekStart?: 'saturday' | 'monday' | 'sunday') {
-  const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
-  const cell = new NotebookCellItem({ elementName: 'panel-1', source: 'user', body: panel });
-  const scene = new NotebookScene({
-    title: 'Test notebook',
-    body: new NotebookLayoutManager({ cells: [cell] }),
-    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now', timeZone, weekStart }),
-    timePicker: new SceneTimePicker({}),
-    refreshPicker: new SceneRefreshPicker({}),
+  // The time-range transformer needs an active scene child and an ancestor range, not the notebook editor.
+  const cell = new SceneFlexItem({ body: undefined });
+  const timeRange = new SceneTimeRange({ from: 'now-6h', to: 'now', timeZone, weekStart });
+  const scene = new EmbeddedScene({
+    body: new SceneFlexLayout({ children: [cell] }),
+    $timeRange: timeRange,
   });
   const deactivate = cell.activate();
-  return { cell, scene, deactivate };
+  return { cell, scene, timeRange, deactivate };
 }
 
 describe('buildCellSceneTimeRange', () => {
@@ -75,9 +66,9 @@ describe('buildCellSceneTimeRange', () => {
   });
 
   it('commits a picked range locally instead of forwarding it to the ancestor', () => {
-    const { cell, scene, deactivate } = buildActivatedCell(ANCESTOR_TIME_ZONE);
+    const { cell, timeRange, deactivate } = buildActivatedCell(ANCESTOR_TIME_ZONE);
     cell.setState({ $timeRange: buildCellSceneTimeRange('now-1h', 'now') });
-    const ancestorFromBefore = scene.state.$timeRange.state.from;
+    const ancestorFromBefore = timeRange.state.from;
 
     cell.state.$timeRange?.onTimeRangeChange(
       rangeUtil.convertRawToRange({ from: 'now-24h', to: 'now' }, ANCESTOR_TIME_ZONE)
@@ -85,14 +76,14 @@ describe('buildCellSceneTimeRange', () => {
 
     expect(cell.state.$timeRange?.state.from).toBe('now-24h');
     // The notebook's own ambient range is untouched.
-    expect(scene.state.$timeRange.state.from).toBe(ancestorFromBefore);
+    expect(timeRange.state.from).toBe(ancestorFromBefore);
 
     deactivate();
   });
 
   it('re-evaluates a relative cell override when an absolute notebook range is refreshed', () => {
-    const { cell, scene, deactivate } = buildActivatedCell(ANCESTOR_TIME_ZONE);
-    scene.state.$timeRange.onTimeRangeChange(
+    const { cell, timeRange, deactivate } = buildActivatedCell(ANCESTOR_TIME_ZONE);
+    timeRange.onTimeRangeChange(
       rangeUtil.convertRawToRange(
         { from: '2024-01-01T10:00:00.000Z', to: '2024-01-01T12:00:00.000Z' },
         ANCESTOR_TIME_ZONE
@@ -101,7 +92,7 @@ describe('buildCellSceneTimeRange', () => {
     cell.setState({ $timeRange: buildCellSceneTimeRange('now-24h', 'now') });
 
     jest.setSystemTime(new Date('2024-01-01T21:00:00Z'));
-    scene.state.$timeRange.onRefresh();
+    timeRange.onRefresh();
 
     // 2024-01-01T21:00:00.000Z, and 24h before that.
     expect(cell.state.$timeRange?.state.value.to.valueOf()).toBe(1704142800000);

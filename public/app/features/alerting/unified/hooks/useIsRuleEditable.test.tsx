@@ -11,7 +11,7 @@ import { type FolderDTO } from 'app/types/folders';
 import { setupMswServer } from '../mockApi';
 import { mockDataSource, mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 
 import { useFolder } from './useFolder';
 import { useIsRuleEditable } from './useIsRuleEditable';

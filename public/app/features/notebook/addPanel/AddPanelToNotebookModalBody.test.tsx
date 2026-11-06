@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
+import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { onInteraction, setEchoSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
@@ -459,7 +459,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('reports success with a link to the new notebook', async () => {
       const { user, onDismiss } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() => expect(onDismiss).toHaveBeenCalled());
@@ -473,7 +474,8 @@ describe('AddPanelToNotebookModalBody', () => {
       createWithContent.mockResolvedValue({ uid: 'nb3', title: "Checkout's errors/sec" });
       const { user, onDismiss } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), "Checkout's errors/sec");
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste("Checkout's errors/sec");
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() => expect(onDismiss).toHaveBeenCalled());
@@ -523,7 +525,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('writes once even if the form is submitted twice before it re-renders', async () => {
       const { user } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
 
       const form = document.getElementById('add-panel-to-notebook')!;
       fireEvent.submit(form);
@@ -536,7 +539,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('tells the create that the panel came from the library', async () => {
       const { user } = renderModal(undefined, true);
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
@@ -661,7 +665,8 @@ describe('AddPanelToNotebookModalBody', () => {
       const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
       await user.click(lockCheckbox());
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() => expect(createWithContent).toHaveBeenCalled());
@@ -830,10 +835,12 @@ describe('AddPanelToNotebookModalBody', () => {
 
     // notebooks:write opens this picker and notebooks:create is what the create tab needs, so a
     // reader can arrive here with no way to make the notebook they are being told to make.
-    it('does not suggest it to a reader who cannot create', () => {
+    it('does not suggest it to a reader who cannot create', async () => {
       grant([AccessControlAction.NotebooksWrite]);
       setPicker({ rows: [], isFiltered: false });
-      renderModal();
+      await act(async () => {
+        renderModal();
+      });
 
       expect(screen.getByText(/no permission to create one/)).toBeInTheDocument();
       expect(screen.queryByText(/Create one instead/)).not.toBeInTheDocument();
@@ -843,9 +850,11 @@ describe('AddPanelToNotebookModalBody', () => {
   describe('permissions', () => {
     // With one route open there is nothing to choose, so the control is not offered at all rather
     // than offered with a single option in it.
-    it('drops the chooser and goes straight to the picker for a user who can only add to existing', () => {
+    it('drops the chooser and goes straight to the picker for a user who can only add to existing', async () => {
       grant([AccessControlAction.NotebooksWrite]);
-      renderModal();
+      await act(async () => {
+        renderModal();
+      });
 
       expect(screen.queryByRole('radio', { name: 'New notebook' })).not.toBeInTheDocument();
       expect(screen.queryByRole('radio', { name: 'Existing notebook' })).not.toBeInTheDocument();
@@ -915,7 +924,8 @@ describe('AddPanelToNotebookModalBody', () => {
       createWithContent.mockRejectedValue(new Error('notebook is too large'));
       const { user } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
@@ -939,7 +949,8 @@ describe('AddPanelToNotebookModalBody', () => {
       });
       const { user } = renderModal(buildPanel);
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>

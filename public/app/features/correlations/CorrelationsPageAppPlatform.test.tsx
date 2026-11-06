@@ -15,7 +15,7 @@ import { type createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 
-import { mockDataSource } from '../alerting/unified/mocks';
+import { mockDataSource } from '../alerting/unified/testSetup/mockDataSource';
 
 import { CorrelationsPageAppPlatform } from './CorrelationsPageWrapper';
 import {

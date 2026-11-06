@@ -188,16 +188,6 @@ describe('AnnoListPanel', () => {
       expect(await screen.findByText(/2021-01-01T00:00:00.000Z/i)).toBeInTheDocument();
     });
 
-    it("renders annotation item's html content", async () => {
-      const { getMock } = await setupTestContext({
-        results: [{ ...defaultResult, text: '<a href="/path">test link </a> ' }],
-      });
-
-      getMock.mockClear();
-      expect(await screen.findByRole('link')).toBeInTheDocument();
-      expect(getMock).not.toHaveBeenCalled();
-    });
-
     describe('and login property is missing in annotation', () => {
       it('then it renders the annotations correctly', async () => {
         await setupTestContext({ results: [{ ...defaultResult, login: undefined }] });
@@ -316,22 +306,6 @@ describe('AnnoListPanel', () => {
         await waitFor(() => expect(searchMock).toHaveBeenCalledTimes(1));
 
         expect(pushSpy).toHaveBeenCalledWith('/d/asdkjhajksd/some-dash?from=1609458600000&to=1609459800000');
-      });
-    });
-
-    describe('and the user clicks a link rendered inside the annotation title', () => {
-      silenceConsoleOutput();
-
-      it('then the link handles its own navigation and the row does not open the annotation', async () => {
-        const { pushSpy, partialSpy } = await setupTestContext({
-          results: [{ ...defaultResult, text: '<a href="/path">embedded link</a>' }],
-        });
-
-        await userEvent.click(await screen.findByRole('link', { name: /embedded link/i }));
-
-        expect(searchMock).not.toHaveBeenCalled();
-        expect(pushSpy).not.toHaveBeenCalled();
-        expect(partialSpy).not.toHaveBeenCalled();
       });
     });
 

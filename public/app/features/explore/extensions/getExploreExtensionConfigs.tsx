@@ -7,13 +7,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { isMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from 'app/features/notebook/addPanel/addPanelModal';
 import { canAddPanelToNotebook } from 'app/features/notebook/permissions';
-import { dispatch } from 'app/store/store';
+
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { log } from '../../plugins/extensions/logs/log';
 import { createAddedLinkConfig } from '../../plugins/extensions/utils';
-import { changeCorrelationEditorDetails } from '../state/main';
-import { runQueries } from '../state/query';
+
 
 import { getAddToDashboardTitle } from './AddToDashboard/getAddToDashboardTitle';
 import { type PluginExtensionExploreContext } from './ToolbarExtensionPoint';
@@ -80,9 +79,9 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
         configure: (context) => {
           return context?.shouldShowAddCorrelation ? {} : undefined;
         },
-        onClick: (_, { context }) => {
-          dispatch(changeCorrelationEditorDetails({ editorMode: true }));
-          dispatch(runQueries({ exploreId: context!.exploreId }));
+        onClick: async (_, { context }) => {
+          const { startCorrelation } = await import('./startCorrelation');
+          startCorrelation(context!.exploreId);
         },
       }),
       createAddedLinkConfig<PluginExtensionExploreContext>({

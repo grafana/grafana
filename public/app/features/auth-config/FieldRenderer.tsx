@@ -5,7 +5,7 @@ import { type UseFormReturn, Controller } from 'react-hook-form';
 import { type SelectableValue } from '@grafana/data';
 import { Checkbox, Field, Input, SecretInput, Select, Switch, useTheme2 } from '@grafana/ui';
 
-import { fieldMap } from './fields';
+import { getField } from './fields';
 import { type SSOProviderDTO, type SSOSettingsField } from './types';
 import { isSelectableValueArray } from './utils/guards';
 
@@ -36,7 +36,7 @@ export const FieldRenderer = ({
   const isDependantField = typeof field !== 'string';
   const name = isDependantField ? field.name : field;
   const parentValue = isDependantField && field.dependsOn ? watch(field.dependsOn) : null;
-  const fieldData = fieldMap(provider)[name];
+  const fieldData = getField(provider, name);
   const theme = useTheme2();
 
   // Handle disabledWhen configuration

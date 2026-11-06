@@ -1,6 +1,6 @@
 import { produce } from 'immer';
 
-import { isSupportedExternalPrometheusFlavoredRulesSourceType } from '@grafana/alerting/internal';
+
 import {
   type IntervalValues,
   type RelativeTimeRange,
@@ -69,6 +69,9 @@ import {
   rulerRuleType,
 } from './rules';
 import { parseInterval } from './time';
+
+// eslint-disable-next-line no-barrel-files/no-barrel-files -- Keep existing callers compatible with the narrower query utility.
+export { getInstantFromDataQuery } from './query';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
 
@@ -927,32 +930,4 @@ function isPromQuery(model: AlertDataQuery): model is PromQuery {
 
 export function isPromOrLokiQuery(model: AlertDataQuery): model is PromOrLokiQuery {
   return 'expr' in model;
-}
-
-export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): boolean | undefined {
-  const dataSourceUID = query.datasourceUid ?? query.model.datasource?.uid;
-  if (!dataSourceUID) {
-    return undefined;
-  }
-
-  // find the datasource type from the UID
-  const type = getDataSourceSrv().getInstanceSettings(dataSourceUID)?.type;
-  if (!type) {
-    return undefined;
-  }
-
-  // if the datasource is not a supported prometheus flavor or loki, return "undefined"
-  if (!isSupportedExternalRulesSourceType(type)) {
-    return undefined;
-  }
-
-  const { model } = query;
-
-  // if the datasource is prometheus or loki, instant is defined in the model, or defaults to true
-  const isInstantForPrometheus = 'instant' in model && model.instant !== undefined ? model.instant : true;
-  const isInstantForLoki = 'queryType' in model && model.queryType !== undefined ? model.queryType === 'instant' : true;
-
-  const isPrometheusFlavoredDataSourceType = isSupportedExternalPrometheusFlavoredRulesSourceType(type);
-  const isInstant = isPrometheusFlavoredDataSourceType ? isInstantForPrometheus : isInstantForLoki;
-  return isInstant;
 }

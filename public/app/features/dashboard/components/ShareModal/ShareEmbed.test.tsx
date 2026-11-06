@@ -39,14 +39,12 @@ function mockLocationHref(href: string) {
     search = href.substring(searchPos);
   }
 
-  // @ts-ignore
-  delete win.location;
-  win.location = {
+  jest.spyOn(win, 'location', 'get').mockReturnValue({
     ...location,
     href,
     origin: new URL(href).origin,
     search,
-  };
+  });
 }
 
 describe('ShareEmbed', () => {
@@ -64,6 +62,10 @@ describe('ShareEmbed', () => {
 
   afterAll(() => {
     config.bootData = originalBootData;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('generates the correct embed url for a dashboard', () => {

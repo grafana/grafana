@@ -13,6 +13,12 @@ export default [
     treeshake: false,
   },
   {
+    input: 'src/notification-policies.ts',
+    plugins,
+    output: [cjsOutput(pkg, 'grafana-alerting'), esmOutput(pkg, 'grafana-alerting')],
+    treeshake: false,
+  },
+  {
     input: 'src/unstable.ts',
     plugins,
     output: [cjsOutput(pkg, 'grafana-alerting'), esmOutput(pkg, 'grafana-alerting')],

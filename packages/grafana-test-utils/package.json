@@ -41,6 +41,11 @@
       "import": "./src/unstable.ts",
       "require": "./src/unstable.ts"
     },
+    "./feature-flags": {
+      "types": "./src/utilities/featureFlags.ts",
+      "import": "./src/utilities/featureFlags.ts",
+      "require": "./src/utilities/featureFlags.ts"
+    },
     "./matchers": {
       "types": "./src/matchers/index.ts",
       "import": "./src/matchers/index.ts",

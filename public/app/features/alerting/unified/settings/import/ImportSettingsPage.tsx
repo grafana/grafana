@@ -9,7 +9,7 @@ import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import { WithReturnButton } from '../../components/WithReturnButton';
 import { AutoSyncConfiguration } from '../../components/settings/AutoSyncConfiguration';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';

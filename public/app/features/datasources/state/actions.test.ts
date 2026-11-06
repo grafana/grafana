@@ -86,6 +86,16 @@ const failDataSourceTest = async (error: object) => {
 };
 
 describe('loadDataSource()', () => {
+  let locationSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    locationSpy = jest.spyOn(window, 'location', 'get').mockReturnValue({} as Location);
+  });
+
+  afterEach(() => {
+    locationSpy.mockRestore();
+  });
+
   it('should resolve to a data-source if a UID was used for fetching', async () => {
     const dataSourceMock = getMockDataSource();
     const dispatch = jest.fn();
@@ -107,11 +117,6 @@ describe('loadDataSource()', () => {
     const dispatch = jest.fn();
     const getState = jest.fn();
 
-    const win: typeof globalThis = window;
-    // @ts-ignore
-    delete win.location;
-    win.location = {} as Location;
-
     (api.getDataSourceByUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
     // Fetch the datasource by ID
@@ -128,11 +133,6 @@ describe('loadDataSource()', () => {
     const dataSourceMock = getMockDataSource({ id, uid });
     const dispatch = jest.fn();
     const getState = jest.fn();
-
-    const win: typeof globalThis = window;
-    // @ts-ignore
-    delete win.location;
-    win.location = {} as Location;
 
     (api.getDataSourceByUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 

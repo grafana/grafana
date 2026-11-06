@@ -1,6 +1,6 @@
 import { KBarPortal, KBarProvider, useKBar } from 'kbar';
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, userEvent } from 'test/test-utils';
+import { act, cleanup, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { PluginExtensionTypes } from '@grafana/data';
@@ -11,9 +11,9 @@ import {
   useFlagGrafanaCmdkHybridSearch,
   useFlagGrafanaVectorSearchCmdk,
 } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PortalContainer } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -79,6 +79,10 @@ const setup = () => {
   );
 };
 
+// Search hooks discard results whose timestamp is not newer than the previous search.
+// Advance virtual time between input events so successive queries have distinct timestamps.
+const setupUser = () => userEvent.setup({ advanceTimers: jest.advanceTimersByTime, delay: 1 });
+
 // Window listeners run after the palette's own click handling, so this reads whether the palette cancelled the
 // link's navigation, then cancels it itself because jsdom can't navigate.
 const isNavigationCancelledOnClick = async (element: Element) => {
@@ -88,13 +92,16 @@ const isNavigationCancelledOnClick = async (element: Element) => {
     event.preventDefault();
   };
   window.addEventListener('click', recordAndCancel);
-  await userEvent.click(element);
-  window.removeEventListener('click', recordAndCancel);
+  try {
+    await setupUser().click(element);
+  } finally {
+    window.removeEventListener('click', recordAndCancel);
+  }
   return cancelled;
 };
 
 const triggerEmptyState = async () => {
-  const user = userEvent.setup();
+  const user = setupUser();
   // Type a nonsense query to trigger the empty state naturally, rather than relying on
   // kbar's useThrottledValue timing with an empty search (which causes flakiness)
   const input = screen.getByPlaceholderText('Search or jump to...');
@@ -103,6 +110,7 @@ const triggerEmptyState = async () => {
 
 describe('CommandPalette', () => {
   beforeEach(() => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask', 'setImmediate', 'clearImmediate'] });
     setTestFlags({ 'dashboard.notebooks': false });
     jest.mocked(KBarPortal).mockImplementation(({ children }) => <div>{children}</div>);
     setPluginLinksHook(() => ({
@@ -120,6 +128,15 @@ describe('CommandPalette', () => {
     (reportInteraction as jest.Mock).mockClear();
   });
 
+  afterEach(() => {
+    try {
+      cleanup();
+      jest.clearAllTimers();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('mounts the palette in the shared overlay container when opened', async () => {
     jest
       .mocked(KBarPortal)
@@ -130,7 +147,8 @@ describe('CommandPalette', () => {
       return <button onClick={() => query.toggle()}>Open command palette</button>;
     }
 
-    const { user } = render(
+    const user = setupUser();
+    render(
       <>
         <PortalContainer />
         <KBarProvider>
@@ -204,7 +222,7 @@ describe('CommandPalette', () => {
     });
 
     expect(pluginLinksHook.mock.calls.length).toBeGreaterThan(callsAfterFirstOpen);
-    const user = userEvent.setup();
+    const user = setupUser();
     await user.type(screen.getByPlaceholderText('Search or jump to...'), 'Dynamic extension action');
     expect(await screen.findByText('Dynamic extension action')).toBeInTheDocument();
   });
@@ -225,7 +243,7 @@ describe('CommandPalette', () => {
     }));
     setup();
 
-    await userEvent.type(screen.getByPlaceholderText('Search or jump to...'), 'Path-only extension link');
+    await setupUser().type(screen.getByPlaceholderText('Search or jump to...'), 'Path-only extension link');
     const row = (await screen.findByText('Path-only extension link')).closest('a');
 
     expect(row).toHaveAttribute('href', '/a/test-plugin/page');
@@ -250,7 +268,7 @@ describe('CommandPalette', () => {
     }));
     setup();
 
-    await userEvent.type(screen.getByPlaceholderText('Search or jump to...'), 'Click handler extension link');
+    await setupUser().type(screen.getByPlaceholderText('Search or jump to...'), 'Click handler extension link');
     const row = (await screen.findByText('Click handler extension link')).closest('a');
 
     expect(await isNavigationCancelledOnClick(row!)).toBe(true);
@@ -289,7 +307,7 @@ describe('CommandPalette', () => {
       );
 
       setup();
-      await userEvent.setup().type(screen.getByPlaceholderText('Search or jump to...'), 'Incident');
+      await setupUser().type(screen.getByPlaceholderText('Search or jump to...'), 'Incident');
 
       expect(await screen.findByRole('option', { name: 'Notebooks: Incident latency notes' })).toHaveAttribute(
         'href',
@@ -304,7 +322,7 @@ describe('CommandPalette', () => {
     await triggerEmptyState();
 
     // The empty state now waits for the deep search fetch (500ms debounce) to settle
-    expect(await screen.findByText('No results found', {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByText('No results found')).toBeInTheDocument();
     // Check if AI Assistant button is rendered with correct props
     expect(screen.getByRole('button', { name: 'Search with Grafana Assistant' })).toBeInTheDocument();
   });
@@ -316,7 +334,7 @@ describe('CommandPalette', () => {
     await triggerEmptyState();
 
     // Check if empty state message is rendered
-    expect(await screen.findByText('No results found', {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByText('No results found')).toBeInTheDocument();
     // Check that AI Assistant button is not rendered
     expect(screen.queryByRole('button', { name: 'Search with Grafana Assistant' })).not.toBeInTheDocument();
   });
@@ -335,12 +353,12 @@ describe('CommandPalette', () => {
       );
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
 
       expect(await screen.findByText('Dashboards deep search')).toBeInTheDocument();
-      // Deep search debounces for 500ms, so allow extra time for results
-      expect(await screen.findByText('API latency', {}, { timeout: 3000 })).toBeInTheDocument();
+      // Deep search debounces for 500ms; findBy advances fake timers until results arrive.
+      expect(await screen.findByText('API latency')).toBeInTheDocument();
       expect(screen.getByText('p99 latency by region')).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /API latency/ })).toHaveAttribute('href', '/d/dash-1');
     });
@@ -358,10 +376,10 @@ describe('CommandPalette', () => {
       );
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
 
-      expect(await screen.findByText('API latency', {}, { timeout: 3000 })).toBeInTheDocument();
+      expect(await screen.findByText('API latency')).toBeInTheDocument();
       // Tags surface as pills, not as raw "Tags:" text in the snippet
       expect(screen.getByText('infra')).toBeInTheDocument();
       expect(screen.getByText('prod')).toBeInTheDocument();
@@ -381,10 +399,10 @@ describe('CommandPalette', () => {
       );
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
 
-      expect(await screen.findByText('panel one', {}, { timeout: 3000 })).toBeInTheDocument();
+      expect(await screen.findByText('panel one')).toBeInTheDocument();
       expect(screen.getByText('panel three')).toBeInTheDocument();
       // The 4th and 5th collapse into the count
       expect(screen.queryByText('panel four')).not.toBeInTheDocument();
@@ -397,11 +415,11 @@ describe('CommandPalette', () => {
       );
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       // A query that matches no keyword results but returns deep search hits
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'zzznomatch');
 
-      expect(await screen.findByText('API latency', {}, { timeout: 3000 })).toBeInTheDocument();
+      expect(await screen.findByText('API latency')).toBeInTheDocument();
       expect(screen.queryByText('No results found')).not.toBeInTheDocument();
     });
 
@@ -415,11 +433,11 @@ describe('CommandPalette', () => {
       );
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       const input = screen.getByPlaceholderText('Search or jump to...');
       // No keyword results match this query, so the deep column is the only pane
       await user.type(input, 'latency');
-      await screen.findByText('API latency', {}, { timeout: 3000 });
+      await screen.findByText('API latency');
 
       // Arrow down from the input moves focus into the results
       await user.keyboard('{ArrowDown}');
@@ -445,10 +463,10 @@ describe('CommandPalette', () => {
       );
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       const input = screen.getByPlaceholderText('Search or jump to...');
       await user.type(input, 'latency');
-      await screen.findByText('API latency', {}, { timeout: 3000 });
+      await screen.findByText('API latency');
 
       // Ctrl+N from the input moves focus into the results, like ArrowDown
       await user.keyboard('{Control>}n{/Control}');
@@ -471,11 +489,11 @@ describe('CommandPalette', () => {
       );
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       const input = screen.getByPlaceholderText('Search or jump to...');
       // "dark" matches the static change-theme action, so the keyword pane has results
       await user.type(input, 'dark');
-      await screen.findByText('Dark dashboards', {}, { timeout: 3000 });
+      await screen.findByText('Dark dashboards');
 
       // Arrow down from the input lands on the keyword list
       await user.keyboard('{ArrowDown}');
@@ -507,10 +525,10 @@ describe('CommandPalette', () => {
       );
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       const input = screen.getByPlaceholderText('Search or jump to...');
       await user.type(input, 'latency');
-      await screen.findByText('API latency', {}, { timeout: 3000 });
+      await screen.findByText('API latency');
 
       await user.keyboard('{ArrowDown}');
       expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
@@ -535,14 +553,15 @@ describe('CommandPalette', () => {
       });
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
 
       expect(screen.queryByText('Dashboards deep search')).not.toBeInTheDocument();
-      // Outwait the 500ms deep search debounce to prove no request fires
+      // Advance past the 500ms deep search debounce to prove no request fires
       await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 600));
+        await jest.advanceTimersByTimeAsync(600);
       });
+      expect(await screen.findByText('No results found')).toBeInTheDocument();
       expect(deepSearchCalled).toBe(false);
       expect(screen.queryByText('Dashboards deep search')).not.toBeInTheDocument();
     });
@@ -554,9 +573,8 @@ describe('CommandPalette', () => {
     });
 
     it('reports deep-search context when a deep search result is clicked', async () => {
-      // The deep card is a real <a href>, so clicking it makes jsdom log an
-      // (unimplemented) navigation error — suppress it; we only care about the report
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      // The deep card is a real <a href>; prevent browser navigation while testing
+      // the click report, since jsdom does not implement navigation.
       server.use(
         getVectorSearchHandler([
           { name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 },
@@ -565,10 +583,12 @@ describe('CommandPalette', () => {
       );
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
 
-      const link = await screen.findByRole('link', { name: /API latency/ }, { timeout: 3000 });
+      const link = await screen.findByRole('link', { name: /API latency/ });
+      expect(link).toHaveAttribute('href', '/d/dash-1');
+      link.addEventListener('click', (event) => event.preventDefault(), { once: true });
       await user.click(link);
 
       expect(reportInteraction).toHaveBeenCalledWith(
@@ -585,13 +605,11 @@ describe('CommandPalette', () => {
           target: '/d/dash-1',
         })
       );
-      consoleErrorSpy.mockRestore();
     });
 
     it('reports the destination url as target when a navigational keyword result is clicked', async () => {
-      // Clicking the row's real <a href> makes jsdom log an (unimplemented)
-      // navigation error — suppress it; we only care about the report
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      // The row is a real <a href>; prevent browser navigation while testing
+      // the click report, since jsdom does not implement navigation.
       const actions: CommandPaletteAction[] = [
         {
           id: 'test/latency-dashboard',
@@ -607,10 +625,12 @@ describe('CommandPalette', () => {
           <CommandPalette />
         </KBarProvider>
       );
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'Latency overview');
 
-      const option = await screen.findByRole('option', { name: /Latency overview/ }, { timeout: 3000 });
+      const option = await screen.findByRole('option', { name: /Latency overview/ });
+      expect(option).toHaveAttribute('href', '/d/abc123');
+      option.addEventListener('click', (event) => event.preventDefault(), { once: true });
       await user.click(option);
 
       expect(reportInteraction).toHaveBeenCalledWith(
@@ -622,17 +642,16 @@ describe('CommandPalette', () => {
           target: '/d/abc123',
         })
       );
-      consoleErrorSpy.mockRestore();
     });
 
     it('reports a non-deep-search selection when a keyword result is selected', async () => {
       server.use(getVectorSearchHandler([{ name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 }]));
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       // "dark" matches the static change-theme action (a command, not a link, so no navigation)
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'dark');
-      await user.click(await screen.findByRole('option', { name: /^Preferences: Change theme/ }, { timeout: 3000 }));
+      await user.click(await screen.findByRole('option', { name: /^Preferences: Change theme/ }));
 
       expect(reportInteraction).toHaveBeenCalledWith(
         'command_palette_action_selected',
@@ -655,7 +674,7 @@ describe('CommandPalette', () => {
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
       await user.keyboard('{Shift>}{Enter}{/Shift}');
 
@@ -671,7 +690,7 @@ describe('CommandPalette', () => {
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
       await user.click(screen.getByRole('button', { name: /ask Assistant/ }));
 
@@ -687,7 +706,7 @@ describe('CommandPalette', () => {
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: false });
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
 
       expect(screen.queryByRole('button', { name: /ask Assistant/ })).not.toBeInTheDocument();
@@ -700,7 +719,7 @@ describe('CommandPalette', () => {
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       // Focus the input without typing anything
       screen.getByPlaceholderText('Search or jump to...').focus();
 
@@ -716,7 +735,7 @@ describe('CommandPalette', () => {
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
 
       expect(screen.queryByRole('button', { name: /ask Assistant/ })).not.toBeInTheDocument();
@@ -739,11 +758,11 @@ describe('CommandPalette', () => {
       );
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
 
       // Wait for the settled deep search render (500ms debounce)
-      await screen.findByText('API latency', {}, { timeout: 3000 });
+      await screen.findByText('API latency');
 
       expect(reportInteraction).toHaveBeenCalledWith('command_palette_deep_search_results_shown', {
         isDeepSearchEnabled: true,
@@ -763,13 +782,14 @@ describe('CommandPalette', () => {
       (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false);
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
 
-      // Outwait the deep search debounce to prove nothing settles/reports
+      // Advance past the deep search debounce to prove nothing settles/reports
       await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 600));
+        await jest.advanceTimersByTimeAsync(600);
       });
+      expect(await screen.findByText('No results found')).toBeInTheDocument();
 
       expect(reportInteraction).not.toHaveBeenCalledWith(
         'command_palette_deep_search_results_shown',
@@ -785,25 +805,25 @@ describe('CommandPalette', () => {
       (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false);
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       const input = screen.getByPlaceholderText('Search or jump to...');
       await user.type(input, 'dark');
-      await screen.findAllByRole('option', {}, { timeout: 3000 });
+      await screen.findAllByRole('option');
 
       // Legacy behavior: an item is preselected, so the input points at it
-      expect(input).toHaveAttribute('aria-activedescendant');
+      await waitFor(() => expect(input).toHaveAttribute('aria-activedescendant'));
     });
 
     it('uses the new model (nothing preselected) when deep search is enabled', async () => {
       // Both flags default to true in beforeEach → new keyboard handling
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       const input = screen.getByPlaceholderText('Search or jump to...');
       await user.type(input, 'dark');
-      await screen.findAllByRole('option', {}, { timeout: 3000 });
+      await screen.findAllByRole('option');
 
       // New behavior: focus starts in the input, nothing is highlighted
-      expect(input).not.toHaveAttribute('aria-activedescendant');
+      await waitFor(() => expect(input).not.toHaveAttribute('aria-activedescendant'));
     });
   });
 });

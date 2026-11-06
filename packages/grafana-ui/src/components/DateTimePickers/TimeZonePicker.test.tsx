@@ -6,6 +6,25 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { TimeZonePicker } from './TimeZonePicker';
 
+jest.mock('@grafana/data/unstable', () => {
+  const actual = jest.requireActual<typeof import('@grafana/data/unstable')>('@grafana/data/unstable');
+  const timeZones = new Set([
+    'America/Chicago',
+    'Asia/Calcutta',
+    'Asia/Kolkata',
+    'Australia/Sydney',
+    'Europe/Moscow',
+    'Europe/Stockholm',
+  ]);
+
+  return {
+    ...actual,
+    // Keep real offsets, abbreviations, and aliases without rendering unrelated options in every test.
+    getTimeZonesAt: (...args: Parameters<typeof actual.getTimeZonesAt>) =>
+      actual.getTimeZonesAt(...args).filter(({ name }) => timeZones.has(name)),
+  };
+});
+
 // Fixed timestamp (northern-hemisphere winter) so DST-dependent abbreviations
 // and offsets are deterministic.
 const JAN_15_2026 = Date.UTC(2026, 0, 15);

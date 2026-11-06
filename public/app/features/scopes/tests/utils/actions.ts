@@ -1,5 +1,5 @@
 import { act, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { type UserEvent } from '@testing-library/user-event';
 
 import { type DateTime, makeTimeRange, dateMath } from '@grafana/data';
 import { type MultiValueVariable, sceneGraph, type VariableValue } from '@grafana/scenes';
@@ -36,21 +36,38 @@ import {
   getResultCloudOpsLink,
 } from './selectors';
 
-const click = async (selector: () => HTMLElement) => act(async () => await userEvent.click(selector()));
+let scopesUser: UserEvent | undefined;
+
+export function setScopesUser(user: UserEvent | undefined) {
+  scopesUser = user;
+}
+
+function getScopesUser() {
+  if (!scopesUser) {
+    throw new Error('Render the dashboard before using scopes UI actions.');
+  }
+  return scopesUser;
+}
+
+const click = async (selector: () => HTMLElement) => act(async () => await getScopesUser().click(selector()));
 
 const type = async (selector: () => HTMLInputElement, value: string) => {
   await act(() => fireEvent.input(selector(), { target: { value } }));
-  await jest.runOnlyPendingTimersAsync();
+  await act(async () => {
+    await jest.runOnlyPendingTimersAsync();
+  });
 };
 
 export const updateScopes = async (service: ScopesService, scopes: string[]) =>
   act(async () => service.changeScopes(scopes));
 export const openSelector = async () => click(getSelectorInput);
-export const hoverSelector = async () => userEvent.hover(getSelectorInput());
+export const hoverSelector = async () => getScopesUser().hover(getSelectorInput());
 export const clearSelector = async () => click(getSelectorClear);
 export const applyScopes = async () => {
   await click(getSelectorApply);
-  await jest.runOnlyPendingTimersAsync();
+  await act(async () => {
+    await jest.runOnlyPendingTimersAsync();
+  });
 };
 export const cancelScopes = async () => click(getSelectorCancel);
 export const searchScopes = async (value: string) => type(getTreeSearch, value);
