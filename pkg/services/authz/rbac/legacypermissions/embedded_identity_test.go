@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -47,7 +46,7 @@ func TestIntegrationEmbeddedLegacySentinelAssertions(t *testing.T) {
 			cfg := loaderConfig(false)
 			cfg.StackID = tc.stack
 			migrated := &observingMigratedResolver{}
-			client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &licensing.OSSLicensingService{}, migrated), cfg)
+			client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, &licensing.OSSLicensingService{}, migrated), cfg)
 			for _, cacheKey := range []string{"", "missing-org-cache-key"} {
 				requester := &identity.StaticRequester{Type: types.TypeUser, UserID: 7, UserUID: "seven", OrgID: tc.orgID, Namespace: tc.namespace, CacheKey: cacheKey}
 				_, err := acimpl.GetLegacyUserPermissions(t.Context(), client, requester, ac.Options{}, cfg)
@@ -99,7 +98,7 @@ func TestIntegrationEmbeddedLegacyRequesterAssertions(t *testing.T) {
 	cfg := loaderConfig(false)
 	cfg.StackID = "12"
 	migrated := &observingMigratedResolver{}
-	client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &licensing.OSSLicensingService{}, migrated), cfg)
+	client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, &licensing.OSSLicensingService{}, migrated), cfg)
 	empty, namespace, cacheKey, id := "", "stacks-12", "caller-cache-key", int64(7)
 	for _, original := range []*string{nil, &empty, &namespace} {
 		_, err := client.LegacyGetUserPermissions(context.Background(), legacypermissions.LegacyPermissionCaller("stacks-12"), legacyclient.LegacyGetUserPermissionsRequest{

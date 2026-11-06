@@ -45,7 +45,6 @@ type Loader struct {
 	actions           ac.ActionResolver
 	cache             *localcache.CacheService
 	cfg               *setting.Cfg
-	features          featuremgmt.FeatureToggles
 	openFeatureClient *openfeature.Client
 	license           licensing.Licensing
 	zanzana           MigratedPermissions
@@ -54,7 +53,7 @@ type Loader struct {
 }
 
 func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver,
-	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+	cache *localcache.CacheService, cfg *setting.Cfg,
 	license licensing.Licensing, zanzana MigratedPermissions,
 ) *Loader {
 	return &Loader{
@@ -63,7 +62,6 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 		actions:           actionResolver,
 		cache:             cache,
 		cfg:               cfg,
-		features:          features,
 		openFeatureClient: openfeature.NewDefaultClient(),
 		license:           license,
 		zanzana:           zanzana,
@@ -85,11 +83,7 @@ func (l *Loader) GetLocalUserPermissions(ctx context.Context, user identity.Requ
 func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester, options ac.Options) ([]ac.Permission, error) {
 	ctx, span := tracer.Start(ctx, "authz.legacypermissions.GetUserPermissions")
 	defer span.End()
-	settings := loadSettings{
-		enforcementEnabled: l.license.FeatureEnabled("accesscontrol.enforcement"),
-		//nolint:staticcheck // Preserve the current global feature-toggle behavior.
-		excludeRedundantManagedPermissions: l.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions),
-	}
+	settings := l.settings(ctx)
 	started := time.Now()
 	// OSS timing includes Zanzana merging; licensed Enterprise measures only RBAC loading.
 	if !settings.enforcementEnabled {
@@ -142,10 +136,37 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	return MergeUserPermissions(permissions, migrated), nil
 }
 
+func (l *Loader) settings(ctx context.Context) loadSettings {
+	return loadSettings{
+		enforcementEnabled: l.license.FeatureEnabled("accesscontrol.enforcement"),
+		excludeRedundantManagedPermissions: l.openFeatureClient.Boolean(
+			ctx,
+			featuremgmt.FlagExcludeRedundantManagedPermissions,
+			false,
+			openfeature.TransactionContext(ctx),
+		),
+	}
+}
+
 func queryFor(orgID int64, p loadSettings) ac.GetUserPermissionsQuery {
 	q := ac.GetUserPermissionsQuery{OrgID: orgID, ExcludeRedundantManagedPermissions: p.excludeRedundantManagedPermissions}
 	if !p.enforcementEnabled {
 		q.RolePrefixes = []string{ac.ManagedRolePrefix, ac.ExternalServiceRolePrefix}
+	}
+	return q
+}
+
+func basicRoleQueryFor(orgID int64, p loadSettings) ac.GetUserPermissionsQuery {
+	q := queryFor(orgID, p)
+	// Both old basic-role stores drop this flag; preserve that asymmetry.
+	q.ExcludeRedundantManagedPermissions = false
+	return q
+}
+
+func cachedAssignmentQueryFor(orgID int64, p loadSettings) ac.GetUserPermissionsQuery {
+	q := queryFor(orgID, p)
+	if p.enforcementEnabled {
+		q.ExcludeRedundantManagedPermissions = false
 	}
 	return q
 }
@@ -189,10 +210,8 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 	var permissions []ac.Permission
 	for _, role := range ac.GetOrgRoles(user) {
 		load := func() ([]ac.Permission, error) {
-			q := queryFor(user.GetOrgID(), p)
+			q := basicRoleQueryFor(user.GetOrgID(), p)
 			q.Roles = []string{role}
-			// Both old basic-role stores drop this flag; preserve that asymmetry.
-			q.ExcludeRedundantManagedPermissions = false
 			stored, err := l.store.permissions(ctx, q)
 			if err != nil {
 				return nil, err
@@ -220,10 +239,7 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 		return nil, err
 	}
 	direct, err := l.cached(ctx, ac.GetUserDirectPermissionCacheKey(user), options, func() ([]ac.Permission, error) {
-		q := queryFor(user.GetOrgID(), p)
-		if p.enforcementEnabled {
-			q.ExcludeRedundantManagedPermissions = false
-		}
+		q := cachedAssignmentQueryFor(user.GetOrgID(), p)
 		var err error
 		q.UserID, err = internalID(user)
 		if err != nil {
@@ -265,11 +281,8 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 		return permissions, nil
 	}
 	metrics.MAccessPermissionsCacheUsage.WithLabelValues(ac.CacheMiss).Inc()
-	q := queryFor(user.GetOrgID(), p)
+	q := cachedAssignmentQueryFor(user.GetOrgID(), p)
 	q.TeamIDs = missing
-	if p.enforcementEnabled {
-		q.ExcludeRedundantManagedPermissions = false
-	}
 	teams, err := l.store.teams(ctx, q)
 	if err != nil {
 		return nil, err
