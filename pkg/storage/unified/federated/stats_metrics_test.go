@@ -270,3 +270,20 @@ func TestLegacyStatsLogsSkippedCountsAtDebug(t *testing.T) {
 	}
 	require.Len(t, *logger.lines, 3, "a deleted namespace is not an error")
 }
+
+func TestLegacyStatsLogsTheCaller(t *testing.T) {
+	run := func(ctx context.Context) recordedLog {
+		logger := newRecordingLogger()
+		s := &LegacyStatsGetter{
+			SQL:    func(context.Context) (*legacysql.LegacyDatabaseHelper, error) { return nil, errors.New("boom") },
+			logger: logger,
+		}
+		_, err := s.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}})
+		require.Error(t, err)
+		require.Len(t, *logger.lines, 1)
+		return (*logger.lines)[0]
+	}
+
+	require.Equal(t, "delete_check", run(WithCaller(t.Context(), "delete_check")).fields["caller"])
+	require.NotContains(t, run(t.Context()).fields, "caller", "an unnamed caller adds no field")
+}

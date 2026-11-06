@@ -246,6 +246,20 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 	return rsp, err
 }
 
+type callerKey struct{}
+
+// WithCaller names who asked for a folder count, so its log lines can say so. The value only
+// travels in-process.
+func WithCaller(ctx context.Context, caller string) context.Context {
+	return context.WithValue(ctx, callerKey{}, caller)
+}
+
+// CallerFrom returns the caller set by WithCaller, or an empty string.
+func CallerFrom(ctx context.Context) string {
+	caller, _ := ctx.Value(callerKey{}).(string)
+	return caller
+}
+
 // countsLogger is the default logger of the folder count paths.
 var countsLogger = log.New("folder.counts")
 
@@ -259,8 +273,11 @@ func (s *LegacyStatsGetter) log(ctx context.Context) log.Logger {
 
 // logFields are the fields shared by every folder count log line. A request can carry many
 // folders, so only the first is named.
-func logFields(in *resourcepb.ResourceStatsRequest, server, resource string) []any {
+func logFields(ctx context.Context, in *resourcepb.ResourceStatsRequest, server, resource string) []any {
 	fields := []any{"namespace", in.Namespace, "folderCount", len(in.Folder), "resource", resource}
+	if caller := CallerFrom(ctx); caller != "" {
+		fields = append(fields, "caller", caller)
+	}
 	if len(in.Folder) > 0 {
 		fields = append(fields, "folder", in.Folder[0])
 	}
@@ -274,7 +291,7 @@ func logFields(in *resourcepb.ResourceStatsRequest, server, resource string) []a
 // away is not a failure, so it only logs at debug level.
 func (s *LegacyStatsGetter) accessed(ctx context.Context, in *resourcepb.ResourceStatsRequest, server, resource string, start time.Time, err error) {
 	s.metrics.observe(resource, start, err)
-	fields := append(logFields(in, server, resource), "duration", time.Since(start), "outcome", legacyOutcome(err))
+	fields := append(logFields(ctx, in, server, resource), "duration", time.Since(start), "outcome", legacyOutcome(err))
 	switch {
 	case err == nil:
 		s.log(ctx).Debug("Counted legacy resources", fields...)
@@ -288,13 +305,13 @@ func (s *LegacyStatsGetter) accessed(ctx context.Context, in *resourcepb.Resourc
 // skipped records the metric and the log line for a legacy count that was not run.
 func (s *LegacyStatsGetter) skipped(ctx context.Context, in *resourcepb.ResourceStatsRequest, server, resource, reason string) {
 	s.metrics.skip(resource, reason)
-	s.log(ctx).Debug("Skipped legacy count", append(logFields(in, server, resource), "reason", reason)...)
+	s.log(ctx).Debug("Skipped legacy count", append(logFields(ctx, in, server, resource), "reason", reason)...)
 }
 
 // lookupFailed records a failure to reach the legacy database before any resource is counted.
 func (s *LegacyStatsGetter) lookupFailed(ctx context.Context, in *resourcepb.ResourceStatsRequest, err error, start time.Time) {
 	s.metrics.observeAll(start, err)
-	fields := append(logFields(in, "", "all"), "duration", time.Since(start), "outcome", legacyOutcome(err), "error", err)
+	fields := append(logFields(ctx, in, "", "all"), "duration", time.Since(start), "outcome", legacyOutcome(err), "error", err)
 	if errors.Is(err, context.Canceled) {
 		s.log(ctx).Debug("Legacy database lookup canceled", fields...)
 		return
