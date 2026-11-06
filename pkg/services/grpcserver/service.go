@@ -27,6 +27,7 @@ import (
 
 var (
 	grpcRequestDuration *prometheus.HistogramVec
+	grpcConcurrency     *interceptors.ConcurrencyMetrics
 )
 
 type Provider interface {
@@ -81,6 +82,9 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 			return nil, err
 		}
 	}
+	if grpcConcurrency == nil {
+		grpcConcurrency = interceptors.NewConcurrencyMetrics(registerer)
+	}
 
 	var instrumentationOptions []middleware.InstrumentationOption
 	if cfg.GRPCServer.ReportGRPCCodesInInstrumentationLabelEnabled {
@@ -92,22 +96,24 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 	// unrecovered panic crashes the whole process.
 	unaryInterceptors := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryPanicRecoveryInterceptor(),
+		interceptors.UnaryConcurrencyInterceptor(grpcConcurrency),
 		interceptors.LoggingUnaryInterceptor(s.logger, s.cfg.EnableLogging), // needs to be registered after tracing interceptor to get trace id
 		middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration, instrumentationOptions...),
-		interceptors.InnermostServiceIdentityUnaryServerInterceptor(),
 	}
 	streamInterceptors := []grpc.StreamServerInterceptor{
 		interceptors.StreamPanicRecoveryInterceptor(),
+		interceptors.StreamConcurrencyInterceptor(grpcConcurrency),
 		interceptors.TracingStreamInterceptor(tracer),
 		interceptors.LoggingStreamInterceptor(s.logger, s.cfg.EnableLogging),
 		middleware.StreamServerInstrumentInterceptor(grpcRequestDuration, instrumentationOptions...),
-		interceptors.InnermostServiceIdentityStreamServerInterceptor(),
 	}
-
 	if authenticator != nil {
-		unaryInterceptors = append([]grpc.UnaryServerInterceptor{grpcAuth.UnaryServerInterceptor(authenticator.Authenticate)}, unaryInterceptors...)
-		streamInterceptors = append([]grpc.StreamServerInterceptor{grpcAuth.StreamServerInterceptor(authenticator.Authenticate)}, streamInterceptors...)
+		unaryInterceptors = append(unaryInterceptors, grpcAuth.UnaryServerInterceptor(authenticator.Authenticate))
+		streamInterceptors = append(streamInterceptors, grpcAuth.StreamServerInterceptor(authenticator.Authenticate))
 	}
+	// Service identity reads the auth info, so it must run after authentication.
+	unaryInterceptors = append(unaryInterceptors, interceptors.InnermostServiceIdentityUnaryServerInterceptor())
+	streamInterceptors = append(streamInterceptors, interceptors.InnermostServiceIdentityStreamServerInterceptor())
 
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.
