@@ -117,13 +117,18 @@ func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 
 	var err error
 	if options.Action != "" {
-		group, resource, subresource, verb := common.TranslateActionToListParams(options.Action)
-		if group != "" && resource != "" {
+		// An action may map to multiple Zanzana resources (for example,
+		// annotations:read is valid for both organization and dashboard annotations).
+		for _, mapping := range common.TranslateActionToListParamsAll(options.Action) {
 			// Per-user search resolves another identity's permissions; their request-time
 			// contextual team membership isn't available here, so no teams are passed.
-			perms, err := r.listPermissions(ctx, namespace, subject, nil, group, resource, subresource, verb, options.Action, options.Scope)
-			if err != nil {
-				return nil, err
+			perms, listErr := r.listPermissions(
+				ctx, namespace, subject, nil,
+				mapping.Group, mapping.Resource, mapping.Subresource, mapping.Verb,
+				options.Action, options.Scope,
+			)
+			if listErr != nil {
+				return nil, listErr
 			}
 			permissions = append(permissions, perms...)
 		}
@@ -248,6 +253,12 @@ func folderScopeForLegacyRBAC(folderUID string) string {
 // both direct dashboard objects (Items) and enclosing folders (Folders).
 func isDashboardRBACAction(action string) bool {
 	return strings.HasPrefix(action, "dashboards:")
+}
+
+// isDashboardScopedAnnotation identifies the annotation subresource on dashboards.
+// These grants also produce folder scopes in legacy RBAC, unlike organization annotations.
+func isDashboardScopedAnnotation(resource, subresource string) bool {
+	return resource == "dashboards" && subresource == "annotations"
 }
 
 // isTeamRBACAction matches team-management actions whose scopes need UID→ID translation.
@@ -377,6 +388,16 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 			})
 			// Generic dashboard list grants org-wide dashboard access; legacy RBAC also records
 			// folder wildcard for the same action (see SearchUsersPermissions / Reduce).
+			appendIfMatches(ac.Permission{
+				Action: action,
+				Scope:  ac.Scope("folders", "*"),
+			})
+		} else if isDashboardScopedAnnotation(resource, subresource) {
+			// Dashboard-scoped annotations use both dashboard and folder scopes in legacy RBAC.
+			appendIfMatches(ac.Permission{
+				Action: action,
+				Scope:  resourceWildcardScope(resource),
+			})
 			appendIfMatches(ac.Permission{
 				Action: action,
 				Scope:  ac.Scope("folders", "*"),
