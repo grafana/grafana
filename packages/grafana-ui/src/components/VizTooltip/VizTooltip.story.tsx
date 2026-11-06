@@ -15,10 +15,18 @@ const headerItem: VizTooltipItem = {
   value: '2024-01-01 12:00:00',
 };
 
-// A spread of short/long names and short/long values, used as fixed comparison content. `auto` must
-// render these exactly as the old system (Baseline); `narrow` caps the width and splits each row so
-// neither the name nor the value can push the other out (each ≤ 75%, so the other keeps ≥ 25%).
+// Normal, representative content (short names and values) for the everyday Baseline/Basic stories.
 const items: VizTooltipItem[] = [
+  { label: 'cpu', value: '72.4%', color: '#73BF69' },
+  { label: 'memory', value: '3.1 GiB', color: '#F2CC0C' },
+  { label: 'requests', value: '1.2k/s', color: '#8AB8FF' },
+  { label: 'p99 latency', value: '48 ms', color: '#FF9830' },
+];
+
+// Pathological content: very long names and/or values that stress the layout. `auto` grows wide to
+// fit them; `narrow` caps the width and wraps each row so the name and value each stay ≤ 75% (so the
+// other always keeps ≥ 25%), without a scrollbar.
+const longLabelItems: VizTooltipItem[] = [
   { label: 'cpu', value: '72.4%', color: '#73BF69' },
   {
     label: 'endpoint',
@@ -38,13 +46,13 @@ const items: VizTooltipItem[] = [
   },
 ];
 
-const Tooltip = ({ size }: { size?: VizTooltipSize }) => {
+const Tooltip = ({ size, items: rows }: { size?: VizTooltipSize; items: VizTooltipItem[] }) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.surface}>
       <VizTooltipWrapper size={size}>
         <VizTooltipHeader item={headerItem} />
-        <VizTooltipContent items={items} />
+        <VizTooltipContent items={rows} />
       </VizTooltipWrapper>
     </div>
   );
@@ -72,15 +80,22 @@ export default meta;
 
 type Story = StoryObj<typeof VizTooltipWrapper>;
 
-// The current (old-system) tooltip, rendered with no size prop. `auto` must always match this.
+// Normal label lengths — the everyday tooltip, shown at `auto` (the default / old-system layout).
 export const Baseline: Story = {
   parameters: { controls: { disable: true } },
-  render: () => <Tooltip />,
+  render: () => <Tooltip items={items} />,
 };
 
-// Toggle the `size` control to compare how the same content reflows.
+// Toggle the `size` control to compare how normal content reflows between `auto` and `narrow`.
 export const Basic: Story = {
-  render: ({ size }) => <Tooltip size={size} />,
+  render: ({ size }) => <Tooltip size={size} items={items} />,
+};
+
+// Pathological long names/values. Defaults to `narrow` to show the capped, wrapped layout; toggle
+// `size` to `auto` to watch the tooltip grow wide to fit instead.
+export const LongLabels: Story = {
+  args: { size: 'narrow' },
+  render: ({ size }) => <Tooltip size={size} items={longLabelItems} />,
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
