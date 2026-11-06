@@ -8,7 +8,7 @@ import { Select } from '@grafana/ui';
 import { type DB, type ResourceSelectorProps } from '../types';
 
 export interface TableSelectorProps extends ResourceSelectorProps {
-  db: DB;
+  db: Pick<DB, 'tables'>;
   table: string | undefined;
   dataset: string | undefined;
   onChange: (v: SelectableValue) => void;
@@ -24,7 +24,7 @@ export const TableSelector = ({ db, dataset, table, className, onChange, inputId
 
     const tables = await db.tables(dataset);
     return tables.map(toOption);
-  }, [dataset]);
+  }, [db, dataset]);
 
   return (
     <Select

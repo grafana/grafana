@@ -4,7 +4,7 @@ import { QueryWithAssistantButton } from '@grafana/assistant';
 import { CoreApp, type DataSourceInstanceSettings, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect } from '@grafana/plugin-ui';
+import { EditorHeader, EditorMode, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { reportInteraction, config } from '@grafana/runtime';
 import { Button, InlineSwitch, RadioButtonGroup, Tooltip, Space, copyTextToClipboard } from '@grafana/ui';
 
@@ -19,8 +19,7 @@ import {
 } from '../types';
 
 import { ConfirmModal } from './ConfirmModal';
-import { DatasetSelector } from './DatasetSelector';
-import { TableSelector } from './TableSelector';
+import { SqlQueryBuilderSelectors } from './SqlQueryBuilderSelectors';
 
 export interface QueryHeaderProps {
   db: DB;
@@ -99,45 +98,6 @@ export function QueryHeader({
       selectedFormat: next.format,
     });
     onChange(next);
-  };
-
-  const onDatasetChange = (e: SelectableValue) => {
-    if (e.value === query.dataset) {
-      return;
-    }
-
-    const next = {
-      ...query,
-      dataset: e.value,
-      table: undefined,
-      sql: undefined,
-      rawSql: '',
-    };
-
-    onChange(next);
-  };
-
-  const onTableChange = (e: SelectableValue) => {
-    if (e.value === query.table) {
-      return;
-    }
-
-    const next: SQLQuery = {
-      ...query,
-      table: e.value,
-      sql: undefined,
-      rawSql: '',
-    };
-
-    onChange(next);
-  };
-
-  const datasetDropdownIsAvailable = () => {
-    if (dialect === 'influx') {
-      return false;
-    }
-
-    return true;
   };
 
   return (
@@ -324,29 +284,18 @@ export function QueryHeader({
       {editorMode === EditorMode.Builder && (
         <>
           <Space v={0.5} />
-          <EditorRow>
-            {datasetDropdownIsAvailable() && (
-              <EditorField label={t('grafana-sql.components.query-header.label-dataset', 'Dataset')} width={25}>
-                <DatasetSelector
-                  db={db}
-                  inputId={`sql-dataset-${htmlId}`}
-                  dataset={query.dataset}
-                  dialect={dialect}
-                  preconfiguredDataset={preconfiguredDataset}
-                  onChange={onDatasetChange}
-                />
-              </EditorField>
-            )}
-            <EditorField label={t('grafana-sql.components.query-header.label-table', 'Table')} width={25}>
-              <TableSelector
-                db={db}
-                inputId={`sql-tableselect-${htmlId}`}
-                dataset={query.dataset || preconfiguredDataset}
-                table={query.table}
-                onChange={onTableChange}
-              />
-            </EditorField>
-          </EditorRow>
+          <SqlQueryBuilderSelectors
+            db={db}
+            query={query}
+            onChange={onChange}
+            dataset={
+              dialect === 'influx'
+                ? { mode: 'hidden', value: preconfiguredDataset }
+                : preconfiguredDataset || dialect === 'postgres'
+                  ? { mode: 'fixed', value: preconfiguredDataset }
+                  : { mode: 'select' }
+            }
+          />
         </>
       )}
     </>

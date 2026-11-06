@@ -28,7 +28,7 @@ export function GroupByRow({ sql, columns, onSqlChange }: GroupByRowProps) {
 
   return (
     <EditorList
-      items={sql.groupBy!}
+      items={sql.groupBy ?? []}
       onChange={onGroupByChange}
       renderItem={makeRenderColumn({
         options: columns,

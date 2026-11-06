@@ -1,5 +1,7 @@
 export type {
   DB,
+  SQLQueryBuilderDB,
+  QueryRowFilter,
   RAQBFieldTypes,
   SQLExpression,
   SQLOptions,
@@ -31,3 +33,9 @@ export { makeVariable } from './utils/testHelpers';
 export { QueryEditorExpressionType } from './expressions';
 export { loadResources } from './loadResources';
 export { quoteIdentifierIfNecessary, unquoteIdentifier, type SqlIdentifierDialect } from './dialects/sqlIdentifier';
+export { SqlQueryBuilder, type SqlQueryBuilderProps } from './components/visual-query-builder/SqlQueryBuilder';
+export {
+  SqlQueryBuilderSelectors,
+  type SqlQueryBuilderSelectorsProps,
+  type SQLDatasetSelector,
+} from './components/SqlQueryBuilderSelectors';

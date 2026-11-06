@@ -420,18 +420,8 @@
       "count": 1
     }
   },
-  "packages/grafana-sql/src/components/DatasetSelector.tsx": {
-    "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
   "packages/grafana-sql/src/components/QueryHeader.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "packages/grafana-sql/src/components/TableSelector.tsx": {
-    "react-hooks/exhaustive-deps": {
       "count": 1
     }
   },
@@ -443,11 +433,6 @@
   "packages/grafana-sql/src/components/visual-query-builder/SelectCustomFunctionParameters.tsx": {
     "react-hooks/immutability": {
       "count": 2
-    }
-  },
-  "packages/grafana-sql/src/components/visual-query-builder/VisualEditor.tsx": {
-    "react-hooks/exhaustive-deps": {
-      "count": 1
     }
   },
   "packages/grafana-sql/src/components/visual-query-builder/WhereRow.tsx": {
