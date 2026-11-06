@@ -112,8 +112,7 @@ To enable cross-filtering, follow these steps:
    {{< figure src="/media/docs/grafana/dashboards/screenshot-added-cross-filter-v13.3.png" max-width="505px" alt="The filter button in a bar chart tooltip">}}
 
 1. In the filter field at the top of the dashboard, do the following as needed:
-  
-   - Filter out the value by changing the operator to `!=`. 
+   - Filter out the value by changing the operator to `!=`.
    - Change the operator to any of the following: `=~`, `!~`, `<`, `<=`, `>`, `>=`.
    - Delete the filter.
 

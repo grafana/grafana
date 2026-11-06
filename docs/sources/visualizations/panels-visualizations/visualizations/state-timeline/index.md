@@ -112,7 +112,6 @@ To enable cross-filtering, follow these steps:
    A filter to include or exclude that field is added and displayed at the top of the dashboard.
 
 1. In the filter field at the top of the dashboard, do the following as needed:
-  
    - Change the operator to any of the following: `=~`, `!~`, `<`, `<=`, `>`, `>=`.
    - Delete the filter.
 
