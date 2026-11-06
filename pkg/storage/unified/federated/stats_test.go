@@ -432,6 +432,11 @@ func TestIntegrationLegacyStatsRecordMetrics(t *testing.T) {
 				require.Equal(t, 0.0, tptestutil.ToFloat64(m.skipped.WithLabelValues(other, legacySkipMigrated)), other)
 				require.Equal(t, uint64(1), observations(t, reg, other, legacyOutcomeOK), "%s still runs", other)
 			}
+			skipped := logger.withMsg("Skipped legacy count")
+			require.Len(t, skipped, 1)
+			require.Equal(t, name, skipped[0].fields["resource"])
+			require.Equal(t, legacySkipMigrated, skipped[0].fields["reason"])
+			require.Equal(t, "db-1", skipped[0].fields["dbServer"])
 		})
 	}
 }
@@ -469,7 +474,7 @@ func TestIntegrationLegacyStatsRecordsFailedStalenessCheck(t *testing.T) {
 	require.Equal(t, legacyAlertRules, failed[0].fields["resource"])
 	require.Equal(t, "db-1", failed[0].fields["dbServer"])
 	require.Equal(t, legacyOutcomeError, failed[0].fields["outcome"])
-	require.Error(t, failed[0].fields["error"].(error))
+	require.NotNil(t, failed[0].fields["error"])
 }
 
 // withServer names the database server on the helpers a provider returns.

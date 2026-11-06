@@ -287,3 +287,79 @@ func TestLegacyStatsLogsTheCaller(t *testing.T) {
 	require.Equal(t, "delete_check", run(WithCaller(t.Context(), "delete_check")).fields["caller"])
 	require.NotContains(t, run(t.Context()).fields, "caller", "an unnamed caller adds no field")
 }
+
+func TestLegacyStatsLogsAMissingSourceOnlyOnceAsAnError(t *testing.T) {
+	logger := newRecordingLogger()
+	s := &LegacyStatsGetter{logger: logger}
+	in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}
+
+	for range 3 {
+		_, err := s.GetStats(t.Context(), in)
+		require.ErrorIs(t, err, ErrLegacyStatsUnavailable)
+	}
+
+	require.Len(t, *logger.lines, 3)
+	require.Equal(t, "error", (*logger.lines)[0].level)
+	require.Equal(t, "Legacy database lookup failed", (*logger.lines)[0].msg)
+	for _, l := range (*logger.lines)[1:] {
+		require.Equal(t, "debug", l.level)
+		require.Equal(t, "Legacy count source still unavailable", l.msg)
+	}
+}
+
+func TestLegacyStatsAccessedLogsEachOutcomeAtItsLevel(t *testing.T) {
+	in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}
+	tests := []struct {
+		name       string
+		err        error
+		server     string
+		wantLevel  string
+		wantMsg    string
+		wantOutput string
+	}{
+		{name: "success", wantLevel: "debug", wantMsg: "Counted legacy resources", wantOutput: legacyOutcomeOK, server: "db-1"},
+		{name: "caller went away", err: fmt.Errorf("query: %w", context.Canceled), wantLevel: "debug", wantMsg: "Legacy count canceled", wantOutput: legacyOutcomeCanceled, server: "db-1"},
+		{name: "failure", err: errors.New("boom"), wantLevel: "error", wantMsg: "Legacy count failed", wantOutput: legacyOutcomeError, server: "db-1"},
+		{name: "failure on a server that isn't named", err: errors.New("boom"), wantLevel: "error", wantMsg: "Legacy count failed", wantOutput: legacyOutcomeError},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logger := newRecordingLogger()
+			s := &LegacyStatsGetter{logger: logger}
+
+			s.accessed(t.Context(), in, tt.server, legacyAlertRules, time.Now(), tt.err)
+
+			require.Len(t, *logger.lines, 1)
+			line := (*logger.lines)[0]
+			require.Equal(t, tt.wantLevel, line.level)
+			require.Equal(t, tt.wantMsg, line.msg)
+			require.Equal(t, tt.wantOutput, line.fields["outcome"])
+			require.Equal(t, legacyAlertRules, line.fields["resource"])
+			if tt.server == "" {
+				require.NotContains(t, line.fields, "dbServer")
+			} else {
+				require.Equal(t, tt.server, line.fields["dbServer"])
+			}
+			if tt.err != nil {
+				require.Equal(t, tt.err, line.fields["error"])
+			} else {
+				require.NotContains(t, line.fields, "error")
+			}
+		})
+	}
+}
+
+func TestLegacyStatsSkippedLogsTheReasonAtDebug(t *testing.T) {
+	logger := newRecordingLogger()
+	s := &LegacyStatsGetter{logger: logger}
+
+	s.skipped(t.Context(), &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}, "db-1", legacyLibraryElements, legacySkipMigrated)
+
+	require.Len(t, *logger.lines, 1)
+	line := (*logger.lines)[0]
+	require.Equal(t, "debug", line.level)
+	require.Equal(t, "Skipped legacy count", line.msg)
+	require.Equal(t, legacyLibraryElements, line.fields["resource"])
+	require.Equal(t, legacySkipMigrated, line.fields["reason"])
+	require.Equal(t, "db-1", line.fields["dbServer"])
+}

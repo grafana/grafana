@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
@@ -43,6 +44,8 @@ type LegacyStatsGetter struct {
 
 	metrics *legacyStatsMetrics
 	logger  log.Logger // defaults to the folder.counts logger
+
+	unavailableLogged atomic.Bool
 }
 
 // CountError identifies which legacy resource count failed while preserving the underlying error.
@@ -312,6 +315,12 @@ func (s *LegacyStatsGetter) skipped(ctx context.Context, in *resourcepb.Resource
 func (s *LegacyStatsGetter) lookupFailed(ctx context.Context, in *resourcepb.ResourceStatsRequest, err error, start time.Time) {
 	s.metrics.observeAll(start, err)
 	fields := append(logFields(ctx, in, "", "all"), "duration", time.Since(start), "outcome", legacyOutcome(err), "error", err)
+	// A missing legacy source is a configuration state that repeats on every request, so only
+	// its first occurrence is an error; the outcome metric still counts each one.
+	if errors.Is(err, ErrLegacyStatsUnavailable) && s.unavailableLogged.Swap(true) {
+		s.log(ctx).Debug("Legacy count source still unavailable", fields...)
+		return
+	}
 	if errors.Is(err, context.Canceled) {
 		s.log(ctx).Debug("Legacy database lookup canceled", fields...)
 		return
