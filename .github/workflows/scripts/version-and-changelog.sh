@@ -13,13 +13,13 @@ set -euo pipefail
 
 RELEASE_GROUPS="${1:?Usage: version-and-changelog.sh <group>[,<group>...]}"
 
-pnpm exec nx release version --groups="$RELEASE_GROUPS"
-
 IFS=',' read -r -a groups <<<"$RELEASE_GROUPS"
-for group in "${groups[@]}"; do
-  project=$(jq -r --arg group "$group" '.release.groups[$group].projects[0] // empty' nx.json)
+
+# Sets $project and $manifest for a release group.
+resolve_group() {
+  project=$(jq -r --arg group "$1" '.release.groups[$group].projects[0] // empty' nx.json)
   if [ -z "$project" ]; then
-    echo "::error::Release group $group does not exist or has no projects."
+    echo "::error::Release group $1 does not exist or has no projects."
     exit 1
   fi
 
@@ -29,6 +29,24 @@ for group in "${groups[@]}"; do
     echo "::error::Could not find the package.json of $project under packages/."
     exit 1
   fi
+}
+
+# nx release reads the last release from a git tag, which the publish workflow creates after the
+# release pull request is merged. Until that tag exists, nx would version and write the changelog
+# from commits that were already released.
+for group in "${groups[@]}"; do
+  resolve_group "$group"
+  tag="${project}@$(git show "HEAD:$manifest" | jq -r .version)"
+  if ! git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+    echo "::notice::The tag ${tag} does not exist yet, so the last release of $project is not published. Skipping."
+    exit 0
+  fi
+done
+
+pnpm exec nx release version --groups="$RELEASE_GROUPS"
+
+for group in "${groups[@]}"; do
+  resolve_group "$group"
 
   old_version=$(git show "HEAD:$manifest" | jq -r .version)
   new_version=$(jq -r .version "$manifest")
