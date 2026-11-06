@@ -419,6 +419,53 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Zero(t, missingResult.TotalCount)
 			})
 
+			t.Run("Should be able to get a user's team memberships by user UID", func(t *testing.T) {
+				// setup appends on every DB reset, so the last users belong to the current DB.
+				memberID, memberUID := userIds[len(userIds)-1], userUIDs[len(userUIDs)-1]
+				otherID := userIds[len(userIds)-2]
+				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+					if err := AddOrUpdateTeamMemberHook(dbHelper, sess, memberID, testOrgID, team1.ID, true, team.PermissionTypeAdmin); err != nil {
+						return err
+					}
+					if err := AddOrUpdateTeamMemberHook(dbHelper, sess, memberID, testOrgID, team2.ID, false, team.PermissionTypeMember); err != nil {
+						return err
+					}
+					return AddOrUpdateTeamMemberHook(dbHelper, sess, otherID, testOrgID, team2.ID, true, team.PermissionTypeMember)
+				})
+				require.NoError(t, err)
+				defer func() {
+					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+						for _, m := range []struct{ userID, teamID int64 }{{memberID, team1.ID}, {memberID, team2.ID}, {otherID, team2.ID}} {
+							if err := RemoveTeamMemberHook(dbHelper, sess, &team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: m.userID, TeamID: m.teamID}); err != nil {
+								return err
+							}
+						}
+						return nil
+					})
+					require.NoError(t, err)
+				}()
+
+				all, err := teamSvc.GetUserTeamMembershipsByUID(context.Background(), &team.GetUserTeamMembershipsByUIDQuery{OrgID: testOrgID, UserUID: memberUID})
+				require.NoError(t, err)
+				require.ElementsMatch(t, []team.UserTeamMembership{
+					{TeamID: team1.ID, TeamUID: team1.UID, External: true, Permission: team.PermissionTypeAdmin},
+					{TeamID: team2.ID, TeamUID: team2.UID, External: false, Permission: team.PermissionTypeMember},
+				}, all)
+
+				external, err := teamSvc.GetUserTeamMembershipsByUID(context.Background(), &team.GetUserTeamMembershipsByUIDQuery{OrgID: testOrgID, UserUID: memberUID, External: true})
+				require.NoError(t, err)
+				require.Equal(t, []team.UserTeamMembership{
+					{TeamID: team1.ID, TeamUID: team1.UID, External: true, Permission: team.PermissionTypeAdmin},
+				}, external)
+
+				otherOrg, err := teamSvc.GetUserTeamMembershipsByUID(context.Background(), &team.GetUserTeamMembershipsByUIDQuery{OrgID: testOrgID + 1, UserUID: memberUID})
+				require.NoError(t, err)
+				require.Empty(t, otherOrg)
+
+				_, err = teamSvc.GetUserTeamMembershipsByUID(context.Background(), &team.GetUserTeamMembershipsByUIDQuery{OrgID: testOrgID})
+				require.ErrorContains(t, err, "user UID is required")
+			})
+
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 				setup()

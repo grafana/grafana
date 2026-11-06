@@ -928,11 +928,6 @@ export interface FeatureToggles {
   */
   cdnPluginsLoadFirst?: boolean;
   /**
-  * Enable loading plugins via declarative URLs
-  * @default false
-  */
-  cdnPluginsUrls?: boolean;
-  /**
   * Enable syncing plugin installations to the installs API
   * @default false
   */
