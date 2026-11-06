@@ -425,6 +425,7 @@ const LogListComponent = ({
       !!dataFrames?.length &&
       dataFrames.some(
         (frame) =>
+          prevDataFramesRef.current!.includes(frame) || frame.fields.some((field) => prevConfigs.includes(field.config))
       );
     prevDataFramesRef.current = dataFrames;
     if (!isSameResultSet) {
