@@ -1,6 +1,6 @@
 import { type DataSourceApi, type DataSourceRef, type DataQuery } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { config, DataSourceWithBackend, getDataSourceInstance } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { updateConfig } from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -9,6 +9,7 @@ import {
   type PublicDashboard,
   generatePublicDashboardUrl,
   getUnsupportedDashboardDatasources,
+  isEmailSharingEnabled,
 } from './SharePublicDashboardUtils';
 
 const mockDS = mockDataSource({
@@ -16,8 +17,8 @@ const mockDS = mockDataSource({
   type: 'mock-ds-type',
 });
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
 }));
 
@@ -42,6 +43,58 @@ describe('generatePublicDashboardUrl', () => {
     let pubdash = { accessToken } as PublicDashboard;
 
     expect(generatePublicDashboardUrl(pubdash.accessToken!)).toEqual(`${appUrl}public-dashboards/${accessToken}`);
+  });
+});
+
+describe('isEmailSharingEnabled', () => {
+  const originalPublicDashboardsEnabled = config.publicDashboardsEnabled;
+  const originalLicenseInfo = config.licenseInfo;
+
+  beforeEach(() => {
+    config.publicDashboardsEnabled = true;
+    config.licenseInfo = { ...originalLicenseInfo, enabledFeatures: { publicDashboardsEmailSharing: true } };
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+    config.publicDashboardsEnabled = originalPublicDashboardsEnabled;
+    config.licenseInfo = originalLicenseInfo;
+  });
+
+  it.each([
+    { name: 'all gates are enabled', publicDashboardsEnabled: true, flag: true, licensed: true, expected: true },
+    {
+      name: 'public dashboards are disabled',
+      publicDashboardsEnabled: false,
+      flag: true,
+      licensed: true,
+      expected: false,
+    },
+    { name: 'the flag is disabled', publicDashboardsEnabled: true, flag: false, licensed: true, expected: false },
+    { name: 'the license is missing', publicDashboardsEnabled: true, flag: true, licensed: false, expected: false },
+  ])('returns $expected when $name', ({ publicDashboardsEnabled, flag, licensed, expected }) => {
+    config.publicDashboardsEnabled = publicDashboardsEnabled;
+    config.licenseInfo = { ...originalLicenseInfo, enabledFeatures: { publicDashboardsEmailSharing: licensed } };
+    setTestFlags({ publicDashboardsEmailSharing: flag });
+
+    expect(isEmailSharingEnabled()).toBe(expected);
+  });
+
+  it('defaults to disabled when the flag is not configured', () => {
+    setTestFlags({});
+
+    expect(isEmailSharingEnabled()).toBe(false);
+  });
+
+  it('evaluates the current flag value on every call', () => {
+    setTestFlags({ publicDashboardsEmailSharing: false });
+    expect(isEmailSharingEnabled()).toBe(false);
+
+    setTestFlags({ publicDashboardsEmailSharing: true });
+    expect(isEmailSharingEnabled()).toBe(true);
+
+    setTestFlags({ publicDashboardsEmailSharing: false });
+    expect(isEmailSharingEnabled()).toBe(false);
   });
 });
 

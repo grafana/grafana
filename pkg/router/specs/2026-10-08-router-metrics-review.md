@@ -1,18 +1,20 @@
 # Router: Metrics review follow-ups
 
-Status: proposed
+Status: done. Done: M1 (#134524), M3 (#134532), M4 (#134486), and M5–M7 and M10–M12 on 2026-10-30.
+Not pursued: M2, M8, M9.
 Package: `pkg/router`
 
 Changes from a review of request coverage, async failure modes and cardinality. No label carries a
 user, namespace, stack ID or slug, so nothing here is unbounded; the items close coverage gaps and
 cut series cost. Keep `specs/2026-09-26-router-metrics.md` in sync with each change.
 
-Scope is the standalone router, which gets its plugins from `plugins_url`. Local plugins, which
+Scope is the standalone router, which gets its plugins from `plugins_url` and its core APIs from `core_url`. Local plugins, which
 only the middleware mode serves, are out of scope.
 
 ## Required
 
-- [x] **M1. Add a request counter and drop `status_code` from the duration histogram.**
+- [x] **M1. Add a request counter and drop `status_code` from the duration histogram.** Done in
+  #134524.
   - Add `grafana_router_http_requests_total{group,verb,route,status_code}`, counting every request,
     watches included, when it finishes.
   - Drop `status_code` from `grafana_router_http_request_duration_seconds`, or reduce it to a class
@@ -31,42 +33,46 @@ only the middleware mode serves, are out of scope.
     metric. The router gets the plugin process's raw v3 client (`v3.NewLazyClient`), which bypasses
     Grafana's plugin client middleware.
 
-- [x] **M3. Count backends dropped during a load.** Added the gauge
+- [x] **M3. Count backends dropped during a load.** Done in #134532. Added the gauge
   `grafana_router_skipped_backends{source}`, rebuilt on each load like `shadowed_groups`, counting
-  the skips in `combineByName` and the `plugins_url` and aggregate polls. It has no `reason` label:
+  the skips in the `plugins_url`, `core_url`, `bridge_url` and aggregate polls. It has no `reason` label:
   each skip is already logged with its error. Add one, from a fixed set, if alerting needs to tell
   skips apart.
   - Not counted: per-group `Backend.Load` failures in `reconcile`. They happen in the router, not a
-    loader, keep the group's last-known-good backend, and already count in
-    `reconcile_errors_total`.
+    loader, keep the group's last-known-good backend, are retried with backoff,
+    and already count in `reconcile_errors_total`.
 
 ## Recommended
 
 - [x] **M4. Instrument managed plugin gRPC connections.** Done in #134486. `pluginClients`
   (`plugin_manifests.go`) created connections without interceptors or a stats handler, so outbound
   calls to managed plugins had no client metrics or spans.
-- [ ] **M5. Export breaker transitions for the ST fallback's per-destination breakers.**
+- [x] **M5. Export breaker transitions for the ST fallback's per-destination breakers.**
   `breakerForDestination` (`st_fallback.go`) creates breakers without an observer. Add a counter
   without a group label, since ST groups can be unregistered, and count evictions from the host
   and breaker caches.
-- [ ] **M6. Measure stack lookup latency.** `newGComURLResolver` uses `http.DefaultClient`. Give it
-  a client with the tracing transport, and add a histogram of lookup duration.
-- [ ] **M7. Attribute discovery failures.** Discovery sub-requests (`readDiscovery`) go through the
+- [x] **M6. Measure stack lookup latency.** `newGComURLResolver` uses `http.DefaultClient`. Give it
+  a client with the tracing transport, and add a histogram of lookup duration. Done: `stack_lookup_duration_seconds{result}`.
+- [x] **M7. Attribute discovery failures.** Discovery sub-requests (`readDiscovery`) go through the
   group's breaker but detach the request outcome, so they can trip a breaker with no matching
   `backend_failures_total` entries. Record their failures, and track fetches still running past
-  their deadline (`discoveryCache`), which today can't be seen.
+  their deadline (`discoveryCache`), which today can't be seen. Done: a discovery read has its own outcome and its
+  failures count in `backend_failures_total` under the group; `discovery_fetches_overdue` is the
+  number of fetches past their deadline.
 
 ## Low priority
 
 - ~~**M8.** Have `PluginLoader` implement `loaderStatus`, so `local-plugin` appears in
   `source_polls_total`.~~ Not pursued: local plugins are out of scope.
-- [ ] **M9.** Count watches the router ends itself, on route change or shutdown, by reason.
-- [ ] **M10.** Add duration histograms for reconciles and source polls.
-- [ ] **M11.** Delete series for groups that are no longer served from the label-based metrics
+- ~~**M9.** Count watches the router ends itself, on route change or shutdown, by reason.~~ Not
+  pursued: it happens almost never, so a metric isn't worth its code (user decision, 2026-10-30).
+- [x] **M10.** Add duration histograms for reconciles and source polls.
+- [x] **M11.** Delete series for groups that are no longer served from the label-based metrics
   (`backend_failures_total`, `breaker_transitions_total`, `discovery_results_total`,
   `longrunning_requests`).
-- [ ] **M12.** Outside `pkg/router`: check whether
+- [x] **M12.** Outside `pkg/router`: check whether
   `grafana_apiserver_watch_establishment_duration_seconds{group,resource}`
   (`pkg/apiserver/endpoints/filters/watch_instrumentation.go`), which in-process plugin apiservers
   register on the router's registry, can get a new `resource` value from a watch on a resource that
-  doesn't exist.
+  doesn't exist. Done, and it could: a refused watch (such as a 404 for an unknown resource) wrote
+  its header, which recorded the resource from the path. Only a 2xx start is recorded now.

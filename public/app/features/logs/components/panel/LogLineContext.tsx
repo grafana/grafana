@@ -26,8 +26,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { reportInteraction, getDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';

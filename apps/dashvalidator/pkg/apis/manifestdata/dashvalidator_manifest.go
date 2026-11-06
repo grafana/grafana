@@ -29,6 +29,7 @@ var appManifestData = app.ManifestData{
 			Name:   "v1alpha1",
 			Served: true,
 			Kinds:  []app.ManifestVersionKind{},
+			// nolint:staticcheck
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
 					"/check": {

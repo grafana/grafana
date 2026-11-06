@@ -1,7 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
 import { Observable } from 'rxjs';
 
-import { type DataFrame, transformDataFrame } from '@grafana/data';
+import { type DataFrame, FrameMatcherID, transformDataFrame } from '@grafana/data';
+import { DataTopic } from '@grafana/schema';
 
 import { type Transformation } from '../types';
 
@@ -15,7 +16,9 @@ jest.mock('@grafana/data', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => ({ replace: (v: string) => v }),
+  // `$pickedRefId` resolves to `B`, so a test can tell a filter matched on the resolved value apart
+  // from one that matched on the literal.
+  getTemplateSrv: () => ({ replace: (v: string) => v.replace(/\$pickedRefId/g, 'B') }),
 }));
 
 const mockTransformDataFrame = jest.mocked(transformDataFrame);
@@ -202,6 +205,113 @@ describe('useTransformationInputData', () => {
     expect(result.current).not.toBe(newRawData);
   });
 
+  describe('the selected transformation own frame filter', () => {
+    // `transformDataFrame` narrows to these itself before running the transformation and merges the
+    // rest back afterwards, so the editor has to be shown the same narrowed set. Otherwise an
+    // Organize editor behind a filter picking one frame still reports on every frame in the panel.
+    const framesByRefId: DataFrame[] = [
+      { refId: 'A', name: 'A-series', fields: [], length: 0 },
+      { refId: 'B', name: 'B-series', fields: [], length: 0 },
+    ];
+
+    it('narrows the raw data when nothing precedes the filtered transformation', () => {
+      const transformations = [
+        makeTransformation('organize', { filter: { id: FrameMatcherID.byRefId, options: 'B' } }),
+      ];
+
+      const { result } = renderHook(() =>
+        useTransformationInputData({
+          selectedTransformation: transformations[0],
+          allTransformations: transformations,
+          rawData: framesByRefId,
+        })
+      );
+
+      expect(result.current).toEqual([framesByRefId[1]]);
+      expect(mockTransformDataFrame).not.toHaveBeenCalled();
+    });
+
+    it('narrows what the preceding transformations produced', () => {
+      const transformations = [
+        makeTransformation('merge'),
+        makeTransformation('organize', { filter: { id: FrameMatcherID.byRefId, options: 'A' } }),
+      ];
+      mockTransformDataFrame.mockReturnValue(
+        new Observable((subscriber) => {
+          subscriber.next(framesByRefId);
+        })
+      );
+
+      const { result } = renderHook(() =>
+        useTransformationInputData({
+          selectedTransformation: transformations[1],
+          allTransformations: transformations,
+          rawData,
+        })
+      );
+
+      // Narrowed after the preceding stage ran, not before it: the filter applies to that stage's
+      // output, which is what the pipeline hands the transformation.
+      expect(mockTransformDataFrame).toHaveBeenCalledWith(
+        [transformations[0].transformConfig],
+        rawData,
+        expect.any(Object)
+      );
+      expect(result.current).toEqual([framesByRefId[0]]);
+    });
+
+    it('narrows by the resolved value of a filter written as a variable', () => {
+      const transformations = [
+        makeTransformation('organize', { filter: { id: FrameMatcherID.byRefId, options: '$pickedRefId' } }),
+      ];
+
+      const { result } = renderHook(() =>
+        useTransformationInputData({
+          selectedTransformation: transformations[0],
+          allTransformations: transformations,
+          rawData: framesByRefId,
+        })
+      );
+
+      // `B`, the value the pipeline matched on — not the literal `$pickedRefId`, which matches nothing.
+      expect(result.current).toEqual([framesByRefId[1]]);
+    });
+
+    it('leaves the frames unnarrowed when the filter cannot be built into a matcher', () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      // `byName` runs its option through `stringToJsRegex`, which throws on a `/`-prefixed string
+      // that is not a complete `/pattern/flags`.
+      const transformations = [
+        makeTransformation('organize', { filter: { id: FrameMatcherID.byName, options: '/etc/hosts' } }),
+      ];
+
+      const { result } = renderHook(() =>
+        useTransformationInputData({
+          selectedTransformation: transformations[0],
+          allTransformations: transformations,
+          rawData: framesByRefId,
+        })
+      );
+
+      expect(result.current).toBe(framesByRefId);
+    });
+
+    it('passes the frames through untouched when the transformation has no filter', () => {
+      const transformations = [makeTransformation('organize')];
+
+      const { result } = renderHook(() =>
+        useTransformationInputData({
+          selectedTransformation: transformations[0],
+          allTransformations: transformations,
+          rawData: framesByRefId,
+        })
+      );
+
+      // Same reference, so an editor memoizing on its input does not rerun for an unfiltered pipeline.
+      expect(result.current).toBe(framesByRefId);
+    });
+  });
+
   it('cleans up the subscription when the component unmounts', () => {
     // Without cleanup, a stale subscription could call setState on an unmounted component,
     // causing React warnings and potential bugs if new query data arrives after navigation.
@@ -228,5 +338,32 @@ describe('useTransformationInputData', () => {
     unmount();
 
     expect(unsubscribe).toHaveBeenCalled();
+  });
+
+  it('replays only annotation-topic transformations ahead of an annotation-topic selection', () => {
+    const annotationTransformation = (id: string): Transformation => ({
+      ...makeTransformation(id),
+      transformConfig: { id, options: {}, topic: DataTopic.Annotations },
+    });
+    const transformations = [
+      makeTransformation('joinByField'),
+      annotationTransformation('filterByRefId'),
+      annotationTransformation('organize'),
+    ];
+    const annotationFrames = makeFrames(['annotation']);
+
+    renderHook(() =>
+      useTransformationInputData({
+        selectedTransformation: transformations[2],
+        allTransformations: transformations,
+        rawData: annotationFrames,
+      })
+    );
+
+    expect(mockTransformDataFrame).toHaveBeenCalledWith(
+      [transformations[1].transformConfig],
+      annotationFrames,
+      expect.any(Object)
+    );
   });
 });

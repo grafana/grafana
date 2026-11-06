@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
-import { useDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
+import { useDefaultDataSourceInstanceListItem } from '@grafana/runtime';
 import { Card, Icon, TagList, useTheme2 } from '@grafana/ui';
 
 interface DataSourceCardProps {

@@ -201,14 +201,14 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 	require.NoError(c.t, err)
 	c.orgSvc = orgSvc
 
-	teamSvc, err := teamimpl.NewLegacyService(legacysql.NewDatabaseProvider(c.env.SQLStore), tracing.NewNoopTracerService())
+	teamSvc, err := teamimpl.NewLegacyService(legacysql.NewDatabaseProvider(c.env.SQLStore), tracing.NewNoopTracerService(), nil)
 	require.NoError(c.t, err)
 	c.teamSvc = teamSvc
 
 	userSvc, err := userimpl.NewLegacyService(
 		legacysql.NewDatabaseProvider(c.env.SQLStore), orgSvc, c.env.Cfg, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
-		supportbundlestest.NewFakeBundleService())
+		supportbundlestest.NewFakeBundleService(), nil)
 	require.NoError(c.t, err)
 	c.userSvc = userSvc
 

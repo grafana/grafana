@@ -1,6 +1,7 @@
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
 
@@ -11,7 +12,7 @@ export function getEditPanelUrl(panelId: number) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId, viewPanel: undefined });
 }
 
-export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | undefined> {
+export function tryGetExploreUrlForPanel(vizPanel: VizPanel, queries?: DataQuery[]): Promise<string | undefined> {
   //const dashboard = panel.getRoot();
   const panelPlugin = vizPanel.getPlugin();
   const queryRunner = getQueryRunnerFor(vizPanel);
@@ -24,7 +25,7 @@ export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | u
   const datasource = getDatasourceFromQueryRunner(queryRunner);
 
   return getExploreUrl({
-    queries: queryRunner.state.queries,
+    queries: queries ?? queryRunner.state.queries,
     dsRef: datasource,
     timeRange: timeRange.state.value,
     scopedVars: { __sceneObject: { value: vizPanel } },

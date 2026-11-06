@@ -19,8 +19,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { type PromQuery } from '@grafana/prometheus';
-import { createQueryRunner } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { createQueryRunner, getDataSourceInstance } from '@grafana/runtime';
 
 import { abortNotifier } from './probeUtils';
 

@@ -816,6 +816,7 @@ func TestCreateFolder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dw, opts := tt.setup(t)
+			expectMissingFolderMetadata(&dw.repo.(*repository.MockReaderWriter).Mock)
 			result, err := dw.CreateFolder(context.Background(), opts)
 			if tt.wantErr {
 				require.Error(t, err)
@@ -860,7 +861,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 		check       func(t *testing.T, result *ParsedResource)
 	}{
 		{
-			name: "flag disabled: moves directory, no _folder.json written",
+			name: "moves directory, no _folder.json written",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
@@ -876,33 +877,8 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: false, folders: fm}
-				return dw, DualWriteOptions{
-					OriginalPath: "old/",
-					Path:         "new/",
-					Ref:          "feature-branch",
-					Message:      "move",
-				}
-			},
-		},
-		{
-			name: "flag enabled: moves directory, no _folder.json written",
-			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
-				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
-					Spec: provisioning.RepositorySpec{
-						Type:      provisioning.LocalRepositoryType,
-						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
-					},
-				}
-				rw := repository.NewMockReaderWriter(t)
-				rw.On("Config").Return(config)
-				rw.On("Move", mock.Anything, "old/", "new/", "feature-branch", "move").Return(nil)
-				accessMock := auth.NewMockAccessChecker(t)
-				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm}
+				expectMissingFolderMetadata(&rw.Mock)
 				return dw, DualWriteOptions{
 					OriginalPath: "old/",
 					Path:         "new/",
@@ -929,6 +905,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
 				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm}
+				expectMissingFolderMetadata(&rw.Mock)
 				return dw, DualWriteOptions{
 					OriginalPath: "old/",
 					Path:         "new/",
@@ -969,6 +946,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(urlRepo, nil, NewEmptyFolderTree(), FolderKind)
 				dw := &DualReadWriter{repo: urlRepo, authorizer: NewAuthorizer(config, urlRepo, accessMock, authTestClients(t), fm, false), folders: fm}
+				expectMissingFolderMetadata(&rw.Mock)
 				return dw, DualWriteOptions{
 					OriginalPath: "old/",
 					Path:         "new/",
@@ -1102,6 +1080,8 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				config := newTestRepoConfig("test-repo")
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+					Return(&repository.FileInfo{Data: makeExistingData(t)}, nil).Once()
 				existingData := makeExistingData(t)
 				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
 					Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
@@ -1145,6 +1125,8 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				}
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+					Return(&repository.FileInfo{Data: makeExistingData(t)}, nil).Once()
 				existingData := makeExistingData(t)
 				rw.On("Read", mock.Anything, "myfolder/_folder.json", "feature").
 					Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
@@ -1225,7 +1207,8 @@ func TestUpdateFolderMetadata(t *testing.T) {
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := newTestRepoConfig("test-repo")
 				rw := repository.NewMockReaderWriter(t)
-				rw.On("Config").Return(config).Maybe()
+				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").Return(&repository.FileInfo{Data: makeExistingData(t)}, nil).Once()
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
@@ -1250,6 +1233,8 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				config := newTestRepoConfig("test-repo")
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+					Return(&repository.FileInfo{Data: makeExistingData(t)}, nil).Once()
 				existingData := makeExistingData(t)
 				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
 					Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil)
@@ -1278,6 +1263,8 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				config := newTestRepoConfig("test-repo")
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+					Return(&repository.FileInfo{Data: makeExistingData(t)}, nil).Once()
 				existingData := makeExistingData(t)
 				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
 					Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil)
@@ -1338,6 +1325,8 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				}
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+					Return(&repository.FileInfo{Data: makeExistingData(t)}, nil).Once()
 				existingData := makeExistingData(t)
 				// First Read with new branch ref returns ErrRefNotFound
 				rw.On("Read", mock.Anything, "myfolder/_folder.json", "folder-rename/new-title").
@@ -1377,6 +1366,8 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				config := newSyncEnabledConfig("test-repo")
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+					Return(&repository.FileInfo{Data: makeExistingData(t)}, nil).Once()
 				existingData := makeExistingData(t)
 
 				updatedManifest := NewFolderManifest(existingUID, "Updated Title", FolderKind)
@@ -1430,6 +1421,8 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				config := newTestRepoConfig("test-repo")
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+					Return(&repository.FileInfo{Data: makeExistingData(t)}, nil).Once()
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).
 					Return(fmt.Errorf("access denied"))
@@ -1452,6 +1445,8 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				config := newTestRepoConfig("test-repo")
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+					Return(&repository.FileInfo{Data: makeExistingData(t)}, nil).Once()
 				existingData := makeExistingData(t)
 				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
 					Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
@@ -1489,6 +1484,8 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				}
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+					Return(&repository.FileInfo{Data: makeExistingData(t)}, nil).Once()
 				existingData := makeExistingData(t)
 				rw.On("Read", mock.Anything, "myfolder/_folder.json", "feature").
 					Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
@@ -1542,6 +1539,8 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				}
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+					Return(&repository.FileInfo{Data: makeExistingData(t)}, nil).Once()
 				existingData := makeExistingData(t)
 				rw.On("Read", mock.Anything, "myfolder/_folder.json", "feature").
 					Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
@@ -1835,6 +1834,7 @@ func TestDualReadWriter_FolderScopeGuard(t *testing.T) {
 
 		tree := NewEmptyFolderTree()
 		tree.Add(teamAFolder, "")
+		expectMissingFolderMetadata(&rw.Mock)
 		fm := NewFolderManager(rw, nil, tree, FolderKind)
 
 		dw := NewDualReadWriter(rw, parser, fm, stubAuthorizer{}, false)
@@ -1867,5 +1867,100 @@ func TestDualReadWriter_FolderScopeGuard(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, teamAFolder.ID, parsed.Meta.GetFolder(),
 			"folder-scoped resource must be parented to the resolved subdirectory folder")
+	})
+}
+
+func TestMoveFile_SecureValues(t *testing.T) {
+	dashboardGVK := schema.GroupVersionKind{
+		Group:   "dashboard.grafana.app",
+		Version: "v0alpha1",
+		Kind:    "Dashboard",
+	}
+
+	// Sync on the configured branch is what makes a move write to storage, so this
+	// is the configuration in which an unguarded relocation would replay the
+	// file's secure-value directives against the secret store.
+	newSyncedGitRepo := func(t *testing.T) (*provisioning.Repository, *repository.MockReaderWriter) {
+		config := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+			Spec: provisioning.RepositorySpec{
+				Type:      provisioning.GitHubRepositoryType,
+				Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+				Sync:      provisioning.SyncOptions{Enabled: true},
+				GitHub:    &provisioning.GitHubRepositoryConfig{Branch: "main"},
+			},
+		}
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config).Maybe()
+		return config, rw
+	}
+
+	newDualWriter := func(t *testing.T, config *provisioning.Repository, rw *repository.MockReaderWriter, parser Parser) *DualReadWriter {
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
+		return &DualReadWriter{
+			repo:       rw,
+			parser:     parser,
+			folders:    fm,
+			authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false),
+		}
+	}
+
+	newParsed := func(t *testing.T, obj map[string]any, client *MockDynamicResourceInterface) *ParsedResource {
+		u := &unstructured.Unstructured{Object: obj}
+		meta, err := utils.MetaAccessor(u)
+		require.NoError(t, err)
+		parsed := &ParsedResource{
+			Obj:  u,
+			Meta: meta,
+			GVK:  dashboardGVK,
+			Repo: provisioning.ResourceRepositoryInfo{
+				Name: "test-repo",
+				Type: provisioning.GitHubRepositoryType,
+			},
+		}
+		if client != nil {
+			parsed.Client = client
+		}
+		return parsed
+	}
+
+	t.Run("a move that supplies no content is still rejected and writes nothing to storage", func(t *testing.T) {
+		config, rw := newSyncedGitRepo(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		poisoned := map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "dash-uid"},
+			"secure":     map[string]any{"apiKey": map[string]any{"create": "super-secret"}},
+		}
+
+		originalFile := &repository.FileInfo{Data: []byte(`{}`), Path: "old/dash.json"}
+		rw.On("Read", mock.Anything, "old/dash.json", "").Return(originalFile, nil)
+		mockParser.On("Parse", mock.Anything, originalFile).Return(newParsed(t, poisoned, mockClient), nil)
+
+		// No opts.Data: the destination carries the original file's content.
+		mockParser.On("Parse", mock.Anything, &repository.FileInfo{
+			Data: []byte(`{}`),
+			Path: "new/dash.json",
+		}).Return(newParsed(t, poisoned, mockClient), nil)
+
+		dw := newDualWriter(t, config, rw, mockParser)
+		_, err := dw.MoveResource(context.Background(), DualWriteOptions{
+			OriginalPath: "old/dash.json",
+			Path:         "new/dash.json",
+			Message:      "move",
+		})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrSecureValuesNotAllowed)
+		require.Contains(t, err.Error(), "cannot be created or removed from a github repository")
+		require.NotContains(t, err.Error(), "super-secret")
+		mockClient.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		mockClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		rw.AssertNotCalled(t, "Move", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 }

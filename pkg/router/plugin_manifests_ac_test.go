@@ -7,7 +7,6 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
@@ -47,7 +46,7 @@ func TestPluginManifestAccessControl(t *testing.T) {
 }
 
 func TestPluginManifestAccessChecker(t *testing.T) {
-	check := appplugin.NewPluginAccessChecker(pluginManifestAccessControl{})
+	check := pluginaccesscontrol.NewAppAccessChecker(pluginManifestAccessControl{})
 	decision, reason, err := check(t.Context(), &identity.StaticRequester{UserUID: "test-user"}, "test-app")
 	require.NoError(t, err)
 	require.Equal(t, authorizer.DecisionAllow, decision)

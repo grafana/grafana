@@ -1,5 +1,5 @@
 import type { DataSourceApi, DrilldownsApplicability } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   GROUP_BY_OPERATOR,
@@ -17,13 +17,10 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 
 import { getDrilldownApplicability, verifyDrilldownApplicability } from './drilldownUtils';
 
-jest.mock('@grafana/runtime/unstable', () => {
-  const actual = jest.requireActual('@grafana/runtime/unstable');
-  return {
-    ...actual,
-    getDataSourceInstance: jest.fn(),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceInstance: jest.fn(),
+}));
 
 const getDataSourceInstanceMock = getDataSourceInstance as jest.MockedFunction<typeof getDataSourceInstance>;
 

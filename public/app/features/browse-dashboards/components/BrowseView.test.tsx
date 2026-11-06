@@ -1,11 +1,15 @@
-import { act, getByLabelText, render, screen, userEvent } from 'test/test-utils';
+import { HttpResponse, http } from 'msw';
+import { act, cleanup, getByLabelText, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService, setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { PROVISIONING_API_BASE } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { ManagerKind } from 'app/features/apiserver/types';
 import * as useFolderDocsModule from 'app/features/provisioning/hooks/useFolderDocs';
 import * as useFolderReadmeModule from 'app/features/provisioning/hooks/useFolderReadme';
 import { type DashboardViewItem } from 'app/features/search/types';
@@ -171,12 +175,84 @@ describe('browse-dashboards BrowseView', () => {
     expect(screen.getByRole('row', { name: dashboard.title })).toBeInTheDocument();
   });
 
+  describe('with a read-only folderless repository', () => {
+    let originalProvisioning: boolean;
+
+    beforeEach(() => {
+      originalProvisioning = config.provisioningEnabled;
+      config.provisioningEnabled = true;
+      server.use(
+        http.get(`${PROVISIONING_API_BASE}/settings`, () =>
+          HttpResponse.json({
+            items: [
+              {
+                name: 'my-repo',
+                title: 'My repo',
+                type: 'github',
+                target: 'folderless',
+                workflows: [],
+              } satisfies RepositoryView,
+            ],
+          })
+        )
+      );
+    });
+
+    afterEach(() => {
+      config.provisioningEnabled = originalProvisioning;
+    });
+
+    it('disables the checkbox of an item inside one of its top-level folders', async () => {
+      // Folderless repos don't name top-level folders after the repo, so only managerId points to it
+      const repoFolder: DashboardViewItem = {
+        kind: 'folder',
+        uid: 'projectone-uid',
+        title: 'ProjectOne',
+        managedBy: ManagerKind.Repo,
+        managerId: 'my-repo',
+      };
+      const childFolder: DashboardViewItem = {
+        kind: 'folder',
+        uid: 'components-uid',
+        title: 'components',
+        parentUID: repoFolder.uid,
+        managedBy: ManagerKind.Repo,
+        managerId: 'my-repo',
+      };
+
+      render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />, {
+        preloadedState: {
+          browseDashboards: {
+            rootItems: fullyLoadedViewItemCollection([repoFolder]),
+            childrenByParentUID: { [repoFolder.uid]: fullyLoadedViewItemCollection([childFolder]) },
+            openFolders: { [repoFolder.uid]: true },
+            selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
+          },
+        },
+      });
+
+      const childRow = await screen.findByRole('row', { name: childFolder.title });
+      await waitFor(() => expect(within(childRow).getByRole('checkbox')).toBeDisabled());
+    });
+  });
+
   describe('when there is no item in the folder', () => {
     it('shows a CTA for creating a dashboard if the user has editor rights', async () => {
       render(
         <BrowseView permissions={mockPermissions} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />
       );
       expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
+    });
+
+    it('does not show the Create dashboard CTA on mobile when mobileEditDeprecation is enabled', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      render(
+        <BrowseView permissions={mockPermissions} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />
+      );
+      expect(await screen.findByText("This folder doesn't have any dashboards yet")).toBeInTheDocument();
+      expect(screen.queryByText('Create dashboard')).not.toBeInTheDocument();
+      cleanup();
+      setTestFlags({});
     });
 
     it('shows a simple message if the user has viewer rights', async () => {

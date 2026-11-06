@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { useAsync } from 'react-use';
 
 import {
@@ -117,9 +117,9 @@ export function useDataSourceInstanceSettings(
  * Prefer this over {@link useDataSourceInstanceSettings} when identity and plugin metadata are enough:
  * it avoids depending on per-instance settings that will later be fetched on demand.
  *
- * Resolves **by uid only**: a ref with no usable uid — including `'default'`, `undefined` and
- * type-only refs — yields `item: undefined` rather than the default data source. Template
- * variable strings (e.g. `$ds` or `${ds}`) are not interpolated; resolve them to a uid first.
+ * Resolves refs like {@link getDataSourceInstanceListItem}: a uid, name or numeric id, `'default'`,
+ * `undefined` (the default data source) or a type-only ref. Template variable strings (e.g. `$ds`
+ * or `${ds}`) resolve against the global variables only.
  *
  * @public
  */
@@ -140,12 +140,16 @@ export function useDataSourceInstanceListItem(
  * function reference changes. Wrap inline filter callbacks in `useCallback`
  * to avoid unnecessary re-fetches.
  *
+ * `items` keeps the same reference across renders until the result changes. While loading and after
+ * an error it is an empty array that belongs to this hook instance and is not shared with other callers.
+ *
  * @public
  */
 export function useDataSourceInstanceList(filters?: GetDataSourceInstanceListFilters): UseDataSourceInstanceListResult {
   const filterValuesKey = filtersKey(filters);
   const filterFunc = filters?.filter;
   const cacheGeneration = useDataSourceCacheGeneration();
+  const emptyItems = useMemo<DataSourceInstanceListItem[]>(() => [], []);
 
   const { loading, error, value } = useAsync(
     () => getDataSourceInstanceList(filters),
@@ -153,7 +157,7 @@ export function useDataSourceInstanceList(filters?: GetDataSourceInstanceListFil
     [filterValuesKey, filterFunc, cacheGeneration]
   );
 
-  return { isLoading: loading, error, items: value ?? [] };
+  return { isLoading: loading, error, items: value ?? emptyItems };
 }
 
 /**

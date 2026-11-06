@@ -9,21 +9,15 @@ import {
   LoadingState,
   type PanelData,
 } from '@grafana/data';
-import { createQueryRunner } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { createQueryRunner, getDataSourceInstance } from '@grafana/runtime';
 
 import { fetchLabelValues, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   createQueryRunner: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
 }));
-
 const mockCreateQueryRunner = jest.mocked(createQueryRunner);
 
 const run = jest.fn();

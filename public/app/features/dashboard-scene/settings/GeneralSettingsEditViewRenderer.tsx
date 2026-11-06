@@ -147,9 +147,7 @@ export function GeneralSettingsEditViewRenderer({ model }: SceneComponentProps<G
             <MoveProvisionedDashboardDrawer
               dashboard={dashboard}
               targetFolderUID={moveModalProps.targetFolderUID}
-              targetFolderTitle={moveModalProps.targetFolderTitle}
               onDismiss={model.onMoveModalDismiss}
-              onSuccess={model.onMoveSuccess}
             />
           )}
 

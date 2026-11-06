@@ -1,9 +1,6 @@
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
   viewport: { width: 1920, height: 1080 },
 });
 

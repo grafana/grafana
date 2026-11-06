@@ -12,6 +12,7 @@ import { type DashboardSceneState, type DashboardViewState } from './types/dashb
 const viewStateKeys = {
   body: true,
   isEditing: true,
+  mode: true,
   inspectPanelKey: true,
   viewPanel: true,
   editview: true,
@@ -28,7 +29,7 @@ const viewStateKeyList = Object.keys(viewStateKeys) as ViewStateKey[];
 
 type ViewRequest<K extends ViewStateKey> = {
   key: K;
-  load: () => Promise<DashboardViewState[K]>;
+  load: (signal: AbortSignal) => Promise<DashboardViewState[K]>;
 };
 
 export type DashboardViewRequest = {

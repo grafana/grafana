@@ -1,12 +1,16 @@
 import { lastValueFrom, Observable, of } from 'rxjs';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { type BackendSrv, type DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import {
+  type BackendSrv,
+  type DataSourceWithBackend,
+  getBackendSrv,
   getDataSourceInstance,
   getDataSourceInstanceList,
   getDefaultDataSourceInstanceListItem,
-} from '@grafana/runtime/unstable';
+} from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
   abortNotifier,
@@ -27,15 +31,10 @@ import { backendInstance, deferred } from './test-utils';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceList: jest.fn(),
   getDefaultDataSourceInstanceListItem: jest.fn(),
 }));
-
 const getDataSourceInstanceListMock = jest.mocked(getDataSourceInstanceList);
 const healthGetMock = jest.fn();
 
@@ -367,6 +366,21 @@ describe('isDatasourceHealthy', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  it('skips the legacy health request and reads as healthy on a multi-tenant homepage', async () => {
+    setTestFlags({ [FlagKeys.GrafanaMultiTenantHomepage]: true });
+    try {
+      await expect(isDatasourceHealthy('unprobed')).resolves.toBe(true);
+      expect(healthGetMock).not.toHaveBeenCalled();
+    } finally {
+      setTestFlags({});
+    }
+
+    // Nothing was cached for the uid, so the next read with the legacy API available probes it.
+    healthGetMock.mockResolvedValue({ status: 'ERROR' });
+    await expect(isDatasourceHealthy('unprobed')).resolves.toBe(false);
+    expect(healthGetMock).toHaveBeenCalledTimes(1);
   });
 
   it('shares one /health request per uid across concurrent callers', async () => {

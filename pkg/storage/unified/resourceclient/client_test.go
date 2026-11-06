@@ -37,18 +37,12 @@ func TestNewIDTokenExtractor(t *testing.T) {
 	withInfo := func(info *identity.StaticRequester) context.Context {
 		return types.WithAuthInfo(context.Background(), info)
 	}
-	requireIdentity := func(context.Context) bool { return true }
-	oboOn := func(context.Context) bool { return true }
-	oboOff := func(context.Context) bool { return false }
+	embedded := ModeEmbedded.policy()
+	standalone := ModeStandalone.policy()
 	cancelledCtx, cancel := context.WithCancel(withInfo(&identity.StaticRequester{Type: types.TypeUser}))
 	cancel()
 	expiredCtx, cancelExpired := context.WithDeadline(withInfo(&identity.StaticRequester{Type: types.TypeUser}), time.Now().Add(-time.Minute))
 	defer cancelExpired()
-	// Allows the fallback, but a done context must return before the policy reads its flag.
-	unreachablePolicy := func(context.Context) bool {
-		t.Error("RequireCallerIdentity was consulted for a done context")
-		return false
-	}
 
 	modes := []string{identityModeService, identityModeIDToken, identityModeOnBehalfOf, identityModeFallbackService, identityModeDenied, identityModeCancelled}
 	counts := func() map[string]float64 {
@@ -61,7 +55,7 @@ func TestNewIDTokenExtractor(t *testing.T) {
 
 	for _, tc := range []struct {
 		name      string
-		cfg       RemoteResourceClientConfig
+		policy    identityPolicy
 		ctx       context.Context
 		wantMode  string
 		wantToken string
@@ -69,68 +63,60 @@ func TestNewIDTokenExtractor(t *testing.T) {
 	}{
 		{
 			name:     "internal service identity",
+			policy:   standalone,
 			ctx:      serviceCtx,
 			wantMode: identityModeService,
 		},
 		{
 			name:     "access policy calling on its own behalf",
+			policy:   standalone,
 			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeAccessPolicy}),
 			wantMode: identityModeService,
 		},
 		{
 			name:      "user with an id token",
+			policy:    standalone,
 			ctx:       withInfo(&identity.StaticRequester{Type: types.TypeUser, IDToken: "id-token"}),
 			wantMode:  identityModeIDToken,
 			wantToken: "id-token",
 		},
 		{
-			name:     "user on a client whose exchanger carries the caller",
-			cfg:      RemoteResourceClientConfig{CarriesCallerIdentity: true, RequireCallerIdentity: requireIdentity},
-			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser}),
-			wantMode: identityModeOnBehalfOf,
-		},
-		{
-			name:     "user with nothing to forward falls back to the service",
-			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: func(context.Context) bool { return false }},
+			name:     "embedded client falls back to the service for a user with nothing to forward",
+			policy:   embedded,
 			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser}),
 			wantMode: identityModeFallbackService,
 		},
 		{
-			name:     "an unset policy defers to the flag, which defaults off",
-			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser}),
-			wantMode: identityModeFallbackService,
-		},
-		{
-			name:     "user with nothing to forward is denied when the fallback is off",
-			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: requireIdentity},
+			name:     "standalone client denies a user with nothing to forward",
+			policy:   standalone,
 			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser}),
 			wantMode: identityModeDenied,
 			wantCode: codes.PermissionDenied,
 		},
 		{
 			name:     "cancelled user request without an id token is neither a fallback nor a denial",
-			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: requireIdentity},
+			policy:   standalone,
 			ctx:      cancelledCtx,
 			wantMode: identityModeCancelled,
 			wantCode: codes.Canceled,
 		},
 		{
 			name:     "cancelled user request is not counted as a fallback when the fallback is allowed",
-			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: unreachablePolicy},
+			policy:   embedded,
 			ctx:      cancelledCtx,
 			wantMode: identityModeCancelled,
 			wantCode: codes.Canceled,
 		},
 		{
 			name:     "user request past its deadline is not counted as a fallback",
-			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: unreachablePolicy},
+			policy:   embedded,
 			ctx:      expiredCtx,
 			wantMode: identityModeCancelled,
 			wantCode: codes.DeadlineExceeded,
 		},
 		{
 			name:     "user carried inside the access token goes obo",
-			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn, RequireCallerIdentity: requireIdentity},
+			policy:   standalone,
 			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t)}),
 			wantMode: identityModeOnBehalfOf,
 		},
@@ -138,20 +124,20 @@ func TestNewIDTokenExtractor(t *testing.T) {
 			// The exchanger carries the caller inside the exchanged token, so the ID token
 			// must stay home: pure obo.
 			name:     "obo takes priority over a present id token",
-			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn},
+			policy:   embedded,
 			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t), IDToken: "id-token"}),
 			wantMode: identityModeOnBehalfOf,
 		},
 		{
 			name:      "obo policy off keeps the classic id token transport",
-			cfg:       RemoteResourceClientConfig{OnBehalfOf: oboOff},
+			policy:    identityPolicy{},
 			ctx:       withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t), IDToken: "id-token"}),
 			wantMode:  identityModeIDToken,
 			wantToken: "id-token",
 		},
 		{
 			name:     "an access token that does not carry the user is not obo",
-			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn, RequireCallerIdentity: func(context.Context) bool { return false }},
+			policy:   embedded,
 			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: serviceActorToken(t)}),
 			wantMode: identityModeFallbackService,
 		},
@@ -160,7 +146,7 @@ func TestNewIDTokenExtractor(t *testing.T) {
 			want := counts()
 			want[tc.wantMode]++
 
-			token, err := newIDTokenExtractor(tc.cfg)(tc.ctx)
+			token, err := newIDTokenExtractor(tc.policy)(tc.ctx)
 
 			assert.Equal(t, tc.wantCode, status.Code(err))
 			assert.Equal(t, tc.wantToken, token)
@@ -173,11 +159,10 @@ func TestNewIDTokenExtractor(t *testing.T) {
 // The call must fail with `codes.PermissionDenied` and never reach the server.
 func TestRemoteClientDeniesRequestsWithoutCallerIdentity(t *testing.T) {
 	interceptor, err := NewAuthnGrpcClientInterceptor(noop.NewTracerProvider().Tracer(""), RemoteResourceClientConfig{
-		Namespace:             "stacks-1",
-		Audiences:             []string{"resourceStore"},
-		TokenExchanger:        ProvideInProcExchanger(),
-		RequireCallerIdentity: func(context.Context) bool { return true },
-	})
+		Namespace:      "stacks-1",
+		Audiences:      []string{"resourceStore"},
+		TokenExchanger: ProvideInProcExchanger(),
+	}, ModeStandalone)
 	require.NoError(t, err)
 
 	ctx := types.WithAuthInfo(context.Background(), &identity.StaticRequester{Type: types.TypeUser})
@@ -200,7 +185,7 @@ func TestNewAuthnGrpcClientInterceptor(t *testing.T) {
 			Namespace: "*",
 			Audiences: []string{"resourceStore"},
 			IsDev:     true,
-		})
+		}, ModeEmbedded)
 		require.NoError(t, err)
 		require.NotNil(t, interceptor)
 	})
@@ -210,7 +195,7 @@ func TestNewAuthnGrpcClientInterceptor(t *testing.T) {
 			Namespace: "*",
 			Audiences: []string{"resourceStore"},
 			IsDev:     false,
-		})
+		}, ModeEmbedded)
 		require.Error(t, err, "must not silently self-mint tokens outside dev mode")
 	})
 
@@ -220,7 +205,7 @@ func TestNewAuthnGrpcClientInterceptor(t *testing.T) {
 			Audiences:      []string{"resourceStore"},
 			IsDev:          false,
 			TokenExchanger: ProvideInProcExchanger(),
-		})
+		}, ModeStandalone)
 		require.NoError(t, err)
 		require.NotNil(t, interceptor)
 	})
@@ -232,7 +217,7 @@ func TestNewAuthnGrpcClientInterceptor(t *testing.T) {
 			Namespace:        "*",
 			Audiences:        []string{"resourceStore"},
 			IsDev:            false,
-		})
+		}, ModeStandalone)
 		require.NoError(t, err)
 		require.NotNil(t, interceptor)
 	})

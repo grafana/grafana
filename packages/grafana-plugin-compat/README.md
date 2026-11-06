@@ -18,12 +18,10 @@ Ships both ESM and CommonJS builds, so it works with `import` and `require`.
 - `@grafana/plugin-compat/datasources` — `getDataSourceInstance`,
   `getDataSourceInstanceList`, `getDataSourceInstanceSettings`,
   `getDefaultDataSourceInstanceListItem` and its
-  `useDefaultDataSourceInstanceListItem` hook, and
+  `useDefaultDataSourceInstanceListItem` hook, `useDataSourceInstanceList`, and
   `registerRuntimeDataSourceInstance`. Replacements for `getDataSourceSrv()`
   methods.
-- `@grafana/plugin-compat/apps` — `getPluginSettings`,
-  `updateAppPluginSettings`. Replacements for the `getBackendSrv()`
-  plugin-settings endpoints.
+- `@grafana/plugin-compat/apps` — `getPluginSettings`, `updateAppPluginSettings`, `getAppPluginHealth`. Replacements for the `getBackendSrv()` plugin-settings and app-health endpoints.
 
 ## Usage
 
@@ -35,10 +33,11 @@ import {
   registerRuntimeDataSourceInstance,
   useDefaultDataSourceInstanceListItem,
 } from '@grafana/plugin-compat/datasources';
-import { getPluginSettings } from '@grafana/plugin-compat/apps';
+import { getAppPluginHealth, getPluginSettings } from '@grafana/plugin-compat/apps';
 
 const ds = await getDataSourceInstance({ uid: 'my-uid' });
 const settings = await getPluginSettings('my-plugin-id');
+const health = await getAppPluginHealth('my-plugin-id');
 
 // `undefined` unless the org default is one of the items.
 const items = await getDataSourceInstanceList({ type: 'prometheus' });
@@ -49,6 +48,8 @@ const { isLoading, error, item } = useDefaultDataSourceInstanceListItem(items);
 // Throws if a data source with the same uid is already registered.
 registerRuntimeDataSourceInstance({ dataSource: new MyRuntimeDataSource('my-plugin-id', 'my-uid') });
 ```
+
+`getAppPluginHealth` resolves with the health result for both healthy and unhealthy responses. Inspect `health?.status`; authentication, transport, and other non-health failures reject. The k8s path defaults an omitted message to an empty string; legacy health responses are returned unchanged. Known non-app plugins return `undefined` when k8s metadata is available.
 
 On hosts with the async APIs, a data source registered this way is not visible
 to `getDataSourceSrv()`. Look it up with `getDataSourceInstance` instead.

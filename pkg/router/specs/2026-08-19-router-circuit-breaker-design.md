@@ -1,7 +1,30 @@
 # Router passive circuit breaker — design
 
-Status: approved (brainstorming), pending implementation plan
+Status: implemented; mechanics superseded. The decisions (passive only, `sony/gobreaker`, the
+rejected alternatives and the 502/503/504 failure set) still hold. Current behavior is described
+in `pkg/router/AGENTS.md` ("The circuit breaker is passive only").
 Package: `pkg/router`
+
+> **What changed since this was written (as of 2026-10-26):**
+>
+> - A handler that implements `handlerFor` (`requestRouter`) picks a handler per request, and only
+>   that handler's breakers apply. `dashboard.grafana.app` uses it to split requests between its
+>   multi-tenant backend and the stacks (#135613).
+> - Deadlines the router sets on its own fetches carry `errRouterDeadline`, so missing them counts
+>   against the backend; only the caller's own cancellation is excluded (#135823).
+> - Embedded groups in middleware mode bypass the breaker, since the server runs in process
+>   (#135946).
+> - The breaker is gobreaker's two-step breaker (`Allow`/`done`). The outcome is reported as soon as
+>   the status is written, so a watch can't hold the half-open trial slot (#133630).
+> - A labeled `proxyFailure` counts regardless of status, and so does a panic. A rejected backend
+>   redirect does not count (#133627). Only `errCallerGone` (the caller's own context ending) is
+>   excluded; a response-header timeout still counts.
+> - Plugin backends break only on plugin client calls, and only reachability errors count (#133943).
+>   The ST fallback keeps one breaker per destination host and group.
+> - Breaker state and transitions are metrics (`grafana_router_breaker_state`,
+>   `grafana_router_breaker_transitions_total`).
+> - A failed reconcile is retried with backoff (#133646), so the retry gap described below is fixed.
+> - `lastRV` is now `lastKey` (`Backend.Key()`).
 
 ## Problem
 
@@ -89,8 +112,7 @@ Piggybacks entirely on existing reconcile rules — no new goroutine, no new tea
 - **Unchanged RV** (existing skip branch): untouched — breaker state carries forward exactly like the
   connection pool does.
 - **Changed RV** (rebuild branch): **new breaker instance, reset to closed.** An RV change can mean the
-  target URL itself moved (new `RouteBackendSpec.Forward.Url`); carrying over trip state from the old
-  target would be stale. Same "reload = fresh trust" logic as the handler rebuild itself.
+  target URL itself moved; carrying over trip state from the old target would be stale. Same "reload = fresh trust" logic as the handler rebuild itself.
 - **Group removed**: breaker goes away with the rest of the entry; gobreaker holds no resources to
   release (unlike the transport pool).
 
@@ -98,7 +120,7 @@ Piggybacks entirely on existing reconcile rules — no new goroutine, no new tea
 
 Use `gobreaker.Settings{}` zero-value — the library's own defaults (trip after 5 consecutive failures,
 60s open cooldown before half-open, 1 half-open trial request) — rather than inventing thresholds or
-adding a new CRD field. No change to `RouteBackendSpec`, no enterprise loader change. Revisit only if a
+adding a new config field. Revisit only if a
 real group needs different tuning than the defaults provide.
 
 ## Failure signal

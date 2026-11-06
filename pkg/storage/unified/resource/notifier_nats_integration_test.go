@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/peer"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -29,15 +30,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// TestIntegrationNatsWatchNotificationRoundTrip drives the real publish
+// TestNatsWatchNotificationRoundTrip drives the real publish
 // (kvStorageBackend) and consume (natsNotifier) sides against an embedded NATS
 // server, proving they agree over the wire rather than against a fake.
-func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestNatsWatchNotificationRoundTrip(t *testing.T) {
 	t.Run("committed write round-trips through NATS with every field intact", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
 		backend := newTestKVStorageBackend(pub)
@@ -84,7 +82,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 		establishInterest(t, ctx, out, backend)
 
 		// Guards the publish and consume switches (in separate files) staying in sync.
-		for _, action := range []kv.DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted} {
+		for _, action := range []DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted} {
 			backend.publishWatchNotification(ctx, Event{
 				Namespace:       "default",
 				Group:           "playlist.grafana.app",
@@ -149,6 +147,45 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 				return false
 			}
 		}, 5*time.Second, time.Millisecond)
+	})
+
+	t.Run("metadata survives the marshal/transport/unmarshal round trip", func(t *testing.T) {
+		ctx, pub, sub := startNatsRoundTrip(t)
+		backend := newTestKVStorageBackend(pub)
+		assert.Equal(t, int64(defaultMaxWatchNotificationBytes), pub.MaxPayload(), "the embedded server applies the NATS default")
+		assert.Equal(t, defaultMaxWatchNotificationBytes, backend.watchPublisher.maxWatchNotificationBytes())
+		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, NewWatchExpiry(), nil, &logging.NoOpLogger{})
+		out := notifier.Watch(ctx, WatchOptions{})
+
+		event := Event{
+			Namespace:       "default",
+			Group:           "playlist.grafana.app",
+			Resource:        "playlists",
+			Name:            "p-1",
+			ResourceVersion: 5,
+			Action:          DataActionUpdated,
+			Metadata: &resourcepb.NotificationMetadata{
+				Labels:                  map[string]string{"env": "prod"},
+				Annotations:             map[string]string{"example.grafana.app/note": "x"},
+				Finalizers:              []string{"example.grafana.app/cleanup"},
+				Generation:              3,
+				CreationTimestampMillis: 1000,
+				DeletionTimestampMillis: 2000,
+			},
+		}
+
+		var got Event
+		require.Eventually(t, func() bool {
+			backend.publishWatchNotification(ctx, event)
+			select {
+			case got = <-out:
+				return true
+			case <-time.After(20 * time.Millisecond):
+				return false
+			}
+		}, 5*time.Second, time.Millisecond)
+
+		assert.True(t, proto.Equal(event.Metadata, got.Metadata))
 	})
 
 	t.Run("malformed and unknown-type notifications are dropped, not delivered", func(t *testing.T) {
@@ -271,9 +308,7 @@ func startNatsService(t *testing.T, ctx context.Context, svc services.Service) {
 // subscription, re-reads the object from the same KV, and writes it to the
 // index. The index is the test double, because the Bleve index lives in a
 // package that imports this one.
-func TestIntegrationGlobalIndexFollowsKVWritesThroughNATS(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestGlobalIndexFollowsKVWritesThroughNATS(t *testing.T) {
 	ctx, pub, sub := startNatsRoundTrip(t)
 	backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
 		o.EventPublisher = pub
@@ -378,9 +413,7 @@ func (s *stallingKV) BatchGet(ctx context.Context, section string, keys []string
 
 // A notification dropped by a full notifier buffer is missed by every watch, so
 // the watch must expire and the client's re-list must recover the write.
-func TestIntegrationNatsWatchExpiresWhenNotifierDrops(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestNatsWatchExpiresWhenNotifierDrops(t *testing.T) {
 	_, pub, sub := startNatsRoundTrip(t)
 	store := &stallingKV{release: make(chan struct{})}
 	srv := newWatchTestServer(t, watchTestServerOpts{
@@ -434,9 +467,7 @@ func TestIntegrationNatsWatchExpiresWhenNotifierDrops(t *testing.T) {
 
 // Clients reconnect watches more often than the max age, so expiry must follow
 // each client's phase across reconnects rather than restart with every watch.
-func TestIntegrationNatsWatchMaxAgeFollowsClientPhase(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestNatsWatchMaxAgeFollowsClientPhase(t *testing.T) {
 	const maxAge = 2 * time.Second
 	_, pub, sub := startNatsRoundTrip(t)
 	srv := newWatchTestServer(t, watchTestServerOpts{

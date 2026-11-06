@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
+import { Button, Drawer, Dropdown, Menu, MenuItem, Text } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { appEvents } from 'app/core/app_events';
 import { FolderOwnerModal } from 'app/core/components/OwnerReferences/FolderOwnerModal';
@@ -17,8 +17,9 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
 import { type FolderDTO } from 'app/types/folders';
 
-import { useDeleteFolderMutationFacade, useMoveFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
+import { useMoveFolder } from '../../../api/clients/folder/v1beta1/hooks';
 import { extractErrorMessage } from '../../../api/utils';
+import { useDeleteFolderMutation } from '../api/browseDashboardsAPI';
 import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
@@ -39,8 +40,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
   const [showManageOwnersModal, setShowManageOwnersModal] = useState(false);
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
   const [showMoveProvisionedFolderDrawer, setShowMoveProvisionedFolderDrawer] = useState(false);
-  const [moveFolder] = useMoveFolderMutationFacade();
-  const deleteFolder = useDeleteFolderMutationFacade();
+  const [moveFolder] = useMoveFolder();
+  const [deleteFolder] = useDeleteFolderMutation();
 
   const {
     canEditFolders,
@@ -181,9 +182,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
   return (
     <>
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
-        <Button variant="secondary">
+        <Button variant="secondary" icon={isOpen ? 'angle-up' : 'angle-down'} iconPlacement="right">
           <Trans i18nKey="browse-dashboards.folder-actions-button.folder-actions">Folder actions</Trans>
-          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>
       </Dropdown>
       {showPermissionsDrawer && (

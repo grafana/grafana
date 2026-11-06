@@ -180,8 +180,8 @@ describe('useDataSourceInstanceListItem', () => {
     const { result } = renderHook(() => useDataSourceInstanceListItem('uid-alpha'));
     await waitFor(() => expect(result.current.item?.name).toBe('Alpha'));
 
-    act(() => {
-      syncDataSourceInstanceSettings({
+    await act(async () => {
+      await syncDataSourceInstanceSettings({
         datasources: { Synced: ds({ id: 1, uid: 'uid-alpha', name: 'Synced', type: 'test-db' }) },
         defaultDatasource: 'Synced',
       });
@@ -203,6 +203,10 @@ describe('useDataSourceInstanceListItem', () => {
     await waitFor(() => expect(result.current.item?.name).toBe('RuntimeDataSource-runtime-db'));
   });
 });
+
+const failingFilter = () => {
+  throw new Error('filter failed');
+};
 
 describe('useDataSourceInstanceList', () => {
   it('populates items', async () => {
@@ -257,6 +261,64 @@ describe('useDataSourceInstanceList', () => {
     await act(() => reloadDataSourceInstanceSettings());
 
     await waitFor(() => expect(result.current.items.map((item) => item.name)).toEqual(['Charlie']));
+  });
+
+  it('keeps the same items reference across re-renders while loading', async () => {
+    const { result, rerender } = renderHook(() => useDataSourceInstanceList());
+
+    expect(result.current.isLoading).toBe(true);
+    const itemsWhileLoading = result.current.items;
+    expect(itemsWhileLoading).toEqual([]);
+
+    rerender();
+
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.items).toBe(itemsWhileLoading);
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+  });
+
+  it('keeps the same items reference across re-renders after an error', async () => {
+    const { result, rerender } = renderHook(() => useDataSourceInstanceList({ filter: failingFilter }));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.error?.message).toBe('filter failed');
+    expect(result.current.items).toEqual([]);
+    const itemsAfterError = result.current.items;
+
+    rerender();
+
+    expect(result.current.items).toBe(itemsAfterError);
+  });
+
+  it('does not share the empty items array between hook instances', async () => {
+    const first = renderHook(() => useDataSourceInstanceList());
+    const second = renderHook(() => useDataSourceInstanceList());
+
+    expect(first.result.current.isLoading).toBe(true);
+    expect(second.result.current.isLoading).toBe(true);
+    expect(first.result.current.items).not.toBe(second.result.current.items);
+
+    // A caller that mutates its own empty array must not change what other callers see.
+    first.result.current.items.push(ds({ name: 'Intruder' }) as unknown as DataSourceInstanceListItem);
+    expect(second.result.current.items).toEqual([]);
+
+    await waitFor(() => expect(first.result.current.isLoading).toBe(false));
+    await waitFor(() => expect(second.result.current.isLoading).toBe(false));
+  });
+
+  it('does not leak a mutated empty items array into a later hook instance', async () => {
+    const first = renderHook(() => useDataSourceInstanceList());
+    first.result.current.items.push(ds({ name: 'Intruder' }) as unknown as DataSourceInstanceListItem);
+    await waitFor(() => expect(first.result.current.isLoading).toBe(false));
+    first.unmount();
+
+    const second = renderHook(() => useDataSourceInstanceList());
+
+    expect(second.result.current.isLoading).toBe(true);
+    expect(second.result.current.items).toEqual([]);
+
+    await waitFor(() => expect(second.result.current.isLoading).toBe(false));
   });
 });
 

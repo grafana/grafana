@@ -7,16 +7,12 @@ import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { setLogger, initializeLoggersRegistry } from '../logging/registry';
 import { getPluginMetaFromCache, refetchPluginMeta } from '../pluginMeta/plugins';
 import { clockPanelMetaOnPrem, myOrgTestAppMeta, v0alpha1Response } from '../pluginMeta/test-fixtures/v0alpha1Response';
+import { getCacheKey } from '../pluginUtils';
 
 import { legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
-import {
-  clockPanelOnPremPluginMeta,
-  cloudwatchPluginMeta,
-  myOrgTestAppSettings,
-} from './test-fixtures/v0alpha1Response';
+import { clockPanelOnPremPluginMeta, myOrgTestAppSettings, testdataPluginMeta } from './test-fixtures/v0alpha1Response';
 import { type Settings as v0alpha1Settings } from './types';
 import { updateAppPluginSettings } from './updateAppPluginSettings';
-import { getCacheKey } from './utils';
 
 jest.mock('../pluginMeta/plugins', () => ({
   ...jest.requireActual('../pluginMeta/plugins'),
@@ -26,7 +22,7 @@ jest.mock('../pluginMeta/plugins', () => ({
 
 const getPluginMetaFromCacheMock = jest.mocked(getPluginMetaFromCache);
 const refetchPluginMetaMock = jest.mocked(refetchPluginMeta);
-const cloudwatch = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'cloudwatch')!;
+const testdata = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'grafana-testdata-datasource')!;
 
 describe('settings', () => {
   let backendSrv: BackendSrv;
@@ -125,9 +121,10 @@ describe('settings', () => {
               path: '/secure/password/remove',
               value: true,
             },
+            { op: 'remove', path: '/secure/apiKey/name' },
             {
-              op: 'replace',
-              path: '/secure/apiKey/name',
+              op: 'add',
+              path: '/secure/apiKey/create',
               value: 'the api key',
             },
             {
@@ -218,11 +215,11 @@ describe('settings', () => {
       });
 
       it('should just map data source plugins', async () => {
-        refetchPluginMetaMock.mockResolvedValue(cloudwatch);
+        refetchPluginMetaMock.mockResolvedValue(testdata);
 
-        const result = await updateAppPluginSettings(cloudwatch.spec.pluginJson.id, {});
+        const result = await updateAppPluginSettings(testdata.spec.pluginJson.id, {});
 
-        expect(result).toEqual(cloudwatchPluginMeta);
+        expect(result).toEqual(testdataPluginMeta);
         expect(backendSrv.post).not.toHaveBeenCalled();
         expect(backendSrv.get).not.toHaveBeenCalled();
       });

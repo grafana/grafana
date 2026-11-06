@@ -1,7 +1,7 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneGridRow, SceneQueryRunner, VizPanel } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
@@ -82,13 +82,7 @@ describe('duplicateDefaultGridPanel', () => {
 });
 
 describe('duplicateDefaultGridPanel (legacy mode)', () => {
-  beforeAll(() => {
-    setTestFlags({ dashboardNewLayouts: false });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
-  });
+  testWithFlags({ dashboardNewLayouts: false });
 
   it('Should duplicate a panel', () => {
     const { manager, grid } = setupLegacy();

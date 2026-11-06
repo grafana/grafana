@@ -91,7 +91,7 @@ func setup(t *testing.T, srv *Server) *Server {
 		common.NewResourceTuple("team:ctx-list#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-list-dashboard"),
 		common.NewResourceTuple("team:ctx-batch#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-batch-dashboard"),
 		common.NewResourceTuple("team:ctx-1000#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-1000-dashboard"),
-		common.NewResourceTuple("user:u1", common.RelationCreate, datasourceGroup, datasourceResource, datasourceQuerySubresource, "ds-1"),
+		common.NewResourceTuple("user:u1", common.RelationCreate, "datasource.grafana.app", datasourceResource, datasourceQuerySubresource, "ds-1"),
 	}
 
 	return setupOpenFGADatabase(t, srv, tuples)
@@ -105,6 +105,10 @@ func setupOpenFGAServer(t *testing.T) *Server {
 
 	// Use a test-specific database to avoid migration conflicts
 	testStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
+	// Bound OpenFGA query fan-out and retain connections between checks to avoid
+	// exhausting database connections during the integration suite.
+	cfg.Raw.Section("database").Key("max_open_conn").SetValue("10")
+	cfg.Raw.Section("database").Key("max_idle_conn").SetValue("10")
 
 	// Hack to skip these tests on mysql 5.7
 	if testStore.GetDialect().DriverName() == migrator.MySQL {

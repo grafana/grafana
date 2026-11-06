@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -24,6 +25,7 @@ type embeddingBuilderProvider struct {
 func (p embeddingBuilderProvider) Validate() error                 { return p.validate() }
 func (p embeddingBuilderProvider) Snapshot() embed.BuilderSnapshot { return p.snapshot() }
 func (p embeddingBuilderProvider) Has(group, resource string) bool { return p.has(group, resource) }
+func (p embeddingBuilderProvider) Allowed() []schema.GroupResource { return nil }
 
 type enrolledBuilder struct {
 	embed.Builder
@@ -56,7 +58,7 @@ func TestEmbeddingEnrollmentGatesQueries(t *testing.T) {
 			}
 			t.Run(name, func(t *testing.T) {
 				backend := &fakeVectorBackend{collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: tc.external}}
-				s, _, provider := newHybridTestServer(lexTableResponse(), backend)
+				s, _, provider := newHybridTestServer(lexFieldValueResponse(), backend)
 				calls := 0
 				s.embeddingBuilders = embeddingBuilderProvider{
 					validate: func() error { return tc.validationErr },
@@ -88,12 +90,12 @@ func TestEmbeddingEnrollmentGatesQueries(t *testing.T) {
 						require.Equal(t, codes.NotFound, status.Code(err))
 					}
 				} else {
-					resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "text"})
-					require.NoError(t, err)
+					_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "text"})
 					if tc.allowed {
-						require.Nil(t, resp.Error)
+						require.NoError(t, err)
 					} else {
-						require.EqualValues(t, http.StatusNotFound, resp.Error.Code)
+						require.Equal(t, codes.NotFound, status.Code(err))
+						require.EqualValues(t, http.StatusNotFound, rpcErrorResult(t, err).Code)
 					}
 				}
 				if tc.allowed {
@@ -115,15 +117,15 @@ func TestEmbeddingEnrollmentRefreshesForQueries(t *testing.T) {
 	s.embeddingBuilders = embeddingBuilderProvider{has: func(group, resource string) bool {
 		return available && group == "g" && resource == "r"
 	}}
-	_, allowed, err := s.resolveAllowedCollection(t.Context(), "g", "r")
+	_, allowed, err := s.resolveAllowedCollection(t.Context(), "ns", "g", "r")
 	require.NoError(t, err)
 	require.True(t, allowed)
 	available = false
-	_, allowed, err = s.resolveAllowedCollection(t.Context(), "g", "r")
+	_, allowed, err = s.resolveAllowedCollection(t.Context(), "ns", "g", "r")
 	require.NoError(t, err)
 	require.False(t, allowed)
 	available = true
-	_, allowed, err = s.resolveAllowedCollection(t.Context(), "g", "r")
+	_, allowed, err = s.resolveAllowedCollection(t.Context(), "ns", "g", "r")
 	require.NoError(t, err)
 	require.True(t, allowed)
 }

@@ -197,58 +197,76 @@ func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
 		name            string
 		method          string
 		path            string
-		flagEnabled     bool
+		originalPath    string
+		data            string
 		expectForbidden bool
 	}{
 		{
-			name:            "POST _folder.json flag on",
+			name:            "POST _folder.json",
 			method:          http.MethodPost,
 			path:            "folder/_folder.json",
-			flagEnabled:     true,
 			expectForbidden: true,
 		},
 		{
-			name:            "PUT _folder.json flag on",
+			name:            "PUT _folder.json",
 			method:          http.MethodPut,
 			path:            "folder/_folder.json",
-			flagEnabled:     true,
 			expectForbidden: true,
 		},
 		{
-			name:            "DELETE _folder.json flag on",
+			name:            "DELETE _folder.json",
 			method:          http.MethodDelete,
 			path:            "folder/_folder.json",
-			flagEnabled:     true,
 			expectForbidden: true,
 		},
 		{
-			name:            "GET _folder.json flag on",
+			name:            "GET _folder.json",
 			method:          http.MethodGet,
 			path:            "folder/_folder.json",
-			flagEnabled:     true,
 			expectForbidden: false,
 		},
 		{
-			name:            "POST _folder.json flag off",
-			method:          http.MethodPost,
-			path:            "folder/_folder.json",
-			flagEnabled:     false,
-			expectForbidden: false,
-		},
-		{
-			name:            "POST regular file flag on",
+			name:            "POST regular file",
 			method:          http.MethodPost,
 			path:            "folder/dashboard.json",
-			flagEnabled:     true,
+			expectForbidden: false,
+		},
+		{
+			name:            "POST move folder metadata",
+			method:          http.MethodPost,
+			path:            "folder/dashboard.json",
+			originalPath:    "folder/_folder.json",
+			expectForbidden: true,
+		},
+		{
+			name:            "POST replace folder metadata with a dashboard",
+			method:          http.MethodPost,
+			path:            "folder/dashboard.json",
+			originalPath:    "folder/_folder.json",
+			data:            `{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":"replacement"},"spec":{"title":"Replacement","schemaVersion":42}}`,
+			expectForbidden: true,
+		},
+		{
+			name:            "POST move regular file",
+			method:          http.MethodPost,
+			path:            "folder/dashboard.json",
+			originalPath:    "folder/original.json",
+			expectForbidden: false,
+		},
+		{
+			name:            "GET ignores originalPath",
+			method:          http.MethodGet,
+			path:            "folder/dashboard.json",
+			originalPath:    "folder/_folder.json",
 			expectForbidden: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			connector := &filesConnector{folderMetadataEnabled: tc.flagEnabled}
-			req := httptest.NewRequest(tc.method, "/", nil)
-			opts := resources.DualWriteOptions{Path: tc.path}
+			connector := &filesConnector{}
+			req := httptest.NewRequest(tc.method, "/", strings.NewReader(tc.data))
+			opts := resources.DualWriteOptions{Path: tc.path, OriginalPath: tc.originalPath}
 
 			if tc.expectForbidden {
 				_, err := connector.handleMethodRequest(context.Background(), req, opts, false, nil, nil, nil)
@@ -571,6 +589,7 @@ func TestHandleGetRawFile(t *testing.T) {
 				},
 			}
 			mockReadWriter.EXPECT().Config().Return(repo).Maybe()
+			mockReadWriter.EXPECT().Read(mock.Anything, mock.MatchedBy(resources.IsFolderMetadataFile), mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), nil, false)
 
 			if tt.readError != nil {
@@ -623,6 +642,8 @@ func TestHandleGetRawFile_FolderScopedAuth(t *testing.T) {
 		mockAccess.EXPECT().
 			Check(mock.Anything, mock.Anything, mock.Anything).
 			Return(apierrors.NewForbidden(provisioningapi.RepositoryResourceInfo.GroupResource(), "team-a", errors.New("denied")))
+
+		mockReadWriter.EXPECT().Read(mock.Anything, mock.MatchedBy(resources.IsFolderMetadataFile), mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 
 		authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), nil, false)
 		connector := &filesConnector{access: mockAccess}

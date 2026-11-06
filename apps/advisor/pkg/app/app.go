@@ -17,7 +17,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -25,12 +24,12 @@ import (
 	advisorapi "github.com/grafana/grafana/apps/advisor/pkg/apis"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
-	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"github.com/grafana/grafana/apps/advisor/pkg/translations"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -60,12 +59,6 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
-	// Initialize checks
-	checkMap := map[string]checks.Check{}
-	for _, c := range checkRegistry.Checks() {
-		checkMap[c.ID()] = c
-	}
-
 	ctr, err := checktyperegisterer.New(cfg, log)
 	if err != nil {
 		return nil, err
@@ -92,7 +85,7 @@ func New(cfg app.Config) (app.App, error) {
 				Validator: &simple.Validator{
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
 						if req.Object != nil {
-							check, err := getCheck(req.Object, checkMap)
+							check, err := getCheck(req.Object, checkRegistry)
 							if err != nil {
 								return err
 							}

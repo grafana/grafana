@@ -2,7 +2,9 @@ package resource
 
 import (
 	"net/http"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -46,8 +48,8 @@ func TestKVBlobSupportPutRejectsInvalidRequests(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			rsp, err := NewKVBlobSupport(setupBadgerKV(t)).PutResourceBlob(t.Context(), tc.req)
-			require.NoError(t, err)
-			requireErrorCode(t, tc.wantCode, rsp.Error)
+			require.Nil(t, rsp)
+			requireErrorCode(t, tc.wantCode, rpcErrorResult(t, err))
 		})
 	}
 }
@@ -75,8 +77,8 @@ func TestKVBlobSupportGetRejectsInvalidRequests(t *testing.T) {
 			}
 
 			rsp, err := store.GetResourceBlob(t.Context(), tc.key, info, true)
-			require.NoError(t, err)
-			requireErrorCode(t, tc.wantCode, rsp.Error)
+			require.Nil(t, rsp)
+			requireErrorCode(t, tc.wantCode, rpcErrorResult(t, err))
 		})
 	}
 }
@@ -99,4 +101,20 @@ func requireErrorCode(t *testing.T, want int32, got *resourcepb.ErrorResult) {
 	t.Helper()
 	require.NotNil(t, got)
 	require.Equal(t, want, got.Code)
+}
+
+// Blob GC derives age from the UID on stores without upload-time metadata.
+func TestKVBlobSupportMintsTimeOrderedUID(t *testing.T) {
+	uid := writeTestBlob(t, NewKVBlobSupport(setupBadgerKV(t)), "text/plain", "payload")
+	created, ok := uuidV7Time(uid)
+	require.True(t, ok, "uid %q must be a UUIDv7", uid)
+	require.WithinDuration(t, time.Now(), created, 5*time.Second)
+}
+
+func TestKVBlobSupportStreamMintsTimeOrderedUID(t *testing.T) {
+	rsp, err := NewKVBlobSupport(setupSqlKV(t)).(*kvBlobSupport).PutResourceBlobStream(t.Context(),
+		&resourcepb.PutBlobRequest{Resource: testBlobResourceKey, ContentType: "text/plain"}, strings.NewReader("payload"))
+	require.NoError(t, err)
+	_, ok := uuidV7Time(rsp.Uid)
+	require.True(t, ok, "uid %q must be a UUIDv7", rsp.Uid)
 }

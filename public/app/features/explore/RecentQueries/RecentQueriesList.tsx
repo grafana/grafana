@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { type DataSourceApi, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { EmptyState, ScrollContainer, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { createQueryText, mapQueriesToHeadings } from 'app/core/utils/richHistory';
 import { type SortOrder } from 'app/core/utils/richHistoryTypes';
@@ -16,7 +16,8 @@ type Props = {
   queries: RichHistoryQuery[];
   isLoading: boolean;
   sortOrder: SortOrder;
-  onSelectQuery: (query: RichHistoryQuery) => void;
+  /** When omitted, rows don't offer a Select action (see RecentQueriesLayout). */
+  onSelectQuery?: (query: RichHistoryQuery) => void;
   onStarQuery: (id: string, starred: boolean) => void;
   onSaveQuery?: (query: RichHistoryQuery) => void;
 };

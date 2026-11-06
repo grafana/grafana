@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/alerting/logging"
 	notificationHistorian "github.com/grafana/alerting/notify/historian"
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/alerting/notify/nfstatus"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/expr"
@@ -35,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -98,7 +101,7 @@ func ProvideService(
 	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
 	alertingStore *store.DBstore,
-	ruleStore *rules.RuleStore,
+	ruleStore rules.Store,
 	provenanceStore *provenance.ProvenanceStore,
 	httpClientProvider httpclient.Provider,
 	pluginContextProvider *plugincontext.Provider,
@@ -202,7 +205,7 @@ type AlertNG struct {
 	FolderResourcePermissions accesscontrol.FolderPermissionsService
 	annotationsRepo           annotations.Repository
 	store                     *store.DBstore
-	ruleStore                 *rules.RuleStore
+	ruleStore                 rules.Store
 	provenanceStore           *provenance.ProvenanceStore
 	userService               user.Service
 	orgService                org.Service
@@ -252,21 +255,16 @@ func (ng *AlertNG) init() error {
 	// using the UTF-8 parser and then fallsback to the classic parser on error.
 	// UTF-8 is permitted in label names. This should be removed when the compat package
 	// is removed from Alertmanager.
-	compat.InitFromFlags(ng.Log, featurecontrol.NoopFlags{})
+	compat.InitFromFlags(logging.NewSlogLogger(ng.Log), featurecontrol.NoopFlags{})
 
 	// Configure the remote Alertmanager.
-	// If toggles for both modes are enabled, remote primary takes precedence.
 	var opts []notifier.Option
 	var skipClustering bool
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	remoteSecondaryWithRemoteState := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondaryWithRemoteState)
-	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
+	remoteAMEnabled := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
+	if remoteAMEnabled {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
 		runtimeConfig := remoteClient.RuntimeConfig{
 			DispatchTimer: notifier.GetDispatchTimer(ng.FeatureToggles).String(),
@@ -283,28 +281,10 @@ func (ng *AlertNG) init() error {
 			RuntimeConfig:     runtimeConfig,
 		}
 
-		// This function will be used by the MOA to create new Alertmanagers.
-		var override func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory
-
-		if remotePrimary {
-			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
-			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
-			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, m, ng.tracer, ng.FeatureToggles)
-			skipClustering = true
-		} else {
-			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
-			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
-			override = remote.NewRemoteSecondaryFactory(cfg,
-				ng.KVStore,
-				ng.store,
-				ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
-				crypto,
-				m,
-				ng.tracer,
-				remoteSecondaryWithRemoteState,
-				ng.FeatureToggles,
-			)
-		}
+		ng.Log.Debug("Starting Grafana with remote Alertmanager enabled")
+		metrics.RegisterRemoteAlertmanagerInfo(ng.Metrics.Registerer)
+		override := remote.NewFactory(cfg, ng.KVStore, crypto, m, ng.tracer, ng.FeatureToggles)
+		skipClustering = true
 
 		opts = append(opts, notifier.WithAlertmanagerOverride(override))
 	}
@@ -567,12 +547,12 @@ func (ng *AlertNG) init() error {
 		ng.MultiOrgAlertmanager,
 	)
 
-	// Create limits provider based on alertmanager mode.
+	// Create limits provider depending on whether the remote Alertmanager is enabled.
 	// The provider is used for both template and silence limit validation.
 	// Both provisioning.LimitsProvider and notifier.LimitsProvider interfaces have identical
 	// signatures, so NoopLimitsProvider and RemoteLimitsProvider satisfy both via structural typing.
 	var limitsProvider provisioning.LimitsProvider
-	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
+	if remoteAMEnabled {
 		// For remote alertmanager, create a MimirClient to fetch limits
 		remoteURL, err := url.Parse(ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL)
 		if err != nil {
@@ -732,15 +712,9 @@ func (ng *AlertNG) BackfillFolderFullpaths(ctx context.Context) error {
 		default:
 		}
 
-		// Get all unique folder UIDs for this org from alert_rule table where folder_fullpath is NULL
-		var folderUIDs []string
-		err := ng.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(`
-				SELECT DISTINCT namespace_uid
-				FROM alert_rule
-				WHERE org_id = ? AND folder_fullpath IS NULL
-			`, orgID).Find(&folderUIDs)
-		})
+		// A routed legacy database provider needs the org identity during startup too.
+		orgCtx, _ := identity.WithServiceIdentity(ctx, orgID)
+		folderUIDs, err := ng.ruleStore.GetFolderUIDsWithMissingFullpath(orgCtx, orgID)
 		if err != nil {
 			ng.Log.Error("Failed to fetch folder UIDs for backfill", "org_id", orgID, "error", err)
 			continue
@@ -781,6 +755,16 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		if err := ng.BackfillFolderFullpaths(subCtx); err != nil {
 			ng.Log.Warn("Failed to backfill folder fullpaths", "error", err)
 		}
+		return nil
+	})
+
+	children.Go(func() error {
+		orgIDs, err := ng.store.FetchOrgIds(subCtx)
+		if err != nil {
+			ng.Log.Warn("Failed to backfill alert UIDs on annotations", "error", err)
+			return nil
+		}
+		annotationsimpl.BackfillAlertUIDs(subCtx, ng.SQLStore, ng.ruleStore, orgIDs, ng.Log.New("component", "annotation-alert-uid-backfill"))
 		return nil
 	})
 
@@ -969,6 +953,8 @@ func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientPro
 			Timeout:              settings.Timeout,
 			CustomHeaders:        settings.CustomHeaders,
 			DefaultDatasourceUID: settings.DefaultDatasourceUID,
+			MaxBatchSize:         settings.MaxWriteBatchSize,
+			MaxWriteConcurrency:  settings.MaxWriteConcurrency,
 		}
 
 		logger.Info("Setting up remote write using data sources",

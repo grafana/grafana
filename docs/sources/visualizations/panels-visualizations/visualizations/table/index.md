@@ -186,28 +186,28 @@ Columns with filters applied have a filter icon displayed next to the title.
 To remove the filter, click the filter icon and then click **Clear filter**.
 The icon no longer displays.
 
-### Cross-filter from table cells
+## Cross-filter from a table cell
 
-You can apply filters directly from table cells using a field override.
-These filters let you choose whether to filter values in or out.
+In tables, you can apply dashboard cross-filters directly from the visualization.
+Cross-filtering requires a **Group by** variable and a data source that supports dashboard filters, such as Prometheus or Loki.
 
-To enable cell filters, follow these steps:
+To enable cross-filtering, follow these steps:
 
-1. Select override type **Fields with name**.
-1. Select the column you want to filter in the drop-down list.
-
-   {{< admonition type="tip" >}}
-   These directions use a basic override for demonstration purposes.
-   You can whichever override type best helps you in selecting the field you want to filter.
-   {{< /admonition >}}
-
-1. Click **Add override property**.
-1. Select **Standard options > Cross-filter**.
+1. Add a field override for the x-axis field, and select **Standard options > Cross-filter**.
+1. Toggle on the **Cross-filter** switch.
 1. Save the dashboard.
 1. Mouse over the cell to display the menu icon.
-1. Click the menu and select either **Filter for value** or **Filter out value**:
+1. Click the series that has the value you want to filter to display the filter control:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v13.3.png" max-width="350px" alt="Table with filter icon displayed on a cell" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with filter icon displayed on a cell" >}}
+
+1. Click the filter for or filter out icon.
+
+   A filter to include or exclude that field is added and displayed at the top of the dashboard.
+
+1. In the filter field at the top of the dashboard, do the following as needed:
+   - Change the operator to any of the following: `=~`, `!~`, `<`, `<=`, `>`, `>=`.
+   - Delete the filter.
 
 For more information about applying filters this way, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
 

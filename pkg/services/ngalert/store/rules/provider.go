@@ -51,9 +51,6 @@ func ProvideRuleStore(
 		// database" apart from "identity provider" and keep the folder-key read on sess.
 		// legacyDatabaseProvider still supplies bare table names on demand when this is nil.
 	}
-	if err := folderService.RegisterService(&store); err != nil {
-		return nil, err
-	}
 	return &store, nil
 }
 
@@ -66,8 +63,19 @@ func (st RuleStore) legacyDatabaseProvider(ctx context.Context) (*legacysql.Lega
 	return st.LegacyDatabaseProvider(ctx)
 }
 
-// withoutAmbientSession forces a fresh session, since sqlstore reuses whatever's on ctx without
-// checking it came from the right db.DB.
+// ambientSessionFor keeps the ambient session only if it was opened on conn's database, so the query
+// joins the caller's transaction. sqlstore reuses any session on ctx, so others are dropped.
+func ambientSessionFor(ctx context.Context, conn db.DB) context.Context {
+	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok {
+		if engine := conn.GetEngine(); engine != nil && sess.DB() == engine.DB() {
+			return ctx
+		}
+	}
+	return withoutAmbientSession(ctx)
+}
+
+// withoutAmbientSession forces a fresh session. Use it for reads whose failure is ignored: on
+// Postgres a failed statement would otherwise abort the caller's transaction.
 func withoutAmbientSession(ctx context.Context) context.Context {
 	return context.WithValue(ctx, sqlstore.ContextSessionKey{}, nil)
 }

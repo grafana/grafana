@@ -35,6 +35,19 @@ import (
 // ErrNoBranches is returned when a repository has no branches (e.g., a completely empty repository).
 var ErrNoBranches = errors.New("no branches found in repository")
 
+// defaultUserAgent identifies Grafana to the Git server when no User-Agent is configured.
+// The nanogit default ("nanogit/0") is rejected by github.com.
+const defaultUserAgent = "grafana-provisioning"
+
+// UserAgent returns the User-Agent Grafana sends to Git servers by default: defaultUserAgent
+// followed by the Grafana build version, so a Git host can tell which release is calling.
+func UserAgent(version string) string {
+	if version == "" {
+		return defaultUserAgent
+	}
+	return defaultUserAgent + "/" + version
+}
+
 type RepositoryConfig struct {
 	URL              string
 	Branch           string
@@ -45,6 +58,8 @@ type RepositoryConfig struct {
 	SMIMECertificate string
 	Path             string
 	SkipGitSuffix    bool
+	// UserAgent overrides the User-Agent sent to the Git server. Empty means defaultUserAgent.
+	UserAgent string
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
@@ -67,7 +82,7 @@ func NewRepository(
 	metrics *repository.OperationMetrics,
 	clientMetrics *ClientMetrics,
 ) (GitRepository, error) {
-	opts := []options.Option{options.WithCapabilityNegotiation()}
+	opts := []options.Option{options.WithCapabilityNegotiation(), options.WithUserAgent(cmp.Or(gitConfig.UserAgent, defaultUserAgent))}
 	if gitConfig.SkipGitSuffix {
 		opts = append(opts, options.WithoutGitSuffix())
 	}
@@ -235,8 +250,8 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		r.SetBranch(branch)
 	}
 
-	// Check authorization
-	if ok, err := r.client.CanRead(ctx); err != nil || !ok {
+	// Check authorization. A missing repository is reported by the existence check below.
+	if ok, err := r.client.CanRead(ctx); (err != nil || !ok) && !errors.Is(err, client.ErrRepositoryNotFound) {
 		// Map nanogit errors to repository errors for proper HTTP status codes
 		if err != nil {
 			err = mapNanogitError(err)
@@ -466,10 +481,8 @@ func (r *gitRepository) ReadTree(ctx context.Context, ref string) (out []reposit
 	entries := make([]repository.FileTreeEntry, 0, len(tree.Entries))
 	for _, entry := range tree.Entries {
 		isBlob := entry.Type == protocol.ObjectTypeBlob
-		// Apply path prefix filtering
 		relativePath, err := safepath.RelativeTo(entry.Path, r.gitConfig.Path)
-		if err != nil {
-			// File is outside configured path, skip it
+		if err != nil || repository.IsIgnoredPath(relativePath, !isBlob) {
 			continue
 		}
 
@@ -815,11 +828,12 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 
 	changes = make([]repository.VersionedFileChange, 0)
 	for _, f := range files {
+		currentPath, pathErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
+		ignoreCurrentPath := pathErr != nil || repository.IsIgnoredPath(currentPath, f.Type == protocol.ObjectTypeTree)
+
 		switch f.Status {
 		case protocol.FileStatusAdded:
-			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			if err != nil {
-				// do nothing as it's outside of configured path
+			if ignoreCurrentPath {
 				continue
 			}
 
@@ -829,9 +843,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 				Action: repository.FileActionCreated,
 			})
 		case protocol.FileStatusModified:
-			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			if err != nil {
-				// do nothing as it's outside of configured path
+			if ignoreCurrentPath {
 				continue
 			}
 
@@ -842,10 +854,11 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 				Action:      repository.FileActionUpdated,
 			})
 		case protocol.FileStatusDeleted:
-			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			if err != nil {
-				// do nothing as it's outside of configured path
+			if ignoreCurrentPath {
 				continue
+			}
+			if f.Type == protocol.ObjectTypeTree {
+				currentPath = safepath.EnsureTrailingSlash(currentPath)
 			}
 
 			changes = append(changes, repository.VersionedFileChange{
@@ -857,9 +870,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 			})
 		case protocol.FileStatusTypeChanged:
 			// Handle type changes as modifications
-			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			if err != nil {
-				// do nothing as it's outside of configured path
+			if ignoreCurrentPath {
 				continue
 			}
 
@@ -869,14 +880,12 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 				Action: repository.FileActionUpdated,
 			})
 		case protocol.FileStatusRenamed:
-			newPath, newPathErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
+			newPath := currentPath
 			oldPath, oldPathErr := safepath.RelativeTo(f.OldPath, r.gitConfig.Path)
 
-			// A rename may span the repository boundary: one side inside the
-			// configured path and the other outside. Resolve this upfront so
-			// the switch below only deals with the four semantic cases.
-			newInsidePath := newPathErr == nil
-			oldInsidePath := oldPathErr == nil
+			// A rename can cross the configured path or move into or out of a hidden directory.
+			newInsidePath := !ignoreCurrentPath
+			oldInsidePath := oldPathErr == nil && !repository.IsIgnoredPath(oldPath, f.Type == protocol.ObjectTypeTree)
 
 			// Tree entries (directories) are emitted with trailing slashes so
 			// downstream code can identify them via safepath.IsDir.
@@ -1210,7 +1219,7 @@ func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults 
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
 				Field:  field.NewPath("secure", "token").String(),
-				Detail: "authentication failed",
+				Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized",
 			}},
 		}
 	}
@@ -1222,7 +1231,7 @@ func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults 
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
 				Field:  field.NewPath("secure", "token").String(),
-				Detail: "permission denied",
+				Detail: "permission denied: the Git server returned HTTP 403 Forbidden",
 			}},
 		}
 	}

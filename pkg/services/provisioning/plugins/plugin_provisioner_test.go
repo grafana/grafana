@@ -80,6 +80,31 @@ func TestPluginProvisioner(t *testing.T) {
 		}
 	})
 
+	t.Run("Should return error when jsonData is too large", func(t *testing.T) {
+		cfg := []*pluginsAsConfig{
+			{
+				Apps: []*appFromConfig{
+					{PluginID: "test-plugin", OrgID: 1, Enabled: true},
+					{PluginID: "test-plugin-2", OrgID: 1, Enabled: true},
+				},
+			},
+		}
+		store := &mockStore{tooLargePluginID: "test-plugin"}
+		ap := PluginProvisioner{
+			log:            log.New("test"),
+			cfgProvider:    &testConfigReader{result: cfg},
+			pluginSettings: store,
+			pluginStore: pluginstore.NewFakePluginStore(
+				pluginstore.Plugin{JSONData: plugins.JSONData{ID: "test-plugin"}},
+				pluginstore.Plugin{JSONData: plugins.JSONData{ID: "test-plugin-2"}},
+			),
+		}
+
+		err := ap.applyChanges(context.Background(), "")
+		require.ErrorIs(t, err, pluginsettings.ErrPluginSettingDataTooLarge)
+		require.Empty(t, store.updateRequests)
+	})
+
 	t.Run("Should return error trying to disable an auto-enabled plugin", func(t *testing.T) {
 		cfg := []*pluginsAsConfig{
 			{
@@ -136,6 +161,8 @@ func (tcr *testConfigReader) readConfig(_ context.Context, _ string) ([]*plugins
 
 type mockStore struct {
 	updateRequests []*pluginsettings.UpdateArgs
+	// tooLargePluginID makes UpdatePluginSetting reject that plugin as too large.
+	tooLargePluginID string
 }
 
 func (m *mockStore) GetPluginSettingByPluginID(_ context.Context, args *pluginsettings.GetByPluginIDArgs) (*pluginsettings.DTO, error) {
@@ -149,6 +176,9 @@ func (m *mockStore) GetPluginSettingByPluginID(_ context.Context, args *pluginse
 }
 
 func (m *mockStore) UpdatePluginSetting(_ context.Context, args *pluginsettings.UpdateArgs) error {
+	if args.PluginID == m.tooLargePluginID {
+		return pluginsettings.ErrPluginSettingDataTooLarge.Errorf("too large")
+	}
 	m.updateRequests = append(m.updateRequests, args)
 	return nil
 }

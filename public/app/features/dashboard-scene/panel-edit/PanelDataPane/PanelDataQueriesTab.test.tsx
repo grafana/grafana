@@ -209,42 +209,6 @@ function resolveMockUid(ref?: DataSourceRef | string | null) {
   return typeof ref === 'string' ? ref : ref?.uid;
 }
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstance: async (ref?: DataSourceRef | string | null) => {
-    const uid = resolveMockUid(ref);
-    if (uid === '-- Grafana --') {
-      return grafanaDs;
-    }
-    if (uid === 'gdev-testdata') {
-      return ds1Mock;
-    }
-    if (uid === 'gdev-prometheus') {
-      return ds2Mock;
-    }
-    if (uid === '-- Mixed --') {
-      return MixedDs;
-    }
-    if (uid === SHARED_DASHBOARD_QUERY) {
-      return ds3Mock;
-    }
-    return defaultDsMock;
-  },
-  getDataSourceInstanceSettings: async (ref?: DataSourceRef | string | null) => {
-    const uid = resolveMockUid(ref);
-    if (uid === 'gdev-testdata') {
-      return instance1SettingsMock;
-    }
-    if (uid === 'gdev-prometheus') {
-      return instance2SettingsMock;
-    }
-    if (uid === '-- Mixed --') {
-      return MixedDsSettingsMock;
-    }
-    return instance1SettingsMock;
-  },
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
@@ -302,6 +266,38 @@ jest.mock('@grafana/runtime', () => ({
     ...jest.requireActual('@grafana/runtime').config,
     defaultDatasource: 'gdev-testdata',
     expressionsEnabled: true,
+  },
+  getDataSourceInstance: async (ref?: DataSourceRef | string | null) => {
+    const uid = resolveMockUid(ref);
+    if (uid === '-- Grafana --') {
+      return grafanaDs;
+    }
+    if (uid === 'gdev-testdata') {
+      return ds1Mock;
+    }
+    if (uid === 'gdev-prometheus') {
+      return ds2Mock;
+    }
+    if (uid === '-- Mixed --') {
+      return MixedDs;
+    }
+    if (uid === SHARED_DASHBOARD_QUERY) {
+      return ds3Mock;
+    }
+    return defaultDsMock;
+  },
+  getDataSourceInstanceSettings: async (ref?: DataSourceRef | string | null) => {
+    const uid = resolveMockUid(ref);
+    if (uid === 'gdev-testdata') {
+      return instance1SettingsMock;
+    }
+    if (uid === 'gdev-prometheus') {
+      return instance2SettingsMock;
+    }
+    if (uid === '-- Mixed --') {
+      return MixedDsSettingsMock;
+    }
+    return instance1SettingsMock;
   },
 }));
 

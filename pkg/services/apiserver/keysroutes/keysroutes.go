@@ -6,12 +6,12 @@ import (
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )

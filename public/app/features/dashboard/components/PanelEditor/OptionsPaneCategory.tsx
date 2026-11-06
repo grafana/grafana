@@ -1,5 +1,5 @@
 import { css, cx, keyframes } from '@emotion/css';
-import { type ReactNode, useCallback, useEffect, useState, useRef } from 'react';
+import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from 'react';
 import * as React from 'react';
 import { useLocalStorage } from 'react-use';
 
@@ -56,6 +56,9 @@ export const OptionsPaneCategory = React.memo(
     compactIcons = false,
     disabledText,
   }: OptionsPaneCategoryProps) => {
+    const generatedId = useId();
+    const headingId = `${generatedId}-heading`;
+    const contentId = `${generatedId}-content`;
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
       isExpanded: isOpenDefault,
     });
@@ -193,7 +196,7 @@ export const OptionsPaneCategory = React.memo(
           ref={ref}
         >
           <div className={headerStyles}>
-            <h3 id={`button-${id}`} className={cx(styles.title, styles.titleDisabled)}>
+            <h3 id={headingId} className={cx(styles.title, styles.titleDisabled)}>
               {renderTitle(isExpanded)}
             </h3>
             <Tooltip interactive={!(typeof disabledText === 'string')} content={disabledText}>
@@ -216,14 +219,14 @@ export const OptionsPaneCategory = React.memo(
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className={headerStyles} onClick={onToggle}>
           {headerActionPlacement === 'left' && toggleButton}
-          <h3 id={`button-${id}`} className={cx(styles.title, isExpanded && styles.titleExpanded)}>
+          <h3 id={headingId} className={cx(styles.title, isExpanded && styles.titleExpanded)}>
             {renderTitle(isExpanded)}
           </h3>
           {headerActions && <div className={styles.headerActions}>{headerActions}</div>}
           {headerActionPlacement === 'right' && toggleButton}
         </div>
         {isExpanded && (
-          <div className={bodyStyles} id={id} aria-labelledby={`button-${id}`}>
+          <div className={bodyStyles} id={contentId} role="group" aria-labelledby={headingId}>
             {children}
           </div>
         )}

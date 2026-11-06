@@ -51,6 +51,7 @@ export type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'nam
   type?: 'alerting' | 'recording';
   ruleMatchers?: string[];
   plugins?: 'hide' | 'only';
+  metadataOnly?: boolean;
 };
 
 /** A label set on an alert rule. */
@@ -129,6 +130,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
         dashboardUid,
         ruleMatchers,
         plugins,
+        metadataOnly,
       }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
@@ -150,6 +152,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
           dashboard_uid: dashboardUid,
           rule_matcher: ruleMatchers,
           plugins: plugins,
+          metadata_only: metadataOnly,
         },
       }),
       providesTags: (_result, _error, { folderUid, groupName, ruleName }) => {

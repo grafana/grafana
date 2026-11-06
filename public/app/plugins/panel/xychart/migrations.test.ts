@@ -74,6 +74,35 @@ describe('XYChart migrations', () => {
       expect(out.series[0].x?.matcher?.options).toBe('a');
     });
 
+    it('does not migrate current options when plugin version is empty', () => {
+      const inputOptions = {
+        mapping: SeriesMapping.Auto,
+        series: [{ x: { matcher: { id: FieldMatcherID.byName, options: 'a' } } }],
+      } as Options;
+      const panel = legacyPanel({ options: inputOptions as unknown as LegacyXYChartOptions });
+
+      expect(xyChartMigrationHandler(panel)).toBe(inputOptions);
+    });
+
+    it('does not migrate empty options when plugin version is empty', () => {
+      const inputOptions = {} as Options;
+      const panel = legacyPanel({ options: inputOptions as unknown as LegacyXYChartOptions });
+
+      expect(xyChartMigrationHandler(panel)).toBe(inputOptions);
+    });
+
+    it.each([
+      ['dims', partialLegacy({ dims: { frame: 0 }, series: [] })],
+      ['seriesMapping', partialLegacy({ seriesMapping: LegacySeriesMapping.Auto, series: [] } as never)],
+      ['series with field names', partialLegacy({ series: [{ x: 'a', y: 'b' }] } as never)],
+    ])('migrates legacy options with %s when plugin version is empty', (_name, opts) => {
+      const out = xyChartMigrationHandler(legacyPanel({ options: opts }));
+
+      expect(out.mapping).toBeDefined();
+      expect(out).not.toHaveProperty('dims');
+      expect(out).not.toHaveProperty('seriesMapping');
+    });
+
     it('returns options unchanged when version parses to NaN', () => {
       const input = { mapping: SeriesMapping.Auto, series: [] } as unknown as Options;
       const panel = { pluginVersion: 'x.y.z', options: input } as PanelModel;

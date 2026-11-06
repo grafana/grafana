@@ -1,10 +1,20 @@
 import { type DataSourceApi } from '@grafana/data';
 
+import { type RuntimeDataSource } from '../RuntimeDataSource';
+
 import { PLUGIN_CACHE_UID_MISMATCH_WARNING } from './constants';
 import { logDataSourceWarning } from './logging';
 
 const cache = new Map<string, DataSourceApi>();
-const runtimeCache = new Map<string, DataSourceApi>();
+const runtimeCache = new Map<string, RuntimeDataSource>();
+// Increases on every clear. A load that started before a clear was built from the old settings,
+// so it must not write its instance into the cache or be joined by a later caller.
+let generation = 0;
+
+/** The current cache generation. Compare it before and after an async load. */
+export function getPluginCacheGeneration(): number {
+  return generation;
+}
 
 export function getCachedPlugin(uid: string): DataSourceApi | undefined {
   return cache.get(uid);
@@ -22,17 +32,22 @@ export function setCachedPlugin(uid: string, instance: DataSourceApi): void {
 }
 
 /** Write a runtime-registered plugin instance. Runtime entries survive {@link clearPluginCache}. */
-export function setRuntimePlugin(uid: string, instance: DataSourceApi): void {
+export function setRuntimePlugin(uid: string, instance: RuntimeDataSource): void {
   runtimeCache.set(uid, instance);
   cache.set(uid, instance);
 }
 
 /**
- * Clear all non-runtime plugin instances. Runtime entries are preserved,
- * matching the behaviour of the legacy `DatasourceSrv.init()` which reset
- * `this.datasources` then re-added runtime sources.
+ * Sync because the legacy `DataSourceSrv` reads runtime data sources from here. Remove with `DataSourceSrv`.
+ * @internal
  */
+export function getRuntimePlugin(uid: string): RuntimeDataSource | undefined {
+  return runtimeCache.get(uid);
+}
+
+/** Clear all non-runtime plugin instances. Runtime entries are preserved. */
 export function clearPluginCache(): void {
+  generation++;
   for (const uid of cache.keys()) {
     if (!runtimeCache.has(uid)) {
       cache.delete(uid);
@@ -51,4 +66,6 @@ export function _resetForTests(): void {
   }
   cache.clear();
   runtimeCache.clear();
+  // Increase rather than reset, so a load left over from an earlier test never matches.
+  generation++;
 }

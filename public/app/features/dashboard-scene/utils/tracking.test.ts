@@ -6,7 +6,7 @@ import {
   defaultVizConfigKind,
   type GridLayoutItemKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 
 import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
 import nestedDashboard from '../serialization/testfiles/nested_dashboard.json';
@@ -255,15 +255,15 @@ describe('dashboard tracking', () => {
   });
 
   describe('global variables interactions', () => {
-    it('reports dashboards_global_variables_loaded', () => {
-      DashboardInteractions.globalVariablesLoaded({
+    it('reports dashboards_predefined_variables_loaded', () => {
+      DashboardInteractions.predefinedVariablesLoaded({
         global_count: 2,
         folder_count: 1,
         total_count: 3,
         mode: 'all',
       });
 
-      expect(reportInteraction).toHaveBeenCalledWith('dashboards_global_variables_loaded', {
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_predefined_variables_loaded', {
         global_count: 2,
         folder_count: 1,
         total_count: 3,
@@ -289,13 +289,7 @@ describe('dashboard tracking', () => {
   describe('text panel usage tracking', () => {
     const mermaidMarkdown = '# Diagram\n\n```mermaid\ngraph TD;\nA-->B;\n```';
 
-    beforeEach(() => {
-      setTestFlags({ 'grafana.newTextPanel': true, 'text.newFeatures': true, ...defaultFlags });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
+    testWithFlags({ 'grafana.newTextPanel': true, 'text.newFeatures': true, ...defaultFlags });
 
     it('counts the features used by every text panel on the dashboard', () => {
       const scene = buildSceneWithTextPanels([

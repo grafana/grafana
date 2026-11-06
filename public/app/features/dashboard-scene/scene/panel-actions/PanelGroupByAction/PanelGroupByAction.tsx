@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { fuzzySearch, type MetricFindValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import {
   type AdHocFiltersVariable,
   GroupByVariable,

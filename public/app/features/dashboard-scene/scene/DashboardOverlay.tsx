@@ -7,13 +7,25 @@ import { Drawer, useStyles2 } from '@grafana/ui';
 import { DashboardLoadingBar } from './DashboardLoadingBar';
 import { type DashboardScene } from './DashboardScene';
 
-export function DashboardOverlay({ dashboard }: { dashboard: DashboardScene }) {
-  const { overlay, isOverlayLoading } = dashboard.useState();
+export function DashboardOverlay({
+  dashboard,
+  onDismissLoading,
+}: {
+  dashboard: DashboardScene;
+  onDismissLoading?: () => void;
+}) {
+  const { overlay, loadingView } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
-  if (isOverlayLoading) {
+  if (loadingView === 'overlay') {
     return (
-      <Drawer title={t('dashboard.loading.drawer-title', 'Loading…')} onClose={() => dashboard.closeModal()}>
+      <Drawer
+        title={t('dashboard.loading.drawer-title', 'Loading…')}
+        onClose={() => {
+          dashboard.closeModal();
+          onDismissLoading?.();
+        }}
+      >
         <div className={styles.loading}>
           <DashboardLoadingBar label={t('dashboard.loading.drawer', 'Loading drawer')} />
         </div>

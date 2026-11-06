@@ -11,6 +11,8 @@ import { type UserPermission } from 'app/types/accessControl';
 export async function loadUserPermissions(): Promise<UserPermission | null> {
   try {
     const { permissions } = await getBackendSrv().get<UserPermissions>(
+      // TODO: After the backend has been deployed we can shift the frontend to target the cluster scoped url
+      // `/apis/${API_GROUP}/${API_VERSION}/whoami/permissions`,
       `${getAPIBaseURL(API_GROUP, API_VERSION)}/users/~/permissions`,
       // Recompute rather than serving the cached AuthZ snapshot: callers use this
       // to observe permissions they were just granted. Older servers without the

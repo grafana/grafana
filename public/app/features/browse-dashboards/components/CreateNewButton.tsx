@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
-import { Button, Drawer, Dropdown, Icon, Menu, useTheme2 } from '@grafana/ui';
+import { Button, Drawer, Dropdown, Menu, useTheme2 } from '@grafana/ui';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { DASHBOARD_GROUP_COLOR_NAME, ITEM_ICONS } from 'app/core/components/AppChrome/QuickAdd/utils';
@@ -16,6 +16,7 @@ import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import {
@@ -52,6 +53,7 @@ export default function CreateNewButton({
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: renderPreBuiltDashboardAction } = useTemplateDashboardsAvailability();
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   const theme = useTheme2();
 
@@ -96,7 +98,7 @@ export default function CreateNewButton({
 
   const newMenu = (
     <Menu>
-      {canCreateDashboard && (
+      {canCreateDashboard && !isMobileEditDeprecated && (
         <Menu.Group label={t('browse-dashboards.create-new.dashboard-group', 'Dashboard')}>
           <Menu.Item
             label={getNewDashboardPhrase()}
@@ -153,7 +155,7 @@ export default function CreateNewButton({
       )}
       {canCreateFolder && (
         <>
-          {canCreateDashboard && <Menu.Divider />}
+          {canCreateDashboard && !isMobileEditDeprecated && <Menu.Divider />}
           <Menu.Item
             onClick={() => {
               reportInteraction('grafana_browse_dashboards_new_folder_drawer_opened', {
@@ -176,11 +178,12 @@ export default function CreateNewButton({
         <Button
           disabled={isReadOnlyRepo}
           tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}
-          variant="secondary"
+          variant="primary"
+          icon={isOpen ? 'angle-up' : 'angle-down'}
+          iconPlacement="right"
           data-testid={selectors.components.CreateNewButton.newButton}
         >
           {getNewPhrase()}
-          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>
       </Dropdown>
       {showNewFolderDrawer && (

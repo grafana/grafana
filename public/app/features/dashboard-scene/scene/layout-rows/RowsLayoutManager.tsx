@@ -13,6 +13,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { isDashboardReviewing, isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
@@ -183,9 +184,7 @@ export class RowsLayoutManager
       perform: () => {
         this.setState({ rows: [...this.state.rows, newRow] });
         const dashboard = getDashboardSceneFor(this);
-        if (dashboard.state.isEditing) {
-          newRow.getLayout().editModeChanged?.(true);
-        }
+        newRow.getLayout().editModeChanged?.(isFullDashboardEditing(dashboard.state));
       },
       undo: () => this.setState({ rows: this.state.rows.filter((r) => r !== newRow) }),
     });
@@ -658,6 +657,12 @@ export class RowsLayoutManager
       .filter((row) => row.getCollapsedState() !== collapse);
 
     if (rowsToToggle.length === 0) {
+      return;
+    }
+
+    // Edit actions are refused outside Editing mode, but collapsing rows is a viewing action
+    if (isDashboardReviewing(getDashboardSceneFor(this).state)) {
+      rowsToToggle.forEach((row) => row.setCollapsedState(collapse));
       return;
     }
 

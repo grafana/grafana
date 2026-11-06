@@ -24,7 +24,7 @@ import {
   urlUtil,
   generateUUID,
 } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { type QueryOptions, type QueryTransaction } from 'app/types/explore';

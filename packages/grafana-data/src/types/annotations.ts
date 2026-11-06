@@ -43,6 +43,7 @@ export interface AnnotationEvent {
   tags?: string[];
   color?: string;
   alertId?: number;
+  alertUID?: string;
   newState?: string;
 
   // Currently used to merge annotations from alerts and dashboard

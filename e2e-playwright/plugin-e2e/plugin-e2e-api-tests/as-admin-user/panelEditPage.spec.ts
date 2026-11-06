@@ -162,11 +162,17 @@ test.describe(
         const showBorder = axisOptions.getSwitch('Show border');
 
         await expect(showBorder).toBeChecked({ checked: false });
-        await showBorder.check();
-        await expect(showBorder).toBeChecked();
+        // Switch.check()/uncheck() force-click stale coordinates if the options pane is still
+        // laying out, so retry until the click lands. Both are no-ops once in the target state.
+        await expect(async () => {
+          await showBorder.check();
+          await expect(showBorder).toBeChecked({ timeout: 1000 });
+        }).toPass();
 
-        await showBorder.uncheck();
-        await expect(showBorder).toBeChecked({ checked: false });
+        await expect(async () => {
+          await showBorder.uncheck();
+          await expect(showBorder).toBeChecked({ checked: false, timeout: 1000 });
+        }).toPass();
       });
 
       test('checking switch', async ({ panelEditPage }) => {
@@ -175,8 +181,10 @@ test.describe(
         const showBorder = axisOptions.getSwitch('Show border');
 
         await expect(showBorder).toBeChecked({ checked: false });
-        await showBorder.check();
-        await expect(showBorder).toBeChecked();
+        await expect(async () => {
+          await showBorder.check();
+          await expect(showBorder).toBeChecked({ timeout: 1000 });
+        }).toPass();
       });
 
       test('re-selecting value in radio button group', async ({ panelEditPage }) => {

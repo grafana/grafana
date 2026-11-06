@@ -226,7 +226,7 @@ function useColumns(
           }
 
           const provenance = rulerRule.grafana_alert.provenance;
-          return provenance ? <ProvisioningBadge /> : null;
+          return provenance ? <ProvisioningBadge provenance={provenance} /> : null;
         },
         size: '100px',
       },

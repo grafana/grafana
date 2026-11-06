@@ -164,24 +164,22 @@ func TestShouldUseSearchForTrash(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		mutate      func(*resourcepb.ListRequest)
-		disable     bool
-		allowlisted bool
-		want        bool
+		mutate  func(*resourcepb.ListRequest)
+		disable bool
+		want    bool
 	}{
-		"allowlisted trash": {allowlisted: true, want: true},
-		"no search":         {disable: true, allowlisted: true},
-		"store source":      {allowlisted: true, mutate: func(req *resourcepb.ListRequest) { req.Source = resourcepb.ListRequest_STORE }},
-		"cross namespace":   {allowlisted: true, mutate: func(req *resourcepb.ListRequest) { req.Options.Key.Namespace = "" }},
-		"named resource":    {allowlisted: true, mutate: func(req *resourcepb.ListRequest) { req.Options.Key.Name = "a" }},
-		"not allowlisted":   {},
-		"resource version":  {allowlisted: true, mutate: func(req *resourcepb.ListRequest) { req.ResourceVersion = 42 }},
-		"exact version":     {allowlisted: true, mutate: func(req *resourcepb.ListRequest) { req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_Exact }},
-		"not older than": {allowlisted: true, want: true, mutate: func(req *resourcepb.ListRequest) {
+		"approved kind":    {want: true},
+		"no search":        {disable: true},
+		"store source":     {mutate: func(req *resourcepb.ListRequest) { req.Source = resourcepb.ListRequest_STORE }},
+		"cross namespace":  {mutate: func(req *resourcepb.ListRequest) { req.Options.Key.Namespace = "" }},
+		"named resource":   {mutate: func(req *resourcepb.ListRequest) { req.Options.Key.Name = "a" }},
+		"resource version": {mutate: func(req *resourcepb.ListRequest) { req.ResourceVersion = 42 }},
+		"exact version":    {mutate: func(req *resourcepb.ListRequest) { req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_Exact }},
+		"not older than": {want: true, mutate: func(req *resourcepb.ListRequest) {
 			req.ResourceVersion = 42
 			req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
 		}},
-		"kind not approved for trash": {allowlisted: true, mutate: func(req *resourcepb.ListRequest) {
+		"kind not approved for trash": {mutate: func(req *resourcepb.ListRequest) {
 			req.Options.Key.Group = "runtime.test"
 			req.Options.Key.Resource = "runtimekinds"
 		}},
@@ -198,11 +196,6 @@ func TestShouldUseSearchForTrash(t *testing.T) {
 			if !tc.disable {
 				s.searchClient = &stubSearchClient{}
 			}
-			allowed := map[string]bool{}
-			if tc.allowlisted {
-				allowed[req.Options.Key.Group+"/"+req.Options.Key.Resource] = true
-			}
-			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
 			require.Equal(t, tc.want, s.shouldUseSearchForTrash(req))
 		})
 	}
@@ -282,10 +275,10 @@ func TestListTrashWithSearchDoesNotFallBackFromSearchContinueToken(t *testing.T)
 	req := trashListRequest()
 	req.NextPageToken = ContinueToken{SearchAfter: []string{"42"}, ResourceVersion: 100}.String()
 
-	resp, err := s.List(ctx, req)
+	_, err := s.List(ctx, req)
 
-	require.NoError(t, err)
-	require.Equal(t, int32(http.StatusServiceUnavailable), resp.Error.GetCode())
+	respErr := rpcErrorResult(t, err)
+	require.Equal(t, int32(http.StatusServiceUnavailable), respErr.GetCode())
 	require.Zero(t, backend.listHistoryCalls)
 }
 
@@ -396,9 +389,6 @@ func newSearchBackedTrashTestServer(searchResp *resourcepb.ResourceSearchRespons
 	searchClient := &stubSearchClient{resp: searchResp}
 	s := createTestServer(searchClient, 1024)
 	s.backend = backend
-	s.searchBackedListResources = SearchBackedListConfig{AllowedResources: map[string]bool{
-		trashSearchTestGroup + "/" + trashSearchTestResource: true,
-	}}
 	return s, searchClient
 }
 
@@ -532,9 +522,10 @@ func TestTrashListServicePermissionErrors(t *testing.T) {
 						return
 					}
 					if path == "store" {
-						require.NoError(t, err)
-						require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
-						require.Contains(t, resp.Error.GetMessage(), "dashboard.grafana.app/dashboards:set_permissions")
+						require.Nil(t, resp)
+						respErr := rpcErrorResult(t, err)
+						require.Equal(t, int32(http.StatusInternalServerError), respErr.GetCode())
+						require.Contains(t, respErr.GetMessage(), "dashboard.grafana.app/dashboards:set_permissions")
 					} else {
 						require.ErrorIs(t, err, ErrServiceCannotDelegate)
 						require.Nil(t, resp)

@@ -116,6 +116,9 @@ type IdentityAccessManagementAPIBuilder struct {
 	teamGetter rest.Getter
 	userGetter rest.Getter
 
+	// authInfoStorage is set when the AuthInfo API is registered; the user delete cascades to it.
+	authInfoStorage rest.Storage
+
 	cfgProvider    configprovider.ConfigProvider
 	settingService settingsvc.Service
 	// ssoSettingsClient backs the SSOSetting kind's MTSettingsStore (reads +

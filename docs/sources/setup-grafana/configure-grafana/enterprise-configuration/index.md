@@ -159,7 +159,7 @@ Enable or disable the reporting feature. When disabled, no reports are generated
 
 ### rendering_timeout
 
-Timeout for the following reporting rendering requests: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files. Default is 10 seconds (`10s`).
+Timeout for the following reporting rendering requests: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files. Default is 30 seconds (`30s`).
 
 ### concurrent_render_limit
 
@@ -552,6 +552,12 @@ Disabling the maximum is not recommended in production environments.
 {{< /admonition >}}
 
 ## [caching.redis]
+
+Use these settings to configure Redis as the query caching backend.
+
+{{< admonition type="note" >}}
+Redis Sentinel isn't supported for query caching. Use a standalone Redis instance with `url`, or a Redis Cluster with `cluster`.
+{{< /admonition >}}
 
 ### url
 

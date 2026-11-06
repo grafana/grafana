@@ -244,9 +244,9 @@
         "border": "palette.violet800"
       },
       "darkgrey": {
-        "text": "palette.ink300",
-        "background": "palette.ink950",
-        "border": "palette.ink800"
+        "text": "palette.ink150",
+        "background": "palette.ink750",
+        "border": "palette.ink550"
       }
     }
   },
@@ -265,6 +265,6 @@
     "h5": { "fontWeight": 400, "fontSize": 14, "lineHeight": 22, "letterSpacing": 0 },
     "h6": { "fontWeight": 500, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 },
     "body": { "fontWeight": 400, "fontSize": 14, "lineHeight": 22, "letterSpacing": 0 },
-    "bodySmall": { "fontWeight": 500, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 }
+    "bodySmall": { "fontWeight": 400, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 }
   }
 }

@@ -69,7 +69,7 @@ type DataSourceAPIBuilder struct {
 	schemas                map[string]*pluginschema.PluginSchema
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
-	proxyDeps              *ProxyDependencies
+	proxyDependencies      ProxyDependenciesProvider
 	dataSourceCRUDMetric   *prometheus.HistogramVec
 
 	// dataSourceRequestValidator gates outbound datasource requests (proxy and
@@ -91,7 +91,7 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
-	proxyDeps *ProxyDependencies,
+	proxyDependencies ProxyDependenciesProvider,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
@@ -152,7 +152,7 @@ func RegisterAPIService(
 			decrypter,
 			flags,
 			dataSourceRequestValidator,
-			proxyDeps,
+			proxyDependencies,
 		)
 		if err != nil {
 			return nil, err
@@ -191,7 +191,7 @@ func NewDataSourceAPIBuilder(
 	decrypter decrypt.DecryptService, // when not reading legacy
 	cfg DataSourceAPIBuilderConfig,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
-	proxyDeps *ProxyDependencies,
+	proxyDependencies ProxyDependenciesProvider,
 ) (*DataSourceAPIBuilder, error) {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
 
@@ -205,7 +205,7 @@ func NewDataSourceAPIBuilder(
 		decrypter:                  decrypter,
 		cfg:                        cfg,
 		dataSourceRequestValidator: dataSourceRequestValidator,
-		proxyDeps:                  proxyDeps,
+		proxyDependencies:          proxyDependencies,
 	}
 	return builder, nil
 }
@@ -328,7 +328,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// Frontend proxy
 	if b.cfg.EnableProxyEndpoint && len(b.pluginJSON.Routes) > 0 {
-		storage[ds.StoragePath("proxy")] = &subProxyREST{builder: b}
+		storage[ds.StoragePath("proxy")] = &subProxyREST{builder: b, transports: newProxyTransportCache()}
 	}
 
 	// Register query types (convert to real k8s type first)

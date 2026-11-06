@@ -10,9 +10,8 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { type PanelPluginMetas } from '@grafana/runtime/internal';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import { formatDate } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';

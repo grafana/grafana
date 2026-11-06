@@ -13,6 +13,9 @@ import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import type { DashboardScene } from '../../scene/DashboardScene';
 import type { MutationResult } from '../types';
 
+/** The `actor` recorded on undo entries the mutation API creates, and the `trigger` of its undo/redo interactions. */
+export const MUTATION_API_ACTOR = 'mutation-api';
+
 /** The scene a command operates on. Defaults to DashboardScene so a dashboard command names no type parameter. */
 export interface MutationContext<TScene = DashboardScene> {
   scene: TScene;
@@ -113,13 +116,11 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): Per
 }
 
 /**
- * Enter edit mode if the dashboard is not already editing.
+ * Enter edit mode or apply the Assistant presentation to the current edit session.
  * Call this at the top of any command handler that modifies the dashboard.
  */
 export function enterEditModeIfNeeded(scene: DashboardScene): void {
-  if (!scene.state.isEditing) {
-    scene.onEnterEditMode('assistant');
-  }
+  scene.onEnterEditMode('assistant');
   // New-layout mutations only run while the sidebar is active, and it may not be mounted here.
   // Independent of edit mode: addElement-based undo/redo tracking needs this regardless.
   scene.activateSidebar();

@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import * as React from 'react';
 import { type ChangeEvent, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import Skeleton from 'react-loading-skeleton';
 
 import {
   CoreApp,
@@ -18,7 +19,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { type GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Field, type GraphThresholdsStyleMode, Icon, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
@@ -34,6 +35,8 @@ import { VizWrapper } from './VizWrapper';
 
 const DEFAULT_MAX_DATA_POINTS = 43200;
 const DEFAULT_MIN_INTERVAL = '1s';
+// Loads faster than this show nothing, so a cached data source does not flash a loading indicator.
+export const QUERY_ROW_LOADING_INDICATOR_DELAY_MS = 300;
 
 export interface AlertQueryOptions {
   maxDataPoints?: number | undefined;
@@ -58,6 +61,8 @@ interface Props {
   condition: string | null;
   onSetCondition: (refId: string) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
+  onDataSourceLoaded: () => void;
+  showLoadingIndicator: boolean;
 }
 
 export const QueryWrapper = ({
@@ -78,6 +83,8 @@ export const QueryWrapper = ({
   condition,
   onSetCondition,
   onChangeQueryOptions,
+  onDataSourceLoaded,
+  showLoadingIndicator,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [dsInstance, setDsInstance] = useState<DataSourceApi>();
@@ -186,12 +193,17 @@ export const QueryWrapper = ({
   return (
     <Stack direction="column" gap={0.5}>
       <div className={styles.wrapper}>
+        {/* QueryEditorRow renders nothing until the plugin code loads, so the loading indicator holds its place */}
+        {showLoadingIndicator && <QueryRowSkeleton />}
         <QueryEditorRow<AlertDataQuery>
           hideRefId={!isAdvancedMode}
           hideActionButtons={!isAdvancedMode}
           collapsable={false}
           dataSource={dsSettings}
-          onDataSourceLoaded={setDsInstance}
+          onDataSourceLoaded={(instance) => {
+            setDsInstance(instance);
+            onDataSourceLoaded();
+          }}
           onChangeDataSource={(settings) => onChangeDataSource(settings, index)}
           id={query.refId}
           index={index}
@@ -221,15 +233,25 @@ export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => 
   return <div className={styles.wrapper}>{children}</div>;
 };
 
+export function QueryRowSkeleton() {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.skeleton} data-testid="alert-query-row-skeleton">
+      <Skeleton width={200} height={24} />
+      <Skeleton height={64} />
+    </div>
+  );
+}
+
 export function MaxDataPointsOption({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
-    <InlineField
-      labelWidth={24}
+    <Field
       label={t('alerting.max-data-points-option.label-max-data-points', 'Max data points')}
-      tooltip={t(
+      description={t(
         'alerting.max-data-points-option.tooltip-max-data-points',
-        'The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer.'
+        'Per series, used directly by some data sources and to calculate auto interval'
       )}
+      noMargin
     >
       <Input
         type="number"
@@ -239,7 +261,7 @@ export function MaxDataPointsOption({ value, onChange }: { value: string; onChan
         onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
         value={value}
       />
-    </InlineField>
+    </Field>
   );
 }
 
@@ -255,17 +277,16 @@ export function MinIntervalOption({
   error?: string;
 }) {
   return (
-    <InlineField
+    <Field
       label={t('alerting.min-interval-option.label-interval', 'Interval')}
-      labelWidth={24}
-      tooltip={
+      description={
         <Trans i18nKey="alerting.min-interval-option.tooltip-interval">
-          Interval sent to the data source. Recommended to be set to write frequency, for example <code>1m</code> if
-          your data is written every minute.
+          Recommended to be set to write frequency, for example <code>1m</code> if your data is written every minute.
         </Trans>
       }
       invalid={invalid}
       error={error}
+      noMargin
     >
       <Input
         type="text"
@@ -275,7 +296,7 @@ export function MinIntervalOption({
         onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
         value={value}
       />
-    </InlineField>
+    </Field>
   );
 }
 
@@ -288,6 +309,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     button: {
       overflow: 'visible',
     },
+  }),
+  skeleton: css({
+    padding: theme.spacing(1),
   }),
   dsTooltip: css({
     display: 'flex',

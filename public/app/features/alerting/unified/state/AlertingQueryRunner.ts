@@ -15,8 +15,7 @@ import {
   withLoadingIndicator,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataSourceWithBackend, type FetchResponse, toDataQueryError } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { DataSourceWithBackend, type FetchResponse, getDataSourceInstance, toDataQueryError } from '@grafana/runtime';
 import { type BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/processing/canceler';

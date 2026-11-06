@@ -1,12 +1,10 @@
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 import { expectRowVisibility, expectTabVisibility, undockMegaMenu } from './helpers';
 import { type Sidebar } from './page-objects';
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
   },
 });
 

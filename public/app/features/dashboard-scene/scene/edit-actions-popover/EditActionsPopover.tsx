@@ -15,6 +15,7 @@ import React, { cloneElement, createContext, useContext, useMemo, useState } fro
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ElementSelectionContext, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 
 export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
@@ -97,10 +98,19 @@ export function EditActionsPopover({
 
   return (
     <>
-      {cloneElement(children, getReferenceProps({ ref: mergedRef }))}
+      {cloneElement(children, {
+        ...getReferenceProps({ ref: mergedRef }),
+        'data-edit-actions-id': context.floatingId,
+      })}
       {isEnabled && isOpen && content && (
         <Portal root={portalRoot?.()} zIndex={zIndex ?? theme.zIndex.portal}>
-          <div ref={refs.setFloating} style={floatingStyles} className={styles.popover} {...getFloatingProps()}>
+          <div
+            ref={refs.setFloating}
+            style={floatingStyles}
+            className={styles.popover}
+            data-testid={selectors.components.EditActionsPopover.container}
+            {...getFloatingProps({ id: context.floatingId })}
+          >
             <EditActionsPopoverContext.Provider value={popoverContextValue}>
               {/* Stops pointerdown from all actions reaching ancestors, e.g. to prevent an element selection.
               It cannot live on the icon buttons because their wrapping Tooltip overrides their pointerdown handlers */}

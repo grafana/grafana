@@ -22,8 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
-
-	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
@@ -99,28 +97,11 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	ctx := c.Req.Context()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
-	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
 	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
 
-	// With the client-built nav tree the frontend only needs the items it cannot
-	// know about (enterprise index-data hooks add theirs to the empty root below,
-	// and the client grafts them in) — skip building the full tree. The
-	// conditions must mirror isClientNavTreeEnabled (buildStaticNavTree.ts):
-	// the frontend falls back to the bootdata tree unless both flags are
-	// enabled, so skipping on a different set here would leave it with an
-	// empty tree.
-	multiTenantNavTree, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaMultiTenantNavTree, false, openfeature.TransactionContext(ctx))
-	useMTPlugins, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagPluginsUseMTPlugins, false, openfeature.TransactionContext(ctx))
-	clientNavTree := multiTenantNavTree && useMTPlugins
-	// Children must be non-nil so bootdata serves an empty array rather than
-	// null: frontends that read bootData.navTree directly crash on null.
-	navTree := &navtree.NavTreeRoot{Children: []*navtree.NavLink{}}
-	if !clientNavTree {
-		var err error
-		navTree, err = hs.navTreeService.GetNavTree(c, prefs)
-		if err != nil {
-			return nil, err
-		}
+	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
+	if err != nil {
+		return nil, err
 	}
 
 	weekStart := ""
@@ -129,7 +110,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	theme := hs.getThemeForIndexData(prefs.Theme, urlPrefs.Theme)
-	assets, err := webassets.GetWebAssets(ctx, webassets.ResolveBuildDir(ctx), hs.Cfg, hs.License)
+	assets, err := webassets.GetWebAssets(ctx, webassets.BuildDir, hs.Cfg, hs.License)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +174,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		RenderBindingSupported:              renderBindingSupported,
 		UseLuxon:                            useLuxon,
 		AssetSriChecksEnabled:               hs.Cfg.AssetSriChecksEnabled,
-		OFREPRootUrlEnabled:                 ofrepRootUrlEnabled,
 		LegacyFeatureToggleMode:             legacyFeatureToggleMode,
 		ESModuleAssetsEnabled:               assets.ESModule,
 	}
@@ -250,7 +230,9 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 }
 
 func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) int {
-	if userID == 0 {
+	// Single-org navigation does not need legacy user or membership rows,
+	// which may be absent when users are stored in unified storage.
+	if userID == 0 || hs.Cfg.RBAC.SingleOrganization {
 		return 1
 	}
 

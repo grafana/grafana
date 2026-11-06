@@ -2,8 +2,8 @@ import memoize from 'micro-memoize';
 
 import { formattedValueToString, getValueFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { LOGS_DRILLDOWN_APP_ID } from 'app/core/appPluginIds';
 
-import { LOGS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { drilldownActiveCta } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { CLOUD_UTILITY_LOKI_DATASOURCE_UIDS, lokiHasRecentLabels, probeFound } from './solutionDataProbes';

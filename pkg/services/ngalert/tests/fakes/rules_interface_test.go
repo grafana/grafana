@@ -20,6 +20,7 @@ var (
 	_ rulestore.RuleByIDReader          = (*RuleStore)(nil)
 	_ rulestore.RuleGroupReader         = (*RuleStore)(nil)
 	_ rulestore.RuleCounter             = (*RuleStore)(nil)
+	_ rulestore.RuleGroupCounter        = (*RuleStore)(nil)
 	_ rulestore.RuleWriter              = (*RuleStore)(nil)
 	_ rulestore.RuleAdminWriter         = (*RuleStore)(nil)
 	_ rulestore.RuleVersionReader       = (*RuleStore)(nil)

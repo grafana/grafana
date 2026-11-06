@@ -13,6 +13,7 @@ import {
   type GrafanaTheme2,
   type LicenseInfo,
   type MapLayerOptions,
+  type NavigationConfig,
   type OAuthSettings,
   type PanelPluginMeta,
   type PreinstalledPlugin as PreinstalledPluginGrafanaData,
@@ -212,6 +213,7 @@ export class GrafanaBootConfig {
     alertStateHistoryBackend: undefined,
     alertStateHistoryPrimary: undefined,
   };
+  navigation: NavigationConfig = {};
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   applicationInsightsAutoRouteTracking?: boolean;
@@ -336,10 +338,6 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
 
   const isDevelopment = config.buildInfo.env === 'development';
 
-  // Although most flags can not be changed from the URL in production,
-  // some of them are safe (and useful!) to change dynamically from the browser URL
-  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI']);
-
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
@@ -349,7 +347,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
 
       const toggleState = value === 'true' || value === ''; // browser rewrites true as ''
       if (toggleState !== featureToggles[key]) {
-        if (isDevelopment || safeRuntimeFeatureFlags.has(featureName)) {
+        if (isDevelopment) {
           featureToggles[featureName] = toggleState;
           console.log(`Setting feature toggle ${featureName} = ${toggleState} via url`);
         } else {

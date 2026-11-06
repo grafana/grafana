@@ -21,3 +21,10 @@ Any mix of versions must work during rollout: new client ↔ old server and old 
 3. **New client expectations need a fallback.** Keep handling old server behavior until the server change is fully rolled out.
 
 The CI check `pr-unified-storage-compatibility.yml` fails PRs changing both sides; if truly inseparable, add the `no-check-unified-storage-compatibility` label and justify it in the PR description. The check covers common callers, not every importer, and contract-only PRs don't fire it (rule 2 is the safeguard there) — the rules apply regardless.
+
+## Code Review Rules
+
+### Unified storage RPC errors
+
+- For unary unified storage/search gRPC calls, handle failures through the returned error, not the response's legacy `Error` field. Handle the error before dereferencing a potentially nil response. Do not add response-field checks to status-only RPC paths.
+- Review error-helper selection and classification against [resource/doc.go](resource/doc.go). Test returned errors, preserved HTTP status/details, and nil-response safety. BulkProcess and direct Go calls that bypass conversion can still need legacy response-error handling; retain and test both forms on those paths until their producers are migrated.

@@ -22,6 +22,11 @@ import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
+import {
+  isDashboardReviewing,
+  isDashboardSceneLike,
+  isFullDashboardEditing,
+} from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
@@ -50,6 +55,7 @@ import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
+import { findAdjacentVizPanel, focusVizPanel } from '../layouts-shared/utils';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -129,6 +135,10 @@ export class DefaultGridLayoutManager
   }
 
   private _activationHandler() {
+    const root = this.getRoot();
+    if (isDashboardSceneLike(root) && isDashboardReviewing(root.state)) {
+      this.editModeChanged(false);
+    }
     if (isDashboardNewLayoutsEnabled()) {
       this._subs.add(
         this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) => {
@@ -235,6 +245,21 @@ export class DefaultGridLayoutManager
     }
 
     const layout = this.state.grid;
+    // A row owns every panel below it, so the next panel after the last top-level one sits
+    // inside the first expanded row. Collapsed rows don't render their panels.
+    const getPanelFromGridChild = (child: SceneGridItemLike): VizPanel | undefined => {
+      if (child instanceof DashboardGridItem) {
+        return child.state.body;
+      }
+      if (child instanceof SceneGridRow && !child.state.isCollapsed) {
+        for (const rowChild of child.state.children) {
+          if (rowChild instanceof DashboardGridItem) {
+            return rowChild.state.body;
+          }
+        }
+      }
+      return undefined;
+    };
 
     let row: SceneGridRow | undefined;
 
@@ -245,14 +270,19 @@ export class DefaultGridLayoutManager
     }
 
     if (row) {
+      const adjacentPanel = findAdjacentVizPanel(gridItem, row.state.children, getPanelFromGridChild);
       row.setState({ children: row.state.children.filter((child) => child !== gridItem) });
       layout.forceRender();
+      focusVizPanel(adjacentPanel);
       return;
     }
+
+    const adjacentPanel = findAdjacentVizPanel(gridItem, layout.state.children, getPanelFromGridChild);
 
     if (!isDashboardNewLayoutsEnabled()) {
       // No undo/redo support in legacy edit mode
       layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
+      focusVizPanel(adjacentPanel);
       return;
     }
 
@@ -260,7 +290,10 @@ export class DefaultGridLayoutManager
       meta: { actionId: 'panel.remove', scope: 'custom-grid' },
       removedObject: gridItem.state.body,
       source: this,
-      perform: () => layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) }),
+      perform: () => {
+        layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
+        focusVizPanel(adjacentPanel);
+      },
       undo: () => layout.setState({ children: [...layout.state.children, gridItem] }),
     });
   }
@@ -353,16 +386,19 @@ export class DefaultGridLayoutManager
     return row;
   }
 
+  private editModeTimeout?: ReturnType<typeof setTimeout>;
+
   public editModeChanged(isEditing: boolean) {
+    clearTimeout(this.editModeTimeout);
     const updateResizeAndDragging = () => {
       this.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
       forceRenderChildren(this.state.grid, true);
     };
 
-    if (isDashboardNewLayoutsEnabled()) {
+    if (isEditing && isDashboardNewLayoutsEnabled()) {
       // We do this in a timeout to wait a bit with enabling dragging as dragging enables grid animations
       // if we show the sidebar without animations it opens much faster and feels more responsive
-      setTimeout(updateResizeAndDragging, 10);
+      this.editModeTimeout = setTimeout(updateResizeAndDragging, 10);
       return;
     }
 
@@ -511,7 +547,11 @@ export class DefaultGridLayoutManager
 
   public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
     const panels = currentLayout.getVizPanels();
-    return DefaultGridLayoutManager.fromVizPanels(panels);
+    const root = currentLayout.getRoot();
+    const isEditing = !isDashboardSceneLike(root) || isFullDashboardEditing(root.state);
+    const layout = DefaultGridLayoutManager.fromVizPanels(panels);
+    layout.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
+    return layout;
   }
 
   public static createEmpty(): DefaultGridLayoutManager {
@@ -591,7 +631,8 @@ export class DefaultGridLayoutManager
 function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<DefaultGridLayoutManager>) {
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
   const dashboard = useDashboard(model);
-  const { isEditing } = dashboard.useState();
+  const dashboardState = dashboard.useState();
+  const isEditing = isFullDashboardEditing(dashboardState);
   const hasClonedParents = isRepeatCloneOrChildOf(model);
   const styles = useStyles2(getStyles);
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();

@@ -535,3 +535,46 @@ func TestNewCatalogProviderWithTTL(t *testing.T) {
 		assert.Nil(t, provider)
 	})
 }
+
+func TestCatalogProvider_GetMeta_MissingCDNURL(t *testing.T) {
+	newServer := func(response grafanaComPluginVersionMeta) *httptest.Server {
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			require.NoError(t, json.NewEncoder(w).Encode(response))
+		}))
+	}
+	parentID := "test-plugin"
+	parent := grafanaComPluginVersionMeta{
+		PluginSlug: "test-plugin",
+		Version:    "1.0.0",
+		JSON:       grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin", Type: pluginsv0alpha1.MetaJSONDataTypeApp}},
+		Children: []grafanaComChildPluginVersion{{
+			Slug: "test-child",
+			Path: "test-child",
+			JSON: grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-child", Type: pluginsv0alpha1.MetaJSONDataTypePanel}},
+		}},
+	}
+
+	tests := []struct {
+		name string
+		ref  PluginRef
+	}{
+		{name: "plugin", ref: PluginRef{ID: "test-plugin", Version: "1.0.0"}},
+		{name: "child plugin", ref: PluginRef{ID: "test-child", Version: "1.0.0", ParentID: &parentID}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := newServer(parent)
+			defer server.Close()
+
+			provider, err := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
+			require.NoError(t, err)
+
+			_, err = provider.GetMeta(context.Background(), tt.ref)
+			require.ErrorIs(t, err, ErrMissingCDNURL)
+			var fetchErr *FetchError
+			require.ErrorAs(t, err, &fetchErr)
+			assert.Equal(t, "missing_cdn_url", fetchErr.Reason)
+		})
+	}
+}

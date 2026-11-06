@@ -75,6 +75,19 @@ linters:
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/dashboard is not allowed to import grafana core
+        apps-live:
+          list-mode: lax
+          files:
+            - '**/apps/live/*'
+            - '**/apps/live/**/*'
+            - '!**/pkg/registry/apps/live/*'
+            - '!**/pkg/registry/apps/live/**/*'
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
+            - github.com/grafana/grafana/pkg/infra/log
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: apps/live is not allowed to import grafana core
         apps-secret:
           list-mode: lax
           files:
@@ -93,8 +106,6 @@ linters:
             - '**/pkg/tsdb/azuremonitor/**/*'
             - '**/pkg/tsdb/graphite/*'
             - '**/pkg/tsdb/graphite/**/*'
-            - '**/pkg/tsdb/cloudwatch/*'
-            - '**/pkg/tsdb/cloudwatch/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg/api
               desc: Core plugins are not allowed to depend on Grafana core packages
@@ -152,6 +163,19 @@ linters:
               desc: Core plugins are not allowed to depend on Grafana core packages
             - pkg: github.com/grafana/grafana/pkg/tsdb/intervalv2
               desc: Core plugins are not allowed to depend on Grafana core packages
+        legacyapi:
+          list-mode: lax
+          files:
+            - '**/pkg/legacyapi/*'
+            - '**/pkg/legacyapi/**/*'
+          allow:
+            - github.com/grafana/grafana/apps/dashboard
+            - github.com/grafana/grafana/pkg/apimachinery
+            - github.com/grafana/grafana/pkg/infra/slugify
+            - github.com/grafana/grafana/pkg/legacyapi
+          deny:
+            - pkg: github.com/grafana/grafana/
+              desc: pkg/legacyapi is not allowed to import grafana core
         main:
           deny:
             - pkg: io/ioutil
@@ -231,6 +255,11 @@ linters:
       - linters:
           - staticcheck
         text: 'SA1019: "?go\.opentelemetry\.io/otel/exporters/jaeger"? is deprecated:'
+      # Keep testing the legacy hybrid request format while older clients use it.
+      - linters:
+          - staticcheck
+        path: _test\.go$
+        text: 'SA1019: .*resourcepb\.HybridSearchRequest\)\.(Key|GetKey) is deprecated:'
       - linters:
           - staticcheck
         text: use fake service and real access control evaluator instead

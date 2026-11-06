@@ -131,17 +131,30 @@ func applyPerKindSort(req *Query, sorts []searchv0.SortField) {
 	req.Sort = sorts
 }
 
-func perKindSortRules(rules []*ngmodels.AlertRule, field string, desc bool) {
-	_ = field
+// perKindSortRules orders legacy rules by each sort field in turn, then by UID
+// so pages are stable. It must handle every field in legacySortFields.
+func perKindSortRules(rules []*ngmodels.AlertRule, sorts []searchv0.SortField) {
+	if len(sorts) == 0 {
+		sorts = []searchv0.SortField{{Field: fieldTitle, Direction: sortAscending}}
+	}
 	sort.SliceStable(rules, func(i, j int) bool {
-		aTitle := strings.ToLower(rules[i].Title)
-		bTitle := strings.ToLower(rules[j].Title)
-		if aTitle != bTitle {
-			if desc {
-				return aTitle > bTitle
+		for _, s := range sorts {
+			c := compareRulesBy(rules[i], rules[j], s.Field)
+			if c == 0 {
+				continue
 			}
-			return aTitle < bTitle
+			if s.Direction == sortDescending {
+				return c > 0
+			}
+			return c < 0
 		}
 		return rules[i].UID < rules[j].UID
 	})
+}
+
+func compareRulesBy(a, b *ngmodels.AlertRule, field string) int {
+	if field == fieldName {
+		return strings.Compare(a.UID, b.UID)
+	}
+	return strings.Compare(strings.ToLower(a.Title), strings.ToLower(b.Title))
 }

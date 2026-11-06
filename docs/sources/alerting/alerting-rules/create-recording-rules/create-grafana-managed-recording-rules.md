@@ -111,6 +111,8 @@ To do this, you need to make sure that your recording rule is in the right evalu
 
    All rules within the same group are evaluated concurrently over the same time interval. Every recording rule in a group uses the same evaluation time, meaning that all queries from the same group are always aligned with each other.
 
+   If another recording rule or alert rule depends on this rule's results, you can define an explicit evaluation order through the API or Terraform. For instructions, refer to [Configure rule sequences](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/rule-sequences/).
+
 1. Before or after creating a recording rule, you have the option to **Pause evaluation** if necessary.
 
 ### Advanced configuration

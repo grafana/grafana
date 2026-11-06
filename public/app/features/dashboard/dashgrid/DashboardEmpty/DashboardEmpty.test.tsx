@@ -80,9 +80,6 @@ function setup(options?: Partial<Props>) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  // The legacy empty-dashboard clicks expect isDynamicDashboard: false. The new-layouts
-  // describe below sets the flag true after this.
-  setTestFlags({ dashboardNewLayouts: false });
   // Reset the mock to default state
   mockUseGetResourceRepositoryView.mockReturnValue({
     isReadOnlyRepo: false,
@@ -126,7 +123,7 @@ it('creates new visualization when clicked Add visualization', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', {
     item: 'add_visualization',
-    isDynamicDashboard: false,
+    isDynamicDashboard: true,
   });
   expect(locationService.partial).toHaveBeenCalled();
   expect(locationService.partial).toHaveBeenCalledWith({ editPanel: undefined, firstPanel: true });
@@ -142,7 +139,7 @@ it('open import dashboard when clicked Import dashboard', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', {
     item: 'import_dashboard',
-    isDynamicDashboard: false,
+    isDynamicDashboard: true,
   });
   expect(onImportDashboard).toHaveBeenCalled();
 });
@@ -156,7 +153,7 @@ it('adds a library panel when clicked Add library panel', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', {
     item: 'import_from_library',
-    isDynamicDashboard: false,
+    isDynamicDashboard: true,
   });
   expect(locationService.partial).not.toHaveBeenCalled();
   expect(onAddLibraryPanel).toHaveBeenCalled();
@@ -205,6 +202,15 @@ describe('new layouts empty state', () => {
     render(<DashboardEmpty dashboard={dashboard} canCreate />);
     return dashboard;
   }
+
+  it('hides manual layout controls and the add pane in View mode', () => {
+    setTestFlags({ 'grafana.dashboardPreviewMode': true });
+    const dashboard = setupScene({ mode: 'view' });
+    expect(screen.getByText('This dashboard has no panels.')).toBeInTheDocument();
+    expect(screen.queryByText('Select layout')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
+  });
 
   it('keeps the layout picker and opens the add pane when assistant dashboard planning is off', async () => {
     const dashboard = setupScene();

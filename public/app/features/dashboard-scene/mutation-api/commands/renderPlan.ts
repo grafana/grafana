@@ -5,6 +5,10 @@
  * tab), each with query-less placeholder panels, plus any stand-in variables. A plan preview renders once and is never edited, so
  * there is nothing to build up incrementally the way ADD_ROW/ADD_TAB/ADD_PANEL do.
  *
+ * With phase "building" nothing from the plan renders: the dashboard stays empty behind a loading
+ * screen until the build's first write replaces it (see DashboardMutationClient), or END_PLANNING
+ * ends it when the build writes nothing.
+ *
  * Never calls enterEditModeIfNeeded: the preview is a static, view-mode surface that must never
  * enter edit mode (see refuseWhilePlanning for the few actions still reachable without it).
  */
@@ -94,7 +98,7 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
             })
           : buildSection(section);
 
-      const body =
+      const buildPlanBody = () =>
         payload.layout === 'tabs'
           ? new TabsLayoutManager({
               tabs: payload.sections.map((section) => new TabItem({ title: section.title, layout: buildTab(section) })),
@@ -105,7 +109,10 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
               ),
             });
 
-      const variables: SceneVariable[] = (payload.variables ?? []).map(
+      const isBuilding = payload.phase === 'building';
+      const body = isBuilding ? DefaultGridLayoutManager.createEmpty() : buildPlanBody();
+
+      const variables: SceneVariable[] = (isBuilding ? [] : (payload.variables ?? [])).map(
         (name) => new CustomVariable({ name, query: getPlanningVariableValues().join(',') })
       );
 
@@ -142,12 +149,15 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
         // the scene is dirty, and isNew marks a fresh dashboard dirty on entry. Must be false
         // here or exiting below wipes the rendered plan.
         isDirty: false,
-        planning: {
-          planId,
-          planTitle: payload.title,
-          onBuild: () => notify('build'),
-          onDismiss: () => notify('dismiss'),
-        },
+        planning: isBuilding
+          ? { phase: 'building', planId, planTitle: payload.title }
+          : {
+              phase: 'preview',
+              planId,
+              planTitle: payload.title,
+              onBuild: () => notify('build'),
+              onDismiss: () => notify('dismiss'),
+            },
       });
 
       // DefaultGridLayoutManager hardcodes isDraggable/isResizable true; only editModeChanged

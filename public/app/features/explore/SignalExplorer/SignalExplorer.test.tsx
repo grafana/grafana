@@ -69,13 +69,19 @@ const lokiQuery = (refId: string): DataQuery => ({ refId, datasource: { uid: 'lo
 const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 const otherTimeRange = { raw: { from: 'now-6h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 
-const explorer = (queries: DataQuery[], paneDatasource?: DataSourceApi, range: TimeRange = timeRange) => (
+const explorer = (
+  queries: DataQuery[],
+  paneDatasource?: DataSourceApi,
+  range: TimeRange = timeRange,
+  onAddToQuery?: (refId: string, text: string) => void
+) => (
   <SignalExplorer
     queries={queries}
     paneDatasource={paneDatasource}
     timeRange={range}
     scroller={scrollerMock}
     toggleButton={<button type="button">Collapse outline</button>}
+    onAddToQuery={onAddToQuery}
   />
 );
 
@@ -84,7 +90,11 @@ const seedDataSources = () => {
   setDatasourcePluginMetas(pluginMetas);
 };
 
-const setup = async (queries: DataQuery[], paneDatasource?: DataSourceApi) => {
+const setup = async (
+  queries: DataQuery[],
+  paneDatasource?: DataSourceApi,
+  onAddToQuery?: (refId: string, text: string) => void
+) => {
   scrollerMock.scroll = jest.fn();
   seedDataSources();
 
@@ -116,7 +126,7 @@ const setup = async (queries: DataQuery[], paneDatasource?: DataSourceApi) => {
     ],
   });
 
-  const rendered = render(explorer(queries, paneDatasource));
+  const rendered = render(explorer(queries, paneDatasource, timeRange, onAddToQuery));
 
   // Both datasource hooks resolve a few promise turns after the first paint. Settling them here
   // keeps those state updates inside act() and means the assertions below see resolved cards.
@@ -279,7 +289,7 @@ describe('<SignalExplorer />', () => {
     expect(screen.getByPlaceholderText('Search metrics')).toHaveValue('node_cpu');
   });
 
-  it('scrolls to the query row when a card is clicked', async () => {
+  it('scrolls to the query row when the jump button is clicked', async () => {
     const { user } = await setup([lokiQuery('A')]);
 
     await user.click(screen.getByRole('button', { name: /^Jump to query A/ }));
@@ -337,21 +347,19 @@ describe('<SignalExplorer />', () => {
     expect(scrollerMock.scroll).not.toHaveBeenCalled();
   });
 
-  it('scrolls to the query row when a Prometheus card is expanded, but not when it collapses', async () => {
+  it('scrolls to the query row from an open Prometheus card only through its jump button', async () => {
     const { user } = await setup([lokiQuery('A'), promQuery('B')]);
 
     await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' }));
 
     expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
+    expect(scrollerMock.scroll).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Jump to query B (gdev-prometheus)' }));
+
     expect(scrollerMock.scroll).toHaveBeenCalledTimes(1);
     expect(scrollerMock.scroll).toHaveBeenCalledWith({ top: -10, behavior: 'smooth' });
-
-    await user.click(
-      screen.getByRole('button', { name: 'Collapse datasource explorer for query B (gdev-prometheus)' })
-    );
-
-    expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
-    expect(scrollerMock.scroll).toHaveBeenCalledTimes(1);
+    expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
   });
 
   describe('default expansion', () => {
@@ -624,6 +632,70 @@ describe('<SignalExplorer />', () => {
       rerender(explorer([promQuery('A', 'up'), promQuery('B')], promPane));
 
       expect(reportInteractionMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('adding to the query', () => {
+    const codeQuery = (refId: string): DataQuery => ({ ...promQuery(refId, 'up'), editorMode: 'code' }) as DataQuery;
+    const builderQuery = (refId: string): DataQuery =>
+      ({ ...promQuery(refId, 'up'), editorMode: 'builder' }) as DataQuery;
+
+    const expandCard = (user: UserEvent, refId: string) =>
+      user.click(
+        screen.getByRole('button', { name: `Expand datasource explorer for query ${refId} (gdev-prometheus)` })
+      );
+
+    beforeEach(() => {
+      useMetricCatalogMock.mockReturnValue({
+        metrics: [{ name: 'up', type: 'gauge' }],
+        truncated: false,
+        loading: false,
+      });
+    });
+
+    it('adds to the query of the card the row belongs to', async () => {
+      const onAddToQuery = jest.fn();
+      const { user } = await setup([codeQuery('A'), codeQuery('B')], undefined, onAddToQuery);
+      await expandCard(user, 'B');
+
+      await user.click(within(screen.getByTestId('signal-card-B')).getByRole('button', { name: 'Add up to query' }));
+
+      expect(onAddToQuery).toHaveBeenCalledTimes(1);
+      expect(onAddToQuery).toHaveBeenCalledWith('B', 'up', 'name');
+    });
+
+    it('offers the button only on cards whose query is in Code mode', async () => {
+      const { user } = await setup([codeQuery('A'), builderQuery('B')], undefined, jest.fn());
+      await expandCard(user, 'B');
+
+      expect(
+        within(screen.getByTestId('signal-card-A')).getByRole('button', { name: 'Add up to query' })
+      ).toBeInTheDocument();
+      expect(
+        within(screen.getByTestId('signal-card-B')).queryByRole('button', { name: 'Add up to query' })
+      ).not.toBeInTheDocument();
+    });
+
+    // A query with an expression and no mode of its own is what Explore holds before the user toggles.
+    it('treats a query with an expression and no mode as Code mode', async () => {
+      await setup([promQuery('A', 'up')], undefined, jest.fn());
+
+      expect(screen.getByRole('button', { name: 'Add up to query' })).toBeInTheDocument();
+    });
+
+    it('picks up a switch to Builder mode on a card that is already open', async () => {
+      const { rerender } = await setup([codeQuery('A')], undefined, jest.fn());
+      expect(screen.getByRole('button', { name: 'Add up to query' })).toBeInTheDocument();
+
+      rerender(explorer([builderQuery('A')], undefined, timeRange, jest.fn()));
+
+      expect(screen.queryByRole('button', { name: 'Add up to query' })).not.toBeInTheDocument();
+    });
+
+    it('offers no button when nothing handles it', async () => {
+      await setup([codeQuery('A')]);
+
+      expect(screen.queryByRole('button', { name: 'Add up to query' })).not.toBeInTheDocument();
     });
   });
 });

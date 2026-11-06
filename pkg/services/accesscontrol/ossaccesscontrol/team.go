@@ -14,11 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 )
 
 type TeamPermissionsService struct {
@@ -54,12 +56,13 @@ func TeamPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 }
 
 func ProvideTeamPermissions(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore,
 	iamFeatures iamapi.Features,
 	ac accesscontrol.AccessControl, license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService resourcepermissions.ActionSetService,
 	directRestConfigProvider apiserver.DirectRestConfigProvider,
+	legacyWatch *legacywatch.Publisher,
 ) (*TeamPermissionsService, error) {
 	// The hooks below run inside transactions that resourcepermissions opens on sql,
 	// so their table names must resolve for that same database. Deriving the helper
@@ -112,11 +115,11 @@ func ProvideTeamPermissions(
 			}
 			switch permission {
 			case "Member":
-				return teamimpl.AddOrUpdateTeamMemberHook(dbHelper, session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeMember)
+				err = teamimpl.AddOrUpdateTeamMemberHook(dbHelper, session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeMember)
 			case "Admin":
-				return teamimpl.AddOrUpdateTeamMemberHook(dbHelper, session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeAdmin)
+				err = teamimpl.AddOrUpdateTeamMemberHook(dbHelper, session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeAdmin)
 			case "":
-				return teamimpl.RemoveTeamMemberHook(dbHelper, session, &team.RemoveTeamMemberCommand{
+				err = teamimpl.RemoveTeamMemberHook(dbHelper, session, &team.RemoveTeamMemberCommand{
 					OrgID:  orgID,
 					UserID: user.ID,
 					TeamID: teamId,
@@ -124,6 +127,13 @@ func ProvideTeamPermissions(
 			default:
 				return fmt.Errorf("invalid team permission type %s", permission)
 			}
+			if err != nil || !legacyWatch.Enabled() {
+				return err
+			}
+			// Announcing is best effort: a failed lookup skips it rather than
+			// failing the permission write.
+			_ = teamimpl.QueueTeamMembershipChanged(dbHelper, session, orgID, teamId)
+			return nil
 		},
 		RestConfigProvider: directRestConfigProvider,
 	}

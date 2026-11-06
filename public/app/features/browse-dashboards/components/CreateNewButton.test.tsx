@@ -1,11 +1,10 @@
-import { screen, within } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { render } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { config, useDataSourceInstanceList } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as PROVISIONING_BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -38,8 +37,8 @@ const defaultTestDataSource = {
   type: 'grafana-testdata-datasource',
 } as DataSourceInstanceListItem;
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
 }));
 
@@ -117,6 +116,21 @@ describe('NewActionsButton', () => {
     expect(screen.queryByRole('menuitem', { name: 'New dashboard' })).not.toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Import dashboard' })).not.toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
+  });
+
+  it('should only render the New folder item on mobile when mobileEditDeprecation is enabled', async () => {
+    setTestFlags({ 'grafana.mobileEditDeprecation': true });
+    const { user } = render(
+      <CreateNewButton canCreateDashboard canCreateFolder parentFolder={mockParentFolder} isReadOnlyRepo={false} />
+    );
+    const newButton = screen.getByText('New');
+    await user.click(newButton);
+
+    expect(screen.queryByRole('menuitem', { name: 'New dashboard' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Import dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
+    cleanup();
+    setTestFlags({});
   });
 
   it('should show Import dashboard button when folder is provisioned', async () => {

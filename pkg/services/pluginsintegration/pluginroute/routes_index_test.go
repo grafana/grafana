@@ -7,7 +7,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/manifestroutes"
+	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
 )
 
 // The index must accept every path a route can match, and may reject a path

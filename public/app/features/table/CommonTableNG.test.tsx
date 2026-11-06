@@ -25,7 +25,7 @@ it.each([false, true])('gates JSON highlighting with new table features=%s', asy
   });
   render(
     <OpenFeatureTestProvider flagValueMap={{ [FlagKeys.TableRefreshNewFeatures]: enabled }}>
-      <CommonTableNG data={data} width={800} height={400} />
+      <CommonTableNG data={data} width={800} height={400} timeZone="UTC" />
     </OpenFeatureTestProvider>
   );
   const cell = await screen.findByRole('gridcell', { name: /count/ });
