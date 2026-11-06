@@ -187,41 +187,41 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// folder that still holds alert rules look empty.
 		alertRulesStale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
 		if err != nil {
-			return &CountError{Resources: []string{"alertrules"}, Err: err}
+			return &CountError{Resources: []string{legacyAlertRules}, Err: err}
 		}
 		if alertRulesStale {
 			s.metrics.skip(legacyAlertRules, legacySkipMigrated)
 		} else {
-			err = fn("alert_rule", "namespace_uid", group, "alertrules", "(record IS NULL OR record = '')")
+			err = fn("alert_rule", "namespace_uid", group, legacyAlertRules, "(record IS NULL OR record = '')")
 			if err != nil {
-				return &CountError{Resources: []string{"alertrules"}, Err: err}
+				return &CountError{Resources: []string{legacyAlertRules}, Err: err}
 			}
 		}
 
 		recordingRulesStale, err := s.legacyTableIsStale(sess, helper, recordingRuleResource)
 		if err != nil {
-			return &CountError{Resources: []string{"recordingrules"}, Err: err}
+			return &CountError{Resources: []string{legacyRecordingRules}, Err: err}
 		}
 		if recordingRulesStale {
 			s.metrics.skip(legacyRecordingRules, legacySkipMigrated)
 		} else {
-			err = fn("alert_rule", "namespace_uid", group, "recordingrules", "(record IS NOT NULL AND record != '')")
+			err = fn("alert_rule", "namespace_uid", group, legacyRecordingRules, "(record IS NOT NULL AND record != '')")
 			if err != nil {
-				return &CountError{Resources: []string{"recordingrules"}, Err: err}
+				return &CountError{Resources: []string{legacyRecordingRules}, Err: err}
 			}
 		}
 
 		// Legacy library_elements table
 		libraryPanelsStale, err := s.legacyTableIsStale(sess, helper, libraryPanelResource)
 		if err != nil {
-			return &CountError{Resources: []string{"library_elements"}, Err: err}
+			return &CountError{Resources: []string{legacyLibraryElements}, Err: err}
 		}
 		if libraryPanelsStale {
 			s.metrics.skip(legacyLibraryElements, legacySkipMigrated)
 		} else {
-			err = fn("library_element", "folder_uid", group, "library_elements", "")
+			err = fn("library_element", "folder_uid", group, legacyLibraryElements, "")
 			if err != nil {
-				return &CountError{Resources: []string{"library_elements"}, Err: err}
+				return &CountError{Resources: []string{legacyLibraryElements}, Err: err}
 			}
 		}
 		return nil

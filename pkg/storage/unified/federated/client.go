@@ -16,15 +16,15 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/federated")
 
-// Option configures NewFederatedClient.
-type Option func(*LegacyStatsGetter)
+// StatsOption configures the legacy stats of NewFederatedClient.
+type StatsOption func(*LegacyStatsGetter)
 
 // WithMetrics exports the legacy count metrics on reg.
-func WithMetrics(reg prometheus.Registerer) Option {
+func WithMetrics(reg prometheus.Registerer) StatsOption {
 	return func(s *LegacyStatsGetter) { s.metrics = newLegacyStatsMetrics(reg) }
 }
 
-func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, opts ...Option) resource.ResourceClient {
+func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, opts ...StatsOption) resource.ResourceClient {
 	stats := &LegacyStatsGetter{
 		SQL: sql,
 		Cfg: cfg,

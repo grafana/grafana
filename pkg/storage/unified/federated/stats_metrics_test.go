@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,7 +19,7 @@ import (
 )
 
 // observations returns how many durations were recorded for the labels.
-func observations(t *testing.T, reg *prometheus.Registry, name, outcome string) uint64 {
+func observations(t *testing.T, reg *prometheus.Registry, resourceName, outcome string) uint64 {
 	t.Helper()
 	families, err := reg.Gather()
 	require.NoError(t, err)
@@ -31,12 +32,12 @@ func observations(t *testing.T, reg *prometheus.Registry, name, outcome string) 
 			for _, l := range m.GetLabel() {
 				labels[l.GetName()] = l.GetValue()
 			}
-			if labels["resource"] == name && labels["outcome"] == outcome {
+			if labels["resource"] == resourceName && labels["outcome"] == outcome {
 				return m.GetHistogram().GetSampleCount()
 			}
 		}
 	}
-	t.Fatalf("no series for %s/%s", name, outcome)
+	t.Fatalf("no series for %s/%s", resourceName, outcome)
 	return 0
 }
 
@@ -70,16 +71,41 @@ func TestLegacyStatsMetricsObserveOutcome(t *testing.T) {
 	}
 }
 
+// seriesOf lists the label values of every series of a metric, joined as "resource/other".
+func seriesOf(t *testing.T, reg *prometheus.Registry, metric, otherLabel string) []string {
+	t.Helper()
+	families, err := reg.Gather()
+	require.NoError(t, err)
+	var out []string
+	for _, f := range families {
+		if f.GetName() != metric {
+			continue
+		}
+		for _, m := range f.GetMetric() {
+			labels := map[string]string{}
+			for _, l := range m.GetLabel() {
+				labels[l.GetName()] = l.GetValue()
+			}
+			out = append(out, labels["resource"]+"/"+labels[otherLabel])
+		}
+	}
+	return out
+}
+
 func TestLegacyStatsMetricsExistBeforeAnyObservation(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	newLegacyStatsMetrics(reg)
 
-	n, err := testutil.GatherAndCount(reg, "grafana_folder_counts_legacy_query_duration_seconds")
-	require.NoError(t, err)
-	require.Equal(t, 9, n, "3 resources x 3 outcomes")
-	n, err = testutil.GatherAndCount(reg, "grafana_folder_counts_legacy_skipped_total")
-	require.NoError(t, err)
-	require.Equal(t, 6, n, "3 resources x 2 reasons")
+	require.ElementsMatch(t, []string{
+		"alertrules/ok", "alertrules/error", "alertrules/canceled",
+		"recordingrules/ok", "recordingrules/error", "recordingrules/canceled",
+		"library_elements/ok", "library_elements/error", "library_elements/canceled",
+	}, seriesOf(t, reg, "grafana_folder_counts_legacy_query_duration_seconds", "outcome"))
+	require.ElementsMatch(t, []string{
+		"alertrules/migrated", "alertrules/namespace_deleted",
+		"recordingrules/migrated", "recordingrules/namespace_deleted",
+		"library_elements/migrated", "library_elements/namespace_deleted",
+	}, seriesOf(t, reg, "grafana_folder_counts_legacy_skipped_total", "reason"))
 }
 
 func TestLegacyStatsMetricsNilRecordsNothing(t *testing.T) {
@@ -103,8 +129,14 @@ func TestFederatedGetStatsCountsSkippedForDeletedNamespace(t *testing.T) {
 	_, err := client.GetStats(t.Context(), in)
 	require.NoError(t, err)
 
-	for _, name := range legacyResources {
-		c := client.(*federatedClient).stats.metrics.skipped.WithLabelValues(name, legacySkipNamespaceDeleted)
-		require.Equal(t, 1.0, testutil.ToFloat64(c), name)
-	}
+	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(`
+# HELP grafana_folder_counts_legacy_skipped_total Legacy database counts that were not run, by resource and reason
+# TYPE grafana_folder_counts_legacy_skipped_total counter
+grafana_folder_counts_legacy_skipped_total{reason="migrated",resource="alertrules"} 0
+grafana_folder_counts_legacy_skipped_total{reason="migrated",resource="library_elements"} 0
+grafana_folder_counts_legacy_skipped_total{reason="migrated",resource="recordingrules"} 0
+grafana_folder_counts_legacy_skipped_total{reason="namespace_deleted",resource="alertrules"} 1
+grafana_folder_counts_legacy_skipped_total{reason="namespace_deleted",resource="library_elements"} 1
+grafana_folder_counts_legacy_skipped_total{reason="namespace_deleted",resource="recordingrules"} 1
+`), "grafana_folder_counts_legacy_skipped_total"))
 }
