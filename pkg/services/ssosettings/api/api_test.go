@@ -270,6 +270,16 @@ func TestSSOSettingsAPI_Patch(t *testing.T) {
 			expectedServiceCall: true,
 			expectedStatusCode:  http.StatusInternalServerError,
 		},
+		{
+			desc:                "successfully normalizes camelCase properties in PATCH",
+			key:                 social.GenericOAuthProviderName,
+			body:                `{"settings": {"orgMapping": "org-a-Admin:OrgA:Admin", "orgAttributePath": "grafana_orgs"}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.generic_oauth:*",
+			expectedError:       nil,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusNoContent,
+		},
 	}
 
 	for _, tt := range tests {
@@ -287,7 +297,7 @@ func TestSSOSettingsAPI_Patch(t *testing.T) {
 
 			service := ssosettingstests.NewMockService(t)
 			if tt.expectedServiceCall {
-				service.On("Patch", mock.Anything, tt.key, input.Settings, signedInUser).Return(tt.expectedError).Once()
+				service.On("Patch", mock.Anything, tt.key, models.NormalizeSettings(input.Settings), signedInUser).Return(tt.expectedError).Once()
 			}
 			server := setupTests(t, service)
 

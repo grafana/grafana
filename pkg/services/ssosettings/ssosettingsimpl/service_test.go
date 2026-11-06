@@ -1925,6 +1925,64 @@ func TestService_Patch(t *testing.T) {
 		require.Equal(t, "stored-client-id", env.store.ActualSSOSettings.Settings["client_id"])
 	})
 
+	t.Run("successfully normalizes camelCase settings like orgMapping and orgAttributePath during patch", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		provider := social.GenericOAuthProviderName
+		patchData := map[string]any{
+			"orgMapping":       "org-a-Admin:OrgA:Admin",
+			"orgAttributePath": "grafana_orgs",
+		}
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+			return settings.Provider == provider &&
+				settings.Settings["org_mapping"] == "org-a-Admin:OrgA:Admin" &&
+				settings.Settings["org_attribute_path"] == "grafana_orgs" &&
+				settings.Settings["orgMapping"] == nil &&
+				settings.Settings["orgAttributePath"] == nil
+		}), mock.Anything, mock.Anything).Return(nil)
+		reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+			defer wg.Done()
+			return settings.Provider == provider &&
+				settings.Settings["org_mapping"] == "org-a-Admin:OrgA:Admin" &&
+				settings.Settings["org_attribute_path"] == "grafana_orgs"
+		})).Return(nil).Once()
+		env.reloadables[provider] = reloadable
+
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return &models.SSOSettings{
+				ID:       "someid",
+				Provider: provider,
+				Settings: map[string]any{
+					"org_mapping":        "",
+					"org_attribute_path": "",
+					"client_id":          "test-client",
+				},
+			}, nil
+		}
+
+		env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
+			env.store.ActualSSOSettings = *settings
+			return nil
+		}
+
+		err := env.service.Patch(context.Background(), provider, patchData, &user.SignedInUser{})
+		require.NoError(t, err)
+
+		wg.Wait()
+
+		require.Equal(t, "org-a-Admin:OrgA:Admin", env.store.ActualSSOSettings.Settings["org_mapping"])
+		require.Equal(t, "grafana_orgs", env.store.ActualSSOSettings.Settings["org_attribute_path"])
+		require.Nil(t, env.store.ActualSSOSettings.Settings["orgMapping"])
+		require.Nil(t, env.store.ActualSSOSettings.Settings["orgAttributePath"])
+	})
+
 	t.Run("returns error if provider is not configurable", func(t *testing.T) {
 		t.Parallel()
 

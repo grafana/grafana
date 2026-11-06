@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -219,7 +220,12 @@ func createOAuthInfoFromKeyValues(settingsKV map[string]any, parsingWarns *[]err
 		return nil, err
 	}
 
-	err = decoder.Decode(settingsKV)
+	normalizedSettings := ssoModels.NormalizeSettings(settingsKV)
+	if normalizedSettings == nil {
+		normalizedSettings = make(map[string]any)
+	}
+
+	err = decoder.Decode(normalizedSettings)
 	if err != nil {
 		return nil, err
 	}

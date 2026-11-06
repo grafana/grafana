@@ -451,6 +451,25 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 	require.Equal(t, expectedOAuthInfo, oauthInfo)
 }
 
+func TestCreateOAuthInfoFromKeyValues_CamelCase(t *testing.T) {
+	settings := map[string]any{
+		"orgMapping":       "org-a-Admin:OrgA:Admin",
+		"orgAttributePath": "grafana_orgs",
+		"clientId":         "test-client-id",
+		"clientSecret":     "test-secret",
+	}
+
+	oauthInfo, err := connectors.CreateOAuthInfoFromKeyValues(settings)
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"org-a-Admin:OrgA:Admin"}, oauthInfo.OrgMapping)
+	require.Equal(t, "grafana_orgs", oauthInfo.OrgAttributePath)
+	require.Equal(t, "test-client-id", oauthInfo.ClientId)
+	require.Equal(t, "test-secret", oauthInfo.ClientSecret)
+	require.Empty(t, oauthInfo.Extra["orgMapping"])
+	require.Empty(t, oauthInfo.Extra["orgAttributePath"])
+}
+
 func TestNewOAuthTransport(t *testing.T) {
 	previous := otel.GetTextMapPropagator()
 	otel.SetTextMapPropagator(propagation.TraceContext{})
