@@ -329,22 +329,54 @@ func translateActionToKubernetesAttributes(translation resourceTranslation, acti
 	return group, resource, subresource, verb, true
 }
 
-// TranslateActionToListParams translates an RBAC action to Zanzana List request parameters (group, resource, subresource, verb).
-// Returns empty strings if the action cannot be translated.
-func TranslateActionToListParams(action string) (group, resource, subresource, verb string) {
+// translateActionToListEntries returns every distinct resource mapping for an action.
+// Some RBAC actions (for example annotations:read) are valid on more than one
+// resource group, so callers that search permissions must not discard those mappings.
+func translateActionToListEntries(action string) []ActionListEntry {
 	translationTypes := make([]string, 0, len(resourceTranslations))
 	for typ := range resourceTranslations {
 		translationTypes = append(translationTypes, typ)
 	}
 	sort.Strings(translationTypes)
 
+	var out []ActionListEntry
+	seen := make(map[ActionListEntry]struct{})
 	for _, typ := range translationTypes {
 		translation := resourceTranslations[typ]
-		if group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action); ok {
-			return group, resource, subresource, verb
+		group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action)
+		if !ok {
+			continue
 		}
+		entry := ActionListEntry{
+			Action:      action,
+			Group:       group,
+			Resource:    resource,
+			Subresource: subresource,
+			Verb:        verb,
+		}
+		if _, exists := seen[entry]; exists {
+			continue
+		}
+		seen[entry] = struct{}{}
+		out = append(out, entry)
 	}
-	return "", "", "", ""
+	return out
+}
+
+// TranslateActionToListParamsAll returns every distinct Zanzana List mapping for an RBAC action.
+func TranslateActionToListParamsAll(action string) []ActionListEntry {
+	return translateActionToListEntries(action)
+}
+
+// TranslateActionToListParams returns the first deterministic mapping for compatibility.
+// Use TranslateActionToListParamsAll when an action may target multiple resource groups.
+func TranslateActionToListParams(action string) (group, resource, subresource, verb string) {
+	entries := translateActionToListEntries(action)
+	if len(entries) == 0 {
+		return "", "", "", ""
+	}
+	entry := entries[0]
+	return entry.Group, entry.Resource, entry.Subresource, entry.Verb
 }
 
 // ActionListEntry describes an action that Zanzana supports, along with
@@ -368,7 +400,7 @@ var supportedActions = func() []ActionListEntry {
 	sort.Strings(translationTypes)
 
 	var out []ActionListEntry
-	seen := make(map[string]struct{})
+	seen := make(map[ActionListEntry]struct{})
 	for _, typ := range translationTypes {
 		translation := resourceTranslations[typ]
 
@@ -379,22 +411,13 @@ var supportedActions = func() []ActionListEntry {
 		sort.Strings(actions)
 
 		for _, action := range actions {
-			if _, ok := seen[action]; ok {
-				continue
+			for _, entry := range translateActionToListEntries(action) {
+				if _, exists := seen[entry]; exists {
+					continue
+				}
+				seen[entry] = struct{}{}
+				out = append(out, entry)
 			}
-			group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action)
-			if !ok {
-				continue
-			}
-
-			seen[action] = struct{}{}
-			out = append(out, ActionListEntry{
-				Action:      action,
-				Group:       group,
-				Resource:    resource,
-				Subresource: subresource,
-				Verb:        verb,
-			})
 		}
 	}
 	return out
