@@ -445,8 +445,8 @@ export const DashboardInteractions = {
     reportDashboardInteraction('mode_changed', properties);
   },
 
-  // click "Take me there" button from the dashboard settings for annotations, variables or the JSON model
-  takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' | 'json-model' }) => {
+  // click "Take me there" button from the dashboard settings for annotations, variables, links or the JSON model
+  takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' | 'links' | 'json-model' }) => {
     reportDashboardInteraction('take_me_to_sidebar_clicked', properties);
   },
 

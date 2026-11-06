@@ -275,10 +275,10 @@ func TestListTrashWithSearchDoesNotFallBackFromSearchContinueToken(t *testing.T)
 	req := trashListRequest()
 	req.NextPageToken = ContinueToken{SearchAfter: []string{"42"}, ResourceVersion: 100}.String()
 
-	resp, err := s.List(ctx, req)
+	_, err := s.List(ctx, req)
 
-	require.NoError(t, err)
-	require.Equal(t, int32(http.StatusServiceUnavailable), resp.Error.GetCode())
+	respErr := rpcErrorResult(t, err)
+	require.Equal(t, int32(http.StatusServiceUnavailable), respErr.GetCode())
 	require.Zero(t, backend.listHistoryCalls)
 }
 
@@ -522,9 +522,10 @@ func TestTrashListServicePermissionErrors(t *testing.T) {
 						return
 					}
 					if path == "store" {
-						require.NoError(t, err)
-						require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
-						require.Contains(t, resp.Error.GetMessage(), "dashboard.grafana.app/dashboards:set_permissions")
+						require.Nil(t, resp)
+						respErr := rpcErrorResult(t, err)
+						require.Equal(t, int32(http.StatusInternalServerError), respErr.GetCode())
+						require.Contains(t, respErr.GetMessage(), "dashboard.grafana.app/dashboards:set_permissions")
 					} else {
 						require.ErrorIs(t, err, ErrServiceCannotDelegate)
 						require.Nil(t, resp)

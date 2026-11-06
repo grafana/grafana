@@ -432,17 +432,17 @@ export type FolderSpec = {
   title: string;
 };
 export type FolderCascadeDeleteStatus = {
-  /** Errors encountered while deleting descendants. */
+  /** Errors encountered while deleting direct children. */
   errors?: string[];
   /** When the cascade reached a terminal state, in Unix milliseconds. */
   finished?: number;
-  /** Descendants not yet deleted. */
+  /** Direct children not yet deleted, recomputed on each reconcile. */
   remaining?: number;
   /** When the cascade started, in Unix milliseconds. */
   started?: number;
   /** Current phase of the cascade delete. */
   state: string;
-  /** Descendants discovered when the cascade started; the fixed denominator for remaining. */
+  /** Direct children discovered when the cascade started; the fixed denominator for remaining. */
   total?: number;
 };
 export type FolderStatus = {

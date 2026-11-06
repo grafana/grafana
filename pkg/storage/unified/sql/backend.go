@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"path/filepath"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -91,17 +92,19 @@ func tmpDir(dataPath string) string {
 	return filepath.Join(dataPath, "tmp")
 }
 
-// StorageBackendOption configures optional behavior of the KV storage backend.
+// StorageBackendOption configures optional behavior of the storage backend.
+// KV backend only unless noted. Options must only set fields: the legacy SQL
+// path also applies them, to read the ones it supports.
 type StorageBackendOption func(*resource.KVBackendOptions)
 
 // WithEventPublisher makes the backend announce committed writes on an external
-// message bus (NATS) via the given publisher. Applies only to the KV backend.
+// message bus (NATS) via the given publisher. KV and legacy SQL.
 func WithEventPublisher(p resource.EventPublisher) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) { o.EventPublisher = p }
 }
 
 // WithWatchNotificationMetadata adds allowlisted object metadata to the
-// notifications the event publisher announces. KV backend only.
+// notifications the event publisher announces. KV and legacy SQL.
 func WithWatchNotificationMetadata() StorageBackendOption {
 	return func(o *resource.KVBackendOptions) { o.WatchNotificationMetadata = true }
 }
@@ -130,7 +133,7 @@ func WithNatsNotifierShadow(s resource.EventSubscriber) StorageBackendOption {
 
 // WithNatsNotifier feeds the watch pipeline directly from the NATS bus instead
 // of polling. Delivery is at-most-once; the backend falls back to polling when
-// the subscriber is disabled. KV backend only.
+// the subscriber is disabled.
 func WithNatsNotifier(s resource.EventSubscriber, invalidator resource.Invalidator) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) {
 		o.EventSubscriber = s
@@ -169,6 +172,11 @@ func NewStorageBackend(
 		cfg.SectionWithEnvOverrides("resource_api"))
 
 	if !cfg.EnableSQLKVBackend {
+		// Collect the KV options to pick out the ones SQL supports.
+		var kvOpts resource.KVBackendOptions
+		for _, opt := range opts {
+			opt(&kvOpts)
+		}
 		blobURL, err := resolvedBlobURL(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("blob_url").MustString(""), cfg.DataPath)
 		if err != nil {
 			return nil, err
@@ -191,6 +199,12 @@ func NewStorageBackend(
 			DisablePruner:           cfg.DisablePruner,
 			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
+
+			EventPublisher:            kvOpts.EventPublisher,
+			WatchNotificationMetadata: kvOpts.WatchNotificationMetadata,
+			WatchSubscriber:           natsWatchSubscriber(kvOpts),
+			WatchSettleDelay:          cfg.NotifierSettleDelay,
+			WatchInvalidator:          kvOpts.WatchInvalidator,
 		})
 	}
 
@@ -208,12 +222,29 @@ func NewStorageBackend(
 	// The KV backend has one switch for all background write jobs, so the older
 	// pruner-only setting maps onto it.
 	kvBackendOpts.DisableStorageServices = disableStorageServices || cfg.DisablePruner
+	if cfg.KeyPathReconciliationEnabled {
+		kvBackendOpts.ReconcileKeyPaths = func(ctx context.Context, batchSize int) (int, error) {
+			database, err := eDB.Init(ctx)
+			if err != nil {
+				return 0, err
+			}
+			return reconcileResourceHistoryKeyPaths(ctx, database, batchSize)
+		}
+	}
 
 	for _, opt := range opts {
 		opt(&kvBackendOpts)
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
+}
+
+// natsWatchSubscriber ignores the shadow notifier, which is KV only.
+func natsWatchSubscriber(o resource.KVBackendOptions) resource.EventSubscriber {
+	if !o.EnableNatsNotifier {
+		return nil
+	}
+	return o.EventSubscriber
 }
 
 func newKVGrpcBackend(cfg *setting.Cfg, reg prometheus.Registerer, disableStorageServices bool, kvStore kv.KV, gcGate *resource.GCGate, opts ...StorageBackendOption) (resource.StorageBackend, error) {
@@ -296,6 +327,17 @@ type BackendOptions struct {
 
 	// BlobURL selects the same external blob backend as the resource server.
 	BlobURL string
+
+	// EventPublisher announces committed writes on NATS.
+	EventPublisher resource.EventPublisher
+
+	// WatchNotificationMetadata adds allowlisted object metadata to notifications.
+	WatchNotificationMetadata bool
+
+	// WatchSubscriber, when enabled, feeds watches from NATS instead of polling.
+	WatchSubscriber  resource.EventSubscriber
+	WatchInvalidator resource.Invalidator
+	WatchSettleDelay time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -340,6 +382,12 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		blobGCMetrics:           resource.NewBlobGCMetricsIfEnabled(opts.Reg, "sql", garbageCollection.Enabled && garbageCollection.BlobEnabled),
 		blobURL:                 opts.BlobURL,
 		gcGate:                  opts.GCGate,
+
+		watchPublisher:            resource.NewWatchNotificationPublisher(opts.EventPublisher, opts.Reg, logging.DefaultLogger.With("logger", "sql-resource-server")),
+		watchNotificationMetadata: opts.WatchNotificationMetadata,
+		watchSubscriber:           opts.WatchSubscriber,
+		watchInvalidator:          opts.WatchInvalidator,
+		watchSettleDelay:          opts.WatchSettleDelay,
 	}
 	if err := backend.Init(ctx); err != nil {
 		return nil, err
@@ -399,6 +447,12 @@ type backend struct {
 	dashboardVersionsToKeep int
 	batchTxnTimeout         time.Duration
 	historyPruner           resource.Pruner
+
+	watchPublisher            *resource.WatchNotificationPublisher
+	watchNotificationMetadata bool
+	watchSubscriber           resource.EventSubscriber
+	watchInvalidator          resource.Invalidator
+	watchSettleDelay          time.Duration
 
 	garbageCollection GarbageCollectionConfig
 	gcGate            *resource.GCGate
@@ -475,6 +529,11 @@ func (b *backend) initLocked(ctx context.Context) error {
 		done:            b.done,
 		db:              b.db,
 		dialect:         b.dialect,
+		subscriber:      b.watchSubscriber,
+		invalidator:     b.watchInvalidator,
+		readHistory:     b.readHistoryVersions,
+		settleDelay:     b.watchSettleDelay,
+		reg:             b.reg,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create notifier: %w", err)
@@ -896,22 +955,51 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			time.Sleep(b.simulatedNetworkLatency)
 		}
 		return event.GUID, nil
-	})
+	}, b.afterCommit(ctx, resourcepb.WatchNotification_ADDED, event, folder))
 
 	if err != nil {
 		return 0, err
 	}
 
-	b.notifier.send(ctx, &resource.WrittenEvent{
-		Type:            event.Type,
-		Key:             event.Key,
-		PreviousRV:      event.PreviousRV,
-		Value:           event.Value,
-		ResourceVersion: rv,
-		Folder:          folder,
-	})
-
 	return rv, nil
+}
+
+// afterCommit announces a committed write to local watchers and the bus.
+func (b *backend) afterCommit(ctx context.Context, typ resourcepb.WatchNotification_Type, event resource.WriteEvent, folder string) func(rv int64) {
+	return func(rv int64) {
+		b.notifier.send(ctx, &resource.WrittenEvent{
+			Type:            event.Type,
+			Key:             event.Key,
+			PreviousRV:      event.PreviousRV,
+			Value:           event.Value,
+			ResourceVersion: rv,
+			Folder:          folder,
+		})
+		b.publishWatchNotification(ctx, typ, event, rv, folder)
+	}
+}
+
+// publishWatchNotification leaves previous type and folder empty: they would
+// need an extra read and no consumer uses them. The write is committed, so a
+// cancelled request must not stop the publish.
+func (b *backend) publishWatchNotification(ctx context.Context, typ resourcepb.WatchNotification_Type, event resource.WriteEvent, rv int64, folder string) {
+	if b.watchPublisher == nil {
+		return
+	}
+	n := &resourcepb.WatchNotification{
+		Type:                    typ,
+		Group:                   event.Key.Group,
+		Resource:                event.Key.Resource,
+		Namespace:               event.Key.Namespace,
+		Name:                    event.Key.Name,
+		ResourceVersion:         rv,
+		Folder:                  folder,
+		PreviousResourceVersion: event.PreviousRV,
+	}
+	if b.watchNotificationMetadata {
+		n.Metadata = resource.NewWatchMetadata(schema.GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, event.Object)
+	}
+	b.watchPublisher.Publish(context.WithoutCancel(ctx), n)
 }
 
 // IsRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
@@ -980,20 +1068,11 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			Name:      event.Key.Name,
 		})
 		return event.GUID, nil
-	})
+	}, b.afterCommit(ctx, resourcepb.WatchNotification_MODIFIED, event, folder))
 
 	if err != nil {
 		return 0, err
 	}
-
-	b.notifier.send(ctx, &resource.WrittenEvent{
-		Type:            event.Type,
-		Key:             event.Key,
-		PreviousRV:      event.PreviousRV,
-		Value:           event.Value,
-		ResourceVersion: rv,
-		Folder:          folder,
-	})
 
 	return rv, nil
 }
@@ -1037,20 +1116,11 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 			Name:      event.Key.Name,
 		})
 		return event.GUID, nil
-	})
+	}, b.afterCommit(ctx, resourcepb.WatchNotification_DELETED, event, folder))
 
 	if err != nil {
 		return 0, err
 	}
-
-	b.notifier.send(ctx, &resource.WrittenEvent{
-		Type:            event.Type,
-		Key:             event.Key,
-		PreviousRV:      event.PreviousRV,
-		Value:           event.Value,
-		ResourceVersion: rv,
-		Folder:          folder,
-	})
 
 	return rv, nil
 }
@@ -1395,6 +1465,71 @@ func (b *backend) readHistory(ctx context.Context, key *resourcepb.ResourceKey, 
 	return res.ReadResponse()
 }
 
+// historyVersion identifies one resource_history row.
+type historyVersion struct {
+	Namespace       string
+	Group           string
+	Resource        string
+	Name            string
+	ResourceVersion int64
+}
+
+// historyBatchReadSize bounds the bodies one query returns, like readChunkSize
+// for search reads.
+const historyBatchReadSize = 10
+
+// readHistoryVersions returns the history rows at the given versions, with one
+// query per collection and batch. Missing versions, such as pruned ones, are
+// left out.
+func (b *backend) readHistoryVersions(ctx context.Context, versions []historyVersion) (map[historyVersion]*historyPollResponse, error) {
+	ctx, span := tracer.Start(ctx, "sql.backend.readHistoryVersions")
+	defer span.End()
+	span.SetAttributes(attribute.Int("versions", len(versions)))
+
+	type collection struct{ group, resource string }
+	byCollection := make(map[collection][]int64)
+	wanted := make(map[historyVersion]bool, len(versions))
+	for _, v := range versions {
+		if !wanted[v] {
+			c := collection{v.Group, v.Resource}
+			byCollection[c] = append(byCollection[c], v.ResourceVersion)
+		}
+		wanted[v] = true
+	}
+
+	found := make(map[historyVersion]*historyPollResponse, len(versions))
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		for c, rvs := range byCollection {
+			for chunk := range slices.Chunk(rvs, historyBatchReadSize) {
+				rows, err := dbutil.Query(ctx, tx, sqlResourceHistoryBatchRead, &sqlResourceHistoryBatchReadRequest{
+					SQLTemplate:      sqltemplate.New(b.dialect),
+					Group:            c.group,
+					Resource:         c.resource,
+					ResourceVersions: chunk,
+					Response:         &historyPollResponse{},
+				})
+				if err != nil {
+					return err
+				}
+				for _, row := range rows {
+					v := historyVersion{
+						Namespace: row.Key.Namespace, Group: row.Key.Group, Resource: row.Key.Resource,
+						Name: row.Key.Name, ResourceVersion: row.ResourceVersion,
+					}
+					if wanted[v] {
+						found[v] = row
+					}
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("read history versions: %w", err)
+	}
+	return found, nil
+}
+
 // getHistory fetches the resource history from the resource_history table.
 func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.getHistory")
@@ -1479,10 +1614,14 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 	return iter.listRV, err
 }
 
-// WatchWrittenKeys is not supported: only the KV backend reads written keys
-// from NATS.
-func (b *backend) WatchWrittenKeys(context.Context, []schema.GroupResource, func(string)) (<-chan *resource.WrittenEvent, error) {
-	return nil, resource.ErrWrittenKeysUnsupported
+// WatchWrittenKeys reads written keys from NATS, as on KV, when watches come
+// from the bus, so global search learns of lost keys and reconciles them.
+func (b *backend) WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(string)) (<-chan *resource.WrittenEvent, error) {
+	n, ok := b.notifier.(*natsNotifier)
+	if !ok {
+		return nil, resource.ErrWrittenKeysUnsupported
+	}
+	return resource.WatchWrittenKeysFromBus(ctx, n.subscriber, types, onLost, b.log)
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {

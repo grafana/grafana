@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-const publisherName = "nats-publisher"
+const PublisherServiceName = "nats-publisher"
 
 // Publisher hides nats.go types so callers can mock it.
 type Publisher interface {
@@ -29,7 +29,7 @@ type PublisherService struct {
 func newPublisher(logger log.Logger, m *publisherMetrics, config *Config) *PublisherService {
 	conn := newConnection(rolePublisher, logger, m.connectionMetrics, config, config.PublisherCredentials)
 	p := &PublisherService{connection: conn, metrics: m}
-	p.NamedService = services.NewBasicService(p.starting, p.running, p.stopping).WithName(publisherName)
+	p.NamedService = services.NewBasicService(p.starting, p.running, p.stopping).WithName(PublisherServiceName)
 	return p
 }
 
