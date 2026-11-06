@@ -93,4 +93,24 @@ describe('VizTooltipWrapper', () => {
       expect(cellOf('My Value')).not.toHaveStyle({ maxWidth: '75%' });
     });
   });
+
+  describe('value scroll box', () => {
+    const longValue = 'a value long enough to wrap across several lines in a narrow tooltip';
+
+    it('wraps the value to full height in narrow instead of a fixed-height scroll box', () => {
+      render(
+        <VizTooltipWrapper size="narrow">
+          <VizTooltipRow label="x" value={longValue} showValueScroll />
+        </VizTooltipWrapper>
+      );
+      const value = screen.getByText(longValue);
+      expect(value).toHaveStyle({ wordBreak: 'break-word' });
+      expect(value).not.toHaveStyle({ overflowY: 'auto' });
+    });
+
+    it('keeps the fixed-height value scroll box for auto when showValueScroll is set', () => {
+      render(<VizTooltipRow label="x" value={longValue} showValueScroll />);
+      expect(screen.getByText(longValue)).toHaveStyle({ overflowY: 'auto', maxHeight: '55px' });
+    });
+  });
 });

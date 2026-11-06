@@ -81,18 +81,21 @@ export const VizTooltipRow = ({
   // the delta is a separate node for coloring, but copying the value should keep both values
   const copyText = deltaDisplay == null ? value : `${value} ${deltaDisplay}`;
 
-  const innerValueScrollStyle: CSSProperties = showValueScroll
-    ? {
-        maxHeight: 55,
-        whiteSpace: 'wrap',
-        wordBreak: 'break-word',
-        overflowY: 'auto',
-      }
-    : {
-        whiteSpace: 'pre-line',
-        wordBreak: 'break-word',
-        lineHeight: 1.2,
-      };
+  // A narrow tooltip wraps the value to its full height rather than putting it in a fixed-height
+  // scroll box; `auto` keeps the existing scroll-vs-wrap behaviour unchanged.
+  const innerValueScrollStyle: CSSProperties =
+    showValueScroll && size !== 'narrow'
+      ? {
+          maxHeight: 55,
+          whiteSpace: 'wrap',
+          wordBreak: 'break-word',
+          overflowY: 'auto',
+        }
+      : {
+          whiteSpace: 'pre-line',
+          wordBreak: 'break-word',
+          lineHeight: 1.2,
+        };
 
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);
 
