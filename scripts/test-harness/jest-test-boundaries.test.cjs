@@ -89,6 +89,7 @@ test('the separate harness configuration selects Jest suites, but not source or 
     'scripts/test-harness/regressions/reactSetup.test.tsx',
     'scripts/test-harness/regressions/searchIcons.test.ts',
     'scripts/test-harness/regressions/storeEntryPoint.test.ts',
+    'scripts/test-harness/regressions/testWithFeatureToggles.test.ts',
   ]);
   for (const file of harnessFiles) {
     assert.equal(selected(config, file), jestFiles.includes(file), file);

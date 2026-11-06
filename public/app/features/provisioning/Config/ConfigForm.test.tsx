@@ -1,11 +1,12 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { mockComboboxRect } from '@grafana/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import {
   type Connection,
+  provisioningAPIv0alpha1,
   type Repository,
   type RepositorySpec,
   type SecureValues,
@@ -16,6 +17,7 @@ import {
   AnnoKeyManagerKind,
   ManagerKind,
 } from 'app/features/apiserver/types';
+import { configureStore } from 'app/store/configureStore';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -216,26 +218,19 @@ describe('ConfigForm', () => {
     const terraformRepository = () =>
       managedRepository({ [AnnoKeyManagerKind]: ManagerKind.Terraform, [AnnoKeyManagerIdentity]: 'terraform' });
 
-    it('shows a read-only banner', async () => {
-      setup(terraformRepository());
+    it('shows a read-only banner, keeps Save disabled, and hides Delete after the form has settled', async () => {
+      const store = configureStore();
+      render(<ConfigForm data={terraformRepository()} />, { store });
+
+      // The banner and disabled Save appear immediately; await settings and refs, then flush their updates.
+      // This PAT-based repository skips connection loading.
+      await act(async () => {
+        await Promise.all(store.dispatch(provisioningAPIv0alpha1.util.getRunningQueriesThunk()));
+      });
 
       expect(await screen.findByText(/managed externally/i)).toBeInTheDocument();
-    });
-
-    // Save is also disabled while the connection list is in flight, so settle first to prove it is
-    // the read-only gate holding it rather than a transient loading state.
-    it('keeps Save disabled after the form has settled', async () => {
-      setup(terraformRepository());
-      await screen.findByText(/managed externally/i);
-
       const saveButton = await screen.findByRole('button', { name: /Save/ });
       await waitFor(() => expect(saveButton).toBeDisabled());
-    });
-
-    it('does not render the Delete button', async () => {
-      setup(terraformRepository());
-      await screen.findByText(/managed externally/i);
-
       expect(screen.queryByRole('button', { name: /Delete/ })).not.toBeInTheDocument();
     });
 
