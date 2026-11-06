@@ -1,4 +1,7 @@
 import { act, screen, waitFor } from '@testing-library/react';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import { seedDataSources } from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { render, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,15 +17,10 @@ import { type DashboardPlanningState } from '../types/dashboard';
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(() => ({
-    get: jest.fn().mockResolvedValue({}),
-    getList: jest.fn(),
-    getInstanceSettings: jest.fn(),
-    reload: jest.fn(),
-  })),
-}));
+beforeEach(() => {
+  const settings = makeDataSourceSettings('default-ds', 'Default', 'default-ds-type', { isDefault: true });
+  seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
+});
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
