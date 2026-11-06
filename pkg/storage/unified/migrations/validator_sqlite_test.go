@@ -21,7 +21,7 @@ var sqliteValidationKey = resource.ListRequestKey{
 	Namespace: "default", Group: "folder.grafana.app", Resource: "folders",
 }
 
-func sqliteValidationRevision(name string, rv int64, action kv.DataAction, folder string) resource.DataKey {
+func sqliteValidationRevision(name string, rv int64, action resource.DataAction, folder string) resource.DataKey {
 	return resource.DataKey{
 		Namespace: sqliteValidationKey.Namespace, Group: sqliteValidationKey.Group, Resource: sqliteValidationKey.Resource,
 		Name: name, ResourceVersion: rv, Action: action, Folder: folder,

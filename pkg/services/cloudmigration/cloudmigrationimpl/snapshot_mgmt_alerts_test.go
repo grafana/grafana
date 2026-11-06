@@ -316,7 +316,7 @@ func createMuteTiming(t *testing.T, ctx context.Context, service *Service, user 
 	var mt definitions.MuteTimeInterval
 	require.NoError(t, json.Unmarshal([]byte(muteTiming), &mt))
 
-	interval := v1.NewTimeInterval("", mt.Name, mt.TimeIntervals, models.ProvenanceNone)
+	interval := v1.NewTimeInterval(v1.TimeIntervalUID(mt.Name), mt.Name, mt.TimeIntervals, models.ProvenanceNone)
 	createdTiming, err := service.ngAlert.Api.MuteTimings.CreateMuteTiming(ctx, interval, user.GetOrgID())
 	require.NoError(t, err)
 

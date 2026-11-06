@@ -25,6 +25,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/bus"
@@ -57,8 +58,10 @@ type Bus interface {
 // logged and never fails the write. Delivery is at-most-once, so consumers must
 // still re-list to recover anything missed.
 type Publisher struct {
-	bus       Bus
-	namespace request.NamespaceMapper
+	bus Bus
+	// namespace names the namespace of an org's resources. It receives the ctx of
+	// the write, or of the in-process bus dispatch for a deferred notification.
+	namespace func(ctx context.Context, orgID int64) string
 }
 
 // LegacyWatchNotification is a change to announce once the SQL transaction that makes it
@@ -80,7 +83,7 @@ func ProvidePublisher(cfg *setting.Cfg, nats Bus, events bus.Bus) *Publisher {
 		return nil
 	}
 	p := NewPublisher(nats, request.GetNamespaceMapper(cfg))
-	events.AddEventListener(p.onNotification)
+	p.RegisterListener(events)
 	return p
 }
 
@@ -91,12 +94,36 @@ func ProvideDisabledPublisher() *Publisher {
 }
 
 func (p *Publisher) onNotification(ctx context.Context, n *LegacyWatchNotification) error {
+	// Runs after the SQL transaction has committed, so it must never panic: a nil
+	// or disabled transport drops the notification, as Publish does.
+	if !p.Enabled() {
+		return nil
+	}
 	p.publish(ctx, n.Type, n.Resource, n.OrgID, n.Name, n.ResourceVersion)
 	return nil
 }
 
 func NewPublisher(bus Bus, namespace request.NamespaceMapper) *Publisher {
-	return &Publisher{bus: bus, namespace: namespace}
+	return &Publisher{bus: bus, namespace: func(_ context.Context, orgID int64) string { return namespace(orgID) }}
+}
+
+// NewContextPublisher is a Publisher for a multi-tenant process that serves many
+// stacks from one set of connections: the namespace is the one on the ctx of the
+// write (or of the bus dispatch) rather than derived from the org ID. A write
+// with no namespace on its ctx is dropped with a warning.
+func NewContextPublisher(bus Bus) *Publisher {
+	return &Publisher{bus: bus, namespace: func(ctx context.Context, _ int64) string {
+		return k8srequest.NamespaceValue(ctx)
+	}}
+}
+
+// RegisterListener makes p publish the LegacyWatchNotifications that writers queue
+// on events with db.Session.PublishAfterCommit. Register before events dispatches.
+func (p *Publisher) RegisterListener(events bus.Bus) {
+	if p == nil {
+		return
+	}
+	events.AddEventListener(p.onNotification)
 }
 
 // Enabled reports whether Publish can deliver, so a writer can skip work (e.g. a
@@ -131,7 +158,11 @@ func (p *Publisher) Publish(ctx context.Context, typ resourcepb.WatchNotificatio
 }
 
 func (p *Publisher) publish(ctx context.Context, typ resourcepb.WatchNotification_Type, gr schema.GroupResource, orgID int64, name string, resourceVersion int64) {
-	namespace := p.namespace(orgID)
+	namespace := p.namespace(ctx, orgID)
+	if namespace == "" {
+		logging.FromContext(ctx).Warn("dropping legacy watch notification: no namespace", "resource", gr.String(), "name", name)
+		return
+	}
 	subject := resourcewatch.LegacySubject(gr.WithVersion(""), namespace)
 	payload, err := proto.Marshal(&resourcepb.WatchNotification{
 		Type:            typ,

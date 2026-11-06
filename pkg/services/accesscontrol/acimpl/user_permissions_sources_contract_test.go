@@ -171,14 +171,23 @@ func TestIntegrationGetUserPermissions_ContractSourceCacheClear(t *testing.T) {
 				return err
 			}))
 			if cache {
-				check(accesscontrol.Options{}, []accesscontrol.Permission{baseline, a, a, a})
+				if LegacyUserPermissionsEnabled(ctx) {
+					// AuthZ bypasses the combined basic-role cache, not the team or direct caches.
+					check(accesscontrol.Options{}, []accesscontrol.Permission{baseline, b, a, a})
+				} else {
+					check(accesscontrol.Options{}, []accesscontrol.Permission{baseline, a, a, a})
+				}
 			} else {
 				check(accesscontrol.Options{}, []accesscontrol.Permission{baseline, b, b, b})
 			}
 			s.ClearUserPermissionCache(requester)
 			if cache {
-				// Clear refreshes the direct contribution, not the shared team or basic-role caches.
-				check(accesscontrol.Options{}, []accesscontrol.Permission{baseline, b, a, a})
+				if LegacyUserPermissionsEnabled(ctx) {
+					check(accesscontrol.Options{}, []accesscontrol.Permission{baseline, b, b, a})
+				} else {
+					// Local readers still cache the basic-role contribution as well as teams.
+					check(accesscontrol.Options{}, []accesscontrol.Permission{baseline, b, a, a})
+				}
 			} else {
 				check(accesscontrol.Options{}, []accesscontrol.Permission{baseline, b, b, b})
 			}
