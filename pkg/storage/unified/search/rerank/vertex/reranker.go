@@ -18,12 +18,18 @@ type Reranker struct {
 	client      Client
 	model       string
 	callTimeout time.Duration
+	hedgeDelay  time.Duration
 }
 
 var _ rerank.Scorer = (*Reranker)(nil)
 
 func NewReranker(client Client, model string) *Reranker {
-	return &Reranker{client: client, model: model, callTimeout: 5 * time.Second}
+	return NewRerankerWithHedgeDelay(client, model, rerank.DefaultHedgeDelay)
+}
+
+// NewRerankerWithHedgeDelay uses delay between attempts; nonpositive values disable hedging.
+func NewRerankerWithHedgeDelay(client Client, model string, delay time.Duration) *Reranker {
+	return &Reranker{client: client, model: model, callTimeout: 5 * time.Second, hedgeDelay: delay}
 }
 
 // Score returns scores 1:1 with texts. Records the API omits (it should
@@ -38,7 +44,7 @@ func (r *Reranker) Score(ctx context.Context, query string, texts []string) ([]f
 	callCtx, cancel := context.WithTimeoutCause(ctx, r.callTimeout, rerank.ErrCallTimeout)
 	defer cancel()
 
-	scores, err := rerank.HedgeScores(callCtx, len(texts), func(attemptCtx context.Context) ([]float64, error) {
+	scores, err := rerank.HedgeScores(callCtx, len(texts), r.hedgeDelay, func(attemptCtx context.Context) ([]float64, error) {
 		recs, err := r.client.Rank(attemptCtx, r.model, query, texts)
 		if err != nil {
 			return nil, err

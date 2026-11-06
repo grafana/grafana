@@ -1,6 +1,8 @@
 package setting
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -9,6 +11,51 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestRerankHedgeDelayConfig(t *testing.T) {
+	t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "")
+	for _, tc := range []struct {
+		name, configured, env string
+		setKey                bool
+		want                  time.Duration
+	}{
+		{name: "omitted", want: 500 * time.Millisecond},
+		{name: "empty", setKey: true, want: 500 * time.Millisecond},
+		{name: "malformed", configured: "later", want: 500 * time.Millisecond},
+		{name: "positive", configured: "750ms", want: 750 * time.Millisecond},
+		{name: "zero", configured: "0s"},
+		{name: "negative", configured: "-1s", want: -time.Second},
+		{name: "environment wins", configured: "750ms", env: "250ms", want: 250 * time.Millisecond},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.setKey || tc.configured != "" {
+				cfg.Raw.Section("vector_reranker").Key("hedge_delay").SetValue(tc.configured)
+			}
+			if tc.env != "" {
+				t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", tc.env)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.RerankHedgeDelay)
+		})
+	}
+}
+
+func TestRerankHedgeDelayLoadsCustomINI(t *testing.T) {
+	t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "")
+	path := filepath.Join(t.TempDir(), "custom.ini")
+	require.NoError(t, os.WriteFile(path, []byte("[vector_reranker]\nhedge_delay = 750ms\n"), 0600))
+	cfg := NewCfg()
+	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: path}))
+	require.Equal(t, 750*time.Millisecond, cfg.RerankHedgeDelay)
+}
+
+func TestRerankHedgeDelayEnvironmentWithoutINISection(t *testing.T) {
+	t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "750ms")
+	cfg := NewCfg()
+	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"}))
+	require.Equal(t, 750*time.Millisecond, cfg.RerankHedgeDelay)
+}
 
 func TestUnifiedStorageQuotaResources(t *testing.T) {
 	for _, tc := range []struct {

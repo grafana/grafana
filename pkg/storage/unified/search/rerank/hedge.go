@@ -11,7 +11,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const hedgeDelay = 500 * time.Millisecond
+const DefaultHedgeDelay = 500 * time.Millisecond
 
 type scoreResult struct {
 	scores  []float64
@@ -20,10 +20,10 @@ type scoreResult struct {
 }
 
 // HedgeScores starts one duplicate scoring attempt if the first is still pending
-// after 500 ms. The first valid success wins; an early primary error returns
-// immediately. Both attempts share the caller's deadline. Each attempt must
-// build its own request and honor its context.
-func HedgeScores(ctx context.Context, count int, attempt func(context.Context) ([]float64, error)) ([]float64, error) {
+// after delay. A nonpositive delay disables the duplicate. The first valid
+// success wins; an early primary error returns immediately. Both attempts share
+// the caller's deadline. Each attempt must build its own request and honor its context.
+func HedgeScores(ctx context.Context, count int, delay time.Duration, attempt func(context.Context) ([]float64, error)) ([]float64, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, context.Cause(ctx)
 	}
@@ -53,13 +53,13 @@ func HedgeScores(ctx context.Context, count int, attempt func(context.Context) (
 		}()
 	}
 	start(1)
-	timer := time.NewTimer(hedgeDelay)
-	defer timer.Stop()
-	timerC := timer.C
+	// A nil channel disables the timer case when a duplicate cannot launch.
+	var timerC <-chan time.Time
 	deadline, hasDeadline := ctx.Deadline()
-	if hasDeadline && time.Until(deadline) <= hedgeDelay {
-		timer.Stop()
-		timerC = nil
+	if delay > 0 && (!hasDeadline || time.Until(deadline) > delay) {
+		timer := time.NewTimer(delay)
+		defer timer.Stop()
+		timerC = timer.C
 	}
 	started, pending := 1, 1
 	var failures []error

@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -12,6 +14,52 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 )
+
+type delayedClient struct {
+	calls atomic.Int32
+}
+
+func (c *delayedClient) Rank(ctx context.Context, _, _ string, _ []string) ([]RecordScore, error) {
+	if c.calls.Add(1) == 1 {
+		<-ctx.Done()
+		return nil, ctx.Err()
+	}
+	return []RecordScore{{ID: "0", Score: 0.7}}, nil
+}
+
+func TestReranker_UsesConfiguredHedgeDelay(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		fastClient, slowClient := &delayedClient{}, &delayedClient{}
+		fast := NewRerankerWithHedgeDelay(fastClient, "m", 250*time.Millisecond)
+		slow := NewRerankerWithHedgeDelay(slowClient, "m", 750*time.Millisecond)
+		for _, tc := range []struct {
+			r      *Reranker
+			client *delayedClient
+			delay  time.Duration
+		}{
+			{fast, fastClient, 250 * time.Millisecond},
+			{slow, slowClient, 750 * time.Millisecond},
+		} {
+			start := time.Now()
+			scores, err := tc.r.Score(context.Background(), "q", []string{"a"})
+			require.NoError(t, err)
+			require.Equal(t, []float64{0.7}, scores)
+			require.Equal(t, tc.delay, time.Since(start))
+			require.EqualValues(t, 2, tc.client.calls.Load())
+		}
+	})
+}
+
+func TestReranker_DefaultConstructorHedgesAfter500ms(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		client := &delayedClient{}
+		start := time.Now()
+		_, err := NewReranker(client, "m").Score(context.Background(), "q", []string{"a"})
+		require.NoError(t, err)
+		require.Equal(t, rerank.DefaultHedgeDelay, time.Since(start))
+		require.EqualValues(t, 2, client.calls.Load())
+	})
+}
 
 type fakeClient struct {
 	out      []RecordScore
