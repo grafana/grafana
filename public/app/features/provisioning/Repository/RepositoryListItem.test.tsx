@@ -1,3 +1,4 @@
+import saveAs from 'file-saver';
 import { render, screen } from 'test/test-utils';
 
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
@@ -8,13 +9,13 @@ import {
   ManagerKind,
 } from 'app/features/apiserver/types';
 
+import { setupProvisioningMswServer } from '../mocks/server';
+
 import { RepositoryListItem } from './RepositoryListItem';
 
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
-  useCreateRepositoryJobsMutation: jest.fn().mockReturnValue([jest.fn(), { isLoading: false }]),
-  useListJobQuery: jest.fn().mockReturnValue({ data: undefined }),
-}));
+jest.mock('file-saver', () => jest.fn());
+
+setupProvisioningMswServer();
 
 const createMockRepository = (overrides: Partial<Repository> = {}): Repository => ({
   metadata: { name: 'test-repo' },
@@ -38,6 +39,8 @@ const createMockRepository = (overrides: Partial<Repository> = {}): Repository =
 });
 
 describe('RepositoryListItem', () => {
+  beforeEach(() => jest.clearAllMocks());
+
   describe('repository URL display', () => {
     it('should display repository URL for GitHub repos', () => {
       render(<RepositoryListItem repository={createMockRepository()} />);
@@ -180,6 +183,22 @@ describe('RepositoryListItem', () => {
 
       expect(screen.queryByRole('link', { name: /widgets/ })).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: '3 widgets' })).toBeDisabled();
+    });
+  });
+
+  describe('export', () => {
+    it('downloads the repository as a Repository manifest named after it', async () => {
+      const { user } = render(<RepositoryListItem repository={createMockRepository()} />);
+
+      await user.click(screen.getByRole('button', { name: /export/i }));
+
+      const [blob, filename] = jest.mocked(saveAs).mock.calls[0];
+      expect(filename).toBe('test-repo.json');
+      expect(JSON.parse(await (blob as Blob).text())).toMatchObject({
+        kind: 'Repository',
+        metadata: { name: 'test-repo' },
+        spec: { title: 'Test Repository', github: { url: 'https://github.com/owner/repo' } },
+      });
     });
   });
 

@@ -74,13 +74,12 @@ func TestBulkProcessRejectsUnsafeBlobInput(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, skip := range []bool{false, true} {
-				backend, stream := runBulkBlobValidationTest(t, tc.req(), skip)
+				backend, stream, err := runBulkBlobValidationTest(t, tc.req(), skip)
 				require.Empty(t, backend.forwarded)
 				require.True(t, backend.rollback)
-				require.NotNil(t, stream.response)
-				require.Zero(t, stream.response.Processed)
-				require.NotNil(t, stream.response.Error)
-				require.Equal(t, tc.code, stream.response.Error.Code)
+				require.Nil(t, stream.response, "a failure must not also be sent as a response")
+				require.Error(t, err)
+				require.Equal(t, tc.code, AsErrorResult(err).Code)
 				require.Empty(t, stream.headers.Get(resourcepb.InlineBlobMetadataKey))
 			}
 		})
@@ -110,7 +109,8 @@ func TestBulkProcessPreservesReferenceOnlyInput(t *testing.T) {
 			for _, skip := range []bool{false, true} {
 				req := tc.req()
 				original := append([]byte(nil), req.Value...)
-				backend, stream := runBulkBlobValidationTest(t, req, skip)
+				backend, stream, err := runBulkBlobValidationTest(t, req, skip)
+				require.NoError(t, err)
 				require.False(t, backend.rollback)
 				require.Equal(t, skip, backend.settings.SkipValidation)
 				require.Len(t, backend.forwarded, 1)
@@ -185,12 +185,14 @@ func TestBulkProcessBlobValidationBeforeUpload(t *testing.T) {
 			md := metadata.Join((&BulkSettings{Collection: []*resourcepb.ResourceKey{collection}, SkipValidation: true}).ToMD(), metadata.Pairs(resourcepb.InlineBlobMetadataKey, "1"))
 			ctx = metadata.NewIncomingContext(ctx, md)
 			stream := &negotiatedBulkBlobStream{bulkBlobValidationStream: bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: []*resourcepb.BulkRequest{req}}}}
-			require.NoError(t, srv.BulkProcess(stream))
+			err := srv.BulkProcess(stream)
 			require.Zero(t, uploads)
 			require.Empty(t, backend.forwarded)
 			require.False(t, backend.called)
 			require.False(t, backend.rollback)
-			require.EqualValues(t, http.StatusBadRequest, stream.response.Error.Code)
+			require.Nil(t, stream.response)
+			require.Error(t, err)
+			require.EqualValues(t, http.StatusBadRequest, AsErrorResult(err).Code)
 		})
 	}
 }
@@ -290,12 +292,11 @@ func TestBulkProcessReturnsDiskSpoolReplayErrors(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.Join(settings.ToMD(), metadata.Pairs(resourcepb.InlineBlobMetadataKey, "1")))
 			stream := &negotiatedBulkBlobStream{bulkBlobValidationStream: bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: []*resourcepb.BulkRequest{req}}}}
 
-			require.NoError(t, srv.BulkProcess(stream))
+			err := srv.BulkProcess(stream)
 			require.NoError(t, backend.err)
 			require.True(t, backend.rollback)
-			require.NotNil(t, stream.response.Error)
-			require.Contains(t, stream.response.Error.Message, tc.message)
-			require.Zero(t, stream.response.Processed)
+			require.Nil(t, stream.response)
+			require.Contains(t, rpcErrorResult(t, err).Message, tc.message)
 		})
 	}
 }
@@ -329,13 +330,13 @@ func TestBulkProcessBlobUploadFailureDoesNotPublish(t *testing.T) {
 			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
 			ctx = metadata.NewIncomingContext(ctx, md)
 			stream := &negotiatedBulkBlobStream{bulkBlobValidationStream: bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: append([]*resourcepb.BulkRequest{req}, tc.frames...)}}}
-			require.NoError(t, srv.BulkProcess(stream))
+			err := srv.BulkProcess(stream)
 			require.NoError(t, resourcepb.ValidateInlineBlobAcknowledgement(stream.headers))
 			require.Empty(t, backend.forwarded)
 			require.False(t, backend.called)
 			require.False(t, backend.rollback)
-			require.NotNil(t, stream.response.Error)
-			require.Zero(t, stream.response.Processed)
+			require.Nil(t, stream.response)
+			require.Error(t, err)
 		})
 	}
 }
@@ -361,11 +362,11 @@ func TestBulkProcessBlobHandshakeFailsClosed(t *testing.T) {
 			header[resourcepb.InlineBlobMetadataKey] = tc.version
 			ctx = metadata.NewIncomingContext(ctx, header)
 			stream := &negotiatedBulkBlobStream{bulkBlobValidationStream: bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: []*resourcepb.BulkRequest{req}}}}
-			require.NoError(t, srv.BulkProcess(stream))
+			err := srv.BulkProcess(stream)
 			require.Empty(t, stream.headers.Get(resourcepb.InlineBlobMetadataKey))
 			require.Zero(t, stream.idx)
-			require.NotNil(t, stream.response.Error)
-			require.Equal(t, tc.code, stream.response.Error.Code)
+			require.Nil(t, stream.response)
+			require.Equal(t, tc.code, rpcErrorResult(t, err).Code)
 			require.Empty(t, backend.forwarded)
 		})
 	}
@@ -401,7 +402,7 @@ func bulkBlobBody(body string) func() *resourcepb.BulkRequest {
 	}
 }
 
-func runBulkBlobValidationTest(t *testing.T, req *resourcepb.BulkRequest, skip bool) (*bulkBlobValidationBackend, *bulkBlobValidationStream) {
+func runBulkBlobValidationTest(t *testing.T, req *resourcepb.BulkRequest, skip bool) (*bulkBlobValidationBackend, *bulkBlobValidationStream, error) {
 	t.Helper()
 	backend := &bulkBlobValidationBackend{}
 	srv := &server{backend: backend, access: authlib.FixedAccessClient(true), bulkBatchOptions: DefaultBulkBatchOptions()}
@@ -414,8 +415,8 @@ func runBulkBlobValidationTest(t *testing.T, req *resourcepb.BulkRequest, skip b
 	})
 	ctx = metadata.NewIncomingContext(ctx, settings.ToMD())
 	stream := &bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: []*resourcepb.BulkRequest{req}}}
-	require.NoError(t, srv.BulkProcess(stream))
-	return backend, stream
+	err := srv.BulkProcess(stream)
+	return backend, stream, err
 }
 
 type bulkBlobValidationBackend struct {

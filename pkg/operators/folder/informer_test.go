@@ -13,10 +13,24 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestStampResourceVersion(t *testing.T) {
+	obj := func() runtime.Object {
+		return &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: "stacks-1", Name: "a"}}
+	}
+
+	stamped := stampResourceVersion(obj(), &resourcepb.WatchNotification{ResourceVersion: 2118421378851557376})
+	require.Equal(t, "2118421378851557376", stamped.(*foldersv1.Folder).ResourceVersion)
+
+	unversioned := stampResourceVersion(obj(), &resourcepb.WatchNotification{})
+	require.Empty(t, unversioned.(*foldersv1.Folder).ResourceVersion, "an event without a version must stay unversioned so it is always enqueued")
+}
 
 func TestListFolderKeys(t *testing.T) {
 	first := storagev0.ListKeyItem{Namespace: "stacks-1", Name: "a", ResourceVersion: "10", Folder: "parent"}
