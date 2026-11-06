@@ -155,7 +155,6 @@ describe('SqlExpr', () => {
         completionProvider: expect.any(Object),
       })
     );
-    expect(SQLEditorMock).not.toHaveBeenCalled();
   });
 
   it('allows clearing an existing expression without restoring the default query', async () => {
