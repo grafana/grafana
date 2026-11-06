@@ -373,6 +373,13 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		return nil, err
 	}
 
+	if !create {
+		if err := r.keepCommittedSecureValues(ctx, parsed, opts.Path, opts.Ref); err != nil {
+			return nil, err
+		}
+	}
+
+	// Guard what will be written, so the restored values are checked too.
 	if err := checkSecureValues(parsed); err != nil {
 		return nil, err
 	}
@@ -635,8 +642,10 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 }
 
 func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
-	// Read the original file to get its content for parsing and authorization
-	originalFile, err := r.repo.Read(ctx, opts.OriginalPath, "")
+	// Read the original file to get its content for parsing and authorization. The
+	// copy being moved is the one on the target ref, which can differ from the
+	// configured branch -- a secret rotated there must not be moved back.
+	originalFile, err := r.readWithRefFallback(ctx, opts.OriginalPath, opts.Ref)
 	if err != nil {
 		return nil, fmt.Errorf("read original file: %w", err)
 	}
@@ -671,6 +680,10 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	newParsed, err := r.parser.Parse(ctx, newInfo)
 	if err != nil {
 		return nil, fmt.Errorf("parse new file: %w", err)
+	}
+
+	if len(opts.Data) > 0 && newParsed.Repo.Type.AllowsSecureValues() {
+		keepPlaintextSecureValues(parsed.Obj, newParsed.Obj)
 	}
 
 	// This path writes the resource to storage below, so it is guarded whether or
@@ -863,4 +876,46 @@ func (r *DualReadWriter) shouldUpdateGrafanaDB(opts DualWriteOptions, parsed *Pa
 	}
 
 	return r.isConfiguredBranch(opts)
+}
+
+// readWithRefFallback reads path on ref, falling back to the configured branch
+// when ref does not exist yet: a new PR branch starts from that branch's copy.
+func (r *DualReadWriter) readWithRefFallback(ctx context.Context, path, ref string) (*repository.FileInfo, error) {
+	info, err := r.repo.Read(ctx, path, ref)
+	if errors.Is(err, repository.ErrRefNotFound) && ref != "" {
+		return r.repo.Read(ctx, path, "")
+	}
+	return info, err
+}
+
+// keepCommittedSecureValues restores into the update the plaintext secure values
+// already committed at path. A client that saves back what the resource API
+// returned carries only the reference, which would otherwise drop the secret from
+// the repository and leave the file unable to provision the resource again.
+func (r *DualReadWriter) keepCommittedSecureValues(ctx context.Context, parsed *ParsedResource, path, ref string) error {
+	// A repository type that cannot hold secure values has nothing worth keeping:
+	// checkSecureValues rejects such content and sync refuses the file, so the
+	// plaintext is inert there and this would only cost a read.
+	if !parsed.Repo.Type.AllowsSecureValues() {
+		return nil
+	}
+
+	committed, err := r.readWithRefFallback(ctx, path, ref)
+	if err != nil {
+		if errors.Is(err, repository.ErrFileNotFound) || errors.Is(err, repository.ErrRefNotFound) || apierrors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("read committed file: %w", err)
+	}
+
+	obj, _, _, parseErr := ParseFileResource(ctx, committed)
+	if parseErr != nil {
+		// The update replaces a file we cannot read as a resource, so it has no
+		// secure values to keep.
+		return nil
+	}
+
+	keepPlaintextSecureValues(obj, parsed.Obj)
+
+	return nil
 }

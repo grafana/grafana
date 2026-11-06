@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -75,4 +77,48 @@ func secureValueWrites(obj map[string]any) []string {
 	slices.Sort(keys)
 
 	return keys
+}
+
+// keepPlaintextSecureValues copies every plaintext secure value of committed into
+// updated, unless the update sets its own value for that key.
+func keepPlaintextSecureValues(committed, updated *unstructured.Unstructured) {
+	previous, ok := committed.Object[secureValuesField].(map[string]any)
+	if !ok {
+		return
+	}
+
+	current, _ := updated.Object[secureValuesField].(map[string]any)
+	for key, value := range previous {
+		secureValue, ok := value.(map[string]any)
+		if !ok {
+			continue
+		}
+		if create, ok := secureValue["create"].(string); !ok || create == "" {
+			continue
+		}
+		if setsOwnSecureValue(current[key]) {
+			continue
+		}
+
+		if current == nil {
+			current = map[string]any{}
+			updated.Object[secureValuesField] = current
+		}
+		current[key] = runtime.DeepCopyJSON(secureValue)
+	}
+}
+
+// setsOwnSecureValue reports whether an update declares the value itself, either
+// as a new plaintext or as a removal.
+func setsOwnSecureValue(value any) bool {
+	secureValue, ok := value.(map[string]any)
+	if !ok {
+		return false
+	}
+	if create, ok := secureValue["create"].(string); ok && create != "" {
+		return true
+	}
+	remove, _ := secureValue["remove"].(bool)
+
+	return remove
 }

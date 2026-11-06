@@ -1870,6 +1870,225 @@ func TestDualReadWriter_FolderScopeGuard(t *testing.T) {
 	})
 }
 
+func TestKeepPlaintextSecureValues(t *testing.T) {
+	secureObject := func(secure map[string]any) *unstructured.Unstructured {
+		obj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+			"kind":       "DataSource",
+			"metadata":   map[string]any{"name": "ds-1"},
+			"spec":       map[string]any{"title": "DS"},
+		}}
+		if secure != nil {
+			obj.Object["secure"] = secure
+		}
+		return obj
+	}
+
+	for _, tt := range []struct {
+		name      string
+		committed map[string]any
+		updated   map[string]any
+		want      map[string]any
+	}{
+		{
+			name:      "reference is replaced by the committed plaintext",
+			committed: map[string]any{"password": map[string]any{"create": "hunter2"}},
+			updated:   map[string]any{"password": map[string]any{"name": "lds-sv-ds-1-password"}},
+			want:      map[string]any{"password": map[string]any{"create": "hunter2"}},
+		},
+		{
+			name:      "missing key is restored",
+			committed: map[string]any{"password": map[string]any{"create": "hunter2", "description": "db"}},
+			updated:   nil,
+			want:      map[string]any{"password": map[string]any{"create": "hunter2", "description": "db"}},
+		},
+		{
+			name:      "a new plaintext wins",
+			committed: map[string]any{"password": map[string]any{"create": "hunter2"}},
+			updated:   map[string]any{"password": map[string]any{"create": "rotated"}},
+			want:      map[string]any{"password": map[string]any{"create": "rotated"}},
+		},
+		{
+			name:      "an explicit removal wins",
+			committed: map[string]any{"password": map[string]any{"create": "hunter2"}},
+			updated:   map[string]any{"password": map[string]any{"remove": true}},
+			want:      map[string]any{"password": map[string]any{"remove": true}},
+		},
+		{
+			name:      "a committed reference is not a secret to keep",
+			committed: map[string]any{"password": map[string]any{"name": "shared-password"}},
+			updated:   nil,
+			want:      nil,
+		},
+		{
+			name:      "other keys are left alone",
+			committed: map[string]any{"password": map[string]any{"create": "hunter2"}},
+			updated:   map[string]any{"token": map[string]any{"create": "t"}},
+			want: map[string]any{
+				"password": map[string]any{"create": "hunter2"},
+				"token":    map[string]any{"create": "t"},
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			updated := secureObject(tt.updated)
+			keepPlaintextSecureValues(secureObject(tt.committed), updated)
+			if tt.want == nil {
+				require.NotContains(t, updated.Object, "secure")
+				return
+			}
+			require.Equal(t, tt.want, updated.Object["secure"])
+		})
+	}
+
+	t.Run("committed plaintext is copied, not shared", func(t *testing.T) {
+		committed := secureObject(map[string]any{"password": map[string]any{"create": "hunter2"}})
+		updated := secureObject(nil)
+		keepPlaintextSecureValues(committed, updated)
+
+		kept, ok := updated.Object["secure"].(map[string]any)["password"].(map[string]any)
+		require.True(t, ok)
+		kept["create"] = "mutated"
+		require.Equal(t, "hunter2", committed.Object["secure"].(map[string]any)["password"].(map[string]any)["create"])
+	})
+}
+
+// TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues verifies that an update
+// carrying only the secure value reference the resource API returns does not drop the
+// plaintext already committed in the file.
+func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
+	const (
+		repoName = "repo"
+		path     = "datasource.json"
+	)
+
+	committed := &repository.FileInfo{Path: path, Hash: "h", Data: []byte(`{
+		"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+		"kind": "DataSource",
+		"metadata": {"name": "ds-1"},
+		"spec": {"title": "DS"},
+		"secure": {"password": {"create": "hunter2"}}
+	}`)}
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+		"kind":       "DataSource",
+		"metadata":   map[string]any{"name": "ds-1", "namespace": "default"},
+		"spec":       map[string]any{"title": "DS renamed"},
+		"secure":     map[string]any{"password": map[string]any{"name": "lds-sv-ds-1-password"}},
+	}}
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: repoName})
+
+	var written *unstructured.Unstructured
+	client := &MockDynamicResourceInterface{}
+	client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(&unstructured.Unstructured{}, nil).
+		Run(func(args mock.Arguments) {
+			written = args.Get(1).(*unstructured.Unstructured).DeepCopy()
+		})
+
+	parsed := &ParsedResource{
+		Info:   &repository.FileInfo{Path: path},
+		Obj:    obj,
+		Meta:   meta,
+		GVK:    schema.GroupVersionKind{Group: "testdata.datasource.grafana.app", Version: "v0alpha1", Kind: "DataSource"},
+		GVR:    schema.GroupVersionResource{Group: "testdata.datasource.grafana.app", Version: "v0alpha1", Resource: "datasources"},
+		Client: client,
+		Repo:   provisioning.ResourceRepositoryInfo{Name: repoName, Namespace: "default"},
+		Action: provisioning.ResourceActionUpdate,
+		// Existing + DryRunResponse are pre-set so Run goes straight to the update call.
+		Existing:       obj.DeepCopy(),
+		DryRunResponse: obj.DeepCopy(),
+	}
+
+	var savedFile []byte
+	rw := repository.NewMockReaderWriter(t)
+	rw.On("Config").Return(newSyncEnabledConfig(repoName))
+	rw.On("Read", mock.Anything, path, "").Return(committed, nil)
+	rw.On("Update", mock.Anything, path, "", mock.Anything, "msg").Return(nil).
+		Run(func(args mock.Arguments) {
+			savedFile = args.Get(3).([]byte)
+		})
+
+	parser := NewMockParser(t)
+	parser.On("Parse", mock.Anything, mock.Anything).Return(parsed, nil)
+
+	dw := NewDualReadWriter(rw, parser, NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind), stubAuthorizer{}, false)
+	_, err = dw.UpdateResource(context.Background(), DualWriteOptions{
+		Path:       path,
+		Message:    "msg",
+		SkipDryRun: true,
+	})
+	require.NoError(t, err)
+
+	var saved map[string]any
+	require.NoError(t, json.Unmarshal(savedFile, &saved))
+	require.Equal(t,
+		map[string]any{"password": map[string]any{"create": "hunter2"}},
+		saved["secure"],
+		"the file must keep the plaintext it already had")
+
+	require.NotNil(t, written)
+	require.Equal(t,
+		map[string]any{"password": map[string]any{"create": "hunter2"}},
+		written.Object["secure"],
+		"the resource update must carry the plaintext from the file")
+}
+
+func TestKeepCommittedSecureValues_ReadFallback(t *testing.T) {
+	const path = "datasource.json"
+
+	committed := &repository.FileInfo{Path: path, Data: []byte(`{
+		"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+		"kind": "DataSource",
+		"metadata": {"name": "ds-1"},
+		"spec": {"title": "DS"},
+		"secure": {"password": {"create": "hunter2"}}
+	}`)}
+
+	newParsed := func() *ParsedResource {
+		return &ParsedResource{Obj: &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+			"kind":       "DataSource",
+			"metadata":   map[string]any{"name": "ds-1"},
+			"spec":       map[string]any{"title": "DS"},
+		}}}
+	}
+
+	t.Run("a branch that does not exist yet falls back to the configured branch", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, path, "feature").Return(nil, repository.ErrRefNotFound)
+		rw.On("Read", mock.Anything, path, "").Return(committed, nil)
+
+		parsed := newParsed()
+		dw := &DualReadWriter{repo: rw}
+		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, "feature"))
+		require.Equal(t,
+			map[string]any{"password": map[string]any{"create": "hunter2"}},
+			parsed.Obj.Object["secure"])
+	})
+
+	t.Run("a new file has nothing to keep", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, path, "").Return(nil, repository.ErrFileNotFound)
+
+		parsed := newParsed()
+		dw := &DualReadWriter{repo: rw}
+		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, ""))
+		require.NotContains(t, parsed.Obj.Object, "secure")
+	})
+
+	t.Run("a failed read fails the update", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, path, "").Return(nil, assert.AnError)
+
+		dw := &DualReadWriter{repo: rw}
+		require.ErrorIs(t, dw.keepCommittedSecureValues(context.Background(), newParsed(), path, ""), assert.AnError)
+	})
+}
+
 func TestMoveFile_SecureValues(t *testing.T) {
 	dashboardGVK := schema.GroupVersionKind{
 		Group:   "dashboard.grafana.app",
@@ -1962,5 +2181,49 @@ func TestMoveFile_SecureValues(t *testing.T) {
 		mockClient.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		mockClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		rw.AssertNotCalled(t, "Move", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+}
+
+func TestKeepCommittedSecureValues_RepositoryTypeGate(t *testing.T) {
+	const path = "datasource.json"
+
+	parsedFor := func(repoType provisioning.RepositoryType) *ParsedResource {
+		return &ParsedResource{
+			Repo: provisioning.ResourceRepositoryInfo{Type: repoType},
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+				"kind":       "DataSource",
+				"metadata":   map[string]any{"name": "ds-1"},
+				"spec":       map[string]any{"title": "DS"},
+			}},
+		}
+	}
+
+	t.Run("a git repository is not read at all", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+
+		dw := &DualReadWriter{repo: rw}
+		parsed := parsedFor(provisioning.GitHubRepositoryType)
+		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, ""))
+		require.NotContains(t, parsed.Obj.Object, "secure")
+		rw.AssertNotCalled(t, "Read", mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("a repository that allows secure values is read", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, path, "").Return(&repository.FileInfo{Path: path, Data: []byte(`{
+			"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+			"kind": "DataSource",
+			"metadata": {"name": "ds-1"},
+			"spec": {"title": "DS"},
+			"secure": {"password": {"create": "hunter2"}}
+		}`)}, nil)
+
+		dw := &DualReadWriter{repo: rw}
+		parsed := parsedFor(provisioning.LocalRepositoryType)
+		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, ""))
+		require.Equal(t,
+			map[string]any{"password": map[string]any{"create": "hunter2"}},
+			parsed.Obj.Object["secure"])
 	})
 }
