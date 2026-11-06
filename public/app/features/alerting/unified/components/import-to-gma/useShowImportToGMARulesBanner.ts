@@ -1,9 +1,7 @@
-import { useMemo } from 'react';
-
 import { config } from '@grafana/runtime';
 
+import { useDataSourcesForRules } from '../../hooks/useDataSourcesForRules';
 import { useImportEntrypointState } from '../../hooks/useImportEntrypointState';
-import { getRulesDataSources } from '../../utils/datasource';
 
 import { useCanImportToGMA } from './useCanImportToGMA';
 
@@ -14,7 +12,7 @@ import { useCanImportToGMA } from './useCanImportToGMA';
  */
 export function useShowImportToGMARulesBanner(): boolean {
   const { canImportRules } = useCanImportToGMA();
-  const hasExternalRulesSources = useMemo(() => getRulesDataSources().length > 0, []);
+  const hasExternalRulesSources = useDataSourcesForRules().items.length > 0;
   const { disabled: importDisabled, isLoading: importStateLoading } = useImportEntrypointState();
 
   return (
