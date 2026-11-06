@@ -46,21 +46,6 @@ func (p *rulesRuleAccessControl) AuthorizeRuleRead(ctx context.Context, user ide
 	return nil
 }
 
-// AuthorizeRuleGroupRead authorizes the read access to a group of rules for a user.
-// It first checks if the user has permission to read all rules. If yes, it bypasses the authorization.
-// If not, it calls the RuleAccessControlService to authorize access to the rule group.
-// It returns an error if the authorization fails or if there is an error during permission check.
-func (p *rulesRuleAccessControl) AuthorizeRuleGroupRead(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
-	can, err := p.CanReadAllRules(ctx, user)
-	if err != nil {
-		return err
-	}
-	if !can {
-		return p.AuthorizeAccessToRuleGroup(ctx, user, rules)
-	}
-	return nil
-}
-
 // AuthorizeRuleGroupWrite authorizes the write access to a group of rules for a user.
 // It first checks if the user has permission to write all rules. If yes, it bypasses the authorization.
 // If not, it calls the RuleAccessControlService to authorize the rule changes.
