@@ -1,15 +1,13 @@
 import {
+  type AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
   SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
   type SupportedExternalPrometheusFlavoredRulesSourceType,
   isDataSourceManagingAlerts,
 } from '@grafana/alerting/internal';
 import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceSettings } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import {
-  type AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-  AlertmanagerChoice,
-} from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import {
   type DataSourceRulesSourceIdentifier as DataSourceRulesSourceIdentifier,
   type GrafanaRulesSourceIdentifier,

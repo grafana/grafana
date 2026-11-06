@@ -2,11 +2,11 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import * as React from 'react';
 import { Provider } from 'react-redux';
 
+import { AlertManagerImplementation } from '@grafana/alerting/internal';
 import { store } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 
 import * as useAlertManagerSources from '../hooks/useAlertManagerSources';
