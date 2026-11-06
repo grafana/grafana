@@ -5277,28 +5277,6 @@ func TestPutBlobReturnsBackendBodyFailureAsError(t *testing.T) {
 	requireRPCError(t, err, want)
 }
 
-type bodyErrorStatsBackend struct {
-	missingReadBackend
-	result *resourcepb.ResourceStatsResponse
-}
-
-func (b *bodyErrorStatsBackend) GetStats(context.Context, *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
-	return b.result, nil
-}
-
-func TestGetStatsReturnsBackendBodyFailureAsError(t *testing.T) {
-	want := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats failed"}
-	backend := &bodyErrorStatsBackend{result: &resourcepb.ResourceStatsResponse{Error: want}}
-	srv, err := NewResourceServer(ResourceServerOptions{Backend: backend})
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
-	ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
-
-	rsp, err := srv.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default"})
-	require.Nil(t, rsp)
-	requireRPCError(t, err, want)
-}
-
 func TestGetStatsPassesThroughClientResult(t *testing.T) {
 	want := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats failed"}
 	stats := newFakeResourceIndexClient()

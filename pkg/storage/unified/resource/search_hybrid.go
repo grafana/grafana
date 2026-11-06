@@ -291,7 +291,7 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 				}
 			}
 		})
-		if err := searchCallError(lexResp, err); err != nil {
+		if err := searchCallError(err); err != nil {
 			return nil, fmt.Errorf("lexical leg: %w", err)
 		}
 		hits, err := lexicalHitsFromResponse(lexResp)
@@ -394,7 +394,7 @@ func (s *searchServer) resolveSemanticMetadata(ctx context.Context, key *resourc
 		Fields:       []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_TAGS},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := searchCallError(resp, err); err != nil {
+	if err := searchCallError(err); err != nil {
 		s.log.Warn("hybrid search: semantic metadata resolution failed", "err", err)
 		return
 	}
@@ -455,7 +455,7 @@ func (s *searchServer) resolveFolderTitles(ctx context.Context, namespace string
 		Fields:       []string{SEARCH_FIELD_TITLE},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := searchCallError(resp, err); err != nil {
+	if err := searchCallError(err); err != nil {
 		s.log.Warn("hybrid search: folder title resolution failed", "err", err)
 		return
 	}
@@ -548,13 +548,13 @@ func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
 	}
 }
 
-// searchCallError maps an ErrorResult — embedded in the response or attached
-// to a grpc error's details — to a single error, so either form yields
-// the same code. The result replaces the grpc error rather than joining
-// it, which would let the grpc status win status.Code.
-func searchCallError(resp *resourcepb.ResourceSearchResponse, err error) error {
+// searchCallError maps an ErrorResult attached to a grpc error's details
+// through grpcErrorFromErrorResult, so every in-process search failure
+// yields the same code. The result replaces the grpc error rather than
+// joining it, which would let the grpc status win status.Code.
+func searchCallError(err error) error {
 	if err == nil {
-		return grpcErrorFromErrorResult(resp.GetError())
+		return nil
 	}
 	if res := resourceutil.ErrorResultFromGRPCDetails(err); res != nil {
 		return grpcErrorFromErrorResult(res)

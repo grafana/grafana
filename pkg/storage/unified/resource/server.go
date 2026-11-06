@@ -2639,7 +2639,7 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 	}
 
 	if s.search != nil {
-		return statsCallResult(s.search.GetStats(ctx, req))
+		return s.search.GetStats(ctx, req)
 	}
 
 	if s.searchClient != nil {
@@ -2649,21 +2649,10 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 	// TODO: remove this fallback once the SQL backend is phased out; it's not implemented
 	// in the KV backend.
 	if srv, ok := s.backend.(StatsGetter); ok {
-		return statsCallResult(srv.GetStats(ctx, req))
+		return srv.GetStats(ctx, req)
 	}
 
 	return nil, fmt.Errorf("search index not configured")
-}
-
-// Direct Go calls to local search and the SQL stats fallback bypass unary gRPC
-// conversion and can still return body errors; these are not errors from a gRPC
-// server. This temporary conversion can be removed once those producers return
-// native errors.
-func statsCallResult(rsp *resourcepb.ResourceStatsResponse, err error) (*resourcepb.ResourceStatsResponse, error) {
-	if err == nil && rsp.GetError() != nil {
-		return nil, GRPCStatusError(rsp.GetError())
-	}
-	return rsp, err
 }
 
 // requireUserNamespace is a cross-tenant safety net for delegated-only
