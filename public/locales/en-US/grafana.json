@@ -2500,6 +2500,7 @@
       "no-condition-tooltip": "Select a query condition to preview routing",
       "permission-warning": "Preview not available",
       "permission-warning-message": "You don't have permission to view notification policies. Preview is not available.",
+      "policy-not-found": "Notification policy \"{{policyName}}\" was not found.",
       "preview-routing": "Preview routing",
       "select-folder-tooltip": "Select a folder to preview routing",
       "text-loading-preview": "Loading preview...",
@@ -12404,7 +12405,8 @@
     "log-details": {
       "error": {
         "diagnose-with-assistant": "Diagnose with assistant",
-        "error-details": "Error details"
+        "error-details": "Error details",
+        "expand-stacktrace": "Expand stack trace"
       }
     },
     "log-labels": {
@@ -13796,8 +13798,12 @@
     "view": {
       "available-once-created": "Available once you write something",
       "copy-link": "Copy link",
-      "mode-edit": "Edit",
-      "mode-view": "View",
+      "mode-current": "Notebook mode: {{mode}}",
+      "mode-edit-description": "Edit text and panels.",
+      "mode-editing": "Editing",
+      "mode-label": "Notebook mode",
+      "mode-view-description": "View and explore the notebook.",
+      "mode-viewing": "Viewing",
       "more-actions": "More actions"
     }
   },
@@ -15989,28 +15995,17 @@
       "give-feedback": "Give feedback",
       "tooltip": "Experimental feature options"
     },
-    "footer": {
-      "edit-option": "Edit {{label}}",
-      "inspect-queries": "Inspect queries",
-      "label": {
-        "interval": "Interval",
-        "max-data-points": "Max data points",
-        "min-interval": "Min interval",
-        "relative-time": "Relative time",
-        "time-shift": "Time shift"
-      },
-      "placeholder": {
-        "no-limit": "No limit"
-      },
-      "query-inspector": "Query inspector",
-      "query-options": "Query options"
-    },
     "header": {
       "alert": "Alert",
+      "enter-stacked-view": "Enter stacked view",
+      "exit-stacked-view": "Exit stacked view",
       "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
       "pending-transformation": "Select a transformation",
       "pending-transformation-cancel": "Cancel",
+      "showing-items_one": "Showing {{count}} item",
+      "showing-items_other": "Showing {{count}} items",
+      "stacked-view": "Stacked view",
       "transformation": "Transformation"
     },
     "help": {
@@ -16028,6 +16023,22 @@
       "add-query": "Add query",
       "message": "Add a query, expression, or transformation to get started"
     },
+    "query-options-bar": {
+      "edit-option": "Edit {{label}}",
+      "inspect-queries": "Inspect queries",
+      "label": {
+        "interval": "Interval",
+        "max-data-points": "Max data points",
+        "min-interval": "Min interval",
+        "relative-time": "Relative time",
+        "time-shift": "Time shift"
+      },
+      "placeholder": {
+        "no-limit": "No limit"
+      },
+      "query-inspector": "Query inspector",
+      "query-options": "Query options"
+    },
     "sidebar": {
       "add": "Add",
       "add-below": "Add below {{id}}",
@@ -16043,8 +16054,6 @@
       "card-click": "Select card {{id}}",
       "card-multi-select": "Include card {{id}} in bulk selection",
       "data": "Data",
-      "enter-stacked-view": "Enter stacked view",
-      "exit-stacked-view": "Exit stacked view",
       "footer-items_one": "{{count}} items",
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
@@ -16055,20 +16064,15 @@
       "new-type": "New {{type}}",
       "queries-empty": "No queries or expressions",
       "queries-expressions": "Queries & Expressions",
-      "stacked": "Stack",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
       "transformations-empty": "No transformations",
       "view-toggle": "View"
     },
     "stacked": {
-      "exit": "Exit stacked view",
-      "exit-aria-label": "Exit stacked view",
       "heading": "{{type}} {{name}}",
       "heading-with-detail": "{{type}} {{name}}, {{detail}}",
-      "scroll-area-aria-label": "Stacked editor items",
-      "showing-items_one": "Showing {{count}} items",
-      "showing-items_other": "Showing {{count}} items"
+      "scroll-area-aria-label": "Stacked editor items"
     },
     "transformation-debug": {
       "copy-input-data": "Copy input data to clipboard",
