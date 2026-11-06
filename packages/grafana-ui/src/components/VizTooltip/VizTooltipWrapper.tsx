@@ -30,13 +30,10 @@ export interface VizTooltipWrapperProps extends HTMLAttributes<HTMLDivElement> {
 /** @alpha */
 export const VizTooltipWrapper = ({ children, className, size = DEFAULT_VIZ_TOOLTIP_SIZE }: VizTooltipWrapperProps) => {
   const styles = useStyles2(getStyles, size);
-  // TEMP MARKER (remove before commit): confirms this local build is actually being served.
-  console.log('[GRAFT MARKER] VizTooltipWrapper render, size =', size);
   return (
     <VizTooltipContext.Provider value={size}>
       <div
         className={clsx(styles, className)}
-        data-graft-marker="viztooltip-optin"
         data-testid={selectors.components.Panels.Visualization.Tooltip.Wrapper}
       >
         {children}
