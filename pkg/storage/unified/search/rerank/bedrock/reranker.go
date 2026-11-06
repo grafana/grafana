@@ -2,7 +2,6 @@ package bedrock
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -31,7 +30,8 @@ func NewRerankerWithHedgeDelay(client Client, model string, delay time.Duration)
 	return &Reranker{client: client, model: model, callTimeout: 5 * time.Second, hedgeDelay: delay}
 }
 
-// Score returns scores 1:1 with texts. Indices the API omits default to 0.
+// Score returns scores 1:1 with texts. Every input must have a provider result;
+// out-of-range indices are ignored and an incomplete response fails the attempt.
 func (r *Reranker) Score(ctx context.Context, query string, texts []string) ([]float64, error) {
 	if len(texts) == 0 {
 		return nil, nil
@@ -48,17 +48,21 @@ func (r *Reranker) Score(ctx context.Context, query string, texts []string) ([]f
 			return nil, err
 		}
 		scores := make([]float64, len(texts))
+		seen := make([]bool, len(texts))
 		for _, res := range results {
 			if res.Index >= 0 && res.Index < len(scores) {
 				scores[res.Index] = res.Score
+				seen[res.Index] = true
+			}
+		}
+		for i, present := range seen {
+			if !present {
+				return nil, fmt.Errorf("bedrock rerank: missing score for input %d", i)
 			}
 		}
 		return scores, nil
 	})
 	if err != nil {
-		if errors.Is(context.Cause(callCtx), rerank.ErrCallTimeout) {
-			return nil, rerank.ErrCallTimeout
-		}
 		return nil, err
 	}
 	return scores, nil

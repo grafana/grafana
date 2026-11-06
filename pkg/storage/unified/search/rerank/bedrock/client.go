@@ -6,8 +6,9 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
+
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 )
 
 // rerankRequest is Cohere Rerank's InvokeModel body (api_version 2 is the
@@ -48,9 +49,12 @@ func (c *invokeClient) Rerank(ctx context.Context, model, query string, document
 		Body:        body,
 	}, func(o *bedrockruntime.Options) {
 		// Keep each hedged operation to one SDK attempt without changing the shared client.
-		o.Retryer = retry.AddWithMaxAttempts(retry.NewStandard(), 1)
+		o.RetryMaxAttempts = 1
 	})
 	if err != nil {
+		if ctx.Err() == nil && c.runtime.Options().Retryer.IsErrorRetryable(err) {
+			err = rerank.MarkRetryable(err)
+		}
 		return nil, fmt.Errorf("bedrock rerank: invoke: %w", err)
 	}
 	var resp rerankResponse

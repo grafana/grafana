@@ -10,6 +10,10 @@ import (
 	"cloud.google.com/go/discoveryengine/apiv1/discoveryenginepb"
 	"github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/option"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 )
 
 // rankClient is the production Client backed by the Discovery Engine
@@ -67,6 +71,9 @@ func (c *rankClient) Rank(ctx context.Context, model, query string, texts []stri
 		IgnoreRecordDetailsInResponse: true,
 	}, gax.WithRetry(func() gax.Retryer { return nil }))
 	if err != nil {
+		if ctx.Err() == nil && status.Code(err) == codes.Unavailable {
+			err = rerank.MarkRetryable(err)
+		}
 		return nil, fmt.Errorf("vertex rerank: rank: %w", err)
 	}
 	out := make([]RecordScore, 0, len(resp.GetRecords()))

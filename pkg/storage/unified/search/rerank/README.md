@@ -1,6 +1,6 @@
 # Configure reranker hedging
 
-Set `hedge_delay` to control when a slow reranking request starts one duplicate request.
+Set `hedge_delay` to control when a slow reranking request starts a second attempt.
 The setting applies to both Vertex and Bedrock rerankers.
 
 ## Set the delay
@@ -16,10 +16,14 @@ You can also set `GF_VECTOR_RERANKER_HEDGE_DELAY=750ms` in the server environmen
 Restart the server that runs search to apply the change.
 
 The default is `500ms` when the setting is absent, empty, or invalid.
-Set `hedge_delay = 0` to disable duplicate requests; negative durations also disable them.
-Disabling duplicates does not enable provider SDK retries.
+Set `hedge_delay = 0` to allow only one attempt; negative durations do the same.
+Provider SDK retries remain disabled.
 
-A positive delay starts one duplicate only while the first request is pending and time remains.
-The first valid result wins, and Grafana cancels the other request.
+A positive delay starts a duplicate if the first request is still pending and time remains.
+If the first request fails sooner with a retryable provider error, the second attempt starts immediately.
+Authentication and validation errors do not trigger an immediate retry.
+Grafana makes at most two attempts in total.
+Each successful response must include a valid score for every input.
+The first complete, valid response wins, and Grafana cancels the other request without waiting.
 Reranking still has a five-second limit, or an earlier request deadline.
-If the delay reaches that deadline, only the first request runs.
+If the delay reaches that deadline, no timed duplicate starts; an immediate retry can still run while time remains.
