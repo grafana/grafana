@@ -230,13 +230,20 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 // resourceScope scopes an object by the resource type Zanzana listed it under
 // (e.g. "folders:uid:abc"), not by the action prefix, so permission actions like
 // "folders.permissions:read" stay scoped on "folders:uid:<uid>".
-func resourceScope(resource, name string) string {
-	return ac.Scope(resource, "uid", name)
+func resourceScope(group, resource, name string) string {
+	return ac.Scope(resourceScopePrefix(group, resource), "uid", name)
 }
 
 // resourceWildcardScope is the org-wide scope for the listed resource ("folders:*").
-func resourceWildcardScope(resource string) string {
-	return ac.Scope(resource, "*")
+func resourceWildcardScope(group, resource string) string {
+	return ac.Scope(resourceScopePrefix(group, resource), "*")
+}
+
+func resourceScopePrefix(group, resource string) string {
+	if group == "secret.grafana.app" && resource == "securevalues" {
+		return "secret.securevalues"
+	}
+	return resource
 }
 
 // folderScopeForLegacyRBAC returns a legacy RBAC scope for folder-scoped access (folders:uid:<uid>).
@@ -373,7 +380,7 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 			}
 			appendIfMatches(ac.Permission{
 				Action: action,
-				Scope:  resourceWildcardScope(resource),
+				Scope:  resourceWildcardScope(group, resource),
 			})
 			// Generic dashboard list grants org-wide dashboard access; legacy RBAC also records
 			// folder wildcard for the same action (see SearchUsersPermissions / Reduce).
@@ -394,7 +401,7 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 		} else {
 			appendIfMatches(ac.Permission{
 				Action: action,
-				Scope:  resourceWildcardScope(resource),
+				Scope:  resourceWildcardScope(group, resource),
 			})
 		}
 	}
@@ -409,7 +416,7 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 			resolved, err := r.resolveTeamScope(ctx, namespace, item)
 			if err != nil {
 				zLogger.Warn("failed to resolve team UID to ID, using uid scope", "uid", item, "error", err)
-				itemScope = resourceScope(resource, item)
+				itemScope = resourceScope(group, resource, item)
 			} else {
 				itemScope = resolved
 			}
@@ -417,12 +424,12 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 			resolved, err := r.resolveUserScope(ctx, namespace, action, item)
 			if err != nil {
 				zLogger.Warn("failed to resolve user UID to ID, using uid scope", "uid", item, "error", err)
-				itemScope = resourceScope(resource, item)
+				itemScope = resourceScope(group, resource, item)
 			} else {
 				itemScope = resolved
 			}
 		default:
-			itemScope = resourceScope(resource, item)
+			itemScope = resourceScope(group, resource, item)
 		}
 		appendIfMatches(ac.Permission{
 			Action: action,

@@ -46,6 +46,11 @@ func (v *secureValueValidator) Validate(sv, oldSv *secretv1beta1.SecureValue, op
 
 		return errs
 	}
+	// Keep resource identifiers within the legacy permission table limit.
+	if operation == admission.Create && len(sv.Name) > contracts.SecureValueNameMaxLength {
+		errs = append(errs, field.TooLong(field.NewPath("metadata", "name"), sv.Name, contracts.SecureValueNameMaxLength))
+	}
+
 	if err := validation.IsDNS1123Subdomain(sv.Namespace); len(err) > 0 {
 		errs = append(
 			errs,
