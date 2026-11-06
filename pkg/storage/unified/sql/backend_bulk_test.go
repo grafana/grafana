@@ -448,9 +448,22 @@ func TestPlanNameRanges(t *testing.T) {
 		{"crossing budget splits half-open", []string{"a", "b", "c", "d"}, 20, []nameRange{{"", "b", 20}, {"b", "", 20}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.want, planNameRanges(tc.names, sizeOf, tc.budget))
+			require.Equal(t, tc.want, planNameRanges(tc.names, sizeOf, tc.budget, 0))
 		})
 	}
+
+	t.Run("names that cost no bytes still split at the name limit", func(t *testing.T) {
+		deleted := func(string) int64 { return 0 }
+		got := planNameRanges([]string{"a", "b", "c", "d", "e"}, deleted, 100, 2)
+		require.Equal(t, []nameRange{{"", "b", 0}, {"b", "d", 0}, {"d", "", 0}}, got)
+	})
+
+	t.Run("the name limit and the byte budget both close a range", func(t *testing.T) {
+		got := planNameRanges([]string{"a", "b", "c", "d"}, sizeOf, 25, 3)
+		require.Equal(t, []nameRange{{"", "b", 20}, {"b", "", 20}}, got)
+		got = planNameRanges([]string{"a", "b", "c", "d"}, sizeOf, 1000, 3)
+		require.Equal(t, []nameRange{{"", "c", 30}, {"c", "", 10}}, got)
+	})
 
 	t.Run("coverage: every name maps to exactly one range, no gaps", func(t *testing.T) {
 		rng := rand.New(rand.NewSource(1))
@@ -470,7 +483,7 @@ func TestPlanNameRanges(t *testing.T) {
 		}
 		sizeFn := func(name string) int64 { return sizes[name] }
 
-		ranges := planNameRanges(names, sizeFn, 200)
+		ranges := planNameRanges(names, sizeFn, 200, 0)
 		require.NotEmpty(t, ranges)
 		require.Equal(t, "", ranges[len(ranges)-1].endName, "final range must be unbounded above")
 

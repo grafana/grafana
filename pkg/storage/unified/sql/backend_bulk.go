@@ -861,6 +861,9 @@ const (
 	// backfillStatementMaxBytes bounds each backfill INSERT...SELECT in the single-transaction
 	// path, so the statement runtime does not grow with the collection size.
 	backfillStatementMaxBytes = 32 * 1024 * 1024
+	// backfillRangeMaxNames bounds the names in one backfill range. Names whose latest row
+	// is a deletion cost no bytes, but the backfill still groups their history.
+	backfillRangeMaxNames = 10_000
 )
 
 // deleteCollectionChunked clears the resource and resource_history tables for a
@@ -1005,7 +1008,7 @@ func (b *backend) backfillCollection(ctx context.Context, run migrationRunner, k
 		nameList[i] = n.Name
 	}
 
-	for _, r := range planNameRanges(nameList, sizeOf, budget) {
+	for _, r := range planNameRanges(nameList, sizeOf, budget, backfillRangeMaxNames) {
 		if err := run(ctx, func(ctx context.Context, x db.ContextExecer) error {
 			return b.bulkWorker(ctx, x).insertFromHistoryRange(key, r.startName, r.endName)
 		}); err != nil {
@@ -1043,14 +1046,15 @@ type nameRange struct {
 
 // planNameRanges splits names into contiguous half-open (startName, endName]
 // ranges whose summed sizeOf stays within budget, keeping each backfill
-// write-set under the byte cap.
+// write-set under the byte cap, and that hold at most maxNames names when it is
+// positive.
 //
 // names MUST be kept in DB collation order (as returned by the distinct-name query).
 //
 // The result covers every name exactly once and ends with an unbounded range
 // (endName == "") as a catch-all. An empty names slice yields one unbounded
 // range, matching the original single-statement backfill.
-func planNameRanges(names []string, sizeOf func(name string) int64, budget int64) []nameRange {
+func planNameRanges(names []string, sizeOf func(name string) int64, budget int64, maxNames int) []nameRange {
 	if budget <= 0 {
 		budget = defaultChunkBudget
 	}
@@ -1060,20 +1064,23 @@ func planNameRanges(names []string, sizeOf func(name string) int64, budget int64
 
 	var ranges []nameRange
 	rangeStart := "" // exclusive lower bound of the current open range
-	prev := ""       // most recently accumulated name (acc > 0 ⇒ prev is set)
+	prev := ""       // most recently accumulated name (count > 0 ⇒ prev is set)
 	var acc int64
+	count := 0
 
 	for _, name := range names {
 		sz := sizeOf(name)
 
-		// Adding this name would overflow the current non-empty range: close
-		// the range at the previous name and start a new one there.
-		if acc > 0 && acc+sz > budget {
+		// Adding this name would overflow the current non-empty range's bytes or
+		// names: close the range at the previous name and start a new one there.
+		if count > 0 && ((acc > 0 && acc+sz > budget) || (maxNames > 0 && count >= maxNames)) {
 			ranges = append(ranges, nameRange{startName: rangeStart, endName: prev, plannedBytes: acc})
 			rangeStart = prev
 			acc = 0
+			count = 0
 		}
 		acc += sz
+		count++
 		prev = name
 	}
 
