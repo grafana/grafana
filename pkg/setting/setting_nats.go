@@ -186,9 +186,11 @@ func readNATSSettings(cfg *Cfg) error {
 	cfg.explicitWatchSettings.notifier = explicitlySet(section, "notifier")
 	cfg.explicitWatchSettings.notifierWatchMaxAge = explicitlySet(section, "notifier_watch_max_age")
 	// The notifier and its max age default on with the bus only, so turning NATS
-	// on is a single setting and nothing changes while it is off.
+	// on is a single setting and nothing changes while it is off. Shadow mode
+	// compares the bus with polling, so it keeps watches on polling.
 	enabled := section.Key("enabled").MustBool(false)
-	notifier := section.Key("notifier").MustBool(enabled)
+	shadow := section.Key("notifier_shadow").MustBool(false)
+	notifier := section.Key("notifier").MustBool(enabled && !shadow)
 	var watchMaxAge time.Duration
 	if enabled && notifier {
 		watchMaxAge = defaultNotifierWatchMaxAge
@@ -213,7 +215,7 @@ func readNATSSettings(cfg *Cfg) error {
 		DiscoveryEnabled:     section.Key("discovery_enabled").MustBool(true),
 		DiscoveryInterval:    section.Key("discovery_interval").MustDuration(5 * time.Second),
 		DiscoveryTTL:         section.Key("discovery_ttl").MustDuration(15 * time.Second),
-		NotifierShadow:       section.Key("notifier_shadow").MustBool(false),
+		NotifierShadow:       shadow,
 		Notifier:             notifier,
 		NotificationMetadata: section.Key("notification_metadata").MustBool(false),
 		NotifierWatchMaxAge:  section.Key("notifier_watch_max_age").MustDuration(watchMaxAge),

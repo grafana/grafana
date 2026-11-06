@@ -122,6 +122,8 @@ cluster_tls_ca_path = /etc/nats/ca.crt
 			"enabled, max age set":         {"[nats]\nenabled = true\nnotifier_watch_max_age = 5m\n", true, 5 * time.Minute},
 			"enabled, max age off":         {"[nats]\nenabled = true\nnotifier_watch_max_age = 0\n", true, 0},
 			"disabled, notifier set":       {"[nats]\nnotifier = true\n", true, 0},
+			"enabled, shadow only":         {"[nats]\nenabled = true\nnotifier_shadow = true\n", false, 0},
+			"enabled, shadow and notifier": {"[nats]\nenabled = true\nnotifier_shadow = true\nnotifier = true\n", true, time.Hour},
 		}
 		for name, tc := range cases {
 			t.Run(name, func(t *testing.T) {
