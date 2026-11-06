@@ -650,6 +650,14 @@ func TestLegacyZanzanaParity(t *testing.T) {
 			zanzanaResp: &authzv1.ListResponse{All: true},
 		},
 		{
+			name:   "all_true_org_annotations_no_scope_filter",
+			action: "annotations:delete",
+			legacyPerms: []ac.Permission{
+				{Action: "annotations:delete", Scope: ac.ScopeAnnotationsTypeOrganization},
+			},
+			zanzanaResp: &authzv1.ListResponse{All: true},
+		},
+		{
 			name:   "scope_filter_keeps_only_matching_dashboard_uid",
 			action: "dashboards:read",
 			scope:  ac.Scope("dashboards", "uid", "match"),

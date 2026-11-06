@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	annotationv0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -255,6 +256,12 @@ func isTeamRBACAction(action string) bool {
 	return strings.HasPrefix(action, "teams:") || strings.HasPrefix(action, "teams.")
 }
 
+// isOrgAnnotationsResource matches the organization-level annotations resource.
+func isOrgAnnotationsResource(group, resource, subresource string) bool {
+	gvr := annotationv0.AnnotationKind().GroupVersionResource()
+	return group == gvr.Group && resource == gvr.Resource && subresource == ""
+}
+
 // resolveTeamScope translates a team UID to the legacy teams:id:<numericID> scope.
 func (r *ZanzanaPermissionResolver) resolveTeamScope(ctx context.Context, namespace, teamUID string) (string, error) {
 	if r.scopeResolver == nil {
@@ -361,7 +368,13 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 
 	// If All is true, the user has access to all resources of this type.
 	if resp.All {
-		if isDashboardRBACAction(action) {
+		if isOrgAnnotationsResource(group, resource, subresource) {
+			// This resource only covers organization annotations; annotations:* would also authorize dashboard annotations.
+			appendIfMatches(ac.Permission{
+				Action: action,
+				Scope:  ac.ScopeAnnotationsTypeOrganization,
+			})
+		} else if isDashboardRBACAction(action) {
 			// Legacy RBAC sometimes stores scope "*" for org-wide dashboard access. Only add it
 			// when there is no scope filter: with a non-empty filter, "*" would match queries where
 			// legacy rows only had dashboards:* / folders:* (see PermissionMatchesSearchOptions).
