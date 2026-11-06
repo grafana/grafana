@@ -3,7 +3,6 @@ package cascadedelete
 import (
 	"context"
 	"errors"
-	"slices"
 	"sync"
 	"time"
 
@@ -16,7 +15,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -258,7 +256,7 @@ func (c *Controller) processNext(ctx context.Context) bool {
 		return true
 	}
 
-	c.setWaiting(key, f.DeletionTimestamp != nil && slices.Contains(f.Finalizers, foldersv1.CascadeDeleteFinalizer))
+	c.setWaiting(key, cascadePending(f))
 	res, err := c.reconciler.Reconcile(ctx, f)
 	switch {
 	case errors.Is(err, ErrChildrenStillListed):
