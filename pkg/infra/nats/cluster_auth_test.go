@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -280,6 +281,7 @@ func TestServerClusterRouteAuth(t *testing.T) {
 		shortenRouteCredentialBackoff(t)
 		store := newSharedTestKV(t)
 		a := startTestAuthServer(t, store, nil)
+		waitForRegisteredPeers(t, store, a)
 		hookB := newLogHook()
 		logsB := &recordingLogger{Logger: hookB}
 		storeB := newDownKV(store)
@@ -303,6 +305,8 @@ func TestServerClusterRouteAuth(t *testing.T) {
 
 		storeB.down.Store(false)
 		hookB.waitForLog(t, "info: nats clustering enabled")
+		// The explicit route can deliver before b's discovery registers it.
+		waitForRegisteredPeers(t, store, a, b)
 		requireDelivery(t, a, b)
 		require.Equal(t, stored, clusterPassword(b))
 
@@ -380,6 +384,36 @@ func startTestAuthServer(t *testing.T, store kv.KV, logger log.Logger) *Server {
 	require.NoError(t, err)
 	startService(t, t.Context(), s)
 	return s
+}
+
+// waitForRegisteredPeers waits until exactly the given servers are registered:
+// discovery registers on its first tick, after the server is running.
+func waitForRegisteredPeers(t *testing.T, store kv.KV, servers ...*Server) {
+	t.Helper()
+	want := make([]string, 0, len(servers))
+	for _, s := range servers {
+		s.mu.RLock()
+		want = append(want, s.opts.ServerName)
+		s.mu.RUnlock()
+	}
+	slices.Sort(want)
+	guard := time.After(hangGuard)
+	for {
+		peers := registeredPeers(t, store)
+		got := make([]string, 0, len(peers))
+		for _, p := range peers {
+			got = append(got, p.ServerName)
+		}
+		slices.Sort(got)
+		if slices.Equal(got, want) {
+			return
+		}
+		select {
+		case <-guard:
+			t.Fatalf("registered peers %v, want %v", got, want)
+		case <-time.After(10 * time.Millisecond):
+		}
+	}
 }
 
 func storedRouteCredential(t *testing.T, store kv.KV) string {
