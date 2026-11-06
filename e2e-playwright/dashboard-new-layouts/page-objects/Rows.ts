@@ -24,21 +24,21 @@ export class Rows extends PageObject {
     return this.getRowHeader(rowTitle).getByRole('button', { name: 'Copy link to row', exact: true });
   }
 
-  /** Returns all row title elements matching the given title */
-  getTitles(rowTitle: string): Locator {
+  /**
+   * Returns all row title elements matching the given title
+   * @param rowTitle row title to match; omit it to get the titles of every rendered row, in display order
+   */
+  getTitles(rowTitle?: string): Locator {
+    if (rowTitle === undefined) {
+      return this.page.locator(`[data-testid^="${this.selectors.components.DashboardRow.title('')}"]`);
+    }
+
     return this.getRowHeader(rowTitle).getByTestId(this.selectors.components.DashboardRow.title(rowTitle));
   }
 
   /** Returns the first row title element matching the given title */
   getTitle(rowTitle: string): Locator {
     return this.getTitles(rowTitle).first();
-  }
-
-  /** Returns the title elements of every rendered row, in display order */
-  getTitles(): Locator {
-    // DashboardRow.title() only builds exact ids, so match every id sharing its prefix
-    const prefix = this.selectors.components.DashboardRow.title('');
-    return this.page.getByTestId(new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
   }
 
   /** Returns the row's content wrapper (grid or nested tabs) right after the row header */
@@ -69,11 +69,6 @@ export class Rows extends PageObject {
         }
       });
     }
-  }
-
-  /** Returns the row's collapse/expand button; its `aria-expanded` tells whether the row is expanded */
-  getToggle(rowTitle: string): Locator {
-    return this.getByGrafanaSelector(this.selectors.components.DashboardRow.toggle(rowTitle));
   }
 
   /** Collapses an expanded row, expands a collapsed one */
