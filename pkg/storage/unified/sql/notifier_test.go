@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"sync"
 	"testing"
 	"testing/synctest"
@@ -305,7 +306,7 @@ func (f *floorRecorder) Raise(gr resource.GroupResource, rv int64) {
 func (f *floorRecorder) get() map[resource.GroupResource]int64 {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	return f.floors
+	return maps.Clone(f.floors)
 }
 
 func (nt *natsNotifierTest) missingEvents(reason string) float64 {
@@ -597,6 +598,11 @@ func TestNatsNotifierRaisesFloorsBeforeExpiringWatches(t *testing.T) {
 		nt.publish(t, "pruned", rv)
 		settle()
 		nt.history.add("written", rv+10, resourcepb.WatchEvent_ADDED)
+		// Keeps the floors from being raised and released before the
+		// reconnect's expiry is seen.
+		nt.history.mu.Lock()
+		nt.history.latestErr = errors.New("database unavailable")
+		nt.history.mu.Unlock()
 		nt.bus.reconnect()
 		synctest.Wait()
 
@@ -604,6 +610,12 @@ func TestNatsNotifierRaisesFloorsBeforeExpiringWatches(t *testing.T) {
 		// A missing row raises its floor; a bus reconnect holds every resume
 		// until the latest RVs are read.
 		require.Equal(t, []floorState{{rv, false}, {rv, true}}, seen)
+
+		nt.history.mu.Lock()
+		nt.history.latestErr = nil
+		nt.history.mu.Unlock()
+		time.Sleep(10 * time.Second)
+		synctest.Wait()
 		require.Equal(t, rv+11, floors.get()[gr])
 		require.False(t, floors.isHeld())
 	})
