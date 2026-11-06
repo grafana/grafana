@@ -91,7 +91,6 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 
 	for _, desc := range []*grpc.ServiceDesc{
 		&resourcepb.ResourceStore_ServiceDesc,
-		&resourcepb.ResourceStats_ServiceDesc,
 		&resourcepb.ResourceIndex_ServiceDesc,
 		&resourcepb.ManagedObjectIndex_ServiceDesc,
 		&resourcepb.BlobStore_ServiceDesc,

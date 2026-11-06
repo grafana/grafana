@@ -71,11 +71,11 @@ func TestResourceBlobValidationPreservesAuthentication(t *testing.T) {
 	key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default", Name: "item"}
 	value := blobValidationBody(`,"blobs":{"dashboard":{"data":"e30="}}`)
 	created, err := srv.Create(t.Context(), &resourcepb.CreateRequest{Key: key, Value: value})
-	require.NoError(t, err)
-	require.EqualValues(t, http.StatusUnauthorized, created.GetError().GetCode())
+	require.Nil(t, created)
+	require.EqualValues(t, http.StatusUnauthorized, rpcErrorResult(t, err).GetCode())
 	updated, err := srv.Update(t.Context(), &resourcepb.UpdateRequest{Key: key, Value: value})
-	require.NoError(t, err)
-	require.EqualValues(t, http.StatusUnauthorized, updated.GetError().GetCode())
+	require.Nil(t, updated)
+	require.EqualValues(t, http.StatusUnauthorized, rpcErrorResult(t, err).GetCode())
 }
 
 func TestResourceWritesPreserveBlobReferences(t *testing.T) {

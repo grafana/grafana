@@ -167,7 +167,7 @@ func (v *preferencesCountValidator) countUnified(ctx context.Context, sess *xorm
 		Namespace: summary.Namespace,
 		Kinds:     []string{fmt.Sprintf("%s/%s", summary.Group, summary.Resource)},
 	})
-	if err := resource.ErrorFromResponse(statsResp.GetError(), err); err != nil {
+	if err != nil {
 		return 0, err
 	}
 	for _, stat := range statsResp.Stats {

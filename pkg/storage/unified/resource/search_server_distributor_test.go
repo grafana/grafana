@@ -60,10 +60,11 @@ func TestSearchDistributorConvertsOwnErrors(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = conn.Close() })
 
-	_, err = resourcepb.NewResourceIndexClient(conn).RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
+	resp, err := resourcepb.NewResourceIndexClient(conn).RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
 		Namespace: "default", Keys: []*resourcepb.ResourceKey{{Namespace: "other"}},
 	})
 	want := NewBadRequestError("key namespace does not match request namespace")
+	require.Nil(t, resp)
 	require.Equal(t, codes.InvalidArgument, status.Code(err))
 	details := status.Convert(err).Details()
 	require.Len(t, details, 1)
@@ -441,6 +442,26 @@ func TestDistributorRebuildIndexesRetriesSameInstance(t *testing.T) {
 
 	slices.Sort(state.calls)
 	require.Equal(t, []string{"instance-a", "instance-a", "instance-b", "instance-c"}, state.calls)
+}
+
+func TestDistributorRebuildIndexesAggregatesStatusError(t *testing.T) {
+	state := &failoverTestState{errFn: func(_ int, id string) error {
+		if id == "instance-b" {
+			return status.Error(codes.InvalidArgument, "bad keys")
+		}
+		return nil
+	}}
+	ds := newFailoverTestDistributor(t, 1, state)
+
+	resp, err := ds.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{Namespace: "stacks-1"})
+	require.Nil(t, resp, "partial results are not returned with the error")
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+	details := status.Convert(err).Details()
+	require.Len(t, details, 1)
+	res, ok := details[0].(*resourcepb.ErrorResult)
+	require.True(t, ok)
+	require.Equal(t, int32(http.StatusBadRequest), res.Code)
+	require.Contains(t, res.Message, "bad keys")
 }
 
 func requireSearchReplicaSetIDs(t *testing.T, testRing *ring.Ring, extendReplicaSet bool, expectedIDs []string) {

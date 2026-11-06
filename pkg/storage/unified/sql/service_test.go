@@ -55,7 +55,6 @@ var _ resource.SearchServer = (*mockSearchServer)(nil)
 type mockResourceServer struct {
 	mockSearchServer
 	resourcepb.UnimplementedResourceStoreServer
-	resourcepb.UnimplementedResourceStatsServer
 	resourcepb.UnimplementedBulkStoreServer
 	resourcepb.UnimplementedBlobStoreServer
 	resourcepb.UnimplementedBlobStoreStreamingServer
@@ -362,7 +361,7 @@ func TestRegisterSearchServerWithAuth(t *testing.T) {
 }
 
 // TestRegisterUnifiedResourceServerWithAuth verifies that registerUnifiedResourceServer
-// wraps all registered services (ResourceStore, ResourceStats, BulkStore, BlobStore,
+// wraps all registered services (ResourceStore, BulkStore, BlobStore,
 // Quotas, ResourceIndex, ManagedObjectIndex, Diagnostics, VectorStore) with per-service auth.
 func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	var authCalled atomic.Int32
@@ -385,14 +384,6 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 		client := resourcepb.NewResourceStoreClient(conn)
 		_, err := client.Read(ctx, &resourcepb.ReadRequest{})
 		requireAuthPassed(t, err, "Read should pass per-service auth")
-		require.Greater(t, authCalled.Load(), int32(0))
-	})
-
-	t.Run("ResourceStats/RecordEvent", func(t *testing.T) {
-		authCalled.Store(0)
-		client := resourcepb.NewResourceStatsClient(conn)
-		_, err := client.RecordEvent(ctx, &resourcepb.RecordEventRequest{})
-		requireAuthPassed(t, err, "RecordEvent should pass per-service auth")
 		require.Greater(t, authCalled.Load(), int32(0))
 	})
 
