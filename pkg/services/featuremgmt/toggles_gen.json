@@ -1243,6 +1243,24 @@
     },
     {
       "metadata": {
+        "name": "authzDelegationChecks",
+        "resourceVersion": "1793637223255",
+        "creationTimestamp": "2026-11-02T15:45:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-02 16:33:43.255476 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use AuthZ Check and LegacyCheck for single-org IAM delegation checks (resolved at startup)",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "awsAssumeRolePerDatasourceExternalId",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-15T15:32:33Z"
@@ -3060,6 +3078,21 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.folderPickerFolderEditAccess",
+        "resourceVersion": "1793975376541",
+        "creationTimestamp": "2026-11-06T14:29:36Z"
+      },
+      "spec": {
+        "description": "Shows folders the user cannot edit as read only in the folder picker, instead of hiding them",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {

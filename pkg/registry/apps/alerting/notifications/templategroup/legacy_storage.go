@@ -121,8 +121,8 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if !ok {
 		return nil, fmt.Errorf("expected template but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
-	if p.Name != "" { // TODO remove when metadata.name can be defined by user
-		return nil, errors.NewBadRequest("object's metadata.name should be empty")
+	if p.Name == templates.DefaultTemplateName { // The default template is addressed by this name.
+		return nil, errors.NewBadRequest(fmt.Sprintf("object's metadata.name cannot be %q", templates.DefaultTemplateName))
 	}
 	domainModel, err := convertToDomainModel(p)
 	if err != nil {

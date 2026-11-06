@@ -34,6 +34,13 @@ func newDeleteCheckMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) *d
 	if legacyJoinEnabled {
 		join = "enabled"
 	}
+	// Created up front so rate() alerts see the first failure. refused_not_empty is left out because
+	// it only exists with the kind that blocked the delete.
+	for _, outcome := range []string{deleteCheckAllowed, deleteCheckRefusedCountFailed, deleteCheckRefusedCountCanceled, deleteCheckBypassedForce} {
+		for _, dryRun := range []string{"false", "true"} {
+			checks.WithLabelValues(outcome, join, blockingKindNone, dryRun).Add(0)
+		}
+	}
 	return &deleteCheckMetrics{checks: checks, legacyJoin: join, dryRun: "false"}
 }
 
