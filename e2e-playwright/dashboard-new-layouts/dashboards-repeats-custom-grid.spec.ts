@@ -1,13 +1,13 @@
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 import testV2DashWithRowRepeats from '../dashboards/V2DashWithRowRepeats.json';
 
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 import {
-  expectRepeatedPanelTitlesToBe,
   expectDashboardChangesToContain,
+  expectRepeatedPanelTitlesToBe,
   flows,
-  movePanel,
   getPanelBox,
+  movePanel,
 } from './helpers';
 import { type Panels } from './page-objects';
 
@@ -16,12 +16,6 @@ const NEW_TITLE_BASE = 'edited rep - ';
 const REPEAT_OPTIONS = [1, 2, 3, 4];
 const getTitleInRepeatRow = (rowIndex: number, panelIndex: number) =>
   `repeated-row-${rowIndex}-repeated-panel-${panelIndex}`;
-
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
 
 test.use({
   viewport: { width: 1920, height: 1080 },

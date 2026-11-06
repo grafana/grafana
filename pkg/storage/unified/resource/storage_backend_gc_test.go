@@ -21,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
@@ -551,7 +550,7 @@ func TestGarbageCollectionGroupResource(t *testing.T) {
 		b := storageBackend
 
 		// replicates an object being deleted then recreated with the same name
-		revisions := []kv.DataAction{
+		revisions := []DataAction{
 			DataActionCreated,
 			DataActionUpdated,
 			DataActionDeleted,
@@ -869,7 +868,7 @@ func TestGarbageCollectionLoopGroupFailure(t *testing.T) {
 	// writes a created and a deleted revision, both old enough to be collected
 	writeDeletedResource := func(t *testing.T, ctx context.Context, b *kvStorageBackend, group string) {
 		t.Helper()
-		for _, action := range []kv.DataAction{DataActionCreated, DataActionDeleted} {
+		for _, action := range []DataAction{DataActionCreated, DataActionDeleted} {
 			err := b.dataStore.Save(ctx, DataKey{
 				Namespace:       "namespace",
 				Group:           group,

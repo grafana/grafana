@@ -15,6 +15,7 @@ labels:
 menuTitle: Trace to metrics
 title: Configure trace to metrics correlation
 weight: 400
+review_date: 2026-09-10
 aliases:
   - /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#trace-to-metrics
 ---
@@ -62,7 +63,7 @@ To use a basic configuration, follow these steps:
    The tags you configure must be present in the spans attributes or resources for a trace to metrics span link to appear. You can optionally configure a new name for the tag. This is useful if the tag has dots in the name and the target data source doesn't allow using dots in labels. For example, you can remap `service.name` to `service_name`.
 
 1. Don't select **Add query**.
-1. Select **Save and Test**.
+1. Select **Save & test**.
 
 ## Set up custom queries
 
@@ -93,7 +94,7 @@ To use custom queries with the configuration, follow these steps:
      Interpolate tags using the `$__tags` keyword.
      For example, when you configure the query `requests_total{$__tags}` with the tags `k8s.pod=pod` and `cluster`, the result looks like `requests_total{pod="nginx-554b9", cluster="us-east-1"}`.
 
-1. Select **Save and Test**.
+1. Select **Save & test**.
 
 ## Configuration options
 

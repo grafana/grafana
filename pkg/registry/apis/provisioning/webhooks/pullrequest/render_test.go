@@ -61,8 +61,8 @@ func TestScreenshotRenderer_PutBlobErrors(t *testing.T) {
 		response *resourcepb.PutBlobResponse
 		err      error
 	}{
-		{name: "embedded", response: &resourcepb.PutBlobResponse{Error: result, Url: "https://example.com/invalid.png", Uid: "invalid"}},
 		{name: "grpc details", err: st.Err()},
+		{name: "grpc details with partial response", response: &resourcepb.PutBlobResponse{Url: "https://example.com/invalid.png", Uid: "invalid"}, err: st.Err()},
 		{name: "ordinary transport", err: transportErr},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -78,9 +78,7 @@ func TestScreenshotRenderer_PutBlobErrors(t *testing.T) {
 			}, "dashboard", nil)
 			require.Error(t, err)
 			require.Empty(t, url)
-			if tc.err != nil {
-				require.Same(t, tc.err, err)
-			}
+			require.Same(t, tc.err, err)
 		})
 	}
 }

@@ -2,6 +2,8 @@ package search
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -47,10 +49,21 @@ func searchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit i
 
 // globalSearchResults is searchResults for the search across resource types,
 // which also reports the types it left out.
-func globalSearchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit int64) (*searchv0.GlobalSearchResults, error) {
-	results, err := searchResults(res, kind, limit)
+func globalSearchResults(req *resourcepb.ResourceSearchRequest, res *resourcepb.ResourceSearchResponse, kind kindRef) (*searchv0.GlobalSearchResults, error) {
+	results, err := searchResults(res, kind, req.Limit)
 	if err != nil {
 		return nil, err
+	}
+	if req.GetFacet()[resource.SEARCH_FIELD_GROUP_RESOURCE] != nil {
+		results.Facets = withEmptyTypes(results.Facets, res)
+	}
+	// decodeResults makes one item per row, in order.
+	items := make([]searchv0.GlobalResultItem, len(results.Items))
+	for i, item := range results.Items {
+		items[i] = searchv0.GlobalResultItem{ResultItem: item}
+		if access := res.GetRows()[i].GetAccess(); len(access) > 0 {
+			items[i].Access = maps.Clone(access)
+		}
 	}
 	return &searchv0.GlobalSearchResults{
 		TypeMeta: metaForKind(searchv0.KindGlobalSearchResults),
@@ -58,9 +71,53 @@ func globalSearchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, l
 			ResultsMetadata: results.Metadata,
 			SkippedTypes:    res.GetSkippedTypes(),
 		},
-		Items:  results.Items,
-		Facets: results.Facets,
+		Items:       items,
+		Facets:      results.Facets,
+		FolderPaths: folderPaths(res.GetFolderPaths()),
 	}, nil
+}
+
+// withEmptyTypes adds every searched type without results to the groupResource
+// facet, with a count of 0, so a client can show all the types the search
+// covers. A facet only counts the types it found. They come after the facet
+// limit, so they never push out a type that has results.
+func withEmptyTypes(facets map[string][]searchv0.FacetTerm, res *resourcepb.ResourceSearchResponse) map[string][]searchv0.FacetTerm {
+	terms := facets[resource.SEARCH_FIELD_GROUP_RESOURCE]
+	var empty []string
+	// An older search server reports no kinds, so it adds nothing.
+	for gr := range res.GetKinds() {
+		found := slices.ContainsFunc(terms, func(t searchv0.FacetTerm) bool { return t.Value == gr })
+		if !found && !slices.Contains(res.GetSkippedTypes(), gr) {
+			empty = append(empty, gr)
+		}
+	}
+	if len(empty) == 0 {
+		return facets
+	}
+	slices.Sort(empty)
+	for _, gr := range empty {
+		terms = append(terms, searchv0.FacetTerm{Value: gr, Count: 0})
+	}
+	if facets == nil {
+		facets = map[string][]searchv0.FacetTerm{}
+	}
+	facets[resource.SEARCH_FIELD_GROUP_RESOURCE] = terms
+	return facets
+}
+
+func folderPaths(in map[string]*resourcepb.FolderPath) map[string][]searchv0.FolderPathItem {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string][]searchv0.FolderPathItem, len(in))
+	for name, path := range in {
+		items := make([]searchv0.FolderPathItem, 0, len(path.GetFolders()))
+		for _, f := range path.GetFolders() {
+			items = append(items, searchv0.FolderPathItem{Name: f.GetName(), Title: f.GetTitle(), Detached: f.GetDetached()})
+		}
+		out[name] = items
+	}
+	return out
 }
 
 // trashResults maps a backend search response into the trash envelope. No facets:
@@ -141,6 +198,7 @@ func decodeResults(res *resourcepb.ResourceSearchResponse, kind kindRef) (decode
 			score := row.GetScore()
 			item.Score = &score
 		}
+
 		items = append(items, item)
 	}
 

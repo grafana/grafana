@@ -70,6 +70,11 @@ const DefaultRendererAuthToken = "-"
 // written to a provisioning repository through the files API.
 const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
 
+// ProvisioningMaxJobBodySizeDefault is the default value for the
+// [provisioning] max_job_body_size key (150 KiB). It bounds the request body
+// of a job POST.
+const ProvisioningMaxJobBodySizeDefault int64 = 150 * 1024
+
 // ProvisioningSyncResourceTimeoutDefault is the default value for the
 // [provisioning] sync_resource_timeout key. It bounds how long applying a
 // single resource (or folder) may take during a sync job before that
@@ -209,6 +214,7 @@ type Cfg struct {
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
+	ProvisioningMaxJobBodySize                int64         // bytes; default 150 KiB (153600); <=0 = default
 	ProvisioningSyncResourceTimeout           time.Duration // per-resource apply timeout during sync; default 30s; <=0 = default
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
 	ProvisioningControllerResyncInterval      time.Duration // informer re-list interval for the repo/connection controllers (jobs use ProvisioningJobPollInterval); default 60s; <=0 = default
@@ -622,11 +628,6 @@ type Cfg struct {
 	// MaxNestedFolderDepth is the hard ceiling for folder nesting depth.
 	// The SQL query builders use this value to generate JOIN chains.
 	MaxNestedFolderDepth int
-	// FolderParallelDashboardDeleteEnabled deletes the dashboards of a deleted folder concurrently, with
-	// at most FolderParallelDashboardDeleteConcurrency deletes in flight per folder deletion, not per
-	// instance. Experimental and intentionally undocumented.
-	FolderParallelDashboardDeleteEnabled     bool
-	FolderParallelDashboardDeleteConcurrency int
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
@@ -709,12 +710,11 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage                        map[string]UnifiedStorageConfig
-	UnifiedStorageClusterSlug             string
-	UnifiedStorageAuthzExemptionEnabled   bool
-	UnifiedStorageAuthzExemptResources    []string
-	HybridSearchDefaultResources          []string
-	UnifiedStorageGRPCErrorResultToStatus bool
+	UnifiedStorage                      map[string]UnifiedStorageConfig
+	UnifiedStorageClusterSlug           string
+	UnifiedStorageAuthzExemptionEnabled bool
+	UnifiedStorageAuthzExemptResources  []string
+	HybridSearchDefaultResources        []string
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -748,6 +748,7 @@ type Cfg struct {
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
 	GlobalSearchIndexEnabled                   bool          // Build one index per namespace covering several resource types, alongside the per-resource indexes.
 	GlobalSearchIndexStartupBuild              bool          // Temporary: build global indexes before readiness instead of in the background. To be removed once environments restore them from snapshots at startup.
+	GlobalSearchIndexIdleTimeout               time.Duration // Close a global index not searched for this long. 0 keeps it open.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
@@ -867,14 +868,8 @@ type Cfg struct {
 	LoggedQuotaResources          []string
 	QuotasErrorMessageSupportInfo string
 
-	EnableSQLKVBackend           bool
-	EnableSQLKVCompatibilityMode bool
-	// LogSQLBackendCalls, when true, logs every call that reaches an exported
-	// method of the legacy SQL backend. Temporary smoke-test instrumentation
-	// used to confirm no production traffic still reaches sql/backend before
-	// removing the sqlkv backwards-compatibility layer.
-	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
-	LogSQLBackendCalls                bool
+	EnableSQLKVBackend                bool
+	KeyPathReconciliationEnabled      bool
 	KVLeaseTTL                        time.Duration
 	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
@@ -1028,6 +1023,7 @@ func RedactedValue(key, value string) string {
 		"INSTALL_TOKEN$",
 		"PROXY_TOKEN$",
 		"EXCHANGE_TOKEN$",
+		"CLIENT_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1825,9 +1821,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
 	cfg.MaxNestedFolderDepth = maxDeptFolderSettings(iniFile)
-	if err := cfg.readFolderParallelDashboardDeleteSettings(iniFile.Section("folder")); err != nil {
-		return err
-	}
 
 	var err error
 	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)
@@ -2680,6 +2673,10 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
+	cfg.ProvisioningMaxJobBodySize = iniFile.Section("provisioning").Key("max_job_body_size").MustInt64(ProvisioningMaxJobBodySizeDefault)
+	if cfg.ProvisioningMaxJobBodySize <= 0 {
+		cfg.ProvisioningMaxJobBodySize = ProvisioningMaxJobBodySizeDefault
+	}
 	cfg.ProvisioningSyncResourceTimeout = iniFile.Section("provisioning").Key("sync_resource_timeout").MustDuration(ProvisioningSyncResourceTimeoutDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)
