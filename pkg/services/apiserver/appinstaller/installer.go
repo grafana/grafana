@@ -73,6 +73,12 @@ type StorageOptionsProvider interface {
 	GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions
 }
 
+// StorageWrapper lets an app installer wrap a resource's storage after the server has configured it
+// (key functions, dual writing). Wrapping earlier would hide the *registry.Store type the server configures.
+type StorageWrapper interface {
+	WrapStorage(gv schema.GroupVersion, gr schema.GroupResource, storage rest.Storage) rest.Storage
+}
+
 // VersionedStorageOptionsProvider is [StorageOptionsProvider] per
 // group+version+resource. An installer implementing both is asked this one
 // first, and falls back to the unversioned answer for any GVR it declines.

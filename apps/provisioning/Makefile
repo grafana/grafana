@@ -3,6 +3,8 @@ include ../sdk.mk
 .PHONY: generate # Run Grafana App SDK code generation
 generate: install-app-sdk update-app-sdk
 	@$(APP_SDK_BIN) generate --source=./kinds/
+	@# The generated types are patched to keep the shapes the provisioning code and the k8s generators rely on.
+	@go run ./hack/patchtypes ./pkg/apis/provisioning/v0alpha1
 
 .PHONY: build
 build: generate

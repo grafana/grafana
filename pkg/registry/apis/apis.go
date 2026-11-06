@@ -26,7 +26,7 @@ func ProvideRegistryServiceSink(
 	_ *userstorage.UserStorageAPIBuilder,
 	_ *preferences.APIBuilder,
 	_ *collections.APIBuilder,
-	_ *provisioning.APIBuilder,
+	_ *provisioning.APIBuilders,
 	_ *secret.DependencyRegisterer,
 	_ *provisioning.DependencyRegisterer,
 ) *Service {
