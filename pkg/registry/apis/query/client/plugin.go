@@ -29,8 +29,13 @@ import (
 
 type pluginClient struct {
 	pluginClient plugins.Client
-	pCtxProvider *plugincontext.Provider
+	pCtxProvider datasourcePluginContextProvider
 	ac           accesscontrol.AccessControl
+}
+
+type datasourcePluginContextProvider interface {
+	GetDataSourceInstanceSettings(context.Context, string) (*backend.DataSourceInstanceSettings, error)
+	PluginContextForDataSource(context.Context, *backend.DataSourceInstanceSettings) (backend.PluginContext, error)
 }
 
 type pluginRegistry struct {
@@ -152,6 +157,19 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 	qdr.PluginContext, err = d.pCtxProvider.PluginContextForDataSource(ctx, settings)
 	if err != nil {
 		return nil, err
+	}
+
+	if useChunkedQuery(ctx, settings.Type) {
+		collector := newChunkedQueryCollector()
+		if err := d.pluginClient.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
+			PluginContext: qdr.PluginContext,
+			Queries:       qdr.Queries,
+			Headers:       qdr.Headers,
+			Format:        backend.DataFrameFormat_ARROW,
+		}, collector); err != nil {
+			return nil, err
+		}
+		return &backend.QueryDataResponse{Responses: collector.responses}, nil
 	}
 
 	rsp, err := d.pluginClient.QueryData(ctx, qdr)
