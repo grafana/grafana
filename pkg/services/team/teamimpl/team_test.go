@@ -10,6 +10,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -119,6 +120,7 @@ func TestGetUserTeamMembershipsByUIDRouting(t *testing.T) {
 	tests := []struct {
 		name         string
 		targetingKey string
+		background   bool
 		k8sErr       error
 		want         []team.UserTeamMembership
 		wantErr      error
@@ -141,6 +143,13 @@ func TestGetUserTeamMembershipsByUIDRouting(t *testing.T) {
 			want:         []team.UserTeamMembership{{TeamID: 7, TeamUID: "legacy-team", External: true, Permission: team.PermissionTypeAdmin}},
 			wantLegacy:   true,
 		},
+		{
+			name:         "background service calls read legacy SQL",
+			targetingKey: "enabled",
+			background:   true,
+			want:         []team.UserTeamMembership{{TeamID: 7, TeamUID: "legacy-team", External: true, Permission: team.PermissionTypeAdmin}},
+			wantLegacy:   true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -154,7 +163,11 @@ func TestGetUserTeamMembershipsByUIDRouting(t *testing.T) {
 				k8sService:        &teamtest.FakeService{ExpectedMemberships: k8sMemberships, ExpectedError: tt.k8sErr},
 				legacyService:     &LegacyService{store: legacyStore, tracer: tracing.InitializeTracerForTest()},
 			}
-			ctx := openfeature.WithTransactionContext(context.Background(), openfeature.NewEvaluationContext(tt.targetingKey, nil))
+			ctx := context.Background()
+			if tt.background {
+				ctx = identity.WithServiceIdentityContext(ctx, 2)
+			}
+			ctx = openfeature.WithTransactionContext(ctx, openfeature.NewEvaluationContext(tt.targetingKey, nil))
 
 			got, err := service.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{OrgID: 2, UserUID: "user-1", External: true})
 			if tt.wantErr != nil {
@@ -167,6 +180,69 @@ func TestGetUserTeamMembershipsByUIDRouting(t *testing.T) {
 				require.Equal(t, []string{"2/user-1/true"}, legacyStore.calls)
 			} else {
 				require.Empty(t, legacyStore.calls)
+			}
+		})
+	}
+}
+
+type teamByIDStore struct {
+	store
+	calls int
+}
+
+func (s *teamByIDStore) GetByID(_ context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
+	s.calls++
+	return &team.TeamDTO{ID: query.ID, UID: "legacy-team"}, nil
+}
+
+func TestGetTeamByIDRouting(t *testing.T) {
+	client := newStackRedirectClient(t)
+	k8sTeam := &team.TeamDTO{ID: 1, UID: "k8s-team"}
+
+	tests := []struct {
+		name         string
+		targetingKey string
+		ctx          context.Context
+		wantLegacy   bool
+	}{
+		{
+			name:         "redirect reads through k8s without the users API",
+			targetingKey: "enabled",
+			ctx:          context.Background(),
+		},
+		{
+			name:         "background service calls read legacy SQL",
+			targetingKey: "enabled",
+			ctx:          identity.WithServiceIdentityContext(context.Background(), 1),
+			wantLegacy:   true,
+		},
+		{
+			name:         "reads legacy SQL without the redirect",
+			targetingKey: "disabled",
+			ctx:          context.Background(),
+			wantLegacy:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			legacyStore := &teamByIDStore{}
+			service := &Service{
+				openFeatureClient: client,
+				iamFeatures:       iamapi.Features{},
+				k8sService:        &teamtest.FakeService{ExpectedTeamDTO: k8sTeam},
+				legacyService:     &LegacyService{store: legacyStore, tracer: tracing.InitializeTracerForTest()},
+			}
+			ctx := openfeature.WithTransactionContext(tt.ctx, openfeature.NewEvaluationContext(tt.targetingKey, nil))
+
+			got, err := service.GetTeamByID(ctx, &team.GetTeamByIDQuery{OrgID: 1, ID: 1})
+			require.NoError(t, err)
+			if tt.wantLegacy {
+				require.Equal(t, "legacy-team", got.UID)
+				require.Equal(t, 1, legacyStore.calls)
+			} else {
+				require.Equal(t, k8sTeam, got)
+				require.Zero(t, legacyStore.calls)
 			}
 		})
 	}

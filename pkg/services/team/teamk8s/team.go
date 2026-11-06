@@ -77,7 +77,7 @@ type TeamK8sService struct {
 var _ team.Service = (*TeamK8sService)(nil)
 
 // NewTeamK8sService relies on the k8s users resource for member enrichment;
-// teamimpl gates the redirect on kubernetesUsersApi, except for GetUserTeamMembershipsByUID.
+// teamimpl gates the redirect on kubernetesUsersApi, except for GetTeamByID and GetUserTeamMembershipsByUID.
 func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *TeamK8sService {
 	return &TeamK8sService{
 		logger:          logger,
@@ -1121,7 +1121,7 @@ func (s *TeamK8sService) GetUserTeamMembershipsByUID(ctx context.Context, query 
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
-	memberships, err := ReadUserTeamMemberships(ctx, client, s.namespaceMapper(query.OrgID), query.UserUID, query.External)
+	memberships, err := readUserTeamMemberships(ctx, client, s.namespaceMapper(query.OrgID), query.UserUID, query.External)
 	if err != nil {
 		s.logger.FromContext(ctx).Error("failed to read user team memberships", "orgID", query.OrgID, "userUID", query.UserUID, "err", err)
 		span.RecordError(err)

@@ -17,11 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 )
 
-// ReadUserTeamMemberships reads memberships through the teams API using an existing client.
+// readUserTeamMemberships reads memberships through the teams API using an existing client.
 // It runs as a namespace-scoped service identity so caller permissions cannot hide memberships.
 // Offset pages can shift during concurrent membership changes, as with the teams search API.
-// Background callers must supply a client whose transport supports calls without a web request.
-func ReadUserTeamMemberships(ctx context.Context, client rest.Interface, namespace, userUID string, external bool) ([]team.UserTeamMembership, error) {
+func readUserTeamMemberships(ctx context.Context, client rest.Interface, namespace, userUID string, external bool) ([]team.UserTeamMembership, error) {
 	if userUID == "" {
 		return nil, errors.New("user UID is required")
 	}

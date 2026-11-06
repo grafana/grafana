@@ -99,8 +99,9 @@ func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery)
 	return s.legacyService.SearchTeams(ctx, query)
 }
 
+// GetTeamByID needs no k8s users resource, so the teams redirect alone routes it to k8s.
 func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	if s.isK8sRedirectEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+	if s.isK8sRedirectFlagEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
 		return s.k8sService.GetTeamByID(ctx, query)
 	}
 
@@ -195,8 +196,9 @@ func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int6
 
 // GetUserTeamMembershipsByUID doesn't fall back on k8s errors: unified storage may be
 // authoritative, so legacy SQL can be stale and callers would act on the wrong memberships.
+// Like the other lookups, background service calls read legacy SQL (see shouldFallbackToLegacy).
 func (s *Service) GetUserTeamMembershipsByUID(ctx context.Context, query *team.GetUserTeamMembershipsByUIDQuery) ([]team.UserTeamMembership, error) {
-	if s.isK8sRedirectFlagEnabled(ctx) {
+	if s.isK8sRedirectFlagEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
 		return s.k8sService.GetUserTeamMembershipsByUID(ctx, query)
 	}
 

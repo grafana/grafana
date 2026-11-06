@@ -87,6 +87,7 @@ import (
 	_ "k8s.io/apiserver/pkg/endpoints/filters"
 	_ "k8s.io/apiserver/pkg/util/compatibility"
 	_ "k8s.io/client-go/dynamic/fake"
+	_ "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/component-base/featuregate/testing"
 	_ "k8s.io/kube-openapi/pkg/validation/strfmt"
 	_ "k8s.io/kube-openapi/pkg/validation/validate"

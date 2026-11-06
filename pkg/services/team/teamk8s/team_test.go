@@ -2157,7 +2157,7 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 			},
 		},
 		{
-			name:         "reads without a request context, as background callers do",
+			name:         "reads as its own service identity when the caller has none",
 			userUID:      "user-1",
 			noReqContext: true,
 			pages:        map[string]searchPage{"1": {hits: []string{"team-a"}, totalHits: 1}},
@@ -2278,7 +2278,7 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 			if tt.noReqContext {
 				client, clientErr := svc.getRESTClient(contextWithReqContext())
 				require.NoError(t, clientErr)
-				result, err = ReadUserTeamMemberships(ctx, client, svc.namespaceMapper(orgID), tt.userUID, tt.external)
+				result, err = readUserTeamMemberships(ctx, client, svc.namespaceMapper(orgID), tt.userUID, tt.external)
 			} else {
 				result, err = svc.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{
 					OrgID: orgID, UserUID: tt.userUID, External: tt.external,
