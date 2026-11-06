@@ -140,6 +140,18 @@ func TestInterceptorsReportPerServer(t *testing.T) {
 	})
 }
 
+func TestProvideServiceWithComponent(t *testing.T) {
+	reg := withFreshServerMetrics(t)
+	tracer := noop.NewTracerProvider().Tracer("")
+	_, err := ProvideService(setting.NewCfg(), nil, tracer, reg)
+	require.NoError(t, err)
+	_, err = ProvideServiceWithComponent(setting.NewCfg(), nil, tracer, reg, "other")
+	require.NoError(t, err, "servers with distinct components can share a registerer")
+	require.Panics(t, func() {
+		_, _ = ProvideServiceWithComponent(setting.NewCfg(), nil, tracer, reg, "other")
+	}, "wiring the same component twice must fail loudly")
+}
+
 // withFreshServerMetrics makes the next server register its process-wide
 // request duration metric on a new registry, restoring it afterwards.
 func withFreshServerMetrics(t *testing.T) *prometheus.Registry {

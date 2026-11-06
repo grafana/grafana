@@ -52,7 +52,14 @@ type gPRCServerService struct {
 }
 
 func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
-	return provideService(cfg, authenticator, tracer, registerer, modules.Core, false, nil)
+	return ProvideServiceWithComponent(cfg, authenticator, tracer, registerer, modules.Core)
+}
+
+// ProvideServiceWithComponent is like ProvideService, but labels the server's
+// metrics with component. Each server sharing a registerer with another needs
+// its own component, or registering its metrics panics.
+func ProvideServiceWithComponent(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer, component string) (Provider, error) {
+	return provideService(cfg, authenticator, tracer, registerer, component, false, nil)
 }
 
 // component labels the server's own metrics, so that servers sharing a
