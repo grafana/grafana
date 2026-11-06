@@ -181,6 +181,11 @@ If one of the panels in the dashboard using that data source doesn't include tha
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-no-data-v12.2.png" max-width="650px" alt="Table, filtered and bar chart returning no results" >}}
 
+From the filter field at the top of the dashboard, you can do the following as needed:
+
+- Change the operator to any of the following: `=~`, `!~`, `<`, `<=`, `>`, `>=`.
+- Delete the filter.
+
 For some visualizations, if your query doesn't include some type of data grouping, you might need to group the data first.
 For more information, refer to [Group from the panel](#group-from-the-panel).
 
