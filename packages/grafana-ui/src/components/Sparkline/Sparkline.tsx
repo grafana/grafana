@@ -1,6 +1,6 @@
 import React, { memo, useLayoutEffect, useMemo, useState } from 'react';
 
-import { type FieldConfig, type FieldSparkline } from '@grafana/data';
+import { type AbsoluteTimeRange, type FieldConfig, type FieldSparkline } from '@grafana/data';
 import { type GraphFieldConfig } from '@grafana/schema';
 
 import { type Themeable2 } from '../../types/theme';
@@ -30,6 +30,8 @@ export interface SparklineProps extends Themeable2 {
   showTooltip?: boolean;
   /** Emits the latest point at most once per animation frame; `null` immediately on leave/unmount. Enables the cursor. */
   onHover?: (hover: SparklineHoverEvent | null) => void;
+  /** Emits the dragged interval; the sparkline keeps its own x scale. */
+  onRangeSelected?: (range: AbsoluteTimeRange) => void;
 }
 
 export const Sparkline: React.FC<SparklineProps> = memo((props) => {
@@ -72,7 +74,7 @@ interface SparklineChartProps extends Omit<SparklineProps, 'onHover' | 'showTool
 }
 
 const SparklineChart = memo((props: SparklineChartProps) => {
-  const { sparkline, config: fieldConfig, theme, width, height, showHighlights, emitHover } = props;
+  const { sparkline, config: fieldConfig, theme, width, height, showHighlights, emitHover, onRangeSelected } = props;
 
   const { configBuilder, data, warning } = useMemo(() => {
     const { frame, warning: seriesWarning } = prepareSeries(sparkline, theme, fieldConfig, showHighlights);
@@ -81,9 +83,17 @@ const SparklineChart = memo((props: SparklineChartProps) => {
     }
     return {
       data: preparePlotData2(frame, getStackingGroups(frame)),
-      configBuilder: prepareConfig(sparkline, frame, theme, showHighlights, Boolean(emitHover), emitHover),
+      configBuilder: prepareConfig(
+        sparkline,
+        frame,
+        theme,
+        showHighlights,
+        Boolean(emitHover),
+        emitHover,
+        onRangeSelected
+      ),
     };
-  }, [sparkline, fieldConfig, theme, showHighlights, emitHover]);
+  }, [sparkline, fieldConfig, theme, showHighlights, emitHover, onRangeSelected]);
 
   if (warning || !configBuilder || !data) {
     return null;

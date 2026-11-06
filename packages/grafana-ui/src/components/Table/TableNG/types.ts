@@ -1,6 +1,7 @@
 import { type FC, type SyntheticEvent } from 'react';
 
 import {
+  type AbsoluteTimeRange,
   type DataFrame,
   type Field,
   type GrafanaTheme2,
@@ -148,6 +149,8 @@ interface BaseTableProps {
   noValue?: string;
   /** used by SparklineCell when provided */
   timeRange?: TimeRange;
+  /** Lets sparkline cells set the dashboard time range; omitted when the feature is off. */
+  onTimeRangeSelected?: (range: AbsoluteTimeRange) => void;
   /** Timezone used by the field display processors and value-filter matcher. */
   timeZone?: string;
   enableSharedCrosshair?: boolean;
@@ -206,6 +209,7 @@ export interface TableCellRendererProps {
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;
+  onTimeRangeSelected?: (range: AbsoluteTimeRange) => void;
   value: TableCellValue;
   height: number;
   // flags that are static per column
@@ -255,6 +259,7 @@ export interface SparklineCellProps {
   rowIdx: number;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
+  onTimeRangeSelected?: (range: AbsoluteTimeRange) => void;
   value: TableCellValue;
   width: number;
 }
