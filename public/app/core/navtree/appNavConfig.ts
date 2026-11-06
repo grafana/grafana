@@ -44,6 +44,7 @@ export interface AppNavConfig {
 
 export const ASSERTS_SERVICES_PATH = `/a/${ASSERTS_APP_ID}/services`;
 export const SLO_SERVICES_PATH = `/a/${SLO_APP_ID}/services`;
+export const ASSISTANT_PAGES_PATH = `/a/${ASSISTANT_APP_ID}/pages`;
 
 // The assistant pages OSS deployments get (mirrors assistantOSSNavigationPaths
 // in the Go builder)
@@ -310,7 +311,7 @@ const APP_NAV_PATH_CONFIG: Record<string, AppNavConfig> = {
     text: 'Coding agent',
     isNew: true,
   },
-  [`/a/${ASSISTANT_APP_ID}/pages`]: {
+  [ASSISTANT_PAGES_PATH]: {
     sectionId: NavID.root,
     sortWeight: NavWeight.dashboards + 1,
     icon: 'pages',

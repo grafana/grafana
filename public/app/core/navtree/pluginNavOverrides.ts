@@ -10,8 +10,9 @@ import {
   SERVICECENTER_APP_ID,
   SLO_APP_ID,
 } from 'app/core/appPluginIds';
+import { contextSrv } from 'app/core/services/context_srv';
 
-import { ASSERTS_SERVICES_PATH, SLO_SERVICES_PATH } from './appNavConfig';
+import { ASSERTS_SERVICES_PATH, ASSISTANT_PAGES_PATH, SLO_SERVICES_PATH } from './appNavConfig';
 import { NavID, NavWeight } from './constants';
 import {
   findNavById,
@@ -126,5 +127,29 @@ export const PLUGIN_NAV_OVERRIDES: PluginNavOverride[] = [
     when: (_, installedPluginIds) =>
       installedPluginIds.has(PATHFINDER_APP_ID) || installedPluginIds.has(DOCS_PLUGIN_APP_ID),
     apply: (tree) => updateNavById(tree, NavID.help, (help) => ({ ...help, hideFromTabs: true })),
+  },
+  {
+    // The Assistant's pages section carries its own create action. No constant
+    // for the action: it is an app-platform permission, named as the Go builder names it.
+    when: (tree) =>
+      Boolean(findNavById(tree, standalonePluginPageId(ASSISTANT_PAGES_PATH))) &&
+      contextSrv.hasPermission('assistant.ext.grafana.app/pages:create'),
+    apply: (tree) =>
+      updateNavById(tree, standalonePluginPageId(ASSISTANT_PAGES_PATH), (section) => ({
+        ...section,
+        children: [
+          ...(section.children ?? []),
+          {
+            // No pluginId: the frontend registers a catch-all app route for every plugin
+            // nav item, which would make this section own every assistant app url
+            text: 'New Grafana Page',
+            id: 'assistant/pages/new',
+            icon: 'plus',
+            url: `${ASSISTANT_PAGES_PATH}/new`,
+            hideFromTabs: true,
+            isCreateAction: true,
+          },
+        ],
+      })),
   },
 ];

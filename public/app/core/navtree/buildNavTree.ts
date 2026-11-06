@@ -94,12 +94,12 @@ export function buildNavTree(apps: AppPluginConfig[] = []): NavModelItem[] {
 
 /** Appends registered extension items into their parent sections. Returns a new tree. */
 function applyRegisteredNavEntries(tree: NavModelItem[]): NavModelItem[] {
-  return getRegisteredNavEntries().reduce((current, { parentId, entry }) => {
+  return getRegisteredNavEntries().reduce((current, { parentId, entry, after }) => {
     const built = buildEntries([entry]);
     if (built.length === 0) {
       return current;
     }
-    const next = appendIntoSection(current, parentId, built);
+    const next = appendIntoSection(current, parentId, built, after);
     if (!next) {
       // A registered item naming a section that isn't there is a bug in the
       // registering bundle, so say so rather than dropping it silently

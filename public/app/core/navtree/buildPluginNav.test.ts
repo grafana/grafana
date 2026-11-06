@@ -330,6 +330,27 @@ describe('applyPluginNav', () => {
       expect(childTexts(merged, 'grafana-assistant-app')).not.toContain('Pages');
     });
 
+    it('adds the assistant create action only with the pages create permission', () => {
+      const namespace = config.namespace;
+      config.namespace = 'stacks-123';
+      const assistant = () =>
+        app('grafana-assistant-app', 'Assistant', [
+          page('Home', '/a/grafana-assistant-app'),
+          page('Pages', '/a/grafana-assistant-app/pages'),
+        ]);
+      const pagesId = 'standalone-plugin-page-/a/grafana-assistant-app/pages';
+
+      setup({ permissions: ['plugins.app:access', 'assistant.ext.grafana.app/pages:create'] });
+      const withCreate = findById(merge(assistant()), pagesId);
+      expect(ids(withCreate?.children ?? [])).toEqual(['assistant/pages/new']);
+      expect(withCreate?.children?.[0]).toMatchObject({ isCreateAction: true, hideFromTabs: true });
+
+      setup({ permissions: ['plugins.app:access'] });
+      expect(findById(merge(assistant()), pagesId)?.children ?? []).toEqual([]);
+
+      config.namespace = namespace;
+    });
+
     it('drops that app when its page fails the include access check', () => {
       setup({ orgRole: 'Viewer' });
       const merged = merge(
