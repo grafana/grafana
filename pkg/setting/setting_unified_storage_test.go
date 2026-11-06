@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 )
 
 func TestUnifiedStorageQuotaResources(t *testing.T) {
@@ -964,6 +965,90 @@ func TestQOSMaxConcurrentPerTenant(t *testing.T) {
 			}
 			cfg.setUnifiedStorageConfig()
 			require.Equal(t, tc.want, cfg.QOSMaxConcurrentPerTenant)
+		})
+	}
+}
+
+func TestIgnoredWatchSettings(t *testing.T) {
+	const (
+		sql    = "[unified_storage]\nenable_sqlkv_backend = false\n"
+		kv     = "[unified_storage]\nenable_sqlkv_backend = true\n"
+		file   = "[grafana-apiserver]\nstorage_type = file\n"
+		remote = "[grafana-apiserver]\nstorage_type = unified-grpc\n"
+		// Empty values are what conf/defaults.ini ships.
+		shippedDefaults = "[nats]\nnotifier =\nnotifier_watch_max_age =\n[unified_storage]\nseeded_watches_enabled =\n"
+	)
+	notifierIgnored := func(reason string) ignoredWatchSetting {
+		return ignoredWatchSetting{setting: "[nats] notifier", reason: reason}
+	}
+	maxAgeIgnored := func(reason string) ignoredWatchSetting {
+		return ignoredWatchSetting{setting: "[nats] notifier_watch_max_age", reason: reason}
+	}
+	seededIgnored := ignoredWatchSetting{setting: "[unified_storage] seeded_watches_enabled", reason: "the legacy SQL backend cannot seed watches"}
+
+	for _, tc := range []struct {
+		name string
+		raw  []string
+		want []ignoredWatchSetting
+	}{
+		{name: "defaults with nats disabled", raw: []string{shippedDefaults, sql}},
+		{name: "defaults with nats on legacy sql", raw: []string{shippedDefaults, sql, "[nats]\nenabled = true\n"}},
+		{name: "defaults with nats on kv", raw: []string{shippedDefaults, kv, "[nats]\nenabled = true\n"}},
+		{name: "defaults with nats on file", raw: []string{shippedDefaults, file, "[nats]\nenabled = true\n"}},
+		{name: "notifier on legacy sql", raw: []string{sql, "[nats]\nenabled = true\nnotifier = true\n"}},
+		{
+			name: "notifier with nats disabled",
+			raw:  []string{sql, "[nats]\nnotifier = true\n"},
+			want: []ignoredWatchSetting{notifierIgnored("NATS is disabled")},
+		},
+		{
+			name: "notifier on file",
+			raw:  []string{file, "[nats]\nenabled = true\nnotifier = true\n"},
+			want: []ignoredWatchSetting{notifierIgnored("the file storage backend does not use NATS")},
+		},
+		{name: "notifier off is never ignored", raw: []string{sql, "[nats]\nnotifier = false\n"}},
+		{
+			name: "max age with the notifier off",
+			raw:  []string{kv, "[nats]\nenabled = true\nnotifier = false\nnotifier_watch_max_age = 5m\n"},
+			want: []ignoredWatchSetting{maxAgeIgnored("the NATS notifier is off")},
+		},
+		{
+			name: "max age with nats disabled",
+			raw:  []string{kv, "[nats]\nnotifier_watch_max_age = 5m\n"},
+			want: []ignoredWatchSetting{maxAgeIgnored("NATS is disabled")},
+		},
+		{name: "max age with the notifier on", raw: []string{kv, "[nats]\nenabled = true\nnotifier_watch_max_age = 5m\n"}},
+		{name: "zero max age is never ignored", raw: []string{kv, "[nats]\nnotifier_watch_max_age = 0\n"}},
+		{
+			name: "seeded watches on legacy sql",
+			raw:  []string{sql, "[unified_storage]\nseeded_watches_enabled = true\n"},
+			want: []ignoredWatchSetting{seededIgnored},
+		},
+		{name: "seeded watches on kv without the notifier", raw: []string{kv, "[unified_storage]\nseeded_watches_enabled = true\n"}},
+		{name: "seeded watches off on legacy sql", raw: []string{sql, "[unified_storage]\nseeded_watches_enabled = false\n"}},
+		{
+			name: "everything on legacy sql with nats disabled",
+			raw:  []string{sql, "[nats]\nnotifier = true\nnotifier_watch_max_age = 5m\n[unified_storage]\nseeded_watches_enabled = true\n"},
+			want: []ignoredWatchSetting{notifierIgnored("NATS is disabled"), maxAgeIgnored("NATS is disabled"), seededIgnored},
+		},
+		{
+			name: "remote storage reads its own settings",
+			raw:  []string{remote, "[nats]\nnotifier = true\nnotifier_watch_max_age = 5m\n[unified_storage]\nseeded_watches_enabled = true\n"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			sources := make([]any, 0, len(tc.raw))
+			for _, raw := range tc.raw {
+				sources = append(sources, []byte(raw))
+			}
+			f, err := ini.Load(sources[0], sources[1:]...)
+			require.NoError(t, err)
+			cfg.Raw = f
+			require.NoError(t, readNATSSettings(cfg))
+			cfg.setUnifiedStorageConfig()
+
+			require.Equal(t, tc.want, cfg.ignoredWatchSettings())
 		})
 	}
 }
