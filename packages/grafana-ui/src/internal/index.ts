@@ -64,6 +64,7 @@ export { getSvgSize } from '../components/Icon/utils';
 export { LoadingIndicator } from '../components/PanelChrome/LoadingIndicator';
 export {
   PanelChromeHeaderControlsContext,
+  usePanelChromeHeaderControls,
   type PanelChromeHeaderControls,
 } from '../components/PanelChrome/PanelChromeHeaderControlsContext';
 export { type ButtonLinkProps, getButtonStyles } from '../components/Button/Button';
