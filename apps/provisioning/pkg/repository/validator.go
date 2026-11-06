@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -428,15 +429,38 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return invalidRepositoryError(a.GetName(), list)
 	}
 
-	// Run validators
-	for _, validator := range v.validators {
-		list = append(list, validator.Validate(ctx, r)...)
-		if len(list) > 0 {
-			return invalidRepositoryError(a.GetName(), list)
+	// Run validators. A spec whose only change is switching the sync off is exempt: the
+	// validators authorize spec content, and this change introduces none -- while a
+	// repository whose configured path or URL has since stopped being permitted would
+	// otherwise be unable to turn its own sync off.
+	if !isSyncDisableOnly(a, r) {
+		for _, validator := range v.validators {
+			list = append(list, validator.Validate(ctx, r)...)
+			if len(list) > 0 {
+				return invalidRepositoryError(a.GetName(), list)
+			}
 		}
 	}
 
 	return nil
+}
+
+// isSyncDisableOnly reports whether this update turns off a running sync and changes nothing
+// else in the spec, so revalidating the spec could only reject content that is already stored.
+func isSyncDisableOnly(a admission.Attributes, r *provisioning.Repository) bool {
+	if a.GetOperation() != admission.Update {
+		return false
+	}
+	old, ok := a.GetOldObject().(*provisioning.Repository)
+	if !ok || !old.Spec.Sync.Enabled || r.Spec.Sync.Enabled {
+		return false
+	}
+
+	// Compare on the sync already switched off, so the only difference left to find is
+	// another field the caller changed alongside it.
+	want := old.Spec.DeepCopy()
+	want.Sync.Enabled = false
+	return apiequality.Semantic.DeepEqual(&r.Spec, want)
 }
 
 func invalidRepositoryError(name string, list field.ErrorList) error {

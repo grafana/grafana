@@ -79,6 +79,29 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 		assert.Equal(t, "Team A", folders[0].Object["spec"].(map[string]any)["title"])
 	})
 
+	// The bootstrap repository is managed by file-provisioning and manages resources under the
+	// same name, and the count request filters on the manager id alone -- so the sync has to
+	// pick its own entry out of several rather than expect exactly one, or the card is empty.
+	t.Run("reports what it manages in its stats", func(t *testing.T) {
+		repo, err := helper.Repositories.Resource.Get(t.Context(), "bootstrap", metav1.GetOptions{})
+		require.NoError(t, err)
+
+		stats, found, err := unstructured.NestedSlice(repo.Object, "status", "stats")
+		require.NoError(t, err)
+		require.True(t, found, "the bootstrap repository should report stats")
+
+		counted := map[string]int64{}
+		for _, entry := range stats {
+			row := entry.(map[string]any)
+			count, _, err := unstructured.NestedInt64(row, "count")
+			require.NoError(t, err)
+			counted[row["resource"].(string)] = count
+		}
+		assert.NotZero(t, counted["dashboards"], "stats: %v", counted)
+		assert.NotZero(t, counted["repositories"], "the repositories it declared are counted too")
+		assert.NotZero(t, counted["connections"])
+	})
+
 	t.Run("provisions the repository declared in the path", func(t *testing.T) {
 		nested := requireRepository(t, helper, "nested")
 		manager, ok := metaOf(t, nested).GetManagerProperties()

@@ -1319,3 +1319,101 @@ func TestValidateCommitOptions(t *testing.T) {
 		})
 	}
 }
+
+// A repository whose configured path has stopped being permitted -- a bootstrap repository
+// after bootstrap_path is cleared -- would otherwise be unable to turn its own sync off,
+// leaving it enabled against a directory the configuration no longer names.
+func TestAdmissionValidator_Validate_AllowsDisablingSyncWithoutRevalidatingTheSpec(t *testing.T) {
+	old := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "bootstrap",
+			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Bootstrap",
+			Type:  provisioning.LocalRepositoryType,
+			Local: &provisioning.LocalRepositoryConfig{Path: "/no/longer/permitted"},
+			Sync:  provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeFolderless},
+		},
+	}
+	repo := old.DeepCopy()
+	repo.Spec.Sync.Enabled = false
+
+	// No EXPECT() for Validate: the type validators, which are what would reject the path,
+	// must not run for a change that introduces no spec content.
+	mockFactory := NewMockFactory(t)
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
+		NewValidator(false, mockFactory),
+	)
+
+	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
+
+	require.NoError(t, admissionValidator.Validate(context.Background(), attr, nil))
+}
+
+func TestAdmissionValidator_Validate_StillValidatesChangesBundledWithDisablingSync(t *testing.T) {
+	old := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "bootstrap",
+			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Bootstrap",
+			Type:  provisioning.LocalRepositoryType,
+			Local: &provisioning.LocalRepositoryConfig{Path: "conf/provisioning/bootstrap"},
+			Sync:  provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeFolderless},
+		},
+	}
+	// Repointing the path while switching the sync off must not ride the exemption.
+	repo := old.DeepCopy()
+	repo.Spec.Sync.Enabled = false
+	repo.Spec.Local = &provisioning.LocalRepositoryConfig{Path: "/somewhere/else"}
+
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).
+		Return(field.ErrorList{field.Invalid(field.NewPath("spec", "local", "path"), "/somewhere/else", "not permitted")}).Once()
+
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
+		NewValidator(false, mockFactory),
+	)
+
+	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
+
+	err := admissionValidator.Validate(context.Background(), attr, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not permitted")
+}
+
+func TestAdmissionValidator_Validate_StillValidatesWhenEnablingSync(t *testing.T) {
+	old := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "bootstrap",
+			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Bootstrap",
+			Type:  provisioning.LocalRepositoryType,
+			Local: &provisioning.LocalRepositoryConfig{Path: "/no/longer/permitted"},
+			Sync:  provisioning.SyncOptions{Enabled: false, Target: provisioning.SyncTargetTypeFolderless},
+		},
+	}
+	repo := old.DeepCopy()
+	repo.Spec.Sync.Enabled = true
+
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).
+		Return(field.ErrorList{field.Invalid(field.NewPath("spec", "local", "path"), "/no/longer/permitted", "not permitted")}).Once()
+
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
+		NewValidator(false, mockFactory),
+	)
+
+	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
+
+	err := admissionValidator.Validate(context.Background(), attr, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not permitted")
+}
