@@ -1,6 +1,7 @@
 package setting
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -199,6 +200,45 @@ func TestSeededWatchesEnabled(t *testing.T) {
 				t.Setenv("GF_UNIFIED_STORAGE_SEEDED_WATCHES_ENABLED", tc.env)
 			}
 			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.SeededWatchesEnabled)
+		})
+	}
+}
+
+func TestSeededWatchesDefault(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		storageType string
+		kv          bool
+		nats        bool
+		notifier    bool
+		configured  string
+		want        bool
+	}{
+		{name: "kv with the notifier", kv: true, nats: true, notifier: true, want: true},
+		{name: "kv over grpc with the notifier", storageType: "unified-kv-grpc", nats: true, notifier: true, want: true},
+		{name: "kv with the notifier off", kv: true, nats: true},
+		{name: "kv with nats disabled", kv: true, notifier: true},
+		{name: "legacy sql with the notifier", nats: true, notifier: true},
+		{name: "file with the notifier", storageType: "file", kv: true, nats: true, notifier: true},
+		{name: "remote storage with the notifier", storageType: "unified-grpc", kv: true, nats: true, notifier: true},
+		{name: "explicit off wins on kv with the notifier", kv: true, nats: true, notifier: true, configured: "false"},
+		{name: "explicit on wins on legacy sql", configured: "true", want: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.storageType != "" {
+				cfg.Raw.Section("grafana-apiserver").Key("storage_type").SetValue(tc.storageType)
+			}
+			section := cfg.Raw.Section("unified_storage")
+			section.Key("enable_sqlkv_backend").SetValue(strconv.FormatBool(tc.kv))
+			// Empty is what conf/defaults.ini ships.
+			section.Key("seeded_watches_enabled").SetValue(tc.configured)
+			cfg.NATS.Enabled = tc.nats
+			cfg.NATS.Notifier = tc.notifier
+
+			cfg.setUnifiedStorageConfig()
+
 			require.Equal(t, tc.want, cfg.SeededWatchesEnabled)
 		})
 	}
