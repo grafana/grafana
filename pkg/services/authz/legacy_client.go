@@ -12,6 +12,8 @@ type LegacyActionRestriction = legacyclient.LegacyActionRestriction
 
 type LegacyInternalIdentity = legacyclient.LegacyInternalIdentity
 
+type LegacyBackgroundIdentity = legacyclient.LegacyBackgroundIdentity
+
 type LegacyInternalIdentityProfile = legacyclient.LegacyInternalIdentityProfile
 
 const (

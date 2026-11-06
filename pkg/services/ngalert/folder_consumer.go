@@ -22,7 +22,7 @@ type AlertRuleFolderConsumer struct {
 	store alertRuleStore
 }
 
-func ProvideAlertRuleFolderConsumer(store *rulestore.RuleStore) *AlertRuleFolderConsumer {
+func ProvideAlertRuleFolderConsumer(store rulestore.Store) *AlertRuleFolderConsumer {
 	return &AlertRuleFolderConsumer{store: store}
 }
 

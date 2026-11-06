@@ -4,9 +4,12 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { useFlagGrafanaCmdkDashboardTags } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
-import { type ManagerKind } from 'app/features/apiserver/types';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+
+import { ResultTags } from './ResultTags';
+import { getActionManagedBy, getActionTags } from './types';
 
 export const ResultItem = React.forwardRef(
   (
@@ -35,12 +38,10 @@ export const ResultItem = React.forwardRef(
     }, [action.ancestors, currentRootActionId]);
 
     const styles = useStyles2(getResultItemStyles);
+    const dashboardTagsEnabled = useFlagGrafanaCmdkDashboardTags();
 
-    // type assertion needed because kbar's ActionImpl copies all properties from the input Action object at runtime,
-    // but its TS type doesn't reflect custom properties like managedBy or url.
-    // See the same pattern for `url` in KBarResults.tsx and below command url
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const managedBy = (action as ActionImpl & { managedBy?: ManagerKind }).managedBy;
+    const managedBy = getActionManagedBy(action);
+    const tags = getActionTags(action);
     const showProvisionedBadge = config.provisioningEnabled && Boolean(managedBy);
 
     let name = action.name;
@@ -72,7 +73,12 @@ export const ResultItem = React.forwardRef(
             <span>{name}</span>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
-          {showProvisionedBadge && <ManagedBadge managerKind={managedBy} />}
+          {showProvisionedBadge && (
+            <span className={styles.managedBadge}>
+              <ManagedBadge managerKind={managedBy} />
+            </span>
+          )}
+          {dashboardTagsEnabled && tags && tags.length > 0 && <ResultTags tags={tags} />}
         </div>
       </div>
     );
@@ -86,7 +92,7 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     row: css({
       padding: theme.spacing(1, 2),
       display: 'flex',
-      alightItems: 'center',
+      alignItems: 'center',
       justifyContent: 'space-between',
       cursor: 'pointer',
       position: 'relative',
@@ -114,8 +120,14 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       alignItems: 'baseline',
       fontSize: theme.typography.fontSize,
       width: '100%',
+      minWidth: 0,
+      '& > svg': {
+        flexShrink: 0,
+      },
     }),
     textContainer: css({
+      flex: '0 1 auto',
+      minWidth: 0,
       display: 'block',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
@@ -133,13 +145,13 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       ...theme.typography.bodySmall,
       color: theme.colors.text.secondary,
       display: 'block',
-      flexBasis: '20%',
-      flexGrow: 1,
-      flexShrink: 0,
-      maxWidth: 'fit-content',
+      // Give the dashboard name priority when the row runs out of space.
+      flex: '0 10 auto',
+      minWidth: 0,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     }),
+    managedBadge: css({ display: 'flex', flexShrink: 0, alignSelf: 'center' }),
   };
 };

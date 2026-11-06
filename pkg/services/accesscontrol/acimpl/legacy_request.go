@@ -25,7 +25,25 @@ func (a *AccessControl) buildLegacyCheckRequest(
 	}
 
 	namespace := user.GetNamespace()
+	var internal *legacyclient.LegacyInternalIdentity
 	if profile, ok := identity.InternalIdentityProfileFor(user); ok {
+		internal = &legacyclient.LegacyInternalIdentity{Profile: legacyclient.LegacyInternalIdentityProfile(profile)}
+	} else if name, ok := accesscontrol.BackgroundUserName(user); ok {
+		permissions := make(map[string][]string, len(user.GetPermissions()))
+		for action, scopes := range user.GetPermissions() {
+			permissions[action] = slices.Clone(scopes)
+		}
+
+		internal = &legacyclient.LegacyInternalIdentity{
+			Background: &legacyclient.LegacyBackgroundIdentity{
+				Name:        name,
+				OrgRole:     string(user.GetOrgRole()),
+				Permissions: permissions,
+			},
+		}
+	}
+
+	if internal != nil {
 		if namespace == "" || namespace == "*" {
 			if user.GetOrgID() < 1 || namespaceMapper == nil {
 				return legacyclient.LegacyCheckRequest{}, errors.New("internal legacy check requires a concrete target namespace")
@@ -40,7 +58,7 @@ func (a *AccessControl) buildLegacyCheckRequest(
 
 		return legacyclient.LegacyCheckRequest{
 			Namespace:           parsedNamespace.Value,
-			InternalIdentity:    &legacyclient.LegacyInternalIdentity{Profile: legacyclient.LegacyInternalIdentityProfile(profile)},
+			InternalIdentity:    internal,
 			Evaluator:           evaluator,
 			SkipScopeResolution: a.skipScopeResolution,
 		}, nil

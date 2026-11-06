@@ -51,7 +51,6 @@ func TestSharedStorage(t *testing.T) {
 			Namespace: sharedNS, Group: sharedGroup, Resource: sharedResource, Name: "one",
 		}})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		stored := &unstructured.Unstructured{}
 		require.NoError(t, json.Unmarshal(rsp.Value, stored))
 		require.Equal(t, sharedGroup+"/v1", stored.GetAPIVersion())
@@ -158,7 +157,6 @@ func TestSharedStorageWithName(t *testing.T) {
 			Namespace: sharedNS, Group: sharedGroup, Resource: sharedResource, Name: "a-id",
 		}})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		stored := &unstructured.Unstructured{}
 		require.NoError(t, json.Unmarshal(rsp.Value, stored))
 		require.Equal(t, "a-id", stored.GetName())

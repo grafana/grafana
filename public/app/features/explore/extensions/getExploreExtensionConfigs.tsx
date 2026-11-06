@@ -92,7 +92,7 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         description: 'Add the query and panel from explore to a notebook',
         targets: [PluginExtensionPoints.ExploreToolbarAction],
-        icon: 'book',
+        icon: 'gf-notebook',
         category: 'Dashboards',
         configure: () => {
           // Returning undefined when notebooks are off matters beyond hiding the item: BasicExtensions

@@ -28,7 +28,7 @@ type LegacyCheckRequest struct {
 	Teams               []string
 	SkipCache           bool
 	SkipScopeResolution bool
-	// InternalIdentity asserts a predefined profile on the trusted embedded channel.
+	// InternalIdentity asserts a predefined profile or background grants on the trusted embedded channel.
 	// It cannot be combined with Subject, Restriction or a global RequesterOrgID.
 	InternalIdentity *LegacyInternalIdentity
 	// Restriction limits reloaded grants to actions in the caller's effective permission map.
@@ -42,6 +42,14 @@ type LegacyActionRestriction struct {
 
 type LegacyInternalIdentity struct {
 	Profile LegacyInternalIdentityProfile
+	// Background preserves the caller's exact grants and is mutually exclusive with Profile.
+	Background *LegacyBackgroundIdentity
+}
+
+type LegacyBackgroundIdentity struct {
+	Name        string
+	OrgRole     string
+	Permissions map[string][]string
 }
 
 type LegacyInternalIdentityProfile string

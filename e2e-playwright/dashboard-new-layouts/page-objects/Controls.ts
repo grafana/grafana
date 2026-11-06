@@ -112,7 +112,7 @@ export class Controls extends PageObject {
     getEditActions: (): Locator => this.getByGrafanaSelector(this.selectors.components.EditActionsPopover.container),
     clickEditAction: async (
       variableLabel: string,
-      action: 'Settings' | 'Edit query' | 'Edit values' | 'Duplicate' | 'Delete'
+      action: 'Variable settings' | 'Edit query' | 'Edit values' | 'Duplicate' | 'Delete'
     ) => {
       await test.step(`Click "${action}" in the popover for variable "${variableLabel}"`, async () => {
         const control = this.variables.getControl(variableLabel);

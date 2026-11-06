@@ -1463,6 +1463,15 @@
         "count-unavailable": "Count unavailable",
         "expand": "Expand {{title}}"
       },
+      "instances": {
+        "error": "error",
+        "firing": "firing",
+        "healthy": "normal",
+        "nodata": "no data",
+        "pending": "pending",
+        "recovering": "recovering",
+        "view-instances": "View instances"
+      },
       "interval": "Evaluated every {{interval}}",
       "labels_one": "{{formatted}} label",
       "labels_other": "{{formatted}} labels",
@@ -1481,6 +1490,11 @@
         "retry-rules-in-folder": "Retry loading rules in {{title}}",
         "rules-error": "Failed to load recording rules",
         "search-issues": "Change the search to see results"
+      },
+      "routing": {
+        "default-policy": "Default policy",
+        "delivered-to": "Delivered to",
+        "policy": "Policy: {{name}}"
       },
       "rule-count": {
         "alert-rules_one": "{{formatted}} alert rule",
@@ -2047,7 +2061,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Apply"
+      "apply": "Apply",
+      "editor-label": "Alert rule YAML"
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -2485,6 +2500,7 @@
       "no-condition-tooltip": "Select a query condition to preview routing",
       "permission-warning": "Preview not available",
       "permission-warning-message": "You don't have permission to view notification policies. Preview is not available.",
+      "policy-not-found": "Notification policy \"{{policyName}}\" was not found.",
       "preview-routing": "Preview routing",
       "select-folder-tooltip": "Select a folder to preview routing",
       "text-loading-preview": "Loading preview...",
@@ -2916,6 +2932,10 @@
       "revert-button": "Revert to previous experience",
       "see-activity-button": "See Alert Activity",
       "title": "Revert to previous experience"
+    },
+    "route-timings": {
+      "error-format": "Invalid duration format. Must be {number}{time_unit}",
+      "error-zero": "Must be greater than zero"
     },
     "routing": {
       "routing": "Routing"
@@ -5334,6 +5354,9 @@
       "preferences": "Preferences",
       "recent-dashboards": "Recent dashboards",
       "recent-scopes": "Recent scopes"
+    },
+    "tags": {
+      "label": "Tags"
     }
   },
   "common": {
@@ -5759,7 +5782,8 @@
       "apply-undo-title": "Assistant Composer edit",
       "overlay": {
         "hint-panel": "Click to comment on a panel, or drag to draw a region",
-        "hint-region": "Drag to draw a region"
+        "hint-region": "Drag to draw a region",
+        "hint-variable": "Click to comment on a variable, or drag to draw a region"
       },
       "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
@@ -5941,6 +5965,9 @@
       "render-label": {
         "tooltip-remove-property": "Remove property"
       }
+    },
+    "edit": {
+      "mobile-not-available": "Dashboard editing is not available on small screens. Switch to a larger screen to continue."
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
@@ -6247,7 +6274,6 @@
     },
     "modes": {
       "agent-edit": "Agent editing",
-      "change-mode": "Change dashboard mode",
       "composer": "Composer",
       "composer-description": "Point at anything and ask the Assistant.",
       "composer-no-permission": "You need permission to edit this dashboard.",
@@ -6263,8 +6289,6 @@
       "empty": "This dashboard has no panels.",
       "label": "Dashboard mode",
       "save-before-viewing": "Save the dashboard before switching to Viewing.",
-      "switch-to-editing": "Switch to Editing",
-      "switch-to-viewing": "Switch to Viewing",
       "view": "Viewing",
       "view-changes": "View changes",
       "view-description": "View and explore the dashboard."
@@ -6438,6 +6462,9 @@
           "hide-header": "Hide row header",
           "title": "Title"
         },
+        "section-annotations": {
+          "title": "Annotations"
+        },
         "section-filters": {
           "title": "Filters"
         },
@@ -6519,11 +6546,10 @@
         "data-source": "Data source",
         "display": "Show annotation controls in",
         "display-options": {
-          "above-dashboard": "Above dashboard",
           "controls-menu": "Controls menu",
-          "controls-menu-description": "Can be accessed when the controls menu is open",
+          "controls-menu-description": "Visible when the controls menu is open",
           "hidden": "Hidden",
-          "hidden-description": "Hides the toggle for turning this annotation on or off"
+          "hidden-description": "Only visible in edit mode"
         },
         "enabled": "Enabled",
         "enabled-description": "When enabled the annotation query is issued every dashboard refresh",
@@ -6623,6 +6649,8 @@
         "row": "Row",
         "rows": "Rows",
         "section-filters-set": "Filters",
+        "selected-panels_one": "{{count}} panel",
+        "selected-panels_other": "{{count}} panels",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} variable",
@@ -6805,6 +6833,9 @@
             "description": "Repeat this tab for each value in the selected variable.",
             "title": "Repeat by variable"
           }
+        },
+        "section-annotations": {
+          "title": "Annotations"
         },
         "section-filters": {
           "title": "Filters"
@@ -7169,7 +7200,8 @@
         "change-annotation-panel-filter": "Change annotation panel filter",
         "change-annotation-query": "Change annotation query"
       },
-      "edit-query": "Edit query"
+      "tooltip-edit-annotation-query": "Edit query",
+      "tooltip-edit-annotation-settings": "Annotation settings"
     },
     "annotation-editable-element": {
       "delete-confirm": "Delete annotation query",
@@ -7252,7 +7284,6 @@
       "duplicate-tooltip": "Duplicate",
       "duplicate-tooltip-disabled": "Repeated panels can't be duplicated individually",
       "remove-tooltip": "Remove",
-      "settings": "Settings",
       "view": "View"
     },
     "conversion-warning-banner": {
@@ -7369,6 +7400,11 @@
         "button-moved": "Take me there",
         "description-moved": "The JSON model has moved to the dashboard's sidebar, under \"Edit as code\".",
         "title-moved": "Looking for the JSON model?"
+      },
+      "links": {
+        "button-moved": "Take me there",
+        "description-moved": "Link settings have moved to the dashboard's sidebar.",
+        "title-moved": "Looking for link settings?"
       },
       "variables": {
         "button-moved": "Take me there",
@@ -7581,6 +7617,7 @@
       "error-invalid-json": "Invalid JSON",
       "error-invalid-layout": "Layout JSON did not pass validation. Please check the JSON and try again.",
       "error-invalid-v2-panel": "Panel JSON did not pass validation. Please check the JSON and try again.",
+      "mobile-edit-unavailable": "Editing is unavailable on small screens",
       "validation-error": "Validation error"
     },
     "interval-variable-form": {
@@ -7652,10 +7689,10 @@
       "discard-pending-failed": "Couldn't discard the changes. Try again.",
       "discard-pending-title": "Discard your pending changes?",
       "draft-body": "Previewing a new dashboard, only you can see it until you save it.",
+      "draft-discarded": "Draft discarded",
       "draft-title": "Draft",
       "edited-dashboard": "Edit dashboard",
       "highlight-changes": "Highlight changes on the dashboard",
-      "open-to-save": "Open to save",
       "pending-body": "Previewing pending changes, only you can see them.",
       "pending-body-source": "Previewing pending changes {{source}}, only you can see them.",
       "pending-changes-changed": "These pending changes changed",
@@ -7673,6 +7710,7 @@
     "link-edit-actions": {
       "add-link": "Add link",
       "remove-link": "Remove link",
+      "tooltip-links-settings": "Links settings",
       "update-link": "Update link"
     },
     "link-editable-element": {
@@ -7757,7 +7795,10 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Edit visualization"
+      "panels-selected_one": "{{count}} panel selected",
+      "panels-selected_other": "{{count}} panels selected",
+      "tooltip-edit-panel-visualization": "Edit visualization",
+      "tooltip-panel-settings": "Panel settings"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",
@@ -8190,7 +8231,9 @@
     },
     "variable-edit-actions": {
       "edit-custom-values": "Edit values",
-      "edit-query": "Edit query"
+      "edit-query": "Edit query",
+      "tooltip-filter-settings": "Filter settings",
+      "tooltip-variable-settings": "Variable settings"
     },
     "variable-editable-element": {
       "delete-confirm": "Delete variable",
@@ -10732,6 +10775,8 @@
       "clear-button": "Clear selection"
     },
     "code-mirror": {
+      "diff-modified": "Modified",
+      "diff-original": "Original",
       "error-label": "CodeMirror editor failed to load",
       "language-load-failed": "Syntax highlighting failed to load",
       "language-load-failed-description": "The editor will continue without language-specific features.",
@@ -12360,7 +12405,8 @@
     "log-details": {
       "error": {
         "diagnose-with-assistant": "Diagnose with assistant",
-        "error-details": "Error details"
+        "error-details": "Error details",
+        "expand-stacktrace": "Expand stack trace"
       }
     },
     "log-labels": {
@@ -12399,7 +12445,6 @@
       "copy-log-line-json": "Copy log contents as JSON",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
-      "displayed-fields-section": "Organize displayed fields",
       "fields": {
         "adhoc-statistics": "Ad-hoc statistics",
         "copy-value-to-clipboard": "Copy value to clipboard",
@@ -12418,19 +12463,14 @@
       "inline-no-scrolls": "Switch to expanded view",
       "inline-with-scrolls": "Switch to condensed view",
       "link-fallback-label": "Link",
-      "link-value-tooltip": "Link value",
-      "links-section": "Links",
       "log-attributes-field": "Log attributes",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
-      "move-displayed-field-down": "Move down",
-      "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
       "open-assistant": "Explain log line in Assistant",
       "open-value-in": "Open value in",
       "pin-line": "Pin log",
       "prettify": "Prettify",
-      "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
       "scroll-to-logline": "Scroll to log line",
       "search": {
@@ -13758,8 +13798,12 @@
     "view": {
       "available-once-created": "Available once you write something",
       "copy-link": "Copy link",
-      "mode-edit": "Edit",
-      "mode-view": "View",
+      "mode-current": "Notebook mode: {{mode}}",
+      "mode-edit-description": "Edit text and panels.",
+      "mode-editing": "Editing",
+      "mode-label": "Notebook mode",
+      "mode-view-description": "View and explore the notebook.",
+      "mode-viewing": "Viewing",
       "more-actions": "More actions"
     }
   },
@@ -14017,6 +14061,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Could not find anything matching your query"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "Remove changes",
+    "save-to-dashboard": "Save to dashboard",
+    "tooltip": "This panel has unsaved changes that affect its view",
+    "undo-title": "Save view changes"
   },
   "panel-data-pane": {
     "try-new-editor": {
@@ -14757,6 +14807,7 @@
       "delete-confirm": "Are you sure you want to delete this connection? This action cannot be undone.",
       "delete-title": "Delete connection",
       "error-loading": "Failed to load connections",
+      "export": "Export",
       "kind-github-app": "GitHub App",
       "kind-oauth-app": "OAuth App",
       "no-connections": "No connections configured",
@@ -15025,6 +15076,11 @@
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
+    "managed-read-only-banner": {
+      "body": "Its configuration is managed outside Grafana and is read-only here. Change it where it is defined.",
+      "title": "This resource is managed externally"
+    },
+    "managed-read-only-tooltip": "This resource is managed externally and is read-only",
     "message": {
       "show-less": "show less",
       "show-more": "show more",
@@ -15254,6 +15310,7 @@
       "view-folder": "View folder"
     },
     "repository-card": {
+      "export": "Export",
       "last-sync": "Last sync: {{date}}",
       "settings": "Settings",
       "view": "View"
@@ -15361,6 +15418,8 @@
     "resource-kind": {
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
+      "datasource": "data source",
+      "datasources": "Data sources",
       "folder": "folder",
       "folders": "Folders",
       "library-panel": "library panel",
@@ -15938,28 +15997,17 @@
       "give-feedback": "Give feedback",
       "tooltip": "Experimental feature options"
     },
-    "footer": {
-      "edit-option": "Edit {{label}}",
-      "inspect-queries": "Inspect queries",
-      "label": {
-        "interval": "Interval",
-        "max-data-points": "Max data points",
-        "min-interval": "Min interval",
-        "relative-time": "Relative time",
-        "time-shift": "Time shift"
-      },
-      "placeholder": {
-        "no-limit": "No limit"
-      },
-      "query-inspector": "Query inspector",
-      "query-options": "Query options"
-    },
     "header": {
       "alert": "Alert",
+      "enter-stacked-view": "Enter stacked view",
+      "exit-stacked-view": "Exit stacked view",
       "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
       "pending-transformation": "Select a transformation",
       "pending-transformation-cancel": "Cancel",
+      "showing-items_one": "Showing {{count}} item",
+      "showing-items_other": "Showing {{count}} items",
+      "stacked-view": "Stacked view",
       "transformation": "Transformation"
     },
     "help": {
@@ -15977,13 +16025,28 @@
       "add-query": "Add query",
       "message": "Add a query, expression, or transformation to get started"
     },
+    "query-options-bar": {
+      "edit-option": "Edit {{label}}",
+      "inspect-queries": "Inspect queries",
+      "label": {
+        "interval": "Interval",
+        "max-data-points": "Max data points",
+        "min-interval": "Min interval",
+        "relative-time": "Relative time",
+        "time-shift": "Time shift"
+      },
+      "placeholder": {
+        "no-limit": "No limit"
+      },
+      "query-inspector": "Query inspector",
+      "query-options": "Query options"
+    },
     "sidebar": {
       "add": "Add",
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
       "add-expression-disabled": "Expressions are not supported with the Dashboard data source",
       "add-query": "Add query",
-      "add-query-or-expression": "Add query or expression",
       "add-saved-query": "Add saved query",
       "add-transformation": "Add transformation",
       "add-transformation-below": "Add transformation below {{id}}",
@@ -15993,31 +16056,25 @@
       "card-click": "Select card {{id}}",
       "card-multi-select": "Include card {{id}} in bulk selection",
       "data": "Data",
-      "enter-stacked-view": "Enter stacked view",
-      "exit-stacked-view": "Exit stacked view",
       "footer-items_one": "{{count}} items",
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
       "footer-items-alert_other": "{{count}} alerts",
       "footer-select": "Select...",
       "footer-select-label": "Select multiple items",
+      "more-add-options": "More add options",
       "new-type": "New {{type}}",
       "queries-empty": "No queries or expressions",
       "queries-expressions": "Queries & Expressions",
-      "stacked": "Stack",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
       "transformations-empty": "No transformations",
       "view-toggle": "View"
     },
     "stacked": {
-      "exit": "Exit stacked view",
-      "exit-aria-label": "Exit stacked view",
-      "hidden-aria-label": "Hidden",
-      "scroll-area-aria-label": "Stacked editor items",
-      "showing-items_one": "Showing {{count}} items",
-      "showing-items_other": "Showing {{count}} items",
-      "transformation": "Transformation"
+      "heading": "{{type}} {{name}}",
+      "heading-with-detail": "{{type}} {{name}}, {{detail}}",
+      "scroll-area-aria-label": "Stacked editor items"
     },
     "transformation-debug": {
       "copy-input-data": "Copy input data to clipboard",
