@@ -125,30 +125,26 @@ describe('fillNullLists', () => {
     expect(spec.elements).toEqual({});
   });
 
-  it('skips null annotations and variables on rows and tabs', () => {
+  it('normalizes null annotations and tolerates null variables on rows and tabs', () => {
     const section = { variables: null, annotations: null, layout: { kind: 'GridLayout', spec: { items: [] } } };
+    const tab = {
+      kind: 'TabsLayoutTab',
+      spec: {
+        ...section,
+        layout: { kind: 'RowsLayout', spec: { rows: [{ kind: 'RowsLayoutRow', spec: section }] } },
+      },
+    };
     const spec = {
       title: 'sections',
       timeSettings: { from: 'now-6h', to: 'now' },
-      layout: {
-        kind: 'TabsLayout',
-        spec: {
-          tabs: [
-            {
-              kind: 'TabsLayoutTab',
-              spec: {
-                ...section,
-                layout: { kind: 'RowsLayout', spec: { rows: [{ kind: 'RowsLayoutRow', spec: section }] } },
-              },
-            },
-          ],
-        },
-      },
+      layout: { kind: 'TabsLayout', spec: { tabs: [tab] } },
     } as unknown as DashboardV2Spec;
 
     expect(() => fillNullLists(spec)).not.toThrow();
     expect(tab.spec.annotations).toEqual([]);
     expect(section.annotations).toEqual([]);
+    expect(tab.spec.variables).toBeNull();
+    expect(section.variables).toBeNull();
   });
 
   it('preserves omitted nested annotations', () => {
