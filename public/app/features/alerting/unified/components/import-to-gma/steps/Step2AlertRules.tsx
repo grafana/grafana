@@ -34,11 +34,12 @@ import { stringifyErrorLike } from '../../../utils/misc';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName, useGetRulerRules } from '../../rule-editor/useAlertRuleSuggestions';
 import { type ImportFormValues } from '../ImportToGMA';
-import { getRulesSourceOptions } from '../Wizard/steps';
+import { getRulesSourceOptions, isAutoSyncSelected } from '../Wizard/steps';
 import { useGetRulesThatMightBeOverwritten } from '../hooks';
 import { filterRulerRulesConfig } from '../useImport';
 import { parseYamlFileToRulerRulesConfigDTO } from '../yamlToRulerConverter';
 
+import { usePredictedAutoSyncIdentifier } from './Step1AlertmanagerResources';
 import { YamlFileDropzone, getYamlFileDescription } from './YamlFileDropzone';
 import { isStep2Valid } from './utils';
 
@@ -80,6 +81,10 @@ export function Step2Content({ step1Completed, canImport }: Step2ContentProps) {
     namespace,
     ruleGroup,
     targetFolder,
+    notificationsSource,
+    notificationsDatasourceUID,
+    notificationsDatasourceName,
+    autoSyncNotificationsEnabled,
   ] = watch([
     'rulesSource',
     'rulesDatasourceUID',
@@ -89,7 +94,20 @@ export function Step2Content({ step1Completed, canImport }: Step2ContentProps) {
     'namespace',
     'ruleGroup',
     'targetFolder',
+    'notificationsSource',
+    'notificationsDatasourceUID',
+    'notificationsDatasourceName',
+    'autoSyncNotificationsEnabled',
   ]);
+
+  // With Auto-sync the tree is named by the sync; policyTreeName is a disabled field that may hold an earlier entry.
+  const autoSyncSelected = isAutoSyncSelected(autoSyncNotificationsEnabled ?? false, notificationsSource);
+  const autoSyncIdentifier = usePredictedAutoSyncIdentifier(
+    autoSyncSelected,
+    notificationsDatasourceUID,
+    notificationsDatasourceName
+  );
+  const createdTreeName = autoSyncSelected ? (autoSyncIdentifier ?? '') : policyTreeName;
 
   // Get namespaces and groups for filtering
   const { namespaceGroups, isLoading: isLoadingNamespaces } = useGetNameSpacesByDatasourceName(
@@ -159,14 +177,14 @@ export function Step2Content({ step1Completed, canImport }: Step2ContentProps) {
     // Step 1 can create a tree that the API doesn't know about yet. Offer it first, since it's
     // the most relevant option.
     const isUncreatedTree =
-      step1Completed && policyTreeName && !existingTreeOptions.some((option) => option.value === policyTreeName);
+      step1Completed && createdTreeName && !existingTreeOptions.some((option) => option.value === createdTreeName);
 
     if (!isUncreatedTree) {
       return existingTreeOptions;
     }
 
-    return [{ label: policyTreeName, value: policyTreeName }, ...existingTreeOptions];
-  }, [step1Completed, policyTreeName, existingTreeOptions]);
+    return [{ label: createdTreeName, value: createdTreeName }, ...existingTreeOptions];
+  }, [step1Completed, createdTreeName, existingTreeOptions]);
 
   return (
     <Stack direction="column" gap={3}>

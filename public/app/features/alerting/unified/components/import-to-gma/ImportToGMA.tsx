@@ -484,8 +484,14 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
     setStep1Snapshot(snapshot);
     setValue('step1Completed', true);
     setValue('step1Skipped', false);
-    if (snapshot.policyTreeName && !getValues('selectedRoutingTree')) {
-      setValue('selectedRoutingTree', snapshot.policyTreeName);
+    // Auto-sync names the tree itself; the disabled name field can still hold an earlier entry.
+    const autoSyncSelected = isAutoSyncSelected(
+      snapshot.autoSyncNotificationsEnabled ?? false,
+      snapshot.notificationsSource
+    );
+    const createdTreeName = autoSyncSelected ? autoSyncIdentifier : snapshot.policyTreeName;
+    if (createdTreeName && !getValues('selectedRoutingTree')) {
+      setValue('selectedRoutingTree', createdTreeName);
     }
     return true;
   }, [trigger, triggerDryRunCheck, setValue, getValues, autoSyncIdentifier]);

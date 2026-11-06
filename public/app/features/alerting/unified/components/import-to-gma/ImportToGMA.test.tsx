@@ -46,6 +46,7 @@ jest.mock('@grafana/ui/unstable', () => ({
 let mockScenario:
   | 'yaml'
   | 'auto-sync'
+  | 'auto-sync-custom-name'
   | 'datasource'
   | 'datasource-unnamed'
   | 'schema-derived-secrets'
@@ -61,7 +62,10 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
     Step1Content: function Step1Content() {
       const { setValue, register, getValues } = useFormContext();
       useEffect(() => {
-        if (mockScenario === 'auto-sync') {
+        if (mockScenario === 'auto-sync' || mockScenario === 'auto-sync-custom-name') {
+          if (mockScenario === 'auto-sync-custom-name') {
+            setValue('policyTreeName', 'typed-before-auto-sync');
+          }
           setValue('notificationsSource', 'datasource');
           setValue('notificationsDatasourceUID', 'mimir-uid');
           setValue('notificationsDatasourceName', 'Mimir Alertmanager');
@@ -156,7 +160,7 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
           new File(['{{ define "slack" }}{{ end }}'], 'slack.tmpl', { type: 'text/plain' }),
         ]);
       }, [setValue, getValues]);
-      if (mockScenario === 'auto-sync') {
+      if (mockScenario === 'auto-sync' || mockScenario === 'auto-sync-custom-name') {
         return null;
       }
       return <input placeholder="prometheus-prod" {...register('policyTreeName')} />;
@@ -1014,6 +1018,31 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({ datasourceUid: 'mimir-uid' }));
     expect(rulesImportCalled).toBe(true);
     await waitFor(() => expect(within(dialog).getByText(/alert rules were also imported/i)).toBeInTheDocument());
+  });
+
+  it('routes imported rules to the tree Auto-sync names, not the policy tree name typed earlier', async () => {
+    mockScenario = 'auto-sync-custom-name';
+    mockSeedRulesSource = true;
+    setupStatefulAutoSyncConfig(server);
+    let rulesRequestHeaders = '';
+    server.use(
+      http.post('/api/convert/prometheus/config/v1/rules', ({ request }) => {
+        rulesRequestHeaders = JSON.stringify(Object.fromEntries(request.headers.entries()));
+        return HttpResponse.json(convertResponse());
+      })
+    );
+
+    const { user } = render(<ImportWizardGate />);
+    await advanceToRules(user);
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByText(/review import/i);
+    await user.click(screen.getByRole('button', { name: /enable auto-sync/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /enable auto-sync/i }));
+
+    await waitFor(() => expect(rulesRequestHeaders).not.toBe(''));
+    expect(rulesRequestHeaders).toContain('mimir-alertmanager');
+    expect(rulesRequestHeaders).not.toContain('typed-before-auto-sync');
   });
 
   it('reports a Rules-specific failure — not an Auto-sync failure — when Rules import fails after Auto-sync already succeeded', async () => {
