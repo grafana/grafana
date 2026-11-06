@@ -2070,6 +2070,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "reverseColorScheme",
+			Description: "Enable the option to reverse by value color schemes",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true, React: true},
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "jaegerEnableGrpcEndpoint",
 			Description: "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
 			Stage:       FeatureStageExperimental,

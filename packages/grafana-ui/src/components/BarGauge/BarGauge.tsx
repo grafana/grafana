@@ -618,7 +618,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
 
   let gradient = '';
   let lastpos = 0;
-  let mode = getFieldColorMode(field.color?.mode);
+  let mode = getFieldColorMode(field.color?.mode, field.color?.reverse);
 
   if (mode.id === FieldColorModeId.Thresholds) {
     const thresholds = field.thresholds!;
