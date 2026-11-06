@@ -9757,7 +9757,6 @@
     "api": {
       "anonymous-user": "Anonymous",
       "folder-delete-error-provisioned": "Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.",
-      "folder-deleted-success": "Folder deleted",
       "folder-move-error-provisioned": "Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.",
       "folder-moved-success": "Folder moved"
     }
@@ -11706,8 +11705,8 @@
           },
           "website-monitoring": {
             "cta": "Start setup",
-            "description": "Track the availability of your website and its performance from different locations.",
-            "title": "Monitor website uptime and performance"
+            "description": "Measure availability, speed, and key user journeys from your users' locations.",
+            "title": "Monitor your website's user experience"
           }
         },
         "show-less": "Show fewer guides",
@@ -11828,10 +11827,10 @@
       "switchSolution": "Switch solution",
       "synthetic-monitoring": {
         "action": "Enable Synthetic Monitoring",
-        "context": "Black-box checks for the services your cluster runs",
-        "description": "Probe your endpoints from global locations with HTTP, DNS, and ping checks, and alert on downtime.",
+        "context": "End-user observability for your services",
+        "description": "Run browser, API, and network checks from global locations to track availability, speed, and key user journeys.",
         "setup-action": "Create your first check",
-        "title": "Monitor uptime from the outside"
+        "title": "See your app the way your users do"
       },
       "title": "Recommendations for your stack"
     },
@@ -11932,7 +11931,7 @@
         "checks_one": "{{value}} check",
         "checks_other": "{{value}} checks",
         "create-check": "Create a check",
-        "description": "Monitor uptime and performance of your endpoints from probes around the world.",
+        "description": "Monitor the digital experience of your endpoints and user journeys from probes around the world.",
         "failing_one": "{{count}} check failing",
         "failing_other": "{{count}} checks failing",
         "failing-worst": "{{check}} at {{percent}}%",
@@ -13559,8 +13558,12 @@
       "code": "Code",
       "heading": "Heading",
       "label": "Click to add above",
+      "more-visualization-options": "More visualization options",
+      "new-from-saved-queries": "New from Saved Queries",
       "paragraph": "Paragraph",
       "prompt": "Type to start writing — press / for blocks",
+      "saved-query-no-suggestion": "No visualization found",
+      "saved-query-no-suggestion-detail": "The query did not return enough data to suggest a visualization type.",
       "visualization": "Visualization"
     },
     "cell": {
@@ -13866,7 +13869,7 @@
         "description-no-value": "What to show when there is no value",
         "description-value-mappings": "Modify the display text based on input value",
         "name-actions": "Actions",
-        "name-ad-hoc": "Filter from values",
+        "name-ad-hoc": "Cross-filter",
         "name-color-scheme": "Color scheme",
         "name-data-links": "Data links",
         "name-decimals": "Decimals",
@@ -14807,6 +14810,7 @@
       "delete-confirm": "Are you sure you want to delete this connection? This action cannot be undone.",
       "delete-title": "Delete connection",
       "error-loading": "Failed to load connections",
+      "export": "Export",
       "kind-github-app": "GitHub App",
       "kind-oauth-app": "OAuth App",
       "no-connections": "No connections configured",
@@ -15309,6 +15313,7 @@
       "view-folder": "View folder"
     },
     "repository-card": {
+      "export": "Export",
       "last-sync": "Last sync: {{date}}",
       "settings": "Settings",
       "view": "View"
