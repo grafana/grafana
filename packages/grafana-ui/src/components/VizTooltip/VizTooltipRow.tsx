@@ -287,6 +287,8 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     fontVariantNumeric: theme.flags.tabularNums ? 'tabular-nums' : undefined,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
+    // In a narrow tooltip a wrapped value's lines stay right-aligned, matching single-line values.
+    ...(size === 'narrow' && { textAlign: 'right' }),
   }),
   colorWrapper: css({
     alignSelf: 'center',

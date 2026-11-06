@@ -80,6 +80,8 @@ describe('VizTooltipWrapper', () => {
       );
       expect(cellOf('My Label')).toHaveStyle({ maxWidth: '75%' });
       expect(cellOf(value)).toHaveStyle({ maxWidth: '75%', marginLeft: 'auto', justifyContent: 'flex-end' });
+      // wrapped value lines stay right-aligned too
+      expect(screen.getByText(value)).toHaveStyle({ textAlign: 'right' });
     });
 
     it('keeps the old-system row layout for auto (value holds its width, no percentage caps)', () => {
@@ -91,6 +93,7 @@ describe('VizTooltipWrapper', () => {
       expect(cellOf('My Value')).toHaveStyle({ flexShrink: 0 });
       expect(cellOf('My Label')).not.toHaveStyle({ maxWidth: '75%' });
       expect(cellOf('My Value')).not.toHaveStyle({ maxWidth: '75%' });
+      expect(screen.getByText('My Value')).not.toHaveStyle({ textAlign: 'right' });
     });
   });
 
