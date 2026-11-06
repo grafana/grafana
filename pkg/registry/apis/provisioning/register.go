@@ -152,7 +152,6 @@ type APIBuilder struct {
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
 	maxFileSize                   int64
-	maxJobBodySize                int64
 	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
@@ -226,7 +225,6 @@ func NewAPIBuilder(
 	folderMetadataEnabled bool,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	maxFileSize int64,
-	maxJobBodySize int64,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -281,8 +279,6 @@ func NewAPIBuilder(
 		incrementalPolicy:                   incrementalPolicy,
 		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
 		maxFileSize: maxFileSize,
-		// Request body cap for job creation. Non-positive (<=0) uses the default.
-		maxJobBodySize: maxJobBodySize,
 	}
 
 	for _, builder := range extraBuilders {
@@ -367,7 +363,6 @@ func RegisterAPIService(
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	maxFileSize := cfg.ProvisioningMaxFileSize
-	maxJobBodySize := cfg.ProvisioningMaxJobBodySize
 	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
 
@@ -414,7 +409,6 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		incrementalPolicy,
 		maxFileSize,
-		maxJobBodySize,
 	)
 	if err != nil {
 		return nil, err
@@ -462,7 +456,6 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		incrementalPolicy,
 		maxFileSize,
-		maxJobBodySize,
 	)
 	if err != nil {
 		return nil, err
@@ -958,7 +951,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled, b.maxJobBodySize), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled), 30*time.Second)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
