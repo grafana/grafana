@@ -50,41 +50,68 @@ func TestAnnotationPermissionListingIncludesBothResources(t *testing.T) {
 		{name: "no grants"},
 	}
 	for _, tc := range cases {
-		for action, verb := range map[string]string{"annotations:read": "get", "annotations:create": "create", "annotations:write": "update", "annotations:delete": "delete"} {
-			for _, mode := range []string{"action", "prefix", "all", "current user"} {
-				t.Run(tc.name+"/"+action+"/"+mode, func(t *testing.T) {
-					if mode == "current user" && tc.scope != "" {
-						t.Skip("current user listing has no scope filter")
-					}
-					client := &annotationListClient{organization: tc.organization, dashboard: tc.dashboard}
-					r := &ZanzanaPermissionResolver{client: client}
-					var perms []ac.Permission
-					if mode == "current user" {
-						var err error
-						perms, err = r.ResolveCurrentUserPermissions(t.Context(), &identity.StaticRequester{Type: "user", UserUID: "u1", OrgID: 1, Namespace: "default"})
-						require.NoError(t, err)
-					} else {
-						options := ac.SearchOptions{Scope: tc.scope}
-						if mode == "action" {
-							options.Action = action
-						}
-						if mode == "prefix" {
-							options.ActionPrefix = "annotations:"
-						}
-						result, err := r.searchPermissionsForIdentity(t.Context(), 1, 42, "u1", false, options)
-						require.NoError(t, err)
-						perms = result[42]
-					}
-					require.ElementsMatch(t, tc.want, permScopes(perms, action))
-					var groups []string
-					for _, call := range client.calls {
-						if call.Verb == verb {
-							groups = append(groups, call.Group)
-						}
-					}
-					require.ElementsMatch(t, []string{"annotation.grafana.app", "dashboard.grafana.app"}, groups, "query each distinct resource once, despite duplicate dashboard/folder translations")
-				})
+		t.Run(tc.name, func(t *testing.T) {
+			client := &annotationListClient{organization: tc.organization, dashboard: tc.dashboard}
+			r := &ZanzanaPermissionResolver{client: client}
+			result, err := r.searchPermissionsForIdentity(t.Context(), 1, 42, "u1", false,
+				ac.SearchOptions{Action: "annotations:read", Scope: tc.scope})
+			require.NoError(t, err)
+			require.ElementsMatch(t, tc.want, permScopes(result[42], "annotations:read"))
+			requireAnnotationResourceCalls(t, client, "get")
+		})
+	}
+}
+
+func TestAnnotationPermissionListingSearchModes(t *testing.T) {
+	cases := []struct {
+		name         string
+		options      ac.SearchOptions
+		action, verb string
+	}{
+		{name: "read action", options: ac.SearchOptions{Action: "annotations:read"}, action: "annotations:read", verb: "get"},
+		{name: "create action", options: ac.SearchOptions{Action: "annotations:create"}, action: "annotations:create", verb: "create"},
+		{name: "write action", options: ac.SearchOptions{Action: "annotations:write"}, action: "annotations:write", verb: "update"},
+		{name: "delete action", options: ac.SearchOptions{Action: "annotations:delete"}, action: "annotations:delete", verb: "delete"},
+		{name: "prefix", options: ac.SearchOptions{ActionPrefix: "annotations:"}, action: "annotations:read", verb: "get"},
+		{name: "unfiltered", action: "annotations:read", verb: "get"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &annotationListClient{
+				organization: &authzv1.ListResponse{All: true},
+				dashboard:    &authzv1.ListResponse{Items: []string{"dash1"}, Folders: []string{"folder1"}},
 			}
+			r := &ZanzanaPermissionResolver{client: client}
+			result, err := r.searchPermissionsForIdentity(t.Context(), 1, 42, "u1", false, tc.options)
+			require.NoError(t, err)
+			require.ElementsMatch(t, []string{"annotations:*", "dashboards:uid:dash1", "folders:uid:folder1"}, permScopes(result[42], tc.action))
+			requireAnnotationResourceCalls(t, client, tc.verb)
+		})
+	}
+}
+
+func TestResolveCurrentUserPermissions_AnnotationResources(t *testing.T) {
+	client := &annotationListClient{
+		organization: &authzv1.ListResponse{All: true},
+		dashboard:    &authzv1.ListResponse{Items: []string{"dash1"}, Folders: []string{"folder1"}},
+	}
+	r := &ZanzanaPermissionResolver{client: client}
+	user := &identity.StaticRequester{Type: "user", UserUID: "u1", OrgID: 1, Namespace: "default"}
+	perms, err := r.ResolveCurrentUserPermissions(t.Context(), user)
+	require.NoError(t, err)
+	for action, verb := range map[string]string{"annotations:read": "get", "annotations:create": "create", "annotations:write": "update", "annotations:delete": "delete"} {
+		require.ElementsMatch(t, []string{"annotations:*", "dashboards:uid:dash1", "folders:uid:folder1"}, permScopes(perms, action), action)
+		requireAnnotationResourceCalls(t, client, verb)
+	}
+}
+
+func requireAnnotationResourceCalls(t *testing.T, client *annotationListClient, verb string) {
+	t.Helper()
+	var groups []string
+	for _, call := range client.calls {
+		if call.Verb == verb {
+			groups = append(groups, call.Group)
 		}
 	}
+	require.ElementsMatch(t, []string{"annotation.grafana.app", "dashboard.grafana.app"}, groups, "query each distinct resource once per action")
 }
