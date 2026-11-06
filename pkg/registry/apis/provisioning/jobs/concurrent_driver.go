@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
@@ -54,6 +55,7 @@ type ConcurrentJobDriver struct {
 	historicJobs         HistoryWriter
 	workers              []Worker
 	metrics              *JobMetrics
+	tracer               tracing.Tracer
 	queue                workqueue.TypedRateLimitingInterface[string]
 
 	// processed classifies each delivery and records the processing metrics. It
@@ -90,6 +92,10 @@ type ConcurrentJobDriver struct {
 // multiple job workers. resyncInterval is the jobs informer's resync/re-list
 // cadence; the driver uses it as the post-claim cooldown so failed-run recovery
 // tracks the configured pickup interval (non-positive falls back to 30s).
+//
+// tracer starts the root span of every job. Spans that the workers start with
+// tracing.Start only record when a parent span exists, so without this root
+// span they are all dropped. A nil tracer keeps that old behaviour.
 func NewConcurrentJobDriver(
 	numDrivers int,
 	jobTimeout, resyncInterval, leaseRenewalInterval time.Duration,
@@ -99,6 +105,7 @@ func NewConcurrentJobDriver(
 	registry prometheus.Registerer,
 	metrics *JobMetrics,
 	natsBacked bool,
+	tracer tracing.Tracer,
 	workers ...Worker,
 ) (*ConcurrentJobDriver, error) {
 	if numDrivers <= 0 {
@@ -127,6 +134,7 @@ func NewConcurrentJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		metrics:              metrics,
+		tracer:               tracer,
 		processed:            usinformer.NewProcessedMetrics(registry, resourceLabelJobs, natsBacked),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
@@ -347,7 +355,7 @@ func (c *ConcurrentJobDriver) popQueued(key string) (queuedEvent, bool) {
 // This is a blocking function that will run until the context is canceled.
 //
 // Note: This function intentionally does NOT create a tracing span because it runs indefinitely
-// until shutdown. Individual job processing operations already have their own spans.
+// until shutdown. Each job gets its own root span in processKey.
 func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 	logger := logging.FromContext(ctx).With("logger", "concurrent-job-driver", "num_drivers", c.numDrivers)
 	ctx = logging.Context(ctx, logger)
@@ -382,6 +390,7 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				strconv.Itoa(driverID),
 				c.metrics,
 				c.processed,
+				c.tracer,
 				c.workers...,
 			)
 

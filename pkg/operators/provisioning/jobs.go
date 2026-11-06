@@ -81,6 +81,7 @@ func buildDriver(
 		registry,
 		metrics,
 		nats.Enabled(controllerCfg.natsSubscriber),
+		tracer,
 		workers...,
 	)
 }
