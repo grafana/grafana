@@ -30,7 +30,7 @@ func NewConcurrencyMetrics(reg prometheus.Registerer) *ConcurrencyMetrics {
 	return &ConcurrencyMetrics{
 		atArrival: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "grafana_grpc_requests_in_flight_at_arrival",
-			Help:                            "gRPC requests of the same route already being handled when a request arrives.",
+			Help:                            "gRPC requests of the same route already being handled when a request arrives, including requests later rejected by authentication.",
 			Buckets:                         []float64{0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000},
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,

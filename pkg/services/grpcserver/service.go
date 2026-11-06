@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/keepalive"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,7 +28,6 @@ import (
 
 var (
 	grpcRequestDuration *prometheus.HistogramVec
-	grpcConcurrency     *interceptors.ConcurrencyMetrics
 )
 
 type Provider interface {
@@ -52,10 +52,13 @@ type gPRCServerService struct {
 }
 
 func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
-	return provideService(cfg, authenticator, tracer, registerer, false, nil)
+	return provideService(cfg, authenticator, tracer, registerer, modules.Core, false, nil)
 }
 
-func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer, separateShutdown bool, listener net.Listener) (*gPRCServerService, error) {
+// component labels the server's own metrics, so that servers sharing a
+// registerer, such as core Grafana and a dskit gRPC server in one process,
+// report separately.
+func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer, component string, separateShutdown bool, listener net.Listener) (*gPRCServerService, error) {
 	s := &gPRCServerService{
 		cfg:              cfg.GRPCServer,
 		logger:           log.New("grpc-server"),
@@ -82,9 +85,7 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 			return nil, err
 		}
 	}
-	if grpcConcurrency == nil {
-		grpcConcurrency = interceptors.NewConcurrencyMetrics(registerer)
-	}
+	concurrency := interceptors.NewConcurrencyMetrics(prometheus.WrapRegistererWith(prometheus.Labels{"component": component}, registerer))
 
 	var instrumentationOptions []middleware.InstrumentationOption
 	if cfg.GRPCServer.ReportGRPCCodesInInstrumentationLabelEnabled {
@@ -96,13 +97,13 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 	// unrecovered panic crashes the whole process.
 	unaryInterceptors := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryPanicRecoveryInterceptor(),
-		interceptors.UnaryConcurrencyInterceptor(grpcConcurrency),
+		interceptors.UnaryConcurrencyInterceptor(concurrency),
 		interceptors.LoggingUnaryInterceptor(s.logger, s.cfg.EnableLogging), // needs to be registered after tracing interceptor to get trace id
 		middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration, instrumentationOptions...),
 	}
 	streamInterceptors := []grpc.StreamServerInterceptor{
 		interceptors.StreamPanicRecoveryInterceptor(),
-		interceptors.StreamConcurrencyInterceptor(grpcConcurrency),
+		interceptors.StreamConcurrencyInterceptor(concurrency),
 		interceptors.TracingStreamInterceptor(tracer),
 		interceptors.LoggingStreamInterceptor(s.logger, s.cfg.EnableLogging),
 		middleware.StreamServerInstrumentInterceptor(grpcRequestDuration, instrumentationOptions...),
@@ -286,7 +287,7 @@ func ProvideDSKitServiceWithListener(
 	passthrough := interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	})
-	grpcService, err := provideService(cfg, passthrough, tracer, registerer, true, listener)
+	grpcService, err := provideService(cfg, passthrough, tracer, registerer, serviceName, true, listener)
 	if err != nil {
 		return nil, err
 	}

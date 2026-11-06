@@ -8,6 +8,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
@@ -55,7 +56,7 @@ func TestInterceptorsRecordRejectedRequests(t *testing.T) {
 			reg := withFreshServerMetrics(t)
 			authenticating := make(chan struct{})
 			release := make(chan struct{})
-			client := startInterceptorTestServer(t, reg, interceptors.AuthenticatorFunc(func(context.Context) (context.Context, error) {
+			client := startInterceptorTestServer(t, reg, "test", interceptors.AuthenticatorFunc(func(context.Context) (context.Context, error) {
 				authenticating <- struct{}{}
 				<-release
 				return nil, status.Error(codes.Unauthenticated, "rejected")
@@ -66,7 +67,7 @@ func TestInterceptorsRecordRejectedRequests(t *testing.T) {
 			for range requests {
 				wg.Go(func() {
 					err := tc.call(t.Context(), client)
-					require.Equal(t, codes.Unauthenticated, status.Code(err))
+					assert.Equal(t, codes.Unauthenticated, status.Code(err))
 				})
 			}
 			// All requests are blocked in authentication before any is rejected,
@@ -90,7 +91,7 @@ func TestInterceptorsRecoverAuthenticationPanics(t *testing.T) {
 	for _, tc := range healthCalls {
 		t.Run(tc.name, func(t *testing.T) {
 			reg := withFreshServerMetrics(t)
-			client := startInterceptorTestServer(t, reg, interceptors.AuthenticatorFunc(func(context.Context) (context.Context, error) {
+			client := startInterceptorTestServer(t, reg, "test", interceptors.AuthenticatorFunc(func(context.Context) (context.Context, error) {
 				panic("authenticator panic")
 			}))
 
@@ -107,23 +108,53 @@ func TestInterceptorsRecoverAuthenticationPanics(t *testing.T) {
 	}
 }
 
+func TestInterceptorsReportPerServer(t *testing.T) {
+	allow := interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) { return ctx, nil })
+	check := func(t *testing.T, client grpc_health_v1.HealthClient, calls int) {
+		t.Helper()
+		for range calls {
+			_, err := client.Check(t.Context(), &grpc_health_v1.HealthCheckRequest{})
+			require.NoError(t, err)
+		}
+	}
+	const route = "/grpc.health.v1.Health/Check"
+
+	t.Run("separate registries", func(t *testing.T) {
+		regA := withFreshServerMetrics(t)
+		regB := prometheus.NewRegistry()
+		check(t, startInterceptorTestServer(t, regA, "a", allow), 1)
+		check(t, startInterceptorTestServer(t, regB, "b", allow), 2)
+
+		require.Equal(t, uint64(1), requireHistogram(t, regA, "grafana_grpc_requests_in_flight_at_arrival", map[string]string{"route": route}).GetSampleCount())
+		require.Equal(t, uint64(2), requireHistogram(t, regB, "grafana_grpc_requests_in_flight_at_arrival", map[string]string{"route": route}).GetSampleCount())
+	})
+
+	t.Run("shared registry", func(t *testing.T) {
+		// Core Grafana and a dskit gRPC server can share a registerer in one process.
+		reg := withFreshServerMetrics(t)
+		check(t, startInterceptorTestServer(t, reg, "a", allow), 1)
+		check(t, startInterceptorTestServer(t, reg, "b", allow), 2)
+
+		require.Equal(t, uint64(1), requireHistogram(t, reg, "grafana_grpc_requests_in_flight_at_arrival", map[string]string{"route": route, "component": "a"}).GetSampleCount())
+		require.Equal(t, uint64(2), requireHistogram(t, reg, "grafana_grpc_requests_in_flight_at_arrival", map[string]string{"route": route, "component": "b"}).GetSampleCount())
+	})
+}
+
 // withFreshServerMetrics makes the next server register its process-wide
-// metrics on a new registry, restoring the previous metrics afterwards.
+// request duration metric on a new registry, restoring it afterwards.
 func withFreshServerMetrics(t *testing.T) *prometheus.Registry {
 	t.Helper()
-	previousDuration, previousConcurrency := grpcRequestDuration, grpcConcurrency
-	grpcRequestDuration, grpcConcurrency = nil, nil
-	t.Cleanup(func() {
-		grpcRequestDuration, grpcConcurrency = previousDuration, previousConcurrency
-	})
+	previous := grpcRequestDuration
+	grpcRequestDuration = nil
+	t.Cleanup(func() { grpcRequestDuration = previous })
 	return prometheus.NewRegistry()
 }
 
-func startInterceptorTestServer(t *testing.T, reg prometheus.Registerer, authenticator interceptors.Authenticator) grpc_health_v1.HealthClient {
+func startInterceptorTestServer(t *testing.T, reg prometheus.Registerer, component string, authenticator interceptors.Authenticator) grpc_health_v1.HealthClient {
 	t.Helper()
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	service, err := provideService(setting.NewCfg(), authenticator, noop.NewTracerProvider().Tracer(""), reg, false, listener)
+	service, err := provideService(setting.NewCfg(), authenticator, noop.NewTracerProvider().Tracer(""), reg, component, false, listener)
 	require.NoError(t, err)
 	grpc_health_v1.RegisterHealthServer(service.server, &testHealthServer{})
 	served := make(chan error, 1)

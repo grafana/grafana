@@ -9,6 +9,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 )
@@ -28,7 +29,7 @@ func TestConcurrencyInterceptors(t *testing.T) {
 					<-release
 					return nil, nil
 				})
-				require.NoError(t, err)
+				assert.NoError(t, err)
 			})
 		}
 		wg.Go(func() {
@@ -36,7 +37,7 @@ func TestConcurrencyInterceptors(t *testing.T) {
 				<-release
 				return nil
 			})
-			require.NoError(t, err)
+			assert.NoError(t, err)
 		})
 		synctest.Wait()
 
@@ -50,7 +51,7 @@ func TestConcurrencyInterceptors(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(`
-# HELP grafana_grpc_requests_in_flight_at_arrival gRPC requests of the same route already being handled when a request arrives.
+# HELP grafana_grpc_requests_in_flight_at_arrival gRPC requests of the same route already being handled when a request arrives, including requests later rejected by authentication.
 # TYPE grafana_grpc_requests_in_flight_at_arrival histogram
 grafana_grpc_requests_in_flight_at_arrival_bucket{route="/svc/List",le="0"} 1
 grafana_grpc_requests_in_flight_at_arrival_bucket{route="/svc/List",le="1"} 1
