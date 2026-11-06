@@ -100,6 +100,7 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
   const labelStyles = getLabelStyles(theme);
   const checkboxSize = 2;
   const labelPadding = 1;
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
   const getBorderColor = (color: string) => {
     return invalid ? theme.colors.error.border : color;
@@ -134,25 +135,29 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
        * for angular components styling
        * */
       '&:checked + span': {
-        background: theme.components.checkbox.activeBackground,
-        border: `1px solid ${getBorderColor(theme.components.checkbox.activeBackground)}`,
+        background: visualRefreshEnabled
+          ? theme.colors.accent.subtleBackground
+          : theme.components.checkbox.activeBackground,
+        border: `1px solid ${getBorderColor(visualRefreshEnabled ? theme.colors.accent.border : theme.components.checkbox.activeBackground)}`,
 
         '&:hover': {
-          background: theme.components.checkbox.activeBackgroundHover,
-          border: `1px solid ${getBorderColor(theme.components.checkbox.activeBackgroundHover)}`,
+          background: visualRefreshEnabled
+            ? theme.colors.accent.subtleBackground
+            : theme.components.checkbox.activeBackgroundHover,
+          border: `1px solid ${getBorderColor(visualRefreshEnabled ? theme.colors.accent.borderEmphasis : theme.components.checkbox.activeBackgroundHover)}`,
         },
 
         '&:after': {
           content: '""',
           position: 'absolute',
           zIndex: 2,
-          left: theme.spacing(0.5),
-          top: 0,
-          width: theme.spacing(0.75),
-          height: theme.spacing(1.5),
-          border: `solid ${theme.colors.accent.contrastText}`,
-          borderWidth: '0 3px 3px 0',
-          transform: 'rotate(45deg)',
+          left: theme.spacing(visualRefreshEnabled ? 0.625 : 0.5),
+          top: visualRefreshEnabled ? theme.spacing(0.125) : 0,
+          width: theme.spacing(visualRefreshEnabled ? 0.5 : 0.75),
+          height: theme.spacing(visualRefreshEnabled ? 1.25 : 1.5),
+          border: `solid ${visualRefreshEnabled ? theme.colors.accent.text : theme.colors.accent.contrastText}`,
+          borderWidth: visualRefreshEnabled ? '0 2px 2px 0' : '0 3px 3px 0',
+          transform: visualRefreshEnabled ? 'rotate(55deg)' : 'rotate(45deg)',
         },
       },
 
