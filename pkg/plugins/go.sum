@@ -126,6 +126,8 @@ github.com/grafana/grafana-app-sdk/logging v0.62.1 h1:sxpdnRQN3YMIcFlGnsCIo5pzxh
 github.com/grafana/grafana-app-sdk/logging v0.62.1/go.mod h1:JpkWw7qVQA+XGAT8GJUEDAIgOxssceNpztB7oz7GWJw=
 github.com/grafana/grafana-plugin-sdk-go v0.298.0 h1:Pv1QPfBYSykOO9SJmoNm2bQ3uFbtIaKgb74KlpP6OPA=
 github.com/grafana/grafana-plugin-sdk-go v0.298.0/go.mod h1:eOXMD6Vm+bNj2LxwgDLQ5r4ys9XVYnTIW9iBgTVIoH0=
+github.com/grafana/grafana-plugin-sdk-go v0.298.1-0.20261109160728-29ad6468cb22 h1:Mnup086GshPLbakOioLN5ALwZkKKrThrM9AxCLyk6l0=
+github.com/grafana/grafana-plugin-sdk-go v0.298.1-0.20261109160728-29ad6468cb22/go.mod h1:eOXMD6Vm+bNj2LxwgDLQ5r4ys9XVYnTIW9iBgTVIoH0=
 github.com/grafana/otel-profiling-go v0.7.0 h1:Q6CBLSgAnYmNQNNrj4ipG0S/K/K8iazA9E4kYRzZf0I=
 github.com/grafana/otel-profiling-go v0.7.0/go.mod h1:Gt7LHg3HEfBoU8ZVArhqYaiA65EjcBe3nd3+arX6eMY=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.12 h1:X6OemT2WcLtxdmNukEQuIp0c+efWVI/tBTd0oeWeDHI=
@@ -203,6 +205,8 @@ github.com/olekukonko/ll v0.1.9 h1:7twe+xnE6CSlfOlvGj0Finwnvr3CgWt25W33yuWNI6k=
 github.com/olekukonko/ll v0.1.9/go.mod h1:RPRC6UcscfFZgjo1nulkfMH5IM0QAYim0LfnMvUuozw=
 github.com/olekukonko/tablewriter v1.1.5 h1:4LoZSfMySpMQY3PT8RWJsJeuEuMIoo9xGRgvmqjg6IQ=
 github.com/olekukonko/tablewriter v1.1.5/go.mod h1:+kedxuyTtgoZLwif3P1Em4hARJs+mVnzKxmsCL/C5RY=
+github.com/open-feature/go-sdk v1.17.2 h1:pTdeNks/hgnPrlqdgtFwltnIron1oOxqg4FmLlirJlY=
+github.com/open-feature/go-sdk v1.17.2/go.mod h1:kTMCquVtck18XdSCI6rBoNFEBLvkOy4Tphu2pV8bq34=
 github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=
 github.com/patrickmn/go-cache v2.1.0+incompatible/go.mod h1:3Qf8kWWT7OJRJbdiICTKqZju1ZixQ/KpMGzzAfe6+WQ=
 github.com/pierrec/lz4/v4 v4.1.33 h1:GjG1TJ1V4IzKP8L96muuuDNpTwd7D+l2ccXrjAbe014=
