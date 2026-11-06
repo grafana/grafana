@@ -70,6 +70,10 @@ export function MarkdownCellEditor({
           const tree = syntaxTree(view.state);
           const insertAt = newlineInsertionPoint(tree, pos);
 
+          if (enclosingListKind(tree, pos) === 'checklist') {
+            return insertNewlineContinueMarkup(view);
+          }
+
           if (enclosingListKind(tree, pos)) {
             const marker = nextListContinuation(view.state, pos);
             if (marker === undefined) {
@@ -103,6 +107,10 @@ export function MarkdownCellEditor({
           const { state } = view;
           const pos = state.selection.main.head;
           const tree = syntaxTree(state);
+
+          if (enclosingListKind(tree, pos) === 'checklist') {
+            return insertNewlineContinueMarkup(view);
+          }
 
           let marker: string | undefined;
           if (enclosingListKind(tree, pos)) {
