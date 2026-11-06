@@ -36,30 +36,33 @@ describe('VizTooltipWrapper', () => {
   // slack. Rendering the real wrapper + row tree (rather than the context directly) exercises that
   // wiring the way consumers hit it.
   describe('size propagation to descendant rows', () => {
-    // The inline label/value sit inside the wrapper divs that carry the flex-shrink behaviour, so
-    // reach those wrappers via the rendered text rather than coupling to generated class names.
+    // The inline label/value sit inside the wrapper divs that carry the width constraints, so reach
+    // those wrappers via the rendered text rather than coupling to generated class names.
     const labelWrapperOf = (labelText: string) => screen.getByText(labelText).parentElement;
     const valueWrapperOf = (valueText: string) => screen.getByText(valueText).parentElement;
 
-    it('lets the value shrink while the label holds its width when size is narrow', () => {
+    it('caps the label name at 75% and floors the value at 25% of the width when size is narrow', () => {
       const value = 'a long value that should wrap rather than widen the tooltip';
       render(
         <VizTooltipWrapper size="narrow">
           <VizTooltipRow label="My Label" value={value} />
         </VizTooltipWrapper>
       );
-      expect(labelWrapperOf('My Label')).toHaveStyle({ flexShrink: 0 });
-      expect(valueWrapperOf(value)).toHaveStyle({ flexShrink: 1 });
+      expect(labelWrapperOf('My Label')).toHaveStyle({ maxWidth: '75%' });
+      // value keeps a 25% floor and stays right-aligned within its cell, matching the auto layout
+      expect(valueWrapperOf(value)).toHaveStyle({ minWidth: '25%', justifyContent: 'flex-end' });
     });
 
-    it('lets the label shrink while the value holds its width when size is auto', () => {
+    it('leaves the label uncapped and the value holding its width when size is auto', () => {
       render(
         <VizTooltipWrapper size="auto">
           <VizTooltipRow label="My Label" value="My Value" />
         </VizTooltipWrapper>
       );
-      expect(labelWrapperOf('My Label')).toHaveStyle({ flexShrink: 1 });
+      // auto grows to fit: the value holds its width (does not shrink) and neither cell is % bound.
       expect(valueWrapperOf('My Value')).toHaveStyle({ flexShrink: 0 });
+      expect(labelWrapperOf('My Label')).not.toHaveStyle({ maxWidth: '75%' });
+      expect(valueWrapperOf('My Value')).not.toHaveStyle({ minWidth: '25%' });
     });
   });
 });

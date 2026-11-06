@@ -291,12 +291,21 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   }),
   labelWrapper: css({
     flexGrow: 1,
-    // In a narrow tooltip the label keeps its width and the value wraps/shrinks instead.
-    flexShrink: size === 'narrow' ? 0 : 1,
+    flexShrink: 1,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     color: theme.colors.text.secondary,
     fontWeight: 400,
+    // In a narrow tooltip the label name wraps within at most 75% of the width rather than holding
+    // its width and pushing the value off the edge; `auto` keeps growing to fit it on one line.
+    // `overflow: visible` + `break-word` keep the flex min-size at the longest word (overflow
+    // hidden would collapse a flex item's auto min-size to 0), so a short name is never broken
+    // mid-word when a long value competes for the row's space.
+    ...(size === 'narrow' && {
+      maxWidth: '75%',
+      overflow: 'visible',
+      overflowWrap: 'break-word',
+    }),
   }),
   // block wrapper between labelWrapper and the inline label, so it must carry the ellipsis itself
   labelTooltipTarget: css({
@@ -307,7 +316,11 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     display: 'flex',
     alignItems: 'center',
     flexShrink: size === 'narrow' ? 1 : 0,
-    minWidth: size === 'narrow' ? 0 : undefined,
+    // In a narrow tooltip the value wraps but never shrinks below 25% of the width so it stays
+    // readable, and stays right-aligned within that 25% cell to match the `auto` layout; `auto`
+    // holds the value on one line and lets the tooltip grow instead.
+    minWidth: size === 'narrow' ? '25%' : undefined,
+    justifyContent: size === 'narrow' ? 'flex-end' : undefined,
     alignSelf: 'center',
     marginRight,
   }),
