@@ -348,6 +348,11 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]float6
 func resultNormal(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, reason string) {
 	switch {
 	case state.State == eval.Normal:
+		// A Normal state that stays Normal must not retain a previous
+		// evaluation error, otherwise rule health would stay "error"
+		// after the query recovers (e.g. under OkErrState/KeepLastErrState,
+		// where resultError records the error on the state).
+		state.Error = nil
 		logger.Debug("Keeping state", "state", state.State)
 	case state.State == eval.Recovering:
 		// If the previous state is Recovering then check if the KeepFiringFor duration has been observed,
@@ -369,6 +374,10 @@ func resultNormal(state *State, rule *models.AlertRule, result eval.Result, logg
 			// If the KeepFiringFor duration has not been observed then the state is kept as Recovering.
 			// We must also set the next endsAt to a future time for the Alertmanager,
 			// as for it the alert is still firing.
+			// As in the Keeping-Normal case above, do not retain a previous
+			// evaluation error here; resultError re-records its own error
+			// after this function returns.
+			state.Error = nil
 			state.EndsAt = nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
 		}
 	case state.State == eval.Alerting && rule.KeepFiringFor > 0:
@@ -433,6 +442,13 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 				"next_ends_at",
 				nextEndsAt)
 			state.SetAlerting(reason, result.EvaluatedAt, nextEndsAt)
+		} else {
+			// The state stays Pending, but this evaluation succeeded,
+			// so a previous evaluation error must not be retained:
+			// otherwise rule health would stay "error" after the query
+			// recovers (e.g. an error recorded under KeepLastErrState
+			// while the instance was Pending).
+			state.Error = nil
 		}
 	default:
 		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
@@ -517,10 +533,17 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 	case models.OkErrState:
 		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)
 		resultNormal(state, rule, result, logger, "") // TODO: Should we add a reason?
+		// Record the error on the state even though the alert state stays
+		// Normal, so rule health and lastError reflect the failed query.
+		// This mirrors the AlertingErrState branch above.
+		state.Error = result.Error
 		state.addErrorInfoToAnnotations(result.Error, rule)
 	case models.KeepLastErrState:
 		logger := logger.New("previous_handler", handlerStr)
 		resultKeepLast(state, rule, result, logger)
+		// As above: keep the previous alert state, but record the error
+		// so rule health and lastError are not hidden by KeepLast.
+		state.Error = result.Error
 		state.addErrorInfoToAnnotations(result.Error, rule)
 	default:
 		err := fmt.Errorf("unsupported execution error state: %s", rule.ExecErrState)
