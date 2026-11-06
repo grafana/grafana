@@ -2,7 +2,7 @@ import test, { expect, type Locator, type Page } from '@playwright/test';
 
 import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { type Tabs, type Panels, type Rows } from '../page-objects';
+import { type Controls, type Tabs, type Panels, type Rows } from '../page-objects';
 
 /**
  * Reusable assertion bundles built on page-object locators (and occasional
@@ -144,5 +144,22 @@ export async function expectDashboardChangesToContain(
       .toBe(true);
 
     await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
+  });
+}
+
+/**
+ * In edit mode, opens the save drawer and asserts it has nothing to save (its Save button is
+ * disabled), then closes it
+ */
+export async function expectNoUnsavedChanges(controls: Controls) {
+  await test.step('Expect the dashboard to have no unsaved changes', async () => {
+    await controls.openSaveDrawer();
+
+    const drawer = controls.getSaveDrawer();
+    await expect(drawer.getByText('No changes to save', { exact: true })).toBeVisible();
+    await expect(controls.getSaveDrawerSaveButton()).toBeDisabled();
+
+    await controls.closeSaveDrawer();
+    await expect(drawer).toBeHidden();
   });
 }

@@ -24,8 +24,15 @@ export class Rows extends PageObject {
     return this.getRowHeader(rowTitle).getByRole('button', { name: 'Copy link to row', exact: true });
   }
 
-  /** Returns all row title elements matching the given title */
-  getTitles(rowTitle: string): Locator {
+  /**
+   * Returns all row title elements matching the given title
+   * @param rowTitle row title to match; omit it to get the titles of every rendered row, in display order
+   */
+  getTitles(rowTitle?: string): Locator {
+    if (rowTitle === undefined) {
+      return this.page.locator(`[data-testid^="${this.selectors.components.DashboardRow.title('')}"]`);
+    }
+
     return this.getRowHeader(rowTitle).getByTestId(this.selectors.components.DashboardRow.title(rowTitle));
   }
 

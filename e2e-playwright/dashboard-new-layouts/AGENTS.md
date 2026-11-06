@@ -144,6 +144,8 @@ The same reuse thresholds apply within feature folders: for example, extract a l
 
 For variable-specific setup and assertions, inspect [`variables/helpers/flows.ts`](variables/helpers/flows.ts) and [`variables/helpers/assertions.ts`](variables/helpers/assertions.ts). They cover isolated dashboard imports, variable creation, save-and-return flows, and preview/dropdown assertions. Import them directly from those files within `variables/`.
 
+For drag and drop, drive gestures with `dragAndDrop()` or, when a drag needs intermediate moves or checks before the release, `startPointerDrag()` from [`helpers/utils.ts`](helpers/utils.ts). Both use real pointer events only, so specs keep working whichever drag implementation the dashboard uses. Drop-point geometry and layout assertions used only by drag-and-drop specs live in [`drag-and-drop/helpers/`](drag-and-drop/helpers/), and the dashboards they start from are built through the API by [`drag-and-drop/fixtures/`](drag-and-drop/fixtures/).
+
 Do not put UI interactions that belong on a page object into helpers. Do not put the behavior-under-test assertion into `flows.ts` (flows may only assert to keep their own sequence reliable, e.g. waiting for a save toast).
 
 ## How to Write a New Test

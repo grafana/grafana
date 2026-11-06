@@ -48,6 +48,30 @@ export class Controls extends PageObject {
     });
   }
 
+  /** Opens the save drawer without saving */
+  async openSaveDrawer() {
+    await test.step('Open save drawer', async () => {
+      await this.getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.saveButton).click();
+    });
+  }
+
+  /** Returns the open save drawer */
+  getSaveDrawer(): Locator {
+    return this.page.getByRole('dialog');
+  }
+
+  /** Returns the Save button inside the save drawer */
+  getSaveDrawerSaveButton(): Locator {
+    return this.getSaveDrawer().getByTestId(this.selectors.components.Drawer.DashboardSaveDrawer.saveButton);
+  }
+
+  /** Closes the save drawer without saving */
+  async closeSaveDrawer() {
+    await test.step('Close save drawer', async () => {
+      await this.getSaveDrawer().getByTestId(this.selectors.components.Drawer.General.close).click();
+    });
+  }
+
   /** Opens the share snapshot drawer via the share button's arrow menu */
   async openShareSnapshotDrawer() {
     await test.step('Open share snapshot drawer', async () => {
