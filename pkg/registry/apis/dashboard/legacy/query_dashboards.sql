@@ -66,6 +66,9 @@ WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
   AND dashboard.id >= {{ .Arg .Query.AfterID }}
   AND (dashboard.id > {{ .Arg .Query.AfterID }} OR COALESCE(dashboard_version.version, dashboard.version) > {{ .Arg .Query.AfterVersion }})
   {{ end }}
+  {{ if and .Query.AllowFallback .Query.UpToID }}
+  AND dashboard.id <= {{ .Arg .Query.UpToID }}
+  {{ end }}
   ORDER BY
     {{ if .Query.AllowFallback }}
     dashboard.id ASC,

@@ -41,6 +41,8 @@ type DashboardQuery struct {
 	// Migration keyset: return rows after (AfterID, AfterVersion). Only used with AllowFallback.
 	AfterID      int64
 	AfterVersion int64
+	// Migration page bound: only dashboards with an id up to UpToID. Only used with AllowFallback.
+	UpToID int64
 
 	// Only folders
 	GetFolders bool

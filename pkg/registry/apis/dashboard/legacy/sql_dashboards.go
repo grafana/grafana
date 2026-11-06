@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -160,9 +161,9 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, helper *legacysql.Lega
 	}, err
 }
 
-// Page bounds for the dashboard migration read. Each page is read fully and its rows
-// closed before anything is sent, so no legacy SELECT stays open while unified storage
-// writes and statement_timeout bounds one page rather than the whole org.
+// Page bounds for the dashboard and folder migration reads. Each page is read fully and its rows
+// closed before anything is sent, so no legacy SELECT stays open while unified storage writes and
+// statement_timeout bounds one page rather than the whole org.
 const (
 	migrationPageMaxRows  = 500
 	migrationPageMaxBytes = 32 * 1024 * 1024
@@ -173,26 +174,13 @@ func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64,
 	if !opts.WithHistory {
 		return fmt.Errorf("dashboard migration requires history")
 	}
-	query := &DashboardQuery{
-		OrgID:         orgId,
-		GetHistory:    true,
-		AllowFallback: true, // allow fallback to dashboard table during migration
-		MaxRows:       migrationPageMaxRows,
-	}
-
 	sql, err := a.sql(ctx)
 	if err != nil {
 		return err
 	}
 
 	opts.Progress(-1, "migrating dashboards...")
-	scanned, rejected, err := a.migrateLegacyPages(ctx, sql, query, opts, stream, dashboardBulkRequest, func(page *migrationPage) error {
-		if page.lastID < query.AfterID || (page.lastID == query.AfterID && page.lastVersion <= query.AfterVersion) {
-			return fmt.Errorf("dashboard migration paging did not advance past id %d version %d", query.AfterID, query.AfterVersion)
-		}
-		query.AfterID, query.AfterVersion = page.lastID, page.lastVersion
-		return nil
-	})
+	scanned, rejected, err := a.migrateLegacyPages(ctx, sql, opts, stream, newDashboardPager(orgId))
 	if err != nil {
 		return err
 	}
@@ -215,26 +203,13 @@ func (a *dashboardSqlAccess) MigrateDashboards(ctx context.Context, orgId int64,
 
 // MigrateFolders handles the folder migration logic
 func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
-	// Folders are listed by descending id, so each page continues below the last id
-	query := &DashboardQuery{
-		OrgID:      orgId,
-		GetFolders: true,
-		MaxRows:    migrationPageMaxRows,
-	}
-
 	sql, err := a.sql(ctx)
 	if err != nil {
 		return err
 	}
 
 	opts.Progress(-1, "migrating folders...")
-	scanned, _, err := a.migrateLegacyPages(ctx, sql, query, opts, stream, folderBulkRequest, func(page *migrationPage) error {
-		if page.lastID <= 0 || (query.LastID > 0 && page.lastID >= query.LastID) {
-			return fmt.Errorf("folder migration paging did not advance past id %d", query.LastID)
-		}
-		query.LastID = page.lastID
-		return nil
-	})
+	scanned, _, err := a.migrateLegacyPages(ctx, sql, opts, stream, newFolderPager(orgId))
 	if err != nil {
 		return err
 	}
@@ -243,20 +218,137 @@ func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, op
 	return nil
 }
 
-// migrateLegacyPages sends query's rows page by page. next moves query past a page
-// that may be followed by more rows, or fails if the keyset did not advance.
+// legacyPager reads one kind of legacy row page by page.
+type legacyPager struct {
+	query *DashboardQuery
+	build migrationRequestBuilder
+	// beforePage runs before each page query, in the same transaction.
+	beforePage func(ctx context.Context, a *dashboardSqlAccess, helper *legacysql.LegacyDatabaseHelper) error
+	// advance moves query past a page read with the given row limit and reports whether rows may remain.
+	advance func(page *migrationPage, limit int) (bool, error)
+	// window is how many dashboards bound a dashboard page
+	window int
+}
+
+func newFolderPager(orgID int64) *legacyPager {
+	// Folders are listed by descending id, so each page continues below the last id
+	query := &DashboardQuery{OrgID: orgID, GetFolders: true}
+	return &legacyPager{
+		query: query,
+		build: folderBulkRequest,
+		advance: func(page *migrationPage, limit int) (bool, error) {
+			if !page.full(limit) {
+				return false, nil
+			}
+			if page.lastID <= 0 || (query.LastID > 0 && page.lastID >= query.LastID) {
+				return false, fmt.Errorf("folder migration paging did not advance past id %d", query.LastID)
+			}
+			query.LastID = page.lastID
+			return true, nil
+		},
+	}
+}
+
+// newDashboardPager pages dashboard rows by (dashboard id, version). Each page is also bounded by the
+// id of the n-th next dashboard: the sort key is not an index, so without the bound some databases sort
+// the rest of the org for every page. n follows how many dashboards the previous page covered.
+func newDashboardPager(orgID int64) *legacyPager {
+	query := &DashboardQuery{
+		OrgID:         orgID,
+		GetHistory:    true,
+		AllowFallback: true, // allow fallback to dashboard table during migration
+	}
+	p := &legacyPager{query: query, build: dashboardBulkRequest, window: migrationPageMaxRows}
+	p.beforePage = func(ctx context.Context, a *dashboardSqlAccess, helper *legacysql.LegacyDatabaseHelper) error {
+		bound, err := a.dashboardPageBound(ctx, helper, query, p.window)
+		query.UpToID = bound
+		return err
+	}
+	p.advance = func(page *migrationPage, limit int) (bool, error) {
+		if !page.full(limit) {
+			if query.UpToID == 0 {
+				return false, nil
+			}
+			// Every row up to the bound was read, so the window was smaller than a page
+			query.AfterID, query.AfterVersion = query.UpToID, math.MaxInt32
+			p.window = min(p.window*2, migrationPageMaxRows)
+			return true, nil
+		}
+		if page.lastID < query.AfterID || (page.lastID == query.AfterID && page.lastVersion <= query.AfterVersion) {
+			return false, fmt.Errorf("dashboard migration paging did not advance past id %d version %d", query.AfterID, query.AfterVersion)
+		}
+		query.AfterID, query.AfterVersion = page.lastID, page.lastVersion
+		if query.UpToID > 0 {
+			p.window = min(page.dashboards+1, migrationPageMaxRows)
+		}
+		return true, nil
+	}
+	return p
+}
+
+// dashboardPageBound returns the id of the n-th dashboard at or after the keyset, or 0 when fewer remain.
+func (a *dashboardSqlAccess) dashboardPageBound(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query *DashboardQuery, n int) (int64, error) {
+	req := newDashboardIDsQueryReq(helper, query, n)
+	rawQuery, err := sqltemplate.Execute(sqlQueryDashboardIDs, req)
+	if err != nil {
+		return 0, fmt.Errorf("execute template %q: %w", sqlQueryDashboardIDs.Name(), err)
+	}
+	rows, err := a.executeQuery(ctx, helper, rawQuery, req.GetArgs()...)
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	var id int64
+	count := 0
+	for rows.Next() {
+		if err := rows.Scan(&id); err != nil {
+			return 0, err
+		}
+		count++
+	}
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+	if count < n {
+		return 0, nil
+	}
+	return id, nil
+}
+
+// migrateLegacyPages sends the pager's rows to stream.
 func (a *dashboardSqlAccess) migrateLegacyPages(
 	ctx context.Context,
 	helper *legacysql.LegacyDatabaseHelper,
-	query *DashboardQuery,
 	opts migrations.MigrateOptions,
 	stream resourcepb.BulkStore_BulkProcessClient,
-	build migrationRequestBuilder,
-	next func(page *migrationPage) error,
+	p *legacyPager,
 ) (scanned int, rejected []dashboardRow, err error) {
-	sent := 0
+	send := migrationSender(stream, opts)
+
+	if helper.DialectForDriver().DialectName() == "sqlite" {
+		// SQLite has no statement timeout. One read keeps its SHARED lock for the whole migration,
+		// so a bulk write cannot spill into an EXCLUSIVE lock that would lock out a later page.
+		page, err := a.queryMigrationPage(ctx, helper, p.query, opts.Namespace, nil, p.build, 0, send)
+		if err != nil {
+			return 0, nil, err
+		}
+		return page.scanned, page.rejected, nil
+	}
+
+	limit := migrationPageMaxRows
 	for {
-		page, err := a.readMigrationPage(ctx, helper, query, opts, rejected, build)
+		p.query.MaxRows = limit
+		page, err := a.readMigrationPage(ctx, helper, opts, func(ctx context.Context) (*migrationPage, error) {
+			if p.beforePage != nil {
+				if err := p.beforePage(ctx, a, helper); err != nil {
+					return nil, err
+				}
+			}
+			return a.queryMigrationPage(ctx, helper, p.query, opts.Namespace, rejected, p.build, migrationPageMaxBytes, nil)
+		})
 		if err != nil {
 			return scanned, rejected, err
 		}
@@ -264,24 +356,43 @@ func (a *dashboardSqlAccess) migrateLegacyPages(
 		scanned += page.scanned
 
 		for _, item := range page.items {
-			sent++
-			opts.Progress(sent, fmt.Sprintf("[v:%2d] %s (size:%d / %d|%d)", item.generation, item.req.Key.Name, len(item.req.Value), sent, scanned))
-			if err := stream.Send(item.req); err != nil {
-				if errors.Is(err, io.EOF) {
-					opts.Progress(sent, fmt.Sprintf("stream EOF/cancelled. index=%d", sent))
-					return scanned, rejected, nil
-				}
+			if stop, err := send(item); stop || err != nil {
 				return scanned, rejected, err
 			}
 		}
 
-		if !page.more {
-			return scanned, rejected, nil
-		}
-		if err := next(page); err != nil {
+		more, err := p.advance(page, limit)
+		if err != nil || !more {
 			return scanned, rejected, err
 		}
+		limit = nextPageLimit(page, limit)
 	}
+}
+
+// migrationSender sends one item and reports whether to stop, which it does when the stream ended.
+func migrationSender(stream resourcepb.BulkStore_BulkProcessClient, opts migrations.MigrateOptions) func(migrationItem) (bool, error) {
+	sent := 0
+	return func(item migrationItem) (bool, error) {
+		sent++
+		opts.Progress(sent, fmt.Sprintf("[v:%2d] %s (size:%d / %d)", item.generation, item.req.Key.Name, len(item.req.Value), sent))
+		if err := stream.Send(item.req); err != nil {
+			if errors.Is(err, io.EOF) {
+				opts.Progress(sent, fmt.Sprintf("stream EOF/cancelled. index=%d", sent))
+				return true, nil
+			}
+			return true, err
+		}
+		return false, nil
+	}
+}
+
+// nextPageLimit shrinks the row limit to the rows that fit after a page cut by the byte limit, so the
+// next query does not fetch rows that are discarded on close, and grows it back otherwise.
+func nextPageLimit(page *migrationPage, limit int) int {
+	if page.cutByBytes {
+		return max(page.scanned, 1)
+	}
+	return min(limit*2, migrationPageMaxRows)
 }
 
 // migrationRequestBuilder turns the current legacy row into the request written to unified storage.
@@ -364,23 +475,30 @@ type migrationItem struct {
 }
 
 type migrationPage struct {
-	items    []migrationItem
-	rejected []dashboardRow
-	scanned  int // rows read, including rejected ones
+	items      []migrationItem
+	rejected   []dashboardRow
+	scanned    int // rows read, including rejected ones
+	dashboards int // distinct dashboard ids read
 
 	// Keyset of the last scanned row; the next page starts after it
 	lastID      int64
 	lastVersion int64
 
-	// The page was cut by the row or byte limit, so more rows may follow
-	more bool
+	// The page stopped at the byte limit before its row limit
+	cutByBytes bool
 }
 
-func (a *dashboardSqlAccess) readMigrationPage(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query *DashboardQuery, opts migrations.MigrateOptions, rejected []dashboardRow, build migrationRequestBuilder) (*migrationPage, error) {
+// full reports whether the page stopped at a limit, so more rows may follow.
+func (p *migrationPage) full(limit int) bool {
+	return p.cutByBytes || p.scanned >= limit
+}
+
+// readMigrationPage runs fetch, in a transaction carrying the statement timeout override when one is set.
+func (a *dashboardSqlAccess) readMigrationPage(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, opts migrations.MigrateOptions, fetch func(context.Context) (*migrationPage, error)) (*migrationPage, error) {
 	if opts.StatementTimeout <= 0 {
-		return a.queryMigrationPage(ctx, helper, query, opts.Namespace, rejected, build)
+		return fetch(ctx)
 	}
-	// executeQuery reuses the transaction from ctx, so the override covers only this page query
+	// executeQuery reuses the transaction from ctx, so the override covers only this page's queries
 	var page *migrationPage
 	err := helper.DB.InTransaction(ctx, func(ctx context.Context) error {
 		if err := helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -390,13 +508,14 @@ func (a *dashboardSqlAccess) readMigrationPage(ctx context.Context, helper *lega
 			return err
 		}
 		var err error
-		page, err = a.queryMigrationPage(ctx, helper, query, opts.Namespace, rejected, build)
+		page, err = fetch(ctx)
 		return err
 	})
 	return page, err
 }
 
-func (a *dashboardSqlAccess) queryMigrationPage(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query *DashboardQuery, namespace string, rejected []dashboardRow, build migrationRequestBuilder) (*migrationPage, error) {
+// queryMigrationPage reads query's rows into a page, or hands each one to emit as it is read when emit is set.
+func (a *dashboardSqlAccess) queryMigrationPage(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query *DashboardQuery, namespace string, rejected []dashboardRow, build migrationRequestBuilder, maxBytes int, emit func(migrationItem) (bool, error)) (*migrationPage, error) {
 	rows, err := a.getRows(ctx, helper, query)
 	if rows != nil {
 		defer func() {
@@ -407,22 +526,39 @@ func (a *dashboardSqlAccess) queryMigrationPage(ctx context.Context, helper *leg
 		return nil, err
 	}
 	rows.rejected = rejected
-	return collectMigrationPage(rows, namespace, query.MaxRows, migrationPageMaxBytes, build)
+	return collectMigrationPage(rows, namespace, maxBytes, build, emit)
 }
 
-func collectMigrationPage(rows *rowsWrapper, namespace string, maxRows, maxBytes int, build migrationRequestBuilder) (*migrationPage, error) {
+// collectMigrationPage reads rows until they end or maxBytes (when positive) is reached.
+func collectMigrationPage(rows *rowsWrapper, namespace string, maxBytes int, build migrationRequestBuilder, emit func(migrationItem) (bool, error)) (*migrationPage, error) {
 	page := &migrationPage{}
 	size := 0
+	var lastDashboard int64
 	for rows.Next() {
+		if rows.lastID != lastDashboard {
+			page.dashboards++
+			lastDashboard = rows.lastID
+		}
 		req, err := build(rows, namespace)
 		if err != nil {
 			return nil, err
 		}
-		page.items = append(page.items, migrationItem{req: req, generation: rows.row.Dash.Generation})
+		item := migrationItem{req: req, generation: rows.row.Dash.Generation}
+		if emit != nil {
+			stop, err := emit(item)
+			if err != nil {
+				return nil, err
+			}
+			if stop {
+				break
+			}
+		} else {
+			page.items = append(page.items, item)
+		}
 
 		size += len(req.Value)
-		if size >= maxBytes {
-			page.more = true
+		if maxBytes > 0 && size >= maxBytes {
+			page.cutByBytes = true
 			break
 		}
 	}
@@ -433,9 +569,6 @@ func collectMigrationPage(rows *rowsWrapper, namespace string, maxRows, maxBytes
 	page.scanned = rows.count
 	page.rejected = rows.rejected
 	page.lastID, page.lastVersion = rows.lastID, rows.lastVersion
-	if rows.count >= maxRows {
-		page.more = true
-	}
 	return page, nil
 }
 

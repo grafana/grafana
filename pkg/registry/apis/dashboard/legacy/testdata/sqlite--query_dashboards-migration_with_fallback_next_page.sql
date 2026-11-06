@@ -29,6 +29,7 @@ WHERE dashboard.is_folder = FALSE
   AND dashboard.org_id = 1
   AND dashboard.id >= 42
   AND (dashboard.id > 42 OR COALESCE(dashboard_version.version, dashboard.version) > 7)
+  AND dashboard.id <= 99
   ORDER BY
     dashboard.id ASC,
     COALESCE(dashboard_version.version, dashboard.version) ASC

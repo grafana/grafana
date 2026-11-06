@@ -23,6 +23,12 @@ func TestDashboardQueries(t *testing.T) {
 		return &v
 	}
 
+	getIDsQuery := func(q *DashboardQuery, limit int) sqltemplate.SQLTemplate {
+		v := newDashboardIDsQueryReq(nodb, q, limit)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	getLibraryQuery := func(q *LibraryPanelQuery) sqltemplate.SQLTemplate {
 		v := newLibraryQueryReq(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -112,6 +118,7 @@ func TestDashboardQueries(t *testing.T) {
 						MaxRows:       500,
 						AfterID:       42,
 						AfterVersion:  7,
+						UpToID:        99,
 					}),
 				},
 				{
@@ -149,6 +156,15 @@ func TestDashboardQueries(t *testing.T) {
 						GetHistory: true,
 						LastID:     500,
 					}),
+				},
+			},
+			sqlQueryDashboardIDs: {
+				{
+					Name: "page_bound",
+					Data: getIDsQuery(&DashboardQuery{
+						OrgID:   1,
+						AfterID: 42,
+					}, 25),
 				},
 			},
 			sqlQueryPanels: {
