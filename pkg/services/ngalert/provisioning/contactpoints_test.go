@@ -379,7 +379,8 @@ func TestIntegrationContactPointService(t *testing.T) {
 					require.Equal(t, newCp.UID, cps[0].UID)
 					require.Equal(t, test.to, models.Provenance(cps[0].Provenance))
 				} else {
-					require.Error(t, err, fmt.Sprintf("cannot change provenance from '%s' to '%s'", test.from, test.to))
+					require.Error(t, err)
+					require.Truef(t, validation.ErrProvenanceChangeNotAllowed.Base.Is(err), "expected ErrProvenanceChangeNotAllowed but got %s", err)
 				}
 			})
 		}
