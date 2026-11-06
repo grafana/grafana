@@ -1,9 +1,11 @@
 import {
   type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
-  SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
-  type SupportedExternalPrometheusFlavoredRulesSourceType,
+  SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
+  type SupportedExternalRulesSourceType,
+  isAlertManagerWithConfigAPI,
   isDataSourceManagingAlerts,
+  isSupportedExternalRulesSourceType,
 } from '@grafana/alerting/internal';
 import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceSettings } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
@@ -24,7 +26,6 @@ import { hasAnyPermission } from '../hooks/abilities/abilityUtils';
 import { getExternalGlobalRuleAbility, getGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
 import { ExternalRuleAction, RuleAction } from '../hooks/abilities/types';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
-import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
 import { instancesPermissions, silencesPermissions } from './access-control';
 import {
@@ -350,18 +351,6 @@ export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentif
     ruleSourceType: 'datasource',
   };
 }
-
-/**
- * Check if the given type is a supported external rules source type. Includes Loki and Prometheus flavored types.
- */
-export function isSupportedExternalRulesSourceType(type: string): type is SupportedExternalRulesSourceType {
-  return SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES.find((t) => t === type) !== undefined;
-}
-export type SupportedExternalRulesSourceType = 'loki' | SupportedExternalPrometheusFlavoredRulesSourceType;
-export const SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES = [
-  'loki',
-  ...SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
-] as const;
 
 /**
  * Check if the given type is a supported rules source type. Includes "grafana" for Grafana Managed Rules.
