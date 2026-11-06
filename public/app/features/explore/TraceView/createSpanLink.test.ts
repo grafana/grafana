@@ -293,6 +293,24 @@ describe('createSpanLinkFactory', () => {
       });
     });
 
+    it('treats a unit-less 0 time shift as no shift', () => {
+      const createLink = setupSpanLinkFactory({
+        spanStartTimeShift: '0',
+        spanEndTimeShift: '0',
+      });
+      const span = createTraceSpan({
+        process: {
+          serviceName: 'service',
+          tags: [{ key: 'hostname', value: 'hostname1' }],
+        },
+      });
+      const links = createLink!(span);
+      expectLokiLink(links?.[0], 'hostname="hostname1"', ['service'], {
+        from: '1602637200000',
+        to: '1602637201000',
+      });
+    });
+
     it('filters by trace and span ID', () => {
       const createLink = setupSpanLinkFactory({
         filterBySpanID: true,
@@ -696,6 +714,31 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"1602633600000","to":"1602640801000"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A","datasource":{"type":"prometheus","uid":"prom1Uid"}}]}'
+        )}`
+      );
+    });
+
+    it.each([
+      { name: 'a unit-less 0 time shift as no shift', shift: '0', from: '1602637200000', to: '1602637201000' },
+      { name: 'an invalid time shift as the default', shift: 'soon', from: '1602637080000', to: '1602637321000' },
+    ])('treats $name', ({ shift, from, to }) => {
+      const createLink = createSpanLinkFactory({
+        splitOpenFn: jest.fn(),
+        traceToMetricsOptions: {
+          datasourceUid: 'prom1Uid',
+          queries: [{ query: 'customQuery' }],
+          spanStartTimeShift: shift,
+          spanEndTimeShift: shift,
+        },
+        metricsDataSourceSettings: getDataSourceSrv().getInstanceSettings('prom1Uid'),
+        trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
+      });
+
+      const links = createLink!(createTraceSpan());
+      expect(links?.[0]?.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          `{"range":{"from":"${from}","to":"${to}"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A","datasource":{"type":"prometheus","uid":"prom1Uid"}}]}`
         )}`
       );
     });
