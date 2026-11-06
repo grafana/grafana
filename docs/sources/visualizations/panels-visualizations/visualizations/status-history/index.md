@@ -99,13 +99,12 @@ To enable cross-filtering, follow these steps:
 1. Add a field override for the x-axis field, and select **Standard options > Cross-filter**.
 1. Toggle on the **Cross-filter** switch.
 1. Click the series that has the value you want to filter to display the filter control.
-1. In the tooltip, click the **Filter for...** button.
+1. In the tooltip, click **Filter on this value** or **Filter out this value**.
 
-   A filter to include that field is added and displayed at the top of the dashboard.
+   A filter to include or exclude that field is added and displayed at the top of the dashboard.
 
 1. In the filter field at the top of the dashboard, do the following as needed:
   
-   - Filter out the value by changing the operator to `!=`. 
    - Change the operator to any of the following: `=~`, `!~`, `<`, `<=`, `>`, `>=`.
    - Delete the filter.
 
