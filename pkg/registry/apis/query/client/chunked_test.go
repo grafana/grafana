@@ -22,6 +22,7 @@ import (
 	dataapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	queryapi "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
@@ -31,7 +32,7 @@ import (
 func setChunkedTypes(t *testing.T, value any) {
 	t.Helper()
 	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		chunkedQueryTypesFlag: {State: memprovider.Enabled, DefaultVariant: "value", Variants: map[string]any{"value": value}},
+		chunked.QueryTypesFlag: {State: memprovider.Enabled, DefaultVariant: "value", Variants: map[string]any{"value": value}},
 	})))
 	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 }
@@ -125,7 +126,13 @@ func TestPluginClientChunkedSelection(t *testing.T) {
 			}}
 			response, err := client.QueryData(requesterContext(), testRequest(t))
 			require.NoError(t, err)
-			require.Empty(t, response.Responses)
+			if tc.streamed {
+				require.Len(t, response.Responses, 2)
+				require.Equal(t, backend.StatusOK, response.Responses["A"].Status)
+				require.Equal(t, backend.StatusOK, response.Responses["B"].Status)
+			} else {
+				require.Empty(t, response.Responses)
+			}
 			require.Equal(t, 1, permission.calls)
 			require.Equal(t, 1, contextProvider.calls)
 			if tc.streamed {
@@ -141,7 +148,7 @@ func TestPluginClientChunkedSelection(t *testing.T) {
 
 func TestPluginClientChunkedDefaultsOff(t *testing.T) {
 	require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
-	require.False(t, useChunkedQuery(context.Background(), "test"))
+	require.False(t, chunked.UseChunkedQuery(context.Background(), "test"))
 }
 
 func TestPluginClientChunkedAuthorizationAndLookup(t *testing.T) {
@@ -192,7 +199,7 @@ func TestPluginClientChunkedParity(t *testing.T) {
 			writer := backend.NewChunkedDataWriter(req.Format, raw.OnChunk)
 			require.NoError(t, writer.WriteFrame(ctx, "A", "0", data.NewFrame("result", data.NewField("value", nil, []int64{1}))))
 			require.NoError(t, writer.WriteFrame(ctx, "A", "0", data.NewFrame("result", data.NewField("value", nil, []int64{2, 3}))))
-			require.NoError(t, raw.OnChunk(&pluginv2.QueryChunkedDataResponse{RefId: "B", Status: 403, Error: "denied", ErrorSource: "downstream"}))
+			require.NoError(t, writer.WriteError(ctx, "B", backend.StatusForbidden, backend.DownstreamError(errors.New("denied"))))
 			return nil
 		},
 	}}
@@ -240,28 +247,28 @@ func TestPluginClientChunkedTenantContext(t *testing.T) {
 	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 	ctx := openfeature.MergeTransactionContext(context.Background(), openfeature.NewEvaluationContext("", map[string]any{"stackId": "42"}))
 	ctx = request.WithRequestInfo(ctx, &request.RequestInfo{Namespace: "default"})
-	require.True(t, useChunkedQuery(ctx, "test"))
+	require.True(t, chunked.UseChunkedQuery(ctx, "test"))
 	require.Equal(t, "default", provider.evaluation["namespace"])
 	require.Equal(t, "default", provider.evaluation["targetingKey"])
 	require.Equal(t, "42", provider.evaluation["stackId"])
 }
 
 func TestChunkedQueryCollectorFrames(t *testing.T) {
-	collector := newChunkedQueryCollector()
+	collector := chunked.NewQueryResponseCollector()
 	for _, tc := range []struct {
 		ref, id string
 		value   int64
 	}{{"A", "0", 1}, {"B", "0", 2}, {"A", "1", 3}, {"A", "0", 4}, {"A", "", 5}, {"A", "", 6}} {
 		require.NoError(t, collector.WriteFrame(context.Background(), tc.ref, tc.id, data.NewFrame("result", data.NewField("value", nil, []int64{tc.value}))))
 	}
-	require.Len(t, collector.responses["A"].Frames, 4)
-	require.Len(t, collector.responses["B"].Frames, 1)
-	frame := collector.responses["A"].Frames[0]
+	require.Len(t, collector.Response().Responses["A"].Frames, 4)
+	require.Len(t, collector.Response().Responses["B"].Frames, 1)
+	frame := collector.Response().Responses["A"].Frames[0]
 	require.Equal(t, "A", frame.RefID)
 	require.Equal(t, 2, frame.Fields[0].Len())
 	require.EqualValues(t, 1, frame.Fields[0].At(0))
 	require.EqualValues(t, 4, frame.Fields[0].At(1))
-	require.EqualValues(t, 2, collector.responses["B"].Frames[0].Fields[0].At(0))
+	require.EqualValues(t, 2, collector.Response().Responses["B"].Frames[0].Fields[0].At(0))
 }
 
 func TestChunkedQueryCollectorErrors(t *testing.T) {
@@ -275,20 +282,20 @@ func TestChunkedQueryCollectorErrors(t *testing.T) {
 		{"unexpected format", &pluginv2.QueryChunkedDataResponse{RefId: "A", Frame: []byte("{}"), Format: pluginv2.DataFrameFormat_ARROW}},
 		{"missing initial schema", &pluginv2.QueryChunkedDataResponse{RefId: "A", FrameId: "0", Frame: []byte(`{"data":{"values":[[1]]}}`), Format: pluginv2.DataFrameFormat_JSON}},
 	} {
-		t.Run(tc.name, func(t *testing.T) { require.Error(t, newChunkedQueryCollector().OnChunk(tc.chunk)) })
+		t.Run(tc.name, func(t *testing.T) { require.Error(t, chunked.NewQueryResponseCollector().OnChunk(tc.chunk)) })
 	}
-	collector := newChunkedQueryCollector()
+	collector := chunked.NewQueryResponseCollector()
 	require.NoError(t, collector.WriteFrame(context.Background(), "A", "0", data.NewFrame("result", data.NewField("value", nil, []int64{1}))))
 	require.ErrorContains(t, collector.WriteFrame(context.Background(), "A", "0", data.NewFrame("result", data.NewField("value", nil, []string{"changed"}))), "appending chunked query frame")
 	require.ErrorContains(t, collector.WriteFrame(context.Background(), "A", "0", data.NewFrame("result")), "field count changed")
 }
 
 func TestChunkedQueryCollectorTypedErrorSource(t *testing.T) {
-	collector := newChunkedQueryCollector()
+	collector := chunked.NewQueryResponseCollector()
 	require.NoError(t, collector.WriteError(context.Background(), "A", backend.StatusForbidden, backend.DownstreamError(errors.New("denied"))))
-	require.Equal(t, backend.StatusForbidden, collector.responses["A"].Status)
-	require.Equal(t, backend.ErrorSourceDownstream, collector.responses["A"].ErrorSource)
-	require.EqualError(t, collector.responses["A"].Error, "denied")
+	require.Equal(t, backend.StatusForbidden, collector.Response().Responses["A"].Status)
+	require.Equal(t, backend.ErrorSourceDownstream, collector.Response().Responses["A"].ErrorSource)
+	require.EqualError(t, collector.Response().Responses["A"].Error, "denied")
 }
 
 type streamingDataServer struct {
@@ -382,4 +389,30 @@ func TestPluginClientChunkedRejectsArrow(t *testing.T) {
 	require.ErrorContains(t, err, "expected JSON chunked query frame")
 	require.Nil(t, response)
 	require.Equal(t, 1, calls)
+}
+
+func TestPluginClientChunkedSDKErrorSourceAndHTTPStatus(t *testing.T) {
+	for _, coreFallback := range []bool{false, true} {
+		name := "native"
+		if coreFallback {
+			name = "core fallback"
+		}
+		t.Run(name, func(t *testing.T) {
+			setChunkedTypes(t, map[string]any{"types": []any{"test"}})
+			client := pluginClient{ac: &testAccessControl{allowed: true}, pCtxProvider: &testPluginContext{datasourceType: "test"}, pluginClient: testPluginClient{
+				streaming: func(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+					writer := backend.NewChunkedDataWriter(req.Format, w.(chunked.RawChunkReceiver).OnChunk)
+					if coreFallback {
+						return chunked.ProcessTypedResponse(ctx, &backend.QueryDataResponse{Responses: backend.Responses{"A": {Error: errors.New("bad SQL"), Status: backend.StatusInternal, ErrorSource: backend.ErrorSourceDownstream}}}, writer)
+					}
+					return writer.WriteError(ctx, "A", backend.StatusInternal, backend.DownstreamError(errors.New("bad SQL")))
+				},
+			}}
+			response, err := client.QueryData(requesterContext(), testRequest(t))
+			require.NoError(t, err)
+			require.Equal(t, backend.ErrorSourceDownstream, response.Responses["A"].ErrorSource)
+			require.Equal(t, 400, queryapi.GetResponseCode(response))
+			require.Contains(t, response.Responses, "B")
+		})
+	}
 }
