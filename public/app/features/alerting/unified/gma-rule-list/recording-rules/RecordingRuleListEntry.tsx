@@ -2,6 +2,7 @@ import { useGetRecordingRuleQuery } from '@grafana/api-clients/rtkq/rules.alerti
 
 import { useFolderPath } from '../folder-browsing/folderLookups';
 
+import { RecordingRuleActions } from './RecordingRuleActions';
 import { RecordingRuleRow } from './RecordingRuleRow';
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
 
@@ -16,5 +17,12 @@ export function RecordingRuleListEntry({ searchHit, showFolderPath }: RecordingR
   const folderPath = useFolderPath(showFolderPath ? searchHit.folderUid : undefined);
   const { data: fullRule } = useGetRecordingRuleQuery({ name: searchHit.uid });
 
-  return <RecordingRuleRow searchHit={searchHit} folderPath={folderPath} rule={fullRule} />;
+  return (
+    <RecordingRuleRow
+      searchHit={searchHit}
+      folderPath={folderPath}
+      rule={fullRule}
+      actions={fullRule && <RecordingRuleActions rule={fullRule} />}
+    />
+  );
 }
