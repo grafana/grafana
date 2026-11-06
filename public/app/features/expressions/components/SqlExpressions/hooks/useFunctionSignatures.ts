@@ -10,10 +10,6 @@ export function useFunctionSignatures(enabled: boolean): SqlFunctionSignature[] 
   const [functionSignatures, setFunctionSignatures] = useState<SqlFunctionSignature[]>();
 
   useEffect(() => {
-    if (!enabled) {
-      return;
-    }
-
     let cancelled = false;
 
     import('../functionSignatures')
@@ -29,7 +25,7 @@ export function useFunctionSignatures(enabled: boolean): SqlFunctionSignature[] 
     return () => {
       cancelled = true;
     };
-  }, [enabled]);
+  }, []);
 
   return functionSignatures;
 }
