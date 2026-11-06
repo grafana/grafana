@@ -429,17 +429,20 @@ func TestIntegrationLegacyStatsRecordsFailedStalenessCheck(t *testing.T) {
 
 	testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	ctx := request.WithNamespace(context.Background(), "default")
-	helper, err := legacysql.NewDatabaseProvider(testDB)(ctx)
-	require.NoError(t, err)
-	// With no Cfg the staleness check reads kv_store, so removing it makes that check fail.
-	require.NoError(t, testDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("DROP TABLE " + helper.Table("kv_store"))
-		return err
-	}))
+	// With no Cfg the staleness check reads kv_store. Pointing it at a table that doesn't exist
+	// makes the check fail without touching the shared test database.
+	provider := func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{DB: testDB, Table: func(n string) string {
+			if n == "kv_store" {
+				return "kv_store_missing"
+			}
+			return n
+		}}, nil
+	}
 	reg := prometheus.NewRegistry()
-	store := &LegacyStatsGetter{SQL: legacysql.NewDatabaseProvider(testDB), metrics: newLegacyStatsMetrics(reg)}
+	store := &LegacyStatsGetter{SQL: provider, metrics: newLegacyStatsMetrics(reg)}
 
-	_, err = store.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: []string{"f1"}})
+	_, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: []string{"f1"}})
 
 	var countErr *CountError
 	require.ErrorAs(t, err, &countErr)
