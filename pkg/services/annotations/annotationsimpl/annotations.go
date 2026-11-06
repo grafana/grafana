@@ -48,11 +48,11 @@ func ProvideService(
 	l := log.New("annotations")
 	l.Debug("Initializing annotations service")
 
-	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService, reg)
+	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService, ruleStore, reg)
 	write := xormStore
 
 	var read ReadStore
-	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, db, ruleStore, log.New("annotations.loki"), tracer, reg)
+	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, db, log.New("annotations.loki"), tracer, reg)
 	if historianStore != nil {
 		l.Debug("Using composite read store")
 		read = NewCompositeStore(log.New("annotations.composite"), xormStore, historianStore)

@@ -152,18 +152,6 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     expect(screen.getByDisplayValue('lotsa-emails')).toBeInTheDocument();
   });
 
-  it('checks the selected contact point still exists by its title', async () => {
-    const capture = captureRequests((r) => r.method === 'GET' && r.url.includes('/receivers'));
-    renderRuleEditor();
-
-    await selectContactPoint('lotsa-emails');
-
-    await waitFor(async () => {
-      const selectors = (await capture).map((r) => new URL(r.url).searchParams.get('fieldSelector'));
-      expect(selectors).toContain('spec.title=lotsa-emails');
-    });
-  });
-
   it('does not show contact points with canUse=false (imported) in the dropdown', async () => {
     // Override the receivers handler to include a contact point that cannot be used (e.g., imported)
     server.use(
@@ -300,6 +288,16 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       const requests = await capture;
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();
+    });
+
+    it('shows the contact point selector again after switching the notifications step back to basic mode', async () => {
+      localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
+      const { user } = renderRuleEditor();
+
+      await user.click(await ui.inputs.switchModeBasic(GrafanaRuleFormStep.Notification).find());
+      await user.click(await ui.inputs.switchModeAdvanced(GrafanaRuleFormStep.Notification).find());
+
+      expect(await ui.inputs.simplifiedRouting.contactPoint.find()).toBeInTheDocument();
     });
 
     it('switch modes are intiallized depending on the local storage - 1', async () => {

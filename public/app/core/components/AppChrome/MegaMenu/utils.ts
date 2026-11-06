@@ -296,6 +296,8 @@ export const HIDDEN_NAV_ITEMS = new Set<string>([
   '/a/grafana-cmab-app/invoices',
   '/a/grafana-cmab-app/settings',
   '/a/grafana-cmab-app/resources',
+
+  'standalone-plugin-page-/a/grafana-collector-app/alloy',
 ]);
 
 /**

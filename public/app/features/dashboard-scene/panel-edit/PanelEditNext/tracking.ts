@@ -29,7 +29,7 @@ export function trackTransformationFilterChanged(filter: string | null) {
   });
 }
 
-type AddCardSource = 'section_header' | 'inline' | 'empty_state' | 'legacy';
+export type AddCardSource = 'section_header' | 'inline' | 'empty_state' | 'legacy' | 'stacked_gap';
 
 export function trackAddQuery(
   querySource: 'saved_query' | 'new_query',
@@ -72,7 +72,7 @@ export function trackAddTransformationInitiated(source: AddCardSource, options?:
   );
 }
 
-export type CardActionSource = 'content_header' | 'sidebar_card';
+export type CardActionSource = 'content_header' | 'stacked_header' | 'sidebar_card';
 
 export function trackCardAction(
   action: 'delete' | 'toggle_hide' | 'duplicate',
@@ -91,20 +91,26 @@ export function trackCardAction(
   );
 }
 
-export function trackTransformationToolAction(action: 'toggle_help' | 'toggle_filter' | 'toggle_debug') {
+export function trackTransformationToolAction(
+  action: 'toggle_help' | 'toggle_filter' | 'toggle_debug',
+  source?: CardActionSource
+) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action,
     item_type: QueryEditorType.Transformation,
+    ...(source && { source }),
   });
 }
 
 export function trackQueryMenuAction(
   action: 'duplicate' | 'toggle_datasource_help' | 'open_inspector',
-  itemType: QueryEditorType
+  itemType: QueryEditorType,
+  source?: CardActionSource
 ) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action,
     item_type: itemType,
+    ...(source && { source }),
   });
 }
 

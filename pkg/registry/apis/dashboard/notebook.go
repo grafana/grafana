@@ -20,5 +20,5 @@ func validateNotebook(notebook *dashv2beta1.Notebook) error {
 		return fmt.Errorf("notebook layout kind must be %q, got %q", notebookLayoutKind, notebook.Spec.Layout.Kind)
 	}
 
-	return nil
+	return validateNotebookCellIDs(notebook)
 }

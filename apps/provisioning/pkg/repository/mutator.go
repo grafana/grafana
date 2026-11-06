@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // AdmissionMutator handles mutation for Repository resources
@@ -73,6 +75,13 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		return fmt.Errorf("failed to mutate repository: %w", err)
 	}
 
+	// After the factory, so the comparison uses the normalized URL that will be stored.
+	if a.GetOperation() == admission.Update {
+		if oldRepo, ok := a.GetOldObject().(*provisioning.Repository); ok {
+			InvalidateConnectionTokenOnURLChange(r, oldRepo)
+		}
+	}
+
 	return nil
 }
 
@@ -93,6 +102,68 @@ func CopySecureValues(new, old *provisioning.Repository) {
 	}
 }
 
+// RequiresNewTokenForURLChange reports whether a URL change must come with a new token.
+// The rule exists so a stored credential cannot be repointed at another host.
 func RequiresNewTokenForURLChange(new, old *provisioning.Repository) bool {
-	return old != nil && new.URL() != old.URL() && new.Secure.Token.IsZero()
+	if old == nil || new.URL() == old.URL() || suppliedNewToken(new, old) {
+		return false
+	}
+
+	return !connectionMintsTokenForURLChange(new, old)
+}
+
+// InvalidateConnectionTokenOnURLChange marks a connection-minted token for removal when the
+// repository moves. The token is scoped to the repository it was minted for, so the
+// controller has to mint a new one; keeping it would fail every git operation against the
+// new URL until the token nears expiry.
+func InvalidateConnectionTokenOnURLChange(new, old *provisioning.Repository) {
+	if old == nil || new.URL() == old.URL() {
+		return
+	}
+	// Nothing to invalidate if no token is stored, and a caller-supplied one wins.
+	if old.Secure.Token.IsZero() || suppliedNewToken(new, old) {
+		return
+	}
+	// Must match the exemption exactly: marking the token for removal counts as supplying
+	// one, which would otherwise satisfy RequiresNewTokenForURLChange and skip the host check.
+	if !connectionMintsTokenForURLChange(new, old) {
+		return
+	}
+
+	new.Secure.Token = common.InlineSecureValue{Remove: true}
+}
+
+// suppliedNewToken reports whether the incoming object carries a token decision of its own.
+// Echoing the stored reference back is not one: a read-modify-write client resends what it
+// read, and treating that as a new token would let it move the URL on the old credential.
+// Only the credential identity counts, so a description cannot stand in for a new token.
+func suppliedNewToken(new, old *provisioning.Repository) bool {
+	token := new.Secure.Token
+	switch {
+	case token.IsZero():
+		return false
+	case token.Remove || !token.Create.IsZero():
+		return true
+	default:
+		return token.Name != old.Secure.Token.Name
+	}
+}
+
+// connectionMintsTokenForURLChange reports whether the connection can mint a token for the
+// new URL on the caller's behalf, which it can while the repository stays on the same host.
+func connectionMintsTokenForURLChange(new, old *provisioning.Repository) bool {
+	return new.HasConnection() && sameURLHost(new.URL(), old.URL())
+}
+
+func sameURLHost(a, b string) bool {
+	parsedA, err := url.Parse(a)
+	if err != nil {
+		return false
+	}
+	parsedB, err := url.Parse(b)
+	if err != nil {
+		return false
+	}
+
+	return parsedA.Host != "" && strings.EqualFold(parsedA.Host, parsedB.Host)
 }

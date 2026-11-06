@@ -1657,9 +1657,6 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/GrafanaEvaluationBehavior.tsx": {
-    "react-hooks/preserve-manual-memoization": {
-      "count": 3
-    },
     "react-hooks/set-state-in-effect": {
       "count": 1
     }
@@ -1679,15 +1676,7 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/QueryRows.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/RecordingRuleEditor.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "react-hooks/set-state-in-effect": {
       "count": 1
     }
@@ -1724,11 +1713,6 @@
   },
   "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/CloudDataSourceSelector.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/QueryAndExpressionsStep.tsx": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -2763,11 +2747,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/solo/ViewPanelSidePane.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/solo/ViewPanelWrapper.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3257,11 +3236,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/VirtualizedTraceView.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/model/transform-trace-data.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -3356,9 +3330,6 @@
   },
   "public/app/features/geo/gazetteer/gazetteer.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
@@ -3715,10 +3686,7 @@
       "count": 1
     },
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
+      "count": 2
     }
   },
   "public/app/features/plugins/sandbox/distortions.ts": {
@@ -4149,11 +4117,6 @@
       "count": 2
     }
   },
-  "public/app/features/variables/query/operators.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/query/queryRunners.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -4495,11 +4458,6 @@
   },
   "public/app/plugins/datasource/graphite/utils.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/mixed/MixedDataSource.ts": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },

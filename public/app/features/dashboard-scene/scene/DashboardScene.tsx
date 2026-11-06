@@ -130,6 +130,12 @@ import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getLayoutManagerFor } from '../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../utils/interactions';
+import {
+  isEditEntryBlocked,
+  isMobileEditDeprecated,
+  notifyMobileEditNotAvailable,
+  redirectAwayFromMobileEdit,
+} from '../utils/mobileEditDeprecation';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import { persistUseCrossDashboardVariables } from '../utils/persistUseCrossDashboardVariables';
 import { fetchPredefinedVariables, isPredefinedOrigin } from '../utils/predefinedVariables';
@@ -139,6 +145,7 @@ import {
   getDefaultVizPanel,
   getLayoutForObject,
   hasActualSaveChanges,
+  isLibraryPanel,
 } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
@@ -164,6 +171,8 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
+import { promotePanelAdHocChanges } from './panel-actions/promote/promotePanelAdHocChanges';
+import { PromotePanelAdHocChangesEvent } from './panel-actions/promote/utils';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { takePendingPlanBuild } from './pendingPlanBuild';
 import { DashboardPlanningEvent } from './planningEvents';
@@ -531,6 +540,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         if (pendingBuild) {
           this.setState({ planning: { phase: 'building', ...pendingBuild } });
         }
+      } else if (isMobileEditDeprecated()) {
+        // Building a new dashboard requires edit mode, which is unavailable on mobile.
+        redirectAwayFromMobileEdit();
       } else {
         // Silent CUJ signal so the dashboard_edit journey starts on /dashboard/new
         // (the regular `dashboards_edit_button_clicked` doesn't fire here — auto-edit
@@ -582,6 +594,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.closeComposerSession();
     });
 
+    // Panel actions ask for their ad hoc changes to be saved with an event, so they do not import the dashboard's saving code.
+    const promoteAdHocChangesSubscription = this.subscribeToEvent(
+      PromotePanelAdHocChangesEvent,
+      ({ payload: { panel } }) => promotePanelAdHocChanges(this, panel)
+    );
+
     // Closing the tab or reloading never deactivates the scene, so an open edit period would go unreported.
     const onPageHide = () => this.endEditPeriod('abandoned');
     window.addEventListener('pagehide', onPageHide);
@@ -593,6 +611,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.exitComposerMode();
       this.closeComposerSession();
       composerSubscription.unsubscribe();
+      promoteAdHocChangesSubscription.unsubscribe();
       window.removeEventListener('pagehide', onPageHide);
       this.endEditPeriod('abandoned');
       this.cancelPendingViews();
@@ -734,10 +753,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setState({ links: nonDefaultLinks });
   }
 
+  /** Returns false if starting an edit session was blocked, e.g. on mobile. A session already underway is never blocked. */
   public onEnterEditMode = (
     source: 'user' | 'assistant' = 'user',
     trigger: DashboardModeTrigger = source === 'assistant' ? 'assistant' : 'navigation'
-  ) => {
+  ): boolean => {
+    if (!this.state.isEditing && isMobileEditDeprecated()) {
+      notifyMobileEditNotAvailable();
+      return false;
+    }
+
     const currentMode = getDashboardMode(this.state);
     if (trigger !== 'restore') {
       this.startEditPeriod(source);
@@ -780,8 +805,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.applyDashboardMode();
       this.reportModeChange(currentMode, trigger);
     }
+    return true;
   };
 
+  /**
+   * Returns false if the switch was refused. On mobile, switching into a non-view mode is blocked with
+   * a warning, but staying in the current mode is not.
+   */
   public setDashboardMode(mode: DashboardMode, trigger: DashboardModeTrigger = 'navigation'): boolean {
     // Only a Composer session enters Composer (see enterComposerMode); any other mode request leaves it.
     if (mode === 'composer' && trigger !== 'composer') {
@@ -816,6 +846,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const previous = getDashboardMode(this.state);
     if (previous === mode) {
       return true;
+    }
+    // A switch into any other non-view mode is blocked
+    if (mode !== 'view' && isMobileEditDeprecated()) {
+      notifyMobileEditNotAvailable();
+      return false;
     }
     if (
       trigger === 'picker' &&
@@ -947,8 +982,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
       if (this.state.isEditing) {
         this.startEditPeriod('user');
-      } else {
-        this.onEnterEditMode('user', 'picker');
+      } else if (!this.onEnterEditMode('user', 'picker')) {
+        return;
       }
       this.setState({ composerEditing: true });
       return;
@@ -979,7 +1014,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /**
    * An Assistant edit while Composer is over Viewing switches it to Editing, with an Assistant edit session,
-   * as an Assistant edit from Viewing starts Agent editing without Composer. False when the user cannot edit.
+   * as an Assistant edit from Viewing starts Agent editing without Composer. False when the user cannot edit
+   * or entering edit mode was blocked.
    */
   public startComposerEditingForAssistant(): boolean {
     if (!isComposerMode(this.state) || !this.state.editable || !this.canEditDashboard()) {
@@ -988,8 +1024,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (!isComposerEditing(this.state)) {
       if (this.state.isEditing) {
         this.startEditPeriod('assistant');
-      } else {
-        this.onEnterEditMode('assistant', 'assistant');
+      } else if (!this.onEnterEditMode('assistant', 'assistant')) {
+        return false;
       }
       this.setState({ composerEditing: true });
     }
@@ -1325,6 +1361,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /**
+   * After the dashboard was reloaded into this scene in place, mid edit session: discarding goes back
+   * to what was reloaded, as it would after a fresh load in edit mode, not to the tree it replaced.
+   */
+  public rebaselineEditSession() {
+    if (!this.state.isEditing) {
+      return;
+    }
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false, planning: undefined });
+    this._initialUrlState = locationService.getLocation();
+  }
+
+  /**
    * Discard changes and revert to the last saved state, while keeping edit mode enabled.
    * This is useful for flows where you want to continue an action (for example share/export)
    * without forcing the user to exit edit mode.
@@ -1585,8 +1633,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public addPanel(vizPanel: VizPanel): void {
-    if (!this.state.isEditing) {
-      this.onEnterEditMode();
+    // onEnterEditMode can no-op without throwing (e.g. blocked on mobile) -- its return value is
+    // the only reliable signal that it actually happened.
+    if (!this.state.isEditing && !this.onEnterEditMode()) {
+      return;
     }
 
     // Add panel to layout
@@ -2014,6 +2064,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (!canManuallyEditDashboard(this.state)) {
       return;
     }
+    if (isEditEntryBlocked(this)) {
+      notifyMobileEditNotAvailable();
+      return;
+    }
     const editview = this.state.meta.isDashboardTemplate ? 'template' : 'settings';
     locationService.partial({ editview });
   };
@@ -2381,6 +2435,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   isManaged() {
     return Boolean(this.getManagerKind());
+  }
+
+  isLibraryPanel(vizPanel: VizPanel) {
+    return isLibraryPanel(vizPanel);
   }
 
   isManagedRepository() {
