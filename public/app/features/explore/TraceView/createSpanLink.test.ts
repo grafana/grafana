@@ -197,13 +197,15 @@ describe('createSpanLinkFactory', () => {
       const dsSrv = getDataSourceSrv();
       const createLink = createSpanLinkFactory({
         splitOpenFn,
-        traceToLogsOptions: {
-          customQuery: false,
-          datasourceUid: 'lokiUid',
-        },
+        logsDestinations: [
+          {
+            index: 0,
+            options: { customQuery: false, datasourceUid: 'lokiUid' },
+            settings: dsSrv.getInstanceSettings('lokiUid')!,
+          },
+        ],
         trace: dummyTraceData,
         dataFrame: dummyDataFrame,
-        logsDataSourceSettings: dsSrv.getInstanceSettings('lokiUid'),
       });
 
       const linkDef = createLink!(createTraceSpan())![0];
@@ -1238,6 +1240,94 @@ describe('createSpanLinkFactory', () => {
     });
   });
 
+  describe('multiple logs destinations', () => {
+    const appLogs = { uid: 'loki-app-uid', name: 'loki-app', type: 'loki' } as DataSourceInstanceSettings;
+    const auditLogs = { uid: 'loki-audit-uid', name: 'loki-audit', type: 'loki' } as DataSourceInstanceSettings;
+
+    const createLinks = (logsDestinations: Parameters<typeof createSpanLinkFactory>[0]['logsDestinations']) =>
+      createSpanLinkFactory({
+        splitOpenFn: jest.fn(),
+        logsDestinations,
+        trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
+      })!(createTraceSpan())!;
+
+    const explorePane = (href: string) => JSON.parse(new URL(href, 'http://localhost').searchParams.get('left')!);
+
+    beforeAll(() => {
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('builds one link per destination, each with its own label, data source, query and time shift', () => {
+      const links = createLinks([
+        {
+          index: 0,
+          options: { name: 'Application logs', customQuery: true, query: '{job="app"} |= "${__trace.traceId}"' },
+          settings: appLogs,
+        },
+        {
+          index: 1,
+          options: { customQuery: true, query: '{job="audit"}', spanStartTimeShift: '-5m', spanEndTimeShift: '5m' },
+          settings: auditLogs,
+        },
+      ]);
+
+      expect(links.map((link) => [link.type, link.title, link.logsDestination?.isOneOfMany])).toEqual([
+        [SpanLinkType.Logs, 'Application logs', true],
+        [SpanLinkType.Logs, 'loki-audit', true],
+      ]);
+      expect(explorePane(links[0].href)).toEqual({
+        range: { from: '1602637200000', to: '1602637201000' },
+        datasource: 'loki-app-uid',
+        queries: [
+          { expr: '{job="app"} |= "trace1"', refId: 't2l:custom', datasource: { type: 'loki', uid: 'loki-app-uid' } },
+        ],
+      });
+      expect(explorePane(links[1].href)).toEqual({
+        range: { from: '1602636900000', to: '1602637501000' },
+        datasource: 'loki-audit-uid',
+        queries: [{ expr: '{job="audit"}', refId: 't2l:custom', datasource: { type: 'loki', uid: 'loki-audit-uid' } }],
+      });
+    });
+
+    it('adds the destination position to labels that would otherwise be identical', () => {
+      const links = createLinks([
+        { index: 0, options: { customQuery: true, query: '{job="app"}' }, settings: appLogs },
+        { index: 1, options: { customQuery: true, query: '{job="worker"}' }, settings: appLogs },
+        { index: 2, options: { name: 'Audit', customQuery: true, query: '{job="audit"}' }, settings: auditLogs },
+      ]);
+
+      expect(links.map((link) => link.title)).toEqual(['loki-app (1)', 'loki-app (2)', 'Audit']);
+    });
+
+    it.each([
+      { desc: 'its name', name: 'Application logs', expected: 'Application logs' },
+      { desc: 'the generic label without a name', name: undefined, expected: 'Related logs' },
+    ])('labels a single destination with $desc', ({ name, expected }) => {
+      const links = createLinks([
+        { index: 0, options: { name, customQuery: true, query: '{job="app"}' }, settings: appLogs },
+      ]);
+
+      expect(links.map((link) => [link.title, link.logsDestination?.isOneOfMany])).toEqual([[expected, false]]);
+    });
+
+    it('keeps the datasource label and multi-destination policy when only one target resolves', () => {
+      const links = createLinks([
+        {
+          index: 0,
+          options: { customQuery: true, query: '{job="app"}' },
+          settings: appLogs,
+          isOneOfMany: true,
+        },
+      ]);
+
+      expect(links.map((link) => [link.type, link.title, link.logsDestination?.isOneOfMany])).toEqual([
+        [SpanLinkType.Logs, 'loki-app', true],
+      ]);
+    });
+  });
+
   describe('should return falconLogScale link', () => {
     const falconLogScaleUID = 'falconLogScaleUID';
 
@@ -1754,13 +1844,12 @@ function setupSpanLinkFactory(
 ) {
   const splitOpenFn = jest.fn();
   const dsSrv = getDataSourceSrv();
+  const logsDataSourceSettings = datasourceUid ? dsSrv.getInstanceSettings(datasourceUid) : undefined;
   return createSpanLinkFactory({
     splitOpenFn,
-    traceToLogsOptions: {
-      customQuery: false,
-      datasourceUid,
-      ...options,
-    },
+    logsDestinations: logsDataSourceSettings
+      ? [{ index: 0, options: { customQuery: false, datasourceUid, ...options }, settings: logsDataSourceSettings }]
+      : [],
     traceToProfilesOptions: {
       customQuery: false,
       datasourceUid: 'pyroscopeUid',
@@ -1773,7 +1862,6 @@ function setupSpanLinkFactory(
     },
     trace: dummyTraceData,
     dataFrame: dummyDataFrameForProfiles ? dummyDataFrameForProfiles : dummyDataFrame,
-    logsDataSourceSettings: datasourceUid ? dsSrv.getInstanceSettings(datasourceUid) : undefined,
     profilesDataSourceSettings: dsSrv.getInstanceSettings('pyroscopeUid'),
   });
 }
