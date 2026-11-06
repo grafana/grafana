@@ -14807,6 +14807,7 @@
       "delete-confirm": "Are you sure you want to delete this connection? This action cannot be undone.",
       "delete-title": "Delete connection",
       "error-loading": "Failed to load connections",
+      "export": "Export",
       "kind-github-app": "GitHub App",
       "kind-oauth-app": "OAuth App",
       "no-connections": "No connections configured",
@@ -15309,6 +15310,7 @@
       "view-folder": "View folder"
     },
     "repository-card": {
+      "export": "Export",
       "last-sync": "Last sync: {{date}}",
       "settings": "Settings",
       "view": "View"
