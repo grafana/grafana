@@ -11,7 +11,10 @@ import (
 // setRoutes replaces the solicited cluster routes. nats-server only presents
 // the credentials carried in a solicited route's URL.
 func (s *Server) setRoutes(routes []*url.URL) error {
-	routes = withRouteCredentials(routes, s.routeAuth)
+	s.mu.RLock()
+	creds := s.routeAuth
+	s.mu.RUnlock()
+	routes = withRouteCredentials(routes, creds)
 	return s.reload(func(o *natsserver.Options) { o.Routes = routes })
 }
 

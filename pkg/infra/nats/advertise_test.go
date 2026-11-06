@@ -200,12 +200,16 @@ func clusterPort(t *testing.T, s *Server) string {
 
 func registeredRouteURL(t *testing.T, s *Server) string {
 	t.Helper()
+	// Route reloads replace opts while discovery runs.
+	s.mu.RLock()
+	name := s.opts.ServerName
+	s.mu.RUnlock()
 	for _, p := range registeredPeers(t, s.kv) {
-		if p.ServerName == s.opts.ServerName {
+		if p.ServerName == name {
 			return p.RouteURL
 		}
 	}
-	t.Fatalf("%s is not registered", s.opts.ServerName)
+	t.Fatalf("%s is not registered", name)
 	return ""
 }
 

@@ -31,14 +31,12 @@ const (
 	routePingInterval = 5 * time.Second
 	routeMaxPingsOut  = 2
 
-	// Startup waits up to routeCredentialRetryTimeout for the database to hand
-	// out the route credential, each attempt bounded by
-	// routeCredentialAttemptTimeout.
-	routeCredentialRetryTimeout   = 30 * time.Second
 	routeCredentialAttemptTimeout = 10 * time.Second
 )
 
-var routeCredentialBackoff = backoff.Config{MinBackoff: 500 * time.Millisecond, MaxBackoff: 5 * time.Second}
+// routeCredentialBackoff paces the background retry for the route credential
+// until it loads or the server stops. Tests that wait on it shorten it.
+var routeCredentialBackoff = backoff.Config{MinBackoff: 5 * time.Second, MaxBackoff: 30 * time.Second}
 
 var (
 	ErrDisabled = errors.New("nats is disabled")
@@ -63,8 +61,16 @@ type Server struct {
 	reloadMu sync.Mutex
 	// clusterTLS is nil unless cluster TLS is configured.
 	clusterTLS *clusterTLSWatcher
-	// routeAuth is nil unless the shared registry provides a route credential.
+	// routeAuth is the route credential from the shared registry. It is nil
+	// without discovery on a shared store, and until the credential loads when
+	// it could not be read or created at startup. Guarded by mu.
 	routeAuth *url.Userinfo
+	// routePlaceholder is the cluster credential while routeAuth is still
+	// loading: a random per-process password no peer knows, so the cluster port
+	// rejects every route without leaving the address it will serve on.
+	routePlaceholder *url.Userinfo
+	// routeSecrets are masked in embedded server logs.
+	routeSecrets *routeSecrets
 }
 
 func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) (*Server, error) {
@@ -98,25 +104,25 @@ func newServer(cfg setting.NATSSettings, store kv.KV, dbDriver string, logger lo
 	if !s.IsDisabled() {
 		s.metrics = newServerMetrics(reg)
 
-		if s.kv != nil && s.cfg.DiscoveryEnabled {
-			creds, err := s.loadRouteAuth()
+		s.routeSecrets = &routeSecrets{}
+		// With discovery on a shared store every route authenticates, with the
+		// real credential or, until it loads, the placeholder.
+		routeAuthRequired := s.kv != nil && s.cfg.DiscoveryEnabled
+		if routeAuthRequired {
+			creds, err := s.loadRouteAuth(context.Background())
 			if err != nil {
-				// Peers that hold the credential reject this instance anyway, so
-				// keep the cluster port off the network and out of the registry
-				// rather than accept unauthenticated routes on it.
-				s.log.Error("nats clustering disabled until restart: the route credential could not be read or created, "+
-					"so the cluster port stays on loopback and this instance does not register as a peer",
-					"err", err, "listen_address", loopbackListenAddress)
-				s.cfg.ListenAddress = loopbackListenAddress
-				s.cfg.AdvertiseAddress = ""
-				s.cfg.DiscoveryEnabled = false
+				s.log.Warn("nats cluster routes wait for the route credential; clustering starts once it can be read or created", "err", err)
+				s.routePlaceholder = url.UserPassword(routeAuthUser, randomRoutePassword())
+				s.routeSecrets.add(s.routePlaceholder)
+			} else {
+				s.routeAuth = creds
+				s.routeSecrets.add(creds)
 			}
-			s.routeAuth = creds
 		}
 		if s.cfg.ListenAddress == "" {
-			s.cfg.ListenAddress = autoListenAddress(s.log, s.cfg, dbDriver, s.routeAuth != nil)
+			s.cfg.ListenAddress = autoListenAddress(s.log, s.cfg, dbDriver, routeAuthRequired)
 		}
-		warnExposedClusterPort(s.log, s.cfg, s.routeAuth != nil)
+		warnExposedClusterPort(s.log, s.cfg, routeAuthRequired)
 
 		// The resolved host feeds both Cluster.Advertise and the registry route URL,
 		// so gossip and discovery hand peers the same address.
@@ -203,11 +209,65 @@ func (s *Server) running(ctx context.Context) error {
 	s.mu.RLock()
 	d := s.discovery
 	s.mu.RUnlock()
+	if s.routePlaceholder != nil {
+		// Clustering waits for the route credential; peers only learn about this
+		// instance once discovery starts with it.
+		creds := s.awaitRouteAuth(ctx)
+		if creds == nil {
+			return nil
+		}
+		var err error
+		if d, err = s.enableClustering(creds); err != nil {
+			s.log.Error("failed to apply the nats route credential; clustering stays disabled until restart", "err", err)
+			<-ctx.Done()
+			return nil
+		}
+	}
 	if d == nil {
 		<-ctx.Done()
 		return nil
 	}
 	return d.run(ctx)
+}
+
+// awaitRouteAuth retries the route credential until it loads, or returns nil
+// once ctx is done.
+func (s *Server) awaitRouteAuth(ctx context.Context) *url.Userinfo {
+	b := backoff.New(ctx, routeCredentialBackoff)
+	for b.Ongoing() {
+		b.Wait()
+		if ctx.Err() != nil {
+			return nil
+		}
+		creds, err := s.loadRouteAuth(ctx)
+		if err == nil {
+			return creds
+		}
+		s.log.Debug("failed to read or create the nats route credential; retrying", "err", err, "attempt", b.NumRetries())
+	}
+	return nil
+}
+
+// enableClustering replaces the placeholder with the route credential and
+// starts discovery. nats-server checks accepted routes against its current
+// options, so new routes authenticate without a restart.
+func (s *Server) enableClustering(creds *url.Userinfo) (*discovery, error) {
+	s.routeSecrets.add(creds)
+	password, _ := creds.Password()
+	if err := s.reload(func(o *natsserver.Options) {
+		o.Cluster.Username = creds.Username()
+		o.Cluster.Password = password
+	}); err != nil {
+		return nil, err
+	}
+
+	s.mu.Lock()
+	s.routeAuth = creds
+	s.discovery = s.newPeerDiscovery(s.server, s.opts)
+	d := s.discovery
+	s.mu.Unlock()
+	s.log.Info("nats clustering enabled: the route credential is loaded")
+	return d, nil
 }
 
 func (s *Server) stopping(_ error) error {
@@ -253,7 +313,7 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("create embedded nats server: %w", err)
 	}
-	server.SetLoggerV2(newServerLogger(s.log, s.routeAuth), false, false, false)
+	server.SetLoggerV2(newServerLogger(s.log, s.routeSecrets), false, false, false)
 	server.Start()
 	if !server.ReadyForConnections(10 * time.Second) {
 		server.Shutdown()
@@ -270,25 +330,15 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	// injects a sqlStore, so production embedded servers cluster through discovery; module
 	// mode cannot enable embedded NATS (see module_server.go). A nil KV therefore only
 	// happens for a single standalone node (e.g. tests), which runs without clustering.
-	if s.cfg.DiscoveryEnabled && s.kv != nil {
-		s.discovery = newDiscovery(
-			s.log,
-			server,
-			newKVPeerStore(s.kv, opts.Cluster.Name),
-			peer{ServerName: opts.ServerName, RouteURL: routeURL},
-			discoveryOptions{
-				reload:   s.setRoutes,
-				interval: s.cfg.DiscoveryInterval,
-				ttl:      s.cfg.DiscoveryTTL,
-				metrics:  s.metrics,
-			},
-		)
+	// Without the route credential yet, running starts discovery once it loads.
+	if s.cfg.DiscoveryEnabled && s.kv != nil && s.routeAuth != nil {
+		s.discovery = s.newPeerDiscovery(server, &opts)
 	}
 	s.mu.Unlock()
 
 	s.metrics.embeddedServerUp.Set(1)
 	s.log.Info("started embedded nats server", "client_url", clientURL, "client_listen", s.cfg.ClientListen,
-		"route_url", routeURL, "cluster_tls", s.cfg.ClusterTLS.Enabled(), "route_auth", s.routeAuth != nil)
+		"route_url", routeURL, "cluster_tls", s.cfg.ClusterTLS.Enabled(), "route_auth", opts.Cluster.Username != "")
 	if s.cfg.ClientListen {
 		s.log.Warn("nats client port is open without TLS or authentication; anyone who can reach it can publish and subscribe on every subject",
 			"client_url", clientURL)
@@ -308,6 +358,21 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *Server) newPeerDiscovery(server *natsserver.Server, opts *natsserver.Options) *discovery {
+	return newDiscovery(
+		s.log,
+		server,
+		newKVPeerStore(s.kv, opts.Cluster.Name),
+		peer{ServerName: opts.ServerName, RouteURL: routeURLForServer(s.cfg, server)},
+		discoveryOptions{
+			reload:   s.setRoutes,
+			interval: s.cfg.DiscoveryInterval,
+			ttl:      s.cfg.DiscoveryTTL,
+			metrics:  s.metrics,
+		},
+	)
 }
 
 // isLoopbackRouteURL reports whether the route URL's host is a loopback address,
@@ -348,38 +413,21 @@ func (s *Server) serverOptions() *natsserver.Options {
 			MaxPingsOut:  routeMaxPingsOut,
 		},
 	}
-	if s.routeAuth != nil {
+	if auth := cmp.Or(s.routeAuth, s.routePlaceholder); auth != nil {
 		// The server checks these on accepted routes and presents them when it
 		// dials a peer it learned through gossip.
-		opts.Cluster.Username = s.routeAuth.Username()
-		opts.Cluster.Password, _ = s.routeAuth.Password()
+		opts.Cluster.Username = auth.Username()
+		opts.Cluster.Password, _ = auth.Password()
 	}
 	return opts
 }
 
-// loadRouteAuth reads or creates the route credential in the discovery
-// registry, retrying while the database is unavailable at startup.
-func (s *Server) loadRouteAuth() (*url.Userinfo, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), routeCredentialRetryTimeout)
+// loadRouteAuth makes one bounded attempt to read or create the route
+// credential in the discovery registry.
+func (s *Server) loadRouteAuth(ctx context.Context) (*url.Userinfo, error) {
+	ctx, cancel := context.WithTimeout(ctx, routeCredentialAttemptTimeout)
 	defer cancel()
-	b := backoff.New(ctx, routeCredentialBackoff)
-	var lastErr error
-	for b.Ongoing() {
-		attemptCtx, cancelAttempt := context.WithTimeout(ctx, routeCredentialAttemptTimeout)
-		creds, err := loadRouteCredentials(attemptCtx, s.kv, discoveryClusterName)
-		cancelAttempt()
-		if err == nil {
-			return creds, nil
-		}
-		lastErr = err
-		if b.NumRetries() == 0 {
-			s.log.Warn("failed to read or create the nats route credential; retrying", "err", err, "timeout", routeCredentialRetryTimeout)
-		} else {
-			s.log.Debug("failed to read or create the nats route credential; retrying", "err", err, "attempt", b.NumRetries()+1)
-		}
-		b.Wait()
-	}
-	return nil, lastErr
+	return loadRouteCredentials(ctx, s.kv, discoveryClusterName)
 }
 
 func dbDriver(sqlStore db.DB) string {

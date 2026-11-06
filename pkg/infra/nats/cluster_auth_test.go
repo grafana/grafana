@@ -10,10 +10,12 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
 
+	"github.com/grafana/dskit/backoff"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
@@ -181,43 +183,61 @@ func TestServerListenAddress(t *testing.T) {
 }
 
 func TestServerRouteCredentialStartup(t *testing.T) {
-	for _, listen := range []string{"", "10.9.0.1"} {
-		t.Run("a store that keeps failing keeps the cluster port on loopback with listen address "+strconv.Quote(listen), func(t *testing.T) {
-			synctest.Test(t, func(t *testing.T) {
-				hook := newLogHook()
-				start := time.Now()
-				s, err := newServer(newEmbeddedTestCfg(listen, "10.9.0.2").NATS, failingKV{}, migrator.Postgres, hook, prometheus.NewRegistry())
-				require.NoError(t, err)
-				require.Equal(t, routeCredentialRetryTimeout, time.Since(start))
+	for listen, want := range map[string]string{"": wildcardListenAddress, "10.9.0.1": "10.9.0.1"} {
+		t.Run("a store failing at startup keeps the address "+strconv.Quote(want)+" behind a placeholder", func(t *testing.T) {
+			hook := newLogHook()
+			s, err := newServer(newEmbeddedTestCfg(listen, "").NATS, failingKV{}, migrator.Postgres, hook, prometheus.NewRegistry())
+			require.NoError(t, err)
 
-				require.Equal(t, loopbackListenAddress, s.opts.Cluster.Host)
-				require.Equal(t, loopbackListenAddress, s.opts.Cluster.Advertise)
-				require.Empty(t, s.opts.Cluster.Username)
-				// Without discovery the instance never registers, so peers never dial it.
-				require.False(t, s.cfg.DiscoveryEnabled)
-				hook.waitForLog(t, "warn: failed to read or create the nats route credential; retrying")
-				hook.waitForLog(t, "error: nats clustering disabled until restart")
-			})
+			require.Equal(t, want, s.opts.Cluster.Host)
+			require.Nil(t, s.routeAuth)
+			require.Equal(t, routeAuthUser, s.opts.Cluster.Username)
+			require.Len(t, s.opts.Cluster.Password, 64)
+			// The port is authenticated by the placeholder, so only the clear
+			// text warning applies.
+			msgs := hook.drain()
+			require.Contains(t, msgs, "warn: nats cluster routes wait for the route credential; clustering starts once it can be read or created")
+			for _, msg := range msgs {
+				require.NotContains(t, msg, "accepts routes from any host")
+			}
 		})
 	}
 
-	t.Run("a store that recovers within the retry window yields the credential and the configured address", func(t *testing.T) {
-		synctest.Test(t, func(t *testing.T) {
-			hook := newLogHook()
-			store := &flakyKV{failures: 3}
-			start := time.Now()
-			s, err := newServer(newEmbeddedTestCfg("10.9.0.1", "").NATS, store, migrator.Postgres, hook, prometheus.NewRegistry())
-			require.NoError(t, err)
-			require.Less(t, time.Since(start), routeCredentialRetryTimeout)
+	t.Run("each process gets its own placeholder", func(t *testing.T) {
+		a, err := newServer(newEmbeddedTestCfg("", "").NATS, failingKV{}, "", log.NewNopLogger(), prometheus.NewRegistry())
+		require.NoError(t, err)
+		b, err := newServer(newEmbeddedTestCfg("", "").NATS, failingKV{}, "", log.NewNopLogger(), prometheus.NewRegistry())
+		require.NoError(t, err)
+		require.NotEqual(t, a.opts.Cluster.Password, b.opts.Cluster.Password)
+	})
 
-			require.Equal(t, 4, store.gets)
-			require.Equal(t, "10.9.0.1", s.opts.Cluster.Host)
-			require.Equal(t, routeAuthUser, s.opts.Cluster.Username)
-			require.Equal(t, string(store.value), s.opts.Cluster.Password)
-			require.True(t, s.cfg.DiscoveryEnabled)
-			for _, msg := range hook.drain() {
-				require.False(t, strings.HasPrefix(msg, "error:"), "logged %q", msg)
-			}
+	t.Run("the background retry loads the credential once the store recovers", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			// The first read fails at construction, three more in the retry.
+			store := &flakyKV{failures: 4}
+			s, err := newServer(newEmbeddedTestCfg("", "").NATS, store, "", log.NewNopLogger(), prometheus.NewRegistry())
+			require.NoError(t, err)
+			require.NotNil(t, s.routePlaceholder)
+
+			creds := s.awaitRouteAuth(t.Context())
+			require.NotNil(t, creds)
+			pass, _ := creds.Password()
+			require.Equal(t, string(store.value), pass)
+			require.Equal(t, 5, store.gets)
+		})
+	})
+
+	t.Run("the background retry stops with the server", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			s, err := newServer(newEmbeddedTestCfg("", "").NATS, failingKV{}, "", log.NewNopLogger(), prometheus.NewRegistry())
+			require.NoError(t, err)
+			ctx, cancel := context.WithCancel(t.Context())
+			done := make(chan *url.Userinfo)
+			go func() { done <- s.awaitRouteAuth(ctx) }()
+
+			synctest.Wait()
+			cancel()
+			require.Nil(t, <-done)
 		})
 	})
 }
@@ -256,6 +276,66 @@ func TestServerClusterRouteAuth(t *testing.T) {
 		hookB.waitForLog(t, "authentication error")
 	})
 
+	t.Run("an instance that starts without the credential joins once the store recovers", func(t *testing.T) {
+		shortenRouteCredentialBackoff(t)
+		store := newSharedTestKV(t)
+		a := startTestAuthServer(t, store, nil)
+		hookB := newLogHook()
+		logsB := &recordingLogger{Logger: hookB}
+		storeB := newDownKV(store)
+		// On macOS a wildcard and a loopback listener can bind the same port, so
+		// a loopback dial to a wildcard listener may reach another test's server.
+		// b binds loopback; TestServerRouteCredentialStartup covers other
+		// addresses behind the placeholder.
+		b, err := newServer(newEmbeddedTestCfg("127.0.0.1", "").NATS, storeB, "", logsB, prometheus.NewRegistry())
+		require.NoError(t, err)
+		startService(t, t.Context(), b)
+
+		require.True(t, b.server.ClusterAddr().IP.IsLoopback(), "cluster port bound to %s", b.server.ClusterAddr())
+		placeholder := clusterPassword(b)
+		stored := storedRouteCredential(t, store)
+		require.NotEqual(t, stored, placeholder)
+		require.Equal(t, []peer{a.discovery.self}, registeredPeers(t, store), "b registered before it has the credential")
+
+		// A peer holding the credential cannot route to b yet.
+		require.NoError(t, a.setRoutes(natsserver.RoutesFromStr(routeURLForServer(b.cfg, b.server))))
+		hookB.waitForLog(t, "authentication error")
+
+		storeB.down.Store(false)
+		hookB.waitForLog(t, "info: nats clustering enabled")
+		requireDelivery(t, a, b)
+		require.Equal(t, stored, clusterPassword(b))
+
+		for _, s := range []*Server{a, b} {
+			u, err := url.Parse(registeredRouteURL(t, s))
+			require.NoError(t, err)
+			require.Nil(t, u.User, "registry row carries credentials")
+		}
+		requireNotStored(t, store, placeholder)
+		logsB.requireNotLogged(t, placeholder)
+		logsB.requireNotLogged(t, stored)
+	})
+
+	t.Run("stopping while waiting for the credential exits cleanly", func(t *testing.T) {
+		shortenRouteCredentialBackoff(t)
+		hook := newLogHook()
+		storeB := newDownKV(newSharedTestKV(t))
+		s, err := newServer(newEmbeddedTestCfg("127.0.0.1", "").NATS, storeB, "", hook, prometheus.NewRegistry())
+		require.NoError(t, err)
+		ctx, cancel := context.WithTimeout(t.Context(), hangGuard)
+		defer cancel()
+		require.NoError(t, s.StartAsync(ctx))
+		require.NoError(t, s.AwaitRunning(ctx))
+		// Two attempts in the background prove the retry runs before the stop.
+		storeB.waitForGets(t, 3)
+
+		s.StopAsync()
+		require.NoError(t, s.AwaitTerminated(ctx))
+		for _, msg := range hook.drain() {
+			require.NotContains(t, msg, "clustering enabled")
+		}
+	})
+
 	t.Run("an instance without credentials is rejected", func(t *testing.T) {
 		hook := newLogHook()
 		a := startTestAuthServer(t, newSharedTestKV(t), hook)
@@ -275,7 +355,9 @@ func TestServerLoggerMasksRoutePassword(t *testing.T) {
 	require.NoError(t, err)
 	pass, _ := creds.Password()
 	hook := newLogHook()
-	l := newServerLogger(hook, creds)
+	secrets := &routeSecrets{}
+	secrets.add(creds)
+	l := newServerLogger(hook, secrets)
 
 	route := &url.URL{Scheme: "nats", Host: "10.9.0.1:6222", User: creds}
 	l.Errorf("Removed route %v", route)
@@ -344,6 +426,78 @@ func (f *flakyKV) Batch(_ context.Context, _ string, ops []kv.BatchOp) error {
 	return nil
 }
 
+// switchableKV fails the route credential calls while down.
+type switchableKV struct {
+	kv.KV
+	down atomic.Bool
+	gets atomic.Int64
+	got  chan struct{}
+}
+
+func newDownKV(store kv.KV) *switchableKV {
+	s := &switchableKV{KV: store, got: make(chan struct{}, 64)}
+	s.down.Store(true)
+	return s
+}
+
+func (s *switchableKV) Get(ctx context.Context, section, key string) (io.ReadCloser, error) {
+	s.gets.Add(1)
+	select {
+	case s.got <- struct{}{}:
+	default:
+	}
+	if s.down.Load() {
+		return nil, errStoreDown
+	}
+	return s.KV.Get(ctx, section, key)
+}
+
+func (s *switchableKV) Batch(ctx context.Context, section string, ops []kv.BatchOp) error {
+	if s.down.Load() {
+		return errStoreDown
+	}
+	return s.KV.Batch(ctx, section, ops)
+}
+
+// waitForGets blocks until the store has served n reads.
+func (s *switchableKV) waitForGets(t *testing.T, n int64) {
+	t.Helper()
+	guard := time.After(hangGuard)
+	for s.gets.Load() < n {
+		select {
+		case <-s.got:
+		case <-guard:
+			t.Fatalf("store served %d reads, want %d", s.gets.Load(), n)
+		}
+	}
+}
+
+func shortenRouteCredentialBackoff(t *testing.T) {
+	saved := routeCredentialBackoff
+	t.Cleanup(func() { routeCredentialBackoff = saved })
+	routeCredentialBackoff = backoff.Config{MinBackoff: 10 * time.Millisecond, MaxBackoff: 50 * time.Millisecond}
+}
+
+// clusterPassword reads the password the cluster port currently requires.
+func clusterPassword(s *Server) string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.opts.Cluster.Password
+}
+
+func requireNotStored(t *testing.T, store kv.KV, value string) {
+	t.Helper()
+	for key, err := range store.Keys(t.Context(), kv.NATSPeersSection, kv.ListOptions{}) {
+		require.NoError(t, err)
+		r, err := store.Get(t.Context(), kv.NATSPeersSection, key)
+		require.NoError(t, err)
+		data, err := io.ReadAll(r)
+		require.NoError(t, err)
+		require.NoError(t, r.Close())
+		require.NotContains(t, string(data), value, "row %q", key)
+	}
+}
+
 // recordingLogger keeps every record with its key/value pairs, so a test can
 // check that a value was never logged anywhere in a record.
 type recordingLogger struct {
@@ -358,14 +512,26 @@ func (l *recordingLogger) record(msg string, ctx []any) {
 	l.records = append(l.records, fmt.Sprint(append([]any{msg}, ctx...)...))
 }
 
-func (l *recordingLogger) Debug(msg string, ctx ...any) { l.record(msg, ctx) }
-func (l *recordingLogger) Info(msg string, ctx ...any)  { l.record(msg, ctx) }
-func (l *recordingLogger) Warn(msg string, ctx ...any)  { l.record(msg, ctx) }
-func (l *recordingLogger) Error(msg string, ctx ...any) { l.record(msg, ctx) }
+func (l *recordingLogger) Debug(msg string, ctx ...any) {
+	l.record(msg, ctx)
+	l.Logger.Debug(msg, ctx...)
+}
+func (l *recordingLogger) Info(msg string, ctx ...any) {
+	l.record(msg, ctx)
+	l.Logger.Info(msg, ctx...)
+}
+func (l *recordingLogger) Warn(msg string, ctx ...any) {
+	l.record(msg, ctx)
+	l.Logger.Warn(msg, ctx...)
+}
+func (l *recordingLogger) Error(msg string, ctx ...any) {
+	l.record(msg, ctx)
+	l.Logger.Error(msg, ctx...)
+}
 
 func (l *recordingLogger) Log(keyvals ...any) error {
 	l.record("", keyvals)
-	return nil
+	return l.Logger.Log(keyvals...)
 }
 
 func (l *recordingLogger) requireNotLogged(t *testing.T, value string) {

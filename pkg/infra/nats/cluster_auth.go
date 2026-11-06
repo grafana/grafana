@@ -50,9 +50,7 @@ func loadRouteCredentials(ctx context.Context, store kv.KV, clusterName string) 
 
 	// Deleting the row and restarting every instance rotates the credential:
 	// the first instance to start creates a new one.
-	var b [32]byte
-	_, _ = rand.Read(b[:])
-	created := hex.EncodeToString(b[:])
+	created := randomRoutePassword()
 	// Create only commits when the key is absent (a primary key in SQL, a
 	// conflict-checked transaction in Badger), so concurrent first startups
 	// commit exactly one value. A losing create fails, for whatever reason the
@@ -68,6 +66,12 @@ func loadRouteCredentials(ctx context.Context, store kv.KV, clusterName string) 
 		return nil, fmt.Errorf("create nats route credential: %w", errors.Join(createErr, err))
 	}
 	return url.UserPassword(routeAuthUser, password), nil
+}
+
+func randomRoutePassword() string {
+	var b [32]byte
+	_, _ = rand.Read(b[:])
+	return hex.EncodeToString(b[:])
 }
 
 func readRouteCredential(ctx context.Context, store kv.KV, key string) (string, error) {
