@@ -57,7 +57,8 @@ The Parca query editor's label selector field supports template variable interpo
 
 Create a custom variable to switch between services in your profiling dashboard.
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Variable**.
 1. Select **Custom** as the variable type.
@@ -69,7 +70,7 @@ Create a custom variable to switch between services in your profiling dashboard.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 In your Parca query's label selector, reference the variable:
 
@@ -96,7 +97,8 @@ In your Parca query's label selector, reference both variables:
 
 Create a text box variable for free-form label filtering.
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Variable**.
 1. Select **Textbox** as the variable type.
@@ -105,7 +107,7 @@ Create a text box variable for free-form label filtering.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 In your Parca query's label selector, reference the variable:
 
