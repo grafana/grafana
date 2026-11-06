@@ -92,3 +92,35 @@ func TestSchedule_resetMetricsOnStop(t *testing.T) {
 		require.NoError(t, err)
 	})
 }
+
+func TestIntervalBucketLabel(t *testing.T) {
+	tests := []struct {
+		seconds  int64
+		expected string
+	}{
+		{1, "<=10s"},
+		{10, "<=10s"},
+		{11, "10s-30s"},
+		{30, "10s-30s"},
+		{31, "30s-1m"},
+		{60, "30s-1m"},
+		{61, "1m-5m"},
+		{300, "1m-5m"},
+		{301, "5m-15m"},
+		{900, "5m-15m"},
+		{901, "15m-30m"},
+		{1800, "15m-30m"},
+		{1801, "30m-1h"},
+		{3600, "30m-1h"},
+		{3601, "1h-6h"},
+		{6 * 3600, "1h-6h"},
+		{6*3600 + 1, "6h-12h"},
+		{12 * 3600, "6h-12h"},
+		{12*3600 + 1, "12h-1d"},
+		{24 * 3600, "12h-1d"},
+		{24*3600 + 1, ">1d"},
+	}
+	for _, tc := range tests {
+		require.Equal(t, tc.expected, intervalBucketLabel(tc.seconds), "interval %ds", tc.seconds)
+	}
+}

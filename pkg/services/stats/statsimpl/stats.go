@@ -94,7 +94,7 @@ func (ss *sqlStatsService) getResourceCounts(ctx context.Context, orgs []*org.Or
 			Namespace: ss.namespacer(org.ID),
 			Kinds:     kinds,
 		})
-		if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
+		if err != nil {
 			return nil, err
 		}
 		for i, s := range resp.Stats {
