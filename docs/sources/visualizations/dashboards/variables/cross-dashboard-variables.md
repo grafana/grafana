@@ -36,7 +36,7 @@ For example, in the preceding image, there are two variables in the "Core metric
 The following image shows a dashboard in the "Core metrics" folder.
 As a result, the variables in the "Core metrics" folder are available to that dashboard, as well as all the global variables:
 
-![Available cross-dashboard variables in dashboard sidebar](/media/docs/grafana/dashboards/screenshot-cross-dash-variables-sidebar-v13.3.png)
+![Available cross-dashboard variables in dashboard sidebar](/media/docs/grafana/dashboards/screenshot-cross-dash-variables-sidebar-v13.3.1.png)
 
 Variables in other folders aren't available to that dashboard.
 
@@ -86,7 +86,7 @@ To add cross-dashboard variables to a dashboard, follow these steps:
 1. Select the **Global or folder variable** variable type.
 1. Select the variables you want to add to the dashboard:
 
-   ![Cross-dashboard variable selected and added above dashboard](/media/docs/grafana/dashboards/screenshot-cross-dash-variable-selected-v13.3.png)
+   ![Cross-dashboard variable selected and added above dashboard](/media/docs/grafana/dashboards/screenshot-cross-dash-variable-selected-v13.3.1.png)
 
    To add every global variable available, select **All global** and to add every folder variable available, select **All folder**.
 

@@ -38,7 +38,7 @@ To create a dashboard from a template, follow these steps:
 
    The dashboard created includes a banner panel indicating the dashboard is using sample data:
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-sample-data-dashboard-v13.0.png" max-width="750px" alt="Dashboard with sample data" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-sample-data-dashboard-v13.3.png" max-width="750px" alt="Dashboard with sample data" >}}
 
 1. Click **Save** in the top-right corner.
 1. (Optional) Enter a new title for the dashboard.
@@ -51,7 +51,7 @@ To create a dashboard from a template, follow these steps:
 1. Make any other edits to the dashboard to most effectively display your data.
 1. When you've made all of your changes, hover the cursor over the top-right corner of the banner panel to open the panel edit menu, and then click **Remove** to remove the panel.
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-remove-banner-v13.0.png" max-width="750px" alt="Removing the sample data banner panel" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-remove-banner-v13.3.png" max-width="750px" alt="Removing the sample data banner panel" >}}
 
 1. Click **Save**.
 1. Enter an optional description of your updates, and click **Save**.

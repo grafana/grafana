@@ -264,7 +264,7 @@ If you have a row with panels, but you want the panels to appear ungrouped, you 
 In view mode, the row header is hidden, so that the panels in that row appear ungrouped.
 In the following image, the panels are grouped into two rows, but the header of the second row is hidden:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-headerless-row-v13.1.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-headerless-row-v13.3.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
 
 When you hide the header of a row, you can't collapse the row.
 
@@ -279,7 +279,7 @@ However, both groupings still share the same time range, and the underlying dash
 
 The following image shows an example using two rows of panels:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-section-variables-v13.1.png" max-width="750px" alt="A dashboard with two rows, each with its own variable filter above the panels" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-section-variables-v13.3.png" max-width="750px" alt="A dashboard with two rows, each with its own variable filter above the panels" >}}
 
 Panels in the grouping resolve section-level variables and filters first, then fall back to dashboard-level variables.
 
