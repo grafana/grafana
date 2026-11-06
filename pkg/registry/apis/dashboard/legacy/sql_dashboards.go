@@ -278,9 +278,9 @@ func newDashboardPager(orgID int64) *legacyPager {
 			return false, fmt.Errorf("dashboard migration paging did not advance past id %d version %d", query.AfterID, query.AfterVersion)
 		}
 		query.AfterID, query.AfterVersion = page.lastID, page.lastVersion
-		if query.UpToID > 0 {
-			p.window = min(page.dashboards+1, migrationPageMaxRows)
-		}
+		// Also after an unbounded page: an org with fewer dashboards than the window would
+		// otherwise never get a bound
+		p.window = min(page.dashboards+1, migrationPageMaxRows)
 		return true, nil
 	}
 	return p

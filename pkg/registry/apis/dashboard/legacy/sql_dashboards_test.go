@@ -954,6 +954,17 @@ func TestDashboardPagerAdvance(t *testing.T) {
 		require.Equal(t, 26, p.window)
 	})
 
+	t.Run("a full unbounded page fits the window so the next page gets a bound", func(t *testing.T) {
+		p := newDashboardPager(1)
+		// Fewer dashboards remain than the window, so the lookup found no bound
+		p.query.UpToID = 0
+		more, err := p.advance(&migrationPage{scanned: 500, dashboards: 25, lastID: 25, lastVersion: 20}, 500)
+		require.NoError(t, err)
+		require.True(t, more)
+		require.Equal(t, int64(25), p.query.AfterID)
+		require.Equal(t, 26, p.window)
+	})
+
 	t.Run("an unbounded page with fewer rows than the limit is the last one", func(t *testing.T) {
 		p := newDashboardPager(1)
 		more, err := p.advance(&migrationPage{scanned: 3, dashboards: 1, lastID: 9, lastVersion: 3}, 500)
