@@ -621,6 +621,25 @@ func TestNatsNotifierRaisesFloorsBeforeExpiringWatches(t *testing.T) {
 	})
 }
 
+// A first subscription that succeeds only on a retry reports a gap before
+// capture. The floors read after capture already cover it, so no resume is
+// held.
+func TestNatsNotifierRetriedStartHoldsNoResumes(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		nt := newNatsNotifierTest(t)
+		nt.bus.failSubscribe = 1
+
+		floors := &floorRecorder{}
+		var heldAtCapture bool
+		_, _, err := nt.notifier.watchWithFloors(t.Context(), floors, func() { heldAtCapture = floors.isHeld() })
+		require.NoError(t, err)
+		synctest.Wait()
+		require.Equal(t, 1, nt.invalidator.invalidations(), "the retried subscription reported a gap")
+		require.False(t, heldAtCapture)
+		require.False(t, floors.isHeld())
+	})
+}
+
 // A start that fails after the bus reported a gap, here the first capture once
 // a retried subscription succeeds, must not leave every resume held.
 func TestNatsNotifierFailedStartReleasesItsHold(t *testing.T) {

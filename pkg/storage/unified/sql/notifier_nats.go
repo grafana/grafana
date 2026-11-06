@@ -112,10 +112,13 @@ func (n *natsNotifier) watchWithFloors(ctx context.Context, floors resource.Resu
 			floors.Raise(resource.GroupResource{Group: v.Group, Resource: v.Resource}, v.ResourceVersion)
 		}
 		n.expireWatches(e, nil)
-	}, captured)
+	}, func() {
+		gaps.capture()
+		captured()
+	})
 	if err != nil {
-		// The bus can report a gap before the start fails, for example once a
-		// retried subscription succeeds; its hold must not outlive this start.
+		// The bus can report a gap before the start fails, for example a
+		// reconnect after capture; its hold must not outlive this start.
 		gaps.abandon()
 		return nil, nil, err
 	}
@@ -137,13 +140,22 @@ type unknownGaps struct {
 	signal chan struct{}
 
 	mu        sync.Mutex
+	captured  bool
 	reported  int64
 	abandoned bool
 }
 
+// capture starts counting gaps. Earlier ones, such as the one a retried first
+// subscription reports, are covered by the floors read after capture.
+func (g *unknownGaps) capture() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.captured = true
+}
+
 func (g *unknownGaps) report() {
 	g.mu.Lock()
-	if g.abandoned {
+	if !g.captured || g.abandoned {
 		g.mu.Unlock()
 		return
 	}
