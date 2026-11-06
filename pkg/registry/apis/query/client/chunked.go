@@ -2,9 +2,9 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -65,40 +65,53 @@ func (c *chunkedQueryCollector) OnChunk(chunk *pluginv2.QueryChunkedDataResponse
 		response.Status = backend.StatusOK
 	}
 	if len(chunk.Frame) > 0 {
-		if chunk.Format != pluginv2.DataFrameFormat_ARROW {
-			return fmt.Errorf("expected Arrow chunked query frame, got %v", chunk.Format)
-		}
-		frame, err := data.UnmarshalArrowFrame(chunk.Frame)
-		if err != nil {
-			return fmt.Errorf("decoding chunked query frame: %w", err)
-		}
-		if frame.RefID == "" {
-			frame.RefID = chunk.RefId
+		if chunk.Format != pluginv2.DataFrameFormat_JSON {
+			return fmt.Errorf("expected JSON chunked query frame, got %v", chunk.Format)
 		}
 		if c.frames[chunk.RefId] == nil {
 			c.frames[chunk.RefId] = map[string]*data.Frame{}
 		}
 		previous := c.frames[chunk.RefId][chunk.FrameId]
 		if chunk.FrameId != "" && previous != nil {
-			if len(previous.Fields) != len(frame.Fields) {
+			var payload struct {
+				Data *struct {
+					Values []json.RawMessage `json:"values"`
+				} `json:"data"`
+			}
+			if err := json.Unmarshal(chunk.Frame, &payload); err != nil {
+				return fmt.Errorf("decoding chunked query frame: %w", err)
+			}
+			if payload.Data == nil || len(payload.Data.Values) != len(previous.Fields) {
 				return errors.New("chunked query frame field count changed")
 			}
-			for i, field := range frame.Fields {
-				existing := previous.Fields[i]
-				if existing.Type() != field.Type() || existing.Name != field.Name || !maps.Equal(existing.Labels, field.Labels) {
-					return errors.New("chunked query frame schema changed")
-				}
-			}
-			for i, field := range frame.Fields {
-				previous.Fields[i].AppendAll(field)
+			if err := data.AppendJSONData(previous, chunk.Frame); err != nil {
+				return fmt.Errorf("appending chunked query frame: %w", err)
 			}
 		} else {
+			var envelope struct {
+				Schema json.RawMessage `json:"schema"`
+				Data   json.RawMessage `json:"data"`
+			}
+			if err := json.Unmarshal(chunk.Frame, &envelope); err != nil {
+				return fmt.Errorf("decoding chunked query frame: %w", err)
+			}
+			if len(envelope.Schema) == 0 || string(envelope.Schema) == "null" || len(envelope.Data) == 0 || string(envelope.Data) == "null" {
+				return errors.New("first chunked query frame requires schema and data")
+			}
+			frame := &data.Frame{}
+			if err := json.Unmarshal(chunk.Frame, frame); err != nil {
+				return fmt.Errorf("decoding chunked query frame: %w", err)
+			}
+			if frame.RefID == "" {
+				frame.RefID = chunk.RefId
+			}
 			response.Frames = append(response.Frames, frame)
 			if chunk.FrameId != "" {
 				c.frames[chunk.RefId][chunk.FrameId] = frame
 			}
 		}
 	}
+
 	if chunk.Status != 0 {
 		response.Status = backend.Status(chunk.Status)
 	}
@@ -119,11 +132,15 @@ func (c *chunkedQueryCollector) WriteFrame(_ context.Context, refID, frameID str
 	if frame == nil {
 		return errors.New("chunked query frame is nil")
 	}
-	encoded, err := frame.MarshalArrow()
+	include := data.IncludeAll
+	if frameID != "" && c.frames[refID][frameID] != nil {
+		include = data.IncludeDataOnly
+	}
+	encoded, err := data.FrameToJSON(frame, include)
 	if err != nil {
 		return err
 	}
-	return c.OnChunk(&pluginv2.QueryChunkedDataResponse{RefId: refID, FrameId: frameID, Frame: encoded, Format: pluginv2.DataFrameFormat_ARROW, Status: 200})
+	return c.OnChunk(&pluginv2.QueryChunkedDataResponse{RefId: refID, FrameId: frameID, Frame: encoded, Format: pluginv2.DataFrameFormat_JSON, Status: 200})
 }
 
 func (c *chunkedQueryCollector) WriteError(_ context.Context, refID string, status backend.Status, err error) error {

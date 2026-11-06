@@ -165,7 +165,7 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 			PluginContext: qdr.PluginContext,
 			Queries:       qdr.Queries,
 			Headers:       qdr.Headers,
-			Format:        backend.DataFrameFormat_ARROW,
+			Format:        backend.DataFrameFormat_JSON,
 		}, collector); err != nil {
 			return nil, err
 		}

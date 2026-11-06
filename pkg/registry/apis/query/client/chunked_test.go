@@ -117,7 +117,7 @@ func TestPluginClientChunkedSelection(t *testing.T) {
 					require.Equal(t, tc.dsType, req.PluginContext.PluginID)
 					require.EqualValues(t, 42, req.PluginContext.OrgID)
 					require.Equal(t, "one", req.PluginContext.DataSourceInstanceSettings.UID)
-					require.Equal(t, backend.DataFrameFormat_ARROW, req.Format)
+					require.Equal(t, backend.DataFrameFormat_JSON, req.Format)
 					require.Len(t, req.Queries, 2)
 					require.Contains(t, string(req.Queries[0].JSON), `"test":"value"`)
 					return nil
@@ -271,14 +271,15 @@ func TestChunkedQueryCollectorErrors(t *testing.T) {
 	}{
 		{"nil event", nil},
 		{"missing ref", &pluginv2.QueryChunkedDataResponse{}},
-		{"invalid arrow", &pluginv2.QueryChunkedDataResponse{RefId: "A", Frame: []byte("invalid"), Format: pluginv2.DataFrameFormat_ARROW}},
-		{"unexpected format", &pluginv2.QueryChunkedDataResponse{RefId: "A", Frame: []byte("{}"), Format: pluginv2.DataFrameFormat_JSON}},
+		{"invalid JSON", &pluginv2.QueryChunkedDataResponse{RefId: "A", Frame: []byte("invalid"), Format: pluginv2.DataFrameFormat_JSON}},
+		{"unexpected format", &pluginv2.QueryChunkedDataResponse{RefId: "A", Frame: []byte("{}"), Format: pluginv2.DataFrameFormat_ARROW}},
+		{"missing initial schema", &pluginv2.QueryChunkedDataResponse{RefId: "A", FrameId: "0", Frame: []byte(`{"data":{"values":[[1]]}}`), Format: pluginv2.DataFrameFormat_JSON}},
 	} {
 		t.Run(tc.name, func(t *testing.T) { require.Error(t, newChunkedQueryCollector().OnChunk(tc.chunk)) })
 	}
 	collector := newChunkedQueryCollector()
 	require.NoError(t, collector.WriteFrame(context.Background(), "A", "0", data.NewFrame("result", data.NewField("value", nil, []int64{1}))))
-	require.ErrorContains(t, collector.WriteFrame(context.Background(), "A", "0", data.NewFrame("result", data.NewField("value", nil, []string{"changed"}))), "schema changed")
+	require.ErrorContains(t, collector.WriteFrame(context.Background(), "A", "0", data.NewFrame("result", data.NewField("value", nil, []string{"changed"}))), "appending chunked query frame")
 	require.ErrorContains(t, collector.WriteFrame(context.Background(), "A", "0", data.NewFrame("result")), "field count changed")
 }
 
@@ -296,7 +297,10 @@ type streamingDataServer struct {
 	streamErr error
 }
 
-func (s *streamingDataServer) QueryChunkedData(_ *pluginv2.QueryChunkedDataRequest, stream grpc.ServerStreamingServer[pluginv2.QueryChunkedDataResponse]) error {
+func (s *streamingDataServer) QueryChunkedData(req *pluginv2.QueryChunkedDataRequest, stream grpc.ServerStreamingServer[pluginv2.QueryChunkedDataResponse]) error {
+	if req.Format != pluginv2.DataFrameFormat_JSON {
+		return status.Error(codes.InvalidArgument, "expected JSON request")
+	}
 	for _, chunk := range s.chunks {
 		if err := stream.Send(chunk); err != nil {
 			return err
@@ -306,20 +310,22 @@ func (s *streamingDataServer) QueryChunkedData(_ *pluginv2.QueryChunkedDataReque
 }
 
 func TestPluginClientChunkedGRPC(t *testing.T) {
-	for _, fails := range []bool{false, true} {
-		name := "complete"
-		if fails {
-			name = "interrupted"
-		}
+	for _, name := range []string{"complete", "interrupted", "arrow"} {
 		t.Run(name, func(t *testing.T) {
 			setChunkedTypes(t, map[string]any{"types": []any{"test"}})
-			frameBytes, err := data.NewFrame("result", data.NewField("value", nil, []int64{42})).MarshalArrow()
+			frameBytes, err := data.NewFrame("result", data.NewField("value", nil, []int64{42})).MarshalJSON()
 			require.NoError(t, err)
+			format := pluginv2.DataFrameFormat_JSON
+			if name == "arrow" {
+				frameBytes, err = data.NewFrame("result", data.NewField("value", nil, []int64{42})).MarshalArrow()
+				require.NoError(t, err)
+				format = pluginv2.DataFrameFormat_ARROW
+			}
 			dataServer := &streamingDataServer{chunks: []*pluginv2.QueryChunkedDataResponse{
-				{RefId: "A", FrameId: "0", Format: pluginv2.DataFrameFormat_ARROW, Frame: frameBytes, Status: 200},
+				{RefId: "A", FrameId: "0", Format: format, Frame: frameBytes, Status: 200},
 				{RefId: "B", Status: 403, Error: "denied", ErrorSource: "downstream"},
 			}}
-			if fails {
+			if name == "interrupted" {
 				dataServer.streamErr = status.Error(codes.Unavailable, "plugin stopped")
 			}
 			listener := bufconn.Listen(1024 * 1024)
@@ -335,9 +341,14 @@ func TestPluginClientChunkedGRPC(t *testing.T) {
 				streaming: grpcClient.QueryChunkedData,
 			}}
 			response, err := client.QueryData(requesterContext(), testRequest(t))
-			if fails {
+			if name == "interrupted" {
 				require.Nil(t, response)
 				require.Equal(t, codes.Unavailable, status.Code(err))
+				return
+			}
+			if name == "arrow" {
+				require.ErrorContains(t, err, "expected JSON chunked query frame")
+				require.Nil(t, response)
 				return
 			}
 			require.NoError(t, err)
@@ -347,4 +358,28 @@ func TestPluginClientChunkedGRPC(t *testing.T) {
 			require.EqualError(t, response.Responses["B"].Error, "denied")
 		})
 	}
+}
+
+func TestPluginClientChunkedRejectsArrow(t *testing.T) {
+	setChunkedTypes(t, map[string]any{"types": []any{"test"}})
+	frameBytes, err := data.NewFrame("result", data.NewField("value", nil, []int64{42})).MarshalArrow()
+	require.NoError(t, err)
+	calls := 0
+	client := pluginClient{ac: &testAccessControl{allowed: true}, pCtxProvider: &testPluginContext{datasourceType: "test"}, pluginClient: testPluginClient{
+		unary: func(context.Context, *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+			t.Fatal("unexpected unary fallback")
+			return nil, nil
+		},
+		streaming: func(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+			calls++
+			require.Equal(t, backend.DataFrameFormat_JSON, req.Format)
+			writer := backend.NewChunkedDataWriter(req.Format, w.(chunked.RawChunkReceiver).OnChunk)
+			require.NoError(t, writer.WriteFrame(ctx, "A", "0", data.NewFrame("result", data.NewField("value", nil, []int64{1}))))
+			return w.(chunked.RawChunkReceiver).OnChunk(&pluginv2.QueryChunkedDataResponse{RefId: "A", FrameId: "0", Frame: frameBytes, Format: pluginv2.DataFrameFormat_ARROW})
+		},
+	}}
+	response, err := client.QueryData(requesterContext(), testRequest(t))
+	require.ErrorContains(t, err, "expected JSON chunked query frame")
+	require.Nil(t, response)
+	require.Equal(t, 1, calls)
 }
