@@ -4338,6 +4338,7 @@
         "name": "kubernetesFolderCountsLegacyStorage",
         "resourceVersion": "1793306194106",
         "creationTimestamp": "2026-09-11T15:39:49Z",
+        "deletionTimestamp": "2026-11-06T19:12:02Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-10-29 20:36:34.106495 +0000 UTC"
         }
