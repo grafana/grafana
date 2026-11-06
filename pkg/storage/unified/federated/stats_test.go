@@ -422,3 +422,27 @@ func TestIntegrationLegacyStatsRecordMetrics(t *testing.T) {
 		})
 	}
 }
+
+func TestIntegrationLegacyStatsRecordsFailedStalenessCheck(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	ctx := request.WithNamespace(context.Background(), "default")
+	helper, err := legacysql.NewDatabaseProvider(testDB)(ctx)
+	require.NoError(t, err)
+	// With no Cfg the staleness check reads kv_store, so removing it makes that check fail.
+	require.NoError(t, testDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Exec("DROP TABLE " + helper.Table("kv_store"))
+		return err
+	}))
+	reg := prometheus.NewRegistry()
+	store := &LegacyStatsGetter{SQL: legacysql.NewDatabaseProvider(testDB), metrics: newLegacyStatsMetrics(reg)}
+
+	_, err = store.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: []string{"f1"}})
+
+	var countErr *CountError
+	require.ErrorAs(t, err, &countErr)
+	require.Equal(t, []string{legacyAlertRules}, countErr.Resources)
+	require.Equal(t, uint64(1), observations(t, reg, legacyAlertRules, legacyOutcomeError))
+	require.Equal(t, uint64(0), observations(t, reg, legacyRecordingRules, legacyOutcomeError), "the first failure ends the request")
+}

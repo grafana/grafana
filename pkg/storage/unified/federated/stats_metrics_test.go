@@ -140,3 +140,36 @@ grafana_folder_counts_legacy_skipped_total{reason="namespace_deleted",resource="
 grafana_folder_counts_legacy_skipped_total{reason="namespace_deleted",resource="recordingrules"} 1
 `), "grafana_folder_counts_legacy_skipped_total"))
 }
+
+func TestFederatedGetStatsRecordsLegacyAccessFailures(t *testing.T) {
+	tests := []struct {
+		name     string
+		provider legacysql.LegacyDatabaseProvider
+		want     string
+	}{
+		{name: "no legacy source", provider: nil, want: legacyOutcomeError},
+		{name: "provider failure", provider: func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+			return nil, errors.New("connect: refused")
+		}, want: legacyOutcomeError},
+		{name: "caller went away during the lookup", provider: func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+			return nil, fmt.Errorf("lookup stack: %w", context.Canceled)
+		}, want: legacyOutcomeCanceled},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reg := prometheus.NewRegistry()
+			base := resource.NewMockResourceClient(t)
+			in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}
+			base.On("GetStats", mock.Anything, in).Return(&resourcepb.ResourceStatsResponse{}, nil).Once()
+			client := NewFederatedClient(base, tt.provider, nil, WithMetrics(reg))
+
+			_, err := client.GetStats(t.Context(), in)
+			require.Error(t, err)
+
+			for _, name := range legacyResources {
+				require.Equal(t, uint64(1), observations(t, reg, name, tt.want), name)
+				require.Equal(t, uint64(0), observations(t, reg, name, legacyOutcomeOK), name)
+			}
+		})
+	}
+}

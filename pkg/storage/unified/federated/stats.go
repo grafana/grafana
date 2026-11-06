@@ -103,6 +103,7 @@ func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper 
 
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	if s.SQL == nil {
+		s.metrics.observeAll(time.Now(), ErrLegacyStatsUnavailable)
 		return nil, &CountError{Resources: LegacyCountedResources, Err: ErrLegacyStatsUnavailable}
 	}
 	info, err := claims.ParseNamespace(in.Namespace)
@@ -113,6 +114,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		return nil, fmt.Errorf("invalid OrgID found in namespace")
 	}
 
+	lookupStart := time.Now()
 	helper, err := s.SQL(ctx)
 	if errors.Is(err, legacysql.ErrNamespaceDeleted) {
 		// The stack was deleted or migrated away and its namespace is being torn down. Fall back
@@ -126,6 +128,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		return &resourcepb.ResourceStatsResponse{}, nil
 	}
 	if err != nil {
+		s.metrics.observeAll(lookupStart, err)
 		return nil, &CountError{Resources: LegacyCountedResources, Err: err}
 	}
 
@@ -175,6 +178,17 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// Indicate that this came from the SQL tables
 		group := "sql-fallback"
 
+		// A failed staleness check is a legacy database failure too, so it is recorded as an error.
+		isStale := func(configKey, name string) (bool, error) {
+			start := time.Now()
+			stale, err := s.legacyTableIsStale(sess, helper, configKey)
+			if err != nil {
+				s.metrics.observe(name, start, err)
+				return false, &CountError{Resources: []string{name}, Err: err}
+			}
+			return stale, nil
+		}
+
 		// Legacy alert rule table. Alert rules and recording rules share this table and are
 		// told apart by the `record` column, so count them separately — reporting the whole
 		// table as "alertrules" makes callers that read both kinds count recording rules
@@ -185,9 +199,9 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// NULL has to count as "not a recording rule". Comparing NULL with = or != yields
 		// NULL rather than true, which would drop those rows from both counts and let a
 		// folder that still holds alert rules look empty.
-		alertRulesStale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+		alertRulesStale, err := isStale(alertRuleResource, legacyAlertRules)
 		if err != nil {
-			return &CountError{Resources: []string{legacyAlertRules}, Err: err}
+			return err
 		}
 		if alertRulesStale {
 			s.metrics.skip(legacyAlertRules, legacySkipMigrated)
@@ -198,9 +212,9 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 			}
 		}
 
-		recordingRulesStale, err := s.legacyTableIsStale(sess, helper, recordingRuleResource)
+		recordingRulesStale, err := isStale(recordingRuleResource, legacyRecordingRules)
 		if err != nil {
-			return &CountError{Resources: []string{legacyRecordingRules}, Err: err}
+			return err
 		}
 		if recordingRulesStale {
 			s.metrics.skip(legacyRecordingRules, legacySkipMigrated)
@@ -212,9 +226,9 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		}
 
 		// Legacy library_elements table
-		libraryPanelsStale, err := s.legacyTableIsStale(sess, helper, libraryPanelResource)
+		libraryPanelsStale, err := isStale(libraryPanelResource, legacyLibraryElements)
 		if err != nil {
-			return &CountError{Resources: []string{legacyLibraryElements}, Err: err}
+			return err
 		}
 		if libraryPanelsStale {
 			s.metrics.skip(legacyLibraryElements, legacySkipMigrated)

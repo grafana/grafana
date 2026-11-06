@@ -41,7 +41,7 @@ func newLegacyStatsMetrics(reg prometheus.Registerer) *legacyStatsMetrics {
 	m := &legacyStatsMetrics{
 		duration: f.NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "grafana_folder_counts_legacy_query_duration_seconds",
-			Help:                            "Duration of the legacy database count queries behind folder counts, by resource and outcome",
+			Help:                            "Duration of legacy database access for folder counts, by resource and outcome. One observation per COUNT query, so a request spanning many folders records several; failed staleness checks and database lookups are recorded as errors",
 			Buckets:                         []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
@@ -84,4 +84,12 @@ func (m *legacyStatsMetrics) skip(resource, reason string) {
 		return
 	}
 	m.skipped.WithLabelValues(resource, reason).Inc()
+}
+
+// observeAll records one outcome for every resource, for failures that happen before any of them
+// is counted.
+func (m *legacyStatsMetrics) observeAll(start time.Time, err error) {
+	for _, resource := range legacyResources {
+		m.observe(resource, start, err)
+	}
 }
