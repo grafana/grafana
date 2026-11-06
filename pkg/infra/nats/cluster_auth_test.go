@@ -1,14 +1,18 @@
 package nats
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
+	"testing/synctest"
+	"time"
 
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
@@ -157,15 +161,6 @@ func TestServerListenAddress(t *testing.T) {
 		require.Equal(t, routeAuthUser, s.opts.Cluster.Username)
 	})
 
-	t.Run("a store failure falls back to loopback with a warning", func(t *testing.T) {
-		hook := newLogHook()
-		s, err := newServer(newEmbeddedTestCfg("", "").NATS, failingKV{}, migrator.Postgres, hook, prometheus.NewRegistry())
-		require.NoError(t, err)
-		require.Equal(t, loopbackListenAddress, s.opts.Cluster.Host)
-		require.Empty(t, s.opts.Cluster.Username)
-		hook.waitForLog(t, "warn: nats cluster routes are unauthenticated: failed to read or create the route credential")
-	})
-
 	t.Run("an explicit listen address is used as is", func(t *testing.T) {
 		s := newKVTestServer(t, newEmbeddedTestCfg("10.9.0.1", ""), newSharedTestKV(t))
 		require.Equal(t, "10.9.0.1", s.opts.Cluster.Host)
@@ -182,6 +177,48 @@ func TestServerListenAddress(t *testing.T) {
 		cfg.NATS.DiscoveryEnabled = false
 		noDiscovery := newKVTestServer(t, cfg, newSharedTestKV(t))
 		require.Empty(t, noDiscovery.opts.Cluster.Username)
+	})
+}
+
+func TestServerRouteCredentialStartup(t *testing.T) {
+	for _, listen := range []string{"", "10.9.0.1"} {
+		t.Run("a store that keeps failing keeps the cluster port on loopback with listen address "+strconv.Quote(listen), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				hook := newLogHook()
+				start := time.Now()
+				s, err := newServer(newEmbeddedTestCfg(listen, "10.9.0.2").NATS, failingKV{}, migrator.Postgres, hook, prometheus.NewRegistry())
+				require.NoError(t, err)
+				require.Equal(t, routeCredentialRetryTimeout, time.Since(start))
+
+				require.Equal(t, loopbackListenAddress, s.opts.Cluster.Host)
+				require.Equal(t, loopbackListenAddress, s.opts.Cluster.Advertise)
+				require.Empty(t, s.opts.Cluster.Username)
+				// Without discovery the instance never registers, so peers never dial it.
+				require.False(t, s.cfg.DiscoveryEnabled)
+				hook.waitForLog(t, "warn: failed to read or create the nats route credential; retrying")
+				hook.waitForLog(t, "error: nats clustering disabled until restart")
+			})
+		})
+	}
+
+	t.Run("a store that recovers within the retry window yields the credential and the configured address", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			hook := newLogHook()
+			store := &flakyKV{failures: 3}
+			start := time.Now()
+			s, err := newServer(newEmbeddedTestCfg("10.9.0.1", "").NATS, store, migrator.Postgres, hook, prometheus.NewRegistry())
+			require.NoError(t, err)
+			require.Less(t, time.Since(start), routeCredentialRetryTimeout)
+
+			require.Equal(t, 4, store.gets)
+			require.Equal(t, "10.9.0.1", s.opts.Cluster.Host)
+			require.Equal(t, routeAuthUser, s.opts.Cluster.Username)
+			require.Equal(t, string(store.value), s.opts.Cluster.Password)
+			require.True(t, s.cfg.DiscoveryEnabled)
+			for _, msg := range hook.drain() {
+				require.False(t, strings.HasPrefix(msg, "error:"), "logged %q", msg)
+			}
+		})
 	})
 }
 
@@ -281,6 +318,30 @@ func (failingKV) Get(context.Context, string, string) (io.ReadCloser, error) {
 
 func (failingKV) Batch(context.Context, string, []kv.BatchOp) error {
 	return errStoreDown
+}
+
+// flakyKV keeps the route credential in memory and fails its first reads.
+type flakyKV struct {
+	kv.KV
+	failures int
+	gets     int
+	value    []byte
+}
+
+func (f *flakyKV) Get(context.Context, string, string) (io.ReadCloser, error) {
+	f.gets++
+	if f.gets <= f.failures {
+		return nil, errStoreDown
+	}
+	if f.value == nil {
+		return nil, kv.ErrNotFound
+	}
+	return io.NopCloser(bytes.NewReader(f.value)), nil
+}
+
+func (f *flakyKV) Batch(_ context.Context, _ string, ops []kv.BatchOp) error {
+	f.value = ops[0].Value
+	return nil
 }
 
 // recordingLogger keeps every record with its key/value pairs, so a test can

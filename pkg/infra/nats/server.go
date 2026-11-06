@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/services"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	natsclient "github.com/nats-io/nats.go"
@@ -30,8 +31,14 @@ const (
 	routePingInterval = 5 * time.Second
 	routeMaxPingsOut  = 2
 
-	routeCredentialTimeout = 10 * time.Second
+	// Startup waits up to routeCredentialRetryTimeout for the database to hand
+	// out the route credential, each attempt bounded by
+	// routeCredentialAttemptTimeout.
+	routeCredentialRetryTimeout   = 30 * time.Second
+	routeCredentialAttemptTimeout = 10 * time.Second
 )
+
+var routeCredentialBackoff = backoff.Config{MinBackoff: 500 * time.Millisecond, MaxBackoff: 5 * time.Second}
 
 var (
 	ErrDisabled = errors.New("nats is disabled")
@@ -91,7 +98,21 @@ func newServer(cfg setting.NATSSettings, store kv.KV, dbDriver string, logger lo
 	if !s.IsDisabled() {
 		s.metrics = newServerMetrics(reg)
 
-		s.routeAuth = s.loadRouteAuth()
+		if s.kv != nil && s.cfg.DiscoveryEnabled {
+			creds, err := s.loadRouteAuth()
+			if err != nil {
+				// Peers that hold the credential reject this instance anyway, so
+				// keep the cluster port off the network and out of the registry
+				// rather than accept unauthenticated routes on it.
+				s.log.Error("nats clustering disabled until restart: the route credential could not be read or created, "+
+					"so the cluster port stays on loopback and this instance does not register as a peer",
+					"err", err, "listen_address", loopbackListenAddress)
+				s.cfg.ListenAddress = loopbackListenAddress
+				s.cfg.AdvertiseAddress = ""
+				s.cfg.DiscoveryEnabled = false
+			}
+			s.routeAuth = creds
+		}
 		if s.cfg.ListenAddress == "" {
 			s.cfg.ListenAddress = autoListenAddress(s.log, s.cfg, dbDriver, s.routeAuth != nil)
 		}
@@ -337,21 +358,28 @@ func (s *Server) serverOptions() *natsserver.Options {
 }
 
 // loadRouteAuth reads or creates the route credential in the discovery
-// registry. Routes only authenticate when discovery runs on a shared store; a
-// store failure leaves them unauthenticated, which keeps an automatic bind on
-// loopback, rather than failing Grafana startup.
-func (s *Server) loadRouteAuth() *url.Userinfo {
-	if s.kv == nil || !s.cfg.DiscoveryEnabled {
-		return nil
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), routeCredentialTimeout)
+// registry, retrying while the database is unavailable at startup.
+func (s *Server) loadRouteAuth() (*url.Userinfo, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), routeCredentialRetryTimeout)
 	defer cancel()
-	creds, err := loadRouteCredentials(ctx, s.kv, discoveryClusterName)
-	if err != nil {
-		s.log.Warn("nats cluster routes are unauthenticated: failed to read or create the route credential in the database", "err", err)
-		return nil
+	b := backoff.New(ctx, routeCredentialBackoff)
+	var lastErr error
+	for b.Ongoing() {
+		attemptCtx, cancelAttempt := context.WithTimeout(ctx, routeCredentialAttemptTimeout)
+		creds, err := loadRouteCredentials(attemptCtx, s.kv, discoveryClusterName)
+		cancelAttempt()
+		if err == nil {
+			return creds, nil
+		}
+		lastErr = err
+		if b.NumRetries() == 0 {
+			s.log.Warn("failed to read or create the nats route credential; retrying", "err", err, "timeout", routeCredentialRetryTimeout)
+		} else {
+			s.log.Debug("failed to read or create the nats route credential; retrying", "err", err, "attempt", b.NumRetries()+1)
+		}
+		b.Wait()
 	}
-	return creds
+	return nil, lastErr
 }
 
 func dbDriver(sqlStore db.DB) string {
