@@ -72,6 +72,10 @@ After configuring the data source, you can:
 - [Build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/) to visualize your InfluxDB data.
 - Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) rules based on your InfluxDB query results.
 
+To see the InfluxDB data source in action, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="InfluxDB 3.0: Hourly Electric Grid Monitor for US" url="https://play.grafana.org/d/f9a5b2d1-0227-4341-93fd-113fedba6481/" >}}
+
 ## Plugin updates
 
 Starting with Grafana v13.2, the InfluxDB data source is a standalone plugin, preinstalled in both Grafana OSS and Enterprise. This enables more frequent updates independent of Grafana releases. Grafana automatically checks the plugin catalog and installs the latest version on each server restart.

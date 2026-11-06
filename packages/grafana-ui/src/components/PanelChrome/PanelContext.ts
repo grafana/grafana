@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from 'react';
+import { createContext, useContext } from 'react';
 
 import {
   type AnnotationEventUIModel,
@@ -9,6 +9,7 @@ import {
   type DataTransformerConfig,
   type EventBus,
   EventBusSrv,
+  type PanelNotices,
 } from '@grafana/data';
 
 import { type AdHocFilterItem } from '../Table/types';
@@ -41,9 +42,26 @@ export interface AdHocTransformationsState {
 
 /** @alpha */
 export interface PanelContext {
+  /** Panel-owned notices. Absent on hosts without notice support. @alpha */
+  notices?: PanelNotices;
+  /** Connects host data for the lifetime of a panel status surface. @internal */
+  activateNotices?: () => () => void;
   /** Identifier for the events scope */
   eventsScope: string;
   eventBus: EventBus;
+
+  /**
+   * Experimental one-shot exemplar selection. The caller retains the request until the panel
+   * acknowledges it, so panel remounts cannot replay a handled navigation request.
+   * Frame indexes refer to the supplied annotation frames, including field overrides.
+   * `onHandled` may be called more than once for the same request and should be idempotent.
+   *
+   * @alpha -- experimental
+   */
+  openExemplar?: {
+    getRequest: (exemplars: DataFrame[]) => { requestId: string; frameIndex: number; rowIndex: number } | undefined;
+    onHandled: (requestId: string) => void;
+  };
 
   /** Dashboard panels sync */
   sync?: () => DashboardCursorSync;
@@ -142,29 +160,3 @@ export const PanelContextProvider = PanelContextRoot.Provider;
  * @alpha
  */
 export const usePanelContext = () => useContext(PanelContextRoot);
-
-/**
- * Returns the selected owner's transformations and re-renders when the panel host changes them.
- * Returns `undefined` when the panel host does not support ad-hoc transformations.
- *
- * @alpha
- */
-export function useAdHocTransformations(owner: string): AdHocTransformationsState | undefined {
-  const api = usePanelContext().adHocTransformations;
-  const subscribe = useCallback(
-    (onChange: () => void) => (api ? api.subscribe(owner, onChange) : () => {}),
-    [api, owner]
-  );
-  const getSnapshot = useCallback(() => api?.get(owner), [api, owner]);
-  const transformations = useSyncExternalStore(subscribe, getSnapshot);
-  const sourceSeries = api?.getSourceSeries(owner);
-  const setTransformations = useCallback(
-    (nextTransformations: readonly DataTransformerConfig[]) => api?.set(owner, nextTransformations),
-    [api, owner]
-  );
-
-  return useMemo(
-    () => (transformations && sourceSeries ? { transformations, sourceSeries, setTransformations } : undefined),
-    [transformations, sourceSeries, setTransformations]
-  );
-}

@@ -60,8 +60,8 @@ func TestGetConnectionsPagination(t *testing.T) {
 		return result
 	}
 
-	// the max-limit is a high number (1000), so we need an array that is longer than that
-	items2500 := make([]queryV1.DataSourceConnection, 3000)
+	// the max-limit is a high number (5000), so we need an array that is longer than that
+	items2500 := make([]queryV1.DataSourceConnection, 14000)
 	for i := 0; i < len(items2500); i++ {
 		items2500[i].Name = fmt.Sprintf("n_%d", i)
 	}
@@ -108,21 +108,21 @@ func TestGetConnectionsPagination(t *testing.T) {
 	// now for the long array
 	long1 := request(items2500, "/connections")
 	require.Len(t, long1.Items, int(maxConnectionsLimit))
-	require.Equal(t, "v1_1000", long1.Continue)
+	require.Equal(t, "v1_5000", long1.Continue)
 
 	long2 := request(items2500, "/connections?continue="+long1.Continue)
 	require.Len(t, long2.Items, int(maxConnectionsLimit))
-	require.Equal(t, "v1_2000", long2.Continue)
+	require.Equal(t, "v1_10000", long2.Continue)
 
 	long3 := request(items2500, "/connections?continue="+long2.Continue)
-	require.Len(t, long3.Items, int(maxConnectionsLimit))
+	require.Len(t, long3.Items, 4000)
 	require.Equal(t, "", long3.Continue)
 
 	require.Equal(t, items2500, slices.Concat(long1.Items, long2.Items, long3.Items))
 
 	// you cannot go higher than MAX_CONNECTIONS_LIMIT
-	limited := request(items2500, "/connections?limit=1500")
-	require.Len(t, limited.Items, 1000)
+	limited := request(items2500, "/connections?limit=5500")
+	require.Len(t, limited.Items, 5000)
 	require.NotEqual(t, "", limited.Continue)
 }
 

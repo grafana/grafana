@@ -22,7 +22,7 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-function buildScene(hideTimeControls = false) {
+function buildScene() {
   return new NotebookScene({
     title: 'My notebook',
     uid: 'nb1',
@@ -38,7 +38,6 @@ function buildScene(hideTimeControls = false) {
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     timePicker: new SceneTimePicker({}),
     refreshPicker: new SceneRefreshPicker({}),
-    hideTimeControls,
   });
 }
 
@@ -66,16 +65,6 @@ describe('NotebookSceneControls', () => {
     render(<NotebookSceneControls model={scene} stickyOffset={0} />);
 
     expect(screen.getByRole('button', { name: /Time range selected/ })).toBeInTheDocument();
-  });
-
-  it('hides the time controls when the notebook asks for them to be hidden', () => {
-    const scene = buildScene(true);
-    activate(scene);
-
-    render(<NotebookSceneControls model={scene} stickyOffset={0} />);
-
-    expect(screen.queryByRole('button', { name: /Time range selected/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /refresh time interval/i })).not.toBeInTheDocument();
   });
 
   it('offers the history controls only in edit mode', async () => {

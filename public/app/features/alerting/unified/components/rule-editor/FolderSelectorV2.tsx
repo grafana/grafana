@@ -24,7 +24,7 @@ export function FolderSelectorV2() {
 
   const handleFolderCreation = (folder: Folder) => {
     resetGroup();
-    setValue('folder', folder);
+    setValue('folder', folder, { shouldValidate: true });
   };
 
   return (
@@ -54,11 +54,12 @@ export function FolderSelectorV2() {
             </Label>
           }
           error={errors.folder?.message}
+          invalid={!!errors.folder?.message}
           data-testid={selectors.components.AlertRules.folderPicker}
         >
-          <Stack direction="column" alignItems="flex-start" gap={1}>
-            <Controller
-              render={({ field: { ref, ...field } }) => (
+          <Controller
+            render={({ field: { ref, ...field } }) => (
+              <Stack direction="column" alignItems="flex-start" gap={1}>
                 <div style={{ width: 420 }}>
                   <NestedFolderPicker
                     permission="view"
@@ -68,7 +69,7 @@ export function FolderSelectorV2() {
                     value={folder?.uid}
                     onChange={(uid, title) => {
                       if (uid && title) {
-                        setValue('folder', { title, uid });
+                        setValue('folder', { title, uid }, { shouldValidate: true });
                       } else {
                         setValue('folder', undefined);
                       }
@@ -77,17 +78,17 @@ export function FolderSelectorV2() {
                     }}
                   />
                 </div>
-              )}
-              name="folder"
-              rules={{
-                required: {
-                  value: true,
-                  message: t('alerting.folder-selector.message.select-a-folder', 'Select a folder'),
-                },
-              }}
-            />
-            <CreateNewFolder onCreate={handleFolderCreation} fill="solid" size="sm" />
-          </Stack>
+                <CreateNewFolder onCreate={handleFolderCreation} fill="solid" size="sm" />
+              </Stack>
+            )}
+            name="folder"
+            rules={{
+              required: {
+                value: true,
+                message: t('alerting.folder-selector.message.folder-required', 'Folder is required'),
+              },
+            }}
+          />
         </Field>
       }
     </Stack>

@@ -5,11 +5,11 @@ import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromiseWithArgs } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
+import { getApiVersion, getCacheKey, getLegacyCacheKey, getNamespace, isAuthError } from '../pluginUtils';
 
 import { logPluginSettingsDebug, logPluginSettingsError } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
 import { type Settings as v0alpha1Settings } from './types';
-import { getApiVersion, getCacheKey, getLegacyCacheKey, getNamespace, isAuthError } from './utils';
 
 export function getLegacySettings(pluginId: string, showErrorAlert?: boolean): Promise<PluginMeta> {
   const options = { showErrorAlert, validatePath: true };

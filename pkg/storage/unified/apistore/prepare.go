@@ -202,13 +202,13 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
 
-	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
 	createdBy := info.GetUID()
 	if metaUID, ok := identity.MetadataIdentityUIDFrom(ctx); ok {
 		createdBy = metaUID
 	}
 	obj.SetCreatedBy(createdBy)
+	obj.SetUpdatedBy(createdBy)
 	obj.SetGeneration(1) // the first time we write
 
 	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, s.ownerReference(obj), &v)
@@ -250,7 +250,7 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 		},
 	})
 	// A failed search returns no rows, which would otherwise pass as "the ID is free".
-	if err := resourceutil.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
+	if err := resourceutil.StatusErrorFromGRPC(err); err != nil {
 		return err
 	}
 	hasResults, err := searchResponseHasRows(rsp)
@@ -268,14 +268,10 @@ func searchResponseHasRows(rsp *resourcepb.ResourceSearchResponse) (bool, error)
 	if rsp == nil {
 		return false, errors.New("nil search response")
 	}
-	switch rsp.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return len(rsp.GetResults().GetRows()) > 0, nil
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return len(rsp.GetRows()) > 0, nil
-	default:
+	if rsp.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return false, fmt.Errorf("unsupported search result format %d", rsp.GetResultFormat())
 	}
+	return len(rsp.GetRows()) > 0, nil
 }
 
 // Called on update
@@ -363,6 +359,13 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 			if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
 				return v, err
 			}
+		}
+	}
+
+	if !v.hasChanged && s.opts.EnableInlineBlobs {
+		v.hasChanged, err = s.blobsChanged(ctx, updateObject, previousObject)
+		if err != nil {
+			return v, err
 		}
 	}
 

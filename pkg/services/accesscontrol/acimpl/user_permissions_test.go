@@ -88,13 +88,14 @@ type fakeUserPermissionsClient struct {
 	user        identity.Requester
 	options     accesscontrol.Options
 	calls       int
+	err         error
 }
 
 func (c *fakeUserPermissionsClient) GetUserPermissions(_ context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	c.calls++
 	c.user = user
 	c.options = options
-	return c.permissions, nil
+	return c.permissions, c.err
 }
 
 func (c *fakeUserPermissionsClient) ClearUserPermissionCache(identity.Requester) {}

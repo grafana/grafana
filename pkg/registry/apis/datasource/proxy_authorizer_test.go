@@ -44,7 +44,12 @@ func TestProxyRouteAccessChecker(t *testing.T) {
 			client := proxyAccessClient{check: func(ctx context.Context, gotUser authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 				calls++
 				require.Same(t, user, gotUser)
-				require.Equal(t, authlib.CheckRequest{Namespace: "stacks-11", Group: "test.datasource.grafana.app", Resource: "datasources", Name: "ds-1", Verb: action}, req)
+				expected := authlib.CheckRequest{Namespace: "stacks-11", Group: "test.datasource.grafana.app", Resource: "datasources", Name: "ds-1", Verb: action}
+				if action == "datasources:query" {
+					expected.Subresource = "query"
+					expected.Verb = "create"
+				}
+				require.Equal(t, expected, req)
 				require.Empty(t, folder)
 				return authlib.CheckResponse{Allowed: true}, nil
 			}}

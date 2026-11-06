@@ -58,6 +58,10 @@ export function PieChartPanel(props: Props) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
+  // The chart draws slices in this order, so sort here rather than in the legend,
+  // which is not rendered when the legend is hidden.
+  fieldDisplayValues.sort(comparePieChartItemsByValue(options.sort));
+
   // Compute gradient fills once here so both the chart and the legend share
   // the exact same color map (same rank order, same interpolated hex values).
   //
@@ -129,11 +133,9 @@ function getLegend(props: Props, displayValues: FieldDisplay[], gradientFills?: 
     return undefined;
   }
 
-  const sortedDisplayValues = displayValues.sort(comparePieChartItemsByValue(props.options.sort));
-
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
-  const legendItems: VizLegendItem[] = sortedDisplayValues
+  const legendItems: VizLegendItem[] = displayValues
     .map<VizLegendItem | undefined>((value: FieldDisplay, idx: number) => {
       const hideFrom: HideSeriesConfig = value.field.custom?.hideFrom ?? {};
 

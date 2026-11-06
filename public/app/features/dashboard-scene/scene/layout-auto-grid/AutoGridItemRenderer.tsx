@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useFlagGrafanaDashboardsAutoHeightPanels } from '@grafana/runtime/internal';
 import { LazyLoader, sceneGraph, type SceneComponentProps, VizPanelFitScope, type VizPanel } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
@@ -20,7 +21,7 @@ import { type AutoGridItem } from './AutoGridItem';
 import {
   AutoGridLayoutManager,
   getFitMinHeightInPixels,
-  getMaxHeightCssValue,
+  getMaxHeightInPixels,
   getNamedHeightInPixels,
 } from './AutoGridLayoutManager';
 import { AutoGridResizeIntercept } from './AutoGridResizeIntercept';
@@ -29,7 +30,9 @@ import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
   const { body, repeatedPanels = [], key, fitContent: itemFitContent } = model.useState();
   const { draggingKey } = model.getParentGrid().useState();
-  const { isEditing, preload } = useDashboardState(model);
+  const dashboardState = useDashboardState(model);
+  const { preload } = dashboardState;
+  const isEditing = isFullDashboardEditing(dashboardState);
   const styles = useStyles2(getStyles);
   const soloPanelContext = useSoloPanelContext();
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
@@ -64,16 +67,14 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   // chrome floating at the top.
   // Non-fit panels keep the row height as their floor. When row heights aren't
   // matched they pin to it explicitly so a tall fit sibling doesn't stretch them.
-  // When a max height bounds the cell, the cap is applied to the panel chrome
-  // and the scroll lives on the chrome's content area — not on this cell — so
-  // the panel header stays fixed while the body scrolls (see
-  // styles.itemMaxHeightClip). The value travels down via a CSS variable.
-  const maxHeightCss = getMaxHeightCssValue(maxHeightMode, maxHeight);
-  const isMaxHeightBounded = maxHeightCss !== 'none';
+  // When a max height bounds the cell, the panel chrome applies the cap (via the
+  // fit context) and hands the panel the inner height left, so panels that can
+  // size to it do. Those that can't scroll inside the chrome's content area — not
+  // this cell — so the panel header stays fixed (see styles.itemMaxHeightScroll).
+  const fitMaxHeightPx = fitContentOn ? getMaxHeightInPixels(maxHeightMode, maxHeight) : undefined;
+  const isMaxHeightBounded = fitMaxHeightPx !== undefined;
   const itemStyle = fitContentOn
-    ? isMaxHeightBounded
-      ? { '--auto-grid-item-max-height': maxHeightCss }
-      : undefined
+    ? undefined
     : matchRowHeightsOn
       ? autoHeightPanelsEnabled
         ? { minHeight: rowHeightPx }
@@ -122,7 +123,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           const wrapperContent = (
             <>
               {autoHeightPanelsEnabled ? (
-                <VizPanelFitScope enabled={fitContentOn} minHeight={fitMinHeightPx}>
+                <VizPanelFitScope enabled={fitContentOn} minHeight={fitMinHeightPx} maxHeight={fitMaxHeightPx}>
                   <item.Component model={item} />
                 </VizPanelFitScope>
               ) : (
@@ -141,7 +142,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
               className={cx(
                 isConditionallyHidden && !isEditing && styles.hidden,
                 fitContentOn && styles.itemFitContent,
-                fitContentOn && isMaxHeightBounded && styles.itemMaxHeightClip
+                isMaxHeightBounded && styles.itemMaxHeightScroll
               )}
               style={extraStyle}
             >
@@ -162,7 +163,18 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           );
         }
       ),
-    [model, isLazy, key, styles, isEditing, fitContentOn, isMaxHeightBounded, fitMinHeightPx, autoHeightPanelsEnabled]
+    [
+      model,
+      isLazy,
+      key,
+      styles,
+      isEditing,
+      fitContentOn,
+      isMaxHeightBounded,
+      fitMinHeightPx,
+      fitMaxHeightPx,
+      autoHeightPanelsEnabled,
+    ]
   );
 
   const { isSelected: isSourceSelected } = useElementSelection(body.state.key);
@@ -237,16 +249,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   itemFitContent: css({
     width: '100%',
   }),
-  // Cap the panel chrome itself (not the cell) and scroll inside its content
-  // area, so the panel header stays fixed while the body scrolls. The chrome is
+  // The panel chrome is capped (not the cell), so scroll inside its content
+  // area and the panel header stays fixed while the body scrolls. The chrome is
   // a flex column (header, then content); `minHeight: 0` lets the content flex
   // item shrink to the remaining space instead of overflowing the chrome.
   // Because nothing overflows the cell, selection/hover outlines at the
   // chrome's edges stay unclipped.
-  itemMaxHeightClip: css({
-    '& [data-viz-panel-key] > div > section': {
-      maxHeight: 'var(--auto-grid-item-max-height)',
-    },
+  itemMaxHeightScroll: css({
     [`& [data-viz-panel-key] > div > section > [data-testid="${selectors.components.Panels.Panel.content}"]`]: {
       minHeight: 0,
       overflowY: 'auto',

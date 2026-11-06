@@ -13,8 +13,8 @@ const rows: MetricInfo[] = [
   { name: 'http_requests_total', type: 'counter', help: 'h' },
   { name: 'node_load1', type: 'gauge', help: 'l' },
 ];
-const complete: Catalog = { metrics: rows, truncated: false };
-const truncated: Catalog = { metrics: rows, truncated: true };
+const complete: Catalog = { metrics: rows, truncated: false, searchable: true };
+const truncated: Catalog = { metrics: rows, truncated: true, searchable: true };
 const found: MetricInfo[] = [
   { name: 'quickpizza_requests_total', type: 'counter' },
   { name: 'quickpizza_latency_seconds', type: 'gauge' },
@@ -41,6 +41,8 @@ describe('useMetricCatalog', () => {
 
   it('applies substring filter and type filter', async () => {
     jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
+    // Answered with the whole catalog, so what narrows it is the hook's own filter.
+    jest.spyOn(client, 'searchCatalog').mockResolvedValue(rows);
     const { result } = renderHook(() =>
       useMetricCatalog({ uid: 'p1' }, range, { searchText: 'load', typeFilter: 'gauge' })
     );
@@ -58,6 +60,7 @@ describe('useMetricCatalog', () => {
 
   it('filters case-insensitively on search text', async () => {
     jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
+    jest.spyOn(client, 'searchCatalog').mockResolvedValue(rows);
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range, { searchText: 'LOAD' }));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
@@ -65,8 +68,10 @@ describe('useMetricCatalog', () => {
 
   it('trims the search text, which otherwise matches no metric name at all', async () => {
     jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
+    const search = jest.spyOn(client, 'searchCatalog').mockResolvedValue(rows);
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range, { searchText: '  load ' }));
     await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(search).toHaveBeenCalledWith({ uid: 'p1' }, range, 'load');
     expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
   });
 
@@ -154,11 +159,19 @@ describe('useMetricCatalog', () => {
     // resolutions are wrapped in `act` so the resulting state updates (or lack thereof, if the
     // `cancelled` guard drops the stale one) are flushed before the assertion below runs.
     await act(async () => {
-      second.resolve({ metrics: [{ name: 'p2_metric', type: 'counter', help: 'from p2' }], truncated: false });
+      second.resolve({
+        metrics: [{ name: 'p2_metric', type: 'counter', help: 'from p2' }],
+        truncated: false,
+        searchable: true,
+      });
       await second.promise;
     });
     await act(async () => {
-      first.resolve({ metrics: [{ name: 'p1_metric', type: 'gauge', help: 'from p1' }], truncated: false });
+      first.resolve({
+        metrics: [{ name: 'p1_metric', type: 'gauge', help: 'from p1' }],
+        truncated: false,
+        searchable: true,
+      });
       await first.promise;
     });
 
@@ -213,26 +226,42 @@ describe('useMetricCatalog', () => {
       return { ...hook, search };
     };
 
-    it('filters a complete catalog locally, without asking the datasource', async () => {
+    // A server can return fewer names than the series limit and still hold more, as Mimir does under
+    // its `max_label_values_limit`, so a catalog that looks complete can still be missing the match.
+    it('searches the datasource even when the catalog came back under the series limit', async () => {
       const { result, rerender, search } = renderSearch(complete);
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      rerender({ searchText: 'load' });
+      rerender({ searchText: 'quick' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
 
-      expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      expect(search).toHaveBeenCalledWith({ uid: 'p1' }, range, 'quick');
+      expect(result.current.metrics.map((m) => m.name)).toEqual([
+        'quickpizza_requests_total',
+        'quickpizza_latency_seconds',
+      ]);
+    });
+
+    it('neither searches nor shows loading for a datasource with metric lookups disabled', async () => {
+      const { result, rerender, search } = renderSearch({ metrics: [], truncated: false, searchable: false });
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      rerender({ searchText: 'quick' });
+
       expect(result.current.loading).toBe(false);
       act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
       expect(search).not.toHaveBeenCalled();
     });
 
-    it('searches the datasource for a truncated catalog once the user stops typing', async () => {
+    it('searches the datasource once the user stops typing', async () => {
       const { result, rerender, search } = renderSearch(truncated);
       await waitFor(() => expect(result.current.loading).toBe(false));
 
       rerender({ searchText: 'q' });
       rerender({ searchText: 'qu' });
       rerender({ searchText: ' quick ' });
-      // The truncated catalog is no answer, so the wait for the debounce reads as loading.
+      // The datasource has not answered yet, so the wait for the debounce reads as loading.
       expect(result.current.loading).toBe(true);
       expect(search).not.toHaveBeenCalled();
 
@@ -309,7 +338,43 @@ describe('useMetricCatalog', () => {
       expect(result.current.loading).toBe(true);
     });
 
-    it('shows the whole truncated catalog again as soon as the search is cleared', async () => {
+    it('shows the catalog’s matches while the search for a replaced term waits', async () => {
+      const { result, rerender, search } = renderSearch(complete);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      rerender({ searchText: 'quick' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      const pending = deferred<MetricInfo[]>();
+      search.mockReturnValue(pending.promise);
+
+      rerender({ searchText: 'node' });
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
+
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      expect(search).toHaveBeenLastCalledWith({ uid: 'p1' }, range, 'node');
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
+      expect(result.current.loading).toBe(true);
+    });
+
+    it('merges the last answer with the catalog’s matches, in name order, while a shortened term waits', async () => {
+      const catalog: Catalog = { metrics: [...rows, ...found], truncated: false, searchable: true };
+      const { result, rerender, search } = renderSearch(catalog);
+      search.mockResolvedValue([found[1]]);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      rerender({ searchText: 'quickpizza_lat' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      rerender({ searchText: 'quick' });
+
+      expect(result.current.metrics.map((m) => m.name)).toEqual([
+        'quickpizza_latency_seconds',
+        'quickpizza_requests_total',
+      ]);
+      expect(result.current.loading).toBe(true);
+    });
+
+    it('shows the whole catalog again as soon as the search is cleared', async () => {
       const { result, rerender } = renderSearch(truncated);
       await waitFor(() => expect(result.current.loading).toBe(false));
       rerender({ searchText: 'quick' });
@@ -365,7 +430,7 @@ describe('useMetricCatalog', () => {
       expect(result.current.error).toBeUndefined();
     });
 
-    it('shows the truncated catalog’s matches during a search started before the catalog arrived', async () => {
+    it('shows the catalog’s matches during a search started before the catalog arrived', async () => {
       const catalogPending = deferred<Catalog>();
       const searchPending = deferred<MetricInfo[]>();
       jest.spyOn(client, 'fetchCatalog').mockReturnValue(catalogPending.promise);

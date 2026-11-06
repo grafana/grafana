@@ -26,6 +26,7 @@ import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/appendExtensionsToPanelMenu';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { InspectTab } from 'app/features/inspector/types';
 import { AddPanelToNotebookScene } from 'app/features/notebook/addPanel/AddPanelToNotebookScene';
 import { canAddPanelToNotebook } from 'app/features/notebook/permissions';
@@ -34,11 +35,13 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { pastePanelStyles } from '../actions/panel/pastePanelStyles';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { DashboardInteractions } from '../utils/interactions';
+import { isEditEntryBlocked, isMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { getPanelStyleConfig } from '../utils/panelStyleConfigs';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
@@ -47,6 +50,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
+import { canManuallyEditDashboard, dashboardModesEnabled, isViewingDashboard } from './dashboardModes';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 
 /**
@@ -90,15 +94,25 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (dashboard.canEditDashboard() && dashboard.state.editable && !isReadOnlyRepeat && !isEditingPanel) {
+    if (
+      (canManuallyEditDashboard(dashboard.state) || isViewingDashboard(dashboard.state)) &&
+      dashboard.canEditDashboard() &&
+      dashboard.state.editable &&
+      !isReadOnlyRepeat &&
+      !isEditingPanel &&
+      !isEditEntryBlocked(dashboard)
+    ) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({
         text: t('panel.header-menu.edit', `Edit`),
-        iconClassName: 'edit',
+        iconClassName: 'pen',
         shortcut: 'e',
         href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
         onClick: () => {
+          if (dashboardModesEnabled() && isViewingDashboard(dashboard.state)) {
+            dashboard.setDashboardMode('edit', 'panel_menu');
+          }
           DashboardInteractions.panelActionClicked('edit', getPanelIdForVizPanel(panel), 'panel', panel.state.pluginId);
         },
       });
@@ -170,7 +184,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       },
     });
 
-    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
+    if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),
         iconClassName: 'file-copy-alt',
@@ -182,7 +196,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (!isEditingPanel) {
+    if (!isEditingPanel && !isMobileEditDeprecated()) {
       moreSubMenu.push({
         text: t('panel.header-menu.copy', `Copy`),
         iconClassName: 'copy',
@@ -194,7 +208,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
+    if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel) {
       if (isLibraryPanel(panel)) {
         moreSubMenu.push({
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
@@ -294,16 +308,14 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    if (config.featureToggles.panelTimeSettings) {
-      items.push({
-        text: t('panel.header-menu.time-settings', 'Time settings'),
-        iconClassName: 'clock-nine',
-        onClick: (e) => {
-          e.preventDefault();
-          dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
-        },
-      });
-    }
+    items.push({
+      text: t('panel.header-menu.time-settings', 'Time settings'),
+      iconClassName: 'clock-nine',
+      onClick: (e) => {
+        e.preventDefault();
+        dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
+      },
+    });
 
     const extensions = await firstValueFrom(
       getObservablePluginLinks({
@@ -313,7 +325,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       })
     );
 
-    if (extensions.length > 0 && !dashboard.state.isEditing) {
+    if (extensions.length > 0 && !isFullDashboardEditing(dashboard.state)) {
       const extensionsSubmenuName = t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions');
       const reservedNames = new Set<string>(items.map((m) => m.text));
       reservedNames.add(t('panel.header-menu.styles', `Styles`));
@@ -329,7 +341,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (getPanelStyleConfig(panel.state.pluginId) && dashboard.state.isEditing) {
+    if (getPanelStyleConfig(panel.state.pluginId) && isFullDashboardEditing(dashboard.state)) {
       const stylesSubMenu: PanelMenuItem[] = [];
 
       stylesSubMenu.push({
@@ -355,7 +367,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
               panel.state.pluginId,
               getPanelIdForVizPanel(panel) ?? -1
             );
-            dashboard.pastePanelStyles(panel);
+            pastePanelStyles(dashboard, panel);
           },
         });
       }
@@ -393,14 +405,14 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
       items.push({
         text: t('panel.header-menu.add-to-notebook', 'Add to notebook'),
-        iconClassName: 'book',
+        iconClassName: 'gf-notebook',
         onClick: () => {
           dashboard.showModal(new AddPanelToNotebookScene({ panelRef: panel.getRef() }));
         },
       });
     }
 
-    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
+    if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel) {
       items.push({
         text: '',
         type: 'divider',
@@ -567,14 +579,18 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
 }
 
 export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
-  appEvents.publish(
-    new ShowConfirmModalEvent({
-      title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
-      text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
-      yesText: 'Remove',
-      onConfirm: () => dashboard.removePanel(panel),
-    })
-  );
+  // Let the menu close and release focus before mounting the confirmation modal.
+  // Otherwise its aria-hidden ancestor still contains the focused trigger.
+  setTimeout(() => {
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
+        text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
+        yesText: 'Remove',
+        onConfirm: () => dashboard.removePanel(panel),
+      })
+    );
+  }, 0);
 }
 
 const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {

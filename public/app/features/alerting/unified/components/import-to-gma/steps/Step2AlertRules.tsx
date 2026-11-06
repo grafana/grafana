@@ -1,20 +1,18 @@
-import { isEmpty } from 'lodash';
+import { isEmpty, noop } from 'lodash';
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useAsync, useToggle } from 'react-use';
 
 import {
   isSupportedExternalPrometheusFlavoredRulesSourceType,
-  isValidRecordingRulesTarget,
+  useDataSourcesWithValidRecordingTargetByUid,
 } from '@grafana/alerting/internal';
 import { buildRoutingTreeOptions, useRoutingTrees } from '@grafana/alerting/unstable';
-import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Box,
-  CodeEditor,
   Collapse,
   Combobox,
   type ComboboxOption,
@@ -27,6 +25,7 @@ import {
   Stack,
   Text,
 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
@@ -70,6 +69,8 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
     clearErrors,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
+
+  const recordingTargets = useDataSourcesWithValidRecordingTargetByUid();
 
   const [
     rulesSource,
@@ -279,16 +280,17 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                       <DataSourcePicker
                         {...field}
                         alerting
-                        filter={(ds: DataSourceInstanceSettings) =>
+                        disabled={recordingTargets.isLoading}
+                        filter={(ds) =>
                           isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) &&
                           supportedImportTypes.includes(ds.type)
                         }
                         current={field.value}
-                        onChange={(ds: DataSourceInstanceSettings) => {
+                        onChange={(ds) => {
                           onChange(ds.uid);
                           setValue('rulesDatasourceName', ds.name);
                           // Auto-populate target datasource if not yet selected
-                          if (!getValues('targetDatasourceUID') && isValidRecordingRulesTarget(ds)) {
+                          if (!getValues('targetDatasourceUID') && recordingTargets.byUid.has(ds.uid)) {
                             setValue('targetDatasourceUID', ds.uid);
                           }
                         }}
@@ -465,8 +467,15 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                 'alerting.import-to-gma.step2.target-datasource-desc',
                 'The Prometheus data source to store recording rules in'
               )}
-              invalid={!!errors.targetDatasourceUID}
-              error={errors.targetDatasourceUID?.message}
+              invalid={Boolean(errors.targetDatasourceUID || recordingTargets.error)}
+              error={
+                errors.targetDatasourceUID?.message ??
+                (recordingTargets.error &&
+                  t(
+                    'alerting.recording-rules.target-data-sources-error',
+                    'Failed to load the list of data sources that can store recording rules'
+                  ))
+              }
               noMargin
             >
               <Controller
@@ -476,8 +485,10 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                     current={field.value}
                     inputId="recording-rules-target-data-source"
                     noDefault
-                    filter={isValidRecordingRulesTarget}
-                    onChange={(ds: DataSourceInstanceSettings) => {
+                    disabled={recordingTargets.isLoading}
+                    isLoading={recordingTargets.isLoading}
+                    filter={(ds) => recordingTargets.byUid.has(ds.uid)}
+                    onChange={(ds) => {
                       setValue('targetDatasourceUID', ds.uid);
                     }}
                   />
@@ -557,17 +568,13 @@ function OverrideWarning({ rulesThatMightBeOverwritten }: { rulesThatMightBeOver
           isOpen={showDetails}
           onToggle={toggleShowDetails}
         >
-          <CodeEditor
-            width="100%"
-            height={300}
+          <CodeMirrorEditor
+            height="300px"
             language="json"
             value={JSON.stringify(rulesThatMightBeOverwritten, null, 2)}
-            monacoOptions={{
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              lineNumbers: 'on',
-              readOnly: true,
-            }}
+            onChange={noop}
+            readOnly
+            aria-label={t('alerting.import-to-gma.step2.override-warning-details', 'Rules that might be overwritten')}
           />
         </Collapse>
       </Stack>

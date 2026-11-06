@@ -2,7 +2,10 @@ import { isEqual } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
 import {
+  AdHocFiltersVariable,
   NewSceneObjectAddedEvent,
+  sceneGraph,
+  type SceneObject,
   sceneUtils,
   type SceneObjectUrlValue,
   type SceneObjectUrlValues,
@@ -10,9 +13,11 @@ import {
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { type TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { buildDashboardWithAccessInfoFromScene } from '../../serialization/buildDashboardWithAccessInfoFromScene';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
+import { applySupportsMultiValueOperators } from '../../utils/applySupportsMultiValueOperators';
 import { edit } from '../utils/edit';
 
 // Minimal structural type for the bits of DashboardSceneUrlSync the rebuild drives, without
@@ -28,9 +33,10 @@ export interface ApplyDashboardSpecProps {
   description: string;
   /** Where the spec edit came from, reported with undo/redo interactions. */
   scope: string;
+  actor?: string;
 }
 
-export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDashboardSpecProps): void {
+export function applyDashboardSpec({ scene, spec, description, scope, actor }: ApplyDashboardSpecProps): void {
   const dto = buildDashboardWithAccessInfoFromScene(scene, spec);
   const rebuilt = transformSaveModelSchemaV2ToScene(dto);
   // The URL state each spec produces on its own, before any URL is applied. Their difference is
@@ -45,8 +51,13 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
   const { loadingView: rebuiltLoading, ...newState } = sceneUtils.cloneSceneObjectState(rebuilt.state, {
     key: scene.state.key,
     sidebar: scene.state.sidebar,
+    // Template identity is not part of the dashboard spec or its access DTO.
+    meta: { ...rebuilt.state.meta, isDashboardTemplate: scene.state.meta.isDashboardTemplate },
   });
-  const { loadingView: previousLoading, ...previousState } = scene.state;
+  // A plan's building screen is still up during the build's first write; undoing that write must
+  // not restore it, since nothing would be left to end it. Leaving `planning` out of the merge
+  // keeps whatever is current.
+  const { loadingView: previousLoading, planning: previousPlanning, ...previousState } = scene.state;
 
   // `setState` merges, so an open panel editor would survive the swap still driving the
   // VizPanel and layout item of the tree we just discarded: edits made through it never reach
@@ -59,9 +70,11 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
     scene.state.editPanel?.getUrlKey() ?? (typeof requestedPanel === 'string' ? requestedPanel : undefined);
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow the base handler to the dashboard's own, which owns the hold below
   const urlSync = scene.urlSync as DashboardUrlSync | undefined;
+  // The first perform swaps in a fresh tree, which queries on its own; a later one is a redo.
+  let performed = false;
 
   edit({
-    meta: { actionId: 'dashboard.editSchema', scope },
+    meta: { actionId: 'dashboard.editSchema', scope, ...(actor ? { actor } : {}) },
     source: scene,
     description,
     perform: () => {
@@ -80,10 +93,20 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
         fromSpec: getPreviousSpecUrl,
         toSpec: () => nextSpecUrl,
       });
-      scene.setState({ ...newState, editPanel: undefined, isDirty: true });
+      scene.setState({
+        ...newState,
+        mode: scene.state.mode,
+        editPanel: undefined,
+        isDirty: true,
+      });
       // Dashboard state is replaced in place losing all edit-only properties.
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
-      scene.state.body.editModeChanged?.(true);
+      scene.applyDashboardMode();
+
+      // Ad hoc variables look up whether their data source takes multi-value operators after the build,
+      // and set it on the objects the build made. The swap installed clones of those, so look it up again
+      // on the clones, or the lookups land on the discarded tree.
+      resolveAdHocMultiValueOperators(scene);
 
       scene.state.sidebar.refreshAfterRebuild();
 
@@ -96,11 +119,17 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
       if (editPanelKey) {
         urlSync?.updateFromUrl({ editPanel: editPanelKey });
       }
+
+      if (performed) {
+        refreshSwappedInData(scene);
+      }
+      performed = true;
     },
     undo: () => {
       const outgoingKeys = Object.keys(sceneUtils.getUrlState(scene));
       // A previously pending editor has no state key to overwrite the editor from the rebuilt tree.
-      scene.setState({ ...previousState, editPanel: previousState.editPanel });
+      scene.setState({ ...previousState, editPanel: previousState.editPanel, mode: scene.state.mode });
+      scene.applyDashboardMode();
       scene.state.sidebar.refreshAfterRebuild();
       // The restored tree is the one the apply replaced, so its spec state can be read from it now.
       const urlUpdates = urlUpdatesForSwap(scene, {
@@ -110,8 +139,88 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
         toSpec: getPreviousSpecUrl,
       });
       syncRebuiltChildrenFromUrl(scene, urlUpdates);
+      refreshSwappedInData(scene);
     },
   });
+}
+
+/**
+ * Swaps `reloaded`, the open dashboard loaded again from the server, onto the open scene in place of
+ * a fresh page load: no loading state, and the page keeps its scroll position, URL state, open panel
+ * editor and edit mode. Not an edit: there is nothing to undo, and the scene is as stored.
+ */
+export function swapInReloadedDashboard(scene: DashboardScene, reloaded: DashboardScene): void {
+  const incoming = sceneUtils.getUrlState(reloaded);
+  const { loadingView, ...newState } = sceneUtils.cloneSceneObjectState(reloaded.state, {
+    key: scene.state.key,
+    sidebar: scene.state.sidebar,
+  });
+  // As in applyDashboardSpec: drop an open panel editor, which drives the discarded tree, and re-open it.
+  const requestedPanel = scene.urlSync?.getUrlState().editPanel;
+  const editPanelKey =
+    scene.state.editPanel?.getUrlKey() ?? (typeof requestedPanel === 'string' ? requestedPanel : undefined);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow the base handler to the dashboard's own, which owns the hold below
+  const urlSync = scene.urlSync as DashboardUrlSync | undefined;
+  if (editPanelKey) {
+    urlSync?.retainEditPanelAcrossRebuild(editPanelKey);
+  }
+  // An embedded dashboard isn't synced with the page URL, which belongs to the page around it.
+  const urlUpdates = scene.state.meta.isEmbedded
+    ? {}
+    : urlUpdatesForSwap(scene, {
+        incoming,
+        outgoingKeys: Object.keys(sceneUtils.getUrlState(scene)),
+        fromSpec: () => specUrlState(scene),
+        toSpec: () => incoming,
+      });
+  const { isEditing, editable, mode } = scene.state;
+  const tabs = openTabs(scene);
+  scene.setState({
+    ...newState,
+    // A fresh load starts in view mode; the page was editing, and goes on editing what it reloaded.
+    ...(isEditing ? { isEditing, editable } : {}),
+    mode,
+    editPanel: undefined,
+    isDirty: false,
+  });
+  scene.applyDashboardMode();
+  resolveAdHocMultiValueOperators(scene);
+  scene.state.sidebar.refreshAfterRebuild();
+  syncRebuiltChildrenFromUrl(scene, urlUpdates);
+  // A dashboard without URL sync (an embedded one) keeps its open tabs only in the tree just replaced.
+  reopenTabs(scene, tabs);
+  if (editPanelKey) {
+    urlSync?.updateFromUrl({ editPanel: editPanelKey });
+  }
+}
+
+// A type import: the tabs layout's module imports this one's, so it is recognized by what it does.
+function isTabsLayout(object: SceneObject): object is TabsLayoutManager {
+  return 'switchToTab' in object && typeof object.switchToTab === 'function' && 'tabs' in object.state;
+}
+
+/** The tab each tabs layout of `scene` has open, in the tree's order. */
+function openTabs(scene: DashboardScene): Array<string | undefined> {
+  return sceneGraph
+    .findAllObjects(scene, isTabsLayout)
+    .flatMap((layout) => (isTabsLayout(layout) ? [layout.state.currentTabSlug] : []));
+}
+
+/** Opens `tabs` again, in the tree's order, where a tabs layout still has the tab. */
+function reopenTabs(scene: DashboardScene, tabs: Array<string | undefined>) {
+  const layouts = sceneGraph.findAllObjects(scene, isTabsLayout).filter(isTabsLayout);
+  layouts.forEach((layout, i) => {
+    const slug = tabs[i];
+    if (slug && slug !== layout.state.currentTabSlug && layout.state.tabs.some((tab) => tab.getSlug() === slug)) {
+      layout.setState({ currentTabSlug: slug });
+    }
+  });
+}
+
+// Undo and redo swap back a tree whose query runners still hold the data they had when set aside, and
+// a runner only re-queries on activation once the time range has moved past that data.
+function refreshSwappedInData(scene: DashboardScene) {
+  sceneGraph.getTimeRange(scene).onRefresh();
 }
 
 /** The URL state of the spec the scene serializes to, rebuilt on its own. */
@@ -182,4 +291,12 @@ function syncRebuiltChildrenFromUrl(scene: DashboardScene, updates: SceneObjectU
 function isSameUrlValue(a: SceneObjectUrlValue, b: SceneObjectUrlValue) {
   const values = (value: SceneObjectUrlValue) => (value == null ? [] : Array.isArray(value) ? value : [value]);
   return isEqual(values(a), values(b));
+}
+
+function resolveAdHocMultiValueOperators(scene: DashboardScene) {
+  for (const variable of sceneGraph.findAllObjects(scene, (obj) => obj instanceof AdHocFiltersVariable)) {
+    if (variable instanceof AdHocFiltersVariable) {
+      applySupportsMultiValueOperators(variable, variable.state.datasource?.type);
+    }
+  }
 }

@@ -68,7 +68,8 @@ func declareManifestRoles(service ac.Service, group, pluginName string, manifest
 // usable without every plugin having to spell the same two roles out.
 //
 // ManifestRole.Routes is not converted: a custom route never reaches unified
-// storage, so it is authorized by the plugin's app access alone.
+// storage, so it is authorized by the plugin's app access and by any access
+// check it declares, which the role kinds grant.
 func manifestRoleRegistrations(group, pluginName string, manifest *app.ManifestData) []ac.RoleRegistration {
 	if manifest == nil {
 		return nil
@@ -154,15 +155,36 @@ func defaultRoleRegistrations(group, pluginName string, resources map[string]str
 }
 
 // rolePermissions converts one manifest role's kinds into RBAC permissions.
+//
+// A role kind may name a kind's custom route, as Kind/<route>, which grants the
+// <resource>/<route> subresource a route's declared access check asks for.
 func rolePermissions(group string, role app.ManifestRole, resources map[string]string) []ac.Permission {
 	seen := map[string]bool{}
 	permissions := make([]ac.Permission, 0, len(role.Kinds))
 	for _, kind := range role.Kinds {
-		resource, ok := resources[kind.Kind]
+		base, sub, isSub := strings.Cut(kind.Kind, "/")
+		resource, ok := resources[base]
 		if !ok {
 			logging.DefaultLogger.Warn("skipping manifest role kind that no served version declares",
 				"group", group, "kind", kind.Kind)
 			continue
+		}
+		if isSub {
+			// A declared check names a subresource as one path segment, so
+			// anything else would grant an action no check asks for.
+			if sub == "" || strings.Contains(sub, "/") {
+				logging.DefaultLogger.Warn("skipping manifest role kind that names no single custom route",
+					"group", group, "kind", kind.Kind)
+				continue
+			}
+			// Built-in subresources, not routes, so no declared check asks for
+			// them, and users may not write status at all.
+			if strings.EqualFold(sub, "status") || strings.EqualFold(sub, "scale") {
+				logging.DefaultLogger.Warn("skipping manifest role kind that names a built-in subresource",
+					"group", group, "kind", kind.Kind)
+				continue
+			}
+			resource += "/" + sub
 		}
 		for _, permission := range permissionsFor(group, []string{resource}, roleKindVerbs(group, kind)) {
 			if seen[permission.Action] {

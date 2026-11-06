@@ -44,7 +44,7 @@ func TestToFolderErrorStorageClassification(t *testing.T) {
 			result := &resourcepb.ErrorResult{Code: http.StatusForbidden, Reason: reason}
 			st, err := status.New(codes.PermissionDenied, "denied").WithDetails(result)
 			require.NoError(t, err)
-			for _, input := range []error{resource.ErrorFromResponse(result, nil), st.Err(), fmt.Errorf("search: %w", st.Err())} {
+			for _, input := range []error{resource.StatusError(result), st.Err(), fmt.Errorf("search: %w", st.Err())} {
 				require.Same(t, folder.ErrAccessDenied, toFolderError(input))
 			}
 		})
@@ -53,7 +53,7 @@ func TestToFolderErrorStorageClassification(t *testing.T) {
 		result := &resourcepb.ErrorResult{Code: http.StatusForbidden, Reason: string(metav1.StatusReasonInvalid)}
 		st, err := status.New(codes.PermissionDenied, "denied").WithDetails(result)
 		require.NoError(t, err)
-		for _, input := range []error{resource.ErrorFromResponse(result, nil), st.Err(), fmt.Errorf("search: %w", st.Err())} {
+		for _, input := range []error{resource.StatusError(result), st.Err(), fmt.Errorf("search: %w", st.Err())} {
 			require.Same(t, input, toFolderError(input))
 		}
 	})
@@ -246,20 +246,14 @@ func TestGetUIDFromLegacyID(t *testing.T) {
 		Limit: folderSearchLimit,
 	}
 	searchRes := &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "resolved-uid",
-						Resource: "folders",
-					},
-					Cells: [][]byte{[]byte("")},
-				},
-			},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
 		},
+		Rows: []*resourcepb.ResourceSearchRow{{
+			Key:    &resourcepb.ResourceKey{Name: "resolved-uid", Resource: "folders"},
+			Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{""}}},
+		}},
 		TotalHits: 1,
 	}
 

@@ -25,13 +25,12 @@ import { isDataSourceLoadError } from './errors';
 import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
 import { applyFilters, type GetDataSourceInstanceListFilters } from './listFilters';
 import { describeRef, logDataSourceWarning } from './logging';
-import { clearPluginCache } from './pluginCache';
+import { clearPluginCache, _resetForTests as resetPluginCache } from './pluginCache';
 import { resolveRef, _resetForTests as resetResolveRef } from './resolveRef';
 import { BootDataSource } from './sources/bootDataSource';
 import { createDataSourceCacheSource } from './sources/selectSource';
 import { type BootDataSourceSettings } from './sources/types';
 
-export { toListItem } from './cache';
 export type { GetDataSourceInstanceListFilters } from './listFilters';
 
 /**
@@ -299,6 +298,7 @@ export function _resetForTests(): void {
     throw new Error('_resetForTests must only be called from tests');
   }
   resetCache();
+  resetPluginCache();
   resetResolveRef();
   resetExpressionDs();
 }

@@ -16,6 +16,7 @@ import {
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { duplicateVariable } from '../actions/variable/duplicateVariable';
 import { removeVariable } from '../actions/variable/removeVariable';
@@ -46,7 +47,8 @@ export function VariableControls({
   variablesOverride?: SceneVariable[];
 }) {
   const { variables: dashboardVariables } = sceneGraph.getVariables(dashboard)!.useState();
-  const { isEditing } = dashboard.useState();
+  const dashboardState = dashboard.useState();
+  const isEditing = isFullDashboardEditing(dashboardState);
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const isEditingNewLayouts = isEditing && dashboardNewLayoutsEnabled;
   const variables = variablesOverride ?? dashboardVariables;
@@ -293,13 +295,7 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   }
 
   return (
-    // Prevent row selection on click (see RowItemRenderer onPointerUp)
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div
-      className={styles.sectionVariables}
-      onPointerDown={(e) => e.stopPropagation()}
-      onPointerUp={(e) => e.stopPropagation()}
-    >
+    <div className={styles.sectionVariables}>
       {visibleVariables.map((variable) => (
         <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
       ))}
@@ -307,13 +303,10 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   );
 }
 
-const getSectionVariableStyles = (theme: GrafanaTheme2) => ({
+const getSectionVariableStyles = (_theme: GrafanaTheme2) => ({
+  // Join the section controls row so variables and annotations share one wrapping line.
   sectionVariables: css({
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing(1),
-    marginBottom: theme.spacing(1),
+    display: 'contents',
   }),
 });
 

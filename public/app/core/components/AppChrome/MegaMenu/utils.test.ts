@@ -7,7 +7,6 @@ import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import {
   getEnrichedHelpItem,
   getActiveItem,
-  findByUrl,
   getPinnedEntries,
   moveItem,
   reorderSections,
@@ -239,28 +238,6 @@ describe('getActiveItem', () => {
       id: 'not-home',
     };
     expect(getActiveItem(mockNavTree, mockPage, '/')?.id).toEqual('home');
-  });
-});
-
-describe('findByUrl', () => {
-  it('returns the correct item at the top level', () => {
-    expect(findByUrl(mockNavTree, '/item')).toEqual({
-      text: 'Item',
-      url: '/item',
-      id: 'item',
-    });
-  });
-
-  it('returns the correct child item', () => {
-    expect(findByUrl(mockNavTree, '/child')).toEqual({
-      text: 'Child',
-      url: '/child',
-      id: 'child',
-    });
-  });
-
-  it('returns null if no item found', () => {
-    expect(findByUrl(mockNavTree, '/no-item')).toBeNull();
   });
 });
 

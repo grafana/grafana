@@ -2,9 +2,11 @@ import { act, screen, waitFor } from '@testing-library/react';
 import { render, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { DashboardAnnotationsDataLayer } from '../DashboardAnnotationsDataLayer';
+import { DashboardDataLayerSet } from '../DashboardDataLayerSet';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardPlanningState } from '../types/dashboard';
@@ -12,17 +14,37 @@ import { type DashboardPlanningState } from '../types/dashboard';
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(() => ({
+    get: jest.fn().mockResolvedValue({}),
+    getList: jest.fn(),
+    getInstanceSettings: jest.fn(),
+    reload: jest.fn(),
+  })),
+}));
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
+
 function renderRow({
   collapse = false,
   title = 'My row',
   isEditing = false,
   planning,
-}: { collapse?: boolean; title?: string; isEditing?: boolean; planning?: DashboardPlanningState } = {}) {
+  $data,
+}: {
+  collapse?: boolean;
+  title?: string;
+  isEditing?: boolean;
+  planning?: DashboardPlanningState;
+  $data?: DashboardDataLayerSet;
+} = {}) {
   const row = new RowItem({
     key: 'row-1',
     title,
     collapse,
     layout: AutoGridLayoutManager.createEmpty(),
+    $data,
   });
   const scene = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
@@ -31,21 +53,10 @@ function renderRow({
     planning,
   });
   render(<scene.Component model={scene} />);
-  return { row };
+  return { row, scene };
 }
 
 describe('RowItemRenderer', () => {
-  beforeEach(() => {
-    // New layouts mount the sidebar extension point, which calls usePluginLinks. These tests render the scene without starting that hook.
-    setTestFlags({ dashboardNewLayouts: false });
-  });
-
-  afterEach(() => {
-    act(() => {
-      setTestFlags({});
-    });
-  });
-
   it('stamps data-dashboard-element-key and data-dashboard-element-type on the row header', () => {
     renderRow({ collapse: false });
 
@@ -88,6 +99,31 @@ describe('RowItemRenderer', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
   });
 
+  it('records collapsing the row in undo history while editing', async () => {
+    const { row, scene } = renderRow({ collapse: false, isEditing: true });
+    const deactivateSidebar = scene.state.sidebar.activate();
+    await waitFor(() => {
+      expect(document.querySelector('[data-rfd-drag-handle-draggable-id="row-1"]')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByTestId(selectors.components.DashboardRow.toggle(row.state.title!)));
+
+    expect(row.state.collapse).toBe(true);
+    expect(scene.state.sidebar.state.undoStack).toHaveLength(1);
+    deactivateSidebar();
+  });
+
+  it('does not record collapsing the row in undo history outside edit mode', async () => {
+    const { row, scene } = renderRow({ collapse: false });
+    const deactivateSidebar = scene.state.sidebar.activate();
+
+    await userEvent.click(screen.getByTestId(selectors.components.DashboardRow.toggle(row.state.title!)));
+
+    expect(row.state.collapse).toBe(true);
+    expect(scene.state.sidebar.state.undoStack).toHaveLength(0);
+    deactivateSidebar();
+  });
+
   it('copies a link to the row when the copy link button is clicked', async () => {
     // ClipboardButton only uses the clipboard API in a secure context.
     // userEvent.setup() (called by render) attaches a working clipboard stub we can read back.
@@ -113,6 +149,7 @@ describe('RowItemRenderer', () => {
   it('hides the copy link button while previewing a dashboard plan (planning)', () => {
     renderRow({
       planning: {
+        phase: 'preview',
         planId: 'plan-1',
         planTitle: 'Dashboard plan',
         onBuild: () => {},
@@ -154,5 +191,42 @@ describe('RowItemRenderer', () => {
 
     const copiedUrl = new URL(await navigator.clipboard.readText());
     expect(copiedUrl.searchParams.get('drow')).toBe('Foo%2FBar');
+  });
+
+  it('renders a row annotation control when the row is expanded', async () => {
+    await act(async () => {
+      renderRow({
+        $data: new DashboardDataLayerSet({
+          annotationLayers: [
+            new DashboardAnnotationsDataLayer({
+              name: 'Deploys',
+              isEnabled: true,
+              isHidden: false,
+              query: { name: 'Deploys', enable: true, iconColor: 'red' },
+            }),
+          ],
+        }),
+      });
+    });
+
+    expect(screen.getByText('Deploys')).toBeInTheDocument();
+  });
+
+  it('hides a row annotation control when the row is collapsed', () => {
+    renderRow({
+      collapse: true,
+      $data: new DashboardDataLayerSet({
+        annotationLayers: [
+          new DashboardAnnotationsDataLayer({
+            name: 'Deploys',
+            isEnabled: true,
+            isHidden: false,
+            query: { name: 'Deploys', enable: true, iconColor: 'red' },
+          }),
+        ],
+      }),
+    });
+
+    expect(screen.queryByText('Deploys')).not.toBeInTheDocument();
   });
 });

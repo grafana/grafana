@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	alertingModels "github.com/grafana/alerting/models"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -119,7 +121,10 @@ func (t *ReceiverTestingService) PatchIntegrationAndTest(ctx context.Context, us
 
 func (t *ReceiverTestingService) authorizeEdits(ctx context.Context, user identity.Requester, rcv *models.Receiver, integration, existing *models.Integration) error {
 	// if user does not have permissions to update protected, check the diff and return error if there is a change in protected fields
-	canUpdateProtected, _ := t.authz.HasUpdateProtected(ctx, user, rcv)
+	canUpdateProtected, err := t.authz.HasUpdateProtected(ctx, user, rcv)
+	if err != nil && !errors.Is(err, ngalertac.ErrAuthorizationBase) {
+		return fmt.Errorf("failed to check protected fields permission: %w", err)
+	}
 	if canUpdateProtected {
 		return nil
 	}
@@ -127,7 +132,7 @@ func (t *ReceiverTestingService) authorizeEdits(ctx context.Context, user identi
 	if len(diff) == 0 {
 		return nil
 	}
-	err := t.authz.AuthorizeUpdateProtected(ctx, user, rcv)
+	err = t.authz.AuthorizeUpdateProtected(ctx, user, rcv)
 	if err != nil {
 		return makeProtectedFieldsAuthzError(err, map[string][]schema.IntegrationFieldPath{
 			existing.UID: diff,

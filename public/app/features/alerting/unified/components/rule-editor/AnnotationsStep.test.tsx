@@ -1,14 +1,11 @@
-import { act } from '@testing-library/react';
 import type { JSX } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
-
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockDashboardApi, setupMswServer } from '../../mockApi';
-import { mockDashboardDto, mockDashboardSearchItem } from '../../mocks';
+import { mockDashboardSearchItem, mockDashboardV2Dto } from '../../mocks';
 import { getDefaultFormValues } from '../../rule-editor/formDefaults';
 import { type RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
@@ -50,18 +47,6 @@ function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {
 }
 
 describe('AnnotationsField', function () {
-  beforeEach(() => {
-    // The dashboard mocks are v1 resources. New layouts select the v2 dashboard API, which
-    // rejects that shape.
-    setTestFlags({ dashboardNewLayouts: false });
-  });
-
-  afterEach(() => {
-    act(() => {
-      setTestFlags({});
-    });
-  });
-
   it('should display default list of annotations', function () {
     render(<FormWrapper />);
 
@@ -91,7 +76,7 @@ describe('AnnotationsField', function () {
       ]);
 
       mockDashboardApi(server).dashboard(
-        mockDashboardDto({
+        mockDashboardV2Dto({
           title: 'My dashboard',
           uid: 'dash-test-uid',
           panels: [
@@ -119,7 +104,7 @@ describe('AnnotationsField', function () {
       ]);
 
       mockDashboardApi(server).dashboard(
-        mockDashboardDto({
+        mockDashboardV2Dto({
           title: 'My dashboard',
           uid: 'dash-test-uid',
           panels: [
@@ -147,65 +132,26 @@ describe('AnnotationsField', function () {
       expect(annotationValueElements[1]).toHaveTextContent('2');
     });
 
-    it('should not show rows as panels', async function () {
+    it('should show a link to the selected panel once dashboard and panel are selected', async function () {
       mockDashboardApi(server).search([
         mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
       ]);
-
       mockDashboardApi(server).dashboard(
-        mockDashboardDto({
+        mockDashboardV2Dto({
           title: 'My dashboard',
           uid: 'dash-test-uid',
-          panels: [
-            { id: 1, title: 'Row panel', type: 'row' },
-            { id: 2, title: 'First panel', type: 'timeseries' },
-          ],
+          panels: [{ id: 2, title: 'Second panel', type: 'graph' }],
         })
       );
 
-      const { user } = render(<FormWrapper />);
+      const { user } = render(<FormWrapper formValues={{ annotations: [] }} />);
 
       await user.click(ui.setDashboardButton.get());
-      expect(ui.dashboardPicker.confirmButton.get()).toBeDisabled();
-
       await user.click(await screen.findByTitle('My dashboard'));
+      await user.click(await screen.findByText('Second panel'));
+      await user.click(ui.dashboardPicker.confirmButton.get());
 
-      expect(await screen.findByText('First panel')).toBeInTheDocument();
-      expect(screen.queryByText('Row panel')).not.toBeInTheDocument();
-    });
-
-    it('should show panels within collapsed rows', async function () {
-      mockDashboardApi(server).search([
-        mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
-      ]);
-
-      mockDashboardApi(server).dashboard(
-        mockDashboardDto({
-          title: 'My dashboard',
-          uid: 'dash-test-uid',
-          panels: [
-            { id: 1, title: 'First panel', type: 'timeseries' },
-            {
-              id: 2,
-              title: 'Row panel',
-              collapsed: true,
-              type: 'row',
-              panels: [{ id: 3, title: 'Panel within collapsed row', type: 'timeseries' }],
-            },
-          ],
-        })
-      );
-
-      const { user } = render(<FormWrapper />);
-
-      await user.click(ui.setDashboardButton.get());
-      expect(ui.dashboardPicker.confirmButton.get()).toBeDisabled();
-
-      await user.click(await screen.findByTitle('My dashboard'));
-
-      expect(await screen.findByText('First panel')).toBeInTheDocument();
-      expect(screen.queryByText('Row panel')).not.toBeInTheDocument();
-      expect(await screen.findByText('Panel within collapsed row')).toBeInTheDocument();
+      expect(await ui.panelAnnotation.find()).toHaveTextContent('Second panel');
     });
 
     // this test _should_ work in theory but something is stopping the 'onClick' function on the dashboard item
@@ -221,7 +167,7 @@ describe('AnnotationsField', function () {
       ]);
 
       mockDashboardApi(server).dashboard(
-        mockDashboardDto({
+        mockDashboardV2Dto({
           title: 'My dashboard',
           uid: 'dash-test-uid',
           panels: [
@@ -231,7 +177,7 @@ describe('AnnotationsField', function () {
         })
       );
       mockDashboardApi(server).dashboard(
-        mockDashboardDto({
+        mockDashboardV2Dto({
           title: 'My other dashboard',
           uid: 'dash-other-uid',
           panels: [{ id: 3, title: 'Third panel', type: 'timeseries' }],
@@ -282,13 +228,13 @@ describe('AnnotationsField', function () {
     ]);
 
     mockDashboardApi(server).dashboard(
-      mockDashboardDto({
+      mockDashboardV2Dto({
         title: 'My dashboard',
         uid: 'dash-test-uid',
         panels: [
           { id: 1, title: 'First panel', type: 'bar' },
           { id: 2, title: 'Second panel', type: 'graph' },
-          { type: 'timeseries' }, // Panels might NOT have id and title fields
+          { id: 3, type: 'timeseries' }, // Panels might NOT have a title
         ],
       })
     );
@@ -309,10 +255,14 @@ describe('AnnotationsField', function () {
     ]);
 
     mockDashboardApi(server).dashboard(
-      mockDashboardDto({
+      mockDashboardV2Dto({
         title: 'My dashboard',
         uid: 'dash-test-uid',
-        panels: [{ type: 'row' }, { type: 'timeseries' }, { id: 4, type: 'graph' }, { title: 'Graph', type: 'graph' }],
+        panels: [
+          { id: 2, type: 'timeseries' },
+          { id: 4, type: 'graph' },
+          { id: 5, title: 'Graph', type: 'graph' },
+        ],
       })
     );
 

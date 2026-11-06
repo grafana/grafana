@@ -26,9 +26,7 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 	s.reportSearchListBodies(ctx)
 
 	if req.Options.Key.Namespace == "" {
-		return &resourcepb.ListResponse{
-			Error: NewBadRequestError("namespace must be specified for list with filter"),
-		}, nil
+		return nil, GRPCStatusError(NewBadRequestError("namespace must be specified for list with filter"))
 	}
 
 	for _, v := range req.Options.Fields {
@@ -44,7 +42,7 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 
 	page, errRes, err := s.executeSearchListPage(ctx, req, srq, span)
 	if errRes != nil {
-		return &resourcepb.ListResponse{Error: errRes}, nil
+		return nil, GRPCStatusError(errRes)
 	}
 	searchErr := err
 	if searchErr == nil {
@@ -56,11 +54,11 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		if IsSelectableFieldNotIndexed(result) && req.NextPageToken == "" {
 			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerList, searchErr)
 		}
+		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", searchErr)
 		if err != nil {
 			return nil, err
 		}
-		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", searchErr)
-		return &resourcepb.ListResponse{Error: result}, nil
+		return nil, GRPCStatusError(result)
 	}
 
 	rsp := &resourcepb.ListResponse{
@@ -71,25 +69,29 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+		return nil, GRPCStatusError(&resourcepb.ErrorResult{
 			Code:    http.StatusUnauthorized,
 			Message: "no user found in context",
-		}}, nil
+		})
 	}
 
 	rows := page.rows
 	if s.authorizeBeforeFetchEnabled && page.folderIndexed {
 		rows, errRes = s.authorizeSearchRows(ctx, page.rows)
 		if errRes != nil {
-			return &resourcepb.ListResponse{Error: errRes}, nil
+			return nil, GRPCStatusError(errRes)
 		}
 	}
-	if result := s.consumeSearchRows(ctx, user, req, rows, s.readSearchRows(ctx, rows), page.resourceVersion, rsp); result != nil {
-		return result, nil
+	stopped, errRes := s.consumeSearchRows(ctx, user, req, rows, s.readSearchRows(ctx, rows), page.resourceVersion, rsp)
+	if errRes != nil {
+		return nil, GRPCStatusError(errRes)
+	}
+	if stopped {
+		return rsp, nil
 	}
 
 	if errRes := setSearchListContinueToken(req, page.response, page.rows, page.resourceVersion, false, rsp); errRes != nil {
-		return &resourcepb.ListResponse{Error: errRes}, nil
+		return nil, GRPCStatusError(errRes)
 	}
 
 	return rsp, nil
@@ -212,53 +214,37 @@ func decodeSearchListPage(response *resourcepb.ResourceSearchResponse, listRV in
 		page.resourceVersion = response.GetResourceVersion()
 	}
 
-	var rows []listSearchRow
-	switch response.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		table := response.GetResults()
-		if table == nil {
-			return page, nil
-		}
-		rows = make([]listSearchRow, 0, len(table.GetRows()))
-		for i, row := range table.GetRows() {
-			if row == nil || row.GetKey() == nil {
-				return nil, fmt.Errorf("resource table row %d has no key", i)
-			}
-			rows = append(rows, listSearchRow{
-				key:             row.GetKey(),
-				resourceVersion: row.GetResourceVersion(),
-				sortFields:      row.GetSortFields(),
-			})
-		}
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		folderField := slices.IndexFunc(response.GetFields(), func(f *resourcepb.ResourceSearchField) bool {
-			return f.GetName() == SEARCH_FIELD_FOLDER
-		})
-		page.folderIndexed = folderField >= 0
-		rows = make([]listSearchRow, 0, len(response.GetRows()))
-		for i, row := range response.GetRows() {
-			if row == nil || row.GetKey() == nil {
-				return nil, fmt.Errorf("field-value row %d has no key", i)
-			}
-			listRow := listSearchRow{
-				key:             row.GetKey(),
-				resourceVersion: row.GetResourceVersion(),
-				sortFields:      row.GetSortFields(),
-			}
-			for _, value := range row.GetValues() {
-				if folderField >= 0 && value.GetFieldIndex() == uint32(folderField) && len(value.GetStringValues()) > 0 {
-					listRow.folder = value.GetStringValues()[0]
-				}
-			}
-			rows = append(rows, listRow)
-		}
-	default:
+	if response.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return nil, fmt.Errorf("unsupported search result format %d", response.GetResultFormat())
+	}
+
+	folderField := slices.IndexFunc(response.GetFields(), func(f *resourcepb.ResourceSearchField) bool {
+		return f.GetName() == SEARCH_FIELD_FOLDER
+	})
+	page.folderIndexed = folderField >= 0
+	rows := make([]listSearchRow, 0, len(response.GetRows()))
+	for i, row := range response.GetRows() {
+		if row == nil || row.GetKey() == nil {
+			return nil, fmt.Errorf("field-value row %d has no key", i)
+		}
+		listRow := listSearchRow{
+			key:             row.GetKey(),
+			resourceVersion: row.GetResourceVersion(),
+			sortFields:      row.GetSortFields(),
+		}
+		for _, value := range row.GetValues() {
+			if folderField >= 0 && value.GetFieldIndex() == uint32(folderField) && len(value.GetStringValues()) > 0 {
+				listRow.folder = value.GetStringValues()[0]
+			}
+		}
+		rows = append(rows, listRow)
 	}
 	page.rows = rows
 	return page, nil
 }
 
+// stopped is true when a list limit ends consumption early and rsp.NextPageToken
+// is set; the caller must return rsp without replacing that continuation token.
 func (s *server) consumeSearchRows(
 	ctx context.Context,
 	user claims.AuthInfo,
@@ -267,23 +253,23 @@ func (s *server) consumeSearchRows(
 	values iter.Seq[*BackendReadResponse],
 	listRV int64,
 	rsp *resourcepb.ListResponse,
-) *resourcepb.ListResponse {
+) (stopped bool, errRes *resourcepb.ErrorResult) {
 	i := 0
 	pageBytes := 0
 	for val := range values {
 		if i >= len(rows) {
-			return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+			return false, &resourcepb.ErrorResult{
 				Code:    http.StatusInternalServerError,
 				Message: "batch resource reader returned too many responses",
-			}}
+			}
 		}
 		row := rows[i]
 		i++
 		if val == nil {
-			return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+			return false, &resourcepb.ErrorResult{
 				Code:    http.StatusInternalServerError,
 				Message: "empty resource read response",
-			}}
+			}
 		}
 		// The index can return a row storage no longer has, deleted or pruned before
 		// the index caught up. The store scan would not list it either, so it is left
@@ -316,22 +302,21 @@ func (s *server) consumeSearchRows(
 							"code", val.Error.Code,
 							"error", val.Error.Message,
 						)
-						return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+						return false, &resourcepb.ErrorResult{
 							Code:    http.StatusInternalServerError,
 							Message: "failed to read resource",
-						}}
+						}
 					}
 					continue
 				}
-				return &resourcepb.ListResponse{Error: errRes}
+				return false, errRes
 			}
 		}
-		if err := ErrorFromResponse(val.Error, nil); err != nil {
-			resErr := AsErrorResult(err)
-			if resErr.Code == http.StatusForbidden {
+		if val.Error != nil {
+			if val.Error.Code == http.StatusForbidden {
 				continue
 			}
-			return &resourcepb.ListResponse{Error: resErr}
+			return false, val.Error
 		}
 		pageBytes += len(val.Value)
 		rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
@@ -342,19 +327,19 @@ func (s *server) consumeSearchRows(
 			setListStopReason(ctx, reason)
 			token, err := NewSearchContinueToken(row.sortFields, listRV)
 			if err != nil {
-				return &resourcepb.ListResponse{Error: NewBadRequestError("invalid continue token")}
+				return false, NewBadRequestError("invalid continue token")
 			}
 			rsp.NextPageToken = token
-			return rsp
+			return true, nil
 		}
 	}
 	if i != len(rows) {
-		return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+		return false, &resourcepb.ErrorResult{
 			Code:    http.StatusInternalServerError,
 			Message: fmt.Sprintf("batch resource reader returned %d responses for %d requests", i, len(rows)),
-		}}
+		}
 	}
-	return nil
+	return false, nil
 }
 
 // authorizeSearchRows uses indexed folders; consumeSearchRows checks again if
@@ -375,7 +360,7 @@ func (s *server) authorizeSearchRows(ctx context.Context, rows []listSearchRow) 
 	for i, err := range authz.FilterAuthorized(ctx, s.access, batched, func(i int) authz.BatchCheckItem {
 		row := rows[i]
 		return listAuthorizationItem(row.key, row.key.Name, row.folder, row.resourceVersion)
-	}, authz.WithTracer(tracer)) {
+	}, authz.WithTracer(tracer), authz.WithSizeHint(len(rows))) {
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}

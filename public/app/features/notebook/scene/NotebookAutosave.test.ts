@@ -18,13 +18,23 @@ import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/l
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION, NOTEBOOK_AUTOSAVE_FAILED_REASON } from '../analytics/types';
-import { createNotebook, NotebookConflictError, updateNotebook } from '../api/notebookResource';
+import {
+  NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION,
+  NOTEBOOK_AUTOSAVE_FAILED_REASON,
+  NOTEBOOK_ENTRY_POINT,
+} from '../analytics/types';
+import {
+  createNotebook,
+  NotebookConflictError,
+  readNotebookResourceVersion,
+  updateNotebook,
+} from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { defaultSpec as defaultNotebookSpec, defaultVisualizationPanelKind } from '../types';
 
 import { changedCellTimeRange } from './NotebookAutosave';
+import { needsConfirmBeforeLeaving } from './NotebookPrompt';
 import { NotebookScene } from './NotebookScene';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -34,6 +44,7 @@ import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 jest.mock('../api/notebookResource', () => ({
   createNotebook: jest.fn(),
   updateNotebook: jest.fn(),
+  readNotebookResourceVersion: jest.fn(),
   NotebookConflictError: jest.requireActual('../api/notebookResource').NotebookConflictError,
 }));
 
@@ -51,6 +62,8 @@ jest.mock('../analytics/main', () => ({
     editSessionEnded: jest.fn(),
     autosaveFailed: jest.fn(),
     autosaveConflictResolved: jest.fn(),
+    autosaveRetried: jest.fn(),
+    viewOnlyChangesResolved: jest.fn(),
   },
 }));
 
@@ -375,6 +388,35 @@ describe('NotebookAutosave', () => {
     expect(scene.autosave.state.status).toBe('saved');
   });
 
+  it('reports the Retry button with how many saves had failed in a row, and sends the save again', async () => {
+    const scene = activateEditing();
+    jest.mocked(NotebookAnalytics.autosaveRetried).mockClear();
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    scene.autosave.retryFromButton();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(NotebookAnalytics.autosaveRetried).toHaveBeenCalledTimes(1);
+    expect(NotebookAnalytics.autosaveRetried).toHaveBeenCalledWith(scene.state.uid ?? '', 1);
+    expect(scene.autosave.state.status).toBe('saved');
+  });
+
+  // The overwrite also goes through `retry`, and is already reported as the answer to the conflict prompt.
+  it('does not count a retry that is not the button', async () => {
+    const scene = activateEditing();
+    jest.mocked(NotebookAnalytics.autosaveRetried).mockClear();
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    scene.autosave.retry();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(NotebookAnalytics.autosaveRetried).not.toHaveBeenCalled();
+  });
+
   it('reports increasing attempts for failures in a row, and starts over after a save lands', async () => {
     const scene = activateEditing();
     jest
@@ -632,6 +674,123 @@ describe('NotebookAutosave', () => {
     expect(scene.autosave.state.status).toBe('saved');
     expect(scene.autosave.state.isConflict).toBe(false);
     expect(scene.autosave.state.savedResourceVersion).toBe('1757');
+  });
+
+  it('overwrites from saveDocumentChange without resending the stale resourceVersion, and does not leave the choice behind', async () => {
+    const scene = activateEditing();
+    jest.mocked(updateNotebook).mockResolvedValue({ generation: 3, resourceVersion: '1757' });
+
+    editFirstCell(scene, 'Hello world');
+    await scene.autosave.saveDocumentChange({ overwrite: true });
+    editFirstCell(scene, 'Hello again');
+    await scene.autosave.saveDocumentChange();
+
+    expect(jest.mocked(updateNotebook).mock.calls[0][2]).toBeUndefined();
+    expect(jest.mocked(updateNotebook).mock.calls[1][2]).toBe('1757');
+  });
+
+  it('still sends a chosen overwrite queued behind an in-flight save that conflicts, without a second prompt', async () => {
+    let finishFirstSave = () => {};
+    jest.mocked(updateNotebook).mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          finishFirstSave = () => reject(new NotebookConflictError('the object has been modified'));
+        })
+    );
+    jest.mocked(updateNotebook).mockResolvedValueOnce({ generation: 3, resourceVersion: '1757' });
+    const publish = jest.spyOn(appEvents, 'publish');
+
+    const scene = activateEditing();
+    editFirstCell(scene, 'First');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    // Arrives while the first save is in flight, so it queues behind it.
+    editFirstCell(scene, 'Second');
+    const saved = scene.autosave.saveDocumentChange({ overwrite: true });
+    finishFirstSave();
+    await saved;
+
+    expect(updateNotebook).toHaveBeenCalledTimes(2);
+    expect(jest.mocked(updateNotebook).mock.calls[1][2]).toBeUndefined();
+    expect(scene.autosave.state.status).toBe('saved');
+    expect(publish.mock.calls.some(([published]) => published instanceof ShowConfirmModalEvent)).toBe(false);
+  });
+
+  it('awaitInFlightSave returns without bringing a waiting edit forward', async () => {
+    const scene = activateEditing();
+    editFirstCell(scene, 'Waiting for the debounce');
+
+    await scene.autosave.awaitInFlightSave();
+
+    expect(updateNotebook).not.toHaveBeenCalled();
+    expect(scene.autosave.state.status).toBe('pending');
+  });
+
+  it('awaitInFlightSave waits for a save that is already running, and does not throw when it failed', async () => {
+    let finishSave = () => {};
+    jest.mocked(updateNotebook).mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          finishSave = () => reject(new NotebookConflictError('the object has been modified'));
+        })
+    );
+    const scene = activateEditing();
+    editFirstCell(scene, 'First');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    let settled = false;
+    const waiting = scene.autosave.awaitInFlightSave().then(() => {
+      settled = true;
+    });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+
+    finishSave();
+    await waiting;
+
+    expect(settled).toBe(true);
+  });
+
+  describe('isSavedElsewhere', () => {
+    it('is false before this scene has a version to compare, without asking the server', async () => {
+      const scene = activateEditing();
+
+      expect(await scene.autosave.isSavedElsewhere()).toBe(false);
+      expect(readNotebookResourceVersion).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['the server still holds this version', '5', false],
+      ['someone else saved since', '9', true],
+      ['the server reports no version', undefined, false],
+    ])('compares with the server: %s', async (_label, serverVersion, expected) => {
+      const scene = activateEditing();
+      scene.autosave.setState({ savedResourceVersion: '5' });
+      jest.mocked(readNotebookResourceVersion).mockResolvedValue(serverVersion);
+
+      expect(await scene.autosave.isSavedElsewhere()).toBe(expected);
+    });
+
+    // Otherwise this scene's own save, landing during the check, would read as someone else's.
+    it('lets a save of its own that is already running land before comparing', async () => {
+      let finishSave = () => {};
+      jest.mocked(updateNotebook).mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishSave = () => resolve({ generation: 3, resourceVersion: '7' });
+          })
+      );
+      jest.mocked(readNotebookResourceVersion).mockResolvedValue('7');
+      const scene = activateEditing();
+      scene.autosave.setState({ savedResourceVersion: '5' });
+      editFirstCell(scene, 'Mine');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      const checking = scene.autosave.isSavedElsewhere();
+      finishSave();
+
+      expect(await checking).toBe(false);
+    });
   });
 
   it('does not raise the conflict prompt once the scene has deactivated, so it cannot appear on a page the user navigated to', async () => {
@@ -1043,6 +1202,41 @@ describe('NotebookAutosave', () => {
       expect(scene.state.$timeRange.state.from).toBe('now-6h');
     });
 
+    // The scene ignores a stored hideTimepicker, so a write that did not touch the time settings has to
+    // send the same false it shows, not the stored true it was loaded from.
+    it('writes a stored hideTimepicker back as false on a save that did not touch the time settings', async () => {
+      const scene = transformNotebookToScene({
+        apiVersion: 'notebook.grafana.app/v2beta1',
+        kind: 'Notebook',
+        metadata: { name: 'nb-1', resourceVersion: '1', generation: 1, creationTimestamp: '2026-07-01T00:00:00Z' },
+        spec: {
+          ...defaultNotebookSpec(),
+          title: 'My notebook',
+          timeSettings: { ...defaultNotebookSpec().timeSettings, hideTimepicker: true },
+          elements: { md1: { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: 'Hi' } } } } },
+          layout: {
+            kind: 'NotebookLayout',
+            spec: {
+              cells: [
+                {
+                  kind: 'NotebookLayoutItem',
+                  spec: { element: { kind: 'ElementReference', name: 'md1' }, source: 'user' },
+                },
+              ],
+            },
+          },
+        },
+      });
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      editFirstCell(scene, 'Hello world');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(updateNotebook).mock.calls[0][1].timeSettings.hideTimepicker).toBe(false);
+    });
+
     // setCellTimeRange clears the panel's own one-sided override to make room for the cell range, so a
     // restore that only put the cell range back would cost the notebook a timeFrom it has.
     it("puts back the panel's own one-sided override the reader's cell range displaced", () => {
@@ -1232,6 +1426,7 @@ describe('NotebookAutosave', () => {
         expect(scene.state.isEditing).toBe(true);
         expect(panel.state.fieldConfig.overrides).toHaveLength(1);
         expect(savedVizConfigs()[0]?.spec.fieldConfig.overrides).toHaveLength(1);
+        expect(NotebookAnalytics.viewOnlyChangesResolved).toHaveBeenLastCalledWith(scene.state.uid ?? '', 'keep', 1);
 
         stopPanel();
       });
@@ -1264,6 +1459,21 @@ describe('NotebookAutosave', () => {
         expect(scene.state.isEditing).toBe(true);
         expect(panel.state.fieldConfig.overrides).toEqual([]);
         expect(updateNotebook).not.toHaveBeenCalled();
+        expect(NotebookAnalytics.viewOnlyChangesResolved).toHaveBeenLastCalledWith(scene.state.uid ?? '', 'discard', 1);
+
+        stopPanel();
+      });
+
+      // The Cancel button, the close button and Escape all reach the modal's onDismiss.
+      it('reports cancelling, and leaves the notebook as a read', async () => {
+        const { scene, stopPanel, payload } = await readAndRecolour();
+        jest.mocked(NotebookAnalytics.viewOnlyChangesResolved).mockClear();
+
+        payload?.onDismiss?.();
+
+        expect(scene.state.isEditing).toBeFalsy();
+        expect(NotebookAnalytics.viewOnlyChangesResolved).toHaveBeenCalledTimes(1);
+        expect(NotebookAnalytics.viewOnlyChangesResolved).toHaveBeenCalledWith(scene.state.uid ?? '', 'cancel', 1);
 
         stopPanel();
       });
@@ -1394,6 +1604,144 @@ describe('NotebookAutosave', () => {
 
       expect(savedVizConfigs()[0]?.group).toBe('table');
 
+      stopPanel();
+    });
+
+    it('saves an explicit visualization choice with the same plugin', async () => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      const stopPanel = panel.activate();
+      await jest.advanceTimersByTimeAsync(0);
+      scene.onEnterEditMode();
+      jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+        panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+      });
+
+      await scene.state.body.changePanelVisualization(cell, {
+        name: 'Bars',
+        pluginId: panel.state.pluginId,
+        hash: 'bars',
+        options: { ...panel.state.options, fillOpacity: 42 },
+      });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(savedVizConfigs().at(-1)?.spec.options).toMatchObject({ fillOpacity: 42 });
+      stopPanel();
+    });
+
+    it.each([undefined, 'nb-1'])('does not persist visualization edits in a draft with uid %s', async (uid) => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      scene.setState({ uid, isDraft: true });
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      await cell.onVisualizationChange({ name: 'Table', pluginId: 'table', hash: 'table' });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(panel.state.pluginId).toBe('table');
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(createNotebook).not.toHaveBeenCalled();
+      expect(updateNotebook).not.toHaveBeenCalled();
+
+      scene.editHistory.undo();
+      await scene.state.body.whenVizChangesSettled();
+      scene.editHistory.redo();
+      await scene.state.body.whenVizChangesSettled();
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(panel.state.pluginId).toBe('table');
+      expect(createNotebook).not.toHaveBeenCalled();
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
+    it('leaves edit mode without waiting for visualization undo and saves its eventual result', async () => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      const stopPanel = panel.activate();
+      await jest.advanceTimersByTimeAsync(0);
+      scene.onEnterEditMode();
+
+      let finishUndo!: () => void;
+      const undoBlocked = new Promise<void>((resolve) => {
+        finishUndo = resolve;
+      });
+      jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+        if (pluginId === 'timeseries') {
+          await undoBlocked;
+        }
+        panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+      });
+
+      await scene.state.body.changePanelVisualization(cell, {
+        name: 'Table',
+        pluginId: 'table',
+        hash: 'table',
+        options: { showHeader: true },
+      });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+      expect(savedVizConfigs().at(-1)?.group).toBe('table');
+
+      scene.editHistory.undo();
+      scene.onTitleChange('Saved while the visualization loads');
+      scene.onExitEditMode();
+      expect(scene.state.isEditing).toBe(false);
+      expect(jest.mocked(updateNotebook).mock.calls.at(-1)?.[1].title).toBe('Saved while the visualization loads');
+
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+      expect(panel.state.pluginId).toBe('table');
+      expect(scene.state.isEditing).toBe(false);
+
+      finishUndo();
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(scene.state.isEditing).toBe(false);
+      expect(savedVizConfigs().at(-1)?.group).toBe('timeseries');
+      stopPanel();
+    });
+
+    it('flushes other edits immediately on teardown without waiting for visualization undo', async () => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      const stopPanel = panel.activate();
+      await jest.advanceTimersByTimeAsync(0);
+      scene.onEnterEditMode();
+
+      let finishUndo!: () => void;
+      const undoBlocked = new Promise<void>((resolve) => {
+        finishUndo = resolve;
+      });
+      jest.spyOn(panel, 'changePluginType').mockImplementation(async (pluginId, options, fieldConfig) => {
+        if (pluginId === 'timeseries') {
+          await undoBlocked;
+        }
+        panel.setState({ pluginId, options: options ?? {}, fieldConfig: fieldConfig ?? panel.state.fieldConfig });
+      });
+
+      await scene.state.body.changePanelVisualization(cell, {
+        name: 'Table',
+        pluginId: 'table',
+        hash: 'table',
+        options: { showHeader: true },
+      });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+      expect(savedVizConfigs().at(-1)?.group).toBe('table');
+
+      scene.editHistory.undo();
+      scene.onTitleChange('Changed before leaving');
+      expect(needsConfirmBeforeLeaving(scene)).toBe(true);
+      const markEdited = jest.spyOn(scene.autosave, 'markVisualizationEdited');
+      deactivate();
+      deactivate = undefined;
+      expect(jest.mocked(updateNotebook).mock.calls.at(-1)?.[1].title).toBe('Changed before leaving');
+      const savesBeforeUndoSettles = jest.mocked(updateNotebook).mock.calls.length;
+      await jest.advanceTimersByTimeAsync(0);
+      finishUndo();
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(panel.state.pluginId).toBe('timeseries');
+      expect(markEdited).toHaveBeenCalledWith('panel1', true);
+      expect(updateNotebook).toHaveBeenCalledTimes(savesBeforeUndoSettles + 1);
+      expect(savedVizConfigs().at(-1)?.group).toBe('timeseries');
       stopPanel();
     });
 
@@ -1859,6 +2207,16 @@ describe('NotebookAutosave', () => {
       expect(scene.state.uid).toBe('nb-new');
       expect(NotebookAnalytics.created).toHaveBeenCalledTimes(1);
       expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb-new', 'notebook_list', 1);
+    });
+
+    it('attributes creation to the launcher that opened the blank notebook', async () => {
+      const scene = activateBlankEditing();
+      scene.autosave.setEntryPoint(NOTEBOOK_ENTRY_POINT.QUICK_ADD);
+
+      typeIntoIt(scene, 'first thought');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb-new', 'quick_add', 1);
     });
 
     it('is not created at all when nothing was typed', async () => {

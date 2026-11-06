@@ -13,22 +13,25 @@ const (
 	// StateKVOrgID and StateKVNamespace address the reconciler's records in
 	// Grafana's kv_store table. Reconciliation state is not org-scoped, so it
 	// uses org 0 like the unified storage dualwrite state does.
-	StateKVOrgID     int64 = 0
-	StateKVNamespace       = "zanzana.reconciler"
+	StateKVOrgID           int64 = 0
+	StateKVNamespace             = "zanzana.reconciler"
+	GlobalRolesKVNamespace       = "zanzana.reconciler.global_roles"
 
 	// stateVersion identifies the expected-tuple computation. Bump it whenever
 	// a change makes tuples written by earlier versions wrong, so that every
 	// namespace reconciles on its next authorization request instead of waiting
 	// out the reconciler interval.
-	stateVersion = 1
+	stateVersion = 2
 )
 
-// StateStore persists which namespaces have been reconciled, keyed by
-// namespace. It is satisfied by *kvstore.NamespacedKVStore.
+// StateStore persists namespace completion records and cluster-scoped GlobalRole snapshots.
+// Snapshots use a separate KV namespace from completion records.
 type StateStore interface {
 	Get(ctx context.Context, key string) (string, bool, error)
 	Set(ctx context.Context, key string, value string) error
 	Del(ctx context.Context, key string) error
+	GetGlobalRoleSnapshot(ctx context.Context, key string) (string, bool, error)
+	SetGlobalRoleSnapshot(ctx context.Context, key, value string) error
 }
 
 // namespaceState records a completed reconciliation. Its purpose is to identify

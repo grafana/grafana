@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -114,7 +115,7 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 func TestAlertmanagerConfigStoreSave(t *testing.T) {
 	orgID := int64(1)
 
-	dbCfg := v1.AMConfigDB{}
+	dbCfg := store.AMConfigDB{}
 	require.NoError(t, json.Unmarshal([]byte(defaultConfig), &dbCfg))
 	cfg := *v1.ToModel(&dbCfg)
 	expectedCfg, err := SerializeAlertmanagerConfig(cfg)

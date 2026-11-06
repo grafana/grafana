@@ -48,6 +48,8 @@ type Service struct {
 	userPermissionsEvaluator accesscontrol.UserPermissionsEvaluator
 	userPermissionsResolver  UserPermissionsResolver
 	actionResolver           accesscontrol.ActionResolver
+	legacyScopeResolvers     *accesscontrol.ScopeResolverRegistry
+	legacyScopeNamespace     types.NamespaceFormatter
 	identityStore            legacy.LegacyIdentityStore
 	settings                 Settings
 
@@ -71,7 +73,8 @@ type Service struct {
 }
 
 type UserPermissionsResolver interface {
-	ResolveCurrentUserPermissions(ctx context.Context, user identity.Requester) ([]accesscontrol.Permission, error)
+	ResolveCurrentUserPermissions(ctx context.Context, user identity.Requester, skipCache bool) ([]accesscontrol.Permission, error)
+	ResolvePermissionScopes(context.Context, identity.Requester, []accesscontrol.Permission) ([]accesscontrol.Permission, error)
 }
 
 type Settings struct {
@@ -639,18 +642,21 @@ func validateNamespace(ctx context.Context, nameSpace string) (types.NamespaceIn
 	if nameSpace == "" {
 		return types.NamespaceInfo{}, status.Error(codes.InvalidArgument, "namespace is required")
 	}
+
 	authInfo, has := types.AuthInfoFrom(ctx)
 	if !has {
 		return types.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
 	}
+
 	if !types.NamespaceMatches(authInfo.GetNamespace(), nameSpace) {
 		return types.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match")
 	}
 
 	ns, err := types.ParseNamespace(nameSpace)
 	if err != nil {
-		return types.NamespaceInfo{}, err
+		return types.NamespaceInfo{}, fmt.Errorf("could not parse namespace: %w", err)
 	}
+
 	return ns, nil
 }
 

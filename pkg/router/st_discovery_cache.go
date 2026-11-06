@@ -91,6 +91,11 @@ func (c *stackDiscoveryCache) add(key string, entry stackDiscoveryEntry) {
 	defer c.mu.Unlock()
 	// Remove first, so that the evict callback subtracts a replaced entry.
 	c.entries.Remove(key)
+	if entry.size > c.limit {
+		// It could never fit, and making room would evict every other stack's
+		// entries before dropping it too.
+		return
+	}
 	c.entries.Add(key, entry)
 	c.bytes += entry.size
 	for c.bytes > c.limit && c.entries.Len() > 0 {
@@ -106,20 +111,11 @@ func stackDiscoveryKey(host *singleTenantTarget, req *http.Request) string {
 }
 
 // cacheableDiscoveryRequest reports whether a discovery request may be served
-// from the cache. Discovery reads no query parameter but OpenAPI's hash, so
-// any other only adds keys for callers to fill the cache with.
+// from the cache. Discovery reads no query parameter, and forwardDiscovery
+// strips OpenAPI's hash, so any query only adds keys for callers to fill the
+// cache with.
 func cacheableDiscoveryRequest(req *http.Request) bool {
-	if req.Method != http.MethodGet || req.Header.Get("Range") != "" {
-		return false
-	}
-	query := req.URL.Query()
-	switch len(query) {
-	case 0:
-		return true
-	case 1:
-		return len(query["hash"]) == 1
-	}
-	return false
+	return req.Method == http.MethodGet && req.Header.Get("Range") == "" && req.URL.RawQuery == ""
 }
 
 // fetchedStackDiscovery is the result of one fetch, shared by every caller
@@ -138,6 +134,14 @@ type fetchedStackDiscovery struct {
 // an answer for the caller who fetched it, so each other caller fetches its
 // own.
 func (st *singleTenantFallback) forwardDiscovery(host *singleTenantTarget, w http.ResponseWriter, req *http.Request) {
+	// A stack answers an OpenAPI hash that is no longer its document's with a
+	// redirect, which the router rejects as a 502. Clients get hashes from
+	// /openapi/v3 indexes cached before a stack changed, so never send one;
+	// the router's own OpenAPI path strips it too.
+	if req.URL.Query().Has("hash") {
+		req = req.Clone(req.Context())
+		stripHashQueryParam(req)
+	}
 	if st.discoveryDocs == nil || !cacheableDiscoveryRequest(req) {
 		st.forward(host, "", w, req, nil)
 		return
@@ -184,7 +188,7 @@ func (st *singleTenantFallback) forwardDiscovery(host *singleTenantTarget, w htt
 func (st *singleTenantFallback) fetchDiscovery(host *singleTenantTarget, key string, req *http.Request) fetchedStackDiscovery {
 	// Shared by every caller waiting on it, so one caller leaving must not
 	// cancel it.
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(req.Context()), singleTenantDiscoveryFetchTimeout)
+	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(req.Context()), singleTenantDiscoveryFetchTimeout, errRouterDeadline)
 	defer cancel()
 	// Without conditional headers the stack sends a body to cache, never a 304.
 	proxyReq := req.Clone(ctx)
@@ -204,7 +208,7 @@ func (st *singleTenantFallback) fetchDiscovery(host *singleTenantTarget, key str
 	}
 	if cacheable && rec.statusCode == http.StatusOK {
 		f.entry.header = openAPICacheHeaders(rec.header)
-		f.entry.etag = quoteETag(hashHex(rec.body.String()))
+		f.entry.etag = quoteETag(hashHexBytes(rec.body.Bytes()))
 		f.entry.expiresAt = time.Now().Add(singleTenantDiscoveryCacheTTL)
 		st.discoveryDocs.add(key, f.entry)
 		f.stored = true

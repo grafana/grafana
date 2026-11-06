@@ -20,9 +20,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 
+	"github.com/grafana/grafana/apps/live/pkg/model"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/live/model"
 )
 
 // WatchRunner will start a watch task and broadcast results

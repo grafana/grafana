@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	grpccodes "google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,6 +22,7 @@ import (
 // Package-level errors.
 var (
 	ErrNotImplementedYet = errors.New("not implemented yet")
+	errQueueTimeout      = errors.New("request timed out in QOS queue")
 
 	ErrResourceAlreadyExists error = &apierrors.StatusError{
 		ErrStatus: metav1.Status{
@@ -91,6 +93,25 @@ func StatusError(res *resourcepb.ErrorResult) error {
 
 func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	return resourceutil.StatusErrorFromResponse(respErr, err)
+}
+
+func StatusErrorFromGRPC(err error) error {
+	return resourceutil.StatusErrorFromGRPC(err)
+}
+
+// GRPCStatusError converts an ErrorResult into a gRPC status error with the
+// mapped code and the full ErrorResult attached as a status detail, so clients
+// can recover the original HTTP/Kubernetes semantics. Returns nil for nil input.
+func GRPCStatusError(result *resourcepb.ErrorResult) error {
+	if result == nil {
+		return nil
+	}
+	st, err := status.New(grpcCodeFromErrorResult(result), result.Message).WithDetails(result)
+	if err != nil {
+		errorMappingLog.Error("Failed to attach ErrorResult details to gRPC status", "error", err, "code", result.Code, "reason", result.Reason)
+		return status.Error(grpccodes.Internal, "failed to encode error details")
+	}
+	return st.Err()
 }
 
 func NewTooManyRequestsError(msg string) *resourcepb.ErrorResult {

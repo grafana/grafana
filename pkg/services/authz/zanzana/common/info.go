@@ -9,6 +9,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
@@ -143,6 +144,7 @@ func getTypeAndRelations(group, resource string) (string, []string) {
 func newResource(
 	typ, group, resource, name, folder, subresource string, relations []string,
 ) ResourceInfo {
+	group, resource, subresource = datasourcek8s.AuthorizationResource(group, resource, subresource)
 	// Global variables and library panels intentionally use root-folder permissions.
 	if group != "dashboard.grafana.app" || (resource != "variables" && resource != "librarypanels") {
 		folder = foldermodel.ToLegacyFolderUID(folder)
@@ -204,7 +206,8 @@ func (r ResourceInfo) ResourceIdent() string {
 }
 
 func (r ResourceInfo) FolderIdent() string {
-	if r.folder == "" {
+	// Wildcard access is checked at the group-resource level; OpenFGA rejects folder:*.
+	if r.folder == "" || r.folder == "*" {
 		return ""
 	}
 

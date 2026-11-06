@@ -1,7 +1,7 @@
 import { omit } from 'lodash';
 
-import { type AnnotationQuery, getDataSourceRef, isEmptyObject, type TimeRange } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { type AnnotationQuery, isEmptyObject, type TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
@@ -9,6 +9,7 @@ import {
   LocalValueVariable,
   type QueryVariable,
   sceneGraph,
+  type SceneDataLayerProvider,
   type SceneDataQuery,
   SceneDataTransformer,
   type SceneObject,
@@ -69,7 +70,8 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
-import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
+import { normalizeDataSourceRef } from './normalizeDataSourceRef';
+import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToSchemaV2Variables';
 import { buildTimeSettingsSpec } from './shared/timeSettings';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
@@ -357,7 +359,7 @@ export function vizPanelToSchemaV2(
   const subtitle =
     bakeRepeatValues && vizPanel.state.subtitle
       ? sceneGraph.interpolate(vizPanel, vizPanel.state.subtitle, undefined, 'text')
-      : undefined;
+      : vizPanel.state.subtitle;
 
   const elementSpec: PanelKind = {
     kind: 'Panel',
@@ -698,8 +700,15 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
   if (!(data instanceof DashboardDataLayerSet)) {
     return [];
   }
+  return annotationLayersToSchemaV2(data.state.annotationLayers, dsReferencesMapping);
+}
+
+export function annotationLayersToSchemaV2(
+  layers: SceneDataLayerProvider[],
+  dsReferencesMapping?: DSReferencesMapping
+): AnnotationQueryKind[] {
   const annotations: AnnotationQueryKind[] = [];
-  for (const layer of data.state.annotationLayers) {
+  for (const layer of layers) {
     if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
       continue;
     }
@@ -1041,23 +1050,6 @@ export function getAutoAssignedDSRef(
 
   // if type is not panels, annotations, or variables, throw error
   throw new Error(`Invalid type ${type} for getAutoAssignedDSRef`);
-}
-
-export function normalizeDataSourceRef(ds: DataSourceRef | string | null | undefined): DataSourceRef | undefined {
-  if (!ds) {
-    return undefined;
-  }
-
-  if (typeof ds === 'string') {
-    if (ds.startsWith('$')) {
-      return { uid: ds };
-    }
-
-    const instance = getDataSourceSrv().getInstanceSettings(ds);
-    return instance ? getDataSourceRef(instance) : { uid: ds };
-  }
-
-  return Object.keys(ds).length === 0 ? undefined : ds;
 }
 
 /**

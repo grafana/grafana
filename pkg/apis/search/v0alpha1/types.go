@@ -16,6 +16,7 @@ const (
 	// rejects the others.
 	KindSearchQuery         = "SearchQuery"
 	KindSearchResults       = "SearchResults"
+	KindGlobalSearchResults = "GlobalSearchResults"
 	KindTrashQuery          = "TrashQuery"
 	KindTrashResults        = "TrashResults"
 	KindHybridSearchQuery   = "HybridSearchQuery"
@@ -172,6 +173,21 @@ type SearchQuery struct {
 	Continue string `json:"continue,omitempty"`
 }
 
+// GlobalSearchQuery is the request body for POST
+// .../namespaces/{namespace}/global/search: a SearchQuery, and what only the
+// search across resource types offers.
+//
+// +k8s:deepcopy-gen=true
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type GlobalSearchQuery struct {
+	SearchQuery `json:",inline"`
+
+	// Access names verbs to check for each returned item against the caller:
+	// update, delete and set_permissions. Each item then says, in its access,
+	// whether the caller may do them. Only the returned page is checked.
+	Access []string `json:"access,omitempty"`
+}
+
 // TrashQuery is the request body for POST .../{resource}/trash. It is a
 // deliberately smaller subset of SearchQuery: trash documents index only the
 // standard fields, so there is no labelSelector and no faceting. Field
@@ -191,9 +207,7 @@ type TrashQuery struct {
 	Continue string `json:"continue,omitempty"`
 }
 
-// SearchResults is the response body for POST .../{resource}/search and POST
-// .../namespaces/{namespace}/global/search. On the global search, each item
-// names its own resource type.
+// SearchResults is the response body for POST .../{resource}/search.
 //
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -206,6 +220,56 @@ type SearchResults struct {
 	// Facets holds term counts per requested facet field. Counts are computed
 	// over a bounded sample window, so they are best-effort/approximate.
 	Facets map[string][]FacetTerm `json:"facets,omitempty"`
+}
+
+// GlobalSearchResults is the response body for POST
+// .../namespaces/{namespace}/global/search. Each item names its own resource
+// type.
+//
+// +k8s:deepcopy-gen=true
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type GlobalSearchResults struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Metadata GlobalResultsMetadata `json:"metadata"`
+	Items    []GlobalResultItem    `json:"items"`
+
+	// Facets holds term counts per requested facet field. Counts are computed
+	// over a bounded sample window, so they are best-effort/approximate.
+	Facets map[string][]FacetTerm `json:"facets,omitempty"`
+
+	// FolderPaths holds the path of each folder the items are in, keyed by the
+	// folder's name as items return it in the folder field. Only items that
+	// return the folder field are covered, and the root folder has no path.
+	// Paths are display data: they are left out when they cannot be found.
+	FolderPaths map[string][]FolderPathItem `json:"folderPaths,omitempty"`
+}
+
+// FolderPathItem is one folder of a folder path. Folder paths list ancestors
+// before descendants, ending with the containing folder. Like the folder API's
+// parents, the nearest unreadable folder or folder missing from the global
+// index appears first, by name only and marked detached. Its ancestors are
+// omitted.
+//
+// +k8s:deepcopy-gen=true
+type FolderPathItem struct {
+	Name     string `json:"name"`
+	Title    string `json:"title,omitempty"`
+	Detached bool   `json:"detached,omitempty"`
+}
+
+// GlobalResultsMetadata carries the pagination token, the total hit count, and
+// the types the search left out.
+//
+// +k8s:deepcopy-gen=true
+type GlobalResultsMetadata struct {
+	ResultsMetadata `json:",inline"`
+
+	// SkippedTypes lists the types, as {group}/{resource}, that the search left
+	// out, so the results are incomplete. A type is left out when the calling
+	// service may not search it on the user's behalf, or when this deployment
+	// does not check its results against the user. Both are deployment problems.
+	SkippedTypes []string `json:"skippedTypes,omitempty"`
 }
 
 // TrashResults is the response body for POST .../{resource}/trash. It has the
@@ -267,6 +331,20 @@ type ResultItem struct {
 	// Fields holds the JSON values for the requested (or default) fields.
 	// Array-typed fields are returned as JSON arrays. Absent fields are omitted.
 	Fields *common.Unstructured `json:"fields,omitempty"`
+}
+
+// GlobalResultItem is one global search hit.
+//
+// +k8s:deepcopy-gen=true
+type GlobalResultItem struct {
+	ResultItem `json:",inline"`
+
+	// Access says, for each verb the query's access names, whether the caller
+	// may do it to this item. A verb that could not be checked is left out, so
+	// a missing verb means unknown rather than no. It reflects permissions only:
+	// an item can still refuse an edit, for example when it is provisioned (see
+	// the manager fields).
+	Access map[string]bool `json:"access,omitempty"`
 }
 
 // ResourceRef is the full identity of a returned item. Namespace is implicit

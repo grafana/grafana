@@ -2,7 +2,9 @@ package folders
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -10,8 +12,11 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	folderservice "github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -29,6 +34,66 @@ var countedKinds = []string{
 	"dashboard.grafana.app/librarypanels",
 	"rules.alerting.grafana.app/alertrules",
 	"rules.alerting.grafana.app/recordingrules",
+}
+
+// countStatsErrors resolves the outcome of a GetStats call made by the folder count callers.
+//
+// raw is the exact call error, for logs and traces. It is not converted with StatusErrorFromGRPC
+// because that replaces unstructured gRPC 5xx messages with the generic status text and would
+// drop a federated.CountError wrapping a gRPC or API status.
+//
+// public is what the folder API returns: a sanitized 500 from countFailedError, except for
+// cancellations and timeouts, which keep their 499/504 status so caller disconnects are not
+// reported as server failures.
+func countStatsErrors(err error, deleting bool) (raw error, public error) {
+	if err == nil {
+		return nil, nil
+	}
+	if isCanceledOrTimedOut(err) {
+		return err, resource.StatusErrorFromGRPC(err)
+	}
+	return err, countFailedError(err, deleting)
+}
+
+func isCanceledOrTimedOut(err error) bool {
+	return isCanceled(err) || errors.Is(err, context.DeadlineExceeded) || resource.AsErrorResult(err).Code == http.StatusGatewayTimeout
+}
+
+func isCanceled(err error) bool {
+	return errors.Is(err, context.Canceled) || resource.AsErrorResult(err).Code == errutil.HTTPStatusClientClosedRequest
+}
+
+// countFailedError intentionally maps upstream failures to 500s: the folder API is a server
+// client here, so an upstream 4xx describes a server-side dependency failure, not a caller error.
+// deleting selects the delete-check message, so a refused delete says why it was refused.
+func countFailedError(err error, deleting bool) error {
+	var countErr *federated.CountError
+	resources := "folder contents"
+	if errors.As(err, &countErr) {
+		names := make([]string, 0, len(countErr.Resources))
+		for _, resource := range countErr.Resources {
+			switch resource {
+			case "alertrules", "alertrules.rules.alerting.grafana.app":
+				names = append(names, "alert rules")
+			case "recordingrules", "recordingrules.rules.alerting.grafana.app":
+				names = append(names, "recording rules")
+			case "library_elements", "librarypanels.dashboard.grafana.app":
+				names = append(names, "library panels")
+			}
+		}
+		if len(names) > 0 {
+			resources = strings.Join(names, ", ")
+		}
+	}
+	base := folderservice.ErrCountFailed
+	if deleting {
+		base = folderservice.ErrDeleteCountFailed
+	}
+	return base.Build(errutil.TemplateData{
+		Private: map[string]any{"resources": resources},
+		Public:  map[string]any{"resources": resources},
+		Error:   err,
+	})
 }
 
 type subCountREST struct {
@@ -81,19 +146,8 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		statsCtx, statsSpan := tracer.Start(ctx, "folders.subCountREST.Connect.GetStats")
-		stats, err := r.searcher.GetStats(statsCtx, &resourcepb.ResourceStatsRequest{
-			Namespace: ns.Value,
-			Kinds:     countedKinds,
-			Folder:    []string{name},
-		})
-		err = resource.StatusErrorFromResponse(stats.GetError(), err)
+		stats, err := r.getStats(ctx, ns.Value, name)
 		if err != nil {
-			_ = tracing.Error(statsSpan, err)
-		}
-		statsSpan.End()
-		if err != nil {
-			logging.FromContext(ctx).Error("Failed to get folder descendant counts", "namespace", ns.Value, "folder", name, "error", err)
 			responder.Error(tracing.Error(span, err))
 			return
 		}
@@ -109,4 +163,24 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 		responder.Object(200, rsp)
 	}), nil
+}
+
+// getStats has its own function so the span can be ended with defer and covers only the storage call.
+// The exact failure is logged and recorded on the span; the returned error is the public one.
+func (r *subCountREST) getStats(ctx context.Context, namespace, name string) (*resourcepb.ResourceStatsResponse, error) {
+	ctx, span := tracer.Start(ctx, "folders.subCountREST.getStats")
+	defer span.End()
+
+	stats, err := r.searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: namespace,
+		Kinds:     countedKinds,
+		Folder:    []string{name},
+	})
+	rawErr, publicErr := countStatsErrors(err, false)
+	if rawErr != nil {
+		_ = tracing.Error(span, rawErr)
+		logging.FromContext(ctx).Error("Failed to get folder descendant counts", "namespace", namespace, "folder", name, "error", rawErr)
+		return nil, publicErr
+	}
+	return stats, nil
 }

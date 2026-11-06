@@ -21,7 +21,6 @@ import (
 // job's status, and create no job. Reconciling again before the next interval must
 // leave sync status unchanged.
 func TestIntegrationProvisioning_GitSyncIntervalNoop(t *testing.T) {
-	t.Skip("flaky: job already running for repo")
 	helper := sharedGitHelper(t)
 	const repoName = "git-interval-noop"
 	helper.CreateSyncEnabledGitRepo(t, repoName, map[string][]byte{
@@ -81,17 +80,13 @@ func TestIntegrationProvisioning_GitSyncIntervalNoop(t *testing.T) {
 	require.Equal(t, expected, refreshed, "a no-op check must preserve the previous sync job's status")
 
 	helper.TriggerRepositoryReconciliation(t, repoName)
-	require.Never(t, func() bool {
+	common.Consistently(t, func(t *testing.T) {
 		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-		if !assert.NoError(t, err) {
-			return true
-		}
+		require.NoError(t, err)
 		current, err := common.FromUnstructured[provisioning.Repository](obj)
-		if !assert.NoError(t, err) {
-			return true
-		}
-		return !assert.Equal(t, refreshed, current.Status.Sync)
-	}, time.Second, common.WaitIntervalDefault, "reconciliation before the next interval must leave sync status unchanged")
+		require.NoError(t, err)
+		require.Equal(t, refreshed, current.Status.Sync, "reconciliation before the next interval must leave sync status unchanged")
+	}, time.Second, common.WaitIntervalDefault)
 
 	activeJobs, err := helper.Jobs.Resource.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err)

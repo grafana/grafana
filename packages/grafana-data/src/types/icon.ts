@@ -164,6 +164,7 @@ export const availableIconsIndex = {
   'gf-ml-alt': true,
   'gf-movepane-left': true,
   'gf-movepane-right': true,
+  'gf-notebook': true,
   'gf-portrait': true,
   'gf-service-account': true,
   'gf-show-context': true,
@@ -306,6 +307,7 @@ export const availableIconsIndex = {
   'dollar-alt': true,
   'ai-sparkle': true,
   'message-sparkles': true,
+  'ai-select': true,
   bitbucket: true,
   git: true,
   'tachometer-fast': true,
@@ -317,6 +319,7 @@ export const availableIconsIndex = {
   'cursor-logo': true,
   'github-copilot-logo': true,
   robot: true,
+  workflows: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

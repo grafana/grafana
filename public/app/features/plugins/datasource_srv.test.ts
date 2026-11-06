@@ -1,30 +1,51 @@
 import { type Observable, of } from 'rxjs';
 
 import {
+  AppEvents,
   type DataQuery,
   type DataQueryRequest,
   type DataQueryResponse,
   DataSourceApi,
+  type DataSourceConstructor,
   type DataSourceInstanceListItem,
+  type DataSourceJsonData,
   type DataSourceInstanceSettings,
   DataSourcePlugin,
+  type DataSourcePluginMeta,
+  type DataSourceRef,
+  type EventBus,
   type ScopedVars,
 } from '@grafana/data';
 import {
+  type DataSourceSrv,
+  getAppEvents,
   type GetDataSourceListFilters,
+  type MonitoringLogger,
   RuntimeDataSource,
+  setDataSourceSrv,
   setTemplateSrv,
   type TemplateSrv,
   type GetDataSourceInstanceListFilters,
+  getDataSourceInstance,
   getDataSourceInstanceList,
+  getDataSourceInstanceListItem,
   getDataSourceInstanceSettings,
   getDefaultDataSourceInstanceListItem,
+  registerRuntimeDataSourceInstance,
+  setAppEvents,
 } from '@grafana/runtime';
 import {
+  DataSourcePluginImportError,
   ExpressionDatasourceRef,
+  FALLBACK_TO_LEGACY_INSTANCE_WARNING,
+  getCachedPlugin,
+  getPluginIdFromDatasourceInstanceType,
   setDataSourceInstanceSettings,
+  setDataSourcePluginImporter,
+  setDatasourcePluginMetas,
   setExpressionDataSourceInstance,
 } from '@grafana/runtime/internal';
+import { mockLogger } from '@grafana/test-utils/unstable';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 
@@ -75,8 +96,14 @@ class TestRuntimeDataSource extends RuntimeDataSource {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const importDataSourceMock = jest.fn((_meta?: any) => Promise.resolve(new DataSourcePlugin(TestDataSource as any)));
+// TestDataSource deliberately does not extend DataSourceApi, so the loader's legacy patching runs.
+const importTestDataSource = (_meta?: DataSourcePluginMeta) =>
+  Promise.resolve(
+    new DataSourcePlugin<DataSourceApi<DataQuery, DataSourceJsonData>, DataQuery, DataSourceJsonData>(
+      TestDataSource as unknown as DataSourceConstructor<DataSourceApi<DataQuery, DataSourceJsonData>>
+    )
+  );
+const importDataSourceMock = jest.fn(importTestDataSource);
 
 jest.mock('./importer/pluginImporter', () => ({
   pluginImporter: {
@@ -87,14 +114,25 @@ jest.mock('./importer/pluginImporter', () => ({
 
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
-  getDatasourcePluginMeta: jest.fn(),
   refetchDatasourcePluginMetas: jest.fn(() => Promise.resolve()),
-  logPluginMetaError: jest.fn(),
-  logPluginMetaWarning: jest.fn(),
+  syncDatasourcePluginMetas: jest.fn(),
 }));
 
-const { getDatasourcePluginMeta, refetchDatasourcePluginMetas, logPluginMetaError, logPluginMetaWarning } =
-  jest.requireMock('@grafana/runtime/internal');
+const { refetchDatasourcePluginMetas, syncDatasourcePluginMetas } = jest.requireMock('@grafana/runtime/internal');
+
+// DatasourceSrv.get() passes its own importer; getDataSourceInstance() uses the registered one.
+setDataSourcePluginImporter((meta) => importDataSourceMock(meta));
+
+// Mirrors production semantics: one plugin meta per plugin id, shared across instances.
+function seedPluginMetas(settings: Record<string, { type: string; name: string; meta: object }>) {
+  const metas: Record<string, object> = {};
+  for (const ds of Object.values(settings)) {
+    const pluginId = getPluginIdFromDatasourceInstanceType(ds.type, ds.name);
+    metas[pluginId] ??= { id: pluginId, ...ds.meta };
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setDatasourcePluginMetas(metas as any);
+}
 
 const getBackendSrvGetMock = jest.fn();
 
@@ -207,13 +245,7 @@ describe('datasource_srv', () => {
 
     beforeEach(() => {
       importDataSourceMock.mockClear();
-      getDatasourcePluginMeta.mockReset();
-      // Mirrors production semantics: one plugin meta per plugin type, shared across instances.
-      getDatasourcePluginMeta.mockImplementation(async (type: string) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const entry = Object.values(dataSourceInit).find((d: any) => d.type === type) as any;
-        return entry?.meta ?? { id: type };
-      });
+      seedPluginMetas(dataSourceInit);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       dataSourceSrv.init(dataSourceInit as any, 'BBB');
     });
@@ -222,7 +254,7 @@ describe('datasource_srv', () => {
       it('should load plugin and create instance and set meta', async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const ds = (await dataSourceSrv.get('mmm')) as any;
-        expect(ds.meta).toBe(dataSourceInit.mmm.meta);
+        expect(ds.meta).toEqual({ id: 'test-db', ...dataSourceInit.mmm.meta });
         expect(ds.instanceSettings).toBe(dataSourceInit.mmm);
 
         // validate that it caches instance
@@ -381,11 +413,11 @@ describe('datasource_srv', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         freshSrv.init(dataSourceInit as any, 'BBB');
         const apiMeta = { id: 'test-db', metrics: true, fromApi: true };
-        getDatasourcePluginMeta.mockResolvedValueOnce(apiMeta);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setDatasourcePluginMetas({ 'test-db': apiMeta } as any);
 
         await freshSrv.loadDatasource('ZZZ');
 
-        expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-db');
         expect(importDataSourceMock).toHaveBeenCalledWith(apiMeta);
       });
 
@@ -393,17 +425,16 @@ describe('datasource_srv', () => {
         const freshSrv = new DatasourceSrv(templateSrv);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         freshSrv.init(dataSourceInit as any, 'BBB');
-        getDatasourcePluginMeta.mockResolvedValueOnce(null);
-        importDataSourceMock.mockClear();
-        logPluginMetaWarning.mockClear();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setDatasourcePluginMetas({ other: { id: 'other' } } as any);
+        const metaLogger = mockLogger('grafana/runtime.plugins.meta');
 
         await freshSrv.loadDatasource('ZZZ');
 
-        expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-db');
         expect(importDataSourceMock).toHaveBeenCalledWith(dataSourceInit.ZZZ.meta);
-        expect(logPluginMetaWarning).toHaveBeenCalledWith(
+        expect(metaLogger.logWarning).toHaveBeenCalledWith(
           expect.stringContaining('falling back to instanceSettings.meta'),
-          { key: 'ZZZ', pluginId: 'test-db' }
+          { key: 'uid-code-ZZZ', pluginId: 'test-db' }
         );
       });
     });
@@ -640,7 +671,23 @@ describe('datasource_srv', () => {
         expect(ds).toBe(runtimeDataSource);
       });
 
-      it('should forward the fetched settings to refetchDatasourcePluginMetas to avoid a second /api/frontend/settings request', async () => {
+      it('should reuse an already-fetched payload without a request', async () => {
+        const settings = {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          datasources: { ...dataSourceInit } as any,
+          defaultDatasource: 'aaa',
+        };
+        getBackendSrvGetMock.mockReset();
+        syncDatasourcePluginMetas.mockClear();
+
+        await dataSourceSrv.reload(settings);
+
+        expect(getBackendSrvGetMock).not.toHaveBeenCalled();
+        expect(syncDatasourcePluginMetas).toHaveBeenCalledWith(settings);
+        expect(dataSourceSrv.getInstanceSettings('mmm')?.name).toBe('mmm');
+      });
+
+      it('should sync the plugin metas from the fetched settings without refetching them', async () => {
         const settings = {
           datasources: { ...dataSourceInit },
           defaultDatasource: 'aaa',
@@ -648,11 +695,13 @@ describe('datasource_srv', () => {
         getBackendSrvGetMock.mockReset();
         getBackendSrvGetMock.mockReturnValueOnce(settings);
         refetchDatasourcePluginMetas.mockClear();
+        syncDatasourcePluginMetas.mockClear();
 
         await dataSourceSrv.reload();
 
         expect(getBackendSrvGetMock).toHaveBeenCalledTimes(1);
-        expect(refetchDatasourcePluginMetas).toHaveBeenCalledWith(settings);
+        expect(syncDatasourcePluginMetas).toHaveBeenCalledWith(settings);
+        expect(refetchDatasourcePluginMetas).not.toHaveBeenCalled();
       });
 
       it('should sync the new async instance-settings cache from the same fetched payload', async () => {
@@ -674,21 +723,6 @@ describe('datasource_srv', () => {
         expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
         // ...and the sync added no second /api/frontend/settings request.
         expect(getBackendSrvGetMock).toHaveBeenCalledTimes(1);
-      });
-
-      it('should log via logPluginMetaError when refetchDatasourcePluginMetas rejects', async () => {
-        getBackendSrvGetMock.mockReturnValueOnce({
-          datasources: { ...dataSourceInit },
-          defaultDatasource: 'aaa',
-        });
-        const error = new Error('boom');
-        refetchDatasourcePluginMetas.mockReturnValueOnce(Promise.reject(error));
-        logPluginMetaError.mockClear();
-
-        await dataSourceSrv.reload();
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        expect(logPluginMetaError).toHaveBeenCalledWith('Failed to refresh datasource plugin metadata', error);
       });
     });
 
@@ -713,6 +747,156 @@ describe('datasource_srv', () => {
           })
         ).toThrow();
       });
+    });
+  });
+
+  describe('runtime data sources shared with the async APIs', () => {
+    const regularSettings = {
+      Regular: { type: 'test-db', name: 'Regular', uid: 'uid-regular', meta: { id: 'test-db', metrics: true } },
+    };
+    const bootData = () => structuredClone(regularSettings) as unknown as Record<string, DataSourceInstanceSettings>;
+
+    type Register = (srv: DatasourceSrv, dataSource: RuntimeDataSource) => void;
+    const viaLegacy: Register = (srv, dataSource) => srv.registerRuntimeDataSource({ dataSource });
+    const viaAsync: Register = (_srv, dataSource) => registerRuntimeDataSourceInstance({ dataSource });
+
+    let srv: DatasourceSrv;
+    let logger: MonitoringLogger;
+
+    beforeEach(() => {
+      importDataSourceMock.mockClear();
+      setDataSourceInstanceSettings(bootData(), 'Regular');
+      srv = new DatasourceSrv(templateSrv);
+      srv.init(bootData(), 'Regular');
+      // Without a legacy service the fallbacks are inert, so the no-warning assertions would prove nothing.
+      setDataSourceSrv(srv);
+      logger = mockLogger('grafana/runtime.plugins.datasource');
+    });
+
+    afterEach(() => {
+      setDataSourceSrv(undefined as unknown as DataSourceSrv);
+    });
+
+    function expectNoFallbacksOrErrors() {
+      expect(logger.logWarning).not.toHaveBeenCalled();
+      expect(logger.logError).not.toHaveBeenCalled();
+    }
+
+    it('resolves a legacy registration to the same instance through getDataSourceInstance', async () => {
+      const runtime = new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime');
+      srv.registerRuntimeDataSource({ dataSource: runtime });
+
+      expect(await getDataSourceInstance(runtime.uid)).toBe(runtime);
+      expectNoFallbacksOrErrors();
+    });
+
+    it('resolves a legacy registration through the async settings and list-item lookups', async () => {
+      const runtime = new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime');
+      srv.registerRuntimeDataSource({ dataSource: runtime });
+
+      expect(await getDataSourceInstanceSettings(runtime.uid)).toBe(runtime.instanceSettings);
+      expect(await getDataSourceInstanceListItem(runtime.uid)).toMatchObject({
+        uid: 'uid-runtime',
+        type: 'grafana-runtime-datasource',
+      });
+      expectNoFallbacksOrErrors();
+    });
+
+    it('resolves an async registration to the same instance through the legacy service', async () => {
+      const runtime = new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime');
+      registerRuntimeDataSourceInstance({ dataSource: runtime });
+
+      expect(await srv.get(runtime.uid)).toBe(runtime);
+      expect(await srv.get(runtime.getRef())).toBe(runtime);
+      expect(srv.getInstanceSettings(runtime.uid)).toBe(runtime.instanceSettings);
+      expect(srv.getDataSourceSettingsByUid(runtime.uid)).toBe(runtime.instanceSettings);
+      expect(importDataSourceMock).not.toHaveBeenCalled();
+    });
+
+    it('resolves a template variable that interpolates to an async-registered uid', async () => {
+      const runtime = new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime');
+      registerRuntimeDataSourceInstance({ dataSource: runtime });
+      const scopedVars = { datasource: { text: 'Runtime', value: 'uid-runtime' } };
+
+      expect(srv.getInstanceSettings('${datasource}', scopedVars)?.rawRef).toEqual(runtime.getRef());
+      expect(await srv.get('${datasource}', scopedVars)).toBe(runtime);
+    });
+
+    it('leaves runtime data sources out of both list APIs', async () => {
+      srv.registerRuntimeDataSource({
+        dataSource: new TestRuntimeDataSource('grafana-runtime-datasource', 'via-legacy'),
+      });
+      registerRuntimeDataSourceInstance({
+        dataSource: new TestRuntimeDataSource('grafana-runtime-datasource', 'via-async'),
+      });
+
+      const legacyUids = srv.getList({ all: true }).map((ds) => ds.uid);
+      const asyncUids = (await getDataSourceInstanceList({ all: true })).map((ds) => ds.uid);
+
+      expect(legacyUids).toContain('uid-regular');
+      expect(asyncUids).toContain('uid-regular');
+      for (const uids of [legacyUids, asyncUids]) {
+        expect(uids).not.toContain('via-legacy');
+        expect(uids).not.toContain('via-async');
+      }
+    });
+
+    it.each([
+      ['legacy', viaLegacy],
+      ['async', viaAsync],
+    ])('lists a datasource variable pointing at a %s registration', (_api, register) => {
+      const variableSrv = {
+        getVariables: () => [{ type: 'datasource', name: 'runtimeVar', current: { value: 'uid-runtime' } }],
+        replace: (v: string) => v,
+      } as unknown as TemplateSrv;
+      srv = new DatasourceSrv(variableSrv);
+      srv.init(bootData(), 'Regular');
+      register(srv, new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime'));
+
+      expect(srv.getList({ all: true, variables: true }).map((ds) => ds.uid)).toContain('${runtimeVar}');
+    });
+
+    it.each([
+      ['legacy', viaLegacy],
+      ['async', viaAsync],
+    ])('keeps a %s registration visible to both APIs across reload and init', async (_api, register) => {
+      const runtime = new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime');
+      register(srv, runtime);
+      getBackendSrvGetMock.mockResolvedValueOnce({ datasources: bootData(), defaultDatasource: 'Regular' });
+
+      await srv.reload();
+      srv.init(bootData(), 'Regular');
+
+      expect(await srv.get(runtime.uid)).toBe(runtime);
+      expect(srv.getInstanceSettings(runtime.uid)).toBe(runtime.instanceSettings);
+      expect(await getDataSourceInstance(runtime.uid)).toBe(runtime);
+      expect(await getDataSourceInstanceSettings(runtime.uid)).toBe(runtime.instanceSettings);
+      expectNoFallbacksOrErrors();
+    });
+
+    it.each([
+      ['legacy', 'legacy', viaLegacy, viaLegacy],
+      ['legacy', 'async', viaLegacy, viaAsync],
+      ['async', 'legacy', viaAsync, viaLegacy],
+      ['async', 'async', viaAsync, viaAsync],
+    ])('throws on a duplicate uid registered via %s then %s', (_first, _second, registerFirst, registerSecond) => {
+      const first = new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime');
+      registerFirst(srv, first);
+
+      expect(() => registerSecond(srv, new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime'))).toThrow(
+        /already been registered/
+      );
+      expect(srv.getInstanceSettings('uid-runtime')).toBe(first.instanceSettings);
+    });
+
+    it.each([
+      ['legacy', viaLegacy],
+      ['async', viaAsync],
+    ])('throws when a %s registration reuses the uid of a regular data source', (_api, register) => {
+      expect(() => register(srv, new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-regular'))).toThrow(
+        /already been registered/
+      );
+      expect(srv.getInstanceSettings('uid-regular')?.name).toBe('Regular');
     });
   });
 
@@ -829,7 +1013,6 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
         filter({
           uid: ds.uid,
           type: ds.type,
-          apiVersion: ds.apiVersion,
           name: ds.name,
           meta: ds.meta,
         }),
@@ -938,5 +1121,173 @@ describe('reference resolution parity: template variable that interpolates to a 
     // The raw variable string is preserved as the identity, same as the legacy `$` branch.
     expect(settings?.name).toBe('${dsById}');
     expect(settings?.uid).toBe('${dsById}');
+  });
+});
+
+describe('instance parity: DatasourceSrv.get vs getDataSourceInstance', () => {
+  const DEFAULT_NAME = 'Alpha';
+
+  const parityTemplateSrv = {
+    getVariables: () => [{ type: 'datasource', name: 'ds', current: { value: 'uid-bravo' } }],
+    replace: (v: string) => v.replace('${ds}', 'uid-bravo'),
+  } as unknown as TemplateSrv;
+
+  const sources = {
+    Alpha: { id: 11, type: 'test-db', name: 'Alpha', uid: 'uid-alpha', meta: { id: 'test-db', metrics: true } },
+    Bravo: { id: 12, type: 'other-db', name: 'Bravo', uid: 'uid-bravo', meta: { id: 'other-db', metrics: true } },
+    '-- Grafana --': {
+      id: 0,
+      type: 'datasource',
+      name: '-- Grafana --',
+      uid: 'grafana',
+      meta: { id: 'grafana', builtIn: true, metrics: true },
+    },
+  };
+  const clone = () => structuredClone(sources) as unknown as Record<string, DataSourceInstanceSettings>;
+
+  const cases: Array<{ label: string; ref: string | null | Partial<DataSourceRef>; uid: string; type: string }> = [
+    { label: 'uid', ref: 'uid-alpha', uid: 'uid-alpha', type: 'test-db' },
+    { label: 'name', ref: 'Alpha', uid: 'uid-alpha', type: 'test-db' },
+    { label: 'numeric id', ref: '11', uid: 'uid-alpha', type: 'test-db' },
+    { label: 'ref object', ref: { uid: 'uid-bravo', type: 'other-db' }, uid: 'uid-bravo', type: 'other-db' },
+    { label: 'template variable', ref: '${ds}', uid: 'uid-bravo', type: 'other-db' },
+    { label: 'template variable in a ref', ref: { uid: '${ds}' }, uid: 'uid-bravo', type: 'other-db' },
+    { label: '"default"', ref: 'default', uid: 'uid-alpha', type: 'test-db' },
+    { label: 'null', ref: null, uid: 'uid-alpha', type: 'test-db' },
+    { label: 'empty string', ref: '', uid: 'uid-alpha', type: 'test-db' },
+    { label: 'type-only ref', ref: { type: 'other-db' }, uid: 'uid-bravo', type: 'other-db' },
+    { label: 'built-in by name', ref: '-- Grafana --', uid: 'grafana', type: 'grafana' },
+  ];
+
+  let srv: DatasourceSrv;
+  let logger: MonitoringLogger;
+  let originalAppEvents: EventBus;
+  const publish = jest.fn();
+
+  beforeEach(() => {
+    importDataSourceMock.mockReset();
+    // TestDataSource does not extend DataSourceApi, so every load also exercises the legacy patching.
+    importDataSourceMock.mockImplementation(importTestDataSource);
+    publish.mockClear();
+    originalAppEvents = getAppEvents();
+    setAppEvents({ publish } as unknown as EventBus);
+    setTemplateSrv(parityTemplateSrv);
+    setDataSourceInstanceSettings(clone(), DEFAULT_NAME);
+    seedPluginMetas(sources);
+    srv = new DatasourceSrv(parityTemplateSrv);
+    srv.init(clone(), DEFAULT_NAME);
+    // Arm the fallback so the "no fallback" assertions prove something.
+    setDataSourceSrv(srv);
+    logger = mockLogger('grafana/runtime.plugins.datasource');
+  });
+
+  afterEach(() => {
+    setAppEvents(originalAppEvents);
+    setDataSourceSrv(undefined as unknown as DataSourceSrv);
+  });
+
+  function expectNoFallback() {
+    expect(logger.logWarning).not.toHaveBeenCalledWith(FALLBACK_TO_LEGACY_INSTANCE_WARNING, expect.anything());
+  }
+
+  it.each(cases)('returns the same instance for a $label ref when get() loads first', async ({ ref, uid, type }) => {
+    const legacy = await srv.get(ref as DataSourceRef);
+    const runtime = await getDataSourceInstance(ref as DataSourceRef);
+
+    expect(runtime).toBe(legacy);
+    expect(legacy.uid).toBe(uid);
+    expect(legacy.type).toBe(type);
+    expect(importDataSourceMock).toHaveBeenCalledTimes(1);
+    expectNoFallback();
+  });
+
+  it.each(cases)(
+    'returns the same instance for a $label ref when getDataSourceInstance() loads first',
+    async ({ ref, uid, type }) => {
+      const runtime = await getDataSourceInstance(ref as DataSourceRef);
+      const legacy = await srv.get(ref as DataSourceRef);
+
+      expect(legacy).toBe(runtime);
+      expect(runtime.uid).toBe(uid);
+      expect(runtime.type).toBe(type);
+      expect(importDataSourceMock).toHaveBeenCalledTimes(1);
+      expectNoFallback();
+    }
+  );
+
+  it('patches an old-style plugin with the resolved plugin meta on both paths', async () => {
+    const legacy = await srv.get('-- Grafana --');
+
+    expect(legacy.meta).toEqual({ id: 'grafana', builtIn: true, metrics: true });
+    expect(importDataSourceMock).toHaveBeenCalledWith(legacy.meta);
+    expect(await getDataSourceInstance('grafana')).toBe(legacy);
+  });
+
+  it('shares one in-flight load between concurrent callers of both APIs', async () => {
+    const [legacy, runtime] = await Promise.all([srv.get('uid-alpha'), getDataSourceInstance('uid-alpha')]);
+
+    expect(runtime).toBe(legacy);
+    expect(importDataSourceMock).toHaveBeenCalledTimes(1);
+  });
+
+  describe('when the plugin import fails', () => {
+    beforeEach(() => {
+      importDataSourceMock.mockReset();
+      importDataSourceMock.mockRejectedValue(new Error('module not found'));
+    });
+
+    it('get() shows one alert, imports once and rejects with the legacy object', async () => {
+      await expect(srv.get('uid-alpha')).rejects.toEqual({ message: 'Datasource: uid-alpha was not found' });
+
+      expect(importDataSourceMock).toHaveBeenCalledTimes(1);
+      expect(publish).toHaveBeenCalledTimes(1);
+      expect(publish).toHaveBeenCalledWith({
+        type: AppEvents.alertError.name,
+        payload: ['Alpha plugin failed', 'Error: module not found'],
+      });
+      expect(getCachedPlugin('uid-alpha')).toBeUndefined();
+    });
+
+    it('getDataSourceInstance() shows one alert, imports once and does not fall back to get()', async () => {
+      await expect(getDataSourceInstance('uid-alpha')).rejects.toBeInstanceOf(DataSourcePluginImportError);
+
+      expect(importDataSourceMock).toHaveBeenCalledTimes(1);
+      expect(publish).toHaveBeenCalledTimes(1);
+      expect(getCachedPlugin('uid-alpha')).toBeUndefined();
+      expectNoFallback();
+    });
+  });
+
+  it('reload() does not keep an instance whose load started before it', async () => {
+    let resolveImport: () => void = () => {};
+    importDataSourceMock.mockImplementationOnce(
+      (meta) =>
+        new Promise((resolve) => {
+          resolveImport = () => resolve(importTestDataSource(meta));
+        })
+    );
+
+    const stale = srv.get('uid-alpha');
+    // Let the load reach the importer before the reload runs.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await srv.reload({ datasources: clone(), defaultDatasource: DEFAULT_NAME });
+    resolveImport();
+    const staleInstance = await stale;
+
+    const fresh = await getDataSourceInstance('uid-alpha');
+    expect(fresh).not.toBe(staleInstance);
+    expect(await srv.get('uid-alpha')).toBe(fresh);
+    expect(importDataSourceMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('reload() drops the shared instance for both APIs', async () => {
+    const before = await getDataSourceInstance('uid-alpha');
+    getBackendSrvGetMock.mockResolvedValueOnce({ datasources: clone(), defaultDatasource: DEFAULT_NAME });
+
+    await srv.reload();
+
+    const legacy = await srv.get('uid-alpha');
+    expect(legacy).not.toBe(before);
+    expect(await getDataSourceInstance('uid-alpha')).toBe(legacy);
   });
 });

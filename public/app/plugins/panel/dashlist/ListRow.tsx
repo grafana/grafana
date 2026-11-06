@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import type { ReactNode } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
@@ -6,31 +6,15 @@ import { useStyles2, Text, Stack, Link } from '@grafana/ui';
 
 interface ListRowProps {
   title: string;
-  subtitle?: string;
+  // Rendered inside a secondary bodySmall paragraph; a nested Text can restyle part or all of it.
+  subtitle?: ReactNode;
   prefix?: ReactNode;
   trailing?: ReactNode;
-  // isCompact is used to make the row leaner (less spacing)
-  isCompact?: boolean;
-  // oneRow is used to make the row only one row (subtitle will be inline with title)
-  oneRow?: boolean;
   href?: string;
   onClick?: () => void;
-  // Row divider + padding chrome. Set false for a flush row that matches the
-  // pre-redesign homepage cards. Defaults to true.
-  showDivider?: boolean;
 }
 
-export function ListRow({
-  title,
-  subtitle,
-  trailing,
-  isCompact,
-  oneRow,
-  href,
-  onClick,
-  prefix,
-  showDivider = true,
-}: ListRowProps) {
+export function ListRow({ title, subtitle, trailing, href, onClick, prefix }: ListRowProps) {
   const styles = useStyles2(getStyles);
 
   const subtitleDisplay = subtitle && (
@@ -40,13 +24,7 @@ export function ListRow({
   );
 
   const content = (
-    <Stack
-      direction={oneRow ? 'row' : 'column'}
-      gap={oneRow ? 1 : 0}
-      alignItems={oneRow ? 'center' : 'stretch'}
-      grow={1}
-      minWidth={0}
-    >
+    <Stack direction="column" gap={0} grow={1} minWidth={0}>
       {/* Title */}
       <Text truncate element="p">
         {title}
@@ -57,7 +35,7 @@ export function ListRow({
   );
 
   return (
-    <div className={cx(styles.row, isCompact && styles.listCompact, !showDivider && styles.flush)}>
+    <div className={styles.row}>
       <Stack direction="row" alignItems="center" gap={1.5} grow={1} minWidth={0}>
         {prefix && <div className={styles.prefixCell}>{prefix}</div>}
 
@@ -70,7 +48,7 @@ export function ListRow({
         )}
       </Stack>
 
-      {trailing && <div>{trailing}</div>}
+      {trailing && <div className={styles.trailingCell}>{trailing}</div>}
     </div>
   );
 }
@@ -82,19 +60,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     minWidth: 0,
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(1),
+    // A truncated title or subtitle otherwise runs its ellipsis into the trailing cell.
+    gap: theme.spacing(2),
     justifyContent: 'space-between',
     alignItems: 'center',
   }),
-  listCompact: css({
-    margin: 0,
-  }),
-  // Prevents a long title from squeezing the prefix; width policy stays with callers.
+  // Prevents a long title from squeezing the prefix or trailing cells; width policy stays with callers.
   prefixCell: css({
     flexShrink: 0,
   }),
-  flush: css({
-    borderBottom: 'none',
-    padding: 0,
+  trailingCell: css({
+    flexShrink: 0,
   }),
   titleLink: css({
     flex: 1,

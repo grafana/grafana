@@ -10,6 +10,7 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
+import { FolderDescription } from './FolderDescription';
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { getSaveDashboardErrorInfo } from './saveErrors';
 import {
@@ -155,6 +156,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
 
     if (result.status === 'success') {
       dashboard.closeModal();
+      drawer.state.onSaveSuccess?.();
     } else {
       setContentSent({
         title: data.title,
@@ -187,8 +189,8 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
       <>
         {errorInfo && <SaveDashboardErrorAlert info={errorInfo} />}
         <Stack alignItems="center">
-          {cancelButton}
           {saveButton(false)}
+          {cancelButton}
         </Stack>
       </>
     );
@@ -209,6 +211,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
               validate: validateDashboardName,
               onChange: handleTitleChange,
             })}
+            disabled={state.loading}
             aria-label={t(
               'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-title-field',
               'Save dashboard title field'
@@ -224,6 +227,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
         >
           <TextArea
             {...register('description', { required: false })}
+            disabled={state.loading}
             aria-label={t(
               'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-description-field',
               'Save dashboard description field'
@@ -232,12 +236,15 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
           />
         </Field>
 
-        <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
-          <FolderPicker onChange={onFolderChange} value={formValues.folder?.uid} />
-        </Field>
+        <Stack direction="column" gap={1}>
+          <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
+            <FolderPicker onChange={onFolderChange} value={formValues.folder?.uid} disabled={state.loading} />
+          </Field>
+          <FolderDescription folderUid={formValues.folder?.uid} />
+        </Stack>
         {!changeInfo.isNew && (
           <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
-            <Switch {...register('copyTags')} />
+            <Switch {...register('copyTags')} disabled={state.loading} />
           </Field>
         )}
         <Box paddingTop={2}>{renderFooter(state.error)}</Box>

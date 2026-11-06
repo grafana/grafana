@@ -12,7 +12,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "13.3.0-pre";
+export const pluginVersion = "13.4.0-pre";
 
 /**
  * @deprecated - use common in /packages/grafana-schema/src/common/table.cue instead i.e. `import { TableOptions } from '@grafana/schema';`
@@ -52,6 +52,10 @@ export interface Options {
    * When pagination is enabled, sets a fixed number of rows per page. When unset, the page size is derived from the panel height.
    */
   pageSize?: number;
+  /**
+   * Whether the column management sidebar starts open
+   */
+  showColumnsSidebar?: boolean;
   /**
    * Controls whether the panel should show the header
    */

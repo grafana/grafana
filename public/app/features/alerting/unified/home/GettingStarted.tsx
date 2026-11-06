@@ -4,12 +4,12 @@ import SVG from 'react-inlinesvg';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Stack, Text, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import atAGlanceDarkSvg from 'img/alerting/at_a_glance_dark.svg';
 import atAGlanceLightSvg from 'img/alerting/at_a_glance_light.svg';
 
 import { TUTORIAL_URL_ALERTING_GET_STARTED } from '../utils/docs';
+import { alertActivityEnabled } from '../utils/pageAccess';
 
 import { ContentBox } from './ContentBox';
 
@@ -125,7 +125,7 @@ export function WelcomeHeader() {
   return (
     <ContentBox>
       <Stack direction={{ xs: 'column', lg: 'row' }} gap={4} justifyContent="space-between" wrap="wrap">
-        {config.featureToggles.alertingTriage && (
+        {alertActivityEnabled() && (
           <>
             <WelcomeCTABox
               title={t('alerting.welcome-header.title-alert-activity', 'Alert activity')}

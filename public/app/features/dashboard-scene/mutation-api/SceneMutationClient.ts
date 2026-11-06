@@ -62,6 +62,14 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
   }
 
   async execute(mutation: MutationRequest): Promise<MutationResult> {
+    return this.executeChecked(mutation);
+  }
+
+  protected async executeChecked(
+    mutation: MutationRequest,
+    checkWrite?: () => string | undefined,
+    runWrite?: (write: () => Promise<MutationResult>) => Promise<MutationResult>
+  ): Promise<MutationResult> {
     const type = mutation.type.toUpperCase();
 
     const command = this.commands.get(type);
@@ -86,6 +94,11 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
       };
     }
 
+    const writeError = !registration.readOnly ? checkWrite?.() : undefined;
+    if (writeError) {
+      return { success: false, error: writeError, changes: [] };
+    }
+
     const permissionResult = registration.canExecute(this.scene);
     if (!permissionResult.allowed) {
       return { success: false, error: permissionResult.error, changes: [] };
@@ -104,7 +117,8 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
       // argument. Inside the try because structuredClone throws on a payload it cannot clone.
       const payload = registration.readOnly ? validationResult.data : structuredClone(validationResult.data);
 
-      const result = await registration.handler(payload, context);
+      const execute = () => registration.handler(payload, context);
+      const result = await (runWrite && !registration.readOnly ? runWrite(execute) : execute());
 
       if (result.success && !registration.readOnly) {
         this.scene.forceRender();

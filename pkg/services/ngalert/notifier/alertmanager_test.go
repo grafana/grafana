@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	v1store "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	prommodel "github.com/prometheus/common/model"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -131,7 +131,7 @@ receivers:
 	require.NoError(t, err)
 
 	// Verify secrets are encrypted in stored config
-	var savedUserConfig definitions.PostableUserConfig
+	var savedUserConfig v1store.AMConfigDB
 	err = json.Unmarshal([]byte(savedConfig.AlertmanagerConfiguration), &savedUserConfig)
 	require.NoError(t, err)
 
@@ -337,7 +337,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				if cfg.Receivers == nil {
 					cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
 				}
-				r := v1.NewReceiver("new-receiver", nil, ngmodels.ProvenanceNone)
+				r := v1.NewReceiver(v1.ReceiverUID("new-receiver"), "new-receiver", nil, ngmodels.ProvenanceNone)
 				cfg.Receivers[r.UID] = r
 			},
 		},

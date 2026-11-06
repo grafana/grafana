@@ -3,9 +3,12 @@ package federated
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	tptestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -19,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -322,6 +326,38 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 		}
 	})
 
+	t.Run("library panels migration makes legacy counts stale in dual-write mode", func(t *testing.T) {
+		ctx := context.Background()
+		testDB, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		require.NoError(t, migrations.EnsureMigrationLogTable(ctx, testDB, cfg))
+		helper, err := legacysql.NewDatabaseProvider(testDB)(ctx)
+		require.NoError(t, err)
+		s := &LegacyStatsGetter{Cfg: cfgWithMode(libraryPanelResource, grafanarest.Mode1)}
+		insertLog := "INSERT INTO " + helper.Table(migrationLogTable) + " (" + helper.DB.Quote("migration_id") + ", " +
+			helper.DB.Quote("sql") + ", " + helper.DB.Quote("success") + ", " + helper.DB.Quote("error") + ", " +
+			helper.DB.Quote("timestamp") + ") VALUES (?, ?, ?, ?, ?)"
+		require.NoError(t, testDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			stale, err := s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+
+			_, err = sess.Exec(insertLog,
+				libraryPanelMigration, "test", false, "test failure", time.Now())
+			require.NoError(t, err)
+			stale, err = s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+
+			_, err = sess.Exec(insertLog,
+				libraryPanelMigration, "test", true, "", time.Now())
+			require.NoError(t, err)
+			stale, err = s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.True(t, stale)
+			return nil
+		}))
+	})
+
 	t.Run("nil Cfg falls back to the per-stack kv_store marker", func(t *testing.T) {
 		s := &LegacyStatsGetter{}
 		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
@@ -339,4 +375,97 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 			require.False(t, stale)
 		})
 	})
+}
+
+func TestIntegrationLegacyStatsRecordMetrics(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	migrated := func(resource string) *setting.Cfg {
+		return &setting.Cfg{UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+			resource: {DualWriterMode: grafanarest.Mode5},
+		}}
+	}
+	run := func(t *testing.T, cfg *setting.Cfg) (*prometheus.Registry, *legacyStatsMetrics) {
+		t.Helper()
+		testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		reg := prometheus.NewRegistry()
+		m := newLegacyStatsMetrics(reg)
+		store := &LegacyStatsGetter{SQL: legacysql.NewDatabaseProvider(testDB), Cfg: cfg, metrics: m}
+		_, err := store.GetStats(request.WithNamespace(context.Background(), "default"), &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: []string{"f1"}})
+		require.NoError(t, err)
+		return reg, m
+	}
+
+	t.Run("each counted resource records a duration", func(t *testing.T) {
+		reg, m := run(t, nil)
+		for _, name := range legacyResources {
+			require.Equal(t, uint64(1), observations(t, reg, name, legacyOutcomeOK), name)
+			require.Equal(t, 0.0, tptestutil.ToFloat64(m.skipped.WithLabelValues(name, legacySkipMigrated)), name)
+		}
+	})
+
+	for name, configKey := range map[string]string{
+		legacyAlertRules:      alertRuleResource,
+		legacyRecordingRules:  recordingRuleResource,
+		legacyLibraryElements: libraryPanelResource,
+	} {
+		t.Run("a migrated "+name+" is skipped, not timed", func(t *testing.T) {
+			reg, m := run(t, migrated(configKey))
+			for _, other := range legacyResources {
+				if other == name {
+					require.Equal(t, 1.0, tptestutil.ToFloat64(m.skipped.WithLabelValues(other, legacySkipMigrated)), other)
+					require.Equal(t, uint64(0), observations(t, reg, other, legacyOutcomeOK), other)
+					continue
+				}
+				require.Equal(t, 0.0, tptestutil.ToFloat64(m.skipped.WithLabelValues(other, legacySkipMigrated)), other)
+				require.Equal(t, uint64(1), observations(t, reg, other, legacyOutcomeOK), "%s still runs", other)
+			}
+		})
+	}
+}
+
+func TestIntegrationLegacyStatsRecordsFailedStalenessCheck(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	ctx := request.WithNamespace(context.Background(), "default")
+	// With no Cfg the staleness check reads kv_store. Pointing it at a table that doesn't exist
+	// makes the check fail without touching the shared test database.
+	provider := func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{DB: testDB, Table: func(n string) string {
+			if n == "kv_store" {
+				return "kv_store_missing"
+			}
+			return n
+		}}, nil
+	}
+	reg := prometheus.NewRegistry()
+	store := &LegacyStatsGetter{SQL: provider, metrics: newLegacyStatsMetrics(reg)}
+
+	_, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: []string{"f1"}})
+
+	var countErr *CountError
+	require.ErrorAs(t, err, &countErr)
+	require.Equal(t, []string{legacyAlertRules}, countErr.Resources)
+	require.Equal(t, uint64(1), observations(t, reg, legacyAlertRules, legacyOutcomeError))
+	require.Equal(t, uint64(0), observations(t, reg, legacyRecordingRules, legacyOutcomeError), "the first failure ends the request")
+}
+
+func TestIntegrationLegacyStatsTimesEachChunkQuery(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	reg := prometheus.NewRegistry()
+	store := &LegacyStatsGetter{SQL: legacysql.NewDatabaseProvider(testDB), metrics: newLegacyStatsMetrics(reg)}
+	folders := make([]string, 2*folderBatchSize+1)
+	for i := range folders {
+		folders[i] = fmt.Sprintf("folder-%d", i)
+	}
+
+	_, err := store.GetStats(request.WithNamespace(context.Background(), "default"), &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: folders})
+	require.NoError(t, err)
+
+	for _, name := range legacyResources {
+		require.Equal(t, uint64(3), observations(t, reg, name, legacyOutcomeOK), "%s: one observation per chunk", name)
+	}
 }

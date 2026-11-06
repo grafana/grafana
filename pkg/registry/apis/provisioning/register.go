@@ -152,6 +152,7 @@ type APIBuilder struct {
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
 	maxFileSize                   int64
+	maxJobBodySize                int64
 	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
@@ -225,6 +226,7 @@ func NewAPIBuilder(
 	folderMetadataEnabled bool,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	maxFileSize int64,
+	maxJobBodySize int64,
 ) (*APIBuilder, error) {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -237,7 +239,7 @@ func NewAPIBuilder(
 	}
 
 	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
-	resourceLister := resources.NewResourceListerForMigrations(unified)
+	resourceLister := resources.NewResourceLister(unified, clients, supportedResources)
 
 	// Create access checker based on mode
 	var accessChecker auth.AccessChecker
@@ -279,6 +281,8 @@ func NewAPIBuilder(
 		incrementalPolicy:                   incrementalPolicy,
 		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
 		maxFileSize: maxFileSize,
+		// Request body cap for job creation. Non-positive (<=0) uses the default.
+		maxJobBodySize: maxJobBodySize,
 	}
 
 	for _, builder := range extraBuilders {
@@ -286,6 +290,10 @@ func NewAPIBuilder(
 	}
 
 	return b, nil
+}
+
+func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
+	b.repoValidatorOpts = opts
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -359,6 +367,7 @@ func RegisterAPIService(
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	maxFileSize := cfg.ProvisioningMaxFileSize
+	maxJobBodySize := cfg.ProvisioningMaxJobBodySize
 	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
 
@@ -405,6 +414,7 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		incrementalPolicy,
 		maxFileSize,
+		maxJobBodySize,
 	)
 	if err != nil {
 		return nil, err
@@ -452,6 +462,7 @@ func RegisterAPIService(
 		folderMetadataEnabled,
 		incrementalPolicy,
 		maxFileSize,
+		maxJobBodySize,
 	)
 	if err != nil {
 		return nil, err
@@ -947,7 +958,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled), 30*time.Second)
+	jobsConnector := NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled)
+	jobsConnector.SetMaxBodySize(b.maxJobBodySize)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(jobsConnector, 30*time.Second)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -1190,8 +1203,18 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
+			// One per process; see RelistProjectionMetrics.
+			relistProjectionMetrics := informer.NewRelistProjectionMetrics(b.registry)
+			// Likewise one per process; see FreshnessMetrics.
+			freshnessMetrics := informer.NewFreshnessMetrics(b.registry)
+
 			// The repository delta source and the getter it backs.
-			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			var repoKeys keysapi.Lister
+			if b.keysOnlyReList {
+				repoKeys = keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
+				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.RepositoryResourceInfo.GroupVersionResource().Resource)
+			}
+			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
 				reconcileRepoGetter,
@@ -1238,9 +1261,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			var connKeys keysapi.Lister
 			if b.keysOnlyReList {
 				connKeys = keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource())
-				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage")
+				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.ConnectionResourceInfo.GroupVersionResource().Resource)
 			}
-			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, b.registry)
+			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
 			connController := controller.NewConnectionController(
 				connGetter,
 				connStatusPatcher,

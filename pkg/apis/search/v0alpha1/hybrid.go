@@ -2,13 +2,20 @@ package v0alpha1
 
 import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-// HybridSearchQuery is the request body for POST .../{resource}/search/hybrid.
+// HybridSearchQuery is the request body for POST .../{resource}/search/hybrid
+// and POST .../global/search/hybrid.
 // It returns the top matching resources, with no pagination, sorting or facets.
 //
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type HybridSearchQuery struct {
 	metav1.TypeMeta `json:",inline"`
+
+	// Resources selects unique group/resource pairs for global hybrid search.
+	// On Grafana's HTTP route, omitted or empty uses configured defaults, if any.
+	// Per-resource routes reject it.
+	// +listType=atomic
+	Resources []HybridSearchResource `json:"resources,omitempty"`
 
 	// Query supplies the lexical query and, unless SemanticQuery is set, the
 	// text embedded for semantic search. Required, with a maximum of 1000 bytes.
@@ -24,8 +31,9 @@ type HybridSearchQuery struct {
 	// +listType=atomic
 	Filters []HybridSearchFilter `json:"filters,omitempty"`
 
-	// Limit is the maximum number of results. Zero uses the default of 50,
-	// values above 200 are clamped, and negative values are rejected.
+	// Limit is the maximum number of results across all requested resource types.
+	// Zero uses the default of 50, values above 200 are clamped, and negative
+	// values are rejected.
 	Limit int64 `json:"limit,omitempty"`
 
 	// MinRelevance is lowest, low, medium, high or highest. Empty keeps every
@@ -33,9 +41,17 @@ type HybridSearchQuery struct {
 	// is unavailable or fails. It cannot be combined with SkipRerank.
 	MinRelevance string `json:"minRelevance,omitempty"`
 
-	// SkipRerank returns the fused lexical and semantic ordering without
-	// reranking, even when a reranker is configured.
+	// SkipRerank skips reranking even when a reranker is configured. Multiple
+	// resource types are interleaved in request order, preserving each type's ranking.
 	SkipRerank bool `json:"skipRerank,omitempty"`
+}
+
+// HybridSearchResource identifies a resource type for global hybrid search.
+//
+// +k8s:deepcopy-gen=true
+type HybridSearchResource struct {
+	Group    string `json:"group"`
+	Resource string `json:"resource"`
 }
 
 // HybridSearchFilter matches any of Values against Field (IN semantics).
@@ -43,8 +59,9 @@ type HybridSearchQuery struct {
 //
 // +k8s:deepcopy-gen=true
 type HybridSearchFilter struct {
-	// Field is uid or folder for all resources. Dashboards additionally
-	// support datasource_uid and language (promql, logql, traceql or sql).
+	// Field is uid or folder for all resources. A single dashboard resource
+	// type additionally supports datasource_uid and language (promql, logql,
+	// traceql or sql). Searches across multiple types support only uid and folder.
 	Field string `json:"field"`
 
 	// Values must contain at least one value. Values containing '*' are rejected.
@@ -53,7 +70,7 @@ type HybridSearchFilter struct {
 	Values []string `json:"values"`
 }
 
-// HybridSearchResults is the response body for POST .../{resource}/search/hybrid.
+// HybridSearchResults is the response body for per-resource and global hybrid search.
 // Items are ordered by relevance. They are a bounded top-k result set, not an
 // exhaustive list, so the response carries no total count or pagination token.
 //
@@ -84,6 +101,9 @@ type HybridSearchResultItem struct {
 	FolderTitle string `json:"folderTitle,omitempty"`
 	// ManagedBy is absent for unmanaged resources or when lookup fails.
 	ManagedBy *HybridSearchManagedBy `json:"managedBy,omitempty"`
+	// Tags from the lexical index. Omitted when unavailable.
+	// +listType=atomic
+	Tags []string `json:"tags,omitempty"`
 
 	// Chunks contains matching text, best first. A lexical-only hit has a
 	// synthesized chunk containing the resource's title.

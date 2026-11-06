@@ -191,6 +191,26 @@ func (f *RuleStore) Count(_ context.Context, orgID int64) (int64, error) {
 	return total, nil
 }
 
+func (f *RuleStore) CountRuleGroups(_ context.Context, orgID int64) (int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	query := GenericRecordedQuery{Name: "CountRuleGroups", Params: []any{orgID}}
+	f.RecordedOps = append(f.RecordedOps, query)
+	if err := f.Hook(query); err != nil {
+		return 0, err
+	}
+	groups := make(map[string]struct{})
+	for id, rules := range f.Rules {
+		if orgID != 0 && id != orgID {
+			continue
+		}
+		for _, rule := range rules {
+			groups[rule.RuleGroup] = struct{}{}
+		}
+	}
+	return int64(len(groups)), nil
+}
+
 func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()

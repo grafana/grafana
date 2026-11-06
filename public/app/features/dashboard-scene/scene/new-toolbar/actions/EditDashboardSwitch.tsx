@@ -8,7 +8,8 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { type ToolbarActionProps } from '../types';
 
 export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => {
-  const tooltip = dashboard.state.isEditing
+  const state = dashboard.useState();
+  const tooltip = state.isEditing
     ? t('dashboard.toolbar.edit-button.exit-tooltip', 'Exit edit mode')
     : t('dashboard.toolbar.edit-button.enter-tooltip', 'Enter edit mode');
 
@@ -20,7 +21,7 @@ export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => {
     <ToolbarButton
       tooltip={tooltip}
       data-testid={selectors.components.NavToolbar.editDashboard.editButton}
-      icon={dashboard.state.isEditing ? 'edit' : 'pen'}
+      icon="pen"
       variant="canvas"
       onClick={(evt) => {
         evt.preventDefault();
@@ -35,7 +36,7 @@ export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => {
         }
       }}
     >
-      {dashboard.state.isEditing
+      {state.isEditing
         ? t('dashboard.toolbar.edit-button.exit', 'Exit edit')
         : t('dashboard.toolbar.edit-button.enter', 'Edit')}
     </ToolbarButton>

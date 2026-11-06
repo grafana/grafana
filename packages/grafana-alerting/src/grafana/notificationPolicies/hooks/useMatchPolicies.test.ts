@@ -1,5 +1,4 @@
-import { API_VERSION, type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
-
+import { API_VERSION, type RoutingTree } from '../../api/notifications';
 import { LabelMatcherFactory, RouteFactory } from '../../api/notifications/v1beta1/mocks/fakes/Routes';
 import { type Label } from '../../matchers/types';
 
@@ -71,5 +70,52 @@ describe('matchInstancesToRouteTrees', () => {
     expect(result[0].matchedRoutes.length).toBeGreaterThan(0);
     expect(result[0].matchedRoutes[0].routeTree.metadata.name).toBe(treeName);
     expect(result[0].matchedRoutes[0].matchDetails.labels).toBe(instanceLabels);
+  });
+
+  it('should give each instance only its own matches, from every tree in order', () => {
+    const buildTree = (name: string, service: string, receiver: string): RoutingTree => ({
+      kind: 'RoutingTree',
+      apiVersion: API_VERSION,
+      metadata: { name },
+      spec: {
+        defaults: { receiver: `${name}-default` },
+        routes: [
+          RouteFactory.build({
+            matchers: [LabelMatcherFactory.build({ label: 'service', type: '=', value: service })],
+            receiver,
+            routes: [],
+          }),
+        ],
+      },
+    });
+    const trees = [buildTree('tree-a', 'web', 'web-a'), buildTree('tree-b', 'web', 'web-b')];
+    const web: Label[] = [['service', 'web']];
+    const api: Label[] = [['service', 'api']];
+
+    const result = matchInstancesToRouteTrees(trees, [web, api]);
+
+    const summary = result.map(({ labels, matchedRoutes }) => ({
+      labels,
+      matches: matchedRoutes.map(({ route, routeTree }) => [routeTree.metadata.name, route.receiver]),
+    }));
+    expect(summary).toEqual([
+      {
+        labels: web,
+        matches: [
+          ['tree-a', 'web-a'],
+          ['tree-b', 'web-b'],
+        ],
+      },
+      {
+        labels: api,
+        matches: [
+          ['tree-a', 'tree-a-default'],
+          ['tree-b', 'tree-b-default'],
+        ],
+      },
+    ]);
+    result.forEach(({ labels, matchedRoutes }) =>
+      matchedRoutes.forEach(({ matchDetails }) => expect(matchDetails.labels).toBe(labels))
+    );
   });
 });

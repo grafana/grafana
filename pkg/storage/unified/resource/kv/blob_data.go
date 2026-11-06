@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"slices"
 	"strings"
 	"time"
@@ -184,6 +185,77 @@ func (k *SqlKV) deleteBlob(ctx context.Context, key string) error {
 	}
 	return nil
 }
+
+// BlobGCKeys pages by the indexed UUID rather than resource-key order. Each page
+// is closed before yielding so reference checks and deletes can use the connection.
+func (k *SqlKV) BlobGCKeys(ctx context.Context, batchSize int) iter.Seq2[string, error] {
+	return func(yield func(string, error) bool) {
+		if batchSize <= 0 {
+			yield("", fmt.Errorf("blob GC batch size must be positive"))
+			return
+		}
+		cursor := ""
+		for {
+			page, err := k.blobGCPage(ctx, cursor, batchSize)
+			if err != nil {
+				yield("", err)
+				return
+			}
+			for _, key := range page {
+				if !yield(key.String(), nil) {
+					return
+				}
+			}
+			if len(page) < batchSize {
+				return
+			}
+			cursor = page[len(page)-1].UID
+		}
+	}
+}
+
+func (k *SqlKV) blobGCPage(ctx context.Context, cursor string, batchSize int) (page []BlobKey, err error) {
+	query := fmt.Sprintf("SELECT %s, %s, %s, %s, %s FROM %s",
+		k.dialect.QuoteIdent("group"), k.dialect.QuoteIdent("resource"), k.dialect.QuoteIdent("namespace"),
+		k.dialect.QuoteIdent("name"), k.dialect.QuoteIdent("uuid"), k.dialect.QuoteIdent(resourceBlobTable))
+	var args []any
+	if cursor != "" {
+		query += " WHERE " + k.dialect.QuoteIdent("uuid") + " > " + k.dialect.Placeholder(1)
+		args = append(args, cursor)
+	}
+	query += " ORDER BY " + k.dialect.QuoteIdent("uuid") + " ASC LIMIT " + k.dialect.Placeholder(len(args)+1)
+	args = append(args, batchSize)
+	rows, err := k.conn(ctx).QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { err = errors.Join(err, rows.Close()) }()
+	page = make([]BlobKey, 0, batchSize)
+	for rows.Next() {
+		var key BlobKey
+		if err := rows.Scan(&key.Group, &key.Resource, &key.Namespace, &key.Name, &key.UID); err != nil {
+			return nil, err
+		}
+		page = append(page, key)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return page, nil
+}
+
+func (k *SqlKV) FirstUnused(ctx context.Context, key string, _ time.Time) (time.Time, error) {
+	bk, err := ParseBlobKey(key)
+	if err != nil {
+		return time.Time{}, err
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s", k.dialect.QuoteIdent("created"), k.dialect.QuoteIdent(resourceBlobTable), k.blobWhere(blobIdentityColumns))
+	var created time.Time
+	err = k.conn(ctx).QueryRowContext(ctx, query, blobIdentityArgs(bk)...).Scan(&created)
+	return created, err
+}
+
+func (k *SqlKV) ClearUnused(context.Context, string) error { return nil }
 
 func (k *SqlKV) blobKeys(ctx context.Context, opt ListOptions, yield func(string, error) bool) {
 	query := fmt.Sprintf("SELECT %s, %s, %s, %s, %s FROM %s",

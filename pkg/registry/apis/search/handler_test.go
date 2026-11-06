@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -22,18 +25,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type fakeIndexClient struct {
-	got  *resourcepb.ResourceSearchRequest
-	resp *resourcepb.ResourceSearchResponse
-	err  error
+	got   *resourcepb.ResourceSearchRequest
+	resp  *resourcepb.ResourceSearchResponse
+	err   error
+	calls int
 }
 
 func (f *fakeIndexClient) Search(_ context.Context, in *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	f.got = in
+	f.calls++
 	return f.resp, f.err
 }
 
@@ -49,7 +55,7 @@ func doRequest(t *testing.T, h *Handler, body string) *httptest.ResponseRecorder
 
 func emptyResponse() *resourcepb.ResourceSearchResponse {
 	return &resourcepb.ResourceSearchResponse{
-		Results:        &resourcepb.ResourceTable{},
+		ResultFormat:   resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		TotalHits:      0,
 		TotalHitsExact: true,
 	}
@@ -80,6 +86,84 @@ func TestHandler_TranslatesAndReturnsEnvelope(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &out))
 	assert.Equal(t, searchv0.KindSearchResults, out.Kind)
 	assert.Equal(t, searchv0.TotalHitsEqual, out.Metadata.TotalHitsRelation)
+}
+
+func TestHandler_FolderTreeFlag(t *testing.T) {
+	evaluate := func(_ memprovider.InMemoryFlag, ctx openfeature.FlattenedContext) (any, openfeature.ProviderResolutionDetail) {
+		return ctx["allowRecursiveSearch"] == true, openfeature.ProviderResolutionDetail{}
+	}
+	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagSearchPerResourceFolderTree: {
+			Key: featuremgmt.FlagSearchPerResourceFolderTree, State: memprovider.Enabled,
+			Variants: map[string]any{"off": false}, DefaultVariant: "off", ContextEvaluator: &evaluate,
+		},
+	})
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+	client := &fakeIndexClient{resp: emptyResponse()}
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+	body := globalQuery(`{"filter":{"field":"folderTree","operator":"In","values":["team-a","team-b"]}}`)
+	for _, tc := range []struct {
+		name    string
+		enabled bool
+		code    int
+	}{
+		{name: "default off", code: http.StatusUnprocessableEntity},
+		{name: "enabled for this request", enabled: true, code: http.StatusOK},
+		{name: "disabled for the next request", code: http.StatusUnprocessableEntity},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client.got, client.calls = nil, 0
+			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "default"})
+			ctx = request.WithNamespace(ctx, "default")
+			ctx = openfeature.WithTransactionContext(ctx, openfeature.NewEvaluationContext("default", map[string]any{"allowRecursiveSearch": tc.enabled}))
+			r := httptest.NewRequest(http.MethodPost, "/search", strings.NewReader(body)).WithContext(ctx)
+			w := httptest.NewRecorder()
+			h.SearchFor(testKind)(w, r)
+			require.Equal(t, tc.code, w.Code, w.Body.String())
+			if !tc.enabled {
+				assert.Zero(t, client.calls)
+				assert.Nil(t, client.got)
+				assert.Contains(t, w.Body.String(), "unknown field")
+				return
+			}
+			require.Equal(t, 1, client.calls)
+			require.Len(t, client.got.Options.Fields, 1)
+			assert.Equal(t, resource.SEARCH_FIELD_FOLDER_TREE, client.got.Options.Fields[0].Key)
+			assert.Equal(t, "in", client.got.Options.Fields[0].Operator)
+			assert.Equal(t, []string{"team-a", "team-b"}, client.got.Options.Fields[0].Values)
+			assert.Equal(t, "default", client.got.Options.Key.Namespace)
+			assert.Equal(t, testKind.group, client.got.Options.Key.Group)
+			assert.Equal(t, testKind.resource, client.got.Options.Key.Resource)
+			assert.Empty(t, client.got.Federated)
+		})
+	}
+
+	w := doGlobalRequest(t, h, body)
+	require.Equal(t, http.StatusOK, w.Code, "the flag must not disable existing global search: %s", w.Body.String())
+	w = doRequest(t, h, globalQuery(`{"filter":{"field":"folder","operator":"In","values":["team-a"]}}`))
+	require.Equal(t, http.StatusOK, w.Code, "non-recursive search must remain available: %s", w.Body.String())
+}
+
+func TestHandler_FolderTreePropagatesUnsupportedBackend(t *testing.T) {
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagSearchPerResourceFolderTree)
+	result := &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "folderTree can only be searched in the global search index"}
+	grpcStatus, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
+	require.NoError(t, err)
+	for name, client := range map[string]*fakeIndexClient{
+		"transport":                   {err: grpcStatus.Err()},
+		"transport with partial body": {resp: &resourcepb.ResourceSearchResponse{TotalHits: 1}, err: grpcStatus.Err()},
+	} {
+		t.Run(name, func(t *testing.T) {
+			h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+			w := doRequest(t, h, globalQuery(`{"filter":{"field":"folderTree","operator":"In","values":["team-a"]}}`))
+			require.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+			assert.Contains(t, w.Body.String(), result.Message)
+			assert.Equal(t, 1, client.calls, "an unsupported filter must not be retried as a non-recursive search")
+			require.Len(t, client.got.Options.Fields, 1)
+			assert.Equal(t, resource.SEARCH_FIELD_FOLDER_TREE, client.got.Options.Fields[0].Key)
+		})
+	}
 }
 
 func TestHandler_RejectsInvalidBody(t *testing.T) {
@@ -148,8 +232,12 @@ func TestHandler_PropagatesBackendErrorResult(t *testing.T) {
 	require.ErrorAs(t, resource.StatusError(result), &statusErr)
 	want := statusErr.Status()
 	for name, client := range map[string]*fakeIndexClient{
-		"payload":      {resp: &resourcepb.ResourceSearchResponse{Error: result}},
-		"grpc details": {err: grpcStatus.Err()},
+		"grpc details":         {err: grpcStatus.Err()},
+		"wrapped grpc details": {err: fmt.Errorf("search: %w", grpcStatus.Err())},
+		"grpc details with partial response": {
+			resp: &resourcepb.ResourceSearchResponse{TotalHits: 1, Rows: []*resourcepb.ResourceSearchRow{{}}},
+			err:  grpcStatus.Err(),
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
@@ -291,6 +379,99 @@ func TestGlobalHandler_ReadsTheNamespaceWideIndex(t *testing.T) {
 	assert.Equal(t, resource.GlobalSearchResource, client.got.Options.Key.Resource)
 }
 
+// The caller is told the results are incomplete, rather than seeing a type that
+// has nothing in it.
+func TestGlobalHandler_ReportsSkippedTypes(t *testing.T) {
+	rsp := emptyResponse()
+	rsp.SkippedTypes = []string{"folder.grafana.app/folders"}
+	h := NewHandler(&fakeIndexClient{resp: rsp}, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+	w := doGlobalRequest(t, h, globalQuery(""))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	var got searchv0.GlobalSearchResults
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+	assert.Equal(t, searchv0.KindGlobalSearchResults, got.Kind)
+	assert.Equal(t, []string{"folder.grafana.app/folders"}, got.Metadata.SkippedTypes)
+}
+
+// Folder paths reach the caller as JSON, and a response without any leaves the
+// field out.
+func TestGlobalHandler_ReturnsFolderPaths(t *testing.T) {
+	rsp := emptyResponse()
+	rsp.FolderPaths = map[string]*resourcepb.FolderPath{
+		"leaf": {Folders: []*resourcepb.FolderPath_Folder{
+			{Name: "top", Detached: true},
+			{Name: "leaf", Title: "Leaf"},
+		}},
+	}
+	h := NewHandler(&fakeIndexClient{resp: rsp}, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+	w := doGlobalRequest(t, h, globalQuery(""))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	var got struct {
+		FolderPaths json.RawMessage `json:"folderPaths"`
+	}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+	assert.JSONEq(t, `{"leaf": [{"name": "top", "detached": true}, {"name": "leaf", "title": "Leaf"}]}`, string(got.FolderPaths))
+
+	h = NewHandler(&fakeIndexClient{resp: emptyResponse()}, testProvider(), noop.NewTracerProvider().Tracer(""))
+	w = doGlobalRequest(t, h, globalQuery(""))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.NotContains(t, w.Body.String(), "folderPaths")
+}
+
+// The groupResource facet lists every type the search covered, so a client can
+// show a type that has no results. Skipped types stay out, and other facets and
+// requests without the facet are left alone.
+func TestGlobalHandler_TypeFacetListsEmptyTypes(t *testing.T) {
+	rsp := emptyResponse()
+	rsp.Kinds = map[string]string{
+		"dashboard.grafana.app/dashboards": "Dashboard",
+		"folder.grafana.app/folders":       "Folder",
+		"playlist.grafana.app/playlists":   "Playlist",
+		"dashboard.grafana.app/notebooks":  "Notebook",
+	}
+	rsp.SkippedTypes = []string{"dashboard.grafana.app/notebooks"}
+	rsp.Facet = map[string]*resourcepb.ResourceSearchResponse_Facet{
+		resource.SEARCH_FIELD_GROUP_RESOURCE: {Field: resource.SEARCH_FIELD_GROUP_RESOURCE, Terms: []*resourcepb.ResourceSearchResponse_TermFacet{
+			{Term: "dashboard.grafana.app/dashboards", Count: 3},
+		}},
+		"tags": {Field: "tags", Terms: []*resourcepb.ResourceSearchResponse_TermFacet{{Term: "prod", Count: 1}}},
+	}
+	search := func(facets string) searchv0.GlobalSearchResults {
+		t.Helper()
+		h := NewHandler(&fakeIndexClient{resp: rsp}, testProvider(), noop.NewTracerProvider().Tracer(""))
+		body := strings.TrimSuffix(globalQuery(""), "}") + `, "facets": ` + facets + `}`
+		w := doGlobalRequest(t, h, body)
+		require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+		var got searchv0.GlobalSearchResults
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+		return got
+	}
+
+	got := search(`["groupResource", "tags"]`)
+	assert.Equal(t, []searchv0.FacetTerm{
+		{Value: "dashboard.grafana.app/dashboards", Count: 3},
+		{Value: "folder.grafana.app/folders", Count: 0},
+		{Value: "playlist.grafana.app/playlists", Count: 0},
+	}, got.Facets[resource.SEARCH_FIELD_GROUP_RESOURCE])
+	assert.Equal(t, []searchv0.FacetTerm{{Value: "prod", Count: 1}}, got.Facets["tags"])
+
+	got = search(`["tags"]`)
+	assert.Equal(t, []searchv0.FacetTerm{
+		{Value: "dashboard.grafana.app/dashboards", Count: 3},
+	}, got.Facets[resource.SEARCH_FIELD_GROUP_RESOURCE], "without the facet requested, the backend's terms are passed on as they are")
+
+	rsp.Facet = nil
+	got = search(`["groupResource"]`)
+	assert.Equal(t, []searchv0.FacetTerm{
+		{Value: "dashboard.grafana.app/dashboards", Count: 0},
+		{Value: "folder.grafana.app/folders", Count: 0},
+		{Value: "playlist.grafana.app/playlists", Count: 0},
+	}, got.Facets[resource.SEARCH_FIELD_GROUP_RESOURCE], "a search without results still lists every type")
+}
+
 func TestGlobalHandler_FiltersByResourceType(t *testing.T) {
 	client := &fakeIndexClient{resp: emptyResponse()}
 	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
@@ -351,23 +532,22 @@ func TestGlobalHandler_RejectsAKindsOwnField(t *testing.T) {
 
 func TestGlobalHandler_EachResultNamesItsOwnType(t *testing.T) {
 	client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"},
+				Values: []*resourcepb.ResourceSearchValue{{StringValues: []string{"A dashboard"}}},
 			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key:   &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"},
-					Cells: [][]byte{[]byte("A dashboard")},
-				},
-				{
-					Key:   &resourcepb.ResourceKey{Namespace: "default", Group: "folder.grafana.app", Resource: "folders", Name: "folder-a"},
-					Cells: [][]byte{[]byte("A folder")},
-				},
-				{
-					Key:   &resourcepb.ResourceKey{Namespace: "default", Group: "other.grafana.app", Resource: "others", Name: "other-a"},
-					Cells: [][]byte{[]byte("Something else")},
-				},
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: "default", Group: "folder.grafana.app", Resource: "folders", Name: "folder-a"},
+				Values: []*resourcepb.ResourceSearchValue{{StringValues: []string{"A folder"}}},
+			},
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: "default", Group: "other.grafana.app", Resource: "others", Name: "other-a"},
+				Values: []*resourcepb.ResourceSearchValue{{StringValues: []string{"Something else"}}},
 			},
 		},
 		TotalHits:      3,
@@ -387,4 +567,142 @@ func TestGlobalHandler_EachResultNamesItsOwnType(t *testing.T) {
 	// A type the route was not told about keeps its group and resource, which
 	// already identify it, and reports no kind rather than another type's.
 	assert.Equal(t, searchv0.ResourceRef{Group: "other.grafana.app", Resource: "others", Kind: "", Name: "other-a"}, out.Items[2].Resource)
+}
+
+// A query can ask whether the caller may update, delete or set permissions on
+// each returned item. The verbs reach the search server once each, the answers
+// reach the caller as they came, and an unknown verb is rejected.
+func TestGlobalHandler_ReturnsAccessPerItem(t *testing.T) {
+	client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"},
+				Access: map[string]bool{"update": true, "delete": false},
+			},
+			{Key: &resourcepb.ResourceKey{Namespace: "default", Group: "folder.grafana.app", Resource: "folders", Name: "folder-a"}},
+		},
+		TotalHits:      2,
+		TotalHitsExact: true,
+	}}
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+	query := func(access string) string {
+		return strings.TrimSuffix(globalQuery(""), "}") + `, "access": ` + access + `}`
+	}
+
+	w := doGlobalRequest(t, h, query(`["update", "delete", "update"]`))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.Equal(t, []string{"delete", "update"}, client.got.AccessVerbs)
+	var out struct {
+		Items []map[string]json.RawMessage `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &out))
+	require.Len(t, out.Items, 2)
+	assert.JSONEq(t, `{"update": true, "delete": false}`, string(out.Items[0]["access"]))
+	assert.NotContains(t, out.Items[1], "access", "an item without answers has no access")
+
+	client.got = nil
+	w = doGlobalRequest(t, h, query(`["update", "get"]`))
+	assert.Equal(t, http.StatusUnprocessableEntity, w.Code, w.Body.String())
+	assert.Contains(t, w.Body.String(), "access[1]")
+	assert.Nil(t, client.got)
+
+	// Only the global search offers it for now.
+	w = doRequest(t, h, `{"apiVersion": "`+searchv0.APIVERSION+`", "kind": "`+searchv0.KindSearchQuery+`", "access": ["update"]}`)
+	assert.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+	assert.Contains(t, w.Body.String(), `unknown field \"access\"`)
+	assert.Nil(t, client.got)
+}
+
+// The search server names the kinds it takes from manifests read at runtime,
+// which this process may not know, and its names win over this process's.
+func TestGlobalHandler_UsesTheKindsTheServerReports(t *testing.T) {
+	row := func(group, resourceName, name string) *resourcepb.ResourceSearchRow {
+		return &resourcepb.ResourceSearchRow{
+			Key:    &resourcepb.ResourceKey{Namespace: "default", Group: group, Resource: resourceName, Name: name},
+			Values: []*resourcepb.ResourceSearchValue{{StringValues: []string{name}}},
+		}
+	}
+	client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			row("dashboard.grafana.app", "dashboards", "dash-a"),
+			row("x.ext.grafana.app", "pages", "page-a"),
+		},
+		TotalHits:      3,
+		TotalHitsExact: true,
+		Kinds: map[string]string{
+			"x.ext.grafana.app/pages":    "Page",
+			"folder.grafana.app/folders": "Directory",
+		},
+	}}
+	client.resp.Rows = append(client.resp.Rows, row("folder.grafana.app", "folders", "folder-a"))
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+	kinds := func() []string {
+		t.Helper()
+		w := doGlobalRequest(t, h, globalQuery(""))
+		require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+		var out searchv0.GlobalSearchResults
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &out))
+		got := make([]string, 0, len(out.Items))
+		for _, item := range out.Items {
+			got = append(got, item.Resource.Kind)
+		}
+		return got
+	}
+	assert.Equal(t, []string{"Dashboard", "Page", "Directory"}, kinds(),
+		"a kind the server does not name comes from this process; one it names wins")
+
+	// An older server names none; the next response uses this process's kinds,
+	// untouched by the previous one.
+	client.resp.Kinds = nil
+	assert.Equal(t, []string{"Dashboard", "", "Folder"}, kinds())
+}
+
+// Clients mark provisioned items from these fields, which every index stores.
+func TestHandler_ReturnsManagerFields(t *testing.T) {
+	body := `{"apiVersion": "` + searchv0.APIVERSION + `", "kind": "` + searchv0.KindSearchQuery + `", "fields": ["manager.kind", "manager.id", "manager.allowEdits"]}`
+
+	for name, do := range map[string]func(*testing.T, *Handler, string) *httptest.ResponseRecorder{
+		"one kind": doRequest,
+		"global":   doGlobalRequest,
+	} {
+		t.Run(name, func(t *testing.T) {
+			client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields: []*resourcepb.ResourceSearchField{
+					{Name: resource.SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceSearchField_STRING},
+					{Name: resource.SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceSearchField_STRING},
+					{Name: resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS, Type: resourcepb.ResourceSearchField_BOOLEAN},
+				},
+				Rows: []*resourcepb.ResourceSearchRow{{
+					Key: &resourcepb.ResourceKey{Name: "a"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{StringValues: []string{"repo"}},
+						{FieldIndex: 1, StringValues: []string{"my-repo"}},
+						{FieldIndex: 2, BooleanValues: []bool{false}},
+					},
+				}},
+				TotalHits: 1, TotalHitsExact: true,
+			}}
+			h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+			w := do(t, h, body)
+			require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+			assert.Equal(t, []string{resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ID, resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS}, client.got.Fields)
+
+			var got struct {
+				Items []struct {
+					Fields map[string]any `json:"fields"`
+				} `json:"items"`
+			}
+			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+			require.Len(t, got.Items, 1)
+			assert.Equal(t, map[string]any{"manager.kind": "repo", "manager.id": "my-repo", "manager.allowEdits": false}, got.Items[0].Fields)
+		})
+	}
 }

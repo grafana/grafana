@@ -47,6 +47,49 @@ describe('EventsCanvas', () => {
     expect(screen.queryByTestId(selectors.components.UPlotChart.xyCanvas)).not.toBeInTheDocument();
   });
 
+  const createEvents = () => [
+    createDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000] },
+        { name: 'Value', type: FieldType.number, values: [1] },
+      ],
+    }),
+  ];
+
+  it.each([
+    { name: 'no frames', emptyEvents: [] },
+    {
+      name: 'only frames without rows',
+      emptyEvents: [createDataFrame({ fields: [{ name: 'Time', type: FieldType.time, values: [] }] })],
+    },
+  ])('renders nothing when there are $name, even after uPlot init and draw hooks have run', ({ emptyEvents }) => {
+    const config = createConfig();
+    const { rerender } = render(
+      <EventsCanvas
+        id="events-test"
+        config={config}
+        events={createEvents()}
+        renderEventMarker={() => <span data-testid="event-marker-label">exemplar</span>}
+        mapEventToXYCoords={() => ({ x: 2, y: 3 })}
+      />
+    );
+    runPlotHooks({ left: 0, top: 0 });
+    expect(screen.getByTestId('event-marker-label')).toBeVisible();
+
+    rerender(
+      <EventsCanvas
+        id="events-test"
+        config={config}
+        events={emptyEvents}
+        renderEventMarker={() => <span data-testid="event-marker-label">exemplar</span>}
+        mapEventToXYCoords={() => ({ x: 2, y: 3 })}
+      />
+    );
+    runPlotHooks({ left: 0, top: 0 });
+
+    expect(screen.queryByTestId(selectors.components.UPlotChart.xyCanvas)).not.toBeInTheDocument();
+  });
+
   it('renders XYCanvas offset by plot bbox (CSS pixels)', () => {
     const dpr = uPlot.pxRatio;
     const config = createConfig();
@@ -54,9 +97,9 @@ describe('EventsCanvas', () => {
       <EventsCanvas
         id="events-test"
         config={config}
-        events={[]}
+        events={createEvents()}
         renderEventMarker={() => null}
-        mapEventToXYCoords={() => undefined}
+        mapEventToXYCoords={() => ({ x: 2, y: 3 })}
       />
     );
 

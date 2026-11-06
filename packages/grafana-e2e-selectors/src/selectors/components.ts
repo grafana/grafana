@@ -94,6 +94,11 @@ export const versionedComponents = {
       '13.3.0': 'data-testid ControlsAddButton trigger button',
     },
   },
+  DashboardFiltersOverview: {
+    row: {
+      '13.3.0': 'data-testid DashboardFiltersOverview row',
+    },
+  },
   /**
    * @deprecated use DashboardSidebarSplitter instead
    */
@@ -152,6 +157,11 @@ export const versionedComponents = {
     },
     addNewTabButton: {
       '13.2.0': 'data-testid sidebar add new tab button',
+    },
+  },
+  EditActionsPopover: {
+    container: {
+      '13.3.0': 'data-testid EditActionsPopover container',
     },
   },
   EditPaneHeader: {
@@ -620,6 +630,9 @@ export const versionedComponents = {
       PanelGroupByHeaderAction: {
         '12.4.0': 'data-testid Panel group by header action',
       },
+      PanelAdHocChangesHeaderAction: {
+        '13.3.0': 'data-testid Panel ad hoc changes header action',
+      },
     },
     Visualization: {
       Graph: {
@@ -705,8 +718,35 @@ export const versionedComponents = {
           activeFilterButton: {
             '13.3.0': 'data-testid tableng header active-filter-button',
           },
+          hideItem: {
+            '13.3.0': 'data-testid tableng header column-menu-hide-item',
+          },
+          manageColumnsItem: {
+            '13.3.0': 'data-testid tableng header column-menu-manage-columns-item',
+          },
+        },
+        columnsSidebar: {
+          container: {
+            '13.3.0': 'data-testid tableng columns-sidebar',
+          },
+          closeButton: {
+            '13.3.0': 'data-testid tableng columns-sidebar close-button',
+          },
+          row: {
+            '13.3.0': (columnName: string) => `data-testid tableng columns-sidebar row ${columnName}`,
+          },
         },
         Filters: {
+          Range: {
+            field: { '13.3.0': (bound: string) => `data-testid tableng range field ${bound}` },
+            minimumInput: { '13.3.0': 'data-testid tableng range minimum-input' },
+            maximumInput: { '13.3.0': 'data-testid tableng range maximum-input' },
+            includeMissingCheckbox: { '13.3.0': 'data-testid tableng range include-missing-checkbox' },
+            applyButton: { '13.3.0': 'data-testid tableng range apply-button' },
+            cancelButton: { '13.3.0': 'data-testid tableng range cancel-button' },
+            clearButton: { '13.3.0': 'data-testid tableng range clear-button' },
+            histogram: { '13.3.0': 'data-testid tableng range histogram' },
+          },
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
           },
@@ -1666,6 +1706,12 @@ export const versionedComponents = {
       },
       row: {
         '13.3.0': (spanId: string) => `data-testid TraceViewer trace-banner row ${spanId}`,
+      },
+      stacktraceButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner stacktrace-button',
+      },
+      toggleButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner toggle-button',
       },
     },
     spanException: {

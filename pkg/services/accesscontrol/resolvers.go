@@ -3,6 +3,7 @@ package accesscontrol
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -11,8 +12,31 @@ import (
 
 // ScopeAttributeResolver is used to resolve attributes in scopes to one or more scopes that are
 // evaluated by logical or. E.g. "dashboards:id:1" -> "dashboards:uid:test-dashboard" or "folder:uid:test-folder"
+// Resolvers that check permissions as the subject, directly or through other services,
+// must declare the extra actions with WithRequiredActions.
 type ScopeAttributeResolver interface {
 	Resolve(ctx context.Context, orgID int64, scope string) ([]string, error)
+}
+
+// ScopeResolverPermissionDependencies declares extra subject permissions used by
+// a resolver. Callers that load only the checked actions must load these too.
+type ScopeResolverPermissionDependencies interface {
+	RequiredActions() []string
+}
+
+// WithRequiredActions lets LegacyCheck load existing subject grants before resolution.
+// Update actions when the resolver or its downstream services add permission checks.
+func WithRequiredActions(resolver ScopeAttributeResolver, actions ...string) ScopeAttributeResolver {
+	return scopeResolverWithRequiredActions{ScopeAttributeResolver: resolver, actions: slices.Clone(actions)}
+}
+
+type scopeResolverWithRequiredActions struct {
+	ScopeAttributeResolver
+	actions []string
+}
+
+func (r scopeResolverWithRequiredActions) RequiredActions() []string {
+	return slices.Clone(r.actions)
 }
 
 type ActionResolver interface {
@@ -45,19 +69,23 @@ func NewResolvers(log log.Logger) Resolvers {
 	return Resolvers{
 		log:                log,
 		cache:              localcache.New(ttl, cleanInterval),
-		attributeResolvers: map[string]ScopeAttributeResolver{},
+		attributeResolvers: NewScopeResolverRegistry(),
 	}
 }
 
 type Resolvers struct {
 	log                log.Logger
 	cache              *localcache.CacheService
-	attributeResolvers map[string]ScopeAttributeResolver
+	attributeResolvers *ScopeResolverRegistry
 }
 
 func (s *Resolvers) AddScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver) {
 	s.log.Debug("Adding scope attribute resolver", "prefix", prefix)
-	s.attributeResolvers[prefix] = resolver
+	s.attributeResolvers.Register(prefix, resolver)
+}
+
+func (s *Resolvers) ScopeResolverRegistry() *ScopeResolverRegistry {
+	return s.attributeResolvers
 }
 
 func (s *Resolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMutator {
@@ -74,7 +102,7 @@ func (s *Resolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMutator 
 		}
 
 		prefix := ScopePrefix(scope)
-		if resolver, ok := s.attributeResolvers[prefix]; ok {
+		if resolver, ok := s.attributeResolvers.Get(prefix); ok {
 			scopes, err := resolver.Resolve(ctx, orgID, scope)
 			if err != nil {
 				return nil, fmt.Errorf("could not resolve %v: %w", scope, err)

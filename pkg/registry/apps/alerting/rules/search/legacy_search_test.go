@@ -20,21 +20,16 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func TestLegacyBackendMatchesTableResponses(t *testing.T) {
+func TestLegacyBackendMatchesUnifiedResponses(t *testing.T) {
 	for name, rule := range map[string]*ngmodels.AlertRule{"alert": testAlertRule(), "minimal": minimalAlertRule(), "recording": testRecordingRule()} {
 		t.Run(name, func(t *testing.T) {
 			rule.K8sStatus = []byte(`{"health":"OK","state":"Normal","evaluationDuration":0}`)
 			h, _, ctx := legacyStatusHandler(t, rule)
 			values := ruleColumnValues(rule)
 			(&legacyClient{logger: &logtest.Fake{}}).addStatusValues(rule, values)
-			cells, err := ruleCells(values)
-			require.NoError(t, err)
-			wire := &resourcepb.ResourceSearchResponse{TotalHits: 1, TotalHitsExact: true, Results: &resourcepb.ResourceTable{
-				Columns: resultColumnDefinitions(), Rows: []*resourcepb.ResourceTableRow{{Key: ruleKey("default", rule), Cells: cells}},
-			}}
+			wire := ruleResponse(t, ruleKey("default", rule), values)
 			unified := newUnifiedHandler(&fakeIndex{resp: wire}, &fakeIndex{resp: wire})
 			kind := alertRuleKind(t)
 			legacyRoute, unifiedRoute := h.SearchAlertRules, unified.SearchAlertRules
