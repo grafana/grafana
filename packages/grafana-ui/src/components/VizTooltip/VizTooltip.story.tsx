@@ -83,27 +83,6 @@ export const Basic: Story = {
   render: ({ size }) => <Tooltip size={size} />,
 };
 
-// Same content at both sizes. `auto` == Baseline; `narrow` caps the box and wraps names/values so
-// neither pushes the other out.
-export const AutoVsNarrow: Story = {
-  parameters: { controls: { disable: true } },
-  render: function Comparison() {
-    const styles = useStyles2(getStyles);
-    return (
-      <div className={styles.comparison}>
-        <div className={styles.example}>
-          <div className={styles.caption}>size=&quot;auto&quot; — grows to fit (identical to the old system)</div>
-          <Tooltip size="auto" />
-        </div>
-        <div className={styles.example}>
-          <div className={styles.caption}>size=&quot;narrow&quot; — capped; name ≤ 75%, value ≤ 75%, both wrap</div>
-          <Tooltip size="narrow" />
-        </div>
-      </div>
-    );
-  },
-};
-
 const getStyles = (theme: GrafanaTheme2) => ({
   // A minimal tooltip-like surface so the wrapper's own width behaviour is visible, mirroring the
   // real container's background/shadow/clip without imposing its own max-width.
@@ -114,17 +93,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.elevated,
     boxShadow: theme.shadows.z2,
     borderRadius: theme.shape.radius.default,
-  }),
-  comparison: css({
-    display: 'block',
-  }),
-  example: css({
-    marginBottom: theme.spacing(4),
-  }),
-  caption: css({
-    marginBottom: theme.spacing(0.5),
-    color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fontFamilyMonospace,
-    fontSize: theme.typography.bodySmall.fontSize,
   }),
 });
