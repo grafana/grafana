@@ -19,7 +19,7 @@ export function fillNullLists(spec: DashboardV2Spec): void {
   spec.variables ??= [];
   spec.elements ??= {};
 
-  spec.annotations.forEach(fillAnnotation);
+  fillAnnotations(spec);
   for (const link of spec.links) {
     link.tags ??= [];
   }
@@ -30,6 +30,14 @@ export function fillNullLists(spec: DashboardV2Spec): void {
     }
   }
   fillLayout(spec.layout);
+}
+
+function fillAnnotations(target: { annotations?: AnnotationQueryKind[] | null }) {
+  // Normalize stored nulls, but leave omitted optional annotations omitted.
+  if (target.annotations === null) {
+    target.annotations = [];
+  }
+  target.annotations?.forEach(fillAnnotation);
 }
 
 function fillAnnotation(annotation: AnnotationQueryKind) {
@@ -92,7 +100,7 @@ function fillLayout(layout?: DashboardV2Spec['layout']) {
       for (const row of layout.spec.rows) {
         fillConditionalRendering(row.spec.conditionalRendering);
         row.spec.variables?.forEach(fillVariable);
-        row.spec.annotations?.forEach(fillAnnotation);
+        fillAnnotations(row.spec);
         fillLayout(row.spec.layout);
       }
       break;
@@ -101,7 +109,7 @@ function fillLayout(layout?: DashboardV2Spec['layout']) {
       for (const tab of layout.spec.tabs) {
         fillConditionalRendering(tab.spec.conditionalRendering);
         tab.spec.variables?.forEach(fillVariable);
-        tab.spec.annotations?.forEach(fillAnnotation);
+        fillAnnotations(tab.spec);
         fillLayout(tab.spec.layout);
       }
       break;
