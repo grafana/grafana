@@ -163,16 +163,16 @@ export const MOCK_SCOPES: Scope[] = [
  */
 export const MOCK_DEFAULT_SCOPE = MOCK_SCOPES.find((s) => s.metadata.name === 'default-scope-with-path')!;
 
-const dashboardBindingsGenerator = (
+const scopeNavigationsGenerator = (
   scopes: string[],
   dashboards: Array<{ dashboardTitle: string; dashboardKey?: string; groups?: string[] }>
 ) =>
-  scopes.reduce<ScopeDashboardBinding[]>((scopeAcc, scopeTitle) => {
+  scopes.reduce<ScopeNavigation[]>((scopeAcc, scopeTitle) => {
     const scope = scopeTitle.toLowerCase().replaceAll(' ', '-').replaceAll('/', '-');
 
     return [
       ...scopeAcc,
-      ...dashboards.reduce<ScopeDashboardBinding[]>((acc, { dashboardTitle, groups, dashboardKey }, idx) => {
+      ...dashboards.reduce<ScopeNavigation[]>((acc, { dashboardTitle, groups, dashboardKey }, idx) => {
         dashboardKey = dashboardKey ?? dashboardTitle.toLowerCase().replaceAll(' ', '-').replaceAll('/', '-');
         const group = !groups
           ? ''
@@ -186,13 +186,15 @@ const dashboardBindingsGenerator = (
         return [
           ...acc,
           {
-            metadata: { name: `${scope}-${dashboard}` },
+            // The drawer uses the name as the item id and dedupes by URL, so a dashboard shared by
+            // several scopes keeps one name to render as a single item.
+            metadata: { name: dashboard },
             spec: {
-              dashboard,
+              url: `/d/${dashboard}`,
               scope,
             },
             status: {
-              dashboardTitle,
+              title: dashboardTitle,
               groups,
             },
           },
@@ -201,8 +203,8 @@ const dashboardBindingsGenerator = (
     ];
   }, []);
 
-export const MOCK_SCOPE_DASHBOARD_BINDINGS: ScopeDashboardBinding[] = [
-  ...dashboardBindingsGenerator(
+export const MOCK_SCOPE_NAVIGATIONS: ScopeNavigation[] = [
+  ...scopeNavigationsGenerator(
     ['Grafana'],
     [
       { dashboardTitle: 'Data Sources', groups: ['General'] },
@@ -219,7 +221,7 @@ export const MOCK_SCOPE_DASHBOARD_BINDINGS: ScopeDashboardBinding[] = [
       { dashboardTitle: 'Stats' },
     ]
   ),
-  ...dashboardBindingsGenerator(
+  ...scopeNavigationsGenerator(
     ['Loki', 'Tempo', 'Mimir'],
     [
       { dashboardTitle: 'Ingester', groups: ['Components', 'Investigations'] },
@@ -231,7 +233,7 @@ export const MOCK_SCOPE_DASHBOARD_BINDINGS: ScopeDashboardBinding[] = [
       { dashboardTitle: 'Stats', dashboardKey: 'another-stats' },
     ]
   ),
-  ...dashboardBindingsGenerator(
+  ...scopeNavigationsGenerator(
     ['Dev', 'Ops', 'Prod'],
     [
       { dashboardTitle: 'Overview', groups: ['Cardinality Management'] },
@@ -246,6 +248,14 @@ export const MOCK_SCOPE_DASHBOARD_BINDINGS: ScopeDashboardBinding[] = [
     ]
   ),
 ];
+
+export const MOCK_SCOPE_DASHBOARD_BINDINGS: ScopeDashboardBinding[] = MOCK_SCOPE_NAVIGATIONS.map(
+  ({ metadata, spec, status }) => ({
+    metadata: { name: `${spec.scope}-${metadata.name}` },
+    spec: { dashboard: metadata.name, scope: spec.scope },
+    status: { dashboardTitle: status.title, groups: status.groups },
+  })
+);
 
 export const MOCK_NODES: ScopeNode[] = [
   {
