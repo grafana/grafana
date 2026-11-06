@@ -71,15 +71,23 @@ test.describe('Panel options in the new query editor', { tag: ['@dashboards', '@
     await panelEditor.selectVisualization('Stat');
 
     const options = panelEditor.options;
+    const preview = panels.getPanel('Random walk series', panelEditor.getContainer());
+    await expect(preview).toBeVisible();
     await options.toggleTransparentBackground();
     await expect(options.getTransparentBackgroundSwitch()).toBeChecked();
+    await expect(preview).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await options.getDescriptionTextarea().fill('Before preview remount');
     await options.getSubtitleSwitch().click();
     await expect(panelEditor.getPreviewSubtitle()).toHaveText('Before preview remount');
 
+    const miniPreviewWidth = await preview.evaluate((element) => element.getBoundingClientRect().width);
     await panelEditor.toggleSidebarSize();
+    await expect
+      .poll(() => preview.evaluate((element) => element.getBoundingClientRect().width))
+      .toBeLessThan(miniPreviewWidth);
     await options.toggleTransparentBackground();
     await expect(options.getTransparentBackgroundSwitch()).toBeChecked({ checked: false });
+    await expect(preview).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await options.getDescriptionTextarea().fill('After sidebar remount');
     await options.getDescriptionTextarea().blur();
     await expect(panelEditor.getPreviewSubtitle()).toHaveText('After sidebar remount');
@@ -90,6 +98,7 @@ test.describe('Panel options in the new query editor', { tag: ['@dashboards', '@
     await expect(panelEditor.getTableViewSwitch()).toBeChecked({ checked: false });
     await options.toggleTransparentBackground();
     await expect(options.getTransparentBackgroundSwitch()).toBeChecked();
+    await expect(preview).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await options.getDescriptionTextarea().fill('After table-view remount');
     await options.getDescriptionTextarea().blur();
     await expect(panelEditor.getPreviewSubtitle()).toHaveText('After table-view remount');
