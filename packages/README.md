@@ -43,24 +43,24 @@ All packages in the `grafana` group are versioned according to the current Grafa
 
 ### Independent packages
 
-`@grafana/plugin-compat` has its own version. Its version bump and its `CHANGELOG.md` entry come from the [conventional commit](https://www.conventionalcommits.org/) titles of the pull requests that change the package. Do not edit the `version` field or `CHANGELOG.md` by hand.
+Some packages have their own version instead of following the Grafana version. Today that is `@grafana/plugin-compat`. For these packages, the version bump and the `CHANGELOG.md` entry come from the [conventional commit](https://www.conventionalcommits.org/) titles of the pull requests that change the package. Do not edit the `version` field or `CHANGELOG.md` by hand.
 
-A pull request that changes the package must have a title of the form `<type>(<scope>): <description>`, where the scope is optional, for example `feat: Add useDataSourceInstanceList` or `fix(plugin-compat): Handle a missing host API`. The title becomes the squash-merged commit message that Nx reads, so the description should make sense to consumers.
+A pull request that changes an independent package must have a title of the form `<type>(<scope>): <description>`, where the scope is optional, for example `feat: Add useDataSourceInstanceList` or `fix(plugin-compat): Handle a missing host API`. The title becomes the squash-merged commit message that Nx reads, so the description should make sense to consumers.
 
-A breaking change (`feat!: ...`) can have no scope or the scope `plugin-compat`. Nx finds the package from the files a pull request changes and drops the breaking marker when the scope is something else, so `feat(datasources)!: ...` would be released as a minor change.
+A breaking change (`feat!: ...`) can have no scope or the scope of the package it changes, such as `plugin-compat` for `@grafana/plugin-compat`. Nx finds the package from the files a pull request changes and drops the breaking marker when the scope is something else, so `feat(datasources)!: ...` would be released as a minor change.
 
-Below 1.0 the bump is shifted down one level, so choose by intent:
+Below 1.0 Nx shifts the bump down one level (its [`adjustSemverBumpsForZeroMajorVersion`](https://nx.dev/docs/reference/nx-json) option, on by default), so choose by intent:
 
-| Title        | Use for                         | Released as (from 0.7.0) |
-| ------------ | ------------------------------- | ------------------------ |
-| `feat!: ...` | A breaking change for consumers | 0.8.0                    |
-| `feat: ...`  | A new feature or export         | 0.7.1                    |
-| `fix: ...`   | A bug fix                       | 0.7.1                    |
-| `chore: ...` | A change that needs no release  | no release               |
+| Title        | Use for                         | Released as (example: from 0.7.0) |
+| ------------ | ------------------------------- | --------------------------------- |
+| `feat!: ...` | A breaking change for consumers | 0.8.0                             |
+| `feat: ...`  | A new feature or export         | 0.7.1                             |
+| `fix: ...`   | A bug fix                       | 0.7.1                             |
+| `chore: ...` | A change that needs no release  | no release                        |
 
 `perf`, `refactor`, `docs`, `build`, `types`, `examples`, `test`, `style`, `ci` and `revert` do not release either. Use `fix` for an internal improvement that consumers should get. Several pull requests in one release combine into the highest bump, and every releasing title becomes a changelog entry.
 
-Nx finds the changes since the last release from the `@grafana/plugin-compat@<version>` git tag, which the publish workflow creates. Do not delete these tags.
+Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.7.0`, which the publish workflow creates. Do not delete these tags.
 
 ### Stable releases
 
