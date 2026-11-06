@@ -252,12 +252,14 @@ describe('ConfigForm', () => {
       expect(screen.queryByText(/managed externally/i)).not.toBeInTheDocument();
     });
 
-    it('stays editable for git-provisioned repositories, which have their own edit flow', async () => {
+    // Unlike a dashboard, a repository has no edit flow that writes back through its manager:
+    // this form is the only editor, so being provisioned makes it read-only here too.
+    it('is read-only for a repository provisioned by another repository', async () => {
       setup(managedRepository({ [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: 'some-repo' }));
 
       const saveButton = await screen.findByRole('button', { name: /Save/ });
-      await waitFor(() => expect(saveButton).toBeEnabled());
-      expect(screen.queryByText(/managed externally/i)).not.toBeInTheDocument();
+      await waitFor(() => expect(saveButton).toBeDisabled());
+      expect(screen.getByText(/managed externally/i)).toBeInTheDocument();
     });
   });
 });

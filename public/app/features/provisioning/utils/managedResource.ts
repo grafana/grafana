@@ -97,6 +97,17 @@ export function isManagedResourceReadOnly(resource: ManagedResource): boolean {
 }
 
 /**
+ * True when a provisioning resource -- a Repository or a Connection -- is owned by a manager that
+ * does not allow edits. These do not get the repository-flow exemption that
+ * {@link isManagedResourceReadOnly} grants: a dashboard managed by a repository is still edited
+ * in Grafana and written back through it, while a Repository or Connection has no such flow, so
+ * whatever provisioned it is the only place to change it.
+ */
+export function isProvisioningResourceReadOnly(resource: ManagedResource): boolean {
+  return isManaged(resource) && resource.metadata?.annotations?.[AnnoKeyManagerAllowsEdits] !== 'true';
+}
+
+/**
  * Some surfaces (search results, folder DTOs) carry the manager kind as a flattened `managedBy`
  * field on the item itself rather than in `metadata.annotations`. This is the counterpart to
  * {@link isManagedByRepository} for that shape — use it for list items that expose `managedBy`.
