@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -29,8 +30,13 @@ import (
 
 type pluginClient struct {
 	pluginClient plugins.Client
-	pCtxProvider *plugincontext.Provider
+	pCtxProvider datasourcePluginContextProvider
 	ac           accesscontrol.AccessControl
+}
+
+type datasourcePluginContextProvider interface {
+	GetDataSourceInstanceSettings(context.Context, string) (*backend.DataSourceInstanceSettings, error)
+	PluginContextForDataSource(context.Context, *backend.DataSourceInstanceSettings) (backend.PluginContext, error)
 }
 
 type pluginRegistry struct {
@@ -152,6 +158,23 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 	qdr.PluginContext, err = d.pCtxProvider.PluginContextForDataSource(ctx, settings)
 	if err != nil {
 		return nil, err
+	}
+
+	if chunked.UseChunkedQuery(ctx, settings.Type) {
+		refIDs := make([]string, 0, len(queries))
+		for _, query := range queries {
+			refIDs = append(refIDs, query.RefID)
+		}
+		collector := chunked.NewQueryResponseCollector(refIDs...)
+		if err := d.pluginClient.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
+			PluginContext: qdr.PluginContext,
+			Queries:       qdr.Queries,
+			Headers:       qdr.Headers,
+			Format:        backend.DataFrameFormat_JSON,
+		}, collector); err != nil {
+			return nil, err
+		}
+		return collector.Response(), nil
 	}
 
 	rsp, err := d.pluginClient.QueryData(ctx, qdr)
