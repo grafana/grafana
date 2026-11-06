@@ -3,8 +3,15 @@ import { render, screen } from 'test/test-utils';
 
 import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
+import { useAlertingAbility } from '../../hooks/useAbilities';
 import { setupMswServer } from '../../mockApi';
 import { FOLDER_PARENTS_URL, getRecordingRuleHandler } from '../mocks/handlers';
+
+jest.mock('../../hooks/useAbilities', () => ({
+  ...jest.requireActual('../../hooks/useAbilities'),
+  useAlertingAbility: jest.fn(),
+}));
+const mockUseAlertingAbility = jest.mocked(useAlertingAbility);
 
 import { RecordingRuleListEntry } from './RecordingRuleListEntry';
 
@@ -14,6 +21,7 @@ const server = setupMswServer();
 
 describe('RecordingRuleListEntry', () => {
   beforeEach(() => {
+    mockUseAlertingAbility.mockReturnValue([true, true]);
     // Provide a default no-badge rule so requests don't go unhandled in tests that don't care about badges.
     server.use(getRecordingRuleHandler());
   });
@@ -124,5 +132,38 @@ describe('RecordingRuleListEntry', () => {
 
     expect(await screen.findByText('cpu:usage:rate5m')).toBeInTheDocument();
     expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
+  });
+
+  it('renders the More actions button when the full rule is available', async () => {
+    server.use(
+      getRecordingRuleHandler([
+        {
+          apiVersion: `${API_GROUP}/${API_VERSION}`,
+          kind: 'RecordingRule',
+          metadata: {
+            name: 'rule-1',
+            annotations: {
+              'grafana.com/access/canWrite': 'true',
+              'grafana.com/access/canDelete': 'true',
+            },
+          },
+          spec: {
+            title: 'cpu:usage:rate5m',
+            metric: 'cpu:usage:rate5m',
+            targetDatasourceUID: 'gdev-prometheus',
+            trigger: { interval: '1m' },
+            expressions: {},
+          },
+        },
+      ])
+    );
+
+    render(
+      <ul>
+        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath={false} />
+      </ul>
+    );
+
+    expect(await screen.findByRole('button', { name: 'More' })).toBeInTheDocument();
   });
 });
