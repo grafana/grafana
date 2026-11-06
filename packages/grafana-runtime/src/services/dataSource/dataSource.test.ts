@@ -716,7 +716,8 @@ describe('plugin', () => {
 
         const resolvers: Array<() => void> = [];
         const instances: DataSourceApi[] = [];
-        const mockImport = jest.fn(
+        // Untyped like the other importer mocks here: the fake plugin only has what the loader reads.
+        const mockImport = jest.fn().mockImplementation(
           () =>
             new Promise((resolve) => {
               const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
