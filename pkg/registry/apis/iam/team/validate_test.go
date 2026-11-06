@@ -410,14 +410,16 @@ func TestValidateOnDelete(t *testing.T) {
 		assert.ErrorIs(t, ValidateOnDelete(t.Context(), searcher, team), searchErr)
 	})
 
-	t.Run("returns errors embedded in the search response", func(t *testing.T) {
-		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{
-			Error: &resourcepb.ErrorResult{Message: "search unavailable", Code: http.StatusServiceUnavailable},
-		}}
+	t.Run("preserves status details of search failures", func(t *testing.T) {
+		searcher := &deleteValidationSearchClient{err: resource.GRPCStatusError(&resourcepb.ErrorResult{
+			Message: "search unavailable", Code: http.StatusServiceUnavailable,
+		})}
 
 		err := ValidateOnDelete(t.Context(), searcher, team)
 
 		require.Error(t, err)
+		assert.False(t, apierrors.IsConflict(err))
+		assert.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
 		assert.ErrorContains(t, err, "search unavailable")
 	})
 
@@ -511,9 +513,9 @@ func (s *stubReconciler) Validate(groups []string) error {
 func TestValidateTitleUniqueSearchErrors(t *testing.T) {
 	plainErr := errors.New("index down")
 	for name, client := range map[string]*deleteValidationSearchClient{
-		"embedded": {response: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+		"detailed": {err: resource.GRPCStatusError(&resourcepb.ErrorResult{
 			Code: http.StatusServiceUnavailable, Message: "index unavailable",
-		}}},
+		})},
 		"transport": {err: status.Error(codes.Unavailable, "index unavailable")},
 		"plain":     {err: plainErr},
 	} {

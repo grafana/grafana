@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -55,7 +56,7 @@ func TeamPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 }
 
 func ProvideTeamPermissions(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore,
 	iamFeatures iamapi.Features,
 	ac accesscontrol.AccessControl, license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,

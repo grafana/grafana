@@ -565,11 +565,12 @@ const LogListComponent = ({
           virtualization={virtualization}
           wrapLogMessage={wrapLogMessage}
         >
-          {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+          {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
             <VariableSizeList
               className={styles.logList}
               height={listHeight}
               itemCount={itemCount}
+              itemData={itemData}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
                 hasLogsWithErrors,
                 hasLogsWithErrorAttributes,
@@ -587,7 +588,7 @@ const LogListComponent = ({
               style={wrapLogMessage ? { overflowY: 'scroll' } : { overflow: 'scroll' }}
               width="100%"
             >
-              {Renderer}
+              {Log}
             </VariableSizeList>
           )}
         </InfiniteScroll>

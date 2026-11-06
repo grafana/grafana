@@ -123,7 +123,7 @@ func (s *server) recordListBodyStats(span trace.Span, stats *listBodyStats, path
 	}
 
 	returned := 0
-	if err != nil || rsp == nil || rsp.GetError() != nil {
+	if err != nil || rsp == nil {
 		stats.stopReason = listStopError
 	} else {
 		returned = len(rsp.Items)

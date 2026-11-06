@@ -2,6 +2,7 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { getWrapper } from 'test/test-utils';
 
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
@@ -47,6 +48,12 @@ describe('useImportProvisionedSave', () => {
     capturedRequest = null;
     jest.clearAllMocks();
     dashboardAPIVersionResolver.set({ v1: 'v1', v2: 'v2' });
+    // Serve from a sub path: the router basename carries it, so navigate() must get bare paths
+    locationUtil.initialize({
+      config: { appSubUrl: '/grafana' } as GrafanaConfig,
+      getTimeRangeForUrl: jest.fn(),
+      getVariablesUrlParams: jest.fn(),
+    });
 
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
@@ -248,7 +255,7 @@ describe('useImportProvisionedSave', () => {
       });
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/d/new-dash-uid/my-dashboard'));
+        expect(mockNavigate).toHaveBeenCalledWith('/d/new-dash-uid/my-dashboard');
       });
       expect(result.current.error).toBeUndefined();
     });

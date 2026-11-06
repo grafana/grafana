@@ -240,7 +240,8 @@ type ruleWithFolder struct {
 	folderTitle string
 }
 
-// fingerprint calculates a fingerprint that includes all fields except rule's Version and Update timestamp.
+// Fingerprint calculates a fingerprint of the fields that determine the rule state (such as the state cache ID).
+// Changing any other field keeps the fingerprint, so the state of the rule is not reset.
 func (r ruleWithFolder) Fingerprint() fingerprint {
 	rule := r.rule
 
@@ -294,8 +295,14 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	writeQuery := func() {
 		// The order of queries is not important as they represent an expression tree.
 		// Therefore, the order of elements should not change the hash. Sort by RefID because it is the unique key.
+		var thresholdRef string
+		isThreshold := false
 		for i, q := range rule.Data {
 			keys[i] = q.RefID
+			if q.RefID == rule.Condition {
+				cq := q
+				thresholdRef, isThreshold, _ = cq.ThresholdReferenceVar()
+			}
 		}
 		sub := keys[:len(rule.Data)]
 		sort.Strings(sub)
@@ -307,7 +314,15 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 					writeString(q.QueryType)
 					writeInt(int64(q.RelativeTimeRange.From))
 					writeInt(int64(q.RelativeTimeRange.To))
-					writeBytes(q.Model)
+					// The rule's condition decides its state, and a threshold expression passes its input's labels
+					// through unchanged. So nothing about a threshold condition's own model can change the state
+					// cache ID, except which upstream query it reads from (its "expression" field), which is hashed
+					// instead of the model in that case.
+					if q.RefID == rule.Condition && isThreshold {
+						writeString(thresholdRef)
+					} else {
+						writeBytes(q.Model)
+					}
 					break
 				}
 			}
@@ -321,7 +336,19 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	writeString(r.folderTitle)
 	writeLabels(rule.Labels)
 	writeString(rule.Condition)
+	// they decide which cache IDs states get: the Error result adds labels and NoData/Error mapping changes how states are created
+	writeString(string(rule.NoDataState))
+	writeString(string(rule.ExecErrState))
 	writeQuery()
+	// They mirror the __dashboardUid__/__panelId__ rule annotations, which end up in state annotations
+	// and are reused from the cached state where rule annotations are not re-expanded (NoData/Error
+	// mapping, missing series, patch). A link change must reset the state to avoid stale links.
+	if rule.DashboardUID != nil {
+		writeString(*rule.DashboardUID)
+	}
+	if rule.PanelID != nil {
+		writeInt(*rule.PanelID)
+	}
 
 	if rule.IsPaused {
 		writeInt(1)
@@ -331,23 +358,6 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 
 	if rule.NotificationSettings != nil {
 		binary.LittleEndian.PutUint64(tmp, uint64(rule.NotificationSettings.Fingerprint(nil)))
-		writeBytes(tmp)
-	}
-
-	// fields that do not affect the state.
-	// TODO consider removing fields below from the fingerprint
-	writeInt(int64(rule.For))
-	if rule.DashboardUID != nil {
-		writeString(*rule.DashboardUID)
-	}
-	if rule.PanelID != nil {
-		writeInt(*rule.PanelID)
-	}
-	writeString(rule.RuleGroup)
-	writeString(string(rule.NoDataState))
-	writeString(string(rule.ExecErrState))
-	if rule.Record != nil {
-		binary.LittleEndian.PutUint64(tmp, uint64(rule.Record.Fingerprint()))
 		writeBytes(tmp)
 	}
 
