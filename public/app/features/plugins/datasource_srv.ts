@@ -23,10 +23,9 @@ import {
   getPluginIdFromDatasourceInstanceType,
   getDatasourcePluginMeta,
   getRuntimePlugin,
-  logPluginMetaError,
   logPluginMetaWarning,
-  refetchDatasourcePluginMetas,
   syncDataSourceInstanceSettings,
+  syncDatasourcePluginMetas,
   UserStorage,
 } from '@grafana/runtime/internal';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
@@ -390,22 +389,19 @@ export class DatasourceSrv implements DataSourceService {
     return sorted;
   }
 
-  async reload() {
-    const settings = await getBackendSrv().get('/api/frontend/settings');
+  /** `payload` is an already-fetched `/api/frontend/settings`, so the reload sends no request. */
+  async reload(payload?: ReloadPayload) {
+    const settings = payload ?? (await getBackendSrv().get<ReloadPayload>('/api/frontend/settings'));
     // eslint-disable-next-line @grafana/no-config-datasources -- reload() intentionally refreshes boot data for legacy sync consumers
     config.datasources = settings.datasources;
     config.defaultDatasource = settings.defaultDatasource;
     this.init(settings.datasources, settings.defaultDatasource);
+    syncDatasourcePluginMetas(settings);
     // Keep the new async instance-settings cache in sync with the legacy srv during the
     // transition where both exist. The boot source reuses the payload just fetched.
     await syncDataSourceInstanceSettings({
       datasources: settings.datasources,
       defaultDatasource: settings.defaultDatasource,
-    });
-    // Refresh the deduplicated plugin metadata cache in the background.
-    // This does not need to block reload since init() already has the full data.
-    refetchDatasourcePluginMetas(settings).catch((error) => {
-      logPluginMetaError('Failed to refresh datasource plugin metadata', error);
     });
   }
 }
@@ -432,6 +428,11 @@ const isDatasourceRef = (ref: string | DataSourceRef | null | undefined): ref is
   }
   return false;
 };
+
+interface ReloadPayload {
+  datasources: Record<string, DataSourceInstanceSettings>;
+  defaultDatasource: string;
+}
 
 export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;

@@ -55,6 +55,7 @@ export {
   getDatasourcePluginMetas,
   setDatasourcePluginMetas,
   refetchDatasourcePluginMetas,
+  syncDatasourcePluginMetas,
   getPluginIdFromDatasourceInstanceType,
 } from '../services/pluginMeta/datasources';
 export {
@@ -87,6 +88,7 @@ export {
   refetchPanelPluginMetas,
 } from '../services/pluginMeta/panels';
 export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
+export { refetchPluginMetasAfterPluginChange } from '../services/pluginMeta/pluginChange';
 export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
 export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
 export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
@@ -106,3 +108,4 @@ export {
   FALLBACK_TO_LEGACY_SETTINGS_WARNING,
 } from '../services/dataSource/constants';
 export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';
+export { isSignedInOrAnonymous } from '../services/user';

@@ -30,9 +30,9 @@ export function StackedSection({ item, isCurrent, headingId }: StackedSectionPro
       data-stacked-editor-item-type={item.type}
     >
       {item.type === QueryEditorType.Transformation ? (
-        <StackedTransformationItem transformation={item.transformation} headingId={headingId} />
+        <StackedTransformationItem transformation={item.transformation} headingId={headingId} isCurrent={isCurrent} />
       ) : (
-        <StackedQueryItem query={item.query} headingId={headingId} />
+        <StackedQueryItem query={item.query} headingId={headingId} isCurrent={isCurrent} />
       )}
     </section>
   );
@@ -57,7 +57,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
       overflow: 'hidden',
-      marginBottom: theme.spacing(1.5),
       // Matches ContentHeader's 4px accent bar width so single-edit and stacked headers align.
       '&::before': {
         content: '""',

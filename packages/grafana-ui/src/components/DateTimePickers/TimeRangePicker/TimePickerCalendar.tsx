@@ -56,9 +56,12 @@ export interface TimePickerCalendarProps {
   from: DateTime;
   to: DateTime;
   onClose: () => void;
-  onApply: (e: FormEvent<HTMLButtonElement>) => void;
+  /** Used by the modal footer; floating calendars only edit the draft range. */
+  onApply?: (e: FormEvent<HTMLButtonElement>) => void;
   onChange: (from: DateTime, to: DateTime) => void;
   weekStart?: WeekStart;
+  minDate?: Date;
+  maxDate?: Date;
 
   /**
    * When true, the calendar is rendered as a floating "tooltip" next to the input.
@@ -117,7 +120,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
     >
       <Header {...props} />
       <Body {...props} />
-      {showInModal && <Footer {...props} />}
+      {showInModal && props.onApply && <Footer {...props} />}
     </section>
   );
 

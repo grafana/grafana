@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertprovisioning "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	ngalertrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	ngalertrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
@@ -834,11 +835,13 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 	provenanceStore := ngalertprovenance.ProvideProvenanceStore(featureToggles, sqlStore)
 	ruleStore, err := ngalertrules.ProvideRuleStore(cfg, featureToggles, sqlStore, mockFolder, accessControl, provenanceStore)
 	require.NoError(t, err)
+	ruleService, err := ngalertrulesvc.ProvideService(ruleStore, mockFolder)
+	require.NoError(t, err)
 
 	ng, err := ngalert.ProvideService(
 		cfg, featureToggles, nil, nil, rr, sqlStore, kvStore, nil, nil, ngalertprovisioning.NoopRuleMutationValidator{}, quotatest.New(false, nil),
 		secretsService, nil, alertMetrics, mockFolder, accessControl, dashboardService, nil, bus, fakeAccessControlService,
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, alertingStore, ruleStore, provenanceStore,
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, alertingStore, ruleService, provenanceStore,
 		httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
 		nil, // clientGenerator
 		nil, // cfgProvider

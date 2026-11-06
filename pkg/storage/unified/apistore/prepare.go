@@ -250,7 +250,7 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 		},
 	})
 	// A failed search returns no rows, which would otherwise pass as "the ID is free".
-	if err := resourceutil.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
+	if err := resourceutil.StatusErrorFromGRPC(err); err != nil {
 		return err
 	}
 	hasResults, err := searchResponseHasRows(rsp)
@@ -359,6 +359,13 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 			if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
 				return v, err
 			}
+		}
+	}
+
+	if !v.hasChanged && s.opts.EnableInlineBlobs {
+		v.hasChanged, err = s.blobsChanged(ctx, updateObject, previousObject)
+		if err != nil {
+			return v, err
 		}
 	}
 

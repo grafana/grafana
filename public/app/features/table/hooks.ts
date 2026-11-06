@@ -21,12 +21,11 @@ import { usePanelContext } from '@grafana/ui';
 import { getSourceFrameIndex, useColumnTransformations } from '@grafana/ui/internal';
 import { getConfig } from 'app/core/config';
 
+import { TABLE_TRANSFORMATIONS_OWNER } from './constants';
 import { supportsColumnManagement } from './tableCapabilities';
 import { getCellActions } from './utils';
 
 type GetActions = (frame: DataFrame, field: Field, rowIndex: number) => Array<ActionModel<Field>>;
-
-export const TABLE_TRANSFORMATIONS_OWNER = 'grafana:table-view';
 
 /**
  * Caches per-field display names on the data frames. TableNG's `getDisplayName` relies on the cached
@@ -108,6 +107,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       contentAwareWidthsEnabled,
       tableRefreshEnabled,
       jsonSyntaxHighlightingEnabled: refreshNewFeaturesEnabled,
+      rangeFiltersEnabled: refreshNewFeaturesEnabled,
     }),
     [
       options.showHeader,

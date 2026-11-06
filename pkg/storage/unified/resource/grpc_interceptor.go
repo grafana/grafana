@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -26,16 +25,8 @@ func UnaryErrorResultInterceptor() grpc.UnaryServerInterceptor {
 		if !ok || result.GetError() == nil {
 			return resp, nil
 		}
-		return nil, errorResultStatus(result.GetError())
+		return nil, GRPCStatusError(result.GetError())
 	}
-}
-
-func errorResultStatus(failure *resourcepb.ErrorResult) error {
-	st, err := status.New(grpcCodeFromErrorResult(failure), failure.Message).WithDetails(failure)
-	if err != nil {
-		return status.Error(codes.Internal, "failed to encode error details")
-	}
-	return st.Err()
 }
 
 // BlobStreamErrorResultInterceptor converts embedded blob errors before sending
@@ -54,7 +45,7 @@ func (s *blobErrorResultStream) SendMsg(msg any) error {
 	if result, ok := msg.(interface {
 		GetError() *resourcepb.ErrorResult
 	}); ok && result.GetError() != nil {
-		return errorResultStatus(result.GetError())
+		return GRPCStatusError(result.GetError())
 	}
 	return s.ServerStream.SendMsg(msg)
 }
