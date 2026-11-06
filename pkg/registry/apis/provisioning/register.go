@@ -513,8 +513,11 @@ func allowedSyncTargets(configured []string, bootstrapEnabled bool) []provisioni
 // configuration error: enabling the type here would widen what the instance accepts, and
 // ignoring the path would leave it unprovisioned.
 func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
+	// Single namespace: the parser rejects a manifest whose namespace is not the repository's.
+	namespace := request.GetNamespaceMapper(cfg)(cfg.DefaultOrgID())
 	if cfg.ProvisioningBootstrapPath == "" {
-		return bootstrap.Config{}, nil
+		// Still reconcilable, so a repository a previous run registered can be stopped.
+		return bootstrap.Config{Namespace: namespace}, nil
 	}
 	if len(cfg.ProvisioningRepositoryTypes) > 0 &&
 		!slices.Contains(cfg.ProvisioningRepositoryTypes, string(provisioning.LocalRepositoryType)) {
@@ -527,11 +530,7 @@ func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
 		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q sync target to be allowed", bootstrap.SyncTarget)
 	}
 
-	// Single namespace: the parser rejects a manifest whose namespace is not the repository's.
-	return bootstrap.Config{
-		Path:      cfg.ProvisioningBootstrapPath,
-		Namespace: request.GetNamespaceMapper(cfg)(cfg.DefaultOrgID()),
-	}, nil
+	return bootstrap.Config{Path: cfg.ProvisioningBootstrapPath, Namespace: namespace}, nil
 }
 
 // TODO: Move specific endpoint authorization together with the rest of the logic.
@@ -1081,10 +1080,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
-			if b.bootstrapConfig.Enabled() {
-				// Never fatal: a rejected bootstrap repository must not keep the instance down.
-				if err := bootstrap.Ensure(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.bootstrapConfig); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("failed to register bootstrap repository",
+			// Runs whether or not a path is configured: clearing bootstrap_path has to stop the
+			// repository a previous run registered, which costs one read on an instance that
+			// never used one. Never fatal: a rejected bootstrap repository must not keep the
+			// instance down.
+			if b.bootstrapConfig.Reconcilable() {
+				if err := bootstrap.Reconcile(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.bootstrapConfig); err != nil {
+					logging.FromContext(postStartHookCtx.Context).Error("failed to reconcile bootstrap repository",
 						"path", b.bootstrapConfig.Path, "namespace", b.bootstrapConfig.Namespace, "error", err)
 				}
 			}

@@ -21,8 +21,10 @@ func TestBootstrapConfigFromSettings(t *testing.T) {
 		wantErr         bool
 	}{
 		{
-			name: "disabled when no path is configured",
-			want: bootstrap.Config{},
+			// Still carries the namespace: the post-start hook needs one to find and stop a
+			// repository an earlier run registered.
+			name: "disabled but still reconcilable when no path is configured",
+			want: bootstrap.Config{Namespace: "default"},
 		},
 		{
 			name: "targets the default org namespace",

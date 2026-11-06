@@ -41,7 +41,9 @@ type Repositories interface {
 	Update(ctx context.Context, repo *provisioning.Repository, opts metav1.UpdateOptions) (*provisioning.Repository, error)
 }
 
-// Config is the bootstrap repository to register.
+// Config is the bootstrap repository to register. An empty Path means none is configured,
+// which still needs reconciling: a repository registered on an earlier run must stop syncing
+// rather than keep reading a directory the configuration no longer names.
 type Config struct {
 	// Path is the directory the repository reads, as configured.
 	Path string
@@ -49,9 +51,14 @@ type Config struct {
 	Namespace string
 }
 
+// Reconcilable reports whether there is a namespace to reconcile the repository in.
+func (c Config) Reconcilable() bool {
+	return c.Namespace != ""
+}
+
 // Enabled reports whether a bootstrap repository is configured.
 func (c Config) Enabled() bool {
-	return c.Path != "" && c.Namespace != ""
+	return c.Path != "" && c.Reconcilable()
 }
 
 // matches reports whether repo is already the configured shape.
@@ -62,16 +69,46 @@ func (c Config) matches(repo *provisioning.Repository) bool {
 		reflect.DeepEqual(repo.Annotations, want.Annotations)
 }
 
-// Ensure creates the bootstrap repository, or brings an existing one back to the configured
-// shape. A repository that already matches is left alone, so its sync is not restarted on boot.
-func Ensure(ctx context.Context, repos Repositories, cfg Config) error {
+// Reconcile brings the bootstrap repository in line with the configuration: a configured path
+// registers it and keeps its shape, a cleared one stops the repository an earlier run left
+// behind. Both run on every boot, since the configuration can change between them.
+func Reconcile(ctx context.Context, repos Repositories, cfg Config) error {
+	step := ensure
+	if !cfg.Enabled() {
+		step = disable
+	}
+
 	var err error
 	for attempt := 0; attempt < updateAttempts; attempt++ {
-		if err = ensure(ctx, repos, cfg); !apierrors.IsConflict(err) {
+		if err = step(ctx, repos, cfg); !apierrors.IsConflict(err) {
 			return err
 		}
 	}
 	return err
+}
+
+// disable stops the sync on a bootstrap repository left over from a run that configured one.
+// The repository and everything it provisioned are kept: clearing a setting should not delete
+// an instance's dashboards, and an operator who wants them gone can delete the repository.
+func disable(ctx context.Context, repos Repositories, cfg Config) error {
+	existing, err := repos.Get(ctx, Name, metav1.GetOptions{})
+	switch {
+	case apierrors.IsNotFound(err):
+		return nil
+	case err != nil:
+		return fmt.Errorf("read bootstrap repository: %w", err)
+	case !owned(existing):
+		return nil // not ours to stop
+	case !existing.Spec.Sync.Enabled:
+		return nil
+	}
+
+	updated := existing.DeepCopy()
+	updated.Spec.Sync.Enabled = false
+	if _, err := repos.Update(ctx, updated, metav1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("disable bootstrap repository: %w", err)
+	}
+	return nil
 }
 
 func ensure(ctx context.Context, repos Repositories, cfg Config) error {
