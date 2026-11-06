@@ -476,7 +476,7 @@ importers:
         version: 26.4.2(@typescript/typescript6@6.0.2)
       idb:
         specifier: ^8.0.3
-        version: 8.0.3
+        version: 8.0.4
       immer:
         specifier: 10.2.0
         version: 10.2.0
@@ -10683,8 +10683,8 @@ packages:
     peerDependencies:
       postcss: ^8.1.0
 
-  idb@8.0.3:
-    resolution: {integrity: sha512-LtwtVyVYO5BqRvcsKuB2iUMnHwPVByPCXFXOpuU96IZPPoPN6xjOGxZQ74pgSVVLQWtUOYgyeL4GE98BY5D3wg==}
+  idb@8.0.4:
+    resolution: {integrity: sha512-jd0ITCrN+Zah4J7R/Z2jnR3W7A4BXDAjmo62MwWuSjxCiueUAf7X5rbodEdidWzeknwXHmLpdZkoiiCppNi30Q==}
 
   identity-obj-proxy@3.0.0:
     resolution: {integrity: sha512-00n6YnVHKrinT9t0d9+5yZC6UBNJANpYEQvL2LlX6Ab9lnmxzIRcEmTPuyGScvl1+jKuCICX1Z0Ab1pPKKdikA==}
@@ -24217,7 +24217,7 @@ snapshots:
     dependencies:
       postcss: 8.5.31
 
-  idb@8.0.3: {}
+  idb@8.0.4: {}
 
   identity-obj-proxy@3.0.0:
     dependencies:
