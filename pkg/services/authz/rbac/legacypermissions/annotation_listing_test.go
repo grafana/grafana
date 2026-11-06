@@ -8,7 +8,6 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -49,10 +48,10 @@ func TestAnnotationPermissionListingIncludesBothResources(t *testing.T) {
 		scope                   string
 		want                    []string
 	}{
-		{name: "organization only", organization: &authzv1.ListResponse{All: true}, want: []string{"annotations:*"}},
+		{name: "organization only", organization: &authzv1.ListResponse{All: true}, want: []string{"annotations:type:organization"}},
 		{name: "dashboard and folder", dashboard: &authzv1.ListResponse{Items: []string{"dash1"}, Folders: []string{"folder1"}}, want: []string{"dashboards:uid:dash1", "folders:uid:folder1"}},
 		{name: "dashboard wildcard", dashboard: &authzv1.ListResponse{All: true}, want: []string{"dashboards:*", "folders:*"}},
-		{name: "both resources", organization: &authzv1.ListResponse{All: true}, dashboard: &authzv1.ListResponse{All: true}, want: []string{"annotations:*", "dashboards:*", "folders:*"}},
+		{name: "both resources", organization: &authzv1.ListResponse{All: true}, dashboard: &authzv1.ListResponse{All: true}, want: []string{"annotations:type:organization", "dashboards:*", "folders:*"}},
 		{name: "filtered folder", organization: &authzv1.ListResponse{All: true}, dashboard: &authzv1.ListResponse{Items: []string{"dash1"}, Folders: []string{"folder1", "folder2"}}, scope: "folders:uid:folder1", want: []string{"folders:uid:folder1"}},
 		{name: "filtered dashboard wildcard", organization: &authzv1.ListResponse{All: true}, dashboard: &authzv1.ListResponse{All: true}, scope: "dashboards:uid:dash1", want: []string{"dashboards:*"}},
 		{name: "filtered folder wildcard", dashboard: &authzv1.ListResponse{All: true}, scope: "folders:uid:folder1", want: []string{"folders:*"}},
@@ -63,7 +62,7 @@ func TestAnnotationPermissionListingIncludesBothResources(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			client := &annotationListClient{organization: tc.organization, dashboard: tc.dashboard}
 			r := &ZanzanaPermissionResolver{client: client}
-			result, err := r.searchPermissionsForIdentity(t.Context(), 1, 42, "u1", false,
+			result, err := r.searchPermissionsForIdentity(t.Context(), "org-1", 42, "u1", false,
 				ac.SearchOptions{Action: "annotations:read", Scope: tc.scope})
 			require.NoError(t, err)
 			require.ElementsMatch(t, tc.want, permScopes(result[42], "annotations:read"))
@@ -92,26 +91,11 @@ func TestAnnotationPermissionListingSearchModes(t *testing.T) {
 				dashboard:    &authzv1.ListResponse{Items: []string{"dash1"}, Folders: []string{"folder1"}},
 			}
 			r := &ZanzanaPermissionResolver{client: client}
-			result, err := r.searchPermissionsForIdentity(t.Context(), 1, 42, "u1", false, tc.options)
+			result, err := r.searchPermissionsForIdentity(t.Context(), "org-1", 42, "u1", false, tc.options)
 			require.NoError(t, err)
-			require.ElementsMatch(t, []string{"annotations:*", "dashboards:uid:dash1", "folders:uid:folder1"}, permScopes(result[42], tc.action))
+			require.ElementsMatch(t, []string{"annotations:type:organization", "dashboards:uid:dash1", "folders:uid:folder1"}, permScopes(result[42], tc.action))
 			requireAnnotationResourceCalls(t, client, tc.verb)
 		})
-	}
-}
-
-func TestResolveCurrentUserPermissions_AnnotationResources(t *testing.T) {
-	client := &annotationListClient{
-		organization: &authzv1.ListResponse{All: true},
-		dashboard:    &authzv1.ListResponse{Items: []string{"dash1"}, Folders: []string{"folder1"}},
-	}
-	r := &ZanzanaPermissionResolver{client: client}
-	user := &identity.StaticRequester{Type: "user", UserUID: "u1", OrgID: 1, Namespace: "default"}
-	perms, err := r.ResolveCurrentUserPermissions(t.Context(), user)
-	require.NoError(t, err)
-	for action, verb := range map[string]string{"annotations:read": "get", "annotations:create": "create", "annotations:write": "update", "annotations:delete": "delete"} {
-		require.ElementsMatch(t, []string{"annotations:*", "dashboards:uid:dash1", "folders:uid:folder1"}, permScopes(perms, action), action)
-		requireAnnotationResourceCalls(t, client, verb)
 	}
 }
 
@@ -135,7 +119,7 @@ func TestAnnotationPermissionListingResourceErrors(t *testing.T) {
 		wantErr                       error
 	}{
 		{name: "organization lookup fails", organizationErr: lookupErr, want: []string{"dashboards:uid:dash1"}},
-		{name: "dashboard lookup fails", dashboardErr: lookupErr, want: []string{"annotations:*"}},
+		{name: "dashboard lookup fails", dashboardErr: lookupErr, want: []string{"annotations:type:organization"}},
 		{name: "both lookups fail", organizationErr: lookupErr, dashboardErr: lookupErr},
 		{name: "organization canceled", organizationErr: context.Canceled, wantErr: context.Canceled},
 		{name: "dashboard canceled", dashboardErr: context.Canceled, wantErr: context.Canceled},
@@ -150,7 +134,7 @@ func TestAnnotationPermissionListingResourceErrors(t *testing.T) {
 				organizationErr: tc.organizationErr, dashboardErr: tc.dashboardErr,
 			}
 			r := &ZanzanaPermissionResolver{client: client}
-			result, err := r.searchPermissionsForIdentity(t.Context(), 1, 42, "u1", false, ac.SearchOptions{Action: "annotations:read"})
+			result, err := r.searchPermissionsForIdentity(t.Context(), "org-1", 42, "u1", false, ac.SearchOptions{Action: "annotations:read"})
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
 				require.Nil(t, result)

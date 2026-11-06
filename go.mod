@@ -34,7 +34,9 @@ replace (
 	github.com/grafana/grafana/pkg/infra/features => ./pkg/infra/features
 	github.com/grafana/grafana/pkg/infra/log => ./pkg/infra/log
 	github.com/grafana/grafana/pkg/infra/metrics => ./pkg/infra/metrics
+	github.com/grafana/grafana/pkg/infra/slugify => ./pkg/infra/slugify
 	github.com/grafana/grafana/pkg/infra/tracing => ./pkg/infra/tracing
+	github.com/grafana/grafana/pkg/legacyapi => ./pkg/legacyapi
 	github.com/grafana/grafana/pkg/plugins => ./pkg/plugins
 	github.com/grafana/grafana/pkg/storage/dbproxy => ./pkg/storage/dbproxy
 	github.com/grafana/grafana/pkg/storage/unified/apistore => ./pkg/storage/unified/apistore
@@ -175,7 +177,9 @@ require (
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // @grafana/grafana-backend-services-squad
 	github.com/grafana/grafana/pkg/infra/log v0.0.0 // @grafana/grafana-backend-services-squad
 	github.com/grafana/grafana/pkg/infra/metrics v0.0.0 // @grafana/grafana-backend-services-squad
+	github.com/grafana/grafana/pkg/infra/slugify v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/infra/tracing v0.0.0 // @grafana/grafana-backend-services-squad
+	github.com/grafana/grafana/pkg/legacyapi v0.0.0 // @grafana/grafana-backend-services-squad
 	github.com/grafana/grafana/pkg/plugins v0.0.0 // @grafana/grafana-catalog
 	github.com/grafana/grafana/pkg/storage/dbproxy v0.0.0 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0 // @grafana/grafana-search-and-storage
@@ -184,7 +188,7 @@ require (
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/util/sqlite v0.0.0 // @grafana/grafana-backend-group
 	github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 // @grafana/alerting-backend
-	github.com/grafana/nanogit/gittest v1.7.3 // @grafana/grafana-git-ui-sync-team
+	github.com/grafana/nanogit/gittest v1.7.5 // @grafana/grafana-git-ui-sync-team
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // @grafana/data-sources-plugins
 	github.com/grafana/saml v0.4.15-0.20260916103902-393394c6d16c // @grafana/identity-access-team
 	github.com/grafana/schemads v0.2.3 // @grafana/data-sources
@@ -320,7 +324,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.4.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.2.0 // indirect
-	github.com/Azure/go-ansiterm v0.0.0-20261008234032-65faa4be4f89 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20261013165250-51075c6ea6bc // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/autorest/to v0.4.1 // indirect
@@ -337,7 +341,7 @@ require (
 	github.com/Machiel/slugify v1.0.1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
-	github.com/Microsoft/go-winio v0.6.3 // indirect
+	github.com/Microsoft/go-winio v0.6.4 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/ProtonMail/go-crypto v1.5.2 // indirect
@@ -419,7 +423,7 @@ require (
 	github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 // indirect
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect; @grafana/observability-traces-and-profiling
-	github.com/ebitengine/purego v0.11.1 // indirect
+	github.com/ebitengine/purego v0.11.2 // indirect
 	github.com/edsrzf/mmap-go v1.2.1-0.20241212181136-fad1cd13edbd // indirect
 	github.com/efficientgo/core v1.0.0-rc.3 // indirect
 	github.com/elazarl/goproxy v1.9.2 // indirect
@@ -474,7 +478,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.20 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect; @grafana/grafana-app-platform-squad
-	github.com/grafana/nanogit v1.7.3 // indirect
+	github.com/grafana/nanogit v1.7.5 // indirect
 	github.com/grafana/otel-profiling-go v0.7.0 // indirect
 	github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 // indirect
 	github.com/grafana/sqlds/v5 v5.3.1 // indirect

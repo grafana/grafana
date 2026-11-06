@@ -222,6 +222,7 @@ Callers must use only the supported operations.
 
 The API, client, and SQL driver share the module `github.com/grafana/grafana/pkg/storage/dbproxy`.
 Consumers pin a public module version independently of the proxy server image.
+For module versions, tag format, and the release procedure, see [Release the module](README.md#release-the-module).
 
 ## Compatible upgrades and rollback
 

@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -616,5 +617,127 @@ func newTestSearchClient(conn grpc.ClientConnInterface) *testSearchClient {
 		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cci),
 		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cci),
 		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cci),
+	}
+}
+
+// loopbackBus delivers every published notification to every subscriber, like
+// a NATS mesh connecting several instances.
+type loopbackBus struct {
+	mu       sync.Mutex
+	handlers []func(subject string, data []byte)
+}
+
+type loopbackSubscription struct{}
+
+func (loopbackSubscription) WaitReady(ctx context.Context) error { return ctx.Err() }
+func (loopbackSubscription) Unsubscribe() error                  { return nil }
+
+func (b *loopbackBus) Enabled() bool { return true }
+
+func (b *loopbackBus) Publish(_ context.Context, subject string, data []byte) error {
+	b.mu.Lock()
+	handlers := append([]func(string, []byte){}, b.handlers...)
+	b.mu.Unlock()
+	for _, h := range handlers {
+		h(subject, data)
+	}
+	return nil
+}
+
+func (b *loopbackBus) Subscribe(_ context.Context, subject string, handler func(string, []byte), _ func()) (resource.Subscription, error) {
+	if !strings.HasSuffix(subject, ">") {
+		return nil, nil
+	}
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.handlers = append(b.handlers, handler)
+	return loopbackSubscription{}, nil
+}
+
+// newSharedDBBackends starts one HA backend per option set on a single
+// database, as several Grafana instances would.
+func newSharedDBBackends(t *testing.T, optSets ...[]sql.StorageBackendOption) []resource.StorageBackend {
+	initMutex.Lock()
+	defer initMutex.Unlock()
+
+	cfg := setting.NewCfg()
+	cfg.EnableSQLKVBackend = false
+	cfg.DisablePruner = db.IsTestDbSQLite()
+	cfg.NotifierSettleDelay = time.Millisecond
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg.SectionWithEnvOverrides("database").Key("high_availability").SetValue("true")
+
+	// One provider migrates the resource tables once for every backend.
+	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
+	require.NoError(t, err)
+	backends := make([]resource.StorageBackend, 0, len(optSets))
+	for _, opts := range optSets {
+		registerer := prometheus.NewPedanticRegistry()
+		backend, err := sql.NewStorageBackend(cfg, eDB, registerer, resource.ProvideStorageMetrics(registerer), false, nil, nil, opts...)
+		require.NoError(t, err)
+		svc, ok := backend.(services.Service)
+		require.True(t, ok)
+		require.NoError(t, services.StartAndAwaitRunning(testutil.NewTestContext(t, time.Now().Add(time.Minute)), svc))
+		t.Cleanup(func() { _ = services.StopAndAwaitTerminated(context.Background(), svc) })
+		backends = append(backends, backend)
+	}
+	return backends
+}
+
+func receiveWritten(t *testing.T, ch <-chan *resource.WrittenEvent) *resource.WrittenEvent {
+	t.Helper()
+	select {
+	case e, ok := <-ch:
+		require.True(t, ok, "watch stream closed")
+		return e
+	case <-time.After(10 * time.Second):
+		t.Fatal("timed out waiting for a watch event")
+		return nil
+	}
+}
+
+func TestIntegrationSQLBackendWatchesFromNATS(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
+
+	bus := &loopbackBus{}
+	opts := func() []sql.StorageBackendOption {
+		return []sql.StorageBackendOption{sql.WithEventPublisher(bus), sql.WithNatsNotifier(bus, resource.NewWatchExpiry())}
+	}
+	backends := newSharedDBBackends(t, opts(), opts())
+	writer, reader := backends[0], backends[1]
+	ctx := testutil.NewTestContext(t, time.Now().Add(time.Minute))
+
+	readerEvents, err := reader.WatchWriteEvents(ctx)
+	require.NoError(t, err)
+	writerEvents, err := writer.WatchWriteEvents(ctx)
+	require.NoError(t, err)
+
+	created, err := unitest.WriteEvent(ctx, writer, "item", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	updated, err := unitest.WriteEvent(ctx, writer, "item", resourcepb.WatchEvent_MODIFIED, unitest.WithNamespaceAndRV("namespace", created))
+	require.NoError(t, err)
+	deleted, err := unitest.WriteEvent(ctx, writer, "item", resourcepb.WatchEvent_DELETED, unitest.WithNamespaceAndRV("namespace", updated))
+	require.NoError(t, err)
+
+	want := []struct {
+		typ    resourcepb.WatchEvent_Type
+		rv     int64
+		prevRV int64
+	}{
+		{resourcepb.WatchEvent_ADDED, created, 0},
+		{resourcepb.WatchEvent_MODIFIED, updated, created},
+		{resourcepb.WatchEvent_DELETED, deleted, updated},
+	}
+	for name, events := range map[string]<-chan *resource.WrittenEvent{"other instance": readerEvents, "writing instance": writerEvents} {
+		for _, w := range want {
+			got := receiveWritten(t, events)
+			require.Equal(t, w.typ, got.Type, name)
+			require.Equal(t, w.rv, got.ResourceVersion, name)
+			require.Equal(t, w.prevRV, got.PreviousRV, name)
+			require.Equal(t, "item", got.Key.Name, name)
+			require.Equal(t, "folderuid", got.Folder, name)
+			require.Contains(t, string(got.Value), "item "+w.typ.String(), name)
+		}
 	}
 }

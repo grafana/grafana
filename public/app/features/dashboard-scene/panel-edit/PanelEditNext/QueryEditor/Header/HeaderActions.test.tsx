@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 
 import { type ActionItem } from '../../actionItem';
 import { QueryEditorType } from '../../constants';
-import { renderWithQueryEditorProvider } from '../testUtils';
+import { makeQueryActionTarget, renderWithQueryEditorProvider } from '../testUtils';
 import { type Transformation } from '../types';
 
 import { HeaderActions } from './HeaderActions';
@@ -11,16 +11,18 @@ interface MockActionsProps {
   item: ActionItem;
   onDelete?: () => void;
   onToggleHide?: () => void;
+  source?: string;
 }
 
 jest.mock('../../Actions', () => ({
   ...jest.requireActual('../../Actions'),
-  Actions: ({ item, onDelete, onToggleHide }: MockActionsProps) => (
+  Actions: ({ item, onDelete, onToggleHide, source }: MockActionsProps) => (
     <div
       data-testid="actions"
       data-item-type={item.type}
       data-item-id={item.id}
       data-item-hidden={String(item.isHidden)}
+      data-source={source}
     >
       {onToggleHide && <button onClick={onToggleHide}>Toggle hide action</button>}
       {onDelete && <button onClick={onDelete}>Delete action</button>}
@@ -131,6 +133,63 @@ describe('HeaderActions', () => {
 
     expect(toggleTransformationDisabled).toHaveBeenCalledWith('transform-42');
     expect(deleteTransformation).toHaveBeenCalledWith('transform-42');
+  });
+
+  it('acts on an explicit target query instead of the selected one', async () => {
+    const toggleQueryHide = jest.fn();
+    const deleteQuery = jest.fn();
+
+    const { user } = renderWithQueryEditorProvider(
+      <HeaderActions target={makeQueryActionTarget({ refId: 'B', hide: true })} source="stacked_header" />,
+      {
+        selectedQuery: { refId: 'A', hide: false },
+        actionsOverrides: { toggleQueryHide, deleteQuery },
+      }
+    );
+
+    expect(screen.getByTestId('actions')).toHaveAttribute('data-item-id', 'B');
+    expect(screen.getByTestId('actions')).toHaveAttribute('data-item-hidden', 'true');
+    expect(screen.getByTestId('actions')).toHaveAttribute('data-source', 'stacked_header');
+
+    await user.click(screen.getByRole('button', { name: 'Toggle hide action' }));
+    await user.click(screen.getByRole('button', { name: 'Delete action' }));
+
+    expect(toggleQueryHide).toHaveBeenCalledWith('B');
+    expect(deleteQuery).toHaveBeenCalledWith('B');
+  });
+
+  it('acts on an explicit target transformation instead of the selected query', async () => {
+    const toggleTransformationDisabled = jest.fn();
+    const deleteTransformation = jest.fn();
+
+    const { user } = renderWithQueryEditorProvider(
+      <HeaderActions
+        target={{
+          cardType: QueryEditorType.Transformation,
+          transformation: makeTransformation({ transformId: 'x-1' }),
+        }}
+      />,
+      {
+        selectedQuery: { refId: 'A' },
+        actionsOverrides: { toggleTransformationDisabled, deleteTransformation },
+      }
+    );
+
+    expect(screen.getByTestId('transformation-action-buttons')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Toggle hide action' }));
+    await user.click(screen.getByRole('button', { name: 'Delete action' }));
+
+    expect(toggleTransformationDisabled).toHaveBeenCalledWith('x-1');
+    expect(deleteTransformation).toHaveBeenCalledWith('x-1');
+  });
+
+  it('omits the feedback button when asked', () => {
+    renderWithQueryEditorProvider(<HeaderActions showFeedbackButton={false} />, {
+      selectedQuery: { refId: 'A' },
+    });
+
+    expect(screen.queryByTestId('experimental-feedback-button')).not.toBeInTheDocument();
   });
 
   it('passes the selected transformation id to Actions', () => {

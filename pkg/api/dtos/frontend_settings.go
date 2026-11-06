@@ -2,6 +2,7 @@ package dtos
 
 import (
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/setting"
@@ -256,7 +257,6 @@ type FrontendSettingsDTO struct {
 	PluginAdminEnabled                  bool                           `json:"pluginAdminEnabled"`
 	PluginAdminExternalManageEnabled    bool                           `json:"pluginAdminExternalManageEnabled"`
 	PluginCatalogHiddenPlugins          []string                       `json:"pluginCatalogHiddenPlugins"`
-	PluginCatalogManagedPlugins         []string                       `json:"pluginCatalogManagedPlugins"`
 	PluginCatalogPreinstalledPlugins    []setting.InstallPlugin        `json:"pluginCatalogPreinstalledPlugins"`
 	PluginCatalogPreinstalledAutoUpdate bool                           `json:"pluginCatalogPreinstalledAutoUpdate"`
 	ExpressionsEnabled                  bool                           `json:"expressionsEnabled"`
