@@ -446,7 +446,11 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 }
 
 // isSyncDisableOnly reports whether this update turns off a running sync and changes nothing
-// else in the spec, so revalidating the spec could only reject content that is already stored.
+// the validators read, so revalidating could only reject what is already stored. Everything
+// they do read has to be unchanged, not just the spec: the finalizers carry rules of their own
+// (remove-orphan and release-orphan are mutually exclusive), and the secure values decide
+// whether a repository is allowed to reach its remote at all. An object being deleted never
+// reaches here, so its deletion timestamp is already out of scope.
 func isSyncDisableOnly(a admission.Attributes, r *provisioning.Repository) bool {
 	if a.GetOperation() != admission.Update {
 		return false
@@ -456,11 +460,13 @@ func isSyncDisableOnly(a admission.Attributes, r *provisioning.Repository) bool 
 		return false
 	}
 
-	// Compare on the sync already switched off, so the only difference left to find is
-	// another field the caller changed alongside it.
-	want := old.Spec.DeepCopy()
-	want.Sync.Enabled = false
-	return apiequality.Semantic.DeepEqual(&r.Spec, want)
+	// Compare against the stored object with the sync already switched off, so the only
+	// difference left to find is something the caller changed alongside it.
+	want := old.DeepCopy()
+	want.Spec.Sync.Enabled = false
+	return apiequality.Semantic.DeepEqual(&r.Spec, &want.Spec) &&
+		apiequality.Semantic.DeepEqual(&r.Secure, &want.Secure) &&
+		slices.Equal(r.Finalizers, want.Finalizers)
 }
 
 func invalidRepositoryError(name string, list field.ErrorList) error {
