@@ -282,7 +282,7 @@ LIMIT
                 >
                   {renderQueryToolbox}
                 </SqlEditor>
-              </div>            
+              </div>
             );
           }}
         </AutoSizer>
