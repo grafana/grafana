@@ -8,16 +8,16 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { VizTooltipContent } from './VizTooltipContent';
 import { VizTooltipHeader } from './VizTooltipHeader';
 import { VizTooltipWrapper } from './VizTooltipWrapper';
-import { type VizTooltipItem } from './types';
+import { type VizTooltipItem, type VizTooltipSize } from './types';
 
 const headerItem: VizTooltipItem = {
   label: 'Time',
   value: '2024-01-01 12:00:00',
 };
 
-// A spread of short/long names and short/long values, used as the fixed comparison content while we
-// (re)build the tooltip sizing. This is the baseline fixture: whatever the sizing feature does later,
-// its `auto` mode must render this identically to the current `Baseline` story.
+// A spread of short/long names and short/long values, used as fixed comparison content. `auto` must
+// render these exactly as the old system (Baseline); `narrow` caps the width and splits each row so
+// neither the name nor the value can push the other out (each ≤ 75%, so the other keeps ≥ 25%).
 const items: VizTooltipItem[] = [
   { label: 'cpu', value: '72.4%', color: '#73BF69' },
   {
@@ -38,26 +38,67 @@ const items: VizTooltipItem[] = [
   },
 ];
 
+const Tooltip = ({ size }: { size?: VizTooltipSize }) => {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.surface}>
+      <VizTooltipWrapper size={size}>
+        <VizTooltipHeader item={headerItem} />
+        <VizTooltipContent items={items} />
+      </VizTooltipWrapper>
+    </div>
+  );
+};
+
 const meta: Meta<typeof VizTooltipWrapper> = {
   title: 'Plugins/VizTooltip',
   component: VizTooltipWrapper,
+  argTypes: {
+    size: {
+      control: 'radio',
+      options: ['auto', 'narrow'],
+      description:
+        '`auto` (default) grows to fit its content, exactly like the old system. `narrow` caps the width at the `sm` breakpoint and splits each row so the name and value each stay ≤ 75% (keeping the other ≥ 25%).',
+    },
+    children: { table: { disable: true } },
+    className: { table: { disable: true } },
+  },
+  args: {
+    size: 'auto',
+  },
 };
 
 export default meta;
 
 type Story = StoryObj<typeof VizTooltipWrapper>;
 
-// The current (old-system) tooltip, exactly as it renders today — no size options, no max-width.
-// This is the visual baseline we are locking in before changing any CSS.
+// The current (old-system) tooltip, rendered with no size prop. `auto` must always match this.
 export const Baseline: Story = {
-  render: function BaselineTooltip() {
+  parameters: { controls: { disable: true } },
+  render: () => <Tooltip />,
+};
+
+// Toggle the `size` control to compare how the same content reflows.
+export const Basic: Story = {
+  render: ({ size }) => <Tooltip size={size} />,
+};
+
+// Same content at both sizes. `auto` == Baseline; `narrow` caps the box and wraps names/values so
+// neither pushes the other out.
+export const AutoVsNarrow: Story = {
+  parameters: { controls: { disable: true } },
+  render: function Comparison() {
     const styles = useStyles2(getStyles);
     return (
-      <div className={styles.surface}>
-        <VizTooltipWrapper>
-          <VizTooltipHeader item={headerItem} />
-          <VizTooltipContent items={items} />
-        </VizTooltipWrapper>
+      <div className={styles.comparison}>
+        <div className={styles.example}>
+          <div className={styles.caption}>size=&quot;auto&quot; — grows to fit (identical to the old system)</div>
+          <Tooltip size="auto" />
+        </div>
+        <div className={styles.example}>
+          <div className={styles.caption}>size=&quot;narrow&quot; — capped; name ≤ 75%, value ≤ 75%, both wrap</div>
+          <Tooltip size="narrow" />
+        </div>
       </div>
     );
   },
@@ -73,5 +114,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.elevated,
     boxShadow: theme.shadows.z2,
     borderRadius: theme.shape.radius.default,
+  }),
+  comparison: css({
+    display: 'block',
+  }),
+  example: css({
+    marginBottom: theme.spacing(4),
+  }),
+  caption: css({
+    marginBottom: theme.spacing(0.5),
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fontFamilyMonospace,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
 });

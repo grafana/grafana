@@ -11,7 +11,8 @@ import { InlineToast } from '../InlineToast/InlineToast';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
-import { VizTooltipColorPlacement, type VizTooltipDelta, type VizTooltipItem } from './types';
+import { useVizTooltipSize } from './VizTooltipContext';
+import { VizTooltipColorPlacement, type VizTooltipDelta, type VizTooltipItem, type VizTooltipSize } from './types';
 
 interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   /** The formatted value to display. Widened from `VizTooltipItem.value` to also accept numbers, null, and ReactNode. */
@@ -60,7 +61,8 @@ export const VizTooltipRow = ({
   isHiddenFromViz,
   delta,
 }: VizTooltipRowProps) => {
-  const styles = useStyles2(getStyles, justify, marginRight);
+  const size = useVizTooltipSize();
+  const styles = useStyles2(getStyles, justify, marginRight, size);
 
   const deltaDisplay = delta == null ? null : `(${delta.numeric > 0 ? '+' : ''}${delta.text})`;
 
@@ -268,7 +270,7 @@ const getDeltaClass = (delta: VizTooltipDelta, styles: ReturnType<typeof getStyl
   return isFavorable ? styles.deltaFavorable : styles.deltaUnfavorable;
 };
 
-const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string) => ({
+const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string, size: VizTooltipSize = 'auto') => ({
   contentWrapper: css({
     display: 'flex',
     maxWidth: '100%',
@@ -288,11 +290,19 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     flexShrink: 0,
   }),
   labelWrapper: css({
-    flexGrow: 1,
+    flexGrow: size === 'narrow' ? 0 : 1,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     color: theme.colors.text.secondary,
     fontWeight: 400,
+    // In a narrow tooltip the name may expand to at most 75% of the row (so the value always keeps
+    // >=25%) and wraps; `overflow: visible` + `break-word` keep the flex min-size at the longest
+    // word so a short name is never broken mid-word.
+    ...(size === 'narrow' && {
+      maxWidth: '75%',
+      overflow: 'visible',
+      overflowWrap: 'break-word',
+    }),
   }),
   // block wrapper between labelWrapper and the inline label, so it must carry the ellipsis itself
   labelTooltipTarget: css({
@@ -302,9 +312,16 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   valueWrapper: css({
     display: 'flex',
     alignItems: 'center',
-    flexShrink: 0,
+    flexShrink: size === 'narrow' ? 1 : 0,
     alignSelf: 'center',
     marginRight,
+    // In a narrow tooltip the value may expand to at most 75% of the row (so the name always keeps
+    // >=25%) and wraps, while staying pinned to the right so it reads like the `auto` layout.
+    ...(size === 'narrow' && {
+      maxWidth: '75%',
+      marginLeft: 'auto',
+      justifyContent: 'flex-end',
+    }),
   }),
   activeSeries: css({
     fontWeight: theme.typography.fontWeightBold,

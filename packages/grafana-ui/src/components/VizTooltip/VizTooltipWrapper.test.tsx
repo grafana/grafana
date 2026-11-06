@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { VizTooltipRow } from './VizTooltipRow';
 import { VizTooltipWrapper } from './VizTooltipWrapper';
 
 const WRAPPER_TESTID = selectors.components.Panels.Visualization.Tooltip.Wrapper;
@@ -46,12 +47,10 @@ describe('VizTooltipWrapper', () => {
   });
 
   describe('size prop', () => {
-    it('throws when size is "narrow" because it is not implemented yet', () => {
-      // A throw during render makes React log to console.error; silence it so the repo's
-      // jest-fail-on-console setup doesn't flag this (intentionally throwing) test.
-      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-      expect(() => render(<VizTooltipWrapper size="narrow">content</VizTooltipWrapper>)).toThrow(/narrow/);
-      consoleError.mockRestore();
+    it('caps the tooltip width at the sm breakpoint when size is "narrow"', () => {
+      const theme = createTheme();
+      render(<VizTooltipWrapper size="narrow">content</VizTooltipWrapper>);
+      expect(screen.getByTestId(WRAPPER_TESTID)).toHaveStyle({ maxWidth: `${theme.breakpoints.values.sm}px` });
     });
 
     it('renders the same uncapped flex column for size="auto" as with no size prop', () => {
@@ -64,6 +63,34 @@ describe('VizTooltipWrapper', () => {
         fontSize: theme.typography.bodySmall.fontSize,
       });
       expect(getComputedStyle(wrapper).maxWidth).not.toMatch(/\d/);
+    });
+  });
+
+  // The wrapper provides its size via context; rows read it and flip their cell constraints. Render
+  // the real wrapper + row tree so this exercises the wiring the way consumers hit it.
+  describe('size propagation to descendant rows', () => {
+    const cellOf = (text: string) => screen.getByText(text).parentElement;
+
+    it('caps the name and the value each at 75% in narrow, so neither pushes the other out', () => {
+      const value = 'a long value that should wrap rather than push the name off the tooltip';
+      render(
+        <VizTooltipWrapper size="narrow">
+          <VizTooltipRow label="My Label" value={value} />
+        </VizTooltipWrapper>
+      );
+      expect(cellOf('My Label')).toHaveStyle({ maxWidth: '75%' });
+      expect(cellOf(value)).toHaveStyle({ maxWidth: '75%', marginLeft: 'auto', justifyContent: 'flex-end' });
+    });
+
+    it('keeps the old-system row layout for auto (value holds its width, no percentage caps)', () => {
+      render(
+        <VizTooltipWrapper size="auto">
+          <VizTooltipRow label="My Label" value="My Value" />
+        </VizTooltipWrapper>
+      );
+      expect(cellOf('My Value')).toHaveStyle({ flexShrink: 0 });
+      expect(cellOf('My Label')).not.toHaveStyle({ maxWidth: '75%' });
+      expect(cellOf('My Value')).not.toHaveStyle({ maxWidth: '75%' });
     });
   });
 });
