@@ -1942,15 +1942,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "foldersAppPlatformAPI",
-			Description:  "Enables use of app platform API for folders",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaFrontendNavigation,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:   "true",
-		},
-		{
 			Name:        "otelLogsFormatting",
 			Description: "Applies OTel formatting templates to displayed logs",
 			Stage:       FeatureStageGeneralAvailability,

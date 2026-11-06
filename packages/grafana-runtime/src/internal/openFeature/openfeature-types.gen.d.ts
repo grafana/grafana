@@ -113,7 +113,6 @@ declare module "@openfeature/core" {
     | "alertEnrichment"
     | "alertingImportAlertmanagerAPI"
     | "preferLibraryPanelTitle"
-    | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "dashboardLevelTimeMacros"
     | "favoriteDatasources"

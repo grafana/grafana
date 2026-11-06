@@ -2732,7 +2732,8 @@
       "metadata": {
         "name": "foldersAppPlatformAPI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-03T14:15:23Z"
+        "creationTimestamp": "2025-07-03T14:15:23Z",
+        "deletionTimestamp": "2026-11-04T06:40:00Z"
       },
       "spec": {
         "description": "Enables use of app platform API for folders",
