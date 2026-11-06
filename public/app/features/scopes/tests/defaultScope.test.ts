@@ -8,14 +8,12 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { type ScopesService } from '../ScopesService';
 import { type ScopesSelectorService } from '../selector/ScopesSelectorService';
 
-import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
