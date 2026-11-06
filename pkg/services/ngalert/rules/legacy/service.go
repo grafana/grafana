@@ -24,7 +24,6 @@ import (
 )
 
 type ruleAccessControlService interface {
-	AuthorizeRuleGroupRead(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error
 	AuthorizeNotificationSettings(ctx context.Context, user identity.Requester, receivers []accesscontrol.ReceiverRef) error
 	AuthorizeRuleRead(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
