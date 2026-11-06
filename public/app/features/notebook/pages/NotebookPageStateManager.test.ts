@@ -494,6 +494,30 @@ describe('NotebookPageStateManager', () => {
       expect(manager.state.scene?.autosave.state.savedResourceVersion).toBe('1');
     });
 
+    // The route and an embed each have their own manager, and both can be loading the same notebook.
+    it('keeps one scene when two loads of the same notebook are in flight, however the second write ends', async () => {
+      let puts = 0;
+      written = [];
+      server.use(
+        notebookHandler((name) => HttpResponse.json(notebookResource(name))),
+        http.put(NOTEBOOK_URL, async ({ request }) => {
+          puts += 1;
+          const body = (await request.json()) as Resource<NotebookSpec>;
+          // The second write is a conflict, as it would be at the server: the first already moved the revision.
+          return puts === 1
+            ? HttpResponse.json(withId(body))
+            : HttpResponse.json({ message: 'the object has been modified' }, { status: 409 });
+        })
+      );
+      const route = new NotebookPageStateManager({ isLoading: false });
+      const embed = new NotebookPageStateManager({ isLoading: false });
+
+      await Promise.all([route.loadNotebook('nb-1'), embed.loadNotebook('nb-1')]);
+
+      expect(route.state.scene).toBe(embed.state.scene);
+      expect(route.state.scene?.state.body.state.cells[0].state.id).toBe(ID);
+    });
+
     it('does not write again when the scene is reused from the cache', async () => {
       serveIdlessNotebook();
       const manager = new NotebookPageStateManager({ isLoading: false });

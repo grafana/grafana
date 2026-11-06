@@ -172,14 +172,19 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
       const notebook = toNotebookResource(result.data);
 
-      const cached = this.cache.get(uid);
-      // The generation this was loaded at goes stale the moment the page saves, because autosave advances
-      // the server's copy without reloading. Where the scene has saved since, that is the newer number, and
-      // it is what separates this page's own write from somebody else's.
-      const cachedGeneration = cached ? (cached.scene.autosave.state.savedGeneration ?? cached.generation) : undefined;
-      if (cached && isAtLeastAsNew(cachedGeneration, notebook.metadata.generation)) {
+      // The generation a cached scene was loaded at goes stale the moment the page saves, because autosave
+      // advances the server's copy without reloading. Where the scene has saved since, that is the newer
+      // number, and it is what separates this page's own write from somebody else's.
+      const reuseCachedScene = (generation: number | undefined): boolean => {
+        const cached = this.cache.get(uid);
+        const cachedGeneration = cached
+          ? (cached.scene.autosave.state.savedGeneration ?? cached.generation)
+          : undefined;
+        if (!cached || !isAtLeastAsNew(cachedGeneration, generation)) {
+          return false;
+        }
         if (this.isSuperseded(seq)) {
-          return;
+          return true;
         }
         // Here rather than in the scene's own activation or teardown, both of which have the url in the
         // way: `UrlSyncContextProvider` applies the url to the scene before the scene activates, so
@@ -188,6 +193,10 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
         cached.scene.autosave.discardViewOnlyTimeChanges();
         NotebookAnalytics.loaded(cached.scene, true, this.embedded, source);
         this.setState({ scene: cached.scene, isLoading: false });
+        return true;
+      };
+
+      if (reuseCachedScene(notebook.metadata.generation)) {
         return;
       }
 
@@ -197,6 +206,13 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
       // Here rather than before the cache check: writing bumps the generation, which would stop a scene
       // someone is already editing from being reused.
       const loaded = readOnly ? notebook : await withCellIds(uid, result.data, notebook);
+
+      // Again, because everything above is asynchronous and another load of this notebook (the route and
+      // an embed each have their own manager) can have cached its scene meanwhile. Building a second one
+      // would replace it in the cache and leave two scenes, and two autosaves, for one notebook.
+      if (reuseCachedScene(loaded.metadata.generation)) {
+        return;
+      }
 
       // RTK Query freezes cached responses (Immer). The scene pipeline mutates nested panel
       // fieldConfig (e.g. threshold base → -Infinity), so clone before transforming.
