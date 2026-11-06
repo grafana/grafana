@@ -47,8 +47,8 @@ linters:
         apiserver:
           list-mode: lax
           files:
-            - '**/pkg/apiserver/*'
-            - '**/pkg/apiserver/**/*'
+            - '${config-path}/pkg/apiserver/*'
+            - '${config-path}/pkg/apiserver/**/*'
           allow:
             - github.com/grafana/grafana/pkg/apimachinery
             - github.com/grafana/grafana/pkg/apiserver
