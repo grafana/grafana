@@ -90,6 +90,12 @@ func TestService_forwardsStoreMethods(t *testing.T) {
 		{"SaveAlertRuleStatus", []any{ctx, int64(41), "status-rule", status}, nil, func(s *Service) []any { return []any{s.SaveAlertRuleStatus(ctx, 41, "status-rule", status)} }},
 		{"DeleteInFolders", []any{ctx, int64(41), folders, requester}, nil, func(s *Service) []any { return []any{s.DeleteInFolders(ctx, 41, folders, requester)} }},
 		{"CountInFolders", []any{ctx, int64(41), folders, requester}, []any{int64(103)}, func(s *Service) []any { return serviceResult(s.CountInFolders(ctx, 41, folders, requester)) }},
+		{"CountInFoldersByType", []any{ctx, int64(41), folders, ngmodels.RuleTypeFilterRecording, requester}, []any{int64(109)}, func(s *Service) []any {
+			return serviceResult(s.CountInFoldersByType(ctx, 41, folders, ngmodels.RuleTypeFilterRecording, requester))
+		}},
+		{"GetAllFoldersWithRulesByType", []any{ctx, int64(41), ngmodels.RuleTypeFilterRecording}, []any{map[string]struct{}{"recording-folder": {}}}, func(s *Service) []any {
+			return serviceResult(s.GetAllFoldersWithRulesByType(ctx, 41, ngmodels.RuleTypeFilterRecording))
+		}},
 		{"GetAllFoldersWithRules", []any{ctx, int64(41)}, []any{map[string]struct{}{"occupied-folder": {}}}, func(s *Service) []any { return serviceResult(s.GetAllFoldersWithRules(ctx, 41)) }},
 		{"CleanUpDeletedAlertRules", []any{ctx}, []any{int64(107)}, func(s *Service) []any { return serviceResult(s.CleanUpDeletedAlertRules(ctx)) }},
 	}
@@ -370,6 +376,16 @@ func (s *serviceStoreSpy) DeleteInFolders(ctx context.Context, orgID int64, fold
 func (s *serviceStoreSpy) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error) {
 	s.check("CountInFolders", ctx, orgID, folderUIDs, user)
 	return s.out[0].(int64), s.err
+}
+
+func (s *serviceStoreSpy) CountInFoldersByType(ctx context.Context, orgID int64, folderUIDs []string, ruleType ngmodels.RuleTypeFilter, user identity.Requester) (int64, error) {
+	s.check("CountInFoldersByType", ctx, orgID, folderUIDs, ruleType, user)
+	return s.out[0].(int64), s.err
+}
+
+func (s *serviceStoreSpy) GetAllFoldersWithRulesByType(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter) (map[string]struct{}, error) {
+	s.check("GetAllFoldersWithRulesByType", ctx, orgID, ruleType)
+	return s.out[0].(map[string]struct{}), s.err
 }
 
 func (s *serviceStoreSpy) GetAllFoldersWithRules(ctx context.Context, orgID int64) (map[string]struct{}, error) {
