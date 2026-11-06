@@ -104,7 +104,12 @@ function HoverHeaderItem({ isEmpty = false }: { isEmpty?: boolean }) {
 function DragHandleItem() {
   const headerControls = useContext(PanelChromeHeaderControlsContext);
   return headerControls?.dragHandleSlot
-    ? createPortal(<button aria-label="Drag handle" />, headerControls.dragHandleSlot)
+    ? createPortal(
+        <button aria-label="Drag handle">
+          <svg />
+        </button>,
+        headerControls.dragHandleSlot
+      )
     : null;
 }
 
@@ -139,12 +144,17 @@ function renderWrapper(
     onLinkClick,
     hasEmptyHeaderItem = false,
     hasDragHandle = false,
-  }: { isEditing?: boolean; onLinkClick?: () => void; hasEmptyHeaderItem?: boolean; hasDragHandle?: boolean } = {}
+    selected = [],
+  }: {
+    isEditing?: boolean;
+    onLinkClick?: () => void;
+    hasEmptyHeaderItem?: boolean;
+    hasDragHandle?: boolean;
+    selected?: Array<{ id: string }>;
+  } = {}
 ) {
   return render(
-    <ElementSelectionContext.Provider
-      value={{ enabled: isEditing, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}
-    >
+    <ElementSelectionContext.Provider value={{ enabled: isEditing, selected, onSelect: jest.fn(), onClear: jest.fn() }}>
       <PanelActionsWrapper panel={panel}>
         <div data-testid="reference-child">
           panel
@@ -574,6 +584,67 @@ describe('<PanelActionsWrapper />', () => {
       await hoverAndRest(screen.getByTestId('reference-child'));
 
       expect(getToolbarLayout().slice(-4)).toEqual(['|', 'Drag handle', 'Expand (v)', 'More actions']);
+    });
+
+    test('in edit mode, when the panel is one of several selected panels, the actions for the selection are shown', async () => {
+      const panel = createPanel();
+      const otherPanel = createPanel({ key: 'panel-2', title: 'Other panel' });
+      new DashboardScene({
+        editable: true,
+        meta: { canEdit: true, canSave: true },
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel, otherPanel]),
+      });
+
+      renderWrapper(panel, { isEditing: true, selected: [{ id: 'panel-1' }, { id: 'panel-2' }] });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(within(getToolbar()).getByText('2 panels selected')).toBeInTheDocument();
+      expect(getToolbarLayout()).toEqual(['Group into row', 'Group into tab', 'Delete']);
+    });
+
+    test('in edit mode, when an untitled panel without a drag handle is one of several selected panels, no separator trails the actions', async () => {
+      const panel = createPanel({ title: '', hoverHeader: true });
+      const otherPanel = createPanel({ key: 'panel-2', title: 'Other panel' });
+      new DashboardScene({
+        editable: true,
+        meta: { canEdit: true, canSave: true },
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel, otherPanel]),
+      });
+
+      renderWrapper(panel, { isEditing: true, selected: [{ id: 'panel-1' }, { id: 'panel-2' }] });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(getToolbarLayout()).toEqual(['|', 'Group into row', 'Group into tab', 'Delete']);
+    });
+
+    test('in edit mode, when an untitled panel is one of several selected panels, its header items and drag handle stay', async () => {
+      const panel = createPanel({ title: '', hoverHeader: true });
+      const otherPanel = createPanel({ key: 'panel-2', title: 'Other panel' });
+      new DashboardScene({
+        editable: true,
+        meta: { canEdit: true, canSave: true },
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel, otherPanel]),
+      });
+
+      renderWrapper(panel, { isEditing: true, hasDragHandle: true, selected: [{ id: 'panel-1' }, { id: 'panel-2' }] });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(within(getToolbar()).getByText('Panel links')).toBeInTheDocument();
+      expect(getToolbarLayout()).toEqual(['|', 'Group into row', 'Group into tab', 'Delete', '|', 'Drag handle']);
+    });
+
+    test('in edit mode, when only this panel is selected, the single panel actions are shown', async () => {
+      const panel = createPanel();
+      createDashboard(panel, { isEditing: true });
+
+      renderWrapper(panel, { isEditing: true, selected: [{ id: 'panel-1' }] });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(within(getToolbar()).getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
+      expect(within(getToolbar()).queryByRole('button', { name: 'Group into row' })).not.toBeInTheDocument();
     });
 
     test('for a panel without a menu, e.g. on a public dashboard, no popover is shown', async () => {

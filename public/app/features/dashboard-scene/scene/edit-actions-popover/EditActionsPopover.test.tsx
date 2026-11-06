@@ -1,10 +1,17 @@
 import { type JSX, type ReactNode } from 'react';
 import { act, createEvent, fireEvent, render, screen, userEvent, waitFor } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { LazyLoader } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ElementSelectionContext } from '@grafana/ui';
 
-import { EditActionsPopover, WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
+import {
+  EditActionsPopover,
+  PANEL_ACTIONS_POPOVER_REST_DURATION_MS,
+  WAIT_FOR_MOUSE_REST_DURATION_MS,
+} from './EditActionsPopover';
 
 jest.mock('app/core/app_events', () => ({
   appEvents: {
@@ -364,6 +371,48 @@ describe('<EditActionsPopover />', () => {
       rerender(tree(true));
 
       expect(screen.getByTestId('reference-child-input')).toHaveValue('unsaved control state');
+    });
+  });
+
+  describe('opening delay and fade', () => {
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    async function hoverAndWait(element: HTMLElement, ms: number) {
+      jest.useFakeTimers();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      await user.hover(element);
+      act(() => {
+        jest.advanceTimersByTime(ms);
+      });
+    }
+
+    test('with grafana.panelActionsPopover off, it opens after the pointer rests for 225ms and fades in', async () => {
+      const { elements } = renderEditActionsPopover();
+
+      await hoverAndWait(elements.children(), PANEL_ACTIONS_POPOVER_REST_DURATION_MS);
+      expect(elements.queryPopoverContent()).not.toBeInTheDocument();
+
+      act(() => {
+        jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS - PANEL_ACTIONS_POPOVER_REST_DURATION_MS);
+      });
+      expect(elements.getPopoverContent()).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.EditActionsPopover.container)).toHaveAttribute('class');
+    });
+
+    test('with grafana.panelActionsPopover on, it opens after the pointer rests for 150ms, without a fade', async () => {
+      await act(async () => {
+        setTestFlags({ [FlagKeys.GrafanaPanelActionsPopover]: true });
+      });
+      const { elements } = renderEditActionsPopover();
+
+      await hoverAndWait(elements.children(), PANEL_ACTIONS_POPOVER_REST_DURATION_MS);
+
+      expect(elements.getPopoverContent()).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.EditActionsPopover.container)).not.toHaveAttribute('class');
     });
   });
 });

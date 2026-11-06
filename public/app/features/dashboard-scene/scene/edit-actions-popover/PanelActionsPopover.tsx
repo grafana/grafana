@@ -19,6 +19,7 @@ import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { DashboardScene } from '../DashboardScene';
 import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
 import { canManuallyEditDashboard, dashboardModesEnabled, isViewingDashboard } from '../dashboardModes';
+import { useSelectionCountFor } from '../layouts-shared/useIsMultiSelection';
 import { PanelGroupByPicker } from '../panel-actions/PanelGroupByAction/PanelGroupByAction';
 import { isFullDashboardEditing } from '../types/dashboard';
 
@@ -30,7 +31,7 @@ import {
   usePanelActionsOverlayOpenChange,
   usePanelActionsOverlays,
 } from './PanelActionsOverlayContext';
-import { PanelEditActionsWrapper } from './PanelEditActions';
+import { PanelEditActionsBulk, PanelEditActionsWrapper } from './PanelEditActions';
 
 const POPOVER_OFFSET = { mainAxis: -8, alignmentAxis: 8 };
 
@@ -96,6 +97,7 @@ function PanelActionsPopoverWrapper({
               dashboard={dashboard}
               menu={menu}
               hoverSlot={hoverSlot}
+              dragHandleSlot={dragHandleSlot}
               onHoverSlotChange={setHoverSlot}
               onDragHandleSlotChange={setDragHandleSlot}
             />
@@ -124,6 +126,7 @@ interface PanelActionsProps {
   dashboard: DashboardScene;
   menu: VizPanelMenu;
   hoverSlot: HTMLElement | null;
+  dragHandleSlot: HTMLElement | null;
   onHoverSlotChange: (element: HTMLElement | null) => void;
   onDragHandleSlotChange: (element: HTMLElement | null) => void;
 }
@@ -133,6 +136,7 @@ function PanelActions({
   dashboard,
   menu,
   hoverSlot,
+  dragHandleSlot,
   onHoverSlotChange,
   onDragHandleSlotChange,
 }: PanelActionsProps) {
@@ -151,6 +155,9 @@ function PanelActions({
   const { hoverHeader, title } = panel.useState();
   const isSelectionEnabled = Boolean(useContext(ElementSelectionContext)?.enabled);
   const hasHoverSlotItems = useHasVisibleItems(hoverSlot);
+  const hasDragHandle = useHasVisibleItems(dragHandleSlot);
+  // Repeat clones are selected through their source panel, so the selection never holds a clone key.
+  const selectionCount = useSelectionCountFor(panel.state.repeatSourceKey ?? panel.state.key);
 
   const isExpanded = Boolean(viewPanel);
   const isRepeat = isRepeatCloneOrChildOf(panel);
@@ -226,6 +233,20 @@ function PanelActions({
       report('more_actions');
     }
   };
+
+  // Like the panel edit actions: hovering one of several selected panels offers the actions for the whole selection.
+  // The header items and drag handle of an untitled panel still need their slots.
+  if (isEditing && isSelectionEnabled && selectionCount > 1) {
+    return (
+      <>
+        {hoverHeader && <div ref={onHoverSlotChange} className={styles.headerSlot} />}
+        {showsHoverSlotItems && <ActionsSeparator />}
+        <PanelEditActionsBulk panel={panel} />
+        {hoverHeader && hasDragHandle && <ActionsSeparator />}
+        {hoverHeader && <div ref={onDragHandleSlotChange} className={styles.headerSlot} />}
+      </>
+    );
+  }
 
   return (
     <>
