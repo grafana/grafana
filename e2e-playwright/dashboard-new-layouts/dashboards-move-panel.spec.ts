@@ -1,11 +1,10 @@
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 import { getPanelBox, movePanel } from './helpers';
 
 const PAGE_UNDER_TEST = 'ed155665/annotation-filtering';
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: true,
     dashboardUndoRedo: true,
   },
   // these tests require a larger viewport

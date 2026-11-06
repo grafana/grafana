@@ -74,12 +74,19 @@ func TestIntegrationShadowDoesNotWritePermissionCache(t *testing.T) {
 							require.Equal(t, sentinel, value, "key %s", key)
 						}
 					}
-					// Normal calls still populate and refresh the same keys.
+					// Normal calls refresh caches except the combined basic-role cache in OSS.
 					req.ReloadCache = true
 					_, err = client.LegacyGetUserPermissions(context.Background(), legacypermissions.LegacyPermissionCaller(req.Namespace), req)
 					require.NoError(t, err)
 					for _, key := range keys {
 						value, found := cache.Get(key)
+						if !enterprise && key == ac.GetBasicRolePermissionCacheKey("Viewer", 1) {
+							require.Equal(t, warm, found, "key %s", key)
+							if warm {
+								require.Equal(t, sentinel, value, "key %s", key)
+							}
+							continue
+						}
 						require.True(t, found, "key %s", key)
 						require.NotEqual(t, sentinel, value, "key %s", key)
 					}

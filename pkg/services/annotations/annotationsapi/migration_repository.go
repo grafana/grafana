@@ -165,7 +165,7 @@ func (r *migrationRepository) resolveUserUID(ctx context.Context, query *annotat
 }
 
 func isAlertQuery(query *annotations.ItemQuery) bool {
-	return query.Type == "alert" || query.AlertID != 0 || query.AlertUID != ""
+	return query.Type == "alert" || query.AlertUID != ""
 }
 
 // Save writes to the new store and copies the new legacy ID onto item.ID.

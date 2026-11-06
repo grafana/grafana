@@ -1,22 +1,4 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-
-function countYarnPackages(recursive) {
-  const output = execFileSync(
-    'yarn',
-    ['info', '**', '--all', ...(recursive ? ['--recursive'] : []), '--name-only', '--json'],
-    {
-      encoding: 'utf8',
-    }
-  );
-  let count = 0;
-  for (const line of output.trim().split('\n')) {
-    if (!/@(workspace|link):/.test(JSON.parse(line))) {
-      count++;
-    }
-  }
-  return count;
-}
 
 // Counts unique resolved packages. Tree nodes of workspace projects are walked but not counted.
 const countPnpmPackages = (depth) => {
@@ -47,12 +29,4 @@ const countPnpmPackages = (depth) => {
   return ids.size;
 };
 
-const packageManager = JSON.parse(readFileSync('package.json', 'utf8')).packageManager.split('@')[0];
-
-if (packageManager === 'yarn') {
-  console.log(`${countYarnPackages(false)} ${countYarnPackages(true)}`);
-} else if (packageManager === 'pnpm') {
-  console.log(`${countPnpmPackages(0)} ${countPnpmPackages('Infinity')}`);
-} else {
-  throw new Error(`Unsupported package manager: ${packageManager}`);
-}
+console.log(`${countPnpmPackages(0)} ${countPnpmPackages('Infinity')}`);

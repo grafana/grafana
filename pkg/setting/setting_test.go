@@ -683,6 +683,18 @@ func TestRedactedValue(t *testing.T) {
 			expected: RedactedPassword,
 		},
 		{
+			desc:     "client token",
+			key:      "GF_SOME_SERVICE_CLIENT_TOKEN",
+			value:    "some-token",
+			expected: RedactedPassword,
+		},
+		{
+			desc:     "client token exchange url stays visible",
+			key:      "GF_SOME_SERVICE_CLIENT_TOKEN_EXCHANGE_URL",
+			value:    "http://example.com/token-exchange",
+			expected: "http://example.com/token-exchange",
+		},
+		{
 			desc:     "boolean token setting stays visible",
 			key:      "GF_AUTH_GENERIC_OAUTH_USE_REFRESH_TOKEN",
 			value:    "true",
@@ -883,7 +895,7 @@ func TestReadFrontendDevSettings(t *testing.T) {
 		return []byte("app_mode = development\n[frontend_dev]\nserver_url = " + url)
 	}
 
-	// The default matters as much as the parsing: `yarn start` is meant to work without
+	// The default matters as much as the parsing: `pnpm start` is meant to work without
 	// anyone editing an ini file. `make run` passes cfg:app_mode=development, same as here.
 	t.Run("conf/defaults.ini ships a dev server url", func(t *testing.T) {
 		cfg := NewCfg()
@@ -988,42 +1000,4 @@ func TestReadFrontendDevSettings(t *testing.T) {
 		require.True(t, cfg.CSPEnabled)
 		require.Empty(t, cfg.FrontendDevServerURL)
 	})
-}
-
-func TestFolderParallelDashboardDeleteSettings(t *testing.T) {
-	t.Run("off by default", func(t *testing.T) {
-		cfg := NewCfg()
-		require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"}))
-		require.False(t, cfg.FolderParallelDashboardDeleteEnabled)
-		require.Equal(t, 4, cfg.FolderParallelDashboardDeleteConcurrency)
-	})
-
-	t.Run("configured values", func(t *testing.T) {
-		cfg, err := NewCfgFromBytes([]byte("[folder]\nparallel_dashboard_delete_enabled = true\nparallel_dashboard_delete_concurrency = 32\n"))
-		require.NoError(t, err)
-		require.True(t, cfg.FolderParallelDashboardDeleteEnabled)
-		require.Equal(t, 32, cfg.FolderParallelDashboardDeleteConcurrency)
-	})
-
-	t.Run("environment overrides", func(t *testing.T) {
-		t.Setenv("GF_FOLDER_PARALLEL_DASHBOARD_DELETE_ENABLED", "true")
-		t.Setenv("GF_FOLDER_PARALLEL_DASHBOARD_DELETE_CONCURRENCY", "16")
-		cfg := NewCfg()
-		require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"}))
-		require.True(t, cfg.FolderParallelDashboardDeleteEnabled)
-		require.Equal(t, 16, cfg.FolderParallelDashboardDeleteConcurrency)
-	})
-}
-
-func TestFolderParallelDashboardDeleteSettingsRejectInvalidValues(t *testing.T) {
-	for _, tc := range []struct{ key, value string }{
-		{"parallel_dashboard_delete_enabled", "typo"},
-		{"parallel_dashboard_delete_concurrency", "0"},
-		{"parallel_dashboard_delete_concurrency", "lots"},
-	} {
-		t.Run(tc.key+"="+tc.value, func(t *testing.T) {
-			_, err := NewCfgFromBytes([]byte("[folder]\n" + tc.key + " = " + tc.value + "\n"))
-			require.ErrorContains(t, err, tc.key)
-		})
-	}
 }

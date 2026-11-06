@@ -48,8 +48,8 @@ func TestKVBlobSupportPutRejectsInvalidRequests(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			rsp, err := NewKVBlobSupport(setupBadgerKV(t)).PutResourceBlob(t.Context(), tc.req)
-			require.NoError(t, err)
-			requireErrorCode(t, tc.wantCode, rsp.Error)
+			require.Nil(t, rsp)
+			requireErrorCode(t, tc.wantCode, rpcErrorResult(t, err))
 		})
 	}
 }
@@ -77,8 +77,8 @@ func TestKVBlobSupportGetRejectsInvalidRequests(t *testing.T) {
 			}
 
 			rsp, err := store.GetResourceBlob(t.Context(), tc.key, info, true)
-			require.NoError(t, err)
-			requireErrorCode(t, tc.wantCode, rsp.Error)
+			require.Nil(t, rsp)
+			requireErrorCode(t, tc.wantCode, rpcErrorResult(t, err))
 		})
 	}
 }

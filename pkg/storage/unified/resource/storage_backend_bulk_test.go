@@ -2,22 +2,22 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"testing"
+	"testing/synctest"
 	"time"
 
+	"github.com/fullstorydev/grpchan/inprocgrpc"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 
-	infdb "github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/setting"
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 const (
@@ -42,7 +42,10 @@ func (i *batchOnlyBulkIterator) Request() *resourcepb.BulkRequest {
 	return nil
 }
 
-func (i *batchOnlyBulkIterator) NextBatch() bool {
+func (i *batchOnlyBulkIterator) NextBatch(ctx context.Context) bool {
+	if ctx.Err() != nil {
+		return false
+	}
 	i.idx++
 	return i.idx < len(i.batches)
 }
@@ -92,6 +95,18 @@ func (f *failAfterImportKV) InsertDataImportBatch(ctx context.Context, rows []kv
 	}
 
 	return f.writer.InsertDataImportBatch(ctx, rows)
+}
+
+func TestSingleBulkRequestBatchIteratorCancellation(t *testing.T) {
+	iter := newSliceBulkIterator(newBulkImportRequest("ns", "item-1", resourcepb.BulkRequest_ADDED))
+	batchIter := &singleBulkRequestBatchIterator{iter: iter}
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	require.False(t, batchIter.NextBatch(ctx))
+	require.Equal(t, -1, iter.idx, "cancellation must not advance the underlying iterator")
+	require.True(t, batchIter.NextBatch(t.Context()))
+	require.Equal(t, "item-1", batchIter.Batch()[0].Key.Name)
 }
 
 func TestKVStorageBackendProcessBulkImportBatching(t *testing.T) {
@@ -194,42 +209,6 @@ func TestKVStorageBackendProcessBulkPreservesImportedHistory(t *testing.T) {
 	require.Equal(t, int64(3), resp.Processed)
 	require.Equal(t, []string{"item-1", "item-1", "item-1"}, collectBulkImportNames(t, backend, namespace))
 	require.Empty(t, collectLatestBulkImportNames(t, backend, namespace))
-}
-
-func TestKVStorageBackendProcessBulkWritesLegacyHistoryFieldsUpFront(t *testing.T) {
-	backend, dbConn := setupCompatSqlKVStorageBackend(t)
-
-	const namespace = "sqlkv-compat-history"
-	resp := backend.ProcessBulk(context.Background(), BulkSettings{
-		Collection: []*resourcepb.ResourceKey{{
-			Namespace: namespace,
-			Group:     testBulkImportGroup,
-			Resource:  testBulkImportResource,
-		}},
-	}, newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
-		newBulkImportRequestWithGeneration(namespace, "item-1", resourcepb.BulkRequest_ADDED, 3),
-		newBulkImportRequestWithGeneration(namespace, "item-1", resourcepb.BulkRequest_MODIFIED, 4),
-		newBulkImportRequestWithGeneration(namespace, "item-1", resourcepb.BulkRequest_DELETED, 5),
-	}))
-
-	require.Nil(t, resp.Error)
-	require.Empty(t, resp.Rejected)
-	require.Equal(t, int64(3), resp.Processed)
-
-	rows := collectLegacyHistoryRows(t, dbConn, namespace)
-	require.Len(t, rows, 3)
-
-	require.Equal(t, int64(1), rows[0].Action)
-	require.Zero(t, rows[0].PreviousResourceVersion)
-	require.Equal(t, int64(3), rows[0].Generation)
-
-	require.Equal(t, int64(2), rows[1].Action)
-	require.Equal(t, rows[0].ResourceVersion, rows[1].PreviousResourceVersion)
-	require.Equal(t, int64(4), rows[1].Generation)
-
-	require.Equal(t, int64(3), rows[2].Action)
-	require.Equal(t, rows[1].ResourceVersion, rows[2].PreviousResourceVersion)
-	require.Zero(t, rows[2].Generation)
 }
 
 func TestKVStorageBackendProcessBulkRejectsEmptyBatch(t *testing.T) {
@@ -363,6 +342,233 @@ func TestKVStorageBackendProcessBulkReturnsSummary(t *testing.T) {
 	}
 }
 
+type checkingBulkIterator struct {
+	*batchOnlyBulkIterator
+	beforeNext func()
+}
+
+func (i *checkingBulkIterator) NextBatch(ctx context.Context) bool {
+	i.beforeNext()
+	return i.batchOnlyBulkIterator.NextBatch(ctx)
+}
+
+func TestKVStorageBackendProcessBulkLeaseAcrossBackends(t *testing.T) {
+	store := setupBadgerKV(t)
+	setup := func(opts *KVBackendOptions) {
+		opts.KvStore = store
+		opts.DisableStorageServices = true
+	}
+	backend := setupTestStorageBackend(t, setup)
+	other := setupTestStorageBackend(t, setup)
+	const namespace = "bulk-leased"
+	settings := BulkSettings{Collection: []*resourcepb.ResourceKey{{
+		Namespace: namespace, Group: testBulkImportGroup, Resource: testBulkImportResource,
+	}}}
+	importItems := func(name string) BulkRequestIterator {
+		return newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
+			newBulkImportRequest(namespace, name, resourcepb.BulkRequest_ADDED),
+		})
+	}
+	require.Nil(t, backend.ProcessBulk(t.Context(), settings, importItems("item-1")).Error)
+
+	_, release, err := other.acquireBulkLeases(t.Context(), settings.Collection)
+	require.NoError(t, err)
+	resp := backend.ProcessBulk(t.Context(), settings, importItems("item-2"))
+	require.NotNil(t, resp.Error)
+	require.EqualValues(t, http.StatusPreconditionFailed, resp.Error.Code)
+	require.Zero(t, resp.Processed)
+	require.Equal(t, []string{"item-1"}, collectBulkImportNames(t, backend, namespace), "rejected import must leave previously imported data intact")
+	release()
+
+	resp = backend.ProcessBulk(t.Context(), settings, &checkingBulkIterator{
+		batchOnlyBulkIterator: importItems("item-1").(*batchOnlyBulkIterator),
+		beforeNext: func() {
+			competing := other.ProcessBulk(t.Context(), settings, importItems("item-2"))
+			require.NotNil(t, competing.Error)
+			require.EqualValues(t, http.StatusPreconditionFailed, competing.Error.Code)
+		},
+	})
+	require.Nil(t, resp.Error)
+
+	require.Equal(t, []string{"item-1"}, collectBulkImportNames(t, backend, namespace), "competing import must not replace the active import's data")
+
+	// An import error must also release the lease for another backend.
+	resp = backend.ProcessBulk(t.Context(), settings, newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{}))
+	require.NotNil(t, resp.Error)
+	require.Nil(t, other.ProcessBulk(t.Context(), settings, importItems("item-2")).Error)
+	require.Equal(t, []string{"item-2"}, collectBulkImportNames(t, backend, namespace))
+}
+
+func TestKVStorageBackendProcessBulkCancellationReleasesLeaseAndRollsBack(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	const namespace = "bulk-canceled"
+	settings := BulkSettings{Collection: []*resourcepb.ResourceKey{{
+		Namespace: namespace, Group: testBulkImportGroup, Resource: testBulkImportResource,
+	}}}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	iter := &checkingBulkIterator{
+		batchOnlyBulkIterator: newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
+			newBulkImportRequest(namespace, "item-1", resourcepb.BulkRequest_ADDED),
+		}),
+	}
+	iter.beforeNext = func() {
+		if iter.idx == 0 {
+			require.Equal(t, []string{"item-1"}, collectBulkImportNames(t, backend, namespace))
+			cancel()
+		}
+	}
+	resp := backend.ProcessBulk(ctx, settings, iter)
+	require.NotNil(t, resp.Error)
+	require.Empty(t, collectBulkImportNames(t, backend, namespace))
+	_, release, err := backend.acquireBulkLeases(t.Context(), settings.Collection)
+	require.NoError(t, err)
+	release()
+}
+
+type transactionBulkTestServer struct {
+	resourcepb.UnimplementedBulkStoreServer
+	backend  *kvStorageBackend
+	settings BulkSettings
+	iter     BulkRequestIterator
+}
+
+func (s *transactionBulkTestServer) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) error {
+	return stream.SendAndClose(s.backend.ProcessBulk(stream.Context(), s.settings, s.iter))
+}
+
+func TestKVStorageBackendProcessBulkExternalSQLiteTransaction(t *testing.T) {
+	store, db := setupSqlKVWithDB(t)
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.KvStore = store
+		opts.DisableStorageServices = true
+	})
+	_, err := db.ExecContext(t.Context(), "CREATE TABLE bulk_lease_test_lock (id INTEGER)")
+	require.NoError(t, err)
+
+	synctest.Test(t, func(t *testing.T) {
+		time.Sleep(time.Until(time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)))
+		tx, err := db.BeginTx(t.Context(), nil)
+		require.NoError(t, err)
+		defer func() { _ = tx.Rollback() }()
+		_, err = tx.ExecContext(t.Context(), "INSERT INTO bulk_lease_test_lock VALUES (1)")
+		require.NoError(t, err)
+		const namespace = "bulk-external-tx"
+		iter := &checkingBulkIterator{
+			batchOnlyBulkIterator: newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
+				newBulkImportRequest(namespace, "item-1", resourcepb.BulkRequest_ADDED),
+			}),
+			beforeNext: func() { time.Sleep(30 * time.Second) },
+		}
+		channel := &inprocgrpc.Channel{}
+		resourcepb.RegisterBulkStoreServer(channel, &transactionBulkTestServer{
+			backend: backend,
+			settings: BulkSettings{Collection: []*resourcepb.ResourceKey{{
+				Namespace: namespace, Group: testBulkImportGroup, Resource: testBulkImportResource,
+			}}},
+			iter: iter,
+		})
+		stream, err := resourcepb.NewBulkStoreClient(channel).BulkProcess(ContextWithTransaction(t.Context(), tx))
+		require.NoError(t, err)
+		resp, err := stream.CloseAndRecv()
+		require.NoError(t, err)
+		require.Nil(t, resp.Error)
+		require.EqualValues(t, 1, resp.Processed)
+		require.NoError(t, tx.Commit())
+		require.Equal(t, []string{"item-1"}, collectBulkImportNames(t, backend, namespace))
+	})
+}
+
+func TestKVStorageBackendProcessBulkLeaseLossInterruptsBatchWait(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		time.Sleep(time.Until(time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)))
+		store := setupBadgerKV(t)
+		// Avoid the data store cache's permanent background goroutine inside synctest.
+		backend := &kvStorageBackend{
+			kv:              store,
+			bulkLock:        NewBulkLock(),
+			dataStore:       &dataStore{kv: store},
+			eventStore:      newEventStore(store),
+			lastImportStore: newLastImportStore(store),
+			leaseManager:    lease.NewManager(store, "test", "storage", nil, lease.WithGarbageCollectionDisabled),
+			log:             &logging.NoOpLogger{},
+		}
+		const namespace = "bulk-lease-lost"
+		settings := BulkSettings{Collection: []*resourcepb.ResourceKey{
+			{Namespace: namespace, Group: testBulkImportGroup, Resource: testBulkImportResource},
+			{Namespace: "unaffected", Group: testBulkImportGroup, Resource: testBulkImportResource},
+		}}
+		runner := newTestBatchRunner(&testBulkProcessServer{}, settings.Collection[0], BulkBatchOptions{MaxItems: 1})
+		runner.recvOnce.Do(func() { runner.recvCh = make(chan batchStreamResult, 1) })
+		runner.recvCh <- batchStreamResult{request: newBulkImportRequest(namespace, "item-1", resourcepb.BulkRequest_ADDED)}
+		defer runner.stop()
+		done := make(chan *resourcepb.BulkResponse, 1)
+		go func() { done <- backend.ProcessBulk(t.Context(), settings, runner) }()
+		synctest.Wait()
+		require.Equal(t, []string{"item-1"}, collectBulkImportNames(t, backend, namespace))
+
+		// Simulate another holder taking over one lease before the next renewal.
+		prefix := "bulk/" + testBulkImportGroup + "/" + testBulkImportResource + "/" + namespace + "~"
+		keys := 0
+		for key, err := range backend.KV().Keys(t.Context(), kvpkg.LeasesSection, kvpkg.ListOptions{
+			StartKey: prefix, EndKey: kvpkg.PrefixRangeEnd(prefix),
+		}) {
+			require.NoError(t, err)
+			keys++
+			value, err := json.Marshal(map[string]any{"holder": "other", "expires": time.Now().Add(time.Minute).UnixNano()})
+			require.NoError(t, err)
+			writer, err := backend.KV().Save(t.Context(), kvpkg.LeasesSection, key)
+			require.NoError(t, err)
+			_, err = writer.Write(value)
+			require.NoError(t, err)
+			require.NoError(t, writer.Close())
+		}
+		require.Equal(t, 1, keys)
+		time.Sleep(4 * time.Second)
+		synctest.Wait()
+		select {
+		case resp := <-done:
+			require.NotNil(t, resp.Error)
+		default:
+			t.Fatal("lease loss did not interrupt the blocked batch iterator")
+		}
+		require.Empty(t, collectBulkImportNames(t, backend, namespace))
+		_, release, err := backend.acquireBulkLeases(t.Context(), settings.Collection[1:])
+		require.NoError(t, err, "unaffected leases must be released without waiting for client input")
+		release()
+	})
+}
+
+func TestBatchRunnerLeaseContextInterruptsBatchWait(t *testing.T) {
+	for _, bufferedRequest := range []bool{false, true} {
+		t.Run(fmt.Sprintf("buffered=%t", bufferedRequest), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				runner := newTestBatchRunner(&testBulkProcessServer{}, newTestBulkRequest("item-1").Key, BulkBatchOptions{MaxItems: 10})
+				runner.recvOnce.Do(func() { runner.recvCh = make(chan batchStreamResult, 1) })
+				if bufferedRequest {
+					runner.recvCh <- batchStreamResult{request: newTestBulkRequest("item-1")}
+				}
+				defer runner.stop()
+				ctx, cancel := context.WithCancel(t.Context())
+				defer cancel()
+				done := make(chan struct{})
+				go func() {
+					runner.NextBatch(ctx)
+					close(done)
+				}()
+				synctest.Wait()
+				cancel()
+				synctest.Wait()
+				select {
+				case <-done:
+				default:
+					t.Fatal("lease context cancellation did not interrupt batch waiting")
+				}
+			})
+		})
+	}
+}
+
 func newBulkImportRequest(namespace, name string, action resourcepb.BulkRequest_Action) *resourcepb.BulkRequest {
 	return &resourcepb.BulkRequest{
 		Key: &resourcepb.ResourceKey{
@@ -379,119 +585,6 @@ func newBulkImportRequest(namespace, name string, action resourcepb.BulkRequest_
 			name,
 		),
 	}
-}
-
-func newBulkImportRequestWithGeneration(namespace, name string, action resourcepb.BulkRequest_Action, generation int64) *resourcepb.BulkRequest {
-	return &resourcepb.BulkRequest{
-		Key: &resourcepb.ResourceKey{
-			Namespace: namespace,
-			Group:     testBulkImportGroup,
-			Resource:  testBulkImportResource,
-			Name:      name,
-		},
-		Action: action,
-		Value: fmt.Appendf(nil,
-			`{"apiVersion":"bulk.grafana.app/v1","kind":"Item","metadata":{"name":"%s","namespace":"%s","generation":%d},"spec":{"name":"%s"}}`,
-			name,
-			namespace,
-			generation,
-			name,
-		),
-	}
-}
-
-type legacyHistoryRow struct {
-	Action                  int64
-	ResourceVersion         int64
-	PreviousResourceVersion int64
-	Generation              int64
-}
-
-func setupCompatSqlKVStorageBackend(t *testing.T) (*kvStorageBackend, sqldb.DB) {
-	t.Helper()
-
-	dbstore := infdb.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-	require.NoError(t, err)
-	dbConn, err := eDB.Init(context.Background())
-	require.NoError(t, err)
-
-	kvStore, err := kvpkg.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
-	require.NoError(t, err)
-
-	rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-		Dialect: sqltemplate.DialectForDriver(dbConn.DriverName()),
-		DB:      dbConn,
-	})
-	require.NoError(t, err)
-
-	opts := KVBackendOptions{
-		KvStore:     kvStore,
-		RvManager:   rvManager,
-		DBKeepAlive: eDB,
-		WatchOptions: WatchOptions{
-			SettleDelay: time.Millisecond,
-		},
-	}
-	if dbConn.DriverName() == "sqlite3" {
-		opts.UseChannelNotifier = true
-	}
-
-	backend, err := NewKVStorageBackend(opts)
-	require.NoError(t, err)
-
-	kvBackend := backend.(*kvStorageBackend)
-	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-		_ = kvBackend.Stop(ctx)
-	})
-
-	return kvBackend, dbConn
-}
-
-func collectLegacyHistoryRows(t *testing.T, dbConn sqldb.DB, namespace string) []legacyHistoryRow {
-	t.Helper()
-
-	dialect, err := kvpkg.DialectFromDriver(dbConn.DriverName())
-	require.NoError(t, err)
-
-	query := fmt.Sprintf(
-		"SELECT %s, %s, %s, %s FROM %s WHERE %s = %s AND %s = %s AND %s = %s ORDER BY %s ASC",
-		dialect.QuoteIdent("action"),
-		dialect.QuoteIdent("resource_version"),
-		dialect.QuoteIdent("previous_resource_version"),
-		dialect.QuoteIdent("generation"),
-		dialect.QuoteIdent("resource_history"),
-		dialect.QuoteIdent("namespace"),
-		dialect.Placeholder(1),
-		dialect.QuoteIdent("group"),
-		dialect.Placeholder(2),
-		dialect.QuoteIdent("resource"),
-		dialect.Placeholder(3),
-		dialect.QuoteIdent("resource_version"),
-	)
-
-	rows, err := dbConn.QueryContext(context.Background(), query, namespace, testBulkImportGroup, testBulkImportResource)
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, rows.Close())
-	}()
-
-	var records []legacyHistoryRow
-	for rows.Next() {
-		var record legacyHistoryRow
-		require.NoError(t, rows.Scan(
-			&record.Action,
-			&record.ResourceVersion,
-			&record.PreviousResourceVersion,
-			&record.Generation,
-		))
-		records = append(records, record)
-	}
-
-	require.NoError(t, rows.Err())
-	return records
 }
 
 func collectBulkImportNames(t *testing.T, backend *kvStorageBackend, namespace string) []string {

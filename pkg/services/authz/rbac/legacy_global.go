@@ -12,12 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
-	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 type legacyGlobalIdentity struct {
-	requester        identity.StaticRequester
-	permittedActions map[string]struct{}
+	requester identity.StaticRequester
 }
 
 type legacyGlobalPermissionLoader interface {
@@ -68,11 +66,6 @@ func (s *Service) getLegacyGlobalIdentity(
 		return nil, errors.New("global user admin state is missing")
 	}
 
-	permittedActions := make(map[string]struct{}, len(global.GetPermittedActions()))
-	for _, action := range global.GetPermittedActions() {
-		permittedActions[action] = struct{}{}
-	}
-
 	return &legacyGlobalIdentity{
 		requester: identity.StaticRequester{
 			Type:           req.identityType,
@@ -84,7 +77,6 @@ func (s *Service) getLegacyGlobalIdentity(
 			Namespace:      req.namespace.Value,
 			CacheKey:       fmt.Sprintf("%s:global:%d:%s", req.namespace.Value, global.GetRequesterOrgId(), types.NewTypeID(req.identityType, identifiers.UID)),
 		},
-		permittedActions: permittedActions,
 	}, nil
 }
 
@@ -93,18 +85,6 @@ func (s *Service) getLegacyGlobalPermissions(
 	checkedIdentity *legacyGlobalIdentity,
 	actions []string,
 ) (map[string][]string, error) {
-	// Reloading grants must not restore actions removed by authentication, even
-	// when a resolver needs permissions beyond the original check expression.
-	permittedActions := make([]string, 0, len(actions))
-	for _, action := range actions {
-		if _, ok := checkedIdentity.permittedActions[action]; ok {
-			permittedActions = append(permittedActions, action)
-		}
-	}
-	if len(permittedActions) == 0 {
-		return map[string][]string{}, nil
-	}
-
 	loader, ok := s.userPermissionsEvaluator.(legacyGlobalPermissionLoader)
 	if !ok {
 		return nil, errors.New("filtered global permission loader is not configured")
@@ -115,7 +95,7 @@ func (s *Service) getLegacyGlobalPermissions(
 	requester := checkedIdentity.requester
 	requester.OrgID = accesscontrol.GlobalOrgID
 
-	permissions, err := loader.GetGlobalUserPermissions(ctx, &requester, permittedActions)
+	permissions, err := loader.GetGlobalUserPermissions(ctx, &requester, actions)
 	if err != nil {
 		return nil, fmt.Errorf("could not get global user permissions: %w", err)
 	}
@@ -123,38 +103,19 @@ func (s *Service) getLegacyGlobalPermissions(
 	return permissions, nil
 }
 
-func (s *Service) legacyGlobalResolverRequester(
-	ctx context.Context,
+func legacyGlobalResolverRequester(
 	req legacyScopeRequest,
 	permissions map[string][]string,
-) (identity.Requester, error) {
+) identity.Requester {
 	requester := req.globalIdentity.requester
-	grants := make(map[string][]string, len(permissions)+1)
+	grants := make(map[string][]string, len(permissions))
 	for action, scopes := range permissions {
 		grants[action] = slices.Clone(scopes)
 	}
 
-	// Library-panel resolution can perform folder visibility checks as the
-	// subject. Load that action explicitly instead of fetching a full snapshot.
-	//
-	// TODO: in the follow-up PRs (of this task https://github.com/grafana/identity-access-team/issues/2436)
-	// we will need to address the issue that ALL resolvers load folder.ActionFoldersRead
-	// even when the resolver does not need it (f.e. datasources)
-	if _, ok := grants[folder.ActionFoldersRead]; !ok {
-		additional, err := s.getLegacyGlobalPermissions(ctx, req.globalIdentity, []string{folder.ActionFoldersRead})
-		if err != nil {
-			return nil, err
-		}
-		// An absent action must stay absent: even a nil scope slice grants
-		// action-only checks when its key is present.
-		if scopes, ok := additional[folder.ActionFoldersRead]; ok {
-			grants[folder.ActionFoldersRead] = scopes
-		}
-	}
-
 	requester.Permissions = map[int64]map[string][]string{accesscontrol.GlobalOrgID: grants}
 
-	return &requester, nil
+	return &requester
 }
 
 func (s *Service) prepareLegacyGlobalEvaluation(
@@ -167,10 +128,8 @@ func (s *Service) prepareLegacyGlobalEvaluation(
 		return legacyEvaluationArgs{}, err
 	}
 
-	// NoOrgID selects Permissions[0], not Permissions[-1]. Loading grants must
-	// not turn an absent or empty global map into an allowed empty ALL expression.
-	if len(global.GetPermittedActions()) == 0 {
-		return legacyEvaluationArgs{hasAnyPermissions: false, scopeRequest: scopeRequest}, nil
+	if scopeRequest.restrictedActions != nil && len(scopeRequest.restrictedActions) == 0 {
+		return legacyEvaluationArgs{scopeRequest: scopeRequest}, nil
 	}
 
 	checkedIdentity, err := s.getLegacyGlobalIdentity(ctx, scopeRequest, global)
@@ -178,18 +137,6 @@ func (s *Service) prepareLegacyGlobalEvaluation(
 		return legacyEvaluationArgs{}, err
 	}
 
-	permissions, err := s.getLegacyGlobalPermissions(ctx, checkedIdentity, actions)
-	if err != nil {
-		return legacyEvaluationArgs{}, err
-	}
-
 	scopeRequest.globalIdentity = checkedIdentity
-
-	// The trusted caller has a nonempty effective permission map, even when
-	// none of its permitted actions is requested by this expression.
-	return legacyEvaluationArgs{
-		permissions:       permissions,
-		hasAnyPermissions: true,
-		scopeRequest:      scopeRequest,
-	}, nil
+	return s.prepareLegacyPermissions(ctx, actions, scopeRequest)
 }

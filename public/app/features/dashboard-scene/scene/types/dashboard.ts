@@ -1,5 +1,6 @@
 import { type VizPanel, type SceneObject, type SceneObjectState } from '@grafana/scenes';
-import { type DashboardLink } from '@grafana/schema';
+import { type Dashboard, type DashboardLink } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
 
@@ -89,6 +90,11 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
    * toolbar shows only the plan banner (Build/Dismiss) in place of the normal actions.
    */
   planning?: DashboardPlanningState;
+  /**
+   * In `composer` mode: whether Composer is over Editing (it writes, inside the edit session) or over
+   * Viewing (it only asks, and there is nothing to save). Unset outside Composer.
+   */
+  composerEditing?: boolean;
 }
 
 export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
@@ -138,6 +144,10 @@ export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, La
   copyPanel(vizPanel: VizPanel): void;
 
   getDefaultLayout(): DashboardLayoutManager | undefined;
+
+  getInitialSaveModel(): Dashboard | DashboardV2Spec | undefined;
+
+  isLibraryPanel(vizPanel: VizPanel): boolean;
 }
 
 export function isDashboardSceneLike(obj: unknown): obj is DashboardSceneLike {

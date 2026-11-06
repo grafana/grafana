@@ -30,11 +30,7 @@ import {
   LEGACY_STRING_VALUE_KEY,
 } from './transformToV2TypesUtils';
 
-export function sceneVariablesSetToSchemaV2Variables(
-  set: SceneVariables,
-  keepQueryOptions?: boolean,
-  dsReferencesMapping?: DSReferencesMapping
-): Array<
+type SchemaV2Variable =
   | QueryVariableKind
   | TextVariableKind
   | IntervalVariableKind
@@ -43,19 +39,14 @@ export function sceneVariablesSetToSchemaV2Variables(
   | ConstantVariableKind
   | GroupByVariableKind
   | AdhocVariableKind
-  | SwitchVariableKind
-> {
-  let variables: Array<
-    | QueryVariableKind
-    | TextVariableKind
-    | IntervalVariableKind
-    | DatasourceVariableKind
-    | CustomVariableKind
-    | ConstantVariableKind
-    | GroupByVariableKind
-    | AdhocVariableKind
-    | SwitchVariableKind
-  > = [];
+  | SwitchVariableKind;
+
+export function sceneVariablesSetToSchemaV2Variables(
+  set: SceneVariables,
+  keepQueryOptions?: boolean,
+  dsReferencesMapping?: DSReferencesMapping
+): SchemaV2Variable[] {
+  const variables: SchemaV2Variable[] = [];
 
   for (const variable of set.state.variables) {
     // Skipping default variables
