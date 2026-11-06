@@ -251,23 +251,19 @@ describe('NavToolbarActions', () => {
     });
   });
 
-  describe('Read-only badge', () => {
+  describe('Read-only repository', () => {
     beforeEach(() => {
       jest.mocked(useGetResourceRepositoryView).mockReturnValue(readOnlyRepositoryView);
     });
 
-    it('shows the badge next to the disabled Edit button for a user who could otherwise edit', async () => {
+    it('disables the Edit button and explains why in its tooltip', async () => {
       setup();
 
-      expect(await screen.findByRole('button', { name: 'Edit' })).toHaveAttribute('aria-disabled', 'true');
-      expect(screen.getByText('Read only')).toBeInTheDocument();
-    });
+      const editButton = await screen.findByRole('button', { name: 'Edit' });
+      expect(editButton).toHaveAttribute('aria-disabled', 'true');
 
-    it('hides the badge from a user who cannot edit the dashboard anyway', async () => {
-      setup({ canEdit: false, canMakeEditable: false });
-
-      expect(await screen.findByText('Share')).toBeInTheDocument();
-      expect(screen.queryByText('Read only')).not.toBeInTheDocument();
+      await userEvent.hover(editButton);
+      expect(await screen.findByText(/This resource is read-only and provisioned through Git/)).toBeInTheDocument();
     });
   });
 });
