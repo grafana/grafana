@@ -581,6 +581,28 @@ describe('Heatmap data', () => {
       expect(heatmap.xBucketSize).toEqual(10);
       expect(heatmap.xBucketCount).toEqual(3);
     });
+
+    it('ignores non-finite and null x values when inferring sparse x bucket size', () => {
+      const frame = toDataFrame({
+        meta: { type: DataFrameType.HeatmapCells },
+        fields: [
+          { name: 'xMax', type: FieldType.number, values: [10, 10, 20, Number.NaN, Infinity, null, 30] },
+          { name: 'yMin', type: FieldType.number, values: [0, 10, 0, 20, 10, 0, 20] },
+          { name: 'yMax', type: FieldType.number, values: [10, 20, 10, 30, 20, 10, 30] },
+          { name: 'count', type: FieldType.number, values: [3, 1, 5, 2, 4, 6, 7] },
+        ],
+      });
+
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [frame],
+        palette: ['#000', '#888', '#fff'],
+      });
+
+      expect(heatmap.xLayout).toEqual(HeatmapCellLayout.le);
+      expect(heatmap.xBucketSize).toEqual(10);
+      expect(heatmap.xBucketCount).toEqual(3);
+    });
   });
 
   describe('multiple frames without HeatmapRows', () => {

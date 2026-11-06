@@ -292,10 +292,10 @@ const getSparseHeatmapData = (
   // (see utils.ts), which previously only the dense path set; without them it
   // computes a [NaN, NaN] range and the panel silently renders nothing.
   // Sparse x spacing is assumed uniform, so infer the bucket size from the
-  // smallest gap between distinct x values, mirroring how the dense path
+  // smallest gap between distinct finite x values, mirroring how the dense path
   // derives it from the layout repetition in the data.
   const xField = frame.fields[0];
-  const xsUniq = [...new Set(xField.values)].sort((a, b) => a - b);
+  const xsUniq = [...new Set(xField.values.filter((v) => Number.isFinite(v)))].sort((a, b) => a - b);
 
   let xBucketSize: number | undefined = undefined;
 
