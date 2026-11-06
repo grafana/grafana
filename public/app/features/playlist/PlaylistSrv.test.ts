@@ -9,17 +9,21 @@ import { type DashboardQueryResult } from '../search/service/types';
 
 import { PlaylistSrv } from './PlaylistSrv';
 import { type PlaylistItemUI } from './types';
+import { loadDashboards } from './utils';
 
 jest.mock('./utils', () => ({
-  loadDashboards: (items: PlaylistItemUI[]) => {
+  ...jest.requireActual('./utils'),
+  loadDashboards: jest.fn((items: PlaylistItemUI[]) => {
     return Promise.resolve(
       items.map((v) => ({
         ...v, // same item with dashboard URLs filled in
         dashboards: [{ url: `/url/to/${v.value}` } as unknown as DashboardQueryResult],
       }))
     );
-  },
+  }),
 }));
+
+const loadDashboardsMock = jest.mocked(loadDashboards);
 
 const mockPlaylist: Playlist = {
   apiVersion: 'playlist.grafana.app/v1',
@@ -145,6 +149,149 @@ describe('PlaylistSrv', () => {
     // eslint-disable-next-line
     expect((srv as any).validPlaylistUrl).toBe('/url/to/bbb');
     expect(srv.state.isPlaying).toBe(true);
+  });
+
+  it('uses each item own interval and falls back to the global interval', async () => {
+    const getValidUrl = () => (srv as any).validPlaylistUrl; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    const playlist: Playlist = {
+      ...mockPlaylist,
+      spec: {
+        interval: '1s',
+        title: 'The display',
+        items: [
+          { type: 'dashboard_by_uid', value: 'aaa', interval: '10s' },
+          { type: 'dashboard_by_uid', value: 'bbb' },
+        ],
+      },
+    };
+
+    jest.useFakeTimers();
+    try {
+      await srv.start(playlist);
+      expect(getValidUrl()).toBe('/url/to/aaa');
+
+      // aaa has its own 10s interval, so 1s (the global) must not advance it.
+      jest.advanceTimersByTime(1000);
+      expect(getValidUrl()).toBe('/url/to/aaa');
+
+      jest.advanceTimersByTime(9000);
+      expect(getValidUrl()).toBe('/url/to/bbb');
+
+      // bbb has no interval, so it uses the global 1s.
+      jest.advanceTimersByTime(1000);
+      expect(getValidUrl()).toBe('/url/to/aaa');
+    } finally {
+      srv.stop();
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not crash on an invalid per-item interval and falls back to the global one', async () => {
+    const getValidUrl = () => (srv as any).validPlaylistUrl; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    const playlist: Playlist = {
+      ...mockPlaylist,
+      spec: {
+        interval: '1s',
+        title: 'The display',
+        items: [
+          { type: 'dashboard_by_uid', value: 'aaa', interval: 'not-an-interval' },
+          { type: 'dashboard_by_uid', value: 'bbb' },
+        ],
+      },
+    };
+
+    jest.useFakeTimers();
+    try {
+      await srv.start(playlist);
+      expect(srv.state.isPlaying).toBe(true);
+      expect(getValidUrl()).toBe('/url/to/aaa');
+
+      jest.advanceTimersByTime(1000);
+      expect(getValidUrl()).toBe('/url/to/bbb');
+    } finally {
+      srv.stop();
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not enter the playing state when the playlist has no items', async () => {
+    await srv.start({ ...mockPlaylist, spec: { ...mockPlaylist.spec!, items: [] } });
+
+    expect(srv.state.isPlaying).toBe(false);
+  });
+
+  it('does not enter the playing state when no dashboards resolve', async () => {
+    loadDashboardsMock.mockResolvedValueOnce(mockPlaylist.spec!.items.map((v) => ({ ...v, dashboards: [] })));
+
+    await srv.start(mockPlaylist);
+
+    expect(srv.state.isPlaying).toBe(false);
+  });
+
+  it('does not throw or enter the playing state when loading dashboards fails', async () => {
+    loadDashboardsMock.mockRejectedValueOnce(new Error('boom'));
+
+    await expect(srv.start(mockPlaylist)).resolves.toBeUndefined();
+    expect(srv.state.isPlaying).toBe(false);
+  });
+
+  it('keeps a single clean playback when start() calls overlap', async () => {
+    const getValidUrl = () => (srv as any).validPlaylistUrl; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    let resolveA: (items: PlaylistItemUI[]) => void = () => {};
+    let resolveB: (items: PlaylistItemUI[]) => void = () => {};
+    loadDashboardsMock
+      .mockReturnValueOnce(new Promise<PlaylistItemUI[]>((res) => (resolveA = res)))
+      .mockReturnValueOnce(new Promise<PlaylistItemUI[]>((res) => (resolveB = res)));
+
+    const playlistA: Playlist = {
+      ...mockPlaylist,
+      spec: { ...mockPlaylist.spec!, items: [{ type: 'dashboard_by_uid', value: 'a' }] },
+    };
+    const playlistB: Playlist = {
+      ...mockPlaylist,
+      spec: { ...mockPlaylist.spec!, items: [{ type: 'dashboard_by_uid', value: 'b' }] },
+    };
+
+    jest.useFakeTimers();
+    try {
+      const pA = srv.start(playlistA);
+      const pB = srv.start(playlistB);
+
+      // Resolve A first, then B — the later-resolving start wins and tears down the earlier.
+      resolveA([{ type: 'dashboard_by_uid', value: 'a', dashboards: [{ url: '/url/to/a' } as DashboardQueryResult] }]);
+      await pA;
+      // The page URL changes while loads are pending (and start A navigates), so it's no longer where playback began.
+      hrefMock.mockReturnValue('http://localhost/url/to/a');
+      resolveB([{ type: 'dashboard_by_uid', value: 'b', dashboards: [{ url: '/url/to/b' } as DashboardQueryResult] }]);
+      await pB;
+
+      expect(srv.state.isPlaying).toBe(true);
+      expect(getValidUrl()).toBe('/url/to/b');
+      expect((srv as any).startUrl).toBe(initialUrl); // eslint-disable-line @typescript-eslint/no-explicit-any
+      // Start A's timeout was cleaned up, not leaked.
+      expect(jest.getTimerCount()).toBe(1);
+    } finally {
+      srv.stop();
+      jest.useRealTimers();
+    }
+  });
+
+  it('keeps the URL playback was started from when the page changes while dashboards load', async () => {
+    let resolveLoad: (items: PlaylistItemUI[]) => void = () => {};
+    loadDashboardsMock.mockReturnValueOnce(new Promise<PlaylistItemUI[]>((res) => (resolveLoad = res)));
+
+    const promise = srv.start(mockPlaylist);
+    hrefMock.mockReturnValue('http://localhost/somewhere/else');
+    resolveLoad([
+      { type: 'dashboard_by_uid', value: 'aaa', dashboards: [{ url: '/url/to/aaa' } as DashboardQueryResult] },
+    ]);
+    await promise;
+
+    expect((srv as any).startUrl).toBe(initialUrl); // eslint-disable-line @typescript-eslint/no-explicit-any
+    srv.stop();
   });
 
   it('should replace playlist start page in history when starting playlist', async () => {

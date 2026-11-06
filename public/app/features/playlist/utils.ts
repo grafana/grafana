@@ -1,3 +1,4 @@
+import { rangeUtil } from '@grafana/data';
 import { useFlagPlaylistsRBAC } from '@grafana/runtime/internal';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -7,6 +8,22 @@ import { getGrafanaSearcher } from '../search/service/searcher';
 import { type SearchQuery } from '../search/service/types';
 
 import { type PlaylistItemUI } from './types';
+
+// `rangeUtil.intervalToMs` only anchors the start, so alone it accepts "30ssdd" and truncates "1.5m".
+const INTERVAL_PATTERN = /^\d+(ms|[smhdwMy])?$/;
+
+/** Whether an interval string (e.g. "5m", "30s") is well formed and a positive duration. */
+export function isValidInterval(interval: string): boolean {
+  if (!INTERVAL_PATTERN.test(interval)) {
+    return false;
+  }
+  try {
+    const ms = rangeUtil.intervalToMs(interval);
+    return Number.isFinite(ms) && ms > 0;
+  } catch {
+    return false;
+  }
+}
 
 export function useCanWritePlaylists(): boolean {
   const enabled = useFlagPlaylistsRBAC();
