@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { type KeyboardEvent, useEffect, useRef } from 'react';
+import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -14,6 +14,7 @@ import { resolveScrollAlign } from '../cells/focusExtension';
 import { type NotebookBlockType } from './NotebookBlockTypeMenu';
 import { NotebookCellActions } from './NotebookCellActions';
 import { NotebookCellAddButton } from './NotebookCellAddButton';
+import { NotebookCellComments } from './NotebookCellComments';
 import { NOTEBOOK_CELL_CONTROLS_CLASS, NOTEBOOK_CELL_FRAME_CLASS } from './cellClassNames';
 
 /** Hand-written for the same reason as the class above. */
@@ -113,6 +114,8 @@ export function NotebookCellFrame({
   onNavigate,
 }: Props) {
   const styles = useStyles2(getStyles);
+  // Set by the comments mounted beside the cell while they are open.
+  const [commentsActive, setCommentsActive] = useState(false);
   const { collapsed, body, content, elementName } = cell.useState();
   // Markdown/Code hand a focus grant to their own editor's caret (via useFocusExtension) and detect
   // an ArrowUp/Down boundary themselves. A Panel or Collapsed cell has no caret to do either with, so
@@ -227,10 +230,13 @@ export function NotebookCellFrame({
             />
           )}
 
+          <NotebookCellComments cell={cell} onActiveChange={setCommentsActive} />
+
           <div
             className={cx(
               NOTEBOOK_CELL_CONTENT_CLASS,
-              isEditing && onDuplicate && onDelete && (!body || collapsed) && styles.contentWithActions
+              isEditing && onDuplicate && onDelete && (!body || collapsed) && styles.contentWithActions,
+              commentsActive && styles.commentsActive
             )}
           >
             <NotebookCellRenderer
@@ -328,6 +334,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   contentWithActions: css({
     paddingRight: theme.spacing(4),
+  }),
+  commentsActive: css({
+    outline: `2px solid ${theme.colors.warning.border}`,
+    outlineOffset: theme.spacing(0.5),
+    borderRadius: theme.shape.radius.default,
   }),
   dragging: css({
     opacity: 0.9,
