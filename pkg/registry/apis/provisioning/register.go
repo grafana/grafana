@@ -518,6 +518,12 @@ func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
 		!slices.Contains(cfg.ProvisioningRepositoryTypes, string(provisioning.LocalRepositoryType)) {
 		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q repository type to be enabled", provisioning.LocalRepositoryType)
 	}
+	// Admission rejects a sync target that is not allowed, and the bootstrap repository always
+	// uses the same one, so a target it cannot use leaves the instance unprovisioned with
+	// nothing in the configuration to say why.
+	if !slices.Contains(cfg.ProvisioningAllowedTargets, string(bootstrap.SyncTarget)) {
+		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q sync target to be allowed", bootstrap.SyncTarget)
+	}
 
 	// Single namespace: the parser rejects a manifest whose namespace is not the repository's.
 	return bootstrap.Config{

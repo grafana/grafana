@@ -17,6 +17,15 @@ import (
 // Name is fixed so a restart reconciles the same object instead of creating a second one.
 const Name = "bootstrap"
 
+// SyncTarget is the target the bootstrap repository syncs to. Exported so the startup guard
+// that checks it is allowed cannot drift from what applySpec writes.
+const SyncTarget = provisioning.SyncTargetTypeFolderless
+
+// updateAttempts bounds the re-read when another replica writes between our read and update.
+// The hook runs once per boot, so a dropped conflict would leave a changed path stale until
+// the next restart.
+const updateAttempts = 3
+
 const (
 	title = "Bootstrap"
 	// Shown in the admin UI, where this repository cannot be configured, so it has to say
@@ -56,6 +65,16 @@ func (c Config) matches(repo *provisioning.Repository) bool {
 // Ensure creates the bootstrap repository, or brings an existing one back to the configured
 // shape. A repository that already matches is left alone, so its sync is not restarted on boot.
 func Ensure(ctx context.Context, repos Repositories, cfg Config) error {
+	var err error
+	for attempt := 0; attempt < updateAttempts; attempt++ {
+		if err = ensure(ctx, repos, cfg); !apierrors.IsConflict(err) {
+			return err
+		}
+	}
+	return err
+}
+
+func ensure(ctx context.Context, repos Repositories, cfg Config) error {
 	existing, err := repos.Get(ctx, Name, metav1.GetOptions{})
 	switch {
 	case apierrors.IsNotFound(err):
@@ -147,7 +166,7 @@ func applySpec(spec *provisioning.RepositorySpec, path string) {
 	spec.Workflows = []provisioning.Workflow{provisioning.WriteWorkflow}
 	spec.Sync.Enabled = true
 	// The directory is instance configuration, not a folder of dashboards.
-	spec.Sync.Target = provisioning.SyncTargetTypeFolderless
+	spec.Sync.Target = SyncTarget
 	spec.GitHub = nil
 	spec.GitHubEnterprise = nil
 	spec.Git = nil

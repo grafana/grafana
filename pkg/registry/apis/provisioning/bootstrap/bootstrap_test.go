@@ -172,6 +172,41 @@ func onceNotFound() clienttesting.ReactionFunc {
 	}
 }
 
+// The hook runs once per boot, so a conflict dropped here would leave a changed bootstrap_path
+// pointed at the old directory until the next restart.
+func TestEnsureRetriesAnUpdateConflict(t *testing.T) {
+	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
+		config.apply(repo)
+		repo.Spec.Local.Path = "conf/provisioning/stale"
+	}))
+	var updates int
+	client.PrependReactor("update", "repositories", func(clienttesting.Action) (bool, runtime.Object, error) {
+		if updates++; updates == 1 {
+			return true, nil, apierrors.NewConflict(schema.GroupResource{Resource: "repositories"}, Name, errors.New("stale"))
+		}
+		return false, nil, nil
+	})
+
+	require.NoError(t, Ensure(context.Background(), repositories(client), config))
+
+	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, config.Path, repo.Spec.Local.Path)
+	assert.Equal(t, 2, updates, "the second attempt should re-read and retry")
+}
+
+func TestEnsureGivesUpOnPersistentConflicts(t *testing.T) {
+	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
+		config.apply(repo)
+		repo.Spec.Local.Path = "conf/provisioning/stale"
+	}))
+	client.PrependReactor("update", "repositories", func(clienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewConflict(schema.GroupResource{Resource: "repositories"}, Name, errors.New("stale"))
+	})
+
+	assert.Error(t, Ensure(context.Background(), repositories(client), config))
+}
+
 func TestEnsureReportsAFailedRead(t *testing.T) {
 	client := newClientset()
 	client.PrependReactor("get", "repositories", func(clienttesting.Action) (bool, runtime.Object, error) {

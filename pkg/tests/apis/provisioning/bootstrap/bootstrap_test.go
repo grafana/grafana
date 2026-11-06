@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -170,6 +171,19 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 		file := readFile(t, bootstrapPath, "github-repository.yaml")
 		assert.Contains(t, file, before, "the committed file should carry the reference")
 		assert.NotContains(t, file, "create", "the plaintext token must not be written back")
+	})
+
+	// The managed-object index reports everything a repository manages, whatever its kind, so a
+	// removed manifest is a removed resource -- the same contract as any other synced file.
+	t.Run("removing a manifest deletes the resource it declared", func(t *testing.T) {
+		require.NoError(t, os.Remove(filepath.Join(bootstrapPath, "github-repository.yaml")))
+
+		helper.SyncAndWait(t, "bootstrap", nil)
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			_, err := helper.Repositories.Resource.Get(t.Context(), "with-token", metav1.GetOptions{})
+			assert.True(c, apierrors.IsNotFound(err), "expected the repository to be gone, got %v", err)
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	})
 
 	t.Run("editing a connection keeps its secure values", func(t *testing.T) {

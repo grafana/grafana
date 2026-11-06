@@ -16,6 +16,7 @@ func TestBootstrapConfigFromSettings(t *testing.T) {
 		name            string
 		path            string
 		repositoryTypes []string
+		allowedTargets  []string
 		want            bootstrap.Config
 		wantErr         bool
 	}{
@@ -40,13 +41,26 @@ func TestBootstrapConfigFromSettings(t *testing.T) {
 			repositoryTypes: []string{"github"},
 			wantErr:         true,
 		},
+		{
+			// Admission would reject the repository, leaving the instance unprovisioned with
+			// nothing in the configuration to say why.
+			name:           "rejects a bootstrap path when its sync target is not allowed",
+			path:           "conf/provisioning/bootstrap",
+			allowedTargets: []string{"folder"},
+			wantErr:        true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			allowedTargets := tt.allowedTargets
+			if allowedTargets == nil {
+				allowedTargets = []string{"folder", "folderless"}
+			}
 			got, err := bootstrapConfigFromSettings(&setting.Cfg{
 				ProvisioningBootstrapPath:   tt.path,
 				ProvisioningRepositoryTypes: tt.repositoryTypes,
+				ProvisioningAllowedTargets:  allowedTargets,
 			})
 			if tt.wantErr {
 				assert.Error(t, err)
