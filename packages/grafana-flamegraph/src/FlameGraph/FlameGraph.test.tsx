@@ -103,6 +103,7 @@ describe('FlameGraph', () => {
           viewMode: ViewMode.Single,
           paneView: PaneView.FlameGraph,
           isDiff: false,
+          isSandwich: false,
           search: '',
           collapseConfig: undefined,
         });
