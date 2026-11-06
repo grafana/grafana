@@ -415,6 +415,7 @@ export function useSplitter(options: UseSplitterOptions) {
   const styles = useStyles2(getStyles, direction);
   const dragStyles = useStyles2(getDragStyles, dragPosition);
   const dragHandleStyle = direction === 'column' ? dragStyles.dragHandleHorizontal : dragStyles.dragHandleVertical;
+  const ariaOrientation: React.AriaAttributes['aria-orientation'] = direction === 'row' ? 'vertical' : 'horizontal';
   const id = useId();
 
   const primaryStyles: React.CSSProperties = {
@@ -472,6 +473,7 @@ export function useSplitter(options: UseSplitterOptions) {
       ref: splitterRef,
       style: { [measurementProp]: `${handleSize}px` },
       role: 'separator',
+      'aria-orientation': ariaOrientation,
       'aria-valuemin': 0,
       'aria-valuemax': 100,
       'aria-valuenow': usePixels ? undefined : initialSize * 100,

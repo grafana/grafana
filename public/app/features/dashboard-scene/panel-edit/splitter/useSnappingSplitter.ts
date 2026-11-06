@@ -30,9 +30,9 @@ export interface UseSnappingSplitterOptions {
   /**
    * Width/height reserved for the pane that fills the remaining space. Only meaningful with
    * `usePixels`, which pins the other pane against shrinking: without a reserve, a container too
-   * narrow for both leaves the filling pane with whatever is left, down to nothing. Must exceed the
-   * drag handle, which `useSplitter` already reserves on its own. The pinned pane never yields below
-   * `collapseBelowPixels`, so a narrower container still cuts into the reserve.
+   * narrow for both leaves the filling pane with whatever is left, down to nothing. The drag handle
+   * is reserved separately. The pinned pane never yields below `collapseBelowPixels`, so a narrower
+   * container still cuts into the reserve.
    */
   minFillingPixels?: number;
 
@@ -242,7 +242,8 @@ export function useSnappingSplitter({
       // `useSplitter` set still applies on top, so the drag handle stays inside the container.
       if (minFillingPixels !== undefined) {
         const maxDim = direction === 'row' ? 'maxWidth' : 'maxHeight';
-        const reserveCap = `max(${collapseBelowPixels}px, calc(100% - ${minFillingPixels}px))`;
+        const handleThickness = splitterProps.style[direction === 'row' ? 'width' : 'height'];
+        const reserveCap = `max(${collapseBelowPixels}px, calc(100% - ${minFillingPixels}px - ${handleThickness}))`;
         const handleCap = collapsingProps.style[maxDim];
         collapsingProps.style[maxDim] = handleCap ? `min(${handleCap}, ${reserveCap})` : reserveCap;
       }

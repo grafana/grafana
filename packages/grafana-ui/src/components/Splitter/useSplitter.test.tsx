@@ -93,6 +93,15 @@ async function dragSplitterBy(pixels: number) {
 
 describe('useSplitter', () => {
   describe('accessibility', () => {
+    it.each([
+      { direction: 'row', orientation: 'vertical' },
+      { direction: 'column', orientation: 'horizontal' },
+    ] as const)('announces a $orientation separator for $direction panes', ({ direction, orientation }) => {
+      render(<Splitter direction={direction} />);
+
+      expect(screen.getByRole('separator')).toHaveAttribute('aria-orientation', orientation);
+    });
+
     it('removes an aria-hidden handle from the tab order and restores it when shown', async () => {
       render(<Splitter direction="row" />);
       const handle = screen.getByRole('separator', { name: 'Pane resize widget' });
