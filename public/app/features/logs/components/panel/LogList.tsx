@@ -416,13 +416,16 @@ const LogListComponent = ({
     listRef.current?.resetAfterIndex(0);
   }, [forceEscape, otelLogsFormattingEnabled, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
 
-  // Cached height is only safe to carry over to a new `logs` array when it is the same underlying result set
+  // Cached height is only safe to carry over to a new `logs` array when it is the same underlying result set.
   const prevDataFramesRef = useRef(dataFrames);
   useEffect(() => {
+    const prevConfigs = prevDataFramesRef.current?.flatMap((frame) => frame.fields.map((field) => field.config));
     const isSameResultSet =
+      !!prevConfigs?.length &&
       !!dataFrames?.length &&
-      !!prevDataFramesRef.current?.length &&
-      dataFrames.some((frame) => prevDataFramesRef.current!.includes(frame));
+      dataFrames.some(
+        (frame) =>
+      );
     prevDataFramesRef.current = dataFrames;
     if (!isSameResultSet) {
       virtualization.resetLogLineSizes();
