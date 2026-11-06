@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -38,6 +39,8 @@ var LegacyCountedResources = []string{alertRuleResource, recordingRuleResource}
 type LegacyStatsGetter struct {
 	SQL legacysql.LegacyDatabaseProvider
 	Cfg *setting.Cfg
+
+	metrics *legacyStatsMetrics
 }
 
 // CountError identifies which legacy resource count failed while preserving the underlying error.
@@ -117,6 +120,9 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// turns every folder delete in that namespace into a 500. Any other lookup failure,
 		// including a stack that is only unavailable (e.g. archived or suspended), still fails:
 		// its legacy rows can come back, so it must not be treated as empty.
+		for _, resource := range legacyResources {
+			s.metrics.skip(resource, legacySkipNamespaceDeleted)
+		}
 		return &resourcepb.ResourceStatsResponse{}, nil
 	}
 	if err != nil {
@@ -136,7 +142,10 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 				if extraWhere != "" {
 					where += " AND " + extraWhere
 				}
-				return sess.Table(tableName).Where(where, args...).Count()
+				start := time.Now()
+				c, err := sess.Table(tableName).Where(where, args...).Count()
+				s.metrics.observe(r, start, err)
+				return c, err
 			}
 
 			var total int64
@@ -180,7 +189,9 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		if err != nil {
 			return &CountError{Resources: []string{"alertrules"}, Err: err}
 		}
-		if !alertRulesStale {
+		if alertRulesStale {
+			s.metrics.skip(legacyAlertRules, legacySkipMigrated)
+		} else {
 			err = fn("alert_rule", "namespace_uid", group, "alertrules", "(record IS NULL OR record = '')")
 			if err != nil {
 				return &CountError{Resources: []string{"alertrules"}, Err: err}
@@ -191,7 +202,9 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		if err != nil {
 			return &CountError{Resources: []string{"recordingrules"}, Err: err}
 		}
-		if !recordingRulesStale {
+		if recordingRulesStale {
+			s.metrics.skip(legacyRecordingRules, legacySkipMigrated)
+		} else {
 			err = fn("alert_rule", "namespace_uid", group, "recordingrules", "(record IS NOT NULL AND record != '')")
 			if err != nil {
 				return &CountError{Resources: []string{"recordingrules"}, Err: err}
@@ -203,7 +216,9 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		if err != nil {
 			return &CountError{Resources: []string{"library_elements"}, Err: err}
 		}
-		if !libraryPanelsStale {
+		if libraryPanelsStale {
+			s.metrics.skip(legacyLibraryElements, legacySkipMigrated)
+		} else {
 			err = fn("library_element", "folder_uid", group, "library_elements", "")
 			if err != nil {
 				return &CountError{Resources: []string{"library_elements"}, Err: err}

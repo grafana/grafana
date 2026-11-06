@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	tptestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -372,4 +374,51 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 			require.False(t, stale)
 		})
 	})
+}
+
+func TestIntegrationLegacyStatsRecordMetrics(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	migrated := func(resource string) *setting.Cfg {
+		return &setting.Cfg{UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+			resource: {DualWriterMode: grafanarest.Mode5},
+		}}
+	}
+	run := func(t *testing.T, cfg *setting.Cfg) (*prometheus.Registry, *legacyStatsMetrics) {
+		t.Helper()
+		testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		reg := prometheus.NewRegistry()
+		m := newLegacyStatsMetrics(reg)
+		store := &LegacyStatsGetter{SQL: legacysql.NewDatabaseProvider(testDB), Cfg: cfg, metrics: m}
+		_, err := store.GetStats(request.WithNamespace(context.Background(), "default"), &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: []string{"f1"}})
+		require.NoError(t, err)
+		return reg, m
+	}
+
+	t.Run("each counted resource records a duration", func(t *testing.T) {
+		reg, m := run(t, nil)
+		for _, name := range legacyResources {
+			require.Equal(t, uint64(1), observations(t, reg, name, legacyOutcomeOK), name)
+			require.Equal(t, 0.0, tptestutil.ToFloat64(m.skipped.WithLabelValues(name, legacySkipMigrated)), name)
+		}
+	})
+
+	for name, configKey := range map[string]string{
+		legacyAlertRules:      alertRuleResource,
+		legacyRecordingRules:  recordingRuleResource,
+		legacyLibraryElements: libraryPanelResource,
+	} {
+		t.Run("a migrated "+name+" is skipped, not timed", func(t *testing.T) {
+			reg, m := run(t, migrated(configKey))
+			for _, other := range legacyResources {
+				if other == name {
+					require.Equal(t, 1.0, tptestutil.ToFloat64(m.skipped.WithLabelValues(other, legacySkipMigrated)), other)
+					require.Equal(t, uint64(0), observations(t, reg, other, legacyOutcomeOK), other)
+					continue
+				}
+				require.Equal(t, 0.0, tptestutil.ToFloat64(m.skipped.WithLabelValues(other, legacySkipMigrated)), other)
+				require.Equal(t, uint64(1), observations(t, reg, other, legacyOutcomeOK), "%s still runs", other)
+			}
+		})
+	}
 }
