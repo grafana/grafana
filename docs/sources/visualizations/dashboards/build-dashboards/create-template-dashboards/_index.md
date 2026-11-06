@@ -115,9 +115,9 @@ To use this option, hover the cursor over the template or suggestion that you wa
 
 When you choose this option, a preconfigured prompt is entered into the Assistant chat to start the process:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dash-template-w-asst-v13.0.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from a template" caption="A dashboard template being customized by Grafana Assistant" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dash-template-w-asst-v13.3.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from a template" caption="A dashboard template being customized by Grafana Assistant" >}}
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-suggested-dash-w-asst-v13.0.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from a suggestion" caption="A suggested dashboard being customized by Grafana Assistant" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-suggested-dash-w-asst-v13.3.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from a suggestion" caption="A suggested dashboard being customized by Grafana Assistant" >}}
 
 Grafana Assistant analyses the template or suggested dashboard, checks your available data sources, and guides the creation of a dashboard tailored to your environment.
 This lets you create a working, relevant dashboard from a template or suggestion without the need to manually map metrics and panels.

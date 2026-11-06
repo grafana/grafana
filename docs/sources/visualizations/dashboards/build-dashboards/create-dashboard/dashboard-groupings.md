@@ -15,7 +15,7 @@ description: Group dashboard panels
 weight: 300
 image_maps:
   - key: panel-groupings
-    src: /media/docs/grafana/dashboards/screenshot-dashboard-w-groupings-v13.1.png
+    src: /media/docs/grafana/dashboards/screenshot-dashboard-w-groupings-v13.3.png
     alt: Dashboard with nested groupings
     points:
       - x_coord: 15

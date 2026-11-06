@@ -23,49 +23,45 @@ description: Create and edit a dashboard
 weight: 1
 image_maps:
   - key: sidebar-toolbar
-    src: /media/docs/grafana/dashboards/screenshot-edit-mode-imagemap-v13.1.png
+    src: /media/docs/grafana/dashboards/screenshot-edit-mode-imagemap-v13.3.png
     alt: An annotated image of the sidebar and toolbar
     points:
       - x_coord: 101
-        y_coord: 11
+        y_coord: 17
         content: |
           **Add new element**: Click to open the sidebar with add options. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 18
+        y_coord: 23
         content: |
           **Dashboard options**: Click the icon to open the sidebar and access dashboard options. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 24.5
+        y_coord: 29.5
         content: |
           **Feedback**: Submit feedback on the new editing experience. Edit mode only.
       - x_coord: 101
-        y_coord: 31
+        y_coord: 35.5
         content: |
           **Edit as code**: Edit the dashboard JSON. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 38.5
+        y_coord: 43.5
         content: |
           **Export**: Click to display [export](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
       - x_coord: 101
-        y_coord: 45
+        y_coord: 50
         content: |
           **Content outline**: Navigate a dashboard using the [Content outline](#navigate-using-the-content-outline).
       - x_coord: 101
-        y_coord: 51
+        y_coord: 56
         content: |
           **Filters overview**: Open the filters overview drawer.
       - x_coord: 101
-        y_coord: 57
+        y_coord: 62
         content: |
           **Dashboard insights**: View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, and query counts.
       - x_coord: 101
-        y_coord: 65
+        y_coord: 70
         content: |
           **Hide**: Click to hide the sidebar and toolbar.
-      - x_coord: 89
-        y_coord: 13
-        content: |
-          **Dock/Undock**: Click to dock or undock the sidebar.
 ---
 
 # Create dashboards
