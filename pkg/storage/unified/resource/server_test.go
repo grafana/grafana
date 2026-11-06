@@ -5089,56 +5089,6 @@ func newQOSTestSpanRecorder(t *testing.T) *tracetest.SpanRecorder {
 	return recorder
 }
 
-// requireRPCError asserts that err is the gRPC status a handler returns for
-// want: the mapped code and want attached as the ErrorResult detail.
-func requireRPCError(t testing.TB, err error, want *resourcepb.ErrorResult) {
-	t.Helper()
-	got := rpcErrorResult(t, err)
-	require.True(t, proto.Equal(want, got), "want %v, got %v", want, got)
-}
-
-// rpcErrorResult asserts that err is a gRPC status carrying an ErrorResult
-// detail and returns it.
-func rpcErrorResult(t testing.TB, err error) *resourcepb.ErrorResult {
-	t.Helper()
-	require.Error(t, err)
-	res := resourceutil.ErrorResultFromGRPCDetails(err)
-	require.NotNil(t, res, "expected an ErrorResult detail on %v", err)
-	require.Equal(t, grpcCodeFromErrorResult(res), status.Code(err))
-	return res
-}
-
-func TestRPCErrorFrom(t *testing.T) {
-	require.NoError(t, rpcErrorFrom(nil))
-
-	t.Run("gRPC status is returned unchanged", func(t *testing.T) {
-		plain := status.Error(codes.Unavailable, "down")
-		require.Same(t, plain, rpcErrorFrom(plain))
-
-		detailed := GRPCStatusError(NewNotFoundError(&resourcepb.ResourceKey{Resource: "dashboards", Name: "a"}))
-		require.Same(t, detailed, rpcErrorFrom(detailed))
-
-		wrapped := fmt.Errorf("context: %w", plain)
-		require.Same(t, wrapped, rpcErrorFrom(wrapped))
-	})
-
-	t.Run("API status keeps its details", func(t *testing.T) {
-		apiErr := NewConflictStatusError("g", "r", "n", "changed")
-		requireRPCError(t, rpcErrorFrom(apiErr), AsErrorResult(apiErr))
-	})
-
-	t.Run("plain errors map like an embedded error", func(t *testing.T) {
-		err := rpcErrorFrom(errors.New("boom"))
-		requireRPCError(t, err, &resourcepb.ErrorResult{Message: "boom", Code: http.StatusInternalServerError})
-		require.Equal(t, codes.Internal, status.Code(err))
-	})
-
-	t.Run("cancellation keeps the existing mapping", func(t *testing.T) {
-		err := rpcErrorFrom(context.Canceled)
-		requireRPCError(t, err, AsErrorResult(context.Canceled))
-	})
-}
-
 func TestQueueRPCError(t *testing.T) {
 	err := queueRPCError(fmt.Errorf("enqueue: %w", scheduler.ErrTenantQueueFull))
 	requireRPCError(t, err, NewTooManyRequestsError("tenant queue is full, please try again later"))
