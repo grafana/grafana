@@ -1,4 +1,7 @@
+import { renderHook } from '@testing-library/react';
+
 import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafana/alerting';
+import { useDataSourceInstanceList } from '@grafana/runtime';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { PromAlertingRuleState } from '../../../../types/unified-alerting-dto';
@@ -20,7 +23,22 @@ import { Annotation } from '../utils/constants';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import { getFilter } from '../utils/search';
 
-import { filterRules } from './useFilteredRules';
+import { filterRules, useFilteredRules } from './useFilteredRules';
+
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    useDataSourceInstanceList: jest.fn(actual.useDataSourceInstanceList),
+  };
+});
+
+const runtime = jest.requireActual('@grafana/runtime');
+const useDataSourceInstanceListMock = jest.mocked(useDataSourceInstanceList);
+
+afterEach(() => {
+  useDataSourceInstanceListMock.mockImplementation(runtime.useDataSourceInstanceList);
+});
 
 const dataSources = {
   prometheus: mockDataSource({ uid: 'prom-1', name: 'prometheus' }),
@@ -386,4 +404,26 @@ describe('filterRules — default policy recognition', () => {
       expect(names).not.toContain('Named policy rule');
     }
   );
+});
+
+describe('useFilteredRules — data source list errors', () => {
+  it('exposes the data source error when a data source filter is active', () => {
+    const error = new Error('data source list failed');
+    useDataSourceInstanceListMock.mockReturnValue({ items: [], isLoading: false, error });
+
+    const { result } = renderHook(() => useFilteredRules([], getFilter({ dataSourceNames: ['loki'] })));
+
+    expect(result.current.error).toBe(error);
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('ignores data source list errors when no data source filter is active', () => {
+    const error = new Error('data source list failed');
+    useDataSourceInstanceListMock.mockReturnValue({ items: [], isLoading: false, error });
+
+    const { result } = renderHook(() => useFilteredRules([], getFilter({ dataSourceNames: [] })));
+
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.isLoading).toBe(false);
+  });
 });

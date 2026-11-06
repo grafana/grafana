@@ -105,7 +105,7 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
   const deferredFilterState = useDeferredValue(filterState);
   const { dataSourceNames } = deferredFilterState;
 
-  const { items, isLoading } = useDataSourceInstanceList({ all: true });
+  const { items, isLoading, error } = useDataSourceInstanceList({ all: true });
   const dataSourceUids = useMemo(
     () => new Set(items.filter((ds) => dataSourceNames.includes(ds.name)).map((ds) => ds.uid)),
     [items, dataSourceNames]
@@ -132,7 +132,11 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
     return filtered;
   }, [deferredNamespaces, deferredFilterState, dataSourceUids]);
 
-  return { filteredRules, isLoading: dataSourceNames.length > 0 && isLoading };
+  const isDataSourceFilterActive = dataSourceNames.length > 0;
+  const isDataSourceLoading = isDataSourceFilterActive && isLoading;
+  const dataSourceError = isDataSourceFilterActive ? error : undefined;
+
+  return { filteredRules, isLoading: isDataSourceLoading, error: dataSourceError };
 };
 
 export const filterRules = (
