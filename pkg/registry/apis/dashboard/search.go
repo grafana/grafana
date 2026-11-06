@@ -628,6 +628,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if path != nil {
+		// The path has folders the user can only view, so a requested permission is only a fallback for when the path is not served
+		searchRequest.Permission = 0
 		if len(path.reachable) == 0 {
 			s.write(w, dashboardv0alpha1.SearchResults{Hits: []dashboardv0alpha1.DashboardHit{}})
 			return

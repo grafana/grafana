@@ -104,6 +104,33 @@ func TestSearchHandlerPathToCreatable(t *testing.T) {
 		assert.False(t, value, "Org is only on the path")
 	})
 
+	t.Run("lists folders on the path even when a permission is requested", func(t *testing.T) {
+		setCreateToggle(t, true)
+		mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{
+			creatable, orgLookup, publicLookup,
+			folderRows([3]string{"org", "Org", "public"}),
+		}}
+
+		results := searchPathToCreatable(t, mockClient, "type=folder&folder=public&permission=edit&include=pathToCreatable")
+
+		require.Len(t, mockClient.MockCalls, 4)
+		assert.Zero(t, mockClient.MockCalls[3].Permission)
+		require.Len(t, results.Hits, 1)
+		assert.Equal(t, "org", results.Hits[0].Name)
+	})
+
+	t.Run("keeps the requested permission when the path is not served", func(t *testing.T) {
+		setCreateToggle(t, false)
+		mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{
+			folderRows([3]string{"org", "Org", "public"}),
+		}}
+
+		searchPathToCreatable(t, mockClient, "type=folder&folder=public&permission=edit&include=pathToCreatable")
+
+		require.Len(t, mockClient.MockCalls, 1)
+		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), mockClient.MockCalls[0].Permission)
+	})
+
 	t.Run("marks the creatable folder", func(t *testing.T) {
 		setCreateToggle(t, true)
 		mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{
