@@ -1,8 +1,5 @@
-// Package bootstrap registers the instance's bootstrap repository: a local repository
-// over a mounted directory, so the files an operator already mounts can declare the rest
-// of the instance's provisioning configuration — repositories and connections included —
-// instead of a post-start API call. The repository's own configuration comes from
-// grafana.ini and is not editable; what it provisions is.
+// Package bootstrap registers a local repository over the mounted bootstrap directory, so
+// the files there can declare the instance's own repositories and connections.
 package bootstrap
 
 import (
@@ -17,13 +14,15 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// Name is the metadata.name of the bootstrap repository. It is fixed so that a
-// restart reconciles the same object instead of creating a second one.
+// Name is fixed so a restart reconciles the same object instead of creating a second one.
 const Name = "bootstrap"
 
 const (
-	title       = "Bootstrap"
-	description = "Registered from [provisioning] bootstrap_path"
+	title = "Bootstrap"
+	// Shown in the admin UI, where this repository cannot be configured, so it has to say
+	// where its configuration lives and what the directory behind it is for.
+	description = "Instance configuration, synced from the directory set in [provisioning] bootstrap_path. " +
+		"Add repositories, connections, dashboards and folders to that directory to provision them on startup."
 )
 
 // Repositories is the subset of the generated repository client this package needs.
@@ -35,8 +34,7 @@ type Repositories interface {
 
 // Config is the bootstrap repository to register.
 type Config struct {
-	// Path is the directory the repository reads, as configured. It must resolve
-	// under one of the permitted provisioning paths.
+	// Path is the directory the repository reads, as configured.
 	Path string
 	// Namespace is the org namespace the repository is created in.
 	Namespace string
@@ -47,8 +45,7 @@ func (c Config) Enabled() bool {
 	return c.Path != "" && c.Namespace != ""
 }
 
-// matches reports whether repo is already the configured shape, so Ensure can leave it
-// untouched rather than restart the sync it owns on every boot.
+// matches reports whether repo is already the configured shape.
 func (c Config) matches(repo *provisioning.Repository) bool {
 	want := repo.DeepCopy()
 	c.apply(want)
@@ -56,9 +53,8 @@ func (c Config) matches(repo *provisioning.Repository) bool {
 		reflect.DeepEqual(repo.Annotations, want.Annotations)
 }
 
-// Ensure creates the bootstrap repository, or brings an existing one back to the
-// configured shape. It is idempotent: a repository that already matches is left
-// untouched, so the sync it owns is not restarted on every boot.
+// Ensure creates the bootstrap repository, or brings an existing one back to the configured
+// shape. A repository that already matches is left alone, so its sync is not restarted on boot.
 func Ensure(ctx context.Context, repos Repositories, cfg Config) error {
 	existing, err := repos.Get(ctx, Name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
@@ -87,19 +83,16 @@ func Ensure(ctx context.Context, repos Repositories, cfg Config) error {
 	return nil
 }
 
-// apply stamps the configured shape onto repo, leaving the fields the server owns — the
-// sync interval it clamps to min_sync_interval — as they are.
+// apply stamps the configured shape onto repo, leaving the sync interval the server clamps.
 func (c Config) apply(repo *provisioning.Repository) {
 	meta, err := utils.MetaAccessor(repo)
 	if err != nil {
 		return // a typed Repository always has an accessor
 	}
-	// The configuration comes from the file the instance was started with, so the UI
-	// renders this repository read-only: a manager that is not the repository flow, and
-	// does not allow edits. The resources it provisions are not covered by this -- they
-	// are repository-managed, and the write workflow below keeps them editable.
+	// Marks the configuration as owned by bootstrap_path, which renders it read-only in
+	// the UI. What this repository provisions is repo-managed, and stays editable.
 	meta.SetManagerProperties(utils.ManagerProperties{
-		Kind:        utils.ManagerKindClassicFP, //nolint:staticcheck
+		Kind:        utils.ManagerKindFileProvisioning,
 		Identity:    Name,
 		AllowsEdits: false,
 	})
@@ -112,13 +105,11 @@ func applySpec(spec *provisioning.RepositorySpec, path string) {
 	spec.Description = description
 	spec.Type = provisioning.LocalRepositoryType
 	spec.Local = &provisioning.LocalRepositoryConfig{Path: path}
-	// The resources provisioned from the directory stay editable: an edit to one of them
-	// is routed back to this repository's files endpoint, which needs a write workflow to
-	// accept it. What is not editable is this repository itself, see apply.
+	// Editing a provisioned resource is routed to this repository's files endpoint, which
+	// needs a write workflow to accept it.
 	spec.Workflows = []provisioning.Workflow{provisioning.WriteWorkflow}
 	spec.Sync.Enabled = true
-	// Folderless: the mounted directory is instance configuration, not a folder of
-	// dashboards, so its files land at the top level without a wrapper folder.
+	// The directory is instance configuration, not a folder of dashboards.
 	spec.Sync.Target = provisioning.SyncTargetTypeFolderless
 	spec.GitHub = nil
 	spec.GitHubEnterprise = nil

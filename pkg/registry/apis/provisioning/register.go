@@ -496,9 +496,9 @@ func RegisterAPIService(
 }
 
 // bootstrapConfigFromSettings builds the bootstrap repository configuration from
-// [provisioning] bootstrap_path. It fails startup when the path is set but the local
-// repository type is disabled: silently enabling it would widen what the instance
-// accepts, and silently ignoring the path would leave the instance unprovisioned.
+// [provisioning] bootstrap_path. A path set without the local repository type is a
+// configuration error: enabling the type here would widen what the instance accepts, and
+// ignoring the path would leave it unprovisioned.
 func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
 	if cfg.ProvisioningBootstrapPath == "" {
 		return bootstrap.Config{}, nil
@@ -508,9 +508,7 @@ func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
 		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q repository type to be enabled", provisioning.LocalRepositoryType)
 	}
 
-	// The bootstrap repository belongs to the instance, so it lives in the default org's
-	// namespace. Files cannot target another namespace: the parser rejects a manifest whose
-	// namespace is not the repository's.
+	// Single namespace: the parser rejects a manifest whose namespace is not the repository's.
 	return bootstrap.Config{
 		Path:      cfg.ProvisioningBootstrapPath,
 		Namespace: request.GetNamespaceMapper(cfg)(cfg.DefaultOrgID()),

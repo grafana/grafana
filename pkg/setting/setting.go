@@ -201,9 +201,8 @@ type Cfg struct {
 	// ProvisioningResources is the configured set of provisionable resources, each as a
 	// "<group>/<Kind>[:cap...]" token (parsed by resources.ParseSupportedResources at startup).
 	ProvisioningResources []string
-	// ProvisioningBootstrapPath is the directory the bootstrap repository reads. When
-	// set, Grafana registers a local repository over it at startup, so the mounted files
-	// can declare the instance's repositories and connections themselves.
+	// ProvisioningBootstrapPath is the directory Grafana registers a local repository over
+	// at startup, so the mounted files can declare the instance's own provisioning config.
 	ProvisioningBootstrapPath                 string
 	ProvisioningAllowImageRendering           bool
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only

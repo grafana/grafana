@@ -66,7 +66,7 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 
 		manager, ok := metaOf(t, repo).GetManagerProperties()
 		require.True(t, ok, "the bootstrap repository should declare a manager")
-		assert.NotEqual(t, utils.ManagerKindRepo, manager.Kind)
+		assert.Equal(t, utils.ManagerKindFileProvisioning, manager.Kind)
 		assert.False(t, manager.AllowsEdits, "its configuration comes from bootstrap_path")
 	})
 

@@ -46,8 +46,11 @@ func TestEnsureMarksTheRepositoryNotEditable(t *testing.T) {
 	require.NoError(t, err)
 	manager, ok := metaOf(t, repo).GetManagerProperties()
 	require.True(t, ok, "the repository should declare a manager so the UI renders it read-only")
-	assert.NotEqual(t, utils.ManagerKindRepo, manager.Kind, "the repository flow has its own edit workflow")
+	assert.Equal(t, utils.ManagerKindFileProvisioning, manager.Kind)
+	assert.Equal(t, Name, manager.Identity)
 	assert.False(t, manager.AllowsEdits)
+	// SetManagerProperties drops the annotation when edits are not allowed, and the UI
+	// reads its absence the same way.
 	assert.NotContains(t, repo.Annotations, utils.AnnoKeyManagerAllowsEdits)
 }
 
