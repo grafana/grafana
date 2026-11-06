@@ -1,5 +1,5 @@
 import { type TypedVariableModel, type VariableModel } from '@grafana/data';
-import { type SceneObject, SceneVariableSet, sceneGraph } from '@grafana/scenes';
+import { type SceneObject, sceneGraph } from '@grafana/scenes';
 
 import { isDashboardSceneLike } from '../scene/types/dashboard';
 import { sceneVariablesSetToVariables } from '../serialization/sceneVariablesSetToVariables';
@@ -40,7 +40,10 @@ function collectAncestorVariables(sceneObject: SceneObject): VariableModel[] {
   const excludedVariable = sceneObject;
   let current: SceneObject | undefined = sceneObject;
   while (current) {
-    if (current.state.$variables instanceof SceneVariableSet) {
+    // A value import of SceneVariableSet for instanceof would keep most of @grafana/scenes in the
+    // boot bundle. SceneVariableSet is the only SceneVariables implementation, so a presence check
+    // matches the same objects.
+    if (current.state.$variables) {
       const set = current.state.$variables;
       const models = sceneVariablesSetToVariables(set, keepQueryOptions, excludedVariable, true);
 

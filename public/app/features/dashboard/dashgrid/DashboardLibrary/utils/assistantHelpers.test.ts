@@ -8,7 +8,7 @@ import {
   buildTemplateContextTitle,
   isSuggestedDashboardAssistantEnabled,
 } from './assistantHelpers';
-import { isGnetDashboard } from './dashboardLibraryHelpers';
+import { isGnetDashboard } from './isGnetDashboard';
 import { createMockGnetDashboard, createMockPluginDashboard } from './test-utils';
 
 jest.mock('@grafana/assistant', () => ({

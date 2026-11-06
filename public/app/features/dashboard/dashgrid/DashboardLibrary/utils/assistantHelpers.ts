@@ -6,7 +6,7 @@ import { type PluginDashboard } from 'app/types/plugins';
 
 import { type GnetDashboard } from '../types';
 
-import { isGnetDashboard } from './dashboardLibraryHelpers';
+import { isGnetDashboard } from './isGnetDashboard';
 
 /**
  * Template context data structure for the Grafana Assistant.

@@ -2,7 +2,6 @@ import * as z from 'zod';
 
 import { t } from '@grafana/i18n';
 import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
-import { sceneUtils } from '@grafana/scenes';
 import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
 import type { MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
 
@@ -148,12 +147,14 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         }
       }
 
-      // Both are loaded before the scene changes, so a failed import cannot leave it changed but unsaved.
-      const [{ transformNotebookToScene }, { transformNotebookSceneToSaveModel }] = await Promise.all([
+      // All are loaded before the scene changes, so a failed import cannot leave it changed but unsaved.
+      // @grafana/scenes is imported here, not at the top, because this command is registered at boot.
+      const [{ transformNotebookToScene }, { transformNotebookSceneToSaveModel }, { sceneUtils }] = await Promise.all([
         import(/* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookToScene'),
         import(
           /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookSceneToSaveModel'
         ),
+        import('@grafana/scenes'),
       ]);
 
       // Panel cells in the incoming spec are built synchronously by the transform below.
