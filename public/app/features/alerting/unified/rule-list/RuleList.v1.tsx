@@ -123,7 +123,7 @@ const RuleListV1 = () => {
   const hasAlertRulesCreated = !hasNoAlertRulesCreatedYet;
 
   const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
-  const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
+  const { filteredRules: filteredNamespaces } = useFilteredRules(combinedNamespaces, filterState);
 
   const showImportToGMABanner = useShowImportToGMARulesBanner();
 

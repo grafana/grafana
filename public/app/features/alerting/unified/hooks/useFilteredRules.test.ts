@@ -32,14 +32,14 @@ beforeAll(() => {
 
 describe('filterRules', function () {
   // Typos there are deliberate to test the fuzzy search
-  it.each(['cpu', 'hi usage', 'usge'])('should filter out rules by name filter = "%s"', async function (nameFilter) {
+  it.each(['cpu', 'hi usage', 'usge'])('should filter out rules by name filter = "%s"', function (nameFilter) {
     const rules = [mockCombinedRule({ name: 'High CPU usage' }), mockCombinedRule({ name: 'Memory too low' })];
 
     const ns = mockCombinedRuleNamespace({
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = await filterRules([ns], getFilter({ ruleName: nameFilter }));
+    const filtered = filterRules([ns], getFilter({ ruleName: nameFilter }), new Set());
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('High CPU usage');
@@ -48,7 +48,7 @@ describe('filterRules', function () {
   // Typos there are deliberate to test the fuzzy search
   it.each(['availability', 'avialability', 'avail group'])(
     'should filter out rules by evaluation group name = "%s"',
-    async function (groupFilter) {
+    function (groupFilter) {
       const ns = mockCombinedRuleNamespace({
         groups: [
           mockCombinedRuleGroup('Performance group', [mockCombinedRule({ name: 'High CPU usage' })]),
@@ -56,14 +56,14 @@ describe('filterRules', function () {
         ],
       });
 
-      const filtered = await filterRules([ns], getFilter({ groupName: groupFilter }));
+      const filtered = filterRules([ns], getFilter({ groupName: groupFilter }), new Set());
 
       expect(filtered[0].groups).toHaveLength(1);
       expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
     }
   );
 
-  it('should filter out rules by label filter', async function () {
+  it('should filter out rules by label filter', function () {
     const rules = [
       mockCombinedRule({ name: 'High CPU usage', labels: { severity: 'warning' } }),
       mockCombinedRule({ name: 'Memory too low', labels: { severity: 'critical' } }),
@@ -73,13 +73,13 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = await filterRules([ns], getFilter({ labels: ['severity=critical'] }));
+    const filtered = filterRules([ns], getFilter({ labels: ['severity=critical'] }), new Set());
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
   });
 
-  it('should filter out rules by alert instance labels', async function () {
+  it('should filter out rules by alert instance labels', function () {
     const rules = [
       mockCombinedRule({
         name: 'High CPU usage',
@@ -95,13 +95,13 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = await filterRules([ns], getFilter({ labels: ['severity=warning'] }));
+    const filtered = filterRules([ns], getFilter({ labels: ['severity=warning'] }), new Set());
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('High CPU usage');
   });
 
-  it('should filter out rules by state filter', async function () {
+  it('should filter out rules by state filter', function () {
     const rules = [
       mockCombinedRule({
         name: 'High CPU usage',
@@ -117,13 +117,13 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = await filterRules([ns], getFilter({ ruleState: PromAlertingRuleState.Firing }));
+    const filtered = filterRules([ns], getFilter({ ruleState: PromAlertingRuleState.Firing }), new Set());
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
   });
 
-  it('should filter out rules by health filter', async function () {
+  it('should filter out rules by health filter', function () {
     const rules = [
       mockCombinedRule({
         name: 'High CPU usage',
@@ -139,13 +139,13 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = await filterRules([ns], getFilter({ ruleHealth: RuleHealth.Error }));
+    const filtered = filterRules([ns], getFilter({ ruleHealth: RuleHealth.Error }), new Set());
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
   });
 
-  it('should filter out rules by datasource', async function () {
+  it('should filter out rules by datasource', function () {
     const rules = [
       mockCombinedRule({
         name: 'High CPU usage',
@@ -172,14 +172,18 @@ describe('filterRules', function () {
       'Prometheus-ds'
     );
 
-    const filtered = await filterRules([ns, cloudNs], getFilter({ dataSourceNames: ['loki', 'Prometheus-ds'] }));
+    const filtered = filterRules(
+      [ns, cloudNs],
+      getFilter({ dataSourceNames: ['loki', 'Prometheus-ds'] }),
+      new Set([dataSources.loki.uid])
+    );
 
     expect(filtered[0].groups[0].rules).toHaveLength(2);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
     expect(filtered[0].groups[0].rules[1].name).toBe('Cloud');
   });
 
-  it('should be able to combine multiple predicates with AND', async () => {
+  it('should be able to combine multiple predicates with AND', () => {
     const rules = [
       mockCombinedRule({
         name: 'Memory too low',
@@ -201,12 +205,13 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = await filterRules(
+    const filtered = filterRules(
       [ns],
       getFilter({
         ruleHealth: RuleHealth.Ok,
         labels: ['team=operations', 'region=EMEA'],
-      })
+      }),
+      new Set()
     );
 
     expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
@@ -214,7 +219,7 @@ describe('filterRules', function () {
   });
 
   // Typos there are deliberate to test the fuzzy search
-  it.each(['nasa', 'alrt rul', 'nasa ruls'])('should filter out rules by namespace = "%s"', async (namespaceFilter) => {
+  it.each(['nasa', 'alrt rul', 'nasa ruls'])('should filter out rules by namespace = "%s"', (namespaceFilter) => {
     const cpuRule = mockCombinedRule({ name: 'High CPU usage' });
     const memoryRule = mockCombinedRule({ name: 'Memory too low' });
 
@@ -228,13 +233,13 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Memory group', [memoryRule])],
     });
 
-    const filtered = await filterRules([teamEmeaNs, teamNasaNs], getFilter({ namespace: namespaceFilter }));
+    const filtered = filterRules([teamEmeaNs, teamNasaNs], getFilter({ namespace: namespaceFilter }), new Set());
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
   });
 
-  it('should filter out rules by dashboard UID', async () => {
+  it('should filter out rules by dashboard UID', () => {
     const rules = [
       mockCombinedRule({
         name: 'Memory too low',
@@ -253,13 +258,13 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = await filterRules([ns], getFilter({ dashboardUid: 'dashboard-cpu' }));
+    const filtered = filterRules([ns], getFilter({ dashboardUid: 'dashboard-cpu' }), new Set());
 
     expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
     expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe('CPU too high');
   });
 
-  it('does not crash when trying to filter with regex-like strings', async () => {
+  it('does not crash when trying to filter with regex-like strings', () => {
     const rules = [mockCombinedRule({ name: '[alongnameinthefirstgroup]' })];
 
     const ns = mockCombinedRuleNamespace({
@@ -277,16 +282,17 @@ describe('filterRules', function () {
     const groupQuery = 'some|group';
     const freeForm = '.+';
 
-    await expect(
+    expect(
       filterRules(
         [ns],
-        getFilter({ groupName: groupQuery, ruleName: ruleQuery, namespace: namespaceQuery, freeFormWords: [freeForm] })
+        getFilter({ groupName: groupQuery, ruleName: ruleQuery, namespace: namespaceQuery, freeFormWords: [freeForm] }),
+        new Set()
       )
-    ).resolves.toEqual(expect.any(Array));
+    ).toEqual(expect.any(Array));
   });
 
   // these test may same to be the same as the one above but it tests different edge-cases
-  it('does not crash with other regex values', async () => {
+  it('does not crash with other regex values', () => {
     const rules = [mockCombinedRule({ name: 'rule' })];
 
     const ns = mockCombinedRuleNamespace({
@@ -294,12 +300,12 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('group', rules)],
     });
 
-    await expect(filterRules([ns], getFilter({ freeFormWords: ['.+'] }))).resolves.toEqual(expect.any(Array));
+    expect(filterRules([ns], getFilter({ freeFormWords: ['.+'] }), new Set())).toEqual(expect.any(Array));
   });
 
   it.each(['[square-bracket]', '[5m]', '(bracket-test)', 'aste-risk*', 'with+ plus'])(
     'should apply filters when expression contains special characters = "%s"',
-    async (expression) => {
+    (expression) => {
       const rules = [mockCombinedRule({ name: expression })];
 
       const ns = mockCombinedRuleNamespace({
@@ -307,14 +313,14 @@ describe('filterRules', function () {
         groups: [mockCombinedRuleGroup('group', rules)],
       });
 
-      const filtered = await filterRules([ns], getFilter({ freeFormWords: [expression] }));
+      const filtered = filterRules([ns], getFilter({ freeFormWords: [expression] }), new Set());
 
       expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
       expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe(expression);
     }
   );
 
-  it('should return filtered results for long search terms', async () => {
+  it('should return filtered results for long search terms', () => {
     const longRuleName = 'This:is:a:very:long:rule:name:that:definitely:exceeds:max:needle:length';
     const rules = [mockCombinedRule({ name: longRuleName }), mockCombinedRule({ name: 'Short rule name' })];
 
@@ -323,7 +329,7 @@ describe('filterRules', function () {
     });
 
     const longSearchTerm = 'very:long:rule:name:that:definitely:exceeds:max:needle:length';
-    const filtered = await filterRules([ns], getFilter({ ruleName: longSearchTerm }));
+    const filtered = filterRules([ns], getFilter({ ruleName: longSearchTerm }), new Set());
 
     expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
     expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe(longRuleName);
@@ -359,7 +365,7 @@ describe('legacy queryString URL param parsing', () => {
 describe('filterRules — default policy recognition', () => {
   it.each([USER_DEFINED_TREE_NAME, DEFAULT_ROUTING_TREE_NAME_ALIAS])(
     'matches a Grafana rule on the default policy when filtering by "%s"',
-    async (policy) => {
+    (policy) => {
       const defaultPolicyRule = mockCombinedRule({
         name: 'Default policy rule',
         rulerRule: mockRulerGrafanaRule({}, { notification_settings: undefined }),
@@ -373,7 +379,7 @@ describe('filterRules — default policy recognition', () => {
         groups: [mockCombinedRuleGroup('g', [defaultPolicyRule, namedPolicyRule])],
       });
 
-      const filtered = await filterRules([ns], getFilter({ policy }));
+      const filtered = filterRules([ns], getFilter({ policy }), new Set());
       const names = filtered[0]?.groups[0]?.rules.map((r) => r.name) ?? [];
 
       expect(names).toContain('Default policy rule');
