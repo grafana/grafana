@@ -781,10 +781,29 @@ func scanRowKey(rows *sql.Rows) (id int64, version int64, ok bool) {
 	return id, version, idOK && versionOK
 }
 
+// asInt64 accepts any integer type, not only the int64 that database/sql drivers are expected to return.
 func asInt64(v any) (int64, bool) {
 	switch x := v.(type) {
 	case int64:
 		return x, true
+	case int:
+		return int64(x), true
+	case int32:
+		return int64(x), true
+	case int16:
+		return int64(x), true
+	case int8:
+		return int64(x), true
+	case uint64:
+		return int64(x), x <= math.MaxInt64
+	case uint:
+		return int64(x), uint64(x) <= math.MaxInt64
+	case uint32:
+		return int64(x), true
+	case uint16:
+		return int64(x), true
+	case uint8:
+		return int64(x), true
 	case []byte:
 		n, err := strconv.ParseInt(string(x), 10, 64)
 		return n, err == nil

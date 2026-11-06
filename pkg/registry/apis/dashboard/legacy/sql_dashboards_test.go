@@ -924,6 +924,32 @@ func TestCollectMigrationPageFolders(t *testing.T) {
 	require.Equal(t, resourcepb.BulkRequest_ADDED, page.items[1].req.Action)
 }
 
+func TestAsInt64(t *testing.T) {
+	for _, tc := range []struct {
+		in   any
+		want int64
+		ok   bool
+	}{
+		{int64(7), 7, true},
+		{int32(7), 7, true},
+		{int(7), 7, true},
+		{uint16(7), 7, true},
+		{uint64(7), 7, true},
+		{uint64(math.MaxUint64), 0, false},
+		{[]byte("7"), 7, true},
+		{"7", 7, true},
+		{"x", 0, false},
+		{nil, 0, false},
+		{1.5, 0, false},
+	} {
+		got, ok := asInt64(tc.in)
+		require.Equal(t, tc.ok, ok, "%T(%v)", tc.in, tc.in)
+		if tc.ok {
+			require.Equal(t, tc.want, got, "%T(%v)", tc.in, tc.in)
+		}
+	}
+}
+
 func TestNextPageLimit(t *testing.T) {
 	require.Equal(t, 32, nextPageLimit(&migrationPage{scanned: 32, cutByBytes: true}, 500), "shrinks to the rows that fit")
 	require.Equal(t, 1, nextPageLimit(&migrationPage{scanned: 0, cutByBytes: true}, 500))
