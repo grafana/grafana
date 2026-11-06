@@ -109,7 +109,7 @@ func TestSearchAuthMetricsFailure(t *testing.T) {
 	require.Zero(t, authHistogram(t, metrics.SearchAuthReturned, "post_rank", "page").GetSampleCount())
 }
 
-func TestSearchAuthMetricsRejectsPreRankCursor(t *testing.T) {
+func TestSearchAuthMetricsAdaptsPreRankCursor(t *testing.T) {
 	index, metrics := newAuthMetricsIndex(t, search.PostRankAuthzConfig{})
 	query := listQuery(10)
 	query.SearchAfter = []string{"doc-000", "doc-000"}
@@ -117,9 +117,11 @@ func TestSearchAuthMetricsRejectsPreRankCursor(t *testing.T) {
 	ctx := authlib.WithAuthInfo(context.Background(), requester)
 	response, err := index.Search(ctx, &countingAccessClient{allowAll: true}, query, nil, nil)
 	require.NoError(t, err)
-	require.Equal(t, "BadRequest", response.Error.Reason)
-	require.Contains(t, response.Error.Message, "start a new search")
-	require.Zero(t, authHistogram(t, metrics.SearchAuthDuration, "post_rank", "page", "success").GetSampleCount())
+	require.Nil(t, response.Error)
+	require.Len(t, response.Rows, 10)
+	require.Equal(t, "doc-001", response.Rows[0].Key.Name)
+	require.Equal(t, []string{"doc-000", "doc-000"}, query.SearchAfter)
+	require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, "post_rank", "page", "success").GetSampleCount())
 }
 
 func TestSearchAuthMetricsTrashResourceVersionBoundary(t *testing.T) {
@@ -158,15 +160,12 @@ func TestSearchAuthMetricsTrashResourceVersionBoundary(t *testing.T) {
 	require.Equal(t, []string{"newer"}, namesOf(second), "pagination must neither skip nor repeat allowed documents")
 	require.EqualValues(t, 2, authHistogram(t, metrics.SearchAuthDuration, "post_rank", "trash", "success").GetSampleCount())
 
-	// The synthetic lower bound is accepted, but a real two-field
-	// PreRank continuation cannot be resumed under the new sort order.
+	// A real two-field PreRank continuation also resumes through PostRank.
 	query.SearchAfter = []string{fmt.Sprintf("%019d", 10), "boundary-a"}
-	requester := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "carol", Namespace: "default"}
-	ctx := authlib.WithAuthInfo(context.Background(), requester)
-	continued, err := index.Search(ctx, access, query, nil, nil)
-	require.NoError(t, err)
-	require.Equal(t, "BadRequest", continued.Error.Reason)
-	require.Contains(t, continued.Error.Message, "start a new search")
+	continued := runTrashSearch(t, index, access, "carol", query)
+	require.Equal(t, []string{"boundary-b", "newer"}, namesOf(continued))
+	require.Equal(t, []string{fmt.Sprintf("%019d", 10), "boundary-a"}, query.SearchAfter)
+	require.EqualValues(t, 3, authHistogram(t, metrics.SearchAuthDuration, "post_rank", "trash", "success").GetSampleCount())
 	require.Zero(t, access.readChecks, "trash must retain folder-admin/deleter authorization")
 }
 

@@ -3234,6 +3234,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		// the response column list.
 	}
 	adaptPostRankTrashBoundary(req, searchrequest, postRankAuthz)
+	if postRankAuthz {
+		b.adaptPreRankCursor(req, searchrequest)
+	}
 
 	return searchrequest, nil
 }
@@ -3246,9 +3249,38 @@ func adaptPostRankTrashBoundary(req *resourcepb.ResourceSearchRequest, searchReq
 		// Trash NotOlderThan listing starts at [resource version, empty name],
 		// an inclusive lower bound rather than a cursor identifying a result.
 		// Its empty name sorts before every resource, so adding the PostRank
-		// doc-ID tie-breaker preserves the bound. Actual PreRank continuations
-		// retain their shape and are rejected by the cursor check.
+		// doc-ID tie-breaker preserves the bound. This empty name is not a
+		// continuation cursor identifying a document.
 		searchRequest.SearchAfter = []string{searchRequest.SearchAfter[0], "", ""}
+	}
+}
+
+// A PreRank cursor over one resource has all sort values except the final
+// document ID. Its name sort uniquely identifies the boundary document in that
+// resource, so reconstructing the ID preserves SearchAfter and SearchBefore.
+// A federated cursor does not identify which resource owns the name.
+func (b *bleveIndex) adaptPreRankCursor(req *resourcepb.ResourceSearchRequest, searchRequest *bleve.SearchRequest) {
+	if b.key.IsGlobal() || len(req.Federated) > 0 || len(searchRequest.Sort) < 2 ||
+		(len(searchRequest.SearchAfter) > 0 && len(searchRequest.SearchBefore) > 0) {
+		return
+	}
+	if _, ok := searchRequest.Sort[len(searchRequest.Sort)-1].(*search.SortDocID); !ok {
+		return
+	}
+
+	cursor := &searchRequest.SearchAfter
+	if len(searchRequest.SearchBefore) > 0 {
+		cursor = &searchRequest.SearchBefore
+	}
+	if len(*cursor) != len(searchRequest.Sort)-1 {
+		return
+	}
+	for i, field := range searchRequest.Sort[:len(searchRequest.Sort)-1] {
+		if sortField, ok := field.(*search.SortField); ok && sortField.Field == resource.SEARCH_FIELD_NAME && (*cursor)[i] != "" {
+			id := fmt.Sprintf("%s/%s/%s/%s", b.key.Namespace, b.key.Group, b.key.Resource, (*cursor)[i])
+			*cursor = append(slices.Clone(*cursor), id)
+			return
+		}
 	}
 }
 
