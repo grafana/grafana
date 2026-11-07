@@ -62,3 +62,10 @@ grafana.frontendLegacyAPIHandling:
     variation: off
   metadata:
     public: "true"
+
+frontend.live.disabled:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
