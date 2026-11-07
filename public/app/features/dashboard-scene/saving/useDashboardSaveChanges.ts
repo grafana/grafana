@@ -13,7 +13,8 @@ export function useDashboardSaveChanges(
   dashboard: DashboardScene,
   saveTimeRange?: boolean,
   saveVariables?: boolean,
-  saveRefresh?: boolean
+  saveRefresh?: boolean,
+  collapseRows?: boolean
 ) {
   const [, refresh] = useReducer((revision: number) => revision + 1, 0);
 
@@ -32,5 +33,5 @@ export function useDashboardSaveChanges(
     };
   }, [dashboard]);
 
-  return dashboard.getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
+  return dashboard.getDashboardChanges(saveTimeRange, saveVariables, saveRefresh, collapseRows);
 }

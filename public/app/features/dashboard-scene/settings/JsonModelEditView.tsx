@@ -72,6 +72,13 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     return isDashboardV2Spec(this.getSaveModel()) ? parsed.spec : parsed;
   }
 
+  public setEditedSaveModel(saveModel: Dashboard | DashboardV2Spec) {
+    const jsonText = isDashboardV2Spec(saveModel)
+      ? JSON.stringify(buildDashboardResource(this.getDashboard(), saveModel), null, 2)
+      : getPrettyJSON(saveModel);
+    this.setState({ jsonText });
+  }
+
   // v2 dashboards are edited as the full resource envelope but only spec edits are supported.
   // Validate the envelope before saving so metadata/kind/apiVersion changes fail loudly rather
   // than being silently dropped by getEditedSaveModel() (consistent with the sidebar code editor).

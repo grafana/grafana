@@ -91,6 +91,40 @@ describe('JsonModelEditView.getEditedSaveModel', () => {
   });
 });
 
+describe('JsonModelEditView.setEditedSaveModel', () => {
+  it('writes a v2 spec back inside the resource envelope', () => {
+    const dashboard = transformSaveModelSchemaV2ToScene({
+      apiVersion: 'dashboard.grafana.app/v2',
+      kind: 'DashboardWithAccessInfo',
+      metadata: { name: 'my-uid', resourceVersion: '1', creationTimestamp: '2026-01-01T00:00:00Z' },
+      spec: { ...defaultSpec(), title: 'JSON dashboard' },
+      access: { canSave: true },
+    });
+    const view = new JsonModelEditView({});
+    dashboard.setState({ uid: 'my-uid', editview: view });
+    const spec = { ...defaultSpec(), title: 'Saved title' };
+
+    view.setEditedSaveModel(spec);
+
+    expect(JSON.parse(view.state.jsonText)).toEqual(
+      expect.objectContaining({ kind: 'Dashboard', metadata: { name: 'my-uid' }, spec })
+    );
+    expect(view.getEditedSaveModel()).toEqual(spec);
+  });
+
+  it('writes a v1 model back as plain JSON', () => {
+    const view = new JsonModelEditView({});
+    jest
+      .spyOn(view, 'getSaveModel')
+      .mockReturnValue({ title: 'v1 dashboard' } as unknown as ReturnType<typeof view.getSaveModel>);
+    const model = { title: 'Saved title', schemaVersion: 41, panels: [] };
+
+    view.setEditedSaveModel(model);
+
+    expect(view.getEditedSaveModel()).toEqual(model);
+  });
+});
+
 describe('JsonModelEditView.validateEditedResource', () => {
   function setupV2View() {
     const view = new JsonModelEditView({});
