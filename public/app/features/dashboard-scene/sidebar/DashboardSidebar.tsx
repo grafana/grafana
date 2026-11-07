@@ -128,6 +128,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   private _batchSizes = new WeakMap<DashboardEditActionEventPayload, number>();
 
   public setPanelEditAction(editAction: DashboardEditActionEvent) {
+    if (this.isActive) {
+      this.performPanelEditAction(editAction);
+      return;
+    }
+
     this.panelEditAction = editAction;
   }
 
