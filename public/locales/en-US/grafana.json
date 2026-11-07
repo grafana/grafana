@@ -13583,8 +13583,10 @@
       "drag-handle": "Drag to reorder",
       "duplicate": "Duplicate block",
       "frame": {
-        "aria-label-collapsed": "Collapsed block: {{name}}",
-        "aria-label-panel": "Visualization block: {{name}}"
+        "aria-label-collapsed": "Collapsed block",
+        "aria-label-collapsed-titled": "Collapsed block: {{title}}",
+        "aria-label-panel": "Visualization block",
+        "aria-label-panel-titled": "Visualization block: {{title}}"
       },
       "markdown": {
         "aria-label-editor": "Markdown",

@@ -79,6 +79,26 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     });
   });
 
+  // A lost name orphans every comment anchored to it, so a whole-spec write must carry names through
+  // untouched, whether legacy (`heading-2`) or minted (`heading-k3x9qa`).
+  it('keeps the element names it was given, legacy and minted alike', async () => {
+    const scene = notebookScene();
+    const client = new NotebookMutationClient(scene);
+
+    const next = notebookSpec({
+      elements: {
+        'heading-2': markdownCell('## Legacy'),
+        'heading-k3x9qa': markdownCell('## Minted'),
+      },
+      cells: ['heading-k3x9qa', 'heading-2'],
+    });
+
+    const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: next } });
+
+    expect(result.success).toBe(true);
+    expect(cellNamesOf(scene)).toEqual(['heading-k3x9qa', 'heading-2']);
+  });
+
   it('restores the document header from the applied spec', async () => {
     const scene = notebookScene();
     const client = new NotebookMutationClient(scene);

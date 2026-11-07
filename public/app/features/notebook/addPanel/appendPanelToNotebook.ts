@@ -1,3 +1,4 @@
+import { mintElementName } from '../elementName';
 import {
   type CellKind,
   type NotebookElement,
@@ -90,16 +91,7 @@ function uniqueElementName(
   elements: Record<string, NotebookElement>,
   fallback: string
 ): string {
-  const base = slugify(title ?? '') || fallback;
-
-  let candidate = base;
-  let suffix = 1;
-  while (Object.hasOwn(elements, candidate)) {
-    suffix++;
-    candidate = `${base}-${suffix}`;
-  }
-
-  return candidate;
+  return mintElementName(slugify(title ?? '') || fallback, (name) => Object.hasOwn(elements, name));
 }
 
 function slugify(title: string): string {
