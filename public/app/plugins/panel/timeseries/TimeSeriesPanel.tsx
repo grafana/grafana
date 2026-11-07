@@ -82,6 +82,8 @@ export const TimeSeriesPanel = ({
       return { frames: graphable, warning: warn };
     }
 
+    const foo = new Date();
+
     const compareDiffMs: number[] = [0];
 
     const frames = graphable.map((frame: DataFrame) => {
