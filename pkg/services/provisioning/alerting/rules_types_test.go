@@ -199,6 +199,34 @@ func TestRules(t *testing.T) {
 		require.NotNil(t, ruleMapped.NotificationSettings)
 		require.Equal(t, models.NotificationSettingsFromContact(models.ContactPointRouting{Receiver: "test-receiver"}), *ruleMapped.NotificationSettings)
 	})
+	t.Run("a rule should expand braced env vars in annotations without expanding template labels", func(t *testing.T) {
+		t.Setenv("ANNOTATION_REGION", "us-west-2")
+		t.Setenv("ANNOTATION_CLUSTER", "prod")
+
+		rule := validRuleV1(t)
+		var annotations values.StringMapValue
+		err := yaml.Unmarshal([]byte(`
+summary: "{{ $labels.instance }}"
+link: "https://${ANNOTATION_REGION}.${ANNOTATION_CLUSTER}.example.com/{{ $labels.instance }}"
+escaped: "$${ANNOTATION_REGION}"
+literal_pid: "echo $$"
+literal_currency: "$$5"
+mixed: "cost $$5 in ${ANNOTATION_REGION}"
+`), &annotations)
+		require.NoError(t, err)
+		rule.Annotations = annotations
+
+		ruleMapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, map[string]string{
+			"summary":          "{{ $labels.instance }}",
+			"link":             "https://us-west-2.prod.example.com/{{ $labels.instance }}",
+			"escaped":          "${ANNOTATION_REGION}",
+			"literal_pid":      "echo $$",
+			"literal_currency": "$$5",
+			"mixed":            "cost $$5 in us-west-2",
+		}, ruleMapped.Annotations)
+	})
 }
 
 func TestRecordingRules(t *testing.T) {
