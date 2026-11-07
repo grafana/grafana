@@ -7,6 +7,7 @@ export const containsSearchFilter = (query: string | unknown): boolean =>
 
 export interface SearchFilterOptions {
   searchFilter?: string;
+  scopedVars?: ScopedVars;
 }
 
 export const getSearchFilterScopedVar = (args: {
@@ -15,8 +16,10 @@ export const getSearchFilterScopedVar = (args: {
   options?: SearchFilterOptions;
 }): ScopedVars => {
   const { query, wildcardChar } = args;
+  const baseScopedVars = args.options?.scopedVars ?? {};
+
   if (!containsSearchFilter(query)) {
-    return {};
+    return baseScopedVars;
   }
 
   let { options } = args;
@@ -25,6 +28,7 @@ export const getSearchFilterScopedVar = (args: {
   const value = options.searchFilter ? `${options.searchFilter}${wildcardChar}` : `${wildcardChar}`;
 
   return {
+    ...baseScopedVars,
     __searchFilter: {
       value,
       text: '',
