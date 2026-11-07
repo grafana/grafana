@@ -11,6 +11,7 @@ import {
   type PanelQueryKind,
   type QueryOptionsSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -636,5 +637,57 @@ describe('legacy panel query defaults', () => {
     expect(saved.targets).toEqual([]);
     expect(saved.transformations).toEqual([{ id: 'reduce', options: {} }]);
     expect(new PanelModel(saved).targets).toEqual([]);
+  });
+});
+
+describe('Text query migration on load', () => {
+  beforeEach(() => {
+    setTestFlags({ 'grafana.newTextPanel': true });
+    setPanelPluginMetas({ text: { skipDataQuery: true } as PanelPluginMeta });
+  });
+  afterEach(() => {
+    setTestFlags({});
+    setPanelPluginMetas({});
+  });
+
+  it.each([
+    ['13.2.9', '${__data.fields.cpu}', 0],
+    ['13.3.0', 'Static', 0],
+    ['13.3.1', '{{data.0.cpu}}', 1],
+    ['13.4.0', 'Static', 1],
+    ['', 'Static', 0],
+    ['', '${__value.text}', 1],
+  ])('migrates %s with content %s in both schemas', (version, content, count) => {
+    const v1 = new PanelModel({
+      type: 'text',
+      pluginVersion: version,
+      targets: [{ refId: 'A' }],
+      options: { content },
+    });
+    const v1Viz = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'text',
+      options: { content },
+      $data: createPanelDataProvider(v1),
+    });
+    const v1Saved = vizPanelToPanel(v1Viz);
+    expect(v1Saved.targets).toEqual(count ? [{ refId: 'A' }] : []);
+    expect(v1Saved.options?.content).toBe(content);
+
+    const v2: PanelKind = { kind: 'Panel', spec: defaultPanelSpec() };
+    v2.spec.vizConfig = {
+      ...v2.spec.vizConfig,
+      group: 'text',
+      version,
+      spec: { ...v2.spec.vizConfig.spec, options: { content } },
+    };
+    v2.spec.data.spec.queries = [defaultPanelQueryKind()];
+    v2.spec.data.spec.transformations = [{ kind: 'Transformation', group: 'reduce', spec: { options: {} } }];
+    const loaded = buildVizPanel(v2);
+    const saved = vizPanelToSchemaV2(loaded, undefined, false) as PanelKind;
+    expect(saved.spec.data.spec.queries).toEqual(count ? v2.spec.data.spec.queries : []);
+    expect(saved.spec.vizConfig.spec.options.content).toBe(content);
+    expect(saved.spec.data.spec.transformations).toEqual(v2.spec.data.spec.transformations);
+    expect(vizPanelToSchemaV2(buildVizPanel(saved), undefined, false)).toEqual(saved);
   });
 });
