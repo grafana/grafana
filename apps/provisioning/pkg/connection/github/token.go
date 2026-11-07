@@ -35,11 +35,11 @@ func GenerateJWTToken(appID string, privateKey common.RawSecureValue) (common.Ra
 		return "", time.Time{}, fmt.Errorf("failed to parse private key: %w", err)
 	}
 
-	// Create the JWT token
-	now := time.Now()
+	// Backdate iat so GitHub accepts the token when the local clock runs ahead
+	issuedAt := time.Now().Add(-time.Minute)
 	claims := jwt.RegisteredClaims{
-		IssuedAt:  jwt.NewNumericDate(now),
-		ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(JWTExpirationMinutes) * time.Minute)),
+		IssuedAt:  jwt.NewNumericDate(issuedAt),
+		ExpiresAt: jwt.NewNumericDate(issuedAt.Add(time.Duration(JWTExpirationMinutes) * time.Minute)),
 		Issuer:    appID,
 	}
 
