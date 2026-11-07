@@ -856,6 +856,9 @@ export function useColumnResize(
   // this is the callback that gets passed to react-data-grid
   const dataGridResizeHandler = useCallback(
     (column: Column<TableRow, TableSummaryRow>, width: number) => {
+      if (column.resizable === false) {
+        return;
+      }
       if (!colResizeState.current.columnKey) {
         window.addEventListener('click', dispatchEvent, { capture: true });
       }

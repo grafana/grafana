@@ -48,6 +48,15 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
       showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
     })
     .addBooleanSwitch({
+      path: 'showRowNumbers',
+      name: t('table.name-show-row-numbers', 'Show row numbers'),
+      category,
+      defaultValue: false,
+      showIf: () =>
+        getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false) &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
+    })
+    .addBooleanSwitch({
       path: 'showColumnsSidebar',
       name: t('table.name-show-columns-sidebar', 'Show columns sidebar'),
       description: t(

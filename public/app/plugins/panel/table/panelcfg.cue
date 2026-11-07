@@ -55,6 +55,9 @@ composableKinds: PanelCfg: {
 					zebraStriping?: bool | *false
 					// Whether the column management sidebar starts open
 					showColumnsSidebar?: bool
+
+					// Configured default for the generated row-number gutter.
+					showRowNumbers?: bool
 				} @cuetsy(kind="interface")
 				FieldConfig: {ui.TableFieldOptions} @cuetsy(kind="interface")
 			}

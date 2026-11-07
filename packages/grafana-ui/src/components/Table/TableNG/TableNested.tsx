@@ -21,6 +21,7 @@ import { type DataLinksActionsTooltipState } from '../cellUtils';
 import { TableDataGrid } from './TableDataGrid';
 import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
 import { RowExpander } from './components/RowExpander';
+import { TableSidebar } from './components/TableSidebar';
 import { COLUMN, NESTED_LAST_ROW_CLASS, TABLE } from './constants';
 import {
   useColumnResize,
@@ -47,10 +48,10 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
+import { getRowNumberWidth, useRowNumbers, withRowNumbers, type GridColumns } from './rowNumbers';
 import { getGridStyles, IS_SAFARI_26 } from './styles';
 import {
   type CellRootRenderer,
-  type FromFieldsResult,
   type InspectCellProps,
   type TableColumn,
   type TableNGProps,
@@ -71,6 +72,8 @@ import {
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
+const EMPTY_HIDDEN_COLUMNS = new Set<string>();
+const NOOP = () => {};
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
 
 export function TableNested(props: TableNGProps & { nestedFramesField: Field<DataFrame[]> }) {
@@ -115,6 +118,17 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   const uniqueId = useId();
   const theme = useTheme2();
+  const rowNumbers = useRowNumbers(props);
+  const [sidebarFocusRequest, setSidebarFocusRequest] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(props.showColumnsSidebar ?? false);
+  const [previousSidebarDefault, setPreviousSidebarDefault] = useState(props.showColumnsSidebar);
+  if (previousSidebarDefault !== props.showColumnsSidebar) {
+    setPreviousSidebarDefault(props.showColumnsSidebar);
+    setSidebarOpen(props.showColumnsSidebar ?? false);
+  }
+  const sidebarWidth = rowNumbers.available && sidebarOpen && !noHeader ? Math.min(220, width / 2) : 0;
+  const typographyCtx = useTypographyCtx(theme);
+  const headerTypographyCtx = useHeaderTypographyCtx(theme);
   const panelContext = usePanelContext();
   const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
 
@@ -201,7 +215,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const field = (column as unknown as TableColumn).field;
 
-      if (column.key === EXPANDED_COLUMN_KEY) {
+      if (column.key === EXPANDED_COLUMN_KEY || !('field' in column)) {
         return;
       }
 
@@ -226,6 +240,15 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     return new Set();
   });
 
+  const gutterWidth = rowNumbers.visible
+    ? getRowNumberWidth(sortedRows.filter((row) => row.__depth === 0).length, typographyCtx.monoCharWidth)
+    : 0;
+  const nestedGutterWidth = rowNumbers.visible
+    ? getRowNumberWidth(
+        nestedRows.reduce((count, row) => Math.max(count, row.final.length), 0),
+        typographyCtx.monoCharWidth
+      )
+    : 0;
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
   // nested tables don't support frozen columns; subtract expander column width
@@ -234,21 +257,19 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out.
   // The expander column only exists when there's a nested frame to expand into (see the columns
   // memo below), so with no rows its width isn't taken out of what the real columns get to use.
-  const availableWidth = useMemo(
-    () =>
-      width -
+  const availableWidth = Math.max(
+    width -
+      sidebarWidth -
+      gutterWidth -
       (firstRowNestedData ? COLUMN.EXPANDER_WIDTH : 0) -
       scrollbarWidth -
       (tableRefreshEnabled && (!noPanelPadding || transparent) ? TABLE.FRAME_BORDER_WIDTH * 2 : 0),
-    [width, scrollbarWidth, firstRowNestedData, tableRefreshEnabled, noPanelPadding, transparent]
+    0
   );
-  const nestedAvailableWidth = useMemo(() => availableWidth - TABLE.CELL_PADDING - 1, [availableWidth]);
+  const nestedAvailableWidth = Math.max(availableWidth - nestedGutterWidth - TABLE.CELL_PADDING - 1, 0);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
-
-  const typographyCtx = useTypographyCtx(theme);
-  const headerTypographyCtx = useHeaderTypographyCtx(theme);
 
   // When a width override is removed from field config, the configured-width count drops. That
   // change to field.config.custom.width is a mutation on the existing field objects, so it doesn't
@@ -270,6 +291,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     typographyCtx,
     showTypeIcons,
     hasHeader,
+    hasColumnSidebar: rowNumbers.available,
     getActions: getCellActions,
     tableRefreshEnabled,
     preventHorizontalOverflow,
@@ -287,6 +309,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     typographyCtx: headerTypographyCtx,
     lastColumnExtraPadding,
     tableRefreshEnabled,
+    hasColumnSidebar: rowNumbers.available,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
   const visibleNestedRowCounts = useMemo(
@@ -320,6 +343,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx: headerTypographyCtx,
     tableRefreshEnabled,
+    hasColumnSidebar: rowNumbers.available,
     filterParentCount: data.length,
   });
 
@@ -362,7 +386,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     smallPagination,
   } = usePaginatedRows(sortedRows, {
     enabled: enablePagination,
-    width: availableWidth,
+    width: availableWidth + gutterWidth,
     height,
     footerHeight,
     headerHeight: hasHeader ? headerHeight : 0,
@@ -479,6 +503,13 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       timeZone,
       tableRefreshEnabled,
       typographyCtx,
+      hasColumnSidebar: rowNumbers.available,
+      onOpenColumnPanel: rowNumbers.available
+        ? () => {
+            setSidebarOpen(true);
+            setSidebarFocusRequest((request) => request + 1);
+          }
+        : undefined,
     }),
     [
       wrapFallback,
@@ -502,6 +533,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       timeZone,
       tableRefreshEnabled,
       typographyCtx,
+      rowNumbers.available,
     ]
   );
 
@@ -509,7 +541,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   const buildNestedTableExpanderColumn = useCallback(
     (
-      nestedColumnsMatrix: FromFieldsResult[],
+      nestedColumnsMatrix: GridColumns[],
       hasNestedHeaders: boolean,
       nestedHeaderHeightPx: number,
       hasNestedFooter: boolean,
@@ -533,7 +565,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
         return;
       },
       colSpan(args) {
-        return args.type === 'ROW' && args.row.__depth === 1 ? data.fields.length : 1;
+        return args.type === 'ROW' && args.row.__depth === 1 ? visibleFields.length + 1 : 1;
       },
       renderCell: ({ row }) => {
         const rowId = `${uniqueId}-nested-table-${row.__index}`;
@@ -614,7 +646,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       styles.displayNone,
       styles.lastRowWithoutBorder,
       styles.noDataNested,
-      data.fields.length,
+      visibleFields.length,
       commonDataGridProps,
       expandedRows,
       getRowStableKeyForRowIdx,
@@ -631,16 +663,21 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   );
 
   const nestedColumnsMatrix = useMemo(() => {
-    const result: FromFieldsResult[] = Array.from({ length: nestedData.length });
+    const result: GridColumns[] = Array.from({ length: nestedData.length });
     for (const row of rows) {
       if (row.__depth > 0) {
         const rowNestedFrame = nestedData[row.__index]!;
-        const built = fromFields(
-          getVisibleFields(rowNestedFrame.fields),
-          nestedFieldWidths,
-          rowNestedFrame,
-          nestedRows[row.__index].raw,
-          nestedRows[row.__index].final
+        const built = withRowNumbers(
+          fromFields(
+            getVisibleFields(rowNestedFrame.fields),
+            nestedFieldWidths,
+            rowNestedFrame,
+            nestedRows[row.__index].raw,
+            nestedRows[row.__index].final
+          ),
+          nestedRows[row.__index].final,
+          nestedGutterWidth,
+          rowNumbers.className
         );
         // Each nested table is its own grid with its own header row, so it needs its own edge
         // markers — the outer table's markers sit on the outer columns, the first of which is the
@@ -649,13 +686,14 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       }
     }
     return result;
-  }, [rows, nestedData, nestedRows, nestedFieldWidths, fromFields]);
+  }, [rows, nestedData, nestedRows, nestedFieldWidths, fromFields, nestedGutterWidth, rowNumbers.className]);
 
   const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths, data, rows, sortedRows, lastColumnExtraPadding);
 
     if (!firstRowNestedData) {
-      return { ...result, columns: markEdgeColumns(result.columns) };
+      const built = withRowNumbers(result, sortedRows, gutterWidth, rowNumbers.className);
+      return { ...built, columns: markEdgeColumns(built.columns) };
     }
 
     const expanderCellRenderer: CellRootRenderer = (key, cellProps) => <Cell key={key} {...cellProps} />;
@@ -676,8 +714,9 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       )
     );
 
-    // after the expander column is in place, so it (not the first field) is tagged as the edge.
-    return { ...result, columns: markEdgeColumns(result.columns) };
+    // Mark edges only after the expander and gutter are in place.
+    const built = withRowNumbers(result, sortedRows, gutterWidth, rowNumbers.className);
+    return { ...built, columns: markEdgeColumns(built.columns) };
   }, [
     buildNestedTableExpanderColumn,
     data,
@@ -694,6 +733,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     visibleFields,
     widths,
     lastColumnExtraPadding,
+    gutterWidth,
+    rowNumbers.className,
   ]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -710,7 +751,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     [zebraStriping, paginatedRows]
   );
 
-  return (
+  const dataGrid = (
     <TableDataGrid
       role="treegrid"
       className={tableRefreshEnabled ? styles.lastColumnInset : undefined}
@@ -764,5 +805,34 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       inspectCell={inspectCell}
       onInspectCellDismiss={() => setInspectCell(null)}
     />
+  );
+  if (!rowNumbers.available) {
+    return dataGrid;
+  }
+  return (
+    <div style={{ display: 'flex', height: '100%', minWidth: 0 }}>
+      {sidebarWidth > 0 && (
+        <div style={{ width: sidebarWidth, flexShrink: 0 }}>
+          <TableSidebar
+            focusRequest={sidebarFocusRequest}
+            columns={[]}
+            hiddenColumns={EMPTY_HIDDEN_COLUMNS}
+            onToggleColumn={NOOP}
+            onColumnsReorder={NOOP}
+            onClose={(restoreFocus) => {
+              setSidebarOpen(false);
+              setSidebarFocusRequest(0);
+              if (restoreFocus) {
+                gridRef.current?.element?.focus();
+              }
+            }}
+            headerHeight={headerHeight}
+            transparent={transparent}
+            rowNumbers={{ visible: rowNumbers.visible, onChange: rowNumbers.setVisible }}
+          />
+        </div>
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>{dataGrid}</div>
+    </div>
   );
 }

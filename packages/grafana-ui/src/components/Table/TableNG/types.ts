@@ -99,6 +99,9 @@ export interface TableSortByFieldState {
 export type SortByBehavior = 'initial' | 'managed';
 
 interface BaseTableProps {
+  /** Enables generated row numbers and their runtime sidebar control (table.refreshNewFeatures). */
+  rowNumbersEnabled?: boolean;
+  showRowNumbers?: boolean;
   /** Experimental transformation-backed table view, explicitly owned by its host. */
   rowTransformationsEnabled?: boolean;
   rowTransformations?: TableRowTransformations;
@@ -399,8 +402,8 @@ export interface MeasureCellHeightEntry {
 
 export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
 
-export interface FromFieldsResult {
-  columns: TableColumn[];
+export interface FromFieldsResult<TColumn extends Column<TableRow, TableSummaryRow> = TableColumn> {
+  columns: TColumn[];
   cellRootRenderers: Record<string, CellRootRenderer>;
 }
 

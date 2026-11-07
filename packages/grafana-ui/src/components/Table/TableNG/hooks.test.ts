@@ -9,6 +9,7 @@ import { TableCellDisplayMode } from '@grafana/schema';
 import { TableFilterProvider, useTableFilters } from './TableFilterContext';
 import { NESTED_TABLE_VERTICAL_PADDING, REFRESHED_NESTED_TABLE_VERTICAL_PADDING, TABLE } from './constants';
 import {
+  useColumnResize,
   useFilteredRows,
   useNestedColWidths,
   useNotifyDisplayedRowIndices,
@@ -26,6 +27,7 @@ import {
   useFlatRowHeight,
   useTextWrapFallback,
 } from './hooks';
+import { ROW_NUMBER_KEY } from './rowNumbers';
 import { type TableRow, type TypographyCtx } from './types';
 import { createTypographyContext, compileFrameToRecords, computeContentAwareColWidths } from './utils';
 
@@ -2396,4 +2398,14 @@ describe('useScrollShadows', () => {
     rerender({ enabled: true });
     expect(result.current).toMatchObject({ top: false, bottom: true });
   });
+});
+
+it('ignores gutter resizing and preserves the field name and scope for ordinary columns', () => {
+  const onResize = jest.fn();
+  const { result } = renderHook(() => useColumnResize(onResize, 'nested'));
+  act(() => {
+    result.current!({ key: ROW_NUMBER_KEY + '__', name: 'Row numbers', resizable: false }, 32);
+    result.current!({ key: ROW_NUMBER_KEY, name: ROW_NUMBER_KEY }, 140.9);
+  });
+  expect(onResize.mock.calls).toEqual([[ROW_NUMBER_KEY, 140, 'nested']]);
 });

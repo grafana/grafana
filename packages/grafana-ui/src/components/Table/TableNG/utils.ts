@@ -21,7 +21,7 @@ import {
   type FieldSparkline,
   type DecimalCount,
 } from '@grafana/data';
-import type { ColumnWidth, ColumnWidths, SortColumn } from '@grafana/react-data-grid';
+import type { Column, ColumnWidth, ColumnWidths, SortColumn } from '@grafana/react-data-grid';
 import {
   BarGaugeDisplayMode,
   type FieldTextAlignment,
@@ -55,6 +55,7 @@ import { getColumnMenuOptions } from './menuOptions';
 import type { TextAlign } from './styles';
 import type {
   TableRow,
+  TableSummaryRow,
   ColumnTypes,
   FrameToRowsConverter,
   Comparator,
@@ -62,7 +63,6 @@ import type {
   MeasureCellHeight,
   MeasureCellHeightEntry,
   GetActionsFunctionLocal,
-  TableColumn,
   TextWrapFallback,
 } from './types';
 
@@ -1929,7 +1929,7 @@ type CellClass<TRow> = string | null | undefined | ((row: TRow) => string | null
 const appendCellClass = <TRow>(existing: CellClass<TRow>, edgeClass: string): CellClass<TRow> =>
   typeof existing === 'function' ? (row: TRow) => clsx(existing(row), edgeClass) : clsx(existing, edgeClass);
 
-const withEdgeClass = (column: TableColumn, edgeClass: string): TableColumn => ({
+const withEdgeClass = <T extends Column<TableRow, TableSummaryRow>>(column: T, edgeClass: string): T => ({
   ...column,
   headerCellClass: clsx(column.headerCellClass, edgeClass),
   cellClass: appendCellClass(column.cellClass, edgeClass),
@@ -1942,7 +1942,7 @@ const withEdgeClass = (column: TableColumn, edgeClass: string): TableColumn => (
  * finished column list, after any programmatically injected columns (the nested table's row
  * expander) are in place — a field's own index isn't enough to tell whether it ends up on an edge.
  */
-export function markEdgeColumns(columns: TableColumn[]): TableColumn[] {
+export function markEdgeColumns<T extends Column<TableRow, TableSummaryRow>>(columns: T[]): T[] {
   if (columns.length === 0) {
     return columns;
   }

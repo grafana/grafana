@@ -26,6 +26,7 @@ import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
 import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_CELL_CLASS, TABLE } from './constants';
+import { getRowNumberWidth } from './rowNumbers';
 
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
@@ -3839,4 +3840,110 @@ describe('TableNG', () => {
       expect(metadataWidth).toBeGreaterThan(serviceWidth * 2);
     });
   });
+});
+
+describe('generated row numbers', () => {
+  const positions = (grid: HTMLElement) =>
+    Array.from(grid.querySelectorAll('[role="gridcell"][aria-colindex="1"]'), (cell) => cell.textContent);
+
+  it('preserves fields whose display names resemble the generated gutter key', () => {
+    const frame = createBasicDataFrame();
+    frame.fields[0].config = { ...frame.fields[0].config, displayName: '__grafana_row_number__' };
+    frame.fields[1].config = { ...frame.fields[1].config, displayName: '__grafana_row_number___' };
+    render(<TableNG data={frame} width={800} height={600} rowNumbersEnabled showRowNumbers />);
+    const cells = screen.getAllByRole('gridcell').map((cell) => cell.textContent);
+    expect(cells).toEqual(['1', 'A1', '1', '2', 'A2', '2', '3', 'A3', '3']);
+  });
+
+  it.each([false, true])(
+    'respects feature availability and keeps the gutter outside the field list (enabled=%s)',
+    async (enabled) => {
+      const frame = createBasicDataFrame();
+      const { rerender } = render(
+        <TableNG data={frame} width={800} height={600} rowNumbersEnabled={enabled} showRowNumbers showColumnsSidebar />
+      );
+      expect(positions(screen.getByRole('grid'))).toEqual(enabled ? ['1', '2', '3'] : ['A1', 'A2', 'A3']);
+      if (enabled) {
+        const checkbox = screen.getByRole('checkbox', { name: 'Row numbers' });
+        await userEvent.click(checkbox);
+        expect(positions(screen.getByRole('grid'))).toEqual(['A1', 'A2', 'A3']);
+        rerender(<TableNG data={frame} width={800} height={600} rowNumbersEnabled showRowNumbers showColumnsSidebar />);
+        expect(checkbox).not.toBeChecked();
+        await userEvent.click(checkbox);
+        expect(positions(screen.getByRole('grid'))).toEqual(['1', '2', '3']);
+        expect(screen.queryByRole('button', { name: 'Reorder Row numbers' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Column options for Row numbers' })).not.toBeInTheDocument();
+      } else {
+        expect(screen.queryByRole('checkbox', { name: 'Row numbers' })).not.toBeInTheDocument();
+      }
+      expect(frame.fields.map((field) => field.name)).toEqual(['Column A', 'Column B']);
+    }
+  );
+
+  it('numbers filtered and sorted results across pages while retaining source row indexes', async () => {
+    const frame = createBasicDataFrame();
+    frame.fields[0].config.custom.filterable = true;
+    const onDisplayedRowIndicesChange = jest.fn();
+    render(
+      <TableNG
+        data={frame}
+        width={800}
+        height={600}
+        tableRefreshEnabled
+        rowNumbersEnabled
+        showRowNumbers
+        enablePagination
+        pageSize={1}
+        sortBy={[{ displayName: 'Column B', desc: true }]}
+        onDisplayedRowIndicesChange={onDisplayedRowIndicesChange}
+      />
+    );
+    const grid = screen.getByRole('grid');
+    expect(positions(grid)).toEqual(['1']);
+    expect(within(grid).getByText('A3')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'next page' }));
+    expect(positions(grid)).toEqual(['2']);
+    expect(within(grid).getByText('A2')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Column options for Column A' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Filter values' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'A2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+    expect(positions(grid)).toEqual(['1']);
+    expect(within(grid).getByText('A2')).toBeInTheDocument();
+    expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([1]);
+  });
+
+  it('keeps parent positions stable through expansion and numbers children independently', async () => {
+    render(<TableNG data={createNestedDataFrame()} width={800} height={600} rowNumbersEnabled showRowNumbers />);
+    const grid = screen.getByRole('treegrid');
+    await userEvent.click(screen.getAllByRole('button', { name: 'Expand row' })[0]);
+    const nested = within(grid).getByRole('grid');
+    expect(positions(nested)).toEqual(['1', '2']);
+    const parentPositions = Array.from(
+      grid.querySelectorAll(':scope > [role="row"] > [role="gridcell"][aria-colindex="1"]'),
+      (cell) => (cell.closest('[role="grid"], [role="treegrid"]') === grid ? cell.textContent : undefined)
+    ).filter((value) => value !== undefined);
+    expect(parentPositions).toEqual(['1', '', '2']);
+    await userEvent.click(screen.getByRole('button', { name: 'Collapse row' }));
+    expect(positions(grid).filter(Boolean)).toEqual(['1', '2']);
+  });
+
+  it('leaves footers blank and uses actual monospace metrics across digit boundaries', () => {
+    const frame = createBasicDataFrame();
+    frame.fields[1].config.custom.footer = { reducers: ['sum'] };
+    render(<TableNG data={frame} width={800} height={600} rowNumbersEnabled showRowNumbers />);
+    expect(positions(screen.getByRole('grid'))).toEqual(['1', '2', '3', '']);
+    expect(screen.getByText('6')).toBeInTheDocument();
+    expect(getRowNumberWidth(99, 8)).toBe(29);
+    expect(getRowNumberWidth(100, 8)).toBe(37);
+  });
+
+  it.each([createEmptyDataFrame, createEmptyNestedDataFrame])(
+    'renders an empty result without numbering placeholder rows',
+    (createFrame) => {
+      render(<TableNG data={createFrame()} width={100} height={100} rowNumbersEnabled showRowNumbers />);
+      expect(screen.queryByRole('gridcell')).not.toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: 'Row numbers' })).toBeInTheDocument();
+    }
+  );
 });
