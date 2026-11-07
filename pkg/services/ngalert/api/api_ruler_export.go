@@ -23,7 +23,7 @@ func (srv RulerSrv) ExportFromPayload(c *contextmodel.ReqContext, ruleGroupConfi
 		return toNamespaceErrorResponse(err)
 	}
 
-	rulesWithOptionals, err := apivalidation.ValidateRuleGroup(&ruleGroupConfig, c.GetOrgID(), namespace.UID, apivalidation.RuleLimitsFromConfig(srv.cfg, srv.featureManager))
+	rulesWithOptionals, err := apivalidation.ValidateRuleGroupStrict(&ruleGroupConfig, c.GetOrgID(), namespace.UID, apivalidation.RuleLimitsFromConfig(srv.cfg, srv.featureManager))
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}

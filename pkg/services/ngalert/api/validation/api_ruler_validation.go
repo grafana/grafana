@@ -39,6 +39,17 @@ func ValidateRuleNode(
 	orgId int64,
 	namespaceUID string,
 	limits RuleLimits) (*ngmodels.AlertRule, error) {
+	return validateRuleNode(ruleNode, groupName, interval, orgId, namespaceUID, limits, false)
+}
+
+func validateRuleNode(
+	ruleNode *apimodels.PostableExtendedRuleNode,
+	groupName string,
+	interval time.Duration,
+	orgId int64,
+	namespaceUID string,
+	limits RuleLimits,
+	allowEmptyLabelKey bool) (*ngmodels.AlertRule, error) {
 	intervalSeconds, err := ValidateInterval(interval, limits.BaseInterval)
 	if err != nil {
 		return nil, err
@@ -85,7 +96,7 @@ func ValidateRuleNode(
 
 	if ruleNode.ApiRuleNode != nil {
 		newAlertRule.Annotations = ruleNode.Annotations
-		err = validateLabels(ruleNode.Labels)
+		err = validateLabels(ruleNode.Labels, allowEmptyLabelKey)
 		if err != nil {
 			return nil, err
 		}
@@ -190,9 +201,9 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 	return newRule, nil
 }
 
-func validateLabels(l map[string]string) error {
+func validateLabels(l map[string]string, allowEmptyKey bool) error {
 	for key := range l {
-		if key == "" {
+		if key == "" && !allowEmptyKey {
 			return fmt.Errorf("label key cannot be empty")
 		}
 		if _, ok := ngmodels.LabelsUserCannotSpecify[key]; ok {
@@ -331,11 +342,34 @@ func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRul
 // ValidateRuleGroup validates API model (definitions.PostableRuleGroupConfig) and converts it to a collection of models.AlertRule.
 // Returns a slice that contains all rules described by API model or error if either group specification or an alert definition is not valid.
 // It also returns a map containing current existing alerts that don't contain the is_paused field in the body of the call.
+//
+// Empty label keys are not rejected here: Grafana-managed writes are whole-group,
+// so a rule stored before the check existed would block every rule in its group.
+// The ruler API rejects new empty keys on the computed delta instead. Callers
+// without a delta must use ValidateRuleGroupStrict.
 func ValidateRuleGroup(
 	ruleGroupConfig *apimodels.PostableRuleGroupConfig,
 	orgId int64,
 	namespaceUID string,
 	limits RuleLimits) ([]*ngmodels.AlertRuleWithOptionals, error) {
+	return validateRuleGroup(ruleGroupConfig, orgId, namespaceUID, limits, true)
+}
+
+// ValidateRuleGroupStrict is ValidateRuleGroup that also rejects empty label keys.
+func ValidateRuleGroupStrict(
+	ruleGroupConfig *apimodels.PostableRuleGroupConfig,
+	orgId int64,
+	namespaceUID string,
+	limits RuleLimits) ([]*ngmodels.AlertRuleWithOptionals, error) {
+	return validateRuleGroup(ruleGroupConfig, orgId, namespaceUID, limits, false)
+}
+
+func validateRuleGroup(
+	ruleGroupConfig *apimodels.PostableRuleGroupConfig,
+	orgId int64,
+	namespaceUID string,
+	limits RuleLimits,
+	allowEmptyLabelKey bool) ([]*ngmodels.AlertRuleWithOptionals, error) {
 	if ruleGroupConfig.Name == "" {
 		return nil, errors.New("rule group name cannot be empty")
 	}
@@ -359,7 +393,7 @@ func ValidateRuleGroup(
 	result := make([]*ngmodels.AlertRuleWithOptionals, 0, len(ruleGroupConfig.Rules))
 	uids := make(map[string]int, cap(result))
 	for idx := range ruleGroupConfig.Rules {
-		rule, err := ValidateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, interval, orgId, namespaceUID, limits)
+		rule, err := validateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, interval, orgId, namespaceUID, limits, allowEmptyLabelKey)
 		// TODO do not stop on the first failure but return all failures
 		if err != nil {
 			return nil, fmt.Errorf("invalid rule specification at index [%d]: %w", idx, err)
