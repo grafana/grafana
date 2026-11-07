@@ -14,6 +14,10 @@ module.exports = function textPanelRuntime() {
     platform: 'browser',
     target: 'es2020',
     minify: true,
+    conditions: ['@grafana-app/source'],
+    // UI uses Emotion; unused chart CSS imports from its barrel have no place in this isolated document.
+    loader: { '.svg': 'text', '.css': 'empty' },
+    define: { 'process.env.NODE_ENV': '"production"' },
   }).then(
     (result) => {
       for (const input of Object.keys(result.metafile.inputs)) {

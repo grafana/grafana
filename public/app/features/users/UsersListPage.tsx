@@ -3,7 +3,7 @@ import { connect, type ConnectedProps } from 'react-redux';
 
 import { type OrgRole, renderMarkdown } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { Alert, MarkdownHTML } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useUserListTabExtensions } from 'app/features/admin/useUserListTabExtensions';
@@ -110,7 +110,7 @@ export const UsersListPageUnconnected = ({
       <UsersActionBar onShowInvites={onShowInvites} showInvites={showInvites} />
       {externalUserMngInfoHtml && (
         <Alert severity="info" title="">
-          <div dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
+          <MarkdownHTML html={externalUserMngInfoHtml} />
         </Alert>
       )}
       {isLoading && renderTable()}

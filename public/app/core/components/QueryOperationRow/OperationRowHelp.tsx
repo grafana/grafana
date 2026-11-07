@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { MarkdownHTML, useStyles2 } from '@grafana/ui';
 
 export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
@@ -28,7 +28,7 @@ export const OperationRowHelp = React.memo(
 
 function markdownHelper(markdown: string) {
   const helpHtml = renderMarkdown(markdown);
-  return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: helpHtml }} />;
+  return <MarkdownHTML className="markdown-html" html={helpHtml} />;
 }
 
 OperationRowHelp.displayName = 'OperationRowHelp';

@@ -3,7 +3,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 
 import { textUtil } from '@grafana/data';
 
-import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
+import { loadSandboxAdmonitions, loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
 import {
   MAX_BLOCKED_URL_CHARS,
   resourceOrigin,
@@ -18,6 +18,7 @@ import {
   TEXT_FRAME_PROTOCOL,
   type RenderCommand,
   type MermaidCommand,
+  type AdmonitionsCommand,
 } from './sandboxProtocol';
 
 export const WATCHDOG_TIMEOUT_MS = 15_000;
@@ -32,6 +33,7 @@ export interface SandboxFrameProps {
   policy?: string;
   mermaid?: MermaidConfig;
   diagramError?: string;
+  admonitions?: RenderCommand['admonitions'];
   title: string;
   /** Lets absolutely positioned content lay out against the panel: the frame is otherwise only as tall as its flow content. */
   minHeight?: number;
@@ -40,16 +42,25 @@ export interface SandboxFrameProps {
 }
 
 export function SandboxFrame(props: SandboxFrameProps) {
-  const { html, globalCss, policy, mermaid, diagramError } = props;
-  const [documentVersion, setDocumentVersion] = useState({ html, globalCss, policy, mermaid, diagramError, id: 0 });
+  const { html, globalCss, policy, mermaid, diagramError, admonitions } = props;
+  const [documentVersion, setDocumentVersion] = useState({
+    html,
+    globalCss,
+    policy,
+    mermaid,
+    diagramError,
+    admonitions,
+    id: 0,
+  });
   if (
     documentVersion.html !== html ||
     documentVersion.globalCss !== globalCss ||
     documentVersion.policy !== policy ||
     documentVersion.mermaid !== mermaid ||
-    documentVersion.diagramError !== diagramError
+    documentVersion.diagramError !== diagramError ||
+    documentVersion.admonitions !== admonitions
   ) {
-    setDocumentVersion({ html, globalCss, policy, mermaid, diagramError, id: documentVersion.id + 1 });
+    setDocumentVersion({ html, globalCss, policy, mermaid, diagramError, admonitions, id: documentVersion.id + 1 });
   }
   // Fresh documents isolate each render's messages and runtime; an applied CSP also cannot be relaxed in place.
   return <FrameDocument key={documentVersion.id} {...props} />;
@@ -103,6 +114,7 @@ function useFrameRuntime({
   policy,
   mermaid,
   diagramError = 'Diagram could not be rendered',
+  admonitions,
 }: SandboxFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [sandboxState, setSandboxState] = useState<TextSandboxState>({ status: 'loading', resources: [] });
@@ -129,6 +141,7 @@ function useFrameRuntime({
         globalCss,
         mermaid,
         diagramError,
+        admonitions,
       },
       onStatus: (status) =>
         setSandboxState((current) => (current.status === status ? current : { ...current, status })),
@@ -140,7 +153,7 @@ function useFrameRuntime({
         }),
     });
     return controller.dispose;
-  }, [channel, diagramError, globalCss, html, mermaid, nonce, policy, protectedFrame]);
+  }, [channel, diagramError, globalCss, html, mermaid, admonitions, nonce, policy, protectedFrame]);
 
   return { iframeRef, sandboxState, dimensions, protectedFrame };
 }
@@ -170,6 +183,7 @@ function createFrameController({
   let renderedDocument: string | undefined;
   let hasFailed = false;
   let mermaidRequested = false;
+  let admonitionsRequested = false;
   let disposed = false;
   const expectedOrigin = protectedFrame ? 'null' : window.location.origin;
   // Opaque-origin frames require '*'; commands still target only this document's WindowProxy.
@@ -214,6 +228,8 @@ function createFrameController({
         return sendRender(message.document);
       case 'mermaid-needed':
         return loadRequestedMermaid();
+      case 'admonitions-needed':
+        return loadRequestedAdmonitions();
       case 'rendered':
         return markRendered();
       case 'resize':
@@ -235,6 +251,7 @@ function createFrameController({
     if (renderedDocument !== undefined) {
       hasFailed = false;
       mermaidRequested = false;
+      admonitionsRequested = false;
       clearTimeout(watchdog);
       watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
     } else if (hasFailed) {
@@ -278,6 +295,34 @@ function createFrameController({
       clearTimeout(watchdog);
       onStatus('ready');
     }
+  }
+
+  function loadRequestedAdmonitions() {
+    if (renderedDocument === undefined || hasFailed || !renderCommand.admonitions || admonitionsRequested) {
+      return;
+    }
+    admonitionsRequested = true;
+    const target = iframe.contentWindow;
+    const requestedBy = renderedDocument;
+    const isCurrent = () => !disposed && renderedDocument === requestedBy;
+    void loadSandboxAdmonitions()
+      .then((source) => {
+        if (!isCurrent() || hasFailed || !target || iframe.contentWindow !== target) {
+          return;
+        }
+        const command: AdmonitionsCommand = {
+          protocol: TEXT_FRAME_PROTOCOL,
+          channel: renderCommand.channel,
+          type: 'admonitions-source',
+          source,
+        };
+        target.postMessage(command, targetOrigin);
+      })
+      .catch(() => {
+        if (isCurrent()) {
+          fail();
+        }
+      });
   }
 
   // Content can still resize or report violations after a rendering failure.

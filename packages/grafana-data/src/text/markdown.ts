@@ -1,4 +1,4 @@
-import { marked, type MarkedOptions } from 'marked';
+import { marked, type MarkedOptions, type MarkedExtension } from 'marked';
 import { mangle } from 'marked-mangle';
 
 import { sanitizeTextPanelContent } from './sanitize';
@@ -16,9 +16,40 @@ const markdownOptions: MarkedOptions = {
   breaks: false,
 };
 
+const admonitions: MarkedExtension = {
+  renderer: {
+    blockquote(token) {
+      const match = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][ \t]*(?:\n|$)/.exec(token.text);
+      if (!match) {
+        return false;
+      }
+
+      const kind = match[1].toLowerCase();
+      const title = kind[0].toUpperCase() + kind.slice(1);
+      const [first, ...rest] = token.tokens;
+      if (first?.type !== 'paragraph' || !first.tokens || first.tokens[0]?.type !== 'text') {
+        return false;
+      }
+      // Keep the original tokens so document-level reference links remain resolved.
+      const [marker, ...inline] = first.tokens;
+      if (marker.raw.length < match[0].length && inline[0]?.type === 'br') {
+        inline.shift();
+      }
+      const remainingText = marker.text.slice(match[0].length);
+      const tokens =
+        remainingText || inline.length
+          ? [{ ...first, tokens: [{ ...marker, text: remainingText }, ...inline] }, ...rest]
+          : rest;
+      const body = this.parser.parse(tokens);
+      // HTML consumers retain readable content; the UI renderer upgrades these markers to Alerts.
+      return `<blockquote class="grafana-markdown-alert-${kind}"><p>${title}</p><div class="grafana-markdown-alert-body">${body}</div></blockquote>\n`;
+    },
+  },
+};
+
 export function renderMarkdown(str?: string, options?: RenderMarkdownOptions): string {
   if (!hasInitialized) {
-    marked.use(mangle());
+    marked.use(mangle(), admonitions);
     marked.setOptions({ ...markdownOptions });
     hasInitialized = true;
   }
@@ -47,7 +78,7 @@ export function renderMarkdown(str?: string, options?: RenderMarkdownOptions): s
 
 export function renderTextPanelMarkdown(str?: string, options?: RenderMarkdownOptions): string {
   if (!hasInitialized) {
-    marked.use(mangle());
+    marked.use(mangle(), admonitions);
     marked.setOptions({ ...markdownOptions });
     hasInitialized = true;
   }

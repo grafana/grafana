@@ -269,6 +269,42 @@ describe('sandbox runtime', () => {
     expect(renderer.mock.calls[0][2]()).toBe(true);
   });
 
+  test('loads the admonition renderer for marked HTML and disposes it when the frame unloads', async () => {
+    initialize();
+    const disposeAdmonitions = jest.fn();
+    const renderer = jest.fn(() => disposeAdmonitions);
+    const append = document.head.append.bind(document.head);
+    jest.spyOn(document.head, 'append').mockImplementation((...nodes) => {
+      for (const node of nodes) {
+        if (node instanceof HTMLScriptElement && 'registerAdmonitions' in node) {
+          (node.registerAdmonitions as (render: typeof renderer) => void)(renderer);
+          expect(node.nonce).toBe('test-nonce');
+        }
+      }
+      append(...nodes);
+    });
+    const admonitions = {
+      theme: '{}',
+      titles: { note: 'Note', tip: 'Tip', important: 'Important', warning: 'Warning', caution: 'Caution' },
+    };
+    const markedCommand = {
+      ...command,
+      html: '<blockquote class="grafana-markdown-alert-note"><div class="grafana-markdown-alert-body">Details</div></blockquote>',
+      admonitions,
+    };
+
+    message(markedCommand);
+    await flush();
+    expectNotification('admonitions-needed');
+    message({ ...command, type: 'admonitions-source', source: '/* trusted Alerts */' });
+    await flush();
+
+    expect(renderer).toHaveBeenCalledWith(markedCommand, document.querySelector('.markdown-html'));
+    expectNotification('rendered');
+    window.dispatchEvent(new Event('pagehide'));
+    expect(disposeAdmonitions).toHaveBeenCalledTimes(1);
+  });
+
   test('unloading cancels pending diagrams, reports, and resize observation', async () => {
     initialize(policy);
     violation(CSP_CHECK_URL);

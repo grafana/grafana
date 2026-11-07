@@ -6,7 +6,7 @@ import { useIntersection } from 'react-use';
 import { type GrafanaTheme2, locationUtil, renderMarkdown, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Alert, Button, LinkButton, Spinner, Stack, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, LinkButton, MarkdownHTML, Spinner, Stack, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
 import {
   type RepositoryView,
   type ResourceListItem,
@@ -349,11 +349,8 @@ function RenderedMarkdown({
 
     el.addEventListener('click', handleClick);
     return () => el.removeEventListener('click', handleClick);
-  }, [repositoryType, repositoryName, repositoryPath, fetchResources]);
+  }, [repositoryType, repositoryName, repositoryPath, fetchResources, safe]);
 
-  // React resets innerHTML whenever this object's identity changes, which would
-  // wipe the diagrams the hook swapped in — so only hand it a new one when the html changes.
-  const innerHtml = useMemo(() => ({ __html: safe }), [safe]);
   useMermaidDiagrams(containerRef, safe);
 
   // The metadata table sits outside the markdown container so the link-click
@@ -361,10 +358,11 @@ function RenderedMarkdown({
   return (
     <>
       {frontmatter && <MarkdownFrontmatterTable data={frontmatter} />}
-      <div
+      <MarkdownHTML
+        sanitization="html"
         ref={containerRef}
         className={cx('markdown-html', styles.markdownBody)}
-        dangerouslySetInnerHTML={innerHtml}
+        html={safe}
       />
     </>
   );

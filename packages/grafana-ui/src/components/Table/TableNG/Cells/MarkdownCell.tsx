@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
+import { useMemo, useState } from 'react';
 
 import { renderMarkdown } from '@grafana/data';
 
+import { MarkdownAdmonitions, MarkdownHTML } from '../../../Markdown/MarkdownHTML';
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
 import { type MarkdownCellProps, type TableCellStyles } from '../types';
@@ -17,13 +19,24 @@ export function MarkdownCell({ field, rowIdx, disableSanitizeHtml }: MarkdownCel
 
   return (
     <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
-      <div
-        className="markdown-container"
-        dangerouslySetInnerHTML={{
-          __html: renderMarkdown(renderValue.text, { noSanitize: disableSanitizeHtml }).trim(),
-        }}
-      />
+      {disableSanitizeHtml ? (
+        <UnsanitizedMarkdown key={renderValue.text} text={renderValue.text} />
+      ) : (
+        <MarkdownHTML className="markdown-container" html={renderMarkdown(renderValue.text).trim()} />
+      )}
     </MaybeWrapWithLink>
+  );
+}
+
+// Keep the administrator-controlled opt-out separate from the safe MarkdownHTML API.
+function UnsanitizedMarkdown({ text }: { text: string }) {
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+  const innerHtml = useMemo(() => ({ __html: renderMarkdown(text, { noSanitize: true }).trim() }), [text]);
+  return (
+    <>
+      <div ref={setContainer} className="markdown-container" dangerouslySetInnerHTML={innerHtml} />
+      <MarkdownAdmonitions container={container} />
+    </>
   );
 }
 

@@ -3,6 +3,7 @@ import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from '
 import { textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
+import { getMarkdownAlertTitles } from '@grafana/ui/internal';
 import { getMermaidConfig } from 'app/core/utils/mermaidConfig';
 import {
   clearBlocked,
@@ -29,6 +30,14 @@ export interface TextSandboxProps {
 
 export function TextSandbox({ html, hasData = true, testId, className, minHeight, consent }: TextSandboxProps) {
   const theme = useTheme2();
+  const titles = JSON.stringify(getMarkdownAlertTitles());
+  const admonitions = useMemo(() => {
+    const translatedTitles: ReturnType<typeof getMarkdownAlertTitles> = JSON.parse(titles);
+    return {
+      theme: JSON.stringify({ ...theme, spacing: { gridSize: theme.spacing.gridSize } }),
+      titles: translatedTitles,
+    };
+  }, [theme, titles]);
   const host = useRef<HTMLDivElement>(null);
   const consentKey = useId();
   const { dashboardUid, panelId, panelTitle } = consent ?? {};
@@ -75,6 +84,7 @@ export function TextSandbox({ html, hasData = true, testId, className, minHeight
           globalCss={globalCss}
           policy={hasData ? textSandboxPolicy(origins, fontRoot) : undefined}
           mermaid={mermaid}
+          admonitions={admonitions}
           diagramError={t('textng.sandbox.diagram-error', 'Diagram could not be rendered')}
           title={t('textng.sandbox.title', 'Text panel content')}
           minHeight={minHeight}
