@@ -84,7 +84,9 @@ func (p *RequestHandler) TestReceiver(ctx context.Context, user identity.Request
 		return notifier.IntegrationTestResult{}, models.ErrReceiverTestingInvalidIntegration(err.Error())
 	}
 	alert := notifier.Alert(body.Alert)
-	integration, secure, err := convertReceiverIntegrationToIntegration("", v1beta1.ReceiverIntegration(body.Integration))
+	// The test route takes a flat integration rather than one of the union branches, so
+	// it converts straight to the domain model instead of going through the union.
+	integration, secure, err := convertTestIntegrationToIntegration("", body.Integration)
 	if err != nil {
 		return notifier.IntegrationTestResult{}, err
 	}
