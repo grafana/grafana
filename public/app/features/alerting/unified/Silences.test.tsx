@@ -1,11 +1,11 @@
 import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { type DataSourceApi, dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
@@ -25,6 +25,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { contextSrv } from '../../../core/services/context_srv';
 
+import * as Analytics from './Analytics';
 import NewSilencePage from './NewSilencePage';
 import ExistingSilenceEditorPage from './components/silences/SilencesEditor';
 import SilencesTablePage from './components/silences/SilencesTable';
@@ -76,6 +77,7 @@ const ui = {
   silenceRow: byTestId('row'),
   silencedAlertCell: byTestId('alerts'),
   addSilenceButton: byRole('link', { name: /add silence/i }),
+  createSilenceButton: byRole('link', { name: /create silence/i }),
   existingSilenceNotFound: byRole('alert', { name: /existing silence .* not found/i }),
   noPermissionToEdit: byRole('alert', { name: /do not have permission/i }),
   ruleUnavailable: byRole('alert', { name: /alert rule unavailable/i }),
@@ -99,6 +101,21 @@ const ui = {
 const setUserLogged = (isLogged: boolean) => {
   contextSrv.user.isSignedIn = isLogged;
   contextSrv.user.name = isLogged ? 'admin' : '';
+};
+
+const clickSilenceLink = async (user: ReturnType<typeof userEvent.setup>, link: HTMLElement) => {
+  const href = link.getAttribute('href') ?? '';
+  // The global anchor interception is not installed in tests, so prevent jsdom navigation and
+  // follow the href through the test history instead.
+  link.addEventListener('click', (event) => event.preventDefault(), { capture: true });
+  await user.click(link);
+  await act(async () => {
+    locationService.push(href);
+  });
+};
+
+const clickAddSilence = async (user: ReturnType<typeof userEvent.setup>) => {
+  await clickSilenceLink(user, await ui.addSilenceButton.find());
 };
 
 const enterSilenceLabel = async (index: number, name: string, matcher: MatcherOperator, value: string) => {
@@ -135,6 +152,8 @@ beforeEach(() => {
 });
 
 describe('Silences', () => {
+  afterEach(() => jest.restoreAllMocks());
+
   it(
     'loads and shows silences',
     async () => {
@@ -227,6 +246,103 @@ describe('Silences', () => {
 
       expect(await ui.notExpiredTable.find()).toBeInTheDocument();
       expect(screen.getByLabelText(/Edit filter with key foo/i)).toBeInTheDocument();
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    'prefills a new silence from the current search, keeping repeated labels',
+    async () => {
+      const trackSpy = jest.spyOn(Analytics, 'trackSilencePrefillPartial');
+      const queryString = ['foo="bar"', 'foo!="baz"', 'env=~"prod.*"'].join(',');
+
+      const { user } = renderSilences(`/alerting/silences?queryString=${encodeURIComponent(queryString)}`);
+      await clickAddSilence(user);
+
+      await waitFor(() => expect(ui.editor.matcherName.getAll()).toHaveLength(3));
+      const matcherNames = ui.editor.matcherName.getAll().map((input) => input.getAttribute('value'));
+      expect(matcherNames).toEqual(['foo', 'foo', 'env']);
+      expect(ui.editor.matcherValue.getAll().map((input) => input.getAttribute('value'))).toEqual([
+        'bar',
+        'baz',
+        'prod.*',
+      ]);
+      expect(trackSpy).not.toHaveBeenCalled();
+
+      trackSpy.mockRestore();
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    'shows a notice and tracks the navigation when only some search matchers fit',
+    async () => {
+      const trackSpy = jest.spyOn(Analytics, 'trackSilencePrefillPartial');
+      const matchers = Array.from({ length: 8 }, (_, index) => `label_${index}="${'x'.repeat(280)}"`);
+
+      const { user } = renderSilences(`/alerting/silences?queryString=${encodeURIComponent(matchers.join(','))}`);
+      await clickAddSilence(user);
+
+      const notice = await screen.findByText(/matchers prefilled/i);
+      const prefilledMatchers = Number(/(\d+) of 8 matchers prefilled/i.exec(notice.textContent ?? '')?.[1]);
+      expect(prefilledMatchers).toBeGreaterThan(0);
+      expect(prefilledMatchers).toBeLessThan(8);
+      expect(ui.editor.matchersField.queryAll()).toHaveLength(prefilledMatchers);
+      expect(screen.getByText(/add the remaining matchers/i)).toBeInTheDocument();
+      expect(trackSpy).toHaveBeenCalledTimes(1);
+      expect(trackSpy).toHaveBeenCalledWith();
+      const destination = locationService.getLocation();
+      expect(
+        new TextEncoder().encode(new URL(`${destination.pathname}${destination.search}`, window.location.origin).href)
+          .length
+      ).toBeLessThanOrEqual(2000);
+
+      trackSpy.mockRestore();
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    'prefills and tracks the empty-state create silence link from the current search',
+    async () => {
+      server.use(http.get('/api/alertmanager/:datasourceUid/api/v2/silences', () => HttpResponse.json([])));
+      const trackSpy = jest.spyOn(Analytics, 'trackSilencePrefillPartial');
+      const matchers = Array.from({ length: 8 }, (_, index) => `label_${index}="${'x'.repeat(280)}"`);
+
+      const { user } = renderSilences(`/alerting/silences?queryString=${encodeURIComponent(matchers.join(','))}`);
+      await clickSilenceLink(user, await ui.createSilenceButton.find());
+
+      const notice = await screen.findByText(/matchers prefilled/i);
+      const prefilledMatchers = Number(/(\d+) of 8 matchers prefilled/i.exec(notice.textContent ?? '')?.[1]);
+      expect(prefilledMatchers).toBeGreaterThan(0);
+      expect(prefilledMatchers).toBeLessThan(8);
+      expect(ui.editor.matchersField.queryAll()).toHaveLength(prefilledMatchers);
+      expect(trackSpy).toHaveBeenCalledTimes(1);
+      expect(trackSpy).toHaveBeenCalledWith();
+
+      trackSpy.mockRestore();
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    'disables the add-silence link with an explanation when the prefill URL cannot fit',
+    async () => {
+      const originalAppSubUrl = config.appSubUrl;
+      config.appSubUrl = `/${'a'.repeat(2000)}`;
+
+      try {
+        renderSilences('/alerting/silences?queryString=foo%3D%22bar%22');
+        const link = await ui.addSilenceButton.find();
+
+        expect(link).toHaveAttribute('aria-disabled', 'true');
+        expect(link).not.toHaveAttribute('href');
+        expect(
+          screen.getByText(/cannot open a new silence because the destination URL exceeds 2,000 bytes/i)
+        ).toBeInTheDocument();
+      } finally {
+        config.appSubUrl = originalAppSubUrl;
+      }
     },
     TEST_TIMEOUT
   );

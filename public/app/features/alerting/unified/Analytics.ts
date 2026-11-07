@@ -159,6 +159,10 @@ function getRulerRulesMetadata(rulerRules: RulerRulesConfigDTO) {
   };
 }
 
+export const trackSilencePrefillPartial = () => {
+  reportInteraction('grafana_alerting_silence_prefill_partial');
+};
+
 export const trackRuleListNavigation = async (
   props: AlertRuleTrackingProps = {
     grafana_version: config.buildInfo.version,
