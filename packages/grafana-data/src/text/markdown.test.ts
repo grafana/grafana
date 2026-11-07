@@ -39,6 +39,13 @@ describe('Markdown wrapper', () => {
     expect(str).not.toMatch(/<input/);
   });
 
+  it('should honour the breaks option in the text panel', () => {
+    // The text-panel variant declared RenderMarkdownOptions but called marked() without them, so
+    // panels configured with breaks rendered a single paragraph.
+    expect(renderTextPanelMarkdown('line one
+line two', { breaks: true })).toContain('<br>');
+  });
+
   it('should sanitize content in text panel by default', () => {
     const str = renderTextPanelMarkdown('<script>alert()</script>');
     expect(str).toBe('&lt;script&gt;alert()&lt;/script&gt;');

@@ -52,7 +52,14 @@ export function renderTextPanelMarkdown(str?: string, options?: RenderMarkdownOp
     hasInitialized = true;
   }
 
-  const html = marked(str || '');
+  let opts = undefined;
+  if (options?.breaks) {
+    opts = {
+      ...markdownOptions,
+      breaks: true,
+    };
+  }
+  const html = marked(str || '', opts);
 
   // `marked()` returns a promise if using any extensions that require async processing.
   // we don't use any async extensions, but there is no way for typescript to know this, so we need to check the type.
