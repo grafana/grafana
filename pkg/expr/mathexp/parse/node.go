@@ -321,6 +321,11 @@ func (b *BinaryNode) StringAST() string {
 
 // Check performs parse time checking on the BinaryNode so it fulfills the Node interface.
 func (b *BinaryNode) Check(t *Tree) error {
+	for _, arg := range b.Args {
+		if err := arg.Check(t); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
