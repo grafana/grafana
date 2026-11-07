@@ -9,13 +9,10 @@ import (
 	"strconv"
 	"time"
 
-	sdkk8s "github.com/grafana/grafana-app-sdk/k8s"
-	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -25,6 +22,8 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	sdkk8s "github.com/grafana/grafana-app-sdk/k8s"
+	"github.com/grafana/grafana-app-sdk/resource"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -220,7 +219,7 @@ func (s *TeamK8sService) listUserTeams(ctx context.Context, namespace, userUID s
 	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
 
 	// Propagate every error (including 404) so teamimpl falls back to legacy when the subresource is gated off.
-	resp, err := client.GetUserTeamsAll(svcCtx, sdkresource.Identifier{Namespace: namespace, Name: userUID}, iamv0alpha1.GetUserTeamsRequest{})
+	resp, err := client.GetUserTeamsAll(svcCtx, resource.Identifier{Namespace: namespace, Name: userUID}, iamv0alpha1.GetUserTeamsRequest{})
 	if err != nil {
 		return nil, err
 	}
