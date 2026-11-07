@@ -215,6 +215,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
             currentTimeRange,
           })}
           aria-controls="TimePickerContent"
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
           onClick={onToolbarButtonSwitch}
           icon={timePickerIcon}
           isOpen={isOpen}
