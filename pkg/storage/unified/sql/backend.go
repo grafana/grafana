@@ -1631,6 +1631,24 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 	return b.notifier.notify(ctx)
 }
 
+// WatchResumeFloorsEnabled: only the NATS stream starts at one known point.
+func (b *backend) WatchResumeFloorsEnabled() bool {
+	_, ok := b.notifier.(*natsNotifier)
+	return ok
+}
+
+func (b *backend) WatchWriteEventsWithResumeFloors(ctx context.Context, floors resource.ResumeFloors, captured func()) (map[resource.GroupResource]int64, <-chan *resource.WrittenEvent, error) {
+	n, ok := b.notifier.(*natsNotifier)
+	if !ok {
+		return nil, nil, errors.New("watch resume floors need the NATS notifier")
+	}
+	initial, events, err := n.watchWithFloors(ctx, floors, captured)
+	if err != nil {
+		return nil, nil, fmt.Errorf("start watch with resume floors: %w", err)
+	}
+	return initial, events, nil
+}
+
 // listLatestRVs returns the latest resource version for each (Group, Resource) pair.
 func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.listLatestRVs")
