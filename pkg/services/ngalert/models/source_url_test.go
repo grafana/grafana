@@ -13,7 +13,7 @@ func TestValidateSourceURL(t *testing.T) {
 	require.NoError(t, ValidateSourceURL("http://example.com"))
 
 	require.Error(t, ValidateSourceURL("javascript:alert(1)"))
-	require.Error(t, ValidateSourceURL("https://user:pass@example.com/rule"))
+	require.Error(t, ValidateSourceURL("https://user:pass@example.com/rule")) // trufflehog:ignore
 	require.Error(t, ValidateSourceURL("https:///missing-host"))
 	require.Error(t, ValidateSourceURL("ftp://example.com/rule"))
 	require.Error(t, ValidateSourceURL(strings.Repeat("a", MaxSourceURLLength+1)))

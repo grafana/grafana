@@ -2706,7 +2706,7 @@ func TestIntegrationProvisioningSourceURL(t *testing.T) {
 	t.Run("rejects javascript and userinfo", func(t *testing.T) {
 		sut := createProvisioningSrvSut(t)
 		rc := createTestRequestCtx()
-		for _, raw := range []string{"javascript:alert(1)", "https://user:pass@example.com/rule"} {
+		for _, raw := range []string{"javascript:alert(1)", "https://user:pass@example.com/rule"} { // trufflehog:ignore
 			rule := createTestAlertRule("rejected-"+raw[:4], 1)
 			rule.SourceURL = raw
 			response := sut.RoutePostAlertRule(&rc, rule)
