@@ -228,6 +228,7 @@ export function DashboardSchemaEditor({
               value={displayValue}
               language={format}
               extensions={extensions}
+              overviewRuler
               readOnly={readOnly || Boolean(schemaLoadError)}
               aria-label={t('dashboard-schema-editor.editor-label', 'Dashboard schema')}
               onChange={handleChange}
