@@ -37,6 +37,7 @@ func TestLoadingSettings(t *testing.T) {
 		require.Equal(t, "admin", cfg.AdminUser)
 		require.Equal(t, "", cfg.RendererCallbackUrl)
 		require.Equal(t, "TLS1.2", cfg.MinTLSVersion)
+		require.Contains(t, cfg.AWSForwardSettingsPlugins, "yesoreyeram-infinity-datasource")
 	})
 
 	t.Run("default.ini should have no semi-colon commented entries", func(t *testing.T) {
