@@ -20,6 +20,7 @@ const NAV_ORDER = [
   'notebooks',
   'explore',
   'drilldown',
+  'slideshows',
   'assistant',
   'sigil',
   'alerting',

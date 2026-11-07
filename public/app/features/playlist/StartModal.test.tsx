@@ -34,7 +34,9 @@ const mockPlaylist: Playlist = {
 };
 
 function setup() {
-  return render(<StartModal playlist={mockPlaylist} onDismiss={jest.fn()} />);
+  return render(
+    <StartModal title={mockPlaylist.spec.title} startUrl="/playlists/play/test-playlist-uid" onDismiss={jest.fn()} />
+  );
 }
 
 describe('StartModal', () => {
@@ -76,6 +78,13 @@ describe('StartModal', () => {
       await user.click(screen.getByRole('radio', { name: /kiosk/i }));
       await user.click(screen.getByRole('button', { name: /start/i }));
       expect(locationService.push).toHaveBeenCalledWith(expect.not.stringContaining('hideLogo'));
+    });
+
+    it('starts at the url it was given, with the chosen options', async () => {
+      const { user } = setup();
+      await user.click(screen.getByRole('radio', { name: /kiosk/i }));
+      await user.click(screen.getByRole('button', { name: /start/i }));
+      expect(locationService.push).toHaveBeenCalledWith('/playlists/play/test-playlist-uid?kiosk=true');
     });
   });
 });

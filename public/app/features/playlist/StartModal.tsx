@@ -6,16 +6,17 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
-import { type Playlist } from '../../api/clients/playlist/v1';
-
 import { type PlaylistMode } from './types';
 
 export interface Props {
-  playlist: Playlist;
+  /** Name shown on the start button. */
+  title: string;
+  /** In-app path of the page that starts playback. The chosen display options are added to it. */
+  startUrl: string;
   onDismiss: () => void;
 }
 
-export const StartModal = ({ playlist, onDismiss }: Props) => {
+export const StartModal = ({ title, startUrl, onDismiss }: Props) => {
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
@@ -55,7 +56,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
       params['_dash.hidePlaylistNav'] = true;
     }
 
-    locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.metadata?.name}`, params));
+    locationService.push(urlUtil.renderUrl(startUrl, params));
     reportInteraction('grafana_kiosk_mode', {
       action: 'start_playlist',
       mode: mode,
@@ -153,7 +154,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
       </FieldSet>
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onStart}>
-          <Trans i18nKey="playlist.start-modal.button-start" values={{ title: playlist.spec?.title }}>
+          <Trans i18nKey="playlist.start-modal.button-start" values={{ title }}>
             Start {'{{title}}'}
           </Trans>
         </Button>

@@ -1,8 +1,9 @@
 import { type Location } from 'history';
 import { pickBy } from 'lodash';
 
+import { type Slideshow } from '@grafana/api-clients/rtkq/collections/v1alpha1';
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { getPlaylistItemKind, locationService } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
@@ -20,17 +21,50 @@ const queryParamsToPreserve: { [key: string]: boolean } = {
   '_dash.hidePlaylistNav': true,
 };
 
+const MAX_TIMER_MS = 2 ** 31 - 1;
+
+// The interval in milliseconds, or undefined when it cannot drive a timer: unreadable, zero or
+// negative, or longer than a browser timer can hold (it would run after one millisecond).
+function usableIntervalMs(interval: string): number | undefined {
+  try {
+    const ms = rangeUtil.intervalToMs(interval);
+    return Number.isFinite(ms) && ms > 0 && ms <= MAX_TIMER_MS ? ms : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export interface PlaylistSrvState {
   isPlaying: boolean;
 }
 
+/** An item ready to play: an in-app url and how long to stay on it, when it differs from the default. */
+interface PlayableItem {
+  url: string;
+  interval?: string;
+}
+
+type SlideshowToPlay = { spec: Pick<Slideshow['spec'], 'interval' | 'items'> };
+
 export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   private nextTimeoutId: ReturnType<typeof setTimeout> | undefined;
-  private urls: string[] = []; // the URLs we need to load
+  private items: PlayableItem[] = []; // the items we need to load
   private index = 0;
   declare private interval: number;
+  // Kiosk and display options as they were last seen on a page the player opened. A page that
+  // redirects itself can drop them from the location, so the next item reads them from here
+  // instead; changes the viewer makes on the page (such as leaving kiosk) update them.
+  private preservedParams: Record<string, unknown> = {};
+  // The kept params on the page as last seen, to tell what the viewer changed from what a page
+  // does to its own url.
+  private seenParams: Record<string, unknown> = {};
+  // Whether the page of the current item has already redirected itself.
+  private redirected = false;
   declare private startUrl: string;
   private numberOfLoops = 0;
+  // Changes on every begin and stop, so a start that was waiting on item lookups can tell that it
+  // was stopped or replaced in the meantime.
+  private session = 0;
   declare private validPlaylistUrl: string;
   private locationListenerUnsub?: () => void;
 
@@ -41,16 +75,21 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   }
 
   private navigateToDashboard(replaceHistoryEntry = false) {
-    const url = this.urls[this.index];
-    const queryParams = locationService.getSearchObject();
-    const filteredParams = pickBy(queryParams, (value: unknown, key: string) => queryParamsToPreserve[key]);
-    const nextDashboardUrl = locationUtil.stripBaseFromUrl(url);
+    const item = this.items[this.index];
+    const nextDashboardUrl = locationUtil.stripBaseFromUrl(item.url);
+
+    // A resolved url can carry a query of its own, which the kept params are merged into. The
+    // location is matched on the path alone.
+    const [path, ownQuery = ''] = nextDashboardUrl.split('?');
 
     this.index++;
-    this.validPlaylistUrl = nextDashboardUrl;
-    this.nextTimeoutId = setTimeout(() => this.next(), this.interval);
+    this.validPlaylistUrl = path;
+    this.redirected = false;
+    this.seenParams = { ...this.preservedParams };
+    this.nextTimeoutId = setTimeout(() => this.next(), this.intervalFor(item));
 
-    const urlWithParams = nextDashboardUrl + '?' + urlUtil.toUrlParams(filteredParams);
+    const urlWithParams =
+      path + '?' + urlUtil.toUrlParams({ ...urlUtil.parseKeyValue(ownQuery), ...this.preservedParams });
 
     // When starting the playlist from the PlaylistStartPage component using the playlist URL, we want to replace the
     // history entry to support the back button
@@ -62,10 +101,24 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     }
   }
 
+  // The item's own interval when it has a usable one. The playlist API accepts any string, so an
+  // unusable value must not stop the playlist from playing.
+  private intervalFor(item: PlayableItem): number {
+    if (!item.interval) {
+      return this.interval;
+    }
+    const ms = usableIntervalMs(item.interval);
+    if (ms === undefined) {
+      console.warn(`Ignoring playlist item interval "${item.interval}", using the playlist interval`);
+      return this.interval;
+    }
+    return ms;
+  }
+
   next() {
     clearTimeout(this.nextTimeoutId);
 
-    const playedAllDashboards = this.index > this.urls.length - 1;
+    const playedAllDashboards = this.index > this.items.length - 1;
     if (playedAllDashboards) {
       this.numberOfLoops++;
 
@@ -87,55 +140,132 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   }
 
   // Detect url changes not caused by playlist srv and stop playlist
-  locationUpdated(location: Location) {
-    if (location.pathname !== this.validPlaylistUrl) {
-      this.stop();
+  locationUpdated(location: Location, action?: string) {
+    if (location.pathname === this.validPlaylistUrl) {
+      // Same page: carry over only the options whose value changed, such as the viewer leaving
+      // kiosk. A page syncing other params into its url must not wipe options it never had.
+      const current = this.pickPreserved();
+      for (const key of Object.keys(queryParamsToPreserve)) {
+        if (String(current[key]) === String(this.seenParams[key])) {
+          continue;
+        }
+        if (key in current) {
+          this.preservedParams[key] = current[key];
+        } else {
+          delete this.preservedParams[key];
+        }
+      }
+      this.seenParams = current;
+      return;
     }
+
+    // A page that corrects its own url does so once, with a replace, right after we opened it.
+    // Anything else, such as a click, pushes a new entry or moves again and ends the playlist.
+    if (action === 'REPLACE' && !this.redirected) {
+      this.redirected = true;
+      this.validPlaylistUrl = location.pathname;
+      // What the redirect dropped is not something the viewer chose.
+      this.seenParams = this.pickPreserved();
+      return;
+    }
+
+    this.stop();
   }
 
+  /** Plays a dashboard playlist. */
   async start(playlist: Playlist) {
+    if (!playlist.spec?.items?.length) {
+      this.stop();
+      return;
+    }
+
+    const session = this.begin();
+    const items: PlayableItem[] = [];
+    for (const item of await loadDashboards(playlist.spec.items)) {
+      for (const dash of item.dashboards ?? []) {
+        items.push({ url: dash.url, interval: item.interval });
+      }
+    }
+
+    if (session !== this.session) {
+      return;
+    }
+    this.play(items, playlist.spec.interval);
+  }
+
+  /**
+   * Plays a slideshow. Items whose kind is not registered, that no longer exist, or that the
+   * viewer cannot open are left out.
+   */
+  async startSlideshow(slideshow: SlideshowToPlay) {
+    const session = this.begin();
+
+    const resolved = await Promise.all(
+      (slideshow.spec.items ?? []).map(async (item): Promise<PlayableItem | undefined> => {
+        const kind = getPlaylistItemKind(item.group, item.resource);
+        if (!kind) {
+          return undefined;
+        }
+        try {
+          const found = await kind.resolve(item.name);
+          return found ? { url: found.url, interval: item.interval } : undefined;
+        } catch (err) {
+          console.warn(`Could not resolve slideshow item ${item.group}/${item.resource}/${item.name}`, err);
+          return undefined;
+        }
+      })
+    );
+
+    if (session !== this.session) {
+      return;
+    }
+    this.play(
+      resolved.filter((item) => item !== undefined),
+      slideshow.spec.interval
+    );
+  }
+
+  private pickPreserved() {
+    return pickBy(locationService.getSearchObject(), (value: unknown, key: string) => queryParamsToPreserve[key]);
+  }
+
+  private begin(): number {
     this.stop();
 
     this.startUrl = window.location.href;
     this.index = 0;
+    this.preservedParams = this.pickPreserved();
 
     this.setState({ isPlaying: true });
 
     // setup location tracking
     this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
-    const urls: string[] = [];
+    return ++this.session;
+  }
 
-    if (!playlist.spec?.items?.length) {
-      // alert
-      return;
-    }
-
-    this.interval = rangeUtil.intervalToMs(playlist.spec?.interval);
-
-    const items = await loadDashboards(playlist.spec?.items);
-    for (const item of items) {
-      if (item.dashboards) {
-        for (const dash of item.dashboards) {
-          urls.push(dash.url);
-        }
-      }
-    }
-
-    if (!urls.length) {
+  private play(items: PlayableItem[], interval: string) {
+    if (!items.length) {
       // alert... not found, etc
+      this.stop();
       return;
     }
 
-    this.urls = urls;
-    this.setState({ isPlaying: true });
+    const ms = usableIntervalMs(interval);
+    if (ms === undefined) {
+      console.warn(`Cannot play with the interval "${interval}"`);
+      this.stop();
+      return;
+    }
+    this.interval = ms;
+    this.items = items;
 
     // Replace current history entry with first dashboard instead of pushing
     // this is to avoid the back button to go back to the playlist start page which causes a redirection
     this.navigateToDashboard(true);
-    return;
   }
 
   stop() {
+    this.session++;
     if (!this.state.isPlaying) {
       return;
     }
