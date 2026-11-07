@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
@@ -41,7 +42,11 @@ export function PanelDescription({ description, className, inSubHeader }: Props)
 
   return description !== '' ? (
     <Tooltip interactive content={getDescriptionContent}>
-      <TitleItem className={cx(className, styles.description)}>
+      <TitleItem
+        className={cx(className, styles.description)}
+        aria-label={t('panel-description.more-information', 'More information')}
+        role="button"
+      >
         <Icon name="info-circle" size="md" />
       </TitleItem>
     </Tooltip>
