@@ -143,6 +143,23 @@ describe('QuickAdd', () => {
     expect(screen.getByRole('menuitem', { name: 'New import' })).toBeInTheDocument();
   });
 
+  it('keeps only Import dashboard from the dashboard group on mobile when mobileEditDeprecation is enabled', async () => {
+    setTestFlags({ 'grafana.mobileEditDeprecation': true, 'grafana.customDashboardTemplates': false });
+    jest.spyOn(window, 'matchMedia').mockImplementation(
+      () =>
+        ({
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+          matches: false,
+        }) as unknown as MediaQueryList
+    );
+    setup();
+    await userEvent.click(screen.getByRole('button', { name: 'New' }));
+    expect(screen.queryByRole('menuitem', { name: 'New dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'New alert rule' })).toBeInTheDocument();
+  });
+
   it('reports interaction when a menu item is clicked', async () => {
     const errorSpy = jest.spyOn(console, 'error').mockImplementation();
     setup();
