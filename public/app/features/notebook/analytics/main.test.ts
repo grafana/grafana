@@ -10,6 +10,37 @@ import { defaultVisualizationPanelKind } from '../types';
 
 import { NotebookAnalytics } from './main';
 
+describe('app capture attribution', () => {
+  beforeEach(() => setEchoSrv(new Echo()));
+
+  it.each([
+    ['grafana_notebook_add_to_notebook_opened', () => NotebookAnalytics.addToNotebookOpened('plugin', 'agent_o11y')],
+    ['grafana_notebook_created', () => NotebookAnalytics.created('nb-1', 'plugin', 1, undefined, true, 'agent_o11y')],
+    [
+      'grafana_notebook_cell_added_from_add_to_notebook',
+      () => NotebookAnalytics.cellAddedFromAddToNotebook('nb-1', 'plugin', 0, undefined, true, 'agent_o11y'),
+    ],
+    [
+      'grafana_notebook_add_to_notebook_failed',
+      () => NotebookAnalytics.addToNotebookFailed('nb-1', 'plugin', 'existing', 'write_failed', false, 'agent_o11y'),
+    ],
+  ] as const)('includes the same source app in %s', (name, emit) => {
+    const captured: unknown[] = [];
+    const stop = onInteraction(name, (properties) => captured.push(properties));
+    emit();
+    stop();
+    expect(captured).toEqual([expect.objectContaining({ source: 'plugin', source_app: 'agent_o11y' })]);
+  });
+
+  it('leaves existing non-plugin analytics unchanged', () => {
+    const captured: unknown[] = [];
+    const stop = onInteraction('grafana_notebook_created', (properties) => captured.push(properties));
+    NotebookAnalytics.created('nb-1', 'explore', 1);
+    stop();
+    expect(captured[0]).not.toHaveProperty('source_app');
+  });
+});
+
 function notebookScene(): NotebookScene {
   const cell = new NotebookCellItem({
     elementName: 'intro',

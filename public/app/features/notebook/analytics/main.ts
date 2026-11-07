@@ -6,12 +6,14 @@ import { type NotebookBlockType } from '../scene/layout-notebook/edit/NotebookBl
 import { type PanelElement } from '../types';
 import { isNotebookEditUrl } from '../urls';
 
+import { type NotebookSourceApp } from './captureSource';
 import { readAddedPanelShape, readNotebookShape } from './shape';
 import {
   NOTEBOOK_ADDED_CELL_TYPE,
   NOTEBOOK_ADD_TARGET,
   type NotebookAddFailedProperties,
   type NotebookAddFailedReason,
+  type NotebookAddOpenedProperties,
   type NotebookAddTarget,
   type NotebookAutosaveConflictResolution,
   type NotebookAutosaveConflictResolvedProperties,
@@ -74,6 +76,7 @@ const createEditSessionEndedEvent = createNotebookEvent<NotebookEditSessionEnded
 
 /** Fired the moment a notebook first exists: autosave's first write, or the add-panel modal's create route. */
 const createCreatedEvent = createNotebookEvent<NotebookCreatedProperties>('created');
+const createAddOpenedEvent = createNotebookEvent<NotebookAddOpenedProperties>('add_to_notebook_opened');
 
 /** Fired once a delete has actually landed, from either the list row menu or the notebook's own toolbar. */
 const createDeletedEvent = createNotebookEvent<NotebookDeletedProperties>('deleted');
@@ -152,6 +155,9 @@ function addedPanelProperties({ panel, isLibraryPanel }: AddedPanel) {
  * turn a scene into what each event sends, here and once, instead of at every place that fires one.
  */
 export const NotebookAnalytics = {
+  addToNotebookOpened(source: NotebookEntryPoint, sourceApp?: NotebookSourceApp): void {
+    createAddOpenedEvent({ source, ...(sourceApp && { source_app: sourceApp }) });
+  },
   loaded(scene: NotebookScene, wasCached: boolean, embedded: boolean, source: NotebookLoadSource): void {
     createLoadedEvent({
       // Both call sites only reach this with a scene that already has a uid, so the fallback here is
@@ -195,11 +201,13 @@ export const NotebookAnalytics = {
     source: NotebookEntryPoint,
     cellCount: number,
     addedPanel?: AddedPanel,
-    lockTimeRange?: boolean
+    lockTimeRange?: boolean,
+    sourceApp?: NotebookSourceApp
   ): void {
     createCreatedEvent({
       notebookUid,
       source,
+      ...(sourceApp && { source_app: sourceApp }),
       cellCount,
       ...(lockTimeRange === undefined ? {} : { target: NOTEBOOK_ADD_TARGET.NEW, lockTimeRange }),
       // The blank notebook route sends none of these. It creates from whatever cells exist by its
@@ -242,11 +250,13 @@ export const NotebookAnalytics = {
     source: NotebookEntryPoint,
     position: number,
     addedPanel: AddedPanel | undefined,
-    lockTimeRange: boolean
+    lockTimeRange: boolean,
+    sourceApp?: NotebookSourceApp
   ): void {
     createCellAddedFromAddToNotebookEvent({
       notebookUid,
       source,
+      ...(sourceApp && { source_app: sourceApp }),
       position,
       target: NOTEBOOK_ADD_TARGET.EXISTING,
       lockTimeRange,
@@ -260,9 +270,17 @@ export const NotebookAnalytics = {
     source: NotebookEntryPoint,
     target: NotebookAddTarget,
     reason: NotebookAddFailedReason,
-    lockTimeRange: boolean
+    lockTimeRange: boolean,
+    sourceApp?: NotebookSourceApp
   ): void {
-    createAddFailedEvent({ notebookUid, source, target, reason, lockTimeRange });
+    createAddFailedEvent({
+      notebookUid,
+      source,
+      target,
+      reason,
+      lockTimeRange,
+      ...(sourceApp && { source_app: sourceApp }),
+    });
   },
 
   blockInserted(notebookUid: string, blockType: NotebookBlockType, via: NotebookBlockInsertVia): void {
