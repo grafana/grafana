@@ -67,7 +67,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 jest.mock('app/features/scopes/ScopesContextProvider', () => ({
-  ...jest.requireActual('app/features/scopes/ScopesContextProvider'),
   useScopesServices: jest.fn(() => ({ scopesDashboardsService: { toggleDrawer: jest.fn() } })),
 }));
 

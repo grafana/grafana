@@ -1,12 +1,11 @@
+import { act, render } from '@testing-library/react';
 import { type ReactElement } from 'react';
-import { act, render } from 'test/test-utils';
 
 import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { FinishedJobStatus } from './FinishedJobStatus';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
   useGetRepositoryJobsWithPathQuery: jest.fn(),
 }));
 

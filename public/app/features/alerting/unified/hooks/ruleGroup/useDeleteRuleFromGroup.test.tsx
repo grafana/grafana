@@ -1,11 +1,16 @@
+import { configureStore } from '@reduxjs/toolkit';
+import { render as rtlRender } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { HttpResponse } from 'msw';
-import { render } from 'test/test-utils';
+import { type ReactElement } from 'react';
+import { Provider } from 'react-redux';
 import { byRole, byText } from 'testing-library-selector';
 
 import server from '@grafana/test-utils/server';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRule } from 'app/types/unified-alerting';
 
+import { alertingApi } from '../../api/alertingApi';
 import { setupMswServer } from '../../mockApi';
 import {
   grantUserPermissions,
@@ -30,6 +35,20 @@ setupMswServer();
 beforeAll(() => {
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleRead]);
 });
+
+function render(ui: ReactElement) {
+  const store = configureStore({
+    reducer: { [alertingApi.reducerPath]: alertingApi.reducer },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }).concat(alertingApi.middleware),
+  });
+  const user = userEvent.setup();
+
+  return {
+    ...rtlRender(ui, { wrapper: ({ children }) => <Provider store={store}>{children}</Provider> }),
+    user,
+  };
+}
 
 describe('delete rule', () => {
   it('should be able to delete a Grafana managed rule', async () => {

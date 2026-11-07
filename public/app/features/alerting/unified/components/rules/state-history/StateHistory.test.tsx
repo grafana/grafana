@@ -1,13 +1,34 @@
+import { configureStore } from '@reduxjs/toolkit';
+import { render as rtlRender, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { type ReactElement } from 'react';
+import { Provider } from 'react-redux';
 
 import { AlertState } from '@grafana/data';
-import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { configureStore } from 'app/store/configureStore';
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
+
+import unifiedAlertingReducer from '../../../state/reducers';
 
 import StateHistory, { groupStateByLabels, matchKey } from './StateHistory';
 
-const server = setupMswServer();
+const server = setupMockServer();
+
+beforeAll(() => {
+  setBackendSrv(backendSrv);
+});
+
+function createStore() {
+  return configureStore({
+    reducer: { unifiedAlerting: unifiedAlertingReducer },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }),
+  });
+}
+
+function render(ui: ReactElement, { store = createStore() } = {}) {
+  return rtlRender(ui, { wrapper: ({ children }) => <Provider store={store}>{children}</Provider> });
+}
 
 describe('StateHistory', () => {
   it.each(['switching rules', 'reopening for another rule'])(
@@ -19,7 +40,7 @@ describe('StateHistory', () => {
           return HttpResponse.json({ message: `History unavailable for ${ruleUID}` }, { status: 500 });
         })
       );
-      const store = configureStore();
+      const store = createStore();
       let view = render(<StateHistory ruleUID="first-rule" />, { store });
       expect(await screen.findByRole('alert')).toHaveTextContent('History unavailable for first-rule');
 
@@ -52,7 +73,7 @@ describe('StateHistory', () => {
           ])
         )
       );
-      const store = configureStore();
+      const store = createStore();
       let view = render(<StateHistory ruleUID="first-rule" />, { store });
       expect(await screen.findByText('History for first-rule')).toBeInTheDocument();
 

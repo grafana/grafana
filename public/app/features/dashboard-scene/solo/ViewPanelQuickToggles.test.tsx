@@ -1,9 +1,12 @@
-import { act, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render } from 'test/test-utils';
+import { createMemoryHistory } from 'history';
+// eslint-disable-next-line no-restricted-imports
+import { Router } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { HistoryWrapper, setLocationService, setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 
 import { changeViewPanelOptions, changeViewPanelFieldConfig } from '../actions/panel/changeViewPanelOptions';
@@ -55,7 +58,15 @@ function setup(isEditing = true) {
     body: new AutoGridLayoutManager({ layout: new AutoGridLayout({ children: [new AutoGridItem({ body: panel })] }) }),
   });
   deactivate = activateFullSceneTree(dashboard);
-  render(<ViewPanelQuickToggles panel={panel} plugin={plugin} />);
+  const locationService = new HistoryWrapper(createMemoryHistory());
+  setLocationService(locationService);
+  render(
+    <Router history={locationService.getHistory()}>
+      <CompatRouter>
+        <ViewPanelQuickToggles panel={panel} plugin={plugin} />
+      </CompatRouter>
+    </Router>
+  );
   return { panel, dashboard, sidebar: dashboard.state.sidebar, user: userEvent.setup() };
 }
 

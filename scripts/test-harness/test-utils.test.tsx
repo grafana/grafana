@@ -5,7 +5,7 @@ import { Provider, useStore } from 'react-redux';
 // eslint-disable-next-line no-restricted-imports
 import { MemoryRouter, useLocation as useLegacyLocation } from 'react-router-dom';
 import { useLocation } from 'react-router-dom-v5-compat';
-import { act, getConfig, getWrapper, render, renderHook, screen, waitFor } from 'test/test-utils';
+import { act, cleanup, getConfig, getWrapper, render, renderHook, screen, waitFor } from 'test/test-utils';
 
 import { config, locationService, useChromeHeaderHeight, useLocationService } from '@grafana/runtime';
 import { testWithFlags } from '@grafana/test-utils/feature-flags';
@@ -15,6 +15,11 @@ import { appNotificationsReducer, readAllNotifications } from 'app/core/reducers
 import * as storeModule from 'app/store/configureStore';
 import * as appStore from 'app/store/store';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
+
+// Harness-only roots do not discover the source suites' manual mock.
+jest.mock('uwrap', () => jest.requireActual('../../packages/grafana-ui/src/components/Table/TableNG/__mocks__/uwrap'), {
+  virtual: true,
+});
 
 function customStore() {
   // The probe only reads notifications; use a real reducer without the application's other slices.
@@ -120,6 +125,8 @@ it('honors an explicit wrapper without creating the application providers or sto
 });
 
 describe('getWrapper providers', () => {
+  // Unmount flag subscribers before testWithFlags resets the provider in its inner afterEach.
+  afterEach(cleanup);
   testWithFlags({ 'test-utils-provider': true });
 
   it('shares a custom store, routing history, context overrides, modals, and feature flags', async () => {

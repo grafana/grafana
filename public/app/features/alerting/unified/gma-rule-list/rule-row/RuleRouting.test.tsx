@@ -1,8 +1,20 @@
-import { render, screen } from 'test/test-utils';
+import { render as rtlRender, screen } from '@testing-library/react';
+import { type ReactElement } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { MemoryRouter } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { type AlertRuleSearchHit } from '../alert-rules/alertRuleSearchHit';
 
 import { RuleRouting } from './RuleRouting';
+
+function render(ui: ReactElement) {
+  return rtlRender(
+    <MemoryRouter>
+      <CompatRouter>{ui}</CompatRouter>
+    </MemoryRouter>
+  );
+}
 
 function baseHit(overrides: Partial<AlertRuleSearchHit> = {}): AlertRuleSearchHit {
   return { uid: 'rule-1', title: 'CPU high', ...overrides };

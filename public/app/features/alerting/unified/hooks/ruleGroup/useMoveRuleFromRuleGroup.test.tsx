@@ -1,5 +1,9 @@
+import { configureStore } from '@reduxjs/toolkit';
+import { render as rtlRender } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { produce } from 'immer';
-import { render } from 'test/test-utils';
+import { type ReactElement } from 'react';
+import { Provider } from 'react-redux';
 import { byRole, byText } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types/accessControl';
@@ -10,6 +14,7 @@ import {
 } from 'app/types/unified-alerting';
 import { type PostableRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { alertingApi } from '../../api/alertingApi';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import {
@@ -38,6 +43,20 @@ beforeAll(() => {
     AccessControlAction.AlertingRuleCreate,
   ]);
 });
+
+function render(ui: ReactElement) {
+  const store = configureStore({
+    reducer: { [alertingApi.reducerPath]: alertingApi.reducer },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }).concat(alertingApi.middleware),
+  });
+  const user = userEvent.setup();
+
+  return {
+    ...rtlRender(ui, { wrapper: ({ children }) => <Provider store={store}>{children}</Provider> }),
+    user,
+  };
+}
 
 describe('Moving a Grafana managed rule', () => {
   it('should move a rule from an existing group to another group in the same namespace', async () => {

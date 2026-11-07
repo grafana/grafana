@@ -1,11 +1,13 @@
-import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
@@ -84,7 +86,11 @@ async function buildScene({
     expect(panel.getPlugin()?.panelInteractions?.interactions).toHaveLength(1);
   });
 
-  render(<PanelAdHocChangesAction panel={panel} />);
+  render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <PanelAdHocChangesAction panel={panel} />
+    </OpenFeatureProvider>
+  );
 
   return { panel, dashboard };
 }

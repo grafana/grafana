@@ -1,5 +1,8 @@
 # Shard 1 profile audit
 
+This document records the original audit and implementation.
+The [import-cost follow-up](SHARD1-IMPORT-COST-AUDIT.md) reverses the lazy renderer split and measures actual dependency reductions.
+
 ## Source and scope
 
 The report is `summary.json`, supplied from the benchmark machine.
@@ -182,6 +185,9 @@ This batch does not replace schemas with proxies or weaken validation.
 
 ### 2. Separate lightweight test exports from the application renderer
 
+**Superseded:** The follow-up restores eager renderer imports because this split mainly moved work into test bodies.
+The following paragraphs describe the original experiment, not the current implementation.
+
 `public/test/test-utils.tsx` previously loaded the renderer, runtime, and store graph for every consumer.
 The store imports application reducers and RTK Query clients.
 Supplying a custom store did not avoid that module evaluation.
@@ -338,7 +344,7 @@ Run the manual regression suites:
 node node_modules/jest/bin/jest.js --config jest.harness.config.js --no-watch --runInBand --runTestsByPath \
   scripts/test-harness/theme-registry.test.ts \
   scripts/test-harness/test-utils.test.tsx \
-  scripts/test-harness/test-utils-lazy-renderer.test.tsx \
+  scripts/test-harness/test-utils-initialization.test.tsx \
   scripts/test-harness/regressions/lazySetup.test.ts \
   scripts/test-harness/regressions/reactSetup.test.tsx
 ```
