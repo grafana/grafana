@@ -7,8 +7,11 @@ import "github.com/grafana/grafana-plugin-sdk-go/data"
 // Query state history.
 //
 // Allows to query alerting state history.
-// In addition to defined query parameters it accepts filter by labels. The query parameter name must start with 'labels_'
-//   Example: /v1/rules/history?labels_myKey1=myValue1&labels_myKey2=myValue2
+// In addition to defined query parameters it accepts filter by labels. The query parameter name must start with 'labels_'.
+// Equality (default): pass the label value only, e.g. labels_severity=critical maps to severity="critical".
+// Other operators: the query value must start with the operator and Prometheus matcher operand, e.g.
+// labels_severity!="critical", labels_severity=~"crit.*", labels_env!~"prod.*", labels_team="alerting".
+// Multiple label filters and the 'matchers' parameter can be combined.
 //
 //     Produces:
 //     - application/json
