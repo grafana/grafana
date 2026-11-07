@@ -15,7 +15,7 @@ GOTOOLCHAIN=$(cd "${SCRIPT_ROOT}" && go env GOVERSION)
 export GOTOOLCHAIN
 
 pushd "${SCRIPT_ROOT}/hack" && GO111MODULE=on go mod tidy && popd
-CODEGEN_PKG=${CODEGEN_PKG:-$(cd "${SCRIPT_ROOT}"; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo $(go env GOPATH)/pkg/mod/k8s.io/code-generator@v0.37.0)}
+CODEGEN_PKG=${CODEGEN_PKG:-$(cd "${SCRIPT_ROOT}"; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo $(go env GOPATH)/pkg/mod/k8s.io/code-generator@v0.37.2)}
 
 OUTDIR="${HOME}/go/src"
 OPENAPI_VIOLATION_EXCEPTIONS_FILENAME="zz_generated.openapi_violation_exceptions.list"
