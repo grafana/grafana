@@ -27,14 +27,6 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
     opacity: hovering === 'inactive' ? 0.5 : 1,
   }),
 
-  mainCircle: css({
-    fill: theme.components.panel.background,
-  }),
-
-  filledCircle: css({
-    fill: highlightedNodeColor,
-  }),
-
   hoverCircle: css({
     opacity: 0.5,
     fill: 'transparent',
@@ -91,6 +83,9 @@ export const Node = memo(function Node(props: {
   const styles = getStyles(theme, hovering);
   const isHovered = hovering === 'active';
   const nodeRadius = node.nodeRadius?.values[node.dataFrameRowIndex] || nodeR;
+  const highlightColor =
+    (node.highlightColor?.values && getColor(node.highlightColor, node.dataFrameRowIndex, theme)) ||
+    highlightedNodeColor;
   const strokeWidth = computeNodeCircumferenceStrokeWidth(nodeRadius);
 
   if (!(node.x !== undefined && node.y !== undefined)) {
@@ -105,7 +100,7 @@ export const Node = memo(function Node(props: {
     >
       <circle
         data-testid={`node-circle-${node.id}`}
-        className={node.highlighted ? styles.filledCircle : styles.mainCircle}
+        fill={node.highlighted ? highlightColor : theme.components.panel.background}
         r={nodeRadius}
         cx={node.x}
         cy={node.y}

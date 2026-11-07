@@ -63,7 +63,11 @@ describe('Node', () => {
     render(
       <svg>
         <Node
-          node={{ ...nodeDatum, highlighted: true }}
+          node={{
+            ...nodeDatum,
+            highlighted: true,
+            highlightColor: { name: 'highlightColor', values: ['#0f0'], type: FieldType.string, config: {} },
+          }}
           onMouseEnter={() => {}}
           onMouseLeave={() => {}}
           onClick={() => {}}
@@ -72,7 +76,7 @@ describe('Node', () => {
       </svg>
     );
 
-    expect(screen.getByTestId('node-circle-1')).toHaveStyle({ fill: '#a00' });
+    expect(screen.getByTestId('node-circle-1')).toHaveAttribute('fill', '#0f0');
   });
 
   it('strokes the hover ring with the accent colour', () => {
