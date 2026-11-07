@@ -98,6 +98,7 @@
     "@axe-core/playwright": "^4.11.1",
     "@bsull/augurs": "^0.10.0",
     "@codemirror/autocomplete": "6.20.3",
+    "@codemirror/commands": "6.10.3",
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-sql": "6.10.0",
     "@emotion/eslint-plugin": "11.12.0",
