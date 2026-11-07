@@ -36,3 +36,18 @@ func NewSourceURLPointer(raw string, provenance Provenance) (*string, error) {
 	value := raw
 	return &value, nil
 }
+
+// SourceURLFromAnnotation maps grafana.app/sourcePath onto the write-intent pointer.
+// An empty path is not a write. A path whose scheme is not http or https is not a
+// write either, because that annotation is also a repository file path. An http or
+// https value is validated, including the requirement that the rule is provisioned.
+func SourceURLFromAnnotation(path string, provenance Provenance) (*string, error) {
+	if path == "" {
+		return nil, nil
+	}
+	parsed, err := url.Parse(path)
+	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+		return nil, nil
+	}
+	return NewSourceURLPointer(path, provenance)
+}

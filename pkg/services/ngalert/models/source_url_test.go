@@ -37,6 +37,34 @@ func TestNewSourceURLPointer(t *testing.T) {
 	require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
 }
 
+func TestSourceURLFromAnnotation(t *testing.T) {
+	ptr, err := SourceURLFromAnnotation("", ProvenanceAPI)
+	require.NoError(t, err)
+	require.Nil(t, ptr)
+
+	ptr, err = SourceURLFromAnnotation("alerts/rule.json", ProvenanceAPI)
+	require.NoError(t, err)
+	require.Nil(t, ptr)
+
+	ptr, err = SourceURLFromAnnotation("ftp://example.com/rule", ProvenanceAPI)
+	require.NoError(t, err)
+	require.Nil(t, ptr)
+
+	ptr, err = SourceURLFromAnnotation("https://example.com/alerts/rule.yaml", ProvenanceAPI)
+	require.NoError(t, err)
+	require.NotNil(t, ptr)
+	require.Equal(t, "https://example.com/alerts/rule.yaml", *ptr)
+
+	_, err = SourceURLFromAnnotation("https://example.com/alerts/rule.yaml", ProvenanceNone)
+	require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
+
+	_, err = SourceURLFromAnnotation("https://user:pass@example.com/rule", ProvenanceAPI) // trufflehog:ignore
+	require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
+
+	_, err = SourceURLFromAnnotation("https:///missing-host", ProvenanceAPI)
+	require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
+}
+
 func TestAlertRuleSourceURLDiffAndCopy(t *testing.T) {
 	sourceURL := "https://example.com/alerts/rule.yaml"
 	original := &AlertRule{UID: "rule", SourceURL: &sourceURL}

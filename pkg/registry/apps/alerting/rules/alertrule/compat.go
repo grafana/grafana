@@ -406,7 +406,7 @@ func setRuleSourceURL(rule *ngmodels.AlertRule, meta utils.GrafanaMetaAccessor, 
 	if props, ok := meta.GetSourceProperties(); ok {
 		path = props.Path
 	}
-	ptr, err := ngmodels.NewSourceURLPointer(path, provenance)
+	ptr, err := ngmodels.SourceURLFromAnnotation(path, provenance)
 	if err != nil {
 		return err
 	}

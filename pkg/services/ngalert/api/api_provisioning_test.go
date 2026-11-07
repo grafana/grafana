@@ -2703,6 +2703,31 @@ func TestIntegrationProvisioningSourceURL(t *testing.T) {
 		require.NotContains(t, string(exported.Body()), "sourceUrl")
 	})
 
+	t.Run("provisioning writer URL-only update does not rewrite the rule", func(t *testing.T) {
+		env := createTestEnv(t, testConfig)
+		env.prov = ngalertfakes.NewFakeProvisioningStore()
+		env.rulesAuthz.HasAccessFunc = func(context.Context, identity.Requester, accesscontrol.Evaluator) (bool, error) {
+			return true, nil
+		}
+		sut := createProvisioningSrvSutFromEnv(t, &env)
+		rc := createTestRequestCtx()
+		rule := createTestAlertRule("writer-clear-source-url", 1)
+		rule.SourceURL = sourceURL
+		created := sut.RoutePostAlertRule(&rc, rule)
+		require.Equal(t, http.StatusCreated, created.Status(), string(created.Body()))
+
+		got := deserializeRule(t, sut.RouteRouteGetAlertRule(&rc, rule.UID).Body())
+		version := got.Updated
+		got.SourceURL = ""
+		updated := sut.RoutePutAlertRule(&rc, got, rule.UID)
+		require.Equal(t, http.StatusOK, updated.Status(), string(updated.Body()))
+
+		cleared := sut.RouteRouteGetAlertRule(&rc, rule.UID)
+		require.Equal(t, http.StatusOK, cleared.Status())
+		require.NotContains(t, string(cleared.Body()), "sourceUrl")
+		require.Equal(t, version, deserializeRule(t, cleared.Body()).Updated, "a URL-only edit must not rewrite the rule")
+	})
+
 	t.Run("rejects javascript and userinfo", func(t *testing.T) {
 		sut := createProvisioningSrvSut(t)
 		rc := createTestRequestCtx()

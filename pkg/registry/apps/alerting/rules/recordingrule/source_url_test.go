@@ -34,6 +34,25 @@ func TestSourceURLRoundTrip(t *testing.T) {
 	require.NotContains(t, cleared.Annotations, utils.AnnoKeySourcePath)
 }
 
+func TestSourcePathWithoutURLDoesNotWrite(t *testing.T) {
+	mapper := nsMapperForTest()
+	rule := recordingRuleForSourceURLTest()
+	k8sRule, err := convertToK8sResource(rule.OrgID, rule, ngmodels.ProvenanceToManagerProperties(ngmodels.ProvenanceAPI), mapper)
+	require.NoError(t, err)
+
+	domain, _, err := convertToDomainModel(rule.OrgID, k8sRule)
+	require.NoError(t, err)
+	require.Nil(t, domain.SourceURL)
+
+	if k8sRule.Annotations == nil {
+		k8sRule.Annotations = map[string]string{}
+	}
+	k8sRule.Annotations[utils.AnnoKeySourcePath] = "alerts/rule.json"
+	domain, _, err = convertToDomainModel(rule.OrgID, k8sRule)
+	require.NoError(t, err)
+	require.Nil(t, domain.SourceURL)
+}
+
 func TestSourceURLRejectedWhenProvenanceNone(t *testing.T) {
 	mapper := nsMapperForTest()
 	rule := recordingRuleForSourceURLTest()

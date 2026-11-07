@@ -1066,6 +1066,16 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 			},
 		})
 	}
+	// Provisioning writers pass CanWriteAllRules, so they skip the empty-delta return above.
+	// A source URL is not part of the rule diff. Persist it without writing alert_rule.
+	// The ignored fields match the group delta, which also treats those as non-changes.
+	if len(storedRule.Diff(&rule, "ID", "Version", "Updated", "UpdatedBy", "FolderFullpath")) == 0 {
+		if err := service.persistSourceURL(ctx, rule.OrgID, &rule); err != nil {
+			return models.AlertRule{}, err
+		}
+		storedRule.SourceURL = rule.SourceURL
+		return *storedRule, nil
+	}
 	if rule.NotificationSettings != nil {
 		// The receivers are authorized, and then validated, against the same configuration. In that order so that who
 		// cannot use a receiver is not told whether it exists.
