@@ -16745,6 +16745,13 @@
       "state": "State"
     }
   },
+  "slideshows": {
+    "kinds": {
+      "dashboards": "Dashboards",
+      "notebooks": "Notebooks",
+      "pages": "Pages"
+    }
+  },
   "snapshot": {
     "empty-state": {
       "message": "You haven't created any snapshots yet",
