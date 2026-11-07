@@ -358,6 +358,9 @@ func parseRequestBody[V any](requestBody []byte, logger log.Logger) (*V, error) 
 		logger.Error("Failed to unmarshal request body to JSON", "error", err)
 		return nil, fmt.Errorf("unexpected error %v", err)
 	}
+	if requestJson == nil {
+		return nil, fmt.Errorf("request body must not be null")
+	}
 	return requestJson, nil
 }
 
