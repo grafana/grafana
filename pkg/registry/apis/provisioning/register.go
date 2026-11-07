@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -48,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -64,6 +66,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -172,6 +175,10 @@ type APIBuilder struct {
 	// handler on each notification; the controllers re-fetch from the API in their
 	// reconcile. Otherwise the controllers use the apiserver informer.
 	natsSubscriber nats.Subscriber
+
+	// bootstrapConfig is the read-only local repository registered from
+	// [provisioning] bootstrap_path, empty when none is configured.
+	bootstrapConfig bootstrap.Config
 
 	// keysOnlyReList makes the connection informer's periodic re-list ask storage
 	// for keys instead of whole objects. Off by default: it changes what the
@@ -354,10 +361,11 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	allowedTargets := make([]provisioning.SyncTargetType, 0, len(cfg.ProvisioningAllowedTargets))
-	for _, target := range cfg.ProvisioningAllowedTargets {
-		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
+	bootstrapConfig, err := bootstrapConfigFromSettings(cfg)
+	if err != nil {
+		return nil, err
 	}
+	allowedTargets := allowedSyncTargets(cfg.ProvisioningAllowedTargets, bootstrapConfig.Enabled())
 
 	supportedResources, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
 	if err != nil {
@@ -428,6 +436,9 @@ func RegisterAPIService(
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
 	builder.keysOnlyReList = keysOnlyReList
+	// Only the preferred version registers the bootstrap repository: it is the one that runs
+	// the post-start hook's controllers, and two of them would race on the same object.
+	builder.bootstrapConfig = bootstrapConfig
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -480,6 +491,46 @@ func RegisterAPIService(
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
 	return builder, nil
+}
+
+// allowedSyncTargets returns the sync targets a repository may be created with. An
+// instance-target repository can only exist where no other repository does, so a bootstrap
+// repository rules it out: dropping the target says so at admission and on the settings
+// endpoint, rather than leaving a caller to hit the existing-repository conflict.
+func allowedSyncTargets(configured []string, bootstrapEnabled bool) []provisioning.SyncTargetType {
+	targets := make([]provisioning.SyncTargetType, 0, len(configured))
+	for _, target := range configured {
+		if bootstrapEnabled && provisioning.SyncTargetType(target) == provisioning.SyncTargetTypeInstance {
+			continue
+		}
+		targets = append(targets, provisioning.SyncTargetType(target))
+	}
+	return targets
+}
+
+// bootstrapConfigFromSettings builds the bootstrap repository configuration from
+// [provisioning] bootstrap_path. A path set without the local repository type is a
+// configuration error: enabling the type here would widen what the instance accepts, and
+// ignoring the path would leave it unprovisioned.
+func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
+	// Single namespace: the parser rejects a manifest whose namespace is not the repository's.
+	namespace := request.GetNamespaceMapper(cfg)(cfg.DefaultOrgID())
+	if cfg.ProvisioningBootstrapPath == "" {
+		// Still reconcilable, so a repository a previous run registered can be stopped.
+		return bootstrap.Config{Namespace: namespace}, nil
+	}
+	if len(cfg.ProvisioningRepositoryTypes) > 0 &&
+		!slices.Contains(cfg.ProvisioningRepositoryTypes, string(provisioning.LocalRepositoryType)) {
+		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q repository type to be enabled", provisioning.LocalRepositoryType)
+	}
+	// Admission rejects a sync target that is not allowed, and the bootstrap repository always
+	// uses the same one, so a target it cannot use leaves the instance unprovisioned with
+	// nothing in the configuration to say why.
+	if !slices.Contains(cfg.ProvisioningAllowedTargets, string(bootstrap.SyncTarget)) {
+		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q sync target to be allowed", bootstrap.SyncTarget)
+	}
+
+	return bootstrap.Config{Path: cfg.ProvisioningBootstrapPath, Namespace: namespace}, nil
 }
 
 // TODO: Move specific endpoint authorization together with the rest of the logic.
@@ -1030,6 +1081,17 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// since the repository already passed admission validation when it was created/updated.
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
+
+			// Runs whether or not a path is configured: clearing bootstrap_path has to stop the
+			// repository a previous run registered, which costs one read on an instance that
+			// never used one. Never fatal: a rejected bootstrap repository must not keep the
+			// instance down.
+			if b.bootstrapConfig.Reconcilable() {
+				if err := bootstrap.Reconcile(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.bootstrapConfig); err != nil {
+					logging.FromContext(postStartHookCtx.Context).Error("failed to reconcile bootstrap repository",
+						"path", b.bootstrapConfig.Path, "namespace", b.bootstrapConfig.Namespace, "error", err)
+				}
+			}
 
 			// if running solely CRUD or not the preferred version, skip controllers/workers setup
 			if b.onlyApiServer || !b.isPreferredVersion {

@@ -13,6 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
@@ -357,6 +359,16 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 
 	logger = logger.With("namespace", namespace, "connection", name)
 	ctx = logging.Context(ctx, logger)
+
+	// The status patches and minted tokens below are writes, and a repository-managed
+	// connection only accepts them from the provisioning identity, as RepositoryController
+	// does for repositories.
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
+	if err != nil {
+		return err
+	}
+	ctx = request.WithNamespace(ctx, namespace)
+	logger = logger.WithContext(ctx)
 
 	// Skip if being deleted
 	if conn.DeletionTimestamp != nil {

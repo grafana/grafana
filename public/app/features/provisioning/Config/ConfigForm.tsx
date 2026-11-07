@@ -39,7 +39,7 @@ import { connectionTypesForProvider } from '../utils/connectionData';
 import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions, getRemoteConfig } from '../utils/git';
-import { isManagedResourceReadOnly } from '../utils/managedResource';
+import { isProvisioningResourceReadOnly } from '../utils/managedResource';
 import { getRepositoryTypeConfig, isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
@@ -87,7 +87,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   const isEdit = Boolean(repositoryName);
   // Externally managed repositories (terraform, kubectl, ...) cannot be edited in the UI.
-  const isReadOnly = data ? isManagedResourceReadOnly(data) : false;
+  const isReadOnly = data ? isProvisioningResourceReadOnly(data) : false;
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();

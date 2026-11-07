@@ -1557,6 +1557,15 @@ func WithConnectionTypes(types []string) GrafanaOption {
 	}
 }
 
+// WithProvisioningBootstrapPath sets [provisioning] bootstrap_path, so the server
+// registers a local repository over that directory at startup. The directory and its
+// files must exist before the server starts.
+func WithProvisioningBootstrapPath(path string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningBootstrapPath = path
+	}
+}
+
 func WithProvisioningPublicRootURL(url string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningPublicRootURL = url
@@ -1717,7 +1726,7 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 	}
 }
 
-func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provisioningPath string) *ProvisioningTestHelper {
+func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provisioningPath string, opts testinfra.GrafanaOpts) *ProvisioningTestHelper {
 	t.Helper()
 
 	k8sHelper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
@@ -1792,7 +1801,11 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 		DashboardsV2beta1:  dashboardsV2beta1Client,
 	}
 
-	h.CleanupAllResources(t)
+	// A bootstrap repository is registered at startup and never re-registered, so
+	// wiping it here would leave the test nothing to assert on.
+	if opts.ProvisioningBootstrapPath == "" {
+		h.CleanupAllResources(t)
+	}
 
 	return h
 }
@@ -1804,7 +1817,7 @@ func RunGrafana(t *testing.T, options ...GrafanaOption) *ProvisioningTestHelper 
 		o(&opts)
 	}
 	k8sHelper := apis.NewK8sTestHelper(t, opts)
-	return buildProvisioningHelper(t, k8sHelper, provisioningPath)
+	return buildProvisioningHelper(t, k8sHelper, provisioningPath, opts)
 }
 
 // RunGrafanaShared is like RunGrafana but the server shutdown is not tied to
@@ -1824,7 +1837,7 @@ func runGrafanaShared(t *testing.T, options ...GrafanaOption) (*ProvisioningTest
 		serverShutdown()
 		_ = os.RemoveAll(provisioningPath)
 	}
-	return buildProvisioningHelper(t, k8sHelper, provisioningPath), shutdownFunc
+	return buildProvisioningHelper(t, k8sHelper, provisioningPath, opts), shutdownFunc
 }
 
 func isTransientDeleteError(err error) bool {

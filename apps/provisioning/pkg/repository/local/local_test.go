@@ -1831,3 +1831,25 @@ func TestLocalRepository_Move(t *testing.T) {
 		})
 	}
 }
+
+// A root that matches no permitted prefix is left empty by NewRepository, and os.Stat("")
+// reports not-exist -- so ReadTree used to answer with an empty tree and no error, which a
+// full sync reads as "every managed resource was removed" and deletes them.
+func TestLocalRepositoryUnresolvedRootFailsReadsInsteadOfLookingEmpty(t *testing.T) {
+	repo := NewRepository(
+		&provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type:  provisioning.LocalRepositoryType,
+				Local: &provisioning.LocalRepositoryConfig{Path: "/no/longer/permitted"},
+			},
+		},
+		&LocalFolderResolver{PermittedPrefixes: []string{"/etc/grafana/provisioning"}, HomePath: "/usr/share/grafana"},
+		nil,
+	)
+
+	tree, err := repo.ReadTree(context.Background(), "")
+
+	require.Error(t, err, "an unresolved root must not read as an empty repository")
+	assert.Empty(t, tree)
+	assert.Contains(t, err.Error(), "matches no permitted prefix")
+}
