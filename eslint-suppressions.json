@@ -2421,24 +2421,9 @@
       "count": 3
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelEditNext/VizAndDataPaneNext.tsx": {
-    "react-hooks/refs": {
-      "count": 4
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelEditNext/hooks.ts": {
-    "react-hooks/refs": {
-      "count": 3
-    }
-  },
   "public/app/features/dashboard-scene/panel-edit/PanelEditorRenderer.tsx": {
     "react-hooks/immutability": {
       "count": 3
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/splitter/useSnappingSplitter.ts": {
-    "react-hooks/immutability": {
-      "count": 19
     }
   },
   "public/app/features/dashboard-scene/saving/useParkSaveFormDraft.ts": {
@@ -3236,11 +3221,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/VirtualizedTraceView.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/model/transform-trace-data.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -3691,10 +3671,7 @@
       "count": 1
     },
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
+      "count": 2
     }
   },
   "public/app/features/plugins/sandbox/distortions.ts": {
@@ -4125,11 +4102,6 @@
       "count": 2
     }
   },
-  "public/app/features/variables/query/operators.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/query/queryRunners.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -4471,11 +4443,6 @@
   },
   "public/app/plugins/datasource/graphite/utils.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/mixed/MixedDataSource.ts": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },

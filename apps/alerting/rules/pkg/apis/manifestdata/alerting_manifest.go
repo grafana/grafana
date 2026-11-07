@@ -57,6 +57,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "AlertRule",
 					Plural:     "AlertRules",
+					Resource:   "alertrules",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -264,6 +265,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "RecordingRule",
 					Plural:     "RecordingRules",
+					Resource:   "recordingrules",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -371,6 +373,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "RuleSequence",
 					Plural:     "RuleSequences",
+					Resource:   "rulesequences",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -418,6 +421,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Config",
 					Plural:     "Configs",
+					Resource:   "configs",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -1682,6 +1686,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "AlertRule",
 					Plural:     "AlertRules",
+					Resource:   "alertrules",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -1889,6 +1894,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "RecordingRule",
 					Plural:     "RecordingRules",
+					Resource:   "recordingrules",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -1996,6 +2002,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "RuleSequence",
 					Plural:     "RuleSequences",
+					Resource:   "rulesequences",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{

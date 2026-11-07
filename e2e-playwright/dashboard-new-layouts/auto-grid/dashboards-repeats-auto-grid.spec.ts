@@ -1,23 +1,17 @@
-import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
-
-import { test, expect } from './fixtures';
+import { expect, test } from '../fixtures';
 import {
-  expectRepeatedPanelTitlesToBe,
   expectDashboardChangesToContain,
+  expectRepeatedPanelTitlesToBe,
   flows,
-  movePanel,
   getPanelBox,
-} from './helpers';
+  movePanel,
+} from '../helpers';
+
+import { buildDashboardRepeatsSpec } from './fixtures/dashboard-repeats-spec';
 
 const REPEAT_TITLE_BASE = 'repeat - ';
 const NEW_TITLE_BASE = 'edited rep - ';
 const REPEAT_OPTIONS = [1, 2, 3, 4];
-
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
 
 test.use({
   viewport: { width: 1920, height: 1080 },
@@ -30,12 +24,15 @@ test.describe(
   },
   () => {
     test.describe('Enable and disable', () => {
-      test('can enable repeats', async ({ selectors, page, controls, sidebar, panels }) => {
-        await flows.dashboards.importTestDashboard(page, selectors, 'Auto-grid repeats - add repeats');
+      test('can enable repeats', async ({ selectors, page, request, controls, sidebar, panels }) => {
+        await flows.dashboards.createAndOpenDashboard({
+          page,
+          request,
+          selectors,
+          spec: (grafanaVersion) => buildDashboardRepeatsSpec(grafanaVersion, { repeatsEnabled: false }),
+        });
 
         await controls.enterEditMode();
-        await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
         await panels.selectByIndex(0);
         await sidebar.panelOptions.setTitle(`${REPEAT_TITLE_BASE}$c1`);
@@ -48,18 +45,13 @@ test.describe(
         await expectRepeatedPanelTitlesToBe(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
       });
 
-      test('can remove repeats', async ({ selectors, page, controls, sidebar, panels }) => {
-        await flows.dashboards.importTestDashboard(
+      test('can remove repeats', async ({ selectors, page, request, controls, sidebar, panels }) => {
+        await flows.dashboards.createAndOpenDashboard({
           page,
+          request,
           selectors,
-          'Auto-grid repeats - remove repeats',
-          JSON.stringify(testV2DashWithRepeats)
-        );
-
-        await controls.enterEditMode();
-        await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-        await flows.dashboards.saveDashboard(page, controls);
+          spec: buildDashboardRepeatsSpec,
+        });
 
         // verify 6 panels are present (4 repeats and 2 normal)
         await expect(panels.getHeaders()).toHaveCount(6);
@@ -83,19 +75,13 @@ test.describe(
     });
 
     test.describe('Update', () => {
-      test('can update repeats with variable change', async ({ selectors, page, controls, sidebar, panels }) => {
-        await flows.dashboards.importTestDashboard(
+      test('can update repeats with variable change', async ({ selectors, page, request, controls, panels }) => {
+        await flows.dashboards.createAndOpenDashboard({
           page,
+          request,
           selectors,
-          'Auto-grid repeats - update on variable change',
-          JSON.stringify(testV2DashWithRepeats)
-        );
-
-        await controls.enterEditMode();
-        await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-
-        await flows.dashboards.saveDashboard(page, controls);
+          spec: buildDashboardRepeatsSpec,
+        });
 
         await controls.variables.deselectOption('c1', `${REPEAT_OPTIONS.at(-1)}`);
         await page.locator('body').click({ position: { x: 0, y: 0 } }); // blur select
@@ -107,17 +93,15 @@ test.describe(
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeHidden();
       });
 
-      test('can update repeats in sidebar', async ({ selectors, page, controls, sidebar, panels }) => {
-        await flows.dashboards.importTestDashboard(
+      test('can update repeats in sidebar', async ({ selectors, page, request, controls, sidebar, panels }) => {
+        await flows.dashboards.createAndOpenDashboard({
           page,
+          request,
           selectors,
-          'Auto grid repeats - update through sidebar',
-          JSON.stringify(testV2DashWithRepeats)
-        );
+          spec: buildDashboardRepeatsSpec,
+        });
 
         await controls.enterEditMode();
-        await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
         // select first/original repeat panel to activate sidebar
         await panels.selectByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
@@ -135,23 +119,19 @@ test.describe(
         dashboardPage,
         selectors,
         page,
-        components,
+        request,
         controls,
         sidebar,
+        panelEditor,
         panels,
         canvas,
       }) => {
-        await flows.dashboards.importTestDashboard(
+        await flows.dashboards.createAndOpenDashboard({
           page,
+          request,
           selectors,
-          'Auto-grid repeats - update through panel editor',
-          JSON.stringify(testV2DashWithRepeats)
-        );
-
-        await controls.enterEditMode();
-        await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-        await flows.dashboards.saveDashboard(page, controls);
+          spec: buildDashboardRepeatsSpec,
+        });
 
         await controls.enterEditMode();
 
@@ -167,7 +147,7 @@ test.describe(
         // verify original repeat panel is loaded
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
 
-        await sidebar.panelOptions.setTitle(`${NEW_TITLE_BASE}$c1`);
+        await panelEditor.options.setTitle(`${NEW_TITLE_BASE}$c1`);
 
         // playwright too fast, verifying JSON diff that changes landed
         await expectDashboardChangesToContain(dashboardPage, page, selectors, NEW_TITLE_BASE);
@@ -190,25 +170,24 @@ test.describe(
         dashboardPage,
         selectors,
         page,
+        request,
         controls,
         sidebar,
+        panelEditor,
         panels,
         canvas,
       }) => {
-        await flows.dashboards.importTestDashboard(
+        await flows.dashboards.createAndOpenDashboard({
           page,
+          request,
           selectors,
-          'Auto-grid repeats - update through directly loaded panel editor',
-          JSON.stringify(testV2DashWithRepeats)
-        );
-
-        await controls.enterEditMode();
-        await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-        await flows.dashboards.saveDashboard(page, controls, { reloadPageAfterSave: false });
+          spec: buildDashboardRepeatsSpec,
+        });
 
         // loading directly into panel editor
-        await page.goto(`${page.url()}&editPanel=1`);
+        const editorUrl = new URL(page.url());
+        editorUrl.searchParams.set('editPanel', '1');
+        await page.goto(editorUrl.toString());
 
         // verifying that panel editor loaded
         await expect(
@@ -217,7 +196,7 @@ test.describe(
 
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
 
-        await sidebar.panelOptions.setTitle(`${NEW_TITLE_BASE}$c1`);
+        await panelEditor.options.setTitle(`${NEW_TITLE_BASE}$c1`);
 
         // playwright too fast, verifying JSON diff that changes landed
         await expectDashboardChangesToContain(dashboardPage, page, selectors, NEW_TITLE_BASE);
@@ -237,17 +216,15 @@ test.describe(
     });
 
     test.describe('Move', () => {
-      test('can move repeated panels', async ({ selectors, page, controls, sidebar, panels }) => {
-        await flows.dashboards.importTestDashboard(
+      test('can move repeated panels', async ({ selectors, page, request, controls, panels }) => {
+        await flows.dashboards.createAndOpenDashboard({
           page,
+          request,
           selectors,
-          'Auto-grid repeats - move repeated panels',
-          JSON.stringify(testV2DashWithRepeats)
-        );
+          spec: buildDashboardRepeatsSpec,
+        });
 
         await controls.enterEditMode();
-        await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
         // this moving repeated panel between two normal panels
         await movePanel(panels, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`, 'New panel');
@@ -273,18 +250,13 @@ test.describe(
     });
 
     test.describe('View', () => {
-      test('can view repeated panel', async ({ selectors, page, controls, sidebar, panels }) => {
-        await flows.dashboards.importTestDashboard(
+      test('can view repeated panel', async ({ selectors, page, request, panels }) => {
+        await flows.dashboards.createAndOpenDashboard({
           page,
+          request,
           selectors,
-          'Auto-grid repeats - view repeated panels 2',
-          JSON.stringify(testV2DashWithRepeats)
-        );
-
-        await controls.enterEditMode();
-        await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-        await flows.dashboards.saveDashboard(page, controls);
+          spec: buildDashboardRepeatsSpec,
+        });
 
         await panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`).hover();
         await page.keyboard.press('v');
@@ -308,25 +280,13 @@ test.describe(
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeVisible();
       });
 
-      test('can view embedded repeated panel', async ({
-        dashboardPage,
-        selectors,
-        page,
-        controls,
-        sidebar,
-        panels,
-      }) => {
-        await flows.dashboards.importTestDashboard(
+      test('can view embedded repeated panel', async ({ selectors, page, request, panels }) => {
+        await flows.dashboards.createAndOpenDashboard({
           page,
+          request,
           selectors,
-          'Auto-grid repeats - view embedded repeated panel',
-          JSON.stringify(testV2DashWithRepeats)
-        );
-
-        await controls.enterEditMode();
-        await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-        await flows.dashboards.saveDashboard(page, controls);
+          spec: buildDashboardRepeatsSpec,
+        });
 
         await panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`).hover();
         await page.keyboard.press('p+e');

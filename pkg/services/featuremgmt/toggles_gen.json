@@ -2732,7 +2732,8 @@
       "metadata": {
         "name": "foldersAppPlatformAPI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-03T14:15:23Z"
+        "creationTimestamp": "2025-07-03T14:15:23Z",
+        "deletionTimestamp": "2026-11-04T06:40:00Z"
       },
       "spec": {
         "description": "Enables use of app platform API for folders",
@@ -3078,6 +3079,21 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.folderPickerFolderEditAccess",
+        "resourceVersion": "1793975376541",
+        "creationTimestamp": "2026-11-06T14:29:36Z"
+      },
+      "spec": {
+        "description": "Shows folders the user cannot edit as read only in the folder picker, instead of hiding them",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -4322,6 +4338,7 @@
         "name": "kubernetesFolderCountsLegacyStorage",
         "resourceVersion": "1793306194106",
         "creationTimestamp": "2026-09-11T15:39:49Z",
+        "deletionTimestamp": "2026-11-06T19:12:02Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-10-29 20:36:34.106495 +0000 UTC"
         }
