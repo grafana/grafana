@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -324,6 +325,49 @@ func TestValues_readFile(t *testing.T) {
 	err = yaml.Unmarshal(fmt.Appendf(nil, "val: $__file{%s}", file), data)
 	require.NoError(t, err)
 	assert.Equal(t, expected, data.Val.Value())
+}
+
+func TestValues_expandedValueIsNotInterpolatedAgain(t *testing.T) {
+	const secret = "Pa$sw0rd"
+	t.Setenv("SECRET", secret)
+	t.Setenv("STRING", "test")
+
+	file := filepath.Join(t.TempDir(), "secret")
+	require.NoError(t, os.WriteFile(file, []byte(secret), 0o600))
+
+	tests := []struct {
+		name     string
+		val      string
+		expected string
+	}{
+		{name: "file expander", val: fmt.Sprintf("$__file{%s}", file), expected: secret},
+		{name: "env expander", val: "$__env{SECRET}", expected: secret},
+		{name: "braced env var", val: "${SECRET}", expected: secret},
+		{name: "bare env var", val: "$SECRET", expected: secret},
+		{name: "expander next to env var", val: fmt.Sprintf("$STRING:$__file{%s}", file), expected: "test:" + secret},
+		{name: "expander next to literal $", val: "$$$__env{SECRET}", expected: "$" + secret},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Run("StringValue", func(t *testing.T) {
+				data := &struct {
+					Val StringValue `yaml:"val"`
+				}{}
+				unmarshalingTest(t, fmt.Sprintf("val: %q", tt.val), data)
+				assert.Equal(t, tt.expected, data.Val.Value())
+				assert.Equal(t, tt.val, data.Val.Raw)
+			})
+
+			t.Run("JSONValue", func(t *testing.T) {
+				data := &struct {
+					Val JSONValue `yaml:"val"`
+				}{}
+				unmarshalingTest(t, fmt.Sprintf("val:\n  key: %q", tt.val), data)
+				assert.Equal(t, map[string]any{"key": tt.expected}, data.Val.Value())
+			})
+		})
+	}
 }
 
 func TestValues_expanderError(t *testing.T) {
