@@ -28,6 +28,11 @@ var (
 			Name:      "datasource_request_duration_seconds",
 			Help:      "histogram of durations of outgoing data source requests sent from Grafana",
 			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+			// Same values as metricutil.NewHistogramVec, which cannot be used
+			// here because it returns an unregistered collector.
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"datasource", "datasource_type", "code", "method", "secure_socks_ds_proxy_enabled"},
 	)
 
