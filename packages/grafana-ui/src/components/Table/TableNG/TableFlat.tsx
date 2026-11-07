@@ -391,9 +391,12 @@ export function TableFlat(props: TableNGProps) {
   // position. Runs after re-render (the hidden column's DOM is gone) so the
   // grid indices are current. Without this, the unmounted header cell drops
   // focus to <body> and the next Tab restarts from the top of the page.
+  // shouldFocus is what makes the grid call focus() on the newly active
+  // header cell; without it only the roving-tabindex selection moves and
+  // keyboard focus still falls to <body>.
   useEffect(() => {
     if (pendingHeaderFocusIdx !== null && gridRef.current) {
-      gridRef.current.setActivePosition({ rowIdx: -1, idx: pendingHeaderFocusIdx });
+      gridRef.current.setActivePosition({ rowIdx: -1, idx: pendingHeaderFocusIdx }, { shouldFocus: true });
       setPendingHeaderFocusIdx(null);
     }
   }, [pendingHeaderFocusIdx]);
