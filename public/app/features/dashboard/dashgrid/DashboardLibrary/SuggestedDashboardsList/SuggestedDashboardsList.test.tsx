@@ -2,12 +2,15 @@ import { act, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { TrackingProvider } from '../TrackingContext';
+import { checkDashboardCompatibility } from '../api/compatibilityApi';
 import { fetchCommunityDashboards } from '../api/dashboardLibraryApi';
 import { EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from '../constants';
 import { type GnetDashboard } from '../types';
-import { onUseCommunityDashboard } from '../utils/communityDashboardHelpers';
+import { interpolateDashboardForCompatibilityCheck, onUseCommunityDashboard } from '../utils/communityDashboardHelpers';
 import { createMockGnetDashboard, createMockPluginDashboard } from '../utils/test-utils';
 
 import { SuggestedDashboardsList } from './SuggestedDashboardsList';
@@ -47,6 +50,11 @@ jest.mock('../interactions', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getDataSourceInstanceSettings: jest.fn(async (uid: string) => ({
+    uid,
+    name: `DataSource ${uid}`,
+    type: 'prometheus',
+  })),
   getDataSourceSrv: () => ({
     getInstanceSettings: jest.fn((uid: string) => ({
       uid,
@@ -101,6 +109,7 @@ async function setup(overrides: Partial<typeof defaultProps> = {}) {
 
 describe('SuggestedDashboardsList', () => {
   beforeEach(() => {
+    setTestFlags({});
     jest.clearAllMocks();
     // Default: API returns the same community dashboards as the prop seed
     mockFetchCommunityDashboards.mockResolvedValue({
@@ -109,6 +118,50 @@ describe('SuggestedDashboardsList', () => {
       items: [communityDashboard1, communityDashboard2],
     });
   });
+
+  afterEach(() => {
+    act(() => setTestFlags({}));
+  });
+
+  it.each([true, false])(
+    'gates automatic compatibility checks using OpenFeature validator flag %s',
+    async (enabled) => {
+      setTestFlags({ [FlagKeys.DashboardValidatorApp]: enabled });
+      const dashboardJson = { title: 'Community Dashboard 1', schemaVersion: 39, panels: [] };
+      jest.mocked(interpolateDashboardForCompatibilityCheck).mockResolvedValue(dashboardJson);
+      jest.mocked(checkDashboardCompatibility).mockResolvedValue({
+        compatibilityScore: 1,
+        datasourceResults: [
+          {
+            uid: 'test-ds-uid',
+            type: 'prometheus',
+            totalQueries: 1,
+            checkedQueries: 1,
+            totalMetrics: 2,
+            foundMetrics: 2,
+            missingMetrics: [],
+            compatibilityScore: 1,
+            queryBreakdown: [],
+          },
+        ],
+      });
+      mockFetchCommunityDashboards.mockResolvedValue({ page: 1, pages: 1, items: [communityDashboard1] });
+
+      await setup({ communityDashboards: [communityDashboard1] });
+      expect(screen.getByRole('heading', { name: 'Community Dashboard 1' })).toBeInTheDocument();
+      if (enabled) {
+        await waitFor(() =>
+          expect(checkDashboardCompatibility).toHaveBeenCalledWith(dashboardJson, [
+            { uid: 'test-ds-uid', type: 'prometheus', name: 'DataSource test-ds-uid' },
+          ])
+        );
+        expect(interpolateDashboardForCompatibilityCheck).toHaveBeenCalledWith(1, 'test-ds-uid');
+      } else {
+        expect(checkDashboardCompatibility).not.toHaveBeenCalled();
+        expect(interpolateDashboardForCompatibilityCheck).not.toHaveBeenCalled();
+      }
+    }
+  );
 
   it('should render provisioned dashboards with "Data source provided" badge', async () => {
     const provisioned = [
