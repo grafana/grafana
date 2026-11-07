@@ -9,37 +9,54 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type SecretsStoreImpl struct {
-	db    db.DB
-	log   log.Logger
-	table string
+	dbProvider legacysql.LegacyDatabaseProvider
+	log        log.Logger
+	table      string
 }
 
-func ProvideSecretsStore(db db.DB) *SecretsStoreImpl {
+func ProvideSecretsStore(dbProvider legacysql.LegacyDatabaseProvider) *SecretsStoreImpl {
 	store := &SecretsStoreImpl{
-		db:    db,
-		log:   log.New("secrets.store"),
-		table: "data_keys",
+		dbProvider: dbProvider,
+		log:        log.New("secrets.store"),
+		table:      "data_keys",
 	}
 
 	return store
 }
 
-func NewSecretsStoreForTable(db db.DB, table string) *SecretsStoreImpl {
-	store := ProvideSecretsStore(db)
+func NewSecretsStoreForTable(dbProvider legacysql.LegacyDatabaseProvider, table string) *SecretsStoreImpl {
+	store := ProvideSecretsStore(dbProvider)
 	store.table = table
 	return store
 }
 
+// dbAndTable resolves the database and the data keys table for the tenant in ctx.
+// Callers must use the returned database: a session already placed on ctx (e.g. by a caller's
+// transaction) is reused without checking which engine created it.
+func (ss *SecretsStoreImpl) dbAndTable(ctx context.Context) (db.DB, string, error) {
+	dbHelper, err := ss.dbProvider(ctx)
+	if err != nil {
+		return nil, "", err
+	}
+	return dbHelper.DB, dbHelper.Table(ss.table), nil
+}
+
 func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, id string) (*secrets.DataKey, error) {
+	sqlDB, table, err := ss.dbAndTable(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	dataKey := &secrets.DataKey{}
 	var exists bool
 
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	err = sqlDB.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		exists, err = sess.Table(ss.table).
+		exists, err = sess.Table(table).
 			Where("name = ?", id).
 			Get(dataKey)
 		return err
@@ -57,33 +74,42 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, id string) (*secrets
 }
 
 func (ss *SecretsStoreImpl) GetCurrentDataKey(ctx context.Context, label string) (*secrets.DataKey, error) {
+	sqlDB, table, err := ss.dbAndTable(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	dataKey := &secrets.DataKey{}
 	var exists bool
 
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	err = sqlDB.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		exists, err = sess.Table(ss.table).
-			Where("label = ? AND active = ?", label, ss.db.GetDialect().BooleanValue(true)).
+		exists, err = sess.Table(table).
+			Where("label = ? AND active = ?", label, sqlDB.GetDialect().BooleanValue(true)).
 			Get(dataKey)
 		return err
 	})
 
-	if !exists {
-		return nil, secrets.ErrDataKeyNotFound
-	}
-
 	if err != nil {
 		return nil, fmt.Errorf("failed getting current data key: %w", err)
+	}
+
+	if !exists {
+		return nil, secrets.ErrDataKeyNotFound
 	}
 
 	return dataKey, nil
 }
 
 func (ss *SecretsStoreImpl) GetAllDataKeys(ctx context.Context) ([]*secrets.DataKey, error) {
+	sqlDB, table, err := ss.dbAndTable(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	result := make([]*secrets.DataKey, 0)
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		err := sess.Table(ss.table).Find(&result)
-		return err
+	err = sqlDB.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(table).Find(&result)
 	})
 	return result, err
 }
@@ -93,23 +119,29 @@ func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey *secrets.
 		return fmt.Errorf("cannot insert deactivated data keys")
 	}
 
+	sqlDB, table, err := ss.dbAndTable(ctx)
+	if err != nil {
+		return err
+	}
+
 	dataKey.Created = time.Now()
 	dataKey.Updated = dataKey.Created
 
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Table(ss.table).Insert(dataKey)
-		if err != nil {
-			return err
-		}
-
-		return nil
+	return sqlDB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Table(table).Insert(dataKey)
+		return err
 	})
 }
 
 func (ss *SecretsStoreImpl) DisableDataKeys(ctx context.Context) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Table(ss.table).
-			Where("active = ?", ss.db.GetDialect().BooleanValue(true)).
+	sqlDB, table, err := ss.dbAndTable(ctx)
+	if err != nil {
+		return err
+	}
+
+	return sqlDB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Table(table).
+			Where("active = ?", sqlDB.GetDialect().BooleanValue(true)).
 			UseBool("active").Update(&secrets.DataKey{Active: false})
 		return err
 	})
@@ -120,9 +152,13 @@ func (ss *SecretsStoreImpl) DeleteDataKey(ctx context.Context, id string) error 
 		return fmt.Errorf("data key id is missing")
 	}
 
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Table(ss.table).Delete(&secrets.DataKey{Id: id})
+	sqlDB, table, err := ss.dbAndTable(ctx)
+	if err != nil {
+		return err
+	}
 
+	return sqlDB.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Table(table).Delete(&secrets.DataKey{Id: id})
 		return err
 	})
 }
@@ -132,15 +168,20 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 	providers map[secrets.ProviderID]secrets.Provider, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	currProvider secrets.ProviderID,
 ) error {
+	sqlDB, table, err := ss.dbAndTable(ctx)
+	if err != nil {
+		return err
+	}
+
 	keys := make([]*secrets.DataKey, 0)
-	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Table(ss.table).Find(&keys)
+	if err := sqlDB.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(table).Find(&keys)
 	}); err != nil {
 		return err
 	}
 
 	for _, k := range keys {
-		err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		err := sqlDB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 			provider, ok := providers[kmsproviders.NormalizeProviderID(k.Provider)]
 			if !ok {
 				ss.log.Warn(
@@ -181,7 +222,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 				return nil
 			}
 
-			if _, err := sess.Table(ss.table).Where("name = ?", k.Id).Update(k); err != nil {
+			if _, err := sess.Table(table).Where("name = ?", k.Id).Update(k); err != nil {
 				ss.log.Warn(
 					"Error while re-encrypting data encryption key",
 					"id", k.Id,

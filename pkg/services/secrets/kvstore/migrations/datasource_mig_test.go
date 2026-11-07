@@ -23,6 +23,7 @@ import (
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -37,8 +38,8 @@ func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore db.DB, kvS
 	features := featuremgmt.WithFeatures()
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	quotaService := quotatest.New(false, nil)
-	dsRetriever := dsservice.ProvideDataSourceRetriever(sqlStore, features)
-	dsService, err := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(),
+	dsRetriever := dsservice.ProvideDataSourceRetriever(legacysql.NewDatabaseProvider(sqlStore))
+	dsService, err := dsservice.ProvideService(sqlStore, legacysql.NewDatabaseProvider(sqlStore), secretsService, secretsStore, cfg, features, acmock.New(),
 		acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
 	require.NoError(t, err)
@@ -55,7 +56,7 @@ func TestIntegrationMigrate(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore)
-		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())
+		ds := dsservice.CreateStore(log.NewNopLogger(), legacysql.NewDatabaseProvider(sqlStore))
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
 
