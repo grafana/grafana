@@ -495,11 +495,41 @@ func TestHandleManagedResourceRoutingNotRouted(t *testing.T) {
 		require.True(t, cleanupSafe)
 	})
 
-	t.Run("managed error without configProvider is not routed and is cleanup-safe", func(t *testing.T) {
-		cleanupSafe, err := (&Storage{}).handleManagedResourceRouting(
-			context.Background(), errResourceIsManagedInRepository, resourcepb.WatchEvent_MODIFIED, "/default/examples/d1", obj, obj)
-		require.ErrorIs(t, err, errResourceIsManagedInRepository)
-		require.True(t, cleanupSafe)
+	t.Run("managed error without configProvider is refused as forbidden and is cleanup-safe", func(t *testing.T) {
+		for _, tt := range []struct {
+			name        string
+			annotations map[string]any
+			want        string
+		}{
+			{
+				name: "names the repository",
+				annotations: map[string]any{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "my-repo",
+				},
+				want: "this resource is managed by a repository (my-repo); change it through Git Sync",
+			},
+			{
+				name:        "repository without an identity",
+				annotations: map[string]any{utils.AnnoKeyManagerKind: string(utils.ManagerKindRepo)},
+				want:        "this resource is managed by a repository; change it through Git Sync",
+			},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				managed := &unstructured.Unstructured{Object: map[string]any{
+					"apiVersion": "example.grafana.app/v1", "kind": "Example",
+					"metadata": map[string]any{"namespace": "default", "name": "d1", "annotations": tt.annotations},
+				}}
+				cleanupSafe, err := (&Storage{}).handleManagedResourceRouting(
+					context.Background(), errResourceIsManagedInRepository, resourcepb.WatchEvent_MODIFIED, "/default/examples/d1", managed, managed)
+				var status apierrors.APIStatus
+				require.ErrorAs(t, err, &status, "want a status error, got %v", err)
+				require.EqualValues(t, http.StatusForbidden, status.Status().Code)
+				require.True(t, apierrors.IsForbidden(err))
+				require.EqualError(t, err, tt.want)
+				require.True(t, cleanupSafe)
+			})
+		}
 	})
 }
 
