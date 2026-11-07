@@ -9,7 +9,13 @@ import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
-import { dashboardModesEnabled, getDashboardMode, type DashboardMode } from '../dashboardModes';
+import {
+  dashboardModesEnabled,
+  dashboardPlanEditingEnabled,
+  getDashboardMode,
+  type DashboardMode,
+} from '../dashboardModes';
+import { type EditablePlan } from '../dashboardPlan';
 
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
@@ -102,6 +108,16 @@ export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' |
   return Boolean(state.isEditing && mode !== 'composer' && (!dashboardModesEnabled() || mode === 'edit'));
 }
 
+/** A plan preview stays in view mode, but its layout can still be arranged by hand. */
+export function isArrangingPlan(state: Pick<DashboardSceneState, 'planning'>): boolean {
+  return state.planning?.phase === 'preview' && dashboardPlanEditingEnabled();
+}
+
+/** Whether rows, tabs and panels can be dragged, and panels resized. */
+export function canArrangeLayout(state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'planning'>): boolean {
+  return isFullDashboardEditing(state) || isArrangingPlan(state);
+}
+
 export function isDashboardReviewing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
   const mode = getDashboardMode(state);
   return mode === 'composer' || (dashboardModesEnabled() && mode !== 'edit');
@@ -121,6 +137,11 @@ export interface DashboardPlanPreviewState extends DashboardPlanningBase {
   onBuild: () => void;
   /** Discard the plan and remove its scaffolded panels. */
   onDismiss: () => void;
+  /**
+   * With plan editing on, the preview owns the plan: arranging the layout by hand changes it here,
+   * and Build makes the dashboard from it.
+   */
+  editable?: EditablePlan;
 }
 
 /**

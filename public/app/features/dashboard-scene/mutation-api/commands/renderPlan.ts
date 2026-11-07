@@ -2,15 +2,22 @@
  * RENDER_PLAN command
  *
  * Renders a whole dashboard plan in one call: rows or tabs (optionally with rows nested inside a
- * tab), each with query-less placeholder panels, plus any stand-in variables. A plan preview renders once and is never edited, so
- * there is nothing to build up incrementally the way ADD_ROW/ADD_TAB/ADD_PANEL do.
+ * tab), each with query-less placeholder panels, plus any stand-in variables. A revision re-renders
+ * the whole plan, so there is nothing to build up incrementally the way ADD_ROW/ADD_TAB/ADD_PANEL do.
  *
- * With phase "building" nothing from the plan renders: the dashboard stays empty behind a loading
+ * With phase "building" the plan's sample data does not render: the dashboard waits behind a loading
  * screen until the build's first write replaces it (see DashboardMutationClient), or END_PLANNING
- * ends it when the build writes nothing.
+ * ends it when the build writes nothing. Behind the screen it is empty, or, with plan editing on, a
+ * skeleton of the plan: real panels with the plan's titles, visualizations and layout, and no
+ * queries, for the build to fill in by element key.
  *
- * Never calls enterEditModeIfNeeded: the preview is a static, view-mode surface that must never
- * enter edit mode (see refuseWhilePlanning for the few actions still reachable without it).
+ * With plan editing on, the preview owns the plan (see EditablePlan): ids name its panels and
+ * sections, a panel's gridPos places it, and Build makes the skeleton from the plan as the user
+ * arranged it rather than from the payload, which is the plan as proposed.
+ *
+ * Never calls enterEditModeIfNeeded: the preview is a view-mode surface that must never enter edit
+ * mode (see refuseWhilePlanning for the few actions still reachable without it). With plan editing
+ * enabled its layout can still be arranged by hand (see canArrangeLayout).
  */
 import type * as z from 'zod';
 
@@ -18,6 +25,16 @@ import { CustomVariable, SceneVariableSet, type SceneVariable, type VizPanel } f
 import { defaultPanelSpec, type PanelKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 
+import { dashboardPlanEditingEnabled } from '../../scene/dashboardModes';
+import {
+  assignPlanIds,
+  getSectionKeyForPlanSection,
+  readPlanLayout,
+  type DashboardPlan,
+  type DashboardPlanPanel,
+  type DashboardPlanRow,
+} from '../../scene/dashboardPlan';
+import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -25,27 +42,33 @@ import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { DashboardPlanningEvent } from '../../scene/planningEvents';
 import { getPlanningPanelData, getPlanningVariableValues } from '../../scene/planningSampleData';
+import { canArrangeLayout } from '../../scene/types/dashboard';
 import { buildVizPanel } from '../../serialization/layoutSerializers/utils';
-import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
+import { getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 
 import { payloads } from './schemas';
 import { requiresEdit, type MutationCommand } from './types';
 
 export type RenderPlanPayload = z.infer<typeof payloads.renderPlan>;
 
-function buildPlanPanel(title: string, vizType: string, id: number): VizPanel {
+function buildPanelSpec(panel: DashboardPlanPanel, description?: string): PanelKind {
   const base = defaultPanelSpec();
-  const panelKind: PanelKind = {
+  return {
     kind: 'Panel',
     spec: {
       ...base,
-      id,
-      title,
-      vizConfig: { ...base.vizConfig, group: vizType },
+      id: panel.id,
+      title: panel.title,
+      ...(description ? { description } : {}),
+      vizConfig: { ...base.vizConfig, group: panel.vizType },
     },
   };
+}
 
-  const vizPanel = buildVizPanel(panelKind, id, { withoutQueries: true });
+function buildPlanPanel(panel: DashboardPlanPanel, showIntent: boolean): VizPanel {
+  const vizPanel = buildVizPanel(buildPanelSpec(panel, showIntent ? panel.intent : undefined), panel.id, {
+    withoutQueries: true,
+  });
   // buildVizPanel attaches a dropdown menu unconditionally. A preview panel must have none: a
   // plugin's View pane can mutate and persist panel options (e.g. timeseries legend toggles)
   // with no isPlanning() gate. Clearing menu removes PanelChrome's button entirely.
@@ -53,9 +76,73 @@ function buildPlanPanel(title: string, vizType: string, id: number): VizPanel {
   // ones: its synthetic empty spec would clobber the sample's visualization settings. Apply the
   // sample here rather than change that behavior for every other caller. Its synthetic $data
   // also stays in this lazy command instead of loading with the shared serializer.
-  vizPanel.setState({ ...getPlanningPanelData(title, vizType), key: getVizPanelKeyForPanelId(id), menu: undefined });
+  vizPanel.setState({
+    ...getPlanningPanelData(panel.title, panel.vizType),
+    key: getVizPanelKeyForPanelId(panel.id),
+    menu: undefined,
+  });
 
   return vizPanel;
+}
+
+/** A real panel for the build to fill in: the plan's title and visualization, no queries, no sample data. */
+function buildSkeletonPanel(panel: DashboardPlanPanel): VizPanel {
+  return buildVizPanel(buildPanelSpec(panel), panel.id);
+}
+
+function buildPlanGrid(
+  panels: DashboardPlanPanel[],
+  buildPanel: (panel: DashboardPlanPanel) => VizPanel,
+  useGridPos: boolean
+): DefaultGridLayoutManager {
+  if (!useGridPos || panels.length === 0 || !panels.every((panel) => panel.gridPos)) {
+    return DefaultGridLayoutManager.fromVizPanels(panels.map(buildPanel));
+  }
+  return DefaultGridLayoutManager.fromGridItems(
+    panels.map(
+      (panel) =>
+        new DashboardGridItem({
+          key: getGridItemKeyForPanelId(panel.id),
+          x: panel.gridPos?.x,
+          y: panel.gridPos?.y,
+          width: panel.gridPos?.w,
+          height: panel.gridPos?.h,
+          itemHeight: panel.gridPos?.h,
+          body: buildPanel(panel),
+        })
+    ),
+    true,
+    true
+  );
+}
+
+function buildPlanBody(
+  plan: DashboardPlan,
+  buildPanel: (panel: DashboardPlanPanel) => VizPanel,
+  editing: boolean
+): RowsLayoutManager | TabsLayoutManager {
+  const sectionState = (section: DashboardPlanRow) => ({
+    ...(editing ? { key: getSectionKeyForPlanSection(section.id) } : {}),
+    title: section.title,
+    layout: buildPlanGrid(section.panels, buildPanel, editing),
+  });
+
+  if (plan.layout !== 'tabs') {
+    return new RowsLayoutManager({ rows: plan.sections.map((section) => new RowItem(sectionState(section))) });
+  }
+
+  return new TabsLayoutManager({
+    tabs: plan.sections.map((section) =>
+      section.sections?.length
+        ? new TabItem({
+            ...sectionState(section),
+            layout: new RowsLayoutManager({
+              rows: section.sections.map((row) => new RowItem(sectionState(row))),
+            }),
+          })
+        : new TabItem(sectionState(section))
+    ),
+  });
 }
 
 export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
@@ -86,40 +173,29 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
     }
 
     try {
-      let nextPanelId = 1;
-      const buildSection = (section: Pick<RenderPlanPayload['sections'][number], 'panels'>) =>
-        DefaultGridLayoutManager.fromVizPanels(
-          section.panels.map((panel) => buildPlanPanel(panel.title, panel.vizType, nextPanelId++))
-        );
-      const buildTab = (section: RenderPlanPayload['sections'][number]) =>
-        section.sections?.length
-          ? new RowsLayoutManager({
-              rows: section.sections.map((row) => new RowItem({ title: row.title, layout: buildSection(row) })),
-            })
-          : buildSection(section);
+      const editing = dashboardPlanEditingEnabled();
+      const { planId, phase, ...proposed } = payload;
+      const isBuilding = phase === 'building';
+      const previous = scene.state.planning;
+      const arranged = previous?.phase === 'preview' && previous.planId === planId ? previous.editable : undefined;
+      // Build makes the dashboard from the plan the user arranged, which only the preview has.
+      const plan = editing && isBuilding && arranged ? arranged.plan : assignPlanIds(proposed);
 
-      const buildPlanBody = () =>
-        payload.layout === 'tabs'
-          ? new TabsLayoutManager({
-              tabs: payload.sections.map((section) => new TabItem({ title: section.title, layout: buildTab(section) })),
-            })
-          : new RowsLayoutManager({
-              rows: payload.sections.map(
-                (section) => new RowItem({ title: section.title, layout: buildSection(section) })
-              ),
-            });
+      const body = isBuilding
+        ? editing
+          ? buildPlanBody(plan, buildSkeletonPanel, editing)
+          : DefaultGridLayoutManager.createEmpty()
+        : buildPlanBody(plan, (panel) => buildPlanPanel(panel, editing), editing);
 
-      const isBuilding = payload.phase === 'building';
-      const body = isBuilding ? DefaultGridLayoutManager.createEmpty() : buildPlanBody();
-
-      const variables: SceneVariable[] = (isBuilding ? [] : (payload.variables ?? [])).map(
+      const variables: SceneVariable[] = (isBuilding ? [] : (plan.variables ?? [])).map(
         (name) => new CustomVariable({ name, query: getPlanningVariableValues().join(',') })
       );
 
-      const { planId } = payload;
       const notify = (action: 'build' | 'dismiss') => {
-        if (scene.state.planning?.planId === planId) {
-          appEvents.publish(new DashboardPlanningEvent({ planId, action }));
+        const { planning } = scene.state;
+        if (planning?.planId === planId) {
+          const editable = planning.phase === 'preview' ? planning.editable : undefined;
+          appEvents.publish(new DashboardPlanningEvent({ planId, action, ...editable }));
         }
       };
 
@@ -141,8 +217,8 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
       }
 
       scene.setState({
-        title: payload.title,
-        description: payload.description,
+        title: plan.title,
+        description: plan.description,
         body,
         $variables: new SceneVariableSet({ variables }),
         // exitEditModeConfirmed (via exitEditMode below) restores the pre-edit snapshot whenever
@@ -150,23 +226,18 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
         // here or exiting below wipes the rendered plan.
         isDirty: false,
         planning: isBuilding
-          ? { phase: 'building', planId, planTitle: payload.title }
+          ? { phase: 'building', planId, planTitle: plan.title }
           : {
               phase: 'preview',
               planId,
-              planTitle: payload.title,
+              planTitle: plan.title,
               onBuild: () => notify('build'),
               onDismiss: () => notify('dismiss'),
+              // The layout as rendered, so the plan has every panel's position even where the
+              // payload left it to automatic packing.
+              ...(editing ? { editable: { plan: readPlanLayout(body, plan), revision: 0 } } : {}),
             },
       });
-
-      // DefaultGridLayoutManager hardcodes isDraggable/isResizable true; only editModeChanged
-      // (fired on an edit-mode transition) ever sets them false, and the marker path has no such
-      // transition. Go through editModeChanged rather than the flags directly: it cascades
-      // through Rows/TabsLayoutManager to every inner grid.
-      //
-      // Redundant on the wasEditing path (exitEditModeConfirmed below already calls it) but harmless.
-      body.editModeChanged?.(false);
 
       if (wasEditing) {
         // Installs the new content above, then exits edit mode without restoring the snapshot
@@ -177,7 +248,24 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
         scene.exitEditMode({ skipConfirm: true, restoreInitialState: false });
       }
 
-      return { success: true, changes: [{ path: '/', previousValue: null, newValue: payload.title }] };
+      // Arranging the preview records undo entries, which act on the panels this render replaced.
+      scene.state.sidebar.clearHistory();
+
+      // DefaultGridLayoutManager hardcodes isDraggable/isResizable true; only editModeChanged
+      // (fired on an edit-mode transition) sets them, and the marker path has no such transition.
+      // Go through editModeChanged rather than the flags directly: it cascades through
+      // Rows/TabsLayoutManager to every inner grid. Must run after exitEditMode, which turns
+      // dragging off again.
+      body.editModeChanged?.(canArrangeLayout(scene.state));
+
+      // With editing on, the caller learns the ids the plan was given and, on Build, the plan the
+      // skeleton was made from, which it needs to fill each panel by its element key.
+      const rendered = scene.state.planning?.phase === 'preview' ? scene.state.planning.editable : { plan };
+      return {
+        success: true,
+        ...(editing ? { data: rendered } : {}),
+        changes: [{ path: '/', previousValue: null, newValue: plan.title }],
+      };
     } catch (error) {
       return {
         success: false,

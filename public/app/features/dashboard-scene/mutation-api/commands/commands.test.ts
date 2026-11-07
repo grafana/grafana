@@ -68,6 +68,7 @@ describe('Command consistency', () => {
       'GET_LAYOUT',
       'GET_METADATA_ANNOTATIONS',
       'GET_PANEL_ERRORS',
+      'GET_PLAN',
       'GET_SPEC',
       'LIST_ANNOTATIONS',
       'LIST_PANELS',

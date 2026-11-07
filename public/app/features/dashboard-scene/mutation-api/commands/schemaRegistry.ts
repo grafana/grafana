@@ -39,5 +39,6 @@ export const DASHBOARD_COMMAND_SCHEMAS = [
   { name: 'REDO', payloadSchema: payloads.redo },
   { name: 'RENDER_PLAN', payloadSchema: payloads.renderPlan },
   { name: 'END_PLANNING', payloadSchema: payloads.endPlanning },
+  { name: 'GET_PLAN', payloadSchema: payloads.getPlan },
   { name: 'RELOAD_FROM_SERVER', payloadSchema: payloads.reloadFromServer },
 ] as const;
