@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -30,6 +31,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	"k8s.io/client-go/dynamic"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
@@ -146,6 +148,11 @@ type Storage struct {
 	snowflake      *snowflake.Node    // used to enforce internal ids
 	configProvider RestConfigProvider // used for provisioning
 
+	// Lazily initialized because GetRestConfig blocks until the API server is
+	// fully started (eventualRestConfigProvider), while NewStorage is called
+	// during API group installation — before the server is ready.
+	getDynClient func(ctx context.Context) (dynamic.Interface, error)
+
 	serializer Serializer
 	versioner  storage.Versioner
 
@@ -174,7 +181,7 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
-	configProvider RestConfigProvider, // used for provisioning
+	configProvider RestConfigProvider, // needed to talk to folder service -- ??? can we use the storage client directly?
 	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
@@ -208,6 +215,35 @@ func NewStorage(
 		if opts.GVK.Group != s.gr.Group {
 			return nil, nil, fmt.Errorf("storage group mismatch (%+v) %+v", s.gr, s.opts.GVK)
 		}
+	}
+
+	if opts.EnableFolderSupport && configProvider != nil {
+		var mu sync.Mutex
+		var client dynamic.Interface
+		s.getDynClient = func(ctx context.Context) (dynamic.Interface, error) {
+			mu.Lock()
+			defer mu.Unlock()
+			if err := ctx.Err(); err != nil {
+				return nil, err
+			}
+			if client != nil {
+				return client, nil
+			}
+			cfg, err := configProvider.GetRestConfig(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get REST config: %w", err)
+			}
+			initialized, err := dynamic.NewForConfig(cfg)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+			}
+			// Cache only successful initialization so a canceled request cannot poison the store.
+			client = initialized
+			return client, nil
+		}
+	} else if opts.EnableFolderSupport {
+		logging.DefaultLogger.Warn("configProvider is not configured; repo-manager folder consistency checks will be skipped",
+			"resource", config.GroupResource.String())
 	}
 
 	if opts.DeprecatedInternalID == DeprecatedID_Required {
