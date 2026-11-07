@@ -1378,6 +1378,15 @@
             }
           },
           {
+            "name": "include",
+            "in": "query",
+            "description": "extra data to add to each hit. canCreate marks whether the user can create dashboards in the folder, and is only valid with type=folder",
+            "schema": {
+              "type": "string",
+              "enum": ["canCreate"]
+            }
+          },
+          {
             "name": "sort",
             "in": "query",
             "description": "sortable field",
@@ -1934,6 +1943,10 @@
         "type": "object",
         "required": ["resource", "name", "title"],
         "properties": {
+          "canCreate": {
+            "description": "Whether the user can create dashboards in this folder. Only set when requested with include=canCreate",
+            "type": "boolean"
+          },
           "description": {
             "description": "Dashboard description",
             "type": "string"
@@ -1991,6 +2004,10 @@
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
+          },
+          "canCreateChecked": {
+            "description": "Set when the request asked for include=canCreate and every hit was checked",
+            "type": "boolean"
           },
           "facets": {
             "type": "object",

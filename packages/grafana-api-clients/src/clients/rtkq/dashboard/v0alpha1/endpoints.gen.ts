@@ -213,6 +213,7 @@ const injectedRtkApi = api
             panelType: queryArg.panelType,
             dataSourceType: queryArg.dataSourceType,
             permission: queryArg.permission,
+            include: queryArg.include,
             sort: queryArg.sort,
             limit: queryArg.limit,
             ownerReference: queryArg.ownerReference,
@@ -529,6 +530,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   dataSourceType?: string;
   /** permission needed for the resource (view, edit, admin, create). create is only valid with type=folder */
   permission?: 'view' | 'edit' | 'admin' | 'create';
+  /** extra data to add to each hit. canCreate marks whether the user can create dashboards in the folder, and is only valid with type=folder */
+  include?: 'canCreate';
   /** sortable field */
   sort?: string;
   /** number of results to return */
@@ -1250,6 +1253,8 @@ export type ManagedBy = {
   kind: string;
 };
 export type DashboardHit = {
+  /** Whether the user can create dashboards in this folder. Only set when requested with include=canCreate */
+  canCreate?: boolean;
   /** Dashboard description */
   description?: string;
   /** Stick untyped extra fields in this object (including the sort value) */
@@ -1277,6 +1282,8 @@ export type SortBy = {
 export type DashboardSearchResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  /** Set when the request asked for include=canCreate and every hit was checked */
+  canCreateChecked?: boolean;
   facets?: {
     [key: string]: FacetResult;
   };
