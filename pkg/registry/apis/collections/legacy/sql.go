@@ -2,7 +2,7 @@ package legacy
 
 import (
 	"context"
-	"database/sql"
+	stdsql "database/sql"
 	"fmt"
 	"time"
 
@@ -30,7 +30,7 @@ func NewLegacySQL(db legacysql.LegacyDatabaseProvider) *LegacySQL {
 
 // NOTE: this does not support paging -- lets check if that will be a problem in cloud
 func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user string) ([]dashboardStars, int64, error) {
-	var max sql.NullString
+	var max stdsql.NullString
 	sql, err := s.db(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -59,7 +59,8 @@ func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user str
 	var orgID int64
 	var userUID string
 	var dashboardUID string
-	var updated time.Time
+	var updated stdsql.NullTime
+	var latest time.Time
 
 	for rows.Next() {
 		err := rows.Scan(&orgID, &userUID, &dashboardUID, &updated)
@@ -76,12 +77,17 @@ func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user str
 				UserUID: userUID,
 			}
 		}
-		ts := updated.UnixMilli()
-		if ts > current.Last {
-			current.Last = ts
-		}
-		if ts < current.First || current.First == 0 {
-			current.First = ts
+		if updated.Valid {
+			ts := updated.Time.UnixMilli()
+			if ts > current.Last {
+				current.Last = ts
+			}
+			if ts < current.First || current.First == 0 {
+				current.First = ts
+			}
+			if updated.Time.After(latest) {
+				latest = updated.Time
+			}
 		}
 		current.Dashboards = append(current.Dashboards, dashboardUID)
 	}
@@ -105,18 +111,21 @@ func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user str
 		if max.Valid && max.String != "" {
 			t, _ := time.Parse(time.RFC3339, max.String)
 			if !t.IsZero() {
-				updated = t
+				latest = t
 			}
 		} else {
-			updated = s.startup
+			latest = s.startup
 		}
 	}
 
-	return stars, updated.UnixMilli(), err
+	if latest.IsZero() {
+		return stars, 0, nil
+	}
+	return stars, latest.UnixMilli(), nil
 }
 
 func (s *LegacySQL) GetMaxTime(ctx context.Context) (time.Time, error) {
-	var max sql.NullString
+	var max stdsql.NullString
 	sql, err := s.db(ctx)
 	if err != nil {
 		return time.Time{}, err
