@@ -55,7 +55,16 @@ module.exports = {
     customExportConditions: ['@grafana-app/source', 'browser'],
   },
   transform: {
-    '^.+\\.(ts|tsx|js|jsx|mjs)$': [require.resolve('ts-jest')],
+    '^.+\\.(ts|tsx|js|jsx|mjs)$': [
+      require.resolve('@swc/jest'),
+      {
+        jsc: {
+          transform: { react: { runtime: 'automatic' } },
+          // SWC emits non-configurable export getters, which breaks jest.spyOn on module namespaces
+          experimental: { plugins: [['@swc-contrib/mut-cjs-exports', {}]] },
+        },
+      },
+    ],
   },
   transformIgnorePatterns: [
     // Transform listed ESM packages at the top level or nested under another package
