@@ -18,6 +18,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.12.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.14.0 // indirect
+	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.6 // indirect
 	github.com/getkin/kin-openapi v0.152.0 // indirect
@@ -40,9 +41,9 @@ require (
 	github.com/go-openapi/swag/yamlutils v0.29.2 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20260922202713-e3b571f7135d // indirect
-	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815 // indirect
-	github.com/grafana/dskit v0.0.0-20260814134254-4a836a70f745 // indirect
+	github.com/grafana/authlib v0.0.0-20261023105149-ed7cea0f2b27 // indirect
+	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 // indirect
+	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.62.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.32.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
