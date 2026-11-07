@@ -19,6 +19,7 @@ interface Props {
   option: NotificationChannelOption;
   getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;
   pathPrefix: string;
+  secureFieldPathPrefix?: string;
   errors?: DeepMap<any, FieldError>;
   readOnly?: boolean;
   secureFields: NotificationChannelSecureFields;
@@ -33,6 +34,7 @@ interface Props {
 export const SubformField = ({
   option,
   pathPrefix,
+  secureFieldPathPrefix = '',
   errors,
   defaultValue,
   getOptionMeta,
@@ -81,6 +83,7 @@ export const SubformField = ({
                 key={subOption.propertyName}
                 option={subOption}
                 pathPrefix={`${name}.`}
+                secureFieldPathPrefix={`${secureFieldPathPrefix}${option.propertyName}.`}
                 error={errors?.[subOption.propertyName]}
               />
             );

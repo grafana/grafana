@@ -19,6 +19,7 @@ interface Props {
   defaultValues?: any[];
   option: NotificationChannelOption;
   pathPrefix: string;
+  secureFieldPathPrefix?: string;
   errors?: Array<DeepMap<any, FieldError>>;
   readOnly?: boolean;
   secureFields: NotificationChannelSecureFields;
@@ -28,6 +29,7 @@ interface Props {
 export const SubformArrayField = ({
   option,
   pathPrefix,
+  secureFieldPathPrefix = '',
   errors,
   defaultValues,
   readOnly = false,
@@ -59,16 +61,17 @@ export const SubformArrayField = ({
                   className={styles.deleteIcon}
                 />
               )}
-              {option.subformOptions?.map((option) => (
+              {option.subformOptions?.map((subOption) => (
                 <OptionField
                   readOnly={readOnly}
                   getOptionMeta={getOptionMeta}
                   secureFields={secureFields}
-                  defaultValue={field?.[option.propertyName]}
-                  key={option.propertyName}
-                  option={option}
+                  defaultValue={field?.[subOption.propertyName]}
+                  key={subOption.propertyName}
+                  option={subOption}
                   pathPrefix={`${path}.${itemIndex}.`}
-                  error={errors?.[itemIndex]?.[option.propertyName]}
+                  secureFieldPathPrefix={`${secureFieldPathPrefix}${option.propertyName}.${itemIndex}.`}
+                  error={errors?.[itemIndex]?.[subOption.propertyName]}
                 />
               ))}
             </div>
