@@ -12,6 +12,8 @@ import {
 import { config } from '../../config';
 import { logError } from '../../utils/logging';
 
+import { loadGrowthCohortContext } from './cohorts';
+
 // Ensure the module augmentation is pulled in
 import './openfeature-types.gen.d.ts';
 
@@ -97,6 +99,7 @@ export async function initOpenFeature() {
     {
       targetingKey: config.namespace,
       ...config.openFeatureContext,
+      ...(await loadGrowthCohortContext()),
     }
   );
 }
