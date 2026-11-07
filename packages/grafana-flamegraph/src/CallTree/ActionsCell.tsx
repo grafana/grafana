@@ -74,9 +74,10 @@ export const ActionsCell = memo(function ActionsCell({
       viewMode: viewMode ?? ViewMode.Single,
       paneView: paneView ?? PaneView.CallTree,
       isDiff: data.isDiffFlamegraph(),
+      isSandwich: inCallersMode,
       search,
     });
-  }, [getExtraContextMenuButtons, label, levelItem, data, viewMode, paneView, search]);
+  }, [getExtraContextMenuButtons, label, levelItem, data, viewMode, paneView, search, inCallersMode]);
 
   const hasAnyAction = shouldShowFocusItem || shouldShowCallersItem || shouldShowSearchItem || extraButtons.length > 0;
 
