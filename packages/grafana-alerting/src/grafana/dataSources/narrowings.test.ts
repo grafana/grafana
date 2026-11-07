@@ -62,7 +62,12 @@ describe('getDataSourcesWithValidRecordingTarget', () => {
 
     expect(listMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: ['prometheus', 'grafana-amazonprometheus-datasource', 'grafana-azureprometheus-datasource'],
+        type: [
+          'prometheus',
+          'grafana-amazonprometheus-datasource',
+          'grafana-azureprometheus-datasource',
+          'victoriametrics-metrics-datasource',
+        ],
         all: true,
       })
     );

@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -34,20 +33,16 @@ const (
 
 var (
 	searchRegex = regexp.MustCompile(`\{(\w+)\}`)
-
-	prometheusCompatibleDsTypes = []string{
-		datasources.DS_PROMETHEUS,
-		datasources.DS_AMAZON_PROMETHEUS,
-		datasources.DS_AZURE_PROMETHEUS,
-	}
 )
 
-func isPrometheusCompatible(dsType string) bool {
-	return slices.Contains(prometheusCompatibleDsTypes, dsType)
-}
+// lotexRulerCompatibleTypes lists the datasource types accepted by
+// isLotexRulerCompatible, for use in error messages.
+const lotexRulerCompatibleTypes = "loki, prometheus, amazon prometheus, azure prometheus, victoriametrics, victorialogs"
 
 func isLotexRulerCompatible(dsType string) bool {
-	return dsType == datasources.DS_LOKI || isPrometheusCompatible(dsType)
+	return dsType == datasources.DS_LOKI ||
+		dsType == datasources.DS_VICTORIA_LOGS ||
+		datasources.IsPrometheusCompatible(dsType)
 }
 
 func toMacaronPath(path string) string {
@@ -70,7 +65,7 @@ func getDatasourceByUID(ctx *contextmodel.ReqContext, cache datasources.CacheSer
 		}
 	case apimodels.LoTexRulerBackend:
 		if !isLotexRulerCompatible(ds.Type) {
-			return nil, unexpectedDatasourceTypeError(ds.Type, "loki, prometheus, amazon prometheus, azure prometheus")
+			return nil, unexpectedDatasourceTypeError(ds.Type, lotexRulerCompatibleTypes)
 		}
 	default:
 		return nil, unexpectedDatasourceTypeError(ds.Type, expectedType.String())

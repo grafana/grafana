@@ -639,6 +639,17 @@ describe('getInstantFromDataQuery', () => {
 
     expect(result).toBe(false);
   });
+
+  it('should return undefined if datasource is VictoriaLogs, whose instant queryType means raw logs', () => {
+    setupDataSources(mockDataSource({ type: 'victoriametrics-logs-datasource', name: 'aa', uid: 'aa-1' }));
+    const result = getInstantFromDataQuery({
+      ...query,
+      datasourceUid: 'aa',
+      model: { refId: 'f', queryType: 'instant' },
+    });
+
+    expect(result).toBeUndefined();
+  });
 });
 
 function isExpressionQuery(model: unknown): model is ExpressionQuery {
