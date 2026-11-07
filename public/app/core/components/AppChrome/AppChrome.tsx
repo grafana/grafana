@@ -34,6 +34,7 @@ import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useC
 import { AutoOpenMegaMenuForScopedContent } from './useAutoOpenMegaMenuForScopedContent';
 
 export const EXTENSION_SIDEBAR_FLOATING_TESTID = 'extension-sidebar-floating';
+const SIDE_PANEL_WIDTH = '240px';
 
 const CommandPalette = lazy(() =>
   import('app/features/commandPalette/CommandPalette').then((module) => ({ default: module.CommandPalette }))
@@ -90,6 +91,9 @@ export function AppChrome({ children }: Props) {
   );
 
   const headerLevels = useChromeHeaderLevels();
+  const fitsSidePanel = useMediaQueryMinWidth('md');
+  const showSidePanel = Boolean(state.sidePanel && fitsSidePanel && !state.chromeless && !isScopesDashboardsOpen);
+  const showCompactSidePanel = Boolean(state.sidePanel && !fitsSidePanel && !state.chromeless);
   const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight(), visualRefreshEnabled);
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth, floatingExtensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles, 'middle');
@@ -197,10 +201,31 @@ export function AppChrome({ children }: Props) {
               </ErrorBoundaryAlert>
             </div>
           )}
+          {showSidePanel && (
+            <div
+              className={cx(styles.sidePanelContainer, {
+                [styles.sidePanelContainerDocked]: menuDockedAndOpen,
+              })}
+            >
+              {state.sidePanel?.full}
+            </div>
+          )}
+          {showCompactSidePanel && (
+            <div
+              className={cx({
+                [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
+                [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+              })}
+            >
+              <div className={styles.sidePanelCompact}>{state.sidePanel?.compact}</div>
+            </div>
+          )}
           <main
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+              [styles.pageContainerSidePanel]: showSidePanel && !menuDockedAndOpen,
+              [styles.pageContainerSidePanelDocked]: showSidePanel && menuDockedAndOpen,
               [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
               // Floating takes no width from the page, so the docked width is 0.
               [contentSizeStyles.contentWidth]:
@@ -307,6 +332,35 @@ function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
 }
 
 const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: number, visualRefreshEnabled: boolean) => {
+  // The chrome draws the right half of the card, so it is there while a lazy page is still loading.
+  // The page's own card is flattened to sit inside it.
+  const pageCardJoinedToNav = {
+    background: 'transparent',
+    border: 'none',
+    borderRadius: 'unset',
+    margin: `0 calc(${theme.spacing(0.5)} + 1px) calc(${theme.spacing(0.5)} + 1px) 0`,
+  } as const;
+
+  const pageCardFrame = (left: string) => ({
+    isolation: 'isolate' as const,
+    position: 'relative' as const,
+    '&::before': {
+      content: '""',
+      position: 'absolute' as const,
+      zIndex: -1,
+      top: 0,
+      bottom: theme.spacing(0.5),
+      left,
+      right: theme.spacing(0.5),
+      background: theme.colors.background.page,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderLeft: 'none',
+      borderRadius: theme.shape.radius.lg,
+      borderBottomLeftRadius: 'unset',
+      borderTopLeftRadius: 'unset',
+    },
+  });
+
   return {
     content: css({
       label: 'page-content',
@@ -374,6 +428,59 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       overflow: 'hidden',
       position: 'relative',
     }),
+    sidePanelContainer: css(
+      {
+        position: 'fixed',
+        top: headerLevels * headerHeight,
+        bottom: 0,
+        left: 0,
+        width: SIDE_PANEL_WIDTH,
+        overflowY: 'auto',
+        zIndex: 1,
+        borderRight: `1px solid ${theme.colors.border.weak}`,
+      },
+      // Forms the left edge of the page card, so the card's own left border and corners are dropped (see pageContainerSidePanel)
+      visualRefreshEnabled && {
+        bottom: theme.spacing(0.5),
+        left: theme.spacing(0.5),
+        background: theme.colors.background.page,
+        border: `1px solid ${theme.colors.border.weak}`,
+        borderRadius: theme.shape.radius.lg,
+        borderBottomRightRadius: 'unset',
+        borderTopRightRadius: 'unset',
+      }
+    ),
+    sidePanelCompact: css({
+      padding: visualRefreshEnabled ? theme.spacing(0.5, 0.5, 1) : theme.spacing(1, 2, 1),
+    }),
+    sidePanelContainerDocked: css(
+      {
+        left: MENU_WIDTH,
+      },
+      visualRefreshEnabled && {
+        left: `calc(${MENU_WIDTH} + ${theme.spacing(0.5)})`,
+      }
+    ),
+    pageContainerSidePanel: css(
+      {
+        paddingLeft: SIDE_PANEL_WIDTH,
+      },
+      visualRefreshEnabled && {
+        paddingLeft: `calc(${SIDE_PANEL_WIDTH} + ${theme.spacing(0.5)})`,
+        ...pageCardFrame(`calc(${SIDE_PANEL_WIDTH} + ${theme.spacing(0.5)})`),
+        '& [data-page-card]': pageCardJoinedToNav,
+      }
+    ),
+    pageContainerSidePanelDocked: css(
+      {
+        paddingLeft: `calc(${MENU_WIDTH} + ${SIDE_PANEL_WIDTH})`,
+      },
+      visualRefreshEnabled && {
+        paddingLeft: `calc(${MENU_WIDTH} + ${SIDE_PANEL_WIDTH} + ${theme.spacing(0.5)})`,
+        ...pageCardFrame(`calc(${MENU_WIDTH} + ${SIDE_PANEL_WIDTH} + ${theme.spacing(0.5)})`),
+        '& [data-page-card]': pageCardJoinedToNav,
+      }
+    ),
     pageContainerMenuDocked: css({
       paddingLeft: MENU_WIDTH,
     }),
