@@ -21,8 +21,11 @@ func GetRandomString(n int, alphabets ...byte) (string, error) {
 	if len(alphabets) > 0 {
 		chars = string(alphabets)
 	}
+	if len(chars) > 256 {
+		return "", errors.New("random string alphabet cannot exceed 256 bytes")
+	}
 	cnt := len(chars)
-	max := 255 / cnt * cnt
+	max := 256 / cnt * cnt
 
 	bytes := make([]byte, n)
 
