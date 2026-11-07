@@ -36,6 +36,16 @@ func TestMakeQueryError_QueryLimit(t *testing.T) {
 		require.NotContains(t, qe.Error(), expr.ErrQueryLimit.Error())
 	})
 
+	t.Run("tags the Prometheus data source series cap as ErrQueryLimit", func(t *testing.T) {
+		qe := expr.MakeQueryError("A", "uid", fmt.Errorf("query returned more than 10000 series (err-prometheus-max-series-per-query)"))
+		require.True(t, errors.Is(qe, expr.ErrQueryLimit))
+	})
+
+	t.Run("tags an oversized plugin response rebuilt from its message as ErrQueryLimit", func(t *testing.T) {
+		qe := expr.MakeQueryError("A", "uid", fmt.Errorf("[plugin.resourceExhausted] rpc error: code = ResourceExhausted desc = grpc: received message larger than max (123 vs. 100)"))
+		require.True(t, errors.Is(qe, expr.ErrQueryLimit))
+	})
+
 	t.Run("leaves other query errors retryable", func(t *testing.T) {
 		qe := expr.MakeQueryError("A", "uid", fmt.Errorf("connection refused"))
 		require.False(t, errors.Is(qe, expr.ErrQueryLimit))
