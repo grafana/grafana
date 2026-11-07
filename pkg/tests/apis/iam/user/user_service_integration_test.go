@@ -897,6 +897,33 @@ func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 				require.Equal(t, 403, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
 			})
 
+			t.Run("org reader can resolve membership directly", func(t *testing.T) {
+				reader := helper.CreateUser("membership-reader", apis.Org1, org.RoleViewer,
+					[]resourcepermissions.SetResourcePermissionCommand{{
+						Actions:  []string{accesscontrol.ActionOrgUsersRead},
+						Resource: "users", ResourceAttribute: orgUsersReadScopeAttr, ResourceID: orgUsersReadScopeID,
+					}})
+				for _, filter := range []string{"userUid=" + alphaResp.Result.UID, "userId=" + strconv.FormatInt(alphaID, 10)} {
+					rsp := apis.DoRequest(helper, apis.RequestParams{
+						User:   reader,
+						Method: "GET",
+						Path:   "/api/org/users?" + filter + "&accesscontrol=true",
+					}, &[]org.OrgUserDTO{})
+					require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+					require.Len(t, *rsp.Result, 1)
+					member := (*rsp.Result)[0]
+					require.Equal(t, alphaResp.Result.UID, member.UID)
+					require.Equal(t, "Viewer", member.Role)
+					require.True(t, member.AccessControl[accesscontrol.ActionOrgUsersRead])
+					require.False(t, member.AccessControl[accesscontrol.ActionOrgUsersWrite])
+				}
+				denied := apis.DoRequest(helper, apis.RequestParams{
+					User: reader, Method: "GET",
+					Path: "/api/org/users?userUid=" + betaResp.Result.UID,
+				}, &map[string]any{})
+				require.Equal(t, 403, denied.Response.StatusCode, "body: %s", string(denied.Body))
+			})
+
 			t.Run("scoped users:read returns only the allowed user", func(t *testing.T) {
 				rsp := apis.DoRequest(helper, apis.RequestParams{
 					User:   scopedUser,
