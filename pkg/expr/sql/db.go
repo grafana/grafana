@@ -111,6 +111,8 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 		}
 		return nil, MakeGMSError(name, err)
 	}
+	// Close disposes the plan; without it, entries in GMS's process-wide CachedResultsGlobalCache leak.
+	defer func() { _ = iter.Close(mCtx) }()
 
 	// Convert the iterator into a Grafana data.Frame
 	f, err := convertToDataFrame(mCtx, iter, schema, QueryOptions.MaxOutputCells)
