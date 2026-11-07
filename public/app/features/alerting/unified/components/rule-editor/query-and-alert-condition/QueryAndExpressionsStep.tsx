@@ -8,6 +8,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, useDataSourceInstanceListItem } from '@grafana/runtime';
+import { useFlagAlertingDynamicThresholdExpression } from '@grafana/runtime/internal';
 import {
   Alert,
   Button,
@@ -63,6 +64,7 @@ import { SimpleConditionEditor, getSimpleConditionFromExpressions } from './Simp
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
 import { DESCRIPTIONS } from './descriptions';
 import {
+  addDynamicThresholdExpression,
   addExpressions,
   addNewDataQuery,
   addNewExpression,
@@ -319,6 +321,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     },
     [dispatch]
   );
+
+  const onClickDynamicThreshold = useCallback(() => {
+    dispatch(addDynamicThresholdExpression());
+  }, [dispatch]);
 
   const styles = useStyles2(getStyles);
 
@@ -614,7 +620,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                 />
               )}
               <Stack direction="row">
-                {!simplifiedQueryStep && config.expressionsEnabled && <TypeSelectorButton onClickType={onClickType} />}
+                {!simplifiedQueryStep && config.expressionsEnabled && (
+                  <TypeSelectorButton
+                    onClickType={onClickType}
+                    onClickDynamicThreshold={onClickDynamicThreshold}
+                    isGrafanaAlertingType={isGrafanaAlertingType}
+                  />
+                )}
 
                 {isPreviewLoading && (
                   <Button icon="spinner" type="button" variant="destructive" onClick={cancelQueries}>
@@ -684,7 +696,20 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   );
 };
 
-function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQueryType) => void }) {
+interface TypeSelectorButtonProps {
+  onClickType: (type: ExpressionQueryType) => void;
+  onClickDynamicThreshold: () => void;
+  isGrafanaAlertingType: boolean;
+  sqlExpressionsEnabled?: boolean;
+}
+
+export function TypeSelectorButton({
+  onClickType,
+  onClickDynamicThreshold,
+  isGrafanaAlertingType,
+  sqlExpressionsEnabled = expressionTypes.some(({ value }) => value === ExpressionQueryType.sql),
+}: TypeSelectorButtonProps) {
+  const dynamicThresholdEnabled = useFlagAlertingDynamicThresholdExpression();
   const newMenu = (
     <Menu>
       {expressionTypes.map((type) => (
@@ -696,6 +721,20 @@ function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQue
           />
         </Tooltip>
       ))}
+      {isGrafanaAlertingType && sqlExpressionsEnabled && dynamicThresholdEnabled && (
+        <Tooltip
+          content={t(
+            'alerting.type-selector-button.dynamic-threshold-description',
+            'Create an alert condition with thresholds that vary by label value.'
+          )}
+          placement="right"
+        >
+          <MenuItem
+            onClick={onClickDynamicThreshold}
+            label={t('alerting.type-selector-button.dynamic-threshold', 'Dynamic threshold')}
+          />
+        </Tooltip>
+      )}
     </Menu>
   );
 

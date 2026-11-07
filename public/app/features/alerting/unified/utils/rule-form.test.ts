@@ -11,7 +11,8 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
-import { mockDataSource, mockRuleWithLocation, mockRulerGrafanaRecordingRule } from '../mocks';
+import { mockDataSource, mockRuleWithLocation, mockRulerGrafanaRecordingRule, mockRulerGrafanaRule } from '../mocks';
+import { cloneRuleDefinition } from '../rule-editor/clone.utils';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { setupDataSources } from '../testSetup/datasources';
 import { type AlertManagerManualRouting, RuleFormType, type RuleFormValues } from '../types/rule-form';
@@ -835,5 +836,83 @@ describe('fixMissingRefIdsInExpressionModel', () => {
 
     expect(result.grafana_alert.data[0].model.refId).toBe('A');
     expect(result.grafana_alert.data[1].model.refId).toBe('B');
+  });
+});
+
+describe('dynamic threshold metadata round trip', () => {
+  const sqlModel = {
+    refId: 'B',
+    type: ExpressionQueryType.sql,
+    expression: 'SELECT * FROM A',
+    format: 'alerting',
+    dynamicThreshold: {
+      version: 1,
+      policy: {
+        inputRefId: 'A',
+        valueField: 'value',
+        matchLabel: 'env',
+        labelColumns: ['env'],
+        evaluator: EvalFunction.IsAbove,
+        mappings: [{ labelValue: 'prod', thresholds: [90] }],
+        defaultThreshold: [100],
+      },
+    },
+  };
+  const rule = mockRulerGrafanaRule(
+    {},
+    {
+      uid: 'rule-uid',
+      title: 'Dynamic rule',
+      condition: 'B',
+      namespace_uid: 'folder-uid',
+      rule_group: 'group',
+      data: [{ refId: 'B', datasourceUid: ExpressionDatasourceUID, queryType: '', model: sqlModel }],
+    }
+  );
+  const location = mockRuleWithLocation(rule, {
+    ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+    namespace: 'Folder',
+    group: { name: 'group', interval: '1m', rules: [rule] },
+  });
+
+  it('keeps the metadata when loading a rule into the form and saving it again', () => {
+    const formValues = rulerRuleToFormValues(location);
+    expect(formValues.queries[0].model).toEqual(sqlModel);
+
+    const edited = { ...formValues, name: 'Renamed' };
+    const saved = formValuesToRulerGrafanaRuleDTO(edited);
+
+    expect(saved.grafana_alert.title).toBe('Renamed');
+    expect(saved.grafana_alert.data[0].model).toEqual(sqlModel);
+  });
+
+  it('keeps the metadata when cloning a rule and saving the copy', () => {
+    const cloned = cloneRuleDefinition(location);
+    const formValues = rulerRuleToFormValues(cloned);
+    const saved = formValuesToRulerGrafanaRuleDTO(formValues);
+
+    expect(saved.grafana_alert.title).toBe('Dynamic rule (copy)');
+    expect(saved.grafana_alert.data[0].model).toEqual(sqlModel);
+    expect(rule.grafana_alert.data[0].model).toEqual(sqlModel);
+  });
+
+  it('leaves rules without metadata free of a dynamicThreshold key', () => {
+    const { dynamicThreshold, ...plainSql } = sqlModel;
+    const plainRule = mockRulerGrafanaRule(
+      {},
+      { ...rule.grafana_alert, data: [{ ...rule.grafana_alert.data[0], model: plainSql }] }
+    );
+    const saved = formValuesToRulerGrafanaRuleDTO(
+      rulerRuleToFormValues(
+        mockRuleWithLocation(plainRule, {
+          ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+          namespace: 'Folder',
+          group: { name: 'group', interval: '1m', rules: [plainRule] },
+        })
+      )
+    );
+
+    expect(saved.grafana_alert.data[0].model).toEqual(plainSql);
+    expect(saved.grafana_alert.data[0].model).not.toHaveProperty('dynamicThreshold');
   });
 });

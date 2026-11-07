@@ -19,6 +19,8 @@ export interface FetchSQLFieldsOptions {
   range?: TimeRange;
   scopedVars?: ScopedVars;
   filters?: AdHocVariableFilter[];
+  /** Checked after source queries are interpolated; when true no request is sent and no fields are returned. */
+  isCancelled?: () => boolean;
 }
 
 export async function fetchSQLFields(
@@ -38,6 +40,9 @@ export async function fetchSQLFields(
     options.scopedVars ?? {},
     options.filters
   );
+  if (options.isCancelled?.()) {
+    return [];
+  }
 
   const queryResponse = await datasource.runMetaSQLExprQuery(
     { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${generateUUID()}` },

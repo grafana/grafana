@@ -1,9 +1,12 @@
+import { ExpressionDatasourceUID, ExpressionQueryType } from 'app/features/expressions/types';
 import { type RulerRuleDTO, type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import { EvalFunction } from '../../../../state/alertDef';
 import { mockRulerGrafanaRecordingRule, mockRulerGrafanaRule } from '../../../mocks';
 import { getDefaultFormValues } from '../../../rule-editor/formDefaults';
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 import { Annotation } from '../../../utils/constants';
+import { formValuesToRulerGrafanaRuleDTO } from '../../../utils/rule-form';
 
 import { getPayloadToExport } from './ModifyExportRuleForm';
 
@@ -220,5 +223,120 @@ describe('getPayloadFromDto', () => {
       name: 'Empty Group',
       rules: [expectedModifiedRule2('uid-rule-2')],
     });
+  });
+});
+
+const dynamicThresholdMetadata = {
+  version: 1 as const,
+  policy: {
+    inputRefId: 'A',
+    valueField: 'value',
+    matchLabel: 'env',
+    labelColumns: ['env'],
+    evaluator: EvalFunction.IsAbove,
+    mappings: [{ labelValue: 'prod', thresholds: [90] }],
+    defaultThreshold: [100],
+  },
+};
+
+describe('getPayloadToExport with dynamic threshold metadata', () => {
+  const sqlModel = {
+    refId: 'B',
+    type: ExpressionQueryType.sql,
+    expression: 'SELECT * FROM A',
+    format: 'alerting',
+  };
+  const mathModel = { refId: 'C', type: ExpressionQueryType.math, expression: '$A > 1' };
+  const thresholdModel = { refId: 'D', type: ExpressionQueryType.threshold, expression: 'A' };
+  const expressionQuery = (model: { refId: string; [key: string]: unknown }) => ({
+    refId: model.refId,
+    datasourceUid: ExpressionDatasourceUID,
+    queryType: '',
+    model,
+  });
+  const formValues: RuleFormValues = {
+    ...getDefaultFormValues(),
+    type: RuleFormType.grafana,
+    condition: 'B',
+    name: 'Dynamic rule',
+    queries: [
+      expressionQuery({ ...sqlModel, dynamicThreshold: dynamicThresholdMetadata }),
+      expressionQuery(mathModel),
+      expressionQuery(thresholdModel),
+    ],
+  };
+  const exportedModels = (payload: ReturnType<typeof getPayloadToExport>) =>
+    payload.rules.flatMap((rule) => ('grafana_alert' in rule ? rule.grafana_alert.data.map((q) => q.model) : []));
+
+  it('removes dynamicThreshold from the exported SQL model and keeps the generated SQL', () => {
+    const payload = getPayloadToExport(formValues, undefined, 'uid-new');
+
+    expect(exportedModels(payload)).toEqual([sqlModel, mathModel, thresholdModel]);
+    expect(JSON.stringify(payload)).not.toContain('dynamicThreshold');
+  });
+
+  it('does not mutate the form values and keeps metadata on the normal save conversion', () => {
+    getPayloadToExport(formValues, undefined, 'uid-new');
+
+    expect(formValues.queries[0].model).toHaveProperty('dynamicThreshold', dynamicThresholdMetadata);
+    const saved = formValuesToRulerGrafanaRuleDTO(formValues);
+    expect(saved.grafana_alert.data[0].model).toHaveProperty('dynamicThreshold', dynamicThresholdMetadata);
+  });
+
+  it('strips metadata from rules already in the exported group', () => {
+    const existing = mockRulerGrafanaRule(
+      {},
+      {
+        uid: 'uid-existing',
+        title: 'Existing',
+        data: [expressionQuery({ ...sqlModel, dynamicThreshold: dynamicThresholdMetadata })],
+      }
+    );
+    const group: RulerRuleGroupDTO<RulerRuleDTO> = { name: 'Group', rules: [existing] };
+
+    const payload = getPayloadToExport(formValues, group, 'uid-new');
+
+    expect(exportedModels(payload)).toEqual([sqlModel, sqlModel, mathModel, thresholdModel]);
+    expect(existing.grafana_alert.data[0].model).toHaveProperty('dynamicThreshold');
+  });
+
+  it('leaves non-SQL expression and data source models carrying dynamicThreshold untouched', () => {
+    const mathWithKey = { ...mathModel, dynamicThreshold: dynamicThresholdMetadata };
+    const dataSourceModel = { refId: 'E', expr: 'up', dynamicThreshold: dynamicThresholdMetadata };
+    const rule = mockRulerGrafanaRule(
+      {},
+      {
+        uid: 'uid-existing',
+        title: 'Existing',
+        data: [
+          expressionQuery(mathWithKey),
+          { refId: 'E', datasourceUid: 'prom', queryType: '', model: dataSourceModel },
+        ],
+      }
+    );
+
+    const payload = getPayloadToExport(formValues, { name: 'Group', rules: [rule] }, 'uid-new');
+
+    expect(payload.rules[0]).toBe(rule);
+    expect(exportedModels(payload).slice(0, 2)).toEqual([mathWithKey, dataSourceModel]);
+    expect(exportedModels(payload)[0]).toBe(mathWithKey);
+    expect(exportedModels(payload)[1]).toBe(dataSourceModel);
+  });
+
+  it.each([undefined, null, 'text', 5])('does not throw and returns the rule unchanged when model is %p', (model) => {
+    const rule = mockRulerGrafanaRule(
+      {},
+      {
+        uid: 'uid-existing',
+        title: 'Existing',
+        data: [],
+      }
+    );
+    // @ts-expect-error simulating malformed persisted data
+    rule.grafana_alert.data.push({ refId: 'A', datasourceUid: 'prom', queryType: '', model });
+
+    const payload = getPayloadToExport(formValues, { name: 'Group', rules: [rule] }, 'uid-new');
+
+    expect(payload.rules[0]).toBe(rule);
   });
 });

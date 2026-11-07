@@ -29,6 +29,8 @@ export interface SqlEditorProps {
    * Defaults to the dialect SQL Expressions run against (MySQL).
    */
   dialect?: CodeMirrorSqlDialect;
+  /** Rejects edits while keeping the text selectable. */
+  readOnly?: boolean;
   children?: (props: { formatQuery: () => void }) => ReactNode;
 }
 
@@ -41,6 +43,7 @@ export const SqlEditor = ({
   height = '200px',
   ariaLabel,
   dialect = DEFAULT_CODE_MIRROR_SQL_DIALECT,
+  readOnly,
   children,
 }: SqlEditorProps) => {
   const styles = useStyles2(getStyles);
@@ -77,6 +80,7 @@ export const SqlEditor = ({
           onChange={onChange}
           height={typeof height === 'number' ? `${height}px` : height}
           aria-label={ariaLabel}
+          readOnly={readOnly}
           completionSources={completionSources}
           completeOnSpace
           extensions={extensions}

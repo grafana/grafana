@@ -1,5 +1,12 @@
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { type ClassicCondition, type ExpressionQuery } from 'app/features/expressions/types';
+import { EvalFunction } from 'app/features/alerting/state/alertDef';
+import { buildDynamicThreshold } from 'app/features/expressions/components/DynamicThreshold/buildDynamicThreshold';
+import {
+  type ClassicCondition,
+  type ExpressionQuery,
+  ExpressionQueryType,
+  type SqlExpressionQuery,
+} from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { NEW_REDUCER_REF } from './query-and-alert-condition/reducer';
@@ -176,6 +183,96 @@ describe('rule-editor', () => {
 
       expect(rewiredQueries[1].model as ExpressionQuery).toHaveProperty('expression', 'abs(${C}) + ${C}');
       expect(rewiredQueries[2].model as ExpressionQuery).toHaveProperty('expression', 'C');
+    });
+
+    describe('dynamic threshold SQL expressions', () => {
+      const policy = {
+        inputRefId: 'A',
+        valueField: 'value',
+        matchLabel: 'region',
+        labelColumns: ['region'],
+        evaluator: EvalFunction.IsAbove,
+        mappings: [{ labelValue: 'us-east', thresholds: [5] }],
+        defaultThreshold: [10],
+      };
+      const dynamicThresholdQuery = (expression: string, inputRefId = 'A'): AlertQuery => ({
+        refId: 'B',
+        datasourceUid: '__expr__',
+        queryType: '',
+        model: {
+          refId: 'B',
+          type: ExpressionQueryType.sql,
+          datasource: ExpressionDatasourceRef,
+          format: 'alerting',
+          expression,
+          dynamicThreshold: { version: 1, policy: { ...policy, inputRefId } },
+        } as SqlExpressionQuery,
+      });
+
+      it('updates the policy input and regenerates the SQL atomically', () => {
+        const original = buildDynamicThreshold(policy);
+        const renamed = buildDynamicThreshold({ ...policy, inputRefId: 'C' });
+        if (!original.ok || !renamed.ok) {
+          throw new Error('test policy must compile');
+        }
+
+        const [, rewired] = queriesWithUpdatedReferences(
+          [dataSource, dynamicThresholdQuery(original.expressionSql)],
+          'A',
+          'C'
+        );
+
+        const model = rewired.model as SqlExpressionQuery;
+        expect(model.dynamicThreshold?.policy.inputRefId).toBe('C');
+        expect(model.expression).toBe(renamed.expressionSql);
+        expect(model.expression).toContain('`C`');
+        expect(model.expression).not.toContain('`A`');
+        expect(model.format).toBe('alerting');
+      });
+
+      it('updates the policy input of an incomplete policy and keeps the SQL empty', () => {
+        const query = dynamicThresholdQuery('');
+        (query.model as SqlExpressionQuery).dynamicThreshold!.policy.defaultThreshold = [];
+
+        const [rewired] = queriesWithUpdatedReferences([query], 'A', 'C');
+
+        const model = rewired.model as SqlExpressionQuery;
+        expect(model.dynamicThreshold?.policy.inputRefId).toBe('C');
+        expect(model.expression).toBe('');
+      });
+
+      it('keeps mismatching SQL unchanged and strips the metadata on rename', () => {
+        const query = dynamicThresholdQuery('SELECT * FROM A WHERE edited = 1');
+
+        const [rewired] = queriesWithUpdatedReferences([query], 'A', 'C');
+
+        const model = rewired.model as SqlExpressionQuery;
+        expect(model.expression).toBe('SELECT * FROM A WHERE edited = 1');
+        expect(model).not.toHaveProperty('dynamicThreshold');
+        expect(model.format).toBe('alerting');
+      });
+
+      it('leaves policies for other inputs untouched', () => {
+        const query = dynamicThresholdQuery('SELECT 1', 'Z');
+
+        expect(queriesWithUpdatedReferences([query], 'A', 'C')[0]).toEqual(query);
+      });
+
+      it('does not touch ordinary SQL expressions', () => {
+        const sqlQuery: AlertQuery = {
+          refId: 'B',
+          datasourceUid: '__expr__',
+          queryType: '',
+          model: {
+            refId: 'B',
+            type: ExpressionQueryType.sql,
+            datasource: ExpressionDatasourceRef,
+            expression: 'SELECT * FROM A',
+          },
+        };
+
+        expect(queriesWithUpdatedReferences([sqlQuery], 'A', 'C')[0]).toEqual(sqlQuery);
+      });
     });
 
     it('should skip if refs are identical', () => {

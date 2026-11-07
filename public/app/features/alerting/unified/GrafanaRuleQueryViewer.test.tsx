@@ -4,10 +4,18 @@ import { getDataSourceInstanceList } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { buildDynamicThreshold } from '../../expressions/components/DynamicThreshold/buildDynamicThreshold';
+import { type DynamicThresholdPolicyV1 } from '../../expressions/types';
+import { EvalFunction } from '../state/alertDef';
+
 import { GrafanaRuleQueryViewer } from './GrafanaRuleQueryViewer';
 import { type AlertQueryDataSources } from './hooks/alertQueriesStatus';
 import { mockCombinedRule } from './mocks';
 import { mimirDataSource } from './mocks/server/configure';
+
+jest.mock('@grafana/sql', () => ({
+  Preview: ({ rawSql }: { rawSql: string }) => <pre data-testid="sql-preview" data-raw-sql={rawSql} />,
+}));
 
 const { dataSource } = mimirDataSource();
 const DS_UID = dataSource.uid;
@@ -70,6 +78,102 @@ describe('GrafanaRuleQueryViewer', () => {
     expect(await screen.findByText(dataSource.name)).toBeInTheDocument();
     expect(screen.getByRole('img', { name: dataSource.name })).toBeInTheDocument();
     expect(screen.getByText(/refId: A/)).toBeInTheDocument();
+  });
+
+  describe('SQL expressions', () => {
+    const sqlExpression = (refId: string, extra: Record<string, unknown> = {}): AlertQuery => ({
+      refId,
+      datasourceUid: '__expr__',
+      queryType: '',
+      model: {
+        refId,
+        type: 'sql',
+        datasource: { uid: '__expr__', type: '__expr__' },
+        expression: 'SELECT 1 AS generated_marker',
+        ...extra,
+      } as AlertDataQuery,
+    });
+
+    const dynamicThresholdPolicy: DynamicThresholdPolicyV1 = {
+      inputRefId: 'A',
+      valueField: 'value',
+      matchLabel: 'region',
+      labelColumns: ['region'],
+      evaluator: EvalFunction.IsAbove,
+      mappings: [],
+      defaultThreshold: [1],
+    };
+
+    function compiledSql() {
+      const built = buildDynamicThreshold(dynamicThresholdPolicy);
+      if (!built.ok) {
+        throw new Error('expected the test policy to compile');
+      }
+      return built.expressionSql;
+    }
+
+    it('labels an expression with dynamic threshold metadata and passes the generated SQL to the preview', async () => {
+      const dataSources = await dataSourcesPromise;
+      const generatedSql = compiledSql();
+
+      render(
+        <GrafanaRuleQueryViewer
+          queries={[
+            sqlExpression('B', {
+              expression: generatedSql,
+              dynamicThreshold: { version: 1, policy: dynamicThresholdPolicy },
+            }),
+          ]}
+          condition="B"
+          rule={mockCombinedRule()}
+          dataSourcesByUid={dataSources}
+        />
+      );
+
+      expect(await screen.findByText('Dynamic threshold')).toBeInTheDocument();
+      expect(screen.getByText('Generated SQL')).toBeInTheDocument();
+      expect(screen.queryByText('Sql')).not.toBeInTheDocument();
+      expect(screen.getByTestId('sql-preview')).toHaveAttribute('data-raw-sql', generatedSql);
+    });
+
+    it('renders SQL that no longer matches its dynamic threshold policy as ordinary SQL', async () => {
+      const dataSources = await dataSourcesPromise;
+
+      render(
+        <GrafanaRuleQueryViewer
+          queries={[
+            sqlExpression('B', {
+              expression: `${compiledSql()} -- edited`,
+              dynamicThreshold: { version: 1, policy: dynamicThresholdPolicy },
+            }),
+          ]}
+          condition="B"
+          rule={mockCombinedRule()}
+          dataSourcesByUid={dataSources}
+        />
+      );
+
+      expect(await screen.findByText('Sql')).toBeInTheDocument();
+      expect(screen.queryByText('Dynamic threshold')).not.toBeInTheDocument();
+      expect(screen.queryByText('Generated SQL')).not.toBeInTheDocument();
+    });
+
+    it('keeps the ordinary SQL label for SQL without metadata', async () => {
+      const dataSources = await dataSourcesPromise;
+
+      render(
+        <GrafanaRuleQueryViewer
+          queries={[sqlExpression('B')]}
+          condition="B"
+          rule={mockCombinedRule()}
+          dataSourcesByUid={dataSources}
+        />
+      );
+
+      expect(await screen.findByText('Sql')).toBeInTheDocument();
+      expect(screen.queryByText('Dynamic threshold')).not.toBeInTheDocument();
+      expect(screen.queryByText('Generated SQL')).not.toBeInTheDocument();
+    });
   });
 
   it('renders neither badge nor query model when the data source did not resolve', async () => {
