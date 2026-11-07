@@ -8,7 +8,12 @@ import (
 
 	discoveryengine "cloud.google.com/go/discoveryengine/apiv1"
 	"cloud.google.com/go/discoveryengine/apiv1/discoveryenginepb"
+	"github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/option"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 )
 
 // rankClient is the production Client backed by the Discovery Engine
@@ -55,6 +60,7 @@ func (c *rankClient) Rank(ctx context.Context, model, query string, texts []stri
 			Content: t,
 		}
 	}
+	// The hedge helper owns timed duplicates and transient retries; disable SDK retries for this call.
 	resp, err := c.client.Rank(ctx, &discoveryenginepb.RankRequest{
 		RankingConfig: c.rankingConfig,
 		Model:         model,
@@ -63,8 +69,13 @@ func (c *rankClient) Rank(ctx context.Context, model, query string, texts []stri
 		Records:       records,
 		// We only need ids + scores back, not record payloads.
 		IgnoreRecordDetailsInResponse: true,
-	})
+	}, gax.WithRetry(func() gax.Retryer { return nil }))
 	if err != nil {
+		// Match GAX's exception for permanent certificate failures within Unavailable.
+		if ctx.Err() == nil && status.Code(err) == codes.Unavailable &&
+			!strings.Contains(err.Error(), "x509: certificate signed by unknown authority") {
+			err = rerank.MarkRetryable(err)
+		}
 		return nil, fmt.Errorf("vertex rerank: rank: %w", err)
 	}
 	out := make([]RecordScore, 0, len(resp.GetRecords()))
