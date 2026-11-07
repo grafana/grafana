@@ -1,10 +1,9 @@
-import { act, waitFor, within } from '@testing-library/react';
+import { waitFor, within } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { setBackendSrv } from '@grafana/runtime';
-import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -64,16 +63,6 @@ const server = setupMockServer();
 
 beforeAll(() => {
   setBackendSrv(backendSrv);
-});
-
-beforeEach(() => {
-  setTestFlags({ foldersAppPlatformAPI: false });
-});
-
-afterEach(async () => {
-  await act(async () => {
-    setTestFlags({});
-  });
 });
 
 const receiver = (title: string, name: string) => ({
