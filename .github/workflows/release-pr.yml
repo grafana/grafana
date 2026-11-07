@@ -249,7 +249,7 @@ jobs:
             if [ -f lerna.json ]; then
               pnpm exec lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
             else
-              pnpm exec nx release version "$VERSION"
+              pnpm exec nx release version --groups=grafana "$VERSION"
             fi
           fi
       - name: Refresh lockfile
