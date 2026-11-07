@@ -116,6 +116,30 @@ describe('Rows to fields', () => {
     expect(result.fields[0].config.thresholds?.steps[0].value).toBe(30);
   });
 
+  it('Can handle a threshold value and color per row', () => {
+    const input = toDataFrame({
+      fields: [
+        { name: 'Name', type: FieldType.string, values: ['Temperature', 'Pressure'] },
+        { name: 'Value', type: FieldType.number, values: [10, 200] },
+        { name: 'Limit', type: FieldType.number, values: [30, 100] },
+        { name: 'LimitColor', type: FieldType.string, values: ['orange', 'purple'] },
+      ],
+    });
+
+    const result = rowsToFields(
+      {
+        mappings: [
+          { fieldName: 'Limit', handlerKey: 'thresholds.value' },
+          { fieldName: 'LimitColor', handlerKey: 'thresholds.color' },
+        ],
+      },
+      input
+    );
+
+    expect(result.fields[0].config.thresholds?.steps).toEqual([{ value: 30, color: 'orange' }]);
+    expect(result.fields[1].config.thresholds?.steps).toEqual([{ value: 100, color: 'purple' }]);
+  });
+
   it('Will extract other string fields to labels', () => {
     const input = toDataFrame({
       fields: [
