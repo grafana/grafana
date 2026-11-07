@@ -754,21 +754,27 @@ func createRequestCtxInOrg(org int64) *contextmodel.ReqContext {
 }
 
 // setRouteProvenance marks an org's routing tree as provisioned.
-func setRouteProvenance(t *testing.T, orgID int64, ps provisioning.ProvisioningStore) {
+func setRouteProvenance(t *testing.T, orgID int64, ps interface {
+	SetProvenance(ctx context.Context, o ngmodels.Provisionable, org int64, p ngmodels.Provenance) error
+}) {
 	t.Helper()
 	err := ps.SetProvenance(context.Background(), &apimodels.Route{}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 
 // setContactPointProvenance marks a contact point as provisioned.
-func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps provisioning.ProvisioningStore) {
+func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps interface {
+	SetProvenance(ctx context.Context, o ngmodels.Provisionable, org int64, p ngmodels.Provenance) error
+}) {
 	t.Helper()
 	err := ps.SetProvenance(context.Background(), &apimodels.EmbeddedContactPoint{UID: UID}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 
 // setTemplateProvenance marks a template as provisioned.
-func setTemplateProvenance(t *testing.T, orgID int64, name string, ps provisioning.ProvisioningStore) {
+func setTemplateProvenance(t *testing.T, orgID int64, name string, ps interface {
+	SetProvenance(ctx context.Context, o ngmodels.Provisionable, org int64, p ngmodels.Provenance) error
+}) {
 	t.Helper()
 	err := ps.SetProvenance(context.Background(), &v1.TemplateGroup{Title: name}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)

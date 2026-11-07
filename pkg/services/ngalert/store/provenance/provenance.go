@@ -18,6 +18,7 @@ type provenanceRecord struct {
 	Provenance      models.Provenance
 	ManagerKind     string `xorm:"manager_kind"`
 	ManagerIdentity string `xorm:"manager_identity"`
+	SourceURL       string `xorm:"source_url"`
 }
 
 func (pr provenanceRecord) TableName() string {
@@ -387,4 +388,105 @@ func (st ProvenanceStore) setManagerPropertiesWithLocking(sess *db.Session, reco
 	}
 
 	return st.setManagerPropertiesUpsert(sess, recordKey, recordType, org, m, p)
+}
+
+// SetSourceURL sets or clears the source URL on an existing provenance row.
+// An empty sourceURL stores NULL and does nothing when no row exists. A non-empty
+// sourceURL updates only that column and fails when the provenance row is missing.
+// Provenance and manager upserts do not write this column, so a later legacy write
+// leaves a stored URL in place. Deleting the provenance row deletes the URL.
+func (st ProvenanceStore) SetSourceURL(ctx context.Context, o models.Provisionable, org int64, sourceURL string) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		var value any
+		if sourceURL != "" {
+			value = sourceURL
+		}
+		res, err := sess.Exec(
+			"UPDATE "+provenanceRecord{}.TableName()+" SET source_url = ? WHERE record_key = ? AND record_type = ? AND org_id = ?",
+			value, o.ResourceID(), o.ResourceType(), org,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to store source URL: %w", err)
+		}
+		if sourceURL == "" {
+			return nil
+		}
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("failed to store source URL: %w", err)
+		}
+		if affected == 0 {
+			return fmt.Errorf("failed to store source URL: provenance record does not exist")
+		}
+		return nil
+	})
+}
+
+// GetSourceURL returns the stored source URL, or an empty string when the row or column is missing.
+func (st ProvenanceStore) GetSourceURL(ctx context.Context, o models.Provisionable, org int64) (string, error) {
+	var sourceURL string
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		rawData, err := sess.Table(provenanceRecord{}).
+			Where("record_key = ? AND record_type = ? AND org_id = ?", o.ResourceID(), o.ResourceType(), org).
+			Desc("id").
+			Cols("source_url").
+			QueryString()
+		if err != nil {
+			return fmt.Errorf("failed to query source URL: %w", err)
+		}
+		if len(rawData) > 0 {
+			sourceURL = rawData[0]["source_url"]
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return sourceURL, nil
+}
+
+// GetSourceURLs returns non-empty source URLs for an org and resource type, keyed by record key.
+func (st ProvenanceStore) GetSourceURLs(ctx context.Context, org int64, resourceType string) (map[string]string, error) {
+	result := make(map[string]string)
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		rawData, err := sess.Table(provenanceRecord{}).
+			Where("record_type = ? AND org_id = ? AND source_url IS NOT NULL AND source_url != ''", resourceType, org).
+			Cols("record_key", "source_url").
+			QueryString()
+		if err != nil {
+			return fmt.Errorf("failed to query source URLs: %w", err)
+		}
+		for _, data := range rawData {
+			if data["source_url"] != "" {
+				result[data["record_key"]] = data["source_url"]
+			}
+		}
+		return nil
+	})
+	return result, err
+}
+
+// GetSourceURLsByUIDs returns non-empty source URLs for the given record keys.
+func (st ProvenanceStore) GetSourceURLsByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]string, error) {
+	if len(uids) == 0 {
+		return map[string]string{}, nil
+	}
+	result := make(map[string]string, len(uids))
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		rawData, err := sess.Table(provenanceRecord{}).
+			Where("record_type = ? AND org_id = ? AND source_url IS NOT NULL AND source_url != ''", resourceType, org).
+			In("record_key", uids).
+			Cols("record_key", "source_url").
+			QueryString()
+		if err != nil {
+			return fmt.Errorf("failed to query source URLs: %w", err)
+		}
+		for _, data := range rawData {
+			if data["source_url"] != "" {
+				result[data["record_key"]] = data["source_url"]
+			}
+		}
+		return nil
+	})
+	return result, err
 }

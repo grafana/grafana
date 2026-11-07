@@ -32,6 +32,7 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	}))
 
 	AddManagerPropertiesColumnsToProvenanceType(mg)
+	AddSourceURLColumnToProvenanceType(mg)
 	// End of migration log, add new migrations above this line.
 }
 

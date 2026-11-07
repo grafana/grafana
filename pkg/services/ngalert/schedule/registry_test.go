@@ -633,6 +633,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			"GUID":            {},
 			"FolderFullpath":  {}, // Populated lazily from DB, not part of rule fingerprint
 			"K8sStatus":       {},
+			"SourceURL":       {}, // Write intent stored on the provenance row, not part of the rule fingerprint.
 			"RuleGroupIndex":  {},
 			// cannot change the state cache ID
 			"RuleGroup":                   {},

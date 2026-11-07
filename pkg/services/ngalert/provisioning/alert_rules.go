@@ -564,7 +564,10 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 			return err
 		}
 
-		return service.provenanceStore.SetManagerProperties(ctx, &rule, rule.OrgID, manager)
+		if err = service.provenanceStore.SetManagerProperties(ctx, &rule, rule.OrgID, manager); err != nil {
+			return err
+		}
+		return service.persistSourceURL(ctx, rule.OrgID, &rule)
 	})
 	if err != nil {
 		return models.AlertRule{}, err
@@ -719,13 +722,12 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 		return fmt.Errorf("rule group %s is reserved for no-group rules and cannot be used for rule groups with multiple rules", group.Title)
 	}
 
-	for _, rule := range group.Rules {
-		if rule.UID == "" {
-			// if empty the UID will be generated before save
-			continue
+	for i := range group.Rules {
+		if group.Rules[i].UID == "" {
+			group.Rules[i].UID = util.GenerateShortUID()
 		}
-		if err := util.ValidateUID(rule.UID); err != nil {
-			return fmt.Errorf("%w: cannot create rule with UID %q: %w", models.ErrAlertRuleFailedValidation, rule.UID, err)
+		if err := util.ValidateUID(group.Rules[i].UID); err != nil {
+			return fmt.Errorf("%w: cannot create rule with UID %q: %w", models.ErrAlertRuleFailedValidation, group.Rules[i].UID, err)
 		}
 	}
 
@@ -734,7 +736,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 		return err
 	}
 
-	if delta.IsEmpty() {
+	if delta.IsEmpty() && !rulesUpdateSourceURL(group.Rules) {
 		return nil
 	}
 
@@ -770,7 +772,13 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 		}
 	}
 
-	return service.persistDelta(ctx, user, delta, manager, versionMessage)
+	if delta.IsEmpty() {
+		return service.xact.InTransaction(ctx, func(ctx context.Context) error {
+			return service.persistSourceURLs(ctx, user.GetOrgID(), group.Rules)
+		})
+	}
+
+	return service.persistDelta(ctx, user, delta, manager, versionMessage, group.Rules)
 }
 
 func (service *AlertRuleService) ReplaceRuleGroups(ctx context.Context, user identity.Requester, groups []*models.AlertRuleGroup, manager utils.ManagerProperties, versionMessage string) error {
@@ -817,7 +825,7 @@ func (service *AlertRuleService) DeleteRuleGroups(ctx context.Context, user iden
 					return err
 				}
 			}
-			err = service.persistDelta(ctx, user, delta, manager, "") // Message not used for deletes.
+			err = service.persistDelta(ctx, user, delta, manager, "", nil) // Message not used for deletes.
 			if err != nil {
 				return err
 			}
@@ -873,7 +881,7 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 	return rulestore.UpdateCalculatedRuleFields(delta), nil
 }
 
-func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *rulestore.GroupDelta, manager utils.ManagerProperties, versionMessage string) error {
+func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *rulestore.GroupDelta, manager utils.ManagerProperties, versionMessage string, sourceRules []models.AlertRule) error {
 	// Group replace does not flow through CreateAlertRule/UpdateAlertRule.
 	mutated := make([]*models.AlertRule, 0, len(delta.New)+len(delta.Update))
 	mutated = append(mutated, delta.New...)
@@ -957,8 +965,40 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 			}
 		}
 
-		return nil
+		return service.persistSourceURLs(ctx, user.GetOrgID(), sourceRules)
 	})
+}
+
+// rulesUpdateSourceURL reports whether any submitted rule carries a source URL write intent.
+func rulesUpdateSourceURL(rules []models.AlertRule) bool {
+	for i := range rules {
+		if rules[i].SourceURL != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// persistSourceURL writes one rule's source URL when the caller set the write-intent pointer.
+func (service *AlertRuleService) persistSourceURL(ctx context.Context, orgID int64, rule *models.AlertRule) error {
+	if rule == nil || rule.SourceURL == nil {
+		return nil
+	}
+	if err := models.ValidateSourceURL(*rule.SourceURL); err != nil {
+		return fmt.Errorf("%w: %s", models.ErrAlertRuleFailedValidation, err.Error())
+	}
+	return service.provenanceStore.SetSourceURL(ctx, rule, orgID, *rule.SourceURL)
+}
+
+// persistSourceURLs writes source URLs for every submitted rule whose pointer is set,
+// including rules whose other fields were unchanged and therefore absent from the group delta.
+func (service *AlertRuleService) persistSourceURLs(ctx context.Context, orgID int64, rules []models.AlertRule) error {
+	for i := range rules {
+		if err := service.persistSourceURL(ctx, orgID, &rules[i]); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // UpdateAlertRule updates an alert rule.
@@ -993,7 +1033,10 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 			return models.AlertRule{}, err
 		}
 		if delta.IsEmpty() {
-			// No changes to the rule.
+			// A source URL is not part of the rule diff. Persist it without writing alert_rule.
+			if err := service.persistSourceURL(ctx, rule.OrgID, &rule); err != nil {
+				return models.AlertRule{}, err
+			}
 			return rule, nil
 		}
 		changedNotificationSettings = delta.NewOrUpdatedNotificationSettings()
@@ -1071,12 +1114,25 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		if err != nil {
 			return err
 		}
-		return service.provenanceStore.SetManagerProperties(ctx, &rule, rule.OrgID, manager)
+		if err := service.provenanceStore.SetManagerProperties(ctx, &rule, rule.OrgID, manager); err != nil {
+			return err
+		}
+		return service.persistSourceURL(ctx, rule.OrgID, &rule)
 	})
 	if err != nil {
 		return models.AlertRule{}, err
 	}
 	return rule, err
+}
+
+// GetSourceURL returns the source URL stored for an alert rule, or an empty string when none is stored.
+func (service *AlertRuleService) GetSourceURL(ctx context.Context, orgID int64, ruleUID string) (string, error) {
+	return service.provenanceStore.GetSourceURL(ctx, &models.AlertRule{UID: ruleUID}, orgID)
+}
+
+// GetSourceURLs returns non-empty source URLs for alert rules in an org, keyed by rule UID.
+func (service *AlertRuleService) GetSourceURLs(ctx context.Context, orgID int64) (map[string]string, error) {
+	return service.provenanceStore.GetSourceURLs(ctx, orgID, (&models.AlertRule{}).ResourceType())
 }
 
 func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user identity.Requester, ruleUID string, manager utils.ManagerProperties) error {
