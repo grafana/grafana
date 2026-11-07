@@ -9,6 +9,8 @@ import {
   type StandardEditorProps,
   type StandardEditorsRegistryItem,
 } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './registry';
 
@@ -91,6 +93,34 @@ describe('getAllStandardFieldConfigs', () => {
     expect(fieldMinMax).toBeDefined();
     expect(fieldMinMax!.shouldApply({ type: FieldType.number } as Field)).toBe(true);
     expect(fieldMinMax!.shouldApply({ type: FieldType.string } as Field)).toBe(false);
+  });
+
+  describe('with frame fields', () => {
+    const frameField = { type: FieldType.frame } as Field;
+    const getItem = (id: string) => getAllStandardFieldConfigs().find((c) => c.id === id)!;
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it.each(['fieldMinMax', 'min', 'max'])('%s.shouldApply only applies when table.refreshNewFeatures is on', (id) => {
+      setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: false });
+      expect(getItem(id).shouldApply(frameField)).toBe(false);
+
+      setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true });
+      expect(getItem(id).shouldApply(frameField)).toBe(true);
+    });
+
+    it('drops a fieldMinMax override on a frame field when table.refreshNewFeatures is off', () => {
+      const fieldMinMax = getItem('fieldMinMax');
+
+      setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: false });
+      expect(fieldMinMax.process(true, { field: frameField, data: [] })).toBeUndefined();
+      expect(fieldMinMax.process(true, { field: { type: FieldType.number } as Field, data: [] })).toBe(true);
+
+      setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true });
+      expect(fieldMinMax.process(true, { field: frameField, data: [] })).toBe(true);
+    });
   });
 
   it('mappings.shouldApply skips time fields', () => {
