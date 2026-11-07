@@ -22,7 +22,7 @@ export const VisualEditor = ({ query, db, queryRowFilter, onChange, onValidate, 
   const state = useAsync(async () => {
     const fields = await db.fields(query);
     return fields;
-  }, [db, query.dataset, query.table]);
+  }, [db, query.database, query.dataset, query.table]);
 
   return (
     <>

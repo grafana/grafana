@@ -121,6 +121,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       datasource: this.getRef(),
       rawSql: this.templateSrv.replace(target.rawSql, scopedVars, this.interpolateVariable),
       format: target.format,
+      database: target.database ? this.templateSrv.replace(target.database, scopedVars) : undefined,
     };
   }
 
@@ -150,15 +151,13 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   private checkForDatabaseIssue(request: DataQueryRequest<SQLQuery>) {
-    // If the datasource is Postgres and there is no default database configured - either never configured or removed - return a database issue.
-    if (this.type === 'grafana-postgresql-datasource' && !this.preconfiguredDatabase) {
-      return `You do not currently have a default database configured for this data source. Postgres requires a default
-             database with which to connect. Please configure one through the Data Sources Configuration page, or if you
-             are using a provisioning file, update that configuration file with a default database.`;
-    }
-
     // No need to check for database change/update issues if the datasource is being used in Explore.
     if (request.app !== CoreApp.Explore) {
+      // Skip this check for datasources that support multi-database via an explicit database selector.
+      if (this.db.databases) {
+        return;
+      }
+
       /*
         If a preconfigured datasource database has been added/updated - and the user has built ANY number of queries using a
         database OTHER than the preconfigured one, return a database issue - since those databases are no longer available.
@@ -224,7 +223,10 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   // NOTE: this always runs with the `@grafana/data/getDefaultTimeRange` time range
   async runSql<T extends object>(query: string, options?: RunSQLOptions) {
     const range = getDefaultTimeRange();
-    const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table, refId: options?.refId }, range);
+    const frame = await this.runMetaQuery(
+      { rawSql: query, format: QueryFormat.Table, refId: options?.refId, database: options?.database },
+      range
+    );
     return new DataFrameView<T>(frame);
   }
 
@@ -265,4 +267,5 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
 interface RunSQLOptions extends LegacyMetricFindQueryOptions {
   refId?: string;
+  database?: string;
 }
