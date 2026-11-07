@@ -5,6 +5,7 @@ import { DASHBOARD_FROM_LS_KEY, type DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { setMobileViewport } from '../utils/mobileViewportTestUtils';
 
 import { addPanelsOnLoadBehavior } from './addPanelsOnLoadBehavior';
 
@@ -115,11 +116,7 @@ describe('addPanelsOnLoadBehavior', () => {
   describe('when edit mode is blocked on mobile', () => {
     beforeEach(() => {
       setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
-    });
-
-    afterEach(() => {
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+      setMobileViewport();
     });
 
     it('warns once, adds nothing and discards the payload', () => {

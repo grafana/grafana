@@ -8,6 +8,7 @@ import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 import * as libraryPanels from 'app/features/library-panels/state/api';
 
 import * as panelEditor from '../panel-edit/openPanelEditor';
+import { testWithViewport } from '../utils/mobileViewportTestUtils';
 import { createDeferred } from '../utils/test-utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -75,13 +76,7 @@ describe('DashboardSceneUrlSync', () => {
     describe('when entering edit mode is blocked on mobile', () => {
       testWithFlags({ 'grafana.mobileEditDeprecation': true });
 
-      beforeEach(() => {
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
-      });
-
-      afterEach(() => {
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
-      });
+      testWithViewport('mobile');
 
       it('does not wait on an unloaded library panel or start loading the editor', () => {
         const pending = createDeferred<LibraryPanel>();
@@ -655,13 +650,7 @@ describe('DashboardSceneUrlSync', () => {
       describe('on a mobile viewport', () => {
         testWithFlags({ 'grafana.mobileEditDeprecation': true });
 
-        beforeEach(() => {
-          Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
-        });
-
-        afterEach(() => {
-          Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
-        });
+        testWithViewport('mobile');
 
         it('does not enter edit mode or open the editview pane on mobile', async () => {
           const scene = buildTestScene();

@@ -1,3 +1,5 @@
+import { useMedia } from 'react-use';
+
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
@@ -8,6 +10,10 @@ import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { isFullDashboardEditing } from '../scene/types/dashboard';
 
+// Page zoom shrinks the CSS-pixel viewport but never changes the primary input device, so width alone
+// would block desktop users who zoom for accessibility (WCAG 1.4.4).
+export const TOUCH_PRIMARY_QUERY = '(hover: none) and (pointer: coarse)';
+
 /**
  * Non-reactive check for use outside React (e.g. DashboardScene class methods,
  * mutation-api permission checks).
@@ -15,7 +21,8 @@ import { isFullDashboardEditing } from '../scene/types/dashboard';
 export function isMobileEditDeprecated(): boolean {
   return (
     getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMobileEditDeprecation, false) &&
-    window.innerWidth < config.theme2.breakpoints.values.sm
+    window.innerWidth < config.theme2.breakpoints.values.sm &&
+    window.matchMedia(TOUCH_PRIMARY_QUERY).matches
   );
 }
 
@@ -24,8 +31,9 @@ export function isMobileEditDeprecated(): boolean {
  */
 export function useIsMobileEditDeprecated(): boolean {
   const isEnabled = useFlagGrafanaMobileEditDeprecation();
-  const isMobile = !useMediaQueryMinWidth('sm');
-  return isEnabled && isMobile;
+  const isNarrow = !useMediaQueryMinWidth('sm');
+  const isTouchPrimary = useMedia(TOUCH_PRIMARY_QUERY);
+  return isEnabled && isNarrow && isTouchPrimary;
 }
 
 /**

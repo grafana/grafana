@@ -16,6 +16,7 @@ import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/serv
 import { AccessControlAction } from 'app/types/accessControl';
 import { type FolderDTO } from 'app/types/folders';
 
+import { setMobileViewport } from '../../dashboard-scene/utils/mobileViewportTestUtils';
 import { mockFolderDTO } from '../fixtures/folder.fixture';
 
 import CreateNewButton from './CreateNewButton';
@@ -120,6 +121,7 @@ describe('NewActionsButton', () => {
 
   it('should hide New dashboard but keep Import dashboard and New folder on mobile when mobileEditDeprecation is enabled', async () => {
     setTestFlags({ 'grafana.mobileEditDeprecation': true });
+    setMobileViewport();
     const { user } = render(
       <CreateNewButton canCreateDashboard canCreateFolder parentFolder={mockParentFolder} isReadOnlyRepo={false} />
     );

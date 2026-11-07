@@ -12,6 +12,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { type ExplorePanelData, type ExploreState } from 'app/types/explore';
 
+import { resetViewport, setMobileViewport } from '../../dashboard-scene/utils/mobileViewportTestUtils';
 import { createEmptyQueryResponse } from '../state/utils';
 
 import { type PluginExtensionExploreContext, ToolbarExtensionPoint } from './ToolbarExtensionPoint';
@@ -298,13 +299,14 @@ describe('ToolbarExtensionPoint', () => {
       afterEach(() => {
         cleanup();
         setTestFlags({});
+        resetViewport();
         window.matchMedia = originalMatchMedia;
       });
 
       it('should not render "add to dashboard" action button on mobile', async () => {
         setTestFlags({ 'grafana.mobileEditDeprecation': true });
         // no min-width breakpoint matches, i.e. a mobile viewport
-        window.matchMedia = (query) => ({ ...originalMatchMedia(query), matches: false });
+        setMobileViewport();
 
         renderWithExploreStore(setupToolbarExtensionPoint());
 
@@ -347,13 +349,14 @@ describe('ToolbarExtensionPoint', () => {
     afterEach(() => {
       cleanup();
       setTestFlags({});
+      resetViewport();
       window.matchMedia = originalMatchMedia;
     });
 
     it('should keep the remaining extension reachable from the "Add" menu', async () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
       // no min-width breakpoint matches, i.e. a mobile viewport
-      window.matchMedia = (query) => ({ ...originalMatchMedia(query), matches: false });
+      setMobileViewport();
 
       renderWithExploreStore(setupToolbarExtensionPoint());
 

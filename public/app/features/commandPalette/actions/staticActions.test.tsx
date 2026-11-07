@@ -11,6 +11,7 @@ import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/Dashbo
 import { configureStore } from 'app/store/configureStore';
 import { type UserPermission, AccessControlAction } from 'app/types/accessControl';
 
+import { setMobileViewport } from '../../dashboard-scene/utils/mobileViewportTestUtils';
 import { type CommandPaletteAction } from '../types';
 
 import { useStaticActions } from './staticActions';
@@ -222,6 +223,7 @@ describe('useStaticActions - dashboard creation nav items, blocked on mobile', (
 
   it('excludes only the New dashboard action when blocked on mobile', () => {
     setTestFlags({ 'grafana.mobileEditDeprecation': true });
+    setMobileViewport();
 
     const { result } = renderStaticActions(dashboardsNavTree);
 
