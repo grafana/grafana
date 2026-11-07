@@ -7,7 +7,7 @@ import { type RepoWorkflows } from '../types';
 
 import { isItemManagedByRepository } from './managedResource';
 
-export function getIsReadOnlyWorkflows(workflows?: RepoWorkflows): boolean {
+function getIsReadOnlyWorkflows(workflows?: RepoWorkflows): boolean {
   // Repository is considered read-only if it has no workflows defined (workflows are required for write operations)
   return workflows?.length === 0;
 }

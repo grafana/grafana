@@ -14,7 +14,6 @@ import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
@@ -105,6 +104,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
     folderName: folderUid,
   });
+  const managerAllowsEdits = dashboard.managerAllowsEdits(isReadOnlyRepo);
   const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   if (!isEditingPanel) {
@@ -139,15 +139,6 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  // Only users who could otherwise edit need to know why they can't.
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isReadOnlyRepo && dashboard.canEditDashboard(),
-    render: () => {
-      return <ReadOnlyBadge key="read-only-badge" repoType={repoType} />;
-    },
-  });
-
   // Visible to viewers too, so they know the dashboard is externally managed;
   // the badge itself gates its actions (source/repo links) by permission.
   if (dashboard.isManaged()) {
@@ -155,7 +146,13 @@ export function ToolbarActions({ dashboard }: Props) {
       group: 'icon-actions',
       condition: true,
       render: () => {
-        return <ManagedDashboardNavBarBadge dashboard={dashboard} key="managed-dashboard-badge" />;
+        return (
+          <ManagedDashboardNavBarBadge
+            dashboard={dashboard}
+            managerAllowsEdits={managerAllowsEdits}
+            key="managed-dashboard-badge"
+          />
+        );
       },
     });
   }

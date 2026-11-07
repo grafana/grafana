@@ -16,6 +16,7 @@ import {
   isManagedByRepository,
   isManagedResourceReadOnly,
   type ManagedResource,
+  managerAllowsEdits,
 } from './managedResource';
 
 const resource = (annotations?: Record<string, string>): ManagedResource => ({
@@ -88,6 +89,35 @@ describe('managedResource helpers', () => {
 
     it('returns false when not managed', () => {
       expect(isManagedByRepository(resource())).toBe(false);
+    });
+  });
+
+  describe('managerAllowsEdits', () => {
+    it('returns true for unmanaged resources', () => {
+      expect(managerAllowsEdits(resource())).toBe(true);
+    });
+
+    it('follows the repository workflows for repository-managed resources', () => {
+      const repoManaged = resource({ [AnnoKeyManagerKind]: ManagerKind.Repo });
+
+      expect(managerAllowsEdits(repoManaged, { isReadOnlyRepo: false })).toBe(true);
+      expect(managerAllowsEdits(repoManaged, { isReadOnlyRepo: true })).toBe(false);
+    });
+
+    it.each([ManagerKind.Terraform, ManagerKind.Kubectl, ManagerKind.Plugin, ManagerKind.ClassicFP])(
+      'requires the allows-edits annotation for %s',
+      (kind) => {
+        expect(managerAllowsEdits(resource({ [AnnoKeyManagerKind]: kind }))).toBe(false);
+        expect(managerAllowsEdits(resource({ [AnnoKeyManagerKind]: kind, [AnnoKeyManagerAllowsEdits]: 'true' }))).toBe(
+          true
+        );
+      }
+    );
+
+    it('ignores the repository workflows for managers other than the repository', () => {
+      expect(
+        managerAllowsEdits(resource({ [AnnoKeyManagerKind]: ManagerKind.Terraform }), { isReadOnlyRepo: false })
+      ).toBe(false);
     });
   });
 

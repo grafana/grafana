@@ -84,16 +84,35 @@ export function isManagedByRepository(resource: ManagedResource): boolean {
 }
 
 /**
+ * Whether the resource's manager permits edits in Grafana. Repository-managed resources follow the
+ * repository's workflow configuration, which only the caller can resolve; any other manager has to
+ * opt in through `grafana.app/managerAllowsEdits`. Unmanaged resources are unrestricted.
+ *
+ * This is the manager's policy alone. A resource can still be read-only because the user lacks
+ * permission or because its own spec says so — count those conditions separately.
+ */
+export function managerAllowsEdits(
+  resource: ManagedResource,
+  { isReadOnlyRepo = false }: { isReadOnlyRepo?: boolean } = {}
+): boolean {
+  if (!isManaged(resource)) {
+    return true;
+  }
+
+  if (isManagedByRepository(resource)) {
+    return !isReadOnlyRepo;
+  }
+
+  return resource.metadata?.annotations?.[AnnoKeyManagerAllowsEdits] === 'true';
+}
+
+/**
  * True when a managed resource is read-only in the UI: it is managed by something other than the
  * repository provisioning flow (which has its own edit workflow) and that manager does not allow
- * edits via the `grafana.app/managerAllowsEdits` annotation.
+ * edits.
  */
 export function isManagedResourceReadOnly(resource: ManagedResource): boolean {
-  return (
-    isManaged(resource) &&
-    !isManagedByRepository(resource) &&
-    resource.metadata?.annotations?.[AnnoKeyManagerAllowsEdits] !== 'true'
-  );
+  return isManaged(resource) && !isManagedByRepository(resource) && !managerAllowsEdits(resource);
 }
 
 /**

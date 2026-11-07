@@ -35,8 +35,6 @@ export interface NestedFolderListProps {
   requestLoadMore: (folderUid: string | undefined) => void;
   emptyFolders: Set<string>;
   teamFolderOwnersByUid?: Record<string, { name: string; avatarUrl?: string }>;
-  /** Whether the listed folders are editable by the user; gates the read-only badge on each row. */
-  canEdit?: boolean;
 }
 
 export function NestedFolderList({
@@ -51,7 +49,6 @@ export function NestedFolderList({
   requestLoadMore,
   emptyFolders,
   teamFolderOwnersByUid,
-  canEdit,
 }: NestedFolderListProps) {
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const styles = useStyles2(getStyles);
@@ -67,7 +64,6 @@ export function NestedFolderList({
       idPrefix,
       emptyFolders,
       teamFolderOwnersByUid,
-      canEdit,
     }),
     [
       items,
@@ -79,7 +75,6 @@ export function NestedFolderList({
       idPrefix,
       emptyFolders,
       teamFolderOwnersByUid,
-      canEdit,
     ]
   );
 
@@ -151,7 +146,6 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     idPrefix,
     emptyFolders,
     teamFolderOwnersByUid,
-    canEdit,
   } = data;
   const { item, isOpen, level, parentUID, disabled } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
@@ -264,7 +258,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
 
         <label className={styles.label} id={labelId}>
           <Text truncate>{item.title}</Text>
-          {showRepoBadge && <FolderRepo folder={item} canEdit={canEdit} />}
+          {showRepoBadge && <FolderRepo folder={item} />}
         </label>
         {teamOwner && (
           <div className={styles.teamOwner}>
