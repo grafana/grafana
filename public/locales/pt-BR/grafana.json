@@ -8327,6 +8327,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abrir painel de consulta",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Abrir painel de consulta"
     },
     "viz-panel-links-renderer": {
@@ -9757,7 +9759,6 @@
     "api": {
       "anonymous-user": "Anônimo",
       "folder-delete-error-provisioned": "Não é possível excluir a pasta provisionada. Para removê-la, exclua a pasta do repositório e realize a sincronização para aplicar as alterações.",
-      "folder-deleted-success": "Pasta excluída",
       "folder-move-error-provisioned": "Não é possível mover a pasta provisionada. Para movê-la, altere o local da pasta no repositório e realize a sincronização para aplicar as alterações.",
       "folder-moved-success": "Pasta movida"
     }
@@ -11704,8 +11705,8 @@
           },
           "website-monitoring": {
             "cta": "Iniciar configuração",
-            "description": "Monitore a disponibilidade do seu site e seu desempenho a partir de diferentes locais.",
-            "title": "Monitore o tempo de atividade e o desempenho do site"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Mostrar menos guias",
@@ -11826,10 +11827,10 @@
       "switchSolution": "Trocar solução",
       "synthetic-monitoring": {
         "action": "Ativar monitoramento sintético",
-        "context": "Verificações de caixa preta para os serviços que seu cluster executa",
-        "description": "Investigue seus endpoints a partir de locais globais com verificações de HTTP, DNS e ping e receba alertas sobre tempo de inatividade.",
+        "context": "",
+        "description": "",
         "setup-action": "Crie sua primeira verificação",
-        "title": "Monitore o tempo de atividade de fora"
+        "title": ""
       },
       "title": "Recomendações para seu stack"
     },
@@ -11928,7 +11929,7 @@
       },
       "synthetics": {
         "create-check": "Criar uma verificação",
-        "description": "Monitore o tempo de atividade e o desempenho dos seus endpoints a partir de sondas em todo o mundo.",
+        "description": "",
         "failing-worst": "{{check}} em {{percent}}%",
         "filter": {
           "instances": "Ignorar metas",
@@ -13557,8 +13558,12 @@
       "code": "Código",
       "heading": "Cabeçalho",
       "label": "Clique para adicionar acima",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Parágrafo",
       "prompt": "Digite para começar a escrever. Pressione / para acessar blocos",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Visualização"
     },
     "cell": {
@@ -13864,7 +13869,7 @@
         "description-no-value": "O que mostrar quando não há valor",
         "description-value-mappings": "Modificar o texto de exibição com base no valor de entrada",
         "name-actions": "Ações",
-        "name-ad-hoc": "Filtrar a partir de valores",
+        "name-ad-hoc": "",
         "name-color-scheme": "Esquema de cores",
         "name-data-links": "Links de dados",
         "name-decimals": "Decimais",
@@ -14805,6 +14810,7 @@
       "delete-confirm": "Tem certeza de que deseja excluir esta conexão? Esta ação não poderá ser desfeita.",
       "delete-title": "Excluir conexão",
       "error-loading": "Falha ao carregar conexões",
+      "export": "",
       "kind-github-app": "Aplicativo do GitHub",
       "kind-oauth-app": "Aplicativo OAuth",
       "no-connections": "Nenhuma conexão configurada",
@@ -15307,6 +15313,7 @@
       "view-folder": "Visualizar pasta"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Última sincronização: {{date}}",
       "settings": "Configurações",
       "view": "Visualizar"

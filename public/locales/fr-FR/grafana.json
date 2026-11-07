@@ -8327,6 +8327,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Ouvrir le volet de requête",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Ouvrir le volet de requête"
     },
     "viz-panel-links-renderer": {
@@ -9757,7 +9759,6 @@
     "api": {
       "anonymous-user": "Anonyme",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Dossier supprimé",
       "folder-move-error-provisioned": "Impossible de déplacer le dossier provisionné. Pour le déplacer, effectuez l’opération dans le référentiel puis synchronisez afin d’appliquer les modifications.",
       "folder-moved-success": "Dossier déplacé"
     }
@@ -11704,8 +11705,8 @@
           },
           "website-monitoring": {
             "cta": "Démarrer la configuration",
-            "description": "Suivez la disponibilité de votre site Web ainsi que ses performances depuis différents emplacements.",
-            "title": "Surveillez la disponibilité et les performances du site Web"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Afficher moins de guides",
@@ -11826,10 +11827,10 @@
       "switchSolution": "Changer de solution",
       "synthetic-monitoring": {
         "action": "Activez Synthetic Monitoring",
-        "context": "Vérifications en boîte noire pour les services exécutés par votre cluster",
-        "description": "Sondez vos points de terminaison depuis des emplacements mondiaux avec des vérifications HTTP, DNS et ping, et recevez des alertes en cas d’interruption de service.",
+        "context": "",
+        "description": "",
         "setup-action": "Créez votre première vérification",
-        "title": "Surveillez la disponibilité depuis l’extérieur"
+        "title": ""
       },
       "title": "Recommandations pour votre stack"
     },
@@ -11928,7 +11929,7 @@
       },
       "synthetics": {
         "create-check": "Créer une vérification",
-        "description": "Surveillez la disponibilité et les performances de vos points de terminaison depuis des sondes réparties dans le monde entier.",
+        "description": "",
         "failing-worst": "{{check}} à {{percent}} %",
         "filter": {
           "instances": "Ignorer les cibles",
@@ -13557,8 +13558,12 @@
       "code": "Code",
       "heading": "Titre",
       "label": "Cliquer pour ajouter au-dessus",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Paragraphe",
       "prompt": "Saisissez votre texte pour commencer à écrire ; appuyez sur / pour les blocs",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Visualisation"
     },
     "cell": {
@@ -13864,7 +13869,7 @@
         "description-no-value": "Que faire lorsqu’aucune valeur n’est disponible ?",
         "description-value-mappings": "Adapter le texte affiché en fonction de la valeur d’entrée",
         "name-actions": "Actions",
-        "name-ad-hoc": "Filtrer à partir des valeurs",
+        "name-ad-hoc": "",
         "name-color-scheme": "Palette de couleurs",
         "name-data-links": "Liens de données",
         "name-decimals": "Décimales",
@@ -14805,6 +14810,7 @@
       "delete-confirm": "Voulez-vous vraiment supprimer cette connexion ? Cette action est irréversible.",
       "delete-title": "Supprimer la connexion",
       "error-loading": "Échec du chargement des connexions",
+      "export": "",
       "kind-github-app": "Application GitHub",
       "kind-oauth-app": "Application OAuth",
       "no-connections": "Aucune connexion configurée",
@@ -15307,6 +15313,7 @@
       "view-folder": "Afficher le dossier"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Dernière synchronisation : {{date}}",
       "settings": "Paramètres",
       "view": "Afficher"
