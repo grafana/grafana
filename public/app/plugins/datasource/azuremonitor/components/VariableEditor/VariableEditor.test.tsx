@@ -83,6 +83,58 @@ const defaultProps = {
 };
 
 describe('VariableEditor:', () => {
+  it('shows custom namespace errors and clears them after a successful resource change', async () => {
+    const getMetricNamespaces = jest.fn().mockImplementation(async (_subscription, _group, _uri, custom) => {
+      if (custom) {
+        throw new Error('Metric namespace access denied');
+      }
+      return [{ text: 'foo/bar', value: 'foo/bar' }];
+    });
+    const datasource = createMockDatasource({ ...defaultProps.datasource, getMetricNamespaces });
+    const query: AzureMonitorQuery = {
+      refId: 'A',
+      queryType: AzureQueryType.CustomMetricNamesQuery,
+      subscription: 'sub',
+      resourceGroup: 'rg',
+      namespace: 'foo/bar',
+      resource: 'foobar',
+    };
+    const { rerender } = render(<VariableEditor {...defaultProps} datasource={datasource} query={query} />);
+
+    expect(await screen.findByText('Metric namespace access denied')).toBeInTheDocument();
+
+    getMetricNamespaces.mockResolvedValue([{ text: 'recovered.namespace', value: 'recovered.namespace' }]);
+    rerender(
+      <VariableEditor {...defaultProps} datasource={datasource} query={{ ...query, resource: 'recovered-resource' }} />
+    );
+    openMenu(screen.getByLabelText('Select custom namespace'));
+
+    expect(await screen.findByText('recovered.namespace')).toBeInTheDocument();
+    expect(screen.queryByText('Metric namespace access denied')).not.toBeInTheDocument();
+  });
+
+  it('does not request unused custom namespaces for a platform metric names variable', async () => {
+    const getMetricNamespaces = jest.fn().mockResolvedValue([{ text: 'foo/bar', value: 'foo/bar' }]);
+    const datasource = createMockDatasource({ ...defaultProps.datasource, getMetricNamespaces });
+    render(
+      <VariableEditor
+        {...defaultProps}
+        datasource={datasource}
+        query={{
+          refId: 'A',
+          queryType: AzureQueryType.MetricNamesQuery,
+          subscription: 'sub',
+          resourceGroup: 'rg',
+          namespace: 'foo/bar',
+          resource: 'foobar',
+        }}
+      />
+    );
+
+    expect(await screen.findByLabelText('Select resource')).toBeInTheDocument();
+    expect(getMetricNamespaces.mock.calls).toEqual([['sub', 'rg', undefined, false, true]]);
+  });
+
   it('can view a legacy Grafana query function', async () => {
     const onChange = jest.fn();
     const legacyQuery = { ...defaultProps.query, queryType: AzureQueryType.GrafanaTemplateVariableFn };

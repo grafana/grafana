@@ -309,6 +309,10 @@ export default class ResourcePickerData extends DataSourceWithBackend<
   }
 
   private filterByType = async (t: ResourcePickerQueryType) => {
+    // Metrics support is checked for the selected resource, not inferred from sampled subscription namespaces.
+    if (t === 'metrics') {
+      return '';
+    }
     if (this.supportedMetricNamespaces === '' && t !== 'logs') {
       await this.fetchAllNamespaces();
     }
