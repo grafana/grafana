@@ -70,6 +70,44 @@ describe('inspector download', () => {
       expect.assertions(4);
     });
 
+    it.each([
+      { name: 'no trailing newline', csvConfig: undefined, trailingNewline: false, newline: '\r\n' },
+      { name: 'the default trailing newline', csvConfig: undefined, trailingNewline: true, newline: '\r\n' },
+      { name: 'a custom trailing newline', csvConfig: { newline: '\n' }, trailingNewline: true, newline: '\n' },
+    ])('preserves supplementary Unicode in Excel exports with $name', async ({ csvConfig, trailingNewline, newline }) => {
+      const value = 'A😀é🚀中';
+      const dataFrame = dataFrameFromJSON({
+        schema: { fields: [{ name: 'name', type: FieldType.string }] },
+        data: { values: [[value]] },
+      });
+      downloadDataFrameAsCsv(dataFrame, 'unicode', csvConfig, undefined, true, trailingNewline);
+
+      const excelBlob = jest.mocked(saveAs).mock.calls[0][0];
+      expect(excelBlob).toBeInstanceOf(Blob);
+      expect(excelBlob).toHaveProperty('type', 'text/csv;charset=utf-16le');
+      const lineEnding = newline === '\r\n' ? [0x0d, 0x00, 0x0a, 0x00] : [0x0a, 0x00];
+      expect(Array.from(await getBlobBytes(excelBlob))).toEqual([
+        0xff, 0xfe, // UTF-16LE BOM
+        0x22, 0x00, 0x6e, 0x00, 0x61, 0x00, 0x6d, 0x00, 0x65, 0x00, 0x22, 0x00, // "name"
+        ...lineEnding,
+        0x41, 0x00, // A
+        0x3d, 0xd8, 0x00, 0xde, // 😀: both UTF-16 surrogate code units
+        0xe9, 0x00, // é
+        0x3d, 0xd8, 0x80, 0xde, // 🚀: both UTF-16 surrogate code units
+        0x2d, 0x4e, // 中
+        ...(trailingNewline ? lineEnding : []),
+      ]);
+
+      // The ordinary CSV path must continue to emit UTF-8 without a BOM.
+      downloadDataFrameAsCsv(dataFrame, 'unicode', csvConfig, undefined, false, trailingNewline);
+      const csvBlob = jest.mocked(saveAs).mock.calls[1][0];
+      expect(csvBlob).toBeInstanceOf(Blob);
+      expect(csvBlob).toHaveProperty('type', 'text/csv;charset=utf-8');
+      const expectedText = '"name"' + newline + value + (trailingNewline ? newline : '');
+      expect(await getBlobBytes(csvBlob)).toEqual(new TextEncoder().encode(expectedText));
+      expect(saveAs).toHaveBeenCalledTimes(2);
+    });
+
     it('end with a new line if asked', async () => {
       downloadDataFrameAsCsv(dataFrameFromJSON(json), 'test', undefined, undefined, false, true);
 
@@ -194,5 +232,23 @@ async function getBomType(blob: Blob): Promise<'utf-8' | 'utf-16le' | undefined>
     };
     reader.onerror = reject;
     reader.readAsArrayBuffer(blob.slice(0, 3)); // Read first 3 bytes (covers UTF-8 and UTF-16LE)
+  });
+}
+
+async function getBlobBytes(blob: Blob | string): Promise<Uint8Array> {
+  if (typeof blob === 'string') {
+    throw new Error('Expected a downloaded Blob');
+  }
+  const reader = new FileReader();
+  return new Promise((resolve, reject) => {
+    reader.onload = (event: ProgressEvent<FileReader>) => {
+      if (event.target?.result instanceof ArrayBuffer) {
+        resolve(new Uint8Array(event.target.result));
+      } else {
+        reject(new Error('Unexpected FileReader result type'));
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(blob);
   });
 }
