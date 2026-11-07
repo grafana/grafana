@@ -248,21 +248,25 @@ routes the rendered spec always includes.
 
 ## Kinds authorized by name
 
-Stars are authorized by the owner in an object's name (`user-<id>`) instead of
-by folder. Everything the router knows about them is in `hardcoded_kinds.go`,
-which stands in for what the app manifest will declare:
+Stars and Preferences are authorized by the owner in an object's name
+(`user-<id>`, `team-<uid>`, `namespace`) instead of by folder. Everything the
+router knows about them is in `hardcoded_kinds.go`, which stands in for what the
+app manifest will declare:
 
 - `ownerFromName` allows a request by its name: the owners a kind accepts, fixed
-  names, and whether org admins may do anything. An access policy is held to its
-  token's permissions instead.
-- A user's list returns only the objects they own, and they may not watch. Other
-  identities list everything.
+  names such as `merged`, and whether org admins may do anything. An access
+  policy is held to its token's permissions instead.
+- A user's list returns only the objects they own, most specific first (their own,
+  their teams', the namespace's), and they may not watch. Other identities list
+  everything, except that Preferences limits them to the namespace's object.
+- A fixed name, `merged`, has no stored object: the kind's `VirtualGetter`
+  answers it from the objects the caller owns.
 - A custom route for a name with no stored object is still sent to the app
   (`allowMissingParent`), with the name alone.
 
 `grafana.routeCoreApps` (with `grafana.useRouterMiddleware`)
-serves `collections.grafana.app` from the `apps/collections` app, run in this
-process, and stops the embedded API server registering it. The app authenticates
-through the same local token exchange as a plugin process (see above), so its
-calls to Grafana act as the caller. Grafana must sign plugin tokens itself for
-this.
+serves `collections.grafana.app` and `preferences.grafana.app` from the
+`apps/collections` and `apps/preferences` apps, run in this process, and stops
+the embedded API server registering them. The apps authenticate through the
+same local token exchange as a plugin process (see above), so their calls to
+Grafana act as the caller. Grafana must sign plugin tokens itself for this.

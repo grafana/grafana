@@ -193,7 +193,7 @@ func (b *manifestBuilder) AllowedV0Alpha1Resources() []string {
 func (b *manifestBuilder) withListScope(resource string, store *kindstore.Store) rest.Storage {
 	policy := b.kindPolicies[resource]
 	if policy.ownerFromName != nil {
-		return newOwnerScopedStore(store, policy.ownerFromName)
+		return newOwnerScopedStore(store, policy.ownerFromName, hardcodedVirtualGetter(b.group, resource, b.opts.PreferencesConfig))
 	}
 	return store
 }

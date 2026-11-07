@@ -35,7 +35,7 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (Route
 		return nil, err
 	}
 	if middlewareEnabled(cfg, deps.Features) {
-		apps, err := builtinCoreApps(deps.PluginAuth)
+		apps, err := builtinCoreApps(cfg, deps.PluginAuth)
 		if err != nil {
 			return nil, err
 		}

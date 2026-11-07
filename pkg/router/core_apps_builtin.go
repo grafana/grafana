@@ -16,23 +16,30 @@ import (
 
 	collectionsmanifest "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
 	collectionsapp "github.com/grafana/grafana/apps/collections/pkg/app"
+	preferencesmanifest "github.com/grafana/grafana/apps/preferences/pkg/apis/manifestdata"
+	preferencesapp "github.com/grafana/grafana/apps/preferences/pkg/app"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
+	prefsapi "github.com/grafana/grafana/pkg/registry/apis/preferences"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Plugin IDs of the apps the router serves from this process. They are what the
 // tokens the apps are called with are addressed to.
 const (
 	collectionsPluginID = "grafana-collections-app"
+	preferencesPluginID = "grafana-preferences-app"
 )
 
 // routeCoreApps reports whether the router serves
-// collections.grafana.app, in place of the embedded API server. Like
-// settingsEnabled, it is evaluated through OpenFeature, so a remote provider
-// can turn it on without a [feature_toggles] entry, and it is read once, at
-// startup.
+// collections.grafana.app and preferences.grafana.app, in place of the embedded
+// API server. Like settingsEnabled, it is evaluated through OpenFeature, so a
+// remote provider can turn it on without a [feature_toggles] entry, and it is
+// read once, at startup.
 func routeCoreApps() bool {
 	ctx := context.Background()
 	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRouteCoreApps, false, openfeature.TransactionContext(ctx))
@@ -42,7 +49,7 @@ func routeCoreApps() bool {
 // They call Grafana's API like an external app plugin does: through the local
 // token exchange, as the caller. They fail startup rather than leave their
 // groups unserved when that is not possible.
-func builtinCoreApps(pluginAuth *pluginauth.Config) ([]CoreApp, error) {
+func builtinCoreApps(cfg *setting.Cfg, pluginAuth *pluginauth.Config) ([]CoreApp, error) {
 	if !routeCoreApps() {
 		return nil, nil
 	}
@@ -50,12 +57,25 @@ func builtinCoreApps(pluginAuth *pluginauth.Config) ([]CoreApp, error) {
 		return nil, fmt.Errorf("%s needs Grafana to sign plugin tokens itself, and a local API URL to reach", featuremgmt.FlagGrafanaRouteCoreApps)
 	}
 
+	// Stars write through Grafana's API as the caller. Preferences only validate
+	// what is written to them, and are asked for no other object.
 	collections, err := newCoreApp(collectionsPluginID, collectionsmanifest.LocalManifest().ManifestData, pluginAuth, true,
 		func(c app.Config) (app.App, error) { return collectionsapp.New(c) }, nil)
 	if err != nil {
 		return nil, err
 	}
-	return []CoreApp{collections}, nil
+	preferencesConfig := &preferencesapp.Config{
+		Defaults:          prefsapi.DefaultSpec(cfg),
+		HomeDashboardName: home.DASHBOARD_NAME,
+		IsValidTheme:      pref.IsValidThemeID,
+	}
+	preferences, err := newCoreApp(preferencesPluginID, preferencesmanifest.LocalManifest().ManifestData, pluginAuth, false,
+		func(c app.Config) (app.App, error) { return preferencesapp.New(c) }, preferencesConfig)
+	if err != nil {
+		return nil, err
+	}
+	preferences.PreferencesConfig = preferencesConfig // TEMPORARY, see CoreApp.PreferencesConfig
+	return []CoreApp{collections, preferences}, nil
 }
 
 // routerManifest is a copy of a generated manifest as the router serves it: the

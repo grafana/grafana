@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	collectionsmanifest "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
+	preferencesmanifest "github.com/grafana/grafana/apps/preferences/pkg/apis/manifestdata"
 )
 
 // The generated manifests carry deprecated routes, which the router refuses, so
@@ -15,6 +16,7 @@ import (
 func TestBuiltinCoreAppManifestsAreServable(t *testing.T) {
 	for pluginID, generated := range map[string]*app.ManifestData{
 		collectionsPluginID: collectionsmanifest.LocalManifest().ManifestData,
+		preferencesPluginID: preferencesmanifest.LocalManifest().ManifestData,
 	} {
 		t.Run(pluginID, func(t *testing.T) {
 			before, err := json.Marshal(generated)

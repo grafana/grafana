@@ -38,11 +38,12 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Preferences",
-					Plural:     "Preferences",
-					Resource:   "preferences",
-					Scope:      "Namespaced",
-					Conversion: false,
+					Kind:         "Preferences",
+					Plural:       "Preferences",
+					Resource:     "preferences",
+					Scope:        "Namespaced",
+					Conversion:   false,
+					FolderScoped: func(b bool) *bool { return &b }(false),
 					Storage: &app.ManifestVersionKindStorage{
 						ListKeys: func(b bool) *bool { return &b }(false),
 					},
@@ -67,11 +68,12 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Preferences",
-					Plural:     "Preferences",
-					Resource:   "preferences",
-					Scope:      "Namespaced",
-					Conversion: false,
+					Kind:         "Preferences",
+					Plural:       "Preferences",
+					Resource:     "preferences",
+					Scope:        "Namespaced",
+					Conversion:   false,
+					FolderScoped: func(b bool) *bool { return &b }(false),
 					Storage: &app.ManifestVersionKindStorage{
 						ListKeys: func(b bool) *bool { return &b }(false),
 					},

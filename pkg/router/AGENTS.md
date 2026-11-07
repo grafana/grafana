@@ -187,7 +187,7 @@ Exactly one loader serves:
 
 In middleware mode, `ProvideRoutesLoader` wraps the loader above in the core apps loader
 (`core_apps.go`) when `grafana.routeCoreApps` is on. It adds one `PluginBackend` per
-app Grafana runs in its own process (`core_apps_builtin.go`: collections), served
+app Grafana runs in its own process (`core_apps_builtin.go`: collections and preferences), served
 through an in-process v3 client (`v3.NewInProcessClient`) that verifies the caller's access token like
 a plugin process does. A core app wins a group the base loader also serves. A bad app is skipped with
 a warning, but the toggle fails startup when Grafana cannot sign plugin tokens itself or has no local
