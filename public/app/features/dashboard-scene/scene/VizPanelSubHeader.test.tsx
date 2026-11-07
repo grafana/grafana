@@ -1,4 +1,7 @@
 import { of } from 'rxjs';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import { seedDataSources } from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { type DataQueryRequest, type DataSourceApi, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
@@ -34,12 +37,6 @@ jest.mock('@grafana/runtime', () => ({
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },
-  getDataSourceSrv: () => ({
-    get: jest.fn().mockResolvedValue({
-      getRef: () => ({ uid: 'ds-1', type: 'test' }),
-    }),
-    getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds-1', type: 'test' }),
-  }),
   getPluginImportUtils: () => ({
     getPanelPluginFromCache: jest.fn(() => undefined),
   }),
@@ -51,6 +48,15 @@ setPluginImportUtils({
 });
 
 describe('VizPanelSubHeader', () => {
+  // The query runner and variables resolve every uid the tests swap in, so all of them must exist.
+  beforeEach(() => {
+    const dataSources = ['ds-1', 'ds-2', 'other-ds'].map((uid) => {
+      const settings = makeDataSourceSettings(uid, uid, 'test', { isDefault: uid === 'ds-1' });
+      return { settings, api: new MockDataSourceApi(settings) };
+    });
+    seedDataSources(dataSources, { legacySrv: 'mock' });
+  });
+
   afterEach(() => {
     setTestFlags();
   });

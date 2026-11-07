@@ -1,4 +1,6 @@
-import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import { seedDataSources } from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
@@ -19,13 +21,6 @@ import { PromotePanelAdHocChangesEvent } from './utils';
 
 const annotationDataSource = new MockDataSourceApi('-- Grafana --');
 annotationDataSource.annotations = {};
-const datasourceSrv = new DatasourceSrvMock(annotationDataSource, {
-  '-- Grafana --': annotationDataSource,
-});
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => datasourceSrv,
-}));
 
 const mockSaveDashboard = jest.fn();
 jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
@@ -127,6 +122,8 @@ describe('promotePanelAdHocChanges', () => {
   });
 
   beforeEach(() => {
+    const grafanaSettings = makeDataSourceSettings('-- Grafana --', 'Grafana', 'grafana');
+    seedDataSources([{ settings: grafanaSettings, api: annotationDataSource }], { legacySrv: 'mock' });
     promotionHandler.mockReset().mockImplementation((dashboard) => ({ ...dashboard, title: 'Promoted' }));
     mockSaveDashboard.mockReset().mockResolvedValue({
       data: { uid: 'dash-1', version: 2, url: '/d/dash-1/promoted', status: 'success' },

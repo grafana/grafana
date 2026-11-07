@@ -1,3 +1,7 @@
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import { seedDataSources } from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
+
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -5,12 +9,10 @@ import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { AnnotationEditableElement, type AnnotationLayer } from './AnnotationEditableElement';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(() => ({
-    get: jest.fn().mockResolvedValue({}),
-  })),
-}));
+beforeEach(() => {
+  const settings = makeDataSourceSettings('default-ds', 'Default', 'default-ds-type', { isDefault: true });
+  seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
+});
 
 function createAnnotation(overrides: Partial<DashboardAnnotationsDataLayer['state']> = {}): AnnotationLayer {
   return new DashboardAnnotationsDataLayer({

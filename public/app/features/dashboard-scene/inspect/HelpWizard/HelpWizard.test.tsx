@@ -1,10 +1,10 @@
 import userEvent from '@testing-library/user-event';
+import { seedDataSources } from 'test/helpers/seedDataSources';
 import { render, screen } from 'test/test-utils';
 
 import {
   type DataSourceInstanceSettings,
   type DataSourcePluginMeta,
-  type DataSourceRef,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
@@ -38,16 +38,11 @@ const grafanaDsInstanceSettings = {
   type: 'grafana',
 } as DataSourceInstanceSettings;
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => {
-    return {
-      get: (ref: DataSourceRef) => {
-        return Promise.resolve(new MockDataSourceApi(grafanaDsInstanceSettings));
-      },
-    };
-  },
-}));
+beforeEach(() => {
+  seedDataSources([{ settings: grafanaDsInstanceSettings, api: new MockDataSourceApi(grafanaDsInstanceSettings) }], {
+    legacySrv: 'mock',
+  });
+});
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
