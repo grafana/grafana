@@ -185,12 +185,94 @@ export interface PanelQuerySpec {
 	query: DataQueryKind;
 	refId: string;
 	hidden: boolean;
+	// When set, the query only runs while the group evaluates to visible
+	conditionalRendering?: ConditionalRenderingGroupKind;
 }
 
 export const defaultPanelQuerySpec = (): PanelQuerySpec => ({
 	query: defaultDataQueryKind(),
 	refId: "A",
 	hidden: false,
+});
+
+export interface ConditionalRenderingGroupKind {
+	kind: "ConditionalRenderingGroup";
+	spec: ConditionalRenderingGroupSpec;
+}
+
+export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGroupKind => ({
+	kind: "ConditionalRenderingGroup",
+	spec: defaultConditionalRenderingGroupSpec(),
+});
+
+export interface ConditionalRenderingGroupSpec {
+	visibility: "show" | "hide";
+	condition: "and" | "or";
+	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind)[];
+}
+
+export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
+	visibility: "show",
+	condition: "and",
+	items: [],
+});
+
+export interface ConditionalRenderingVariableKind {
+	kind: "ConditionalRenderingVariable";
+	spec: ConditionalRenderingVariableSpec;
+}
+
+export const defaultConditionalRenderingVariableKind = (): ConditionalRenderingVariableKind => ({
+	kind: "ConditionalRenderingVariable",
+	spec: defaultConditionalRenderingVariableSpec(),
+});
+
+export interface ConditionalRenderingVariableSpec {
+	variable: string;
+	operator: "equals" | "notEquals" | "matches" | "notMatches";
+	value: string;
+}
+
+export const defaultConditionalRenderingVariableSpec = (): ConditionalRenderingVariableSpec => ({
+	variable: "",
+	operator: "equals",
+	value: "",
+});
+
+export interface ConditionalRenderingDataKind {
+	kind: "ConditionalRenderingData";
+	spec: ConditionalRenderingDataSpec;
+}
+
+export const defaultConditionalRenderingDataKind = (): ConditionalRenderingDataKind => ({
+	kind: "ConditionalRenderingData",
+	spec: defaultConditionalRenderingDataSpec(),
+});
+
+export interface ConditionalRenderingDataSpec {
+	value: boolean;
+}
+
+export const defaultConditionalRenderingDataSpec = (): ConditionalRenderingDataSpec => ({
+	value: false,
+});
+
+export interface ConditionalRenderingTimeRangeSizeKind {
+	kind: "ConditionalRenderingTimeRangeSize";
+	spec: ConditionalRenderingTimeRangeSizeSpec;
+}
+
+export const defaultConditionalRenderingTimeRangeSizeKind = (): ConditionalRenderingTimeRangeSizeKind => ({
+	kind: "ConditionalRenderingTimeRangeSize",
+	spec: defaultConditionalRenderingTimeRangeSizeSpec(),
+});
+
+export interface ConditionalRenderingTimeRangeSizeSpec {
+	value: string;
+}
+
+export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRenderingTimeRangeSizeSpec => ({
+	value: "",
 });
 
 export interface TransformationKind {
@@ -852,86 +934,6 @@ export interface RowsLayoutRowSpec {
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
 	layout: defaultGridLayoutKind(),
-});
-
-export interface ConditionalRenderingGroupKind {
-	kind: "ConditionalRenderingGroup";
-	spec: ConditionalRenderingGroupSpec;
-}
-
-export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGroupKind => ({
-	kind: "ConditionalRenderingGroup",
-	spec: defaultConditionalRenderingGroupSpec(),
-});
-
-export interface ConditionalRenderingGroupSpec {
-	visibility: "show" | "hide";
-	condition: "and" | "or";
-	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind)[];
-}
-
-export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
-	visibility: "show",
-	condition: "and",
-	items: [],
-});
-
-export interface ConditionalRenderingVariableKind {
-	kind: "ConditionalRenderingVariable";
-	spec: ConditionalRenderingVariableSpec;
-}
-
-export const defaultConditionalRenderingVariableKind = (): ConditionalRenderingVariableKind => ({
-	kind: "ConditionalRenderingVariable",
-	spec: defaultConditionalRenderingVariableSpec(),
-});
-
-export interface ConditionalRenderingVariableSpec {
-	variable: string;
-	operator: "equals" | "notEquals" | "matches" | "notMatches";
-	value: string;
-}
-
-export const defaultConditionalRenderingVariableSpec = (): ConditionalRenderingVariableSpec => ({
-	variable: "",
-	operator: "equals",
-	value: "",
-});
-
-export interface ConditionalRenderingDataKind {
-	kind: "ConditionalRenderingData";
-	spec: ConditionalRenderingDataSpec;
-}
-
-export const defaultConditionalRenderingDataKind = (): ConditionalRenderingDataKind => ({
-	kind: "ConditionalRenderingData",
-	spec: defaultConditionalRenderingDataSpec(),
-});
-
-export interface ConditionalRenderingDataSpec {
-	value: boolean;
-}
-
-export const defaultConditionalRenderingDataSpec = (): ConditionalRenderingDataSpec => ({
-	value: false,
-});
-
-export interface ConditionalRenderingTimeRangeSizeKind {
-	kind: "ConditionalRenderingTimeRangeSize";
-	spec: ConditionalRenderingTimeRangeSizeSpec;
-}
-
-export const defaultConditionalRenderingTimeRangeSizeKind = (): ConditionalRenderingTimeRangeSizeKind => ({
-	kind: "ConditionalRenderingTimeRangeSize",
-	spec: defaultConditionalRenderingTimeRangeSizeSpec(),
-});
-
-export interface ConditionalRenderingTimeRangeSizeSpec {
-	value: string;
-}
-
-export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRenderingTimeRangeSizeSpec => ({
-	value: "",
 });
 
 export interface RowRepeatOptions {
