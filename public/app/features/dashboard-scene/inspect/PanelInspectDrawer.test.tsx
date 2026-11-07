@@ -1,4 +1,4 @@
-import { waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 
 import { CoreApp, DataSourceApi, getDefaultTimeRange, LoadingState, PanelPlugin, toDataFrame } from '@grafana/data';
 import { getPanelDataStatusItems, PanelStatusStore } from '@grafana/data/internal';
@@ -20,7 +20,7 @@ jest.mock('@grafana/runtime', () => ({
 class InspectorDatasource extends DataSourceApi {
   query = jest.fn();
   testDatasource = jest.fn();
-  components = { MetadataInspector: () => null, ErrorsAndNoticesInspector: () => null };
+  components = { MetadataInspector: () => null, ErrorsAndNoticesInspector: () => <div>Custom query details</div> };
 }
 
 function datasource(uid: string) {
@@ -114,6 +114,47 @@ function withQueryData() {
 }
 
 describe('Tab availability', () => {
+  it.each(['panel warning', 'plugin-load error'])(
+    'shows a %s after successful custom-inspector queries',
+    async (kind) => {
+      jest.mocked(getDataSourceInstance).mockResolvedValue(datasource('first'));
+      const { store, panel, drawer } = setup();
+      if (kind === 'panel warning') {
+        store.createSource().set([{ id: 'panel', severity: 'warning', text: 'Choose field' }]);
+      } else {
+        panel.setState({ _pluginLoadError: 'Plugin failed to load' });
+      }
+
+      await act(async () => {
+        activateDrawer(drawer);
+      });
+      render(<drawer.Component model={drawer} />);
+
+      expect(
+        await screen.findByText(kind === 'panel warning' ? 'Choose field' : 'Plugin failed to load')
+      ).toBeVisible();
+    }
+  );
+
+  it('shows the remaining panel warning when custom-inspector query errors clear', async () => {
+    const customDatasource = datasource('first');
+    jest.mocked(getDataSourceInstance).mockResolvedValue(customDatasource);
+    const { store, data, drawer } = withQueryData();
+    store.createSource().set([{ id: 'panel', severity: 'warning', text: 'Choose field' }]);
+    await act(async () => {
+      activateDrawer(drawer);
+    });
+    render(<drawer.Component model={drawer} />);
+    expect(await screen.findByText('Custom query details')).toBeVisible();
+
+    await act(async () => {
+      data.setState({ data: { ...data.state.data!, state: LoadingState.Done, errors: [] } });
+    });
+
+    expect(await screen.findByText('Choose field')).toBeVisible();
+    expect(screen.queryByText('Custom query details')).not.toBeInTheDocument();
+  });
+
   it('shows an existing panel notice on a non-query panel', async () => {
     plugin.meta.skipDataQuery = true;
     const { store, drawer, tabs } = setup();
@@ -125,7 +166,7 @@ describe('Tab availability', () => {
     deactivate();
   });
 
-  it.failing('adds Errors and notices when a panel notice appears after opening', async () => {
+  it('adds Errors and notices when a panel notice appears after opening', async () => {
     plugin.meta.skipDataQuery = true;
     const { store, drawer, tabs } = setup();
     activateDrawer(drawer);
@@ -136,7 +177,7 @@ describe('Tab availability', () => {
     await waitFor(() => expect(tabs()).toEqual([InspectTab.ErrorsAndNotices, InspectTab.JSON]));
   });
 
-  it.failing('removes Errors and notices when panel notices clear', async () => {
+  it('removes Errors and notices when panel notices clear', async () => {
     plugin.meta.skipDataQuery = true;
     const { store, drawer, tabs } = setup();
     const source = store.createSource();
@@ -189,7 +230,7 @@ describe('Tab availability', () => {
     await waitFor(() => expect(tabs()).toEqual([InspectTab.JSON]));
   });
 
-  it.failing('removes fallback query errors when the host initializes an empty snapshot', async () => {
+  it('removes fallback query errors when the host initializes an empty snapshot', async () => {
     plugin.meta.skipDataQuery = true;
     const { store, drawer, tabs, data } = setup();
     data.setState({ data: { ...data.state.data!, errors: [{ message: 'Query failed' }] } });
@@ -201,7 +242,7 @@ describe('Tab availability', () => {
     await waitFor(() => expect(tabs()).toEqual([InspectTab.JSON]));
   });
 
-  it.failing('uses plugin-load fallback after the host snapshot is cleared', async () => {
+  it('uses plugin-load fallback after the host snapshot is cleared', async () => {
     plugin.meta.skipDataQuery = true;
     const { store, drawer, tabs, panel } = setup();
     store.setExternal([]);
@@ -254,7 +295,7 @@ describe('Tab availability', () => {
     deactivate();
   });
 
-  it.failing('adds Meta data when query results arrive after inspector opens', async () => {
+  it('adds Meta data when query results arrive after inspector opens', async () => {
     jest.mocked(getDataSourceInstance).mockResolvedValue(datasource('first'));
     const { data, drawer, tabs } = withQueryData();
     data.setState({ data: { ...data.state.data!, series: [], errors: [] } });
@@ -271,7 +312,7 @@ describe('Tab availability', () => {
     deactivate();
   });
 
-  it.failing('shows and removes Errors and notices as query results change', async () => {
+  it('shows and removes Errors and notices as query results change', async () => {
     jest.mocked(getDataSourceInstance).mockResolvedValue(datasource('first'));
     const { data, drawer, tabs } = withQueryData();
     data.setState({ data: { ...data.state.data!, series: [], errors: [] } });
@@ -285,11 +326,11 @@ describe('Tab availability', () => {
     deactivate();
   });
 
-  it.failing('keeps standard notices available when datasource discovery fails', async () => {
+  it('keeps standard notices available when datasource discovery fails', async () => {
     jest.mocked(getDataSourceInstance).mockRejectedValue(new Error('Unavailable'));
     const { drawer, tabs } = withQueryData();
-    // Await the legacy initializer so discovery rejection fails this test instead of escaping activation.
-    await drawer.buildTabs(0);
+    activateDrawer(drawer);
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(tabs()).toEqual([
       InspectTab.Data,
       InspectTab.Stats,
@@ -329,7 +370,7 @@ describe('Loading and selection', () => {
     deactivate();
   });
 
-  it.failing('removes result tabs when a refresh finishes without metadata or errors', async () => {
+  it('removes result tabs when a refresh finishes without metadata or errors', async () => {
     jest.mocked(getDataSourceInstance).mockResolvedValue(datasource('first'));
     const { store, data, drawer, tabs } = withQueryData();
     store.setExternal(getPanelDataStatusItems(data.state.data));
@@ -353,7 +394,7 @@ describe('Loading and selection', () => {
     deactivate();
   });
 
-  it.failing('selects a remaining tab when the active result tab disappears', async () => {
+  it('selects a remaining tab when the active result tab disappears', async () => {
     jest.mocked(getDataSourceInstance).mockResolvedValue(datasource('first'));
     const { data, drawer, tabs } = withQueryData();
     const deactivate = activateDrawer(drawer);
@@ -419,7 +460,7 @@ describe('Tab identity and discovery lifecycle', () => {
     deactivate();
   });
 
-  it.failing('ignores stale discovery after provider replacement', async () => {
+  it('ignores stale discovery after provider replacement', async () => {
     const first = datasource('first');
     const second = datasource('second');
     let resolveFirst!: (value: DataSourceApi) => void;
@@ -454,7 +495,7 @@ describe('Tab identity and discovery lifecycle', () => {
     deactivate();
   });
 
-  it.failing('preserves the Data tab when a replacement provider discovers a different datasource', async () => {
+  it('preserves the Data tab when a replacement provider discovers a different datasource', async () => {
     const first = datasource('first');
     const second = datasource('second');
     jest
@@ -511,7 +552,7 @@ describe('Tab identity and discovery lifecycle', () => {
     deactivate();
   });
 
-  it.failing('ignores datasource discovery that finishes after the drawer closes', async () => {
+  it('ignores datasource discovery that finishes after the drawer closes', async () => {
     let resolve!: (value: DataSourceApi) => void;
     const pending = new Promise<DataSourceApi>((done) => {
       resolve = done;
@@ -548,7 +589,7 @@ describe('Plugin availability', () => {
     expect(drawer.state.pluginNotLoaded).toBe(true);
   });
 
-  it.failing('cancels plugin polling when the drawer closes', () => {
+  it('cancels plugin polling when the drawer closes', () => {
     jest.useFakeTimers();
     const { drawer, panel, tabs } = setup();
     const getPlugin = jest.spyOn(panel, 'getPlugin').mockReturnValue(undefined);
@@ -564,7 +605,7 @@ describe('Plugin availability', () => {
     expect(drawer.state.pluginNotLoaded).not.toBe(true);
   });
 
-  it.failing('restarts the plugin timeout when an unavailable plugin is replaced', () => {
+  it('restarts the plugin timeout when an unavailable plugin is replaced', () => {
     jest.useFakeTimers();
     const { drawer, panel } = setup();
     jest.spyOn(panel, 'getPlugin').mockReturnValue(undefined);
@@ -596,7 +637,7 @@ describe('Plugin availability', () => {
     deactivate();
   });
 
-  it.failing('shows plugin load failure after the timeout and clears it on plugin replacement', async () => {
+  it('shows plugin load failure after the timeout and clears it on plugin replacement', async () => {
     jest.useFakeTimers();
     const { panel, drawer, tabs } = setup();
     const getPlugin = jest.spyOn(panel, 'getPlugin').mockReturnValue(undefined);
@@ -613,17 +654,6 @@ describe('Plugin availability', () => {
     expect(drawer.state.pluginNotLoaded).toBe(false);
     deactivate();
   });
-});
-
-it('keeps the original one-shot tab behavior until the reactivity change lands', async () => {
-  plugin.meta.skipDataQuery = true;
-  const { store, drawer, tabs } = setup();
-  const deactivate = activateDrawer(drawer);
-  await waitFor(() => expect(tabs()).toEqual([InspectTab.JSON]));
-
-  store.createSource().set([{ id: 'panel', severity: 'warning', text: 'Choose field' }]);
-  expect(tabs()).toEqual([InspectTab.JSON]);
-  deactivate();
 });
 
 it('retains the initial query-error tab', async () => {
