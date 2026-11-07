@@ -268,17 +268,25 @@ These errors occur when there are issues with query syntax or configuration.
 
 ### `CASE` expression fails on non-standard string column types
 
-**Error message:** Query with `CASE WHEN` returns an error or unexpected results in Grafana, but works in other MySQL clients
+**Error message:** Query with `CASE WHEN` or `IF` returns an error or unexpected results in Grafana, but works in other MySQL clients
 
-**Cause:** The Grafana MySQL driver doesn't handle all MySQL string subtypes (such as `ENUM`, `SET`, `TINYTEXT`, or `MEDIUMTEXT`) in `CASE` expressions. The driver may fail to infer the result type correctly.
+**Cause:** The Grafana MySQL driver doesn't handle all MySQL string subtypes (such as `ENUM`, `SET`, `TINYTEXT`, or `MEDIUMTEXT`) in `CASE` or `IF` expressions. The driver may fail to infer the result type correctly.
 
 **Solution:**
 
-1. Use `CAST()` to normalize the column to `CHAR` before using it in a `CASE` expression:
+1. Use `CAST()` to normalize the column to `CHAR` before using it in a `CASE` or `IF` expression:
 
    ```sql
    SELECT
      CASE WHEN CAST(status_column AS CHAR) = 'active' THEN 1 ELSE 0 END AS is_active
+   FROM my_table
+   ```
+
+   The same applies to `IF`:
+
+   ```sql
+   SELECT
+     IF(CAST(status_column AS CHAR) = 'active', 1, 0) AS is_active
    FROM my_table
    ```
 
