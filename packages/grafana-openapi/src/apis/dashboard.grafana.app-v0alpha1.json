@@ -1408,6 +1408,15 @@
             }
           },
           {
+            "name": "offset",
+            "in": "query",
+            "description": "number of hits to skip, for paging",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
             "name": "ownerReference",
             "in": "query",
             "description": "filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them.",
