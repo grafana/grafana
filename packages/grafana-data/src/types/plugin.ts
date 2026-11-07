@@ -132,6 +132,9 @@ export type ExtensionInfo = {
 };
 
 export interface PluginExtensions {
+  /** Bundled skill files keyed by a stable, plugin-local slug. Content and metadata live in the Markdown file. */
+  skills?: Record<string, { path: string }>;
+
   // The component extensions that the plugin registers
   addedComponents: ExtensionInfo[];
 
