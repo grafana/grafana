@@ -333,7 +333,11 @@ function calculateRange(
     const sparklineRange = findSparklineMinMax(field.values, config.nullValueMode);
     const min = config.min ?? sparklineRange.min;
     const max = config.max ?? sparklineRange.max;
-    return { range: { min, max, delta: max! - min! }, newGlobalRange: globalRange };
+    // With nothing to scale to, leave the range unset so each cell falls back to its own row's range.
+    if (min == null || max == null) {
+      return { newGlobalRange: globalRange };
+    }
+    return { range: { min, max, delta: max - min }, newGlobalRange: globalRange };
   }
 
   // If range is defined with min/max, use it
@@ -369,10 +373,10 @@ function findSparklineMinMax(frames: unknown[], nullValueMode?: NullValueMode): 
   let max = -Infinity;
 
   for (const frame of frames) {
-    if (!isDataFrame(frame) || !frame.fields.some((f) => f.type === FieldType.time)) {
+    if (!isDataFrame(frame) || !frame.fields.some((f) => resolveFieldType(f) === FieldType.time)) {
       continue;
     }
-    const valueField = frame.fields.find((f) => f.type === FieldType.number);
+    const valueField = frame.fields.find((f) => resolveFieldType(f) === FieldType.number);
     if (!valueField) {
       continue;
     }
@@ -393,6 +397,15 @@ function findSparklineMinMax(frames: unknown[], nullValueMode?: NullValueMode): 
   const rangeMin = min === Infinity ? null : min;
   const rangeMax = max === -Infinity ? null : max;
   return { min: rangeMin, max: rangeMax, delta: (rangeMax ?? 0) - (rangeMin ?? 0) };
+}
+
+// Nested field types are only guessed later, when applyFieldOverrides recurses into the frames, so guess them the
+// same way here to count the fields the sparkline will draw.
+function resolveFieldType(field: Field): FieldType {
+  if (!field.type || field.type === FieldType.other) {
+    return guessFieldTypeForField(field) ?? field.type;
+  }
+  return field.type;
 }
 
 // decimals -> cache mapping, -1 is unspecified decimals. pre-init caches for up to 15 decimals
