@@ -354,7 +354,15 @@ func (pl PluginLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 // which is why the router may route them before their authorization moves too.
 // Before adding a group, confirm the same holds for it: never add a group
 // whose data or permissions matter, such as dashboards, folders or IAM.
-var routableCoreGroups = []string{"playlist.grafana.app", "example.grafana.app"}
+//
+// collections holds per-user data, but access to it is decided
+// by the object's name in the router's own authorizer (pluginroute
+// ownerFromName), not by the plugin serving it.
+var routableCoreGroups = []string{
+	"playlist.grafana.app",
+	"example.grafana.app",
+	"collections.grafana.app",
+}
 
 // newPluginBackend builds the backend for one plugin manifest. Its group must be
 // a plugin group (*.ext.grafana.app) or one of routableCoreGroups.
@@ -433,11 +441,12 @@ type PluginBackend struct {
 	// recorded under instead of pluginID, in metrics and spans. A core_url
 	// entry without a plugin ID uses its API group, as its connection does.
 	metricsID string
-	info      plugins.Info
-	group     metav1.APIGroup
-	manifest  *app.ManifestData
-	client    PluginClientProvider
-	deps      PluginDependencies
+
+	info     plugins.Info
+	group    metav1.APIGroup
+	manifest *app.ManifestData
+	client   PluginClientProvider
+	deps     PluginDependencies
 
 	// settings is set instead of manifest for the backend that serves the
 	// plugin's settings API under its plugin ID.

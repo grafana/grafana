@@ -5,6 +5,9 @@ starsV1alpha1: {
 	pluralName: "Stars"
 	scope:      "Namespaced"
 
+	// Access is decided by the owner in the name, not by a folder.
+	folderScoped: false
+
 	// Generic read routes cannot apply the caller filtering used by normal list reads.
 	listKeys: false
 	search: {
@@ -12,6 +15,12 @@ starsV1alpha1: {
 	}
 
 	validation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
+	mutation: {
 		operations: [
 			"CREATE",
 			"UPDATE",

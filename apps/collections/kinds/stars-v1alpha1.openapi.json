@@ -1,0 +1,143 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Collections API",
+    "version": "v1alpha1"
+  },
+  "paths": {
+    "/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}": {
+      "put": {
+        "tags": ["Stars"],
+        "description": "Add a starred item",
+        "operationId": "addStar",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Stars"],
+        "description": "Remove a starred item",
+        "operationId": "removeStar",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Stars",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "group",
+          "in": "path",
+          "description": "API group for stared item",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "example": "dashboard.grafana.app"
+        },
+        {
+          "name": "kind",
+          "in": "path",
+          "description": "Kind for stared item",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "example": "Dashboard"
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "description": "The k8s name for the selected item",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ]
+    }
+  },
+  "components": {
+    "schemas": {
+      "com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars": {
+        "type": "object",
+        "description": "Stars is the stored object returned by the update routes.",
+        "properties": {
+          "apiVersion": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "spec": {
+            "type": "object",
+            "required": ["resource"],
+            "properties": {
+              "resource": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["group", "kind", "names"],
+                  "properties": {
+                    "group": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "names": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": ["spec"]
+      }
+    }
+  }
+}
