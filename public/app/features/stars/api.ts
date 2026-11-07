@@ -1,14 +1,35 @@
+import { DataFrameView } from '@grafana/data';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { toDashboardResults } from 'app/features/search/service/unified';
 
-import { findStarredKind } from './kinds';
+import { searchAppKindHits } from './kindSearch';
+import { type KindSearchStarredKind, partitionStarred, type StarredNames, type StarredNamesOfKind } from './kinds';
 
-/** The starred names of one kind, as the Stars resource stores them. */
-interface StarredNames {
-  group: string;
-  kind: string;
-  names: string[];
+/** Rows of the kinds the dashboard search index holds, in one search over the union of their starred uids. */
+async function searchDashboardIndex(byKind: StarredNamesOfKind[]): Promise<DashboardQueryResult[]> {
+  const uids = [...new Set(byKind.flatMap(({ names }) => names))].sort();
+  if (uids.length === 0) {
+    return [];
+  }
+  const kinds = byKind.map(({ kind }) => kind.searchKind);
+  // A uid is matched against every kind asked for, so a resource of another kind that shares a starred uid
+  // comes back too: leave it room in the limit, drop it after.
+  const starredBySearchKind = new Map(byKind.map(({ kind, names }) => [kind.searchKind, new Set(names)]));
+  const response = await getGrafanaSearcher().search({ name: uids, kind: kinds, limit: uids.length * kinds.length });
+  return response.view.toArray().filter((row) => starredBySearchKind.get(row.kind)?.has(row.uid));
+}
+
+/** Rows of the app kinds, each through its own search endpoint; a kind whose API is unavailable yields none. */
+async function searchAppKinds(
+  byKind: Array<StarredNamesOfKind<KindSearchStarredKind>>
+): Promise<DashboardQueryResult[]> {
+  const hits = await searchAppKindHits(byKind);
+  if (hits.length === 0) {
+    return [];
+  }
+  return new DataFrameView<DashboardQueryResult>(toDashboardResults({ hits, totalHits: hits.length }, '')).toArray();
 }
 
 const starsAPI = collectionsAPIv1alpha1.injectEndpoints({
@@ -21,26 +42,11 @@ const starsAPI = collectionsAPIv1alpha1.injectEndpoints({
      */
     searchStarred: build.query<DashboardQueryResult[], StarredNames[]>({
       queryFn: async (starred) => {
-        // Every kind Grafana shows is in the dashboard search index, under its search kind
-        const byKind = starred.flatMap(({ group, kind, names }) => {
-          const starredKind = findStarredKind(group, kind);
-          return starredKind && names.length > 0 ? [{ searchKind: starredKind.searchKind, names }] : [];
-        });
-        const uids = [...new Set(byKind.flatMap(({ names }) => names))].sort();
-        if (uids.length === 0) {
-          return { data: [] };
-        }
-        const kinds = byKind.map(({ searchKind }) => searchKind);
-        // A uid is matched against every kind asked for, so a resource of another kind that shares a starred uid
-        // comes back too: leave it room in the limit, drop it after.
-        const starredBySearchKind = new Map(byKind.map(({ searchKind, names }) => [searchKind, new Set(names)]));
+        const { indexed, app } = partitionStarred(starred);
         try {
-          const response = await getGrafanaSearcher().search({
-            name: uids,
-            kind: kinds,
-            limit: uids.length * kinds.length,
-          });
-          return { data: response.view.toArray().filter((row) => starredBySearchKind.get(row.kind)?.has(row.uid)) };
+          // The app rows trail the indexed rows, which keep the order the search gave them
+          const [indexedRows, appRows] = await Promise.all([searchDashboardIndex(indexed), searchAppKinds(app)]);
+          return { data: [...indexedRows, ...appRows] };
         } catch (error) {
           return { error };
         }

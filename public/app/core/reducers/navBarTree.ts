@@ -28,6 +28,8 @@ export interface StarredNavItem {
   url: string;
   icon?: IconName;
   sortWeight?: number;
+  /** As the stars registry names the kind: `dashboard`, `folder`, or a registered kind's `group/Kind`. Not needed to remove a star. */
+  kind?: string;
 }
 // Single shared collator avoids per-call Intl.Collator construction
 const collator = new Intl.Collator();
@@ -42,7 +44,7 @@ const navTreeSlice = createSlice({
   reducers: {
     setStarred: (state, action: PayloadAction<StarredNavItem & { isStarred: boolean }>) => {
       const starredItems = state.find((navItem) => navItem.id === 'starred');
-      const { id, title, url, icon, sortWeight, isStarred } = action.payload;
+      const { id, title, url, icon, sortWeight, kind, isStarred } = action.payload;
       if (starredItems) {
         if (isStarred) {
           if (!starredItems.children) {
@@ -54,6 +56,7 @@ const navTreeSlice = createSlice({
             url,
             icon,
             sortWeight,
+            starredKind: kind,
           };
           starredItems.children.push(newStarredItem);
           starredItems.children.sort(compareStarredChildren);
@@ -123,6 +126,7 @@ const navTreeSlice = createSlice({
             url: item.url,
             icon: item.icon,
             sortWeight: item.sortWeight,
+            starredKind: item.kind,
           });
         } else {
           // A starred uid can be missing from the search response when the eventually

@@ -18,8 +18,9 @@ import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collect
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
-import { STARRED_KINDS } from 'app/features/stars/kinds';
-import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
+import { searchAppKindHits } from 'app/features/stars/kindSearch';
+import { loadStarredKindsFor, partitionStarred } from 'app/features/stars/kinds';
+import { userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
 import { isRootFolderUID } from '../constants';
@@ -38,7 +39,7 @@ import { appendFrame, replaceCurrentFolderQuery } from './utils';
 const searchURI = `${v0alphaBaseURL}/search`;
 
 export type SearchHit = {
-  resource: string; // dashboards | folders
+  resource: string; // dashboards | folders, or an app kind's plural
   name: string;
   title: string;
   description?: string;
@@ -47,8 +48,9 @@ export type SearchHit = {
 
   field: Record<string, string | number>; // extra fields from the backend - sort fields included here as well
 
-  // calculated in the frontend
-  url: string;
+  // Hits built from a kind's own search carry their kind and url; the dashboard search leaves both to the frontend
+  kind?: string;
+  url?: string;
   managedBy?: ManagedBy;
 };
 
@@ -66,6 +68,22 @@ export type SearchAPIResponse = {
 };
 
 const folderViewSort = 'name_sort';
+
+/**
+ * Whether the query filters on something only the dashboard index holds, which no app object can
+ * match. App kinds never live at the root folder either, and the trash holds dashboards alone.
+ */
+function isDashboardOnlyQuery(query: SearchQuery): boolean {
+  return Boolean(
+    query.panel_type ||
+      query.ds_type ||
+      query.ds_uid ||
+      query.createdBy ||
+      query.ownerReference?.length ||
+      query.deleted ||
+      query.location === 'general'
+  );
+}
 
 export class UnifiedSearcher implements GrafanaSearcher {
   private locationInfo = loadLocationInfo();
@@ -86,18 +104,50 @@ export class UnifiedSearcher implements GrafanaSearcher {
         fieldSelector: userStarsFieldSelector(),
       })
     );
-    // One uid may be starred as several kinds, so the search gets each uid once
-    const starsIds = [...new Set(STARRED_KINDS.flatMap((k) => findStarredNames(result.data, k.group, k.kind)))];
+    await loadStarredKindsFor(result.data);
+    const { indexed, app } = partitionStarred(result.data.items?.[0]?.spec.resource ?? []);
+    const indexNames = [...new Set(indexed.flatMap(({ names }) => names))];
+    const indexQuery = { ...query, name: indexNames, query: query.query ?? '*' };
 
-    if (starsIds.length) {
-      return this.doSearchQuery({
-        ...query,
-        name: starsIds,
-        query: query.query ?? '*',
-      });
+    if (app.length === 0 || isDashboardOnlyQuery(query)) {
+      return indexNames.length > 0 ? this.doSearchQuery(indexQuery) : noDataResponse();
     }
-    // Nothing is starred
-    return noDataResponse();
+
+    const sort = query.sort ?? '';
+    const uri = await this.newRequest(indexQuery);
+    const [index, appHits] = await Promise.all([
+      indexNames.length > 0 ? this.fetchResponse(uri) : Promise.resolve<SearchAPIResponse>({ hits: [], totalHits: 0 }),
+      searchAppKindHits(app, {
+        text: query.query,
+        tags: query.tags,
+        folder: query.location || undefined,
+        // The app rows trail the server-sorted index rows, so a title sort can only order them among themselves
+        sort: { field: 'title', direction: toSortParam(sort) === '-title' ? 'desc' : 'asc' },
+      }),
+    ]);
+    const total = index.totalHits + appHits.length;
+    if (total === 0) {
+      return noDataResponse();
+    }
+
+    // One row sequence: the index's server pages, then the app rows, which the index does not hold
+    const limit = query.limit ?? pageSize;
+    const page = (offset: number): Promise<SearchAPIResponse> => {
+      if (offset < index.totalHits) {
+        return this.fetchResponse(`${uri}&offset=${offset}`);
+      }
+      const start = offset - index.totalHits;
+      return Promise.resolve({ hits: appHits.slice(start, start + limit), totalHits: total });
+    };
+    // The first page is filled up to the limit with app rows once the index has none left, so a list
+    // that never asks for more, like the dashboard list panel, still shows them
+    const indexExhausted = index.hits.length >= index.totalHits;
+    const first: SearchAPIResponse = {
+      ...index,
+      hits: indexExhausted ? [...index.hits, ...appHits.slice(0, limit - index.hits.length)] : index.hits,
+      totalHits: total,
+    };
+    return this.toQueryResponse(first, sort, page);
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
@@ -149,7 +199,16 @@ export class UnifiedSearcher implements GrafanaSearcher {
       rsp = await this.fetchResponse(uri);
     }
 
-    const first = toDashboardResults(rsp, query.sort ?? '');
+    return this.toQueryResponse(rsp, query.sort ?? '', (offset) => this.fetchResponse(`${uri}&offset=${offset}`));
+  }
+
+  /** Builds the paged response for a search result. `fetchPage` loads the page of rows starting at `offset`. */
+  private async toQueryResponse(
+    rsp: SearchAPIResponse,
+    sort: string,
+    fetchPage: (offset: number) => Promise<SearchAPIResponse>
+  ): Promise<QueryResponse> {
+    const first = toDashboardResults(rsp, sort);
 
     // We add parent folder information into meta.custom of the data frame. This is loaded separately in
     // loadLocationInfo. Used to show parent information upstream.
@@ -191,9 +250,8 @@ export class UnifiedSearcher implements GrafanaSearcher {
         if (offset >= meta.count) {
           return;
         }
-        const nextPageUrl = `${uri}&offset=${offset}`;
-        const resp = await this.fetchResponse(nextPageUrl);
-        const frame = toDashboardResults(resp, query.sort ?? '');
+        const resp = await fetchPage(offset);
+        const frame = toDashboardResults(resp, sort);
         if (!frame) {
           console.log('no results', frame);
           return;
@@ -444,7 +502,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     return {
       ...hit,
       uid: hit.name,
-      url: toURL(hit.resource, hit.name, hit.title),
+      url: hit.url ?? toURL(hit.resource, hit.name, hit.title),
       // Sort tags so we aren't reliant on the backend having done this for us
       // Sorting order can be different between APIs/search implementations
       tags: (hit.tags || []).sort(),
@@ -455,7 +513,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       folder,
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
-      kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
+      kind: hit.kind ?? hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
       managedBy: hit.managedBy,
       ...field,
     };

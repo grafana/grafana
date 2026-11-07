@@ -1,4 +1,5 @@
 import { contextSrv } from 'app/core/services/context_srv';
+import { isDashboardViewItemKind } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -34,8 +35,13 @@ export function getFolderPermissions(folderDTO?: FolderDTO) {
   };
 }
 
+/** Whether the user may bulk move/delete items of this kind; the `*` select-all sentinel counts as dashboard-like. */
 export function canEditItemType(itemKind: string, permissions: BrowseDashboardsPermissions) {
   const { canEditFolders, canDeleteFolders, canEditDashboards, canDeleteDashboards } = permissions;
+  // The browse view moves and deletes only its own kinds; an app kind's objects belong to the plugin that serves them
+  if (itemKind !== '*' && !isDashboardViewItemKind(itemKind)) {
+    return false;
+  }
   return itemKind === 'folder'
     ? Boolean(canEditFolders || canDeleteFolders)
     : Boolean(canEditDashboards || canDeleteDashboards);

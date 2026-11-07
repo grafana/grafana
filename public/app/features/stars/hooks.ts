@@ -1,48 +1,19 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
-import { setStarred, setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
-import { contextSrv } from 'app/core/services/context_srv';
+import { useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
+import { setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
 import { dispatch } from 'app/store/store';
 
 import { useSearchStarredQuery } from './api';
-import { STARRED_KINDS, findStarredKind, findStarredKindBySearchKind } from './kinds';
+import {
+  appKindsFrom,
+  findStarredKindBySearchKind,
+  starredKindsOf,
+  starsHoldAppKind,
+  useDiscoverAppKindsQuery,
+} from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
-
-type StarItemArgs = {
-  id: string;
-  /** Title of the item - this is displayed in the nav */
-  title: string;
-};
-
-/** Star or unstar an item */
-export const useStarItem = (group: string, kind: string) => {
-  const [addStar] = useAddStarMutation();
-  const [removeStar] = useRemoveStarMutation();
-
-  return async ({ id, title }: StarItemArgs, newStarredState: boolean) => {
-    const name = `user-${contextSrv.user.uid}`;
-    const mutationArgs = { id, name, group, kind };
-    try {
-      if (newStarredState) {
-        await addStar(mutationArgs).unwrap();
-      } else {
-        await removeStar(mutationArgs).unwrap();
-      }
-    } catch {
-      // Server rejected the change — leave the nav as-is rather than showing state that didn't persist
-      return;
-    }
-
-    const starredKind = findStarredKind(group, kind);
-    // A star of a kind the nav doesn't show is stored all the same
-    if (starredKind) {
-      const { icon, sortWeight } = starredKind;
-      dispatch(setStarred({ id, title, url: starredKind.url(id), icon, sortWeight, isStarred: newStarredState }));
-    }
-  };
-};
 
 /**
  * Get starred items from the app platform API
@@ -81,14 +52,19 @@ export const useStarredItems = (group: string, kind: string) => {
  */
 export const useStarredSearch = (cap?: number) => {
   const stars = useListStarsQuery({ fieldSelector: userStarsFieldSelector() });
+  // App kinds are discovered once the stars hold one, and the search waits for them so it runs once, over every kind
+  const needsAppKinds = starsHoldAppKind(stars.data);
+  const appKinds = useDiscoverAppKindsQuery(needsAppKinds ? undefined : skipToken);
+  const kindsSettled = !needsAppKinds || appKinds.isSuccess || appKinds.isError;
+  const kinds = useMemo(() => starredKindsOf(appKindsFrom(appKinds.data)), [appKinds.data]);
 
   // Sorted so the cache key is the set, not the order the API listed it in; deduped so a uid starred as several
   // kinds takes one cap slot.
   const searched = useMemo(() => {
-    if (!stars.data) {
+    if (!stars.data || !kindsSettled) {
       return undefined;
     }
-    const byKind = STARRED_KINDS.map((kind) => ({ kind, names: findStarredNames(stars.data, kind.group, kind.kind) }));
+    const byKind = kinds.map((kind) => ({ kind, names: findStarredNames(stars.data, kind.group, kind.kind) }));
     const uids = [...new Set(byKind.flatMap(({ names }) => names))].sort().slice(0, cap);
     const inCap = new Set(uids);
     return {
@@ -98,7 +74,7 @@ export const useStarredSearch = (cap?: number) => {
         return searched.length > 0 ? [{ group: kind.group, kind: kind.kind, names: searched }] : [];
       }),
     };
-  }, [stars.data, cap]);
+  }, [stars.data, kinds, cap, kindsSettled]);
   // Refetched on every mount so an unchanged set still picks up renamed or deleted items.
   const search = useSearchStarredQuery(searched?.args ?? skipToken, { refetchOnMountOrArgChange: true });
 
@@ -106,10 +82,14 @@ export const useStarredSearch = (cap?: number) => {
     uids: searched?.uids,
     rows: search.data,
     // Until the first rows land; a changed star set keeps the previous rows up while it loads.
-    loading: stars.isLoading || search.isLoading,
+    loading: stars.isLoading || appKinds.isLoading || search.isLoading,
+    // A failed discovery is not one: the dashboards and folders still list
     error: stars.isError || search.isError,
     retry: () => {
       stars.refetch();
+      if (appKinds.isError) {
+        appKinds.refetch();
+      }
       if (searched) {
         search.refetch();
       }
@@ -137,8 +117,12 @@ export const useSyncStarredItemsInNav = () => {
     }
     const items = rows.flatMap((row): StarredNavItem[] => {
       const kind = findStarredKindBySearchKind(row.kind);
+      if (!kind) {
+        return [];
+      }
+      const { icon, sortWeight, searchKind } = kind;
       // The search row carries the slugged url, which the nav keeps over the kind's plain one
-      return kind ? [{ id: row.uid, title: row.name, url: row.url, icon: kind.icon, sortWeight: kind.sortWeight }] : [];
+      return [{ id: row.uid, title: row.name, url: row.url, icon, sortWeight, kind: searchKind }];
     });
     dispatch(setStarredItems({ uids, items }));
     setHasSynced(true);
