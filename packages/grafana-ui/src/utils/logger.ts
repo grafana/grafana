@@ -1,1 +1,1 @@
-export { createLogger, type Logger } from '@grafana/data';
+export { createLogger } from '@grafana/data';

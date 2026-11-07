@@ -56,7 +56,6 @@
     "@grafana/data": "13.4.0-pre",
     "@grafana/faro-web-sdk": "^2.12.0",
     "@grafana/schema": "13.4.0-pre",
-    "@grafana/ui": "13.4.0-pre",
     "@openfeature/core": "^1.12.0",
     "@openfeature/localstorage-provider": "^0.1.2",
     "@openfeature/ofrep-web-provider": "^0.4.1",

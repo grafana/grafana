@@ -13,13 +13,13 @@ it('shares helper identities and flag state between the feature-flags and unstab
   const featureFlagsClient = featureFlags.getTestFeatureFlagClient();
   const unstableClient = getTestFeatureFlagClient();
 
-  featureFlags.setTestFlags({ 'entrypoint.enabled': true });
-  expect(unstableClient.getBooleanValue('entrypoint.enabled', false)).toBe(true);
+  featureFlags.setTestFlags({ panelTitleSearch: true });
+  expect(unstableClient.getBooleanValue('panelTitleSearch', false)).toBe(true);
 
-  setTestFlags({ 'entrypoint.enabled': false });
-  expect(featureFlagsClient.getBooleanValue('entrypoint.enabled', true)).toBe(false);
+  setTestFlags({ panelTitleSearch: false });
+  expect(featureFlagsClient.getBooleanValue('panelTitleSearch', true)).toBe(false);
 
   featureFlags.setTestFlags({});
-  expect(featureFlagsClient.getBooleanValue('entrypoint.enabled', true)).toBe(true);
-  expect(unstableClient.getBooleanValue('entrypoint.enabled', true)).toBe(true);
+  expect(featureFlagsClient.getBooleanValue('panelTitleSearch', true)).toBe(true);
+  expect(unstableClient.getBooleanValue('panelTitleSearch', true)).toBe(true);
 });
