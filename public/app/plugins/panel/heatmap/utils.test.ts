@@ -620,6 +620,56 @@ describe('prepConfig', () => {
     orientSpy.mockRestore();
   });
 
+  it('draws with the fill values from the latest setData', () => {
+    const data: DenseHeatmap = [
+      [1000, 1000, 1000],
+      [0, 1, 2],
+      [5, 10, 15],
+    ];
+    const palette = ['#a', '#b', '#c'];
+    const dataRef = {
+      current: createMinimalHeatmapData({
+        heatmapColors: { values: [0, 0, 0], palette, minValue: 5, maxValue: 15 },
+      }),
+    };
+    const config = prepConfig({
+      dataRef,
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'red',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+    }).getConfig();
+    const setData = config.hooks?.setData?.[0];
+    const drawClear = config.hooks?.drawClear?.[0];
+    const heatmapPaths = config.series?.[1]?.paths;
+    if (!setData || !drawClear || !heatmapPaths) {
+      throw new Error('Expected setData and drawClear hooks and a heatmap layer path builder');
+    }
+
+    dataRef.current = createMinimalHeatmapData({
+      heatmapColors: { values: [0, 1, 2], palette, minValue: 5, maxValue: 15 },
+    });
+
+    const rect = jest.fn();
+    const mockU = createMockU(data);
+    // Matching the time range keeps the setData hook from queueing a setScale.
+    Object.assign(mockU, {
+      series: [{}, {}, {}],
+      scales: { x: { min: timeRange.from.valueOf(), max: timeRange.to.valueOf() } },
+    });
+    const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(createOrientMock(data, { rect }));
+
+    setData(mockU);
+    drawClear(mockU);
+    heatmapPaths(mockU, 1, 0, data[0].length - 1);
+
+    // One fill path per palette color: the new fills put each cell in its own path, the stale ones put all three in one.
+    expect(new Set(rect.mock.calls.map(([fillPath]) => fillPath)).size).toBe(3);
+
+    orientSpy.mockRestore();
+  });
+
   describe('x-scale range callback', () => {
     it('returns time range when x-axis is time (isTime=true)', () => {
       const dataRef = { current: createMinimalHeatmapData() };
