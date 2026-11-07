@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -39,7 +40,7 @@ func ProvideDeleteExpiredService(store *store.DBstore) *DeleteExpiredService {
 
 type ImageService interface {
 	// NewImage returns a new image for the alert instance.
-	NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error)
+	NewImage(ctx context.Context, r *models.AlertRule, variables url.Values) (*models.Image, error)
 }
 
 // ScreenshotImageService takes screenshots of the alert rule and saves the
@@ -117,7 +118,8 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 // or the dashboard does not exist, a models.ErrNoDashboard error is returned. If the
 // alert rule has a Dashboard UID and the dashboard exists, but does not have a
 // Panel ID in its annotations then a models.ErrNoPanel error is returned.
-func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error) {
+// Variables, if any, are dashboard variables (var-<name>) for the panel.
+func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRule, variables url.Values) (*models.Image, error) {
 	logger := s.logger.FromContext(ctx)
 
 	dashboardUID := r.GetDashboardUID()
@@ -139,6 +141,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		DashboardUID: dashboardUID,
 		PanelID:      panelID,
 		Timeout:      s.screenshotTimeout,
+		Variables:    variables,
 	}
 
 	// To prevent concurrent screenshots of the same dashboard panel we use singleflight,

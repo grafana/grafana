@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"net/url"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -57,5 +58,5 @@ type Historian interface {
 //
 //go:generate mockgen -destination=image_mock.go -package=state github.com/grafana/grafana/pkg/services/ngalert/state ImageCapturer
 type ImageCapturer interface {
-	NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error)
+	NewImage(ctx context.Context, r *models.AlertRule, variables url.Values) (*models.Image, error)
 }

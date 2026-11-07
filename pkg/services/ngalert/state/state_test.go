@@ -522,7 +522,7 @@ func TestNeedsSending(t *testing.T) {
 func TestTransitionSetsResolvedAt(t *testing.T) {
 	evaluatedAt := time.Now()
 	logger := log.NewNopLogger()
-	noImage := func(string) *ngmodels.Image { return nil }
+	noImage := func(string, url.Values) *ngmodels.Image { return nil }
 
 	baseRule := &ngmodels.AlertRule{
 		IntervalSeconds: 60,
@@ -719,8 +719,8 @@ func TestTakeImage(t *testing.T) {
 		r := ngmodels.AlertRule{}
 		s := NewMockImageCapturer(ctrl)
 
-		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoDashboard)
-		image, err := takeImage(ctx, s, &r)
+		s.EXPECT().NewImage(ctx, &r, gomock.Nil()).Return(nil, ngmodels.ErrNoDashboard)
+		image, err := takeImage(ctx, s, &r, nil)
 		assert.NoError(t, err)
 		assert.Nil(t, image)
 	})
@@ -733,8 +733,8 @@ func TestTakeImage(t *testing.T) {
 		r := ngmodels.AlertRule{DashboardUID: new("foo")}
 		s := NewMockImageCapturer(ctrl)
 
-		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoPanel)
-		image, err := takeImage(ctx, s, &r)
+		s.EXPECT().NewImage(ctx, &r, gomock.Nil()).Return(nil, ngmodels.ErrNoPanel)
+		image, err := takeImage(ctx, s, &r, nil)
 		assert.NoError(t, err)
 		assert.Nil(t, image)
 	})
@@ -747,8 +747,8 @@ func TestTakeImage(t *testing.T) {
 		r := ngmodels.AlertRule{DashboardUID: new("foo"), PanelID: new(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
-		s.EXPECT().NewImage(ctx, &r).Return(nil, screenshot.ErrScreenshotsUnavailable)
-		image, err := takeImage(ctx, s, &r)
+		s.EXPECT().NewImage(ctx, &r, gomock.Nil()).Return(nil, screenshot.ErrScreenshotsUnavailable)
+		image, err := takeImage(ctx, s, &r, nil)
 		assert.NoError(t, err)
 		assert.Nil(t, image)
 	})
@@ -761,8 +761,8 @@ func TestTakeImage(t *testing.T) {
 		r := ngmodels.AlertRule{DashboardUID: new("foo"), PanelID: new(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
-		s.EXPECT().NewImage(ctx, &r).Return(nil, errors.New("unknown error"))
-		image, err := takeImage(ctx, s, &r)
+		s.EXPECT().NewImage(ctx, &r, gomock.Nil()).Return(nil, errors.New("unknown error"))
+		image, err := takeImage(ctx, s, &r, nil)
 		assert.EqualError(t, err, "unknown error")
 		assert.Nil(t, image)
 	})
@@ -775,12 +775,67 @@ func TestTakeImage(t *testing.T) {
 		r := ngmodels.AlertRule{DashboardUID: new("foo"), PanelID: new(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
-		s.EXPECT().NewImage(ctx, &r).Return(&ngmodels.Image{Path: "foo.png"}, nil)
-		image, err := takeImage(ctx, s, &r)
+		s.EXPECT().NewImage(ctx, &r, gomock.Nil()).Return(&ngmodels.Image{Path: "foo.png"}, nil)
+		image, err := takeImage(ctx, s, &r, nil)
 		assert.NoError(t, err)
 		require.NotNil(t, image)
 		assert.Equal(t, ngmodels.Image{Path: "foo.png"}, *image)
 	})
+
+	t.Run("dashboard variables should be passed", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		ctx := context.Background()
+		r := ngmodels.AlertRule{DashboardUID: new("foo"), PanelID: new(int64(1))}
+		s := NewMockImageCapturer(ctrl)
+		variables := url.Values{"var-cluster": {"prod"}}
+
+		s.EXPECT().NewImage(ctx, &r, variables).Return(&ngmodels.Image{Path: "foo.png"}, nil)
+		image, err := takeImage(ctx, s, &r, variables)
+		assert.NoError(t, err)
+		require.NotNil(t, image)
+	})
+}
+
+func TestDashboardVariables(t *testing.T) {
+	logger := log.NewNopLogger()
+	testCases := []struct {
+		desc        string
+		annotations map[string]string
+		expected    url.Values
+	}{
+		{desc: "no annotation", annotations: map[string]string{}, expected: nil},
+		{desc: "empty annotation", annotations: map[string]string{ngmodels.DashboardVariablesAnnotation: ""}, expected: nil},
+		{
+			desc:        "dashboard variables",
+			annotations: map[string]string{ngmodels.DashboardVariablesAnnotation: "var-cluster=prod&var-service=api&var-service=web"},
+			expected:    url.Values{"var-cluster": {"prod"}, "var-service": {"api", "web"}},
+		},
+		{
+			desc:        "other parameters are dropped",
+			annotations: map[string]string{ngmodels.DashboardVariablesAnnotation: "var-cluster=prod&orgId=2&panelId=3&from=now-1h&var-=x"},
+			expected:    url.Values{"var-cluster": {"prod"}},
+		},
+		{desc: "only other parameters", annotations: map[string]string{ngmodels.DashboardVariablesAnnotation: "orgId=2"}, expected: nil},
+		{desc: "invalid query string", annotations: map[string]string{ngmodels.DashboardVariablesAnnotation: "var-cluster=%zz"}, expected: nil},
+		{
+			desc:        "invalid parameters are skipped, valid ones kept",
+			annotations: map[string]string{ngmodels.DashboardVariablesAnnotation: "var-cluster=%zz&var-service=api"},
+			expected:    url.Values{"var-service": {"api"}},
+		},
+		{
+			desc: "values escaped with urlquery round-trip",
+			annotations: map[string]string{ngmodels.DashboardVariablesAnnotation: "var-service=" +
+				url.QueryEscape("a&b+c%d;e f")},
+			expected: url.Values{"var-service": {"a&b+c%d;e f"}},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			assert.Equal(t, tc.expected, dashboardVariables(tc.annotations, logger))
+		})
+	}
 }
 
 func TestParseFormattedState(t *testing.T) {
