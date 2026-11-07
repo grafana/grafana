@@ -1,6 +1,7 @@
 import { isEqual } from 'lodash';
 
 import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   type SceneObject,
@@ -574,6 +575,19 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.selectObject(obj, options);
   }
 
+  public openElementSettings(obj: SceneObject) {
+    const sourceKey = getRepeatCloneSourceKey(obj);
+    const source = sourceKey ? sceneGraph.findByKey(this, sourceKey) : obj;
+    if (!source) {
+      return;
+    }
+
+    this.selectObject(source, { force: true });
+    if (!this.state.openPane) {
+      this.openPane(new ElementEditPane({}));
+    }
+  }
+
   public selectObject(obj: SceneObject, { multi, force }: ElementSelectionOnSelectOptions = {}) {
     this.cancelPaneRequest();
     if (isDashboardReviewing(getDashboardSceneFor(this).state)) {
@@ -592,8 +606,10 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       selectedDisconnectedObject = obj;
     }
 
-    // If current open pane is not showing selected element, then we should maintain selection (force = true) which disables selection toggling
-    if (this.state.openPane?.getId() !== 'element') {
+    const panelActionsPopover = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, false);
+
+    // Keep the selection when opening element settings from a closed sidebar or another pane.
+    if ((!panelActionsPopover || this.state.openPane) && this.state.openPane?.getId() !== 'element') {
       force = true;
     }
 
@@ -659,10 +675,13 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       document.activeElement.blur();
     }
 
+    const panelActionsPopover = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, false);
+    const shouldOpenPane = selected.length > 0 && (!panelActionsPopover || Boolean(this.state.openPane));
+
     const newState: DashboardSidebarState = {
       ...this.state,
       selectionContext: { ...this.state.selectionContext, selected },
-      openPane: selected.length ? new ElementEditPane({}) : undefined,
+      openPane: shouldOpenPane ? new ElementEditPane({}) : undefined,
       isNewElement: false,
       selectedDisconnectedObject,
     };

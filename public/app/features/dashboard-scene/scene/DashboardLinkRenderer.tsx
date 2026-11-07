@@ -35,7 +35,7 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex, d
   const { isSelected, isSelectable } = useElementSelection(selectionId);
 
   const onClickEditLink = useCallback(() => {
-    openEditLinkPane(dashboard, Number(linkIndex));
+    openEditLinkPane(dashboard, Number(linkIndex), true);
   }, [dashboard, linkIndex]);
 
   const onClickDuplicateLink = useCallback(() => {

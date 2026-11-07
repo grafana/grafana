@@ -59,8 +59,7 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
 
   const onClickEdit = () => {
     DashboardInteractions.panelActionClicked('settings', getPanelIdForVizPanel(panel), 'edit_popover');
-    const { selectionContext } = getDashboardSceneLike(panel).state.sidebar.state;
-    selectionContext.onSelect({ id: panel.state.key! }, { force: true });
+    getDashboardSceneLike(panel).state.sidebar.openElementSettings(panel);
   };
 
   const onClickEditVisualization = () => {
