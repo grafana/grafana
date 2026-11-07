@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { createBaseQuery } from '@grafana/api-clients/rtkq';
+import { createBaseQuery } from '@grafana/api-clients/rtkq/createBaseQuery';
 
 import {
   type ConvertAlertmanagerOptions,

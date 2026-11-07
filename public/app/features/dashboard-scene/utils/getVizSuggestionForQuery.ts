@@ -79,7 +79,7 @@ function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunn
  */
 export async function applyQueryToPanel(
   panel: VizPanel,
-  dashboard: DashboardScene,
+  dashboard: Pick<DashboardScene, 'changePanelPlugin' | 'updatePanelTitle'>,
   query: DataQuery,
   suggestion: PanelPluginVisualizationSuggestion,
   title?: string

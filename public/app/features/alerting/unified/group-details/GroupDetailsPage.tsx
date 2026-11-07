@@ -15,7 +15,7 @@ import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
 import { useFolder } from '../hooks/useFolder';
 import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
-import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/defaultEvaluationInterval';
 import { DataSourceGroupLoader } from '../rule-list/DataSourceGroupLoader';
 import { GrafanaGroupLoader } from '../rule-list/GrafanaGroupLoader';
 import { useRulesAccess } from '../utils/accessControlHooks';

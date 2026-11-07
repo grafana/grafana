@@ -31,6 +31,12 @@
       "import": "./dist/esm/clients/rtkq/index.mjs",
       "require": "./dist/cjs/clients/rtkq/index.cjs"
     },
+    "./rtkq/createBaseQuery": {
+      "@grafana-app/source": "./src/clients/rtkq/createBaseQuery.ts",
+      "types": "./dist/types/clients/rtkq/createBaseQuery.d.ts",
+      "import": "./dist/esm/clients/rtkq/createBaseQuery.mjs",
+      "require": "./dist/cjs/clients/rtkq/createBaseQuery.cjs"
+    },
     "./internal/rtkq/legacy": {
       "@grafana-app/source": "./src/clients/rtkq/legacy/index.ts"
     },

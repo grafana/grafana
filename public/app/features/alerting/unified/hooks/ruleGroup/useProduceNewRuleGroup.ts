@@ -7,7 +7,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { notFoundToNullOrThrow } from '../../api/util';
 import { addRuleAction, ruleGroupReducer } from '../../reducers/ruler/ruleGroups';
-import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/defaultEvaluationInterval';
 import { getDatasourceAPIUid } from '../../utils/datasource';
 
 const PREFER_CACHE_VALUE = true;

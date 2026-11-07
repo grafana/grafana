@@ -36,7 +36,7 @@ const ENTERPRISE: Variant = {
   generateCommand:
     'pnpm --filter @grafana/openapi --fail-if-no-match run process-specs && pnpm --filter @grafana/api-clients --fail-if-no-match exec rtk-query-codegen-openapi ../../local/generate-enterprise-apis.ts',
   baseAPIImports: `import { getAPIBaseURL } from '@grafana/api-clients';
-import { createBaseQuery } from '@grafana/api-clients/rtkq';`,
+import { createBaseQuery } from '@grafana/api-clients/rtkq/createBaseQuery';`,
 };
 
 export function variantFor(isEnterprise: boolean): Variant {
