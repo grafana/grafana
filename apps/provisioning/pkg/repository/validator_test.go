@@ -1486,3 +1486,40 @@ func TestAdmissionValidator_Validate_StillValidatesSecureValuesBundledWithDisabl
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "rejected")
 }
+
+// The mutator clamps the sync interval to min_sync_interval before validation, so raising
+// that setting in the same restart that clears bootstrap_path would otherwise make the
+// disable look like a second change and send it back through path validation.
+func TestAdmissionValidator_Validate_AllowsDisablingSyncAfterTheIntervalWasClamped(t *testing.T) {
+	old := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "bootstrap",
+			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Bootstrap",
+			Type:  provisioning.LocalRepositoryType,
+			Local: &provisioning.LocalRepositoryConfig{Path: "/no/longer/permitted"},
+			Sync: provisioning.SyncOptions{
+				Enabled:         true,
+				Target:          provisioning.SyncTargetTypeFolderless,
+				IntervalSeconds: 10,
+			},
+		},
+	}
+	// What the mutator leaves behind once min_sync_interval has been raised to 60s.
+	repo := old.DeepCopy()
+	repo.Spec.Sync.Enabled = false
+	repo.Spec.Sync.IntervalSeconds = 60
+
+	// No EXPECT() for Validate: the type validators, which would reject the path, must not run.
+	mockFactory := NewMockFactory(t)
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
+		NewValidator(false, mockFactory),
+	)
+
+	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
+
+	require.NoError(t, admissionValidator.Validate(context.Background(), attr, nil))
+}

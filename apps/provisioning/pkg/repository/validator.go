@@ -461,9 +461,14 @@ func isSyncDisableOnly(a admission.Attributes, r *provisioning.Repository) bool 
 	}
 
 	// Compare against the stored object with the sync already switched off, so the only
-	// difference left to find is something the caller changed alongside it.
+	// difference left to find is something the caller changed alongside it. The sync
+	// interval is excluded: the mutator clamps it to min_sync_interval before this runs,
+	// so raising that setting would otherwise make every disable look like a second
+	// change. Nothing validates the field -- the mutator owns it and the controller clamps
+	// it again when scheduling -- so there is nothing here to authorize.
 	want := old.DeepCopy()
 	want.Spec.Sync.Enabled = false
+	want.Spec.Sync.IntervalSeconds = r.Spec.Sync.IntervalSeconds
 	return apiequality.Semantic.DeepEqual(&r.Spec, &want.Spec) &&
 		apiequality.Semantic.DeepEqual(&r.Secure, &want.Secure) &&
 		slices.Equal(r.Finalizers, want.Finalizers)
