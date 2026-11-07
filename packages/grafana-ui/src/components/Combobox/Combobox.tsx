@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import { useCombobox } from 'downshift';
 import React, { type ComponentProps, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useLatest } from 'react-use';
 
 import { t } from '@grafana/i18n';
 
@@ -183,6 +184,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
   // get a consistent Value from it
   const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
+  const latestValue = useLatest(value);
   const baseId = useId().replace(/:/g, '--');
 
   const {
@@ -287,6 +289,12 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     // Instead, stateReducer is called in the same tick as state changes, before that state is committed and rendered.
 
     onSelectedItemChange: ({ selectedItem }) => {
+      // With React 18, downshift can call this again with the props of the original selection
+      // after each parent re-render. Skip the call when the value already matches.
+      if (selectedItem?.value === latestValue.current) {
+        return;
+      }
+
       // `selectedItem` type is `ComboboxOption<T> | null`
       // It can be null when `selectItem()` is called with null, and we never do that unless `isClearable` is true.
       // So, when `isClearable` is false, `selectedItem` is always non-null. However, the types don't reflect that,
