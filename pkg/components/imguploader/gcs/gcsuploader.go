@@ -114,27 +114,30 @@ func (u *Uploader) Upload(ctx context.Context, imageDiskPath string) (string, er
 	}
 
 	u.log.Debug("Signing GCS URL")
-	var jwtData []byte
-	if u.KeyFile != "" {
-		jwtData = keyData
-	} else {
-		creds, err := client.FindDefaultCredentials(ctx, scope)
-		if err != nil {
-			return "", fmt.Errorf("failed to find default Google credentials: %s", err)
-		}
-		jwtData = creds.JSON
+	opts := &storage.SignedURLOptions{
+		Scheme:  storage.SigningSchemeV4,
+		Method:  "GET",
+		Expires: time.Now().Add(u.signedURLExpiration),
 	}
-	conf, err := client.JWTConfigFromJSON(jwtData)
+
+	if u.KeyFile == "" {
+		// Let the storage client derive the signer from its default credentials:
+		// a service account key if they include one, otherwise the IAM Credentials
+		// API (signBlob). The latter supports credentials without a private key,
+		// such as GKE Workload Identity or the GCE metadata server.
+		signedURL, err := client.Bucket(u.Bucket).SignedURL(key, opts)
+		if err != nil {
+			return "", fmt.Errorf("failed to sign URL with default Google credentials: %w", err)
+		}
+		return signedURL, nil
+	}
+
+	conf, err := client.JWTConfigFromJSON(keyData)
 	if err != nil {
 		return "", err
 	}
-	opts := &storage.SignedURLOptions{
-		Scheme:         storage.SigningSchemeV4,
-		Method:         "GET",
-		GoogleAccessID: conf.Email,
-		PrivateKey:     conf.PrivateKey,
-		Expires:        time.Now().Add(u.signedURLExpiration),
-	}
+	opts.GoogleAccessID = conf.Email
+	opts.PrivateKey = conf.PrivateKey
 	signedURL, err := client.SignedURL(u.Bucket, key, opts)
 	if err != nil {
 		return "", err
@@ -194,10 +197,6 @@ func (c clientWrapper) Bucket(key string) gcsifaces.StorageBucket {
 	return bucketWrapper{c.client.Bucket(key)}
 }
 
-func (c clientWrapper) FindDefaultCredentials(ctx context.Context, scope string) (*google.Credentials, error) {
-	return google.FindDefaultCredentials(ctx, scope)
-}
-
 func (c clientWrapper) JWTConfigFromJSON(keyJSON []byte) (*jwt.Config, error) {
 	return google.JWTConfigFromJSON(keyJSON)
 }
@@ -212,6 +211,10 @@ type bucketWrapper struct {
 
 func (b bucketWrapper) Object(key string) gcsifaces.StorageObject {
 	return objectWrapper{b.bucket.Object(key)}
+}
+
+func (b bucketWrapper) SignedURL(object string, opts *storage.SignedURLOptions) (string, error) {
+	return b.bucket.SignedURL(object, opts)
 }
 
 type objectWrapper struct {
