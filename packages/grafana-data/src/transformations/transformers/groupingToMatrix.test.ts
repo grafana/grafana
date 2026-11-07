@@ -274,6 +274,40 @@ describe('Grouping to Matrix', () => {
     });
   });
 
+  it('does not apply the value displayNameFromDS to string column names', async () => {
+    const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
+      id: DataTransformerID.groupingToMatrix,
+      options: {
+        columnField: 'Column',
+        rowField: 'Row',
+        valueField: 'Value',
+      },
+    };
+
+    const seriesA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'Column', type: FieldType.string, values: ['a', 'b', 'a'] },
+        { name: 'Row', type: FieldType.string, values: ['h1', 'h1', 'h2'] },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          values: [1, 2, 3],
+          config: { displayNameFromDS: 'mean' },
+        },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const processed = received[0];
+      expect(processed[0].fields.map((field) => field.name)).toEqual(['Row\\Column', 'a', 'b']);
+
+      // displayNameFromDS would override the column value in getFieldDisplayName
+      expect(processed[0].fields[1].config).toEqual({});
+      expect(processed[0].fields[2].config).toEqual({});
+    });
+  });
+
   it('generates Matrix with multiple fields and value type', async () => {
     const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
       id: DataTransformerID.groupingToMatrix,
