@@ -10,8 +10,9 @@ import {
   SERVICECENTER_APP_ID,
   SLO_APP_ID,
 } from 'app/core/appPluginIds';
+import { contextSrv } from 'app/core/services/context_srv';
 
-import { ASSERTS_SERVICES_PATH, SLO_SERVICES_PATH } from './appNavConfig';
+import { ASSERTS_SERVICES_PATH, ASSISTANT_PAGES_PATH, SLO_SERVICES_PATH } from './appNavConfig';
 import { NavID, NavWeight } from './constants';
 import {
   findNavById,
@@ -126,5 +127,25 @@ export const PLUGIN_NAV_OVERRIDES: PluginNavOverride[] = [
     when: (_, installedPluginIds) =>
       installedPluginIds.has(PATHFINDER_APP_ID) || installedPluginIds.has(DOCS_PLUGIN_APP_ID),
     apply: (tree) => updateNavById(tree, NavID.help, (help) => ({ ...help, hideFromTabs: true })),
+  },
+  {
+    when: (tree) =>
+      Boolean(findNavById(tree, standalonePluginPageId(ASSISTANT_PAGES_PATH))) &&
+      contextSrv.hasPermission('assistant.ext.grafana.app/pages:create'),
+    apply: (tree) =>
+      updateNavById(tree, standalonePluginPageId(ASSISTANT_PAGES_PATH), (section) => ({
+        ...section,
+        children: [
+          ...(section.children ?? []),
+          {
+            text: 'New Grafana Page',
+            id: 'assistant/pages/new',
+            icon: 'plus',
+            url: `${ASSISTANT_PAGES_PATH}/new`,
+            hideFromTabs: true,
+            isCreateAction: true,
+          },
+        ],
+      })),
   },
 ];
