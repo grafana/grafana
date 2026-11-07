@@ -329,22 +329,55 @@ func translateActionToKubernetesAttributes(translation resourceTranslation, acti
 	return group, resource, subresource, verb, true
 }
 
-// TranslateActionToListParams translates an RBAC action to Zanzana List request parameters (group, resource, subresource, verb).
-// Returns empty strings if the action cannot be translated.
-func TranslateActionToListParams(action string) (group, resource, subresource, verb string) {
+// translateActionToListEntries returns every distinct resource mapping for an action.
+// Some RBAC actions (for example annotations:read) are valid on more than one
+// resource group, so permission searches must not discard those mappings.
+func translateActionToListEntries(action string) []ActionListEntry {
 	translationTypes := make([]string, 0, len(resourceTranslations))
 	for typ := range resourceTranslations {
 		translationTypes = append(translationTypes, typ)
 	}
 	sort.Strings(translationTypes)
 
+	var out []ActionListEntry
+	seen := make(map[ActionListEntry]struct{})
 	for _, typ := range translationTypes {
 		translation := resourceTranslations[typ]
-		if group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action); ok {
-			return group, resource, subresource, verb
+		group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action)
+		if !ok {
+			continue
 		}
+		entry := ActionListEntry{
+			Action:      action,
+			Group:       group,
+			Resource:    resource,
+			Subresource: subresource,
+			Verb:        verb,
+		}
+		if _, exists := seen[entry]; exists {
+			continue
+		}
+		seen[entry] = struct{}{}
+		out = append(out, entry)
 	}
-	return "", "", "", ""
+	return out
+}
+
+// TranslateActionToListParamsAll returns every distinct Zanzana List mapping for an RBAC action.
+func TranslateActionToListParamsAll(action string) []ActionListEntry {
+	return translateActionToListEntries(action)
+}
+
+// TranslateActionToListParams translates an RBAC action to the first deterministic Zanzana
+// List mapping for compatibility. Use TranslateActionToListParamsAll for permission searches
+// when an action can target more than one resource group.
+func TranslateActionToListParams(action string) (group, resource, subresource, verb string) {
+	entries := translateActionToListEntries(action)
+	if len(entries) == 0 {
+		return "", "", "", ""
+	}
+	entry := entries[0]
+	return entry.Group, entry.Resource, entry.Subresource, entry.Verb
 }
 
 // ActionListEntry describes an action that Zanzana supports, along with
@@ -400,8 +433,52 @@ var supportedActions = func() []ActionListEntry {
 	return out
 }()
 
-// SupportedActions returns every RBAC action that Zanzana can resolve,
-// derived from the resource translation table.
+var supportedActionMappings = func() []ActionListEntry {
+	translationTypes := make([]string, 0, len(resourceTranslations))
+	for typ := range resourceTranslations {
+		translationTypes = append(translationTypes, typ)
+	}
+	sort.Strings(translationTypes)
+
+	var out []ActionListEntry
+	seen := make(map[ActionListEntry]struct{})
+	for _, typ := range translationTypes {
+		translation := resourceTranslations[typ]
+		actions := make([]string, 0, len(translation.mapping))
+		for action := range translation.mapping {
+			actions = append(actions, action)
+		}
+		sort.Strings(actions)
+		for _, action := range actions {
+			group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action)
+			if !ok {
+				continue
+			}
+			entry := ActionListEntry{
+				Action:      action,
+				Group:       group,
+				Resource:    resource,
+				Subresource: subresource,
+				Verb:        verb,
+			}
+			if _, exists := seen[entry]; exists {
+				continue
+			}
+			seen[entry] = struct{}{}
+			out = append(out, entry)
+		}
+	}
+	return out
+}()
+
+// SupportedActionMappings returns every distinct resource mapping for supported RBAC actions.
+// Unlike SupportedActions, it may contain the same action more than once when that action
+// is valid for multiple resource groups.
+func SupportedActionMappings() []ActionListEntry {
+	return supportedActionMappings
+}
+
+// SupportedActions returns one deterministic mapping per RBAC action for compatibility.
 func SupportedActions() []ActionListEntry {
 	return supportedActions
 }
