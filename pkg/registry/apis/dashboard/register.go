@@ -1725,7 +1725,7 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 }
 
 // GetAuthorizer returns a composite authorizer that dispatches by resource type.
-// Notebooks, snapshots, and variables use dedicated authorizers; other resources
+// Notebooks, snapshots, variables, and namespace search use dedicated authorizers; other resources
 // fall back to ServiceAuthorizer. Variables with no classic accessControl (standalone)
 // fall through to ServiceAuthorizer after the feature flag.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -1737,6 +1737,9 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	// Variables use classic variables:* when accessControl is wired; otherwise
 	// they fall through to the service authorizer (standalone / Cloud).
 	variableAuthorizer := newVariableAuthorizer(b.accessControl, serviceAuthorizer)
+	// Namespace search is allowed with a read of dashboards and folders or with
+	// the existing grant on the search resource.
+	searchAuthorizer := newSearchAuthorizer(serviceAuthorizer)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -1748,6 +1751,8 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return variableAuthorizer.Authorize(ctx, attr)
 				case dashv0.SnapshotResourceInfo.GetName():
 					return snapshotAuthorizer.Authorize(ctx, attr)
+				case searchResource:
+					return searchAuthorizer.Authorize(ctx, attr)
 				}
 			}
 			return serviceAuthorizer.Authorize(ctx, attr)
