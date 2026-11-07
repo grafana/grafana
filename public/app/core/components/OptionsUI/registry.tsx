@@ -3,6 +3,7 @@ import { type ComponentType, lazy, Suspense } from 'react';
 
 import {
   type FieldConfigPropertyItem,
+  type Field,
   FieldType,
   standardEditorsRegistry,
   type StandardEditorsRegistryItem,
@@ -32,6 +33,7 @@ import {
 } from '@grafana/data';
 import { actionsOverrideProcessor } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, Switch, TimeZonePicker } from '@grafana/ui';
 
@@ -275,6 +277,11 @@ export const getAllOptionEditors = () => {
   ];
 };
 
+// Sharing one range across a frame field's sparklines changes how existing tables scale, so frame
+// fields only take min/max settings while table.refreshNewFeatures is on.
+const isSharedRangeFrameField = (field?: Field) =>
+  field?.type === FieldType.frame && getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false);
+
 /**
  * Returns collection of common field config properties definitions
  */
@@ -328,9 +335,13 @@ export const getAllStandardFieldConfigs = () => {
 
     editor: standardEditorsRegistry.get('boolean').editor,
     override: standardEditorsRegistry.get('boolean').editor,
-    process: booleanOverrideProcessor,
+    // Overrides skip shouldApply, so frame fields are gated here as well.
+    process: (value, context) =>
+      context.field?.type !== FieldType.frame || isSharedRangeFrameField(context.field)
+        ? booleanOverrideProcessor(value, context)
+        : undefined,
 
-    shouldApply: (field) => field.type === FieldType.number,
+    shouldApply: (field) => field.type === FieldType.number || isSharedRangeFrameField(field),
     showIf: (options) => {
       return options.min === undefined || options.max === undefined;
     },
@@ -353,7 +364,7 @@ export const getAllStandardFieldConfigs = () => {
     settings: {
       placeholder: t('options-ui.registry.standard-field-configs.placeholder-min', 'auto'),
     },
-    shouldApply: (field) => field.type === FieldType.number,
+    shouldApply: (field) => field.type === FieldType.number || isSharedRangeFrameField(field),
     category,
   };
 
@@ -374,7 +385,7 @@ export const getAllStandardFieldConfigs = () => {
       placeholder: t('options-ui.registry.standard-field-configs.placeholder-max', 'auto'),
     },
 
-    shouldApply: (field) => field.type === FieldType.number,
+    shouldApply: (field) => field.type === FieldType.number || isSharedRangeFrameField(field),
     category,
   };
 
