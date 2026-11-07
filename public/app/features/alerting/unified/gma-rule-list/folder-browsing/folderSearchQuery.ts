@@ -5,13 +5,13 @@ import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 const FOLDER_HAS_RULES_LABEL = 'alerting.grafana.app/has-rules';
 const FOLDER_HAS_RULES_LABEL_VALUE = 'true';
 
-/** With a folder filter, scopes the listing to those UIDs so counts and paths match what the user filtered to. */
-export function buildFolderListSearchQuery(continueToken?: string, folderUids: string[] = []): SearchQuery {
+/** With a folder filter, scopes the listing to folders with those titles, matched exactly and case-insensitively. */
+export function buildFolderListSearchQuery(continueToken?: string, folderNames: string[] = []): SearchQuery {
   return {
     apiVersion: 'search.grafana.app/v0alpha1',
     kind: 'SearchQuery',
     labelSelector: { matchLabels: { [FOLDER_HAS_RULES_LABEL]: FOLDER_HAS_RULES_LABEL_VALUE } },
-    ...(folderUids.length > 0 ? { where: { filter: { field: 'name', operator: 'In', values: folderUids } } } : {}),
+    ...(folderNames.length > 0 ? { where: { filter: { field: 'title', operator: 'In', values: folderNames } } } : {}),
     fields: ['title'],
     sort: [{ field: 'title', direction: 'asc' }],
     limit: DEFAULT_PER_PAGE_PAGINATION,

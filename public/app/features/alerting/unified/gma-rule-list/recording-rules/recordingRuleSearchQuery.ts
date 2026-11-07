@@ -2,14 +2,15 @@ import { type ListRecordingRuleSearchRulesV0Alpha1RequestBody } from '@grafana/a
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import { type SourcedLeaf, buildHealthLeaves, buildSharedLeaves, toWhere } from '../rule-search/searchQueryLeaves';
+import { type RuleSearchApiArgs } from '../rule-search/sharedRuleFilter';
 
 import { type RecordingFilterKey, type RecordingRuleFilter } from './recordingRuleFilters';
 
-export function buildRecordingRuleSearchQuery(filter: RecordingRuleFilter, continueToken?: string) {
+export function buildRecordingRuleSearchQuery(apiArgs: RuleSearchApiArgs<RecordingRuleFilter>, continueToken?: string) {
   return {
     apiVersion: 'search.grafana.app/v0alpha1',
     kind: 'SearchQuery',
-    where: toWhere(buildRecordingRuleLeaves(filter)),
+    where: toWhere(buildRecordingRuleLeaves(apiArgs)),
     sort: [{ field: 'title', direction: 'asc' }],
     fields: RECORDING_RULE_FIELDS,
     limit: DEFAULT_PER_PAGE_PAGINATION,
@@ -18,8 +19,14 @@ export function buildRecordingRuleSearchQuery(filter: RecordingRuleFilter, conti
 }
 
 /** The request's leaves in order, each with the filter it came from. */
-export function buildRecordingRuleLeaves(filter: RecordingRuleFilter): Array<SourcedLeaf<RecordingFilterKey>> {
-  return [...buildSharedLeaves(filter), ...buildRecordingLeaves(filter), ...buildHealthLeaves(filter, 'Recording')];
+export function buildRecordingRuleLeaves(
+  apiArgs: RuleSearchApiArgs<RecordingRuleFilter>
+): Array<SourcedLeaf<RecordingFilterKey>> {
+  return [
+    ...buildSharedLeaves(apiArgs),
+    ...buildRecordingLeaves(apiArgs.filter),
+    ...buildHealthLeaves(apiArgs.filter, 'Recording'),
+  ];
 }
 
 function buildRecordingLeaves(filter: RecordingRuleFilter): Array<SourcedLeaf<RecordingFilterKey>> {
