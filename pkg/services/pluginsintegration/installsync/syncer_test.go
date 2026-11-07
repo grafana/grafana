@@ -209,7 +209,6 @@ func TestSyncer_Sync(t *testing.T) {
 	tests := []struct {
 		name                        string
 		pluginInstallAPISyncEnabled bool
-		pluginStoreServiceEnabled   bool
 		installedPlugins            []pluginstore.Plugin
 		orgs                        []*org.OrgDTO
 		orgServiceError             error
@@ -220,52 +219,38 @@ func TestSyncer_Sync(t *testing.T) {
 		{
 			name:                        "plugin install API sync feature toggle disabled",
 			pluginInstallAPISyncEnabled: false,
-			pluginStoreServiceEnabled:   true,
 			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
 			expectedError:               nil,
 			expectSyncCalls:             0,
 		},
 		{
-			name:                        "plugin store service feature toggle disabled",
+			name:                        "feature toggle enabled, no orgs",
 			pluginInstallAPISyncEnabled: true,
-			pluginStoreServiceEnabled:   false,
-			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
-			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
-			expectedError:               nil,
-			expectSyncCalls:             0,
-		},
-		{
-			name:                        "both feature toggles enabled, no orgs",
-			pluginInstallAPISyncEnabled: true,
-			pluginStoreServiceEnabled:   true,
 			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{},
 			expectedError:               nil,
 			expectSyncCalls:             0,
 		},
 		{
-			name:                        "both feature toggles enabled, empty installed plugins",
+			name:                        "feature toggle enabled, empty installed plugins",
 			pluginInstallAPISyncEnabled: true,
-			pluginStoreServiceEnabled:   true,
 			installedPlugins:            []pluginstore.Plugin{},
 			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
 			expectedError:               nil,
 			expectSyncCalls:             0,
 		},
 		{
-			name:                        "both feature toggles enabled, single org",
+			name:                        "feature toggle enabled, single org",
 			pluginInstallAPISyncEnabled: true,
-			pluginStoreServiceEnabled:   true,
 			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
 			expectedError:               nil,
 			expectSyncCalls:             1,
 		},
 		{
-			name:                        "both feature toggles enabled, multiple orgs",
+			name:                        "feature toggle enabled, multiple orgs",
 			pluginInstallAPISyncEnabled: true,
-			pluginStoreServiceEnabled:   true,
 			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
 			orgs: []*org.OrgDTO{
 				{ID: 1, Name: "Org 1"},
@@ -278,7 +263,6 @@ func TestSyncer_Sync(t *testing.T) {
 		{
 			name:                        "org service error",
 			pluginInstallAPISyncEnabled: true,
-			pluginStoreServiceEnabled:   true,
 			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
 			orgs:                        nil,
 			orgServiceError:             errors.New("org service error"),
@@ -288,7 +272,6 @@ func TestSyncer_Sync(t *testing.T) {
 		{
 			name:                        "server lock error",
 			pluginInstallAPISyncEnabled: true,
-			pluginStoreServiceEnabled:   true,
 			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
 			serverLockError:             errors.New("lock error"),
@@ -304,7 +287,6 @@ func TestSyncer_Sync(t *testing.T) {
 			// Setup feature toggles
 			ft := featuremgmt.NewMockFeatureToggles(t)
 			ft.EXPECT().IsEnabled(ctx, featuremgmt.FlagPluginInstallAPISync).Return(tt.pluginInstallAPISyncEnabled).Maybe()
-			ft.EXPECT().IsEnabled(ctx, featuremgmt.FlagPluginStoreServiceLoading).Return(tt.pluginStoreServiceEnabled).Maybe()
 
 			// Setup org service
 			orgService := orgtest.NewOrgServiceFake()

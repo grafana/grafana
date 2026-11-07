@@ -18,8 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs/adapter"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/swagger"
 	"github.com/grafana/grafana/pkg/setting"
@@ -36,10 +34,10 @@ type Options struct {
 }
 
 // New returns a new instance of Server.
-func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
+func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
-	tracerProvider *tracing.TracingService, features featuremgmt.FeatureToggles,
+	tracerProvider *tracing.TracingService,
 	promReg prometheus.Registerer,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
@@ -49,7 +47,7 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 	swagger.RegisterRoutes(httpServer.RouteRegister, cfg, httpServer.License)
 
 	// Create the server
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, tracerProvider, features, promReg)
+	s, err := newServer(opts, cfg, httpServer, provisioningService, backgroundServiceProvider, tracerProvider, promReg)
 	if err != nil {
 		return nil, err
 	}
@@ -61,9 +59,9 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 	return s, nil
 }
 
-func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
+func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
-	tracerProvider *tracing.TracingService, features featuremgmt.FeatureToggles,
+	tracerProvider *tracing.TracingService,
 	promReg prometheus.Registerer,
 ) (*Server, error) {
 	rootCtx := context.Background()
@@ -73,7 +71,6 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 		context:                   rootCtx,
 		HTTPServer:                httpServer,
 		provisioningService:       provisioningService,
-		roleRegistry:              roleRegistry,
 		log:                       log.New("server"),
 		cfg:                       cfg,
 		pidFile:                   opts.PidFile,
@@ -82,7 +79,6 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 		buildBranch:               opts.BuildBranch,
 		backgroundServiceRegistry: backgroundServiceProvider,
 		tracerProvider:            tracerProvider,
-		features:                  features,
 		managerAdapter:            adapter.NewManagerAdapter(backgroundServiceProvider),
 	}
 
@@ -107,10 +103,8 @@ type Server struct {
 
 	backgroundServiceRegistry registry.BackgroundServiceRegistry
 	tracerProvider            *tracing.TracingService
-	features                  featuremgmt.FeatureToggles
 
 	HTTPServer          *api.HTTPServer
-	roleRegistry        accesscontrol.RoleRegistry
 	provisioningService provisioning.ProvisioningService
 	promReg             prometheus.Registerer
 	managerAdapter      *adapter.ManagerAdapter
@@ -132,13 +126,6 @@ func (s *Server) Init() error {
 
 	if err := metrics.SetEnvironmentInformation(s.promReg, s.cfg.MetricsGrafanaEnvironmentInfo); err != nil {
 		return err
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagPluginStoreServiceLoading) {
-		if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
-			return err
-		}
 	}
 
 	return s.provisioningService.RunInitProvisioners(s.context)

@@ -241,7 +241,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-01,heatmapNegativeLogBuckets,experimental,@grafana/dataviz-squad,false,false,true
 2026-03-30,pieChartGradientColorScheme,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-31,jaegerEnableGrpcEndpoint,experimental,@grafana/data-sources-plugins,false,false,false
-2025-10-17,pluginStoreServiceLoading,experimental,@grafana/grafana-catalog,false,false,false
 2025-10-20,onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
 2026-04-16,onlyStoreServiceAccountActionSets,experimental,@grafana/identity-access-team,false,false,false
 2026-06-30,iam.onlyStoreDatasourceActionSets,experimental,@grafana/identity-access-team,false,false,false
