@@ -1,0 +1,133 @@
+name: Release NPM independent packages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/*/package.json'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build, pack and validate without publishing to npm
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  publish:
+    name: Publish independent packages
+    # A push only publishes when it is the merged release pull request, which the job confirms below.
+    # Any other change to a package.json (for example a dependency update) skips the job.
+    if: "github.repository == 'grafana/grafana' && (github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'Release: Frontend packages'))"
+    # MUST use GitHub-hosted runners, as Trusted Publishing currently doesn't support self-hosted runners
+    runs-on: github-hosted-ubuntu-x64-small
+    environment: npm-publish
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
+    env:
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Verify the push is the merged release pull request
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          heads=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${COMMIT_SHA}/pulls" --jq '.[].head.ref')
+          if ! grep -qx 'nx-release-branch--main' <<<"$heads"; then
+            echo "::error::Commit ${COMMIT_SHA} does not come from a pull request on nx-release-branch--main, refusing to publish."
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      # Trusted Publishing is only available in npm v11.5.1 and later
+      - name: Update npm
+        run: npm install -g npm@^11.5.1
+
+      - name: Install dependencies
+        uses: ./.github/actions/yarn-install
+        with:
+          hardened-mode: 'true'
+
+      - name: Build packages
+        run: npm run packages:build
+
+      - name: Pack independent packages
+        run: |
+          rm -rf ./npm-artifacts
+          npm run packages:pack:independent
+
+      # Recorded before already-published tarballs are removed, so a re-run after a failed tagging
+      # step still tags versions that the first run published.
+      - name: List release tags
+        run: |
+          for tarball in ./npm-artifacts/*.tgz; do
+            tar -xzOf "$tarball" package/package.json | jq -r '"\(.name)@\(.version)"'
+          done > "$RUNNER_TEMP/release-tags.txt"
+          cat "$RUNNER_TEMP/release-tags.txt"
+
+      - name: Select packages that are not published yet
+        id: select
+        run: |
+          ./.github/workflows/scripts/select-unpublished-npm-packages.sh ./npm-artifacts
+          count=$(find ./npm-artifacts -maxdepth 1 -name '*.tgz' | wc -l | tr -d ' ')
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          if [ "$count" = '0' ]; then
+            echo "Every independent package is already published, nothing to do."
+          fi
+          tree -a ./npm-artifacts
+
+      - name: Validate packages
+        if: steps.select.outputs.count != '0'
+        run: ./scripts/validate-npm-packages.sh
+
+      - name: Publish packages
+        if: steps.select.outputs.count != '0' && env.DRY_RUN != 'true'
+        run: ./scripts/publish-npm-packages.sh --dist-tag 'latest' --registry 'https://registry.npmjs.org/'
+
+      - name: Report dry run
+        if: steps.select.outputs.count != '0' && env.DRY_RUN == 'true'
+        run: echo "Dry run, the tarballs listed above would have been published to the latest dist-tag."
+
+      - name: Get GitHub App token (writer)
+        id: get-writer-app-token
+        if: github.event_name == 'push'
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-writer
+          permission_set: release-writer-main
+
+      # nx release finds the commits for the next version from these tags. Only a push tags, because
+      # it runs on the merged release commit; a manual run could tag a later commit and skip changes.
+      - name: Tag released versions
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          while read -r tag; do
+            if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" > /dev/null 2>&1; then
+              echo "Tag ${tag} already exists, leaving it as is."
+              continue
+            fi
+            gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+              --method POST \
+              -f "ref=refs/tags/${tag}" \
+              -f "sha=${COMMIT_SHA}" > /dev/null
+            echo "Created tag ${tag} at ${COMMIT_SHA}."
+          done < "$RUNNER_TEMP/release-tags.txt"
