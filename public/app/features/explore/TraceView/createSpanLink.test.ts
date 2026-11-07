@@ -794,6 +794,45 @@ describe('createSpanLinkFactory', () => {
         })
       );
     });
+
+    it('returns a single link when two spans link to each other', () => {
+      const createLink = setupSpanLinkFactory();
+      const links = createLink!(
+        createTraceSpan({
+          references: [
+            {
+              refType: 'FOLLOWS_FROM',
+              spanID: 'span1',
+              traceID: 'traceID',
+              span: { operationName: 'SpanName' } as TraceSpan,
+            },
+          ],
+          subsidiarilyReferencedBy: [
+            {
+              refType: 'FOLLOWS_FROM',
+              spanID: 'span1',
+              traceID: 'traceID',
+              span: { operationName: 'SpanName' } as TraceSpan,
+            },
+          ],
+        })
+      );
+
+      expect(links).toHaveLength(1);
+      expect(links![0]).toEqual(expect.objectContaining({ href: 'traceID-span1', title: 'SpanName' }));
+    });
+
+    it('keeps links to spans with the same id in different traces', () => {
+      const createLink = setupSpanLinkFactory();
+      const links = createLink!(
+        createTraceSpan({
+          references: [{ refType: 'FOLLOWS_FROM', spanID: 'span1', traceID: 'traceID' }],
+          subsidiarilyReferencedBy: [{ refType: 'FOLLOWS_FROM', spanID: 'span1', traceID: 'traceID2' }],
+        })
+      );
+
+      expect(links!.map((link) => link.href)).toEqual(['traceID-span1', 'traceID2-span1']);
+    });
   });
 
   describe('elasticsearch/opensearch link', () => {

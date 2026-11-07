@@ -48,4 +48,65 @@ describe('getTraceSpanIdsAsTree()', () => {
   it('#115 - handles FOLLOW_FROM refs', () => {
     expect(() => traceSelectors.getTraceSpanIdsAsTree(followsFromRef)).not.toThrow();
   });
+
+  describe('cyclic references', () => {
+    const traceID = 'trace';
+    const ref = (refType: 'CHILD_OF' | 'FOLLOWS_FROM', spanID: string) => ({ refType, traceID, spanID });
+    const makeSpan = (spanID: string, startTime: number, references: Array<ReturnType<typeof ref>>) => ({
+      traceID,
+      spanID,
+      startTime,
+      references,
+    });
+    const buildTree = (spans: Array<ReturnType<typeof makeSpan>>) =>
+      traceSelectors.getTraceSpanIdsAsTree({ traceID, spans } as unknown as TraceResponse);
+    const childValues = (node: TreeNode<string>) => node.children.map((child) => child.value);
+
+    it('attaches the span linking to its own child to the root', () => {
+      const tree = buildTree([
+        makeSpan('root', 1, [ref('FOLLOWS_FROM', 'child')]),
+        makeSpan('child', 2, [ref('CHILD_OF', 'root')]),
+      ]);
+
+      expect(childValues(tree)).toEqual(['root']);
+      expect(childValues(tree.children[0])).toEqual(['child']);
+    });
+
+    it('attaches a span whose only reference is a link to itself to the root', () => {
+      const tree = buildTree([makeSpan('a', 1, [ref('FOLLOWS_FROM', 'a')])]);
+
+      expect(childValues(tree)).toEqual(['a']);
+      expect(childValues(tree.children[0])).toEqual([]);
+    });
+
+    it('prefers the span whose edge is a link over the earliest span of the cycle', () => {
+      const tree = buildTree([
+        makeSpan('early', 1, [ref('CHILD_OF', 'late')]),
+        makeSpan('late', 2, [ref('FOLLOWS_FROM', 'early')]),
+      ]);
+
+      expect(childValues(tree)).toEqual(['late']);
+      expect(childValues(tree.children[0])).toEqual(['early']);
+    });
+
+    it('attaches the earliest span of a cycle without links to the root', () => {
+      const tree = buildTree([makeSpan('b', 2, [ref('CHILD_OF', 'a')]), makeSpan('a', 1, [ref('CHILD_OF', 'b')])]);
+
+      expect(childValues(tree)).toEqual(['a']);
+      expect(childValues(tree.children[0])).toEqual(['b']);
+    });
+
+    it('keeps spans below a cycle reachable and leaves other spans in place', () => {
+      const tree = buildTree([
+        makeSpan('root', 1, []),
+        makeSpan('a', 2, [ref('FOLLOWS_FROM', 'b')]),
+        makeSpan('b', 3, [ref('FOLLOWS_FROM', 'a')]),
+        makeSpan('below-cycle', 4, [ref('CHILD_OF', 'b')]),
+      ]);
+
+      expect(childValues(tree)).toEqual(['root', 'a']);
+      expect(childValues(tree.children[1])).toEqual(['b']);
+      expect(childValues(tree.children[1].children[0])).toEqual(['below-cycle']);
+    });
+  });
 });

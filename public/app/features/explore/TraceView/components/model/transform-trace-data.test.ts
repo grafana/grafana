@@ -15,6 +15,7 @@
 import { type TraceKeyValuePair } from '@grafana/data';
 
 import { type Trace, type TraceResponse } from '../types/trace';
+import spanAncestorIds from '../utils/span-ancestor-ids';
 
 import {
   mixedTrace,
@@ -192,6 +193,108 @@ describe('transformTraceData()', () => {
     } as unknown as TraceResponse;
 
     expect(transformTraceData(traceData)!.traceName).toEqual(`${serviceName}: ${rootOperationName}`);
+  });
+});
+
+describe('transformTraceData() cyclic span references', () => {
+  const traceID = 'c75f8f3a277b6c079ca9b5d84134e75b';
+  const startTime = 1586160015434000;
+  const processes = { p1: { serviceName: 'serviceName', tags: [] } };
+
+  type RefType = 'CHILD_OF' | 'FOLLOWS_FROM';
+  const ref = (refType: RefType, spanID: string) => ({ refType, traceID, spanID });
+  const makeSpan = (spanID: string, offset: number, references: Array<ReturnType<typeof ref>>) => ({
+    traceID,
+    spanID,
+    operationName: spanID,
+    references,
+    startTime: startTime + offset,
+    duration: 1000,
+    tags: [],
+    processID: 'p1',
+  });
+  const transform = (spans: Array<ReturnType<typeof makeSpan>>) =>
+    transformTraceData({ traceID, processes, spans } as unknown as TraceResponse)!;
+
+  const spanIdsOf = (trace: Trace) => trace.spans.map((span) => span.spanID).sort();
+
+  it('keeps every span when the root span links to its own child', () => {
+    const trace = transform([
+      makeSpan('root', 0, [ref('FOLLOWS_FROM', 'child-2')]),
+      makeSpan('child-1', 100, [ref('CHILD_OF', 'root')]),
+      makeSpan('child-2', 200, [ref('CHILD_OF', 'root'), ref('FOLLOWS_FROM', 'child-1')]),
+    ]);
+
+    expect(spanIdsOf(trace)).toEqual(['child-1', 'child-2', 'root']);
+  });
+
+  it('keeps every span when a span links to itself', () => {
+    const trace = transform([
+      makeSpan('root', 0, []),
+      makeSpan('child', 100, [ref('CHILD_OF', 'root'), ref('FOLLOWS_FROM', 'child')]),
+    ]);
+
+    expect(spanIdsOf(trace)).toEqual(['child', 'root']);
+  });
+
+  it('keeps every span and finds a finite ancestor chain when the root links to a descendant after an unresolved link', () => {
+    const trace = transform([
+      makeSpan('root', 0, [ref('FOLLOWS_FROM', 'span-from-another-trace'), ref('FOLLOWS_FROM', 'child')]),
+      makeSpan('intermediate', 100, [ref('CHILD_OF', 'root')]),
+      makeSpan('child', 200, [ref('CHILD_OF', 'intermediate')]),
+    ]);
+
+    expect(spanIdsOf(trace)).toEqual(['child', 'intermediate', 'root']);
+    trace.spans.forEach((span) => {
+      expect(spanAncestorIds(span).length).toBeLessThanOrEqual(trace.spans.length);
+    });
+  });
+
+  it('lists the same ancestors for siblings when the root links to one of them', () => {
+    const trace = transform([
+      makeSpan('root', 0, [ref('FOLLOWS_FROM', 'child-2')]),
+      makeSpan('child-1', 100, [ref('CHILD_OF', 'root')]),
+      makeSpan('child-2', 200, [ref('CHILD_OF', 'root'), ref('FOLLOWS_FROM', 'child-1')]),
+      makeSpan('grandchild', 300, [ref('CHILD_OF', 'child-1')]),
+    ]);
+
+    expect(spanAncestorIds(spanById(trace, 'root'))).toEqual([]);
+    expect(spanAncestorIds(spanById(trace, 'child-1'))).toEqual(['root']);
+    expect(spanAncestorIds(spanById(trace, 'child-2'))).toEqual(['root']);
+    expect(spanAncestorIds(spanById(trace, 'grandchild'))).toEqual(['child-1', 'root']);
+  });
+
+  it('lists ancestors from the span tree when the root links to a descendant after an unresolved link', () => {
+    const trace = transform([
+      makeSpan('root', 0, [ref('FOLLOWS_FROM', 'span-from-another-trace'), ref('FOLLOWS_FROM', 'child')]),
+      makeSpan('intermediate', 100, [ref('CHILD_OF', 'root')]),
+      makeSpan('child', 200, [ref('CHILD_OF', 'intermediate')]),
+    ]);
+
+    expect(spanAncestorIds(spanById(trace, 'root'))).toEqual([]);
+    expect(spanAncestorIds(spanById(trace, 'child'))).toEqual(['intermediate', 'root']);
+  });
+
+  it('lists as many ancestors as the depth of the span', () => {
+    const trace = transform([
+      makeSpan('root', 0, [ref('FOLLOWS_FROM', 'child-2')]),
+      makeSpan('child-1', 100, [ref('CHILD_OF', 'root')]),
+      makeSpan('child-2', 200, [ref('CHILD_OF', 'root'), ref('FOLLOWS_FROM', 'child-1')]),
+    ]);
+
+    trace.spans.forEach((span) => {
+      expect(spanAncestorIds(span)).toHaveLength(span.depth);
+    });
+  });
+
+  it('keeps every span when a cycle sits below a reachable root', () => {
+    const trace = transform([
+      makeSpan('root', 0, []),
+      makeSpan('a', 100, [ref('FOLLOWS_FROM', 'b')]),
+      makeSpan('b', 200, [ref('FOLLOWS_FROM', 'a')]),
+    ]);
+
+    expect(spanIdsOf(trace)).toEqual(['a', 'b', 'root']);
   });
 });
 
