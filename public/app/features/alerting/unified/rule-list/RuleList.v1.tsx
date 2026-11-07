@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { t } from '@grafana/i18n';
-import { Button, Stack } from '@grafana/ui';
+import { Alert, Button, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types/store';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -123,9 +123,40 @@ const RuleListV1 = () => {
   const hasAlertRulesCreated = !hasNoAlertRulesCreatedYet;
 
   const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
-  const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
+  const {
+    filteredRules: filteredNamespaces,
+    isLoading: isDataSourceLoading,
+    error: dataSourceError,
+  } = useFilteredRules(combinedNamespaces, filterState);
 
   const showImportToGMABanner = useShowImportToGMARulesBanner();
+  const rulesContent = (() => {
+    if (isDataSourceLoading) {
+      return <LoadingPlaceholder text={t('alerting.list-view.section.grafanaManaged.loading', 'Loading...')} />;
+    }
+
+    if (dataSourceError) {
+      return (
+        <Alert
+          severity="error"
+          title={t('alerting.rule-list.data-source-filter.error-title', 'Unable to load data sources')}
+        >
+          {t(
+            'alerting.rule-list.data-source-filter.error-description',
+            'The selected data sources could not be loaded, so the rules cannot be filtered. Try refreshing the page.'
+          )}
+        </Alert>
+      );
+    }
+
+    return (
+      <>
+        <RuleStats namespaces={filteredNamespaces} />
+        {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
+        {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+      </>
+    );
+  })();
 
   return (
     // We don't want to show the Loading... indicator for the whole page.
@@ -157,9 +188,7 @@ const RuleListV1 = () => {
             )}
           </Stack>
         )}
-        <RuleStats namespaces={filteredNamespaces} />
-        {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
-        {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+        {rulesContent}
       </Stack>
     </AlertingPageWrapper>
   );

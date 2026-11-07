@@ -3,7 +3,7 @@ import { chain, compact, isEmpty } from 'lodash';
 import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
 
 import { isDefaultRoutingTreeName } from '@grafana/alerting';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDataSourceInstanceList } from '@grafana/runtime';
 import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { type CombinedRuleGroup, type CombinedRuleNamespace, type Rule } from 'app/types/unified-alerting';
 import { PromRuleType, type RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -103,12 +103,18 @@ export function useRulesFilter() {
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
   const deferredNamespaces = useDeferredValue(namespaces);
   const deferredFilterState = useDeferredValue(filterState);
+  const { dataSourceNames } = deferredFilterState;
 
-  return useMemo(() => {
-    const filteredRules = filterRules(deferredNamespaces, deferredFilterState);
+  const { items, isLoading, error } = useDataSourceInstanceList({ all: true });
+  const dataSourceUids = useMemo(
+    () => new Set(items.filter((ds) => dataSourceNames.includes(ds.name)).map((ds) => ds.uid)),
+    [items, dataSourceNames]
+  );
 
+  const filteredRules = useMemo(() => {
+    const filtered = filterRules(deferredNamespaces, deferredFilterState, dataSourceUids);
     // Totals recalculation is a workaround for the lack of server-side filtering
-    filteredRules.forEach((namespace) => {
+    filtered.forEach((namespace) => {
       namespace.groups.forEach((group) => {
         group.rules.forEach((rule) => {
           if (prometheusRuleType.alertingRule(rule.promRule)) {
@@ -123,13 +129,20 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
       });
     });
 
-    return filteredRules;
-  }, [deferredNamespaces, deferredFilterState]);
+    return filtered;
+  }, [deferredNamespaces, deferredFilterState, dataSourceUids]);
+
+  const isDataSourceFilterActive = dataSourceNames.length > 0;
+  const isDataSourceLoading = isDataSourceFilterActive && isLoading;
+  const dataSourceError = isDataSourceFilterActive ? error : undefined;
+
+  return { filteredRules, isLoading: isDataSourceLoading, error: dataSourceError };
 };
 
 export const filterRules = (
   namespaces: CombinedRuleNamespace[],
-  filterState: RulesFilter = { dataSourceNames: [], labels: [], freeFormWords: [] }
+  filterState: RulesFilter = { dataSourceNames: [], labels: [], freeFormWords: [] },
+  dataSourceUids: Set<string>
 ): CombinedRuleNamespace[] => {
   let filteredNamespaces = namespaces;
 
@@ -147,13 +160,10 @@ export const filterRules = (
   }
 
   // If a namespace and group have rules that match the rules filters then keep them.
-  const filteredRuleNamespaces: CombinedRuleNamespace[] = [];
+  let filteredRuleNamespaces: CombinedRuleNamespace[] = [];
 
   try {
-    const matches = filteredNamespaces.reduce<CombinedRuleNamespace[]>(reduceNamespaces(filterState), []);
-    matches.forEach((match) => {
-      filteredRuleNamespaces.push(match);
-    });
+    filteredRuleNamespaces = filteredNamespaces.reduce(reduceNamespaces(filterState, dataSourceUids), []);
   } catch (error) {
     logError(new Error('Failed to filter rules', { cause: error }), {
       search: JSON.stringify(filterState),
@@ -163,7 +173,7 @@ export const filterRules = (
   return filteredRuleNamespaces;
 };
 
-const reduceNamespaces = (filterState: RulesFilter) => {
+const reduceNamespaces = (filterState: RulesFilter, dataSourceUids: Set<string>) => {
   return (namespaceAcc: CombinedRuleNamespace[], namespace: CombinedRuleNamespace) => {
     const groupNameFilter = filterState.groupName;
     let filteredGroups = namespace.groups;
@@ -172,7 +182,7 @@ const reduceNamespaces = (filterState: RulesFilter) => {
       filteredGroups = fuzzyFilter(filteredGroups, (g) => g.name, groupNameFilter);
     }
 
-    filteredGroups = filteredGroups.reduce<CombinedRuleGroup[]>(reduceGroups(filterState), []);
+    filteredGroups = filteredGroups.reduce(reduceGroups(filterState, dataSourceUids), []);
 
     if (filteredGroups.length) {
       namespaceAcc.push({
@@ -186,7 +196,7 @@ const reduceNamespaces = (filterState: RulesFilter) => {
 };
 
 // Reduces groups to only groups that have rules matching the filters
-const reduceGroups = (filterState: RulesFilter) => {
+const reduceGroups = (filterState: RulesFilter, dataSourceUids: Set<string>) => {
   const ruleNameQuery = filterState.ruleName ?? filterState.freeFormWords.join(' ');
 
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
@@ -266,9 +276,7 @@ const reduceGroups = (filterState: RulesFilter) => {
 
       if ('dataSourceNames' in matchesFilterFor) {
         if (rulerRuleType.grafana.rule(rule.rulerRule)) {
-          const doesNotQueryDs = isQueryingDataSource(rule.rulerRule, filterState);
-
-          if (doesNotQueryDs) {
+          if (queriesAnyDataSource(rule.rulerRule, dataSourceUids)) {
             matchesFilterFor.dataSourceNames = true;
           }
         } else {
@@ -331,6 +339,7 @@ const reduceGroups = (filterState: RulesFilter) => {
         rules: filteredRules,
       });
     }
+
     return groupAcc;
   };
 };
@@ -344,19 +353,8 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
   }
 }
 
-const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: RulesFilter): boolean => {
-  if (!filterState.dataSourceNames?.length) {
-    return true;
-  }
-
-  return !!rulerRule.grafana_alert.data.find((query) => {
-    if (!query.datasourceUid) {
-      return false;
-    }
-    const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-    return ds?.name && filterState?.dataSourceNames?.includes(ds.name);
-  });
-};
+const queriesAnyDataSource = (rulerRule: RulerGrafanaRuleDTO, dataSourceUids: Set<string>): boolean =>
+  rulerRule.grafana_alert.data.some((query) => dataSourceUids.has(query.datasourceUid));
 
 const RULES_FILTER_KEYS = new Set<string>([
   'freeFormWords',
