@@ -3,6 +3,7 @@ const open = require('open').default;
 const path = require('path');
 
 const baseConfig = require('./jest.config.js');
+const { isCoverageSourceFile } = require('./scripts/codeowners-manifest/coverage-files.js');
 const { buildCodeownerDirectoryPath } = require('./scripts/codeowners-manifest/utils.js');
 
 const CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH = 'codeowners-manifest/filenames-by-team.json';
@@ -33,31 +34,7 @@ if (teamFiles.length === 0) {
   process.exit(1);
 }
 
-const sourceFiles = teamFiles.filter((file) => {
-  const ext = path.extname(file);
-  return (
-    ['.ts', '.tsx', '.js', '.jsx'].includes(ext) &&
-    // exclude all tests and mocks
-    !path.matchesGlob(file, '**/test/**/*') &&
-    !file.includes('.test.') &&
-    !file.includes('.spec.') &&
-    !path.matchesGlob(file, '**/__mocks__/**/*') &&
-    // and storybook stories
-    !file.includes('.story.') &&
-    // and generated files
-    !file.includes('.gen.ts') &&
-    // and type definitions
-    !file.includes('.d.ts') &&
-    !file.endsWith('/types.ts') &&
-    // and anything in graveyard
-    !path.matchesGlob(file, '**/graveyard/**/*') &&
-    // and scripts directory
-    !file.startsWith('scripts/') &&
-    // and jest config files
-    !path.matchesGlob(file, '**/jest.config*.js') &&
-    !file.endsWith('/module.tsx')
-  );
-});
+const sourceFiles = teamFiles.filter(isCoverageSourceFile);
 
 const testFiles = teamFiles.filter((file) => {
   const ext = path.extname(file);
