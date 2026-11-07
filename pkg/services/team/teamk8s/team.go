@@ -32,12 +32,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	iamteam "github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -99,12 +99,24 @@ func (s *TeamK8sService) getDynamicClient(ctx context.Context, namespace string,
 		return nil, errors.New("no request context")
 	}
 
-	dyn, err := dynamic.NewForConfig(s.configProvider.GetDirectRestConfig(reqCtx))
+	dyn, err := dynamic.NewForConfig(s.directRestConfig(reqCtx))
 	if err != nil {
 		return nil, err
 	}
 
 	return dyn.Resource(gvr).Namespace(namespace), nil
+}
+
+// directRestConfig disables client-side rate limiting: requests are served in process, and each call
+// builds a new client, so the default 5 QPS limiter only delays reads that fan out per team.
+func (s *TeamK8sService) directRestConfig(reqCtx *contextmodel.ReqContext) *rest.Config {
+	cfg := s.configProvider.GetDirectRestConfig(reqCtx)
+	if cfg == nil {
+		return nil
+	}
+	cfg = rest.CopyConfig(cfg)
+	cfg.QPS = -1
+	return cfg
 }
 
 func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
@@ -235,7 +247,7 @@ func (s *TeamK8sService) getUserClient(ctx context.Context) (*iamv0alpha1.UserCl
 	if reqCtx == nil {
 		return nil, errors.New("no request context")
 	}
-	restConfig := s.configProvider.GetDirectRestConfig(reqCtx)
+	restConfig := s.directRestConfig(reqCtx)
 	if restConfig == nil {
 		return nil, errors.New("rest config not available")
 	}
@@ -573,7 +585,7 @@ func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, e
 		return nil, errors.New("no request context")
 	}
 
-	cfg := dynamic.ConfigFor(s.configProvider.GetDirectRestConfig(reqCtx))
+	cfg := dynamic.ConfigFor(s.directRestConfig(reqCtx))
 	cfg.GroupVersion = &iamv0alpha1.GroupVersion
 	return rest.RESTClientFor(cfg)
 }
@@ -1097,76 +1109,25 @@ func (s *TeamK8sService) GetUserTeamMembershipsByUID(ctx context.Context, query 
 	))
 	defer span.End()
 
-	ctxLogger := s.logger.FromContext(ctx)
-
 	if query.UserUID == "" {
 		err := errors.New("user UID is required")
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
-
-	// Read as a service identity for the query's org: team search scopes to the caller's namespace
-	// and filters by the caller's permissions, but memberships must be complete for the given org,
-	// as on the legacy path.
-	namespace := s.namespaceMapper(query.OrgID)
-	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
-
-	var teamUIDs []string
-	seen := make(map[string]struct{})
-	for page := 1; ; page++ {
-		result, err := s.searchTeams(svcCtx, &team.SearchTeamsQuery{
-			OrgID:     query.OrgID,
-			MemberUID: query.UserUID,
-			Limit:     common.DefaultListLimit,
-			Page:      page,
-		}, false)
-		if err != nil {
-			ctxLogger.Error("failed to search user teams", "namespace", namespace, "userUID", query.UserUID, "page", page, "err", err)
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-			return nil, fmt.Errorf("failed to search user teams: %w", err)
-		}
-		for _, t := range result.Teams {
-			if _, ok := seen[t.UID]; !ok {
-				seen[t.UID] = struct{}{}
-				teamUIDs = append(teamUIDs, t.UID)
-			}
-		}
-		// Stop on a short page, not on TotalCount: member searches can report only the hits seen so far.
-		if len(result.Teams) < common.DefaultListLimit {
-			break
-		}
-	}
-
-	teams, err := s.listTeamsByUIDs(svcCtx, namespace, teamUIDs)
+	client, err := s.getRESTClient(ctx)
 	if err != nil {
-		ctxLogger.Error("failed to fetch user teams", "namespace", namespace, "userUID", query.UserUID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, fmt.Errorf("failed to fetch user teams: %w", err)
+		return nil, err
 	}
-
-	memberships := make([]team.UserTeamMembership, 0, len(teamUIDs))
-	// The team or the membership may have been removed after the search ran.
-	for _, uid := range teamUIDs {
-		t, ok := teams[uid]
-		if !ok {
-			continue
-		}
-		member, ok := findMemberInTeam(t, query.UserUID)
-		if !ok || (query.External && !member.External) {
-			continue
-		}
-		memberships = append(memberships, team.UserTeamMembership{
-			TeamID:     deprecatedInternalID(t),
-			TeamUID:    t.Name,
-			External:   member.External,
-			Permission: permissionFromMember(member.Permission),
-		})
+	memberships, err := ReadUserTeamMemberships(ctx, client, s.namespaceMapper(query.OrgID), query.UserUID, query.External)
+	if err != nil {
+		s.logger.FromContext(ctx).Error("failed to read user team memberships", "orgID", query.OrgID, "userUID", query.UserUID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 	}
-
-	return memberships, nil
+	return memberships, err
 }
 
 // cloneTeamMemberDTOs deep-copies elements so a caller mutating a returned

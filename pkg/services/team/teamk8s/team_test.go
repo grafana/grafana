@@ -2015,6 +2015,17 @@ func TestTeamK8sService_GetUserTeamMemberships_Cache(t *testing.T) {
 	})
 }
 
+func TestTeamK8sService_directRestConfig(t *testing.T) {
+	providerConfig := &clientrest.Config{Host: "http://apiserver"}
+	svc := NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), &mockDirectRestConfigProvider{restConfig: providerConfig}, tracing.InitializeTracerForTest())
+
+	cfg := svc.directRestConfig(&contextmodel.ReqContext{})
+
+	require.Equal(t, float32(-1), cfg.QPS, "in-process clients must not be rate limited")
+	require.Equal(t, "http://apiserver", cfg.Host)
+	require.Zero(t, providerConfig.QPS, "the provider's config must not be modified")
+}
+
 func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 	newTeam := func(name, internalID string, members ...iamv0alpha1.TeamTeamMember) *iamv0alpha1.Team {
 		return &iamv0alpha1.Team{
@@ -2053,6 +2064,7 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 		teams               map[string]*iamv0alpha1.Team
 		searchStatus        int
 		failTeam            string
+		noReqContext        bool
 		expectErr           string
 		expectedSearchPages int
 		expected            []team.UserTeamMembership
@@ -2142,6 +2154,18 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 			},
 			expected: []team.UserTeamMembership{
 				{TeamID: 10, TeamUID: "team-a", External: false, Permission: team.PermissionTypeMember},
+			},
+		},
+		{
+			name:         "reads without a request context, as background callers do",
+			userUID:      "user-1",
+			noReqContext: true,
+			pages:        map[string]searchPage{"1": {hits: []string{"team-a"}, totalHits: 1}},
+			teams: map[string]*iamv0alpha1.Team{
+				"team-a": newTeam("team-a", "10", externalAdmin),
+			},
+			expected: []team.UserTeamMembership{
+				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
 			},
 		},
 		{
@@ -2245,10 +2269,21 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 			provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
 			svc := NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
 			ctx := identity.WithRequester(contextWithReqContext(), &identity.StaticRequester{OrgID: 1})
+			if tt.noReqContext {
+				ctx = context.Background()
+			}
 
-			result, err := svc.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{
-				OrgID: orgID, UserUID: tt.userUID, External: tt.external,
-			})
+			var result []team.UserTeamMembership
+			var err error
+			if tt.noReqContext {
+				client, clientErr := svc.getRESTClient(contextWithReqContext())
+				require.NoError(t, clientErr)
+				result, err = ReadUserTeamMemberships(ctx, client, svc.namespaceMapper(orgID), tt.userUID, tt.external)
+			} else {
+				result, err = svc.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{
+					OrgID: orgID, UserUID: tt.userUID, External: tt.external,
+				})
+			}
 			if tt.expectErr != "" {
 				require.ErrorContains(t, err, tt.expectErr)
 				return
