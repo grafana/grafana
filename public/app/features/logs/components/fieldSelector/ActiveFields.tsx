@@ -113,7 +113,7 @@ export const ActiveFields = ({
                           title={t(
                             'logs.field-selector.label-title',
                             `{{fieldName}} appears in {{percentage}}% of log lines`,
-                            { fieldName: field.name, percentage: field.stats.percentOfLinesWithLabel }
+                            { fieldName: field.displayName ?? field.name, percentage: field.stats.percentOfLinesWithLabel }
                           )}
                         >
                           <Field
