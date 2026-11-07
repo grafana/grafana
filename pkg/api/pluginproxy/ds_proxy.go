@@ -399,6 +399,14 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		return nil
 	}
 
+	// Loki's read-only query endpoint accepts POST as an alternative to GET.
+	// Keep this exception scoped to the exact endpoint; other unmatched POSTs
+	// remain subject to the plugin route allow-list below.
+	if proxy.dataSource.PluginType() == datasources.DS_LOKI &&
+		proxy.ctx.Req.Method == http.MethodPost && proxy.proxyPath == "api/v1/query" {
+		return nil
+	}
+
 	// Trailing validation below this point for routes that were not matched
 	switch proxy.dataSource.PluginType() {
 	case datasources.DS_PROMETHEUS,
