@@ -198,7 +198,10 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 	case utils.ManagerKindPlugin,
 		utils.ManagerKindClassicFP,                  // nolint:staticcheck
 		utils.ManagerKindClassicAPI,                 // nolint:staticcheck
-		utils.ManagerKindClassicConvertedPrometheus: // nolint:staticcheck
+		utils.ManagerKindClassicConvertedPrometheus, // nolint:staticcheck
+		utils.ManagerKindFileProvisioning:
+		// File-provisioned resources (legacy and the app-platform provisioning bootstrap) are
+		// reconciled from disk; the UI surfaces them as read-only via the manager AllowsEdits flag.
 		// ?? what identity do we use for legacy internal requests?
 		return nil // no error
 

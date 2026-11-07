@@ -45,9 +45,11 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -156,6 +158,10 @@ type APIBuilder struct {
 	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
+	bootstrapManifestsEnabled     bool
+	bootstrapManifestsPath        string
+	bootstrapDigestKey            []byte
+
 	// controllerResyncInterval is the informer re-list interval for the
 	// repository and connection controllers; historyExpiration is both the
 	// HistoricJob retention and the historic-job informer's resync;
@@ -421,6 +427,9 @@ func RegisterAPIService(
 	}
 	builder.repoValidatorOpts = repoValidatorOpts
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	builder.bootstrapManifestsEnabled = cfg.ProvisioningBootstrapManifestsEnabled
+	builder.bootstrapManifestsPath = cfg.ProvisioningBootstrapManifestsPath
+	builder.bootstrapDigestKey = []byte(cfg.SecretKey)
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
 	builder.historyExpiration = cfg.ProvisioningHistoryExpiration
@@ -1034,6 +1043,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// if running solely CRUD or not the preferred version, skip controllers/workers setup
 			if b.onlyApiServer || !b.isPreferredVersion {
 				return nil
+			}
+
+			// Apply Repository/Connection manifests mounted on disk (Git Sync bootstrap). Uses the
+			// loopback config so secure values reach admission unredacted. Failures are logged, never fatal.
+			if b.bootstrapManifestsEnabled {
+				bootstrap.Run(postStartHookCtx.Context, config, b.bootstrapManifestsPath, b.bootstrapDigestKey, log.New("provisioning.bootstrap"))
 			}
 
 			// Informer resync interval used for health check and reconciliation of

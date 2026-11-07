@@ -42,6 +42,12 @@ const (
 	ManagerKindPlugin    ManagerKind = "plugin"
 	ManagerKindGrafana   ManagerKind = "grafana"
 
+	// ManagerKindFileProvisioning marks resources applied from Kubernetes-style manifests
+	// mounted on disk and applied at startup (app-platform provisioning bootstrap). It is
+	// distinct from ManagerKindClassicFP, which is the legacy datasource/dashboard file
+	// provisioning shim.
+	ManagerKindFileProvisioning ManagerKind = "file-provisioning"
+
 	// ManagerKindClassicFP marks resources that originate from the
 	// legacy on-disk file provisioning system (dashboards, folders, correlations,
 	// alerting with the "file" provenance). The manager identity, when present, is
@@ -84,6 +90,8 @@ func ParseManagerKindString(v string) ManagerKind {
 		return ManagerKindPlugin
 	case string(ManagerKindGrafana):
 		return ManagerKindGrafana
+	case string(ManagerKindFileProvisioning):
+		return ManagerKindFileProvisioning
 	case string(ManagerKindClassicFP): // nolint:staticcheck
 		return ManagerKindClassicFP // nolint:staticcheck
 	case string(ManagerKindClassicAPI): // nolint:staticcheck
