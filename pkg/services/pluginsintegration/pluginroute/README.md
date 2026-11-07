@@ -264,7 +264,7 @@ app manifest will declare:
 - A custom route for a name with no stored object is still sent to the app
   (`allowMissingParent`), with the name alone.
 
-`grafana.routePreferencesAndCollections` (with `grafana.useRouterMiddleware`)
+`grafana.routeCoreApps` (with `grafana.useRouterMiddleware`)
 serves `collections.grafana.app` and `preferences.grafana.app` from the
 `apps/collections` and `apps/preferences` apps, run in this process, and stops
 the embedded API server registering them. The apps authenticate through the

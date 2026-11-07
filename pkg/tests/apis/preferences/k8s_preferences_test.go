@@ -37,7 +37,7 @@ func testPreferencesK8sAPIs(t *testing.T, routed bool) {
 	if routed {
 		flags = append(flags,
 			featuremgmt.FlagGrafanaUseRouterMiddleware,
-			featuremgmt.FlagGrafanaRoutePreferencesAndCollections,
+			featuremgmt.FlagGrafanaRouteCoreApps,
 			featuremgmt.FlagApppluginsLoadAppManifest,
 		)
 	}

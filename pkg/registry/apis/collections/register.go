@@ -64,7 +64,7 @@ func RegisterAPIService(
 		builder.legacyStars = legacy.NewDashboardStarsStorage(stars, users, namespacer, sql)
 	}
 
-	// The router serves the group instead (see grafana.routePreferencesAndCollections).
+	// The router serves the group instead (see grafana.routeCoreApps).
 	ctx := context.Background()
 	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRouteCoreApps, false, openfeature.TransactionContext(ctx)) {
 		apiregistration.RegisterAPI(builder)

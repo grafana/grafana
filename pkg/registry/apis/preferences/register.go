@@ -73,9 +73,9 @@ func RegisterAPIService(
 	if prefs != nil {
 		builder.legacyPrefs = legacy.NewPreferencesStorage(prefs, namespacer, sql)
 	}
-	// The router serves the group instead (see grafana.routePreferencesAndCollections).
+	// The router serves the group instead (see grafana.routeCoreApps).
 	ctx := context.Background()
-	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRoutePreferencesAndCollections, false, openfeature.TransactionContext(ctx)) {
+	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRouteCoreApps, false, openfeature.TransactionContext(ctx)) {
 		apiregistration.RegisterAPI(builder)
 	}
 	return builder, nil

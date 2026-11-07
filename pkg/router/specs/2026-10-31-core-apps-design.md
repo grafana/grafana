@@ -1,6 +1,6 @@
 # Router: core apps served from this process
 
-Status: implemented behind `grafana.routePreferencesAndCollections` for collections (Stars) and
+Status: implemented behind `grafana.routeCoreApps` for collections (Stars) and
 preferences, in middleware mode only. The hardcoded parts below are temporary, and the
 `preferences/merged` route is blocked on anonymous callers.
 Packages: `pkg/router`, `pkg/services/pluginsintegration/pluginroute`, `apps/collections`,
