@@ -176,6 +176,8 @@ The **Alerting HTTP API** provides specific endpoints for exporting alerting res
 
 These endpoints accept a `download` parameter to download a file containing the exported resources.
 
+Exported alert rules include `sourceUrl` when a source URL is stored for the rule. Grafana omits the field when no URL is stored. Keep the field in the exported file so that re-applying the file keeps the URL. Refer to [Source URL](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#source-url) for the rules that apply to the field.
+
 <!-- prettier-ignore-start -->
 
 

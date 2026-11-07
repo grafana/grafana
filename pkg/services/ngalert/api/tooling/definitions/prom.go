@@ -187,6 +187,8 @@ type Rule struct {
 	IsPaused             bool                           `json:"isPaused"`
 	NotificationSettings *AlertRuleNotificationSettings `json:"notificationSettings,omitempty"`
 	Provenance           Provenance                     `json:"provenance,omitempty"`
+	// SourceURL is the external source that owns this provisioned rule.
+	SourceURL string `json:"sourceUrl,omitempty"`
 }
 
 // Alert has info for an alert.

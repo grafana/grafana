@@ -85,6 +85,8 @@ type AlertRuleService interface {
 	GetAlertRuleWithFolderFullpath(ctx context.Context, u identity.Requester, ruleUID string) (provisioning.AlertRuleWithFolderFullpath, error)
 	GetAlertRuleGroupWithFolderFullpath(ctx context.Context, u identity.Requester, folder, group string) (alerting_models.AlertRuleGroupWithFolderFullpath, error)
 	GetAlertGroupsWithFolderFullpath(ctx context.Context, u identity.Requester, opts *provisioning.FilterOptions) ([]alerting_models.AlertRuleGroupWithFolderFullpath, error)
+	GetSourceURL(ctx context.Context, orgID int64, ruleUID string) (string, error)
+	GetSourceURLs(ctx context.Context, orgID int64) (map[string]string, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
@@ -354,7 +356,15 @@ func (srv *ProvisioningSrv) RouteGetAlertRules(c *contextmodel.ReqContext) respo
 	for uid, mp := range managerPropsMap {
 		provenances[uid] = alerting_models.ManagerPropertiesToProvenance(mp)
 	}
-	return response.JSON(http.StatusOK, ProvisionedAlertRuleFromAlertRules(rules, provenances))
+	urls, err := srv.alertRules.GetSourceURLs(c.Req.Context(), c.GetOrgID())
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rule source URLs", err)
+	}
+	provisioned := ProvisionedAlertRuleFromAlertRules(rules, provenances)
+	for i := range provisioned {
+		SetProvisionedSourceURL(&provisioned[i], urls[provisioned[i].UID])
+	}
+	return response.JSON(http.StatusOK, provisioned)
 }
 
 func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *contextmodel.ReqContext, UID string) response.Response {
@@ -366,17 +376,26 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *contextmodel.ReqContext, U
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule by UID", err)
 	}
 	provenance := alerting_models.ManagerPropertiesToProvenance(managerProps)
-	return response.JSON(http.StatusOK, ProvisionedAlertRuleFromAlertRule(rule, provenance))
+	sourceURL, err := srv.alertRules.GetSourceURL(c.Req.Context(), c.GetOrgID(), rule.UID)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rule source URL", err)
+	}
+	provisioned := ProvisionedAlertRuleFromAlertRule(rule, provenance)
+	SetProvisionedSourceURL(&provisioned, sourceURL)
+	return response.JSON(http.StatusOK, provisioned)
 }
 
 func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar definitions.ProvisionedAlertRule) response.Response {
+	manager := determineManagerProperties(c)
+	if err := validateProvisionedSourceURL(ar.SourceURL, manager); err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
 	upstreamModel, err := AlertRuleFromProvisionedAlertRule(ar)
-	upstreamModel.OrgID = c.GetOrgID()
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
+	upstreamModel.OrgID = c.GetOrgID()
 
-	manager := determineManagerProperties(c)
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), c.SignedInUser, upstreamModel, manager)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -396,9 +415,13 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 }
 
 func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar definitions.ProvisionedAlertRule, UID string) response.Response {
+	manager := determineManagerProperties(c)
+	if err := validateProvisionedSourceURL(ar.SourceURL, manager); err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
 	updated, err := AlertRuleFromProvisionedAlertRule(ar)
 	if err != nil {
-		ErrResp(http.StatusBadRequest, err, "")
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
 	if UID == "" {
@@ -408,7 +431,6 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 
 	updated.OrgID = c.GetOrgID()
 	updated.UID = UID
-	manager := determineManagerProperties(c)
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), c.SignedInUser, updated, manager)
 	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 		return response.Empty(http.StatusNotFound)
@@ -441,7 +463,15 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *contextmodel.ReqContext, f
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
-	return response.JSON(http.StatusOK, ApiAlertRuleGroupFromAlertRuleGroup(g))
+	urls, err := srv.alertRules.GetSourceURLs(c.Req.Context(), c.GetOrgID())
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rule source URLs", err)
+	}
+	result := ApiAlertRuleGroupFromAlertRuleGroup(g)
+	for i := range result.Rules {
+		SetProvisionedSourceURL(&result.Rules[i], urls[result.Rules[i].UID])
+	}
+	return response.JSON(http.StatusOK, result)
 }
 
 // RouteGetAlertRulesExport retrieves all alert rules in a format compatible with file provisioning.
@@ -477,6 +507,9 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create alerting file export", err)
 	}
+	if err := srv.applyExportSourceURLs(c, &e); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rule source URLs", err)
+	}
 
 	return exportResponse(c, e)
 }
@@ -491,6 +524,9 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqCont
 	e, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath([]alerting_models.AlertRuleGroupWithFolderFullpath{g})
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create alerting file export", err)
+	}
+	if err := srv.applyExportSourceURLs(c, &e); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rule source URLs", err)
 	}
 
 	return exportResponse(c, e)
@@ -512,6 +548,9 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
+	if err := srv.applyExportSourceURLs(c, &e); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rule source URLs", err)
+	}
 
 	return exportResponse(c, e)
 }
@@ -519,11 +558,16 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
 	ag.FolderUID = folderUID
 	ag.Title = group
+	manager := determineManagerProperties(c)
+	for i := range ag.Rules {
+		if err := validateProvisionedSourceURL(ag.Rules[i].SourceURL, manager); err != nil {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+	}
 	groupModel, err := AlertRuleGroupFromApiAlertRuleGroup(ag)
 	if err != nil {
-		ErrResp(http.StatusBadRequest, err, "")
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
-	manager := determineManagerProperties(c)
 	// TODO: https://github.com/grafana/grafana/issues/114197
 	// Support passing change messages.
 	changeMessage := ""
@@ -550,6 +594,29 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRuleGroup(c *contextmodel.ReqContext
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusNoContent, "")
+}
+
+func validateProvisionedSourceURL(sourceURL string, manager utils.ManagerProperties) error {
+	_, err := alerting_models.NewSourceURLPointer(sourceURL, alerting_models.ManagerPropertiesToProvenance(manager))
+	return err
+}
+
+func (srv *ProvisioningSrv) applyExportSourceURLs(c *contextmodel.ReqContext, export *definitions.AlertingFileExport) error {
+	urls, err := srv.alertRules.GetSourceURLs(c.Req.Context(), c.GetOrgID())
+	if err != nil {
+		return err
+	}
+	if len(urls) == 0 {
+		return nil
+	}
+	for gi := range export.Groups {
+		for ri := range export.Groups[gi].Rules {
+			if url, ok := urls[export.Groups[gi].Rules[ri].UID]; ok && url != "" {
+				export.Groups[gi].Rules[ri].SourceURL = &url
+			}
+		}
+	}
+	return nil
 }
 
 func determineProvenance(ctx *contextmodel.ReqContext) alerting_models.Provenance {
