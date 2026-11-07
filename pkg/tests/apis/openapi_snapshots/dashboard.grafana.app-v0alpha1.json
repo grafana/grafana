@@ -1515,6 +1515,17 @@
             }
           },
           {
+            "name": "include",
+            "in": "query",
+            "description": "extra results to include. pathToCreatable lists only the folders the user can create dashboards in, and the folders that lead to them, and sets field.canCreate on each. Only valid with type=folder",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pathToCreatable"
+              ]
+            }
+          },
+          {
             "name": "sort",
             "in": "query",
             "description": "sortable field",
