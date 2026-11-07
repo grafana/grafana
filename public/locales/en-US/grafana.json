@@ -14200,6 +14200,9 @@
       "button": "Create playlist",
       "pro-tip": "You can use playlists to cycle dashboards on TVs without user control. <2>Learn more</2>",
       "title": "There are no playlists created yet"
+    },
+    "slideshows-button": {
+      "title": "Try Slideshows (preview)"
     }
   },
   "playlists": {
@@ -16746,10 +16749,49 @@
     }
   },
   "slideshows": {
+    "edit": {
+      "add-heading": "Add items",
+      "add-item": "Add",
+      "add-kind": "Kind",
+      "add-placeholder": "Search {{kind}}...",
+      "cancel": "Cancel",
+      "edit-title": "Edit slideshow",
+      "interval-invalid": "Use a whole number and a unit, from 10s to 24h, such as 30s or 5m",
+      "interval-label": "Interval",
+      "item-delete": "Delete item",
+      "item-interval": "Interval for item {{position}}",
+      "item-move-down": "Move item down",
+      "item-move-up": "Move item up",
+      "item-not-found": "Not found: {{id}}",
+      "item-unknown-kind": "Unknown kind: {{id}}",
+      "items-empty": "This slideshow is empty. Add items below.",
+      "items-heading": "Items",
+      "load-error": "Error loading slideshow:",
+      "new-title": "New slideshow",
+      "save": "Save",
+      "save-error": "Could not save the slideshow",
+      "save-error-title": "Save failed",
+      "title-label": "Title"
+    },
     "kinds": {
       "dashboards": "Dashboards",
       "notebooks": "Notebooks",
       "pages": "Pages"
+    },
+    "page": {
+      "delete": "Delete",
+      "delete-body": "Are you sure you want to delete {{name}} slideshow?",
+      "delete-confirm": "Delete",
+      "delete-error": "Could not delete the slideshow",
+      "delete-error-title": "Delete failed",
+      "delete-label": "Delete slideshow {{ name }}",
+      "edit": "Edit",
+      "edit-label": "Edit slideshow {{ name }}",
+      "empty": "There are no slideshows yet",
+      "new": "New slideshow",
+      "start": "Start",
+      "start-label": "Start slideshow {{ name }}",
+      "title": "Slideshows"
     }
   },
   "snapshot": {

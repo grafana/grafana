@@ -1,6 +1,7 @@
 import { type ComponentType, Suspense } from 'react';
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -14,6 +15,21 @@ jest.mock('app/features/plugins/routes', () => ({
 jest.mock('../features/notebook/pages/NotebookRenderPage', () => ({
   __esModule: true,
   default: () => <div data-testid="notebook-render-page" />,
+}));
+
+jest.mock('app/features/slideshows/SlideshowsPage', () => ({
+  __esModule: true,
+  default: () => <div data-testid="slideshows-page" />,
+}));
+
+jest.mock('app/features/slideshows/SlideshowPlayPage', () => ({
+  __esModule: true,
+  default: () => <div data-testid="slideshow-play-page" />,
+}));
+
+jest.mock('app/features/slideshows/SlideshowEditPage', () => ({
+  __esModule: true,
+  default: () => <div data-testid="slideshow-edit-page" />,
 }));
 
 describe('admin route guards', () => {
@@ -215,4 +231,96 @@ describe('variables route guards', () => {
       expect(getRouteRolesGuard('/dashboards/variables/edit/:name')()).toEqual([]);
     }
   );
+});
+
+describe('slideshow routes', () => {
+  const slideshowPaths = ['/slideshows', '/slideshows/play/:uid', '/slideshows/new', '/slideshows/edit/:uid'];
+
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('are not registered while the toggle is off', async () => {
+    await act(async () => {
+      setTestFlags({ 'playlist.slideshows': false });
+    });
+
+    const paths = getAppRoutes().map((r) => r.path);
+    for (const path of slideshowPaths) {
+      expect(paths).not.toContain(path);
+    }
+    // The dashboard playlist routes next to them are unaffected.
+    expect(paths).toContain('/playlists');
+  });
+
+  it('are registered while the toggle is on', async () => {
+    await act(async () => {
+      setTestFlags({ 'playlist.slideshows': true });
+    });
+
+    const paths = getAppRoutes().map((r) => r.path);
+    for (const path of slideshowPaths) {
+      expect(paths).toContain(path);
+    }
+  });
+
+  async function getSlideshowRoute(path: string, flags: Record<string, boolean> = {}) {
+    await act(async () => {
+      setTestFlags({ 'playlist.slideshows': true, ...flags });
+    });
+    const route = getAppRoutes().find((r) => r.path === path);
+    if (!route) {
+      throw new Error(`Route not found: ${path}`);
+    }
+    return route;
+  }
+
+  describe('access to the slideshows list', () => {
+    const previousPermissions = contextSrv.user.permissions;
+
+    afterEach(() => {
+      contextSrv.user.permissions = previousPermissions;
+    });
+
+    it('is not restricted beyond the page itself while playlist RBAC is off', async () => {
+      const route = await getSlideshowRoute('/slideshows', { playlistsRBAC: false });
+
+      expect(route.roles).toBeUndefined();
+    });
+
+    it('allows a user with playlists:read while playlist RBAC is on', async () => {
+      contextSrv.user.permissions = { [AccessControlAction.PlaylistsRead]: true };
+      const route = await getSlideshowRoute('/slideshows', { playlistsRBAC: true });
+
+      expect(route.roles?.()).toEqual([]);
+    });
+
+    it('rejects a user without playlists:read while playlist RBAC is on', async () => {
+      contextSrv.user.permissions = {};
+      const route = await getSlideshowRoute('/slideshows', { playlistsRBAC: true });
+
+      expect(route.roles?.()).toEqual(['Reject']);
+    });
+  });
+
+  it.each([
+    ['/slideshows', 'slideshows-page'],
+    ['/slideshows/play/:uid', 'slideshow-play-page'],
+    ['/slideshows/new', 'slideshow-edit-page'],
+    ['/slideshows/edit/:uid', 'slideshow-edit-page'],
+  ])('%s loads its page', async (path, testId) => {
+    const route = await getSlideshowRoute(path);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the stubs above read no route props
+    const Page = route.component as unknown as ComponentType;
+
+    render(
+      <Suspense fallback={null}>
+        <Page />
+      </Suspense>
+    );
+
+    expect(await screen.findByTestId(testId)).toBeInTheDocument();
+  });
 });
