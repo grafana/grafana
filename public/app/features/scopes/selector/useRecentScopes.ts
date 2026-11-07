@@ -5,7 +5,7 @@ import { type Scope, type ScopeNode } from 'app/api/clients/scope/v0alpha1/endpo
 
 import {
   RECENT_SCOPES_CHANGED_EVENT,
-  RECENT_SCOPES_KEY,
+  getRecentScopesKey,
   readStoredRecentScopes,
   type StoredRecentScopeSet,
 } from './recentScopesStorage';
@@ -14,7 +14,7 @@ import { useScopesById, useScopeNodesByName } from './useScopesApi';
 
 function subscribe(callback: () => void) {
   const onStorage = (e: StorageEvent) => {
-    if (e.key === RECENT_SCOPES_KEY) {
+    if (e.key === getRecentScopesKey()) {
       callback();
     }
   };
