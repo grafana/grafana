@@ -1220,6 +1220,31 @@ describe('ScopesService', () => {
       jest.clearAllMocks();
     });
 
+    it.each([
+      { action: 'clearing', appliedScopes: [] },
+      { action: 'changing', appliedScopes: [{ scopeId: 'scope2' }] },
+    ])('does not reapply stale URL scopes while a variable updates after $action scopes', ({ appliedScopes }) => {
+      locationSubject.next({ pathname: '/test', search: '?scopes=scope1&var-scope=scope1' });
+      selectorService.state.appliedScopes = appliedScopes;
+      jest.clearAllMocks();
+
+      locationSubject.next({ pathname: '/test', search: '?scopes=scope1&var-scope=' });
+      locationSubject.next({ pathname: '/test', search: '?scopes=scope3' });
+
+      expect(selectorService.changeScopes.mock.calls).toEqual([[['scope3'], undefined, undefined, false]]);
+    });
+
+    it('applies a previous URL scope again after navigating through a URL without scopes', () => {
+      locationSubject.next({ pathname: '/test', search: '?scopes=scope1' });
+      locationSubject.next({ pathname: '/test', search: '' });
+      locationSubject.next({ pathname: '/test', search: '?scopes=scope1' });
+
+      expect(selectorService.changeScopes.mock.calls).toEqual([
+        [['scope1'], undefined, undefined, false],
+        [['scope1'], undefined, undefined, false],
+      ]);
+    });
+
     it('should update navigation scope when URL changes via back/forward', () => {
       // Simulate URL change (e.g., browser back button)
       locationSubject.next({
