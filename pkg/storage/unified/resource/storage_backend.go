@@ -3174,7 +3174,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				Resource:        req.Key.Resource,
 				Namespace:       req.Key.Namespace,
 				Name:            req.Key.Name,
-				ResourceVersion: bulkRvGenerator.next(obj),
+				ResourceVersion: bulkRvGenerator.next(SearchID(req.Key), obj),
 				Action:          action,
 				Folder:          req.Folder,
 			}
