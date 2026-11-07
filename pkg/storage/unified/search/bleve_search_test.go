@@ -54,7 +54,7 @@ func checkSearchQuery(t *testing.T, index resource.ResourceIndex, query *resourc
 	res, err := index.Search(context.Background(), nil, query, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(orderedExpectedNames)), res.TotalHits)
-	require.True(t, res.TotalHitsExact, "in-searcher authz path reports an exact total")
+	require.True(t, res.TotalHitsExact, "search reports an exact total")
 	for ix, name := range orderedExpectedNames {
 		require.Equal(t, name, res.Rows[ix].Key.Name)
 	}
@@ -1726,10 +1726,10 @@ func newTestDashboardsIndexPostRank(t testing.TB, size int64) resource.ResourceI
 // the bleve defaults).
 func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg search.PostRankAuthzConfig) resource.ResourceIndex {
 	t.Helper()
-	return newTestDashboardsIndexAuthz(t, size, true, cfg)
+	return newTestDashboardsIndexAuthz(t, size, cfg)
 }
 
-func newTestDashboardsIndexAuthz(t testing.TB, size int64, postRank bool, cfg search.PostRankAuthzConfig) resource.ResourceIndex {
+func newTestDashboardsIndexAuthz(t testing.TB, size int64, cfg search.PostRankAuthzConfig) resource.ResourceIndex {
 	t.Helper()
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
@@ -1737,10 +1737,9 @@ func newTestDashboardsIndexAuthz(t testing.TB, size int64, postRank bool, cfg se
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        threshold, // use in-memory for tests
-		PostRankAuthzEnabled: postRank,
-		PostRankAuthz:        cfg,
+		Root:          t.TempDir(),
+		FileThreshold: threshold, // use in-memory for tests
+		PostRankAuthz: cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -2410,10 +2409,8 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, []string{"allowed"}, res.Rows[0].Values[0].StringValues)
 	})
 
-	t.Run("stale SearchAfter cursor falls back to in-searcher path", func(t *testing.T) {
-		// A cursor created before the flag was enabled has one fewer sort value
-		// (no SortDocID tie-breaker). The post-rank path must fall back to the
-		// in-searcher path instead of feeding bleve a mismatched cursor.
+	t.Run("PreRank SearchAfter cursor continues on PostRank", func(t *testing.T) {
+		// A PreRank cursor lacks the document-ID tie-breaker.
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{
 			newDoc("doc-a", "allowed"),
@@ -2421,30 +2418,51 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			newDoc("doc-c", "allowed"),
 		})
 		ac := &countingAccessClient{allowAll: true}
-		// Pre-flag cursor shape: [title, name], no _id tie-breaker. The post-rank
-		// sort order is [title, name, _id] (len 3); this cursor is len 2, so it
-		// mismatches post-rank and falls back to the in-searcher path, whose sort
-		// is [title, name] (len 2) — a match.
-		q := listQuery(10)
+		q := listQuery(1)
 		q.SearchAfter = []string{"doc-a", "doc-a"}
 		names, res := searchNames(t, index, ac, q)
-		require.Nil(t, res.Error)
-		// Falls back to the in-searcher path; returns docs with (title, name)
-		// > ("doc-a", "doc-a").
-		require.Equal(t, []string{"doc-b", "doc-c"}, names)
+		require.Equal(t, []string{"doc-b"}, names)
+		require.Equal(t, []string{"doc-a", "doc-a"}, q.SearchAfter, "the request cursor must not be changed")
+		require.Len(t, res.Rows[0].SortFields, 3)
+		q.SearchAfter = res.Rows[0].SortFields
+		names, _ = searchNames(t, index, ac, q)
+		require.Equal(t, []string{"doc-c"}, names)
+	})
+
+	t.Run("PreRank cursor supports descending sort and name before another field", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-a", "allowed"), newDoc("doc-b", "allowed"), newDoc("doc-c", "allowed"),
+		})
+		q := listQuery(10)
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{
+			{Field: resource.SEARCH_FIELD_NAME, Desc: true},
+			{Field: resource.SEARCH_FIELD_TITLE, Desc: true},
+		}
+		q.SearchAfter = []string{"doc-c", "doc-c"}
+		names, _ := searchNames(t, index, &countingAccessClient{allowAll: true}, q)
+		require.Equal(t, []string{"doc-b", "doc-a"}, names)
 	})
 
 	t.Run("SearchAfter cursor matching neither sort order is rejected", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc-a", "allowed")})
 		ac := &countingAccessClient{allowAll: true}
-		// len 4 matches neither the post-rank order (3: [title, name, _id]) nor
-		// the in-searcher order (2: [title, name]) -> bad request rather than a
-		// mismatched bleve search.
+		// len 4 does not match the PostRank sort order (3 values).
 		q := listQuery(10)
 		q.SearchAfter = []string{"a", "b", "c", "d"}
 		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
 		res, err := index.Search(authlib.WithAuthInfo(context.Background(), requester), ac, q, nil, nil)
+		require.Nil(t, res)
+		require.Equal(t, int32(http.StatusBadRequest), resourceutil.ErrorResultFromGRPCDetails(err).GetCode())
+	})
+
+	t.Run("PreRank cursor without a document name is rejected", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		q := listQuery(10)
+		q.SearchAfter = []string{"doc-a", ""}
+		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
+		res, err := index.Search(authlib.WithAuthInfo(context.Background(), requester), &countingAccessClient{allowAll: true}, q, nil, nil)
 		require.Nil(t, res)
 		require.Equal(t, int32(http.StatusBadRequest), resourceutil.ErrorResultFromGRPCDetails(err).GetCode())
 	})
@@ -2526,65 +2544,51 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.False(t, res.TotalHitsExact, "the top facet sample was capped")
 	})
 
-	t.Run("exhausted tag facets match the in-searcher path", func(t *testing.T) {
-		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
+	t.Run("exhausted tag facets have expected counts", func(t *testing.T) {
 		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
 		docs := []*resource.BulkIndexItem{
 			newDocWithTags("doc-0", "allowed", []string{"prod east", "latency"}),
 			newDocWithTags("doc-1", "denied", []string{"secret"}),
 			newDocWithTags("doc-2", "allowed", []string{"prod east"}),
 		}
-		indexDocs(t, legacyIndex, docs)
 		indexDocs(t, postRankIndex, docs)
 		q := listQuery(10)
 		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
 			"tags": {Field: "tags", Limit: 10},
 		}
 
-		legacyNames, legacyRes := searchNames(t, legacyIndex, &countingAccessClient{
-			allowedFolders: map[string]bool{"allowed": true},
-		}, q)
 		names, res := searchNames(t, postRankIndex, &countingAccessClient{
 			allowedFolders: map[string]bool{"allowed": true},
 		}, q)
-		require.Equal(t, legacyNames, names)
 		require.ElementsMatch(t, []string{"doc-0", "doc-2"}, names)
-		require.Equal(t, legacyRes.Facet, res.Facet)
+		require.Equal(t, map[string]int64{"prod east": 2, "latency": 1}, facetTermCounts(res.Facet["tags"]))
+		require.Equal(t, int64(3), res.Facet["tags"].Total)
 	})
 
-	t.Run("repeated tag values match the in-searcher path", func(t *testing.T) {
-		// Native facets read indexed terms while app-side aggregation walks the
-		// stored slice, so a value repeated inside one document is where the two
-		// can disagree.
-		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
+	t.Run("repeated tag values have expected counts", func(t *testing.T) {
 		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
 		docs := []*resource.BulkIndexItem{
 			newDocWithTags("doc-0", "allowed", []string{"prod", "prod"}),
 			newDocWithTags("doc-1", "allowed", []string{"prod", "latency"}),
 			newDocWithTags("doc-2", "denied", []string{"prod", "prod"}),
 		}
-		indexDocs(t, legacyIndex, docs)
 		indexDocs(t, postRankIndex, docs)
 		q := listQuery(10)
 		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
 			"tags": {Field: "tags", Limit: 10},
 		}
 
-		legacyNames, legacyRes := searchNames(t, legacyIndex, &countingAccessClient{
-			allowedFolders: map[string]bool{"allowed": true},
-		}, q)
 		names, res := searchNames(t, postRankIndex, &countingAccessClient{
 			allowedFolders: map[string]bool{"allowed": true},
 		}, q)
 
-		require.Equal(t, legacyNames, names)
-		require.Equal(t, legacyRes.Facet, res.Facet)
+		require.ElementsMatch(t, []string{"doc-0", "doc-1"}, names)
+		require.Equal(t, map[string]int64{"prod": 2, "latency": 1}, facetTermCounts(res.Facet["tags"]))
 	})
 
-	t.Run("managedBy facets match the in-searcher path", func(t *testing.T) {
+	t.Run("managedBy facets have expected counts", func(t *testing.T) {
 		// managedBy is facet-capable and stored (facet implies stored), so the
 		// post-rank path aggregates it app-side like any other facet field.
-		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
 		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
 		docs := []*resource.BulkIndexItem{
 			newDoc("doc-0", "allowed"),
@@ -2594,45 +2598,38 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		docs[0].Doc.ManagedBy = "repo:one"
 		docs[1].Doc.ManagedBy = "repo:two"
 		docs[2].Doc.ManagedBy = "repo:secret"
-		indexDocs(t, legacyIndex, docs)
 		indexDocs(t, postRankIndex, docs)
 		q := listQuery(10)
 		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
 			"managedBy": {Field: "managedBy", Limit: 10},
 		}
 
-		legacyAC := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
 		postRankAC := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
-		legacyNames, legacyRes := searchNames(t, legacyIndex, legacyAC, q)
 		names, res := searchNames(t, postRankIndex, postRankAC, q)
 
-		require.Equal(t, legacyNames, names)
-		require.Equal(t, legacyRes.Facet, res.Facet)
+		require.ElementsMatch(t, []string{"doc-0", "doc-1"}, names)
 		// The denied doc's manager must not leak into the authorized facet.
 		f := res.Facet["managedBy"]
 		require.Equal(t, int64(2), f.Total)
+		require.Equal(t, map[string]int64{"repo:one": 1, "repo:two": 1}, facetTermCounts(f))
 		for _, term := range f.Terms {
 			require.NotEqual(t, "repo:secret", term.Term)
 		}
 	})
 
-	t.Run("zero facet limit matches the in-searcher path", func(t *testing.T) {
-		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
+	t.Run("zero facet limit returns counts without terms", func(t *testing.T) {
 		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
 		docs := []*resource.BulkIndexItem{
 			newDocWithTags("doc-0", "allowed", []string{"prod", "latency"}),
 			newDocWithTags("doc-1", "allowed", nil),
 		}
-		indexDocs(t, legacyIndex, docs)
 		indexDocs(t, postRankIndex, docs)
 		q := listQuery(10)
 		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
 			"tags": {Field: "tags", Limit: 0},
 		}
 
-		_, legacyRes := searchNames(t, legacyIndex, &countingAccessClient{allowAll: true}, q)
 		_, res := searchNames(t, postRankIndex, &countingAccessClient{allowAll: true}, q)
-		require.Equal(t, legacyRes.Facet, res.Facet)
 		require.Empty(t, res.Facet["tags"].Terms)
 		require.Equal(t, int64(2), res.Facet["tags"].Total)
 		require.Equal(t, int64(1), res.Facet["tags"].Missing)
@@ -2998,11 +2995,8 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, []string{"doc-12", "doc-14", "doc-16"}, names)
 	})
 
-	t.Run("stale SearchBefore cursor falls back to in-searcher path", func(t *testing.T) {
-		// A SearchBefore cursor created before the flag was enabled has one
-		// fewer sort value (no SortDocID tie-breaker). The post-rank path must
-		// fall back to the in-searcher path instead of feeding bleve a
-		// mismatched cursor.
+	t.Run("PreRank SearchBefore cursor continues on PostRank", func(t *testing.T) {
+		// A PreRank SearchBefore cursor lacks the document-ID tie-breaker.
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{
 			newDoc("doc-a", "allowed"),
@@ -3010,16 +3004,12 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			newDoc("doc-c", "allowed"),
 		})
 		ac := &countingAccessClient{allowAll: true}
-		// Pre-flag cursor shape: [title, name], no _id tie-breaker (len 2). The
-		// post-rank sort order is [title, name, _id] (len 3); this cursor
-		// mismatches post-rank and falls back to the in-searcher path, whose
-		// sort is [title, name] (len 2) — a match.
 		q := listQuery(10)
 		q.SearchBefore = []string{"doc-c", "doc-c"}
 		names, res := searchNames(t, index, ac, q)
-		require.Nil(t, res.Error)
-		// Falls back to in-searcher SearchBefore: the hits before ("doc-c","doc-c").
 		require.Equal(t, []string{"doc-a", "doc-b"}, names)
+		require.Equal(t, []string{"doc-c", "doc-c"}, q.SearchBefore, "the request cursor must not be changed")
+		require.Len(t, res.Rows[0].SortFields, 3)
 	})
 }
 
@@ -3033,10 +3023,9 @@ func newTestFoldersIndexPostRank(t testing.TB, size int64, cfg search.PostRankAu
 		Resource:  "folders",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        threshold, // use in-memory for tests
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
+		Root:          t.TempDir(),
+		FileThreshold: threshold, // use in-memory for tests
+		PostRankAuthz: cfg,
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -3089,33 +3078,27 @@ func TestSearchAuthzDoesNotReturnAnObjectChangedDuringAuthorization(t *testing.T
 	}
 	byTitle := listQuery(1)
 	byTitle.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_TITLE}}
-	for name, postRank := range map[string]bool{"in-searcher": false, "post-rank": true} {
-		for change, apply := range changes {
-			t.Run(name+"/"+change, func(t *testing.T) {
-				index := newTestDashboardsIndexAuthz(t, 3, postRank, search.PostRankAuthzConfig{})
-				indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("next", "allowed")})
-				ac := &changingAccessClient{countingAccessClient: countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}}
-				ac.change = func() {
-					changed := newDoc("doc", "allowed")
-					changed.Doc.RV = 2
-					apply(changed)
-					indexDocs(t, index, []*resource.BulkIndexItem{changed})
-				}
+	for change, apply := range changes {
+		t.Run(change, func(t *testing.T) {
+			index := newTestDashboardsIndexAuthz(t, 3, search.PostRankAuthzConfig{})
+			indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("next", "allowed")})
+			ac := &changingAccessClient{countingAccessClient: countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}}
+			ac.change = func() {
+				changed := newDoc("doc", "allowed")
+				changed.Doc.RV = 2
+				apply(changed)
+				indexDocs(t, index, []*resource.BulkIndexItem{changed})
+			}
 
-				names, res := searchNames(t, index, ac, byTitle)
-				if postRank {
-					require.Equal(t, []string{"next"}, names, "the changed object is left out and the page refilled")
-				}
-				// The in-searcher path authorizes and loads from one snapshot, so
-				// it may return the object as it was; never as it became.
-				for _, row := range res.Rows {
-					values, err := resource.DecodeSearchValues(res.Fields, row)
-					require.NoError(t, err)
-					require.Equal(t, "allowed", values[resource.SEARCH_FIELD_FOLDER])
-					require.NotEqual(t, "private title", values[resource.SEARCH_FIELD_TITLE])
-				}
-			})
-		}
+			names, res := searchNames(t, index, ac, byTitle)
+			require.Equal(t, []string{"next"}, names, "the changed object is left out and the page refilled")
+			for _, row := range res.Rows {
+				values, err := resource.DecodeSearchValues(res.Fields, row)
+				require.NoError(t, err)
+				require.Equal(t, "allowed", values[resource.SEARCH_FIELD_FOLDER])
+				require.NotEqual(t, "private title", values[resource.SEARCH_FIELD_TITLE])
+			}
+		})
 	}
 }
 
@@ -3123,7 +3106,7 @@ func TestSearchAuthzDoesNotReturnAnObjectChangedDuringAuthorization(t *testing.T
 // row. A row validation drops does not count, or the page could come back empty
 // with authorized matches still unseen.
 func TestSearchPostRankAuthzScansPastTheBudgetForARowThatSurvivesValidation(t *testing.T) {
-	index := newTestDashboardsIndexAuthz(t, 3, true, search.PostRankAuthzConfig{OverFetchFactor: 1, MaxCandidates: 1})
+	index := newTestDashboardsIndexAuthz(t, 3, search.PostRankAuthzConfig{OverFetchFactor: 1, MaxCandidates: 1})
 	// By title: "doc" and "e" make the first window of two, "next" the second.
 	indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("e", "denied"), newDoc("next", "allowed")})
 	ac := &changingAccessClient{countingAccessClient: countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}}
@@ -3137,56 +3120,6 @@ func TestSearchPostRankAuthzScansPastTheBudgetForARowThatSurvivesValidation(t *t
 
 	names, _ := searchNames(t, index, ac, q)
 	require.Equal(t, []string{"next"}, names)
-}
-
-// Post-rank windows read what authorization needs from doc values and load
-// stored fields only for the returned page. The rows have to come out exactly as
-// on the in-searcher path, which loads fields for the hits it returns.
-func TestSearchPostRankAuthzReturnsTheSameRowsAsInSearcherAuthz(t *testing.T) {
-	docs := make([]*resource.BulkIndexItem, 0, 40)
-	for i := range 40 {
-		d := newDocWithTags(fmt.Sprintf("doc-%02d", i), fmt.Sprintf("folder-%d", i%4), []string{"prod", fmt.Sprintf("svc-%d", i%3)})
-		d.Doc.Description = fmt.Sprintf("dashboard number %d", i)
-		docs = append(docs, d)
-	}
-	postRank := newTestDashboardsIndexAuthz(t, 2, true, search.PostRankAuthzConfig{})
-	inSearcher := newTestDashboardsIndexAuthz(t, 2, false, search.PostRankAuthzConfig{})
-	indexDocs(t, postRank, docs)
-	indexDocs(t, inSearcher, docs)
-
-	withFields := listQuery(5)
-	withFields.Fields = []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_FOLDER, resource.SEARCH_FIELD_TAGS}
-	relevance := listQuery(5)
-	relevance.Query = "doc"
-	offset := listQuery(5)
-	offset.Offset = 7
-
-	for name, q := range map[string]*resourcepb.ResourceSearchRequest{
-		"all columns":       listQuery(5),
-		"requested columns": withFields,
-		"relevance query":   relevance,
-		"offset":            offset,
-	} {
-		for access, ac := range map[string]func() *countingAccessClient{
-			"all folders": func() *countingAccessClient { return &countingAccessClient{allowAll: true} },
-			"some folders": func() *countingAccessClient {
-				return &countingAccessClient{allowedFolders: map[string]bool{"folder-1": true, "folder-3": true}}
-			},
-		} {
-			t.Run(name+"/"+access, func(t *testing.T) {
-				_, want := searchNames(t, inSearcher, ac(), q)
-				_, got := searchNames(t, postRank, ac(), q)
-				require.NotEmpty(t, want.Rows)
-				require.Equal(t, want.Fields, got.Fields)
-				// Post-rank sorts on the document ID last as a tie-breaker, so its
-				// cursors carry one more value; everything else must match.
-				for _, row := range append(want.Rows, got.Rows...) {
-					row.SortFields = nil
-				}
-				require.Equal(t, want.Rows, got.Rows)
-			})
-		}
-	}
 }
 
 func TestSearchPostRankAuthzFederated(t *testing.T) {
@@ -3327,6 +3260,19 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 			{"folders", "f-zzz"},
 		}, got)
 		require.Equal(t, int64(4), res.TotalHits, "TotalHits is the unfiltered merged match count")
+	})
+
+	t.Run("PreRank cursor cannot identify a federated resource", func(t *testing.T) {
+		dash := newTestDashboardsIndexPostRank(t, 2)
+		folder := newTestFoldersIndexPostRank(t, 2, search.PostRankAuthzConfig{})
+		q := federatedQuery(10)
+		q.SearchAfter = []string{"aaa", "shared-name"}
+		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: dashKey.Namespace}
+		ctx := authlib.WithAuthInfo(context.Background(), requester)
+		res, err := dash.Search(ctx, search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true}), q,
+			&resource.SearchIndexes{Federated: []resource.ResourceIndex{folder}}, nil)
+		require.Nil(t, res)
+		require.Equal(t, int32(http.StatusBadRequest), resourceutil.ErrorResultFromGRPCDetails(err).GetCode())
 	})
 
 	t.Run("respects permissions per resource type", func(t *testing.T) {
@@ -4219,7 +4165,7 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 	require.Equal(t, float64(rvLower), float64(rvUpper))
 
 	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	index := newResourceVersionIndex(t, key, false)
+	index := newResourceVersionIndex(t, key)
 	opts := &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 		Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
 	}}
@@ -4292,7 +4238,7 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 // the hits those return, so it needs the stored field loaded too.
 func TestPostRankAuthzSearchReturnsExactResourceVersion(t *testing.T) {
 	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	index := newResourceVersionIndex(t, key, true)
+	index := newResourceVersionIndex(t, key)
 
 	ctx := authlib.WithAuthInfo(context.Background(),
 		&identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: key.Namespace})
@@ -4318,7 +4264,7 @@ func TestPostRankAuthzSearchReturnsExactResourceVersion(t *testing.T) {
 // through the same path.
 func TestTrashSearchReturnsExactResourceVersion(t *testing.T) {
 	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	index := newResourceVersionIndex(t, key, false)
+	index := newResourceVersionIndex(t, key)
 
 	res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
@@ -4338,13 +4284,12 @@ func TestTrashSearchReturnsExactResourceVersion(t *testing.T) {
 
 // newResourceVersionIndex holds three live documents — two with resource versions
 // that collide as float64, one with none — and one deleted document.
-func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, postRankAuthz bool) resource.ResourceIndex {
+func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource) resource.ResourceIndex {
 	t.Helper()
 
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        threshold,
-		PostRankAuthzEnabled: postRankAuthz,
+		Root:          t.TempDir(),
+		FileThreshold: threshold,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource(key.Group, key.Resource): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -4383,7 +4328,7 @@ func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, post
 // nothing, with no sign the field was never usable.
 func TestSearchRejectsInternalFields(t *testing.T) {
 	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	index := newResourceVersionIndex(t, key, false)
+	index := newResourceVersionIndex(t, key)
 	newRequest := func() *resourcepb.ResourceSearchRequest {
 		return &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
