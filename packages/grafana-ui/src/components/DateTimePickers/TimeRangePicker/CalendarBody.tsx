@@ -205,11 +205,20 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
 
       [`${hasActiveSelector}, .react-calendar__tile--active, .react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart`]:
         {
-          color: theme.colors.accent.contrastText,
+          color: theme.flags.visualDesignRefresh ? theme.colors.accent.text : theme.colors.accent.contrastText,
           fontWeight: theme.typography.fontWeightMedium,
-          background: theme.colors.accent.main,
-          border: '0px',
+          background: theme.flags.visualDesignRefresh ? theme.colors.accent.subtleBackground : theme.colors.accent.main,
+          ...(theme.flags.visualDesignRefresh
+            ? { border: `1px solid ${theme.colors.accent.text}`, borderLeftWidth: 0, borderRightWidth: 0 }
+            : { border: '0px' }),
         },
+
+      ...(theme.flags.visualDesignRefresh && {
+        [`${hasActiveSelector}, .react-calendar__tile--rangeStart:not(.react-calendar__tile--hover), .react-calendar__tile--rangeStart.react-calendar__tile--hoverStart`]:
+          { borderLeftWidth: 1 },
+        [`${hasActiveSelector}, .react-calendar__tile--rangeEnd:not(.react-calendar__tile--hover), .react-calendar__tile--rangeEnd.react-calendar__tile--hoverEnd`]:
+          { borderRightWidth: 1 },
+      }),
     }),
   };
 };
