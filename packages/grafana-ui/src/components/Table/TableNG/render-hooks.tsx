@@ -190,6 +190,7 @@ export interface ColumnBuildConfig {
   showTypeIcons?: boolean;
   tableRefreshEnabled?: boolean;
   jsonSyntaxHighlightingEnabled?: boolean;
+  autoDetectJsonEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
   timeZone?: string;
@@ -290,6 +291,7 @@ function buildColumnsFromFields(
     showTypeIcons,
     tableRefreshEnabled,
     jsonSyntaxHighlightingEnabled,
+    autoDetectJsonEnabled,
     timeRange,
     timeZone,
     firstColumnExtraPadding = 0,
@@ -559,6 +561,7 @@ function buildColumnsFromFields(
               displayName={displayName}
               className={cellActionClassName}
               setInspectCell={setInspectCell}
+              autoDetectJsonEnabled={autoDetectJsonEnabled}
               onCellFilterAdded={onCellFilterAdded}
             />
           )}
