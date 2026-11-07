@@ -61,6 +61,8 @@ func RegisterAPIService(
 	if stars != nil {
 		builder.legacyStars = legacy.NewDashboardStarsStorage(stars, users, namespacer, sql)
 	}
+
+	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
