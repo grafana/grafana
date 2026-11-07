@@ -133,6 +133,25 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     [setPopoverVisible]
   );
 
+  // Opening "Filter values" from the column menu closes that menu, and the menu's
+  // Dropdown returns focus to its own trigger on close. That restore lands after
+  // FilterPopup's mount effect has already focused the search input, so the input
+  // loses focus and Tab then skips the portalled popup entirely. Re-assert focus
+  // on the next frame, once the menu's focus restore has run. The ref scopes the
+  // lookup to this header's own popup: a document-wide query could reach a popup
+  // opened from another column or table instance.
+  const filterPopupRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isPopoverVisible) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      filterPopupRef.current?.querySelector<HTMLInputElement>('input')?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isPopoverVisible]);
+
+  // we have to remove/reset the filter if the column is not filterable
   useEffect(() => {
     const anchorRemoved = filterAnchor !== null && !filterAnchor.isConnected;
     if (isPopoverVisible || !anchorRemoved || !isFocusLost()) {
@@ -291,7 +310,11 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
           <div onClick={(ev) => ev.stopPropagation()} onMouseDown={(ev) => ev.stopPropagation()}>
             <Popover
-              content={<FilterPopup {...popupProps} buttonElement={filterAnchor} />}
+              content={
+                <div ref={filterPopupRef}>
+                  <FilterPopup {...popupProps} buttonElement={filterAnchor} />
+                </div>
+              }
               placement="bottom-start"
               referenceElement={filterAnchor}
               show
