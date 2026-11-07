@@ -1,6 +1,10 @@
 package v0alpha1
 
 import (
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -9,6 +13,65 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
+
+// UnmarshalJSON preserves read compatibility with historical resource bodies.
+// New writes only serialize the blob input/reference defined by the current schema.
+func (s *Snapshot) UnmarshalJSON(data []byte) error {
+	type snapshotJSON Snapshot
+	var decoded snapshotJSON
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	var historical struct {
+		Spec struct {
+			Dashboard json.RawMessage `json:"dashboard"`
+		} `json:"spec"`
+	}
+	if err := json.Unmarshal(data, &historical); err != nil {
+		return err
+	}
+	ref := decoded.Blobs.Dashboard
+	hasDashboard := ref != nil && (ref.Data != nil || (ref.Uid != nil && *ref.Uid != ""))
+	if !hasDashboard && len(historical.Spec.Dashboard) > 0 && !bytes.Equal(bytes.TrimSpace(historical.Spec.Dashboard), []byte("null")) {
+		var dashboard map[string]json.RawMessage
+		if err := json.Unmarshal(historical.Spec.Dashboard, &dashboard); err != nil {
+			return fmt.Errorf("historical snapshot dashboard: %w", err)
+		}
+		decoded.Blobs.Dashboard = &SnapshotBlobReference{
+			Data:        new(base64.StdEncoding.EncodeToString(historical.Spec.Dashboard)),
+			ContentType: new("application/json"),
+		}
+	}
+	*s = Snapshot(decoded)
+	return nil
+}
+
+// UnmarshalJSON retains presence checks that optional pointers would otherwise
+// erase before the shared inline-input validator sees the resource.
+func (b *SnapshotBlobReference) UnmarshalJSON(data []byte) error {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(data, &fields); err != nil {
+		return err
+	}
+	if raw, present := fields["data"]; present {
+		var encoded string
+		if err := json.Unmarshal(raw, &encoded); err != nil || encoded == "" {
+			return fmt.Errorf("dashboard blob data must be a nonempty base64 string")
+		}
+		for field := range fields {
+			if field != "data" && field != "contentType" {
+				return fmt.Errorf("unsupported inline dashboard blob field %q", field)
+			}
+		}
+	}
+	type blobJSON SnapshotBlobReference
+	var decoded blobJSON
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	*b = SnapshotBlobReference(decoded)
+	return nil
+}
 
 // GetExternalDeleteURL prefers the server-provided endpoint; older snapshots may only have a public URL.
 func (s *Snapshot) GetExternalDeleteURL() string {
@@ -41,6 +104,21 @@ type DashboardSnapshotWithDeleteKey struct {
 
 	// The delete key is only returned when the item is created.  It is not returned from a get request
 	DeleteKey string `json:"deleteKey,omitempty"`
+}
+
+func (s *DashboardSnapshotWithDeleteKey) UnmarshalJSON(data []byte) error {
+	var snapshot Snapshot
+	if err := json.Unmarshal(data, &snapshot); err != nil {
+		return err
+	}
+	var response struct {
+		DeleteKey string `json:"deleteKey"`
+	}
+	if err := json.Unmarshal(data, &response); err != nil {
+		return err
+	}
+	*s = DashboardSnapshotWithDeleteKey{Snapshot: snapshot, DeleteKey: response.DeleteKey}
+	return nil
 }
 
 func (DashboardSnapshotWithDeleteKey) OpenAPIModelName() string {

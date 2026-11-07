@@ -42,7 +42,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
@@ -113,7 +112,6 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 					ID: pluginID,
 				},
 			})
-			hs.managedPluginsService = managedplugins.NewNoop()
 			hs.pluginPreinstall = pluginchecker.ProvidePreinstall(hs.Cfg)
 
 			expectedIdentity := &authn.Identity{
@@ -658,14 +656,13 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 				hs.PluginSettings = &pluginSettings
 				hs.pluginStore = store
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
-				hs.managedPluginsService = managedplugins.NewNoop()
 				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
 					hs.Cfg,
 					hs.pluginStore,
 					nil, // plugins.Installer
 					tracing.InitializeTracerForTest(),
 					kvstore.NewFakeFeatureToggles(t, true),
-					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
+					pluginchecker.ProvideService(provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
 				)
 				require.NoError(t, err)
 			})
@@ -761,14 +758,13 @@ func Test_PluginsList_EmbeddedFilter(t *testing.T) {
 				hs.PluginSettings = &pluginSettings
 				hs.pluginStore = store
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
-				hs.managedPluginsService = managedplugins.NewNoop()
 				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
 					hs.Cfg,
 					hs.pluginStore,
 					nil,
 					tracing.InitializeTracerForTest(),
 					kvstore.NewFakeFeatureToggles(t, true),
-					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
+					pluginchecker.ProvideService(provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
 				)
 				require.NoError(t, err)
 			})
@@ -983,7 +979,7 @@ func Test_PluginsSettings(t *testing.T) {
 					&pluginfakes.FakePluginInstaller{},
 					tracing.InitializeTracerForTest(),
 					kvstore.NewFakeFeatureToggles(t, true),
-					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
+					pluginchecker.ProvideService(provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
 				)
 				require.NoError(t, err)
 			})
@@ -1035,7 +1031,6 @@ func Test_UpdatePluginSetting(t *testing.T) {
 			hs.PluginSettings = &pluginSettings
 			hs.pluginStore = store
 			hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
-			hs.managedPluginsService = managedplugins.NewNoop()
 			hs.log = log.NewNopLogger()
 		})
 
@@ -1061,7 +1056,6 @@ func Test_UpdatePluginSetting(t *testing.T) {
 			hs.PluginSettings = tooLarge
 			hs.pluginStore = store
 			hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
-			hs.managedPluginsService = managedplugins.NewNoop()
 			hs.log = log.NewNopLogger()
 		})
 

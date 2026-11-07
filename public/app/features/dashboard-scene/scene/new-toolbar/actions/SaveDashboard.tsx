@@ -25,6 +25,11 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
 
   const { save, saveAsCopy: onSaveAsCopy, isNew } = getDashboardSaveActions(dashboard, isDashboardTemplatesFlagEnabled);
   const isManaged = dashboard.isManaged();
+  // Edits to pending changes are recorded as they're made: the banner's Apply saves the dashboard.
+  if (dashboard.recordsToPendingChanges()) {
+    return null;
+  }
+
   // In dashboard settings we still use the nav toolbar for a short while
   const buttonSize = Boolean(editview) ? 'sm' : 'md';
 

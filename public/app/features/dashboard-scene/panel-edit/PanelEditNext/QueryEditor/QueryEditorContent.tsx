@@ -6,9 +6,10 @@ import { useStyles2 } from '@grafana/ui';
 import { QueryEditorType } from '../constants';
 
 import { QueryEditorBody } from './Body/QueryEditorBody';
-import { QueryEditorFooter } from './Footer/QueryEditorFooter';
+import { SingleEditorCard } from './Body/SingleEditorCard';
+import { CardEditorRenderer } from './CardEditorRenderer';
 import { ContentHeaderSceneWrapper } from './Header/ContentHeader';
-import { DatasourceHelpPanel } from './Header/DatasourceHelpPanel';
+import { QueryEditorMainHeader } from './Header/QueryEditorMainHeader';
 import { QueriesEmptyState } from './QueriesEmptyState';
 import {
   useAlertingContext,
@@ -21,7 +22,7 @@ import { StackedEditorRenderer } from './StackedEditor/StackedEditorRenderer';
 export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
 
-  const { cardType, showingDatasourceHelp, pendingExpression, pendingTransformation, pendingSavedQuery, stackedMode } =
+  const { cardType, pendingExpression, pendingTransformation, pendingSavedQuery, stackedMode } =
     useQueryEditorUIContext();
   const { alertRules } = useAlertingContext();
   const { queries } = useQueryRunnerContext();
@@ -36,27 +37,39 @@ export function QueryEditorContent() {
   // edit, so guide them back to adding a card instead of showing an empty editor surface.
   const isQueriesEmptyState = !isAlertView && !hasPendingCard && queries.length === 0 && transformations.length === 0;
 
-  const shouldShowStackedEditor = stackedMode.enabled && !hasPendingPicker && !isAlertView;
-  const shouldShowHeader = !isAlertEmptyState;
-  const shouldShowFooter = !hasPendingPicker && !isAlertView;
-  const shouldShowDatasourceHelp = !hasPendingPicker && showingDatasourceHelp;
+  const shouldShowStackedEditor = stackedMode.enabled && !hasPendingPicker;
 
-  return (
-    <div className={styles.container}>
-      {isQueriesEmptyState ? (
-        <QueriesEmptyState />
-      ) : shouldShowStackedEditor ? (
-        <StackedEditorRenderer />
-      ) : (
+  const renderContent = () => {
+    if (isQueriesEmptyState) {
+      return <QueriesEmptyState />;
+    }
+
+    if (isAlertView) {
+      return (
         <>
-          {shouldShowHeader && <ContentHeaderSceneWrapper />}
-          {shouldShowDatasourceHelp && <DatasourceHelpPanel />}
-          <QueryEditorBody />
-          {shouldShowFooter && <QueryEditorFooter />}
+          {!isAlertEmptyState && <ContentHeaderSceneWrapper />}
+          <QueryEditorBody>
+            <CardEditorRenderer />
+          </QueryEditorBody>
         </>
-      )}
-    </div>
-  );
+      );
+    }
+
+    return (
+      <>
+        {!hasPendingPicker && <QueryEditorMainHeader />}
+        {shouldShowStackedEditor ? (
+          <StackedEditorRenderer />
+        ) : (
+          <QueryEditorBody>
+            <SingleEditorCard />
+          </QueryEditorBody>
+        )}
+      </>
+    );
+  };
+
+  return <div className={styles.container}>{renderContent()}</div>;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -66,6 +79,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
+    // Flush to the editor's bottom edge, so the lower corners are squared.
+    borderBottomLeftRadius: 'unset',
+    borderBottomRightRadius: 'unset',
     height: '100%',
     width: '100%',
     overflow: 'hidden',

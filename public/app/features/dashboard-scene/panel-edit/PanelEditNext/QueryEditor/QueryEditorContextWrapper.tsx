@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
@@ -324,13 +324,24 @@ export function QueryEditorContextWrapper({
 
   const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings, panel);
 
+  // A ref keeps activateStackedItem stable; the stack's IntersectionObserver re-subscribes when it changes.
+  const activeCardIdsRef = useRef({ queryRefId: activeQueryRefId, transformationId: activeTransformationId });
+  useLayoutEffect(() => {
+    activeCardIdsRef.current = { queryRefId: activeQueryRefId, transformationId: activeTransformationId };
+  });
+
   // Scrolling the stack activates the card coming into view, which is navigation — so keep the
   // bulk selection so checkboxes ticked in the sidebar survive scrolling the stack.
   const activateStackedItem = useCallback(
     (queryRefId: string | null, transformationId: string | null) => {
+      // Help and debug views follow the active card, so close them rather than let them jump to the next one.
+      const { queryRefId: activeQuery, transformationId: activeTransformation } = activeCardIdsRef.current;
+      if (queryRefId !== activeQuery || transformationId !== activeTransformation) {
+        resetUIToggles();
+      }
       onCardSelectionChange(queryRefId, transformationId, { bulk: 'keep' });
     },
-    [onCardSelectionChange]
+    [onCardSelectionChange, resetUIToggles]
   );
 
   // Composed after useSelectedCard so `isAlertView` reads the resolved alert card, matching the

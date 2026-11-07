@@ -1,10 +1,4 @@
-import { test, expect } from './fixtures';
-
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
+import { expect, test } from './fixtures';
 
 test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }, () => {
   test.use({

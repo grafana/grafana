@@ -1,9 +1,13 @@
 package resource
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"io"
 	"iter"
+	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -48,6 +52,124 @@ func TestResourceServerOptionsBulkBatchOptions(t *testing.T) {
 	}
 }
 
+func TestProcessBulkWithPreflightRejectsBeforeBackend(t *testing.T) {
+	want := errors.New("invalid spool")
+	iter := &failingPreflightIterator{err: want}
+	backend := &preflightTestBackend{}
+
+	rsp := processBulkWithPreflight(t.Context(), backend, BulkSettings{}, iter)
+
+	require.False(t, backend.called)
+	require.NotNil(t, rsp.Error)
+	require.Contains(t, rsp.Error.Message, want.Error())
+}
+
+func TestSpooledBulkRequestsPreflightRejectsCorruptRecords(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		content []byte
+		message string
+	}{
+		{name: "truncated record", content: []byte{3}, message: "truncated"},
+		{name: "invalid record", content: []byte{1, 0xff}, message: "unmarshal"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			file, err := os.CreateTemp(t.TempDir(), "bulk-spool-*.tmp")
+			require.NoError(t, err)
+			_, err = file.Write(tc.content)
+			require.NoError(t, err)
+			spool := &spooledBulkRequests{file: file, reader: bufio.NewReader(file)}
+			t.Cleanup(spool.Close)
+
+			err = spool.Preflight()
+			require.ErrorContains(t, err, tc.message)
+		})
+	}
+}
+
+func TestBulkSpoolBudgetBoundsAggregateUsage(t *testing.T) {
+	budget := newBulkSpoolBudget(10)
+
+	require.NoError(t, budget.reserve(6))
+	require.EqualValues(t, 6, budget.used())
+	require.Error(t, budget.reserve(5))
+	require.EqualValues(t, 6, budget.used())
+
+	budget.release(6)
+	require.NoError(t, budget.reserve(5))
+	require.EqualValues(t, 5, budget.used())
+}
+
+func TestSpoolBulkRequestsReleasesBudgetAfterQuotaError(t *testing.T) {
+	budget := newBulkSpoolBudget(1)
+	iter := newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{newTestBulkRequest("item")})
+
+	spool, err := spoolBulkRequests(t.Context(), iter, DefaultBulkBatchOptions(), budget)
+
+	require.Nil(t, spool)
+	require.Error(t, err)
+	require.EqualValues(t, 0, budget.used())
+	require.EqualValues(t, 413, AsErrorResult(err).Code)
+}
+
+func TestSpoolBulkRequestsCancellation(t *testing.T) {
+	for _, cancelBeforeStart := range []bool{true, false} {
+		name := "after first batch"
+		if cancelBeforeStart {
+			name = "before first batch"
+		}
+		t.Run(name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			budget := newBulkSpoolBudget(1 << 20)
+			source := newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{newTestBulkRequest("item")})
+			iter := &checkingBulkIterator{
+				batchOnlyBulkIterator: source,
+				beforeNext: func() {
+					if source.idx == 0 {
+						require.Positive(t, budget.used())
+						cancel()
+					}
+				},
+			}
+			if cancelBeforeStart {
+				cancel()
+			}
+
+			spool, err := spoolBulkRequests(ctx, iter, DefaultBulkBatchOptions(), budget)
+
+			require.Nil(t, spool)
+			require.ErrorIs(t, err, context.Canceled)
+			require.Zero(t, budget.used())
+			if cancelBeforeStart {
+				require.Equal(t, -1, source.idx)
+			}
+		})
+	}
+}
+
+func TestSpooledBulkRequestsNextBatchCancellation(t *testing.T) {
+	budget := newBulkSpoolBudget(1 << 20)
+	iter := newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
+		newTestBulkRequest("item-1"),
+		newTestBulkRequest("item-2"),
+	})
+	spool, err := spoolBulkRequests(t.Context(), iter, BulkBatchOptions{MaxItems: 1}, budget)
+	require.NoError(t, err)
+	t.Cleanup(spool.Close)
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	require.False(t, spool.NextBatch(ctx))
+	require.False(t, spool.RollbackRequested())
+	require.True(t, spool.NextBatch(t.Context()))
+	require.Equal(t, "item-1", spool.Batch()[0].Key.Name)
+	require.False(t, spool.NextBatch(ctx))
+	require.True(t, spool.NextBatch(t.Context()))
+	require.Equal(t, "item-2", spool.Batch()[0].Key.Name)
+	require.False(t, spool.NextBatch(t.Context()))
+}
+
 func TestBatchRunnerNextBatchHonorsMaxItemsAndEOF(t *testing.T) {
 	opts := testBulkBatchOptions(2, 1<<20, 0)
 	reqs := []*resourcepb.BulkRequest{
@@ -57,18 +179,18 @@ func TestBatchRunnerNextBatchHonorsMaxItemsAndEOF(t *testing.T) {
 	}
 	runner := newTestBatchRunner(&testBulkProcessServer{requests: reqs}, reqs[0].Key, opts)
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Len(t, runner.Batch(), 2)
 	require.Equal(t, "item-1", runner.Batch()[0].Key.Name)
 	require.Equal(t, "item-2", runner.Batch()[1].Key.Name)
 	require.False(t, runner.RollbackRequested())
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Len(t, runner.Batch(), 1)
 	require.Equal(t, "item-3", runner.Batch()[0].Key.Name)
 	require.False(t, runner.RollbackRequested())
 
-	require.False(t, runner.NextBatch())
+	require.False(t, runner.NextBatch(t.Context()))
 }
 
 func TestBatchRunnerNextBatchHonorsIdleFlush(t *testing.T) {
@@ -82,15 +204,15 @@ func TestBatchRunnerNextBatchHonorsIdleFlush(t *testing.T) {
 		delays:   []time.Duration{0, 20 * time.Millisecond},
 	}, reqs[0].Key, opts)
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Len(t, runner.Batch(), 1)
 	require.Equal(t, "item-1", runner.Batch()[0].Key.Name)
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Len(t, runner.Batch(), 1)
 	require.Equal(t, "item-2", runner.Batch()[0].Key.Name)
 
-	require.False(t, runner.NextBatch())
+	require.False(t, runner.NextBatch(t.Context()))
 }
 
 func TestBatchRunnerNextPreservesSingleItemIteration(t *testing.T) {
@@ -122,7 +244,7 @@ func TestBatchRunnerNextBatchRollbackOnAccessError(t *testing.T) {
 		stopCh:    make(chan struct{}),
 	}
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Empty(t, runner.Batch())
 	require.True(t, runner.RollbackRequested())
 	require.ErrorContains(t, runner.err, "missing access control")
@@ -199,6 +321,25 @@ func TestBulkProcessStopsRunnerOnPanic(t *testing.T) {
 	}
 }
 
+// Early rejections are covered by the blob validation tests; this covers a
+// backend's call-level failure, which must become the stream status instead of
+// a response carrying partial results.
+func TestBulkProcessReturnsBackendFailureAsStatus(t *testing.T) {
+	failure := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "bulk import failed"}
+	srv := &server{
+		backend:          &failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1, Error: failure}},
+		access:           authlib.FixedAccessClient(true),
+		bulkBatchOptions: DefaultBulkBatchOptions(),
+	}
+	key := newTestBulkRequest("item").Key
+	settings := BulkSettings{Collection: []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}}}
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1"})
+	stream := &bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: metadata.NewIncomingContext(ctx, settings.ToMD())}}
+
+	requireRPCError(t, srv.BulkProcess(stream), failure)
+	require.Nil(t, stream.response)
+}
+
 func newTestBatchRunner(stream resourcepb.BulkStore_BulkProcessServer, key *resourcepb.ResourceKey, opts BulkBatchOptions) *batchRunner {
 	return &batchRunner{
 		stream: stream,
@@ -230,6 +371,35 @@ func newTestBulkRequest(name string) *resourcepb.BulkRequest {
 		Action: resourcepb.BulkRequest_ADDED,
 		Value:  []byte(`{"apiVersion":"shorturl.grafana.app/v1beta1","kind":"ShortURL","metadata":{"name":"` + name + `","namespace":"default"},"spec":{"path":"d/test"}}`),
 	}
+}
+
+type failingPreflightIterator struct {
+	err error
+}
+
+func (i *failingPreflightIterator) Preflight() error                 { return i.err }
+func (i *failingPreflightIterator) Next() bool                       { return false }
+func (i *failingPreflightIterator) Request() *resourcepb.BulkRequest { return nil }
+func (i *failingPreflightIterator) RollbackRequested() bool          { return false }
+
+type preflightTestBackend struct {
+	called bool
+}
+
+func (*preflightTestBackend) RequiresBulkPreflight() {}
+
+func (b *preflightTestBackend) ProcessBulk(context.Context, BulkSettings, BulkRequestIterator) *resourcepb.BulkResponse {
+	b.called = true
+	return &resourcepb.BulkResponse{}
+}
+
+type failingBulkBackend struct {
+	UnimplementedStorageBackend
+	rsp *resourcepb.BulkResponse
+}
+
+func (b *failingBulkBackend) ProcessBulk(context.Context, BulkSettings, BulkRequestIterator) *resourcepb.BulkResponse {
+	return b.rsp
 }
 
 type testBulkProcessServer struct {
