@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 
@@ -40,10 +41,25 @@ type ProxyDependencies struct {
 	OAuthTokenService  *oauthtoken.Service
 	Tracer             tracing.Tracer
 	Features           featuremgmt.FeatureToggles
+	// Timeout bounds how long the proxy waits for the response headers of a
+	// datasource that does not set its own timeout.
+	Timeout time.Duration
 	// IDTokenDeriver mints X-Grafana-Id from a requester's OBO access token when the requester
 	// carries no id token of its own. Nil disables that fallback (see
 	// proxyutil.ApplyForwardIDHeader).
 	IDTokenDeriver authnlib.IDTokenDeriver
+}
+
+// defaultProxyTimeout is longer than the legacy proxy's 30 second default.
+const defaultProxyTimeout = 60 * time.Second
+
+// ProxyTimeoutFromConfig returns the [dataproxy] timeout when it has a value, and
+// the API server proxy's default otherwise.
+func ProxyTimeoutFromConfig(cfg *setting.Cfg) time.Duration {
+	if cfg.DataProxyTimeoutConfigured && cfg.DataProxyTimeout > 0 {
+		return time.Duration(cfg.DataProxyTimeout) * time.Second
+	}
+	return defaultProxyTimeout
 }
 
 // ProxyDependenciesProvider returns fixed dependencies in ordinary Grafana and
@@ -61,6 +77,7 @@ func ProvideProxyDependencies(
 	deps := &ProxyDependencies{
 		ProxyCfg:           pluginproxy.NewDataSourceProxySettings(cfg),
 		HTTPClientProvider: httpClientProvider,
+		Timeout:            ProxyTimeoutFromConfig(cfg),
 		OAuthTokenService:  oAuthTokenService,
 		Tracer:             tracer,
 		Features:           features,
@@ -139,6 +156,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 		loader.transports = r.transports
 		loader.transportConfigKey = deps.TransportConfigKey
+		loader.defaultTimeout = deps.Timeout
 
 		ds, err := loader.DataSource(req.Context())
 		if err != nil {
@@ -176,12 +194,18 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
+		var proxyCfg pluginproxy.DataSourceProxySettings
+		if deps.ProxyCfg != nil {
+			proxyCfg = *deps.ProxyCfg
+		}
+		proxyCfg.UnwrapTimeouts = true
+
 		proxy, err := pluginproxy.NewDataSourceProxy(
 			loader,
 			r.builder.pluginJSON.Routes,
 			pluginproxy.HTTPContext{Req: req, Resp: w},
 			proxyPathFromRequest(req, name),
-			deps.ProxyCfg,
+			&proxyCfg,
 			deps.HTTPClientProvider,
 			deps.OAuthTokenService,
 			deps.Tracer,

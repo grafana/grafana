@@ -176,12 +176,14 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		return nil
 	}
 
-	reverseProxy := proxyutil.NewReverseProxy(
-		proxyErrorLogger,
-		proxy.director,
+	proxyOpts := []proxyutil.ReverseProxyOption{
 		proxyutil.WithTransport(transport),
 		proxyutil.WithModifyResponse(modifyResponse),
-	)
+	}
+	if proxy.settings.UnwrapTimeouts {
+		proxyOpts = append(proxyOpts, proxyutil.WithUnwrappedTimeouts(proxyErrorLogger))
+	}
+	reverseProxy := proxyutil.NewReverseProxy(proxyErrorLogger, proxy.director, proxyOpts...)
 
 	proxy.logRequest()
 	ctx, span := proxy.tracer.Start(proxy.ctx.Req.Context(), "datasource reverse proxy")
