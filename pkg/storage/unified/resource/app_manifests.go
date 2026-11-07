@@ -16,6 +16,7 @@ import (
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
 	correlations "github.com/grafana/grafana/apps/correlations/pkg/apis"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis"
+	dashboardviews "github.com/grafana/grafana/apps/dashboardviews/pkg/apis/manifestdata"
 	dashvalidator "github.com/grafana/grafana/apps/dashvalidator/pkg/apis/manifestdata"
 	dashvalidator1 "github.com/grafana/grafana/apps/dashvalidator/pkg/generated/manifestdata"
 	example "github.com/grafana/grafana/apps/example/pkg/apis/manifestdata"
@@ -42,6 +43,7 @@ func generatedAppManifests() []*app.ManifestData {
 		collections.LocalManifest().ManifestData,
 		correlations.LocalManifest().ManifestData,
 		dashboard.LocalManifest().ManifestData,
+		dashboardviews.LocalManifest().ManifestData,
 		dashvalidator.LocalManifest().ManifestData,
 		dashvalidator1.LocalManifest().ManifestData,
 		example.LocalManifest().ManifestData,
