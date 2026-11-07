@@ -90,7 +90,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
-	if err := api.validateRole(cmd.Role, c.GetOrgRole()); err != nil {
+	if err := api.validateRole(c, cmd.Role); err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create service account", err)
 	}
 
@@ -180,7 +180,7 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
-	if err := api.validateRole(cmd.Role, c.GetOrgRole()); err != nil {
+	if err := api.validateRole(c, cmd.Role); err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update service account", err)
 	}
 
@@ -202,14 +202,38 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 	})
 }
 
-func (api *ServiceAccountsAPI) validateRole(r *org.RoleType, orgRole org.RoleType) error {
-	if r != nil && !r.IsValid() {
+func (api *ServiceAccountsAPI) validateRole(c *contextmodel.ReqContext, r *org.RoleType) error {
+	if r == nil {
+		return nil
+	}
+	if !r.IsValid() {
 		return serviceaccounts.ErrServiceAccountInvalidRole.Errorf("invalid role specified")
 	}
-	if r != nil && !orgRole.Includes(*r) {
+	maxRole, err := api.maxAssignableRole(c)
+	if err != nil {
+		return err
+	}
+	if !maxRole.Includes(*r) {
 		return serviceaccounts.ErrServiceAccountRolePrivilegeDenied.Errorf("can not assign a role higher than user's role")
 	}
 	return nil
+}
+
+// maxAssignableRole returns the highest role the caller may give a service account. Access policy
+// identities have no org role, so org.users:write on all users stands in for Admin.
+func (api *ServiceAccountsAPI) maxAssignableRole(c *contextmodel.ReqContext) (org.RoleType, error) {
+	if !c.IsIdentityType(claims.TypeAccessPolicy) {
+		return c.GetOrgRole(), nil
+	}
+	canAssign, err := api.accesscontrol.Evaluate(c.Req.Context(), c.SignedInUser,
+		accesscontrol.EvalPermission(accesscontrol.ActionOrgUsersWrite, accesscontrol.Scope("users", "id", "*")))
+	if err != nil {
+		return org.RoleNone, err
+	}
+	if canAssign {
+		return org.RoleAdmin, nil
+	}
+	return org.RoleNone, nil
 }
 
 // swagger:route DELETE /serviceaccounts/{serviceAccountId} service_accounts deleteServiceAccount

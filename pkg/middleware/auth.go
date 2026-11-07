@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -26,8 +28,11 @@ import (
 
 type AuthOptions struct {
 	ReqGrafanaAdmin bool
-	ReqNoAnonynmous bool
-	ReqSignedIn     bool
+	// AllowAccessPolicy lets access policy identities through ReqGrafanaAdmin. They never carry the
+	// Grafana Admin flag, so the route must still authorize them with an RBAC check.
+	AllowAccessPolicy bool
+	ReqNoAnonynmous   bool
+	ReqSignedIn       bool
 }
 
 func accessForbidden(c *contextmodel.ReqContext) {
@@ -219,7 +224,8 @@ func Auth(options *AuthOptions) web.Handler {
 			return
 		}
 
-		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
+		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin &&
+			(!options.AllowAccessPolicy || !c.IsIdentityType(claims.TypeAccessPolicy)) {
 			accessForbidden(c)
 			return
 		}

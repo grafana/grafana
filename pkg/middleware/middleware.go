@@ -16,6 +16,11 @@ var (
 		ReqSignedIn:     true,
 		ReqGrafanaAdmin: true,
 	})
+	ReqGrafanaAdminOrAccessPolicy = Auth(&AuthOptions{
+		ReqSignedIn:       true,
+		ReqGrafanaAdmin:   true,
+		AllowAccessPolicy: true,
+	})
 	ReqSignedIn            = Auth(&AuthOptions{ReqSignedIn: true})
 	ReqSignedInNoAnonymous = Auth(&AuthOptions{ReqSignedIn: true, ReqNoAnonynmous: true})
 	ReqEditorRole          = RoleAuth(org.RoleEditor, org.RoleAdmin)

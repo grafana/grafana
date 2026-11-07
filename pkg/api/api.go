@@ -574,7 +574,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		adminUserRoute.Post("/", authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.AdminCreateUser))
 		adminUserRoute.Put("/:id/password", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPassword))
-		adminUserRoute.Put("/:id/permissions", userUIDResolver, reqGrafanaAdmin, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersPermissionsUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPermissions))
+		adminUserRoute.Put("/:id/permissions", userUIDResolver, middleware.ReqGrafanaAdminOrAccessPolicy, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersPermissionsUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPermissions))
 		adminUserRoute.Delete("/:id", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersDelete, userIDScope)), routing.Wrap(hs.AdminDeleteUser))
 		adminUserRoute.Post("/:id/disable", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersDisable, userIDScope)), routing.Wrap(hs.AdminDisableUser))
 		adminUserRoute.Post("/:id/enable", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersEnable, userIDScope)), routing.Wrap(hs.AdminEnableUser))

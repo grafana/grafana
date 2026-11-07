@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -28,6 +29,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	type TestCase struct {
 		desc         string
 		basicRole    org.RoleType
+		identityType claims.IdentityType
 		permissions  []accesscontrol.Permission
 		body         string
 		expectedCode int
@@ -77,6 +79,42 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			body:         `{"name": "", "isDisabled": false, "role": "Viewer"}`,
 			expectedCode: http.StatusBadRequest,
 		},
+		{
+			desc:         "access policy should be able to create admin service account with org.users:write",
+			identityType: claims.TypeAccessPolicy,
+			permissions: []accesscontrol.Permission{
+				{Action: serviceaccounts.ActionCreate},
+				{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:id:*"},
+			},
+			body:         `{"name": "test", "isDisabled": false, "role": "Admin"}`,
+			expectedSA:   &serviceaccounts.ServiceAccountDTO{Name: "test", OrgId: 1, Role: string(org.RoleAdmin)},
+			expectedCode: http.StatusCreated,
+		},
+		{
+			desc:         "access policy should not be able to create service account with a role without org.users:write",
+			identityType: claims.TypeAccessPolicy,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}},
+			body:         `{"name": "test", "isDisabled": false, "role": "Viewer"}`,
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:         "access policy should be able to create service account without a role",
+			identityType: claims.TypeAccessPolicy,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}},
+			body:         `{"name": "test", "isDisabled": false}`,
+			expectedSA:   &serviceaccounts.ServiceAccountDTO{Name: "test", OrgId: 1},
+			expectedCode: http.StatusCreated,
+		},
+		{
+			desc:      "user with org.users:write should not be able to create service account above their role",
+			basicRole: org.RoleViewer,
+			permissions: []accesscontrol.Permission{
+				{Action: serviceaccounts.ActionCreate},
+				{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"},
+			},
+			body:         `{"name": "test", "isDisabled": false, "role": "Admin"}`,
+			expectedCode: http.StatusForbidden,
+		},
 	}
 
 	for _, tt := range tests {
@@ -86,7 +124,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			})
 			req := server.NewRequest(http.MethodPost, "/api/serviceaccounts/", strings.NewReader(tt.body))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
-				OrgRole: tt.basicRole, OrgID: 1, IsAnonymous: true,
+				OrgRole: tt.basicRole, OrgID: 1, IsAnonymous: tt.identityType == "", FallbackType: tt.identityType,
 				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
@@ -191,6 +229,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 		id           int64
 		body         string
 		basicRole    org.RoleType
+		identityType claims.IdentityType
 		permissions  []accesscontrol.Permission
 		expectedSA   *serviceaccounts.ServiceAccountProfileDTO
 		expectedCode int
@@ -230,6 +269,26 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
 			expectedCode: http.StatusBadRequest,
 		},
+		{
+			desc:         "access policy should be able to update service account to admin with org.users:write",
+			id:           1,
+			body:         `{"role": "Admin"}`,
+			identityType: claims.TypeAccessPolicy,
+			permissions: []accesscontrol.Permission{
+				{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:*"},
+				{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:id:*"},
+			},
+			expectedSA:   &serviceaccounts.ServiceAccountProfileDTO{},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:         "access policy should not be able to update service account role without org.users:write",
+			id:           1,
+			body:         `{"role": "Editor"}`,
+			identityType: claims.TypeAccessPolicy,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:*"}},
+			expectedCode: http.StatusForbidden,
+		},
 	}
 
 	for _, tt := range tests {
@@ -239,7 +298,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			})
 
 			req := server.NewRequest(http.MethodPatch, fmt.Sprintf("/api/serviceaccounts/%d", tt.id), strings.NewReader(tt.body))
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: 1, FallbackType: tt.identityType, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 
