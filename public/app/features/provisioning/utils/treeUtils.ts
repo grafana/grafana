@@ -60,7 +60,7 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
 export function getItemType(path: string, resource?: ResourceListItem): ItemType {
   const kindInfo = getKindInfoByResource(resource?.resource);
   if (kindInfo) {
-    return kindInfo.itemType;
+    return kindInfo.kind;
   }
   // Inferred folder (no extension means it's a folder from file paths)
   if (!resource && !path.includes('.')) {
