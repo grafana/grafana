@@ -18,6 +18,8 @@ import (
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashboardV1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -981,4 +983,84 @@ func TestIntegrationDashboardDeleteGracefulDegradation(t *testing.T) {
 		err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
 		require.Error(t, err, "provisioned dashboard delete should be blocked")
 	})
+}
+
+func TestIntegrationConversionStatusAfterCrossVersionUpdate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+	t.Cleanup(helper.Shutdown)
+
+	clientV1beta1 := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  dashboardV1beta1.DashboardResourceInfo.GroupVersionResource(),
+	})
+	clientV2 := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  dashboardV2.DashboardResourceInfo.GroupVersionResource(),
+	})
+
+	requireStoredVersion := func(t *testing.T, obj *unstructured.Unstructured, expected string) {
+		t.Helper()
+		failed, _, err := unstructured.NestedBool(obj.Object, "status", "conversion", "failed")
+		require.NoError(t, err)
+		require.False(t, failed)
+		storedVersion, found, err := unstructured.NestedString(obj.Object, "status", "conversion", "storedVersion")
+		require.NoError(t, err)
+		require.True(t, found, "expected status.conversion.storedVersion to be set")
+		require.Equal(t, expected, storedVersion)
+	}
+	requireNoConversion := func(t *testing.T, obj *unstructured.Unstructured) {
+		t.Helper()
+		conversion, found, err := unstructured.NestedMap(obj.Object, "status", "conversion")
+		require.NoError(t, err)
+		require.False(t, found, "expected no status.conversion, got %v", conversion)
+	}
+
+	dash := &unstructured.Unstructured{Object: map[string]any{
+		"spec": map[string]any{
+			"title":         "conversion status",
+			"schemaVersion": 42,
+		},
+	}}
+	dash.SetGenerateName("conv-")
+	dash.SetAPIVersion(dashboardV1beta1.APIVERSION)
+	dash.SetKind("Dashboard")
+	created, err := clientV1beta1.Resource.Create(ctx, dash, metav1.CreateOptions{})
+	require.NoError(t, err)
+	name := created.GetName()
+
+	fromV2, err := clientV2.Resource.Get(ctx, name, metav1.GetOptions{})
+	require.NoError(t, err)
+	requireStoredVersion(t, fromV2, dashboardV1.VERSION)
+
+	require.NoError(t, unstructured.SetNestedField(fromV2.Object, "saved through v2", "spec", "title"))
+	updated, err := clientV2.Resource.Update(ctx, fromV2, metav1.UpdateOptions{})
+	require.NoError(t, err)
+	requireNoConversion(t, updated)
+
+	fromV2, err = clientV2.Resource.Get(ctx, name, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "saved through v2", fromV2.Object["spec"].(map[string]any)["title"])
+	requireNoConversion(t, fromV2)
+
+	fromV1beta1, err := clientV1beta1.Resource.Get(ctx, name, metav1.GetOptions{})
+	require.NoError(t, err)
+	requireStoredVersion(t, fromV1beta1, dashboardV2.VERSION)
+
+	require.NoError(t, unstructured.SetNestedField(fromV1beta1.Object, "saved through v1beta1", "spec", "title"))
+	updated, err = clientV1beta1.Resource.Update(ctx, fromV1beta1, metav1.UpdateOptions{})
+	require.NoError(t, err)
+	requireNoConversion(t, updated)
+
+	fromV1beta1, err = clientV1beta1.Resource.Get(ctx, name, metav1.GetOptions{})
+	require.NoError(t, err)
+	requireNoConversion(t, fromV1beta1)
+
+	fromV2, err = clientV2.Resource.Get(ctx, name, metav1.GetOptions{})
+	require.NoError(t, err)
+	requireStoredVersion(t, fromV2, dashboardV1.VERSION)
 }
