@@ -14,6 +14,7 @@ type FakeService struct {
 	ExpectedError             error
 	ExpectedRecentlyUsedLabel map[int64]string
 	ExpectedAuthModuleLabels  []string
+	ExpectedUsersAuthModules  map[int64][]string
 
 	SetAuthInfoFn        func(ctx context.Context, cmd *login.SetAuthInfoCommand) error
 	UpdateAuthInfoFn     func(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error
@@ -31,6 +32,10 @@ func (a *FakeService) GetUsersRecentlyUsedLabel(ctx context.Context, query login
 
 func (a *FakeService) GetUserAuthModuleLabels(ctx context.Context, userID int64) ([]string, error) {
 	return a.ExpectedAuthModuleLabels, a.ExpectedError
+}
+
+func (a *FakeService) GetUsersAuthModules(ctx context.Context, userIDs []int64) (map[int64][]string, error) {
+	return a.ExpectedUsersAuthModules, a.ExpectedError
 }
 
 func (a *FakeService) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {

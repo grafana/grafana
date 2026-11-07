@@ -110,6 +110,36 @@ func (_m *MockAuthInfoStore) GetUserAuthModules(ctx context.Context, userID int6
 	return r0, r1
 }
 
+// GetUsersAuthModules provides a mock function with given fields: ctx, userIDs
+func (_m *MockAuthInfoStore) GetUsersAuthModules(ctx context.Context, userIDs []int64) (map[int64][]string, error) {
+	ret := _m.Called(ctx, userIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUsersAuthModules")
+	}
+
+	var r0 map[int64][]string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []int64) (map[int64][]string, error)); ok {
+		return rf(ctx, userIDs)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []int64) map[int64][]string); ok {
+		r0 = rf(ctx, userIDs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[int64][]string)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []int64) error); ok {
+		r1 = rf(ctx, userIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetUsersRecentlyUsedLabel provides a mock function with given fields: ctx, query
 func (_m *MockAuthInfoStore) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	ret := _m.Called(ctx, query)
