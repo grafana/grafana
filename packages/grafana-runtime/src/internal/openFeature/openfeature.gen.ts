@@ -310,6 +310,8 @@ export const FlagKeys = {
   PerPanelNonApplicableDrilldowns: "perPanelNonApplicableDrilldowns",
   /** Enable gradient color scheme option for the pie chart panel */
   PieChartGradientColorScheme: "pieChartGradientColorScheme",
+  /** Enables slideshows, playlists that can contain any kind of App Platform object */
+  PlaylistSlideshows: "playlist.slideshows",
   /** Enables RBAC for playlists */
   PlaylistsRBAC: "playlistsRBAC",
   /** Show insights for plugins in the plugin details page */
@@ -2036,6 +2038,17 @@ export const useFlagPerPanelNonApplicableDrilldowns = (options?: ReactFlagEvalua
  */
 export const useFlagPieChartGradientColorScheme = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("pieChartGradientColorScheme", false, options).value;
+};
+
+/**
+ * Enables slideshows, playlists that can contain any kind of App Platform object
+ *
+ * **Details:**
+ * - flag key: `playlist.slideshows`
+ * - default value: `false`
+ */
+export const useFlagPlaylistSlideshows = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("playlist.slideshows", false, options).value;
 };
 
 /**

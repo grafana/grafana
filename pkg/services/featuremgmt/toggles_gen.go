@@ -339,6 +339,10 @@ const (
 	// Enables RBAC for playlists
 	FlagPlaylistsRBAC = "playlistsRBAC"
 
+	// FlagPlaylistSlideshows
+	// Enables slideshows, playlists that can contain any kind of App Platform object
+	FlagPlaylistSlideshows = "playlist.slideshows"
+
 	// FlagSavedQueriesRBAC
 	// Enables Saved queries (query library) RBAC permissions
 	FlagSavedQueriesRBAC = "savedQueriesRBAC"
