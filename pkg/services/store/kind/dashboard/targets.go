@@ -88,6 +88,46 @@ func (s *targetInfo) addTarget(iter *jsoniter.Iterator, jsonPath string, lc map[
 	}
 }
 
+// addV2Query records the datasource referenced by a v2 PanelQuery element. A query without a
+// datasource reference uses the default datasource, as a v1 target with a null datasource does.
+func (s *targetInfo) addV2Query(query map[string]any) {
+	ref := v2QueryDatasourceRef(query)
+	if ref == nil {
+		s.addRef(s.lookup.ByRef(nil))
+		return
+	}
+	if isVariableRef(ref.UID) || isSpecialDatasource(ref.UID) {
+		s.addRef(ref)
+		return
+	}
+	s.addRef(s.lookup.ByRef(ref))
+}
+
+// v2QueryDatasourceRef reads the datasource reference of a v2 PanelQuery element. v2beta1 and later
+// carry the datasource UID in spec.query.datasource.name and the plugin type in spec.query.group;
+// v2alpha1 carried a {uid, type} reference in spec.datasource.
+func v2QueryDatasourceRef(query map[string]any) *DataSourceRef {
+	spec, _ := query["spec"].(map[string]any)
+	if spec == nil {
+		return nil
+	}
+	if q, _ := spec["query"].(map[string]any); q != nil {
+		if ds, _ := q["datasource"].(map[string]any); ds != nil {
+			if uid, _ := ds["name"].(string); uid != "" {
+				typ, _ := q["group"].(string)
+				return &DataSourceRef{UID: uid, Type: typ}
+			}
+		}
+	}
+	if ds, _ := spec["datasource"].(map[string]any); ds != nil {
+		if uid, _ := ds["uid"].(string); uid != "" {
+			typ, _ := ds["type"].(string)
+			return &DataSourceRef{UID: uid, Type: typ}
+		}
+	}
+	return nil
+}
+
 func (s *targetInfo) addPanel(panel PanelSummaryInfo) {
 	for idx, v := range panel.Datasource {
 		if v.UID != "" {

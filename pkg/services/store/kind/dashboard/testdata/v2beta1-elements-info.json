@@ -1,0 +1,88 @@
+{
+  "title": "V2beta1 dashboard with tabs",
+  "tags": [
+    "v2beta1",
+    "tabs"
+  ],
+  "datasource": [
+    {
+      "uid": "sqlite-2",
+      "type": "sqlite-datasource"
+    },
+    {
+      "uid": "sqlite-1",
+      "type": "sqlite-datasource"
+    },
+    {
+      "uid": "default.uid",
+      "type": "default.type"
+    }
+  ],
+  "panels": [
+    {
+      "id": 0,
+      "title": "Named datasource",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "sqlite-1",
+          "type": "sqlite-datasource"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Default datasource",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Unresolved datasource variable falls back to default",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Special datasource",
+      "type": "timeseries"
+    },
+    {
+      "id": 0,
+      "title": "Legacy v2alpha1 ref",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "sqlite-2",
+          "type": "sqlite-datasource"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Two queries same datasource",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "sqlite-1",
+          "type": "sqlite-datasource"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 0,
+  "linkCount": 0,
+  "timeFrom": "",
+  "timeTo": "",
+  "timezone": ""
+}
