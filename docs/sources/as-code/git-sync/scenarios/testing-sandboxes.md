@@ -1,8 +1,20 @@
 ---
-title: Testing sandboxes Git Sync
+title: Testing sandboxes with Git Sync
 menuTitle: Testing sandboxes
 description: Use a shared sandbox branch for short-lived projects and experimentation before promoting changes to the main branch
 weight: 40
+keywords:
+  - git sync
+  - deployment patterns
+  - scenarios
+  - sandbox
+  - promotion
+labels:
+  products:
+    - enterprise
+    - oss
+    - cloud
+canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/scenarios/testing-sandboxes/
 aliases:
   - ../../observability-as-code/git-sync/scenarios/testing-sandboxes/
   - ../../observability-as-code/provision-resources/git-sync-deployment-scenarios/testing-sandboxes/
@@ -13,11 +25,18 @@ aliases:
 
 Use a sandbox branch that users can push to directly, without opening a pull request for every change. A sandbox branch is a low-friction space for short-lived projects and experimentation, while keeping every dashboard version-controlled in Git. When work is ready, you promote it to the `main` branch.
 
-A sandbox is a branch in the same repository, synced to Grafana with the [`write` workflow](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-code/#configuration-parameters) enabled. With the `write` workflow, saving a dashboard commits directly to the sandbox branch, so the editing experience feels close to using Grafana without Git Sync. The difference is that every change is still committed to Git, so nothing is lost and history is preserved.
+A sandbox is a branch in the same repository, synced to Grafana with the [`write` workflow](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-code/#configuration-parameters) enabled. With the `write` workflow, saving a dashboard commits directly to the sandbox branch, so the editing experience feels close to using Grafana without Git Sync. The difference is that Git Sync still commits every change to Git, so you don't lose any work and Git keeps the full history.
 
-This scenario uses a single **shared** sandbox branch that everyone works in. A shared sandbox uses only one Repository connection regardless of how many users work in it, which keeps you well within the per-stack limit of 10 repository connections. If you need stricter isolation, you can instead give each user their own sandbox branch. Refer to [Individual or shared sandboxes](#individual-or-shared-sandboxes).
+This scenario uses a single **shared** sandbox branch that everyone works in. A shared sandbox uses only one Repository connection regardless of how many users work in it, which keeps you well within your repository connection limit. If you need stricter isolation, you can instead give each user their own sandbox branch. Refer to [Individual or shared sandboxes](#individual-or-shared-sandboxes).
+
+Before you begin, ensure you have the following:
+
+- A Git repository hosted on a [compatible Git provider](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits/#compatible-git-providers), with permission to create branches and branch protection rules.
+- A Grafana instance that meets the [Git Sync setup prerequisites](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-before/).
 
 ## Use it for
+
+Use this scenario in the following situations:
 
 - **Short-lived projects**: You need a temporary space for work that may or may not reach production.
 - **Shared experimentation**: A team experiments freely in one space without affecting shared production dashboards.
@@ -26,42 +45,46 @@ This scenario uses a single **shared** sandbox branch that everyone works in. A 
 
 ## Architecture
 
-```
-┌────────────────────────────────────────────────────────────┐
-│              GitHub Repository                             │
-│   Repository: your-org/grafana-manifests                 │
-│                                                            │
-│   Branch: main       ← Promoted, reviewed work            │
-│   └── grafana/                                             │
-│       ├── dashboard-stable.json                            │
-│       └── dashboard-approved.json                          │
-│                                                            │
-│   Branch: sandbox    ← Direct pushes, shared experiments  │
-│   └── grafana/                                             │
-│       ├── alice/dashboard-wip.json                         │
-│       └── bob/dashboard-test.json                          │
-└────────────────────────────────────────────────────────────┘
-                        ↕
-              Git Sync (write workflow)
-                        ↕
-              ┌─────────────────────────┐
-              │    Grafana Instance     │
-              │                         │
-              │  Repository Resource:   │
-              │  - branch: sandbox      │
-              │  - path: grafana/       │
-              │  - workflows: [write]   │
-              │                         │
-              │  Save = direct commit   │
-              │  to sandbox             │
-              └─────────────────────────┘
+In this scenario, the Grafana instance syncs the sandbox branch with the `write` workflow, while the `main` branch holds promoted work:
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ GitHub Repository                                            │
+│ Repository: your-org/grafana-manifests                       │
+│                                                              │
+│ Branch: main          ← Promoted, reviewed work              │
+│ └── grafana/                                                 │
+│     ├── dashboard-stable.json                                │
+│     └── dashboard-approved.json                              │
+│                                                              │
+│ Branch: sandbox       ← Direct pushes, shared experiments    │
+│ └── grafana/                                                 │
+│     ├── alice/dashboard-wip.json                             │
+│     └── bob/dashboard-test.json                              │
+└──────────────────────────────────────────────────────────────┘
+                               ↕
+                     Git Sync (write workflow)
+                               ↕
+                  ┌─────────────────────────┐
+                  │ Grafana Instance        │
+                  │                         │
+                  │ Repository Resource:    │
+                  │ - branch: sandbox       │
+                  │ - path: grafana/        │
+                  │ - workflows: [write]    │
+                  │                         │
+                  │ Save = direct commit    │
+                  │ to sandbox              │
+                  └─────────────────────────┘
 ```
 
 ## Repository structure
 
+The following examples show how the branches appear in Git and how the sandbox branch appears in Grafana.
+
 **In Git:**
 
-```
+```text
 your-org/grafana-manifests
 ├── (branch: main)
 │   └── grafana/
@@ -77,7 +100,7 @@ your-org/grafana-manifests
 
 **In Grafana Dashboards view (synced to `sandbox`):**
 
-```
+```text
 Dashboards
 └── 📁 grafana-manifests/
     ├── 📁 alice/
@@ -86,8 +109,8 @@ Dashboards
         └── Test Dashboard
 ```
 
-- A folder named "grafana-manifests" (from the repository name) contains the dashboards synced from the sandbox branch.
-- Users can create subfolders inside it, such as `alice/` and `bob/`, to keep their work separate within the shared branch. Subfolders map to subdirectories under the synced path, so no extra Repository connection is needed.
+- A folder titled `grafana-manifests`, the Repository resource's display name, contains the dashboards synced from the sandbox branch.
+- Users can create subfolders inside it, such as `alice/` and `bob/`, to keep their work separate within the shared branch. Subfolders map to subdirectories under the synced path, so you don't need an extra Repository connection.
 - Only dashboards on the configured branch and path appear in the instance.
 - Saving a dashboard commits directly to the sandbox branch.
 
@@ -123,21 +146,21 @@ If you enable only the `write` workflow, saving a dashboard always commits direc
 1. Create a sandbox branch in your repository, for example `sandbox`.
 2. Configure a Repository resource that syncs that branch with the `write` workflow enabled.
 3. Users create and edit dashboards in Grafana, optionally in their own subfolder. Each save commits directly to the sandbox branch.
-4. The experience feels similar to using Grafana without Git Sync, but every change is committed to Git.
+4. The experience feels similar to using Grafana without Git Sync, but Git Sync commits every change to Git.
 5. When work is ready, you promote it to the `main` branch. Refer to [Promote a sandbox to main](#promote-a-sandbox-to-main).
 
 ## Individual or shared sandboxes
 
-A sandbox can be shared by everyone or scoped to a single user. Each sandbox is a branch synced through its own Repository connection, so the choice is shaped by the per-stack limit of 10 repository connections. Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits/) for details.
+You can share a sandbox with everyone or scope it to a single user. Each sandbox is a branch synced through its own Repository connection, so your repository connection limit shapes the choice: 1 on Grafana Cloud Free, 10 on other Grafana Cloud tiers, and 10 by default on self-managed Grafana, where you can change it with `max_repositories`. On Grafana Cloud Free, the sandbox uses your only connection, so you can't also sync `main` in the same stack. Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits/) for details.
 
 - **Shared sandbox (recommended)**: Use a single branch, such as `sandbox`, synced through one Repository connection that all users share. This uses only one connection regardless of how many users work in it, so it scales to any number of users. Separate users' work with subfolders (for example, `alice/`, `bob/`) if you want some organization within the shared branch. The trade-off is less isolation, since everyone commits to the same branch. This is the setup described above.
-- **Individual sandboxes**: Give each user their own branch, such as `sandbox/alice` and `sandbox/bob`, each synced through a separate Repository connection. This provides the most isolation, but every sandbox consumes one of your 10 connections, so per-user sandboxes don't scale to many users. Reserve them for a small number of active users or short-lived projects, and delete the branch and its connection when the work is done to free the connection.
+- **Individual sandboxes**: Give each user their own branch, such as `sandbox/alice` and `sandbox/bob`, each synced through a separate Repository connection. This provides the most isolation, but every sandbox consumes one of your connections, so per-user sandboxes don't scale to many users. Reserve them for a small number of active users or short-lived projects, and delete the branch and its connection when you finish the work to free the connection.
 
 Both approaches promote to `main` the same way. Refer to [Promote a sandbox to main](#promote-a-sandbox-to-main).
 
 ## Protect sandbox branches
 
-Even though sandbox branches allow direct pushes, protect them against destructive operations. We recommend blocking force pushes on sandbox branches in your Git provider.
+Even though sandbox branches allow direct pushes, protect them against destructive operations. Block force pushes on sandbox branches in your Git provider.
 
 Force pushes rewrite branch history and can silently discard commits that Git Sync relies on. Blocking them keeps history append-only, so Grafana and Git stay consistent and you can always trace how a dashboard reached its current state.
 
@@ -175,7 +198,7 @@ Use this when a shared sandbox contains a mix of finished and experimental work.
 
 ### Option 3: Promote through a separate instance or path
 
-When `main` is synced to a production instance, treat the sandbox as the development stage of a promotion flow.
+When a production instance syncs `main`, treat the sandbox as the development stage of a promotion flow.
 
 1. Develop in the sandbox instance (synced to the sandbox branch with the `write` workflow).
 2. Promote approved dashboards to `main` using a pull request (Option 1) or by copying files into the `main` path.
@@ -185,12 +208,12 @@ This mirrors the [development and production environments](https://grafana.com/d
 
 ### Option 4: Promote from the Grafana UI
 
-If the `main` branch is synced to a folder in the same instance (through a second Repository connection) or to a separate instance, users can move a dashboard into it directly from Grafana, without touching Git:
+If a second Repository connection syncs the `main` branch to a folder in the same instance, or to a separate instance, users can move a dashboard into it directly from Grafana, without touching Git:
 
 - **Save a copy**: Open the sandbox dashboard, select **Save as** (save a copy), and choose the folder backed by the `main` branch as the destination. Git Sync commits the copy to `main`.
 - **Import dashboard**: Export the dashboard from the sandbox (**Export** as JSON), then use **Dashboards > New > Import** and save it into the folder backed by the `main` branch. Git Sync commits it to `main`.
 
-This suits users who prefer working entirely in the UI. Note that these paths commit to `main` without a pull request, so use them only when `main` allows direct writes; when `main` requires review, prefer Option 1.
+This suits users who prefer working entirely in the UI. Note that these paths commit to `main` without a pull request, so use them only when `main` allows direct writes. When `main` requires review, prefer Option 1.
 
 After promotion, you can delete short-lived sandbox branches, or keep a long-lived shared sandbox and continue iterating.
 
