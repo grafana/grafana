@@ -12,7 +12,7 @@ import {
   FieldType,
 } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
 
 import {

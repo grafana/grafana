@@ -1,6 +1,6 @@
 import { type BackendSrv, getBackendSrv } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 
 import { PROBE_TIMEOUT_MS } from '../solutions/probeUtils';
 

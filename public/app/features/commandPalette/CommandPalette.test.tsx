@@ -11,9 +11,9 @@ import {
   useFlagGrafanaCmdkHybridSearch,
   useFlagGrafanaVectorSearchCmdk,
 } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PortalContainer } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';

@@ -7,9 +7,9 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { mockDataSource } from '../../../mocks';
 import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
 import { setupDataSources } from '../../../testSetup/datasources';
+import { mockDataSource } from '../../../testSetup/mockDataSource';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
 export function createAlertmanagerWrapper(alertmanagerSourceName: string) {

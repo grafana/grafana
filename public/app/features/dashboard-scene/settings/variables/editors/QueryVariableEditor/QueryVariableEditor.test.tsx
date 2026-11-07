@@ -16,7 +16,7 @@ import { setRunRequest } from '@grafana/runtime';
 import { QueryVariable, TextBoxVariable } from '@grafana/scenes';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
 import { mockBoundingClientRect } from '@grafana/test-utils';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
@@ -418,15 +418,19 @@ describe('QueryVariableEditor', () => {
     const staticOptionsToggle = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
     );
-    await userEvent.click(staticOptionsToggle);
+    await user.click(staticOptionsToggle);
 
     // Add first static option
     const addButton = getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton);
     await user.click(addButton);
 
     // Enter label and value for first option
-    await user.type(getAllByPlaceholderText('text')[0], 'First Option[Tab]');
-    await user.type(getAllByPlaceholderText('value')[0], 'first-value[Tab]');
+    await user.click(getAllByPlaceholderText('text')[0]);
+    await user.paste('First Option');
+    await user.tab();
+    await user.click(getAllByPlaceholderText('value')[0]);
+    await user.paste('first-value');
+    await user.tab();
     await screen.findByDisplayValue('first-value');
 
     await waitFor(async () => {
@@ -441,8 +445,12 @@ describe('QueryVariableEditor', () => {
     await user.click(addButton);
 
     // Enter label and value for second option
-    await user.type(getAllByPlaceholderText('text')[1], 'Second Option[Tab]');
-    await user.type(getAllByPlaceholderText('value')[1], 'second-value[Tab]');
+    await user.click(getAllByPlaceholderText('text')[1]);
+    await user.paste('Second Option');
+    await user.tab();
+    await user.click(getAllByPlaceholderText('value')[1]);
+    await user.paste('second-value');
+    await user.tab();
     await screen.findByDisplayValue('second-value');
 
     await waitFor(async () => {

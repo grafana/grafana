@@ -4,7 +4,7 @@ import VectorSource from 'ol/source/Vector';
 
 import { FieldType, createDataFrame } from '@grafana/data';
 
-import { updateFeaturePropertiesForTooltip } from './geojsonDynamic';
+import { updateFeaturePropertiesForTooltip } from '../../utils/geojsonTooltip';
 
 describe('Dynamic GeoJSON Layer', () => {
   describe('updateFeaturePropertiesForTooltip', () => {

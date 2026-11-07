@@ -121,20 +121,30 @@ describe('ProviderConfigForm', () => {
   it('should save and enable on form submit', async () => {
     const { user } = setup(<ProviderConfigForm config={emptyConfig} provider={emptyConfig.provider} />);
 
-    await user.type(screen.getByRole('textbox', { name: /Client ID/i }), 'test-client-id');
-    await user.type(screen.getByLabelText(/Client secret/i), 'test-client-secret');
-    // Type a scope and press enter to select it
-    await user.type(screen.getByRole('combobox', { name: /Scopes/i }), 'user:email{enter}');
+    await user.click(screen.getByRole('textbox', { name: /Client ID/i }));
+    await user.paste('test-client-id');
+    await user.click(screen.getByLabelText(/Client secret/i));
+    await user.paste('test-client-secret');
+    await user.click(screen.getByRole('combobox', { name: /Scopes/i }));
+    await user.paste('user:email');
+    await user.keyboard('{Enter}');
     await user.click(screen.getByLabelText(/Auto login/i));
 
     await user.click(screen.getByText('User mapping'));
-    await user.type(screen.getByRole('textbox', { name: /Role attribute path/i }), 'new-attribute-path');
+    await user.click(screen.getByRole('textbox', { name: /Role attribute path/i }));
+    await user.paste('new-attribute-path');
     await user.click(screen.getByLabelText(/Role attribute strict mode/i));
-    await user.type(screen.getByRole('combobox', { name: /Organization mapping/i }), 'Group A:1:Editor{enter}');
-    await user.type(screen.getByRole('combobox', { name: /Organization mapping/i }), 'Group B:2:Admin{enter}');
+    await user.click(screen.getByRole('combobox', { name: /Organization mapping/i }));
+    await user.paste('Group A:1:Editor');
+    await user.keyboard('{Enter}');
+    await user.click(screen.getByRole('combobox', { name: /Organization mapping/i }));
+    await user.paste('Group B:2:Admin');
+    await user.keyboard('{Enter}');
 
     await user.click(screen.getByText('Extra security measures'));
-    await user.type(screen.getByRole('combobox', { name: /Allowed domains/i }), 'grafana.com{enter}');
+    await user.click(screen.getByRole('combobox', { name: /Allowed domains/i }));
+    await user.paste('grafana.com');
+    await user.keyboard('{Enter}');
     await user.click(screen.getByRole('checkbox', { name: /Use PKCE/i }));
 
     await user.click(screen.getByRole('button', { name: /Save and enable/i }));
@@ -183,10 +193,13 @@ describe('ProviderConfigForm', () => {
 
   it('should save on form submit', async () => {
     const { user } = setup(<ProviderConfigForm config={emptyConfig} provider={emptyConfig.provider} />);
-    await user.type(screen.getByRole('textbox', { name: /Client ID/i }), 'test-client-id');
-    await user.type(screen.getByLabelText(/Client secret/i), 'test-client-secret');
-    // Type a scope and press enter to select it
-    await user.type(screen.getByRole('combobox', { name: /Scopes/i }), 'user:email{enter}');
+    await user.click(screen.getByRole('textbox', { name: /Client ID/i }));
+    await user.paste('test-client-id');
+    await user.click(screen.getByLabelText(/Client secret/i));
+    await user.paste('test-client-secret');
+    await user.click(screen.getByRole('combobox', { name: /Scopes/i }));
+    await user.paste('user:email');
+    await user.keyboard('{Enter}');
     await user.click(screen.getByLabelText(/Auto login/i));
     await user.click(screen.getByText('Save'));
 

@@ -459,7 +459,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('reports success with a link to the new notebook', async () => {
       const { user, onDismiss } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() => expect(onDismiss).toHaveBeenCalled());
@@ -473,7 +474,8 @@ describe('AddPanelToNotebookModalBody', () => {
       createWithContent.mockResolvedValue({ uid: 'nb3', title: "Checkout's errors/sec" });
       const { user, onDismiss } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), "Checkout's errors/sec");
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste("Checkout's errors/sec");
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() => expect(onDismiss).toHaveBeenCalled());
@@ -486,7 +488,8 @@ describe('AddPanelToNotebookModalBody', () => {
       const { user } = renderModal();
 
       // 'Q2 latency regression' is one of the notebooks the picker is holding.
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'Q2 latency regression');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('Q2 latency regression');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       expect(await screen.findByText('A notebook with this name already exists')).toBeInTheDocument();
@@ -498,7 +501,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('refuses a name that differs only by case or surrounding space', async () => {
       const { user } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), '  q2 LATENCY regression  ');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('  q2 LATENCY regression  ');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       expect(await screen.findByText('A notebook with this name already exists')).toBeInTheDocument();
@@ -510,7 +514,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('will not submit a name that is only whitespace', async () => {
       const { user } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), '   ');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('   ');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       expect(await screen.findByText('A notebook name is required')).toBeInTheDocument();
@@ -523,7 +528,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('writes once even if the form is submitted twice before it re-renders', async () => {
       const { user } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
 
       const form = document.getElementById('add-panel-to-notebook')!;
       fireEvent.submit(form);
@@ -536,7 +542,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('tells the create that the panel came from the library', async () => {
       const { user } = renderModal(undefined, true);
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
@@ -553,7 +560,8 @@ describe('AddPanelToNotebookModalBody', () => {
     it('creates the notebook with the panel under the trimmed name', async () => {
       const { user, onDismiss } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), '  Checkout latency  ');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('  Checkout latency  ');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
@@ -661,7 +669,8 @@ describe('AddPanelToNotebookModalBody', () => {
       const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
       await user.click(lockCheckbox());
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() => expect(createWithContent).toHaveBeenCalled());
@@ -915,7 +924,8 @@ describe('AddPanelToNotebookModalBody', () => {
       createWithContent.mockRejectedValue(new Error('notebook is too large'));
       const { user } = renderModal();
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
@@ -939,7 +949,8 @@ describe('AddPanelToNotebookModalBody', () => {
       });
       const { user } = renderModal(buildPanel);
 
-      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('textbox', { name: /Notebook name/ }));
+      await user.paste('New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>

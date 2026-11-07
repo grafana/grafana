@@ -70,9 +70,10 @@ it('shows date extent as placeholders and limits calendar days in the dashboard 
   expect(screen.getByRole('button', { name: 'September 18, 2026' })).toBeDisabled();
 });
 
-it('keeps typed dates outside the calendar extent available as exact bounds', async () => {
+it('keeps pasted dates outside the calendar extent available as exact bounds', async () => {
   const { user, onApply } = setup(FieldType.time, [Date.UTC(2026, 8, 17, 16), Date.UTC(2026, 8, 17, 17)]);
-  await user.type(screen.getByRole('textbox', { name: 'Start' }), '2026-09-16 12:00:00.000');
+  await user.click(screen.getByRole('textbox', { name: 'Start' }));
+  await user.paste('2026-09-16 12:00:00.000');
   await user.click(screen.getByRole('button', { name: 'Apply' }));
   expect(onApply).toHaveBeenCalledWith({ min: Date.UTC(2026, 8, 16, 16), max: undefined, includeMissing: false });
 });
@@ -89,7 +90,7 @@ it('keeps drafted date bounds at the same instants when the timezone changes', a
   const startInput = screen.getByRole('textbox', { name: 'Start' });
   const endInput = screen.getByRole('textbox', { name: 'End' });
   await user.clear(startInput);
-  await user.type(startInput, '2026-09-17 13:00:00.000');
+  await user.paste('2026-09-17 13:00:00.000');
 
   rerenderTimeZone('UTC');
   expect(startInput).toHaveValue('2026-09-17 17:00:00.000');
@@ -157,8 +158,10 @@ it('rejects a malformed date bound without extending the shared time-range field
 
 it('rejects a date range when the start exceeds the end', async () => {
   const { user } = setup(FieldType.time);
-  await user.type(screen.getByRole('textbox', { name: 'Start' }), '2026-09-18 12:00:00.000');
-  await user.type(screen.getByRole('textbox', { name: 'End' }), '2026-09-17 12:00:00.000');
+  await waitFor(() => expect(screen.getByRole('textbox', { name: 'Start' })).toHaveFocus());
+  await user.paste('2026-09-18 12:00:00.000');
+  await user.click(screen.getByRole('textbox', { name: 'End' }));
+  await user.paste('2026-09-17 12:00:00.000');
   expect(screen.getByRole('alert')).toHaveTextContent('minimum no greater than maximum');
   expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled();
 });
@@ -188,7 +191,8 @@ it('selects whole days with the dashboard calendar and applies only on confirmat
 
 it('keeps millisecond precision with an unbounded end date', async () => {
   const { user, onApply } = setup(FieldType.time, [1789660800122, 1789660800123, 1789660800124]);
-  await user.type(screen.getByLabelText('Start'), '2026-09-17 12:00:00.123');
+  await user.click(screen.getByLabelText('Start'));
+  await user.paste('2026-09-17 12:00:00.123');
   expect(screen.getByLabelText('End')).toHaveValue('');
   expect(screen.getByRole('status')).toHaveTextContent('2 of 3 rows');
   await user.click(screen.getByRole('button', { name: 'Apply' }));
@@ -292,7 +296,12 @@ it.each([
   expect(checkbox).toBeEnabled();
 
   const input = screen.getByRole('textbox', { name: label });
-  await user.type(input, bound);
+  if (type === FieldType.time) {
+    await user.click(input);
+    await user.paste(bound);
+  } else {
+    await user.type(input, bound);
+  }
   await user.click(checkbox);
 
   await user.clear(input);
