@@ -2,6 +2,10 @@ import { Registry, type RegistryItem } from '../utils/Registry';
 
 import { createTheme, NewThemeOptionsSchema } from './createTheme';
 import aubergine from './themeDefinitions/aubergine.json';
+import catppuccin_frappe from './themeDefinitions/catppuccin_frappe.json';
+import catppuccin_latte from './themeDefinitions/catppuccin_latte.json';
+import catppuccin_macchiato from './themeDefinitions/catppuccin_macchiato.json';
+import catppuccin_mocha from './themeDefinitions/catppuccin_mocha.json';
 import debug from './themeDefinitions/debug.json';
 import desertbloom from './themeDefinitions/desertbloom.json';
 import deut_prot_dark from './themeDefinitions/deut_prot_dark.json';
@@ -30,6 +34,10 @@ const compareThemeNames = new Intl.Collator().compare;
 
 const extraThemes: { [key: string]: unknown } = {
   aubergine,
+  catppuccin_frappe,
+  catppuccin_latte,
+  catppuccin_macchiato,
+  catppuccin_mocha,
   debug,
   desertbloom,
   deut_prot_dark,
