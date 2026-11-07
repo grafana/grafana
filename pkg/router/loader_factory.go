@@ -19,8 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// ProvideRoutesLoader serves local plugins, or no groups without plugin
-// sources. It never loads the cloud sources: the
+// ProvideRoutesLoader serves local plugins from the plugin store, or no groups without a store
+// or dev targets. It never loads the cloud sources: the
 // standalone router tries ProvideCloudRoutesLoader first, and calls this only
 // when [cloud_router] configures none, and Grafana itself never polls them.
 func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
@@ -28,17 +28,15 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (Route
 	if err != nil {
 		return nil, err
 	}
-	if deps.PluginSources != nil || dev != nil {
+	if deps.PluginStore != nil || dev != nil {
+		loader := &PluginLoader{deps: deps, settings: settingsEnabled(cfg), dev: dev}
 		if middlewareEnabled(cfg, deps.Features) {
-			// When running in ST grafana as middleware, declare plugin roles and resolve settings storage defaults
-			if deps.PluginSources != nil {
-				if err := initLocalPlugins(context.Background(), deps); err != nil {
-					return nil, err
-				}
-			}
+			// When running in ST grafana as middleware, declare plugin roles and resolve settings
+			// storage defaults for each local plugin as it appears.
+			loader.inits = newLocalPluginInits()
 			dev.declareRoles(context.Background(), deps.ACService)
 		}
-		return &PluginLoader{deps: deps, settings: settingsEnabled(cfg), dev: dev}, nil
+		return loader, nil
 	}
 
 	return noRoutesLoader{}, nil
