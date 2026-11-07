@@ -7,13 +7,13 @@ import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { replaceCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { refetchPluginMeta } from '../pluginMeta/plugins';
+import { getApiVersion, getCacheKey, getNamespace } from '../pluginUtils';
 
 import { logPluginSettingsDebug, logPluginSettingsError } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
 import { inlineSecureValuesMapper, settingsSpecMapper } from './mappers/v0alpha1SettingsMapper';
 import { refetchCachedAppSettings, refetchCachedLegacySettings } from './refetchPluginSettings';
 import { type Settings as v0alpha1Settings } from './types';
-import { getApiVersion, getCacheKey, getNamespace } from './utils';
 
 function updateLegacySettings(pluginId: string, data: Partial<PluginMeta>): Promise<void> {
   logPluginSettingsDebug('PluginSettings: updating legacy plugin settings', { pluginId });

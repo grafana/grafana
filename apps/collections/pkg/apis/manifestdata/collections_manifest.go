@@ -37,6 +37,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:         "Stars",
 					Plural:       "Stars",
+					Resource:     "stars",
 					Scope:        "Namespaced",
 					Conversion:   false,
 					FolderScoped: func(b bool) *bool { return &b }(false),

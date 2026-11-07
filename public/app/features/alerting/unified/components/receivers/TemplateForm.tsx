@@ -345,11 +345,12 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                           <AutoSizer>
                             {({ width, height }) => (
                               <TemplateEditor
-                                value={getValues('content')}
+                                value={watch('content')}
                                 onBlur={(value) => setValue('content', value)}
-                                containerStyles={styles.editorContainer}
+                                readOnly={isProvisioned}
                                 width={width}
-                                height={height}
+                                height={`${height}px`}
+                                aria-label={t('alerting.template-form.label-template-group', 'Template group')}
                               />
                             )}
                           </AutoSizer>
@@ -523,10 +524,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     templatePayload: css({
       flex: 1,
-    }),
-    editorContainer: css({
-      width: 'fit-content',
-      border: 'none',
     }),
     payloadCollapseButton: css({
       backgroundColor: theme.colors.info.transparent,

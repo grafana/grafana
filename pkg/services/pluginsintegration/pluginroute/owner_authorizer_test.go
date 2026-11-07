@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
@@ -29,7 +29,7 @@ func (errChecker) Compile(context.Context, authlib.AuthInfo, authlib.ListRequest
 func TestOwnerFromNameAuthorize(t *testing.T) {
 	user := &identity.StaticRequester{UserUID: "abc", Groups: []string{"team1"}, OrgRole: identity.RoleEditor}
 	admin := &identity.StaticRequester{UserUID: "root", OrgRole: identity.RoleAdmin}
-	all := []apiutils.ResourceOwner{apiutils.NamespaceResourceOwner, apiutils.UserResourceOwner, apiutils.TeamResourceOwner}
+	all := []resource.Owner{resource.NamespaceResourceOwner, resource.UserResourceOwner, resource.TeamResourceOwner}
 
 	tests := []struct {
 		name   string
@@ -48,7 +48,7 @@ func TestOwnerFromNameAuthorize(t *testing.T) {
 		{name: "other user", policy: ownerFromName{owners: all}, user: user, verb: "get", obj: "user-xyz", want: authorizer.DecisionDeny},
 		{name: "org admin", policy: ownerFromName{owners: all, allowOrgAdmin: true}, user: admin, verb: "delete", obj: "user-xyz", want: authorizer.DecisionAllow},
 		{name: "org admin not allowed", policy: ownerFromName{owners: all}, user: admin, verb: "get", obj: "user-xyz", want: authorizer.DecisionDeny},
-		{name: "unsupported owner", policy: ownerFromName{owners: []apiutils.ResourceOwner{apiutils.UserResourceOwner}}, user: user, verb: "get", obj: "team-team1", want: authorizer.DecisionDeny},
+		{name: "unsupported owner", policy: ownerFromName{owners: []resource.Owner{resource.UserResourceOwner}}, user: user, verb: "get", obj: "team-team1", want: authorizer.DecisionDeny},
 		{name: "unknown owner is denied", policy: ownerFromName{owners: all}, user: user, verb: "get", obj: "whatever", want: authorizer.DecisionDeny},
 		{name: "namespace read", policy: ownerFromName{owners: all}, user: user, verb: "get", obj: "namespace", want: authorizer.DecisionAllow},
 		{name: "namespace write by editor", policy: ownerFromName{owners: all}, user: user, verb: "update", obj: "namespace", want: authorizer.DecisionDeny},

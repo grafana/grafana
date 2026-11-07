@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // starsUpdatePath is the subresource route, as the manifest declares it.
@@ -44,8 +43,8 @@ func (r *starsRoutes) update(ctx context.Context, w app.CustomRouteResponseWrite
 	}
 	ident := req.ResourceIdentifier
 
-	owner, ok := utils.ParseOwnerFromName(ident.Name)
-	if !ok || owner.Owner != utils.UserResourceOwner {
+	owner, ok := resource.ParseOwnerFromName(ident.Name)
+	if !ok || owner.Owner != resource.UserResourceOwner {
 		return writeStatus(w, apierrors.NewBadRequest("only works with user stars"))
 	}
 	item, err := itemFromPath(req.URL.Path)

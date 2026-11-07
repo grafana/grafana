@@ -14,6 +14,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana-app-sdk/resource"
 	prefsv1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	prefsv1alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
@@ -59,11 +60,11 @@ func RegisterAPIService(
 		authorizer: &utils.AuthorizeFromName{
 			OKNames:      []string{"merged"},
 			AccessClient: accessClient, // can i edit a team
-			Resource: map[string][]apimachineryutils.ResourceOwner{
+			Resource: map[string][]resource.Owner{
 				"preferences": {
-					apimachineryutils.NamespaceResourceOwner,
-					apimachineryutils.TeamResourceOwner,
-					apimachineryutils.UserResourceOwner,
+					resource.NamespaceResourceOwner,
+					resource.TeamResourceOwner,
+					resource.UserResourceOwner,
 				},
 			},
 		},

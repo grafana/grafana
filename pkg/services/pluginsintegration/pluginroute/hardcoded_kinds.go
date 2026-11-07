@@ -1,8 +1,8 @@
 package pluginroute
 
 import (
+	"github.com/grafana/grafana-app-sdk/resource"
 	prefsapp "github.com/grafana/grafana/apps/preferences/pkg/app"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // Everything the router knows about the kinds it authorizes by name lives in
@@ -12,20 +12,20 @@ import (
 // hardcodedKindAuth is where a kind declares that its name decides access.
 // TODO: this declaration moves to the app manifest, and only ownerFromName
 // and the policy fields stay here.
-func hardcodedKindAuth(group, resource string) (o *ownerFromName, allowMissingParent bool) {
+func hardcodedKindAuth(group, name string) (o *ownerFromName, allowMissingParent bool) {
 	switch {
-	case group == "collections.grafana.app" && resource == "stars":
+	case group == "collections.grafana.app" && name == "stars":
 		return &ownerFromName{
 			allowOrgAdmin: true,
-			owners:        []utils.ResourceOwner{utils.UserResourceOwner},
+			owners:        []resource.Owner{resource.UserResourceOwner},
 		}, true
-	case group == "preferences.grafana.app" && resource == "preferences":
+	case group == "preferences.grafana.app" && name == "preferences":
 		return &ownerFromName{
 			names: []string{"merged"},
-			owners: []utils.ResourceOwner{
-				utils.NamespaceResourceOwner,
-				utils.UserResourceOwner,
-				utils.TeamResourceOwner,
+			owners: []resource.Owner{
+				resource.NamespaceResourceOwner,
+				resource.UserResourceOwner,
+				resource.TeamResourceOwner,
 			},
 			nonUserNamespaceOnly: true,
 		}, true

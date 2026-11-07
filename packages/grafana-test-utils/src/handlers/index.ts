@@ -13,5 +13,4 @@ export {
 } from './apis/dashboard.grafana.app/v0alpha1/handlers';
 export { getSearchTeamsErrorHandler, getSearchTeamsHandler } from './api/teams/handlers';
 export { getSignedInUserTeamListHandler } from './api/user/handlers';
-export * as apiFoldersHandlers from './api/folders/handlers';
 export { customLoginHandler } from './auth/handlers';

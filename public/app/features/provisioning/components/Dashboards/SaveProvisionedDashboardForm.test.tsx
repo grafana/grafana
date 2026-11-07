@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { type Dashboard } from '@grafana/schema';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
@@ -268,6 +269,12 @@ describe('SaveProvisionedDashboardForm', () => {
     capturedRequest = null;
     jest.clearAllMocks();
     (validationSrv.validateNewDashboardName as jest.Mock).mockResolvedValue(true);
+    // Serve from a sub path: the router basename carries it, so navigate() must get bare paths
+    locationUtil.initialize({
+      config: { appSubUrl: '/grafana' } as GrafanaConfig,
+      getTimeRangeForUrl: jest.fn(),
+      getVariablesUrlParams: jest.fn(),
+    });
   });
 
   afterEach(() => {
@@ -363,7 +370,7 @@ describe('SaveProvisionedDashboardForm', () => {
     await waitFor(() => {
       expect(props.dashboard.saveCompleted).toHaveBeenCalled();
     });
-    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/d/new-dashboard'));
+    expect(mockNavigate).toHaveBeenCalledWith('/d/new-dashboard/new-dashboard');
     expect(dashboardWatcher.clearIgnoreSave).toHaveBeenCalled();
   });
 

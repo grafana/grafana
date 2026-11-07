@@ -248,8 +248,8 @@
       },
       "darkgrey": {
         "text": "palette.neutral800",
-        "background": "palette.neutral50",
-        "border": "palette.neutral200"
+        "background": "palette.neutral150",
+        "border": "palette.neutral400"
       }
     }
   },
