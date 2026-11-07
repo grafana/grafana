@@ -29,7 +29,7 @@ export function GrafanaRoute(props: Props) {
     if (stPodReadyGateEnabled) {
       stPodReady.start();
     }
-  }, [stPodReadyGateEnabled, stPodReady]);
+  }, [stPodReadyGateEnabled, stPodReady, props.location.pathname]);
 
   useLayoutEffect(() => {
     keybindings.clearAndInitGlobalBindings(props.route);

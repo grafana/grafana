@@ -1,7 +1,7 @@
 package pluginroute
 
 import (
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // Everything the router knows about the kinds it authorizes by name lives in
@@ -11,11 +11,11 @@ import (
 // hardcodedKindAuth is where a kind declares that its name decides access.
 // TODO: this declaration moves to the app manifest, and only ownerFromName
 // and the policy fields stay here.
-func hardcodedKindAuth(group, resource string) (o *ownerFromName, allowMissingParent bool) {
-	if group == "collections.grafana.app" && resource == "stars" {
+func hardcodedKindAuth(group, name string) (o *ownerFromName, allowMissingParent bool) {
+	if group == "collections.grafana.app" && name == "stars" {
 		return &ownerFromName{
 			allowOrgAdmin: true,
-			owners:        []utils.ResourceOwner{utils.UserResourceOwner},
+			owners:        []resource.Owner{resource.UserResourceOwner},
 		}, true
 	}
 	return nil, false

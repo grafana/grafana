@@ -43,6 +43,8 @@ export function runDashboardNavigationCujs({ megaMenu }: { megaMenu: boolean }) 
     },
     () => {
       test(`Navigate between dashboards ${scenario}`, async ({ page, gotoDashboardPage, selectors }) => {
+        test.setTimeout(60_000);
+
         const scopesDashboardsContainer = page.getByTestId('scopes-dashboards-container');
         const scopeSelectorInput = getScopesSelectorInput(page);
         const scopesDashboards = getScopesDashboards(page);

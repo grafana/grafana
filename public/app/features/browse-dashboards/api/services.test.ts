@@ -4,13 +4,12 @@ import { type Store } from 'redux';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { config, setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler, apiFoldersHandlers, starsRoute } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler, starsRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { setStore } from 'app/store/store';
 
 import { listDashboards, listFolders, listStarredFolders } from './services';
@@ -75,56 +74,10 @@ describe('browse-dashboards services', () => {
     beforeEach(() => {
       jest.clearAllMocks();
       mockContextSrv.hasPermission = jest.fn().mockReturnValue(true);
-      setTestFlags({ foldersAppPlatformAPI: false });
       config.sharedWithMeFolderUID = 'sharedwithme';
     });
 
-    afterEach(() => {
-      setTestFlags({});
-    });
-
-    describe('old API (foldersAppPlatformAPI = false)', () => {
-      beforeEach(() => {
-        setTestFlags({ foldersAppPlatformAPI: false });
-      });
-
-      it('returns folders in correct format', async () => {
-        const result = await listFolders(undefined, 'Parent Title', 1, PAGE_SIZE);
-
-        expect(result).toHaveLength(2);
-        expect(result[0]).toMatchObject({
-          kind: 'folder',
-          uid: expect.any(String),
-          title: expect.any(String),
-          parentTitle: 'Parent Title',
-          parentUID: undefined,
-          managedBy: undefined,
-        });
-      });
-
-      it('handles pagination correctly', async () => {
-        const result1 = await listFolders(undefined, undefined, 1, 4);
-        const result2 = await listFolders(undefined, undefined, 2, 2);
-
-        expect(result1).toHaveLength(4);
-        expect(result2).toHaveLength(2);
-        expect(result1[2]).toMatchObject(result2[0]);
-        expect(result1[3]).toMatchObject(result2[1]);
-      });
-
-      it('does not add shared with me folder (handled by backend)', async () => {
-        const result = await listFolders(undefined, undefined, 1, 1);
-
-        expect(result).toHaveLength(1);
-        expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
-      });
-    });
-
-    describe('new API (foldersAppPlatformAPI = true)', () => {
-      beforeEach(() => {
-        setTestFlags({ foldersAppPlatformAPI: true });
-      });
-
+    describe('app-platform API', () => {
       it('returns the correct folders for the requested page', async () => {
         server.use(getCustomSearchHandler(allHits));
         const result = await listFolders('parent-uid', 'Parent Title', 1, 1);
@@ -155,23 +108,18 @@ describe('browse-dashboards services', () => {
         });
       });
 
-      it('adds shared with me and team folders at root level', async () => {
+      it('adds the virtual roots ahead of the real folders at root level', async () => {
         server.use(getCustomSearchHandler(allHits));
         const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
 
-        expect(result).toHaveLength(4);
-        expect(result[0]).toMatchObject({
-          kind: 'folder',
-          uid: 'sharedwithme',
-          title: 'Shared with me',
-          url: undefined, // shared with me has no URL
-        });
-        expect(result[1]).toMatchObject({
-          kind: 'folder',
-          uid: TEAM_FOLDERS_UID,
-          title: 'My team folders',
-          url: undefined, // team folders is a virtual folder with no URL
-        });
+        // Virtual roots are plain text rows with no folder URL
+        expect(result.map(({ uid, title, url }) => ({ uid, title, url }))).toEqual([
+          { uid: 'sharedwithme', title: 'Shared with me', url: undefined },
+          { uid: TEAM_FOLDERS_UID, title: 'My team folders', url: undefined },
+          { uid: STARRED_FOLDERS_UID, title: 'Starred folders', url: undefined },
+          { uid: 'root-folder-1', title: 'Root Folder 1', url: expect.any(String) },
+          { uid: 'root-folder-2', title: 'Root Folder 2', url: expect.any(String) },
+        ]);
       });
 
       it('does not add shared with me folder on subsequent pages', async () => {
@@ -195,7 +143,7 @@ describe('browse-dashboards services', () => {
 
         const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
 
-        expect(result).toHaveLength(3);
+        expect(result).toHaveLength(4);
         expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
         expect(result[0]).toMatchObject({ uid: TEAM_FOLDERS_UID });
       });
@@ -214,10 +162,7 @@ describe('browse-dashboards services', () => {
     describe('URL generation', () => {
       it('sets URL to undefined for shared with me folder', async () => {
         server.use(
-          apiFoldersHandlers.minimalCustomFoldersHandler([
-            { uid: 'sharedwithme', title: 'Shared with me' },
-            { uid: 'regular-folder', title: 'Regular folder' },
-          ])
+          getCustomSearchHandler([{ resource: 'folders', name: 'regular-folder', title: 'Regular folder', field: {} }])
         );
         const result = await listFolders();
 
@@ -226,27 +171,6 @@ describe('browse-dashboards services', () => {
 
         expect(sharedFolder?.url).toBeUndefined();
         expect(regularFolder?.url).toBeDefined();
-      });
-    });
-
-    describe('starred folders virtual item', () => {
-      // One call — putConfiguration replaces the whole flag set, so a second call would drop the first.
-      beforeEach(() => {
-        setTestFlags({ foldersAppPlatformAPI: true, 'grafana.starredFolders': true });
-      });
-
-      it('inserts the starred folders item after team folders and before real folders', async () => {
-        server.use(getCustomSearchHandler(allHits));
-
-        const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
-        const uids = result.map((f) => f.uid);
-
-        expect(uids[0]).toBe('sharedwithme');
-        expect(uids[1]).toBe('teamfolders');
-        expect(uids[2]).toBe('starred_folders');
-        expect(uids.indexOf('starred_folders')).toBeLessThan(uids.indexOf('root-folder-1'));
-        // The virtual container is a plain text row with no folder URL.
-        expect(result.find((f) => f.uid === 'starred_folders')?.url).toBeUndefined();
       });
     });
   });

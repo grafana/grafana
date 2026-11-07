@@ -18,6 +18,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -112,17 +113,17 @@ func (s *DashboardStarsStorage) List(ctx context.Context, options *internalversi
 	return list, nil
 }
 
-func getNamespaceAndOwner(ctx context.Context, name string) (authlib.NamespaceInfo, utils.OwnerReference, error) {
+func getNamespaceAndOwner(ctx context.Context, name string) (authlib.NamespaceInfo, resource.OwnerReference, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
-		return info, utils.OwnerReference{}, err
+		return info, resource.OwnerReference{}, err
 	}
-	owner, ok := utils.ParseOwnerFromName(name)
+	owner, ok := resource.ParseOwnerFromName(name)
 	if !ok {
 		return info, owner, fmt.Errorf("invalid name %w", err)
 	}
-	if owner.Owner != utils.UserResourceOwner {
-		return info, owner, fmt.Errorf("expecting name with prefix: %s-", utils.UserResourceOwner)
+	if owner.Owner != resource.UserResourceOwner {
+		return info, owner, fmt.Errorf("expecting name with prefix: %s-", resource.UserResourceOwner)
 	}
 	return info, owner, nil
 }

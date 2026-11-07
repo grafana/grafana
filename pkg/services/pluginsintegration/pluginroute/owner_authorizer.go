@@ -7,8 +7,8 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // maxOwnedTeams bounds the teams a user's owned names include, so listing does
@@ -23,7 +23,7 @@ type ownerFromName struct {
 	names []string
 
 	// The names can match these owner patterns
-	owners []utils.ResourceOwner
+	owners []resource.Owner
 
 	// Org admins may do anything to the kind
 	allowOrgAdmin bool
@@ -37,23 +37,23 @@ type ownerFromName struct {
 // order a merge of them needs, where the first value set wins.
 func (b *ownerFromName) ownedNames(user identity.Requester) []string {
 	var names []string
-	if slices.Contains(b.owners, utils.UserResourceOwner) {
+	if slices.Contains(b.owners, resource.UserResourceOwner) {
 		if id := user.GetIdentifier(); id != "" {
-			names = append(names, utils.UserOwner(id).AsName())
+			names = append(names, resource.UserOwner(id).AsName())
 		}
 	}
-	if slices.Contains(b.owners, utils.TeamResourceOwner) {
+	if slices.Contains(b.owners, resource.TeamResourceOwner) {
 		teams := slices.Clone(user.GetGroups())
 		slices.Sort(teams)
 		if len(teams) > maxOwnedTeams {
 			teams = teams[:maxOwnedTeams]
 		}
 		for _, team := range teams {
-			names = append(names, utils.TeamOwner(team).AsName())
+			names = append(names, resource.TeamOwner(team).AsName())
 		}
 	}
-	if slices.Contains(b.owners, utils.NamespaceResourceOwner) {
-		names = append(names, utils.NamespaceOwner().AsName())
+	if slices.Contains(b.owners, resource.NamespaceResourceOwner) {
+		names = append(names, resource.NamespaceOwner().AsName())
 	}
 	return names
 }
@@ -64,7 +64,7 @@ func (b *ownerFromName) nonUserNames() ([]string, bool) {
 	if !b.nonUserNamespaceOnly {
 		return nil, false
 	}
-	return []string{utils.NamespaceOwner().AsName()}, true
+	return []string{resource.NamespaceOwner().AsName()}, true
 }
 
 func (b *ownerFromName) authorize(ctx context.Context, user identity.Requester, attr authorizer.Attributes, ac authlib.AccessChecker) (authorizer.Decision, string, error) {
@@ -83,7 +83,7 @@ func (b *ownerFromName) authorize(ctx context.Context, user identity.Requester, 
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	info, ok := utils.ParseOwnerFromName(name)
+	info, ok := resource.ParseOwnerFromName(name)
 	if !ok {
 		return authorizer.DecisionDeny, "name is missing owner", nil
 	}
@@ -92,7 +92,7 @@ func (b *ownerFromName) authorize(ctx context.Context, user identity.Requester, 
 	}
 
 	switch info.Owner {
-	case utils.NamespaceResourceOwner:
+	case resource.NamespaceResourceOwner:
 		if attr.IsReadOnly() {
 			// Everyone can see the namespace
 			return authorizer.DecisionAllow, "", nil
@@ -102,13 +102,13 @@ func (b *ownerFromName) authorize(ctx context.Context, user identity.Requester, 
 		}
 		return authorizer.DecisionDeny, "must be an org admin to edit", nil
 
-	case utils.UserResourceOwner:
+	case resource.UserResourceOwner:
 		if user.GetIdentifier() == info.Identifier {
 			return authorizer.DecisionAllow, "", nil
 		}
 		return authorizer.DecisionDeny, "you are not the owner of the resource", nil
 
-	case utils.TeamResourceOwner:
+	case resource.TeamResourceOwner:
 		// Being able to view a team is not sufficient: you must be a member
 		if attr.IsReadOnly() && slices.Contains(user.GetGroups(), info.Identifier) {
 			return authorizer.DecisionAllow, "", nil
@@ -132,7 +132,7 @@ func (b *ownerFromName) authorize(ctx context.Context, user identity.Requester, 
 		}
 		return authorizer.DecisionDeny, "no edit permissions for the team", nil
 
-	case utils.UnknownResourceOwner:
+	case resource.UnknownResourceOwner:
 		// ParseOwnerFromName never reports one, so no name reaches here.
 	}
 

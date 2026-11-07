@@ -5,10 +5,10 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	prefutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -28,7 +28,7 @@ var ofClient = openfeature.NewDefaultClient()
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Response {
-	return hs.preferenceK8sHandler.GetPreferences(c, prefutils.UserOwner(c.GetIdentifier()))
+	return hs.preferenceK8sHandler.GetPreferences(c, resource.UserOwner(c.GetIdentifier()))
 }
 
 // swagger:route PUT /user/preferences signed_in_user preferences updateUserPreferences
@@ -52,7 +52,7 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	return hs.preferenceK8sHandler.UpdatePreferences(c, prefutils.UserOwner(c.GetIdentifier()), &dtoCmd)
+	return hs.preferenceK8sHandler.UpdatePreferences(c, resource.UserOwner(c.GetIdentifier()), &dtoCmd)
 }
 
 // swagger:route PATCH /user/preferences signed_in_user preferences patchUserPreferences
@@ -74,7 +74,7 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	return hs.preferenceK8sHandler.PatchPreferences(c, prefutils.UserOwner(c.GetIdentifier()), &dtoCmd)
+	return hs.preferenceK8sHandler.PatchPreferences(c, resource.UserOwner(c.GetIdentifier()), &dtoCmd)
 }
 
 // swagger:route GET /org/preferences org preferences getOrgPreferences
@@ -91,7 +91,7 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgPreferences(c *contextmodel.ReqContext) response.Response {
-	return hs.preferenceK8sHandler.GetPreferences(c, prefutils.NamespaceOwner())
+	return hs.preferenceK8sHandler.GetPreferences(c, resource.NamespaceOwner())
 }
 
 // swagger:route PUT /org/preferences org preferences updateOrgPreferences
@@ -114,7 +114,7 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	return hs.preferenceK8sHandler.UpdatePreferences(c, prefutils.NamespaceOwner(), &dtoCmd)
+	return hs.preferenceK8sHandler.UpdatePreferences(c, resource.NamespaceOwner(), &dtoCmd)
 }
 
 // swagger:route PATCH /org/preferences org preferences patchOrgPreferences
@@ -137,7 +137,7 @@ func (hs *HTTPServer) PatchOrgPreferences(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	return hs.preferenceK8sHandler.PatchPreferences(c, prefutils.NamespaceOwner(), &dtoCmd)
+	return hs.preferenceK8sHandler.PatchPreferences(c, resource.NamespaceOwner(), &dtoCmd)
 }
 
 // swagger:parameters  updateUserPreferences

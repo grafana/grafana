@@ -1,0 +1,271 @@
+import { css, cx } from '@emotion/css';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMeasure } from 'react-use';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
+import { Button, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { InspectTab } from 'app/features/inspector/types';
+
+import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
+import { getDashboardSceneFor } from '../../../../utils/utils';
+import { TIME_OPTION_PLACEHOLDER } from '../../constants';
+import { trackQueryMenuAction, trackQueryOptionsToggle } from '../../tracking';
+import {
+  useDatasourceContext,
+  usePanelContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+} from '../QueryEditorContext';
+import { QueryOptionField } from '../types';
+
+interface QueryOptionItem {
+  id: QueryOptionField;
+  label: string;
+  value: string;
+  isActive?: boolean;
+}
+
+export function QueryOptionsBar() {
+  const styles = useStyles2(getStyles);
+
+  const { queryOptions, cardType } = useQueryEditorUIContext();
+  const { options, openSidebar, closeSidebar, isQueryOptionsOpen } = queryOptions;
+  const { data } = useQueryRunnerContext();
+  const { datasource } = useDatasourceContext();
+  const { panel } = usePanelContext();
+
+  const onOpenInspector = useCallback(() => {
+    const dashboard = getDashboardSceneFor(panel);
+    dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Query }));
+    trackQueryMenuAction('open_inspector', cardType);
+  }, [panel, cardType]);
+
+  // Compute option items from actual query options
+  // Items with isActive=true have non-default (user-set) values and are highlighted
+  const items: QueryOptionItem[] = useMemo(() => {
+    const realMaxDataPoints = data?.request?.maxDataPoints;
+    const realInterval = data?.request?.interval;
+    const minIntervalOnDs =
+      datasource?.interval ?? t('query-editor-next.query-options-bar.placeholder.no-limit', 'No limit');
+
+    return [
+      {
+        id: QueryOptionField.maxDataPoints,
+        label: t('query-editor-next.query-options-bar.label.max-data-points', 'Max data points'),
+        value: options.maxDataPoints != null ? String(options.maxDataPoints) : String(realMaxDataPoints ?? '-'),
+        isActive: options.maxDataPoints != null,
+      },
+      {
+        id: QueryOptionField.minInterval,
+        label: t('query-editor-next.query-options-bar.label.min-interval', 'Min interval'),
+        value: options.minInterval ?? minIntervalOnDs,
+        isActive: options.minInterval != null,
+      },
+      {
+        id: QueryOptionField.interval,
+        label: t('query-editor-next.query-options-bar.label.interval', 'Interval'),
+        value: realInterval ?? '-',
+        isActive: false, // Interval is always computed, never user-set
+      },
+      {
+        id: QueryOptionField.relativeTime,
+        label: t('query-editor-next.query-options-bar.label.relative-time', 'Relative time'),
+        value: options.timeRange?.from ?? TIME_OPTION_PLACEHOLDER,
+        isActive: options.timeRange?.from != null,
+      },
+      {
+        id: QueryOptionField.timeShift,
+        label: t('query-editor-next.query-options-bar.label.time-shift', 'Time shift'),
+        value: options.timeRange?.shift ?? TIME_OPTION_PLACEHOLDER,
+        isActive: options.timeRange?.shift != null,
+      },
+    ];
+  }, [options, data, datasource]);
+
+  // The fade marks options clipped off the end, so it has to go once the list is scrolled to them.
+  const listRef = useRef<HTMLUListElement | null>(null);
+  const [measureRef, { width: listWidth }] = useMeasure<HTMLUListElement>();
+  const setListRef = useCallback(
+    (el: HTMLUListElement | null) => {
+      listRef.current = el;
+      if (el) {
+        measureRef(el);
+      }
+    },
+    [measureRef]
+  );
+  const [isClippedAtEnd, setIsClippedAtEnd] = useState(false);
+  const updateClippedAtEnd = useCallback(() => {
+    const list = listRef.current;
+    setIsClippedAtEnd(list !== null && list.scrollLeft + list.clientWidth < list.scrollWidth - 1);
+  }, []);
+  useEffect(updateClippedAtEnd, [updateClippedAtEnd, listWidth, items]);
+
+  const handleItemClick = (event: React.MouseEvent, fieldId?: QueryOptionField) => {
+    // Stop propagation to prevent ClickOutsideWrapper from immediately closing
+    event.stopPropagation();
+
+    // Don't focus interval since it's read-only
+    if (fieldId && fieldId !== QueryOptionField.interval) {
+      trackQueryOptionsToggle(true);
+      openSidebar(fieldId);
+    } else if (!isQueryOptionsOpen) {
+      trackQueryOptionsToggle(true);
+      openSidebar();
+    } else {
+      trackQueryOptionsToggle(false);
+      closeSidebar();
+    }
+  };
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.queryOptionsWrapper}>
+        <Button
+          fill="text"
+          size="sm"
+          onClick={(e) => handleItemClick(e)}
+          aria-label={t('query-editor-next.query-options-bar.query-options', 'Query options')}
+        >
+          <Stack direction="row" alignItems="center" gap={0.5}>
+            <Trans i18nKey="query-editor-next.query-options-bar.query-options">Query options</Trans>
+            <Icon name="angle-down" className={cx(styles.chevron, { [styles.chevronOpen]: isQueryOptionsOpen })} />
+          </Stack>
+        </Button>
+      </div>
+
+      <ul
+        ref={setListRef}
+        className={cx(styles.itemsList, { [styles.itemsListClipped]: isClippedAtEnd })}
+        onScroll={updateClippedAtEnd}
+      >
+        {items.map((item) => (
+          <li key={item.id}>
+            <Button
+              fill="text"
+              size="sm"
+              className={styles.itemButton}
+              onClick={(e) => handleItemClick(e, item.id)}
+              aria-label={t('query-editor-next.query-options-bar.edit-option', 'Edit {{label}}', { label: item.label })}
+            >
+              {item.isActive && <span className={styles.activeIndicator} />}
+              <span className={styles.label}>{item.label}</span>
+              <span className={cx(styles.value, item.isActive && styles.valueActive)}>{item.value}</span>
+            </Button>
+          </li>
+        ))}
+      </ul>
+
+      <div className={styles.actions}>
+        <span className={styles.separator} />
+        <Button
+          fill="text"
+          size="sm"
+          icon="crosshair"
+          variant="secondary"
+          onClick={onOpenInspector}
+          aria-label={t('query-editor-next.query-options-bar.query-inspector', 'Query inspector')}
+        >
+          <Trans i18nKey="query-editor-next.query-options-bar.inspect-queries">Inspect queries</Trans>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    container: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      gap: theme.spacing(1),
+      flex: 1,
+      minWidth: 0,
+    }),
+    itemsList: css({
+      display: 'flex',
+      alignItems: 'center',
+      position: 'relative',
+      gap: theme.spacing(1),
+      listStyle: 'none',
+      margin: 0,
+      // The fade sits over this padding, so it only covers pills once they overflow.
+      padding: theme.spacing(0, 3, 0, 0),
+      flex: '0 1 auto',
+      minWidth: 0,
+      // This list is the part of the options bar that gives way, so it absorbs every shortfall and
+      // can reach zero width. Scrolling keeps the options it holds reachable — clipping them left no
+      // way to get at them at all, which the fade already implied there was.
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      whiteSpace: 'nowrap',
+      // A scrollbar inside the compact options bar would crowd it out. The list still scrolls by trackpad,
+      // Shift+wheel and Tab, and every option it holds is also under "Query options".
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': {
+        display: 'none',
+      },
+    }),
+    // Fades the clipped edge. A mask tracks the scroll port, where an absolutely positioned overlay
+    // would scroll away with the content it is meant to be fading.
+    itemsListClipped: css({
+      maskImage: `linear-gradient(to right, black calc(100% - ${theme.spacing(4)}), transparent)`,
+    }),
+    itemButton: css({
+      // Override Button's default padding and add gap for children
+      padding: theme.spacing(0, 0.5),
+
+      '& > span': {
+        display: 'flex',
+        alignItems: 'center',
+        gap: theme.spacing(0.5),
+      },
+    }),
+    label: css({
+      color: theme.colors.text.primary,
+    }),
+    value: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    valueActive: css({
+      color: theme.colors.success.text,
+    }),
+    activeIndicator: css({
+      width: 6,
+      height: 6,
+      borderRadius: theme.shape.radius.circle,
+      backgroundColor: theme.colors.success.text,
+      flexShrink: 0,
+    }),
+    chevron: css({
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('transform', {
+          duration: theme.transitions.duration.shorter,
+          easing: theme.transitions.easing.easeInOut,
+        }),
+      },
+    }),
+    chevronOpen: css({
+      transform: 'rotate(180deg)',
+    }),
+    queryOptionsWrapper: css({
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    actions: css({
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+    }),
+    separator: css({
+      width: 1,
+      height: theme.spacing(2),
+      background: theme.colors.border.medium,
+    }),
+  };
+}

@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -241,11 +242,19 @@ func (f *FakeOrgStore) FetchOrgIds(_ context.Context) ([]int64, error) {
 
 type NoValidation struct{}
 
+func (n NoValidation) Config() *v1.AMConfigV1 {
+	return nil
+}
+
 func (n NoValidation) Validate(_ models.NotificationSettings) error {
 	return nil
 }
 
 type RejectingValidation struct{}
+
+func (n RejectingValidation) Config() *v1.AMConfigV1 {
+	return nil
+}
 
 func (n RejectingValidation) Validate(s models.NotificationSettings) error {
 	return ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: s.ContactPointRouting.Receiver}}
