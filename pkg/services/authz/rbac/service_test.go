@@ -2138,6 +2138,50 @@ func TestService_Check(t *testing.T) {
 			expected: false,
 		},
 		{
+			name: "should allow slideshows create with wildcard-scoped playlists:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "collections.grafana.app",
+				Resource:  "slideshows",
+				Verb:      "create",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "playlists:write", Scope: "playlists:*", Kind: "playlists", Attribute: "*"},
+			},
+			expected: true,
+		},
+		{
+			name: "should allow named slideshows get with unscoped playlists:read",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "collections.grafana.app",
+				Resource:  "slideshows",
+				Verb:      "get",
+				Name:      "wall",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "playlists:read", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny named slideshows update with only playlists:read",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "collections.grafana.app",
+				Resource:  "slideshows",
+				Verb:      "update",
+				Name:      "wall",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "playlists:read", Scope: ""},
+			},
+			expected: false,
+		},
+		{
 			name: "should allow datasources update via datasources:edit action set scoped to uid",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",

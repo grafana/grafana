@@ -69,6 +69,13 @@ func NewAppInstaller(accessClient authlib.AccessClient, enableReconcilers bool) 
 }
 
 func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return NewAuthorizer(p.accessClient, p.logger)
+}
+
+// NewAuthorizer returns the authorizer for playlist-like resources, which are shared within an
+// org and authorized with the playlists:read and playlists:write permissions through the access
+// client. Other kinds that use the playlist permissions share it.
+func NewAuthorizer(accessClient authlib.AccessChecker, logger log.Logger) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			if !attr.IsResourceRequest() {
@@ -102,14 +109,14 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "unsupported verb: " + attr.GetVerb(), nil
 			}
 
-			res, err := p.accessClient.Check(ctx, user, authlib.CheckRequest{
+			res, err := accessClient.Check(ctx, user, authlib.CheckRequest{
 				Verb:      attr.GetVerb(),
 				Group:     attr.GetAPIGroup(),
 				Resource:  attr.GetResource(),
 				Namespace: attr.GetNamespace(),
 			}, "")
 			if err != nil {
-				p.logger.Error("failed to evaluate permission", "error", err)
+				logger.Error("failed to evaluate permission", "error", err)
 				return authorizer.DecisionDeny, "permission evaluation failed", err
 			}
 			if !res.Allowed {
