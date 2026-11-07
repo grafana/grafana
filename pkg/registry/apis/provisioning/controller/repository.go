@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -44,7 +45,9 @@ import (
 const loggerName = "provisioning-repository-controller"
 
 const (
-	maxAttempts = 3
+	maxAttempts              = 3
+	runningJobsRetryDelay    = 2 * time.Second
+	deleteErrorHealthMessage = "Repository deletion error"
 )
 
 //go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
@@ -467,6 +470,9 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
 		err := rc.finalizer.process(ctx, obj)
+		if errors.Is(err, errJobsRunning) {
+			return err
+		}
 		if err != nil {
 			rc.deletionMetrics.recordError(deletionStageFinalizers)
 			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
@@ -545,6 +551,29 @@ func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *pro
 			"value": deletion,
 		},
 	)
+}
+
+func (rc *RepositoryController) clearDeleteStatus(ctx context.Context, obj *provisioning.Repository) error {
+	var ops []map[string]interface{}
+	if obj.Status.DeleteError != "" {
+		ops = append(ops, map[string]interface{}{"op": "remove", "path": "/status/deleteError"})
+	}
+	if obj.Status.Deletion != nil {
+		ops = append(ops, map[string]interface{}{"op": "remove", "path": "/status/deletion"})
+	}
+	if slices.Equal(obj.Status.Health.Message, []string{deleteErrorHealthMessage}) {
+		healthyStatus := provisioning.HealthStatus{
+			Healthy: true,
+			Checked: obj.Status.Health.Checked,
+		}
+		ops = append(ops, rc.healthPatchIfChanged(obj, healthyStatus)...)
+		readyCondition := buildReadyConditionWithReason(healthyStatus, provisioning.ReasonAvailable)
+		ops = append(ops, BuildConditionPatchOpsFromExisting(obj.Status.Conditions, obj.GetGeneration(), readyCondition)...)
+	}
+	if len(ops) == 0 {
+		return nil
+	}
+	return rc.statusPatcher.Patch(ctx, obj, ops...)
 }
 
 // buildDeletionStatus turns a finalizer failure into the structured
@@ -994,13 +1023,21 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		if err == nil {
 			return repoType, nil
 		}
+		if errors.Is(err, errJobsRunning) {
+			if err := rc.clearDeleteStatus(ctx, obj); err != nil {
+				logger.Warn("failed to clear repository delete error while waiting for running jobs", "error", err)
+			}
+			rc.queueLag.add(key)
+			rc.queue.AddAfter(key, runningJobsRetryDelay)
+			return repoType, nil
+		}
 
 		logger.Warn("unable to delete repository", "error", err)
 		deleteHealthStatus := provisioning.HealthStatus{
 			Healthy: false,
 			Error:   provisioning.HealthFailureHealth,
 			Checked: time.Now().UnixMilli(),
-			Message: []string{"Repository deletion error"},
+			Message: []string{deleteErrorHealthMessage},
 		}
 		patchOps := rc.healthPatchIfChanged(obj, deleteHealthStatus)
 		// handleDelete builds the repository to run its finalizers, so the failure

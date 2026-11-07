@@ -195,6 +195,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 		statusPatcher StatusPatcher
 		repo          *provisioning.Repository
 		expectedErr   string
+		expectedIs    error
 	}{
 		{
 			name:          "No finalizers",
@@ -275,6 +276,23 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			expectedErr: "process finalizers: " + assert.AnError.Error(),
 		},
 		{
+			name: "Running jobs do not record a delete error",
+			finalizer: func() finalizerProcessor {
+				f := NewMockFinalizerProcessor(t)
+				f.On("process", mock.Anything, mock.Anything).Once().Return(errJobsRunning)
+				return f
+			}(),
+			statusPatcher: mocks.NewStatusPatcher(t),
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Finalizers: []string{
+						repository.RemovePendingJobsFinalizer,
+					},
+				},
+			},
+			expectedIs: errJobsRunning,
+		},
+		{
 			name: "Error when patching finalizers",
 			finalizer: func() finalizerProcessor {
 				f := NewMockFinalizerProcessor(t)
@@ -331,10 +349,13 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			}
 
 			err := c.handleDelete(context.Background(), tc.repo)
-			if tc.expectedErr != "" {
+			switch {
+			case tc.expectedIs != nil:
+				assert.Same(t, tc.expectedIs, err)
+			case tc.expectedErr != "":
 				assert.Error(t, err)
 				assert.ErrorContains(t, err, tc.expectedErr)
-			} else {
+			default:
 				assert.NoError(t, err)
 			}
 		})
@@ -2264,6 +2285,131 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 	}
 	require.NotNil(t, readyCond, "expected Ready condition to be present")
 	assert.Equal(t, metav1.ConditionFalse, readyCond.Status)
+}
+
+func TestRepositoryController_process_DeleteWaitsForRunningJobs(t *testing.T) {
+	removeOp := func(path string) interface{} {
+		return mock.MatchedBy(func(op map[string]interface{}) bool {
+			return op["op"] == "remove" && op["path"] == path
+		})
+	}
+	staleDeleteError := "remove finalizers: count running jobs: boom"
+	staleDeletion := &provisioning.DeletionStatus{State: provisioning.DeletionStateBlocked, Message: "boom"}
+
+	testCases := []struct {
+		name         string
+		status       provisioning.RepositoryStatus
+		clearOps     []interface{}
+		patchErr     error
+		checkRequeue bool
+	}{
+		{
+			name:         "no stale delete status is not patched",
+			checkRequeue: true,
+		},
+		{
+			name: "clears stale delete error and restores delete-error health",
+			status: provisioning.RepositoryStatus{
+				DeleteError: staleDeleteError,
+				Deletion:    staleDeletion,
+				Health: provisioning.HealthStatus{
+					Healthy: false,
+					Error:   provisioning.HealthFailureHealth,
+					Checked: 1234,
+					Message: []string{deleteErrorHealthMessage},
+				},
+				Conditions: []metav1.Condition{{
+					Type:    provisioning.ConditionTypeReady,
+					Status:  metav1.ConditionFalse,
+					Reason:  provisioning.ReasonServiceUnavailable,
+					Message: deleteErrorHealthMessage,
+				}},
+			},
+			clearOps: []interface{}{
+				removeOp("/status/deleteError"),
+				removeOp("/status/deletion"),
+				mock.MatchedBy(func(op map[string]interface{}) bool {
+					health, ok := op["value"].(provisioning.HealthStatus)
+					return op["path"] == "/status/health" && ok && health.Healthy && len(health.Message) == 0 &&
+						health.Checked == 1234
+				}),
+				mock.MatchedBy(func(op map[string]interface{}) bool {
+					ready, ok := op["value"].(metav1.Condition)
+					return op["path"] == "/status/conditions/0" && ok &&
+						ready.Type == provisioning.ConditionTypeReady && ready.Status == metav1.ConditionTrue && ready.Reason == provisioning.ReasonAvailable
+				}),
+			},
+		},
+		{
+			name: "keeps a health failure that is not the delete error",
+			status: provisioning.RepositoryStatus{
+				DeleteError: staleDeleteError,
+				Deletion:    staleDeletion,
+				Health: provisioning.HealthStatus{
+					Healthy: false,
+					Error:   provisioning.HealthFailureHealth,
+					Message: []string{"authentication failed"},
+				},
+			},
+			clearOps: []interface{}{removeOp("/status/deleteError"), removeOp("/status/deletion")},
+		},
+		{
+			name:         "requeues when the clear patch fails",
+			status:       provisioning.RepositoryStatus{DeleteError: staleDeleteError},
+			clearOps:     []interface{}{removeOp("/status/deleteError")},
+			patchErr:     assert.AnError,
+			checkRequeue: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			now := metav1.Now()
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "test-repo",
+					Namespace:         "default",
+					DeletionTimestamp: &now,
+					Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+				},
+				Spec:   provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+				Status: tc.status,
+			}
+
+			mockNamespaceLister := &MockRepositoryNamespaceLister{}
+			mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+			mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+			f := NewMockFinalizerProcessor(t)
+			f.On("process", mock.Anything, mock.Anything).Once().Return(errJobsRunning)
+
+			patcher := mocks.NewStatusPatcher(t)
+			if tc.clearOps != nil {
+				patchArgs := append([]interface{}{mock.Anything, mock.AnythingOfType("*v0alpha1.Repository")}, tc.clearOps...)
+				patcher.On("Patch", patchArgs...).Once().Return(tc.patchErr)
+			}
+			rc := &RepositoryController{
+				repos:     informer.NewCachedRepositoryGetter(mockLister),
+				finalizer: f,
+				queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+					workqueue.DefaultTypedControllerRateLimiter[string](),
+					workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-running-jobs"},
+				),
+				statusPatcher: patcher,
+				logger:        logging.DefaultLogger,
+				tracer:        tracing.InitializeTracerForTest(),
+			}
+			t.Cleanup(rc.queue.ShutDown)
+
+			_, err := rc.process("default/test-repo")
+			require.NoError(t, err)
+
+			if tc.checkRequeue {
+				require.Eventually(t, func() bool { return rc.queue.Len() == 1 },
+					2*runningJobsRetryDelay, 50*time.Millisecond, "repository must be requeued while jobs run")
+			}
+		})
+	}
 }
 
 // TestRepositoryController_process_DeleteStatusPatchFailure verifies how a
