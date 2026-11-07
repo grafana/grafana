@@ -26,11 +26,11 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders hue gradient w/
         "addColorStop": [
           [
             0,
-            "#982287",
+            "#ecff6f",
           ],
           [
             1,
-            "#030009",
+            "#d36702",
           ],
         ],
       },
@@ -43,11 +43,11 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders hue gradient w/
         "addColorStop": [
           [
             0,
-            "rgba(152, 34, 135, 0.17)",
+            "rgba(236, 255, 111, 0.17)",
           ],
           [
             1,
-            "rgba(3, 0, 9, 0.17)",
+            "rgba(211, 103, 2, 0.17)",
           ],
         ],
       },
@@ -153,13 +153,13 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders none gradient w
 [
   {
     "props": {
-      "value": "#440154",
+      "value": "#fde725",
     },
     "type": "strokeStyle",
   },
   {
     "props": {
-      "value": "rgba(68, 1, 84, 0.17)",
+      "value": "rgba(253, 231, 37, 0.17)",
     },
     "type": "fillStyle",
   },
@@ -271,7 +271,7 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders opacity gradien
   },
   {
     "props": {
-      "value": "#440154",
+      "value": "#fde725",
     },
     "type": "strokeStyle",
   },
@@ -281,11 +281,11 @@ exports[`TableNG SparklineCell threshold wiring (canvas) renders opacity gradien
         "addColorStop": [
           [
             0,
-            "#4401542b",
+            "#fde7252b",
           ],
           [
             1,
-            "#44015400",
+            "#fde72500",
           ],
         ],
       },

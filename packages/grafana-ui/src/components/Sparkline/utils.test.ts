@@ -1,6 +1,15 @@
+import tinycolor from 'tinycolor2';
 import type uPlot from 'uplot';
 
-import { createTheme, type Field, type FieldSparkline, FieldType, toDataFrame } from '@grafana/data';
+import {
+  createTheme,
+  type DataFrame,
+  type Field,
+  FieldColorModeId,
+  type FieldSparkline,
+  FieldType,
+  toDataFrame,
+} from '@grafana/data';
 
 import { getYRange, prepareConfig, preparePlotFrame } from './utils';
 
@@ -347,6 +356,33 @@ describe('prepareConfig', () => {
     const config = prepareConfig(sparkline, dataFrame, createTheme(), false);
     expect(config.series.length).toBe(1);
     expect(config.series[0].getConfig().points?.show).not.toBe(true);
+  });
+
+  describe('series color with a by-value color scheme', () => {
+    const theme = createTheme();
+
+    const getStroke = (values: number[]) => {
+      const sparkline: FieldSparkline = {
+        x: { name: 'x', values: values.map((_, i) => i), type: FieldType.number, config: {} },
+        y: {
+          name: 'y',
+          values,
+          type: FieldType.number,
+          config: { color: { mode: FieldColorModeId.ContinuousRdYlGr } },
+          state: { range: { min: Math.min(...values), max: Math.max(...values), delta: 0 } },
+        },
+      };
+      const dataFrame: DataFrame = { fields: [sparkline.x!, sparkline.y], length: values.length };
+      return prepareConfig(sparkline, dataFrame, theme).series[0].getConfig().stroke;
+    };
+
+    it('uses the scheme color for the last value', () => {
+      const green = theme.visualization.getColorByName('green');
+      const red = theme.visualization.getColorByName('red');
+
+      expect(tinycolor.equals(String(getStroke([1, 2, 3, 4, 5])), green)).toBe(true);
+      expect(tinycolor.equals(String(getStroke([5, 4, 3, 2, 1])), red)).toBe(true);
+    });
   });
 });
 

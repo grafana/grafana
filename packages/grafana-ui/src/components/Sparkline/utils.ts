@@ -270,7 +270,9 @@ export const prepareConfig = (
     });
 
     const colorMode = getFieldColorModeForField(field);
-    const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
+    // By-value schemes need a representative value; calculating at (0, 0) always yields the
+    // first scheme color, e.g. red for Red-Yellow-Green or the panel background for Reds.
+    const seriesColor = getFieldSeriesColor(field, theme).color;
 
     const hasHighlightIndex = showHighlights && typeof sparkline.highlightIndex === 'number';
     if (hasHighlightIndex) {
