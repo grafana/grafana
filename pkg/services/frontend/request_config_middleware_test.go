@@ -199,7 +199,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		assert.True(t, mockSettingsService.called)
 
 		// Verify success metric was incremented
-		assert.Equal(t, successBefore+1, testutil.ToFloat64(settingsFetchMetric.WithLabelValues("success")))
+		assert.Equal(t, successBefore+2, testutil.ToFloat64(settingsFetchMetric.WithLabelValues("success")))
 	})
 
 	t.Run("should fallback to base config on settings service error", func(t *testing.T) {
@@ -248,7 +248,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		assert.True(t, mockSettingsService.called)
 
 		// Verify error metric was incremented
-		assert.Equal(t, errorBefore+1, testutil.ToFloat64(settingsFetchMetric.WithLabelValues("error")))
+		assert.Equal(t, errorBefore+2, testutil.ToFloat64(settingsFetchMetric.WithLabelValues("error")))
 	})
 
 	t.Run("should not call settings service when no namespace is present", func(t *testing.T) {
@@ -309,11 +309,14 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		assert.Equal(t, http.StatusOK, recorder.Code)
 		assert.True(t, mockSettingsService.called)
 
-		require.Len(t, mockSettingsService.capturedSelector.MatchExpressions, 2)
-		sourceFilter := mockSettingsService.capturedSelector.MatchExpressions[1]
+		require.Len(t, mockSettingsService.capturedSelectors, 2)
+		require.Len(t, mockSettingsService.capturedSelectors[0].MatchExpressions, 2)
+		assert.Equal(t, []string{"security", "analytics"}, mockSettingsService.capturedSelectors[0].MatchExpressions[0].Values)
+		sourceFilter := mockSettingsService.capturedSelectors[0].MatchExpressions[1]
 		assert.Equal(t, "source", sourceFilter.Key)
 		assert.Equal(t, metav1.LabelSelectorOpIn, sourceFilter.Operator)
 		assert.Equal(t, []string{"us"}, sourceFilter.Values)
+		assert.Equal(t, metav1.LabelSelector{MatchLabels: map[string]string{"section": "meticulous"}}, mockSettingsService.capturedSelectors[1])
 	})
 
 	t.Run("populates full frontend settings and namespace when reduced boot data flag is enabled", func(t *testing.T) {
@@ -407,15 +410,19 @@ func TestRequestConfigMiddleware(t *testing.T) {
 
 // mockSettingsService is a simple mock for testing
 type mockSettingsService struct {
-	called           bool
-	capturedSelector metav1.LabelSelector
-	settings         []*settingservice.Setting
-	err              error
+	called            bool
+	capturedSelectors []metav1.LabelSelector
+	listAsIni         func(context.Context, metav1.LabelSelector) (*ini.File, error)
+	settings          []*settingservice.Setting
+	err               error
 }
 
 func (m *mockSettingsService) ListAsIni(ctx context.Context, selector metav1.LabelSelector) (*ini.File, error) {
 	m.called = true
-	m.capturedSelector = selector
+	m.capturedSelectors = append(m.capturedSelectors, selector)
+	if m.listAsIni != nil {
+		return m.listAsIni(ctx, selector)
+	}
 	if m.err != nil {
 		return nil, m.err
 	}

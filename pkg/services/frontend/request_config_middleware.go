@@ -101,6 +101,19 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 						// Merge tenant overrides with base config
 						requestConfig.ApplyOverrides(settings, logger, fullFrontendSettingsEnabled)
 					}
+
+					// Meticulous also accepts Hosted Grafana stack configuration. Keep this
+					// separate so analytics and security still use only stored overrides.
+					meticulousSettings, err := settingsService.ListAsIni(ctx, metav1.LabelSelector{
+						MatchLabels: map[string]string{"section": "meticulous"},
+					})
+					if err != nil {
+						settingsFetchMetric.WithLabelValues("error").Inc()
+						logger.Error("failed to fetch Meticulous settings", "namespace", namespace, "err", err)
+					} else {
+						settingsFetchMetric.WithLabelValues("success").Inc()
+						requestConfig.applyMeticulousOverrides(meticulousSettings, logger)
+					}
 				}
 			}
 
