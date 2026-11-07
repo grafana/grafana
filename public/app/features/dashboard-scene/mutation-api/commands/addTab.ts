@@ -6,7 +6,7 @@
  * (preserving the original layout structure) rather than being flattened.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -25,7 +25,7 @@ export type AddTabPayload = z.infer<typeof addTabPayloadSchema>;
 
 export const addTabCommand: MutationCommand<AddTabPayload> = {
   name: 'ADD_TAB',
-  description: payloads.addTab.description ?? '',
+  description: z.globalRegistry.get(payloads.addTab)?.description ?? '',
 
   payloadSchema: payloads.addTab,
   permission: requiresNewDashboardLayouts,

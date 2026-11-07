@@ -8,7 +8,7 @@
  * If layoutType is omitted, keeps the current type and just applies options.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -146,7 +146,7 @@ function createNewLayout(layoutType: LayoutType, currentLayout: DashboardLayoutM
 
 export const updateLayoutCommand: MutationCommand<UpdateLayoutPayload> = {
   name: 'UPDATE_LAYOUT',
-  description: payloads.updateLayout.description ?? '',
+  description: z.globalRegistry.get(payloads.updateLayout)?.description ?? '',
 
   payloadSchema: payloads.updateLayout,
   permission: requiresNewDashboardLayouts,

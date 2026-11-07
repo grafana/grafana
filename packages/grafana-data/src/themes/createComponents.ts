@@ -1,5 +1,5 @@
 import { mergeWith } from 'lodash';
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { onBackground } from './colorManipulator';
 import { type ThemeColors } from './createColors';
@@ -19,18 +19,26 @@ interface TagColors {
 }
 
 const ThemeTableColorsInputSchema = z.object({
-  rowHoverBackground: z.string().describe('Opaque background for a hovered, unselected row.').optional(),
-  rowSelected: z
-    .string()
-    .describe('Deprecated: use components.table.rowSelectedBackground. This property will be removed in Grafana 14.')
-    .optional(),
-  headerBackground: z.string().describe('Opaque header surface, distinct from body rows.').optional(),
-  border: z.string().describe('Opaque body and footer dividers.').optional(),
-  rowStripedBackground: z
-    .string()
-    .describe('Opaque background for alternating body rows; excludes headers, footers and expansion containers.')
-    .optional(),
-  rowSelectedBackground: z.string().describe('Opaque background for a selected row.').optional(),
+  rowHoverBackground: z.optional(z.string().check(z.describe('Opaque background for a hovered, unselected row.'))),
+  rowSelected: z.optional(
+    z
+      .string()
+      .check(
+        z.describe(
+          'Deprecated: use components.table.rowSelectedBackground. This property will be removed in Grafana 14.'
+        )
+      )
+  ),
+  headerBackground: z.optional(z.string().check(z.describe('Opaque header surface, distinct from body rows.'))),
+  border: z.optional(z.string().check(z.describe('Opaque body and footer dividers.'))),
+  rowStripedBackground: z.optional(
+    z
+      .string()
+      .check(
+        z.describe('Opaque background for alternating body rows; excludes headers, footers and expansion containers.')
+      )
+  ),
+  rowSelectedBackground: z.optional(z.string().check(z.describe('Opaque background for a selected row.'))),
 });
 
 type InferredThemeTableColors = Required<z.infer<typeof ThemeTableColorsInputSchema>>;
@@ -41,9 +49,9 @@ type ThemeTableColors = Omit<InferredThemeTableColors, 'rowSelected'> & {
 };
 
 const badgeColorTokens = z.object({
-  text: z.string().optional(),
-  background: z.string().optional(),
-  border: z.string().optional(),
+  text: z.optional(z.string()),
+  background: z.optional(z.string()),
+  border: z.optional(z.string()),
 });
 
 const DEFAULT_TAG_TEXT_COLOR = '#f7f8fa';
@@ -83,119 +91,119 @@ export const DEFAULT_TAG_COLORS: TagColors[] = [
 ];
 
 /** @beta */
-export const ThemeComponentsInputSchema = z
-  .object({
+export const ThemeComponentsInputSchema = z.partial(
+  z.object({
     /** Applies to normal buttons, inputs, radio buttons, etc */
     height: z.object({
-      sm: z.number().optional(),
-      md: z.number().optional(),
-      lg: z.number().optional(),
+      sm: z.optional(z.number()),
+      md: z.optional(z.number()),
+      lg: z.optional(z.number()),
     }),
     input: z.object({
-      background: z.string().optional(),
-      borderColor: z.string().optional(),
-      borderHover: z.string().optional(),
-      text: z.string().optional(),
+      background: z.optional(z.string()),
+      borderColor: z.optional(z.string()),
+      borderHover: z.optional(z.string()),
+      text: z.optional(z.string()),
     }),
     codeEditor: z.object({
-      keyword: z.string().optional(),
-      controlKeyword: z.string().optional(),
-      variable: z.string().optional(),
-      type: z.string().optional(),
-      function: z.string().optional(),
-      number: z.string().optional(),
-      string: z.string().optional(),
-      operator: z.string().optional(),
-      regexp: z.string().optional(),
-      comment: z.string().optional(),
-      heading: z.string().optional(),
-      link: z.string().optional(),
-      invalid: z.string().optional(),
+      keyword: z.optional(z.string()),
+      controlKeyword: z.optional(z.string()),
+      variable: z.optional(z.string()),
+      type: z.optional(z.string()),
+      function: z.optional(z.string()),
+      number: z.optional(z.string()),
+      string: z.optional(z.string()),
+      operator: z.optional(z.string()),
+      regexp: z.optional(z.string()),
+      comment: z.optional(z.string()),
+      heading: z.optional(z.string()),
+      link: z.optional(z.string()),
+      invalid: z.optional(z.string()),
     }),
     card: z.object({
-      background: z.string().optional(),
-      borderColor: z.string().optional(),
+      background: z.optional(z.string()),
+      borderColor: z.optional(z.string()),
     }),
     checkbox: z.object({
-      activeBackground: z.string().optional(),
-      activeBackgroundHover: z.string().optional(),
+      activeBackground: z.optional(z.string()),
+      activeBackgroundHover: z.optional(z.string()),
     }),
     switch: z.object({
-      activeBackground: z.string().optional(),
-      activeBackgroundHover: z.string().optional(),
+      activeBackground: z.optional(z.string()),
+      activeBackgroundHover: z.optional(z.string()),
     }),
     tooltip: z.object({
-      text: z.string().optional(),
-      background: z.string().optional(),
-      borderColor: z.string().optional(),
+      text: z.optional(z.string()),
+      background: z.optional(z.string()),
+      borderColor: z.optional(z.string()),
     }),
     panel: z.object({
-      padding: z.number().optional(),
-      headerHeight: z.number().optional(),
-      borderColor: z.string().optional(),
-      boxShadow: z.string().optional(),
-      background: z.string().optional(),
+      padding: z.optional(z.number()),
+      headerHeight: z.optional(z.number()),
+      borderColor: z.optional(z.string()),
+      boxShadow: z.optional(z.string()),
+      background: z.optional(z.string()),
     }),
     dropdown: z.object({
-      background: z.string().optional(),
-      borderColor: z.string().optional(),
+      background: z.optional(z.string()),
+      borderColor: z.optional(z.string()),
     }),
     modal: z.object({
-      background: z.string().optional(),
-      borderColor: z.string().optional(),
+      background: z.optional(z.string()),
+      borderColor: z.optional(z.string()),
     }),
     overlay: z.object({
-      background: z.string().optional(),
+      background: z.optional(z.string()),
     }),
     dashboard: z.object({
-      background: z.string().optional(),
-      padding: z.number().optional(),
+      background: z.optional(z.string()),
+      padding: z.optional(z.number()),
     }),
     drawer: z.object({
-      background: z.string().optional(),
-      borderColor: z.string().optional(),
-      padding: z.number().optional(),
+      background: z.optional(z.string()),
+      borderColor: z.optional(z.string()),
+      padding: z.optional(z.number()),
     }),
     textHighlight: z.object({
-      background: z.string().optional(),
-      text: z.string().optional(),
+      background: z.optional(z.string()),
+      text: z.optional(z.string()),
     }),
     sidemenu: z.object({
-      width: z.number().optional(),
+      width: z.optional(z.number()),
     }),
     horizontalDrawer: z.object({
-      defaultHeight: z.number().optional(),
+      defaultHeight: z.optional(z.number()),
     }),
     table: ThemeTableColorsInputSchema,
     menu: z.object({
-      borderRadius: z.enum(['default', 'md', 'sm', 'lg', 'pill', 'circle']).optional(),
-      padding: z.number().optional(),
+      borderRadius: z.optional(z.enum(['default', 'md', 'sm', 'lg', 'pill', 'circle'])),
+      padding: z.optional(z.number()),
     }),
     tag: z.object({
-      colors: z.array(z.object({ background: z.string(), text: z.string() })).optional(),
+      colors: z.optional(z.array(z.object({ background: z.string(), text: z.string() }))),
     }),
     home: z.object({
-      background: z
-        .object({
-          fade: z.string().optional(),
-          highlight: z.string().optional(),
-          right: z.string().optional(),
-          left: z.string().optional(),
+      background: z.optional(
+        z.object({
+          fade: z.optional(z.string()),
+          highlight: z.optional(z.string()),
+          right: z.optional(z.string()),
+          left: z.optional(z.string()),
         })
-        .optional(),
+      ),
     }),
     // keyed by BadgeColor ('brand' is handled separately)
     badge: z.object({
-      blue: badgeColorTokens.optional(),
-      red: badgeColorTokens.optional(),
-      green: badgeColorTokens.optional(),
-      orange: badgeColorTokens.optional(),
-      purple: badgeColorTokens.optional(),
-      darkgrey: badgeColorTokens.optional(),
-      brand: badgeColorTokens.optional(),
+      blue: z.optional(badgeColorTokens),
+      red: z.optional(badgeColorTokens),
+      green: z.optional(badgeColorTokens),
+      orange: z.optional(badgeColorTokens),
+      purple: z.optional(badgeColorTokens),
+      darkgrey: z.optional(badgeColorTokens),
+      brand: z.optional(badgeColorTokens),
     }),
   })
-  .partial();
+);
 
 /** @beta */
 type ThemeComponentsInput = z.infer<typeof ThemeComponentsInputSchema>;

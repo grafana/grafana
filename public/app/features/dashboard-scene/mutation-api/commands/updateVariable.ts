@@ -4,7 +4,7 @@
  * Replace an existing template variable with a new definition, preserving its position.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
@@ -22,7 +22,7 @@ export type UpdateVariablePayload = z.infer<typeof updateVariablePayloadSchema>;
 
 export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
   name: 'UPDATE_VARIABLE',
-  description: payloads.updateVariable.description ?? '',
+  description: z.globalRegistry.get(payloads.updateVariable)?.description ?? '',
 
   payloadSchema: payloads.updateVariable,
   permission: requiresEdit,

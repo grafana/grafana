@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
@@ -23,9 +23,9 @@ interface AlertRuleSearchPage {
 const alertRuleSearchResponseSchema = z.object({
   items: z.array(alertRuleSearchHitSchema),
   metadata: z.object({
-    continue: z.string().optional(),
-    totalHits: z.number().optional().catch(undefined),
-    totalHitsRelation: z.string().optional().catch(undefined),
+    continue: z.optional(z.string()),
+    totalHits: z.catch(z.optional(z.number()), undefined),
+    totalHitsRelation: z.catch(z.optional(z.string()), undefined),
   }),
 });
 
