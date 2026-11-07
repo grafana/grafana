@@ -3,8 +3,10 @@ import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import {
   applyFieldOverrides,
+  type ConfigOverrideRule,
   createTheme,
   type DataFrame,
+  FieldMatcherID,
   FieldType,
   getDefaultTimeRange,
   getPanelDataSummary,
@@ -84,7 +86,7 @@ function hostUsage(): DataFrame {
 
 function services(
   names: Array<string | null> = ['API', 'Worker', 'Web'],
-  availability: number[] = [99.9, 97.5, 100]
+  availability: Array<number | null> = [99.9, 97.5, 100]
 ): DataFrame {
   return toDataFrame({
     fields: [
@@ -97,6 +99,20 @@ function services(
 function affectedServices(): DataFrame {
   return toDataFrame({
     fields: [{ name: 'Affected service', type: FieldType.string, values: ['checkout', 'payments', 'notifications'] }],
+  });
+}
+
+function colors(
+  names: Array<string | null> = ['alpha', 'bravo', 'charlie'],
+  colorNames: Array<string | null> = ['red', 'orange', 'yellow'],
+  values: Array<number | null> = [2, 9, 6]
+): DataFrame {
+  return toDataFrame({
+    fields: [
+      { name: 'name', type: FieldType.string, values: names },
+      { name: 'color', type: FieldType.string, values: colorNames },
+      { name: 'value', type: FieldType.number, values },
+    ],
   });
 }
 
@@ -119,10 +135,10 @@ function numberFields(count: number) {
   }));
 }
 
-function withDisplay(frames: DataFrame[], defaults = {}): DataFrame[] {
+function withDisplay(frames: DataFrame[], defaults = {}, overrides: ConfigOverrideRule[] = []): DataFrame[] {
   return applyFieldOverrides({
     data: frames,
-    fieldConfig: { defaults, overrides: [] },
+    fieldConfig: { defaults, overrides },
     replaceVariables: (value) => value,
     theme,
     timeZone: 'utc',
@@ -150,6 +166,10 @@ function getOptions(name: string, frames: DataFrame[]) {
 
 function itemLines(name: string, frames: DataFrame[]) {
   return (getOptions(name, frames).content ?? '').split('\n').filter((line) => line.startsWith('- '));
+}
+
+function listBody(frames: DataFrame[]) {
+  return (getOptions(LIST, frames).content ?? '').split('\n').slice(3, -1);
 }
 
 function renderTemplate(name: string, frames: DataFrame[], series = frames, renderMode?: RenderMode) {
@@ -239,6 +259,26 @@ describe('textSuggestionsSupplier', () => {
           ),
         ],
       },
+      {
+        name: 'a time series without a value yet',
+        frames: [toDataFrame({ fields: [time, { name: 'CPU', type: FieldType.number, values: [null, NaN, null] }] })],
+      },
+      {
+        name: 'numeric samples without a value',
+        frames: [toDataFrame({ fields: [{ name: 'Queue depth', type: FieldType.number, values: [null, null] }] })],
+      },
+      {
+        name: 'a single row without a value',
+        frames: [
+          toDataFrame({
+            fields: [
+              { name: 'region', type: FieldType.string, values: [''] },
+              { name: 'latency', type: FieldType.number, values: [null] },
+            ],
+          }),
+        ],
+      },
+      { name: 'a table whose cells are all empty', frames: [services([null, '', null], [null, null, null])] },
     ])('offers nothing for $name', ({ frames }) => {
       expect(suggest(frames)).toBeUndefined();
     });
@@ -255,11 +295,6 @@ describe('textSuggestionsSupplier', () => {
       {
         name: 'a single string value',
         frames: [toDataFrame({ fields: [{ name: 'Deployment status', type: FieldType.string, values: ['Healthy'] }] })],
-        expected: [SUMMARY],
-      },
-      {
-        name: 'a time series without a value yet',
-        frames: [toDataFrame({ fields: [time, { name: 'CPU', type: FieldType.number, values: [null, NaN, null] }] })],
         expected: [SUMMARY],
       },
       {
@@ -363,13 +398,50 @@ describe('textSuggestionsSupplier', () => {
       ]);
     });
 
-    it('binds the list to each row, labelled by its first string field', () => {
+    it('leaves fields whose last value is missing or empty out of the summary and the statistics', () => {
+      const frames = [
+        toDataFrame({
+          fields: [
+            time,
+            { name: 'Host', type: FieldType.string, values: ['web-01', 'web-02', ''] },
+            { name: 'CPU', type: FieldType.number, values: [40, 75, null] },
+            { name: 'Memory', type: FieldType.number, values: [null, null, null] },
+            { name: 'Disk', type: FieldType.number, values: [NaN, null, NaN] },
+          ],
+        }),
+      ];
+
+      expect(itemLines(SUMMARY, frames)).toEqual(['- **CPU**: ${__data.fields.CPU:reduce:lastNotNull}']);
+      expect(getOptions(STATISTICS, frames).content?.split('\n').slice(5, -1)).toEqual([
+        '| CPU | ${__data.fields.CPU:reduce:lastNotNull} | ${__data.fields.CPU:reduce:min} | ${__data.fields.CPU:reduce:mean} | ${__data.fields.CPU:reduce:max} |',
+      ]);
+    });
+
+    it('leaves the empty cells of a single row out of its summary', () => {
+      const frames = [
+        toDataFrame({
+          fields: [
+            { name: 'region', type: FieldType.string, values: [null] },
+            { name: 'latency', type: FieldType.number, values: [120] },
+            { name: 'requests', type: FieldType.number, values: [NaN] },
+          ],
+        }),
+      ];
+
+      expect(itemLines(SUMMARY, frames)).toEqual(['- **latency**: ${__data.fields.latency:reduce:lastNotNull}']);
+    });
+
+    it('binds the list to each row, labelled by its first string field, leaving out what a row has no value for', () => {
       expect(getOptions(LIST, [services()]).content).toBe(
         [
           '{{#if (eq data.length 0)}}',
           'No data',
           '{{else}}',
-          '- <strong>${__data.fields.Service}</strong>: ${__data.fields.Availability}',
+          '{{#unless (eq fmt.Availability "")}}',
+          '- {{#unless (eq fmt.Service "")}}<strong>${__data.fields.Service}</strong>: {{/unless}}<span>${__data.fields.Availability}</span>',
+          '{{else unless (eq fmt.Service "")}}',
+          '- <strong>${__data.fields.Service}</strong>',
+          '{{/unless}}',
           '{{/if}}',
         ].join('\n')
       );
@@ -379,7 +451,7 @@ describe('textSuggestionsSupplier', () => {
       {
         name: 'a single string field',
         fields: [{ name: 'host', type: FieldType.string, values: ['a', 'b'] }],
-        item: '- <span>${__data.fields.host}</span>',
+        body: ['{{#unless (eq fmt.host "")}}', '- <span>${__data.fields.host}</span>', '{{/unless}}'],
       },
       {
         name: 'a label after a number',
@@ -387,7 +459,13 @@ describe('textSuggestionsSupplier', () => {
           { name: 'requests', type: FieldType.number, values: [1, 2] },
           { name: 'host', type: FieldType.string, values: ['a', 'b'] },
         ],
-        item: '- <strong>${__data.fields.host}</strong>: ${__data.fields.requests}',
+        body: [
+          '{{#unless (eq fmt.requests "")}}',
+          '- {{#unless (eq fmt.host "")}}<strong>${__data.fields.host}</strong>: {{/unless}}<span>${__data.fields.requests}</span>',
+          '{{else unless (eq fmt.host "")}}',
+          '- <strong>${__data.fields.host}</strong>',
+          '{{/unless}}',
+        ],
       },
       {
         name: 'a series of an instant query, without its timestamp',
@@ -396,7 +474,13 @@ describe('textSuggestionsSupplier', () => {
           { name: 'instance', type: FieldType.string, values: ['web-1', 'web-2'] },
           { name: 'Value', type: FieldType.number, values: [1, 0] },
         ],
-        item: '- <strong>${__data.fields.instance}</strong>: ${__data.fields.Value}',
+        body: [
+          '{{#unless (eq fmt.Value "")}}',
+          '- {{#unless (eq fmt.instance "")}}<strong>${__data.fields.instance}</strong>: {{/unless}}<span>${__data.fields.Value}</span>',
+          '{{else unless (eq fmt.instance "")}}',
+          '- <strong>${__data.fields.instance}</strong>',
+          '{{/unless}}',
+        ],
       },
       {
         name: 'several values, each named',
@@ -405,10 +489,94 @@ describe('textSuggestionsSupplier', () => {
           { name: 'region', type: FieldType.string, values: ['eu', 'us'] },
           { name: 'p95 *latency*', type: FieldType.number, values: [120, 80] },
         ],
-        item: '- <strong>${__data.fields.host}</strong>: region ${__data.fields.region}, p95 \\*latency\\* ${__data.fields["p95 *latency*"]}',
+        body: [
+          '{{#unless (and (eq fmt.region "") (eq fmt.[p95 *latency*] ""))}}',
+          '- {{#unless (eq fmt.host "")}}<strong>${__data.fields.host}</strong>: {{/unless}}<span>' +
+            '{{#unless (eq fmt.region "")}}region ${__data.fields.region}{{/unless}}' +
+            '{{#unless (eq fmt.[p95 *latency*] "")}}{{#unless (eq fmt.region "")}}, {{/unless}}p95 \\*latency\\* ${__data.fields["p95 *latency*"]}{{/unless}}' +
+            '</span>',
+          '{{else unless (eq fmt.host "")}}',
+          '- <strong>${__data.fields.host}</strong>',
+          '{{/unless}}',
+        ],
       },
-    ])('lists $name per row', ({ fields, item }) => {
-      expect(itemLines(LIST, [toDataFrame({ fields })])).toEqual([item]);
+    ])('lists $name per row', ({ fields, body }) => {
+      expect(listBody([toDataFrame({ fields })])).toEqual(body);
+    });
+
+    it.each([
+      { name: 'a reserved word', field: 'true', condition: '(eq fmt.[true] "")' },
+      { name: 'a number', field: '404', condition: '(eq fmt.[404] "")' },
+      { name: 'braces and quotes', field: 'say "{{hi}}"', condition: '(eq fmt.[say "{{hi}}"] "")' },
+      { name: 'a dot', field: 'cpu.usage', condition: '(eq fmt.[cpu.usage] "")' },
+      { name: 'square brackets', field: 'Size [MB]', condition: '(eq fmt.[Size [MB\\]] "")' },
+    ])('checks a row value displayed as $name by a path Handlebars reads literally', ({ field, condition }) => {
+      const frames = [
+        toDataFrame({
+          fields: [
+            { name: 'Service', type: FieldType.string, values: ['API', 'Web'] },
+            { name: field, type: FieldType.number, values: [1, null] },
+          ],
+        }),
+      ];
+
+      expect(listBody(frames)[0]).toBe(`{{#unless ${condition}}}`);
+      expect(listItems(renderSuggestion(LIST, withDisplay(frames)))).toEqual(['API: 1', 'Web']);
+    });
+
+    it.each([
+      { name: 'a backslash', field: 'a\\b', path: '[0]' },
+      { name: 'an angle bracket', field: '<b>', path: '[0]' },
+    ])('keeps a label displayed with $name in every row, as the template cannot check it', ({ field, path }) => {
+      const frames = [
+        toDataFrame({
+          fields: [
+            { name: field, type: FieldType.string, values: ['API', null] },
+            { name: 'Availability', type: FieldType.number, values: [99.9, 100] },
+          ],
+        }),
+      ];
+
+      expect(listBody(frames)).toEqual([
+        '{{#unless (eq fmt.Availability "")}}',
+        `- <strong>\${__data.fields${path}}</strong>: <span>\${__data.fields.Availability}</span>`,
+        '{{else}}',
+        `- <strong>\${__data.fields${path}}</strong>`,
+        '{{/unless}}',
+      ]);
+      expect(listItems(renderSuggestion(LIST, withDisplay(frames)))).toEqual(['API: 99.9', ': 100']);
+    });
+
+    it('checks no field once one is displayed as fmt, which would shadow the formatted values', () => {
+      const frames = [
+        toDataFrame({
+          fields: [
+            { name: 'Service', type: FieldType.string, values: ['API', 'Web'] },
+            { name: 'fmt', type: FieldType.string, values: ['a', 'b'] },
+            { name: 'Availability', type: FieldType.number, values: [99.9, 100] },
+          ],
+        }),
+      ];
+
+      expect(listBody(frames)).toEqual([
+        '- <strong>${__data.fields.Service}</strong>: <span>fmt ${__data.fields.fmt}, Availability ${__data.fields.Availability}</span>',
+      ]);
+    });
+
+    it('checks no field whose display name another field shares, as a row keeps only one of them', () => {
+      const frames = [
+        toDataFrame({
+          fields: [
+            { name: 'Service', type: FieldType.string, values: ['API', 'Web'] },
+            { name: 'a', type: FieldType.number, values: [1, 2], config: { displayName: 'Latency' } },
+            { name: 'b', type: FieldType.number, values: [3, 4], config: { displayName: 'Latency' } },
+          ],
+        }),
+      ];
+
+      expect(listBody(frames)).toEqual([
+        '- {{#unless (eq fmt.Service "")}}<strong>${__data.fields.Service}</strong>: {{/unless}}<span>Latency ${__data.fields.a}, Latency ${__data.fields.b}</span>',
+      ]);
     });
 
     it.each([
@@ -450,25 +618,30 @@ describe('textSuggestionsSupplier', () => {
     });
 
     it.each([
-      { name: 'a plain name', field: 'service', path: '.service' },
-      { name: 'a name with spaces', field: 'Affected service', path: '["Affected service"]' },
-      { name: 'a name with a colon', field: 'job:service', path: '[0]' },
-      { name: 'a name with a caret', field: 'service^2', path: '[0]' },
-      { name: 'a name with a closing brace', field: 'service}', path: '[0]' },
-    ])('binds $name by a path the row macro can read', ({ field, path }) => {
+      { name: 'a plain name', field: 'service', path: '.service', key: 'fmt.service' },
+      {
+        name: 'a name with spaces',
+        field: 'Affected service',
+        path: '["Affected service"]',
+        key: 'fmt.[Affected service]',
+      },
+      { name: 'a name with a colon', field: 'job:service', path: '[0]', key: 'fmt.[job:service]' },
+      { name: 'a name with a caret', field: 'service^2', path: '[0]', key: 'fmt.[service^2]' },
+      { name: 'a name with a closing brace', field: 'service}', path: '[0]', key: 'fmt.[service}]' },
+    ])('binds $name by a path the row macro can read', ({ field, path, key }) => {
       const frames = [
         toDataFrame({
           fields: [
-            { name: field, type: FieldType.string, values: ['API', 'Web'] },
-            { name: 'Availability', type: FieldType.number, values: [99.9, 100] },
+            { name: field, type: FieldType.string, values: ['API', 'Web', null] },
+            { name: 'Availability', type: FieldType.number, values: [99.9, 100, 97.5] },
           ],
         }),
       ];
 
-      expect(itemLines(LIST, frames)).toEqual([
-        `- <strong>\${__data.fields${path}}</strong>: \${__data.fields.Availability}`,
-      ]);
-      expect(listItems(renderSuggestion(LIST, withDisplay(frames)))).toEqual(['API: 99.9', 'Web: 100']);
+      expect(listBody(frames)[1]).toBe(
+        `- {{#unless (eq ${key} "")}}<strong>\${__data.fields${path}}</strong>: {{/unless}}<span>\${__data.fields.Availability}</span>`
+      );
+      expect(listItems(renderSuggestion(LIST, withDisplay(frames)))).toEqual(['API: 99.9', 'Web: 100', '97.5']);
     });
 
     it('binds fields that share a name by their index', () => {
@@ -579,14 +752,13 @@ describe('generated templates', () => {
     expect(tableRows(renderSuggestion(STATISTICS, frames))[1]).toEqual(['Queue depth', '7', '7', '12.3', '18']);
   });
 
-  it('render a field without any value as the No value of its field config', () => {
-    const frames = [
-      toDataFrame({ fields: [time, { name: 'CPU', type: FieldType.number, values: [null, null, null] }] }),
-    ];
+  it('render a summary field that has since lost its values as the No value of its field config', () => {
+    const series = withDisplay(
+      [toDataFrame({ fields: [time, { name: 'CPU', type: FieldType.number, values: [null, null, null] }] })],
+      { noValue: 'No reading' }
+    );
 
-    expect(listItems(renderSuggestion(SUMMARY, withDisplay(frames, { noValue: 'No reading' })))).toEqual([
-      'CPU: No reading',
-    ]);
+    expect(listItems(renderSuggestion(SUMMARY, [timeSeries('CPU')], series))).toEqual(['CPU: No reading']);
   });
 
   it('render the list with one item per row, formatted by the field config', () => {
@@ -615,10 +787,151 @@ describe('generated templates', () => {
   });
 
   it('render a list row without a label as its value alone', () => {
-    expect(listItems(renderSuggestion(LIST, withDisplay([services(['API', null, ' '])])))).toEqual([
+    expect(listItems(renderSuggestion(LIST, withDisplay([services(['API', null, ''])])))).toEqual([
       'API: 99.9%',
-      ': 97.5%',
-      ': 100%',
+      '97.5%',
+      '100%',
+    ]);
+  });
+
+  it('render a list row without a value as its label alone, and leave out a row with neither', () => {
+    const container = renderSuggestion(LIST, withDisplay([services(['API', 'Worker', null], [99.9, null, null])]));
+
+    expect(listItems(container)).toEqual(['API: 99.9%', 'Worker']);
+  });
+
+  it('render each list row with only the named values it has, as one list', () => {
+    const container = renderSuggestion(
+      LIST,
+      withDisplay([
+        colors(
+          ['alpha', 'bravo', null, 'delta', null, ''],
+          ['red', null, 'orange', null, null, ''],
+          [2, 9, 6, null, 4, null]
+        ),
+      ])
+    );
+
+    expect(listItems(container)).toEqual([
+      'alpha: color red, value 2',
+      'bravo: value 9',
+      'color orange, value 6',
+      'delta',
+      'value 4',
+    ]);
+    expect(container.querySelectorAll('ul')).toHaveLength(1);
+  });
+
+  it('render a separator only between the values a row has, whichever of them are missing', () => {
+    const frames = withDisplay([
+      toDataFrame({
+        fields: [
+          {
+            name: 'host',
+            type: FieldType.string,
+            values: ['h0', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', null, null, null, null, null, null, null, null],
+          },
+          {
+            name: 'a',
+            type: FieldType.number,
+            values: [1, 1, 1, 1, null, null, null, null, 1, 1, 1, 1, null, null, null, null],
+          },
+          {
+            name: 'b',
+            type: FieldType.number,
+            values: [2, 2, null, null, 2, 2, null, null, 2, 2, null, null, 2, 2, null, null],
+          },
+          {
+            name: 'c',
+            type: FieldType.number,
+            values: [3, null, 3, null, 3, null, 3, null, 3, null, 3, null, 3, null, 3, null],
+          },
+        ],
+      }),
+    ]);
+
+    expect(listItems(renderSuggestion(LIST, frames))).toEqual([
+      'h0: a 1, b 2, c 3',
+      'h1: a 1, b 2',
+      'h2: a 1, c 3',
+      'h3: a 1',
+      'h4: b 2, c 3',
+      'h5: b 2',
+      'h6: c 3',
+      'h7',
+      'a 1, b 2, c 3',
+      'a 1, b 2',
+      'a 1, c 3',
+      'a 1',
+      'b 2, c 3',
+      'b 2',
+      'c 3',
+    ]);
+  });
+
+  it(`render a separator between the last two values of a row with ${MAX_TEMPLATE_FIELDS} fields`, () => {
+    const frames = withDisplay([
+      toDataFrame({
+        fields: [
+          { name: 'host', type: FieldType.string, values: [null, 'web-1'] },
+          ...Array.from({ length: MAX_TEMPLATE_FIELDS - 1 }, (_, index) => ({
+            name: `v${index}`,
+            type: FieldType.number,
+            values: index < MAX_TEMPLATE_FIELDS - 3 ? [null, null] : [index, null],
+          })),
+        ],
+      }),
+    ]);
+
+    expect(listItems(renderSuggestion(LIST, frames))).toEqual(['v47 47, v48 48', 'web-1']);
+  });
+
+  it('render a list of fields named with square brackets with only the values each row has', () => {
+    const frames = withDisplay([
+      toDataFrame({
+        fields: [
+          { name: 'Disk [name]', type: FieldType.string, values: ['sda', null, 'sdc'] },
+          { name: 'Size [MB]', type: FieldType.number, values: [512, 256, null] },
+          { name: 'Used [%]', type: FieldType.number, values: [null, 40, 90] },
+        ],
+      }),
+    ]);
+
+    expect(listItems(renderSuggestion(LIST, frames))).toEqual([
+      'sda: Size [MB] 512',
+      'Size [MB] 256, Used [%] 40',
+      'sdc: Used [%] 90',
+    ]);
+  });
+
+  it('render a zero as a value, not as a missing one', () => {
+    expect(listItems(renderSuggestion(LIST, withDisplay([services(['API', 'Web'], [0, null])])))).toEqual([
+      'API: 0%',
+      'Web',
+    ]);
+  });
+
+  it('render a missing value as the No value of its field config when one is set', () => {
+    const frames = withDisplay([colors(['alpha', 'bravo'], ['red', null], [2, 9])], { noValue: 'none' });
+
+    expect(listItems(renderSuggestion(LIST, frames))).toEqual([
+      'alpha: color red, value 2',
+      'bravo: color none, value 9',
+    ]);
+  });
+
+  it('keep every value of a list whose fields were renamed after it was suggested', () => {
+    const frames = [colors(['alpha', 'bravo'], ['red', null], [2, 9])];
+    const renamed = withDisplay(frames, {}, [
+      {
+        matcher: { id: FieldMatcherID.byName, options: 'color' },
+        properties: [{ id: 'displayName', value: 'Colour' }],
+      },
+    ]);
+
+    expect(listItems(renderSuggestion(LIST, withDisplay(frames), renamed))).toEqual([
+      'alpha: color red, value 2',
+      'bravo: color , value 9',
     ]);
   });
 
@@ -784,6 +1097,37 @@ describe('an applied suggestion', () => {
 
     expect(listItems(screen.getByTestId('TextNGPanel-converted-content'))).toEqual(['API: 99.5%', 'Web: 98%']);
   });
+
+  it('leaves out the values each row is missing as the rows change', () => {
+    const props = createProps(createReplaceVariables(), {
+      data: createData(withDisplay([colors()])),
+      options: getOptions(LIST, [colors()]),
+    });
+
+    const { rerender } = render(<TextNGPanel {...props} />);
+
+    expect(listItems(screen.getByTestId('TextNGPanel-converted-content'))).toEqual([
+      'alpha: color red, value 2',
+      'bravo: color orange, value 9',
+      'charlie: color yellow, value 6',
+    ]);
+
+    rerender(
+      <TextNGPanel
+        {...props}
+        data={createData(withDisplay([colors(['alpha', 'bravo', null], ['red', null, 'yellow'], [2, 9, 6])]))}
+      />
+    );
+    act(() => {
+      jest.advanceTimersByTime(200);
+    });
+
+    expect(listItems(screen.getByTestId('TextNGPanel-converted-content'))).toEqual([
+      'alpha: color red, value 2',
+      'bravo: value 9',
+      'color yellow, value 6',
+    ]);
+  });
 });
 
 describe('among the other visualization suggestions', () => {
@@ -854,6 +1198,29 @@ describe('among the other visualization suggestions', () => {
       'API: 99.9%',
       'Worker: 97.5%',
       'Web: 100%',
+    ]);
+  });
+
+  it('previews the list with only the values each row has', async () => {
+    const frame = colors(['alpha', 'bravo', null], ['red', null, 'orange'], [2, 9, 6]);
+    const { suggestions } = await getAllSuggestions([frame]);
+    const list = suggestions.find(({ name }) => name === LIST);
+    if (!list) {
+      throw new Error('no list suggestion');
+    }
+
+    render(
+      <VisualizationSuggestionCard
+        data={{ series: [frame], state: LoadingState.Done, timeRange: getDefaultTimeRange() }}
+        suggestion={list}
+        width={200}
+      />
+    );
+
+    expect(listItems(await screen.findByTestId('TextNGPanel-converted-content'))).toEqual([
+      'alpha: color red, value 2',
+      'bravo: value 9',
+      'color orange, value 6',
     ]);
   });
 });

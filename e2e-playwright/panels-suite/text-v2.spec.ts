@@ -27,6 +27,7 @@ const LAST_VALUES_PANEL = '2';
 const SUGGESTIONS_DASHBOARD_UID = 'text-suggestions';
 const VALUE_PER_CATEGORY_PANEL = '8';
 const LABELS_ONLY_PANEL = '15';
+const MISSING_VALUES_PANEL = '18';
 
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
@@ -382,8 +383,31 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
         'Web: 100',
       ]);
       await expect(page.getByTestId('TextNGEditor').locator('.cm-content')).toContainText(
-        '<strong>${__data.fields.Service}</strong>: ${__data.fields.Availability}'
+        '<strong>${__data.fields.Service}</strong>: {{/unless}}<span>${__data.fields.Availability}</span>'
       );
+    });
+
+    test('applies a list that leaves out what each row has no value for', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+    }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: SUGGESTIONS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: MISSING_VALUES_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      const list = dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Text - list'));
+      const items = ['alpha: color red, value 2', 'bravo: value 9', 'color orange, value 6', 'delta'];
+
+      await expect(renderedContent(list).locator('li')).toHaveText(items);
+
+      await list.click();
+
+      await expect(renderedContent(page.getByTestId('TextNGEditor-preview')).locator('li')).toHaveText(items);
     });
 
     test('offers nothing for series told apart only by labels', async ({ gotoDashboardPage, selectors }) => {

@@ -1,3 +1,5 @@
+import { findLast } from 'lodash';
+
 import {
   type DataFrame,
   type Field,
@@ -24,10 +26,19 @@ const DEDICATED_VISUALIZATIONS: PreferredVisualisationType[] = ['logs', 'trace',
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const QUOTABLE_IN_REDUCER = /^[^"\\{}<\p{Cc}]+$/u;
 const QUOTABLE_IN_ROW = /^[^"\\{}<:^\p{Cc}]+$/u;
+const QUOTABLE_IN_HANDLEBARS = /^[^\\<\p{Cc}]+$/u;
+const HANDLEBARS_KEYWORDS = new Set(['true', 'false', 'null', 'undefined', 'this']);
+
+const ROWS_KEY = 'data';
+const FORMATTED_VALUES_KEY = 'fmt';
 
 interface TemplateField {
   label: string;
   path: string;
+}
+
+interface ListField extends TemplateField {
+  emptyCondition?: string;
 }
 
 type TextSuggestion = VisualizationSuggestion<Options>;
@@ -51,17 +62,18 @@ export const textSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> 
 };
 
 function getFrameSuggestions(frame: DataFrame, isInstant: boolean): TextSuggestion[] | undefined {
-  const numberFields = frame.fields.filter((field) => field.type === FieldType.number);
   const valueFields = frame.fields.filter(isValueField);
+  const summaryFields = valueFields.filter(showsLastValue);
+  const numberFields = summaryFields.filter((field) => field.type === FieldType.number);
 
   if (frame.length === 1) {
-    return getSummarySuggestions(getFieldTemplate(frame, valueFields, QUOTABLE_IN_REDUCER), undefined);
+    return getSummarySuggestions(getFieldTemplate(frame, summaryFields, QUOTABLE_IN_REDUCER), undefined);
   }
 
   if (isTimeSeries(frame, isInstant)) {
     return numberFields.length > 0
       ? getSummarySuggestions(
-          getFieldTemplate(frame, valueFields, QUOTABLE_IN_REDUCER),
+          getFieldTemplate(frame, summaryFields, QUOTABLE_IN_REDUCER),
           hasSeveralValues(numberFields) ? getFieldTemplate(frame, numberFields, QUOTABLE_IN_REDUCER) : undefined
         )
       : undefined;
@@ -103,22 +115,22 @@ function getSummarySuggestions(
 
 function getListSuggestions(frame: DataFrame, valueFields: Field[]): TextSuggestion[] | undefined {
   const labelField = valueFields.find((field) => field.type === FieldType.string);
+  const rowKeys = frame.fields.map((field) => getFieldDisplayName(field, frame));
 
-  if (!labelField || frame.fields.some((field) => getFieldDisplayName(field, frame) === 'data')) {
+  if (!labelField || rowKeys.includes(ROWS_KEY)) {
     return;
   }
 
-  const fields = getFieldTemplate(
-    frame,
-    [labelField, ...valueFields.filter((field) => field !== labelField)],
-    QUOTABLE_IN_ROW
+  const listFields = [labelField, ...valueFields.filter((field) => field !== labelField)].slice(0, MAX_TEMPLATE_FIELDS);
+  const fields = getFieldTemplate(frame, listFields, QUOTABLE_IN_ROW);
+
+  if (!fields || !listFields.some((field) => field.values.some(isShown))) {
+    return;
+  }
+
+  const [label, ...values] = fields.map(
+    (field, index): ListField => ({ ...field, emptyCondition: getEmptyCondition(listFields[index], frame, rowKeys) })
   );
-
-  if (!fields) {
-    return;
-  }
-
-  const [label, ...values] = fields;
 
   return [
     {
@@ -126,6 +138,25 @@ function getListSuggestions(frame: DataFrame, valueFields: Field[]): TextSuggest
       options: getOptions(getListContent(label, values), RenderMode.PerRow),
     },
   ];
+}
+
+function getEmptyCondition(field: Field, frame: DataFrame, rowKeys: string[]): string | undefined {
+  const key = getFieldDisplayName(field, frame);
+  const path = getFormattedValuePath(key);
+
+  if (!path || rowKeys.includes(FORMATTED_VALUES_KEY) || rowKeys.indexOf(key) !== rowKeys.lastIndexOf(key)) {
+    return;
+  }
+
+  return `(eq ${path} "")`;
+}
+
+function getFormattedValuePath(key: string): string | undefined {
+  if (IDENTIFIER.test(key) && !HANDLEBARS_KEYWORDS.has(key)) {
+    return `${FORMATTED_VALUES_KEY}.${key}`;
+  }
+
+  return QUOTABLE_IN_HANDLEBARS.test(key) ? `${FORMATTED_VALUES_KEY}.[${key.replace(/]/g, '\\]')}]` : undefined;
 }
 
 function getFieldTemplate(frame: DataFrame, fields: Field[], quotable: RegExp): TemplateField[] | undefined {
@@ -163,6 +194,14 @@ function hasSeveralValues(fields: Field[]): boolean {
 
 function hasValue(value: unknown): boolean {
   return value != null && !Number.isNaN(value);
+}
+
+function isShown(value: unknown): boolean {
+  return hasValue(value) && value !== '';
+}
+
+function showsLastValue(field: Field): boolean {
+  return isShown(findLast(field.values, hasValue));
 }
 
 function getFieldPath(frame: DataFrame, field: Field, quotable: RegExp): string | undefined {
@@ -234,19 +273,56 @@ function getStatisticsContent(fields: TemplateField[]): string {
   return [header.map(escapeMarkdown), alignment, ...rows].map((cells) => `| ${cells.join(' | ')} |`).join('\n');
 }
 
-function getListContent(label: TemplateField, values: TemplateField[]): string {
+function getListContent(label: ListField, values: ListField[]): string {
   const name = getRowMacro(label.path);
 
   if (values.length === 0) {
-    return `- <span>${name}</span>`;
+    return getBlockUnless(label.emptyCondition, `- <span>${name}</span>`);
   }
 
-  const details =
-    values.length === 1
-      ? getRowMacro(values[0].path)
-      : values.map((value) => `${value.label} ${getRowMacro(value.path)}`).join(', ');
+  const details = values.length === 1 ? getRowMacro(values[0].path) : getNamedValues(values);
+  const item = `- ${getInlineUnless(label.emptyCondition, `<strong>${name}</strong>: `)}<span>${details}</span>`;
+  const valuesEmpty = getAllEmptyCondition(values);
 
-  return `- <strong>${name}</strong>: ${details}`;
+  if (!valuesEmpty) {
+    return item;
+  }
+
+  return [
+    `{{#unless ${valuesEmpty}}}`,
+    item,
+    label.emptyCondition ? `{{else unless ${label.emptyCondition}}}` : '{{else}}',
+    `- <strong>${name}</strong>`,
+    '{{/unless}}',
+  ].join('\n');
+}
+
+function getNamedValues(values: ListField[]): string {
+  return values
+    .map((value, index) => {
+      const separator = index === 0 ? '' : getInlineUnless(getAllEmptyCondition(values.slice(0, index)), ', ');
+
+      return getInlineUnless(value.emptyCondition, `${separator}${value.label} ${getRowMacro(value.path)}`);
+    })
+    .join('');
+}
+
+function getAllEmptyCondition(fields: ListField[]): string | undefined {
+  const conditions = fields.flatMap(({ emptyCondition }) => (emptyCondition ? [emptyCondition] : []));
+
+  if (conditions.length === 0 || conditions.length < fields.length) {
+    return;
+  }
+
+  return conditions.length === 1 ? conditions[0] : `(and ${conditions.join(' ')})`;
+}
+
+function getInlineUnless(condition: string | undefined, content: string): string {
+  return condition ? `{{#unless ${condition}}}${content}{{/unless}}` : content;
+}
+
+function getBlockUnless(condition: string | undefined, content: string): string {
+  return condition ? [`{{#unless ${condition}}}`, content, '{{/unless}}'].join('\n') : content;
 }
 
 function getOptions(content: string, renderMode = RenderMode.Once): Partial<Options> {
