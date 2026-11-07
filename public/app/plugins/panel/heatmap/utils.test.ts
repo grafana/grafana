@@ -5,16 +5,17 @@ import { AxisPlacement, HeatmapCellLayout, ScaleDistribution } from '@grafana/sc
 import { type UPlotConfigBuilder } from '@grafana/ui';
 
 import { type HeatmapData } from './fields';
-import { HeatmapSelectionMode } from './panelcfg.gen';
+import { HeatmapSelectionMode, type Options } from './panelcfg.gen';
 import {
   applyExplicitMinMax,
   boundedMinMax,
-  calculateBucketExpansionFactor,
   calculateYSizeDivisor,
   heatmapPathsDense,
   heatmapPathsPoints,
   heatmapPathsSparse,
   prepConfig,
+  sparseBucketExtent,
+  sparseLogFloor,
   toLogBase,
   valuesToFills,
 } from './utils';
@@ -444,6 +445,37 @@ describe('prepConfig', () => {
     expect(builder.series).toEqual([]);
   });
 
+  describe('y scale distribution', () => {
+    function prep(data: HeatmapData, rowsFrame?: Options['rowsFrame']) {
+      return prepConfig({
+        dataRef: { current: data },
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'magenta',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+        rowsFrame,
+      });
+    }
+
+    // uPlot scale distributions: 1 is linear, 3 is log.
+    // Native histogram buckets are exponential and the frame carries no scale of its own, so
+    // the log fallback has to survive any change to how the scale is chosen.
+    it('falls back to log on a sparse frame with no bucket scale set', () => {
+      const builder = prep(createSparseHeatmapData());
+
+      const { scaleKey } = getYScaleRangeInfo(builder);
+      expect(builder.getConfig().scales?.[scaleKey]).toMatchObject({ distr: 3 });
+    });
+
+    it('uses the Y bucket scale option on a sparse frame', () => {
+      const builder = prep(createSparseHeatmapData(), { yBucketScale: { type: ScaleDistribution.Linear } });
+
+      const { scaleKey } = getYScaleRangeInfo(builder);
+      expect(builder.getConfig().scales?.[scaleKey]).toMatchObject({ distr: 1 });
+    });
+  });
+
   it.each([
     {
       desc: 'time',
@@ -717,51 +749,62 @@ describe('prepConfig', () => {
 
   describe('y-scale range callback', () => {
     describe('sparse heatmap', () => {
-      const sparseData: uPlot.AlignedData = [
-        [0, 1, 2],
-        [0, 1, 4, 16],
-        [0, 5, 16, 64],
-      ];
-
-      it('expands dataMax by bucket factor from yMin/yMax and applies explicit min/max', () => {
-        const dataRef = { current: createSparseHeatmapData() };
+      // u.data[1] holds the cell facets [x, yMin, yMax], the shape the panel hands uPlot, and the
+      // range reads the bucket bounds from there, so these fixtures use that real shape.
+      function rangeFor(
+        yMin: number[],
+        yMax: number[],
+        rowsFrame: Options['rowsFrame'],
+        explicit: { min?: number; max?: number } = {}
+      ) {
         const builder = prepConfig({
-          dataRef,
+          dataRef: { current: createSparseHeatmapData() },
           theme,
           timeZone: 'utc',
           getTimeRange: () => timeRange,
           exemplarColor: 'red',
-          yAxisConfig: { axisPlacement: AxisPlacement.Left, min: 2, max: 64 },
-          rowsFrame: { yBucketScale: { type: ScaleDistribution.Linear } },
+          yAxisConfig: { axisPlacement: AxisPlacement.Left, ...explicit },
+          rowsFrame,
         });
         const { range, scaleKey } = getYScaleRangeInfo(builder);
-        const u = createMinimalUPlot(scaleKey, { data: sparseData });
-        const result = range(u, 1, 16, scaleKey);
-        expect(result[0]).toBe(2);
-        expect(result[1]).toBe(64);
+        const u = {
+          data: [[1000], [yMin.map(() => 1000), yMin, yMax]],
+          scales: { [scaleKey]: { log: rowsFrame?.yBucketScale?.log ?? 2 } },
+        } as unknown as uPlot;
+        // what uPlot passes in: it auto-ranges only the yMin facet, and on a log scale skips values <= 0
+        const ranged = rowsFrame?.yBucketScale?.type === ScaleDistribution.Log ? yMin.filter((v) => v > 0) : yMin;
+        return range(u, Math.min(...ranged), Math.max(...ranged), scaleKey);
+      }
+
+      const linear = { yBucketScale: { type: ScaleDistribution.Linear } };
+      const log2 = { yBucketScale: { type: ScaleDistribution.Log, log: 2 } };
+
+      it('frames the buckets from yMin/yMax and applies explicit min/max', () => {
+        expect(rangeFor([0, 1, 4, 16], [1, 4, 16, 64], linear, { min: 2, max: 64 })).toEqual([2, 64]);
       });
 
       it('uses uPlot.rangeLog for sparse log scale and snaps explicit min/max to magnitude', () => {
-        const dataRef = { current: createSparseHeatmapData() };
+        expect(rangeFor([0, 1, 4, 16], [1, 4, 16, 64], log2, { min: 2, max: 64 })).toEqual([2, 64]);
+      });
+
+      it("falls back to uPlot's range when the facets hold no bucket bounds", () => {
         const builder = prepConfig({
-          dataRef,
+          dataRef: { current: createSparseHeatmapData() },
           theme,
           timeZone: 'utc',
           getTimeRange: () => timeRange,
           exemplarColor: 'red',
-          yAxisConfig: { axisPlacement: AxisPlacement.Left, min: 2, max: 64 },
-          rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+          rowsFrame: linear,
         });
         const { range, scaleKey } = getYScaleRangeInfo(builder);
-        const u = createMinimalUPlot(scaleKey, { data: sparseData, log: 2 });
-        const result = range(u, 1, 64, scaleKey);
-        expect(result[0]).toEqual(2);
-        expect(result[1]).toEqual(64);
+        const mockU = { data: [[1000], [null, [], []]] } as unknown as uPlot;
+        expect(range(mockU, 3, 7, scaleKey)).toEqual([3, 7]);
       });
 
-      // Regression: rowsToCellsHeatmap with a single bucket starting at 0 produces yMin=yMax=0.
-      // bucketFactor * 0 = 0, so scaleMax collapsed to 0, causing heatmapPathsDense to clamp tile
-      // height to 1px. The range callback must return a positive scaleMax in this case.
+      // Regression (#120352): rowsToCellsHeatmap with a single bucket starting at 0 produces
+      // yMin = yMax = 0, and a zero-height range made heatmapPathsDense clamp tile height to 1px.
+      // The range callback must return a positive scaleMax in this case.
       it('returns positive scaleMax when single-bucket sparse data has yMin = yMax = 0', () => {
         const dataRef = { current: createSparseHeatmapData() };
         const builder = prepConfig({
@@ -2054,193 +2097,132 @@ describe('applyExplicitMinMax', () => {
   });
 });
 
-describe('calculateBucketExpansionFactor', () => {
-  describe('valid bucket factor calculation', () => {
-    it('calculates factor from first bucket with valid values', () => {
-      const yMinValues = [1, 4, 16];
-      const yMaxValues = [4, 16, 64];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4);
-    });
-
-    it('calculates factor from exponential buckets', () => {
-      const yMinValues = [1, 2, 4, 8];
-      const yMaxValues = [2, 4, 8, 16];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(2);
-    });
-
-    it('handles fractional factors', () => {
-      const yMinValues = [10, 15, 20];
-      const yMaxValues = [15, 20, 25];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(1.5);
+describe('sparseBucketExtent', () => {
+  it('reads the bounds, the lowest positive floor and the ceiling of the bucket that reaches 0', () => {
+    expect(sparseBucketExtent([0, 10, 20], [10, 20, 30])).toEqual({
+      min: 0,
+      max: 30,
+      positiveFloor: 10,
+      zeroCeiling: 10,
     });
   });
 
-  describe('division by zero handling', () => {
-    it('finds valid factor from second bucket when first bucket starts at 0', () => {
-      const yMinValues = [0, 1, 4, 16];
-      const yMaxValues = [1, 4, 16, 64];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4); // Uses second bucket: 4/1 = 4
-    });
-
-    it('finds valid factor from third bucket when first two fail', () => {
-      const yMinValues = [0, 0, 1, 4];
-      const yMaxValues = [1, 4, 4, 16];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4); // Uses third bucket: 4/1 = 4
-    });
-
-    it('returns 1 when all buckets start at 0', () => {
-      const yMinValues = [0, 0, 0];
-      const yMaxValues = [1, 4, 16];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(1);
+  it('keeps each yMin paired with its own yMax whatever order the cells arrive in', () => {
+    expect(sparseBucketExtent([20, 0, 10], [30, 10, 20])).toEqual({
+      min: 0,
+      max: 30,
+      positiveFloor: 10,
+      zeroCeiling: 10,
     });
   });
 
-  describe('negative values', () => {
-    it('handles negative bucket ranges', () => {
-      const yMinValues = [-16, -4, -1];
-      const yMaxValues = [-4, -1, 0];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(0.25); // -4/-16 = 0.25
-    });
-
-    it('skips zero but allows negative values when finding fallback', () => {
-      const yMinValues = [0, -4, -1];
-      const yMaxValues = [1, -1, 0];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(0.25); // Uses second bucket: -1/-4 = 0.25
-    });
-
-    it('handles mixed positive and negative buckets', () => {
-      const yMinValues = [-10, -5, 0, 5];
-      const yMaxValues = [-5, 0, 5, 10];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(0.5); // -5/-10 = 0.5
+  // Carried over from the multiplicative factor this replaced (#117198): Prometheus histograms
+  // commonly start with a [0, le] bucket, which must neither break the range nor be dropped.
+  it('handles Prometheus buckets that start at 0', () => {
+    expect(sparseBucketExtent([0, 0.005, 0.01, 0.025, 0.05], [0.005, 0.01, 0.025, 0.05, 0.1])).toEqual({
+      min: 0,
+      max: 0.1,
+      positiveFloor: 0.005,
+      zeroCeiling: 0.005,
     });
   });
 
-  describe('edge cases', () => {
-    it('returns 1 for empty arrays', () => {
-      const factor = calculateBucketExpansionFactor([], []);
-      expect(factor).toBe(1);
-    });
-
-    it('returns 1 when only yMinValues is empty', () => {
-      const factor = calculateBucketExpansionFactor([], [1, 4, 16]);
-      expect(factor).toBe(1);
-    });
-
-    it('returns 1 when only yMaxValues is empty', () => {
-      const factor = calculateBucketExpansionFactor([1, 4, 16], []);
-      expect(factor).toBe(1);
-    });
-
-    it('returns 1 for single bucket', () => {
-      const yMinValues = [1];
-      const yMaxValues = [4];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4);
-    });
-
-    it('handles when only one array has length > 1', () => {
-      const yMinValues = [1];
-      const yMaxValues = [4, 16, 64];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4); // Uses first bucket only, no fallback search
-    });
-
-    it('handles non-number values in arrays', () => {
-      const yMinValues = ['1', 4, 16];
-      const yMaxValues = [4, 16, 64];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4); // Skips first, uses second bucket
-    });
-
-    it('handles null values', () => {
-      const yMinValues = [null, 1, 4];
-      const yMaxValues = [4, 4, 16];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4); // Skips first, uses second bucket
-    });
-
-    it('handles undefined values', () => {
-      const yMinValues = [undefined, 1, 4];
-      const yMaxValues = [4, 4, 16];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4); // Skips first, uses second bucket
-    });
-
-    it('skips bucket when yMax is not a number', () => {
-      const yMinValues = [0, 1, 4];
-      const yMaxValues = [1, 'invalid', 16];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4); // Skips first two, uses third bucket
-    });
-
-    it('returns 1 when all subsequent buckets have non-number yMax', () => {
-      const yMinValues = [0, 1, 4];
-      const yMaxValues = [1, null, undefined];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(1); // Can't find any valid bucket
-    });
-
-    it('handles decreasing bucket ranges (unusual but valid)', () => {
-      // Buckets are in reverse order: [64,256], [16,64], [4,16], [1,4]
-      const yMinValues = [64, 16, 4, 1];
-      const yMaxValues = [256, 64, 16, 4];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4); // 256/64 = 4 from first bucket
-    });
-
-    it('returns 1 when factor is Infinity', () => {
-      const yMinValues = [0];
-      const yMaxValues = [10];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(1); // 10/0 = Infinity, invalid
-    });
-
-    it('returns 1 when factor is NaN', () => {
-      const yMinValues = [0];
-      const yMaxValues = [0];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(1); // 0/0 = NaN, invalid
-    });
-
-    it('skips buckets with zero factor in findIndex', () => {
-      const yMinValues = [0, 1, 0, 4];
-      const yMaxValues = [1, 0, 10, 16];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4); // Skips: [0,1]=Inf, [1,0]=0, [0,10]=Inf, uses [4,16]=4
-    });
-
-    it('skips buckets with negative factor in findIndex', () => {
-      const yMinValues = [0, -5, 4];
-      const yMaxValues = [1, 10, 16];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4); // Skips [0,1]=Inf, [-5,10]=-2, uses [4,16]=4
+  it('handles every floor being 0', () => {
+    expect(sparseBucketExtent([0, 0, 0], [0.1, 0.5, 1])).toEqual({
+      min: 0,
+      max: 1,
+      positiveFloor: null,
+      zeroCeiling: 0.1,
     });
   });
 
-  describe('realistic heatmap data', () => {
-    it('handles Prometheus-style exponential buckets starting at 0', () => {
-      // Typical Prometheus histogram buckets: 0, 1, 4, 16, 64, 256, 1024, 4096, 16384, 65536
-      const yMinValues = [0, 2, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
-      const yMaxValues = [1, 5, 16, 64, 256, 1024, 4096, 16384, 65536, 262144];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(2.5); // Uses second bucket: 5/2 = 2.5
+  // A native histogram zero bucket spans +/- its threshold, so its ceiling is tiny.
+  it('records the tiny ceiling of a native histogram zero bucket separately from the floors', () => {
+    const zeroThreshold = 2.938735877055719e-39;
+    expect(sparseBucketExtent([-zeroThreshold, 0.001], [zeroThreshold, 0.00119])).toEqual({
+      min: -zeroThreshold,
+      max: 0.00119,
+      positiveFloor: 0.001,
+      zeroCeiling: zeroThreshold,
     });
+  });
 
-    it('handles linear buckets', () => {
-      const yMinValues = [0, 10, 20, 30];
-      const yMaxValues = [10, 20, 30, 40];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(2); // Uses second bucket: 20/10 = 2
+  it('handles negative buckets', () => {
+    expect(sparseBucketExtent([-20, -10, 0, 10], [-10, 0, 10, 20])).toEqual({
+      min: -20,
+      max: 20,
+      positiveFloor: 10,
+      zeroCeiling: 10,
     });
+  });
+
+  it('has no positive bounds when every bound is <= 0', () => {
+    expect(sparseBucketExtent([-30, -20], [-20, -10])).toEqual({
+      min: -30,
+      max: -10,
+      positiveFloor: null,
+      zeroCeiling: null,
+    });
+  });
+
+  it('works with values below 1', () => {
+    expect(sparseBucketExtent([0.001, 0.002], [0.002, 0.004])).toEqual({
+      min: 0.001,
+      max: 0.004,
+      positiveFloor: 0.001,
+      zeroCeiling: null,
+    });
+  });
+
+  it('ignores non-numeric, NaN and Infinity entries', () => {
+    expect(sparseBucketExtent([null, NaN, 5, Infinity], [undefined, 10, -Infinity])).toEqual({
+      min: 5,
+      max: 10,
+      positiveFloor: 5,
+      zeroCeiling: null,
+    });
+  });
+
+  it('returns null when there are no finite bounds', () => {
+    expect(sparseBucketExtent([], [])).toBeNull();
+    expect(sparseBucketExtent([null, NaN], [undefined])).toBeNull();
+  });
+});
+
+describe('sparseLogFloor', () => {
+  const extent = (min: number, positiveFloor: number | null, zeroCeiling: number | null) => ({
+    min,
+    max: 100,
+    positiveFloor,
+    zeroCeiling,
+  });
+
+  it('starts at the lowest bound when every bound is positive', () => {
+    expect(sparseLogFloor(extent(10, 10, null), 2)).toBe(10);
+  });
+
+  // Buckets 0-10 / 10-20: snapping 10 down to 8 leaves the 0-10 bucket under half a step.
+  it('goes one step below the snapped floor when snapping leaves the bucket touching 0 too little room', () => {
+    expect(sparseLogFloor(extent(0, 10, 10), 2)).toBe(4);
+    expect(sparseLogFloor(extent(0, 1, 1), 2)).toBe(0.5);
+    expect(sparseLogFloor(extent(0, 10, 10), 10)).toBe(1);
+  });
+
+  // A classic Prometheus histogram's first bucket is 0-0.005; snapping to 0.001 already leaves 0.7 of a decade.
+  it('keeps the snapped floor when it already leaves the bucket touching 0 half a step', () => {
+    expect(sparseLogFloor(extent(0, 0.005, 0.005), 10)).toBe(0.001);
+  });
+
+  it('gives a lone bucket touching 0 room', () => {
+    expect(sparseLogFloor(extent(0, null, 10), 2)).toBe(4);
+  });
+
+  it('leaves off a bucket that reaches 0 but ends far below the others', () => {
+    expect(sparseLogFloor(extent(-2.938735877055719e-39, 0.001, 2.938735877055719e-39), 2)).toBe(0.001);
+  });
+
+  it('returns null when nothing is positive', () => {
+    expect(sparseLogFloor(extent(-30, null, null), 2)).toBeNull();
   });
 });
 
@@ -2583,30 +2565,6 @@ describe('Regression tests', () => {
       const [min, max] = boundedMinMax([-42]);
       expect(min).toBe(-42);
       expect(max).toBe(-42);
-    });
-  });
-
-  describe('calculateBucketExpansionFactor — Prometheus histogram regressions', () => {
-    // Regression for "Heatmap: Fix tooltip bucket range calculation when first bucket is 0" (PR #95987).
-    // Prometheus histograms commonly start with a [0, le] bucket.
-    // Division by the first yMin (0) produces Infinity, so the function must skip
-    // it and find the first non-zero yMin entry.
-    it('skips the leading zero bucket and returns the correct factor', () => {
-      // Typical Prometheus le buckets: 0.005, 0.01, 0.025, 0.05, 0.1, 0.25 …
-      const yMinValues = [0, 0.005, 0.01, 0.025, 0.05];
-      const yMaxValues = [0.005, 0.01, 0.025, 0.05, 0.1];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      // first valid bucket: 0.01 / 0.005 = 2
-      expect(factor).toBe(2);
-    });
-
-    // When every yMin in the dataset is 0 the function should not return Infinity
-    // or NaN — it must fall back to 1.
-    it('returns 1 when every yMin is 0 (prevents Infinity expansion)', () => {
-      const yMinValues = [0, 0, 0];
-      const yMaxValues = [0.1, 0.5, 1.0];
-      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(1);
     });
   });
 });
