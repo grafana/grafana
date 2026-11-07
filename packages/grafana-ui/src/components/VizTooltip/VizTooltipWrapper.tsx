@@ -26,5 +26,6 @@ const getStyles = (theme: GrafanaTheme2) =>
   css({
     display: 'flex',
     flexDirection: 'column',
+    maxWidth: 460,
     fontSize: theme.typography.bodySmall.fontSize,
   });

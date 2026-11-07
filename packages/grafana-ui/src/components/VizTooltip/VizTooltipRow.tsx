@@ -289,6 +289,7 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   }),
   labelWrapper: css({
     flexGrow: 1,
+    flexShrink: 0,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     color: theme.colors.text.secondary,
@@ -302,7 +303,8 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   valueWrapper: css({
     display: 'flex',
     alignItems: 'center',
-    flexShrink: 0,
+    flexShrink: 1,
+    minWidth: 0,
     alignSelf: 'center',
     marginRight,
   }),
