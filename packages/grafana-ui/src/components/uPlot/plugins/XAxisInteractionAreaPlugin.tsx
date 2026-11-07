@@ -1,4 +1,4 @@
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import uPlot from 'uplot';
 
 import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
@@ -145,22 +145,57 @@ export interface XAxisInteractionAreaPluginProps {
  * Plugin for handling x-axis area interactions, such as time range panning.
  * Properly manages event listener lifecycle to prevent memory leaks.
  */
-export const XAxisInteractionAreaPlugin = ({ config, queryZoom }: XAxisInteractionAreaPluginProps) => {
+export const XAxisInteractionAreaPlugin = ({
+  config,
+  queryZoom,
+}: XAxisInteractionAreaPluginProps) => {
+  const queryZoomRef = useRef(queryZoom);
+  const plotRef = useRef<uPlot | null>(null);
+  const cleanupRef = useRef<(() => void) | undefined>(undefined);
+
   useLayoutEffect(() => {
-    let cleanup: (() => void) | undefined;
+    queryZoomRef.current = queryZoom;
+
+    const plot = plotRef.current;
+
+    if (!plot) {
+      return;
+    }
+
+    if (queryZoom == null) {
+      cleanupRef.current?.();
+      cleanupRef.current = undefined;
+    } else if (!cleanupRef.current) {
+      cleanupRef.current = setupXAxisPan(plot, config, (range) => {
+        queryZoomRef.current?.(range);
+      });
+    }
+  }, [config, queryZoom]);
+
+  useLayoutEffect(() => {
+    let isActive = true;
 
     config.addHook('init', (u) => {
-      if (queryZoom != null) {
-        cleanup = setupXAxisPan(u, config, queryZoom);
+      if (!isActive) {
+        return;
+      }
+
+      plotRef.current = u;
+
+      if (queryZoomRef.current != null && !cleanupRef.current) {
+        cleanupRef.current = setupXAxisPan(u, config, (range) => {
+          queryZoomRef.current?.(range);
+        });
       }
     });
 
     return () => {
-      if (cleanup) {
-        cleanup();
-      }
+      isActive = false;
+      cleanupRef.current?.();
+      cleanupRef.current = undefined;
+      plotRef.current = null;
     };
-  }, [config, queryZoom]);
+  }, [config]);
 
   return null;
 };
