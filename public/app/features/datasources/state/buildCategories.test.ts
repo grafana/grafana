@@ -57,4 +57,16 @@ describe('buildCategories', () => {
     expect(enterprisePluginsCategory.plugins[0].name).toBe('Adobe Analytics');
     expect(enterprisePluginsCategory.plugins[enterprisePluginsCategory.plugins.length - 1].name).toBe('Zendesk');
   });
+
+  it('should preserve links for an installed Enterprise plugin', () => {
+    const plugin = getMockPlugin({ id: 'grafana-splunk-datasource' });
+    plugin.enterprise = true;
+    const documentationLink = { name: 'Documentation', url: 'https://example.com/docs' };
+    plugin.info.links = [documentationLink];
+
+    const result = buildCategories([plugin])
+      .flatMap((category) => category.plugins)
+      .find((item) => item.id === plugin.id);
+    expect(result?.info.links).toEqual([documentationLink]);
+  });
 });
