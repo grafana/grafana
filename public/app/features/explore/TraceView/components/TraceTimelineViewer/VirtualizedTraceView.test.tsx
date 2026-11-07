@@ -19,7 +19,7 @@ import { reportInteraction } from '@grafana/runtime';
 
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
-import { type Trace } from '../types/trace';
+import { type Trace, type TraceSpanData } from '../types/trace';
 import { formatDuration } from '../utils/date';
 
 import SpanTreeOffset from './SpanTreeOffset';
@@ -202,6 +202,58 @@ describe('<VirtualizedTraceViewImpl>', () => {
     rerender(<VirtualizedTraceView {...props} trace={trace} findMatchesIDs={new Set([trace.spans[0].spanID])} />);
 
     expect(jest.mocked(SpanTreeOffset).mock.lastCall?.[0].visibleSpanIds).toBe(initialVisibleSpanIds);
+  });
+
+  describe('visible span ids passed to the rows', () => {
+    const processes = { p1: { serviceName: 'service', tags: [] } };
+    const span = (spanID: string, startTime: number, parentSpanID?: string): TraceSpanData => ({
+      traceID: 'trace',
+      spanID,
+      processID: 'p1',
+      operationName: spanID,
+      startTime,
+      duration: 10,
+      logs: [],
+      flags: 0,
+      references: parentSpanID ? [{ refType: 'CHILD_OF', spanID: parentSpanID, traceID: 'trace' }] : [],
+    });
+    const visibleSpanIdsOfRow = (spanID: string) => {
+      const rowCalls = jest.mocked(SpanTreeOffset).mock.calls.filter(([rowProps]) => rowProps.span.spanID === spanID);
+      return rowCalls[rowCalls.length - 1]?.[0].visibleSpanIds;
+    };
+
+    it('are recomputed when new trace data arrives', () => {
+      // Span "a" sits below the rendered window of the full trace; the subtrace is rooted at "a" without the root span
+      const leaves = Array.from({ length: 50 }, (_, i) => span(`leaf-${i}`, 2 + i, 'root'));
+      const fullTrace = transformTraceData({
+        traceID: 'trace',
+        processes,
+        spans: [span('root', 1), ...leaves, span('a', 100, 'root'), span('b', 101, 'a')],
+      })!;
+      const subtrace = transformTraceData({
+        traceID: 'trace',
+        processes,
+        spans: [span('a', 100, 'root'), span('b', 101, 'a')],
+      })!;
+
+      const { rerender } = render(<VirtualizedTraceView {...props} trace={fullTrace} />);
+      rerender(<VirtualizedTraceView {...props} trace={subtrace} />);
+
+      expect(visibleSpanIdsOfRow('b')).toEqual(['a', 'b']);
+    });
+
+    it('are recomputed when a collapsed span is expanded', () => {
+      const chain = transformTraceData({
+        traceID: 'trace',
+        processes,
+        spans: [span('root', 1), span('a', 2, 'root'), span('b', 3, 'a'), span('c', 4, 'b')],
+      })!;
+
+      const { rerender } = render(<VirtualizedTraceView {...props} trace={chain} childrenHiddenIDs={new Set(['a'])} />);
+      rerender(<VirtualizedTraceView {...props} trace={chain} childrenHiddenIDs={new Set()} />);
+
+      expect(visibleSpanIdsOfRow('c')).toEqual(['root', 'a', 'b', 'c']);
+    });
   });
 
   it('does not throw or report when scrolling to top with no trace', async () => {
