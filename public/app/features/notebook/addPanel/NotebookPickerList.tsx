@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -43,6 +43,11 @@ interface Props {
   isTruncated: boolean;
   selectedUid?: string;
   onSelect: (uid: string) => void;
+  /**
+   * Takes the height the parent has left instead of the modal's fixed bound. The parent must be a
+   * flex column with a definite height.
+   */
+  fill?: boolean;
 }
 
 export function NotebookPickerList({
@@ -55,6 +60,7 @@ export function NotebookPickerList({
   isTruncated,
   selectedUid,
   onSelect,
+  fill = false,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -102,7 +108,7 @@ export function NotebookPickerList({
   }
 
   return (
-    <Stack direction="column" gap={1}>
+    <Stack direction="column" gap={1} flex={fill ? 1 : undefined} minHeight={fill ? 0 : undefined}>
       {/* The room for a card's focus ring has to be *inside* the scrolling element: ScrollContainer
           puts its own `padding` on an outer Box, while the inner div is the one with `overflow: auto`
           doing the clipping, so padding the component only insets the whole list. Hence the Box in
@@ -116,8 +122,8 @@ export function NotebookPickerList({
 
           The wrapper pulls the scroll area back out by the same amount, so the cards still line up
           with the filters above rather than sitting inset from them. */}
-      <div className={styles.bleed}>
-        <ScrollContainer maxHeight={LIST_MAX_HEIGHT} overflowX="hidden">
+      <div className={cx(styles.bleed, fill && styles.bleedFill)}>
+        <ScrollContainer maxHeight={fill ? undefined : LIST_MAX_HEIGHT} overflowX="hidden">
           <Box padding={1}>
             <Stack
               direction="column"
@@ -159,5 +165,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   bleed: css({
     marginLeft: `-${theme.spacing(1)}`,
     marginRight: `-${theme.spacing(1)}`,
+  }),
+  // ScrollContainer fills a flex parent on its own once this is one.
+  bleedFill: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    minHeight: 0,
   }),
 });

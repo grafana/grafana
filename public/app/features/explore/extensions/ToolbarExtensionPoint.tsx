@@ -10,6 +10,10 @@ import {
 import { reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
+import {
+  type OpenSidePanelNotebook,
+  useOpenSidePanelNotebook,
+} from 'app/features/notebook/sidePanel/openSidePanelNotebook';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type ExplorePanelData } from 'app/types/explore';
 import { useSelector } from 'app/types/store';
@@ -42,7 +46,8 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
     context: context,
-    limitPerPlugin: 3,
+    // Core's own links (dashboard, correlation, notebook, open notebook) all count against one plugin.
+    limitPerPlugin: 4,
   });
   const selectExploreItem = getExploreItemSelector(exploreId);
   const noQueriesInPane = Boolean(useSelector(selectExploreItem)?.queries?.length);
@@ -96,6 +101,8 @@ export type PluginExtensionExploreContext = {
   timeZone: TimeZone;
   shouldShowAddCorrelation: boolean;
   panelsState?: ExplorePanelsState;
+  /** The notebook open in the side panel, if any. Part of the context so the toolbar's links recompute when it changes. */
+  openNotebook?: OpenSidePanelNotebook;
 };
 
 function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
@@ -104,6 +111,7 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
   const isCorrelationsEditorMode = isCorrelationDetails?.editorMode || false;
   const { queries, queryResponse, range, panelsState } = useSelector(getExploreItemSelector(exploreId))!;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
+  const openNotebook = useOpenSidePanelNotebook();
 
   const datasourceUids = queries.map((query) => query?.datasource?.uid).filter((uid) => uid !== undefined);
   const numUniqueIds = [...new Set(datasourceUids)].length;
@@ -118,6 +126,7 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
       timeZone: getTimeZone({ timeZone }),
       shouldShowAddCorrelation: canWriteCorrelations && !isCorrelationsEditorMode && isLeftPane && numUniqueIds === 1,
       panelsState,
+      openNotebook,
     };
   }, [
     canWriteCorrelations,
@@ -125,6 +134,7 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
     isCorrelationsEditorMode,
     isLeftPane,
     numUniqueIds,
+    openNotebook,
     panelsState,
     queries,
     queryResponse,
