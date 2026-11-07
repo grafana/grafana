@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/plugin"
 )
 
-// localTokenTTL bounds how long a locally minted token is valid.
+// localTokenTTL is the lifetime for the existing service and subject-token flows.
 const localTokenTTL = 5 * time.Minute
 
 // LocalKeyID identifies the local signing key in tokens and in LocalSigningKeys.
@@ -137,7 +137,7 @@ func (e *localExchanger) Exchange(_ context.Context, req authnlib.TokenExchangeR
 		}
 		claims.Actor, subjectExpiry = actor, expiry
 	}
-	token, err := e.sign("access-policy:grafana", req.Audiences, claims)
+	token, err := e.sign("access-policy:grafana", req.Audiences, claims, localTokenTTL)
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -105,6 +106,19 @@ func TestSignLocalAccessToken(t *testing.T) {
 		require.Equal(t, "user:u1", authnlib.NewAccessTokenAuthInfo(*claims).GetSubject())
 	})
 
+	// Existing exchange modes have always ignored ExpiresIn.
+	for _, requested := range []*int{nil, new(0), new(-1), new(60), new(3600)} {
+		for _, subjectToken := range []string{"", inbound("example-app", "default")} {
+			t.Run("existing exchange preserves its lifetime", func(t *testing.T) {
+				claims, err := sign(authnlib.TokenExchangeRequest{
+					Namespace: "default", Audiences: []string{"grafana"}, SubjectToken: subjectToken, ExpiresIn: requested,
+				})
+				require.NoError(t, err)
+				require.Equal(t, 5*time.Minute, claims.Expiry.Time().Sub(claims.IssuedAt.Time()))
+			})
+		}
+	}
+
 	t.Run("restricted delegated permissions", func(t *testing.T) {
 		claims, err := sign(authnlib.TokenExchangeRequest{
 			Namespace: "default", Audiences: []string{"grafana"}, SubjectToken: inbound("example-app", "default"),
@@ -112,6 +126,15 @@ func TestSignLocalAccessToken(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, []string{"dashboard.grafana.app/dashboards:get"}, claims.Rest.DelegatedPermissions)
+	})
+
+	t.Run("empty restrictions preserve existing subject token behavior", func(t *testing.T) {
+		claims, err := sign(authnlib.TokenExchangeRequest{
+			Namespace: "default", Audiences: []string{"grafana"}, SubjectToken: inbound("example-app", "default"),
+			RestrictedDelegatedPermissions: []string{},
+		})
+		require.NoError(t, err)
+		require.Equal(t, policy.DelegatedPermissions, claims.Rest.DelegatedPermissions)
 	})
 
 	t.Run("refuses to delegate nothing", func(t *testing.T) {
