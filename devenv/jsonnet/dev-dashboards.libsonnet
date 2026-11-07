@@ -111,6 +111,7 @@
     "table_kitchen_sink": (import '../dev-dashboards/panel-table/table_kitchen_sink.json'),
     "table_markdown": (import '../dev-dashboards/panel-table/table_markdown.json'),
     "table_nested": (import '../dev-dashboards/panel-table/table_nested.json'),
+    "table_ng_internal_consumers": (import '../dev-dashboards/panel-table/table_ng_internal_consumers.json'),
     "table_pagination": (import '../dev-dashboards/panel-table/table_pagination.json'),
     "table_sparkline_cell": (import '../dev-dashboards/panel-table/table_sparkline_cell.json'),
     "table_tests": (import '../dev-dashboards/panel-table/table_tests.json'),
