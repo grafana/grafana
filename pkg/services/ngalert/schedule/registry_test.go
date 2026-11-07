@@ -360,6 +360,10 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		mutations := map[string]func(r *models.AlertRule){
 			"RuleGroup": func(r *models.AlertRule) { r.RuleGroup += "-changed" },
 			"For":       func(r *models.AlertRule) { r.For += time.Minute },
+			// Re-importing a Prometheus rule can change only its stored original definition.
+			"Metadata": func(r *models.AlertRule) {
+				r.Metadata.PrometheusStyleRule = &models.PrometheusStyleRule{OriginalRuleDefinition: "alert: changed"}
+			},
 		}
 		for name, mutate := range mutations {
 			t.Run(name, func(t *testing.T) {

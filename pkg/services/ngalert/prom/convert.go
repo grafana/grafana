@@ -177,6 +177,10 @@ func (p *Converter) convertRuleGroup(orgID int64, namespaceUID string, promGroup
 			return nil, fmt.Errorf("failed to generate UID for rule '%s': %w", gr.Title, err)
 		}
 		gr.UID = uid
+		// The label only selects the UID. Keeping it would change the rule's fingerprint,
+		// and so reset its alert state, when it is added to pin the rule's current UID.
+		// The original rule definition keeps it, so exported rules can be re-imported with the same UID.
+		delete(gr.Labels, ruleUIDLabel)
 
 		rules = append(rules, gr)
 	}
