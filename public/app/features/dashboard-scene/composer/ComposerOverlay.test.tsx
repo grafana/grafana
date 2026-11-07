@@ -2262,3 +2262,179 @@ describe('pick hint', () => {
     expect(hint()).toHaveTextContent(PANEL_HINT);
   });
 });
+
+describe('tools', () => {
+  const track = <T,>(promise: Promise<T>) => {
+    const settled = jest.fn();
+    promise.then(settled);
+    return settled;
+  };
+
+  it('starts on Select, offers Select, Text and Remove, and reports tool changes until unsubscribed', () => {
+    const { session } = setup();
+    const listener = jest.fn();
+    const stop = session.onToolChange(listener);
+
+    expect(session.tools).toEqual(['select', 'text', 'remove']);
+    expect(session.tool).toBe('select');
+    act(() => session.setTool('remove'));
+    act(() => session.setTool('remove'));
+    stop();
+    act(() => session.setTool('text'));
+
+    expect(session.tool).toBe('text');
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith('remove');
+  });
+
+  it('marks a click with Remove for removal, and draws nothing on a drag', async () => {
+    const { session, startPick } = setup();
+    act(() => session.setTool('remove'));
+    const pick = startPick();
+    const settled = track(pick);
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 350, clientY: 450 });
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 450 });
+    await act(async () => {});
+    expect(settled).not.toHaveBeenCalled();
+
+    fireEvent.click(overlay, { clientX: 200, clientY: 350 });
+    await expect(pick).resolves.toEqual({
+      ref: { kind: 'panel', panelId: 3 },
+      additive: false,
+      label: 'Latency',
+      tabPath: [],
+      point: { x: 0.25, y: 0.5 },
+      tool: 'remove',
+    });
+  });
+
+  it('picks the text selected inside a panel with Text, and never picks on a plain click', async () => {
+    const { session, startPick } = setup();
+    mountDashboardBody();
+    const content = panelRoot!.firstElementChild!;
+    content.textContent = '12:02 checkout-api retry 3/3 exhausted';
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const settled = track(pick);
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.click(overlay, { clientX: 200, clientY: 350 });
+    await act(async () => {});
+    expect(settled).not.toHaveBeenCalled();
+
+    const down = fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    expect(down).toBe(true); // the browser's selection still starts
+    const text = content.firstChild!;
+    const range = document.createRange();
+    range.setStart(text, 6);
+    range.setEnd(text, 28);
+    window.getSelection()!.removeAllRanges();
+    window.getSelection()!.addRange(range);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 350 });
+
+    await expect(pick).resolves.toMatchObject({
+      ref: { kind: 'panel', panelId: 3 },
+      label: 'Latency',
+      tool: 'text',
+      text: { quote: 'checkout-api retry 3/3', prefix: '12:02', suffix: 'exhausted', rects: [] },
+    });
+    expect(window.getSelection()!.isCollapsed).toBe(true);
+  });
+
+  it("pins a Text pick at its last line's bottom-right, so a title's pin stays inside the panel", async () => {
+    const { session, startPick } = setup();
+    mountDashboardBody();
+    const content = panelRoot!.firstElementChild!;
+    content.textContent = 'Latency';
+    // jsdom lays out no text: one line box at the panel's top, 10px in, 20px tall.
+    const line = { left: 110, top: 200, right: 300, bottom: 220, width: 190, height: 20 };
+    Object.defineProperty(Range.prototype, 'getClientRects', { configurable: true, value: () => [line] });
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 120, clientY: 210, button: 0 });
+    window.getSelection()!.selectAllChildren(content);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 210 });
+
+    await expect(pick).resolves.toMatchObject({
+      tool: 'text',
+      text: { quote: 'Latency', rects: [{ x: 10 / 400, y: 0, width: 190 / 400, height: 20 / 300 }] },
+      // (300 - 100) / 400 across, (220 - 200) / 300 down: the line's bottom, not its top.
+      point: { x: 0.5, y: 20 / 300 },
+    });
+    // @ts-expect-error -- jsdom has no getClientRects on Range; remove the stand-in.
+    delete Range.prototype.getClientRects;
+  });
+
+  it('ignores a Text selection outside every element', async () => {
+    const { session, startPick } = setup();
+    mountDashboardBody();
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const settled = track(pick);
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    const outside = document.createElement('p');
+    outside.textContent = 'Not in a panel';
+    overlay.parentElement!.parentElement!.appendChild(outside);
+
+    fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    window.getSelection()!.selectAllChildren(outside);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 350 });
+    await act(async () => {});
+
+    expect(settled).not.toHaveBeenCalled();
+  });
+
+  it('keeps the tools host out of picking, inside the overlay, and removes it when the session ends', async () => {
+    const { session, startPick } = setup();
+    const host = session.getToolsHost()!;
+    await nextFrame();
+    const button = document.createElement('button');
+    host.appendChild(button);
+    const pick = startPick();
+    const settled = track(pick);
+
+    expect(host.closest('[data-composer-capture-exclude]')).not.toBeNull();
+    fireEvent.pointerDown(button, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.pointerUp(button, { clientX: 200, clientY: 350 });
+    fireEvent.click(button, { clientX: 200, clientY: 350 });
+    await act(async () => {});
+    expect(settled).not.toHaveBeenCalled();
+
+    act(() => {
+      session.exit();
+    });
+    expect(host.isConnected).toBe(false);
+    expect(session.getToolsHost()).toBeNull();
+  });
+
+  it('draws an element marked for removal in the error colour while staged, with a trash icon on its pin', () => {
+    const { annotate } = setup();
+    annotate([item({ state: 'staged', tone: 'remove' })]);
+
+    const theme = createTheme();
+    expect(screen.getByTestId('composer-annotation-outline-a')).toHaveStyle({
+      outline: `2px dashed ${theme.colors.error.border}`,
+    });
+    const pin = screen.getByRole('button', { name: 'Comment 1, marked for removal' });
+    expect(pin).toHaveStyle({ background: theme.colors.error.main });
+    expect(pin.querySelector('svg, [class*="Icon"], div')).not.toBeNull();
+  });
+
+  it("draws a Text pick's selection on its element", () => {
+    const { annotate } = setup();
+    annotate([item({ textRects: [{ x: 0.1, y: 0.5, width: 0.5, height: 0.1 }] })]);
+
+    expect(screen.getByTestId('composer-annotation-text-a-0')).toHaveStyle({
+      left: '140px',
+      top: '350px',
+      width: '200px',
+      height: '30px',
+    });
+  });
+});

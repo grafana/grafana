@@ -21,12 +21,19 @@ import {
   type ComposerExitResult,
   type ComposerSessionAPI,
   type ComposerTarget,
+  type ComposerTool,
   type ElementPick,
   type ElementPoint,
   type ElementRef,
   type RegionCapture,
   type RegionPick,
 } from './types';
+
+/** Every tool, in the order the plugin shows them. */
+const TOOLS: readonly ComposerTool[] = ['select', 'text', 'remove'];
+
+/** Line boxes kept per text highlight; the quote, not the drawing, is what the plugin sends. */
+const MAX_TEXT_RECTS = 20;
 
 /** Left out of region captures: Composer's own layer and the extension sidebar. */
 const CAPTURE_EXCLUDE_SELECTOR = '[data-composer-capture-exclude], [data-extension-sidebar]';
@@ -61,8 +68,10 @@ type PickResult = ElementPick | RegionPick | null;
 /** What the overlay renders. A new object on every change, for `useSyncExternalStore`. */
 export interface ComposerOverlayState {
   picking: boolean;
-  /** Which tool the pending pick uses; null when none is pending. */
+  /** Which pick is pending: an element (any tool) or a region only; null when none is. */
   pickMode: 'element' | 'region' | null;
+  /** What a press does during an element pick. */
+  tool: ComposerTool;
   /** A region capture is running: picking and tab switching wait for it. */
   capturing: boolean;
   paused: boolean;
@@ -75,6 +84,7 @@ export interface ComposerOverlayState {
 const INITIAL_OVERLAY_STATE: ComposerOverlayState = {
   picking: false,
   pickMode: null,
+  tool: 'select',
   capturing: false,
   paused: false,
   highlight: null,
@@ -107,6 +117,9 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
   /** Containers the plugin portals into, kept across re-renders and moved with the overlay. */
   private readonly anchors = new Map<string, HTMLDivElement>();
   private anchorHost: HTMLElement | null = null;
+  /** The container the plugin portals its tools bar into; the overlay places it. */
+  private toolsHost: HTMLDivElement | null = null;
+  private readonly toolListeners = new Set<(tool: ComposerTool) => void>();
   private requestMeasure?: () => void;
   private readonly cleanups: Array<() => void> = [];
 
@@ -157,6 +170,61 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
 
   public get signal(): AbortSignal {
     return this.controller.signal;
+  }
+
+  public get tools(): readonly ComposerTool[] {
+    return TOOLS;
+  }
+
+  public get tool(): ComposerTool {
+    return this.overlayState.tool;
+  }
+
+  public setTool(tool: ComposerTool): void {
+    if (this.ended || !TOOLS.includes(tool) || tool === this.overlayState.tool) {
+      return;
+    }
+    // A selection begun with the Text tool must not survive into a tool that blocks it.
+    window.getSelection()?.removeAllRanges();
+    this.setOverlayState({ tool });
+    this.toolListeners.forEach((listener) => listener(tool));
+  }
+
+  public onToolChange(listener: (tool: ComposerTool) => void): () => void {
+    if (this.ended) {
+      return () => {};
+    }
+    this.toolListeners.add(listener);
+    return () => this.toolListeners.delete(listener);
+  }
+
+  public getToolsHost(): HTMLElement | null {
+    if (this.ended) {
+      return null;
+    }
+    if (!this.toolsHost) {
+      const host = document.createElement('div');
+      host.dataset.composerToolsHost = '';
+      // Sized and placed by the overlay over the visible dashboard body; only the plugin's bar takes pointers.
+      Object.assign(host.style, {
+        position: 'fixed',
+        pointerEvents: 'none',
+        left: '0',
+        top: '0',
+        width: '0',
+        height: '0',
+      });
+      this.toolsHost = host;
+      // Before the anchors, so an open comment editor paints over the bar.
+      this.anchorHost?.parentElement?.insertBefore(host, this.anchorHost);
+      this.requestMeasure?.();
+    }
+    return this.toolsHost;
+  }
+
+  /** @internal The overlay places the tools host; null before it is first asked for. */
+  public getToolsHostElement(): HTMLDivElement | null {
+    return this.toolsHost;
   }
 
   private start() {
@@ -282,13 +350,24 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     if (this.ended) {
       return;
     }
-    const annotations = items.map(({ id, ref, point, label, state, alsoRefs }) => ({
+    const annotations = items.map(({ id, ref, point, label, state, alsoRefs, tone, textRects }) => ({
       id,
       ref: { ...ref },
       point: { x: clamp01(point.x), y: clamp01(point.y) },
       label: label.slice(0, 3),
       state,
       ...(Array.isArray(alsoRefs) && alsoRefs.length > 0 ? { alsoRefs: alsoRefs.map((also) => ({ ...also })) } : {}),
+      ...(tone === 'remove' ? { tone } : {}),
+      ...(Array.isArray(textRects) && textRects.length > 0 && ref.kind !== 'region'
+        ? {
+            textRects: textRects.slice(0, MAX_TEXT_RECTS).map((rect) => ({
+              x: clamp01(rect.x),
+              y: clamp01(rect.y),
+              width: clamp01(rect.width),
+              height: clamp01(rect.height),
+            })),
+          }
+        : {}),
     }));
     const ids = new Set(annotations.map(({ id }) => id));
     for (const [id, anchor] of this.anchors) {
@@ -438,6 +517,9 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     this.cleanups.splice(0).forEach((cleanup) => cleanup());
     this.anchors.forEach((anchor) => anchor.remove());
     this.anchors.clear();
+    this.toolsHost?.remove();
+    this.toolsHost = null;
+    this.toolListeners.clear();
     this.regions.clear();
     this.requestMeasure = undefined;
     this.annotationListeners.clear();
@@ -580,6 +662,10 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     this.requestMeasure = host ? requestMeasure : undefined;
     if (host) {
       this.anchors.forEach((anchor) => host.appendChild(anchor));
+      // Beside the anchors, under the overlay root: inside the layer the overlay excludes from hit-testing.
+      if (this.toolsHost) {
+        host.parentElement?.insertBefore(this.toolsHost, host);
+      }
     }
   }
 
