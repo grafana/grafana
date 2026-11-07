@@ -9,7 +9,6 @@ These are some good resources to explore for developers:
 - [Developer guide](developer-guide.md)
 - [Triage issues](triage-issues.md)
 - [Merge a pull request](merge-pull-request.md)
-- [Making changes to the CI pipeline](drone-pipeline.md)
 - [Breaking changes in frontend APIs](./breaking-changes-guide/breaking-changes-guide.md)
 
 Learn how to create great documentation and apps for Grafana:
