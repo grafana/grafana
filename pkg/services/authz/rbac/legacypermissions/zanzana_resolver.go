@@ -117,13 +117,18 @@ func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 
 	var err error
 	if options.Action != "" {
-		group, resource, subresource, verb := common.TranslateActionToListParams(options.Action)
-		if group != "" && resource != "" {
+		// An action may map to multiple Zanzana resources (for example,
+		// annotations:read covers organization and dashboard annotations).
+		for _, mapping := range common.TranslateActionToListParamsAll(options.Action) {
 			// Per-user search resolves another identity's permissions; their request-time
 			// contextual team membership isn't available here, so no teams are passed.
-			perms, err := r.listPermissions(ctx, namespace, subject, nil, group, resource, subresource, verb, options.Action, options.Scope)
-			if err != nil {
-				return nil, err
+			perms, listErr := r.listPermissions(
+				ctx, namespace, subject, nil,
+				mapping.Group, mapping.Resource, mapping.Subresource, mapping.Verb,
+				options.Action, options.Scope,
+			)
+			if listErr != nil {
+				return nil, listErr
 			}
 			permissions = append(permissions, perms...)
 		}
@@ -252,12 +257,18 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 		formatScope = ""
 	}
 	permissions := (legacyscopes.Formatter{}).Permissions(resource, action, formatScope, resp)
+	if resource == "dashboards" && subresource == "annotations" && resp.All {
+		// Dashboard-scoped annotation grants also appear as folder-wide permissions in legacy RBAC.
+		permissions = append(permissions, (legacyscopes.Formatter{}).Permissions(
+			"folders", action, scope, &authzv1.ListResponse{All: true},
+		)...)
+	}
 	return legacyscopes.WithAliases(ctx, namespace, scope, r.scopeResolver, permissions)
 }
 
 func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, namespace, subject string, teams []string, prefix, scope string) ([]ac.Permission, error) {
 	var permissions []ac.Permission
-	for _, entry := range common.SupportedActions() {
+	for _, entry := range common.SupportedActionMappings() {
 		if strings.HasPrefix(entry.Action, prefix) {
 			perms, err := r.listPermissions(ctx, namespace, subject, teams, entry.Group, entry.Resource, entry.Subresource, entry.Verb, entry.Action, scope)
 			if err != nil {
