@@ -70,8 +70,11 @@ export const VizLegendListItem = <T = unknown,>({
   );
 
   const getAriaLabel = () => {
+    if (item.disabled) {
+      return item.label;
+    }
     if (allItemsSelected) {
-      return t('grafana-ui.viz-legend.all-series-selected', 'All series selected');
+      return `${item.label}, ${t('grafana-ui.viz-legend.all-series-selected', 'All series selected')}`;
     }
     return t('grafana-ui.viz-legend.only-this-series-selected', 'Only {{label}} selected', { label: item.label });
   };
@@ -92,6 +95,7 @@ export const VizLegendListItem = <T = unknown,>({
         disabled={readonly}
         type="button"
         aria-label={getAriaLabel()}
+        aria-pressed={!item.disabled}
         onBlur={onMouseOut}
         onFocus={onMouseOver}
         onMouseOver={onMouseOver}
