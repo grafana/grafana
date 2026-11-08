@@ -112,9 +112,6 @@ func asBackendPlugin(svc any) backendplugin.PluginFactoryFunc {
 	if healthHandler, ok := svc.(backend.CheckHealthHandler); ok {
 		opts.CheckHealthHandler = healthHandler
 	}
-	if storageHandler, ok := svc.(backend.AdmissionHandler); ok {
-		opts.AdmissionHandler = storageHandler
-	}
 
 	if opts.QueryDataHandler != nil || opts.QueryChunkedDataHandler != nil ||
 		opts.CheckHealthHandler != nil || opts.StreamHandler != nil ||

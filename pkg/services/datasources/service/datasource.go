@@ -20,7 +20,6 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -32,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/awsexternalid"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -347,7 +345,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		return nil, fmt.Errorf("invalid jsonData")
 	}
 
-	settings, err := s.prepareInstanceSettings(ctx, &backend.DataSourceInstanceSettings{
+	settings, err := s.prepareInstanceSettings(&backend.DataSourceInstanceSettings{
 		UID:                     cmd.UID,
 		Name:                    cmd.Name,
 		URL:                     cmd.URL,
@@ -359,7 +357,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		BasicAuthEnabled:        cmd.BasicAuth,
 		BasicAuthUser:           cmd.BasicAuthUser,
 		APIVersion:              cmd.APIVersion,
-	}, nil)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -438,11 +436,8 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	return dataSource, nil
 }
 
-// This will valid validate the instance settings return a version that is safe to be saved
-func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend.DataSourceInstanceSettings, ds *datasources.DataSource) (*backend.DataSourceInstanceSettings, error) {
-	operation := backend.AdmissionRequestCreate
-
-	// First apply global validation rules -- these are required regardless which plugin we are talking to
+// prepareInstanceSettings applies the global validation rules to the instance settings
+func (s *Service) prepareInstanceSettings(settings *backend.DataSourceInstanceSettings) (*backend.DataSourceInstanceSettings, error) {
 	if len(settings.Name) > maxDatasourceNameLen {
 		return nil, datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
 	}
@@ -451,121 +446,7 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 		return nil, datasources.ErrDataSourceURLInvalid.Errorf("max length is %d", maxDatasourceUrlLen)
 	}
 
-	if settings.Type == "" {
-		return settings, nil // NOOP used in tests
-	}
-
-	// Make sure it is a known plugin type
-	p, found := s.pluginStore.Plugin(ctx, settings.Type)
-	if !found {
-		// Ignore non-existing plugins for the time being
-		return settings, nil
-	}
-
-	// When the APIVersion is set, the client must also implement AdmissionHandler
-	if settings.APIVersion == "" {
-		return settings, nil // NOOP
-	}
-
-	pb, err := backend.DataSourceInstanceSettingsToProtoBytes(settings)
-	if err != nil {
-		return nil, err
-	}
-
-	pluginContext := s.basePluginContextProvider.GetBasePluginContext(ctx, p, nil)
-	if ds != nil {
-		datasourceSettings, err := adapters.ModelToInstanceSettings(ds, s.decryptSecureJsonDataFn(ctx))
-		if err != nil {
-			return nil, err
-		}
-		pluginContext.DataSourceInstanceSettings = datasourceSettings
-	}
-
-	req := &backend.AdmissionRequest{
-		Operation:     backend.AdmissionRequestCreate,
-		PluginContext: pluginContext,
-		Kind:          settings.GVK(),
-		ObjectBytes:   pb,
-	}
-
-	// Set the old bytes and change the operation
-	if pluginContext.DataSourceInstanceSettings != nil {
-		req.Operation = backend.AdmissionRequestUpdate
-		req.OldObjectBytes, err = backend.DataSourceInstanceSettingsToProtoBytes(settings)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	{ // As an example, this will first call validate (then mutate)
-		// Implementations may vary, but typically validation is
-		// more strict because it does not have the option to fix anything
-		// that has reasonable fixes.
-		rsp, err := s.pluginClient.ValidateAdmission(ctx, req)
-		if err != nil {
-			if errors.Is(err, plugins.ErrMethodNotImplemented) {
-				if settings.APIVersion == "v0alpha1" {
-					// For v0alpha1 we don't require plugins to implement ValidateAdmission
-					return settings, nil
-				}
-				return nil, errutil.Internal("plugin.unimplemented").
-					Errorf("plugin (%s) with apiVersion=%s must implement ValidateAdmission", p.ID, settings.APIVersion)
-			}
-			return nil, err
-		}
-		if rsp == nil {
-			return nil, fmt.Errorf("expected response (%v)", operation)
-		}
-		if !rsp.Allowed {
-			if rsp.Result != nil {
-				return nil, toError(rsp.Result)
-			}
-			return nil, fmt.Errorf("not allowed")
-		}
-		// payload is OK, but now lets do the mutate version...
-	}
-
-	// Next calling mutation -- this will try to get the input into an acceptable form
-	rsp, err := s.pluginClient.MutateAdmission(ctx, req)
-	if err != nil {
-		if errors.Is(err, plugins.ErrMethodNotImplemented) {
-			if settings.APIVersion == "v0alpha1" {
-				// For v0alpha1 we don't require plugins to implement MutateAdmission
-				return settings, nil
-			}
-			return nil, errutil.Internal("plugin.unimplemented").
-				Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, settings.APIVersion)
-		}
-		return nil, err
-	}
-	if rsp == nil {
-		return nil, fmt.Errorf("expected response (%v)", operation)
-	}
-	if !rsp.Allowed {
-		if rsp.Result != nil {
-			return nil, toError(rsp.Result)
-		}
-		return nil, fmt.Errorf("not allowed")
-	}
-	if rsp.ObjectBytes == nil {
-		return nil, fmt.Errorf("mutation response is missing value")
-	}
-	return backend.DataSourceInstanceSettingsFromProto(rsp.ObjectBytes, pluginContext.PluginID)
-}
-
-func toError(status *backend.StatusResult) error {
-	if status == nil {
-		return fmt.Errorf("error converting status")
-	}
-	// hymm -- no way to pass the raw http status along!!
-	// Looks like it must be based on the reason string
-	return errutil.Error{
-		Reason:        errutil.CoreStatus(status.Reason),
-		MessageID:     "datasource.config.mutate",
-		LogMessage:    status.Message,
-		PublicMessage: status.Message,
-		Source:        errutil.SourceDownstream,
-	}
+	return settings, nil
 }
 
 // getAvailableName finds the first available name for a datasource of the given type.
@@ -630,7 +511,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			return fmt.Errorf("invalid jsonData")
 		}
 
-		settings, err := s.prepareInstanceSettings(ctx,
+		settings, err := s.prepareInstanceSettings(
 			&backend.DataSourceInstanceSettings{
 				UID:                     cmd.UID,
 				Name:                    cmd.Name,
@@ -644,7 +525,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 				BasicAuthUser:           cmd.BasicAuthUser,
 				APIVersion:              cmd.APIVersion,
 				Updated:                 time.Now(),
-			}, dataSource)
+			})
 		if err != nil {
 			return err
 		}

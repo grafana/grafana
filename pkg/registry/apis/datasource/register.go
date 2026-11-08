@@ -178,7 +178,6 @@ type PluginClient interface {
 	backend.QueryChunkedDataHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
-	backend.ConversionHandler
 }
 
 func NewDataSourceAPIBuilder(
@@ -355,8 +354,6 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			}
 		}
 	}
-
-	registerQueryConvert(b.client, b.contextProvider, storage)
 
 	apiGroupInfo.VersionedResourcesStorageMap[ds.GroupVersion().Version] = storage
 	return nil

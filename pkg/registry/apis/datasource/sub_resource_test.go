@@ -38,10 +38,6 @@ func (m *resourceMockClient) QueryChunkedData(ctx context.Context, req *backend.
 	return nil
 }
 
-func (m *resourceMockClient) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	return nil, nil
-}
-
 type resourceMockDatasourceProvider struct {
 	instanceSettings    *backend.DataSourceInstanceSettings
 	instanceSettingsErr error
