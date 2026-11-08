@@ -120,7 +120,7 @@ var converterMap = map[string]data.FieldConverter{
 	"string":   stringConverter,
 	"guid":     stringConverter,
 	"timespan": stringConverter,
-	"dynamic":  stringConverter,
+	"dynamic":  dynamicConverter,
 	"object":   objectToStringConverter,
 	"datetime": timeConverter,
 	"int":      intConverter,
@@ -197,6 +197,31 @@ var stringConverter = data.FieldConverter{
 		}
 		as = &s
 		return as, nil
+	},
+}
+
+// dynamicConverter keeps Log Analytics "dynamic" columns as JSON so table
+// JSON View renders structured objects instead of escaped strings.
+var dynamicConverter = data.FieldConverter{
+	OutputFieldType: data.FieldTypeNullableJSON, //nolint:staticcheck
+	Converter: func(v any) (any, error) {
+		if v == nil {
+			return nil, nil
+		}
+
+		// Already-encoded JSON passes through untouched; anything else is
+		// encoded, so strings stay readable instead of double-escaped.
+		if s, ok := v.(string); ok && json.Valid([]byte(s)) {
+			raw := json.RawMessage(s)
+			return &raw, nil
+		}
+
+		marshalled, err := json.Marshal(v)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal dynamic column value: %w", err)
+		}
+		raw := json.RawMessage(marshalled)
+		return &raw, nil
 	},
 }
 

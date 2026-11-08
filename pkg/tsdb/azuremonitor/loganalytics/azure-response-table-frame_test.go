@@ -66,6 +66,59 @@ func TestLogTableToFrame(t *testing.T) {
 	}
 }
 
+func TestDynamicColumnsAreConvertedToJSON(t *testing.T) {
+	res := loadTestFileWithNumber(t, "loganalytics/7-log-analytics-all-types-table.json")
+	frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeLogAnalytics, dataquery.ResultFormatTable, false)
+	require.NoError(t, err)
+	require.NotNil(t, frame)
+
+	var dynamicField *data.Field
+	for _, field := range frame.Fields {
+		if field.Name == "XDynamic" {
+			dynamicField = field
+		}
+	}
+	require.NotNil(t, dynamicField)
+	require.Equal(t, data.FieldTypeNullableJSON, dynamicField.Type())
+
+	value, ok := dynamicField.At(0).(*json.RawMessage)
+	require.True(t, ok)
+	require.NotNil(t, value)
+	require.JSONEq(t, `[{"person":"Daniel"},{"cats":23},{"diagnosis":"cat problem"}]`, string(*value))
+}
+
+func TestDynamicConverter(t *testing.T) {
+	t.Run("nil stays nil", func(t *testing.T) {
+		out, err := dynamicConverter.Converter(nil)
+		require.NoError(t, err)
+		assert.Nil(t, out)
+	})
+
+	t.Run("valid JSON strings pass through untouched", func(t *testing.T) {
+		out, err := dynamicConverter.Converter(`{"a":1}`)
+		require.NoError(t, err)
+		raw, ok := out.(*json.RawMessage)
+		require.True(t, ok)
+		assert.Equal(t, `{"a":1}`, string(*raw))
+	})
+
+	t.Run("plain strings are encoded, not double-escaped", func(t *testing.T) {
+		out, err := dynamicConverter.Converter("just text")
+		require.NoError(t, err)
+		raw, ok := out.(*json.RawMessage)
+		require.True(t, ok)
+		assert.Equal(t, `"just text"`, string(*raw))
+	})
+
+	t.Run("decoded objects are encoded", func(t *testing.T) {
+		out, err := dynamicConverter.Converter(map[string]any{"a": 1.0})
+		require.NoError(t, err)
+		raw, ok := out.(*json.RawMessage)
+		require.True(t, ok)
+		assert.JSONEq(t, `{"a":1}`, string(*raw))
+	})
+}
+
 func TestTraceTableToFrame(t *testing.T) {
 	tests := []struct {
 		name          string
