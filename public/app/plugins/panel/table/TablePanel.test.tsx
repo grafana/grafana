@@ -5,7 +5,9 @@ import userEvent from '@testing-library/user-event';
 import {
   applyFieldOverrides,
   createTheme,
+  type DataFrame,
   EventBusSrv,
+  type FieldConfigSource,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
@@ -244,3 +246,161 @@ it.each(['hide-first', 'filter-first'])(
     }
   }
 );
+
+describe('fit-content max height', () => {
+  const pagedOptions: TableOptions = { ...options, enablePagination: true };
+
+  function makeRowsFrame(rowCount: number, name: string): DataFrame {
+    return toDataFrame({
+      name,
+      fields: [
+        {
+          name: 'Index',
+          type: FieldType.number,
+          values: Array.from({ length: rowCount }, (_, i) => i + 1),
+        },
+        { name: 'Label', type: FieldType.string, values: Array.from({ length: rowCount }, (_, i) => `row-${i + 1}`) },
+      ],
+    });
+  }
+
+  function renderFitContentTable({
+    series,
+    fitMaxHeight,
+    tableOptions = pagedOptions,
+    tableFieldConfig = fieldConfig,
+  }: {
+    series: DataFrame[];
+    fitMaxHeight?: number;
+    tableOptions?: TableOptions;
+    tableFieldConfig?: FieldConfigSource;
+  }) {
+    const withOverrides = applyFieldOverrides({
+      data: series,
+      fieldConfig: tableFieldConfig,
+      theme: createTheme(),
+      timeZone: 'utc',
+      replaceVariables: (s: string) => s,
+    });
+    const props = getPanelProps(tableOptions, {
+      fieldConfig: tableFieldConfig,
+      width: 800,
+      data: { series: withOverrides, state: LoadingState.Done, timeRange: getDefaultTimeRange() },
+      fitContent: true,
+      fitMaxHeight,
+    });
+    return render(
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <TablePanel {...props} />
+      </OpenFeatureProvider>
+    );
+  }
+
+  const dataRowCount = (container: HTMLElement) => container.querySelectorAll('.rdg-row:not(.rdg-header-row)').length;
+
+  it('fits auto-sized pages inside fitMaxHeight', () => {
+    // 50 small rows: natural height 1836px, capped at 320px -> 6 rows per page across 9 pages.
+    const { container } = renderFitContentTable({ series: [makeRowsFrame(50, 'frame')], fitMaxHeight: 320 });
+    expect(dataRowCount(container)).toBe(6);
+    expect(screen.getByRole('button', { name: '9' })).toBeInTheDocument();
+  });
+
+  it('grows naturally when uncapped', () => {
+    const { container } = renderFitContentTable({ series: [makeRowsFrame(50, 'frame')] });
+    expect(dataRowCount(container)).toBeGreaterThan(6);
+    expect(screen.getByRole('button', { name: '2' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '9' })).not.toBeInTheDocument();
+  });
+
+  it('reserves frame picker space within the cap', () => {
+    const { container } = renderFitContentTable({
+      series: [makeRowsFrame(50, 'a'), makeRowsFrame(50, 'b')],
+      fitMaxHeight: 320,
+    });
+    expect(screen.getByRole('combobox', { name: 'Query' })).toBeInTheDocument();
+    // The picker reserve leaves room for 5 rows per page instead of 6: 10 pages, not 9.
+    expect(dataRowCount(container)).toBe(5);
+    expect(screen.getByRole('button', { name: '10' })).toBeInTheDocument();
+  });
+
+  it('honours a configured page size under a cap', () => {
+    setTestFlags({ [FlagKeys.TablePaginationPageSize]: true });
+    const { container } = renderFitContentTable({
+      series: [makeRowsFrame(50, 'frame')],
+      fitMaxHeight: 320,
+      tableOptions: { ...pagedOptions, pageSize: 5 },
+    });
+    expect(dataRowCount(container)).toBe(5);
+    expect(screen.getByRole('button', { name: '10' })).toBeInTheDocument();
+  });
+
+  it('paginates wrapped rows under a cap', () => {
+    const series = [
+      toDataFrame({
+        name: 'frame',
+        fields: [
+          {
+            name: 'Note',
+            type: FieldType.string,
+            values: Array.from({ length: 50 }, (_, i) => `a much longer wrapped value for row number ${i + 1}`),
+          },
+        ],
+      }),
+    ];
+    const wrappedFieldConfig: FieldConfigSource = {
+      defaults: {},
+      overrides: [
+        {
+          matcher: { id: 'byName', options: 'Note' },
+          properties: [{ id: 'custom.wrapText', value: true }],
+        },
+      ],
+    };
+    const { container } = renderFitContentTable({ series, fitMaxHeight: 320, tableFieldConfig: wrappedFieldConfig });
+    expect(dataRowCount(container)).toBe(6);
+    expect(screen.getByRole('button', { name: '9' })).toBeInTheDocument();
+  });
+
+  it('paginates expanded nested rows under a cap', async () => {
+    const nested = applyFieldOverrides({
+      data: [
+        toDataFrame({
+          name: 'NestedData',
+          fields: [
+            { name: 'Nested A', type: FieldType.string, values: ['N1', 'N2'] },
+            { name: 'Nested B', type: FieldType.number, values: [10, 20] },
+          ],
+        }),
+      ],
+      fieldConfig: { defaults: {}, overrides: [] },
+      theme: createTheme(),
+      timeZone: 'utc',
+      replaceVariables: (s: string) => s,
+    })[0];
+    const parent = toDataFrame({
+      name: 'frame',
+      fields: [
+        { name: 'Column A', type: FieldType.string, values: Array.from({ length: 8 }, (_, i) => `A${i + 1}`) },
+        { name: 'Column B', type: FieldType.number, values: Array.from({ length: 8 }, (_, i) => i + 1) },
+        {
+          name: '__depth',
+          type: FieldType.number,
+          values: Array(8).fill(0),
+          config: { custom: { hideFrom: { viz: true } } },
+        },
+        {
+          name: '__index',
+          type: FieldType.number,
+          values: Array.from({ length: 8 }, (_, i) => i),
+          config: { custom: { hideFrom: { viz: true } } },
+        },
+        { name: '__nestedFrames', type: FieldType.nestedFrames, values: Array(8).fill([nested]) },
+      ],
+    });
+    renderFitContentTable({ series: [parent], fitMaxHeight: 320 });
+    // 8 parents at 6 rows per page: a second page, with the nested rows expandable inside the cap.
+    expect(screen.getByRole('button', { name: '2' })).toBeInTheDocument();
+    await userEvent.click(screen.getAllByRole('button', { name: 'Expand row' })[0]);
+    expect(await screen.findByText('N1')).toBeInTheDocument();
+  });
+});

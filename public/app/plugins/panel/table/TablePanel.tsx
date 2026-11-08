@@ -53,6 +53,7 @@ export function TablePanel(props: Props) {
     initialRowIndex,
     sortByBehavior = 'initial',
     fitContent,
+    fitMaxHeight,
   } = props;
 
   const theme = useTheme2();
@@ -153,8 +154,15 @@ export function TablePanel(props: Props) {
   );
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
-  // The cell's CSS min/max bounds (and scrolls) the result.
+  // The cell's CSS min/max bounds (and scrolls) the result. When the layout caps
+  // the panel (fitMaxHeight), lay out at the cap instead: the bounded height feeds
+  // the grid's auto page sizing so pages fit the visible area.
   let tableHeight = fitContent ? getNaturalTableHeight(main, options) : height;
+
+  if (fitContent && fitMaxHeight !== undefined) {
+    const pickerReserve = count > 1 ? getFramePickerHeight(theme, noPanelPadding) : 0;
+    tableHeight = Math.min(tableHeight, Math.max(fitMaxHeight - pickerReserve, 0));
+  }
 
   if (!count || !hasFields) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
@@ -163,11 +171,7 @@ export function TablePanel(props: Props) {
   // Under `table.refresh` the panel drops its own padding so the table can run edge to edge, so the
   // frame picker below it has to bring its own.
   if (count > 1 && !fitContent) {
-    const inputHeight = theme.spacing.gridSize * theme.components.height.md;
-    const padding = theme.spacing.gridSize * (noPanelPadding ? 2 : 1);
-    const borderWidth = noPanelPadding ? FRAME_PICKER_BORDER_WIDTH : 0;
-
-    tableHeight = height - inputHeight - padding - borderWidth;
+    tableHeight = height - getFramePickerHeight(theme, noPanelPadding);
   }
 
   const tableElement = (
@@ -241,6 +245,14 @@ export function TablePanel(props: Props) {
 }
 
 const FRAME_PICKER_BORDER_WIDTH = 1;
+
+function getFramePickerHeight(theme: GrafanaTheme2, noPanelPadding: boolean): number {
+  const inputHeight = theme.spacing.gridSize * theme.components.height.md;
+  const padding = theme.spacing.gridSize * (noPanelPadding ? 2 : 1);
+  const borderWidth = noPanelPadding ? FRAME_PICKER_BORDER_WIDTH : 0;
+
+  return inputHeight + padding + borderWidth;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   framePicker: css({
