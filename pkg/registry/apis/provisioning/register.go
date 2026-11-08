@@ -1087,7 +1087,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// never used one. Never fatal: a rejected bootstrap repository must not keep the
 			// instance down.
 			if b.bootstrapConfig.Reconcilable() {
-				if err := bootstrap.Reconcile(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.bootstrapConfig); err != nil {
+				if err := bootstrap.Reconcile(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.jobs, b.bootstrapConfig); err != nil {
 					logging.FromContext(postStartHookCtx.Context).Error("failed to reconcile bootstrap repository",
 						"path", b.bootstrapConfig.Path, "namespace", b.bootstrapConfig.Namespace, "error", err)
 				}

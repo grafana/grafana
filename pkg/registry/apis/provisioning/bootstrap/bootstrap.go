@@ -34,6 +34,12 @@ const (
 		"Add repositories, connections, dashboards and folders to that directory to provision them on startup."
 )
 
+// Queue drains a repository's queued jobs. Disabling the sync stops the controller from
+// scheduling new ones, but a job queued before that still runs.
+type Queue interface {
+	CleanupQueue(ctx context.Context, namespace, repository string) (int, error)
+}
+
 // Repositories is the subset of the generated repository client this package needs.
 type Repositories interface {
 	Get(ctx context.Context, name string, opts metav1.GetOptions) (*provisioning.Repository, error)
@@ -72,10 +78,12 @@ func (c Config) matches(repo *provisioning.Repository) bool {
 // Reconcile brings the bootstrap repository in line with the configuration: a configured path
 // registers it and keeps its shape, a cleared one stops the repository an earlier run left
 // behind. Both run on every boot, since the configuration can change between them.
-func Reconcile(ctx context.Context, repos Repositories, cfg Config) error {
+func Reconcile(ctx context.Context, repos Repositories, queue Queue, cfg Config) error {
 	step := ensure
 	if !cfg.Enabled() {
-		step = disable
+		step = func(ctx context.Context, repos Repositories, cfg Config) error {
+			return disable(ctx, repos, queue, cfg)
+		}
 	}
 
 	var err error
@@ -90,7 +98,7 @@ func Reconcile(ctx context.Context, repos Repositories, cfg Config) error {
 // disable stops the sync on a bootstrap repository left over from a run that configured one.
 // The repository and everything it provisioned are kept: clearing a setting should not delete
 // an instance's dashboards, and an operator who wants them gone can delete the repository.
-func disable(ctx context.Context, repos Repositories, cfg Config) error {
+func disable(ctx context.Context, repos Repositories, queue Queue, cfg Config) error {
 	existing, err := repos.Get(ctx, Name, metav1.GetOptions{})
 	switch {
 	case apierrors.IsNotFound(err):
@@ -100,13 +108,28 @@ func disable(ctx context.Context, repos Repositories, cfg Config) error {
 	case !owned(existing):
 		return nil // not ours to stop
 	case !existing.Spec.Sync.Enabled:
-		return nil
+		return drain(ctx, queue, cfg)
 	}
 
 	updated := existing.DeepCopy()
 	updated.Spec.Sync.Enabled = false
 	if _, err := repos.Update(ctx, updated, metav1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("disable bootstrap repository: %w", err)
+	}
+
+	// Drain after the write, so the controller cannot schedule another one in between.
+	return drain(ctx, queue, cfg)
+}
+
+// drain clears jobs queued while the sync was still enabled. Without it a pull queued before
+// the disable still runs -- only the controller's scheduling consults sync.enabled -- and a
+// sync over a directory that went away with the setting deletes what it had provisioned.
+func drain(ctx context.Context, queue Queue, cfg Config) error {
+	if queue == nil {
+		return nil
+	}
+	if _, err := queue.CleanupQueue(ctx, cfg.Namespace, Name); err != nil {
+		return fmt.Errorf("clear bootstrap repository job queue: %w", err)
 	}
 	return nil
 }
