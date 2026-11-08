@@ -108,6 +108,16 @@ export function isProvisioningResourceReadOnly(resource: ManagedResource): boole
 }
 
 /**
+ * True when a provisioning resource is a leftover of configuration that no longer names it:
+ * owned by file provisioning, with nothing left running. Its configuration still comes from a
+ * file rather than from here, so it stays read-only, but deleting it is the documented remedy
+ * for clearing the setting — so that one action has to stay available.
+ */
+export function isReleasedByFileProvisioning(resource: ManagedResource, isRunning: boolean): boolean {
+  return !isRunning && getManagerKind(resource) === ManagerKind.FileProvisioning;
+}
+
+/**
  * Some surfaces (search results, folder DTOs) carry the manager kind as a flattened `managedBy`
  * field on the item itself rather than in `metadata.annotations`. This is the counterpart to
  * {@link isManagedByRepository} for that shape — use it for list items that expose `managedBy`.
