@@ -1,10 +1,20 @@
-import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
+import {
+  type DataFrame,
+  type DataTransformerConfig,
+  DataTransformerID,
+  FieldType,
+  FrameMatcherID,
+  getDefaultTimeRange,
+  LoadingState,
+  toDataFrame,
+} from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { VizPanel } from '@grafana/scenes';
+import { SceneDataNode, SceneDataTransformer, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
@@ -52,6 +62,7 @@ interface SceneOptions {
   version?: 'v1' | 'v2';
   meta?: DashboardMeta;
   libraryPanel?: boolean;
+  data?: SceneDataNode;
 }
 
 async function buildScene({
@@ -60,11 +71,13 @@ async function buildScene({
   version = 'v2',
   meta = {},
   libraryPanel = false,
+  data,
 }: SceneOptions = {}) {
   const panel = new VizPanel({
     key: 'panel-1',
     pluginId: 'table',
     headerActions: new VizPanelHeaderActions({}),
+    $data: data && new SceneDataTransformer({ $data: data, transformations: [] }),
     // `isLoaded` skips fetching the library panel from the API.
     $behaviors: libraryPanel ? [new LibraryPanelBehavior({ uid: 'lib', name: 'Lib', isLoaded: true })] : [],
   });
@@ -89,8 +102,27 @@ async function buildScene({
   return { panel, dashboard };
 }
 
-function addAdHocChange(panel: VizPanel) {
-  act(() => panel.getRuntimeTransformations().set(OWNER, [{ id: 'organize', options: {} }]));
+function columns(options: object): DataTransformerConfig {
+  return {
+    id: DataTransformerID.organize,
+    options: { indexByName: {}, excludeByName: {}, renameByName: {}, ...options },
+    filter: { id: FrameMatcherID.byRefId, options: 'A' },
+  };
+}
+
+function addAdHocChange(panel: VizPanel, transformations = [columns({ excludeByName: { region: true } })]) {
+  act(() => panel.getRuntimeTransformations().set(OWNER, transformations));
+}
+
+function services(names = ['service', 'region', 'errors']): DataFrame {
+  return toDataFrame({
+    refId: 'A',
+    fields: names.map((name) => ({ name, type: FieldType.string, values: [`${name} value`] })),
+  });
+}
+
+function panelData(series: DataFrame[], state = LoadingState.Done) {
+  return { series, state, timeRange: getDefaultTimeRange() };
 }
 
 describe('PanelAdHocChangesAction', () => {
@@ -204,6 +236,77 @@ describe('PanelAdHocChangesAction', () => {
     await userEvent.click(screen.getByTestId(buttonTestId));
 
     expect(await screen.findByRole('menuitem', { name: 'Save to dashboard' })).toBeInTheDocument();
+  });
+
+  it('lists the hidden columns, the column order and the filtered fields above the actions', async () => {
+    const { panel } = await buildScene({ data: new SceneDataNode({ data: panelData([services()]) }) });
+    addAdHocChange(panel, [
+      {
+        id: DataTransformerID.filterByValue,
+        options: {
+          type: 'include',
+          match: 'all',
+          missingField: 'ignore',
+          target: { frameKey: 'services', frameIndex: 0, refId: 'A' },
+          filters: [
+            { fieldName: 'service', field: { name: 'service' }, config: { id: 'inSet', options: { values: [] } } },
+          ],
+        },
+      },
+      columns({ excludeByName: { errors: true, region: true }, indexByName: { errors: 0, service: 1, region: 2 } }),
+    ]);
+
+    await userEvent.click(await screen.findByTestId(buttonTestId));
+    const menu = await screen.findByRole('menu');
+
+    expect(within(menu).getByText('Hidden columns: region, errors')).toBeInTheDocument();
+    expect(within(menu).getByText('Columns reordered')).toBeInTheDocument();
+    expect(within(menu).getByText('Filtered by: service')).toBeInTheDocument();
+    expect(within(menu).getByRole('menuitem', { name: 'Remove changes' })).toBeInTheDocument();
+  });
+
+  it('lists only the first three names of a long list', async () => {
+    const names = ['service', 'region', 'errors', 'latency', 'zone', 'owner'];
+    const { panel } = await buildScene({ data: new SceneDataNode({ data: panelData([services(names)]) }) });
+    addAdHocChange(panel, [
+      columns({ excludeByName: { owner: true, zone: true, latency: true, errors: true, region: true } }),
+    ]);
+
+    await userEvent.click(await screen.findByTestId(buttonTestId));
+
+    expect(
+      within(await screen.findByRole('menu')).getByText('Hidden columns: region, errors, latency and 2 more')
+    ).toBeInTheDocument();
+  });
+
+  it('hides the button while none of its changes apply to the panel data, and shows it again once they do', async () => {
+    const data = new SceneDataNode({ data: panelData([services()]) });
+    const { panel } = await buildScene({ data });
+    const hideRegion = [columns({ excludeByName: { region: true } })];
+    addAdHocChange(panel, hideRegion);
+    expect(await screen.findByTestId(buttonTestId)).toBeInTheDocument();
+
+    act(() => data.setState({ data: panelData([services(['service', 'errors'])]) }));
+
+    await waitFor(() => expect(screen.queryByTestId(buttonTestId)).not.toBeInTheDocument());
+    expect(panel.getRuntimeTransformations().get(OWNER)).toEqual(hideRegion);
+
+    act(() => data.setState({ data: panelData([services()]) }));
+
+    expect(await screen.findByTestId(buttonTestId)).toBeInTheDocument();
+  });
+
+  it('keeps showing the changes of a query whose frame has not arrived until the panel data has loaded', async () => {
+    const data = new SceneDataNode({ data: panelData([services()], LoadingState.Loading) });
+    const { panel } = await buildScene({ data });
+    addAdHocChange(panel, [
+      { ...columns({ excludeByName: { region: true } }), filter: { id: 'byRefId', options: 'B' } },
+    ]);
+    expect(await screen.findByTestId(buttonTestId)).toBeInTheDocument();
+
+    act(() => data.setState({ data: panelData([services()]) }));
+
+    await waitFor(() => expect(screen.queryByTestId(buttonTestId)).not.toBeInTheDocument());
   });
 
   it('clears the panel\'s ad hoc transformations and hides the button when "Remove changes" is clicked', async () => {
