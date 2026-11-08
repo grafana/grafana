@@ -220,6 +220,7 @@ export enum PluginExtensionPoints {
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DashboardEmpty = 'grafana/dashboard/empty',
   DashboardSidebar = 'grafana/dashboard/sidebar/v1',
+  DashboardControls = 'grafana/dashboard/controls/v1',
   DataSourceConfig = 'grafana/datasources/config',
   DataSourceConfigActions = 'grafana/datasources/config/actions',
   DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
@@ -290,6 +291,23 @@ export type PluginExtensionPanelContext = {
    * Undefined in legacy dashboard contexts.
    */
   panelPathId?: string;
+};
+
+/**
+ * Props for components added to the dashboard controls bar and to the controls of a row or tab.
+ *
+ * @alpha
+ */
+export type PluginExtensionDashboardControlsContext = {
+  /** Where the control renders: the dashboard controls bar, or a row or tab. */
+  scope: 'dashboard' | 'row' | 'tab';
+  /**
+   * The dashboard data API source reference for the panels the control sits over: every panel for the dashboard,
+   * the section's panels for a row or tab.
+   */
+  sourceRef: string;
+  /** The row or tab title as the viewer sees it. Undefined for the dashboard scope. */
+  sectionLabel?: string;
 };
 
 export type CentralAlertHistorySceneV1Props = {

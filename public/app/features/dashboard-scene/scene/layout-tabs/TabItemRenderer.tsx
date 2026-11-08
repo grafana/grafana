@@ -15,6 +15,7 @@ import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useI
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
+import { DashboardControlsExtensionPoint } from '../DashboardControlsExtensionPoint';
 import { SectionVariableControls } from '../VariableControls';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
@@ -180,7 +181,10 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
       className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
-      {tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
+      <div className={styles.sectionControls}>
+        {tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
+        {!isEditing && <DashboardControlsExtensionPoint section={tab} />}
+      </div>
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>
@@ -188,6 +192,12 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  sectionControls: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    columnGap: theme.spacing(1),
+  }),
   tabSuffix: css({
     display: 'inline-flex',
     alignItems: 'center',
