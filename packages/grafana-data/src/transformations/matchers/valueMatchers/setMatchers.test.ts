@@ -25,3 +25,73 @@ it('keeps an empty string separate from missing values', () => {
   const matches = getValueMatcher({ id: 'inSet', options: { values: [''], includeMissing: false } });
   expect(field.values.filter((_, index) => matches(index, field, frame, [frame]))).toEqual(['']);
 });
+
+describe('matchElements', () => {
+  it('matches array rows when any element is in the set (display mode)', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Actors', type: FieldType.other, values: [['a', 'b'], ['c'], 'b', null] }],
+    });
+    const field = frame.fields[0];
+    field.display = (value) => ({ text: String(value), numeric: NaN });
+    const matches = getValueMatcher({ id: 'inSet', options: { values: ['b'], mode: 'display', matchElements: true } });
+    expect(field.values.filter((_, index) => matches(index, field, frame, [frame]))).toEqual([['a', 'b'], 'b']);
+  });
+
+  it('matches array rows element-wise in raw mode', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Nums', type: FieldType.other, values: [[1, 2], [3], 2] }],
+    });
+    const field = frame.fields[0];
+    // Array elements are normalized to trimmed strings, mirroring rendered pills.
+    const matches = getValueMatcher({ id: 'inSet', options: { values: ['2'], matchElements: true } });
+    expect(field.values.filter((_, index) => matches(index, field, frame, [frame]))).toEqual([[1, 2]]);
+  });
+
+  it('matches per pill for pill-formatted strings', () => {
+    const frame = toDataFrame({
+      fields: [
+        {
+          name: 'Actors',
+          type: FieldType.string,
+          values: ['a, b', 'c', 'b'],
+          config: { custom: { cellOptions: { type: 'pill' } } },
+        },
+      ],
+    });
+    const field = frame.fields[0];
+    field.display = (value) => ({ text: String(value), numeric: NaN });
+    const matches = getValueMatcher({ id: 'inSet', options: { values: ['b'], mode: 'display', matchElements: true } });
+    expect(field.values.filter((_, index) => matches(index, field, frame, [frame]))).toEqual(['a, b', 'b']);
+  });
+
+  it('does not split plain strings, even with matchElements', () => {
+    const frame = toDataFrame({ fields: [{ name: 'Name', type: FieldType.string, values: ['a, b', 'b'] }] });
+    const field = frame.fields[0];
+    field.display = (value) => ({ text: String(value), numeric: NaN });
+    const matches = getValueMatcher({ id: 'inSet', options: { values: ['b'], mode: 'display', matchElements: true } });
+    expect(field.values.filter((_, index) => matches(index, field, frame, [frame]))).toEqual(['b']);
+  });
+
+  it('keeps whole-value matching when matchElements is not set', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Actors', type: FieldType.other, values: [['a', 'b'], ['c']] }],
+    });
+    const field = frame.fields[0];
+    field.display = (value) => ({ text: String(value), numeric: NaN });
+    const matches = getValueMatcher({ id: 'inSet', options: { values: ['b'], mode: 'display' } });
+    expect(field.values.filter((_, index) => matches(index, field, frame, [frame]))).toEqual([]);
+  });
+
+  it('still honors includeMissing for null array-field values', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Actors', type: FieldType.other, values: [['a'], null] }],
+    });
+    const field = frame.fields[0];
+    field.display = (value) => ({ text: String(value), numeric: NaN });
+    const matches = getValueMatcher({
+      id: 'inSet',
+      options: { values: ['a'], mode: 'display', matchElements: true, includeMissing: true },
+    });
+    expect(field.values.filter((_, index) => matches(index, field, frame, [frame]))).toEqual([['a'], null]);
+  });
+});

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { formattedValueToString, guessDecimals, type Field, type SelectableValue } from '@grafana/data';
+import { getValueSetCandidates } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 
 import { FilterOperator, type TableRow } from '../types';
@@ -12,13 +13,15 @@ export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
   }
 
   const set: Record<string, string> = {};
+  const blanks = t('grafana-ui.table.filter.blanks', '(Blanks)');
 
   for (const row of rows) {
     if (row.__depth > 0) {
       continue;
     }
-    const value = getFieldFilterValue(row, field);
-    set[value || t('grafana-ui.table.filter.blanks', '(Blanks)')] = value;
+    for (const value of getFieldFilterValues(row, field)) {
+      set[value || blanks] = value;
+    }
   }
 
   return set;
@@ -27,6 +30,24 @@ export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
 export function getFieldFilterValue(row: TableRow, field: Field): string {
   const fieldValue = row[getDisplayName(field)];
   return field.display ? formattedValueToString(field.display(fieldValue)) : String(fieldValue);
+}
+
+/**
+ * Display strings a row contributes to value filtering. Multi-valued cells
+ * (arrays, or pill-formatted strings) expand to one string per element so each
+ * entry becomes its own filter option; anything else yields the single
+ * whole-value string from getFieldFilterValue.
+ */
+export function getFieldFilterValues(row: TableRow, field: Field): string[] {
+  const fieldValue = row[getDisplayName(field)];
+  return getValueSetCandidates(field, fieldValue).map((candidate) =>
+    field.display ? formattedValueToString(field.display(candidate)) : String(candidate)
+  );
+}
+
+/** True when any of the row's filter values is in the selected set. */
+export function rowMatchesFilterValues(row: TableRow, field: Field, selectedValues: Set<unknown>): boolean {
+  return getFieldFilterValues(row, field).some((value) => selectedValues.has(value));
 }
 
 export function getFilteredOptions(options: SelectableValue[], filterValues?: SelectableValue[]): SelectableValue[] {

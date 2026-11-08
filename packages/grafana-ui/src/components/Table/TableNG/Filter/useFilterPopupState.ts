@@ -7,7 +7,7 @@ import {
   type RangeValueMatcherOptions,
   type SelectableValue,
 } from '@grafana/data';
-import { type ValueSetOptions } from '@grafana/data/internal';
+import { getValueSetCandidates, type ValueSetOptions } from '@grafana/data/internal';
 
 import { useTheme2 } from '../../../../themes/ThemeContext';
 import { useTableFilters } from '../TableFilterContext';
@@ -148,8 +148,10 @@ export function useFilterPopupState({
       if (selection.includeMissing !== undefined && raw == null) {
         continue;
       }
-      if (selected.has(formattedValueToString(previousDisplay(raw)))) {
-        currentValues.add(formattedValueToString(currentDisplay(raw)));
+      for (const candidate of getValueSetCandidates(field, raw)) {
+        if (selected.has(formattedValueToString(previousDisplay(candidate)))) {
+          currentValues.add(formattedValueToString(currentDisplay(candidate)));
+        }
       }
     }
     return Array.from(currentValues, (value) => ({ value, label: value }));

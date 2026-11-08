@@ -4,9 +4,11 @@ import { type TableRow } from '../types';
 
 import {
   calculateUniqueFieldValues,
+  getFieldFilterValues,
   getFilteredOptions,
   operatorSelectableValues,
   rangeHistogram,
+  rowMatchesFilterValues,
   sliderBoundText,
   sliderDecimals,
   valuesToOptions,
@@ -106,6 +108,79 @@ describe('calculateUniqueFieldValues', () => {
     const rows = [{ __depth: 0, __index: 0, Status: 'ok' } as TableRow];
     const result = calculateUniqueFieldValues(rows, field);
     expect(result).toEqual({ ok: 'ok' });
+  });
+
+  it('expands array values into one option per element', () => {
+    const field: Field = { ...makeField('Actors'), type: FieldType.other };
+    const rows = [makeRow('Actors', ['a', 'b']), makeRow('Actors', ['b', 'c'])];
+    const result = calculateUniqueFieldValues(rows, field);
+    expect(result).toEqual({ a: 'a', b: 'b', c: 'c' });
+  });
+
+  it('formats each array element with field.display', () => {
+    const field: Field = {
+      ...makeField('Temp'),
+      type: FieldType.other,
+      display: (v: unknown) => ({ text: `${v}°C`, numeric: Number(v), color: '' }),
+    };
+    const rows = [makeRow('Temp', [22, 37])];
+    const result = calculateUniqueFieldValues(rows, field);
+    expect(result).toEqual({ '22°C': '22°C', '37°C': '37°C' });
+  });
+
+  it('splits pill-cell strings into one option per pill', () => {
+    const field: Field = {
+      ...makeField('Actors'),
+      config: { custom: { cellOptions: { type: 'pill' } } },
+    };
+    const rows = [makeRow('Actors', 'a, b'), makeRow('Actors', 'c')];
+    const result = calculateUniqueFieldValues(rows, field);
+    expect(result).toEqual({ a: 'a', b: 'b', c: 'c' });
+  });
+
+  it('keeps comma-separated strings whole for non-pill fields', () => {
+    const field = makeField('Name');
+    const rows = [makeRow('Name', 'a, b')];
+    const result = calculateUniqueFieldValues(rows, field);
+    expect(result).toEqual({ 'a, b': 'a, b' });
+  });
+
+  it('falls back to the whole value for empty arrays', () => {
+    const field: Field = {
+      ...makeField('Actors'),
+      type: FieldType.other,
+      display: () => ({ text: '', numeric: 0, color: '' }),
+    };
+    const rows = [makeRow('Actors', [])];
+    const result = calculateUniqueFieldValues(rows, field);
+    expect(result).toHaveProperty('(Blanks)');
+  });
+});
+
+describe('getFieldFilterValues', () => {
+  it('returns the single whole-value string for scalars', () => {
+    const field = makeField('Status');
+    expect(getFieldFilterValues(makeRow('Status', 'active'), field)).toEqual(['active']);
+  });
+
+  it('returns one string per element for arrays', () => {
+    const field: Field = { ...makeField('Actors'), type: FieldType.other };
+    expect(getFieldFilterValues(makeRow('Actors', ['a', 'b']), field)).toEqual(['a', 'b']);
+  });
+});
+
+describe('rowMatchesFilterValues', () => {
+  it('matches when any element is selected', () => {
+    const field: Field = { ...makeField('Actors'), type: FieldType.other };
+    const row = makeRow('Actors', ['a', 'b']);
+    expect(rowMatchesFilterValues(row, field, new Set(['b']))).toBe(true);
+    expect(rowMatchesFilterValues(row, field, new Set(['c']))).toBe(false);
+  });
+
+  it('matches whole values for scalar fields', () => {
+    const field = makeField('Status');
+    expect(rowMatchesFilterValues(makeRow('Status', 'active'), field, new Set(['active']))).toBe(true);
+    expect(rowMatchesFilterValues(makeRow('Status', 'active'), field, new Set(['inactive']))).toBe(false);
   });
 });
 

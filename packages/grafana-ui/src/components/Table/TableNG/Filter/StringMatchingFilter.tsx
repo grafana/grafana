@@ -19,9 +19,9 @@ import { FilterMissingValues, FilterPopupFooter, FilterPopupLayout } from './Fil
 import { useFilterInputFocus } from './useFilterInputFocus';
 import {
   calculateUniqueFieldValues,
-  getFieldFilterValue,
   getFilteredOptions,
   operatorSelectableValues,
+  rowMatchesFilterValues,
   valuesToOptions,
 } from './utils';
 
@@ -66,18 +66,19 @@ export function StringMatchingFilter({
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(optionRows, field), [optionRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
-  const [includeMissing, setIncludeMissing] = useState(
-    () =>
-      newFeaturesEnabled &&
-      (appliedIncludeMissing ??
-        (filterValue !== undefined &&
-          rows.some(
-            (row) =>
-              field &&
-              field.values[row.__index] == null &&
-              filterValue.some((option) => option.value === getFieldFilterValue(row, field))
-          )))
-  );
+  const [includeMissing, setIncludeMissing] = useState(() => {
+    if (!newFeaturesEnabled) {
+      return false;
+    }
+    if (appliedIncludeMissing !== undefined) {
+      return appliedIncludeMissing;
+    }
+    if (filterValue === undefined || !field) {
+      return false;
+    }
+    const selectedValues = new Set(filterValue.map((option) => option.value));
+    return rows.some((row) => field.values[row.__index] == null && rowMatchesFilterValues(row, field, selectedValues));
+  });
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const { selectedRows, totalRows } = useMemo(() => {
     if (!newFeaturesEnabled) {
@@ -93,7 +94,7 @@ export function StringMatchingFilter({
       totalRows++;
       if (
         field &&
-        (field.values[row.__index] == null ? includeMissing : selectedValues.has(getFieldFilterValue(row, field)))
+        (field.values[row.__index] == null ? includeMissing : rowMatchesFilterValues(row, field, selectedValues))
       ) {
         selectedRows++;
       }

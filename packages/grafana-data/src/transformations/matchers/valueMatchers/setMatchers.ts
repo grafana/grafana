@@ -1,3 +1,5 @@
+import { TableCellDisplayMode } from '@grafana/schema';
+
 import { getDisplayProcessor } from '../../../field/displayProcessor';
 import { createTheme } from '../../../themes/createTheme';
 import { type Field, type FieldConfig } from '../../../types/dataFrame';
@@ -12,6 +14,60 @@ export interface ValueSetOptions {
   timeZone?: string;
   /** When specified, match null/undefined independently of formatted values. */
   includeMissing?: boolean;
+  /**
+   * When true, multi-valued cells match when any element is in the set: array
+   * values are matched element-wise, and pill-formatted strings per rendered
+   * pill. Scalar values behave exactly as before.
+   */
+  matchElements?: boolean;
+}
+
+/** True when the field renders as pill cells, whose text holds multiple values. */
+export function isPillCellField(field: Field): boolean {
+  return field.config?.custom?.cellOptions?.type === TableCellDisplayMode.Pill;
+}
+
+const PILL_SPLIT_RE = /\s*,\s*/;
+
+/**
+ * Split a cell value into matchable elements. Mirrors inferPills in grafana-ui
+ * TableNG utils so filter options and matching agree with the rendered pills;
+ * keep the two in sync. Unlike inferPills, empty strings yield [''] so blank
+ * cells keep flowing through the existing blanks handling, and non-string
+ * scalars stay raw so raw-mode matching still sees the original value.
+ */
+export function splitFilterElements(value: unknown): unknown[] {
+  if (Array.isArray(value)) {
+    return value.filter((element) => element != null).map((element) => String(element).trim());
+  }
+  if (typeof value !== 'string') {
+    return [value];
+  }
+  const text = value.trim();
+  if (text[0] === '[') {
+    try {
+      const parsed: unknown = JSON.parse(text);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return text.split(PILL_SPLIT_RE);
+    }
+  }
+  return text.split(PILL_SPLIT_RE);
+}
+
+/**
+ * Candidates a row value contributes to set matching. Arrays and pill-cell
+ * values expand to their elements; anything else (including empty expansions,
+ * which fall back to the whole value) behaves exactly as before.
+ */
+export function getValueSetCandidates(field: Field, value: unknown): unknown[] {
+  if (Array.isArray(value) || isPillCellField(field)) {
+    const elements = splitFilterElements(value);
+    if (elements.length > 0) {
+      return elements;
+    }
+  }
+  return [value];
 }
 
 const fallbackTheme = createTheme();
@@ -26,13 +82,17 @@ export const valueSetMatcher: ValueMatcherInfo<ValueSetOptions> = {
   get: (options) => {
     const selected = new Set(options.values);
     const displays = new WeakMap<Field, ReturnType<typeof getDisplayProcessor>>();
+    const matchElements = options.matchElements === true;
     return (index, field) => {
       const value = field.values[index];
       if (options.includeMissing !== undefined && value == null) {
         return options.includeMissing;
       }
       if (options.mode !== 'display') {
-        return selected.has(value);
+        if (!matchElements) {
+          return selected.has(value);
+        }
+        return getValueSetCandidates(field, value).some((candidate) => selected.has(candidate));
       }
       let display = displays.get(field);
       if (!display) {
@@ -45,7 +105,12 @@ export const valueSetMatcher: ValueMatcherInfo<ValueSetOptions> = {
           : (field.display ?? getDisplayProcessor({ theme: fallbackTheme, field, timeZone: options.timeZone }));
         displays.set(field, display);
       }
-      return selected.has(formattedValueToString(display(value)));
+      if (!matchElements) {
+        return selected.has(formattedValueToString(display(value)));
+      }
+      return getValueSetCandidates(field, value).some((candidate) =>
+        selected.has(formattedValueToString(display(candidate)))
+      );
     };
   },
   getOptionsDisplayText: (options) => `Is in set: ${Array.isArray(options.values) ? options.values.join(', ') : ''}`,
