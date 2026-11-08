@@ -206,6 +206,16 @@ describe('ConfigForm', () => {
     const terraformRepository = () =>
       managedRepository({ [AnnoKeyManagerKind]: ManagerKind.Terraform, [AnnoKeyManagerIdentity]: 'terraform' });
 
+    // buildRepository is already sync-disabled, so this is the leftover of a cleared
+    // bootstrap_path; the running variant overrides it.
+    const bootstrapRepository = (isRunning = false): Repository => {
+      const repo = managedRepository({
+        [AnnoKeyManagerKind]: ManagerKind.FileProvisioning,
+        [AnnoKeyManagerIdentity]: 'bootstrap',
+      });
+      return { ...repo, spec: { ...repo.spec!, sync: { ...repo.spec!.sync, enabled: isRunning } } };
+    };
+
     it('shows a read-only banner', async () => {
       setup(terraformRepository());
 
@@ -220,6 +230,22 @@ describe('ConfigForm', () => {
 
       const saveButton = await screen.findByRole('button', { name: /Save/ });
       await waitFor(() => expect(saveButton).toBeDisabled());
+    });
+
+    // defaults.ini tells the operator that clearing bootstrap_path keeps the repository "for
+    // you to remove", and the admin UI is the only place most of them will look.
+    it('keeps Delete available on a bootstrap repository whose path was cleared', async () => {
+      setup(bootstrapRepository());
+
+      expect(await screen.findByRole('button', { name: /Delete/ })).toBeInTheDocument();
+      expect(screen.getByText(/managed externally/i)).toBeInTheDocument();
+    });
+
+    it('does not render Delete while the bootstrap repository is still configured', async () => {
+      setup(bootstrapRepository(true));
+
+      expect(await screen.findByText(/managed externally/i)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Delete/ })).not.toBeInTheDocument();
     });
 
     it('does not render the Delete button', async () => {
