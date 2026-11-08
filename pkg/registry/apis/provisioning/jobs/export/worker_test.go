@@ -931,31 +931,26 @@ func TestCountSupportedResources(t *testing.T) {
 	}
 }
 
-// A kind in a shared storage collection is counted under the collection group, which is not the
-// group serving it, so the two have to be matched rather than compared.
-func TestCountSupportedResourcesInACollection(t *testing.T) {
+// A kind nobody serves contributes nothing to export, so it must not fail the quota pre-count.
+func TestCountSupportedResourcesSkipsUnresolvableKind(t *testing.T) {
 	clients := resources.NewMockResourceClients(t)
 	clients.EXPECT().SupportedResources().Return([]resources.SupportedResource{
-		{GroupKind: schema.GroupKind{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"}},
-		{GroupKind: schema.GroupKind{Group: "loki.datasource.grafana.app", Kind: "DataSource"}},
+		{GroupKind: schema.GroupKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}},
 		{GroupKind: schema.GroupKind{Group: "unserved.grafana.app", Kind: "Gone"}},
-	}).Maybe()
+	})
 	clients.EXPECT().ForKind(mock.Anything, mock.Anything).RunAndReturn(
 		func(_ context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
 			if gvk.Kind == "Gone" {
 				return nil, schema.GroupVersionResource{}, fmt.Errorf("preferred version not found")
 			}
-			return nil, schema.GroupVersionResource{Group: gvk.Group, Version: "v0alpha1", Resource: "datasources"}, nil
-		}).Maybe()
+			return nil, schema.GroupVersionResource{Group: gvk.Group, Version: "v1", Resource: "dashboards"}, nil
+		})
 
 	got, err := countSupportedResources(context.Background(), []v0alpha1.ResourceCount{
-		{Group: "datasource.grafana.app", Resource: "datasources", Count: 12},
-		{Group: "alerting.grafana.app", Resource: "alertrules", Count: 50},
+		{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 7},
 	}, clients)
-
-	// An unresolvable kind is skipped rather than failing the export it contributes nothing to.
 	require.NoError(t, err)
-	assert.Equal(t, int64(12), got, "the collection's stat is counted once for its served members")
+	assert.Equal(t, int64(7), got)
 }
 
 func TestCheckExportQuota(t *testing.T) {
@@ -1396,4 +1391,25 @@ func TestExportWorker_ConfigurationDisabled(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The index counts a collection's members under the collection's group, not the group that serves
+// them, so matching only the served group counted them as zero and let a full export pass a quota
+// check it should have failed.
+func TestCountSupportedResources_CountsACollectionUnderItsStoredGroup(t *testing.T) {
+	const collection = "datasource.grafana.app"
+	memberGVR := schema.GroupVersionResource{Group: "prometheus." + collection, Version: "v0alpha1", Resource: "datasources"}
+
+	clients := resources.NewMockResourceClients(t)
+	clients.EXPECT().SupportedResources().Return([]resources.SupportedResource{
+		{GroupKind: schema.GroupKind{Group: memberGVR.Group, Kind: "DataSource"}, Collection: collection},
+	})
+	clients.EXPECT().ForKind(mock.Anything, mock.Anything).Return(nil, memberGVR, nil)
+
+	got, err := countSupportedResources(context.Background(), []v0alpha1.ResourceCount{
+		{Group: collection, Resource: "datasources", Count: 12},
+		{Group: "alerting.grafana.app", Resource: "alertrules", Count: 50},
+	}, clients)
+	require.NoError(t, err)
+	assert.Equal(t, int64(12), got)
 }

@@ -177,22 +177,32 @@ it('sizes the grid from the clamped sidebar width when the panel shrinks, grows,
   const { rerender } = render(table(800));
   expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '571px' });
 
-  rerender(table(200));
-  expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', '50');
-  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '95px' });
-
-  rerender(table(800));
-  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '571px' });
-
   const pane = screen.getByRole('group', { name: 'Column visibility' }).parentElement!;
   const rect = pane.getBoundingClientRect();
-  let paneWidth = 220;
+  let containerWidth = 800;
+  // The live ARIA updater measures both elements, so they need distinct sizes in jsdom.
+  const containerRect = jest.spyOn(pane.parentElement!, 'getBoundingClientRect').mockImplementation(() => ({
+    ...rect,
+    width: containerWidth,
+  }));
   // useSplitter measures its CSS limits by temporarily collapsing and expanding the pane.
   const paneRect = jest.spyOn(pane, 'getBoundingClientRect').mockImplementation(() => ({
     ...rect,
     width:
-      pane.style.flexGrow === '0' ? 0 : pane.style.flexGrow === '100' ? parseFloat(pane.style.maxWidth) : paneWidth,
+      pane.style.flexGrow === '100'
+        ? parseFloat(pane.style.maxWidth)
+        : parseFloat(pane.style.flexGrow) * (containerWidth - 8),
   }));
+
+  containerWidth = 200;
+  rerender(table(200));
+  expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', '50');
+  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '95px' });
+
+  containerWidth = 800;
+  rerender(table(800));
+  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '571px' });
+
   const splitter = screen.getByRole('separator');
   splitter.setPointerCapture = jest.fn();
   splitter.releasePointerCapture = jest.fn();
@@ -204,10 +214,11 @@ it('sizes the grid from the clamped sidebar width when the panel shrinks, grows,
   expect(pane).toHaveStyle({ maxWidth: '396px' });
   expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '395px' });
 
-  paneWidth = 396;
   await user.pointer({ keys: '[/MouseLeft]', target: splitter });
+  expect(splitter).toHaveAttribute('aria-valuenow', '50');
   expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '395px' });
   paneRect.mockRestore();
+  containerRect.mockRestore();
 });
 
 it('reuses wrapped-cell measurements during unrelated renders with hidden columns', () => {

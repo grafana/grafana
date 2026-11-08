@@ -12,6 +12,7 @@
 //	  {
 //	    "folderScoped": false,                 // does sync stamp a grafana.app/folder annotation?
 //	    "featureFlags": ["playlistsRBAC"],     // extra feature toggles the kind needs (often none)
+//	    "collection": "datasource.grafana.app", // storage collection, for a kind served by many groups
 //	    "manifest": { "apiVersion": "...", "kind": "...", "metadata": {...}, "spec": {...} }
 //	  }
 package resourcekinds
@@ -49,7 +50,7 @@ type kindSpec struct {
 	// FeatureFlags are extra feature toggles the kind needs (raw toggle names, e.g. "playlistsRBAC").
 	FeatureFlags []string `json:"featureFlags"`
 	// Collection is the storage collection the kind's group belongs to, when several API groups
-	// share one. Set it to declare the kind as a wildcard, the way an operator would.
+	// share one. Setting it declares the kind as a collection, the way an operator would.
 	Collection string `json:"collection"`
 	// Manifest is a sample resource manifest; the harness patches its name and spec.title per instance.
 	Manifest json.RawMessage `json:"manifest"`
@@ -128,7 +129,7 @@ func (rk resourceKind) groupPrefix() string { return rk.group + "/" }
 func (rk resourceKind) token() string {
 	group := rk.group
 	if rk.collection != "" {
-		group = provisioningresources.WildcardGroupPrefix + rk.collection
+		group = provisioningresources.CollectionPrefix + rk.collection
 	}
 	if rk.folderScoped {
 		return group + "/" + rk.kind + ":folder"
@@ -142,7 +143,12 @@ func (rk resourceKind) token() string {
 // key is wrong the kind silently falls back to its default storage, so the dimension tests fail
 // loudly rather than passing on the wrong backend.
 func (rk resourceKind) unifiedStorageKey() string {
-	return strings.ToLower(rk.kind) + "s." + rk.group
+	group := rk.group
+	if rk.collection != "" {
+		// A collection is stored under one key for every member, not one per served group.
+		group = rk.collection
+	}
+	return strings.ToLower(rk.kind) + "s." + group
 }
 
 // instance returns a deterministic (name, title) pair for the i-th resource of this kind.

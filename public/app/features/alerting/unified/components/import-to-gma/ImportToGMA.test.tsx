@@ -1,14 +1,14 @@
 import { HttpResponse, http } from 'msw';
-import * as React from 'react';
 import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { type CodeEditor } from '@grafana/ui';
+import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
+import { convertResponse } from '../../mocks/convertApi';
 import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
 import {
   setupAutoSyncConfig,
@@ -27,12 +27,12 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
-// Monaco doesn't render usable content in jsdom — stub it with a plain textarea (same pattern as
-// Templates.test.tsx) so the redacted preview content can be asserted on directly.
-type CodeEditorProps = React.ComponentProps<typeof CodeEditor>;
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  CodeEditor: ({ value }: CodeEditorProps) => <textarea data-testid="code-editor" value={value} readOnly />,
+// Keep these tests focused on the preview's content and editor integration.
+jest.mock('@grafana/ui/unstable', () => ({
+  ...jest.requireActual('@grafana/ui/unstable'),
+  CodeMirrorEditor: jest.fn(({ value, readOnly, 'aria-label': label }: CodeMirrorEditorProps) => (
+    <textarea data-testid="code-editor" aria-label={label} value={value} readOnly={readOnly} />
+  )),
 }));
 
 // Selects which fixture the mocked Step1Content below seeds. Prefixed `mock` per Jest's rule for
@@ -197,7 +197,7 @@ testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 beforeEach(() => {
   mockReportInteraction.mockClear();
   // Default: the notifications import succeeds. Individual tests override this to force a failure.
-  server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
+  server.use(http.post(CONVERT_URL, () => HttpResponse.json(convertResponse())));
   grantUserPermissions([
     AccessControlAction.AlertingNotificationsWrite,
     AccessControlAction.AlertingRuleCreate,
@@ -275,7 +275,7 @@ describe('ImportToGMA wizard — stage analytics', () => {
     server.use(
       http.post(CONVERT_URL, ({ request }) =>
         request.headers.get('X-Grafana-Alerting-Dry-Run') === 'true'
-          ? HttpResponse.json({ status: 'success' })
+          ? HttpResponse.json(convertResponse())
           : new HttpResponse(null, { status: 500 })
       )
     );
@@ -301,7 +301,7 @@ describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
       http.post(CONVERT_URL, ({ request }) =>
         request.headers.get('X-Grafana-Alerting-Dry-Run') === 'true'
           ? new HttpResponse(null, { status: 500 })
-          : HttpResponse.json({ status: 'success' })
+          : HttpResponse.json(convertResponse())
       )
     );
     const { user } = render(<ImportWizardGate />);
@@ -368,6 +368,10 @@ describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
     // aria-label disambiguates the two cards' otherwise-identical "Preview" buttons.
     await user.click(await screen.findByRole('button', { name: /preview configuration/i }));
     const notificationsDialog = await screen.findByRole('dialog', { name: /notifications config preview/i });
+    await screen.findByRole('textbox', { name: /notifications config preview/i });
+    expect(jest.mocked(CodeMirrorEditor).mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({ height: '500px', language: 'yaml', readOnly: true, lineWrapping: true })
+    );
     // Modal renders both its own close-icon button and the explicit "Close" button below the content.
     const closeButtons = within(notificationsDialog).getAllByRole('button', { name: /close/i });
     await user.click(closeButtons[closeButtons.length - 1]);
@@ -450,6 +454,9 @@ describe('ImportToGMA wizard — datasource-fetch preview redaction', () => {
     const editor = await screen.findByTestId<HTMLTextAreaElement>('code-editor');
     expect(editor.value).not.toContain('hunter2wayTooSimpleButStillAKey123');
     expect(editor.value).toContain('"receiver": "default"');
+    expect(jest.mocked(CodeMirrorEditor).mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({ height: '500px', language: 'json', readOnly: true, lineWrapping: true })
+    );
   });
 
   it('does not reopen the notifications preview after it is dismissed while still loading', async () => {
@@ -500,6 +507,8 @@ describe('ImportToGMA wizard — datasource-fetch preview redaction', () => {
     const dialog = await screen.findByRole('dialog', { name: /notifications config preview/i });
 
     // The fetch above is still pending (gated on fetchGate) — dismiss now, while still loading.
+    expect(within(dialog).getByText('Loading content...')).toBeInTheDocument();
+    expect(within(dialog).queryByRole('textbox')).not.toBeInTheDocument();
     const closeButtons = within(dialog).getAllByRole('button', { name: /close/i });
     await user.click(closeButtons[closeButtons.length - 1]);
     expect(screen.queryByRole('dialog', { name: /notifications config preview/i })).not.toBeInTheDocument();
@@ -836,7 +845,7 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
 
   it('does not enable Auto-sync when Notifications is skipped, even though Auto-sync was selected', async () => {
     const { patchSpy } = setupStatefulAutoSyncConfig(server);
-    server.use(http.post('/api/convert/prometheus/config/v1/rules', () => HttpResponse.json({})));
+    server.use(http.post('/api/convert/prometheus/config/v1/rules', () => HttpResponse.json(convertResponse())));
 
     const { user } = render(<ImportWizardGate />);
 
@@ -877,7 +886,7 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     server.use(
       http.post(CONVERT_URL, () => {
         stagingImportCalled = true;
-        return HttpResponse.json({ status: 'success' });
+        return HttpResponse.json(convertResponse());
       })
     );
 
@@ -907,11 +916,11 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     const { getStored } = setupStatefulAutoSyncConfig(server);
     let rulesImportCalled = false;
     server.use(
-      // Confirmed via convertToGMAApi.ts: useConvertToGMAMutation (rules import) posts here,
+      // The rules import (convertApi's postRuleGroups) posts here,
       // a different endpoint from CONVERT_URL (notifications/dry-run only).
       http.post('/api/convert/prometheus/config/v1/rules', () => {
         rulesImportCalled = true;
-        return HttpResponse.json({});
+        return HttpResponse.json(convertResponse());
       })
     );
 
@@ -1013,7 +1022,7 @@ describe('dry-run wiring (wizard-level)', () => {
     server.use(
       http.post(CONVERT_URL, ({ request }) => {
         identifiersSeen.push(request.headers.get('X-Grafana-Alerting-Config-Identifier'));
-        return HttpResponse.json({ status: 'success' });
+        return HttpResponse.json(convertResponse());
       })
     );
     const { user } = render(<ImportWizardGate />);
@@ -1042,7 +1051,7 @@ describe('dry-run wiring (wizard-level)', () => {
       http.post(CONVERT_URL, async () => {
         if (!previewDone) {
           previewDone = true;
-          return HttpResponse.json({ status: 'success' });
+          return HttpResponse.json(convertResponse());
         }
         await new Promise<void>((resolve) => {
           failCheck = resolve;
@@ -1068,7 +1077,7 @@ describe('dry-run wiring (wizard-level)', () => {
     server.use(
       http.post(CONVERT_URL, () => {
         requestCount += 1;
-        return HttpResponse.json({ status: 'success' });
+        return HttpResponse.json(convertResponse());
       })
     );
     const { user } = render(<ImportWizardGate />);
@@ -1107,7 +1116,7 @@ describe('dry-run wiring (wizard-level)', () => {
   });
 
   it('does not disable Next when navigating back to a Step 1 that is already valid', async () => {
-    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
+    server.use(http.post(CONVERT_URL, () => HttpResponse.json(convertResponse())));
     const { user } = render(<ImportWizardGate />);
 
     await screen.findByRole('group', { name: /import notification resources/i });
@@ -1142,7 +1151,7 @@ describe('dry-run wiring (wizard-level)', () => {
             resolveStalePreview = resolve;
           });
         }
-        return HttpResponse.json({ status: 'success' });
+        return HttpResponse.json(convertResponse());
       })
     );
 

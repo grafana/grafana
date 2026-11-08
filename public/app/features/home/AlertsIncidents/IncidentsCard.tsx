@@ -1,7 +1,5 @@
 import { t, Trans } from '@grafana/i18n';
-import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { Badge, LinkButton, Tooltip } from '@grafana/ui';
-import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
+import { LinkButton, Tooltip } from '@grafana/ui';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
@@ -10,10 +8,8 @@ import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 import { TimeAgoCell } from '../TimeAgoCell';
 import { ctaClicked } from '../analytics/main';
 
-import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
-import { AllClearGrot, SummaryCard, SummaryCardPrefix } from './SummaryCard';
+import { AllClearGrot, SummaryCard } from './SummaryCard';
 import { type FilterScope } from './filterSelection';
-import { severityLevelColor } from './severity';
 import { type IncidentsData } from './useIncidents';
 
 /** Empty-state copy names the filtered value; the unfiltered scope uses the generic line. */
@@ -30,23 +26,11 @@ function emptyMessage(filterScope: FilterScope): string {
 }
 
 /** Render-only card body; data comes from useIncidents so callers control where the hook runs. */
-export function IncidentsCard({
-  data,
-  hideFooterActions = false,
-}: {
-  data: IncidentsData;
-  hideFooterActions?: boolean;
-}) {
-  const redesignEnabled = useFlagGrafanaGrowthHomepage();
-  const { pluginId, canAccess, canDeclare, displayed, count, hasMore, filterScope, loading, error, refetch } = data;
+export function IncidentsCard({ data }: { data: IncidentsData }) {
+  const { pluginId, canAccess, canDeclare, displayed, filterScope, loading, error, refetch } = data;
 
   return (
     <SummaryCard
-      title={t('home.incidents-card.title', 'Active incidents')}
-      count={count}
-      // Only cap the badge when the server actually truncated the result; a full page with
-      // nothing beyond it should read the exact count, not "{limit}+".
-      countLimit={hasMore ? ACTIVE_INCIDENTS_QUERY_LIMIT : undefined}
       loading={loading}
       error={
         error
@@ -60,28 +44,18 @@ export function IncidentsCard({
       renderItem={(incident) => (
         <ListRow
           prefix={
-            redesignEnabled ? (
-              // Same severity treatment as the firing-alerts rows so the two tabs share one visual language
-              <Tooltip content={incident.severityLabel}>
-                <span>
-                  <SeverityBars level={canonicalSeverity(incident.severityLabel)} />
-                  <span className="sr-only">{incident.severityLabel}</span>
-                </span>
-              </Tooltip>
-            ) : (
-              <SummaryCardPrefix>
-                <Badge
-                  text={incident.severityLabel}
-                  color={severityLevelColor(canonicalSeverity(incident.severityLabel))}
-                />
-              </SummaryCardPrefix>
-            )
+            // Same severity treatment as the firing-alerts rows so the two tabs share one visual language
+            <Tooltip content={incident.severityLabel}>
+              <span>
+                <SeverityBars level={canonicalSeverity(incident.severityLabel)} />
+                <span className="sr-only">{incident.severityLabel}</span>
+              </span>
+            </Tooltip>
           }
           title={incident.title}
           trailing={<TimeAgoCell date={new Date(incident.createdTime)} />}
           href={canAccess ? createBridgeURL(pluginId, `/incidents/${incident.incidentID}`) : undefined}
           onClick={() => ctaClicked({ surface: 'incidents_card', action: 'incident_detail', placement: 'list' })}
-          showDivider={redesignEnabled}
         />
       )}
       emptyAction={
@@ -98,16 +72,6 @@ export function IncidentsCard({
             <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
           </LinkButton>
         ) : undefined
-      }
-      footer={
-        !hideFooterActions && (
-          <DeclareAndViewIncidentsButtons
-            pluginId={pluginId}
-            hasIncidents={count > 0}
-            canDeclare={canDeclare}
-            canAccess={canAccess}
-          />
-        )
       }
     />
   );

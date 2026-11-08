@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -363,10 +364,10 @@ func TestTrashAuthz_RefusesWhenThereIsNoUser(t *testing.T) {
 	index := newTestDashboardsIndex(t, threshold, 20, func(resource.ResourceIndex) (int64, error) { return 1, nil })
 	indexDocs(t, index, []*resource.BulkIndexItem{trashDoc("alices-dash", "folder-1", trashAlice)})
 
-	res, err := index.Search(context.Background(), &trashAccessClient{readAll: true}, trashQueryFor(nil), nil, nil)
-	require.NoError(t, err)
-	require.NotNil(t, res.Error)
-	assert.Equal(t, int32(401), res.Error.Code)
+	_, err := index.Search(context.Background(), &trashAccessClient{readAll: true}, trashQueryFor(nil), nil, nil)
+	resErr := resourceutil.ErrorResultFromGRPCDetails(err)
+	require.NotNil(t, resErr)
+	assert.Equal(t, int32(401), resErr.Code)
 }
 
 // The post-rank path narrows the bleve field list for count-only requests and for the

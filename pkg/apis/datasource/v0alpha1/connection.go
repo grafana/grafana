@@ -39,8 +39,6 @@ type DataSourceConnection struct {
 
 	APIGroup string `json:"group"`
 
-	APIVersion string `json:"version"`
-
 	Plugin string `json:"plugin,omitempty"`
 
 	// URL the data source is configured against, so a caller listing connections can show it

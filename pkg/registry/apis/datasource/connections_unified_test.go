@@ -94,20 +94,18 @@ func TestUnifiedConnections_ListConnections(t *testing.T) {
 
 		require.Equal(t, []datasourceV0.DataSourceConnection{
 			{
-				Title:      "Prom",
-				Name:       "prom-uid",
-				APIGroup:   "prometheus.datasource.grafana.app",
-				APIVersion: datasourceV0.VERSION,
-				Plugin:     "prometheus",
+				Title:    "Prom",
+				Name:     "prom-uid",
+				APIGroup: "prometheus.datasource.grafana.app",
+				Plugin:   "prometheus",
 				// The reserved group label is storage bookkeeping and is not reported.
 				Labels: map[string]string{"default": "true"},
 			},
 			{
-				Title:      "Loki",
-				Name:       "loki-uid",
-				APIGroup:   "loki.datasource.grafana.app",
-				APIVersion: datasourceV0.VERSION,
-				Plugin:     "loki",
+				Title:    "Loki",
+				Name:     "loki-uid",
+				APIGroup: "loki.datasource.grafana.app",
+				Plugin:   "loki",
 			},
 		}, list.Items)
 	})

@@ -1,4 +1,5 @@
-import { ReactMonacoEditor } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { type AlertDataQuery } from 'app/types/unified-alerting-dto';
 
 interface Props {
@@ -6,22 +7,14 @@ interface Props {
 }
 
 export const SQLQueryPreview = ({ expression }: Props) => (
-  <ReactMonacoEditor
-    options={{
-      readOnly: true,
-      minimap: {
-        enabled: false,
-      },
-      scrollBeyondLastColumn: 0,
-      scrollBeyondLastLine: false,
-      lineNumbers: 'off',
-      cursorWidth: 0,
-      overviewRulerLanes: 0,
-    }}
-    defaultLanguage="sql"
-    height={80}
-    defaultValue={expression}
-    width="100%"
+  <CodeMirrorEditor
+    value={expression}
+    onChange={() => {}}
+    language="sql"
+    height="80px"
+    readOnly
+    basicSetup={{ lineNumbers: false, foldGutter: false }}
+    aria-label={t('alerting.sql-query-preview.aria-label', 'SQL query preview')}
   />
 );
 

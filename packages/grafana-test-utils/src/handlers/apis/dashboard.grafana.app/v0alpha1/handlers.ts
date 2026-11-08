@@ -3,9 +3,15 @@ import { HttpResponse, http } from 'msw';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 
-import { wellFormedTree } from '../../../../fixtures/folders';
+import { treeViewersCanEdit, wellFormedTree } from '../../../../fixtures/folders';
 
 const [mockTree] = wellFormedTree();
+// Folder UIDs a viewer is allowed to edit, mirroring the real search API's `permission=edit` filter.
+const editableFolderUIDs = new Set(
+  treeViewersCanEdit()[0]
+    .filter((v) => v.item.kind === 'folder')
+    .map((v) => v.item.uid)
+);
 
 type FilterArray = Array<(v: (typeof mockTree)[number]) => boolean>;
 
@@ -148,6 +154,7 @@ export interface HybridSearchHitInput {
   score?: number;
   /** Resource manager metadata. */
   managedBy?: DashboardHit['managedBy'];
+  tags?: string[];
   /** Best matching chunk text. */
   snippet?: string;
 }
@@ -168,6 +175,7 @@ export function getHybridSearchHandler(hits: HybridSearchHitInput[] = []) {
       folderTitle: hit.folderTitle,
       score: hit.score ?? 0,
       managedBy: hit.managedBy,
+      tags: hit.tags,
       chunks: [{ subresource: '', content: hit.snippet ?? hit.title }],
     }));
 
@@ -188,12 +196,18 @@ const getDefaultSearchHandler = () =>
     const mappedTypeFilters = typeFilters.map((f) => typeFilterMap[f] || f);
     const tagFilter = new URL(request.url).searchParams.getAll('tag');
     const ownerReferenceFilter = new URL(request.url).searchParams.getAll('ownerReference');
+    const permissionFilter = new URL(request.url).searchParams.get('permission');
 
     const filtered = mockTree.filter((filterItem) => {
       const filters: FilterArray = [
         // Filter UI items out of fixtures as... they're UI items 🤷
         ({ item }) => item.kind !== 'ui',
       ];
+
+      // Mirror the real search API: `permission=edit` only returns folders the viewer can edit.
+      if (permissionFilter?.toLowerCase() === 'edit') {
+        filters.push(({ item }) => item.kind !== 'folder' || editableFolderUIDs.has(item.uid));
+      }
 
       if (ownerReferenceFilter.length > 0) {
         filters.push(({ item }) =>

@@ -466,6 +466,9 @@ export {
   type StandardOptionConfig,
   type PanelScreenshotContext,
   type PanelScreenshotHandler,
+  type PanelInteraction,
+  type PanelInteractions,
+  type PanelInteractionPromotionContext,
 } from './panel/PanelPlugin';
 export {
   getPanelOptionsWithDefaults,
@@ -519,6 +522,8 @@ export type {
   GrafanaJavascriptAgentConfig,
   BuildInfo,
   LicenseInfo,
+  NavigationConfig,
+  NavigationPlacement,
   PreinstalledPlugin,
   UnifiedAlertingConfig,
 } from './types/config';

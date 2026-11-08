@@ -159,7 +159,7 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 			name: "connection lookup succeeds, datasource not found",
 			connectionResult: &queryV0.DataSourceConnectionList{
 				Items: []queryV0.DataSourceConnection{
-					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app"},
 				},
 			},
 			statusCode:      http.StatusNotFound,
@@ -170,7 +170,7 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 			name: "connection lookup succeeds and data source found",
 			connectionResult: &queryV0.DataSourceConnectionList{
 				Items: []queryV0.DataSourceConnection{
-					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app"},
 				},
 			},
 			statusCode: http.StatusOK,
@@ -328,7 +328,7 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 			uid:  "test-uid",
 			connectionResult: &queryV0.DataSourceConnectionList{
 				Items: []queryV0.DataSourceConnection{
-					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app"},
 				},
 			},
 			subPath:         "api/v1/labels",
@@ -340,7 +340,7 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 			uid:  "test-uid",
 			connectionResult: &queryV0.DataSourceConnectionList{
 				Items: []queryV0.DataSourceConnection{
-					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app"},
 				},
 			},
 			subPath:         "api/v1/query",
@@ -353,7 +353,7 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 			uid:  "test-uid",
 			connectionResult: &queryV0.DataSourceConnectionList{
 				Items: []queryV0.DataSourceConnection{
-					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app"},
 				},
 			},
 			subPath:         "api/v1/labels",
@@ -366,7 +366,7 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 			uid:  "test-uid",
 			connectionResult: &queryV0.DataSourceConnectionList{
 				Items: []queryV0.DataSourceConnection{
-					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app"},
 				},
 			},
 			subPath:         "api/v1/query",
@@ -379,7 +379,7 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 			uid:  "test-uid",
 			connectionResult: &queryV0.DataSourceConnectionList{
 				Items: []queryV0.DataSourceConnection{
-					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app"},
 				},
 			},
 			subPath:         "api/v1/query_range",
@@ -463,7 +463,7 @@ func TestCallK8sDataSourceResourceHandler_PreservesHTTPMethod(t *testing.T) {
 				Features: featuremgmt.WithFeatures(),
 				dsConnectionClient: &mockConnectionClient{result: &queryV0.DataSourceConnectionList{
 					Items: []queryV0.DataSourceConnection{
-						{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+						{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app"},
 					},
 				}},
 				clientConfigProvider: configProvider,
@@ -577,7 +577,7 @@ func TestCallK8sDataSourceResourceHandler_Headers(t *testing.T) {
 				Features: featuremgmt.WithFeatures(),
 				dsConnectionClient: &mockConnectionClient{result: &queryV0.DataSourceConnectionList{
 					Items: []queryV0.DataSourceConnection{
-						{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+						{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app"},
 					},
 				}},
 				clientConfigProvider: configProvider,
@@ -828,7 +828,7 @@ func TestCallK8sDataSourceHealthHandler(t *testing.T) {
 			dsUID: "test-uid",
 			connectionResult: &queryV0.DataSourceConnectionList{
 				Items: []queryV0.DataSourceConnection{
-					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1", Plugin: "prometheus"},
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", Plugin: "prometheus"},
 				},
 			},
 			expectedCode:        http.StatusOK,

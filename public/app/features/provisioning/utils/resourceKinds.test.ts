@@ -1,5 +1,10 @@
+import { HttpResponse, http } from 'msw';
+
+import server from '@grafana/test-utils/server';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getIconForKind } from 'app/features/search/service/utils';
+
+import { setupProvisioningMswServer } from '../mocks/server';
 
 import {
   resourceKindInfos,
@@ -10,9 +15,9 @@ import {
   getKindInfoByStat,
   getKindInfoByStatGroup,
   getMigratableKinds,
-  matchesGroup,
-  getSharedGroupMember,
+  getReportedGroup,
   getRepositoryRoute,
+  coversGroup,
   isResourceKindAvailable,
   readImmediateParent,
 } from './resourceKinds';
@@ -48,7 +53,7 @@ describe('resourceKinds registry', () => {
       kind: 'DataSource',
       resource: 'datasources',
       itemType: 'DataSource',
-      sharedGroup: true,
+      collectionGroup: true,
     });
   });
 
@@ -70,6 +75,7 @@ describe('resourceKinds registry', () => {
     expect(resourceKindInfos.dashboard.getLabel()).toBe('dashboard');
     expect(resourceKindInfos.playlist.getLabel()).toBe('playlist');
     expect(resourceKindInfos.librarypanel.getLabel()).toBe('library panel');
+    expect(resourceKindInfos.datasource.getLabel()).toBe('data source');
   });
 
   it('every kind exposes a translated plural label and a list function', () => {
@@ -325,44 +331,39 @@ describe('getMigratableKinds', () => {
   });
 });
 
-// Data sources are the one kind whose registry `group` is a storage collection
-// instead of a served group: each plugin serves its own
-// `{plugin}.datasource.grafana.app`, and that is what the backend reports for an
-// individual resource and in availableResources.
-describe('shared collection groups', () => {
+// Data sources are the one kind whose registry `group` is a storage collection rather than a served
+// group: each plugin serves its own `{plugin}.datasource.grafana.app`, and that is what the backend
+// reports for an individual resource, in availableResources and on a job result row.
+describe('collection groups', () => {
   const testdata = 'grafana-testdata-datasource.datasource.grafana.app';
 
   it('matches a served group inside the collection as well as the collection itself', () => {
-    expect(matchesGroup(resourceKindInfos.datasource, testdata)).toBe(true);
-    expect(matchesGroup(resourceKindInfos.datasource, 'datasource.grafana.app')).toBe(true);
+    expect(coversGroup(resourceKindInfos.datasource, testdata)).toBe(true);
+    expect(coversGroup(resourceKindInfos.datasource, 'datasource.grafana.app')).toBe(true);
   });
 
   it('does not match a group that merely looks similar', () => {
-    expect(matchesGroup(resourceKindInfos.datasource, 'notdatasource.grafana.app')).toBe(false);
-    expect(matchesGroup(resourceKindInfos.datasource, 'datasource.grafana.app.evil')).toBe(false);
+    expect(coversGroup(resourceKindInfos.datasource, 'notdatasource.grafana.app')).toBe(false);
+    expect(coversGroup(resourceKindInfos.datasource, 'datasource.grafana.app.evil')).toBe(false);
   });
 
-  it('leaves kinds that are not shared matching their group exactly', () => {
-    expect(matchesGroup(resourceKindInfos.dashboard, 'dashboard.grafana.app')).toBe(true);
-    expect(matchesGroup(resourceKindInfos.dashboard, 'v2.dashboard.grafana.app')).toBe(false);
-  });
-
-  it('recovers the plugin ID that distinguishes a served group', () => {
-    expect(getSharedGroupMember(resourceKindInfos.datasource, testdata)).toBe('grafana-testdata-datasource');
-    // The collection itself names no member, and neither does an unrelated group.
-    expect(getSharedGroupMember(resourceKindInfos.datasource, 'datasource.grafana.app')).toBeUndefined();
-    expect(getSharedGroupMember(resourceKindInfos.datasource, 'playlist.grafana.app')).toBeUndefined();
-    expect(getSharedGroupMember(resourceKindInfos.datasource, undefined)).toBeUndefined();
-  });
-
-  it('reports no member for a kind whose group is served directly', () => {
-    expect(getSharedGroupMember(resourceKindInfos.dashboard, 'dashboard.grafana.app')).toBeUndefined();
+  it('leaves a kind served under its own group matching exactly', () => {
+    expect(coversGroup(resourceKindInfos.dashboard, 'dashboard.grafana.app')).toBe(true);
+    expect(coversGroup(resourceKindInfos.dashboard, 'v2.dashboard.grafana.app')).toBe(false);
   });
 
   it('resolves a resource reported under a served group back to the kind', () => {
     expect(getKindInfoByGroupKind(testdata, 'DataSource')).toBe(resourceKindInfos.datasource);
     expect(getKindInfoByStat({ group: testdata })).toBe(resourceKindInfos.datasource);
     expect(getKindInfoByStatGroup(testdata)).toBe(resourceKindInfos.datasource);
+  });
+
+  it('reports a served group as the collection, and every other group unchanged', () => {
+    expect(getReportedGroup(testdata, 'DataSource')).toBe('datasource.grafana.app');
+    expect(getReportedGroup('dashboard.grafana.app', 'Dashboard')).toBe('dashboard.grafana.app');
+    // An unknown group is no collection member we can name, so it stays as reported.
+    expect(getReportedGroup('something.else', 'Thing')).toBe('something.else');
+    expect(getReportedGroup(undefined, undefined)).toBeUndefined();
   });
 
   it('is available and migratable when the backend declares any plugin group', () => {
@@ -377,5 +378,109 @@ describe('shared collection groups', () => {
 
     expect(isResourceKindAvailable(resourceKindInfos.datasource, available)).toBe(false);
     expect(getMigratableKinds(available)).toEqual([]);
+  });
+});
+
+describe('listing a collection kind', () => {
+  setupProvisioningMswServer();
+
+  function discovery(groups: Array<{ name: string; version: string; resource: string }>) {
+    return http.get('/apis', () =>
+      HttpResponse.json({
+        items: groups.map(({ name, version, resource }) => ({
+          metadata: { name },
+          versions: [{ version, resources: [{ resource, responseKind: {} }] }],
+        })),
+      })
+    );
+  }
+
+  function datasources(group: string, version: string, names: string[], spec: Record<string, unknown> = {}) {
+    return http.get(`/apis/${group}/${version}/namespaces/:namespace/datasources`, () =>
+      HttpResponse.json({ items: names.map((name) => ({ metadata: { name }, spec: { title: name, ...spec } })) })
+    );
+  }
+
+  const bothServed = () =>
+    server.use(
+      discovery([
+        { name: 'prometheus.datasource.grafana.app', version: 'v0alpha1', resource: 'datasources' },
+        { name: 'loki.datasource.grafana.app', version: 'v1beta1', resource: 'datasources' },
+        // Neither a member of the collection nor, for the second, a server for the kind.
+        { name: 'dashboard.grafana.app', version: 'v1beta1', resource: 'dashboards' },
+        { name: 'other.datasource.grafana.app', version: 'v0alpha1', resource: 'connections' },
+      ]),
+      datasources('prometheus.datasource.grafana.app', 'v0alpha1', ['prom']),
+      datasources('loki.datasource.grafana.app', 'v1beta1', ['logs'])
+    );
+
+  const prom = { uid: 'prom', title: 'prom', managed: false, group: 'prometheus.datasource.grafana.app' };
+  const logs = { uid: 'logs', title: 'logs', managed: false, group: 'loki.datasource.grafana.app' };
+
+  function list(availableResources?: SupportedResource[]) {
+    return resourceKindInfos.datasource.list({ dispatch: jest.fn(), availableResources });
+  }
+
+  it('lists the members of every group discovery serves the kind under', async () => {
+    bothServed();
+
+    // Each member carries the group that serves it, which is how a job addresses it.
+    await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([prom, logs]);
+  });
+
+  it('lists every served member before settings declare which ones provisioning acts on', async () => {
+    bothServed();
+
+    await expect(list(undefined)).resolves.toEqual([prom, logs]);
+  });
+
+  // A member declared on its own reaches the frontend verbatim: only a wildcard pattern is reported
+  // as its collection. Enumerating a member provisioning does not act on would offer it for
+  // migration and have the job reject the reference.
+  it('lists only the member declared, when the collection itself is not', async () => {
+    bothServed();
+
+    await expect(list([{ group: 'prometheus.datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([prom]);
+  });
+
+  it('leaves out a member disabled on its own inside an enabled collection', async () => {
+    bothServed();
+
+    await expect(
+      list([
+        { group: 'datasource.grafana.app', kind: 'DataSource' },
+        { group: 'loki.datasource.grafana.app', kind: 'DataSource', disabled: true },
+      ])
+    ).resolves.toEqual([prom]);
+  });
+
+  it('lists a member enabled on its own inside a disabled collection', async () => {
+    bothServed();
+
+    await expect(
+      list([
+        { group: 'datasource.grafana.app', kind: 'DataSource', disabled: true },
+        { group: 'loki.datasource.grafana.app', kind: 'DataSource' },
+      ])
+    ).resolves.toEqual([logs]);
+  });
+
+  // Classic file provisioning marks a data source read-only and leaves no manager annotation, so
+  // the annotation check alone would offer a resource no write can take over.
+  it('reports a read-only member as managed, keeping it out of migration', async () => {
+    server.use(
+      discovery([{ name: 'prometheus.datasource.grafana.app', version: 'v0alpha1', resource: 'datasources' }]),
+      datasources('prometheus.datasource.grafana.app', 'v0alpha1', ['file-prom'], { readOnly: true })
+    );
+
+    await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([
+      { uid: 'file-prom', title: 'file-prom', managed: true, group: 'prometheus.datasource.grafana.app' },
+    ]);
+  });
+
+  it('lists nothing when no group serves the collection', async () => {
+    server.use(discovery([{ name: 'dashboard.grafana.app', version: 'v1beta1', resource: 'dashboards' }]));
+
+    await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([]);
   });
 });

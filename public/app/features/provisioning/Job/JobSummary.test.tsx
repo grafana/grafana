@@ -27,25 +27,23 @@ describe('JobSummary', () => {
     expect(await rowFor('Folder')).toBeInTheDocument();
   });
 
-  // Every data source plugin serves its own API group, so the backend emits one row per plugin
-  // with the same kind. Without the plugin ID every one of those rows just reads "DataSource".
-  it('names the plugin on rows whose kind is served by several groups', async () => {
+  it('merges the rows of a collection kind its plugins each serve a group for', async () => {
     setup([
-      { group: 'prometheus.datasource.grafana.app', kind: 'DataSource', create: 3 },
-      { group: 'loki.datasource.grafana.app', kind: 'DataSource', create: 1 },
+      { group: 'prometheus.datasource.grafana.app', kind: 'DataSource', create: 3, error: 1 },
+      { group: 'loki.datasource.grafana.app', kind: 'DataSource', create: 1, update: 2 },
       { group: 'dashboard.grafana.app', kind: 'Dashboard', create: 2 },
     ]);
 
-    const prometheusRow = await rowFor('prometheus');
-    expect(within(prometheusRow).getByText('DataSource')).toBeInTheDocument();
-    expect(within(prometheusRow).getByText('prometheus')).toBeInTheDocument();
+    expect(await screen.findAllByText('DataSource')).toHaveLength(1);
+    const row = await rowFor('DataSource');
+    const cells = within(row).getAllByRole('cell');
+    // Created 3 + 1, updated 2, deleted none, errors 1, total 4 + 2 + 1.
+    expect(cells[1]).toHaveTextContent('4');
+    expect(cells[2]).toHaveTextContent('-');
+    expect(cells[3]).toHaveTextContent('2');
+    expect(cells[cells.length - 1]).toHaveTextContent('7');
 
-    expect(within(await rowFor('loki')).getByText('loki')).toBeInTheDocument();
-
-    // A kind served by a single group gains nothing from a member label.
-    const dashboardRow = await rowFor('Dashboard');
-    expect(within(dashboardRow).getByText('Dashboard')).toBeInTheDocument();
-    expect(within(dashboardRow).queryByText('dashboard.grafana.app')).not.toBeInTheDocument();
+    expect(await rowFor('Dashboard')).toBeInTheDocument();
   });
 
   it('computes the total from the action counts', async () => {

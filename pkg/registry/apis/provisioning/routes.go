@@ -133,7 +133,7 @@ func (b *APIBuilder) handleStats(w http.ResponseWriter, r *http.Request) {
 	}
 	// TODO: check if lister could list too many repositories or resources
 	stats, err := b.resourceLister.Stats(r.Context(), u.GetNamespace(), "")
-	if err := resource.StatusErrorFromResponse(nil, err); err != nil {
+	if err := resource.StatusErrorFromGRPC(err); err != nil {
 		errhttp.Write(r.Context(), err, w)
 		return
 	}
@@ -172,10 +172,9 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// A wildcard entry is reported as the collection it names rather than expanded: the
-	// collection is what the search index reports a stored member under, so it is what the
-	// frontend already matches stats and list rows against, and it keeps this list one entry
-	// per configured kind rather than one per installed plugin.
+	// A collection is reported as its own group, not expanded: that is the group the index counts
+	// its members under, so it is what the frontend matches stats and list rows against, and it
+	// keeps one entry per configured kind rather than one per installed member.
 	availableResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
 	for _, r := range b.supportedResources {
 		availableResources = append(availableResources, provisioning.SupportedResource{

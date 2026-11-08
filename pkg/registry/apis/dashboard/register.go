@@ -7,6 +7,7 @@ import (
 	"maps"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -68,6 +69,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
+	settingservice "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -126,6 +128,7 @@ type DashboardsAPIBuilder struct {
 	QuotaService             quota.Service
 	ProvisioningService      provisioning.ProvisioningService
 	minRefreshInterval       string
+	settingService           settingservice.Service
 	dualWriter               dualwrite.Service
 	folderClientProvider     client.K8sHandlerProvider
 	libraryPanels            libraryelements.Service // for legacy library panels
@@ -248,10 +251,11 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient, settingService settingservice.Service) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
 	return &DashboardsAPIBuilder{
-		minRefreshInterval:     "10s",
+		minRefreshInterval:     defaultMinRefreshInterval,
+		settingService:         settingService,
 		accessClient:           ac,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
@@ -535,8 +539,8 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelDelete(ctx context.Context, n
 		Limit:        1,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
-		return err
+	if err != nil {
+		return resource.StatusErrorFromGRPC(err)
 	}
 	if result.GetTotalHits() > 0 {
 		return apierrors.NewForbidden(
@@ -628,7 +632,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate refresh interval
-	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.minRefreshInterval, refresh); err != nil {
+	if err := b.validateRefreshInterval(ctx, a.GetNamespace(), refresh); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -738,7 +742,7 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	}
 
 	// Validate refresh interval
-	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.minRefreshInterval, refresh); err != nil {
+	if err := b.validateRefreshInterval(ctx, a.GetNamespace(), refresh); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -1076,12 +1080,8 @@ func notebookStorageOpts() apistore.StorageOptions {
 	}
 }
 
-// snapshotStorageOpts configures snapshot storage. Snapshots need nothing beyond
-// the GVK that storageForVersion pairs these with, which is the whole point of
-// going through it: the declared kind is what stops a snapshot from being
-// persisted as some other kind in the dashboard group.
 func snapshotStorageOpts() apistore.StorageOptions {
-	return apistore.StorageOptions{}
+	return apistore.StorageOptions{EnableInlineBlobs: true}
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
@@ -1344,6 +1344,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			Service:               b.snapshotService,
 			Namespacer:            b.namespacer,
 			ExternalSnapshotToken: b.snapshotOptions.ExternalSnapshotToken,
+			Blobs:                 b.unified,
 		}
 
 		selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
@@ -1358,7 +1359,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			return err
 		}
 		snapshotGr := snapshots.GroupResource()
-		snapshotDualWrite, err := opts.DualWriteBuilder(snapshotGr, snapshotLegacyStore, snapshot.NewUnifiedBlobStorage(unifiedSnapshotStore, b.unified))
+		snapshotDualWrite, err := opts.DualWriteBuilder(snapshotGr, snapshotLegacyStore, snapshot.NewUnifiedBlobStorage(unifiedSnapshotStore))
 		if err != nil {
 			return err
 		}
@@ -1408,8 +1409,13 @@ func (b *DashboardsAPIBuilder) resourcePermissionsClient(ctx context.Context) (*
 	return b.resourcePermissionsSvc, nil
 }
 
+// afterDelete runs inside the delete request, which the apiserver times out at 34 s.
+const afterDeleteTimeout = 5 * time.Second
+
 func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), afterDeleteTimeout)
+	defer cancel()
+
 	log := logging.DefaultLogger
 
 	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)

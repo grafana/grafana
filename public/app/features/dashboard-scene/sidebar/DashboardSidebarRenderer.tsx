@@ -15,6 +15,7 @@ import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
+import { usePendingChangesHistoryState } from '../lifecycle/pendingChangesHistory';
 import { DashboardLoadingBar } from '../scene/DashboardLoadingBar';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
@@ -257,14 +258,16 @@ function renderEnterpriseItems() {
 function UndoButton({ dashboard }: ToolbarActionProps) {
   const sidebar = dashboard.state.sidebar;
   const { undoStack } = sidebar.useState();
-  const undoAction = undoStack[undoStack.length - 1];
+  const history = sidebar.pendingChangesHistory();
+  const historyState = usePendingChangesHistoryState(history);
+  const description = history ? historyState.undo : undoStack[undoStack.length - 1]?.description;
   const undoWord = t('dashboard.sidebar.undo', 'Undo');
-  const tooltip = `${undoWord}${undoAction?.description ? ` ${undoAction.description}` : ''}`;
+  const tooltip = `${undoWord}${description ? ` ${description}` : ''}`;
 
   return (
     <Sidebar.Button
       icon="corner-up-left"
-      disabled={undoStack.length === 0}
+      disabled={history ? !historyState.undo : undoStack.length === 0}
       onClick={() => sidebar.undoAction()}
       title={undoWord}
       tooltip={tooltip}
@@ -275,14 +278,16 @@ function UndoButton({ dashboard }: ToolbarActionProps) {
 function RedoButton({ dashboard }: ToolbarActionProps) {
   const sidebar = dashboard.state.sidebar;
   const { redoStack } = sidebar.useState();
-  const redoAction = redoStack[redoStack.length - 1];
+  const history = sidebar.pendingChangesHistory();
+  const historyState = usePendingChangesHistoryState(history);
+  const description = history ? historyState.redo : redoStack[redoStack.length - 1]?.description;
   const redoWord = t('dashboard.sidebar.redo', 'Redo');
-  const tooltip = `${redoWord}${redoAction?.description ? ` ${redoAction.description}` : ''}`;
+  const tooltip = `${redoWord}${description ? ` ${description}` : ''}`;
 
   return (
     <Sidebar.Button
       icon="corner-up-right"
-      disabled={redoStack.length === 0}
+      disabled={history ? !historyState.redo : redoStack.length === 0}
       title={redoWord}
       tooltip={tooltip}
       onClick={() => sidebar.redoAction()}

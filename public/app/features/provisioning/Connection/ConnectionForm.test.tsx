@@ -5,6 +5,7 @@ import { mockComboboxRect } from '@grafana/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -133,6 +134,84 @@ describe('ConnectionForm', () => {
       setup({ data: createMockConnection() });
 
       expect(screen.getByLabelText(/^Private Key \(PEM\)/)).toHaveValue('configured');
+    });
+  });
+
+  describe('Rendering - externally managed (read-only)', () => {
+    const managedConnection = () =>
+      createMockConnection({
+        metadata: {
+          name: 'test-connection',
+          annotations: {
+            [AnnoKeyManagerKind]: ManagerKind.Terraform,
+            [AnnoKeyManagerIdentity]: 'terraform',
+          },
+        },
+      });
+
+    const disconnectedOAuthConnection = (annotations?: Record<string, string>) =>
+      createMockConnection({
+        metadata: { name: 'test-connection', annotations },
+        spec: { title: 'Test Connection', type: 'githubOAuth', url: 'https://github.com/org/repo' },
+        status: {
+          health: { healthy: false },
+          observedGeneration: 1,
+          conditions: [
+            {
+              type: 'Ready',
+              status: 'False',
+              reason: 'Rejected',
+              message: 'The provider rejected this connection.',
+              lastTransitionTime: new Date().toISOString(),
+              observedGeneration: 1,
+            },
+          ],
+        },
+      });
+
+    // Save is also disabled while the settings query is in flight (no available types yet), so wait
+    // for a settings-dependent control before asserting that it is the read-only gate holding it.
+    const awaitSettingsLoaded = () => screen.findByRole('radio', { name: 'GitHub App' });
+
+    it('shows a read-only banner', () => {
+      setup({ data: managedConnection() });
+
+      expect(screen.getByText(/managed externally/i)).toBeInTheDocument();
+    });
+
+    it('keeps Save disabled once the available connection types have loaded', async () => {
+      setup({ data: managedConnection() });
+      await awaitSettingsLoaded();
+
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeDisabled();
+    });
+
+    it('does not render the Delete button', () => {
+      setup({ data: managedConnection() });
+
+      expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    });
+
+    it('does not render Reauthorize, which would persist form edits', async () => {
+      setup({ data: disconnectedOAuthConnection({ [AnnoKeyManagerKind]: ManagerKind.Terraform }) });
+      await awaitSettingsLoaded();
+
+      expect(screen.queryByRole('button', { name: /reauthorize/i })).not.toBeInTheDocument();
+    });
+
+    it('offers Reauthorize for an unmanaged disconnected connection', async () => {
+      setup({ data: disconnectedOAuthConnection() });
+      await awaitSettingsLoaded();
+
+      expect(screen.getByRole('button', { name: /reauthorize/i })).toBeInTheDocument();
+    });
+
+    it('does not show the banner and enables Save for an unmanaged connection', async () => {
+      setup({ data: createMockConnection() });
+      await awaitSettingsLoaded();
+
+      expect(screen.queryByText(/managed externally/i)).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeEnabled();
     });
   });
 
