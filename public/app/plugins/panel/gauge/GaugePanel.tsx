@@ -110,7 +110,7 @@ const renderValueFactory = (options: Options) => {
         gradient={options.effects?.gradient}
         height={height}
         nameManualFontSize={options.text?.titleSize}
-        neutral={options.neutral}
+        neutral={value.field.custom?.neutral}
         roundedBars={options.barShape === 'rounded'}
         segmentCount={options.segmentCount}
         segmentSpacing={options.segmentSpacing}

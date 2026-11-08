@@ -2,12 +2,14 @@ import { type PanelModel, type PanelTypeChangedHandler } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 import { sharedSingleStatPanelChangedHandler, sharedSingleStatMigrationHandler } from '@grafana/ui';
 
-import { type Options } from './panelcfg.gen';
+import { type FieldConfig, type Options } from './panelcfg.gen';
 
 // This is called when the panel first loads
 export function gaugePanelMigrationHandler(panel: PanelModel<Options>): Partial<Options> {
   const sharedOptions = sharedSingleStatMigrationHandler(panel);
   const newOptions: Partial<Options> = { ...sharedOptions };
+
+  migrateNeutralToFieldConfig(panel, newOptions);
 
   if (shouldMigrateGauge(panel)) {
     const fieldConfig = panel.fieldConfig;
@@ -41,6 +43,36 @@ export function gaugePanelMigrationHandler(panel: PanelModel<Options>): Partial<
   }
 
   return newOptions;
+}
+
+// Neutral used to be a panel option. It is now a field config option so that it can be set from query results.
+function hasLegacyNeutralOption(panel: PanelModel): boolean {
+  return typeof panel.options?.neutral === 'number';
+}
+
+function migrateNeutralToFieldConfig(panel: PanelModel, newOptions: Partial<Options>) {
+  if (!hasLegacyNeutralOption(panel)) {
+    return;
+  }
+
+  const legacyNeutral: number = panel.options.neutral;
+  if ('neutral' in newOptions) {
+    delete newOptions.neutral;
+  }
+
+  const fieldConfig = panel.fieldConfig ?? { defaults: {}, overrides: [] };
+  const custom: FieldConfig = fieldConfig.defaults.custom ?? {};
+
+  if (custom.neutral === undefined) {
+    panel.fieldConfig = {
+      ...fieldConfig,
+      defaults: { ...fieldConfig.defaults, custom: { ...custom, neutral: legacyNeutral } },
+    };
+  }
+}
+
+export function shouldRunGaugeMigration(panel: PanelModel): boolean {
+  return shouldMigrateGauge(panel) || hasLegacyNeutralOption(panel);
 }
 
 export function shouldMigrateGauge(panel: PanelModel): boolean {
