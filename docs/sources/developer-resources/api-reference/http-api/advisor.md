@@ -22,17 +22,13 @@ weight: 100
 {{< admonition type="note" >}}
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
 
-**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [advisor.grafana.app/v0alpha1](https://play.grafana.org/swagger?api=advisor.grafana.app-v0alpha1) in Swagger.**
+**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [advisor.grafana.app/v0alpha1](https://play.grafana.org/swagger?api=advisor.grafana.app-v0alpha1) in Swagger.** This API is in `v0alpha1`, so it might change in future releases.
 
 {{< /admonition >}}
 
 The `/apis/advisor.grafana.app/*` API exposes the results of [Grafana Advisor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/), the app that runs regular health checks on your data sources, plugins, and Grafana instance.
 
-Advisor stores each run as a `Check` resource. The check's `status.report` field contains the number of analyzed items and the list of failures. You can read these checks to [create an alert based on Grafana Advisor results](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/advisor-create-alert/).
-
-{{< admonition type="caution" >}}
-This API is in `v0alpha1`, so it might change in future releases. Reading checks to build alerts is the only supported public use case. The other endpoints are used internally by Grafana Advisor.
-{{< /admonition >}}
+Advisor stores each run as a `Check` resource. The check's `status.report` field contains the number of analyzed items and the list of failures. You can [read these checks](#list-checks) to [create an alert based on Grafana Advisor results](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/advisor-create-alert/). The rest of the endpoints are for internal use.
 
 ## Before you begin
 
@@ -42,6 +38,10 @@ Before you begin, ensure you have the following:
 - **A service account token with the Admin role:** Use it to authenticate your requests. Refer to [HTTP API authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication).
 
 ## Endpoints
+
+{{< admonition type="note" >}}
+Reading checks to build alerts is the only supported public use case. The other endpoints are used internally by Grafana Advisor.
+{{< /admonition >}}
 
 These are the available endpoints:
 
