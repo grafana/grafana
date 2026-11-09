@@ -408,3 +408,59 @@ describe('useRunImport', () => {
     });
   });
 });
+
+describe('useRunImport — rules from a YAML file', () => {
+  const yamlRules = {
+    rulesSource: 'yaml' as const,
+    rulesYamlFile: new File(['groups: []'], 'rules.yaml'),
+    rulesDatasourceUID: undefined,
+    rulesDatasourceName: null,
+    yamlImportTargetDatasourceUID: 'yaml-target-uid',
+  };
+
+  it('sends them to the data source chosen for the file', async () => {
+    const requests = captureRequests();
+    const { result } = setup(yamlRules);
+
+    await act(async () => {
+      await result.current.confirmImport();
+    });
+
+    expect(result.current.importStatus).toBe('success');
+    expect(requests.rules).toHaveLength(1);
+    expect(requests.rules[0].headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('yaml-target-uid');
+    expect(requests.rulesBodies[0]).toEqual(rulesToImport);
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_alerting_import_to_gma_success',
+      expect.objectContaining({ rulesSource: 'yaml' })
+    );
+  });
+
+  it('uses the data source of a data source import, not a YAML target left over from before', async () => {
+    const requests = captureRequests();
+    const { result } = setup({
+      rulesSource: 'datasource',
+      rulesDatasourceUID: 'prometheus-uid',
+      yamlImportTargetDatasourceUID: 'yaml-target-uid',
+    });
+
+    await act(async () => {
+      await result.current.confirmImport();
+    });
+
+    expect(requests.rules).toHaveLength(1);
+    expect(requests.rules[0].headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('prometheus-uid');
+  });
+
+  it('ignores a data source left over from before the source was switched to YAML', async () => {
+    const requests = captureRequests();
+    const { result } = setup({ ...yamlRules, rulesDatasourceUID: 'prometheus-uid', rulesDatasourceName: 'Prometheus' });
+
+    await act(async () => {
+      await result.current.confirmImport();
+    });
+
+    expect(requests.rules).toHaveLength(1);
+    expect(requests.rules[0].headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('yaml-target-uid');
+  });
+});

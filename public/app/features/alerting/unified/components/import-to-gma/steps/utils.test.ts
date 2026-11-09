@@ -8,6 +8,7 @@ import {
   canRunDryRun,
   getRoutingTreeOptions,
   isStep1Valid,
+  isStep2Valid,
   pickStep1Values,
   validatePolicyTreeName,
 } from './utils';
@@ -361,5 +362,51 @@ describe('getRoutingTreeOptions', () => {
 
   it('adds nothing when step 1 will not create a tree', () => {
     expect(getRoutingTreeOptions(existing, '', true)).toEqual(existing);
+  });
+});
+
+describe('isStep2Valid', () => {
+  const dataSourceRules = {
+    rulesSource: 'datasource' as const,
+    rulesYamlFile: null,
+    rulesDatasourceUID: 'prometheus-uid',
+    selectedRoutingTree: 'imported',
+    targetDatasourceUID: 'prometheus-uid',
+    yamlImportTargetDatasourceUID: undefined,
+  };
+  const yamlRules = {
+    ...dataSourceRules,
+    rulesSource: 'yaml' as const,
+    rulesYamlFile: new File(['groups: []'], 'rules.yaml'),
+    rulesDatasourceUID: undefined,
+    yamlImportTargetDatasourceUID: 'yaml-target-uid',
+  };
+
+  it('accepts a data source with a policy tree and a recording rules target', () => {
+    expect(isStep2Valid(dataSourceRules)).toBe(true);
+  });
+
+  it.each([
+    ['a data source', { rulesDatasourceUID: undefined }],
+    ['a policy tree', { selectedRoutingTree: '' }],
+    ['a recording rules target', { targetDatasourceUID: undefined }],
+  ])('needs %s', (_, missing) => {
+    expect(isStep2Valid({ ...dataSourceRules, ...missing })).toBe(false);
+  });
+
+  it('does not ask a data source rules source for a YAML target', () => {
+    expect(isStep2Valid({ ...dataSourceRules, yamlImportTargetDatasourceUID: undefined })).toBe(true);
+  });
+
+  it('accepts a YAML file with a data source to run against', () => {
+    expect(isStep2Valid(yamlRules)).toBe(true);
+  });
+
+  it('needs a data source to run the rules of a YAML file against', () => {
+    expect(isStep2Valid({ ...yamlRules, yamlImportTargetDatasourceUID: undefined })).toBe(false);
+  });
+
+  it('needs the YAML file itself', () => {
+    expect(isStep2Valid({ ...yamlRules, rulesYamlFile: null })).toBe(false);
   });
 });

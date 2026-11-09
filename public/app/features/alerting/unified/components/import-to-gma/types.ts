@@ -69,6 +69,9 @@ export interface ImportFormValues {
   pauseAlertingRules: boolean;
   pauseRecordingRules: boolean;
   targetDatasourceUID?: string;
+  /** The data source the rules of an uploaded YAML file run against. Only used for the YAML source. */
+  yamlImportTargetDatasourceUID?: string;
+  yamlImportTargetDatasourceName?: string;
 }
 
 export type Step1Values = Pick<

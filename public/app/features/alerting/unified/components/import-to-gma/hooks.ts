@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import { type ComboboxOption } from '@grafana/ui';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
-import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerCloudRulesConfigDTO, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
@@ -61,7 +61,7 @@ export function useGetRulesToBeImported(skip: boolean, selectedDatasourceName: s
   return { rulesToBeImported, isloadingCloudRules };
 }
 
-const EMPTY_RULER_CONFIG: RulerRulesConfigDTO = {};
+const EMPTY_RULER_CONFIG: RulerCloudRulesConfigDTO = {};
 
 interface UseRulesToImportArgs {
   rulesSource: 'datasource' | 'yaml';
