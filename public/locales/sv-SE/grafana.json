@@ -8327,6 +8327,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Öppna frågefönstret",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Öppna frågefönstret"
     },
     "viz-panel-links-renderer": {
@@ -9757,7 +9759,6 @@
     "api": {
       "anonymous-user": "Anonym",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Mappen raderad",
       "folder-move-error-provisioned": "Det går inte att flytta den tilldelade mappen. Om du vill flytta den flyttar du den i lagringsplatsen och synkroniserar för att tillämpa ändringarna.",
       "folder-moved-success": "Mappen flyttad"
     }
@@ -11704,8 +11705,8 @@
           },
           "website-monitoring": {
             "cta": "Starta konfiguration",
-            "description": "Spåra tillgängligheten för din webbplats och dess prestanda från olika platser.",
-            "title": "Övervaka webbplatsens drifttid och prestanda"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Visa färre guider",
@@ -11826,10 +11827,10 @@
       "switchSolution": "Byt lösning",
       "synthetic-monitoring": {
         "action": "Aktivera syntetisk övervakning",
-        "context": "Black-box-kontroller för de tjänster som ditt kluster kör",
-        "description": "Undersök dina slutpunkter från globala platser med HTTP-, DNS- och ping-kontroller och larma vid driftstopp.",
+        "context": "",
+        "description": "",
         "setup-action": "Skapa din första kontroll",
-        "title": "Övervaka drifttid från utsidan"
+        "title": ""
       },
       "title": "Rekommendationer för din stack"
     },
@@ -11928,7 +11929,7 @@
       },
       "synthetics": {
         "create-check": "Skapa en kontroll",
-        "description": "Övervaka dina slutpunkters drifttid och prestanda från sonder runt om i världen.",
+        "description": "",
         "failing-worst": "{{check}} vid {{percent}} %",
         "filter": {
           "instances": "Ignorera mål",
@@ -13557,8 +13558,12 @@
       "code": "Kod",
       "heading": "Rubrik",
       "label": "Klicka för att lägga till ovanför",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Paragraf",
       "prompt": "Skriv för att börja – tryck / för block",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Visualisering"
     },
     "cell": {
@@ -13864,7 +13869,7 @@
         "description-no-value": "Vad som ska visas när det inte finns något värde",
         "description-value-mappings": "Ändra visningstexten baserat på inmatningsvärdet",
         "name-actions": "Åtgärder",
-        "name-ad-hoc": "Filtrera från värden",
+        "name-ad-hoc": "",
         "name-color-scheme": "Färgschema",
         "name-data-links": "Datalänkar",
         "name-decimals": "Decimaler",
@@ -14805,6 +14810,7 @@
       "delete-confirm": "Är du säker på att du vill radera denna anslutning? Den här åtgärden kan inte ångras.",
       "delete-title": "Radera anslutning",
       "error-loading": "Det gick inte att ladda anslutningar",
+      "export": "",
       "kind-github-app": "GitHub-appen",
       "kind-oauth-app": "OAuth-app",
       "no-connections": "Inga anslutningar konfigurerade",
@@ -15307,6 +15313,7 @@
       "view-folder": "Visa mapp"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Senaste synkronisering: {{date}}",
       "settings": "Inställningar",
       "view": "Visa"

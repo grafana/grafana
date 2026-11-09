@@ -8327,6 +8327,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abrir panel de consulta",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Abrir panel de consulta"
     },
     "viz-panel-links-renderer": {
@@ -9757,7 +9759,6 @@
     "api": {
       "anonymous-user": "Anónimo",
       "folder-delete-error-provisioned": "No se puede eliminar la carpeta aprovisionada. Para eliminarla, bórrala del repositorio y sincroniza todo para aplicar los cambios.",
-      "folder-deleted-success": "Carpeta eliminada",
       "folder-move-error-provisioned": "No se puede mover la carpeta aprovisionada. Para moverla, desplázala en el repositorio y sincroniza para aplicar los cambios.",
       "folder-moved-success": "Carpeta movida"
     }
@@ -11704,8 +11705,8 @@
           },
           "website-monitoring": {
             "cta": "Iniciar configuración",
-            "description": "Supervisa la disponibilidad de tu sitio web y su rendimiento desde diferentes ubicaciones.",
-            "title": "Monitoriza el tiempo de actividad y el rendimiento del sitio web"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Mostrar menos guías",
@@ -11826,10 +11827,10 @@
       "switchSolution": "Cambiar de solución",
       "synthetic-monitoring": {
         "action": "Habilitar la monitorización sintética",
-        "context": "Comprobaciones de caja negra para los servicios que ejecuta tu clúster",
-        "description": "Sondea tus puntos finales desde ubicaciones en todo el mundo con comprobaciones de HTTP, DNS y ping, y recibe alertas sobre el tiempo de inactividad.",
+        "context": "",
+        "description": "",
         "setup-action": "Crea tu primera comprobación",
-        "title": "Monitoriza el tiempo de actividad desde el exterior"
+        "title": ""
       },
       "title": "Recomendaciones para tu pila"
     },
@@ -11928,7 +11929,7 @@
       },
       "synthetics": {
         "create-check": "Crear una comprobación",
-        "description": "Monitoriza el tiempo de actividad y el rendimiento de tus puntos finales desde sondas de todo el mundo.",
+        "description": "",
         "failing-worst": "{{check}} al {{percent}} %",
         "filter": {
           "instances": "Ignorar objetivos",
@@ -13557,8 +13558,12 @@
       "code": "Código",
       "heading": "Encabezado",
       "label": "Haz clic para añadir arriba",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Párrafo",
       "prompt": "Escribe para empezar a redactar: pulsa / para los bloques",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Visualización"
     },
     "cell": {
@@ -13864,7 +13869,7 @@
         "description-no-value": "Qué mostrar cuando no hay valor",
         "description-value-mappings": "Modificar el texto de visualización en función del valor introducido",
         "name-actions": "Acciones",
-        "name-ad-hoc": "Filtrar a partir de valores",
+        "name-ad-hoc": "",
         "name-color-scheme": "Esquema de colores",
         "name-data-links": "Enlaces de datos",
         "name-decimals": "Decimales",
@@ -14805,6 +14810,7 @@
       "delete-confirm": "¿Seguro que quieres eliminar esta conexión? Esta acción no se puede deshacer.",
       "delete-title": "Eliminar conexión",
       "error-loading": "Error al cargar las conexiones",
+      "export": "",
       "kind-github-app": "Aplicación de GitHub",
       "kind-oauth-app": "Aplicación de OAuth",
       "no-connections": "No hay conexiones configuradas",
@@ -15307,6 +15313,7 @@
       "view-folder": "Ver carpeta"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Última sincronización: {{date}}",
       "settings": "Configuración",
       "view": "Vista"

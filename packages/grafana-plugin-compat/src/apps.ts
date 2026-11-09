@@ -8,18 +8,10 @@ import {
   HealthStatus,
   isFetchError,
 } from '@grafana/runtime';
-import {
-  getPluginSettings as unstableGetPluginSettings,
-  updateAppPluginSettings as unstableUpdateAppPluginSettings,
-} from '@grafana/runtime/unstable';
 
 export async function getPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta> {
   if (typeof stableGetPluginSettings === 'function') {
     return stableGetPluginSettings(pluginId, showErrorAlert);
-  }
-
-  if (typeof unstableGetPluginSettings === 'function') {
-    return unstableGetPluginSettings(pluginId, showErrorAlert);
   }
 
   return backwardsCompatibleGetPluginSettings(pluginId, showErrorAlert);
@@ -35,10 +27,6 @@ async function backwardsCompatibleGetPluginSettings(pluginId: string, showErrorA
 export async function updateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta> {
   if (typeof stableUpdateAppPluginSettings === 'function') {
     return stableUpdateAppPluginSettings(pluginId, data);
-  }
-
-  if (typeof unstableUpdateAppPluginSettings === 'function') {
-    return unstableUpdateAppPluginSettings(pluginId, data);
   }
 
   return backwardsCompatibleUpdatePluginSettings(pluginId, data);

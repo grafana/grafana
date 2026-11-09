@@ -50,8 +50,6 @@ interface HeaderCellProps {
 
 const TABBABLE_SELECTOR = 'button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-const MENU_BUTTON_TEST_ID = selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button;
-
 const HEADER_LINE_BOX = `${TABLE.HEADER_LINE_HEIGHT}px`;
 
 // Once the focused node is removed, document.activeElement can read as the body, the document element,
@@ -82,6 +80,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   warnings = [],
 }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
   const sortable = isSortableField(field);
   const styles = useStyles2(getStyles, headerCellWrap, sortable, tableRefreshEnabled);
@@ -138,7 +137,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     if (isPopoverVisible || !anchorRemoved || !isFocusLost()) {
       return;
     }
-    ref.current?.querySelector<HTMLButtonElement>(`[data-testid="${MENU_BUTTON_TEST_ID}"]`)?.focus();
+    menuButtonRef.current?.focus();
   }, [isPopoverVisible, filterAnchor]);
 
   useEffect(() => {
@@ -273,6 +272,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
         {columnOptions.length > 0 && (
           <Stack direction="row" gap={0.5} alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
             <HeaderCellMenu
+              buttonRef={menuButtonRef}
               displayName={displayName}
               groups={columnOptions}
               hasActiveFilter={hasActiveFilter}

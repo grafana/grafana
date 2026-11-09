@@ -8327,6 +8327,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abfragebereich öffnen",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Abfragebereich öffnen"
     },
     "viz-panel-links-renderer": {
@@ -9757,7 +9759,6 @@
     "api": {
       "anonymous-user": "Anonym",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Ordner gelöscht",
       "folder-move-error-provisioned": "Bereitgestellter Ordner kann nicht verschoben werden. Um ihn zu verschieben, verschieben Sie ihn in das Repository und synchronisieren Sie es, um die Änderungen zu übernehmen.",
       "folder-moved-success": "Ordner verschoben"
     }
@@ -11704,8 +11705,8 @@
           },
           "website-monitoring": {
             "cta": "Einrichtung starten",
-            "description": "Verfolgen Sie die Verfügbarkeit Ihrer Website und deren Leistung von verschiedenen Standorten aus.",
-            "title": "Überwachen Sie die Verfügbarkeit und Leistung Ihrer Website"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Weniger Anleitungen anzeigen",
@@ -11826,10 +11827,10 @@
       "switchSolution": "Lösung wechseln",
       "synthetic-monitoring": {
         "action": "Synthetic Monitoring aktivieren",
-        "context": "Black-Box-Prüfungen für die Dienste, die Ihr Cluster ausführt",
-        "description": "Prüfen Sie Ihre Endpunkte von globalen Standorten aus mit HTTP-, DNS- und Ping-Prüfungen und erhalten Sie Warnungen bei Ausfallzeiten.",
+        "context": "",
+        "description": "",
         "setup-action": "Erstellen Sie Ihre erste Prüfung",
-        "title": "Überwachen Sie die Verfügbarkeit von außen"
+        "title": ""
       },
       "title": "Empfehlungen für Ihren Stack"
     },
@@ -11928,7 +11929,7 @@
       },
       "synthetics": {
         "create-check": "Überprüfung erstellen",
-        "description": "Überwachen Sie die Verfügbarkeit und Leistung Ihrer Endpunkte mit Probes auf der ganzen Welt.",
+        "description": "",
         "failing-worst": "{{check}} bei {{percent}} %",
         "filter": {
           "instances": "Ziele ignorieren",
@@ -13557,8 +13558,12 @@
       "code": "Code",
       "heading": "Überschrift",
       "label": "Klicken Sie, um oben hinzuzufügen",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Abschnitt",
       "prompt": "Tippen Sie, um mit dem Schreiben zu beginnen – drücken Sie / für Blöcke",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Visualisierung"
     },
     "cell": {
@@ -13864,7 +13869,7 @@
         "description-no-value": "Was angezeigt wird, wenn kein Wert vorhanden ist",
         "description-value-mappings": "Ändern Sie den Anzeigetext je nach Eingabewert",
         "name-actions": "Aktionen",
-        "name-ad-hoc": "Filtern nach Werten",
+        "name-ad-hoc": "",
         "name-color-scheme": "Farbschema",
         "name-data-links": "Datenlinks",
         "name-decimals": "Dezimalstellen",
@@ -14805,6 +14810,7 @@
       "delete-confirm": "Möchten Sie diese Verbindung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
       "delete-title": "Verbindung löschen",
       "error-loading": "Verbindungen konnten nicht geladen werden",
+      "export": "",
       "kind-github-app": "Github-App",
       "kind-oauth-app": "OAuth-App",
       "no-connections": "Keine Verbindungen konfiguriert",
@@ -15307,6 +15313,7 @@
       "view-folder": "Ordner anzeigen"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Letzte Synchronisierung: {{date}}",
       "settings": "Einstellungen",
       "view": "Anzeigen"

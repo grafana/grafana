@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -41,6 +43,9 @@ type LegacyStatsGetter struct {
 	Cfg *setting.Cfg
 
 	metrics *legacyStatsMetrics
+	logger  log.Logger // defaults to the folder.counts logger
+
+	unavailableLogged atomic.Bool
 }
 
 // CountError identifies which legacy resource count failed while preserving the underlying error.
@@ -103,7 +108,7 @@ func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper 
 
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	if s.SQL == nil {
-		s.metrics.observeAll(time.Now(), ErrLegacyStatsUnavailable)
+		s.lookupFailed(ctx, in, ErrLegacyStatsUnavailable, time.Now())
 		return nil, &CountError{Resources: LegacyCountedResources, Err: ErrLegacyStatsUnavailable}
 	}
 	info, err := claims.ParseNamespace(in.Namespace)
@@ -123,12 +128,12 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// including a stack that is only unavailable (e.g. archived or suspended), still fails:
 		// its legacy rows can come back, so it must not be treated as empty.
 		for _, resource := range legacyResources {
-			s.metrics.skip(resource, legacySkipNamespaceDeleted)
+			s.skipped(ctx, in, "", resource, legacySkipNamespaceDeleted)
 		}
 		return &resourcepb.ResourceStatsResponse{}, nil
 	}
 	if err != nil {
-		s.metrics.observeAll(lookupStart, err)
+		s.lookupFailed(ctx, in, err, lookupStart)
 		return nil, &CountError{Resources: LegacyCountedResources, Err: err}
 	}
 
@@ -147,7 +152,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 				}
 				start := time.Now()
 				c, err := sess.Table(tableName).Where(where, args...).Count()
-				s.metrics.observe(r, start, err)
+				s.accessed(ctx, in, helper.Server, r, start, err)
 				return c, err
 			}
 
@@ -183,7 +188,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 			start := time.Now()
 			stale, err := s.legacyTableIsStale(sess, helper, configKey)
 			if err != nil {
-				s.metrics.observe(name, start, err)
+				s.accessed(ctx, in, helper.Server, name, start, err)
 				return false, &CountError{Resources: []string{name}, Err: err}
 			}
 			return stale, nil
@@ -204,7 +209,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 			return err
 		}
 		if alertRulesStale {
-			s.metrics.skip(legacyAlertRules, legacySkipMigrated)
+			s.skipped(ctx, in, helper.Server, legacyAlertRules, legacySkipMigrated)
 		} else {
 			err = fn("alert_rule", "namespace_uid", group, legacyAlertRules, "(record IS NULL OR record = '')")
 			if err != nil {
@@ -217,7 +222,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 			return err
 		}
 		if recordingRulesStale {
-			s.metrics.skip(legacyRecordingRules, legacySkipMigrated)
+			s.skipped(ctx, in, helper.Server, legacyRecordingRules, legacySkipMigrated)
 		} else {
 			err = fn("alert_rule", "namespace_uid", group, legacyRecordingRules, "(record IS NOT NULL AND record != '')")
 			if err != nil {
@@ -231,7 +236,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 			return err
 		}
 		if libraryPanelsStale {
-			s.metrics.skip(legacyLibraryElements, legacySkipMigrated)
+			s.skipped(ctx, in, helper.Server, legacyLibraryElements, legacySkipMigrated)
 		} else {
 			err = fn("library_element", "folder_uid", group, legacyLibraryElements, "")
 			if err != nil {
@@ -242,6 +247,85 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 	})
 
 	return rsp, err
+}
+
+type callerKey struct{}
+
+// WithCaller names who asked for a folder count, so its log lines can say so. The value only
+// travels in-process.
+func WithCaller(ctx context.Context, caller string) context.Context {
+	return context.WithValue(ctx, callerKey{}, caller)
+}
+
+// CallerFrom returns the caller set by WithCaller, or an empty string.
+func CallerFrom(ctx context.Context) string {
+	caller, _ := ctx.Value(callerKey{}).(string)
+	return caller
+}
+
+// countsLogger is the default logger of the folder count paths.
+var countsLogger = log.New("folder.counts")
+
+// log returns the logger carrying the request's trace context.
+func (s *LegacyStatsGetter) log(ctx context.Context) log.Logger {
+	if s.logger != nil {
+		return s.logger.FromContext(ctx)
+	}
+	return countsLogger.FromContext(ctx)
+}
+
+// logFields are the fields shared by every folder count log line. A request can carry many
+// folders, so only the first is named.
+func logFields(ctx context.Context, in *resourcepb.ResourceStatsRequest, server, resource string) []any {
+	fields := []any{"namespace", in.Namespace, "folderCount", len(in.Folder), "resource", resource}
+	if caller := CallerFrom(ctx); caller != "" {
+		fields = append(fields, "caller", caller)
+	}
+	if len(in.Folder) > 0 {
+		fields = append(fields, "folder", in.Folder[0])
+	}
+	if server != "" {
+		fields = append(fields, "dbServer", server)
+	}
+	return fields
+}
+
+// accessed records the metric and the log line for one legacy database query. A caller that went
+// away is not a failure, so it only logs at debug level.
+func (s *LegacyStatsGetter) accessed(ctx context.Context, in *resourcepb.ResourceStatsRequest, server, resource string, start time.Time, err error) {
+	s.metrics.observe(resource, start, err)
+	fields := append(logFields(ctx, in, server, resource), "duration", time.Since(start), "outcome", legacyOutcome(err))
+	switch {
+	case err == nil:
+		s.log(ctx).Debug("Counted legacy resources", fields...)
+	case errors.Is(err, context.Canceled):
+		s.log(ctx).Debug("Legacy count canceled", append(fields, "error", err)...)
+	default:
+		s.log(ctx).Error("Legacy count failed", append(fields, "error", err)...)
+	}
+}
+
+// skipped records the metric and the log line for a legacy count that was not run.
+func (s *LegacyStatsGetter) skipped(ctx context.Context, in *resourcepb.ResourceStatsRequest, server, resource, reason string) {
+	s.metrics.skip(resource, reason)
+	s.log(ctx).Debug("Skipped legacy count", append(logFields(ctx, in, server, resource), "reason", reason)...)
+}
+
+// lookupFailed records a failure to reach the legacy database before any resource is counted.
+func (s *LegacyStatsGetter) lookupFailed(ctx context.Context, in *resourcepb.ResourceStatsRequest, err error, start time.Time) {
+	s.metrics.observeAll(start, err)
+	fields := append(logFields(ctx, in, "", "all"), "duration", time.Since(start), "outcome", legacyOutcome(err), "error", err)
+	// A missing legacy source is a configuration state that repeats on every request, so only
+	// its first occurrence is an error; the outcome metric still counts each one.
+	if errors.Is(err, ErrLegacyStatsUnavailable) && s.unavailableLogged.Swap(true) {
+		s.log(ctx).Debug("Legacy count source still unavailable", fields...)
+		return
+	}
+	if errors.Is(err, context.Canceled) {
+		s.log(ctx).Debug("Legacy database lookup canceled", fields...)
+		return
+	}
+	s.log(ctx).Error("Legacy database lookup failed", fields...)
 }
 
 // folderSet returns in.Folder deduped, with empty entries dropped. Returns
