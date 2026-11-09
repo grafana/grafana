@@ -4,7 +4,7 @@ import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type Scoped
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
-import { makeQueryActionTarget, renderWithQueryEditorProvider } from '../testUtils';
+import { makeQueryActionTarget, makeStackedMode, renderWithQueryEditorProvider } from '../testUtils';
 
 import { ContentHeader, ContentHeaderSceneWrapper } from './ContentHeader';
 
@@ -115,14 +115,28 @@ describe('ContentHeaderSceneWrapper with a target', () => {
     renderWithQueryEditorProvider(<ContentHeaderSceneWrapper target={target} variant="stacked" />, {
       queries: [queryA, queryB],
       selectedQuery: queryA,
+      uiStateOverrides: { stackedMode: makeStackedMode({ enabled: true }) },
     });
 
     expect(pickerProps().current).toBe(resolvedSettings);
     expect(mockHeaderActions.mock.lastCall?.[0]).toMatchObject({
       target,
       source: 'stacked_header',
-      showFeedbackButton: false,
     });
+  });
+
+  it('reports the content header source for a stacked-variant header in single mode', () => {
+    const query = { refId: 'A' };
+
+    renderWithQueryEditorProvider(
+      <ContentHeaderSceneWrapper target={makeQueryActionTarget(query)} variant="stacked" />,
+      {
+        queries: [query],
+        uiStateOverrides: { stackedMode: makeStackedMode({ enabled: false }) },
+      }
+    );
+
+    expect(mockHeaderActions.mock.lastCall?.[0]).toMatchObject({ source: 'content_header' });
   });
 
   it('ignores a pending picker that belongs to the selection', () => {
@@ -143,7 +157,6 @@ describe('ContentHeaderSceneWrapper with a target', () => {
     expect(mockHeaderActions.mock.lastCall?.[0]).toMatchObject({
       target: undefined,
       source: 'content_header',
-      showFeedbackButton: true,
     });
   });
 });
