@@ -153,7 +153,6 @@ func TestUnifiedTeamSearchMemberTotal(t *testing.T) {
 		require.Equal(t, int32(http.StatusServiceUnavailable), statusErr.ErrStatus.Code)
 		require.Equal(t, int32(3), statusErr.ErrStatus.Details.RetryAfterSeconds)
 	})
-
 }
 
 // recountErrorClient fails every Search after the first, so the authorized recount sees a returned error.
