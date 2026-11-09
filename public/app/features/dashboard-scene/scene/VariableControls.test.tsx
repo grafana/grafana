@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import {
   CustomVariable,
   LocalValueVariable,
+  type MultiValueVariable,
   SceneGridLayout,
   type SceneVariable,
   SceneVariableSet,
@@ -368,7 +369,7 @@ function buildSceneWithRepeatedRowVariable() {
     body: new RowsLayoutManager({ rows: [row] }),
   });
   const deactivate = activateFullSceneTree(dashboard);
-  performRowRepeats(repeatVariable, row, false);
+  performRowRepeats(repeatVariable as unknown as MultiValueVariable, row, false);
 
   return { variable, sidebar: dashboard.state.sidebar, repeatedRow: row.state.repeatedRows![0], deactivate };
 }
