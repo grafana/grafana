@@ -8327,6 +8327,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Lekérdezési ablaktábla megnyitása",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Lekérdezési ablaktábla megnyitása"
     },
     "viz-panel-links-renderer": {
@@ -9757,7 +9759,6 @@
     "api": {
       "anonymous-user": "Névtelen",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Mappa törölve",
       "folder-move-error-provisioned": "A kiépített mappa nem helyezhető át. Az áthelyezéshez helyezze át az adattárba, és szinkronizálja a változtatások alkalmazásához.",
       "folder-moved-success": "Mappa áthelyezve"
     }
@@ -11704,8 +11705,8 @@
           },
           "website-monitoring": {
             "cta": "Beállítás indítása",
-            "description": "Kövesse webhelye elérhetőségét és teljesítményét különböző helyekről.",
-            "title": "Webhely üzemidejének és teljesítményének figyelése"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Kevesebb útmutató megjelenítése",
@@ -11826,10 +11827,10 @@
       "switchSolution": "Megoldás váltása",
       "synthetic-monitoring": {
         "action": "Szintetikus monitorozás engedélyezése",
-        "context": "A Black-box az Ön fürtje által futtatott szolgáltatásokat keres",
-        "description": "Megvizsgálhatja végpontjait globális helyekről HTTP-, DNS- és pingellenőrzésekkel, és riasztást kaphat állásidő esetén.",
+        "context": "",
+        "description": "",
         "setup-action": "Hozza létre az első ellenőrzését",
-        "title": "Üzemidő monitorozása kívülről"
+        "title": ""
       },
       "title": "Ajánlások a stackjéhez"
     },
@@ -11928,7 +11929,7 @@
       },
       "synthetics": {
         "create-check": "Ellenőrzés létrehozása",
-        "description": "Figyelje végpontjai üzemidejét és teljesítményét szondákkal a világ minden tájáról.",
+        "description": "",
         "failing-worst": "{{check}} {{percent}} -on",
         "filter": {
           "instances": "Célok mellőzése",
@@ -13557,8 +13558,12 @@
       "code": "Kód",
       "heading": "Irány",
       "label": "Kattintson a hozzáadáshoz feljebb",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Bekezdés",
       "prompt": "Írja be a szöveget az írás megkezdéséhez – nyomja meg a / billentyűt a blokkokhoz",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Vizualizáció"
     },
     "cell": {
@@ -13864,7 +13869,7 @@
         "description-no-value": "Érték hiányában megjelenítendő",
         "description-value-mappings": "Megjelenített szöveg módosítása a bemeneti érték alapján",
         "name-actions": "Műveletek",
-        "name-ad-hoc": "Szűrés az értékekből",
+        "name-ad-hoc": "",
         "name-color-scheme": "Színséma",
         "name-data-links": "Adathivatkozások",
         "name-decimals": "Tizedesjegyek",
@@ -14805,6 +14810,7 @@
       "delete-confirm": "Biztosan törli ezt a kapcsolatot? A művelet nem vonható vissza.",
       "delete-title": "Kapcsolat törlése",
       "error-loading": "A kapcsolatok betöltése nem sikerült",
+      "export": "",
       "kind-github-app": "GitHub-alkalmazás",
       "kind-oauth-app": "OAuth-alkalmazás",
       "no-connections": "Nincs konfigurált kapcsolat",
@@ -15307,6 +15313,7 @@
       "view-folder": "Mappa megtekintése"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Legutóbbi szinkronizálás: {{date}}",
       "settings": "Beállítások",
       "view": "Nézet"

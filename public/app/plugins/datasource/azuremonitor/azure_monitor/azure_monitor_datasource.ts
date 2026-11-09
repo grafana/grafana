@@ -15,7 +15,6 @@ import {
   type AzureMonitorDataSourceJsonData,
   type AzureMonitorLocations,
   type AzureMonitorMetricsMetadataResponse,
-  type AzureMonitorProvidersResponse,
   type DatasourceValidationResult,
   type GetDimensionValuesQuery,
   type GetLogAnalyticsTableResponse,
@@ -50,7 +49,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   dimensionValuesApiVersion = '2021-05-01';
   apiPreviewVersion = '2017-12-01-preview';
   listByResourceGroupApiVersion = '2021-04-01';
-  providerApiVersion = '2021-04-01';
   locationsApiVersion = '2020-01-01';
   defaultSubscriptionId?: string;
   basicLogsEnabled?: boolean;
@@ -391,12 +389,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
     // { resourceGroup: ['rg1', 'rg2'], resourceName: ['res2'] } would result in
     // { resourceGroup: 'rg1', resourceName: 'res2' } which is not.
     return replaceTemplateVariables(this.templateSrv, query, scopedVars)[0];
-  }
-
-  async getProvider(providerName: string) {
-    return await this.getResource<AzureMonitorProvidersResponse>(
-      `${routeNames.azureMonitor}/providers/${providerName}?api-version=${this.providerApiVersion}`
-    );
   }
 
   async getLocations(subscriptions: string[]) {

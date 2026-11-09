@@ -224,6 +224,25 @@ func TestCanSearchByTitle(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("zz"), nil)
 	})
 
+	t.Run("multi-word queries shorter than ngram min are rewritten as prefix wildcards", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "QA Weekly Report - Billing",
+			"name2": "QA Weekly Report - Search",
+			"name3": "Weekly Ops",
+			"name4": "Team QA Weekly",
+		})
+
+		// Every word is too short to have n-grams, so "QA W" becomes "QA W*",
+		// which matches the start of the title.
+		checkSearchQueryUnordered(t, index, newTestQuery("QA W"), []string{"name1", "name2"})
+		checkSearchQueryUnordered(t, index, newTestQuery("QA We"), []string{"name1", "name2"})
+		checkSearchQueryUnordered(t, index, newTestQuery("qa w"), []string{"name1", "name2"})
+		checkSearchQuery(t, index, newTestQuery("XX W"), nil)
+		// Surrounding whitespace is dropped, so a single short word still matches any title word by prefix.
+		checkSearchQueryUnordered(t, index, newTestQuery("QA "), []string{"name1", "name2", "name4"})
+	})
+
 	t.Run("title filter ignores empty tokens from split values", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, noop)
 		indexDocumentsWithTitles(t, index, key, map[string]string{

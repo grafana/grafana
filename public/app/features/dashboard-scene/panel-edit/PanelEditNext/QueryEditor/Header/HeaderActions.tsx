@@ -10,7 +10,6 @@ import { QueryEditorType } from '../../constants';
 import { type CardActionSource } from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
-import { ExperimentalFeedbackButton } from './ExperimentalFeedbackButton';
 import { PluginActions } from './PluginActions';
 import { QueryActionsMenu } from './QueryActionsMenu';
 import { SaveButton } from './SaveButton';
@@ -23,7 +22,6 @@ interface HeaderActionsProps {
   /** The card to act on. Defaults to the selected card. */
   target?: HeaderActionTarget;
   source?: CardActionSource;
-  showFeedbackButton?: boolean;
 }
 
 /**
@@ -34,12 +32,7 @@ interface HeaderActionsProps {
  * selected card. Delete confirmation behavior is configured per type in getQueryEditorTypeConfig
  * and handled by the Actions component.
  */
-export function HeaderActions({
-  containerRef,
-  target: targetProp,
-  source = 'content_header',
-  showFeedbackButton = true,
-}: HeaderActionsProps) {
+export function HeaderActions({ containerRef, target: targetProp, source = 'content_header' }: HeaderActionsProps) {
   const uiState = useQueryEditorUIContext();
   const { toggleQueryHide, toggleTransformationDisabled, deleteQuery, deleteTransformation } = useActionsContext();
   const target = targetProp ?? getSelectedActionTarget(uiState);
@@ -91,7 +84,6 @@ export function HeaderActions({
           duplicate: 0,
         }}
       />
-      {showFeedbackButton && <ExperimentalFeedbackButton />}
       {isTransformation ? (
         <TransformationActionButtons transformation={target.transformation} source={source} />
       ) : (
