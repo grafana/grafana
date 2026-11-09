@@ -181,10 +181,10 @@ describe('coreSpecMapper when called with a core plugin on cloud', () => {
       'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-testdata-datasource/dist/module.js'
     );
     expect(result.info.logos.large).toBe(
-      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-testdata-datasource/dist/img/logo.jpg'
+      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-testdata-datasource/dist/img/testdata.svg'
     );
     expect(result.info.logos.small).toBe(
-      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-testdata-datasource/dist/img/logo.jpg'
+      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-testdata-datasource/dist/img/testdata.svg'
     );
   });
 
@@ -219,8 +219,12 @@ describe('coreSpecMapper when called with a core plugin on prem', () => {
 
     expect(result.baseUrl).toBe('public/app/plugins/datasource/grafana-testdata-datasource/dist');
     expect(result.module).toBe('public/app/plugins/datasource/grafana-testdata-datasource/dist/module.js');
-    expect(result.info.logos.large).toBe('public/app/plugins/datasource/grafana-testdata-datasource/dist/img/logo.jpg');
-    expect(result.info.logos.small).toBe('public/app/plugins/datasource/grafana-testdata-datasource/dist/img/logo.jpg');
+    expect(result.info.logos.large).toBe(
+      'public/app/plugins/datasource/grafana-testdata-datasource/dist/img/testdata.svg'
+    );
+    expect(result.info.logos.small).toBe(
+      'public/app/plugins/datasource/grafana-testdata-datasource/dist/img/testdata.svg'
+    );
   });
 
   it('should resolve correct urls for a non decoupled plugin', () => {
