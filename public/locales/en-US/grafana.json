@@ -6585,6 +6585,7 @@
         "global-section": "Global",
         "load-error": "Could not load global and folder variables.",
         "pane-header": "Global or folder variable",
+        "required-by": "Required by {{names}}",
         "select-all-folder": "All folder",
         "select-all-global": "All global"
       },
@@ -6756,6 +6757,7 @@
           "preview": "Preview"
         },
         "remove": "Remove",
+        "required-by": "Required by {{names}}",
         "selection-options": {
           "allow-custom-values": "Allow custom values",
           "allow-custom-values-description": "Enables users to enter values",
@@ -7284,6 +7286,7 @@
       "duplicate-tooltip": "Duplicate",
       "duplicate-tooltip-disabled": "Repeated panels can't be duplicated individually",
       "remove-tooltip": "Remove",
+      "required-by": "Required by {{names}}",
       "view": "View"
     },
     "conversion-warning-banner": {
@@ -8240,6 +8243,7 @@
       "delete-text": "Are you sure you want to delete: {{name}}?",
       "delete-title": "Delete variable",
       "remove-confirm": "Remove",
+      "remove-required": "{{name}} is required by {{names}}",
       "remove-text": "Are you sure you want to remove: {{name}}?",
       "remove-title": "Remove variable"
     },
@@ -18709,6 +18713,7 @@
       "folder-description-folder-only": "Scope the variable to a folder you can edit",
       "folder-label": "Folder",
       "load-error-title": "This variable cannot be edited",
+      "missing-datasource-variable": "${{name}} isn't global or in this folder, so it only resolves on dashboards that define their own {{name}}",
       "moved": "Variable moved",
       "name-exists": "A variable with this name already exists in the selected folder",
       "save": "Save",
