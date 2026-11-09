@@ -229,9 +229,12 @@ func TestListTrashWithSearchFallsBackWhenIndexCannotServeTrash(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx, metricsState := withRequestMetricsState(identity.WithServiceIdentityContext(context.Background(), 1))
-			searchResp := &resourcepb.ResourceSearchResponse{Error: NewServiceUnavailableError(test.message)}
+			searchErr := NewServiceUnavailableError(test.message)
+			grpcStatus, err := status.New(codes.Unavailable, searchErr.Message).WithDetails(searchErr)
+			require.NoError(t, err)
 			backend := &trashBatchFakeBackend{listRV: 77}
-			s, _ := newSearchBackedTrashTestServer(searchResp, backend)
+			s, searchClient := newSearchBackedTrashTestServer(nil, backend)
+			searchClient.err = grpcStatus.Err()
 
 			resp, err := s.List(ctx, trashListRequest())
 
@@ -247,13 +250,9 @@ func TestListTrashWithSearchFallsBackWhenIndexCannotServeTrash(t *testing.T) {
 
 func TestListTrashWithSearchFallsBackFromRemoteUnavailableError(t *testing.T) {
 	ctx, metricsState := withRequestMetricsState(identity.WithServiceIdentityContext(context.Background(), 1))
-	searchErr := NewServiceUnavailableError("sorting trash by resource version is not available")
-	grpcStatus, err := status.New(codes.Unavailable, searchErr.Message).WithDetails(searchErr)
-	require.NoError(t, err)
-
 	backend := &trashBatchFakeBackend{listRV: 77}
 	s, searchClient := newSearchBackedTrashTestServer(nil, backend)
-	searchClient.err = grpcStatus.Err()
+	searchClient.err = status.Error(codes.Unavailable, "sorting trash by resource version is not available")
 
 	resp, err := s.List(ctx, trashListRequest())
 
@@ -267,18 +266,19 @@ func TestListTrashWithSearchFallsBackFromRemoteUnavailableError(t *testing.T) {
 
 func TestListTrashWithSearchDoesNotFallBackFromSearchContinueToken(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-	searchResp := &resourcepb.ResourceSearchResponse{
-		Error: NewServiceUnavailableError("sorting trash by resource version is not available for this resource until its search index has been rebuilt"),
-	}
+	searchErr := NewServiceUnavailableError("sorting trash by resource version is not available for this resource until its search index has been rebuilt")
+	grpcStatus, err := status.New(codes.Unavailable, searchErr.Message).WithDetails(searchErr)
+	require.NoError(t, err)
 	backend := &trashBatchFakeBackend{listRV: 77}
-	s, _ := newSearchBackedTrashTestServer(searchResp, backend)
+	s, searchClient := newSearchBackedTrashTestServer(nil, backend)
+	searchClient.err = grpcStatus.Err()
 	req := trashListRequest()
 	req.NextPageToken = ContinueToken{SearchAfter: []string{"42"}, ResourceVersion: 100}.String()
 
-	resp, err := s.List(ctx, req)
+	_, err = s.List(ctx, req)
 
-	require.NoError(t, err)
-	require.Equal(t, int32(http.StatusServiceUnavailable), resp.Error.GetCode())
+	respErr := rpcErrorResult(t, err)
+	require.Equal(t, int32(http.StatusServiceUnavailable), respErr.GetCode())
 	require.Zero(t, backend.listHistoryCalls)
 }
 
@@ -522,9 +522,10 @@ func TestTrashListServicePermissionErrors(t *testing.T) {
 						return
 					}
 					if path == "store" {
-						require.NoError(t, err)
-						require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
-						require.Contains(t, resp.Error.GetMessage(), "dashboard.grafana.app/dashboards:set_permissions")
+						require.Nil(t, resp)
+						respErr := rpcErrorResult(t, err)
+						require.Equal(t, int32(http.StatusInternalServerError), respErr.GetCode())
+						require.Contains(t, respErr.GetMessage(), "dashboard.grafana.app/dashboards:set_permissions")
 					} else {
 						require.ErrorIs(t, err, ErrServiceCannotDelegate)
 						require.Nil(t, resp)

@@ -70,6 +70,11 @@ const DefaultRendererAuthToken = "-"
 // written to a provisioning repository through the files API.
 const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
 
+// ProvisioningMaxJobBodySizeDefault is the default value for the
+// [provisioning] max_job_body_size key (150 KiB). It bounds the request body
+// of a job POST.
+const ProvisioningMaxJobBodySizeDefault int64 = 150 * 1024
+
 // ProvisioningSyncResourceTimeoutDefault is the default value for the
 // [provisioning] sync_resource_timeout key. It bounds how long applying a
 // single resource (or folder) may take during a sync job before that
@@ -209,6 +214,7 @@ type Cfg struct {
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
+	ProvisioningMaxJobBodySize                int64         // bytes; default 150 KiB (153600); <=0 = default
 	ProvisioningSyncResourceTimeout           time.Duration // per-resource apply timeout during sync; default 30s; <=0 = default
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
 	ProvisioningControllerResyncInterval      time.Duration // informer re-list interval for the repo/connection controllers (jobs use ProvisioningJobPollInterval); default 60s; <=0 = default
@@ -704,12 +710,11 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage                        map[string]UnifiedStorageConfig
-	UnifiedStorageClusterSlug             string
-	UnifiedStorageAuthzExemptionEnabled   bool
-	UnifiedStorageAuthzExemptResources    []string
-	HybridSearchDefaultResources          []string
-	UnifiedStorageGRPCErrorResultToStatus bool
+	UnifiedStorage                      map[string]UnifiedStorageConfig
+	UnifiedStorageClusterSlug           string
+	UnifiedStorageAuthzExemptionEnabled bool
+	UnifiedStorageAuthzExemptResources  []string
+	HybridSearchDefaultResources        []string
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -725,6 +730,9 @@ type Cfg struct {
 	// MigrationChunkMaxBytes is the soft maximum byte budget per migration chunk
 	// when MigrationChunkedWrites is enabled. Default: 256 MiB.
 	MigrationChunkMaxBytes int64
+	// MigrationStatementTimeout overrides the Postgres statement_timeout for the migration's
+	// own transactions only. Zero keeps the database or role setting. Default: 0.
+	MigrationStatementTimeout time.Duration
 	// RenameWaitDeadline is the maximum time to wait for MySQL RENAME TABLE
 	// statements to appear in the processlist. Default: 1 minute.
 	RenameWaitDeadline          time.Duration
@@ -855,6 +863,7 @@ type Cfg struct {
 	RerankVertexModel     string
 	RerankBedrockRegion   string
 	RerankBedrockModel    string
+	RerankHedgeDelay      time.Duration
 
 	// Overrides/Quotas
 	OverridesFilePath             string
@@ -864,6 +873,7 @@ type Cfg struct {
 	QuotasErrorMessageSupportInfo string
 
 	EnableSQLKVBackend                bool
+	KeyPathReconciliationEnabled      bool
 	KVLeaseTTL                        time.Duration
 	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
@@ -1397,7 +1407,6 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 		os.Exit(1)
 		return nil, err
 	}
-
 	// command line props
 	cfg.commandLineProps = cfg.getCommandLineProperties(args.Args)
 	// load default overrides
@@ -2667,6 +2676,10 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
+	cfg.ProvisioningMaxJobBodySize = iniFile.Section("provisioning").Key("max_job_body_size").MustInt64(ProvisioningMaxJobBodySizeDefault)
+	if cfg.ProvisioningMaxJobBodySize <= 0 {
+		cfg.ProvisioningMaxJobBodySize = ProvisioningMaxJobBodySizeDefault
+	}
 	cfg.ProvisioningSyncResourceTimeout = iniFile.Section("provisioning").Key("sync_resource_timeout").MustDuration(ProvisioningSyncResourceTimeoutDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)

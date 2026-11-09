@@ -43,8 +43,8 @@ func TestIntegrationOrgDeletionCleansRulesAndConfigInTargetOrg(t *testing.T) {
 	}, 30*time.Second, 200*time.Millisecond, "sync worker did not seed the target org Config")
 	serviceCtx := identity.WithServiceIdentityContext(ctx, helper.OrgB.OrgID)
 	key := &resourcepb.ResourceKey{Namespace: targetNamespace, Group: configGVR.Group, Resource: configGVR.Resource, Name: model.ConfigSingletonName}
-	stored, err := helper.GetEnv().ResourceClient.Read(serviceCtx, &resourcepb.ReadRequest{Key: key})
-	require.NoError(t, unified.ErrorFromResponse(stored.GetError(), err))
+	_, err := helper.GetEnv().ResourceClient.Read(serviceCtx, &resourcepb.ReadRequest{Key: key})
+	require.NoError(t, err)
 
 	// Use identical rule names in both orgs to detect cross-tenant deletion.
 	for _, orgUsers := range []apis.OrgUsers{helper.Org1, helper.OrgB} {
@@ -79,8 +79,8 @@ func TestIntegrationOrgDeletionCleansRulesAndConfigInTargetOrg(t *testing.T) {
 		require.NoError(t, err)
 	}
 	ruleKey := &resourcepb.ResourceKey{Namespace: targetNamespace, Group: model.APIGroup, Resource: "alertrules", Name: "org-rule"}
-	stored, err = helper.GetEnv().ResourceClient.Read(serviceCtx, &resourcepb.ReadRequest{Key: ruleKey})
-	require.NoError(t, unified.ErrorFromResponse(stored.GetError(), err))
+	_, err = helper.GetEnv().ResourceClient.Read(serviceCtx, &resourcepb.ReadRequest{Key: ruleKey})
+	require.NoError(t, err)
 
 	response := apis.DoRequest(helper, apis.RequestParams{
 		User:   helper.Org1.Admin,
@@ -95,16 +95,14 @@ func TestIntegrationOrgDeletionCleansRulesAndConfigInTargetOrg(t *testing.T) {
 	require.NoError(t, err, "deleting another org must preserve org 1's Config")
 	_, err = helper.Org1.Admin.ResourceClient(t, model.AlertRuleKind().GroupVersionResource()).Namespace(helper.Namespacer(helper.Org1.OrgID)).Get(ctx, "org-rule", metav1.GetOptions{})
 	require.NoError(t, err, "deleting another org must preserve org 1's rules")
-	stored, err = helper.GetEnv().ResourceClient.Read(serviceCtx, &resourcepb.ReadRequest{Key: ruleKey})
-	ruleErr := unified.ErrorFromResponse(stored.GetError(), err)
-	require.Error(t, ruleErr, "org deletion must remove alert rules from unified storage")
-	ruleResult := unified.AsErrorResult(ruleErr)
+	_, err = helper.GetEnv().ResourceClient.Read(serviceCtx, &resourcepb.ReadRequest{Key: ruleKey})
+	require.Error(t, err, "org deletion must remove alert rules from unified storage")
+	ruleResult := unified.AsErrorResult(err)
 	require.NotNil(t, ruleResult)
 	require.Equal(t, int32(http.StatusNotFound), ruleResult.Code)
-	stored, err = helper.GetEnv().ResourceClient.Read(serviceCtx, &resourcepb.ReadRequest{Key: key})
-	readErr := unified.ErrorFromResponse(stored.GetError(), err)
-	require.Error(t, readErr)
-	result := unified.AsErrorResult(readErr)
+	_, err = helper.GetEnv().ResourceClient.Read(serviceCtx, &resourcepb.ReadRequest{Key: key})
+	require.Error(t, err)
+	result := unified.AsErrorResult(err)
 	require.NotNil(t, result)
 	require.Equal(t, int32(http.StatusNotFound), result.Code)
 }

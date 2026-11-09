@@ -18,7 +18,11 @@ function sourceFrame(names: string[], refId = 'A', overrideHidden: string[] = []
   });
 }
 
-function renderColumnState(initialSource: DataFrame[], initialConfigs: DataTransformerConfig[]) {
+function renderColumnState(
+  initialSource: DataFrame[],
+  initialConfigs: DataTransformerConfig[],
+  onInteraction?: (action: 'visibility' | 'reorder') => void
+) {
   let configs: readonly DataTransformerConfig[] = initialConfigs;
   const listeners = new Set<() => void>();
   const api: PanelRuntimeTransformations = {
@@ -33,9 +37,12 @@ function renderColumnState(initialSource: DataFrame[], initialConfigs: DataTrans
       return () => listeners.delete(listener);
     },
   };
-  const view = renderHook(({ source, index }) => useColumnTransformations(index, api, 'table', true, source), {
-    initialProps: { source: initialSource, index: 0 },
-  });
+  const view = renderHook(
+    ({ source, index }) => useColumnTransformations(index, api, 'table', true, source, onInteraction),
+    {
+      initialProps: { source: initialSource, index: 0 },
+    }
+  );
   return { ...view, api, getConfigs: () => configs };
 }
 
@@ -140,6 +147,37 @@ it('clears only the changed frame order after switching between frames', () => {
   expect(getConfigs()[1]).toEqual(otherOrder);
 });
 
+it('keeps viewer order when the table is handed a different panel and then its own panel back', () => {
+  const source = [sourceFrame(['A', 'B', 'C'])];
+  const originalConfigs = [orderedConfig];
+  const original: PanelRuntimeTransformations = {
+    get: () => originalConfigs,
+    getSourceSeries: () => source,
+    set: jest.fn(),
+    subscribe: () => () => {},
+  };
+  // A panel with the viewer changes saved into it, so its source already has them applied.
+  const promotedSource = [sourceFrame(['C', 'A'])];
+  const promotedConfigs: DataTransformerConfig[] = [];
+  const promoted: PanelRuntimeTransformations = {
+    get: () => promotedConfigs,
+    getSourceSeries: () => promotedSource,
+    set: jest.fn(),
+    subscribe: () => () => {},
+  };
+  const { result, rerender } = renderHook(
+    ({ api, source }) => useColumnTransformations(0, api, 'table', true, source),
+    { initialProps: { api: original, source } }
+  );
+
+  rerender({ api: promoted, source: promotedSource });
+  rerender({ api: original, source });
+
+  expect(result.current?.columnOrder).toEqual(['C', 'A', 'B']);
+  expect(result.current?.hiddenColumns).toEqual(new Set(['B']));
+  expect(original.set).not.toHaveBeenCalled();
+});
+
 it('reads visibility and order from the registered column transformations', () => {
   const source = [
     createDataFrame({
@@ -229,4 +267,18 @@ it.each([false, true])('recovers a missing output frame only when enabled=%s', (
   } else {
     expect(api.set).not.toHaveBeenCalled();
   }
+});
+
+it('reports accepted column changes but not hydration or repeated actions', () => {
+  const onInteraction = jest.fn();
+  const { result, api } = renderColumnState([sourceFrame(['A', 'B', 'C'])], [], onInteraction);
+  expect(result.current?.columnCatalog).toEqual(['A', 'B', 'C']);
+  expect(onInteraction).not.toHaveBeenCalled();
+  act(() => result.current?.onHiddenColumnsChange(new Set(['B'])));
+  act(() => result.current?.onHiddenColumnsChange(new Set(['B'])));
+  act(() => result.current?.onHiddenColumnsChange(new Set()));
+  act(() => result.current?.onColumnOrderChange(['C', 'A', 'B']));
+  act(() => result.current?.onColumnOrderChange(['C', 'A', 'B']));
+  expect(onInteraction.mock.calls).toEqual([['visibility'], ['visibility'], ['reorder']]);
+  expect(api.set).toHaveBeenCalledTimes(3);
 });

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 
 import { type DataSourceApi } from '@grafana/data';
 import { useDataSourceInstance as stableUseDataSourceInstance } from '@grafana/runtime';
-import { useDataSourceInstance as unstableUseDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { getDataSourceInstance } from './getDataSourceInstance';
 import { type Ref } from './types';
@@ -21,9 +20,7 @@ export interface UseDataSourceInstanceResult {
 export const useDataSourceInstance: (ref?: Ref) => UseDataSourceInstanceResult =
   typeof stableUseDataSourceInstance === 'function'
     ? stableUseDataSourceInstance
-    : typeof unstableUseDataSourceInstance === 'function'
-      ? unstableUseDataSourceInstance
-      : useBackwardsCompatibleDataSourceInstance;
+    : useBackwardsCompatibleDataSourceInstance;
 
 function useBackwardsCompatibleDataSourceInstance(ref?: Ref): UseDataSourceInstanceResult {
   const [result, setResult] = useState<UseDataSourceInstanceResult>({ isLoading: true });

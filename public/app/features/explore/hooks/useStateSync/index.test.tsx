@@ -132,6 +132,39 @@ function setup({ queryParams = {}, datasourceGetter = defaultDsGetter }: SetupPa
 }
 
 describe('useStateSync', () => {
+  it.each([true, false])('preserves expandSpan=%s through URL rewriting and reloading', async (expandSpan) => {
+    const { location, store, unmount } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'a' }],
+            panelsState: { trace: { spanId: 'linked-span', expandSpan } },
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      expect(store.getState().explore.panes.one?.datasourceInstance?.uid).toBe('loki-uid');
+      expect(JSON.parse(location.getSearch().get('panes')!).one.panelsState.trace).toEqual({
+        spanId: 'linked-span',
+        expandSpan,
+      });
+    });
+
+    const queryParams = location.getSearchObject();
+    unmount();
+    const reloaded = setup({ queryParams });
+    await waitFor(() => {
+      expect(reloaded.store.getState().explore.panes.one?.panelsState.trace).toEqual({
+        spanId: 'linked-span',
+        expandSpan,
+      });
+    });
+  });
+
   it('does not push a new entry to history on first render', async () => {
     const { location } = setup({});
 

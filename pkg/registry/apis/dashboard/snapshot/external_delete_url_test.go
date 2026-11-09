@@ -35,7 +35,8 @@ func TestExternalSnapshotUsesReturnedDeleteURL(t *testing.T) {
 				External: true, ExternalURL: "https://public.example.com/share/key",
 				ExternalDeleteURL: server.URL + "/private/secret?token=original", DeleteKey: "secret",
 			}
-			snap := convertCreateCmdToK8sSnapshot(cmd, "default")
+			snap, err := convertCreateCmdToK8sSnapshot(cmd, "default")
+			require.NoError(t, err)
 			deleteURL, err := deleteSnapshotFromExternalHost(context.Background(), snap, dashv0.SnapshotSharingOptions{})
 			require.NoError(t, err)
 			require.Equal(t, cmd.ExternalDeleteURL, deleteURL)
@@ -50,6 +51,7 @@ func TestLegacySnapshotPreservesExternalDeleteURL(t *testing.T) {
 		ExternalDeleteURL: "https://delete.example.com/private/secret?token=original",
 		DeleteKey:         "secret", Dashboard: simplejson.New(),
 	}
-	snap := convertSnapshotToK8sResource(original, request.GetNamespaceMapper(nil))
+	snap, err := convertSnapshotToK8sResource(original, request.GetNamespaceMapper(nil))
+	require.NoError(t, err)
 	require.Equal(t, original.ExternalDeleteURL, snap.GetExternalDeleteURL())
 }
