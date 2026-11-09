@@ -5,6 +5,7 @@ import { useFlagGrafanaDashboardSidebarExplicitOpen } from '@grafana/runtime/int
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { DashboardInteractions } from '../../utils/interactions';
 import { type TabItem } from '../layout-tabs/TabItem';
 import { getDashboardSceneLike } from '../types/dashboard';
 
@@ -22,6 +23,7 @@ function TabEditActions({ tab }: { tab: TabItem }) {
   const styles = useStyles2(getActionStyles);
   const isRepeated = isRepeatCloneOrChildOf(tab);
   const onClickEdit = useCallback(() => {
+    DashboardInteractions.trackDashboardSectionAction('settings', 'tab', 'edit_popover');
     getDashboardSceneLike(tab).state.sidebar.openElementSettings(tab);
   }, [tab]);
 
@@ -33,7 +35,10 @@ function TabEditActions({ tab }: { tab: TabItem }) {
       />
       <div className={styles.actionsDivider} />
       <CopyActionButton
-        onClick={() => tab.onCopy()}
+        onClick={() => {
+          DashboardInteractions.trackDashboardSectionAction('copy', 'tab', 'edit_popover');
+          tab.onCopy();
+        }}
         disabled={isRepeated}
         disabledTooltip={t(
           'dashboard-scene.tab-edit-actions.copy-disabled',
@@ -41,7 +46,10 @@ function TabEditActions({ tab }: { tab: TabItem }) {
         )}
       />
       <DuplicateActionButton
-        onClick={() => tab.onDuplicate()}
+        onClick={() => {
+          DashboardInteractions.trackDashboardSectionAction('duplicate', 'tab', 'edit_popover');
+          tab.onDuplicate();
+        }}
         disabled={isRepeated}
         disabledTooltip={t(
           'dashboard-scene.tab-edit-actions.duplicate-disabled',
@@ -56,7 +64,10 @@ function TabEditActions({ tab }: { tab: TabItem }) {
         )}
         yesText={t('dashboard.tabs-layout.delete-tab-yes', 'Delete')}
         confirm={tab.getLayout().getVizPanels().length > 0}
-        onConfirm={() => tab.onDelete()}
+        onConfirm={() => {
+          tab.onDelete();
+          DashboardInteractions.trackDeleteDashboardElement('tab', 'edit_popover');
+        }}
         disabled={isRepeated}
         disabledTooltip={t(
           'dashboard-scene.tab-edit-actions.delete-disabled',
