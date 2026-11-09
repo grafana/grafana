@@ -28,9 +28,6 @@ type kindSearchFields struct {
 	// textQueryKinds maps physical index field names to the query their analyzer
 	// needs.
 	textQueryKinds map[string]textQueryKind
-	// ngramWordFields maps an ngram index field to the standard-analyzed field
-	// holding the same value, where words too short to have n-grams are matched.
-	ngramWordFields map[string]string
 	// sortableFields holds the names a request may sort on.
 	sortableFields map[string]bool
 	// variants drives the index-time copy of per-kind values into the variant
@@ -49,7 +46,6 @@ func newKindSearchFields(provider resource.SearchFieldsProvider, group, kindReso
 		keywordFields:      keywordFieldsForMapping(provider, group, kindResource, selectableFields),
 		numberOrBoolFields: numberOrBoolFieldsForMapping(provider, group, kindResource),
 		textQueryKinds:     textQueryKindsForMapping(provider, group, kindResource, selectableFields),
-		ngramWordFields:    ngramWordFieldsForMapping(provider, group, kindResource),
 		sortableFields:     sortableFieldsForMapping(provider, group, kindResource),
 		variants:           fieldVariantsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
 		resultFields:       resultFields,
@@ -506,18 +502,6 @@ func keywordVariant(def resource.SearchFieldDefinition) (string, bool) {
 		return "", false
 	}
 	return keywordVariantName(def.Name, def.HasCapability(resource.SearchCapabilityText)), true
-}
-
-// ngramWordFieldsForMapping maps each ngram index field to its standard-analyzed
-// counterpart. A field that is partial but not text has none.
-func ngramWordFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) map[string]string {
-	out := map[string]string{}
-	for _, f := range declaredFields(provider, group, kindResource) {
-		if name, ok := ngramVariant(f.def); ok && f.def.HasCapability(resource.SearchCapabilityText) {
-			out[f.prefix+name] = f.prefix + f.def.Name
-		}
-	}
-	return out
 }
 
 // ngramVariant returns the field def's ngram form is mapped to, and false when

@@ -3760,13 +3760,14 @@ func (b *bleveIndex) filterQueries(ctx context.Context, req *resourcepb.Resource
 // returning nil when the query is too short to search. It may append
 // SEARCH_FIELD_SCORE to searchrequest.Fields for free-text relevance scoring.
 func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) query.Query {
-	// Queries shorter than NGRAM_MIN_TOKEN can't hit the title_ngram index. Without this
-	// rewrite, 1-char queries fell through to MatchAllQuery and 2-char queries usually returned
-	// nothing. Treat them as a prefix wildcard ("f" → "f*") so search-as-you-type matches by
-	// prefix via the existing wildcard branch. Callers that already passed a wildcard are left
-	// alone.
-	if q := req.Query; q != "" && len(q) < NGRAM_MIN_TOKEN && !strings.Contains(q, "*") {
-		req.Query = q + "*"
+	// Words shorter than NGRAM_MIN_TOKEN can't hit the title_ngram index. When every word is
+	// that short, 1-char queries fell through to MatchAllQuery and longer ones ("QA W") usually
+	// returned nothing. Treat them as a prefix wildcard ("f" → "f*", "QA W" → "QA W*") so
+	// search-as-you-type matches by prefix via the existing wildcard branch. Callers that already
+	// passed a wildcard are left alone.
+	if words := strings.Fields(req.Query); len(words) > 0 && !strings.Contains(req.Query, "*") &&
+		!slices.ContainsFunc(words, func(w string) bool { return len(w) >= NGRAM_MIN_TOKEN }) {
+		req.Query = strings.Join(words, " ") + "*"
 	}
 
 	if len(req.Query) <= 1 {
@@ -3810,58 +3811,23 @@ func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *res
 			q.SetField(field.Name)
 			disjoin.AddQuery(q)
 
-		case textQueryNgram:
-			// The ngram variant must be analyzed with TITLE_ANALYZER, not the standard
-			// analyzer (which splits on punctuation and drops sub-ngram-length fragments).
-			// Words too short to have n-grams are looked up in the standard variant.
-			prefixField, ok := b.searchFields.ngramWordFields[field.Name]
-			if !ok {
-				prefixField = field.Name
+		case textQueryNgram, textQueryStandard:
+			q := bleve.NewMatchQuery(removeSmallTerms(req.Query)) // removeSmallTerms should be part of the analyzer
+			q.SetBoost(float64(field.Boost))
+			q.SetField(field.Name)
+			// Match the analyzer used to index each field: the ngram variant
+			// must be analyzed with TITLE_ANALYZER, not the standard analyzer
+			// (which splits on punctuation and drops sub-ngram-length fragments).
+			if kind == textQueryNgram {
+				q.Analyzer = TITLE_ANALYZER
+			} else {
+				q.Analyzer = standard.Name
 			}
-			disjoin.AddQuery(b.wordsTextQuery(req.Query, field.Name, TITLE_ANALYZER, prefixField, field.Boost))
-
-		case textQueryStandard:
-			disjoin.AddQuery(b.wordsTextQuery(req.Query, field.Name, standard.Name, field.Name, field.Boost))
+			q.Operator = query.MatchQueryOperatorAnd // all terms must match
+			disjoin.AddQuery(q)
 		}
 	}
 	return disjoin
-}
-
-// wordsTextQuery requires every word of text to match field. Words shorter than
-// NGRAM_MIN_TOKEN have no n-grams and are usually still being typed, so they match
-// as the prefix of a word in prefixField.
-func (b *bleveIndex) wordsTextQuery(text, field, analyzer, prefixField string, boost float32) query.Query {
-	var long []string
-	var conjuncts []query.Query
-	for _, word := range strings.Fields(text) {
-		if len(word) >= NGRAM_MIN_TOKEN {
-			long = append(long, word)
-			continue
-		}
-		// Prefix queries are not analyzed, so analyze the word the way prefixField
-		// was indexed: lowercased, and dropped if it's a stop word like "to", since
-		// stop words are not indexed and requiring one would match nothing.
-		for _, token := range b.index.Mapping().AnalyzerNamed(standard.Name).Analyze([]byte(word)) {
-			p := bleve.NewPrefixQuery(string(token.Term))
-			p.SetField(prefixField)
-			conjuncts = append(conjuncts, p)
-		}
-	}
-
-	match := bleve.NewMatchQuery(strings.Join(long, " "))
-	match.SetField(field)
-	match.Analyzer = analyzer
-	match.Operator = query.MatchQueryOperatorAnd // all terms must match
-	if len(conjuncts) == 0 {
-		match.SetBoost(float64(boost))
-		return match
-	}
-	if len(long) > 0 {
-		conjuncts = append(conjuncts, match)
-	}
-	q := bleve.NewConjunctionQuery(conjuncts...)
-	q.SetBoost(float64(boost))
-	return q
 }
 
 // textQueryKindFor reports how a physical index field has to be queried.
@@ -3938,6 +3904,23 @@ func (b *bleveIndex) resolveQueryFields(requested []*resourcepb.ResourceSearchRe
 		})
 	}
 	return out
+}
+
+func removeSmallTerms(query string) string {
+	words := strings.Fields(query)
+	validWords := make([]string, 0, len(words))
+
+	for _, word := range words {
+		if len(word) >= NGRAM_MIN_TOKEN {
+			validWords = append(validWords, word)
+		}
+	}
+
+	if len(validWords) == 0 {
+		return query
+	}
+
+	return strings.Join(validWords, " ")
 }
 
 func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
@@ -4562,23 +4545,6 @@ func titleFieldNgramQuery(value string) query.Query {
 	q.Analyzer = TITLE_ANALYZER
 	q.Operator = query.MatchQueryOperatorAnd
 	return q
-}
-
-func removeSmallTerms(query string) string {
-	words := strings.Fields(query)
-	validWords := make([]string, 0, len(words))
-
-	for _, word := range words {
-		if len(word) >= NGRAM_MIN_TOKEN {
-			validWords = append(validWords, word)
-		}
-	}
-
-	if len(validWords) == 0 {
-		return query
-	}
-
-	return strings.Join(validWords, " ")
 }
 
 // splitTermCharacters normalizes punctuation separators before sending a title filter value through the ngram analyzer.

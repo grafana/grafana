@@ -511,31 +511,6 @@ func TestTextQueryKindsForMapping(t *testing.T) {
 	assert.Equal(t, textQueryTermLowered, textQueryKindsForMapping(nil, "", "", nil)[resource.SEARCH_FIELD_TITLE_PHRASE])
 }
 
-func TestNgramWordFieldsForMapping(t *testing.T) {
-	gvr := schema.GroupVersionResource{Group: "example.grafana.app", Version: "v1", Resource: "widgets"}
-	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
-		gvr: {
-			{
-				Name:         "panel_title",
-				Type:         resource.SearchFieldTypeString,
-				Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityPartial},
-			},
-			{
-				Name:         "slug",
-				Type:         resource.SearchFieldTypeString,
-				Capabilities: []resource.SearchCapability{resource.SearchCapabilityPartial},
-			},
-		},
-	}, nil)
-
-	fields := ngramWordFieldsForMapping(provider, gvr.Group, gvr.Resource)
-
-	assert.Equal(t, resource.SEARCH_FIELD_TITLE, fields[resource.SEARCH_FIELD_TITLE_NGRAM])
-	assert.Equal(t, "fields.panel_title", fields["fields.panel_title_ngram"])
-	// Without the text capability there is no standard-analyzed field to match short words in.
-	assert.NotContains(t, fields, "fields.slug_ngram")
-}
-
 func TestBleveIndex_textQueryKindFor(t *testing.T) {
 	b := &bleveIndex{searchFields: kindSearchFields{textQueryKinds: map[string]textQueryKind{resource.SEARCH_FIELD_TITLE_PHRASE: textQueryTerm}}}
 	assert.Equal(t, textQueryTerm, b.textQueryKindFor(resource.SEARCH_FIELD_TITLE_PHRASE))
