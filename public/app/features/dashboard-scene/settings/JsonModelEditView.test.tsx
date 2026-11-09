@@ -1,9 +1,11 @@
 import { waitFor } from '@testing-library/react';
 import { cleanup, render, screen } from 'test/test-utils';
 
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { type FetchError } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
+import { defaultAdhocVariableKind, defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type MetaStatus } from 'app/features/apiserver/types';
 
@@ -16,6 +18,20 @@ const saveDashboardMutationMock = jest.fn();
 jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
   ...jest.requireActual('app/features/browse-dashboards/api/browseDashboardsAPI'),
   useSaveDashboardMutation: () => [saveDashboardMutationMock],
+}));
+
+const mockGetDashboardDTO = jest.fn();
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: async () => ({ getDashboardDTO: mockGetDashboardDTO }),
+}));
+
+// Only the `mvo` data source type takes multi-value operators.
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceInstanceSettings: async ({ type }: { type?: string }) =>
+    type === 'mvo'
+      ? ({ meta: { multiValueFilterOperators: true } } as unknown as DataSourceInstanceSettings)
+      : undefined,
 }));
 
 jest.mock('../v2schema/dashboardSchemaFetcher', () => ({
@@ -337,5 +353,32 @@ describe('JsonModelEditView CodeMirror editing', () => {
     expect(save).toBeDisabled();
     expect(screen.getByRole('radio', { name: 'JSON' })).toBeDisabled();
     expect(saveDashboardMutationMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('JsonModelEditView.onSaveSuccess', () => {
+  it('resolves multi-value operator support on the ad hoc variables it swaps in', async () => {
+    const adhoc = defaultAdhocVariableKind();
+    adhoc.group = 'mvo';
+    adhoc.datasource = { name: 'mvo-uid' };
+    adhoc.spec = { ...adhoc.spec, name: 'filters' };
+    const dto = {
+      apiVersion: 'dashboard.grafana.app/v2',
+      kind: 'DashboardWithAccessInfo',
+      metadata: { name: 'my-uid', resourceVersion: '1', creationTimestamp: '2026-01-01T00:00:00Z' },
+      spec: { ...defaultSpec(), title: 'Dashboard', variables: [adhoc] },
+      access: { canSave: true },
+    } as const;
+    mockGetDashboardDTO.mockResolvedValue(dto);
+    const dashboard = transformSaveModelSchemaV2ToScene({ ...dto, spec: { ...defaultSpec(), title: 'Dashboard' } });
+    const view = new JsonModelEditView({});
+    dashboard.setState({ editview: view });
+    view.setState({ jsonText: JSON.stringify({ ...dto, kind: 'Dashboard', spec: dto.spec }) });
+
+    await view.onSaveSuccess({ uid: 'my-uid', version: 2, status: 'success', url: '/d/my-uid', slug: '' });
+
+    const filters = sceneGraph.lookupVariable('filters', dashboard);
+    expect(filters).toBeInstanceOf(AdHocFiltersVariable);
+    await waitFor(() => expect(filters?.state).toMatchObject({ supportsMultiValueOperators: true }));
   });
 });

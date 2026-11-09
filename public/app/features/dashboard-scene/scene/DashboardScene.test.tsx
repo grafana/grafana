@@ -2548,6 +2548,27 @@ describe('DashboardScene', () => {
       });
     });
 
+    it('resolves multi-value operator support on the ad hoc variables it restores', async () => {
+      const restored = new DashboardScene({
+        uid: 'dash-1',
+        $variables: new SceneVariableSet({
+          variables: [new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'mvo', type: 'mvo' } })],
+        }),
+      });
+      mockRestoreDashboardVersion.mockResolvedValue({ version: 3 });
+      jest.mocked(transformSaveModelToScene).mockReturnValue(restored);
+      jest.mocked(getDataSourceInstanceSettings).mockResolvedValueOnce({
+        uid: 'mvo',
+        meta: { multiValueFilterOperators: true },
+      } as unknown as DataSourceInstanceSettings);
+
+      await scene.onRestore(getVersionMock());
+
+      const filters = sceneGraph.lookupVariable('filters', scene);
+      expect(filters).toBeInstanceOf(AdHocFiltersVariable);
+      await waitFor(() => expect(filters?.state).toMatchObject({ supportsMultiValueOperators: true }));
+    });
+
     it('should call dashboardWatcher.reloadPage even if dashboard is in editing mode', async () => {
       // sometimes a dashboard can be in editing mode after user has already restored to a previous version
 

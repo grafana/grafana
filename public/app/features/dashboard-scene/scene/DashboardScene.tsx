@@ -113,6 +113,7 @@ import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { DashboardStateChangedEvent } from '../sidebar/events';
 import { type DashboardSidebarState } from '../sidebar/types';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { resolveAdHocMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
   mayInjectAnyPredefinedVariables,
@@ -1497,6 +1498,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     newState.version = versionRsp.version;
 
     this.setState(newState);
+    resolveAdHocMultiValueOperators(this);
     this.exitEditMode({ skipConfirm: true, restoreInitialState: false });
 
     return true;
