@@ -20,7 +20,7 @@ it.each([
   expect(result.current.value.filters).toEqual([]);
   expect(onFilterInteraction).not.toHaveBeenCalled();
   act(() => result.current.value.applyFilter(data.fields[0], predicate));
-  expect(onFilterInteraction.mock.calls).toEqual([[{ action: 'apply', filter_type: 'local', filter_kind: kind }]]);
+  expect(onFilterInteraction.mock.calls).toEqual([[{ filter_type: 'local', filter_kind: kind }]]);
   act(() => result.current.value.applyFilter(data.fields[0], predicate));
   rerender();
   expect(onFilterInteraction).toHaveBeenCalledTimes(1);
@@ -54,7 +54,5 @@ it('reports transformation-backed changes after persistence and suppresses uncha
   const predicate = createRangePredicate({ min: 1, max: 2, includeMissing: false });
   act(() => result.current.value.applyFilter(data.fields[0], predicate));
   act(() => result.current.value.applyFilter(data.fields[0], predicate));
-  expect(onFilterInteraction.mock.calls).toEqual([
-    [{ action: 'apply', filter_type: 'transformation', filter_kind: 'numeric_range' }],
-  ]);
+  expect(onFilterInteraction.mock.calls).toEqual([[{ filter_type: 'transformation', filter_kind: 'numeric_range' }]]);
 });

@@ -214,7 +214,7 @@ export function TablePanel(props: Props) {
         panelContext.onAddAdHocFilter
           ? (filter) => {
               panelContext.onAddAdHocFilter?.(filter);
-              reportTableFilterInteraction({ action: 'apply', filter_type: 'adhoc', filter_kind: 'values' });
+              reportTableFilterInteraction({ filter_type: 'adhoc', filter_kind: 'values' });
             }
           : undefined
       }

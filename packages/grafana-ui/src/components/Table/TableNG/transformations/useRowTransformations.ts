@@ -59,7 +59,7 @@ export function useRowTransformations(props: TableNGProps) {
           const next = writeTableFilter(current, predicate, context);
           return isEqual(current, next) ? current : next;
         },
-        () => onInteraction?.({ action: 'apply', filter_type: filterType, filter_kind: filterKind(field, predicate) })
+        () => onInteraction?.({ filter_type: filterType, filter_kind: filterKind(field, predicate) })
       );
     },
     [update, source, frameKey, frameIndex, onInteraction, filterType]
