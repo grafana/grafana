@@ -96,20 +96,21 @@ func TestRunnerInvalidWorkPreservesPrimary(t *testing.T) {
 				observer.EXPECT().ObserveOutcome(Failed)
 
 				primaryCalls := 0
+				wantResult := 42
 				wantErr := errors.New("primary failure")
 				var result int
 				var primaryErr error
 
 				runner.Run(t.Context(), observer, func() {
 					primaryCalls++
-					result, primaryErr = 42, wantErr
+					result, primaryErr = wantResult, wantErr
 				}, func() Work {
 					return tc.work
 				})
 				synctest.Wait()
 
 				require.Equal(t, 1, primaryCalls)
-				require.Equal(t, 42, result)
+				require.Equal(t, wantResult, result)
 				require.ErrorIs(t, primaryErr, wantErr)
 
 				require.Empty(t, runner.inFlight)
