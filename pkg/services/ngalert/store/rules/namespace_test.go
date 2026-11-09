@@ -210,6 +210,14 @@ func TestGetOrCreateNamespaceByUID(t *testing.T) {
 	})
 }
 
+func TestAlertingFolderUID(t *testing.T) {
+	got, err := AlertingFolderUID("Title", "parent", 1)
+	require.NoError(t, err)
+	want, err := generateAlertingFolderUID("Title", "parent", 1)
+	require.NoError(t, err)
+	require.Equal(t, want, got, "the exported helper returns the UID GetOrCreateNamespaceByTitle assigns")
+}
+
 func TestGenerateAlertingFolderUID(t *testing.T) {
 	const orgID int64 = 1
 

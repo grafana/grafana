@@ -193,6 +193,13 @@ func (st RuleStore) GetOrCreateNamespaceByUID(ctx context.Context, uid, title st
 	return newFolder.ToFolderReference(), true, nil
 }
 
+// AlertingFolderUID returns the UID GetOrCreateNamespaceByTitle gives a folder
+// with this title, parent and org. The folder keeps it after a rename, so it
+// finds folders whose title changed.
+func AlertingFolderUID(title, parentUID string, orgID int64) (string, error) {
+	return generateAlertingFolderUID(title, parentUID, orgID)
+}
+
 // generateAlertingFolderUID creates a deterministic UID for folders
 // based on the title and parent UID to avoid race conditions when multiple
 // identical folders are created concurrently
