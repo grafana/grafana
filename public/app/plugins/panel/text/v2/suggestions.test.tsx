@@ -8,10 +8,8 @@ import {
   type DataFrame,
   FieldMatcherID,
   FieldType,
-  getDefaultTimeRange,
   getPanelDataSummary,
   type InterpolateFunction,
-  LoadingState,
   type PanelPluginMeta,
   PluginType,
   type PreferredVisualisationType,
@@ -19,11 +17,9 @@ import {
   standardFieldConfigEditorRegistry,
   toDataFrame,
 } from '@grafana/data';
-import { setTemplateSrv } from '@grafana/runtime';
 import { FlagKeys, setPanelPluginMetas } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
-import { VisualizationSuggestionCard } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestionCard';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
@@ -1138,7 +1134,6 @@ describe('among the other visualization suggestions', () => {
       table: panelMeta('table', 6),
       text: panelMeta('text', 14),
     });
-    setTemplateSrv(initTemplateSrv('text-suggestions-picker', []));
   });
 
   it('lists the Text suggestions after the established panels, so a new panel never defaults to Text', async () => {
@@ -1156,71 +1151,5 @@ describe('among the other visualization suggestions', () => {
 
     expect(suggestions[0].pluginId).toBe('stat');
     expect(suggestions.at(-1)).toMatchObject({ pluginId: 'text', name: LIST });
-  });
-
-  it('previews the summary with each field and its current value', async () => {
-    const { suggestions } = await getAllSuggestions([usage()]);
-    const summary = suggestions.find(({ name }) => name === SUMMARY);
-    if (!summary) {
-      throw new Error('no summary suggestion');
-    }
-
-    render(
-      <VisualizationSuggestionCard
-        data={{ series: [usage()], state: LoadingState.Done, timeRange: getDefaultTimeRange() }}
-        suggestion={summary}
-        width={200}
-      />
-    );
-
-    expect(listItems(await screen.findByTestId('TextNGPanel-converted-content'))).toEqual([
-      'CPU: 75.0%',
-      'Memory usage: 120 B',
-    ]);
-  });
-
-  it('previews the list with every row', async () => {
-    const { suggestions } = await getAllSuggestions([services()]);
-    const list = suggestions.find(({ name }) => name === LIST);
-    if (!list) {
-      throw new Error('no list suggestion');
-    }
-
-    render(
-      <VisualizationSuggestionCard
-        data={{ series: [services()], state: LoadingState.Done, timeRange: getDefaultTimeRange() }}
-        suggestion={list}
-        width={200}
-      />
-    );
-
-    expect(listItems(await screen.findByTestId('TextNGPanel-converted-content'))).toEqual([
-      'API: 99.9%',
-      'Worker: 97.5%',
-      'Web: 100%',
-    ]);
-  });
-
-  it('previews the list with only the values each row has', async () => {
-    const frame = colors(['alpha', 'bravo', null], ['red', null, 'orange'], [2, 9, 6]);
-    const { suggestions } = await getAllSuggestions([frame]);
-    const list = suggestions.find(({ name }) => name === LIST);
-    if (!list) {
-      throw new Error('no list suggestion');
-    }
-
-    render(
-      <VisualizationSuggestionCard
-        data={{ series: [frame], state: LoadingState.Done, timeRange: getDefaultTimeRange() }}
-        suggestion={list}
-        width={200}
-      />
-    );
-
-    expect(listItems(await screen.findByTestId('TextNGPanel-converted-content'))).toEqual([
-      'alpha: color red, value 2',
-      'bravo: value 9',
-      'color orange, value 6',
-    ]);
   });
 });

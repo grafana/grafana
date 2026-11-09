@@ -3,7 +3,6 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   type FieldConfigSource,
   getTimeZone,
-  type InterpolateFunction,
   type PanelPlugin,
   PluginContextProvider,
   getPanelOptionsWithDefaults,
@@ -18,13 +17,8 @@ import { appEvents } from 'app/core/app_events';
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
 
 const defaultFieldConfig = { defaults: {}, overrides: [] };
-const defaultReplaceVariables: InterpolateFunction = (value) => value;
 
-interface Props<P extends object, F extends object> extends PanelRendererProps<P, F> {
-  replaceVariables?: InterpolateFunction;
-}
-
-export function PanelRenderer<P extends object = {}, F extends object = {}>(props: Props<P, F>) {
+export function PanelRenderer<P extends object = {}, F extends object = {}>(props: PanelRendererProps<P, F>) {
   const {
     pluginId,
     data,
@@ -37,7 +31,6 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
     onChangeTimeRange = () => {},
     onFieldConfigChange = () => {},
     fieldConfig = defaultFieldConfig,
-    replaceVariables = defaultReplaceVariables,
   } = props;
 
   const theme = useTheme2();
@@ -113,7 +106,7 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
           width={width}
           height={height}
           renderCounter={0}
-          replaceVariables={replaceVariables}
+          replaceVariables={(str: string) => str}
           onOptionsChange={onOptionsChange}
           onFieldConfigChange={onFieldConfigChange}
           onChangeTimeRange={onChangeTimeRange}
