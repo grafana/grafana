@@ -144,7 +144,8 @@ export function readPlanLayout(body: AnyDashboardLayoutManager, plan: DashboardP
 
   const readPanels = (layout: DashboardLayoutManager): DashboardPlanPanel[] | undefined => {
     if (!(layout instanceof DefaultGridLayoutManager)) {
-      return undefined;
+      // Moving a tab's last row out leaves the tab an empty auto grid: still a section, just with no panels.
+      return layout.getVizPanels().length === 0 ? [] : undefined;
     }
     return layout.state.grid.state.children
       .flatMap((item) => {

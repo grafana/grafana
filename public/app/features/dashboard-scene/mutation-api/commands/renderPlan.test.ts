@@ -9,6 +9,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 
 import { moveGridItem } from '../../actions/layout/moveGridItem';
+import { moveRowToTab } from '../../actions/layout/moveRowToTab';
 import { reorderRows } from '../../actions/layout/reorderRows';
 import { edit } from '../../actions/utils/edit';
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -724,6 +725,61 @@ describe('RENDER_PLAN', () => {
 
         expect(getEditablePlan(scene)?.plan.sections.map((section) => section.id)).toEqual(['errors', 'throughput']);
         expect(getEditablePlan(scene)?.revision).toBe(1);
+      } finally {
+        deactivateSidebar();
+      }
+    });
+
+    it("takes a tab's only row moved to another tab into the plan, leaving the first tab empty", async () => {
+      const { scene, client } = setup();
+      await client.execute({
+        type: 'RENDER_PLAN',
+        payload: {
+          planId: 'plan-1',
+          title: 'Kafka overview',
+          layout: 'tabs',
+          sections: [
+            {
+              id: 'alpha',
+              title: 'Alpha',
+              panels: [],
+              sections: [{ id: 'metrics', title: 'Metrics', panels: [{ id: 1, title: 'CPU', vizType: 'timeseries' }] }],
+            },
+            {
+              id: 'beta',
+              title: 'Beta',
+              panels: [],
+              sections: [{ id: 'logs', title: 'Logs', panels: [{ id: 2, title: 'Errors', vizType: 'logs' }] }],
+            },
+          ],
+        },
+      });
+      const deactivateSidebar = scene.state.sidebar.activate();
+
+      try {
+        const [alpha, beta] = (scene.state.body as TabsLayoutManager).state.tabs;
+        const source = alpha.getLayout() as RowsLayoutManager;
+        moveRowToTab({ row: source.state.rows[0], source, destination: beta });
+
+        const editable = getEditablePlan(scene);
+        expect(editable?.revision).toBe(1);
+        expect(
+          editable?.plan.sections.map(({ id, panels, sections }) => [
+            id,
+            panels.map((panel) => panel.id),
+            sections?.map((row) => [row.id, row.panels.map((panel) => panel.id)]),
+          ])
+        ).toEqual([
+          ['alpha', [], undefined],
+          [
+            'beta',
+            [],
+            [
+              ['logs', [2]],
+              ['metrics', [1]],
+            ],
+          ],
+        ]);
       } finally {
         deactivateSidebar();
       }
