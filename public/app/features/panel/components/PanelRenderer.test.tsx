@@ -3,7 +3,7 @@ import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import { getDefaultTimeRange, LoadingState, type PanelData, type PanelProps, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { PanelRenderer } from './PanelRenderer';
 
@@ -23,12 +23,19 @@ const data: PanelData = {
 };
 
 describe('PanelRenderer', () => {
+  let previousTemplateSrv: TemplateSrv;
+
   beforeAll(() => {
+    previousTemplateSrv = getTemplateSrv();
     setTemplateSrv(
       initTemplateSrv('panel-renderer', [
         { type: 'constant', name: 'greeting', current: { value: 'dashboard', text: 'dashboard' } },
       ])
     );
+  });
+
+  afterAll(() => {
+    setTemplateSrv(previousTemplateSrv);
   });
 
   it('gives the panel the replaceVariables it is passed', () => {
