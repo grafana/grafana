@@ -28,7 +28,7 @@ func TestIntegration_OSSBasicRolePermissions_PersistAndRefreshOnRegisterFixedRol
 	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := database.ProvideService(sql)
 
-	svc := ProvideOSSService(
+	svc, initErr := ProvideOSSService(
 		setting.NewCfg(),
 		store,
 		&resourcepermissions.FakeActionSetSvc{},
@@ -40,6 +40,7 @@ func TestIntegration_OSSBasicRolePermissions_PersistAndRefreshOnRegisterFixedRol
 		nil,
 		iam.Features{}, nil, nil,
 	)
+	require.NoError(t, initErr)
 
 	require.NoError(t, svc.DeclareFixedRoles(accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
@@ -89,7 +90,7 @@ func TestIntegration_OSSBasicRolePermissions_PersistAndRefreshOnRegisterFixedRol
 		return err
 	}))
 
-	svc2 := ProvideOSSService(
+	svc2, initErr := ProvideOSSService(
 		setting.NewCfg(),
 		store,
 		&resourcepermissions.FakeActionSetSvc{},
@@ -101,6 +102,7 @@ func TestIntegration_OSSBasicRolePermissions_PersistAndRefreshOnRegisterFixedRol
 		nil,
 		iam.Features{}, nil, nil,
 	)
+	require.NoError(t, initErr)
 	require.NoError(t, svc2.DeclareFixedRoles(accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name: "fixed:test:role",
