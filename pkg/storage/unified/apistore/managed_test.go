@@ -1108,7 +1108,7 @@ func TestIsManagerRelease(t *testing.T) {
 func TestIsMarkForDeleteOnly(t *testing.T) {
 	previous := managedObject(t, repoManager, "folders/f.json", nil)
 	terminating := func(d *dashboard.Dashboard) {
-		d.Labels = map[string]string{folderTerminatingLabel: folderTerminatingLabelValue}
+		d.Labels = map[string]string{utils.LabelKeyFolderTerminating: utils.LabelValueFolderTerminating}
 	}
 
 	t.Run("terminating label", func(t *testing.T) {
@@ -1133,7 +1133,7 @@ func TestIsMarkForDeleteOnly(t *testing.T) {
 
 	t.Run("other labels", func(t *testing.T) {
 		require.False(t, isMarkForDeleteOnly(managedObject(t, repoManager, "folders/f.json", func(d *dashboard.Dashboard) {
-			d.Labels = map[string]string{folderTerminatingLabel: folderTerminatingLabelValue, "x": "y"}
+			d.Labels = map[string]string{utils.LabelKeyFolderTerminating: utils.LabelValueFolderTerminating, "x": "y"}
 		}), previous))
 	})
 
@@ -1166,6 +1166,37 @@ func TestIsMarkForDeleteOnly(t *testing.T) {
 			terminating(d)
 			d.Finalizers = []string{"block"}
 		}), previous))
+	})
+
+	t.Run("finalizer removed while deleting", func(t *testing.T) {
+		now := v1.Now()
+		deleting := managedObject(t, repoManager, "folders/f.json", func(d *dashboard.Dashboard) {
+			d.DeletionTimestamp = &now
+			d.Finalizers = []string{"a", "b"}
+		})
+		require.True(t, isMarkForDeleteOnly(managedObject(t, repoManager, "folders/f.json", func(d *dashboard.Dashboard) {
+			d.DeletionTimestamp = &now
+			d.Finalizers = []string{"b"}
+		}), deleting))
+	})
+
+	t.Run("finalizer added while deleting", func(t *testing.T) {
+		now := v1.Now()
+		deleting := managedObject(t, repoManager, "folders/f.json", func(d *dashboard.Dashboard) {
+			d.DeletionTimestamp = &now
+			d.Finalizers = []string{"a"}
+		})
+		require.False(t, isMarkForDeleteOnly(managedObject(t, repoManager, "folders/f.json", func(d *dashboard.Dashboard) {
+			d.DeletionTimestamp = &now
+			d.Finalizers = []string{"a", "block"}
+		}), deleting))
+	})
+
+	t.Run("finalizer removed before the delete starts", func(t *testing.T) {
+		withFinalizer := managedObject(t, repoManager, "folders/f.json", func(d *dashboard.Dashboard) {
+			d.Finalizers = []string{"a"}
+		})
+		require.False(t, isMarkForDeleteOnly(managedObject(t, repoManager, "folders/f.json", terminating), withFinalizer))
 	})
 
 	t.Run("owner references", func(t *testing.T) {

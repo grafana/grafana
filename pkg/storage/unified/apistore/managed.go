@@ -30,10 +30,6 @@ const (
 	provisioningGroup    = "provisioning.grafana.app"
 	provisioningVersion  = "v0alpha1"
 	repositoriesResource = "repositories"
-
-	// Keep in sync with the label that folder cascade delete sets.
-	folderTerminatingLabel      = "grafana.app/folder-terminating"
-	folderTerminatingLabelValue = "true"
 )
 
 var (
@@ -360,22 +356,41 @@ func isManagerRelease(obj, previous utils.GrafanaMetaAccessor) bool {
 // isMarkForDeleteOnly ignores the annotations that prepareObjectForUpdate sets itself. The manager
 // and source annotations must not change.
 func isMarkForDeleteOnly(obj, previous utils.GrafanaMetaAccessor) bool {
-	if !maps.Equal(mapWithout(obj.GetLabels(), folderTerminatingLabel), mapWithout(previous.GetLabels(), folderTerminatingLabel)) {
+	if !maps.Equal(mapWithout(obj.GetLabels(), utils.LabelKeyFolderTerminating), mapWithout(previous.GetLabels(), utils.LabelKeyFolderTerminating)) {
 		return false
 	}
 	serverAnnotations := []string{utils.AnnoKeyUpdatedBy, utils.AnnoKeyUpdatedTimestamp, utils.AnnoKeyGrantPermissions}
 	if !maps.Equal(mapWithout(obj.GetAnnotations(), serverAnnotations...), mapWithout(previous.GetAnnotations(), serverAnnotations...)) {
 		return false
 	}
-	if !slices.Equal(obj.GetFinalizers(), previous.GetFinalizers()) ||
+	if !finalizersUnchangedOrReleased(obj, previous) ||
 		!apiequality.Semantic.DeepEqual(obj.GetOwnerReferences(), previous.GetOwnerReferences()) {
 		return false
 	}
-	terminating := obj.GetLabels()[folderTerminatingLabel] == folderTerminatingLabelValue
+	terminating := obj.GetLabels()[utils.LabelKeyFolderTerminating] == utils.LabelValueFolderTerminating
 	if !terminating && obj.GetDeletionTimestamp() == nil {
 		return false
 	}
 	return specAndFolderUnchanged(obj, previous)
+}
+
+// finalizersUnchangedOrReleased lets the owners of finalizers remove them after the delete starts.
+// Kubernetes deletes the resource when the last finalizer is gone, so a delete cannot finish
+// without these writes.
+func finalizersUnchangedOrReleased(obj, previous utils.GrafanaMetaAccessor) bool {
+	finalizers, oldFinalizers := obj.GetFinalizers(), previous.GetFinalizers()
+	if slices.Equal(finalizers, oldFinalizers) {
+		return true
+	}
+	if obj.GetDeletionTimestamp() == nil || previous.GetDeletionTimestamp() == nil {
+		return false
+	}
+	for _, f := range finalizers {
+		if !slices.Contains(oldFinalizers, f) {
+			return false
+		}
+	}
+	return true
 }
 
 func mapWithout(m map[string]string, keys ...string) map[string]string {
