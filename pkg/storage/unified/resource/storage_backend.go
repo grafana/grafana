@@ -3124,9 +3124,9 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		defer cancel()
 
 		// we don't have transactions in the kv store, so we simply delete everything we created
-		err = b.inBulkStep(rollbackCtx, func(ctx context.Context) error {
-			return b.dataStore.BatchDelete(ctx, saved)
-		})
+		// Not under the migration statement timeout: in one transaction a failing chunk or the deadline
+		// would undo the chunks already deleted, while autocommitted chunks keep that progress.
+		err = b.dataStore.BatchDelete(rollbackCtx, saved)
 		if err != nil {
 			b.log.Error("failed to delete during rollback", "error", err)
 		}
