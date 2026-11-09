@@ -28,7 +28,7 @@ import {
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
-import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerCloudRulesConfigDTO, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { DataSourceType } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
@@ -39,6 +39,7 @@ import { type ImportFormValues } from '../types';
 import { parseYamlFileToRulerRulesConfigDTO } from '../yamlToRulerConverter';
 
 import { YamlFileDropzone, getYamlFileDescription } from './YamlFileDropzone';
+import { YamlTargetDataSourceField } from './YamlTargetDataSourceField';
 import { usePredictedAutoSyncIdentifier } from './useAutoSyncPrediction';
 import { getRoutingTreeOptions, isStep2Valid } from './utils';
 
@@ -54,14 +55,17 @@ async function validateRulesYamlFile(file: File | null): Promise<string | true> 
   if (!file) {
     return t('alerting.import-to-gma.step2.yaml-required', 'Please select a file');
   }
+  let rules: RulerCloudRulesConfigDTO;
   try {
-    await parseYamlFileToRulerRulesConfigDTO(file, file.name);
-    return true;
+    rules = await parseYamlFileToRulerRulesConfigDTO(file, file.name);
   } catch (error) {
     return t('alerting.import-to-gma.step2.yaml-error', 'Failed to parse YAML file: {{error}}', {
       error: stringifyErrorLike(error),
     });
   }
+  // The import accepts a file without rules and then imports nothing, so it has to be caught here.
+  const hasRules = Object.values(rules).some((groups) => groups.some((group) => group.rules.length > 0));
+  return hasRules || t('alerting.import-to-gma.step2.yaml-no-rules', 'No rules found in this file');
 }
 
 /**
@@ -140,7 +144,7 @@ export function Step2Content({ step1Completed, canImport }: Step2ContentProps) {
     setValue('ruleGroup', undefined);
   }, [rulesDatasourceName, setValue]);
 
-  const rulesSourceOptions = getRulesSourceOptions(true);
+  const rulesSourceOptions = getRulesSourceOptions();
 
   const { trees: existingTrees, isLoading: isLoadingRoutingTrees } = useRoutingTrees();
   const existingTreeOptions = useMemo(() => buildRoutingTreeOptions(existingTrees), [existingTrees]);
@@ -369,28 +373,34 @@ export function Step2Content({ step1Completed, canImport }: Step2ContentProps) {
             )}
 
             {rulesSource === 'yaml' && (
-              <Field
-                label={t('alerting.import-to-gma.step2.yaml-file', 'Rules YAML file')}
-                description={getYamlFileDescription()}
-                invalid={!!errors.rulesYamlFile}
-                error={errors.rulesYamlFile?.message}
-                noMargin
-              >
-                <Controller
-                  render={({ field: { onChange } }) => (
-                    <YamlFileDropzone file={rulesYamlFile} onChange={(file) => handleYamlFileChange(file, onChange)} />
-                  )}
-                  control={control}
-                  name="rulesYamlFile"
-                  rules={{
-                    required: {
-                      value: true,
-                      message: t('alerting.import-to-gma.step2.yaml-required', 'Please select a file'),
-                    },
-                    validate: validateRulesYamlFile,
-                  }}
-                />
-              </Field>
+              <Stack direction="column" gap={2}>
+                <Field
+                  label={t('alerting.import-to-gma.step2.yaml-file', 'Rules YAML file')}
+                  description={getYamlFileDescription()}
+                  invalid={!!errors.rulesYamlFile}
+                  error={errors.rulesYamlFile?.message}
+                  noMargin
+                >
+                  <Controller
+                    render={({ field: { onChange } }) => (
+                      <YamlFileDropzone
+                        file={rulesYamlFile}
+                        onChange={(file) => handleYamlFileChange(file, onChange)}
+                      />
+                    )}
+                    control={control}
+                    name="rulesYamlFile"
+                    rules={{
+                      required: {
+                        value: true,
+                        message: t('alerting.import-to-gma.step2.yaml-required', 'Please select a file'),
+                      },
+                      validate: validateRulesYamlFile,
+                    }}
+                  />
+                </Field>
+                <YamlTargetDataSourceField recordingTargets={recordingTargets} />
+              </Stack>
             )}
           </Box>
         </Box>
@@ -556,10 +566,18 @@ export function useStep2Validation(canImport: boolean): boolean {
     watch,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
-  const [rulesSource, rulesDatasourceUID, rulesYamlFile, selectedRoutingTree, targetDatasourceUID] = watch([
+  const [
+    rulesSource,
+    rulesDatasourceUID,
+    rulesYamlFile,
+    yamlImportTargetDatasourceUID,
+    selectedRoutingTree,
+    targetDatasourceUID,
+  ] = watch([
     'rulesSource',
     'rulesDatasourceUID',
     'rulesYamlFile',
+    'yamlImportTargetDatasourceUID',
     'selectedRoutingTree',
     'targetDatasourceUID',
   ]);
@@ -567,7 +585,7 @@ export function useStep2Validation(canImport: boolean): boolean {
   const hasStep2Errors =
     !!errors.rulesSource ||
     (rulesSource === 'datasource' && !!errors.rulesDatasourceUID) ||
-    (rulesSource === 'yaml' && !!errors.rulesYamlFile) ||
+    (rulesSource === 'yaml' && (!!errors.rulesYamlFile || !!errors.yamlImportTargetDatasourceUID)) ||
     !!errors.selectedRoutingTree ||
     !!errors.targetDatasourceUID;
 
@@ -579,6 +597,7 @@ export function useStep2Validation(canImport: boolean): boolean {
     rulesSource,
     rulesYamlFile,
     rulesDatasourceUID,
+    yamlImportTargetDatasourceUID,
     selectedRoutingTree,
     targetDatasourceUID,
   });
