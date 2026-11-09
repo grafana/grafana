@@ -19,7 +19,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -37,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	legacydashboards "github.com/grafana/grafana/pkg/legacyapi/dashboards"
 	"github.com/grafana/grafana/pkg/registry"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -2269,114 +2269,47 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		return nil, err
 	}
 
-	dash, err := dr.unstructuredToLegacyDashboardWithUsers(item, orgID, users)
+	dash, err := legacydashboards.FromConverted(item)
 	if err != nil {
 		return nil, err
 	}
-
-	// The requested version
-	gv, _ := schema.ParseGroupVersion(item.GetAPIVersion())
-	if gv.Version != "" {
-		dash.APIVersion = gv.Version
-	}
-
-	// Use the old payload if we could not convert to the the requested version
-	conversion, ok, _ := unstructured.NestedMap(item.Object, "status", "conversion")
-	if ok && conversion != nil {
-		failed, _, _ := unstructured.NestedBool(conversion, "failed")
-		if failed {
-			dash.APIVersion, _, _ = unstructured.NestedString(conversion, "storedVersion")
-			body, ok, _ := unstructured.NestedMap(conversion, "source")
-			if ok {
-				dash.Data = simplejson.NewFromAny(body)
-			}
-		}
-	}
-
-	return dash, nil
+	return legacyDashboardModel(dash, orgID, users), nil
 }
 
 func (dr *DashboardServiceImpl) unstructuredToLegacyDashboardWithUsers(item *unstructured.Unstructured, orgID int64, users map[string]*user.User) (*dashboards.Dashboard, error) {
-	spec, ok := item.Object["spec"].(map[string]any)
-	if !ok {
-		return nil, errors.New("error parsing dashboard from k8s response")
-	}
-	obj, err := utils.MetaAccessor(item)
+	dash, err := legacydashboards.FromUnstructured(item)
 	if err != nil {
 		return nil, err
 	}
-	uid := obj.GetName()
-	spec["uid"] = uid
+	return legacyDashboardModel(dash, orgID, users), nil
+}
 
-	dashVersion := obj.GetGeneration()
-	spec["version"] = dashVersion
-
-	title, _, _ := unstructured.NestedString(spec, "title")
-	out := dashboards.Dashboard{
+func legacyDashboardModel(dash *legacydashboards.Dashboard, orgID int64, users map[string]*user.User) *dashboards.Dashboard {
+	out := &dashboards.Dashboard{
 		OrgID:      orgID,
-		ID:         obj.GetDeprecatedInternalID(), // nolint:staticcheck
-		UID:        uid,
-		Slug:       slugify.Slugify(title),
-		FolderUID:  folder.ToLegacyFolderUID(obj.GetFolder()),
-		Version:    int(dashVersion),
-		Data:       simplejson.NewFromAny(spec),
-		APIVersion: strings.TrimPrefix(item.GetAPIVersion(), dashboardv0.GROUP+"/"),
+		ID:         dash.ID, // nolint:staticcheck
+		UID:        dash.UID,
+		Slug:       dash.Slug,
+		FolderUID:  dash.FolderUID,
+		Version:    dash.Version,
+		Data:       simplejson.NewFromAny(dash.Data),
+		APIVersion: dash.APIVersion,
+		Created:    dash.Created,
+		Updated:    dash.Updated,
+		Deleted:    dash.Deleted,
+		PluginID:   dash.PluginID,
+		GnetID:     dash.GnetID,
+		IsFolder:   dash.IsFolder,
+		HasACL:     dash.HasACL,
+		Title:      dash.Title,
 	}
-
-	out.Created = obj.GetCreationTimestamp().Time
-	updated, err := obj.GetUpdatedTimestamp()
-	if err == nil && updated != nil {
-		// old apis return in local time, created is already doing that
-		localTime := updated.Local()
-		out.Updated = localTime
-	} else {
-		// by default, set updated to created
-		out.Updated = out.Created
-	}
-
-	deleted := obj.GetDeletionTimestamp()
-	if deleted != nil {
-		out.Deleted = obj.GetDeletionTimestamp().Time
-	}
-
-	out.PluginID = dashboard.GetPluginIDFromMeta(obj)
-
-	if creator, ok := users[obj.GetCreatedBy()]; ok {
+	if creator, ok := users[dash.CreatedBy]; ok {
 		out.CreatedBy = creator.ID
 	}
-	if updater, ok := users[obj.GetUpdatedBy()]; ok {
+	if updater, ok := users[dash.UpdatedBy]; ok {
 		out.UpdatedBy = updater.ID
 	}
-
-	// any dashboards that have already been synced to unified storage will have the id in the spec
-	// and not as a label. We will need to support this conversion until they have all been updated
-	// to labels
-	if id, ok := spec["id"].(int64); ok {
-		out.ID = id
-		out.Data.Del("id")
-	}
-
-	if gnetID, ok := spec["gnet_id"].(int64); ok {
-		out.GnetID = gnetID
-	}
-
-	if isFolder, ok := spec["is_folder"].(bool); ok {
-		out.IsFolder = isFolder
-	}
-
-	if hasACL, ok := spec["has_acl"].(bool); ok {
-		out.HasACL = hasACL
-	}
-
-	if title, ok := spec["title"].(string); ok {
-		out.Title = title
-		// if slug isn't in the metadata, add it via the title
-		if out.Slug == "" {
-			out.UpdateSlug()
-		}
-	}
-
-	return &out, nil
+	return out
 }
 
 func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, namespace string) (*unstructured.Unstructured, error) {

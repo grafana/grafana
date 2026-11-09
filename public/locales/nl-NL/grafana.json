@@ -8327,6 +8327,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Querydeelvenster openen",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Querydeelvenster openen"
     },
     "viz-panel-links-renderer": {
@@ -9757,7 +9759,6 @@
     "api": {
       "anonymous-user": "Anoniem",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Map verwijderd",
       "folder-move-error-provisioned": "Kan de geprovisioneerde map niet verplaatsen. Om deze te verplaatsen, verplaats je de map in de repository en synchroniseer je ze om de wijzigingen toe te passen.",
       "folder-moved-success": "Map verplaatst"
     }
@@ -11704,8 +11705,8 @@
           },
           "website-monitoring": {
             "cta": "Configuratie starten",
-            "description": "Volg de beschikbaarheid van je website en de prestaties ervan vanaf verschillende locaties.",
-            "title": "De uptime en prestaties van de website controleren"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Minder handleidingen weergeven",
@@ -11826,10 +11827,10 @@
       "switchSolution": "Oplossing wisselen",
       "synthetic-monitoring": {
         "action": "Synthetic Monitoring inschakelen",
-        "context": "Black-box-controles voor de services die je cluster uitvoert",
-        "description": "Test je eindpunten vanuit wereldwijde locaties met HTTP-, DNS- en ping-checks en waarschuw bij downtime.",
+        "context": "",
+        "description": "",
         "setup-action": "Je eerste controle aanmaken",
-        "title": "De uptime van buitenaf controleren"
+        "title": ""
       },
       "title": "Aanbevelingen voor je stack"
     },
@@ -11928,7 +11929,7 @@
       },
       "synthetics": {
         "create-check": "Een controle aanmaken",
-        "description": "Controleer de uptime en prestaties van je eindpunten met probes over de hele wereld.",
+        "description": "",
         "failing-worst": "{{check}} bij {{percent}}%",
         "filter": {
           "instances": "Doelen negeren",
@@ -13557,8 +13558,12 @@
       "code": "Code",
       "heading": "Titel",
       "label": "Klik om hierboven toe te voegen",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Alinea",
       "prompt": "Typ om te beginnen met schrijven — druk op / voor blokken",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Visualisatie"
     },
     "cell": {
@@ -13864,7 +13869,7 @@
         "description-no-value": "Wat te laten zien als er geen waarde is",
         "description-value-mappings": "Wijzig de weergavetekst op basis van de invoerwaarde",
         "name-actions": "Acties",
-        "name-ad-hoc": "Filteren op waarden",
+        "name-ad-hoc": "",
         "name-color-scheme": "Kleurschema",
         "name-data-links": "Gegevenslinks",
         "name-decimals": "Decimalen",
@@ -14805,6 +14810,7 @@
       "delete-confirm": "Weet je zeker dat je deze verbinding wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
       "delete-title": "Verbinding verwijderen",
       "error-loading": "Kan verbindingen niet laden",
+      "export": "",
       "kind-github-app": "GitHub-App",
       "kind-oauth-app": "OAuth-App",
       "no-connections": "Geen verbindingen geconfigureerd",
@@ -15307,6 +15313,7 @@
       "view-folder": "Map weergeven"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Laatste synchronisatie: {{date}}",
       "settings": "Instellingen",
       "view": "Weergave"

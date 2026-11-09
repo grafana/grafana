@@ -408,16 +408,6 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:            "kubernetesFolderCountsLegacyStorage",
-			Description:     "Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaSearchAndStorageSquad,
-			HideFromDocs:    true,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true},
-		},
-		{
 			Name:            "grafana.kubernetesAnnotationsClient",
 			Description:     "Enables usage of the new annotations API client",
 			Stage:           FeatureStageExperimental,
@@ -1940,15 +1930,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
-		},
-		{
-			Name:         "foldersAppPlatformAPI",
-			Description:  "Enables use of app platform API for folders",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaFrontendNavigation,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:   "true",
 		},
 		{
 			Name:        "otelLogsFormatting",
@@ -3476,6 +3457,15 @@ var (
 		{
 			Name:         "grafana.panelActionsPopover",
 			Description:  "Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.dashboardSidebarExplicitOpen",
+			Description:  "In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,

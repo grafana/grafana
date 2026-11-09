@@ -10,13 +10,16 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authlib "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
@@ -207,7 +210,7 @@ func TestTxChunker(t *testing.T) {
 				b.SQLMock.ExpectCommit()
 			}
 			var onCommit int
-			c, err := newTxChunker(ctx, b.db, ReadCommitted, tc.budget, tc.maxRows, func(int64) { onCommit++ })
+			c, err := newTxChunker(ctx, b.db, ReadCommitted, tc.budget, tc.maxRows, func(int64) { onCommit++ }, nil)
 			require.NoError(t, err)
 			for _, n := range tc.adds {
 				require.NoError(t, c.add(n, 1))
@@ -224,7 +227,7 @@ func TestTxChunker(t *testing.T) {
 		b.SQLMock.ExpectBegin()
 		b.SQLMock.ExpectRollback()
 
-		c, err := newTxChunker(ctx, b.db, ReadCommitted, 1000, txChunkerMaxRows, nil)
+		c, err := newTxChunker(ctx, b.db, ReadCommitted, 1000, txChunkerMaxRows, nil, nil)
 		require.NoError(t, err)
 		require.NoError(t, c.add(100, 1))
 		require.NoError(t, c.abort())
@@ -238,11 +241,62 @@ func TestTxChunker(t *testing.T) {
 		b.SQLMock.ExpectBegin()
 		b.SQLMock.ExpectCommit().WillReturnError(errTest)
 
-		c, err := newTxChunker(ctx, b.db, ReadCommitted, 1000, txChunkerMaxRows, nil)
+		c, err := newTxChunker(ctx, b.db, ReadCommitted, 1000, txChunkerMaxRows, nil, nil)
 		require.NoError(t, err)
 		// Flush triggers the failing commit; the error must surface and no new
 		// tx is begun.
 		require.ErrorIs(t, c.commit(), errTest)
+		require.NoError(t, b.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("migration statement timeout is set first in every postgres transaction", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+		b.dialect = sqltemplate.PostgreSQL
+		b.migrationStatementTimeout = 15 * time.Minute
+		for range 2 {
+			b.SQLMock.ExpectBegin()
+			b.SQLMock.ExpectExec("SET LOCAL statement_timeout = 900000").WillReturnResult(sqlmock.NewResult(0, 0))
+			b.SQLMock.ExpectCommit()
+		}
+
+		c, err := newTxChunker(ctx, b.db, ReadCommitted, 100, txChunkerMaxRows, nil, b.setMigrationStatementTimeout)
+		require.NoError(t, err)
+		require.NoError(t, c.add(100, 1))
+		require.NoError(t, c.commit())
+		require.NoError(t, b.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("migration statement timeout is a no-op when unset or not postgres", func(t *testing.T) {
+		for _, tc := range []struct {
+			name    string
+			dialect sqltemplate.Dialect
+			timeout time.Duration
+		}{
+			{"unset", sqltemplate.PostgreSQL, 0},
+			{"mysql", sqltemplate.MySQL, time.Minute},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				b, ctx := setupBackendTest(t)
+				b.dialect = tc.dialect
+				b.migrationStatementTimeout = tc.timeout
+				b.SQLMock.ExpectBegin()
+				b.SQLMock.ExpectCommit()
+
+				c, err := newTxChunker(ctx, b.db, ReadCommitted, 100, txChunkerMaxRows, nil, b.setMigrationStatementTimeout)
+				require.NoError(t, err)
+				require.NoError(t, c.commit())
+				require.NoError(t, b.SQLMock.ExpectationsWereMet())
+			})
+		}
+	})
+
+	t.Run("onBegin error rolls back and surfaces", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+		b.SQLMock.ExpectBegin()
+		b.SQLMock.ExpectRollback()
+
+		_, err := newTxChunker(ctx, b.db, ReadCommitted, 100, txChunkerMaxRows, nil, func(context.Context, sqldb.Tx) error { return errTest })
+		require.ErrorIs(t, err, errTest)
 		require.NoError(t, b.SQLMock.ExpectationsWereMet())
 	})
 
@@ -252,10 +306,47 @@ func TestTxChunker(t *testing.T) {
 		b.SQLMock.ExpectBegin()
 		b.SQLMock.ExpectCommit()
 
-		c, err := newTxChunker(ctx, b.db, ReadCommitted, 0, txChunkerMaxRows, nil)
+		c, err := newTxChunker(ctx, b.db, ReadCommitted, 0, txChunkerMaxRows, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(defaultChunkBudget), c.budget)
 		require.NoError(t, c.commit())
+		require.NoError(t, b.SQLMock.ExpectationsWereMet())
+	})
+}
+
+func TestChunkedBackfillStatementTimeout(t *testing.T) {
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	sizes := backfillSizes{"a": {rv: 1, size: 10}, "b": {rv: 2, size: 10}}
+
+	t.Run("postgres override wraps each backfill statement in its own transaction", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+		b.dialect = sqltemplate.PostgreSQL
+		b.migrationStatementTimeout = 15 * time.Minute
+
+		b.SQLMock.ExpectBegin()
+		b.SQLMock.ExpectExec("SET LOCAL statement_timeout = 900000").WillReturnResult(sqlmock.NewResult(0, 0))
+		b.SQLMock.ExpectQuery("SELECT DISTINCT").WillReturnRows(sqlmock.NewRows([]string{"name"}).AddRow("a").AddRow("b"))
+		b.SQLMock.ExpectCommit()
+		for range 2 {
+			b.SQLMock.ExpectBegin()
+			b.SQLMock.ExpectExec("SET LOCAL statement_timeout = 900000").WillReturnResult(sqlmock.NewResult(0, 0))
+			b.SQLMock.ExpectExec("INSERT INTO resource").WillReturnResult(sqlmock.NewResult(0, 1))
+			b.SQLMock.ExpectCommit()
+		}
+
+		require.NoError(t, b.backfillCollection(ctx, b.execMigration, key, sizes, 10, nil))
+		require.NoError(t, b.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("without an override the statements autocommit as before", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+		b.dialect = sqltemplate.PostgreSQL
+
+		b.SQLMock.ExpectQuery("SELECT DISTINCT").WillReturnRows(sqlmock.NewRows([]string{"name"}).AddRow("a").AddRow("b"))
+		b.SQLMock.ExpectExec("INSERT INTO resource").WillReturnResult(sqlmock.NewResult(0, 1))
+		b.SQLMock.ExpectExec("INSERT INTO resource").WillReturnResult(sqlmock.NewResult(0, 1))
+
+		require.NoError(t, b.backfillCollection(ctx, b.execMigration, key, sizes, 10, nil))
 		require.NoError(t, b.SQLMock.ExpectationsWereMet())
 	})
 }
@@ -404,6 +495,19 @@ func TestProcessBulkParquetBufferWriteErrorKeepsCollection(t *testing.T) {
 	require.Len(t, list.Items, 2)
 }
 
+func TestBulkRVUsesDeletionTime(t *testing.T) {
+	now := time.Now()
+	obj := &metav1.ObjectMeta{Annotations: map[string]string{
+		utils.AnnoKeyUpdatedTimestamp: now.Add(-2 * 365 * 24 * time.Hour).UTC().Format(time.RFC3339),
+	}}
+	deletedAt := metav1.NewTime(now.Add(-24 * time.Hour))
+	obj.SetDeletionTimestamp(&deletedAt)
+
+	rv := newBulkRV().next(obj)
+	// RVs are microseconds, bucketed to 10s with a counter in the low digits
+	require.InDelta(t, deletedAt.UnixMicro(), rv, float64(20*time.Second/time.Microsecond))
+}
+
 func TestBulkHistoryInsertRowLimit(t *testing.T) {
 	require.Equal(t, bulkHistoryInsertSQLiteMaxRows, bulkHistoryInsertRowLimit("sqlite"))
 	require.Equal(t, bulkHistoryInsertDefaultMaxRows, bulkHistoryInsertRowLimit("mysql"))
@@ -429,9 +533,22 @@ func TestPlanNameRanges(t *testing.T) {
 		{"crossing budget splits half-open", []string{"a", "b", "c", "d"}, 20, []nameRange{{"", "b", 20}, {"b", "", 20}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.want, planNameRanges(tc.names, sizeOf, tc.budget))
+			require.Equal(t, tc.want, planNameRanges(tc.names, sizeOf, tc.budget, 0))
 		})
 	}
+
+	t.Run("names that cost no bytes still split at the name limit", func(t *testing.T) {
+		deleted := func(string) int64 { return 0 }
+		got := planNameRanges([]string{"a", "b", "c", "d", "e"}, deleted, 100, 2)
+		require.Equal(t, []nameRange{{"", "b", 0}, {"b", "d", 0}, {"d", "", 0}}, got)
+	})
+
+	t.Run("the name limit and the byte budget both close a range", func(t *testing.T) {
+		got := planNameRanges([]string{"a", "b", "c", "d"}, sizeOf, 25, 3)
+		require.Equal(t, []nameRange{{"", "b", 20}, {"b", "", 20}}, got)
+		got = planNameRanges([]string{"a", "b", "c", "d"}, sizeOf, 1000, 3)
+		require.Equal(t, []nameRange{{"", "c", 30}, {"c", "", 10}}, got)
+	})
 
 	t.Run("coverage: every name maps to exactly one range, no gaps", func(t *testing.T) {
 		rng := rand.New(rand.NewSource(1))
@@ -451,7 +568,7 @@ func TestPlanNameRanges(t *testing.T) {
 		}
 		sizeFn := func(name string) int64 { return sizes[name] }
 
-		ranges := planNameRanges(names, sizeFn, 200)
+		ranges := planNameRanges(names, sizeFn, 200, 0)
 		require.NotEmpty(t, ranges)
 		require.Equal(t, "", ranges[len(ranges)-1].endName, "final range must be unbounded above")
 
