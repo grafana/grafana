@@ -5,13 +5,13 @@
 // because it rejects the per-subcommand git settings that "nx release version" requires. Each group is
 // expected to contain a single package that lives in packages/.
 //
-// Usage: node scripts/release/version-and-changelog.ts <group>[,<group>...]
+// Usage: node scripts/release/version-and-changelog.mts <group>[,<group>...]
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const USAGE = 'Usage: version-and-changelog.ts <group>[,<group>...]';
+const USAGE = 'Usage: version-and-changelog.mts <group>[,<group>...]';
 
 export interface Deps {
   nxJson: { release: { groups: Record<string, { projects?: string[] }> } };

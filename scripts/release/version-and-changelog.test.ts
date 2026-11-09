@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseGroups, versionAndChangelog } from './version-and-changelog';
+import { parseGroups, versionAndChangelog } from './version-and-changelog.mjs';
 
 type Manifest = { name: string; version: string };
 
@@ -52,9 +52,9 @@ describe('parseGroups', () => {
   });
 
   it('rejects a missing or empty argument', () => {
-    expect(() => parseGroups(undefined)).toThrow('Usage: version-and-changelog.ts <group>[,<group>...]');
-    expect(() => parseGroups('')).toThrow('Usage: version-and-changelog.ts <group>[,<group>...]');
-    expect(() => parseGroups(' , ')).toThrow('Usage: version-and-changelog.ts <group>[,<group>...]');
+    expect(() => parseGroups(undefined)).toThrow('Usage: version-and-changelog.mts <group>[,<group>...]');
+    expect(() => parseGroups('')).toThrow('Usage: version-and-changelog.mts <group>[,<group>...]');
+    expect(() => parseGroups(' , ')).toThrow('Usage: version-and-changelog.mts <group>[,<group>...]');
   });
 });
 
