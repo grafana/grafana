@@ -13,6 +13,7 @@ const DiffEditor = lazy(() =>
   }))
 );
 
+/** @internal */
 export function CodeMirrorDiffEditor(props: CodeMirrorDiffEditorProps): ReactElement {
   return (
     <ErrorBoundaryAlert

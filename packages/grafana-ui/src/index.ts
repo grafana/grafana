@@ -83,7 +83,6 @@ export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
 export { QueryInput, type QueryInputProps } from './components/QueryInput/QueryInput';
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
-export { CodeMirrorDiffEditor } from './components/CodeMirror/DiffEditorLazy';
 export { CODE_MIRROR_LANGUAGES } from './components/CodeMirror/languages';
 export type {
   CodeMirrorBasicSetup,
@@ -92,7 +91,6 @@ export type {
   CodeMirrorCompletionMode,
   CodeMirrorCompletionResult,
   CodeMirrorCompletionSource,
-  CodeMirrorDiffEditorProps,
   CodeMirrorEditorLanguage,
   CodeMirrorEditorProps,
   CodeMirrorEditorTheme,
