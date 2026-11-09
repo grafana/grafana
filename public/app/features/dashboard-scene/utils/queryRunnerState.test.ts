@@ -1,4 +1,4 @@
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { type DataQueryRequest, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { clearDefaultQuery } from './clearDefaultQuery';
@@ -17,7 +17,7 @@ describe('query runner defaults', () => {
 
   it('preserves request metadata when clearing the runner', () => {
     const timeRange = getDefaultTimeRange();
-    const request = { app: 'dashboard', interval: '2m', maxDataPoints: 500, range: timeRange, targets: [] };
+    const request = {} as DataQueryRequest;
 
     expect(
       getEmptyQueryRunnerState({ series: [], state: LoadingState.Loading, timeRange, request }).data?.request
@@ -64,7 +64,7 @@ describe('query runner defaults', () => {
 
   it('waits for data again when the first explicit query is added', () => {
     const timeRange = getDefaultTimeRange();
-    const request = { app: 'dashboard', interval: '2m', maxDataPoints: 500, range: timeRange, targets: [] };
+    const request = {} as DataQueryRequest;
     const runner = new SceneQueryRunner(
       getEmptyQueryRunnerState({ series: [], state: LoadingState.Done, timeRange, request })
     );
