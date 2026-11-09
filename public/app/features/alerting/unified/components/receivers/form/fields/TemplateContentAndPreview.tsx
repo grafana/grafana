@@ -47,10 +47,10 @@ export function TemplateContentAndPreview({
               {({ width, height }: Size) => (
                 <TemplateEditor
                   value={templateContent}
-                  containerStyles={styles.editorContainer}
                   width={width}
-                  height={height}
+                  height={`${height}px`}
                   readOnly
+                  aria-label={t('alerting.template-content-and-preview.label-template-content', 'Template content')}
                 />
               )}
             </AutoSizer>
@@ -100,8 +100,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
       overflow: 'auto',
       backgroundColor: theme.colors.background.primary,
     }),
-  editorContainer: css({
-    width: 'fit-content',
-    border: 'none',
-  }),
 });

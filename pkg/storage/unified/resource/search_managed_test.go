@@ -82,17 +82,15 @@ func TestManagedObjectsRequireNamespace(t *testing.T) {
 	server := newDiscoveryTestSearchServer(t, storage, &mockSearchBackend{})
 
 	t.Run("ListManagedObjects", func(t *testing.T) {
-		rsp, err := server.ListManagedObjects(t.Context(), &resourcepb.ListManagedObjectsRequest{})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+		_, err := server.ListManagedObjects(t.Context(), &resourcepb.ListManagedObjectsRequest{})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusBadRequest), rspErr.Code)
 	})
 
 	t.Run("CountManagedObjects", func(t *testing.T) {
-		rsp, err := server.CountManagedObjects(t.Context(), &resourcepb.CountManagedObjectsRequest{})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+		_, err := server.CountManagedObjects(t.Context(), &resourcepb.CountManagedObjectsRequest{})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusBadRequest), rspErr.Code)
 	})
 
 	require.Zero(t, storage.listStoredCalls.Load(), "discovery must not run without a namespace")

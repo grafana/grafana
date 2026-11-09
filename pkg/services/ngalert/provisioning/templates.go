@@ -12,6 +12,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	notifymerge "github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type TemplateService struct {
@@ -134,6 +135,23 @@ func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, nameOrUi
 	return v1.TemplateGroup{}, ErrTemplateNotFound.Errorf("")
 }
 
+// GetTemplateByUID returns the template with the given UID. Unlike GetTemplate, a template with that title is not
+// taken for it.
+func (t *TemplateService) GetTemplateByUID(ctx context.Context, orgID int64, uid string) (v1.TemplateGroup, error) {
+	revision, err := t.configStore.Get(ctx, orgID)
+	if err != nil {
+		return v1.TemplateGroup{}, err
+	}
+	result, found, err := t.getTemplateByUID(ctx, revision, orgID, uid)
+	if err != nil {
+		return v1.TemplateGroup{}, err
+	}
+	if !found {
+		return v1.TemplateGroup{}, ErrTemplateNotFound.Errorf("")
+	}
+	return result, nil
+}
+
 // UpsertTemplate is used by the legacy provisioning API and matches by Name/Title only as the legacy provisioning API
 // does not support UIDs.
 func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error) {
@@ -161,8 +179,8 @@ func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl 
 
 	// If template was not found, this is assumed to be a create operation except for two cases:
 	// - If a ResourceVersion is provided: we should assume that this was meant to be a conditional update operation.
-	// - If UID is provided: custom UID for templates is not currently supported, so this was meant to be an update
-	// operation without a ResourceVersion.
+	// - If UID is provided: the only caller of this method is the legacy provisioning API, which doesn't support
+	// custom UIDs, so this was meant to be an update operation without a ResourceVersion.
 	if tmpl.Version != "" || tmpl.UID != "" {
 		return v1.TemplateGroup{}, ErrTemplateNotFound.Errorf("")
 	}
@@ -202,6 +220,17 @@ func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_s
 		return v1.TemplateGroup{}, ErrTemplateExists.Errorf("")
 	}
 
+	if tmpl.UID != "" {
+		if err := v1.ValidateTemplateUID(string(tmpl.UID)); err != nil {
+			return v1.TemplateGroup{}, MakeErrTemplateInvalid(err)
+		}
+	} else {
+		tmpl.UID = v1.ResourceUID(util.GenerateShortUID())
+	}
+	if _, ok := revision.Config.Templates[tmpl.UID]; ok {
+		return v1.TemplateGroup{}, MakeErrTemplateUidExists(string(tmpl.UID))
+	}
+
 	// Validate template limits before creating (check both count and size)
 	if err := t.validateTemplateLimits(ctx, len(revision.Config.Templates), len(tmpl.Content), true); err != nil {
 		return v1.TemplateGroup{}, err
@@ -237,11 +266,6 @@ func (t *TemplateService) UpdateTemplate(ctx context.Context, orgID int64, tmpl 
 func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error) {
 	if revision.Config.Templates == nil {
 		revision.Config.Templates = make(map[v1.ResourceUID]v1.TemplateGroup)
-	}
-
-	if tmpl.UID == "" {
-		// Not sure if we should allow Updates from k8s API without a UID, but some existing tests indirectly verify this behaviour, so I'll leave it in for now.
-		tmpl.UID = v1.TemplateUID(tmpl.Kind, tmpl.Title)
 	}
 
 	existing, found, err := t.getTemplateByUID(ctx, revision, orgID, string(tmpl.UID))
@@ -281,9 +305,7 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	updated := revision.SetTemplate(tmpl)
 
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if existing.Title != updated.Title { // if template by was found by UID and it's name is different, then this is the rename operation. Delete old resources.
-			// Remove old entry. This is only needed because UID is currently computed from the title.
-			delete(revision.Config.Templates, existing.UID)
+		if existing.Title != updated.Title { // The template keeps its UID, so only the provenance, which is keyed by the title, is removed.
 			err := t.provenanceStore.DeleteProvenance(ctx, &existing, orgID)
 			if err != nil {
 				return err
@@ -302,18 +324,31 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	return updated, nil
 }
 
+// DeleteTemplate deletes the template with the given name, or if there is none, with the given UID.
 func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance models.Provenance, version string) error {
+	return t.deleteTemplate(ctx, orgID, provenance, version, func(revision *legacy_storage.ConfigRevision) (v1.TemplateGroup, bool, error) {
+		existing, found, err := t.getTemplateByName(ctx, revision, orgID, nameOrUid)
+		if err != nil || found {
+			return existing, found, err
+		}
+		return t.getTemplateByUID(ctx, revision, orgID, nameOrUid)
+	})
+}
+
+// DeleteTemplateByUID deletes the template with the given UID. Unlike DeleteTemplate, a template with that title is
+// not taken for it.
+func (t *TemplateService) DeleteTemplateByUID(ctx context.Context, orgID int64, uid string, provenance models.Provenance, version string) error {
+	return t.deleteTemplate(ctx, orgID, provenance, version, func(revision *legacy_storage.ConfigRevision) (v1.TemplateGroup, bool, error) {
+		return t.getTemplateByUID(ctx, revision, orgID, uid)
+	})
+}
+
+func (t *TemplateService) deleteTemplate(ctx context.Context, orgID int64, provenance models.Provenance, version string, find func(*legacy_storage.ConfigRevision) (v1.TemplateGroup, bool, error)) error {
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
-	existing, found, err := t.getTemplateByName(ctx, revision, orgID, nameOrUid)
-	if err != nil {
-		return err
-	}
-	if !found {
-		existing, found, err = t.getTemplateByUID(ctx, revision, orgID, nameOrUid)
-	}
+	existing, found, err := find(revision)
 	if err != nil {
 		return err
 	}
@@ -358,7 +393,7 @@ func (t *TemplateService) checkOptimisticConcurrency(existing v1.TemplateGroup, 
 }
 
 func (t *TemplateService) getTemplateByName(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, name string) (v1.TemplateGroup, bool, error) {
-	existingContent, ok := revision.Config.Templates[v1.TemplateUID(v1.TemplateKindGrafana, name)]
+	existingContent, ok := revision.FindTemplate(v1.TemplateKindGrafana, name)
 	if !ok {
 		return v1.TemplateGroup{}, false, nil
 	}

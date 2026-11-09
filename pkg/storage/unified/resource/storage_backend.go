@@ -767,12 +767,28 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
+				b.runGarbageCollectionWithLease(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
 			}
 		}
 	}()
 
 	return nil
+}
+
+func (b *kvStorageBackend) runGarbageCollectionWithLease(ctx context.Context, cutoffTimeStamp int64) {
+	// Own the complete resource and blob pass, including dry runs. This lease
+	// coordinates collectors; it does not fence in-flight storage operations.
+	ctx, release, err := b.acquireStorageLeases(ctx, []string{"garbage-collection"}, lease.WithAutoRenew())
+	if err != nil {
+		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+			b.log.Debug("Garbage collection is running on another instance; skipping this cycle")
+		} else {
+			b.log.Error("Failed to acquire garbage collection lease", "error", err)
+		}
+		return
+	}
+	defer release()
+	b.runGarbageCollection(ctx, cutoffTimeStamp)
 }
 
 func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
@@ -2962,7 +2978,7 @@ func (s *singleBulkRequestBatchIterator) RollbackRequested() bool {
 func (*kvStorageBackend) RequiresBulkPreflight() {}
 
 //nolint:gocyclo
-func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ProcessBulk")
 	defer span.End()
 
@@ -2976,9 +2992,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 	err := b.bulkLock.Start(setting.Collection)
 	if err != nil {
-		return &resourcepb.BulkResponse{
-			Error: AsErrorResult(err),
-		}
+		return nil, err
 	}
 	defer b.bulkLock.Finish(setting.Collection)
 
@@ -2987,7 +3001,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	if !usingExternalTx {
 		leaseCtx, releaseLeases, err := b.acquireBulkLeases(ctx, setting.Collection)
 		if err != nil {
-			return &resourcepb.BulkResponse{Error: AsErrorResult(err)}
+			return nil, err
 		}
 		defer releaseLeases()
 		ctx = leaseCtx
@@ -2997,24 +3011,22 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
 	rsp := &resourcepb.BulkResponse{}
 
-	reportError := func(err error, format string, args ...any) {
+	reportError := func(err error, format string, args ...any) error {
 		msg := fmt.Sprintf(format, args...)
 		b.log.Error(msg, "error", err)
-		rsp.Error = AsErrorResult(fmt.Errorf("%s: %w", msg, err))
+		return fmt.Errorf("%s: %w", msg, err)
 	}
 
 	for _, key := range setting.Collection {
 		events := make([]string, 0)
 		for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
 			if err != nil {
-				reportError(err, "failed to list event")
-				return rsp
+				return nil, reportError(err, "failed to list event")
 			}
 
 			evtKey, err := ParseEventKey(evtKeyStr)
 			if err != nil {
-				reportError(err, "error parsing event key")
-				return rsp
+				return nil, reportError(err, "error parsing event key")
 			}
 
 			if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
@@ -3025,8 +3037,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		if err := b.eventStore.batchDelete(ctx, events); err != nil {
-			reportError(err, "failed to delete events")
-			return rsp
+			return nil, reportError(err, "failed to delete events")
 		}
 
 		historyKeys := make([]DataKey, 0)
@@ -3037,8 +3048,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			Resource:  key.Resource,
 		}, SortOrderAsc) {
 			if err != nil {
-				reportError(err, "failed to list collection before delete")
-				return rsp
+				return nil, reportError(err, "failed to list collection before delete")
 			}
 
 			historyKeys = append(historyKeys, dataKey)
@@ -3046,8 +3056,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 		previousCount := int64(len(historyKeys))
 		if err := b.dataStore.BatchDelete(ctx, historyKeys); err != nil {
-			reportError(err, "failed to delete collection")
-			return rsp
+			return nil, reportError(err, "failed to delete collection")
 		}
 
 		summary := &resourcepb.BulkResponse_Summary{
@@ -3098,8 +3107,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	for batchIter.NextBatch(ctx) {
 		if err := ctx.Err(); err != nil {
 			rollback()
-			rsp.Error = AsErrorResult(err)
-			return rsp
+			return nil, err
 		}
 		if batchIter.RollbackRequested() {
 			rollback()
@@ -3109,8 +3117,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		batch := batchIter.Batch()
 		if len(batch) == 0 {
 			rollback()
-			rsp.Error = AsErrorResult(fmt.Errorf("missing request batch"))
-			return rsp
+			return nil, fmt.Errorf("missing request batch")
 		}
 
 		batchItems := make([]kvBulkImportItem, 0, len(batch))
@@ -3119,8 +3126,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		for _, req := range batch {
 			if req == nil {
 				rollback()
-				rsp.Error = AsErrorResult(fmt.Errorf("missing request"))
-				return rsp
+				return nil, fmt.Errorf("missing request")
 			}
 
 			rsp.Processed++
@@ -3158,7 +3164,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				Resource:        req.Key.Resource,
 				Namespace:       req.Key.Namespace,
 				Name:            req.Key.Name,
-				ResourceVersion: bulkRvGenerator.next(obj),
+				ResourceVersion: bulkRvGenerator.next(SearchID(req.Key), obj),
 				Action:          action,
 				Folder:          req.Folder,
 			}
@@ -3198,8 +3204,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		usedBatchWriter, err := b.dataStore.insertDataImportBatch(ctx, batchRows)
 		if err != nil {
 			rollback()
-			rsp.Error = AsErrorResult(fmt.Errorf("failed to save resource batch: %w", err))
-			return rsp
+			return nil, fmt.Errorf("failed to save resource batch: %w", err)
 		}
 
 		if !usedBatchWriter {
@@ -3226,24 +3231,25 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 	if err := ctx.Err(); err != nil {
 		rollback()
-		rsp.Error = AsErrorResult(err)
-		return rsp
+		return nil, err
 	}
 
-	if rsp.Error == nil {
-		now := time.Now()
-		for nsr := range updatedResources {
-			err := b.lastImportStore.Save(ctx, ResourceLastImportTime{
-				NamespacedResource: nsr,
-				LastImportTime:     now,
-			})
-			if err != nil {
-				reportError(err, "failed to save last import time for resource %s", nsr.String())
-			}
+	var lastImportErr error
+	now := time.Now()
+	for nsr := range updatedResources {
+		err := b.lastImportStore.Save(ctx, ResourceLastImportTime{
+			NamespacedResource: nsr,
+			LastImportTime:     now,
+		})
+		if err != nil {
+			lastImportErr = reportError(err, "failed to save last import time for resource %s", nsr.String())
 		}
 	}
+	if lastImportErr != nil {
+		return nil, lastImportErr
+	}
 
-	return rsp
+	return rsp, nil
 }
 
 // keysSubscriber is the subscriber search may watch written keys with: the one

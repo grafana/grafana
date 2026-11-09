@@ -2,6 +2,7 @@ package nats
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -15,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-kit/log/level"
 	"github.com/grafana/dskit/services"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	natsclient "github.com/nats-io/nats.go"
@@ -22,7 +24,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/term"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
@@ -375,24 +378,42 @@ func TestServerClientPort(t *testing.T) {
 }
 
 func TestServerLogger(t *testing.T) {
-	fake := &logtest.Fake{}
-	l := serverLogger{log: fake}
+	hook := newLogHook()
+	l := serverLogger{log: hook}
 
 	l.Noticef("notice %d", 1)
 	l.Debugf("debug %d", 1)
 	l.Tracef("trace %d", 1)
-	require.Zero(t, fake.InfoLogs.Calls+fake.DebugLogs.Calls)
+	require.Empty(t, hook.drain())
 
 	l.Warnf("route %s", "slow")
-	require.Equal(t, logtest.Logs{Calls: 1, Message: "route slow"}, fake.WarnLogs)
-
 	l.Errorf("handshake %s", "failed")
-	require.Equal(t, logtest.Logs{Calls: 1, Message: "handshake failed"}, fake.ErrorLogs)
-
 	// Fatalf logs instead of exiting the process.
 	l.Fatalf("listen %s", "failed")
-	require.Equal(t, logtest.Logs{Calls: 2, Message: "listen failed"}, fake.ErrorLogs)
+	require.Equal(t, []string{"warn: route slow", "error: handshake failed", "error: listen failed"}, hook.drain())
+
+	t.Run("a message is only formatted when its level is written", func(t *testing.T) {
+		var out bytes.Buffer
+		logger := log.NewNopLogger()
+		// The terminal format is the default on a TTY, and the strictest about msg.
+		logger.Swap(level.NewFilter(term.NewTerminalLogger(&out), level.AllowError()))
+		formatted := 0
+		arg := stringerFunc(func() string { formatted++; return "slow" })
+		l := serverLogger{log: logger}
+
+		l.Warnf("route %s", arg)
+		require.Zero(t, formatted)
+		require.Empty(t, out.String())
+
+		l.Errorf("route %s", arg)
+		require.Equal(t, 1, formatted)
+		require.Contains(t, out.String(), "route slow")
+	})
 }
+
+type stringerFunc func() string
+
+func (f stringerFunc) String() string { return f() }
 
 // startTestClientPortServer starts an embedded server without discovery from
 // the given client settings.
@@ -435,9 +456,8 @@ func startTestTLSServerWithLog(t *testing.T, store kv.KV, tlsCfg setting.NATSClu
 		DiscoveryTTL:      time.Minute,
 		ClusterTLS:        tlsCfg,
 	}
-	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+	s, err := newServer(cfg.NATS, store, "", log.New("infra.nats.server"), prometheus.NewRegistry())
 	require.NoError(t, err)
-	s.kv = store
 	if hook != nil {
 		s.log = hook
 	}
