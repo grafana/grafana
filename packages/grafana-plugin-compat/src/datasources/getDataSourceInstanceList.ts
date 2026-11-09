@@ -5,7 +5,6 @@ import {
   getDataSourceSrv,
   getDataSourceInstanceList as stableGetDataSourceInstanceList,
 } from '@grafana/runtime';
-import { getDataSourceInstanceList as unstableGetDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { type GetDataSourceInstanceListFilters } from './types';
 
@@ -14,10 +13,6 @@ export async function getDataSourceInstanceList(
 ): Promise<DataSourceInstanceListItem[]> {
   if (typeof stableGetDataSourceInstanceList === 'function') {
     return stableGetDataSourceInstanceList(filters);
-  }
-
-  if (typeof unstableGetDataSourceInstanceList === 'function') {
-    return unstableGetDataSourceInstanceList(filters);
   }
 
   return backwardsCompatibleGetDataSourceInstanceList(filters);

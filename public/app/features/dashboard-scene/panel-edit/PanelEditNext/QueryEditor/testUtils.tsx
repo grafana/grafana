@@ -11,6 +11,7 @@ import { type QueryGroupOptions } from 'app/types/query';
 
 import { QueryEditorType } from '../constants';
 
+import { type QueryActionTarget } from './Header/headerActionTarget';
 import {
   type AlertingState,
   type DatasourceState,
@@ -133,6 +134,13 @@ export function makeStackedMode(overrides: Partial<StackedEditorState> = {}): St
     syncActiveItem: jest.fn(),
     ...overrides,
   };
+}
+
+export function makeQueryActionTarget(
+  query: DataQuery,
+  overrides: Partial<Omit<QueryActionTarget, 'query'>> = {}
+): QueryActionTarget {
+  return { cardType: QueryEditorType.Query, query, dsData: null, dsLoading: false, ...overrides };
 }
 
 export const mockUIStateBase = {

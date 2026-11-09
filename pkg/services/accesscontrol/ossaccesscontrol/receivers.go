@@ -165,9 +165,8 @@ func copyPermissionUser(orgID int64) identity.Requester {
 	)
 }
 
-// CopyPermissions copies the resource permissions from one receiver uid to a new uid. This is a temporary
-// method to be used during receiver renaming that is necessitated by receiver uids being generated from the receiver
-// name.
+// CopyPermissions copies the resource permissions from one receiver uid to a new uid. It is used when a new receiver
+// is split off an existing one and should start with the same permissions.
 func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error) {
 	r.log.Debug("Copying permissions from receiver", "old_uid", oldUID, "new_uid", newUID)
 	oldResourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(oldUID)

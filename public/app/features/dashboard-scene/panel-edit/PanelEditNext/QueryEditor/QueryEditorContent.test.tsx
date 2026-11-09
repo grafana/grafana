@@ -1,31 +1,37 @@
 import { screen } from '@testing-library/react';
+import { type ReactNode } from 'react';
 
+import { AlertState } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
+import { mockCombinedRule } from 'app/features/alerting/unified/mocks';
 
 import { QueryEditorType } from '../constants';
 
 import { QueryEditorContent } from './QueryEditorContent';
 import { type QueryEditorUIState } from './QueryEditorContext';
 import { makeStackedMode, renderWithQueryEditorProvider } from './testUtils';
-import { type Transformation } from './types';
+import { type AlertRule, type Transformation } from './types';
 
-// QueryEditorContent's job is composition: pick between the stacked editor and the single-edit
-// body based on stacked-mode/picker/alert state. The children have their own tests, so we stub
-// them with recognizable markers and only assert which branch was rendered.
+// QueryEditorContent's job is composition: pick the header and the stacked or single-item body
+// based on stacked-mode/picker/alert state. The children have their own tests, so we stub them
+// with recognizable markers and only assert which branch was rendered.
 jest.mock('./StackedEditor/StackedEditorRenderer', () => ({
   StackedEditorRenderer: () => <div data-testid="stacked-editor-renderer" />,
 }));
 jest.mock('./Body/QueryEditorBody', () => ({
-  QueryEditorBody: () => <div data-testid="query-editor-body" />,
+  QueryEditorBody: ({ children }: { children: ReactNode }) => <div data-testid="query-editor-body">{children}</div>,
 }));
-jest.mock('./Footer/QueryEditorFooter', () => ({
-  QueryEditorFooter: () => <div data-testid="query-editor-footer" />,
+jest.mock('./StackedEditor/SingleItemRenderer', () => ({
+  SingleItemRenderer: () => <div data-testid="single-item-renderer" />,
+}));
+jest.mock('./CardEditorRenderer', () => ({
+  CardEditorRenderer: () => <div data-testid="card-editor-renderer" />,
+}));
+jest.mock('./Header/QueryEditorMainHeader', () => ({
+  QueryEditorMainHeader: () => <div data-testid="main-header" />,
 }));
 jest.mock('./Header/ContentHeader', () => ({
   ContentHeaderSceneWrapper: () => <div data-testid="content-header" />,
-}));
-jest.mock('./Header/DatasourceHelpPanel', () => ({
-  DatasourceHelpPanel: () => <div data-testid="datasource-help-panel" />,
 }));
 jest.mock('./QueriesEmptyState', () => ({
   QueriesEmptyState: () => <div data-testid="queries-empty-state" />,
@@ -37,69 +43,72 @@ const transformation: Transformation = {
   transformId: 'transform-1',
   transformConfig: { id: 'reduce', options: {} },
 };
+const alertRule: AlertRule = {
+  alertId: 'alert-1',
+  rule: mockCombinedRule({ name: 'High CPU Alert' }),
+  state: AlertState.Alerting,
+};
 
-// Existing branch tests assert the editor surface, which now only renders when the panel has at
-// least one card. Seed a query by default so empty-panel behaviour is tested explicitly below.
+// Seed a query by default so empty-panel behaviour is tested explicitly below.
 function renderContent(uiStateOverrides: Partial<QueryEditorUIState> = {}, queries: DataQuery[] = [query]) {
   return renderWithQueryEditorProvider(<QueryEditorContent />, { uiStateOverrides, queries });
 }
 
 describe('QueryEditorContent', () => {
-  it('renders the stacked editor when stacked mode is enabled, no picker is open, and not in alert view', () => {
+  it('renders the main header above the stacked editor when stacked mode is enabled', () => {
     renderContent({ stackedMode: makeStackedMode({ enabled: true }) });
 
+    expect(screen.getByTestId('main-header')).toBeInTheDocument();
     expect(screen.getByTestId('stacked-editor-renderer')).toBeInTheDocument();
-    expect(screen.queryByTestId('query-editor-body')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('query-editor-footer')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('queries-empty-state')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('single-item-renderer')).not.toBeInTheDocument();
+  });
+
+  it('renders the main header above the selected card when stacked mode is disabled', () => {
+    renderContent({ stackedMode: makeStackedMode({ enabled: false }) });
+
+    expect(screen.getByTestId('main-header')).toBeInTheDocument();
+    expect(screen.getByTestId('single-item-renderer')).toBeInTheDocument();
+    expect(screen.queryByTestId('stacked-editor-renderer')).not.toBeInTheDocument();
   });
 
   it.each([
-    {
-      name: 'stacked mode is disabled',
-      overrides: { stackedMode: makeStackedMode({ enabled: false }) },
-      expectedFooter: true,
-    },
-    {
-      name: 'a pending expression takes over',
-      overrides: { stackedMode: makeStackedMode({ enabled: true }), pendingExpression: { insertAfter: 'A' } },
-      expectedFooter: false,
-    },
-    {
-      name: 'a pending transformation takes over',
-      overrides: { stackedMode: makeStackedMode({ enabled: true }), pendingTransformation: { insertAfter: 'A' } },
-      expectedFooter: false,
-    },
-    {
-      name: 'the editor is in alert view',
-      overrides: { stackedMode: makeStackedMode({ enabled: true }), cardType: QueryEditorType.Alert },
-      expectedFooter: false,
-    },
-  ])('falls back to the single-edit body when $name', ({ overrides, expectedFooter }) => {
-    renderContent(overrides);
+    { name: 'a pending expression', overrides: { pendingExpression: { insertAfter: 'A' } } },
+    { name: 'a pending transformation', overrides: { pendingTransformation: { insertAfter: 'A' } } },
+  ])('shows $name picker with its own header and without the main header, even in stacked mode', ({ overrides }) => {
+    renderContent({ stackedMode: makeStackedMode({ enabled: true }), ...overrides });
 
+    expect(screen.getByTestId('content-header')).toBeInTheDocument();
+    expect(screen.getByTestId('card-editor-renderer')).toBeInTheDocument();
+    expect(screen.queryByTestId('main-header')).not.toBeInTheDocument();
     expect(screen.queryByTestId('stacked-editor-renderer')).not.toBeInTheDocument();
-    expect(screen.getByTestId('query-editor-body')).toBeInTheDocument();
-    expect(screen.queryByTestId('queries-empty-state')).not.toBeInTheDocument();
-    if (expectedFooter) {
-      expect(screen.getByTestId('query-editor-footer')).toBeInTheDocument();
-    } else {
-      expect(screen.queryByTestId('query-editor-footer')).not.toBeInTheDocument();
-    }
+    expect(screen.queryByTestId('single-item-renderer')).not.toBeInTheDocument();
   });
 
-  describe('when the panel has no queries or transformations', () => {
-    it('shows the empty state instead of the editor surface', () => {
-      renderWithQueryEditorProvider(<QueryEditorContent />, { queries: [], transformations: [] });
+  describe('in alert view', () => {
+    it('keeps the alert header and editor without the main header or card, even in stacked mode', () => {
+      renderWithQueryEditorProvider(<QueryEditorContent />, {
+        queries: [query],
+        alertingState: { alertRules: [alertRule] },
+        uiStateOverrides: { stackedMode: makeStackedMode({ enabled: true }), cardType: QueryEditorType.Alert },
+      });
 
-      expect(screen.getByTestId('queries-empty-state')).toBeInTheDocument();
-      expect(screen.queryByTestId('content-header')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('query-editor-body')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('query-editor-footer')).not.toBeInTheDocument();
+      expect(screen.getByTestId('content-header')).toBeInTheDocument();
+      expect(screen.getByTestId('card-editor-renderer')).toBeInTheDocument();
+      expect(screen.queryByTestId('main-header')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('single-item-renderer')).not.toBeInTheDocument();
       expect(screen.queryByTestId('stacked-editor-renderer')).not.toBeInTheDocument();
     });
 
-    it('shows the empty state even when stacked mode is enabled', () => {
+    it('hides the alert header when there are no alert rules', () => {
+      renderContent({ cardType: QueryEditorType.Alert });
+
+      expect(screen.queryByTestId('content-header')).not.toBeInTheDocument();
+      expect(screen.getByTestId('card-editor-renderer')).toBeInTheDocument();
+    });
+  });
+
+  describe('when the panel has no queries or transformations', () => {
+    it('shows the empty state instead of the editor surface, even in stacked mode', () => {
       renderWithQueryEditorProvider(<QueryEditorContent />, {
         queries: [],
         transformations: [],
@@ -107,14 +116,16 @@ describe('QueryEditorContent', () => {
       });
 
       expect(screen.getByTestId('queries-empty-state')).toBeInTheDocument();
+      expect(screen.queryByTestId('main-header')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('query-editor-body')).not.toBeInTheDocument();
       expect(screen.queryByTestId('stacked-editor-renderer')).not.toBeInTheDocument();
     });
 
-    it('keeps the transformation card editor when only transformations remain', () => {
+    it('keeps the selected card when only transformations remain', () => {
       renderWithQueryEditorProvider(<QueryEditorContent />, { queries: [], transformations: [transformation] });
 
       expect(screen.queryByTestId('queries-empty-state')).not.toBeInTheDocument();
-      expect(screen.getByTestId('query-editor-body')).toBeInTheDocument();
+      expect(screen.getByTestId('single-item-renderer')).toBeInTheDocument();
     });
 
     it.each([

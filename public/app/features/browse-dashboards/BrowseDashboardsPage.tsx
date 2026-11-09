@@ -9,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
-import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/features/browse-dashboards/hooks/useNavModel';
 import { useRefreshOnRepositorySync } from 'app/features/browse-dashboards/hooks/useRefreshOnRepositorySync';
@@ -109,14 +109,14 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     reportInteraction('dashboards_browse_list_viewed');
   }, [isRecentlyViewedEnabled]);
 
-  const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
+  const { data: folderDTO } = useGetCombinedFolderQuery(folderUID);
   const navModel = useNavModel(folderDTO, 'dashboards');
 
   const [saveFolder] = useUpdateFolder();
   const hasSelection = useHasSelection();
 
   // Fetch the root (aka general) folder if we're not in a specific folder
-  const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
+  const { data: rootFolderDTO } = useGetCombinedFolderQuery(folderDTO ? undefined : 'general');
   const folder = folderDTO ?? rootFolderDTO;
 
   const { canEditFolders, canDeleteFolders, canDeleteDashboards, canEditDashboards } = getFolderPermissions(folder);
