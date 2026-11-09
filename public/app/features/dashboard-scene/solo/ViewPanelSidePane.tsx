@@ -18,6 +18,7 @@ import { Box, ScrollContainer, Sidebar, Text, RadioButtonDot, Button, Spinner } 
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
+import { hasPanelActionsPopover } from '../scene/edit-actions-popover/PanelActionsPopover';
 import { getDashboardSceneLike } from '../scene/types/dashboard';
 import { DashboardInteractions } from '../utils/interactions';
 
@@ -90,14 +91,15 @@ function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSideP
   }
 
   const viewPanelOptions = plugin.value.viewPanelOptions;
+  // The panel actions popover has a "Restore size" action instead, but only where the popover is shown.
+  const showsBackButton = !isActionsPopoverEnabled || !hasPanelActionsPopover(panel);
 
   return (
     <Box display="flex" direction="column" flex={1} height="100%">
       <Sidebar.PaneHeader title={t('dashboard.sidebar.view-panel.pane-header', 'View panel')} />
       <ScrollContainer showScrollIndicators={true}>
         <Box padding={0} gap={0} display="flex" direction="column">
-          {/* The panel actions popover has a "Restore size" action instead */}
-          {!isActionsPopoverEnabled && (
+          {showsBackButton && (
             <Box display="flex" direction="column" gap={0} padding={2} paddingBottom={2}>
               <Button
                 variant="secondary"

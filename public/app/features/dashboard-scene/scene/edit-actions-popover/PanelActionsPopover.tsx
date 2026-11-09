@@ -56,6 +56,15 @@ export function PanelActionsWrapper({ panel, children }: { panel: VizPanel; chil
   );
 }
 
+/**
+ * Whether the panel gets the panel actions popover while `grafana.panelActionsPopover` is on. Public dashboards have
+ * no panel menu and embedded dashboards only offer Explore, so they keep the panel header, and no "Restore size".
+ */
+export function hasPanelActionsPopover(panel: VizPanel): boolean {
+  const root = panel.getRoot();
+  return root instanceof DashboardScene && Boolean(panel.state.menu) && !root.state.meta.isEmbedded;
+}
+
 function PanelActionsPopoverWrapper({
   panel,
   dashboard,
@@ -68,7 +77,7 @@ function PanelActionsPopoverWrapper({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
-  const { viewPanel, meta } = dashboard.useState();
+  const { viewPanel } = dashboard.useState();
   const { menu } = panel.useState();
   const [hoverSlot, setHoverSlot] = useState<HTMLElement | null>(null);
   const [dragHandleSlot, setDragHandleSlot] = useState<HTMLElement | null>(null);
@@ -82,8 +91,7 @@ function PanelActionsPopoverWrapper({
     [hoverSlot, dragHandleSlot, isExpanded]
   );
 
-  // Public dashboards have no panel menu and embedded dashboards only offer Explore, so they keep the panel header.
-  if (!menu || meta.isEmbedded) {
+  if (!menu || !hasPanelActionsPopover(panel)) {
     return children;
   }
 

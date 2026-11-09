@@ -27,6 +27,7 @@ import { DashboardLoadingBar } from '../scene/DashboardLoadingBar';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
+import { hasPanelActionsPopover } from '../scene/edit-actions-popover/PanelActionsPopover';
 import { type ToolbarActionProps } from '../scene/new-toolbar/types';
 import { hasViewPanelPaneContent } from '../solo/ViewPanelSidePane';
 import { DashboardInteractions } from '../utils/interactions';
@@ -313,7 +314,8 @@ function ViewPanelControlsButtonForPanel({ panel, children }: { panel: VizPanel;
   // Re-renders once the panel plugin, and with it its view panel options, has loaded.
   panel.useState();
 
-  return hasViewPanelPaneContent(panel) ? children : null;
+  // Without the actions popover, the pane holds the only "Back to dashboard" button, so it always has content.
+  return !hasPanelActionsPopover(panel) || hasViewPanelPaneContent(panel) ? children : null;
 }
 
 function renderEnterpriseItems() {
