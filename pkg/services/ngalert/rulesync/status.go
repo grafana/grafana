@@ -48,6 +48,19 @@ func (r SyncReason) ConditionReason() string {
 	}
 }
 
+// InvalidatesDedup reports whether a failure with this reason may have left the
+// stored rules out of step with the last applied upstream hash. Such a failure
+// must not leave that hash in place, or an upstream that returns to it would
+// be skipped without re-applying.
+func (r SyncReason) InvalidatesDedup() bool {
+	switch r {
+	case ReasonSave, ReasonPrune, ReasonPanic:
+		return true
+	default:
+		return false
+	}
+}
+
 // SyncError tags an error with a SyncReason so callers can classify via
 // errors.As without parsing messages.
 type SyncError struct {

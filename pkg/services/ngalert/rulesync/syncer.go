@@ -475,9 +475,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	hashStr := strconv.FormatUint(hash, 10)
 	if rc.persistedHash != "" && rc.persistedHash == hashStr {
 		s.logger.Debug("External ruler config unchanged since last sync (persisted)", "org_id", orgID)
-		// The stored hash is already current, and another replica may have
-		// stored a newer one since rc was read, so don't write it back.
-		s.recordUnchanged(ctx, orgID, rc.uid, rc.origin, "")
+		s.recordUnchanged(ctx, orgID, rc.uid, rc.origin, hashStr)
 		return
 	}
 	s.stateMu.RLock()
@@ -631,5 +629,10 @@ func (s *ExternalRulerSyncer) prune(ctx context.Context, user identity.Requester
 func (s *ExternalRulerSyncer) recordFailure(ctx context.Context, orgID int64, orgIDStr string, uid string, origin externalSyncOrigin, syncErr *SyncError) {
 	s.logger.Warn("External ruler sync failed", "org_id", orgID, "reason", syncErr.Reason.Label(), "error", syncErr)
 	s.metrics.SyncFailures.WithLabelValues(orgIDStr, syncErr.Reason.Label()).Inc()
+	if syncErr.Reason.InvalidatesDedup() {
+		s.stateMu.Lock()
+		s.orgState(orgID).hashSet = false
+		s.stateMu.Unlock()
+	}
 	s.recordSyncResult(ctx, orgID, uid, origin, syncErr, "")
 }
