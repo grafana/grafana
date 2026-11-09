@@ -53,25 +53,49 @@ func matchingWork() Work {
 }
 
 func TestRunnerInvalidWorkPreservesPrimary(t *testing.T) {
-	for _, missing := range []string{"Snapshot", "Call", "Compare", "all"} {
-		t.Run(missing, func(t *testing.T) {
+	snapshot := func() { panic("unexpected Snapshot callback for invalid work") }
+	call := func(context.Context) { panic("unexpected Call callback for invalid work") }
+	compare := func(context.Context) Outcome { panic("unexpected Compare callback for invalid work") }
+
+	for _, tc := range []struct {
+		name      string
+		work      Work
+		wantError string
+	}{
+		{
+			name:      "missing Snapshot",
+			work:      Work{Call: call, Compare: compare},
+			wantError: "shadow work Snapshot callback is required",
+		},
+		{
+			name:      "missing Call",
+			work:      Work{Snapshot: snapshot, Compare: compare},
+			wantError: "shadow work Call callback is required",
+		},
+		{
+			name:      "missing Compare",
+			work:      Work{Snapshot: snapshot, Call: call},
+			wantError: "shadow work Compare callback is required",
+		},
+		{
+			name:      "empty work",
+			work:      Work{},
+			wantError: "shadow work Snapshot callback is required",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				controller := gomock.NewController(t)
 				runner := newTestRunner(t)
 				observer := NewMockObserver(controller)
 
-				callback := missing
-				if missing == "all" {
-					callback = "Snapshot"
-				}
-
 				observer.EXPECT().ObserveDuration(Primary, gomock.Any())
 				observer.EXPECT().ObserveError(gomock.Any(), gomock.Cond(func(err error) bool {
-					return err != nil && err.Error() == "shadow work "+callback+" callback is required"
+					return err != nil && err.Error() == tc.wantError
 				}))
 				observer.EXPECT().ObserveOutcome(Failed)
 
-				primaryCalls, shadowCallbacks := 0, 0
+				primaryCalls := 0
 				wantErr := errors.New("primary failure")
 				var result int
 				var primaryErr error
@@ -80,27 +104,7 @@ func TestRunnerInvalidWorkPreservesPrimary(t *testing.T) {
 					primaryCalls++
 					result, primaryErr = 42, wantErr
 				}, func() Work {
-					work := Work{
-						Snapshot: func() { shadowCallbacks++ },
-						Call:     func(context.Context) { shadowCallbacks++ },
-						Compare: func(context.Context) Outcome {
-							shadowCallbacks++
-							return Match
-						},
-					}
-
-					switch missing {
-					case "Snapshot":
-						work.Snapshot = nil
-					case "Call":
-						work.Call = nil
-					case "Compare":
-						work.Compare = nil
-					case "all":
-						work = Work{}
-					}
-
-					return work
+					return tc.work
 				})
 				synctest.Wait()
 
@@ -108,7 +112,6 @@ func TestRunnerInvalidWorkPreservesPrimary(t *testing.T) {
 				require.Equal(t, 42, result)
 				require.ErrorIs(t, primaryErr, wantErr)
 
-				require.Zero(t, shadowCallbacks)
 				require.Empty(t, runner.inFlight)
 
 				next := NewMockObserver(controller)
