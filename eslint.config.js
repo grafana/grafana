@@ -19,7 +19,11 @@ const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
 const jsTsFiles = '*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}';
 
-const pluginsToTranslate = ['public/app/plugins/panel', 'public/app/plugins/datasource/azuremonitor'];
+const pluginsToTranslate = [
+  'public/app/plugins/panel',
+  'public/app/plugins/datasource/azuremonitor',
+  'public/app/plugins/datasource/grafana',
+];
 
 const commonTestIgnores = [
   '**/*.{test,spec}.{ts,tsx}',
