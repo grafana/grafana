@@ -6,7 +6,13 @@ import { getEmptyQueryRunnerState, setQueryRunnerQueries } from './queryRunnerSt
 
 describe('query runner defaults', () => {
   it('marks an intentionally empty runner ready to display', () => {
-    expect(getEmptyQueryRunnerState()).toEqual({ queries: [], _hasFetchedData: true });
+    const timeRange = getDefaultTimeRange();
+
+    expect(getEmptyQueryRunnerState(timeRange)).toEqual({
+      queries: [],
+      _hasFetchedData: true,
+      data: { series: [], state: LoadingState.Done, timeRange },
+    });
   });
 
   it('clears only the untouched starter query', () => {
@@ -28,10 +34,11 @@ describe('query runner defaults', () => {
     expect(runner.state.queries).toEqual([{ refId: 'A', hide: true }]);
   });
 
-  it('cancels the starter query and clears its data', () => {
+  it('cancels the starter query and replaces its data with an empty result', () => {
+    const timeRange = getDefaultTimeRange();
     const runner = new SceneQueryRunner({
       queries: [{ refId: 'A' }],
-      data: { series: [], state: LoadingState.Done, timeRange: getDefaultTimeRange() },
+      data: { series: [], state: LoadingState.Done, timeRange },
     });
     const cancelQuery = jest.spyOn(runner, 'cancelQuery');
     const panel = new VizPanel({ pluginId: 'custom', $data: runner });
@@ -39,7 +46,11 @@ describe('query runner defaults', () => {
     clearDefaultQuery(panel);
 
     expect(cancelQuery).toHaveBeenCalledTimes(1);
-    expect(runner.state.data).toBeUndefined();
+    expect(runner.state.data).toEqual({
+      series: [],
+      state: LoadingState.Done,
+      timeRange,
+    });
   });
 
   it('waits for data again when the first explicit query is added', () => {
@@ -61,10 +72,11 @@ describe('query runner defaults', () => {
   });
 
   it('cancels the active query and marks the runner ready when the last query is removed', () => {
+    const timeRange = getDefaultTimeRange();
     const runner = new SceneQueryRunner({
       queries: [{ refId: 'A' }],
       _hasFetchedData: false,
-      data: { series: [], state: LoadingState.Loading, timeRange: getDefaultTimeRange() },
+      data: { series: [], state: LoadingState.Loading, timeRange },
     });
     const cancelQuery = jest.spyOn(runner, 'cancelQuery');
 
@@ -72,7 +84,11 @@ describe('query runner defaults', () => {
 
     expect(cancelQuery).toHaveBeenCalledTimes(1);
     expect(runner.state.queries).toEqual([]);
-    expect(runner.state.data).toBeUndefined();
+    expect(runner.state.data).toEqual({
+      series: [],
+      state: LoadingState.Done,
+      timeRange,
+    });
     expect(runner.isDataReadyToDisplay()).toBe(true);
   });
 });

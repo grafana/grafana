@@ -2,6 +2,7 @@ import {
   type DataSourceInstanceSettings,
   type DataTransformerConfig,
   getDataSourceRef,
+  LoadingState,
   PluginType,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -1542,7 +1543,7 @@ describe('PanelDataPaneNext', () => {
       expect(mockQueryRunner.setState).toHaveBeenCalledWith({
         queries: [],
         _hasFetchedData: true,
-        data: undefined,
+        data: expect.objectContaining({ series: [], state: LoadingState.Done }),
       });
       expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
     });
@@ -1556,7 +1557,7 @@ describe('PanelDataPaneNext', () => {
       expect(mockQueryRunner.setState).toHaveBeenCalledWith({
         queries: [],
         _hasFetchedData: true,
-        data: undefined,
+        data: expect.objectContaining({ series: [], state: LoadingState.Done }),
       });
       expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
     });
