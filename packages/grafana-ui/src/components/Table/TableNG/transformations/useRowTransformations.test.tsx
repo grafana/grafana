@@ -9,7 +9,7 @@ import { useRowTransformations } from './useRowTransformations';
 it.each([
   [FieldType.number, 'numeric_range'],
   [FieldType.time, 'date_range'],
-])('reports applied and removed %s ranges once, without field names or bounds', (type, kind) => {
+])('reports applied %s ranges without field names or bounds, and ignores removal', (type, kind) => {
   const data = createDataFrame({ fields: [{ name: 'Private field', type, values: [1, 2, 3] }] });
   const onFilterInteraction = jest.fn();
   const { result, rerender } = renderHook(
@@ -25,10 +25,9 @@ it.each([
   rerender();
   expect(onFilterInteraction).toHaveBeenCalledTimes(1);
   act(() => result.current.value.clearFilter(data.fields[0]));
-  expect(onFilterInteraction.mock.calls[1]).toEqual([{ action: 'remove', filter_type: 'local', filter_kind: kind }]);
   act(() => result.current.value.clearFilter(data.fields[0]));
   expect(result.current.value.filters).toEqual([]);
-  expect(onFilterInteraction).toHaveBeenCalledTimes(2);
+  expect(onFilterInteraction).toHaveBeenCalledTimes(1);
 });
 
 it('reports transformation-backed changes after persistence and suppresses unchanged filters', () => {

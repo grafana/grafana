@@ -5,7 +5,7 @@ export function reportTableColumnInteraction(action: 'visibility' | 'reorder') {
 }
 
 export function reportTableFilterInteraction(interaction: {
-  action: 'apply' | 'remove';
+  action: 'apply';
   filter_type: 'local' | 'transformation' | 'adhoc';
   filter_kind: 'values' | 'numeric_range' | 'date_range' | 'other';
 }) {

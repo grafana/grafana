@@ -65,23 +65,9 @@ export function useRowTransformations(props: TableNGProps) {
     [update, source, frameKey, frameIndex, onInteraction, filterType]
   );
   const clearFilter = useCallback(
-    (field: Field, parentIndex?: number) => {
-      let kind: TableFilterInteraction['filter_kind'] = 'other';
-      update(
-        (current) => {
-          const selected = activeFilters(current, frameKey, source).filter((config) =>
-            matchesTableFilter(config, field, parentIndex)
-          );
-          if (selected.length === 1 && selected[0].options.filters.length === 1) {
-            kind = filterKind(field, selected[0].options.filters[0].config);
-          }
-          const next = clearFieldFilter(current, { source, frameKey, frameIndex, field, parentIndex });
-          return isEqual(current, next) ? current : next;
-        },
-        () => onInteraction?.({ action: 'remove', filter_type: filterType, filter_kind: kind })
-      );
-    },
-    [update, source, frameKey, frameIndex, onInteraction, filterType]
+    (field: Field, parentIndex?: number) =>
+      update((current) => clearFieldFilter(current, { source, frameKey, frameIndex, field, parentIndex })),
+    [update, source, frameKey, frameIndex]
   );
   const clearFilters = useCallback(() => update((current) => clearFrameFilters(current, frameKey)), [update, frameKey]);
   const value = useMemo(
