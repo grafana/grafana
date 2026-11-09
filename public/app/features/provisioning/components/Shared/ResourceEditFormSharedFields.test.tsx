@@ -260,6 +260,76 @@ describe('ResourceEditFormSharedFields', () => {
       expect(filenameInput).toHaveValue('test.json');
     });
 
+    it('should display repository root description and default placeholder when repository path is not configured', () => {
+      setup({ isNew: true, repository: mockRepo.github });
+
+      expect(
+        screen.getByText('Folder inside the repository. Leave empty for the repository root.')
+      ).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /folder/i })).toHaveAttribute(
+        'placeholder',
+        'Select or enter folder path'
+      );
+    });
+
+    it('should display repository root description and default placeholder for local repositories even with path', () => {
+      setup({
+        isNew: true,
+        repository: {
+          ...mockRepo.local,
+          path: '/var/lib/grafana/dashboards',
+        },
+      });
+
+      expect(
+        screen.getByText('Folder inside the repository. Leave empty for the repository root.')
+      ).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /folder/i })).toHaveAttribute(
+        'placeholder',
+        'Select or enter folder path'
+      );
+    });
+
+    it('should display configured repository path in description and neutral placeholder when repository path is set', () => {
+      setup({
+        isNew: true,
+        repository: {
+          ...mockRepo.github,
+          path: 'dashboards/production',
+        },
+      });
+
+      expect(
+        screen.getByText(
+          'Folder inside the repository. Leave empty for the configured repository path (dashboards/production).'
+        )
+      ).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /folder/i })).toHaveAttribute(
+        'placeholder',
+        'Select or enter folder path'
+      );
+    });
+
+    it('should trim leading and trailing slashes from configured repository path in description', () => {
+      setup({
+        isNew: true,
+        repository: {
+          ...mockRepo.github,
+          path: '/team-a/dashboards/',
+        },
+      });
+
+      expect(
+        screen.getByText(
+          'Folder inside the repository. Leave empty for the configured repository path (team-a/dashboards).'
+        )
+      ).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /folder/i })).toHaveAttribute(
+        'placeholder',
+        'Select or enter folder path'
+      );
+    });
+
     it('should render folder and filename fields for existing dashboards when allowPathEdit is true', () => {
       setup({ isNew: false, allowPathEdit: true, formDefaultValues: { path: 'dashboards/my-dashboard.json' } });
 
