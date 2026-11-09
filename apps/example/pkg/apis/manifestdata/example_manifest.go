@@ -42,6 +42,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Example",
 					Plural:     "Examples",
+					Resource:   "examples",
 					Scope:      "Namespaced",
 					Conversion: true,
 					Admission: &app.AdmissionCapabilities{
@@ -70,6 +71,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Example",
 					Plural:     "Examples",
+					Resource:   "examples",
 					Scope:      "Namespaced",
 					Conversion: true,
 					Admission: &app.AdmissionCapabilities{

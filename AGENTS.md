@@ -145,7 +145,7 @@ Build a specific plugin: `pnpm --filter @grafana-plugins/<name> dev`
 
 ## Key Notes
 
-- When calling a unified storage gRPC client, handle both error forms (transport `err` and response `Error`) with the helpers described in `pkg/storage/unified/resource/doc.go`; never check only one of them.
+- For unary unified storage gRPC calls, handle the returned error using the guidance in `pkg/storage/unified/resource/doc.go`; failures are reported through gRPC status, not the response's legacy `Error` field. Streaming and direct Go calls have separate requirements documented there.
 - **Wire DI**: Backend service init changes require `make gen-go`. Wire catches circular deps at compile time.
 - **CUE schemas**: Dashboard/panel schemas in `kinds/` generate both Go and TS code via `make gen-cue`.
 - **Feature toggles**: Defined in `pkg/services/featuremgmt/`, auto-generate code. Run `make gen-feature-toggles` after changes.

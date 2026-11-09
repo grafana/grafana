@@ -10,7 +10,7 @@ import { useFolderPath } from '../folder-browsing/folderLookups';
 import { useSearchRuleFoldersInfiniteQuery } from '../folder-browsing/folderSearch';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 import { RuleRowList } from '../rule-row/RuleRowList';
-import { createEmptyFilter } from '../rule-search/sharedRuleFilter';
+import { createRulesApiFilter } from '../rule-search/sharedRuleFilter';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 import { PagedFailureAlert } from '../shared/PagedFailureAlert';
@@ -26,7 +26,7 @@ interface FoldersViewProps {
 export function AlertRulesFoldersView({ folderUids }: FoldersViewProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const { data, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
-    useSearchRuleFoldersInfiniteQuery({ folderUids });
+    useSearchRuleFoldersInfiniteQuery({ kind: 'alert', folderUids });
   const folders = data?.pages.flatMap((page) => page.folders);
 
   const toggle = (uid: string) => {
@@ -114,10 +114,9 @@ function AlertFolderListEntry({ folderUid, title, expanded, onToggle }: AlertFol
 }
 
 function ExpandedFolderRules({ folderUid, title }: { folderUid: string; title: string }) {
-  const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useAlertRuleSearch({
-    ...createEmptyFilter(),
-    folders: [folderUid],
-  });
+  const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useAlertRuleSearch(
+    createRulesApiFilter({ folders: [folderUid] })
+  );
 
   const retryLabel = t('alerting.gma-rule-list.alert-rules.retry-rules-in-folder', 'Retry loading rules in {{title}}', {
     interpolation: { escapeValue: false },

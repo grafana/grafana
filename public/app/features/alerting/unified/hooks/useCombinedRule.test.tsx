@@ -13,6 +13,7 @@ import {
   grafanaRulerNamespace,
   grafanaRulerRule,
 } from '../mocks/grafanaRulerApi';
+import { setFolderResponse } from '../mocks/server/configure';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { useCombinedRule } from './useCombinedRule';
@@ -67,14 +68,7 @@ describe('useCombinedRule', () => {
       );
 
       // Mock the folder endpoint
-      server.use(
-        http.get('/api/folders/:uid', () => {
-          return HttpResponse.json({
-            uid: grafanaRulerNamespace.uid,
-            title: grafanaRulerNamespace.name,
-          });
-        })
-      );
+      setFolderResponse({ uid: grafanaRulerNamespace.uid, title: grafanaRulerNamespace.name });
 
       const ruleIdentifier: GrafanaRuleIdentifier = {
         ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
@@ -108,9 +102,7 @@ describe('useCombinedRule', () => {
       );
 
       // Folder titled "my/folder" -> stringifyFolder() would produce the escaped "my\/folder"
-      server.use(
-        http.get('/api/folders/:uid', () => HttpResponse.json({ uid: grafanaRulerNamespace.uid, title: 'my/folder' }))
-      );
+      setFolderResponse({ uid: grafanaRulerNamespace.uid, title: 'my/folder' });
 
       // Prometheus returns the same folder but with a different namespace name (here the unescaped
       // "my/folder"), simulating a backend whose fullpath escaping does not byte-match the client's.
@@ -163,9 +155,7 @@ describe('useCombinedRule', () => {
       server.use(
         http.get('/api/ruler/grafana/api/v1/rules/:namespace/:group', () => HttpResponse.json(grafanaRulerGroup))
       );
-      server.use(
-        http.get('/api/folders/:uid', () => HttpResponse.json({ uid: grafanaRulerNamespace.uid, title: 'my/folder' }))
-      );
+      setFolderResponse({ uid: grafanaRulerNamespace.uid, title: 'my/folder' });
       server.use(
         http.get('/api/prometheus/grafana/api/v1/rules', () =>
           HttpResponse.json({ status: 'success', data: { groups: [] } })

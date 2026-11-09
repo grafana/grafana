@@ -25,7 +25,25 @@ func (a *AccessControl) buildLegacyCheckRequest(
 	}
 
 	namespace := user.GetNamespace()
+	var internal *legacyclient.LegacyInternalIdentity
 	if profile, ok := identity.InternalIdentityProfileFor(user); ok {
+		internal = &legacyclient.LegacyInternalIdentity{Profile: legacyclient.LegacyInternalIdentityProfile(profile)}
+	} else if name, ok := accesscontrol.BackgroundUserName(user); ok {
+		permissions := make(map[string][]string, len(user.GetPermissions()))
+		for action, scopes := range user.GetPermissions() {
+			permissions[action] = slices.Clone(scopes)
+		}
+
+		internal = &legacyclient.LegacyInternalIdentity{
+			Background: &legacyclient.LegacyBackgroundIdentity{
+				Name:        name,
+				OrgRole:     string(user.GetOrgRole()),
+				Permissions: permissions,
+			},
+		}
+	}
+
+	if internal != nil {
 		if namespace == "" || namespace == "*" {
 			if user.GetOrgID() < 1 || namespaceMapper == nil {
 				return legacyclient.LegacyCheckRequest{}, errors.New("internal legacy check requires a concrete target namespace")
@@ -40,18 +58,18 @@ func (a *AccessControl) buildLegacyCheckRequest(
 
 		return legacyclient.LegacyCheckRequest{
 			Namespace:           parsedNamespace.Value,
-			InternalIdentity:    &legacyclient.LegacyInternalIdentity{Profile: legacyclient.LegacyInternalIdentityProfile(profile)},
+			InternalIdentity:    internal,
 			Evaluator:           evaluator,
 			SkipScopeResolution: a.skipScopeResolution,
 		}, nil
 	}
 
+	permissions := user.GetPermissions()
 	var global *legacyclient.LegacyGlobalEvaluation
 	if user.GetOrgID() == accesscontrol.NoOrgID || user.GetOrgID() == accesscontrol.GlobalOrgID {
-		permissions := user.GetGlobalPermissions()
+		permissions = user.GetGlobalPermissions()
 		global = &legacyclient.LegacyGlobalEvaluation{
-			RequesterOrgID:   user.GetOrgID(),
-			PermittedActions: slices.Sorted(maps.Keys(permissions)),
+			RequesterOrgID: user.GetOrgID(),
 		}
 		// Global org IDs describe requester state. Use the configured instance
 		// namespace for transport; evaluation still uses global grants.
@@ -75,5 +93,7 @@ func (a *AccessControl) buildLegacyCheckRequest(
 		Teams:               slices.Clone(groups),
 		SkipScopeResolution: a.skipScopeResolution,
 		GlobalEvaluation:    global,
+		// Preserve authentication filtering when AuthZ reloads grants and resolver dependencies.
+		Restriction: &legacyclient.LegacyActionRestriction{Actions: slices.Sorted(maps.Keys(permissions))},
 	}, nil
 }

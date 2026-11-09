@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/grafana/dskit/services"
@@ -16,10 +17,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
+	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -1027,10 +1030,9 @@ func TestBackend_StorageDisabled(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTestStorageDisabled(t)
 
-		resp := b.ProcessBulk(ctx, resource.BulkSettings{}, nil)
-		require.NotNil(t, resp)
-		require.NotNil(t, resp.Error)
-		require.Contains(t, resp.Error.Message, "storage backend is not enabled")
+		resp, err := b.ProcessBulk(ctx, resource.BulkSettings{}, nil)
+		require.ErrorContains(t, err, "storage backend is not enabled")
+		require.Nil(t, resp)
 	})
 
 	t.Run("WatchWriteEvents returns error when storage is disabled", func(t *testing.T) {
@@ -1279,4 +1281,54 @@ func TestBackend_publishesWatchNotifications(t *testing.T) {
 			require.Empty(t, pub.subjects)
 		})
 	}
+}
+
+func TestIntegrationReadHistoryVersions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	storageBackend, _ := newTestBackend(t, GarbageCollectionConfig{})
+	b := storageBackend.(*backend)
+
+	created, err := unitest.WriteEvent(ctx, b, "item1", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	updated, err := unitest.WriteEvent(ctx, b, "item1", resourcepb.WatchEvent_MODIFIED, unitest.WithNamespaceAndRV("namespace", created))
+	require.NoError(t, err)
+	other, err := unitest.WriteEvent(ctx, b, "item2", resourcepb.WatchEvent_ADDED, unitest.WithResource("other"))
+	require.NoError(t, err)
+
+	key := func(name, res string, rv int64) historyVersion {
+		return historyVersion{Namespace: "namespace", Group: "group", Resource: res, Name: name, ResourceVersion: rv}
+	}
+	versions := make([]historyVersion, 0, 5+historyBatchReadSize)
+	versions = append(versions,
+		key("item1", "resource", created), key("item1", "resource", updated), key("item2", "other", other),
+		key("missing", "resource", 1),
+		// No row at this version, but an older one exists.
+		key("item1", "resource", updated-1),
+	)
+	// More versions than one query takes, so batches are split.
+	for i := range historyBatchReadSize {
+		versions = append(versions, key("missing", "resource", int64(i+2)))
+	}
+
+	found, err := b.readHistoryVersions(ctx, versions)
+	require.NoError(t, err)
+	require.Len(t, found, 3)
+
+	row := found[key("item1", "resource", updated)]
+	require.NotNil(t, row)
+	require.Equal(t, int(resourcepb.WatchEvent_MODIFIED), row.Action)
+	require.Equal(t, created, *row.PreviousRV)
+	require.Equal(t, "folderuid", row.Folder)
+	require.Contains(t, string(row.Value), "item1 MODIFIED")
+
+	require.Equal(t, int(resourcepb.WatchEvent_ADDED), found[key("item1", "resource", created)].Action)
+	require.Equal(t, "other", found[key("item2", "other", other)].Key.Resource)
+
+	// The version must match the name: another object's RV is not returned.
+	found, err = b.readHistoryVersions(ctx, []historyVersion{key("item2", "resource", updated)})
+	require.NoError(t, err)
+	require.Empty(t, found)
 }

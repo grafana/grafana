@@ -168,14 +168,19 @@ export const TableContainer = memo(function TableContainer({
     <>
       {frames && frames.length === 0 && (
         <PanelChrome
-          key={panelPadding}
           title={t('explore.table.title', 'Table')}
           width={width}
           height={200}
           loadingState={panelLoadingState}
-          padding={panelPadding}
+          // Renders MetaInfoText, not the table panel — don't inherit its noPadding.
+          padding="md"
         >
-          {() => <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned') }]} />}
+          {() => (
+            // Matches the title's extra inline-start padding (PANEL_TITLE_INSET in Table/TableNG/constants.ts).
+            <div className={css({ paddingInlineStart: theme.spacing.x0_5 })}>
+              <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned') }]} />
+            </div>
+          )}
         </PanelChrome>
       )}
       {frames && frames.length > 0 && (
