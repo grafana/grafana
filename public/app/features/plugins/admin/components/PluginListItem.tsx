@@ -12,6 +12,7 @@ import { type CatalogPlugin, PluginIconName } from '../types';
 
 import { PluginListItemBadges } from './PluginListItemBadges';
 import { PluginLogo } from './PluginLogo';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 const LOGO_SIZE = '48px';
 
@@ -122,6 +123,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         '&:hover': {
           background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
         },
+
+        '&:focus-visible': getFocusStyles(theme, true),
       },
       visualRefreshEnabled && {
         background: theme.colors.background.primary,

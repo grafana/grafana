@@ -384,11 +384,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
         outline: 'none',
       },
 
-      '&:focus-visible': {
-        ...getFocusStyles(theme, true),
-        borderRadius: theme.shape.radius.default,
-      },
-
+      '&:focus-visible': getFocusStyles(theme),
       '&:[disabled]': {
         cursor: 'default',
         // Need type assertion here due to the use of !important
@@ -425,10 +421,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
       touchAction: 'manipulation',
     },
 
-    ':focus-visible': {
-      ...getFocusStyles(theme, true),
-      borderRadius: theme.shape.radius.default,
-    },
+    ':focus-visible': getFocusStyles(theme, true),
 
     '.text-link': {
       textDecoration: 'underline',
