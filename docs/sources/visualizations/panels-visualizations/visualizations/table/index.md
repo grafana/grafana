@@ -178,13 +178,26 @@ To remove the filter, click the blue filter icon and then click **Clear filter**
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
 
-### Apply filters from the table
+## Cross-filter from a table cell
 
-In tables, you can apply filters directly from the visualization with one click.
+In tables, you can apply dashboard cross-filters directly from the visualization.
+Cross-filtering requires a **Group by** variable and a data source that supports dashboard filters, such as Prometheus or Loki.
 
-To display the filter icons, hover your cursor over the cell that has the value for which you want to filter:
+To enable cross-filtering, follow these steps:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with filter icon displayed on a cell" >}}
+1. Add a field override for the x-axis field, and select **Standard options > Cross-filter**.
+1. Toggle on the **Cross-filter** switch.
+1. Click the series that has the value you want to filter to display the filter control:
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with filter icon displayed on a cell" >}}
+
+1. Click the filter for or filter out icon.
+
+   A filter to include or exclude that field is added and displayed at the top of the dashboard.
+
+1. In the filter field at the top of the dashboard, do the following as needed:
+   - Change the operator to any of the following: `=~`, `!~`, `<`, `<=`, `>`, `>=`.
+   - Delete the filter.
 
 For more information about applying filters this way, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
 

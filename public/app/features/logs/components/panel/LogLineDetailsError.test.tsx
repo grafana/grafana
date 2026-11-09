@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 
 import {
   type ChatContextItem,
@@ -75,6 +75,31 @@ describe('LogLineDetailsError', () => {
 
     expect(screen.getByText('at UserService.getUserId')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'exception.stacktrace' })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('opens the stack trace in a modal', async () => {
+    // Hover reveals the action. jsdom does not apply :hover, so skip the hit-target check.
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+    const stacktrace = [
+      'java.lang.NullPointerException: Cannot invoke User.getId()',
+      '\tat com.example.UserService.getUserId(UserService.java:42)',
+    ].join('\n');
+
+    render(<LogLineDetailsError fields={[field('exception.stacktrace', stacktrace, 0)]} labels={[]} />);
+
+    expect(screen.queryByRole('button', { name: 'Expand stack trace' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'exception.stacktrace' }));
+    await user.click(screen.getByRole('button', { name: 'Expand stack trace' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'exception.stacktrace' });
+    expect(dialog).toHaveTextContent('java.lang.NullPointerException: Cannot invoke User.getId()');
+    expect(dialog).toHaveTextContent('at com.example.UserService.getUserId(UserService.java:42)');
+
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(screen.queryByRole('dialog', { name: 'exception.stacktrace' })).not.toBeInTheDocument();
+    expect(screen.getByText(/at com\.example\.UserService\.getUserId\(UserService\.java:42\)/)).toBeInTheDocument();
   });
 
   it('hides the assistant action when Grafana Assistant is unavailable', () => {

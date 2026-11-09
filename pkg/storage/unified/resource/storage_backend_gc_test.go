@@ -1060,3 +1060,52 @@ func TestGarbageCollectionCycleMetrics(t *testing.T) {
 		})
 	}
 }
+
+func TestGarbageCollectionKeepsRecentlyDeletedBulkImports(t *testing.T) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)), func(opts *KVBackendOptions) {
+		opts.GarbageCollection = GarbageCollectionConfig{Enabled: true, Interval: time.Minute, BatchSize: 100, DashboardsMaxAge: 365 * 24 * time.Hour}
+	})
+	const namespace = "default"
+	now := time.Now()
+	lastEdit := now.Add(-2 * 365 * 24 * time.Hour)
+	dashboard := func(name string, action resourcepb.BulkRequest_Action, deletedAt time.Time) *resourcepb.BulkRequest {
+		deletion := ""
+		if !deletedAt.IsZero() {
+			deletion = fmt.Sprintf(`,"deletionTimestamp":%q`, deletedAt.UTC().Format(time.RFC3339))
+		}
+		return &resourcepb.BulkRequest{
+			Key:    &resourcepb.ResourceKey{Namespace: namespace, Group: "dashboard.grafana.app", Resource: "dashboards", Name: name},
+			Action: action,
+			Value: fmt.Appendf(nil, `{"apiVersion":"dashboard.grafana.app/v1","kind":"Dashboard","metadata":{"name":%q,"namespace":%q,"annotations":{%q:%q}%s},"spec":{}}`,
+				name, namespace, utils.AnnoKeyUpdatedTimestamp, lastEdit.UTC().Format(time.RFC3339), deletion),
+		}
+	}
+
+	// Both dashboards were last edited two years ago; one was deleted yesterday, the other 400 days ago
+	resp := backend.ProcessBulk(ctx, BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{Namespace: namespace, Group: "dashboard.grafana.app", Resource: "dashboards"}},
+	}, newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
+		dashboard("deleted-yesterday", resourcepb.BulkRequest_ADDED, time.Time{}),
+		dashboard("deleted-yesterday", resourcepb.BulkRequest_DELETED, now.Add(-24*time.Hour)),
+		dashboard("deleted-long-ago", resourcepb.BulkRequest_ADDED, time.Time{}),
+		dashboard("deleted-long-ago", resourcepb.BulkRequest_DELETED, now.Add(-400*24*time.Hour)),
+	}))
+	require.Nil(t, resp.Error)
+	require.Empty(t, resp.Rejected)
+
+	cutoff := backend.garbageCollectionCutoffTimestamp("dashboard.grafana.app", "dashboards", now.UnixMicro())
+	_, err := backend.garbageCollectGroupResource(ctx, "dashboard.grafana.app", "dashboards", cutoff)
+	require.NoError(t, err)
+
+	remaining := map[string]int{}
+	for k, err := range backend.kv.Keys(ctx, dataSection, ListOptions{
+		StartKey: "dashboard.grafana.app/dashboards/" + namespace + "/",
+		EndKey:   "dashboard.grafana.app/dashboards/" + namespace + "0",
+	}) {
+		require.NoError(t, err)
+		remaining[strings.Split(strings.TrimPrefix(k, "dashboard.grafana.app/dashboards/"+namespace+"/"), "/")[0]]++
+	}
+	require.Equal(t, 2, remaining["deleted-yesterday"], "a dashboard deleted yesterday must stay restorable")
+	require.Zero(t, remaining["deleted-long-ago"], "a deletion past retention is collected")
+}
