@@ -80,7 +80,7 @@ describe('VisualizationSuggestionCard', () => {
     expect(previewModifier).toHaveBeenCalled();
   });
 
-  it('resolves dashboard variables, scoped vars and data macros in the preview', () => {
+  it('resolves dashboard variables, field macros and data macros in the preview', () => {
     setTemplateSrv(
       initTemplateSrv('suggestion-card', [
         { type: 'constant', name: 'host', current: { value: 'web-01', text: 'web-01' } },
@@ -92,11 +92,10 @@ describe('VisualizationSuggestionCard', () => {
     const { replaceVariables } = mockPanelRendererProps.mock.calls[0][0] as { replaceVariables: InterpolateFunction };
 
     expect(
-      replaceVariables('${__field.name} on $host: ${reduced}', {
-        reduced: { text: '75.0%', value: '75.0%' },
-        __dataContext: { value: { data: mockData.series, frame, field: frame.fields[1], frameIndex: 0 } },
+      replaceVariables('${__field.name} on $host: ${__data.fields.value}', {
+        __dataContext: { value: { data: mockData.series, frame, field: frame.fields[1], rowIndex: 2, frameIndex: 0 } },
       })
-    ).toBe('value on web-01: 75.0%');
+    ).toBe('value on web-01: 30');
   });
 
   it('should render successfully when isSelected is true', () => {
