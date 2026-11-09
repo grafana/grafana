@@ -96,15 +96,6 @@ export function DashboardImportK8s({ queryParams }: Props) {
     reportInteraction(IMPORT_STARTED_EVENT_NAME, { import_source: 'json_pasted' });
 
     const json = JSON.parse(formData.dashboardJson);
-
-    if ((json.spec?.elements || json.elements) && !dashboardNewLayoutsEnabled) {
-      appEvents.emit(AppEvents.alertError, [
-        'Import failed',
-        'Dashboard using new layout cannot be imported because the feature is not enabled',
-      ]);
-      return;
-    }
-
     await processDashboardJson(json);
   }
 
@@ -113,10 +104,20 @@ export function DashboardImportK8s({ queryParams }: Props) {
     source = DashboardSource.Json,
     meta: ImportState['meta'] = { updatedAt: '', orgName: '' }
   ) {
+    const format = detectExportFormat(json);
+
+    if (format === ExportFormat.V2Resource && !dashboardNewLayoutsEnabled) {
+      setState((prev) => ({ ...prev, status: LoadingState.Error }));
+      appEvents.emit(AppEvents.alertError, [
+        'Import failed',
+        'Dashboard using new layout cannot be imported because the feature is not enabled',
+      ]);
+      return;
+    }
+
     setState((prev) => ({ ...prev, status: LoadingState.Loading }));
 
     try {
-      const format = detectExportFormat(json);
       const isV2Resource = isDashboardV2Resource(json);
       // Unwrap k8s resource to get the spec, or use as-is for classic dashboards
       const dashboard = isV2Resource || isDashboardV1Resource(json) ? json.spec : json;
