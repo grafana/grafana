@@ -21,7 +21,7 @@ Provider SDK retries remain disabled.
 
 A positive delay starts a duplicate if the first request is still pending and time remains.
 If the first request fails sooner with a retryable provider error, the second attempt starts immediately.
-Authentication and validation errors do not trigger an immediate retry.
+Authentication, validation, and Bedrock throttling errors do not trigger an immediate retry.
 Grafana makes at most two attempts in total.
 Each successful response must include a valid score for every input.
 The first complete, valid response wins, and Grafana cancels the other request without waiting.

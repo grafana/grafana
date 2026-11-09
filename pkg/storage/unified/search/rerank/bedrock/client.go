@@ -3,9 +3,12 @@ package bedrock
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
@@ -52,7 +55,10 @@ func (c *invokeClient) Rerank(ctx context.Context, model, query string, document
 		o.RetryMaxAttempts = 1
 	})
 	if err != nil {
-		if ctx.Err() == nil && c.runtime.Options().Retryer.IsErrorRetryable(err) {
+		var statusErr interface{ HTTPStatusCode() int }
+		throttled := retry.IsErrorThrottles(retry.DefaultThrottles).IsErrorThrottle(err).Bool() ||
+			(errors.As(err, &statusErr) && statusErr.HTTPStatusCode() == http.StatusTooManyRequests)
+		if ctx.Err() == nil && !throttled && c.runtime.Options().Retryer.IsErrorRetryable(err) {
 			err = rerank.MarkRetryable(err)
 		}
 		return nil, fmt.Errorf("bedrock rerank: invoke: %w", err)

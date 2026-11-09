@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -17,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
+	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -91,6 +93,49 @@ func TestRealSDKTransientFailureRetriesOnceImmediately(t *testing.T) {
 	require.Equal(t, []float64{0.6}, scores)
 	require.EqualValues(t, 2, calls.Load())
 }
+
+func TestRealSDKThrottlingDoesNotRetryImmediately(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		status    int
+		errorType string
+		isModeled bool
+	}{
+		{name: "modeled throttling exception", status: http.StatusBadRequest, errorType: "ThrottlingException", isModeled: true},
+		{name: "unmodeled HTTP 429", status: http.StatusTooManyRequests},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var calls atomic.Int32
+			transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+				calls.Add(1)
+				header := make(http.Header)
+				if tc.errorType != "" {
+					header.Set("x-amzn-errortype", tc.errorType)
+				}
+				header.Set("Content-Type", "application/json")
+				return &http.Response{StatusCode: tc.status, Header: header, Body: io.NopCloser(strings.NewReader(`{"message":"throttled"}`)), Request: r}, nil
+			})
+
+			cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: &http.Client{Transport: transport}, BaseEndpoint: aws.String("https://bedrock.test")}
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			_, err := NewRerankerWithHedgeDelay(NewClient(bedrockruntime.NewFromConfig(cfg)), "m", 2*time.Second).Score(ctx, "q", []string{"a"})
+			require.Error(t, err)
+			require.EqualValues(t, 1, calls.Load())
+			var statusErr interface{ HTTPStatusCode() int }
+			require.ErrorAs(t, err, &statusErr)
+			require.Equal(t, tc.status, statusErr.HTTPStatusCode())
+			if tc.isModeled {
+				var throttle *types.ThrottlingException
+				require.ErrorAs(t, err, &throttle)
+			}
+		})
+	}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
 
 func TestRealSDKAuthorizationFailureDoesNotRetry(t *testing.T) {
 	var calls atomic.Int32
