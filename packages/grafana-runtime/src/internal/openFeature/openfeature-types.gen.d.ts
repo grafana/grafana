@@ -205,6 +205,7 @@ declare module "@openfeature/core" {
     | "reporting.removeLogoUrlField"
     | "dashboards.disablePublicDashboards"
     | "grafana.panelActionsPopover"
+    | "grafana.dashboardSidebarExplicitOpen"
     | "grafana.folderPickerFolderEditAccess";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;

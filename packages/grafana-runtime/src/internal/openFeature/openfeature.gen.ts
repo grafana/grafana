@@ -192,6 +192,8 @@ export const FlagKeys = {
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened */
+  GrafanaDashboardSidebarExplicitOpen: "grafana.dashboardSidebarExplicitOpen",
   /** Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables */
   GrafanaDashboardVariablesMigration: "grafana.dashboardVariablesMigration",
   /** Enables the auto-height feature for dashboard panels */
@@ -1387,6 +1389,17 @@ export const useFlagGrafanaDashboardPreviewMode = (options?: ReactFlagEvaluation
  */
 export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardSettingsRedesign", true, options).value;
+};
+
+/**
+ * In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardSidebarExplicitOpen`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardSidebarExplicitOpen = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardSidebarExplicitOpen", false, options).value;
 };
 
 /**

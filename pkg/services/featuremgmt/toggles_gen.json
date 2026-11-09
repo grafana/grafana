@@ -2968,6 +2968,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardSidebarExplicitOpen",
+        "resourceVersion": "1794214035595",
+        "creationTimestamp": "2026-11-09T08:47:15Z"
+      },
+      "spec": {
+        "description": "In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardVariablesMigration",
         "resourceVersion": "1792033601704",
         "creationTimestamp": "2026-10-15T03:06:41Z"
