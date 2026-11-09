@@ -2,8 +2,6 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { API_GROUP, API_VERSION, type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { GrafanaEdition } from '@grafana/data/internal';
-import { config } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { useAlertingAbility } from '../../hooks/useAbilities';
@@ -200,38 +198,5 @@ describe('AlertRuleActions', () => {
     await userEvent.click(screen.getByRole('button', { name: 'More' }));
     await screen.findByRole('menuitem', { name: /View/i });
     expect(screen.queryByRole('menuitem', { name: /Silence/i })).not.toBeInTheDocument();
-  });
-
-  describe('Declare incident', () => {
-    it('shows Declare incident in Enterprise when rule is firing', async () => {
-      config.buildInfo.edition = GrafanaEdition.Enterprise;
-      config.buildInfo.env = 'production';
-      const rule = { ...ruleWithPerms(), status: { state: 'Firing' as const } };
-      renderActions(rule);
-
-      await userEvent.click(screen.getByRole('button', { name: 'More' }));
-      expect(await screen.findByRole('menuitem', { name: /Declare incident/i })).toBeInTheDocument();
-    });
-
-    it('hides Declare incident when rule is not firing', async () => {
-      config.buildInfo.edition = GrafanaEdition.Enterprise;
-      config.buildInfo.env = 'production';
-      renderActions(ruleWithPerms());
-
-      await userEvent.click(screen.getByRole('button', { name: 'More' }));
-      await screen.findByRole('menuitem', { name: /View/i });
-      expect(screen.queryByRole('menuitem', { name: /Declare incident/i })).not.toBeInTheDocument();
-    });
-
-    it('hides Declare incident in OSS even when firing', async () => {
-      config.buildInfo.edition = GrafanaEdition.OpenSource;
-      config.buildInfo.env = 'production';
-      const rule = { ...ruleWithPerms(), status: { state: 'Firing' as const } };
-      renderActions(rule);
-
-      await userEvent.click(screen.getByRole('button', { name: 'More' }));
-      await screen.findByRole('menuitem', { name: /View/i });
-      expect(screen.queryByRole('menuitem', { name: /Declare incident/i })).not.toBeInTheDocument();
-    });
   });
 });

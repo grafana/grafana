@@ -1,10 +1,7 @@
-import { useMemo } from 'react';
-
 import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { useFlagAlertEnrichment, useFlagAlertingEnrichmentPerRule } from '@grafana/runtime/internal';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { isGranted } from '../../hooks/abilities/abilityUtils';
-import { useEnrichmentAbility } from '../../hooks/abilities/otherAbilities';
 import {
   buildSilenceAbility,
   useCanSilenceInFolder,
@@ -13,10 +10,9 @@ import {
 import {
   type Ability,
   type AsyncAbility,
-  EnrichmentAction,
   Granted,
+  InsufficientPermissions,
   IsPluginManaged,
-  NotSupported,
   Provisioned,
 } from '../../hooks/abilities/types';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
@@ -25,108 +21,55 @@ import { getAnnotation, isK8sEntityProvisioned } from '../../utils/k8s/utils';
 import { getRulePluginOrigin } from '../../utils/rules';
 
 export interface RuleAbilities {
-  canEdit: Ability;
-  canPause: Ability;
-  canDelete: Ability;
-  canDuplicate: Ability;
-  canSilence: AsyncAbility;
-  canManageEnrichments: Ability;
+  edit: Ability;
+  pause: Ability;
+  delete: Ability;
+  duplicate: Ability;
+  silence: AsyncAbility;
 }
 
-type RuleMetadata = Pick<AlertRule, 'metadata' | 'spec'>;
+export function useRuleAbilities(rule: AlertRule): RuleAbilities {
+  const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  const { silenceSupported, silenceLoading } = useGrafanaRulesSilenceSupport();
+  const canSilenceInFolder = useCanSilenceInFolder(rule.metadata.annotations?.[AnnoKeyFolder]);
 
-function writeAbility(isProvisioned: boolean, isPlugin: boolean, isManaged: boolean, canWrite: boolean): Ability {
-  if (isProvisioned) {
-    return Provisioned;
-  }
-  if (isPlugin) {
-    return IsPluginManaged;
-  }
-  if (isManaged) {
-    return NotSupported;
-  }
-  return canWrite ? Granted : NotSupported;
-}
+  const isPluginManaged = Boolean(getRulePluginOrigin({ labels: rule.spec?.labels }));
+  const locked = getLockedReason(rule, isPluginManaged);
 
-function duplicateAbility(isPlugin: boolean, canCreate: boolean): Ability {
-  if (isPlugin) {
-    return IsPluginManaged;
-  }
-  return canCreate ? Granted : NotSupported;
-}
+  const fromAnnotation = (annotation: K8sAnnotations, permission: AccessControlAction): Ability =>
+    locked ?? (getAnnotation(rule, annotation) === 'true' ? Granted : InsufficientPermissions([permission]));
 
-function deleteAbility(isProvisioned: boolean, isPlugin: boolean, isManaged: boolean, canDelete: boolean): Ability {
-  if (isProvisioned) {
-    return Provisioned;
-  }
-  if (isPlugin) {
-    return IsPluginManaged;
-  }
-  if (isManaged) {
-    return NotSupported;
-  }
-  return canDelete ? Granted : NotSupported;
-}
-
-function getRuleAbilities(
-  rule: RuleMetadata,
-  canCreate: boolean,
-  canManageEnrichmentsAbility: boolean,
-  silenceLoading: boolean,
-  silenceSupported: boolean,
-  canSilenceInFolder: boolean
-): RuleAbilities {
-  const canWrite = getAnnotation(rule, K8sAnnotations.AccessWrite) === 'true';
-  const canDelete = getAnnotation(rule, K8sAnnotations.AccessDelete) === 'true';
-  const isProvisioned = isK8sEntityProvisioned(rule);
-  const isPlugin = Boolean(getRulePluginOrigin({ labels: rule.spec?.labels }));
-  const isManaged = Boolean(rule.metadata?.annotations?.['grafana.app/managedBy']);
-
-  const write = writeAbility(isProvisioned, isPlugin, isManaged, canWrite);
+  const edit = fromAnnotation(K8sAnnotations.AccessWrite, AccessControlAction.AlertingRuleUpdate);
 
   return {
-    canEdit: write,
-    canPause: write,
-    canDelete: deleteAbility(isProvisioned, isPlugin, isManaged, canDelete),
-    canDuplicate: duplicateAbility(isPlugin, canCreate),
-    canSilence: buildSilenceAbility(silenceLoading, silenceSupported, canSilenceInFolder),
-    canManageEnrichments: canManageEnrichmentsAbility ? Granted : NotSupported,
+    edit,
+    pause: edit,
+    delete: fromAnnotation(K8sAnnotations.AccessDelete, AccessControlAction.AlertingRuleDelete),
+    duplicate: getDuplicateAbility(isPluginManaged, createSupported && createAllowed),
+    silence: buildSilenceAbility(silenceLoading, silenceSupported, canSilenceInFolder),
   };
 }
 
-/** Returns action abilities for a GMA alert rule, memoized on the rule and permission state. */
-export function useRuleAbilities(rule: AlertRule): RuleAbilities {
-  const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
-  const canCreate = createSupported && createAllowed;
+function getLockedReason(rule: AlertRule, isPluginManaged: boolean): Ability | undefined {
+  if (isK8sEntityProvisioned(rule)) {
+    return Provisioned;
+  }
+  if (isPluginManaged) {
+    return IsPluginManaged;
+  }
+  // Managed by an external system — treat the same as provisioned.
+  if (rule.metadata?.annotations?.['grafana.app/managedBy']) {
+    return Provisioned;
+  }
+  return undefined;
+}
 
-  const enrichmentReadAbility = useEnrichmentAbility(EnrichmentAction.Read);
-  const alertEnrichmentEnabled = useFlagAlertEnrichment();
-  const alertingEnrichmentPerRuleEnabled = useFlagAlertingEnrichmentPerRule();
-  const canManageEnrichmentsAbility =
-    isGranted(enrichmentReadAbility) && alertEnrichmentEnabled && alertingEnrichmentPerRuleEnabled;
-
-  const { silenceSupported, silenceLoading } = useGrafanaRulesSilenceSupport();
-  const canSilenceInFolder = useCanSilenceInFolder(rule.metadata?.annotations?.['grafana.app/folder']);
-
-  return useMemo(
-    () =>
-      getRuleAbilities(
-        rule,
-        canCreate,
-        canManageEnrichmentsAbility,
-        silenceLoading,
-        silenceSupported,
-        canSilenceInFolder
-      ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      rule.metadata?.annotations,
-      rule.spec?.labels,
-      canCreate,
-      canManageEnrichmentsAbility,
-      silenceLoading,
-      silenceSupported,
-      canSilenceInFolder,
-    ]
-  );
+function getDuplicateAbility(isPluginManaged: boolean, canCreate: boolean): Ability {
+  if (isPluginManaged) {
+    return IsPluginManaged;
+  }
+  if (!canCreate) {
+    return InsufficientPermissions([AccessControlAction.AlertingRuleCreate]);
+  }
+  return Granted;
 }

@@ -7,7 +7,6 @@ import { Box, Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import MoreButton from '../../components/MoreButton';
-import { AIAlertRuleButtonComponent } from '../../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
@@ -71,12 +70,9 @@ function AlertRulesPageHeader() {
   return (
     <Stack direction="row" gap={1} alignItems="center">
       {canCreate && (
-        <>
-          <LinkButton href="/alerting/new/alerting" icon="plus" variant="primary">
-            <Trans i18nKey="alerting.gma-rule-list.header.new-alert-rule">New alert rule</Trans>
-          </LinkButton>
-          <AIAlertRuleButtonComponent />
-        </>
+        <LinkButton href="/alerting/new/alerting" icon="plus" variant="primary">
+          <Trans i18nKey="alerting.gma-rule-list.header.new-alert-rule">New alert rule</Trans>
+        </LinkButton>
       )}
       <Dropdown overlay={moreMenu}>
         <MoreButton />
