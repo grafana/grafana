@@ -216,7 +216,7 @@ describe('PanelAdHocChangesAction', () => {
     await userEvent.click(screen.getByTestId(buttonTestId));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Remove changes' }));
 
-    expect(reportInteraction).toHaveBeenCalledWith('grafana_table_cleared_changes');
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_table_cleared_interactions');
     expect(panel.getRuntimeTransformations().get(OWNER)).toEqual([]);
     expect(screen.queryByTestId(buttonTestId)).not.toBeInTheDocument();
   });

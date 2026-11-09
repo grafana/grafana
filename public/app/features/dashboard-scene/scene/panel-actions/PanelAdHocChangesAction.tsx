@@ -43,7 +43,7 @@ export function PanelAdHocChangesAction({ panel }: Props) {
     const hadChanges = api.get(TABLE_TRANSFORMATIONS_OWNER).length > 0;
     api.set(TABLE_TRANSFORMATIONS_OWNER, []);
     if (hadChanges && panel.state.pluginId === 'table') {
-      reportInteraction('grafana_table_cleared_changes');
+      reportInteraction('grafana_table_cleared_interactions');
     }
   }, [panel]);
 
