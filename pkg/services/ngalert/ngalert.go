@@ -103,6 +103,7 @@ func ProvideService(
 	tracer tracing.Tracer,
 	alertingStore *store.DBstore,
 	ruleStore rulesstore.Store,
+	sqlRuleStore *rulesstore.RuleStore,
 	provenanceStore *provenance.ProvenanceStore,
 	httpClientProvider httpclient.Provider,
 	pluginContextProvider *plugincontext.Provider,
@@ -141,6 +142,7 @@ func ProvideService(
 		tracer:                    tracer,
 		store:                     alertingStore,
 		ruleStore:                 ruleStore,
+		sqlRuleStore:              sqlRuleStore,
 		provenanceStore:           provenanceStore,
 		httpClientProvider:        httpClientProvider,
 		pluginContextProvider:     pluginContextProvider,
@@ -207,10 +209,14 @@ type AlertNG struct {
 	annotationsRepo           annotations.Repository
 	store                     *store.DBstore
 	ruleStore                 rulesstore.Store
-	provenanceStore           *provenance.ProvenanceStore
-	userService               user.Service
-	orgService                org.Service
-	cfgProvider               configprovider.ConfigProvider
+	// sqlRuleStore bypasses the rules service wrapper. The legacy rule service backs the
+	// app-platform legacy storage, so routing it through the wrapper (which may delegate to
+	// that storage) would recurse.
+	sqlRuleStore    *rulesstore.RuleStore
+	provenanceStore *provenance.ProvenanceStore
+	userService     user.Service
+	orgService      org.Service
+	cfgProvider     configprovider.ConfigProvider
 
 	bus             bus.Bus
 	pluginsStore    pluginstore.Store
@@ -593,7 +599,7 @@ func (ng *AlertNG) init() error {
 		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
 		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator)
 
-	legacyRuleService := legacy.NewLegacyRuleService(ng.ruleStore, ng.provenanceStore, ng.folderService, ng.QuotaService, ng.store,
+	legacyRuleService := legacy.NewLegacyRuleService(ng.sqlRuleStore, ng.provenanceStore, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()), ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
 		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator)
 
