@@ -30,6 +30,9 @@ function Stack({ items, selectedItem, onActiveItemChange }: StackProps) {
             data-stacked-editor-item-type={item.type}
           />
         ))}
+        <div data-stacked-add-bar data-testid="add-bar">
+          <button data-testid="add-bar-button" />
+        </div>
       </div>
     </div>
   );
@@ -173,6 +176,81 @@ describe('useStackedItemScroll', () => {
     jest.advanceTimersByTime(1);
 
     expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('pauses re-pinning while the pointer is on an add bar', () => {
+    const ro = mockResizeObserver();
+    try {
+      const items = [makeQueryItem('A'), makeQueryItem('B'), makeQueryItem('C')];
+      const { getByTestId } = render(
+        <Stack items={items} selectedItem={queryRef('C')} onActiveItemChange={jest.fn()} />
+      );
+
+      fireEvent.pointerMove(getByTestId('add-bar-button'));
+      ro.resize();
+
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      ro.restore();
+    }
+  });
+
+  it('resumes re-pinning once the pointer leaves the add bar', () => {
+    const ro = mockResizeObserver();
+    try {
+      const items = [makeQueryItem('A'), makeQueryItem('B'), makeQueryItem('C')];
+      const { getByTestId } = render(
+        <Stack items={items} selectedItem={queryRef('C')} onActiveItemChange={jest.fn()} />
+      );
+
+      fireEvent.pointerMove(getByTestId('add-bar-button'));
+      fireEvent.pointerOut(getByTestId('add-bar-button'), {
+        relatedTarget: getByTestId(`section-${QueryEditorType.Query}-A`),
+      });
+      ro.resize();
+
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      ro.restore();
+    }
+  });
+
+  // Choosing a menu item returns focus to the bar's button after the new card is selected.
+  it('keeps re-pinning when focus returns to an add bar', () => {
+    const ro = mockResizeObserver();
+    try {
+      const items = [makeQueryItem('A'), makeQueryItem('B'), makeQueryItem('C')];
+      const { getByTestId } = render(
+        <Stack items={items} selectedItem={queryRef('C')} onActiveItemChange={jest.fn()} />
+      );
+
+      fireEvent.focusIn(getByTestId('add-bar-button'));
+      ro.resize();
+
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      ro.restore();
+    }
+  });
+
+  it('keeps re-pinning when an add bar scrolls under a still pointer', () => {
+    const items = [makeQueryItem('A'), makeQueryItem('B'), makeQueryItem('C')];
+    const { getByTestId } = render(<Stack items={items} selectedItem={queryRef('C')} onActiveItemChange={jest.fn()} />);
+
+    fireEvent.pointerOver(getByTestId('add-bar-button'));
+    jest.advanceTimersByTime(1);
+
+    expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps re-pinning when the pointer moves over a card', () => {
+    const items = [makeQueryItem('A'), makeQueryItem('B'), makeQueryItem('C')];
+    const { getByTestId } = render(<Stack items={items} selectedItem={queryRef('C')} onActiveItemChange={jest.fn()} />);
+
+    fireEvent.pointerMove(getByTestId(`section-${QueryEditorType.Query}-A`));
+    jest.advanceTimersByTime(1);
+
+    expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
   });
 
   it('ignores scroll position while auto-following, then follows it after the user scrolls', () => {

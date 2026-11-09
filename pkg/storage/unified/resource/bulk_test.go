@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"iter"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -13,11 +15,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestResourceServerOptionsBulkBatchOptions(t *testing.T) {
@@ -320,6 +325,25 @@ func TestBulkProcessStopsRunnerOnPanic(t *testing.T) {
 	}
 }
 
+// Early rejections are covered by the blob validation tests; this covers a
+// backend's call-level failure, which must become the stream status instead of
+// a response carrying partial results.
+func TestBulkProcessReturnsBackendFailureAsStatus(t *testing.T) {
+	failure := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "bulk import failed"}
+	srv := &server{
+		backend:          &failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1, Error: failure}},
+		access:           authlib.FixedAccessClient(true),
+		bulkBatchOptions: DefaultBulkBatchOptions(),
+	}
+	key := newTestBulkRequest("item").Key
+	settings := BulkSettings{Collection: []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}}}
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1"})
+	stream := &bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: metadata.NewIncomingContext(ctx, settings.ToMD())}}
+
+	requireRPCError(t, srv.BulkProcess(stream), failure)
+	require.Nil(t, stream.response)
+}
+
 func newTestBatchRunner(stream resourcepb.BulkStore_BulkProcessServer, key *resourcepb.ResourceKey, opts BulkBatchOptions) *batchRunner {
 	return &batchRunner{
 		stream: stream,
@@ -371,6 +395,15 @@ func (*preflightTestBackend) RequiresBulkPreflight() {}
 func (b *preflightTestBackend) ProcessBulk(context.Context, BulkSettings, BulkRequestIterator) *resourcepb.BulkResponse {
 	b.called = true
 	return &resourcepb.BulkResponse{}
+}
+
+type failingBulkBackend struct {
+	UnimplementedStorageBackend
+	rsp *resourcepb.BulkResponse
+}
+
+func (b *failingBulkBackend) ProcessBulk(context.Context, BulkSettings, BulkRequestIterator) *resourcepb.BulkResponse {
+	return b.rsp
 }
 
 type testBulkProcessServer struct {
@@ -488,4 +521,92 @@ func (b *panicBulkBackend) GetResourceStats(context.Context, NamespacedResource,
 
 func (b *panicBulkBackend) GetResourceLastImportTime(context.Context, NamespacedResource) (time.Time, error) {
 	panic("not implemented")
+}
+
+func TestBulkRV(t *testing.T) {
+	now := time.Now()
+	object := func(updated time.Time) metav1.Object {
+		obj := &metav1.ObjectMeta{CreationTimestamp: metav1.NewTime(updated.Add(-time.Hour))}
+		if !updated.IsZero() {
+			obj.SetAnnotations(map[string]string{utils.AnnoKeyUpdatedTimestamp: updated.UTC().Format(time.RFC3339)})
+		}
+		return obj
+	}
+	rvTime := func(rv int64) time.Time {
+		return time.UnixMilli(snowflakeTimestampMillis(rv))
+	}
+
+	t.Run("an old deletion after a recently updated object keeps its own age", func(t *testing.T) {
+		g := newBulkRV()
+		recent := g.next("a", object(now.Add(-time.Minute)))
+		deleted := g.next("b", object(now.Add(-90*24*time.Hour)))
+		require.Less(t, deleted, recent)
+		require.WithinDuration(t, now.Add(-90*24*time.Hour), rvTime(deleted), time.Second)
+	})
+
+	t.Run("a deletion takes its deletion time, not its last edit", func(t *testing.T) {
+		g := newBulkRV()
+		obj := object(now.Add(-2 * 365 * 24 * time.Hour))
+		deletedAt := metav1.NewTime(now.Add(-24 * time.Hour))
+		obj.SetDeletionTimestamp(&deletedAt)
+		require.WithinDuration(t, deletedAt.Time, rvTime(g.next("a", obj)), time.Second)
+	})
+
+	t.Run("versions of one object keep increasing when timestamps go back", func(t *testing.T) {
+		g := newBulkRV()
+		first := g.next("a", object(now.Add(-time.Hour)))
+		second := g.next("a", object(now.Add(-2*time.Hour)))
+		require.Greater(t, second, first)
+	})
+
+	t.Run("RVs stay unique across objects in the same millisecond", func(t *testing.T) {
+		g := newBulkRV()
+		ts := now.Add(-time.Hour).Truncate(time.Second)
+		seen := map[int64]bool{}
+		for i := range 2500 {
+			rv := g.next(fmt.Sprintf("obj-%d", i), object(ts))
+			require.False(t, seen[rv], "duplicate RV %d", rv)
+			seen[rv] = true
+			require.Less(t, rv&((1<<resourceVersionTimestampShift)-1), int64(1000), "sub-millisecond counter must stay under 1000")
+		}
+	})
+
+	t.Run("an object whose last version filled a millisecond continues in a later one", func(t *testing.T) {
+		g := newBulkRV()
+		ts := object(now.Add(-time.Hour).Truncate(time.Second))
+		var last int64
+		for i := range 999 {
+			last = g.next(fmt.Sprintf("filler-%d", i), ts)
+		}
+		require.Equal(t, int64(999), last&((1<<resourceVersionTimestampShift)-1), "the millisecond is full")
+		g.lastRV["obj"] = last
+		next := g.next("obj", ts)
+		require.Greater(t, next, last)
+		require.Equal(t, last>>resourceVersionTimestampShift+1, next>>resourceVersionTimestampShift)
+	})
+
+	t.Run("a large cohort with one timestamp stays unique and skips full milliseconds", func(t *testing.T) {
+		g := newBulkRV()
+		at := now.Add(-time.Hour).Truncate(time.Second)
+		seen := map[int64]bool{}
+		prev := int64(0)
+		for i := range 50_000 {
+			rv := g.next(fmt.Sprintf("obj-%d", i), object(at))
+			require.False(t, seen[rv], "duplicate RV %d", rv)
+			require.Greater(t, rv, prev, "a cohort fills milliseconds in order")
+			seen[rv], prev = true, rv
+		}
+		// The cohort's first millisecond points straight at the one still open, so the
+		// next object with this timestamp skips every full millisecond in one step
+		start := snowflakeFromTime(at) >> resourceVersionTimestampShift
+		require.Equal(t, prev>>resourceVersionTimestampShift, g.nextFree[start])
+	})
+
+	t.Run("objects without a usable timestamp get unique RVs below the import start", func(t *testing.T) {
+		g := newBulkRV()
+		a := g.next("a", &metav1.ObjectMeta{})
+		b := g.next("b", &metav1.ObjectMeta{})
+		require.NotEqual(t, a, b)
+		require.WithinDuration(t, now.Add(-30*time.Second), rvTime(a), 2*time.Second)
+	})
 }

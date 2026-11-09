@@ -254,18 +254,6 @@ export interface AzureMonitorLocations {
   supportsLogs?: boolean;
 }
 
-export interface AzureMonitorProvidersResponse {
-  namespace: string;
-  resourceTypes: ProviderResourceType[];
-}
-
-interface ProviderResourceType {
-  resourceType: string;
-  locations: string[];
-  apiVersions: string[];
-  capabilities: string;
-}
-
 export interface AzureAPIResponse<T> {
   value: T[];
   count?: {
