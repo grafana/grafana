@@ -89,14 +89,20 @@ export function useColumnTransformations(
   const onColumnOrderChange = useCallback(
     (order: string[]) => {
       if (context) {
+        let orderChanged = false;
         update(
           (current) => {
             const before = columnTransformations.columnOrder.read(current, context).columnOrder ?? context.catalog;
             const next = columnTransformations.columnOrder.write(current, order, context);
             const after = columnTransformations.columnOrder.read(next, context).columnOrder ?? context.catalog;
-            return isEqual(before, after) ? current : next;
+            orderChanged = !isEqual(before, after);
+            return next;
           },
-          () => onInteraction?.('reorder')
+          () => {
+            if (orderChanged) {
+              onInteraction?.('reorder');
+            }
+          }
         );
       }
     },
