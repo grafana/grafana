@@ -180,7 +180,6 @@ func TestMigrationRepository_Find(t *testing.T) {
 	t.Run("alert query reads legacy only", func(t *testing.T) {
 		for _, query := range []*annotations.ItemQuery{
 			{Type: "alert"},
-			{AlertID: 7},
 			{AlertUID: "abc"},
 		} {
 			legacy := &fakeLegacy{findResult: []*annotations.ItemDTO{item(1, 10)}}

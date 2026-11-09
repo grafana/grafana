@@ -2,19 +2,18 @@ import { type AnnotationQuery, type NavModel, type NavModelItem, PageLayoutType 
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useFlagDashboardNewLayouts, useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
-import { type SceneComponentProps, type VizPanel, type dataLayers } from '@grafana/scenes';
+import { type dataLayers, type SceneComponentProps, type VizPanel } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import {
-  HIGHLIGHT_CATEGORY_PARAM_NAME,
   CATEGORY_PARAM_NAME,
+  HIGHLIGHT_CATEGORY_PARAM_NAME,
 } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { type AnnotationsEditView } from './AnnotationsEditView';
 import { AnnotationSettingsEdit } from './annotations/AnnotationSettingsEdit';
@@ -34,14 +33,14 @@ export function AnnotationsEditViewRenderer({ model }: SceneComponentProps<Annot
   const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
 
   const goToSidebar = () => {
-    // close settings and open dashboard sidebar
-    const dashboard = getDashboardSceneFor(model);
-    dashboard.state.sidebar.selectObject(dashboard);
     locationService.partial({
       editview: null,
       [HIGHLIGHT_CATEGORY_PARAM_NAME]: 'dashboard-annotations',
       [CATEGORY_PARAM_NAME]: 'dashboard-annotations',
     });
+    setTimeout(() => {
+      dashboard.state.sidebar.selectObject(dashboard);
+    }, 0);
 
     DashboardInteractions.takeMeToSidebarClicked({ item: 'annotations' });
   };

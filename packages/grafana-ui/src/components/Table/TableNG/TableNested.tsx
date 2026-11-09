@@ -261,20 +261,14 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const frozenColumns = 0;
   const numFrozenColsFullyInView = 0;
   // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out.
-  // The expander column only exists when there's a nested frame to expand into (see the columns
-  // memo below), so with no rows its width isn't taken out of what the real columns get to use.
   const availableWidth = useMemo(
     () =>
       width -
-      (firstRowNestedData ? COLUMN.EXPANDER_WIDTH : 0) -
+      COLUMN.EXPANDER_WIDTH -
       parentGutterWidth -
       scrollbarWidth -
       (tableRefreshEnabled && (!noPanelPadding || transparent) ? TABLE.FRAME_BORDER_WIDTH * 2 : 0),
-    [width, scrollbarWidth, parentGutterWidth, firstRowNestedData, tableRefreshEnabled, noPanelPadding, transparent]
-  );
-  const nestedAvailableWidth = useMemo(
-    () => Math.max(0, availableWidth - TABLE.CELL_PADDING - 1 - nestedGutterWidth),
-    [availableWidth, nestedGutterWidth]
+    [width, scrollbarWidth, parentGutterWidth, tableRefreshEnabled, noPanelPadding, transparent]
   );
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
@@ -694,16 +688,15 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths, data, rows, sortedRows, lastColumnExtraPadding);
 
-    if (!firstRowNestedData) {
-      if (showRowNumbers) {
-        result.columns.unshift(createRowNumberColumn(1, parentGutterWidth));
-        result.cellRootRenderers[ROW_NUMBER_COLUMN_KEY] = function renderEmptyParentRowNumberCell(key, cellProps) {
-          return <Cell key={key} {...cellProps} />;
-        };
-      }
-      return { ...result, columns: markEdgeColumns(result.columns) };
+    if (showRowNumbers) {
+      result.columns.unshift(createRowNumberColumn(1, parentGutterWidth));
+      result.cellRootRenderers[ROW_NUMBER_COLUMN_KEY] = function renderEmptyParentRowNumberCell(key, cellProps) {
+        return <Cell key={key} {...cellProps} />;
+      };
     }
 
+    // Keep the expander column even with no rows: nested tables have no first-column inset of their
+    // own, so without it the first header cell sits closer to the panel edge than the panel title.
     const expanderCellRenderer: CellRootRenderer = (key, cellProps) => <Cell key={key} {...cellProps} />;
     result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;
 
@@ -739,7 +732,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   }, [
     buildNestedTableExpanderColumn,
     data,
-    firstRowNestedData,
     fromFields,
     hasNestedHeaders,
     nestedColumnsMatrix,

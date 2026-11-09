@@ -21,7 +21,7 @@ export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => {
     <ToolbarButton
       tooltip={tooltip}
       data-testid={selectors.components.NavToolbar.editDashboard.editButton}
-      icon={dashboard.state.isEditing ? 'edit' : 'pen'}
+      icon="pen"
       variant="canvas"
       onClick={(evt) => {
         evt.preventDefault();

@@ -5,15 +5,13 @@ import { type Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
-import { type CodeEditor } from '@grafana/ui';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import Templates from './Templates';
 import { grantUserPermissions } from './mocks';
-
-type CodeEditorProps = React.ComponentProps<typeof CodeEditor>;
+import { resetTemplatesDb } from './mocks/server/handlers/k8s/templates.k8s';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
@@ -34,13 +32,6 @@ jest.mock(
       children({ width: 1000, height: 1000, scaledWidth: 1, scaledHeight: 1 })
 );
 
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  CodeEditor: ({ value, onChange }: CodeEditorProps) => (
-    <textarea data-testid="code-editor" value={value} onChange={(e) => onChange?.(e.target.value)} />
-  ),
-}));
-
 const ui = {
   templateForm: byRole('form', { name: 'Template form' }),
   form: {
@@ -58,6 +49,7 @@ const navUrl = {
 setupMswServer();
 
 beforeEach(() => {
+  resetTemplatesDb();
   grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsWrite]);
 });
 
@@ -124,8 +116,9 @@ describe('Templates routes', () => {
 
     expect(form).toBeInTheDocument();
     expect(within(form).getByRole('textbox', { name: /Template group name/ })).toHaveValue('custom-email');
-    expect(within(form).getAllByTestId('code-editor')[0]).toHaveValue(
-      '{{ define "custom-email" }}  Custom email template {{ end }}'
+    expect(await within(form).findByRole('textbox', { name: 'Template group' })).toHaveTextContent(
+      '{{ define "custom-email" }}  Custom email template {{ end }}',
+      { normalizeWhitespace: false }
     );
   });
 
@@ -136,7 +129,7 @@ describe('Templates routes', () => {
 
     expect(form).toBeInTheDocument();
     expect(within(form).getByRole('textbox', { name: /Template group name/ })).toHaveValue('custom-email (copy)');
-    expect(within(form).getAllByTestId('code-editor')[0]).toHaveTextContent(
+    expect(await within(form).findByRole('textbox', { name: 'Template group' })).toHaveTextContent(
       '{{ define "custom-email_NEW" }} Custom email template {{ end }}'
     );
   });
@@ -146,10 +139,11 @@ describe('Templates routes', () => {
 
     const form = await ui.templateForm.find();
 
-    const templateEditor = within(form).getAllByTestId('code-editor')[0];
+    const templateEditor = await within(form).findByRole('textbox', { name: 'Template group' });
 
-    await user.clear(templateEditor);
-    await user.type(templateEditor, '{{ define "custom-email" }}Updated custom email template{{ end }}');
+    await user.click(templateEditor);
+    await user.keyboard('{Control>}a{/Control}{Backspace}');
+    await user.paste('{{ define "custom-email" }}Updated custom email template{{ end }}');
 
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
@@ -158,5 +152,10 @@ describe('Templates routes', () => {
     );
 
     expect(ui.templateForm.query()).not.toBeInTheDocument();
+
+    setup([navUrl.edit('k8s-custom-email-resource-name')]);
+    expect(await screen.findByRole('textbox', { name: 'Template group' })).toHaveTextContent(
+      /^\{\{ define "custom-email" \}\}Updated custom email template\{\{ end \}\}$/
+    );
   });
 });

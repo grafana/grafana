@@ -20,8 +20,6 @@ type SnapshotSpec struct {
 	Timestamp *string `json:"timestamp,omitempty"`
 	// Snapshot delete key
 	DeleteKey *string `json:"deleteKey,omitempty"`
-	// The raw dashboard (unstructured for now)
-	Dashboard map[string]interface{} `json:"dashboard,omitempty"`
 }
 
 // NewSnapshotSpec creates a new SnapshotSpec object.

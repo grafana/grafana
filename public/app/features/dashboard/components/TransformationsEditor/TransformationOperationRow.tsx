@@ -16,6 +16,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
+import { DataTopic } from '@grafana/schema';
 import { ConfirmModal } from '@grafana/ui';
 import {
   QueryOperationAction,
@@ -118,6 +119,11 @@ export const TransformationOperationRow = ({
     // transformDataFrame skips variable interpolation under Scenes, so resolve them here as the panel does.
     const resolved = interpolateConfigs(configs.map((t) => t.transformation));
     const config = resolved[index];
+    // The pipeline runs each topic over its own frames, so this transformation is described against
+    // the frames of its topic, preceded only by the transformations that share it.
+    const isAnnotations = config.topic === DataTopic.Annotations;
+    const topicFrames = (isAnnotations ? data.annotations : data.series) ?? [];
+    const sharesTopic = (other: DataTransformerConfig) => (other.topic === DataTopic.Annotations) === isAnnotations;
     // we need previous transformation index to get its outputs
     //    to be used in this transforms inputs
     const prevTransformIndex = index - 1;
@@ -126,11 +132,11 @@ export const TransformationOperationRow = ({
     let prevOutputTransforms: Array<DataTransformerConfig<{}>> = [];
 
     if (prevTransformIndex >= 0) {
-      prevInputTransforms = resolved.slice(0, prevTransformIndex);
-      prevOutputTransforms = resolved.slice(prevTransformIndex, index);
+      prevInputTransforms = resolved.slice(0, prevTransformIndex).filter(sharesTopic);
+      prevOutputTransforms = resolved.slice(prevTransformIndex, index).filter(sharesTopic);
     }
 
-    const inputTransforms = resolved.slice(0, index);
+    const inputTransforms = resolved.slice(0, index).filter(sharesTopic);
     const outputTransforms = resolved.slice(index, index + 1);
 
     const ctx: DataTransformContext = {
@@ -160,7 +166,7 @@ export const TransformationOperationRow = ({
 
     try {
       subscriptions.push(
-        transformDataFrame(inputTransforms, data.series, ctx).subscribe({
+        transformDataFrame(inputTransforms, topicFrames, ctx).subscribe({
           next: (data) => setInput(applyFilter(data)),
           error,
         })
@@ -181,7 +187,7 @@ export const TransformationOperationRow = ({
           disabled: undefined,
         };
         subscriptions.push(
-          transformDataFrame(inputTransforms, data.series, ctx)
+          transformDataFrame(inputTransforms, topicFrames, ctx)
             .pipe(mergeMap((before) => transformDataFrame([previewConfig], applyFilter(before), ctx)))
             .subscribe({
               // More than one frame means there is no single output to name, so the row shows "(Auto)".
@@ -191,18 +197,19 @@ export const TransformationOperationRow = ({
         );
       }
       subscriptions.push(
-        transformDataFrame(inputTransforms, data.series, ctx)
+        transformDataFrame(inputTransforms, topicFrames, ctx)
           .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
           .subscribe({ next: setOutput, error })
       );
       subscriptions.push(
-        transformDataFrame(prevInputTransforms, data.series, ctx)
+        transformDataFrame(prevInputTransforms, topicFrames, ctx)
           .pipe(mergeMap((before) => transformDataFrame(prevOutputTransforms, before, ctx)))
           .subscribe({
             next: (result) => {
               let mergedResult = [...result];
               // add refIds that were requested even if they did not return a result
-              data.request?.targets.forEach((series) => {
+              // Requested refIds are series queries; annotation frames do not come from them.
+              (isAnnotations ? [] : (data.request?.targets ?? [])).forEach((series) => {
                 const refIdInResult = mergedResult.some((frame) => frame.refId === series.refId);
                 if (!refIdInResult) {
                   mergedResult.push({ refId: series.refId, fields: [], length: 0 });

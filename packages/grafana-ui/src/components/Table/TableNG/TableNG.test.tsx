@@ -995,13 +995,19 @@ describe('TableNG', () => {
       expect(container.querySelector('[aria-label="Expand row"]')).not.toBeInTheDocument();
     });
 
-    it('gives the columns the full frame content width when there are no rows to expand', () => {
-      // With no nested frame to expand into there's no expander column, so its width shouldn't be
-      // held back from the real columns — rdg's grid-template-columns shows what they actually got.
+    it('keeps the expander as the first column when there are no rows to expand', () => {
+      // The first data column's header only lines up with the panel title when the expander sits in
+      // front of it, so the expander column stays even with nothing to expand. rdg's
+      // grid-template-columns shows the expander's 36px followed by the data columns sharing the rest.
       const { container } = render(<TableNG data={createEmptyNestedDataFrame()} width={800} height={600} />);
 
       const grid = container.querySelector<HTMLElement>('[role="treegrid"]')!;
-      expect(grid).toHaveStyle({ gridTemplateColumns: '400px 400px' });
+      expect(grid).toHaveStyle({ gridTemplateColumns: '36px 382px 382px' });
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(headers[0]).toHaveTextContent('Expand nested rows');
+      expect(headers[0]).toHaveClass(FIRST_COLUMN_CLASS);
+      expect(headers[1]).toHaveTextContent('Column A');
     });
   });
 

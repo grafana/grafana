@@ -40,6 +40,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:         "Playlist",
 					Plural:       "Playlists",
+					Resource:     "playlists",
 					Scope:        "Namespaced",
 					Conversion:   true,
 					FolderScoped: func(b bool) *bool { return &b }(false),
@@ -72,6 +73,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:         "Playlist",
 					Plural:       "Playlists",
+					Resource:     "playlists",
 					Scope:        "Namespaced",
 					Conversion:   true,
 					FolderScoped: func(b bool) *bool { return &b }(false),
