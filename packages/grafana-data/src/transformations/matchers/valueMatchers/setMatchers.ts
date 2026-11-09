@@ -34,7 +34,9 @@ const PILL_SPLIT_RE = /\s*,\s*/;
  * TableNG utils so filter options and matching agree with the rendered pills;
  * keep the two in sync. Unlike inferPills, empty strings yield [''] so blank
  * cells keep flowing through the existing blanks handling, and non-string
- * scalars stay raw so raw-mode matching still sees the original value.
+ * scalars stay raw so raw-mode matching still sees the original value. Like
+ * inferPills, the '[' check runs on the untrimmed string: a value with leading
+ * whitespace before '[' comma-splits on both sides.
  */
 export function splitFilterElements(value: unknown): unknown[] {
   if (Array.isArray(value)) {
@@ -43,16 +45,15 @@ export function splitFilterElements(value: unknown): unknown[] {
   if (typeof value !== 'string') {
     return [value];
   }
-  const text = value.trim();
-  if (text[0] === '[') {
+  if (value[0] === '[') {
     try {
-      const parsed: unknown = JSON.parse(text);
+      const parsed: unknown = JSON.parse(value);
       return Array.isArray(parsed) ? parsed : [];
     } catch {
-      return text.split(PILL_SPLIT_RE);
+      return value.trim().split(PILL_SPLIT_RE);
     }
   }
-  return text.split(PILL_SPLIT_RE);
+  return value.trim().split(PILL_SPLIT_RE);
 }
 
 /**

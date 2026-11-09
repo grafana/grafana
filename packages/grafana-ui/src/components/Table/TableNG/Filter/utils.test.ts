@@ -6,8 +6,11 @@ import {
   calculateUniqueFieldValues,
   getFieldFilterValues,
   getFilteredOptions,
+  isLegacyWholeCellSelection,
   operatorSelectableValues,
   rangeHistogram,
+  remapSelectionsToCurrentDisplay,
+  restoreWholeCellSelections,
   rowMatchesFilterValues,
   sliderBoundText,
   sliderDecimals,
@@ -248,5 +251,120 @@ describe('operatorSelectableValues', () => {
     for (const [key, op] of Object.entries(ops)) {
       expect(op.value).toBe(key);
     }
+  });
+});
+
+function makePillField(name: string): Field {
+  return {
+    ...makeField(name),
+    config: { custom: { cellOptions: { type: 'pill' } } },
+  };
+}
+
+describe('isLegacyWholeCellSelection', () => {
+  it('detects unflagged selections on pill fields', () => {
+    expect(isLegacyWholeCellSelection(makePillField('Actors'), { values: ['a, b'] })).toBe(true);
+  });
+
+  it('detects unflagged selections on array-valued fields', () => {
+    const field: Field = { ...makeField('Actors'), type: FieldType.other, values: [['a']] };
+    expect(isLegacyWholeCellSelection(field, { values: ['a'] })).toBe(true);
+  });
+
+  it('ignores flagged per-element selections', () => {
+    const field: Field = { ...makeField('Actors'), type: FieldType.other, values: [['a']] };
+    expect(isLegacyWholeCellSelection(field, { values: ['a'], matchElements: true })).toBe(false);
+  });
+
+  it('ignores scalar fields, whose values were always whole-cell', () => {
+    expect(isLegacyWholeCellSelection(makeField('Status'), { values: ['active'] })).toBe(false);
+  });
+});
+
+describe('restoreWholeCellSelections', () => {
+  it('expands a saved array cell onto its per-element options', () => {
+    const field: Field = { ...makeField('Actors'), type: FieldType.other };
+    const rows = [makeRow('Actors', ['a', 'b']), makeRow('Actors', ['c'])];
+    // Without field.display the stored whole-cell string is String(cell).
+    expect(restoreWholeCellSelections(rows, field, ['a,b'])).toEqual(['a', 'b']);
+  });
+
+  it('expands a saved pill cell onto its per-pill options', () => {
+    const field = makePillField('Actors');
+    const rows = [makeRow('Actors', 'a, b'), makeRow('Actors', 'c')];
+    expect(restoreWholeCellSelections(rows, field, ['a, b'])).toEqual(['a', 'b']);
+  });
+
+  it('formats restored elements with field.display', () => {
+    const field: Field = {
+      ...makeField('Temp'),
+      type: FieldType.other,
+      display: (v: unknown) => ({ text: `${v}!`, numeric: Number(v) }),
+    };
+    const rows = [makeRow('Temp', [22, 37])];
+    expect(restoreWholeCellSelections(rows, field, ['22,37!'])).toEqual(['22!', '37!']);
+  });
+
+  it('drops stored values matching no row', () => {
+    const field: Field = { ...makeField('Actors'), type: FieldType.other };
+    const rows = [makeRow('Actors', ['a'])];
+    expect(restoreWholeCellSelections(rows, field, ['zzz'])).toEqual([]);
+  });
+
+  it('passes scalar whole values through unchanged', () => {
+    const field = makeField('Status');
+    const rows = [makeRow('Status', 'active')];
+    expect(restoreWholeCellSelections(rows, field, ['active'])).toEqual(['active']);
+  });
+});
+
+describe('remapSelectionsToCurrentDisplay', () => {
+  const previousDisplay = (v: unknown) => ({ text: `old:${String(v)}`, numeric: NaN });
+  const currentDisplay = (v: unknown) => ({ text: `new:${String(v)}`, numeric: NaN });
+
+  it('expands legacy whole-cell values to current per-element strings', () => {
+    const field: Field = { ...makeField('Actors'), type: FieldType.other };
+    const rows = [makeRow('Actors', ['a', 'b']), makeRow('Actors', ['c'])];
+    expect(
+      remapSelectionsToCurrentDisplay({
+        rows,
+        field,
+        storedValues: ['old:a,b'],
+        previousDisplay,
+        currentDisplay,
+        legacyWholeCell: true,
+      })
+    ).toEqual(['new:a', 'new:b']);
+  });
+
+  it('remaps per-element values candidate by candidate', () => {
+    const field: Field = { ...makeField('Actors'), type: FieldType.other };
+    const rows = [makeRow('Actors', ['a', 'b'])];
+    expect(
+      remapSelectionsToCurrentDisplay({
+        rows,
+        field,
+        storedValues: ['old:b'],
+        previousDisplay,
+        currentDisplay,
+        legacyWholeCell: false,
+      })
+    ).toEqual(['new:b']);
+  });
+
+  it('skips null rows when includeMissing is set', () => {
+    const field = makeField('Status');
+    const rows = [makeRow('Status', null)];
+    expect(
+      remapSelectionsToCurrentDisplay({
+        rows,
+        field,
+        storedValues: ['old:null'],
+        previousDisplay,
+        currentDisplay,
+        includeMissing: true,
+        legacyWholeCell: false,
+      })
+    ).toEqual([]);
   });
 });

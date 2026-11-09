@@ -2,6 +2,8 @@ import { toDataFrame } from '../../../dataframe/processDataFrame';
 import { FieldType } from '../../../types/dataFrame';
 import { getValueMatcher } from '../../matchers';
 
+import { splitFilterElements } from './setMatchers';
+
 it.each([
   { includeMissing: undefined, expected: [null, undefined, '-'] },
   { includeMissing: false, expected: ['-'] },
@@ -80,6 +82,16 @@ describe('matchElements', () => {
     field.display = (value) => ({ text: String(value), numeric: NaN });
     const matches = getValueMatcher({ id: 'inSet', options: { values: ['b'], mode: 'display' } });
     expect(field.values.filter((_, index) => matches(index, field, frame, [frame]))).toEqual([]);
+  });
+
+  it('comma-splits bracketed strings with leading whitespace, like inferPills', () => {
+    // inferPills checks the untrimmed first character for '[', so the cell
+    // renders comma-split pills here; the filter must agree with the pills.
+    expect(splitFilterElements(' ["a", "b"]')).toEqual(['["a"', '"b"]']);
+  });
+
+  it('parses JSON arrays without leading whitespace', () => {
+    expect(splitFilterElements('["a", "b"]')).toEqual(['a', 'b']);
   });
 
   it('still honors includeMissing for null array-field values', () => {

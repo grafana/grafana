@@ -130,6 +130,12 @@ describe('TableNG utils', () => {
       expect(inferPills('[a, b')).toEqual(['[a', 'b']);
     });
 
+    it('comma-splits when whitespace precedes the opening bracket', () => {
+      // The '[' check runs on the untrimmed string; splitFilterElements in
+      // grafana-data mirrors this so filter options agree with the pills.
+      expect(inferPills(' ["a", "b"]')).toEqual(['["a"', '"b"]']);
+    });
+
     it('memoizes by input so repeated calls (per resize tick) reuse the same array', () => {
       // string inputs compare by value
       expect(inferPills('a,b,c')).toBe(inferPills('a,b,c'));

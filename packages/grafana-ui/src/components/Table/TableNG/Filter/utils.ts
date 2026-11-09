@@ -1,9 +1,16 @@
 import { useMemo } from 'react';
 
-import { formattedValueToString, guessDecimals, type Field, type SelectableValue } from '@grafana/data';
-import { getValueSetCandidates } from '@grafana/data/internal';
+import {
+  type DisplayProcessor,
+  formattedValueToString,
+  guessDecimals,
+  type Field,
+  type SelectableValue,
+} from '@grafana/data';
+import { getValueSetCandidates, type ValueSetOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 
+import { fieldFiltersByElements } from '../transformations/valueFilter';
 import { FilterOperator, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
@@ -48,6 +55,97 @@ export function getFieldFilterValues(row: TableRow, field: Field): string[] {
 /** True when any of the row's filter values is in the selected set. */
 export function rowMatchesFilterValues(row: TableRow, field: Field, selectedValues: Set<unknown>): boolean {
   return getFieldFilterValues(row, field).some((value) => selectedValues.has(value));
+}
+
+/**
+ * True when an inSet selection was saved as whole-cell values before
+ * element-wise filtering existed: selections on element-wise fields that carry
+ * no matchElements flag. Reopening such a popup must map the stored values
+ * onto the per-element options instead of showing an empty selection.
+ */
+export function isLegacyWholeCellSelection(field: Field, selection: ValueSetOptions): boolean {
+  return selection.matchElements !== true && fieldFiltersByElements(field);
+}
+
+/**
+ * Map a whole-cell inSet selection saved before element-wise filtering onto
+ * the current per-element options. Each row whose whole-cell filter value was
+ * stored contributes its current per-element values; stored values matching no
+ * row drop out like any other stale selection. Scalar fields are unaffected:
+ * their whole-cell and per-element values are identical.
+ */
+export function restoreWholeCellSelections(
+  rows: TableRow[],
+  field: Field,
+  storedValues: unknown[]
+): string[] {
+  const stored = new Set(storedValues.map(String));
+  const restored = new Set<string>();
+  for (const row of rows) {
+    if (row.__depth !== 0) {
+      continue;
+    }
+    if (stored.has(getFieldFilterValue(row, field))) {
+      for (const value of getFieldFilterValues(row, field)) {
+        restored.add(value);
+      }
+    }
+  }
+  return Array.from(restored);
+}
+
+export interface RemapSelectionsOptions {
+  rows: TableRow[];
+  field: Field;
+  storedValues: unknown[];
+  previousDisplay: DisplayProcessor;
+  currentDisplay: DisplayProcessor;
+  includeMissing?: boolean;
+  /** True when the stored values are whole-cell strings saved before element-wise filtering. */
+  legacyWholeCell: boolean;
+}
+
+/**
+ * Remap stored display strings onto current display strings after a display
+ * config change. Legacy whole-cell values match the whole raw value under the
+ * previous display and expand to current per-element strings; per-element
+ * values remap candidate by candidate.
+ */
+export function remapSelectionsToCurrentDisplay({
+  rows,
+  field,
+  storedValues,
+  previousDisplay,
+  currentDisplay,
+  includeMissing,
+  legacyWholeCell,
+}: RemapSelectionsOptions): string[] {
+  const selected = new Set(storedValues.map(String));
+  const currentValues = new Set<string>();
+  const fieldName = getDisplayName(field);
+  for (const row of rows) {
+    if (row.__depth !== 0) {
+      continue;
+    }
+    const raw = row[fieldName];
+    if (includeMissing !== undefined && raw == null) {
+      continue;
+    }
+    if (legacyWholeCell) {
+      if (selected.has(formattedValueToString(previousDisplay(raw)))) {
+        for (const candidate of getValueSetCandidates(field, raw)) {
+          currentValues.add(formattedValueToString(currentDisplay(candidate)));
+        }
+      }
+      continue;
+    }
+    for (const candidate of getValueSetCandidates(field, raw)) {
+      if (selected.has(formattedValueToString(previousDisplay(candidate)))) {
+        currentValues.add(formattedValueToString(currentDisplay(candidate)));
+      }
+    }
+  }
+  return Array.from(currentValues);
 }
 
 export function getFilteredOptions(options: SelectableValue[], filterValues?: SelectableValue[]): SelectableValue[] {

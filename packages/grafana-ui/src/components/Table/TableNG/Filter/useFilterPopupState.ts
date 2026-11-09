@@ -2,12 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   type Field,
-  formattedValueToString,
   getDisplayProcessor,
   type RangeValueMatcherOptions,
   type SelectableValue,
 } from '@grafana/data';
-import { getValueSetCandidates, type ValueSetOptions } from '@grafana/data/internal';
+import { type ValueSetOptions } from '@grafana/data/internal';
 
 import { useTheme2 } from '../../../../themes/ThemeContext';
 import { useTableFilters } from '../TableFilterContext';
@@ -15,10 +14,14 @@ import { tableFilterKey } from '../transformations/filterByValue';
 import { createRangePredicate } from '../transformations/rangeFilter';
 import { createValuePredicate, unsupportedFilterReason } from '../transformations/valueFilter';
 import { FilterOperator, type TableRow } from '../types';
-import { getDisplayName } from '../utils';
 
 import { type FilterPopupProps } from './FilterPopup';
-import { operatorSelectableValues } from './utils';
+import {
+  isLegacyWholeCellSelection,
+  operatorSelectableValues,
+  remapSelectionsToCurrentDisplay,
+  restoreWholeCellSelections,
+} from './utils';
 
 interface UseFilterPopupStateOptions {
   name: string;
@@ -124,37 +127,40 @@ export function useFilterPopupState({
     if (!isPopoverVisible || !selection) {
       return undefined;
     }
+    // Whole-cell saves from before element-wise filtering carry no
+    // matchElements flag; map them onto the per-element options via the rows
+    // so reopening the popup restores the selection instead of showing it
+    // empty (which would clear the filter on apply).
+    const legacyField =
+      field !== undefined && isLegacyWholeCellSelection(field, selection) ? field : undefined;
     if (
       !field ||
       !selection.displayConfig ||
       (selection.displayConfig === field.config && selection.timeZone === timeZone)
     ) {
+      if (legacyField) {
+        return restoreWholeCellSelections(rowsForPopup, legacyField, selection.values).map((value) => ({
+          value,
+          label: value,
+        }));
+      }
       return selection.values.map((value) => ({ value, label: String(value) }));
     }
-    const selected = new Set(selection.values.map(String));
     const previousDisplay = getDisplayProcessor({
       field: { ...field, config: selection.displayConfig },
       theme,
       timeZone: selection.timeZone,
     });
     const currentDisplay = field.display ?? getDisplayProcessor({ field, theme, timeZone });
-    const currentValues = new Set<string>();
-    const fieldName = getDisplayName(field);
-    for (const row of rowsForPopup) {
-      if (row.__depth !== 0) {
-        continue;
-      }
-      const raw = row[fieldName];
-      if (selection.includeMissing !== undefined && raw == null) {
-        continue;
-      }
-      for (const candidate of getValueSetCandidates(field, raw)) {
-        if (selected.has(formattedValueToString(previousDisplay(candidate)))) {
-          currentValues.add(formattedValueToString(currentDisplay(candidate)));
-        }
-      }
-    }
-    return Array.from(currentValues, (value) => ({ value, label: value }));
+    return remapSelectionsToCurrentDisplay({
+      rows: rowsForPopup,
+      field,
+      storedValues: selection.values,
+      previousDisplay,
+      currentDisplay,
+      includeMissing: selection.includeMissing,
+      legacyWholeCell: legacyField !== undefined,
+    }).map((value) => ({ value, label: value }));
   }, [isPopoverVisible, selection, field, timeZone, theme, rowsForPopup]);
 
   return {
