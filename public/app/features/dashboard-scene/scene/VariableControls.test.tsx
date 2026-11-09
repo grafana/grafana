@@ -192,7 +192,7 @@ describe('VariableControls', () => {
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'View' }));
-    expect(selectObject).toHaveBeenCalledWith(variable);
+    expect(selectObject).toHaveBeenCalledWith(variable, { force: true });
     jest.useRealTimers();
   });
 
