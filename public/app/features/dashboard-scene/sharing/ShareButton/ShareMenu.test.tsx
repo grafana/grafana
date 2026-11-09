@@ -113,6 +113,17 @@ describe('ShareMenu', () => {
       );
     });
 
+    it('should show only the link title, like the other share items', async () => {
+      usePluginLinksMock.mockReturnValue({
+        links: [createLink({ description: 'Link description', onClick: jest.fn() })],
+        isLoading: false,
+      });
+      setup();
+
+      expect(await screen.findByText('Test link')).toBeInTheDocument();
+      expect(screen.queryByText('Link description')).not.toBeInTheDocument();
+    });
+
     it('should call the link onClick and track the click', async () => {
       const onClick = jest.fn();
       const trackSpy = jest.spyOn(DashboardInteractions, 'sharingCategoryClicked');

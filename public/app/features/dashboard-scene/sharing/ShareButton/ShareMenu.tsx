@@ -117,7 +117,6 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
         shareId,
         testId: shareId,
         label: link.title,
-        description: link.description || undefined,
         icon: link.icon ?? 'apps',
         renderCondition: !panel,
         onClick: () => {
