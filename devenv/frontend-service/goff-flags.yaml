@@ -63,7 +63,7 @@ grafana.frontendLegacyAPIHandling:
   metadata:
     public: "true"
 
-frontend.live.disabled:
+frontend.disableGrafanaLive:
   variations:
     enabled: true
     disabled: false

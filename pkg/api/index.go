@@ -97,7 +97,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	ctx := c.Req.Context()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
-	liveDisabled, _ := ofClient.BooleanValue(ctx, "frontend.live.disabled", false, openfeature.TransactionContext(ctx))
+	liveDisabled, _ := ofClient.BooleanValue(ctx, "frontend.disableGrafanaLive", false, openfeature.TransactionContext(ctx))
 	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
 
 	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
