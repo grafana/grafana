@@ -119,17 +119,75 @@ func TestRunnerDetachesRequestAndSnapshotsBeforeReturn(t *testing.T) {
 	})
 }
 
-func TestRunnerSkipsTransactionWithoutPreparing(t *testing.T) {
-	runner := newTestRunner(t)
-	observer := &recordingObserver{}
-	ctx := context.WithValue(t.Context(), sqlstore.ContextSessionKey{}, &sqlstore.DBSession{})
-	calls := 0
-	runner.Run(ctx, observer, func() { calls++ }, func() Work { panic("must not prepare") })
-	require.Equal(t, 1, calls)
-	require.Equal(t, []SkipReason{Transaction}, observer.skips)
-	require.Empty(t, observer.durations)
-	require.Empty(t, observer.panics)
-	require.Empty(t, runner.inFlight)
+func TestRunnerSkipPolicyIsOptionalAndPerRun(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		runner := newTestRunner(t)
+		ctx := context.WithValue(t.Context(), sqlstore.ContextSessionKey{}, &sqlstore.DBSession{})
+		for _, tc := range []struct {
+			name    string
+			options []RunOption
+			skipped bool
+		}{
+			{
+				name: "skip before preparing",
+				options: []RunOption{WithSkip(func(policyCtx context.Context) SkipReason {
+					require.Same(t, ctx, policyCtx)
+					require.Empty(t, runner.inFlight)
+					return "test-policy"
+				})},
+				skipped: true,
+			},
+			{name: "omitting policy runs even with SQL session"},
+			{
+				name: "empty reason allows shadowing",
+				options: []RunOption{WithSkip(func(context.Context) SkipReason {
+					return ""
+				})},
+			},
+		} {
+			observer := &recordingObserver{}
+			calls, prepared := 0, false
+			runner.Run(ctx, observer, func() { calls++ }, func() Work {
+				prepared = true
+				return matchingWork()
+			}, tc.options...)
+			synctest.Wait()
+			require.Equal(t, 1, calls, tc.name)
+			require.Equal(t, !tc.skipped, prepared, tc.name)
+			if tc.skipped {
+				require.Equal(t, []SkipReason{"test-policy"}, observer.skips, tc.name)
+				require.Empty(t, observer.outcomes, tc.name)
+				require.Empty(t, observer.durations, tc.name)
+			} else {
+				require.Empty(t, observer.skips, tc.name)
+				require.Equal(t, []Outcome{Match}, observer.outcomes, tc.name)
+			}
+			require.Empty(t, observer.panics, tc.name)
+			require.Empty(t, runner.inFlight, tc.name)
+		}
+	})
+}
+
+func TestRunnerSkipPolicyPanicPreservesPrimary(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		runner := newTestRunner(t)
+		observer := &recordingObserver{}
+		calls := 0
+		runner.Run(t.Context(), observer, func() { calls++ }, func() Work {
+			t.Fatal("must not prepare after a policy panic")
+			return Work{}
+		}, WithSkip(func(context.Context) SkipReason { panic("policy") }))
+		require.Equal(t, 1, calls)
+		require.Equal(t, []Outcome{Failed}, observer.outcomes)
+		require.Equal(t, []any{"policy"}, observer.panics)
+		require.Empty(t, observer.skips)
+		require.Empty(t, runner.inFlight)
+
+		next := &recordingObserver{}
+		runner.Run(t.Context(), next, func() {}, matchingWork)
+		synctest.Wait()
+		require.Equal(t, []Outcome{Match}, next.outcomes)
+	})
 }
 
 func TestRunnerSharesCapacityAcrossOperations(t *testing.T) {

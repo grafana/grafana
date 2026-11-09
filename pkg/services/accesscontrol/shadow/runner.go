@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type Implementation string
@@ -30,10 +28,20 @@ const (
 
 type SkipReason string
 
-const (
-	Transaction SkipReason = "transaction"
-	Capacity    SkipReason = "capacity"
-)
+const Capacity SkipReason = "capacity"
+
+type RunOption func(*runOptions)
+
+type runOptions struct {
+	skip func(context.Context) SkipReason
+}
+
+// WithSkip checks the original context before acquiring capacity or preparing
+// work. An empty reason allows shadowing. The policy applies only to this Run;
+// without it, admission is limited only by capacity.
+func WithSkip(check func(context.Context) SkipReason) RunOption {
+	return func(options *runOptions) { options.skip = check }
+}
 
 // Observer binds instrumentation to an operation. Implementations must be safe
 // for concurrent calls. Keeping registration outside Runner lets adapters retain
@@ -65,28 +73,42 @@ func NewRunner(maxConcurrent int, timeout time.Duration) (*Runner, error) {
 	if maxConcurrent < 1 {
 		return nil, fmt.Errorf("shadow concurrency must be positive: %d", maxConcurrent)
 	}
+
 	if timeout <= 0 {
 		return nil, fmt.Errorf("shadow timeout must be positive: %s", timeout)
 	}
+
 	return &Runner{inFlight: make(chan struct{}, maxConcurrent), timeout: timeout}, nil
 }
 
 // Run always invokes primary synchronously and preserves its panic behavior.
 // prepare snapshots inputs before primary, and is skipped when admission fails.
-// Panics in shadow preparation, execution, or comparison are observational only.
-// Callbacks must use the provided background context and respect its deadline;
+// Panics in skip checks, shadow preparation, execution, or comparison are observational only.
+// Call and Compare must use the provided background context and respect its deadline;
 // capacity remains occupied until work actually exits, even after cancellation.
-func (r *Runner) Run(ctx context.Context, observer Observer, primary func(), prepare func() Work) {
+func (r *Runner) Run(ctx context.Context, observer Observer, primary func(), prepare func() Work, options ...RunOption) {
 	if r == nil {
 		primary()
 		return
 	}
-	// A detached read cannot compare the caller's uncommitted transaction state.
-	if session, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && session != nil {
-		observer.ObserveSkip(Transaction)
-		primary()
-		return
+	var opts runOptions
+	for _, option := range options {
+		option(&opts)
 	}
+	if opts.skip != nil {
+		var reason SkipReason
+		if !safely(ctx, observer, func() { reason = opts.skip(ctx) }) {
+			primary()
+			return
+		}
+
+		if reason != "" {
+			observer.ObserveSkip(reason)
+			primary()
+			return
+		}
+	}
+
 	select {
 	case r.inFlight <- struct{}{}:
 	default:
@@ -114,32 +136,40 @@ func (r *Runner) Run(ctx context.Context, observer Observer, primary func(), pre
 	launched = true
 	go func() {
 		defer func() { <-r.inFlight }()
+
 		shadowCtx, cancel := context.WithTimeout(background, r.timeout)
 		defer cancel()
-		safely(shadowCtx, observer, func() {
-			measure(observer, Shadow, func() { work.Call(shadowCtx) })
-			outcome := work.Compare(shadowCtx)
-			if shadowCtx.Err() != nil {
-				outcome = Failed
-			}
-			observer.ObserveOutcome(outcome)
-		})
+
+		safely(
+			shadowCtx,
+			observer,
+			func() {
+				measure(observer, Shadow, func() { work.Call(shadowCtx) })
+				outcome := work.Compare(shadowCtx)
+				if shadowCtx.Err() != nil {
+					outcome = Failed
+				}
+				observer.ObserveOutcome(outcome)
+			})
 	}()
 }
 
 func measure(observer Observer, implementation Implementation, call func()) {
 	start := time.Now()
 	defer func() { observer.ObserveDuration(implementation, time.Since(start)) }()
+
 	call()
 }
 
-func safely(ctx context.Context, observer Observer, call func()) (ok bool) {
+func safely(ctx context.Context, observer Observer, call func()) bool {
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			observer.ObservePanic(ctx, recovered)
 			observer.ObserveOutcome(Failed)
 		}
 	}()
+
 	call()
+
 	return true
 }

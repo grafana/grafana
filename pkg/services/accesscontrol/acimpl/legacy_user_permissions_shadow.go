@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -36,11 +37,13 @@ func NewLegacyUserPermissionsShadow(reg prometheus.Registerer, maxConcurrent int
 	if maxConcurrent < 1 {
 		maxConcurrent = setting.DefaultLegacyUserPermissionsShadowMaxConcurrent
 	}
+
 	runner, err := shadow.NewRunner(maxConcurrent, 10*time.Second)
 	if err != nil {
 		return nil, err
 	}
 	factory := promauto.With(reg)
+
 	return &LegacyUserPermissionsShadow{
 		runner: runner,
 		logger: log.New("accesscontrol.legacy-shadow"),
@@ -64,35 +67,57 @@ func (s *LegacyUserPermissionsShadow) GetUserPermissions(ctx context.Context, cl
 	if s == nil {
 		return primary()
 	}
-	var permissions []ac.Permission
-	var err error
+
+	var result userPermissionsResult
 	s.runner.Run(ctx, s, func() {
-		permissions, err = primary()
+		result.permissions, result.err = primary()
 	}, func() shadow.Work {
-		req, shadowErr := legacyUserPermissionsRequest(usr, options, cfg)
-		var expected, actual []ac.Permission
-		return shadow.Work{
-			Snapshot: func() { expected = slices.Clone(permissions) },
-			Call: func(ctx context.Context) {
-				if shadowErr == nil {
-					actual, shadowErr = loadLegacyUserPermissions(legacypermissions.WithPermissionShadow(ctx), client, req)
-				}
-			},
-			Compare: func(ctx context.Context) shadow.Outcome {
-				if err != nil || shadowErr != nil {
-					s.logger.FromContext(ctx).Warn("Permission shadow comparison failed", "namespace", req.Namespace, "currentError", err, "shadowError", shadowErr)
-					return shadow.Failed
-				}
-				missing, gained := permissionSetDifference(expected, actual)
-				if len(missing) != 0 || len(gained) != 0 {
-					s.logger.FromContext(ctx).Warn("Permission shadow results differ", "namespace", req.Namespace, "subject", req.Identity.UID, "missing", missing, "gained", gained)
-					return shadow.Mismatch
-				}
-				return shadow.Match
-			},
-		}
-	})
-	return permissions, err
+		return s.prepareShadowWork(client, usr, options, cfg, &result)
+	}, shadow.WithSkip(skipPermissionShadowForSQLSession))
+
+	return result.permissions, result.err
+}
+
+func skipPermissionShadowForSQLSession(ctx context.Context) shadow.SkipReason {
+	// A detached read cannot compare the caller's uncommitted transaction state.
+	if session, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && session != nil {
+		return "transaction"
+	}
+	return ""
+}
+
+type userPermissionsResult struct {
+	permissions []ac.Permission
+	err         error
+}
+
+func (s *LegacyUserPermissionsShadow) prepareShadowWork(client legacyclient.Service, usr identity.Requester, options ac.Options, cfg *setting.Cfg, primary *userPermissionsResult) shadow.Work {
+	req, shadowErr := legacyUserPermissionsRequest(usr, options, cfg)
+	var expected, actual []ac.Permission
+	var primaryErr error
+	return shadow.Work{
+		Snapshot: func() {
+			expected = slices.Clone(primary.permissions)
+			primaryErr = primary.err
+		},
+		Call: func(ctx context.Context) {
+			if shadowErr == nil {
+				actual, shadowErr = loadLegacyUserPermissions(legacypermissions.WithPermissionShadow(ctx), client, req)
+			}
+		},
+		Compare: func(ctx context.Context) shadow.Outcome {
+			if primaryErr != nil || shadowErr != nil {
+				s.logger.FromContext(ctx).Warn("Permission shadow comparison failed", "namespace", req.Namespace, "currentError", primaryErr, "shadowError", shadowErr)
+				return shadow.Failed
+			}
+			missing, gained := permissionSetDifference(expected, actual)
+			if len(missing) != 0 || len(gained) != 0 {
+				s.logger.FromContext(ctx).Warn("Permission shadow results differ", "namespace", req.Namespace, "subject", req.Identity.UID, "missing", missing, "gained", gained)
+				return shadow.Mismatch
+			}
+			return shadow.Match
+		},
+	}
 }
 
 func (s *LegacyUserPermissionsShadow) ObserveDuration(implementation shadow.Implementation, elapsed time.Duration) {
