@@ -138,6 +138,29 @@ describe('useIsRuleEditable', () => {
         expect(result.current.isRemovable).toBe(false);
       });
 
+      it('Should report loading while the folder has not loaded yet', () => {
+        mocks.useFolder.mockReturnValue({ loading: false, folder: undefined });
+
+        const wrapper = getProviderWrapper();
+
+        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
+
+        expect(result.current.loading).toBe(true);
+        expect(result.current.isEditable).toBe(false);
+      });
+
+      it('Should forbid editing without loading when the folder fails to load', async () => {
+        mocks.useFolder.mockReturnValue({ loading: false, folder: undefined, error: new Error('Folder not found') });
+
+        const wrapper = getProviderWrapper();
+
+        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
+
+        await waitFor(() => expect(result.current.loading).toBe(false));
+        expect(result.current.isEditable).toBe(false);
+        expect(result.current.isRemovable).toBe(false);
+      });
+
       it('Should forbid editing when the user has no alert rule update permission', async () => {
         mockUseFolder({ accessControl: {} });
 

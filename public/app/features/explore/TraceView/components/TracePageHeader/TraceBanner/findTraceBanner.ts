@@ -71,6 +71,10 @@ export function findTraceBanner(spans: TraceSpan[]): TraceBannerHighlight | unde
   return undefined;
 }
 
+export function getTraceBannerStatusCode(span: TraceSpan): string | undefined {
+  return getTagValue(span, HTTP_STATUS_KEYS);
+}
+
 export function getTraceBannerOperationLabel(span: TraceSpan): string {
   const method = getTagValue(span, HTTP_METHOD_KEYS);
   const rawPath = getTagValue(span, HTTP_PATH_KEYS);
@@ -87,9 +91,22 @@ export function getTraceBannerOperationLabel(span: TraceSpan): string {
   return [method, path ?? span.operationName].filter(Boolean).join(' ');
 }
 
-export function getSpanTracePercent(spanDuration: number, traceDuration: number): number {
+/** Smallest share the one-decimal format can express; anything under it would read as "0". */
+const MIN_DISPLAYED_PERCENT = 0.1;
+
+/**
+ * Span share of the trace, ready for display. A span short enough to round away is reported as
+ * "<0.1" rather than "0", so a real but tiny span is not mistaken for one that took no time.
+ */
+export function getSpanTracePercentLabel(spanDuration: number, traceDuration: number): string {
   if (traceDuration <= 0) {
-    return 0;
+    return '0';
   }
-  return Math.min(100, Math.round((spanDuration / traceDuration) * 1000) / 10);
+
+  const percent = Math.min(100, Math.round((spanDuration / traceDuration) * 1000) / 10);
+  if (percent === 0 && spanDuration > 0) {
+    return `<${MIN_DISPLAYED_PERCENT}`;
+  }
+
+  return String(percent);
 }

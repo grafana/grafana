@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -31,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -83,14 +85,15 @@ type Store interface {
 
 func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
-	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
+	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore *sqlstore.SQLStore,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService ActionSetService,
+	iamFeatures iamapi.Features,
 ) (*Service, error) {
 	// Fail fast at startup if a Kubernetes-native flow needs an APIGroup but none
 	// is configured.
-	if options.APIGroup == "" && requiresAPIGroup(context.Background(), options.Resource, options.K8sActionFormat) {
-		return nil, fmt.Errorf("APIGroup is required for resource %q when Kubernetes-native permissions are enabled (K8sActionFormat or the resource-permission redirect)", options.Resource)
+	if options.APIGroup == "" && requiresAPIGroup(options.Resource, options.K8sActionFormat, iamFeatures) {
+		return nil, fmt.Errorf("APIGroup is required for resource %q when Kubernetes-native permissions are enabled (K8sActionFormat or the resource-permission API)", options.Resource)
 	}
 
 	permissions := make([]string, 0, len(options.PermissionsToActions))
@@ -132,13 +135,14 @@ func New(cfg *setting.Cfg,
 	}
 	s.dynamicClient = s.dynamicClientForContext
 
-	s.api = newApi(cfg, ac, router, s, features, s.options.RestConfigProvider)
+	s.api = newApi(cfg, ac, router, s, s.options.RestConfigProvider, iamFeatures)
 
 	if err := s.declareFixedRoles(); err != nil {
 		return nil, err
 	}
 
 	s.api.registerEndpoints()
+	sqlStore.Bus().AddEventListener(s.onPermissionCachesInvalidated)
 
 	return s, nil
 }
@@ -312,7 +316,8 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		return nil, err
 	}
 
-	s.clearUserPermissionCache(orgID, user.ID)
+	// A concurrent reader can repopulate stale permissions if we clear before commit.
+	s.invalidatePermissionCachesAfterCommit(ctx, orgID, []int64{user.ID})
 
 	return result, nil
 }
@@ -487,9 +492,45 @@ func (s *Service) SetPermissions(
 		return nil, err
 	}
 
-	s.clearUserPermissionCaches(orgID, commands)
+	// Capture IDs before the caller can reuse its command slice.
+	userIDs := make([]int64, 0, len(commands))
+	for _, cmd := range commands {
+		userIDs = append(userIDs, cmd.UserID)
+	}
+	s.invalidatePermissionCachesAfterCommit(ctx, orgID, userIDs)
 
 	return result, nil
+}
+
+// Each resource provider registers a listener on the same bus. The owner limits
+// this in-process event to the service that performed the permission write.
+type resourcePermissionCachesInvalidated struct {
+	owner   *Service
+	orgID   int64
+	userIDs []int64
+}
+
+func (s *Service) invalidatePermissionCachesAfterCommit(ctx context.Context, orgID int64, userIDs []int64) {
+	event := &resourcePermissionCachesInvalidated{owner: s, orgID: orgID, userIDs: slices.Clone(userIDs)}
+	if sess := sqlstore.SessionFromContext(ctx); sess != nil {
+		sess.PublishAfterCommit(event)
+		return
+	}
+	_ = s.onPermissionCachesInvalidated(ctx, event)
+}
+
+func (s *Service) onPermissionCachesInvalidated(_ context.Context, event *resourcePermissionCachesInvalidated) error {
+	if event.owner != s {
+		return nil
+	}
+	seen := make(map[int64]bool, len(event.userIDs))
+	for _, id := range event.userIDs {
+		if id != 0 && !seen[id] {
+			s.clearUserPermissionCache(event.orgID, id)
+			seen[id] = true
+		}
+	}
+	return nil
 }
 
 // clearUserPermissionCaches clears the permission cache of every user assigned by
@@ -899,15 +940,10 @@ func (s *Service) scopeResource() string {
 // APIGroup configured, since it can no longer be guessed (see getAPIGroup). It is
 // required for any Kubernetes-native flow:
 //   - K8sActionFormat is enabled (K8s-format actions/scopes), or
-//   - the resource-permission redirect is enabled for a resource that routes
-//     through the generic K8s adapter.
-//
-// The redirect gate is read through the same OpenFeature helper used at runtime
-// (k8sResourcePermissionRedirectEnabled), so this startup check stays aligned with
-// when getAPIGroup is actually exercised. Called at construction with a background
-// context, so it sees the global flag values; per-tenant overrides are still
-// guarded at runtime by getAPIGroup.
-func requiresAPIGroup(ctx context.Context, resource string, k8sActionFormat bool) bool {
+//   - the resource-permission API is available for a resource that can route
+//     through the generic K8s adapter. The redirect is request-scoped and may be
+//     enabled later, so construction cannot use its current value for validation.
+func requiresAPIGroup(resource string, k8sActionFormat bool, iamFeatures iamapi.Features) bool {
 	if k8sActionFormat {
 		return true
 	}
@@ -926,5 +962,5 @@ func requiresAPIGroup(ctx context.Context, resource string, k8sActionFormat bool
 		return false
 	}
 
-	return k8sResourcePermissionRedirectEnabled(ctx)
+	return iamFeatures.ResourcePermissionsAPI
 }

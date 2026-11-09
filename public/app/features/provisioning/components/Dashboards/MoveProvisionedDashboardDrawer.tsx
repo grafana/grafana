@@ -10,29 +10,13 @@ import { MoveProvisionedDashboardForm } from './MoveProvisionedDashboardForm';
 export interface Props {
   dashboard: DashboardScene;
   targetFolderUID?: string;
-  targetFolderTitle?: string;
   onDismiss: () => void;
-  onSuccess: (folderUID: string, folderTitle: string) => void;
 }
 
-export function MoveProvisionedDashboardDrawer({
-  dashboard,
-  targetFolderUID,
-  targetFolderTitle,
-  onDismiss,
-  onSuccess,
-}: Props) {
+export function MoveProvisionedDashboardDrawer({ dashboard, targetFolderUID, onDismiss }: Props) {
   const view = useDashboardRepositoryView(dashboard);
-  const {
-    defaultValues,
-    loadedFromRef,
-    readOnly,
-    canPushToConfiguredBranch,
-    isNew,
-    repository,
-    repoDataStatus,
-    error,
-  } = useProvisionedDashboardData(dashboard, view);
+  const { defaultValues, readOnly, canPushToConfiguredBranch, isNew, repository, repoDataStatus, error } =
+    useProvisionedDashboardData(dashboard, view);
 
   return (
     <ProvisionedFormGate
@@ -44,15 +28,12 @@ export function MoveProvisionedDashboardDrawer({
       <MoveProvisionedDashboardForm
         dashboard={dashboard}
         defaultValues={defaultValues!}
-        loadedFromRef={loadedFromRef}
         readOnly={readOnly}
         repository={repository}
         isNew={isNew}
         canPushToConfiguredBranch={canPushToConfiguredBranch}
         targetFolderUID={targetFolderUID}
-        targetFolderTitle={targetFolderTitle}
         onDismiss={onDismiss}
-        onSuccess={onSuccess}
       />
     </ProvisionedFormGate>
   );

@@ -62,7 +62,7 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 	}
 
 	for _, ds := range cfg.Datasources {
-		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
+		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name} //nolint:staticcheck // Preserve legacy field compatibility.
 		dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
 		if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return err
@@ -93,7 +93,7 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 
 func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg *configs) error {
 	for _, ds := range cfg.Datasources {
-		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
+		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name} //nolint:staticcheck // Preserve legacy field compatibility.
 		dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
 
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
@@ -252,7 +252,7 @@ func makeCreateCorrelationCommand(ctx context.Context, correlation map[string]an
 
 func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig, willExistAfterProvisioning map[DataSourceMapKey]bool) error {
 	for _, ds := range dsToDelete {
-		getDsQuery := &datasources.GetDataSourceQuery{Name: ds.Name, OrgID: ds.OrgID}
+		getDsQuery := &datasources.GetDataSourceQuery{Name: ds.Name, OrgID: ds.OrgID} //nolint:staticcheck // Preserve legacy field compatibility.
 		existingDs, err := dc.dsService.GetDataSource(ctx, getDsQuery)
 
 		if err != nil {

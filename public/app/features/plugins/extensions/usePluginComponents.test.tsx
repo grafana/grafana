@@ -8,10 +8,10 @@ import {
   type PluginMeta,
   PluginType,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import * as errors from './errors';
+import { isGrafanaDevMode } from './isGrafanaDevMode';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
@@ -22,18 +22,13 @@ import { type PluginExtensionRegistries } from './registry/types';
 import { basicApp } from './test-fixtures/config.apps';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponents } from './usePluginComponents';
-import { isGrafanaDevMode } from './utils';
 
 // Unmock usePluginComponents to test the real implementation
 jest.unmock('./usePluginComponents');
 
 jest.mock('./useLoadAppPlugins');
 
-jest.mock('./utils', () => ({
-  ...jest.requireActual('./utils'),
-
-  // Manually set the dev mode to false
-  // (to make sure that by default we are testing a production scenario)
+jest.mock('./isGrafanaDevMode', () => ({
   isGrafanaDevMode: jest.fn().mockReturnValue(false),
 }));
 
@@ -65,11 +60,9 @@ describe('usePluginComponents()', () => {
   let pluginMeta: PluginMeta;
   const pluginId = basicApp.id;
   const extensionPointId = `${pluginId}/extension-point/v1`;
-  const originalBuildInfoEnv = config.buildInfo.env;
   let apps: AppPluginConfig[];
 
   beforeEach(() => {
-    config.buildInfo.env = originalBuildInfoEnv;
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
     jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
 
@@ -225,7 +218,7 @@ describe('usePluginComponents()', () => {
   });
 
   it('should pass a copy of the props to the components (in dev mode)', async () => {
-    config.buildInfo.env = 'development';
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
     type Props = {
       foo: {
@@ -246,25 +239,42 @@ describe('usePluginComponents()', () => {
       },
     };
 
+    const componentConfig = {
+      targets: extensionPointId,
+      title: '1',
+      description: '1',
+      component: ({ foo, override = false }: Partial<Props>) => {
+        // Trying to override the prop
+        if (override && foo) {
+          const foo3 = foo.foo2.foo3;
+          foo3.foo4 = 'baz';
+        }
+
+        return <span>Foo</span>;
+      },
+    };
+
+    pluginMeta = {
+      ...pluginMeta,
+      extensions: {
+        ...pluginMeta.extensions!,
+        extensionPoints: [
+          {
+            id: extensionPointId,
+            title: 'Extension point',
+            description: 'Extension point description',
+          },
+        ],
+      },
+    };
+
+    registries.addedComponentsRegistry = new AddedComponentsRegistry([
+      { ...apps[0], extensions: { ...apps[0].extensions, addedComponents: [componentConfig] } },
+    ]);
+
     registries.addedComponentsRegistry.register({
       pluginId,
-      configs: [
-        {
-          targets: extensionPointId,
-          title: '1',
-          description: '1',
-          // @ts-ignore - The register() method is not designed to be called directly like this, and because of that it doesn't have a way to set the type of the Props
-          component: ({ foo, override = false }: Props) => {
-            // Trying to override the prop
-            if (override) {
-              const foo3 = foo.foo2.foo3;
-              foo3.foo4 = 'baz';
-            }
-
-            return <span>Foo</span>;
-          },
-        },
-      ],
+      configs: [componentConfig],
     });
 
     // Check if it returns the components

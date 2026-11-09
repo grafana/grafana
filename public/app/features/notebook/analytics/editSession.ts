@@ -13,20 +13,22 @@ export interface NotebookEditSessionTotals {
   undoCount: number;
   redoCount: number;
   timeRangeChanged: boolean;
+  cellTimeRangeChanged: boolean;
 }
 
 /**
  * Totals for one edit session, from entering edit mode to leaving it.
  *
  * Counted here rather than read off NotebookEditHistory, which cannot answer this: its undo stack
- * drops the oldest action once it holds 100, and swapping the notebook's body clears both stacks, so
- * its length is a count of what can still be undone rather than of what somebody did.
+ * drops the oldest action once it holds 100, so its length is a count of what can still be undone
+ * rather than of what somebody did.
  *
  * Counting here also means no call site has to report anything. Every mutation already goes through
  * the history, and the history only records an action the first time it runs, so a redo cannot count
  * twice.
  */
 export class NotebookEditSession implements NotebookEditHistoryObserver {
+  private active = false;
   private startedAt = 0;
   private editCount = 0;
   private cellsAdded = 0;
@@ -35,16 +37,17 @@ export class NotebookEditSession implements NotebookEditHistoryObserver {
   private undoCount = 0;
   private redoCount = 0;
   private timeRangeChanged = false;
+  private cellTimeRangeChanged = false;
+
+  /** Whether a session has started and not yet ended, so a session can only be ended once. */
+  public get isActive(): boolean {
+    return this.active;
+  }
 
   public start(): void {
+    this.reset();
+    this.active = true;
     this.startedAt = Date.now();
-    this.editCount = 0;
-    this.cellsAdded = 0;
-    this.cellsRemoved = 0;
-    this.cellsMoved = 0;
-    this.undoCount = 0;
-    this.redoCount = 0;
-    this.timeRangeChanged = false;
   }
 
   /** Reads the totals and clears them, so the next session starts from nothing. */
@@ -58,10 +61,24 @@ export class NotebookEditSession implements NotebookEditHistoryObserver {
       undoCount: this.undoCount,
       redoCount: this.redoCount,
       timeRangeChanged: this.timeRangeChanged,
+      cellTimeRangeChanged: this.cellTimeRangeChanged,
     };
 
-    this.start();
+    this.active = false;
+    this.reset();
     return totals;
+  }
+
+  private reset(): void {
+    this.startedAt = 0;
+    this.editCount = 0;
+    this.cellsAdded = 0;
+    this.cellsRemoved = 0;
+    this.cellsMoved = 0;
+    this.undoCount = 0;
+    this.redoCount = 0;
+    this.timeRangeChanged = false;
+    this.cellTimeRangeChanged = false;
   }
 
   /**
@@ -71,6 +88,11 @@ export class NotebookEditSession implements NotebookEditHistoryObserver {
    */
   public onTimeRangeChanged(): void {
     this.timeRangeChanged = true;
+  }
+
+  /** As `onTimeRangeChanged`, but for a cell's own time range rather than the notebook's. */
+  public onCellTimeRangeChanged(): void {
+    this.cellTimeRangeChanged = true;
   }
 
   public onRecord(kind: NotebookEditKind): void {

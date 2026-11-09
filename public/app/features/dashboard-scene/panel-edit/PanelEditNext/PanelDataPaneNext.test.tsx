@@ -24,14 +24,9 @@ const mockGetDataSourceInstance = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: (ref?: unknown, scopedVars?: unknown) => mockGetDataSourceInstance(ref, scopedVars),
   getDataSourceInstanceSettings: (ref?: unknown, scopedVars?: unknown) => mockGetInstanceSettings(ref, scopedVars),
 }));
-
 // Mutable state object for the mock queryRunner
 const mockQueryRunnerState: {
   datasource: { uid: string; type: string } | undefined;
@@ -483,6 +478,38 @@ describe('PanelDataPaneNext', () => {
 
         dataPane.toggleTransformationDisabled(5);
         expect(mockTransformer.setState).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('transformations with a static refId', () => {
+      const named: DataTransformerConfig = { id: 'reduce', refId: 'T-A', options: {} };
+      const unnamed: DataTransformerConfig = { id: 'groupBy', options: {} };
+
+      let namedTransformer: SceneDataTransformer;
+
+      beforeEach(() => {
+        namedTransformer = new SceneDataTransformer({
+          transformations: [named, unnamed],
+          $data: mockQueryRunner,
+        });
+
+        jest.spyOn(namedTransformer, 'setState');
+        jest.spyOn(namedTransformer, 'reprocessTransformations').mockImplementation(() => {});
+        mockPanel.state.$data = namedTransformer;
+      });
+
+      it('should keep the named transformation when another one is added', () => {
+        dataPane.addTransformation('limit');
+
+        expect(namedTransformer.setState).toHaveBeenCalledWith({
+          transformations: [named, unnamed, { id: 'limit', options: {} }],
+        });
+      });
+
+      it('should delete by an index that counts the named transformation', () => {
+        dataPane.deleteTransformation(1);
+
+        expect(namedTransformer.setState).toHaveBeenCalledWith({ transformations: [named] });
       });
     });
   });
@@ -1096,6 +1123,31 @@ describe('PanelDataPaneNext', () => {
       expect(testDataPane.state.dsError).toBe(primaryError);
     });
 
+    it('should keep the quotes in the settings-not-found message when the default also fails', async () => {
+      mockQueryRunnerState.datasource = { uid: 'deleted-uid', type: 'prometheus' };
+      mockGetDataSourceInstance.mockResolvedValueOnce(promDatasource).mockRejectedValueOnce(new Error('No default'));
+      mockGetInstanceSettings.mockReturnValue(undefined);
+
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      await callLoadDatasource();
+      consoleErrorSpy.mockRestore();
+
+      expect(testDataPane.state.dsError?.message).toContain(
+        'Datasource settings not found for uid: {"uid":"deleted-uid"'
+      );
+    });
+
+    it('should set a generic dsError when the primary rejects with a non-Error and the default fails', async () => {
+      mockQueryRunnerState.datasource = { uid: 'deleted-uid', type: 'prometheus' };
+      mockGetDataSourceInstance.mockRejectedValue('boom');
+
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      await callLoadDatasource();
+      consoleErrorSpy.mockRestore();
+
+      expect(testDataPane.state.dsError?.message).toBe('Failed to load datasource');
+    });
+
     it('should handle a Mixed panel datasource and reflect meta.mixed in state', async () => {
       mockQueryRunnerState.datasource = { uid: '-- Mixed --', type: 'mixed' };
       const mixedDatasource = { uid: '-- Mixed --', type: 'mixed' };
@@ -1408,10 +1460,27 @@ describe('PanelDataPaneNext', () => {
       await testDataPane.changeDataSource({ uid: 'nonexistent-uid', type: 'unknown' }, 'A');
 
       expect(testDataPane.state.dsError).toBeInstanceOf(Error);
-      expect(testDataPane.state.dsError?.message).toMatch(/nonexistent-uid/);
+      expect(testDataPane.state.dsError?.message).toBe('Datasource not found: nonexistent-uid');
       // queryRunner must not have been touched — the change never went through
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
       expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
+    });
+
+    it('should clear dsError after a subsequent successful datasource change', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
+
+      mockGetInstanceSettings.mockReturnValueOnce(undefined);
+
+      await testDataPane.changeDataSource({ uid: 'nonexistent-uid', type: 'unknown' }, 'A');
+
+      expect(testDataPane.state.dsError).toBeInstanceOf(Error);
+
+      mockGetInstanceSettings.mockReturnValue(promInstance2Settings);
+
+      await testDataPane.changeDataSource({ uid: 'prom-uid-2', type: 'prometheus' }, 'A');
+
+      expect(testDataPane.state.dsError).toBeUndefined();
     });
 
     it('should set dsError and not update queries when get() fails during a type-change DS switch', async () => {
@@ -1420,12 +1489,15 @@ describe('PanelDataPaneNext', () => {
 
       // First call: look up the new target (loki). Second call: look up the previous query DS (prom).
       // The type mismatch triggers shouldUseDefaultQuery=true, which calls get() — which then rejects.
-      mockGetInstanceSettings.mockReturnValueOnce(lokiSettings).mockReturnValueOnce(promSettings);
+      mockGetInstanceSettings
+        .mockReturnValueOnce({ ...lokiSettings, name: 'Loki & "prod"' })
+        .mockReturnValueOnce(promSettings);
       mockGetDataSourceInstance.mockRejectedValue(new Error('Plugin not found'));
 
       await testDataPane.changeDataSource({ uid: 'loki-uid', type: 'loki' }, 'A');
 
       expect(testDataPane.state.dsError).toBeInstanceOf(Error);
+      expect(testDataPane.state.dsError?.message).toBe('Failed to load datasource: Loki & "prod"');
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
       expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
     });
@@ -1673,7 +1745,38 @@ describe('PanelDataPaneNext', () => {
       await testDataPane.bulkChangeDataSource(['A'], { uid: 'nonexistent', type: 'unknown' });
 
       expect(testDataPane.state.dsError).toBeInstanceOf(Error);
+      expect(testDataPane.state.dsError?.message).toBe('Datasource not found: nonexistent');
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
+    });
+
+    it('sets dsError and does not update queries when get() fails for the target datasource', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
+
+      mockGetInstanceSettings.mockReturnValue({ ...lokiSettings, name: 'Loki & "prod"' });
+      mockGetDataSourceInstance.mockRejectedValue(new Error('Plugin not found'));
+
+      await testDataPane.bulkChangeDataSource(['A'], { uid: 'loki-uid', type: 'loki' });
+
+      expect(testDataPane.state.dsError?.message).toBe('Failed to load datasource: Loki & "prod"');
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
+    });
+
+    it('clears dsError after a subsequent successful bulk datasource change', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
+
+      mockGetInstanceSettings.mockReturnValueOnce(undefined);
+
+      await testDataPane.bulkChangeDataSource(['A'], { uid: 'nonexistent', type: 'unknown' });
+
+      expect(testDataPane.state.dsError).toBeInstanceOf(Error);
+
+      mockGetInstanceSettings.mockReturnValue(promInstance2Settings);
+
+      await testDataPane.bulkChangeDataSource(['A'], { uid: 'prom-uid-2', type: 'prometheus' });
+
+      expect(testDataPane.state.dsError).toBeUndefined();
     });
 
     it('runs queries after a successful datasource change', async () => {
@@ -1727,6 +1830,22 @@ describe('PanelDataPaneNext', () => {
         ],
       });
       expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+
+    it('bulkToggleTransformationsDisabled leaves a transformation with a static refId in place', () => {
+      const named: DataTransformerConfig = { id: 'reduce', refId: 'T-A', options: {} };
+      const namedTransformer = new SceneDataTransformer({
+        transformations: [named, { id: 'groupBy', options: {} }],
+        $data: mockQueryRunner,
+      });
+      jest.spyOn(namedTransformer, 'setState');
+      mockPanel.state.$data = namedTransformer;
+
+      dataPane.bulkToggleTransformationsDisabled([1], true);
+
+      expect(namedTransformer.setState).toHaveBeenCalledWith({
+        transformations: [named, { id: 'groupBy', options: {}, disabled: true }],
+      });
     });
   });
 });

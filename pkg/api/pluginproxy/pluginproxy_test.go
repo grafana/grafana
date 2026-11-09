@@ -218,7 +218,7 @@ func TestPluginProxy(t *testing.T) {
 		ps := &pluginsettings.DTO{
 			SecureJSONData: map[string][]byte{},
 		}
-		proxy, err := NewPluginProxy(ps, routes, req, responseWriter, &user.SignedInUser{}, "", false, false, nil, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
+		proxy, err := NewPluginProxy(ps, routes, req, responseWriter, &user.SignedInUser{}, "", false, false, nil, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 		proxy.HandleRequest()
 
@@ -365,7 +365,7 @@ func TestPluginProxyRoutes(t *testing.T) {
 			ps := &pluginsettings.DTO{
 				SecureJSONData: map[string][]byte{},
 			}
-			proxy, err := NewPluginProxy(ps, testRoutes, req, responseWriter, &user.SignedInUser{}, tc.proxyPath, false, false, nil, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures(tc.withFeatures...))
+			proxy, err := NewPluginProxy(ps, testRoutes, req, responseWriter, &user.SignedInUser{}, tc.proxyPath, false, false, nil, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures(tc.withFeatures...), nil)
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
@@ -488,7 +488,7 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 				PluginID:       "test-app",
 				SecureJSONData: map[string][]byte{},
 			}
-			proxy, err := NewPluginProxy(ps, testRoutes, req, responseWriter, signedInUser, tc.proxyPath, false, false, nil, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
+			proxy, err := NewPluginProxy(ps, testRoutes, req, responseWriter, signedInUser, tc.proxyPath, false, false, nil, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures(), nil)
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
@@ -524,7 +524,7 @@ func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secureJsonDat
 		},
 		tracing.InitializeTracerForTest(), &http.Transport{},
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
-		featuremgmt.WithFeatures(),
+		featuremgmt.WithFeatures(), nil,
 	)
 	require.NoError(t, err)
 

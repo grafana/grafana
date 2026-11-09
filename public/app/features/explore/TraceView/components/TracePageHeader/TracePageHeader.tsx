@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css, cx } from '@emotion/css';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import {
@@ -34,6 +34,7 @@ import {
   usePluginComponents,
   usePluginLinks,
   config,
+  logError,
 } from '@grafana/runtime';
 import { AdHocFiltersComboboxRenderer } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
@@ -42,6 +43,7 @@ import {
   type BadgeColor,
   Button,
   CollapsableSection,
+  copyTextToClipboard,
   Dropdown,
   Icon,
   Label,
@@ -51,7 +53,6 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { copyStringToClipboard } from 'app/core/utils/explore';
 
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';
 import { LogsLinkButton } from '../TraceTimelineViewer/SpanDetail/LogsLink';
@@ -60,9 +61,10 @@ import {
   type TUpdateViewRangeTimeFunction,
   type ViewRange,
 } from '../TraceTimelineViewer/types';
+import { SpanErrorIcon } from '../common/SpanErrorIcon';
 import { getHeaderTags, getRootSpan } from '../model/trace-viewer';
 import { type Trace, type TraceViewPluginExtensionContext } from '../types/trace';
-import { formatDuration } from '../utils/date';
+import { formatSummaryDuration } from '../utils/date';
 import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name';
 
 import TracePageSearchBar from './SearchBar/TracePageSearchBar';
@@ -71,6 +73,17 @@ import { TraceBanner } from './TraceBanner/TraceBanner';
 import { findTraceBanner, HttpStatusClass } from './TraceBanner/findTraceBanner';
 import { TraceFilterPills } from './TraceFilterPills';
 import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
+
+const TRACE_ID_PREFIX_LENGTH = 8;
+const TRACE_ID_SUFFIX_LENGTH = 5;
+
+function formatTraceId(traceId: string): string {
+  if (traceId.length <= TRACE_ID_PREFIX_LENGTH + TRACE_ID_SUFFIX_LENGTH + 3) {
+    return traceId;
+  }
+
+  return `${traceId.slice(0, TRACE_ID_PREFIX_LENGTH)}...${traceId.slice(-TRACE_ID_SUFFIX_LENGTH)}`;
+}
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
@@ -81,7 +94,8 @@ export type TracePageHeaderProps = {
   setSearch: (newSearch: TraceSearchProps) => void;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
-  setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
+  setFocusedSpanIdForSearch: (spanID: string) => void;
+  onGoToSpan: (spanID: string) => void;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
   datasourceName: string;
@@ -105,6 +119,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     setSearch,
     showSpanFilters,
     setFocusedSpanIdForSearch,
+    onGoToSpan,
     spanFilterMatches,
     datasourceType,
     datasourceName,
@@ -123,6 +138,36 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
   const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
+
+  const measureHeader = useCallback(() => {
+    setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
+  }, [setHeaderHeight, styles.header]);
+
+  const goToBannerSpan = useCallback(
+    (spanId: string) => {
+      reportInteraction('grafana_traces_trace_view_go_to_span_clicked', {
+        app,
+        datasourceType,
+        grafana_version: config.buildInfo.version,
+        location: 'trace-banner',
+      });
+      onGoToSpan(spanId);
+    },
+    [app, datasourceType, onGoToSpan]
+  );
+
+  const toggleBannerException = useCallback(
+    (isOpen: boolean) => {
+      reportInteraction('grafana_traces_trace_view_banner_exception_toggled', {
+        app,
+        datasourceType,
+        grafana_version: config.buildInfo.version,
+        location: 'trace-banner',
+        isOpen,
+      });
+    },
+    [app, datasourceType]
+  );
 
   // Create controller for adhoc filters
   const controller = useTraceAdHocFiltersController(trace, search, setSearch);
@@ -152,16 +197,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const traceBanner = useMemo(() => (trace ? findTraceBanner(trace.spans) : undefined), [trace]);
 
   useEffect(() => {
-    setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
-  }, [
-    setHeaderHeight,
-    showSpanFilters,
-    styles.header,
-    extensionComponents,
-    extensionLinks,
-    logsLinkModel,
-    traceBanner,
-  ]);
+    measureHeader();
+  }, [measureHeader, showSpanFilters, extensionComponents, extensionLinks, logsLinkModel, traceBanner]);
 
   // Memoize service count to avoid recomputing on every render
   // Uses getServiceColorKey to count namespace/serviceName pairs as distinct services
@@ -220,9 +257,14 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           label={t('explore.trace-page-header.share-copy-link', 'Copy link')}
           icon="link"
           testId={selectors.components.TraceViewer.shareMenu.copyLinkButton}
-          onClick={() => {
-            copyStringToClipboard(window.location.href);
-            notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+          onClick={async () => {
+            try {
+              await copyTextToClipboard(window.location.href);
+              notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+            } catch (e) {
+              logError(e instanceof Error ? e : new Error(String(e)));
+              notifyApp.error(t('explore.trace-page-header.link-copy-failed', 'Could not copy link to clipboard'));
+            }
           }}
         />
         <Menu.Item
@@ -255,11 +297,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       <div className={styles.titleRow}>
         <div className={styles.titleSection}>
           {showErrorIcon && (
-            <Icon
-              name="exclamation-triangle"
-              className={styles.errorIcon}
-              aria-label={t('explore.trace-page-header.error-indicator', 'Trace has errors')}
-            />
+            <SpanErrorIcon ariaLabel={t('explore.trace-page-header.error-indicator', 'Trace has errors')} />
           )}
           {showWarningIcon && (
             <Icon
@@ -343,7 +381,15 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         )}
       </div>
 
-      {!hideHeaderDetails && traceBanner && <TraceBanner highlight={traceBanner} traceDuration={trace.duration} />}
+      {!hideHeaderDetails && traceBanner && (
+        <TraceBanner
+          highlight={traceBanner}
+          traceDuration={trace.duration}
+          onGoToSpan={goToBannerSpan}
+          onExceptionToggle={toggleBannerException}
+          onLayoutChange={measureHeader}
+        />
+      )}
 
       {/* Metadata row */}
       {!hideHeaderDetails && (
@@ -352,8 +398,15 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             <div className={styles.metadataItem}>
               <span className={styles.metadataLabel}>{t('explore.trace-page-header.trace-id', 'Trace ID')}</span>
               <span className={styles.metadataValue}>
-                <button className={styles.traceIdButton} onClick={copyTraceId}>
-                  {trace.traceID}
+                <button
+                  className={styles.traceIdButton}
+                  onClick={copyTraceId}
+                  title={trace.traceID}
+                  aria-label={t('explore.trace-page-header.copy-trace-id', 'Copy trace ID {{id}}', {
+                    id: trace.traceID,
+                  })}
+                >
+                  {formatTraceId(trace.traceID)}
                   <Icon name={copyTraceIdClicked ? 'check' : 'copy'} size="sm" className={styles.copyIcon} />
                 </button>
               </span>
@@ -362,7 +415,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             <div className={styles.metadataItem}>
               <span className={styles.metadataField}>
                 <Icon name="clock-nine" size="xs" className={styles.metadataIcon} aria-hidden />
-                <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start time')}</span>
+                <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start')}</span>
               </span>
               <span
                 className={cx(
@@ -382,7 +435,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
                 <Icon name="stopwatch" type="default" size="sm" className={styles.metadataIcon} aria-hidden />
                 <span className={styles.metadataLabel}>{t('explore.trace-page-header.duration', 'Duration')}</span>
               </span>
-              <span className={styles.metadataValue}>{formatDuration(trace.duration)}</span>
+              <span className={styles.metadataValue}>{formatSummaryDuration(trace.duration)}</span>
             </div>
 
             <div className={styles.metadataItem}>
@@ -520,7 +573,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
       color: theme.colors.text.primary,
       fontSize: theme.typography.h4.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
+      fontWeight: theme.typography.fontWeightBold,
       lineHeight: theme.typography.h4.lineHeight,
       margin: 0,
       minWidth: 0,
@@ -541,11 +594,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-    }),
-
-    errorIcon: css({
-      color: theme.colors.error.text,
-      flexShrink: 0,
     }),
 
     warningIcon: css({

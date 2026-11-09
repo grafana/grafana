@@ -6,6 +6,7 @@ import { useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
 import { getInternalRadius } from '@grafana/ui/internal';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 interface DashboardControlsChromeProps {
   children: React.ReactNode;
@@ -29,7 +30,7 @@ interface DashboardControlsChromeProps {
 export function DashboardControlsChrome({ children, onPointerDown }: DashboardControlsChromeProps) {
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled, isDashboardNewLayoutsEnabled());
 
   return (
     <div className={styles.chrome} onPointerDown={onPointerDown}>
@@ -38,7 +39,18 @@ export function DashboardControlsChrome({ children, onPointerDown }: DashboardCo
   );
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) {
+function getStyles(
+  theme: GrafanaTheme2,
+  headerHeight: number,
+  visualRefreshEnabled: boolean,
+  newLayoutsEnabled: boolean
+) {
+  // Scroll the controls when they'd be taller than the viewport, so part of the dashboard stays visible.
+  const heightCap = {
+    maxHeight: `calc(100dvh - ${headerHeight}px - max(20dvh, 200px))`,
+    overflowY: 'auto',
+  } as const;
+
   return {
     chrome: css(
       {
@@ -47,10 +59,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
         // scrollContainer in DashboardSidebarSplitter), so the bar must paint over that strip on
         // every viewport: opaque background plus its own paint order.
         position: 'relative',
-        // The canvas wrapper next to us is also z-index 1 and comes later in DOM order, so it wins the
-        // tie and paints over the time picker and variable overlays, which render inside this wrapper.
-        // Enough to clear it, and low enough to stay under the fixed app top bar that the controls row
-        // scrolls past on narrow viewports.
+        // Above the canvas wrapper (z-index 1, later in the DOM), below the fixed app top bar.
         zIndex: 2,
         background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
         [theme.breakpoints.up('md')]: {
@@ -58,8 +67,12 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
           // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
           zIndex: theme.zIndex.sidemenu,
           top: headerHeight,
+          // Legacy only needs the cap while sticky.
+          ...heightCap,
         },
       },
+      // New layouts never scroll the bar away, so the cap applies at every width.
+      newLayoutsEnabled && heightCap,
       visualRefreshEnabled && {
         borderTopLeftRadius: getInternalRadius(theme, 0, {
           parentBorderRadius: 'lg',

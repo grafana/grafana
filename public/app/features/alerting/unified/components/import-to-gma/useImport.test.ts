@@ -1,20 +1,22 @@
 import { HttpResponse, http } from 'msw';
-import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
+import { act, getWrapper, renderHook } from 'test/test-utils';
 
 import { DEFAULT_ROUTING_TREE_NAME_ALIAS } from '@grafana/alerting';
 
 import { setupMswServer } from '../../mockApi';
+import { mockGrafanaRulerRule, mockRulerAlertingRule } from '../../mocks';
+import { convertResponse } from '../../mocks/convertApi';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
 import {
   buildRoutingParams,
   deriveDryRunResult,
-  mergeTemplateFiles,
+  deriveDryRunState,
+  filterRulerRulesConfig,
   parseDryRunResponse,
-  readTemplateFiles,
   summarizeMergeStats,
-  useDryRunNotifications,
   useImportNotifications,
+  useImportRules,
 } from './useImport';
 
 const server = setupMswServer();
@@ -27,7 +29,7 @@ function captureConvertHeaders() {
   server.use(
     http.post(CONVERT_URL, ({ request }) => {
       headers.push(request.headers);
-      return HttpResponse.json({ status: 'success' });
+      return HttpResponse.json(convertResponse());
     })
   );
   return headers;
@@ -40,36 +42,36 @@ function yamlFile() {
 const wrapper = getWrapper({ renderWithRouter: true });
 
 describe('buildRoutingParams', () => {
-  it('should return notificationSettings with policy when a routing tree is selected', () => {
+  it('should return the named routing tree when one is selected', () => {
     const result = buildRoutingParams('my-policy');
 
     expect(result).toEqual({
-      notificationSettings: JSON.stringify({ policy: 'my-policy' }),
+      notificationSettings: { type: 'NamedRoutingTree', routingTree: 'my-policy' },
     });
   });
 
-  it('should return notificationSettings=undefined when no routing tree is selected', () => {
+  it('should return notificationSettings=null when no routing tree is selected', () => {
     const result = buildRoutingParams(undefined);
 
-    expect(result).toEqual({ notificationSettings: undefined });
+    expect(result).toEqual({ notificationSettings: null });
   });
 
-  it('should return notificationSettings=undefined for empty string routing tree', () => {
+  it('should return notificationSettings=null for empty string routing tree', () => {
     const result = buildRoutingParams('');
 
-    expect(result).toEqual({ notificationSettings: undefined });
+    expect(result).toEqual({ notificationSettings: null });
   });
 
-  it('should return notificationSettings=undefined for the default routing tree', () => {
+  it('should return notificationSettings=null for the default routing tree', () => {
     const result = buildRoutingParams(ROOT_ROUTE_NAME);
 
-    expect(result).toEqual({ notificationSettings: undefined });
+    expect(result).toEqual({ notificationSettings: null });
   });
 
-  it('should return notificationSettings=undefined for the default routing tree alias', () => {
+  it('should return notificationSettings=null for the default routing tree alias', () => {
     const result = buildRoutingParams(DEFAULT_ROUTING_TREE_NAME_ALIAS);
 
-    expect(result).toEqual({ notificationSettings: undefined });
+    expect(result).toEqual({ notificationSettings: null });
   });
 });
 
@@ -107,6 +109,8 @@ describe('parseDryRunResponse', () => {
   it('maps merge stats onto the validation result', () => {
     const result = parseDryRunResponse({
       status: 'success',
+      errorType: '',
+      error: '',
       stats: { added_receivers: ['slack'], added_route: 'imported-prod' },
     });
 
@@ -121,7 +125,7 @@ describe('parseDryRunResponse', () => {
   });
 
   it('omits stats when the response has none', () => {
-    const result = parseDryRunResponse({ status: 'success' });
+    const result = parseDryRunResponse({ status: 'success', errorType: '', error: '' });
 
     expect(result.stats).toBeUndefined();
   });
@@ -159,6 +163,58 @@ describe('deriveDryRunResult', () => {
   });
 });
 
+describe('deriveDryRunState', () => {
+  const validResult = {
+    valid: true,
+    error: undefined,
+    renamedReceivers: [],
+    renamedTimeIntervals: [],
+    stats: undefined,
+  };
+  const renamedResult = {
+    valid: true,
+    error: undefined,
+    renamedReceivers: [{ originalName: 'default', newName: 'default-2' }],
+    renamedTimeIntervals: [],
+    stats: undefined,
+  };
+  const invalidResult = {
+    valid: false,
+    error: 'boom',
+    renamedReceivers: [],
+    renamedTimeIntervals: [],
+    stats: undefined,
+  };
+
+  it('is loading whenever the mutation is loading, regardless of stale result or error', () => {
+    expect(deriveDryRunState(true, undefined, undefined)).toBe('loading');
+    expect(deriveDryRunState(true, validResult, undefined)).toBe('loading');
+    expect(deriveDryRunState(true, undefined, 'boom')).toBe('loading');
+  });
+
+  it('is idle when there is neither a result nor an error', () => {
+    expect(deriveDryRunState(false, undefined, undefined)).toBe('idle');
+  });
+
+  it('is success for a valid result with no renamed resources', () => {
+    expect(deriveDryRunState(false, validResult, undefined)).toBe('success');
+  });
+
+  it('is warning for a valid result that renamed resources', () => {
+    expect(deriveDryRunState(false, renamedResult, undefined)).toBe('warning');
+  });
+
+  it('is error for an invalid result', () => {
+    expect(deriveDryRunState(false, invalidResult, undefined)).toBe('error');
+  });
+
+  // Regression: the same stale-result precedence deriveDryRunResult guards against — an error
+  // must win even if a previous successful result is still sitting in `result`.
+  it('is error when an error is present alongside a stale successful result', () => {
+    expect(deriveDryRunState(false, validResult, 'boom')).toBe('error');
+  });
+});
+
 describe('promote header wiring', () => {
   it('sends X-Grafana-Alerting-Promote when importing with promote', async () => {
     const headers = captureConvertHeaders();
@@ -183,108 +239,11 @@ describe('promote header wiring', () => {
     expect(headers).toHaveLength(1);
     expect(headers[0].has('X-Grafana-Alerting-Promote')).toBe(false);
   });
-
-  it('sends the promote header on a promote dry-run', async () => {
-    const headers = captureConvertHeaders();
-    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
-
-    await act(async () => {
-      await result.current.runDryRun({ source: 'yaml', yamlFile: yamlFile(), configIdentifier: 'prod', promote: true });
-    });
-
-    expect(headers).toHaveLength(1);
-    expect(headers[0].get('X-Grafana-Alerting-Promote')).toBe('true');
-    expect(headers[0].get('X-Grafana-Alerting-Dry-Run')).toBe('true');
-  });
-});
-
-describe('useDryRunNotifications reset', () => {
-  // Regression: once a dry-run succeeds, its result is cached. If the step later becomes invalid
-  // (e.g. a duplicate template name) the dry-run stops running, so reset() must clear the cached
-  // result or the review step keeps reporting the config as ready to import.
-  it('clears a previous successful result', async () => {
-    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
-    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
-
-    await act(async () => {
-      await result.current.runDryRun({ source: 'yaml', yamlFile: yamlFile(), configIdentifier: 'prod' });
-    });
-    await waitFor(() => expect(result.current.result?.valid).toBe(true));
-
-    act(() => {
-      result.current.reset();
-    });
-    await waitFor(() => expect(result.current.result).toBeUndefined());
-  });
-
-  // Regression: the Step 1 trigger effect depends on runDryRun/reset identity. RTK recreates the
-  // mutation's reset on every trigger, so if reset isn't stabilized its identity changes after each
-  // dry-run, re-firing that effect and triggering another dry-run — an infinite request loop.
-  it('keeps stable runDryRun and reset identities across a dry-run', async () => {
-    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
-    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
-
-    const runDryRunBefore = result.current.runDryRun;
-    const resetBefore = result.current.reset;
-
-    await act(async () => {
-      await result.current.runDryRun({ source: 'yaml', yamlFile: yamlFile(), configIdentifier: 'prod' });
-    });
-    await waitFor(() => expect(result.current.result?.valid).toBe(true));
-
-    expect(result.current.runDryRun).toBe(runDryRunBefore);
-    expect(result.current.reset).toBe(resetBefore);
-  });
 });
 
 function templateFile(name: string, content: string) {
   return new File([content], name, { type: 'text/plain' });
 }
-
-describe('readTemplateFiles', () => {
-  it('returns an empty map when there are no files', async () => {
-    expect(await readTemplateFiles()).toEqual({});
-    expect(await readTemplateFiles([])).toEqual({});
-  });
-
-  it('keys each file by its name with the file content as the value', async () => {
-    const result = await readTemplateFiles([
-      templateFile('email.tmpl', 'email body'),
-      templateFile('slack.tmpl', 'slack body'),
-    ]);
-
-    expect(result).toEqual({ 'email.tmpl': 'email body', 'slack.tmpl': 'slack body' });
-  });
-
-  it('rejects when two files share the same name', async () => {
-    await expect(
-      readTemplateFiles([templateFile('dupe.tmpl', 'one'), templateFile('dupe.tmpl', 'two')])
-    ).rejects.toThrow('dupe.tmpl');
-  });
-});
-
-describe('mergeTemplateFiles', () => {
-  it('layers uploaded templates on top of the embedded ones', () => {
-    expect(mergeTemplateFiles({ 'embedded.tmpl': 'a' }, { 'uploaded.tmpl': 'b' })).toEqual({
-      'embedded.tmpl': 'a',
-      'uploaded.tmpl': 'b',
-    });
-  });
-
-  it('returns a copy of the embedded map when there are no uploaded templates', () => {
-    const embedded = { 'embedded.tmpl': 'a' };
-    const merged = mergeTemplateFiles(embedded, {});
-
-    expect(merged).toEqual(embedded);
-    expect(merged).not.toBe(embedded);
-  });
-
-  it('throws when an uploaded name collides with an embedded template', () => {
-    expect(() => mergeTemplateFiles({ 'shared.tmpl': 'embedded' }, { 'shared.tmpl': 'uploaded' })).toThrow(
-      'shared.tmpl'
-    );
-  });
-});
 
 describe('template file import wiring', () => {
   function captureConvertBodies() {
@@ -292,7 +251,7 @@ describe('template file import wiring', () => {
     server.use(
       http.post(CONVERT_URL, async ({ request }) => {
         bodies.push(await request.clone().json());
-        return HttpResponse.json({ status: 'success' });
+        return HttpResponse.json(convertResponse());
       })
     );
     return bodies;
@@ -319,17 +278,92 @@ describe('template file import wiring', () => {
     const bodies = captureConvertBodies();
     const { result } = renderHook(() => useImportNotifications(), { wrapper });
 
-    await expect(
-      act(async () => {
-        await result.current({
+    // The rejection is checked inside `act`: an `act` call that rejects leaves React's test renderer
+    // broken, and every hook rendered after it in this file returns nothing.
+    await act(async () => {
+      await expect(
+        result.current({
           source: 'yaml',
           yamlFile: yamlFile(),
           templateFiles: [templateFile('dupe.tmpl', 'one'), templateFile('dupe.tmpl', 'two')],
           configIdentifier: 'prod',
-        });
-      })
-    ).rejects.toThrow('dupe.tmpl');
+        })
+      ).rejects.toThrow('dupe.tmpl');
+    });
 
     expect(bodies).toHaveLength(0);
+  });
+});
+
+describe('rules import wiring', () => {
+  const RULES_URL = '/api/convert/prometheus/config/v1/rules';
+
+  function captureRulesRequests() {
+    const requests: Array<{ headers: Headers; body: unknown }> = [];
+    server.use(
+      http.post(RULES_URL, async ({ request }) => {
+        requests.push({ headers: request.headers, body: await request.json() });
+        return HttpResponse.json(convertResponse());
+      })
+    );
+    return requests;
+  }
+
+  it('sends the import options as headers, with the routing tree in the convert API shape', async () => {
+    const requests = captureRulesRequests();
+    const { result } = renderHook(() => useImportRules(), { wrapper });
+
+    await act(async () => {
+      await result.current({
+        dataSourceUID: 'mimir',
+        targetFolderUID: 'folder-1',
+        pauseAlertingRules: true,
+        pauseRecordingRules: false,
+        payload: {},
+        targetDatasourceUID: 'mimir-writes',
+        ...buildRoutingParams('team-a'),
+      });
+    });
+
+    expect(requests).toHaveLength(1);
+    const { headers } = requests[0];
+    expect(headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('mimir');
+    expect(headers.get('X-Grafana-Alerting-Folder-UID')).toBe('folder-1');
+    expect(headers.get('X-Grafana-Alerting-Target-Datasource-UID')).toBe('mimir-writes');
+    expect(headers.get('X-Grafana-Alerting-Alert-Rules-Paused')).toBe('true');
+    expect(headers.get('X-Grafana-Alerting-Recording-Rules-Paused')).toBe('false');
+    expect(headers.get('X-Grafana-Alerting-Notification-Settings')).toBe(JSON.stringify({ policy: 'team-a' }));
+    // The imported rules stay editable in the UI.
+    expect(headers.has('X-Disable-Provenance')).toBe(true);
+  });
+
+  it('leaves out the notification settings header for the default routing tree', async () => {
+    const requests = captureRulesRequests();
+    const { result } = renderHook(() => useImportRules(), { wrapper });
+
+    await act(async () => {
+      await result.current({
+        dataSourceUID: 'mimir',
+        pauseAlertingRules: false,
+        pauseRecordingRules: false,
+        payload: {},
+        ...buildRoutingParams(undefined),
+      });
+    });
+
+    expect(requests[0].headers.has('X-Grafana-Alerting-Notification-Settings')).toBe(false);
+  });
+});
+
+describe('filterRulerRulesConfig', () => {
+  it('skips Grafana-managed rules, since the convert API only imports data source rules', () => {
+    const dataSourceRule = mockRulerAlertingRule({ alert: 'HighCPU' });
+
+    const result = filterRulerRulesConfig({ ns: [{ name: 'group', rules: [dataSourceRule, mockGrafanaRulerRule()] }] });
+
+    expect(result).toEqual({
+      filteredConfig: { ns: [{ name: 'group', rules: [dataSourceRule] }] },
+      someRulesAreSkipped: true,
+    });
   });
 });

@@ -30,6 +30,16 @@ describe('RowExpander', () => {
     expect(onCellExpand).toHaveBeenCalledTimes(1);
   });
 
+  it('fills the cell so its entire region toggles the row', () => {
+    render(<RowExpander onCellExpand={jest.fn()} rowId="row-1" />);
+
+    expect(getExpander()).toHaveStyle({
+      position: 'absolute',
+      inset: 0,
+      paddingInline: '6px',
+    });
+  });
+
   it('calls onCellExpand when Enter is pressed', async () => {
     const onCellExpand = jest.fn();
     render(<RowExpander onCellExpand={onCellExpand} rowId="row-1" />);

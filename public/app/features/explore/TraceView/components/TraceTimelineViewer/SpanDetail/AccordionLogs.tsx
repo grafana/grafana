@@ -20,7 +20,6 @@ import { type GrafanaTheme2, type TraceLog } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../../Theme';
 import { formatDuration } from '../../utils/date';
 
 import AccordionKeyValues from './AccordionKeyValues';
@@ -38,12 +37,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: 'inherit',
       display: 'flex',
       alignItems: 'center',
-      background: autoColor(theme, '#f0f0f0'),
+      background: theme.colors.background.secondary,
       padding: theme.spacing(0.5, 1),
     }),
     AccordionLogsContent: css({
       label: 'AccordionLogsContent',
-      background: autoColor(theme, '#f0f0f0'),
+      background: theme.colors.background.secondary,
       padding: '0.5rem 0.5rem 0.25rem 0.5rem',
     }),
     AccordionLogsFooter: css({

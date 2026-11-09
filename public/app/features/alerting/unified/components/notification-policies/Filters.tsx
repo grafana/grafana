@@ -19,12 +19,7 @@ import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useCo
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { matcherToObjectMatcher } from '../../utils/alertmanager';
-import {
-  normalizeMatchers,
-  parsePromQLStyleMatcherLoose,
-  parsePromQLStyleMatcherLooseSafe,
-  unquoteIfRequired,
-} from '../../utils/matchers';
+import { normalizeMatchers, parsePromQLStyleMatcherLoose, unquoteIfRequired } from '../../utils/matchers';
 
 import { ExternalAlertmanagerContactPointSelector } from './ContactPointSelector';
 
@@ -41,10 +36,7 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
   const { hasFilters, clearFilters, selectedPolicyTreeNames } = useNotificationPoliciesFilters();
   const styles = useStyles2(getStyles);
 
-  const matchers = useMemo(
-    () => parsePromQLStyleMatcherLooseSafe(queryString ?? '').map(matcherToObjectMatcher),
-    [queryString]
-  );
+  const matchers = useMemo(() => parseNotificationPolicyMatchers(queryString ?? ''), [queryString]);
 
   useDebounce(
     () => {
@@ -71,7 +63,7 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
     if (!queryString) {
       inputValid = true;
     } else {
-      parsePromQLStyleMatcherLoose(queryString);
+      parsePromQLStyleMatcherLoose(queryString, { trimValue: true });
     }
   } catch (err) {
     inputValid = false;
@@ -234,6 +226,14 @@ export function findRoutesMatchingPredicate(
   return matchingRouteIdsWithPath;
 }
 
+function parseNotificationPolicyMatchers(query: string): ObjectMatcher[] {
+  try {
+    return parsePromQLStyleMatcherLoose(query, { trimValue: true }).map(matcherToObjectMatcher);
+  } catch {
+    return [];
+  }
+}
+
 export function findRoutesByMatchers(route: RouteWithID, labelMatchersFilter: ObjectMatcher[]): boolean {
   const filters = labelMatchersFilter.map(unquoteMatchersIfRequired);
   const routeMatchers = normalizeMatchers(route).map(unquoteMatchersIfRequired);
@@ -260,10 +260,7 @@ export function useNotificationPoliciesFilters() {
 
   const selectedPolicyTreeNames = useMemo(() => searchParams.getAll('includeTree').filter(Boolean), [searchParams]);
 
-  const labelMatchers = useMemo(
-    () => parsePromQLStyleMatcherLooseSafe(queryString ?? '').map(matcherToObjectMatcher),
-    [queryString]
-  );
+  const labelMatchers = useMemo(() => parseNotificationPolicyMatchers(queryString ?? ''), [queryString]);
 
   const hasFilters = Boolean(queryString || contactPoint || selectedPolicyTreeNames.length > 0);
 

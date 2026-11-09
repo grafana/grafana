@@ -16,8 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zclient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -58,7 +60,7 @@ func setupTestEnv(t *testing.T) *testEnv {
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
 
-	teamService, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracing.InitializeTracerForTest(), nil)
+	teamService, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{})
 	require.NoError(t, err)
 
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, quotatest.New(false, nil))
@@ -206,6 +208,7 @@ func addBuiltinRole(t *testing.T, env *testEnv, roleUID, builtinRole string, org
 
 // Mock zanzana client for testing
 type mockZanzanaClient struct {
+	zclient.NoopClient
 	mock.Mock
 }
 

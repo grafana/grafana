@@ -1,5 +1,4 @@
 import { t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -118,7 +117,6 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
 
   static Component = ({ model }: SceneComponentProps<PanelTimeRangeDrawer>) => {
     const { timeFrom, timeShift, compareWith, compareColorMode, hideTimeOverride, panelRef } = model.useState();
-
     const supportsComparisonDelta = PLUGINS_WITH_COMPARISON_DELTA.has(panelRef.resolve().state.pluginId);
 
     const timeOptions = getQuickOptions()
@@ -184,11 +182,9 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
             />
           </Field>
 
-          {config.featureToggles.timeComparison && (
-            <TimeComparisonField value={compareWith} onChange={(compareWith) => model.setState({ compareWith })} />
-          )}
+          <TimeComparisonField value={compareWith} onChange={(compareWith) => model.setState({ compareWith })} />
 
-          {config.featureToggles.timeComparison && compareWith && supportsComparisonDelta && (
+          {compareWith && supportsComparisonDelta && (
             <Field
               noMargin
               label={t('dashboard.panel.time-range-settings.compare-color-mode', 'Comparison tooltip delta color')}
@@ -221,11 +217,11 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
 
           <Box paddingTop={3}>
             <Stack>
-              <Button variant="secondary" onClick={model.onClose}>
-                <Trans i18nKey="common.cancel">Cancel</Trans>
-              </Button>
               <Button variant="primary" onClick={model.onApply}>
                 <Trans i18nKey="common.apply">Apply</Trans>
+              </Button>
+              <Button variant="secondary" onClick={model.onClose}>
+                <Trans i18nKey="common.cancel">Cancel</Trans>
               </Button>
             </Stack>
           </Box>

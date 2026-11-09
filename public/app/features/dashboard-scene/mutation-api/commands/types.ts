@@ -7,11 +7,14 @@
 
 import type * as z from 'zod';
 
-import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import type { MutationResult } from '../types';
+
+/** The `actor` recorded on undo entries the mutation API creates, and the `trigger` of its undo/redo interactions. */
+export const MUTATION_API_ACTOR = 'mutation-api';
 
 /** The scene a command operates on. Defaults to DashboardScene so a dashboard command names no type parameter. */
 export interface MutationContext<TScene = DashboardScene> {
@@ -56,6 +59,14 @@ export interface MutationCommand<T = unknown, TScene = DashboardScene> {
   handler: (payload: T, context: MutationContext<TScene>) => Promise<MutationResult>;
 }
 
+export interface LazyMutationCommand<TScene = DashboardScene> {
+  name: string;
+  /** Mirrors the loaded command so guards can inspect it without loading its implementation. */
+  readOnly?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload types vary by lazily loaded command
+  load: () => Promise<MutationCommand<any, TScene>>;
+}
+
 /**
  * Requires edit permissions on the dashboard (pure check, no side effects).
  */
@@ -81,7 +92,7 @@ export function readOnly(_scene: DashboardScene): PermissionCheckResult {
  * Used by all layout mutation commands (row/tab CRUD, panel movement).
  */
 export function requiresNewDashboardLayouts(scene: DashboardScene): PermissionCheckResult {
-  if (!config.featureToggles.dashboardNewLayouts) {
+  if (!isDashboardNewLayoutsEnabled()) {
     return {
       allowed: false,
       error: 'Layout management requires the "dashboardNewLayouts" feature toggle to be enabled.',
@@ -95,7 +106,7 @@ export function requiresNewDashboardLayouts(scene: DashboardScene): PermissionCh
  * Used by GET_LAYOUT and other read-only layout commands.
  */
 export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): PermissionCheckResult {
-  if (!config.featureToggles.dashboardNewLayouts) {
+  if (!isDashboardNewLayoutsEnabled()) {
     return {
       allowed: false,
       error: 'Layout management requires the "dashboardNewLayouts" feature toggle to be enabled.',
@@ -105,14 +116,13 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): Per
 }
 
 /**
- * Enter edit mode if the dashboard is not already editing.
+ * Enter edit mode or apply the Assistant presentation to the current edit session.
  * Call this at the top of any command handler that modifies the dashboard.
  */
 export function enterEditModeIfNeeded(scene: DashboardScene): void {
-  if (!scene.state.isEditing) {
-    scene.onEnterEditMode('assistant');
-  }
+  scene.onEnterEditMode('assistant');
   // New-layout mutations only run while the sidebar is active, and it may not be mounted here.
+  // Independent of edit mode: addElement-based undo/redo tracking needs this regardless.
   scene.activateSidebar();
 }
 

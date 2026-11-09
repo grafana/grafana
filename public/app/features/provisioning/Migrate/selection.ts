@@ -1,4 +1,4 @@
-import { type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
+import { type ProvisioningResourceRef as ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type FolderRow, type MigratableResource, resourceKey } from './hooks/useMigrationData';
 
@@ -57,7 +57,9 @@ export function resolveSelection(
       return;
     }
     seen.add(key);
-    resources.push({ name: resource.uid, group: resource.kind.group, kind: resource.kind.kind });
+    // A collection kind's registry group is the collection, which no API server serves; the
+    // listed resource carries the group that does.
+    resources.push({ name: resource.uid, group: resource.group ?? resource.kind.group, kind: resource.kind.kind });
   };
 
   // Resources covered by a selected folder are tracked separately so we don't

@@ -80,6 +80,180 @@ describe('processNodes', () => {
     ]);
   });
 
+  it.each([
+    {
+      name: 'a missing source',
+      edge: { source: 'missing-source', target: '0' },
+      missing: [{ side: 'source', id: 'missing-source' }],
+    },
+    {
+      name: 'a missing target',
+      edge: { source: '0', target: 'missing-target' },
+      missing: [{ side: 'target', id: 'missing-target' }],
+    },
+    {
+      name: 'both endpoints missing',
+      edge: { source: 'missing-source', target: 'missing-target' },
+      missing: [
+        { side: 'source', id: 'missing-source' },
+        { side: 'target', id: 'missing-target' },
+      ],
+    },
+  ])('should reject edges with $name', ({ edge, missing }) => {
+    const result = processNodes(makeNodesDataFrame(1), makeEdgesDataFrame([edge]));
+
+    expect(result).toEqual({
+      nodes: [],
+      edges: [],
+      error: {
+        kind: 'missing-endpoints',
+        affectedEdges: 1,
+        examples: [{ rowIndex: 0, edgeId: `${edge.source}--${edge.target}`, missing }],
+      },
+    });
+  });
+
+  it('should reject the entire graph when only some edges have missing endpoints', () => {
+    const result = processNodes(
+      makeNodesDataFrame(2),
+      makeEdgesDataFrame([
+        { source: '0', target: '1' },
+        { source: '0', target: 'missing' },
+        { source: '1', target: '0' },
+      ])
+    );
+
+    expect(result).toEqual({
+      nodes: [],
+      edges: [],
+      error: {
+        kind: 'missing-endpoints',
+        affectedEdges: 1,
+        examples: [{ rowIndex: 1, edgeId: '0--missing', missing: [{ side: 'target', id: 'missing' }] }],
+      },
+    });
+  });
+
+  it('should distinguish an explicitly empty nodes frame from absent nodes', () => {
+    const edges = makeEdgesDataFrame([{ source: 'from', target: 'to' }]);
+
+    expect(processNodes(undefined, edges).error).toBeUndefined();
+    expect(processNodes(makeNodesDataFrame(0), edges)).toEqual({
+      nodes: [],
+      edges: [],
+      error: {
+        kind: 'missing-endpoints',
+        affectedEdges: 1,
+        examples: [
+          {
+            rowIndex: 0,
+            edgeId: 'from--to',
+            missing: [
+              { side: 'source', id: 'from' },
+              { side: 'target', id: 'to' },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
+  it.each([
+    { frame: 'nodes', field: 'id', nodes: createDataFrame({ name: 'nodes', fields: [] }), edges: undefined },
+    {
+      frame: 'edges',
+      field: 'id',
+      nodes: makeNodesDataFrame(1),
+      edges: createDataFrame({
+        name: 'edges',
+        fields: [
+          { name: 'source', type: FieldType.string, values: ['0'] },
+          { name: 'target', type: FieldType.string, values: ['0'] },
+        ],
+      }),
+    },
+    {
+      frame: 'edges',
+      field: 'source',
+      nodes: makeNodesDataFrame(1),
+      edges: createDataFrame({
+        name: 'edges',
+        fields: [
+          { name: 'id', type: FieldType.string, values: ['e'] },
+          { name: 'target', type: FieldType.string, values: ['0'] },
+        ],
+      }),
+    },
+    {
+      frame: 'edges',
+      field: 'target',
+      nodes: makeNodesDataFrame(1),
+      edges: createDataFrame({
+        name: 'edges',
+        fields: [
+          { name: 'id', type: FieldType.string, values: ['e'] },
+          { name: 'source', type: FieldType.string, values: ['0'] },
+        ],
+      }),
+    },
+  ])('should return a field-specific error when $frame.$field is absent', ({ frame, field, nodes, edges }) => {
+    expect(processNodes(nodes, edges)).toEqual({
+      nodes: [],
+      edges: [],
+      error: { kind: 'missing-field', frame, field },
+    });
+  });
+
+  it('should report the node id error before missing edge fields', () => {
+    const nodes = createDataFrame({ name: 'nodes', fields: [] });
+    const edges = createDataFrame({ name: 'edges', fields: [] });
+
+    expect(processNodes(nodes, edges)).toEqual({
+      nodes: [],
+      edges: [],
+      error: { kind: 'missing-field', frame: 'nodes', field: 'id' },
+    });
+  });
+
+  it('should count every invalid row while keeping only the first five examples', () => {
+    const edges = makeEdgesDataFrame(Array.from({ length: 7 }, () => ({ source: 'missing', target: '0' })));
+
+    const result = processNodes(makeNodesDataFrame(1), edges);
+
+    expect(result.nodes).toEqual([]);
+    expect(result.edges).toEqual([]);
+    expect(result.error).toEqual({
+      kind: 'missing-endpoints',
+      affectedEdges: 7,
+      examples: Array.from({ length: 5 }, (_, index) => ({
+        rowIndex: index,
+        edgeId: 'missing--0',
+        missing: [{ side: 'source', id: 'missing' }],
+      })),
+    });
+  });
+
+  it('should leave node and edge frames and their field values unchanged', () => {
+    const nodes = makeNodesDataFrame(2);
+    const edges = makeEdgesDataFrame([{ source: '0', target: '1' }]);
+    const nodeFields = nodes.fields.map((field) => ({ field, values: field.values, config: field.config }));
+    const edgeFields = edges.fields.map((field) => ({ field, values: field.values, config: field.config }));
+
+    const result = processNodes(nodes, edges);
+
+    expect(result.error).toBeUndefined();
+    nodeFields.forEach(({ field, values, config }, index) => {
+      expect(nodes.fields[index]).toBe(field);
+      expect(nodes.fields[index].values).toBe(values);
+      expect(nodes.fields[index].config).toBe(config);
+    });
+    edgeFields.forEach(({ field, values, config }, index) => {
+      expect(edges.fields[index]).toBe(field);
+      expect(edges.fields[index].values).toBe(values);
+      expect(edges.fields[index].config).toBe(config);
+    });
+  });
+
   it('detects dataframes correctly', () => {
     const validFrames = [
       createDataFrame({

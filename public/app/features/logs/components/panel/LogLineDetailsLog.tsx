@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { memo, useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -12,6 +12,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { HighlightedLogRenderer } from './HighlightedLogRenderer';
 import { getStyles } from './LogLine';
 import { useLogListContext } from './LogListContext';
+import { getIconButtonStyles } from './activeIconButtonStyles';
 import { type LogListModel } from './processing';
 
 interface Props {
@@ -82,7 +83,8 @@ export const LogLineDetailsLog = memo(({ log: originalLog, prettifyJSON, syntaxH
             <span className={styles.actions}>
               {onClickFilterString && (
                 <IconButton
-                  name="search-plus"
+                  className={styles.iconButton}
+                  name="filter-plus"
                   size={fontSize === 'small' ? 'sm' : undefined}
                   onClick={filterLogLine}
                   tooltip={t('logs.log-line-details.filter-for-log-line', 'Filter for this log line')}
@@ -90,7 +92,8 @@ export const LogLineDetailsLog = memo(({ log: originalLog, prettifyJSON, syntaxH
               )}
               {onClickFilterOutString && (
                 <IconButton
-                  name="search-minus"
+                  className={styles.iconButton}
+                  name="filter-minus"
                   size={fontSize === 'small' ? 'sm' : undefined}
                   onClick={filterOutLogLine}
                   tooltip={t('logs.log-line-details.filter-out-log-line', 'Filter out this log line')}
@@ -108,7 +111,7 @@ export const LogLineDetailsLog = memo(({ log: originalLog, prettifyJSON, syntaxH
                   name="eye"
                   onClick={toggleLogLine}
                   tabIndex={0}
-                  variant={logLineDisplayed ? 'primary' : undefined}
+                  className={cx(styles.iconButton, logLineDisplayed && styles.activeIconButton)}
                 />
               )}
             </span>
@@ -141,7 +144,7 @@ const getLogLineDetailsLogStyles = (theme: GrafanaTheme2) => ({
     overflow: 'auto',
   }),
   actions: css({
-    paddingRight: theme.spacing(0.5),
+    paddingRight: theme.spacing(0.75),
     gap: theme.spacing(0.25),
     display: 'inline-flex',
     alignItems: 'flex-end',
@@ -153,4 +156,5 @@ const getLogLineDetailsLogStyles = (theme: GrafanaTheme2) => ({
     // Disable hover style
     pointerEvents: 'none',
   }),
+  ...getIconButtonStyles(theme),
 });

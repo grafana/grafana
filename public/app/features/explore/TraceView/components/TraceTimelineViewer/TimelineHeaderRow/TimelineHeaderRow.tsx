@@ -18,7 +18,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../../Theme';
 import Ticks from '../Ticks';
 import TimelineRow from '../TimelineRow';
 import { type TUpdateViewRangeTimeFunction, type ViewRangeTime, type ViewRangeTimeUpdate } from '../types';
@@ -31,8 +30,8 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     TimelineHeaderRow: css({
       label: 'TimelineHeaderRow',
-      background: autoColor(theme, '#ececec'),
-      borderBottom: `1px solid ${autoColor(theme, '#ccc')}`,
+      background: theme.colors.background.secondary,
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
       height: '38px',
       lineHeight: '38px',
       width: '100%',

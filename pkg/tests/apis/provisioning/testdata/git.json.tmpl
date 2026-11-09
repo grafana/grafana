@@ -18,7 +18,8 @@
             "enabled": {{ if .SyncEnabled }} true {{ else }} false {{ end }},
             "target": "{{ or .SyncTarget "folder" }}",
             "intervalSeconds": {{ or .SyncIntervalSeconds 60 }}
-        },
+        },{{ if .ConnectionName }}
+        "connection": { "name": "{{ .ConnectionName }}" },{{ end }}
         "workflows": {{ .WorkflowsJSON }}
     },
     "secure": {

@@ -8,7 +8,6 @@ import {
   BLOCKS_ATTR,
   clampPageSize,
   CONTENT_PADDING,
-  countRows,
   fitPageSize,
   usePagination,
   type PaginationOptions,
@@ -55,16 +54,6 @@ function boxOfRows(rowHeight: number, available: number, rowsOnPage: () => numbe
 function numberedFrame(rows: number) {
   return toDataFrame({ fields: [{ name: 'n', values: Array.from({ length: rows }, (_, i) => i) }] });
 }
-
-describe('countRows', () => {
-  it('sums the rows of every frame', () => {
-    expect(countRows([numberedFrame(3), numberedFrame(4)])).toBe(7);
-  });
-
-  it('ignores a frame without fields, which renders no blocks', () => {
-    expect(countRows([{ fields: [], length: 12 }, numberedFrame(2)])).toBe(2);
-  });
-});
 
 describe('clampPageSize', () => {
   it.each([
@@ -120,6 +109,20 @@ describe('usePagination', () => {
 
     expect(result.current.active).toBe(false);
     expect(result.current.rowWindow).toBeUndefined();
+  });
+
+  it('pages a panel sized to its content at the configured page size, laying it out by content', () => {
+    const { result } = setup({ fitContent: true, height: 0, pageSize: 20 });
+
+    expect(result.current.rowWindow).toEqual({ start: 0, count: 20 });
+    expect(result.current.fitHeight).toBeUndefined();
+  });
+
+  it('fits pages to the cap of a capped panel sized to its content, and lays it out at the cap', () => {
+    const { result } = setup({ fitContent: true, height: 0, fitMaxHeight: 400 });
+
+    expect(result.current.rowWindow).toEqual({ start: 0, count: 15 });
+    expect(result.current.fitHeight).toBe(400);
   });
 
   it('shows no control when the page holds every row, which is not paging', () => {
@@ -188,6 +191,22 @@ describe('usePagination', () => {
 
     expect(result.current.rowWindow).toEqual({ start: 0, count: 6 });
     expect(result.current.numPages).toBe(25);
+  });
+
+  it('refits from opaque iframe metrics when the runtime reports content height', () => {
+    const container = document.createElement('div');
+    Object.defineProperty(container, 'clientHeight', { value: 300 + CONTENT_PADDING });
+    const frame = document.createElement('iframe');
+    container.appendChild(frame);
+    const { result } = setup({}, container);
+    expect(result.current.rowWindow?.count).toBe(15);
+
+    act(() => {
+      frame.setAttribute('data-text-content-height', '750');
+      container.dispatchEvent(new Event('text-content-resized'));
+    });
+
+    expect(result.current.rowWindow?.count).toBe(6);
   });
 
   it('leaves the padding clientHeight reports out of the room it fits rows into', () => {

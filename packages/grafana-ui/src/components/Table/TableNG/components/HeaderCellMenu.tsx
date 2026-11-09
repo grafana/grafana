@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import { useCallback, useRef } from 'react';
+import { Fragment, useCallback, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,14 +10,20 @@ import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Dropdown } from '../../../Dropdown/Dropdown';
 import { IconButton } from '../../../IconButton/IconButton';
 import { Menu } from '../../../Menu/Menu';
+import { type ColumnOption } from '../menuOptions';
 
 interface HeaderCellMenuProps {
+  groups: ColumnOption[][];
+  onAddToAssistant?: () => void;
   displayName: string;
-  filterable: boolean;
   /** Whether this column currently has an active filter — swaps the menu item's label to reflect it. */
   hasActiveFilter?: boolean;
+  isFilterOpen?: boolean;
   /** Opens the column's filter popup, anchored to the passed element. */
   onOpenFilter: (anchor: HTMLButtonElement | null) => void;
+  onHideColumn?: () => void;
+  canHideColumn?: boolean;
+  onOpenColumnPanel?: () => void;
 }
 
 /**
@@ -27,32 +33,86 @@ interface HeaderCellMenuProps {
  * Built on Dropdown + Menu so it matches the dashboard panel menu. The filter popup itself is owned
  * by `HeaderCell`, which also opens it from the persistent filter icon.
  */
-export function HeaderCellMenu({ displayName, filterable, hasActiveFilter, onOpenFilter }: HeaderCellMenuProps) {
+export function HeaderCellMenu({
+  displayName,
+  groups,
+  hasActiveFilter,
+  isFilterOpen,
+  onOpenFilter,
+  onHideColumn,
+  canHideColumn,
+  onOpenColumnPanel,
+  onAddToAssistant,
+}: HeaderCellMenuProps) {
   // `Dropdown` overwrites its child's ref with its own floating-ui reference, so we can't hold a ref
   // on the button directly. We reach it through the wrapper instead, so the popup can anchor to it.
   const wrapperRef = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
 
-  const menuLabel = t('grafana-ui.table.column-menu-label', 'Column options for {{name}}', { name: displayName });
+  const menuLabel = t('grafana-ui.table.column-menu-label', 'Column options for {{name}}', {
+    name: displayName,
+    interpolation: { escapeValue: false },
+  });
 
   const overlay = useCallback(
     () => (
       <Menu ariaLabel={menuLabel}>
-        {filterable && (
-          <Menu.Item
-            label={
-              hasActiveFilter
-                ? t('grafana-ui.table.column-menu-update-filter', 'Update filter')
-                : t('grafana-ui.table.column-menu-filter', 'Filter values')
-            }
-            icon="filter"
-            testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem}
-            onClick={() => onOpenFilter(wrapperRef.current?.querySelector('button') ?? null)}
-          />
-        )}
+        {groups.map((group, index) => (
+          <Fragment key={group[0]}>
+            {index > 0 && <Menu.Divider />}
+            {group.map((option) => {
+              switch (option) {
+                case 'filter':
+                  return (
+                    <Menu.Item
+                      key={option}
+                      label={
+                        hasActiveFilter
+                          ? t('grafana-ui.table.column-menu-update-filter', 'Update filter')
+                          : t('grafana-ui.table.column-menu-filter', 'Filter values')
+                      }
+                      icon="filter"
+                      testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem}
+                      onClick={() => onOpenFilter(wrapperRef.current?.querySelector('button') ?? null)}
+                    />
+                  );
+                case 'hide':
+                  return (
+                    <Menu.Item
+                      key={option}
+                      label={t('grafana-ui.table.column-menu-hide', 'Hide column')}
+                      icon="eye-slash"
+                      disabled={!canHideColumn}
+                      testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.hideItem}
+                      onClick={onHideColumn}
+                    />
+                  );
+                case 'manage':
+                  return (
+                    <Menu.Item
+                      key={option}
+                      label={t('grafana-ui.table.column-menu-manage-columns', 'Manage columns')}
+                      icon="columns"
+                      testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.manageColumnsItem}
+                      onClick={onOpenColumnPanel}
+                    />
+                  );
+                case 'assistant':
+                  return (
+                    <Menu.Item
+                      key={option}
+                      label={t('grafana-ui.table.add-to-assistant', 'Add to Assistant')}
+                      icon="ai-sparkle"
+                      onClick={onAddToAssistant}
+                    />
+                  );
+              }
+            })}
+          </Fragment>
+        ))}
       </Menu>
     ),
-    [filterable, hasActiveFilter, menuLabel, onOpenFilter]
+    [groups, hasActiveFilter, menuLabel, onOpenFilter, onHideColumn, canHideColumn, onOpenColumnPanel, onAddToAssistant]
   );
 
   return (
@@ -68,6 +128,7 @@ export function HeaderCellMenu({ displayName, filterable, hasActiveFilter, onOpe
       <Dropdown overlay={overlay} placement="bottom-end">
         <IconButton
           className={styles.button}
+          data-filter-open={isFilterOpen || undefined}
           name="ellipsis-v"
           size="sm"
           aria-label={menuLabel}
@@ -101,7 +162,11 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     // Scoped to `.table-ng-header-cell` (HeaderCell's own root), not bare `.rdg-cell`: in a nested
     // table, a column's header cell also sits inside the outer grid's `.rdg-cell`, so `:hover` on
     // bare `.rdg-cell` would reveal every column's menu in the nested table at once.
-    '.table-ng-header-cell:hover &, &:focus-visible, &[aria-expanded="true"]': {
+    '.table-ng-header-cell:hover &, &:focus-visible, &[aria-expanded="true"], &[data-filter-open="true"]': {
+      opacity: 1,
+    },
+    '&[data-filter-open="true"]:before': {
+      backgroundColor: theme.colors.action.hover,
       opacity: 1,
     },
   }),

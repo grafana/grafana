@@ -105,6 +105,24 @@ After you have configured the Elasticsearch data source, you can:
 - Add [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to process query results.
 - [Build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/) to visualize your Elasticsearch data.
 
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to explore and query your Elasticsearch data source, use the `gcx datasources elasticsearch` commands:
+
+```sh
+# List the indices and fields available to the data source
+gcx datasources elasticsearch list-indices -d <DATASOURCE_UID>
+gcx datasources elasticsearch list-fields -d <DATASOURCE_UID> --index grafana-logs
+
+# Search documents with a Lucene query
+gcx datasources elasticsearch query -d <DATASOURCE_UID> 'app:frontend AND level:error' --since 1h
+
+# Aggregate documents over time, split into series by a field
+gcx datasources elasticsearch metrics -d <DATASOURCE_UID> 'level:error' --group-by app.keyword --since 6h
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your Elasticsearch data source. You can omit the `-d` flag when `datasources.elasticsearch` is configured in your `gcx` context. The `query` command searches documents with Lucene syntax (add `--mode logs` for a newest-first logs view), `metrics` runs a time-bucketed aggregation (`--agg`, `--field`, `--group-by`), and `list-indices` and `list-fields` help you discover index patterns and field names.
+
 ## Related data sources
 
 - [OpenSearch](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/) - For Amazon OpenSearch Service.

@@ -3,6 +3,8 @@ import { type EditorState, type Extension } from '@codemirror/state';
 import { type BasicSetupOptions } from '@uiw/react-codemirror';
 import { type ReactNode } from 'react';
 
+import { type CODE_MIRROR_LANGUAGES } from './languages';
+
 export type CodeMirrorCompletion = Completion;
 export type CodeMirrorCompletionContext = CompletionContext;
 export type CodeMirrorCompletionResult = CompletionResult;
@@ -19,7 +21,19 @@ export type CodeMirrorCompletionMode = 'override' | 'merge';
  */
 export type CodeMirrorBasicSetup = boolean | BasicSetupOptions;
 
-export type CodeMirrorEditorLanguage = 'go' | 'html' | 'json' | 'markdown' | 'sql' | 'typescript' | 'xml' | 'yaml';
+export type CodeMirrorEditorLanguage = keyof typeof CODE_MIRROR_LANGUAGES;
+
+export interface CodeMirrorDiffEditorProps {
+  original: string;
+  modified: string;
+  language?: CodeMirrorEditorLanguage;
+  /** Editor height, such as `'200px'` or `'100%'`. */
+  height?: string;
+  /** Show deleted and inserted lines in a single pane. Defaults to false. */
+  inline?: boolean;
+  /** Show line numbers. Defaults to true. */
+  lineNumbers?: boolean;
+}
 
 /**
  * SQL dialect used for syntax highlighting and keyword completion when

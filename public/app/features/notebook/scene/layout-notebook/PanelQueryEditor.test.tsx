@@ -2,6 +2,8 @@ import { act } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataQuery, type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
@@ -13,6 +15,11 @@ import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
 import { PanelQueryEditor } from './PanelQueryEditor';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
+
+setPluginImportUtils({
+  importPanelPlugin: async (id) => getPanelPlugin({ id }).useFieldConfig(),
+  getPanelPluginFromCache: () => undefined,
+});
 
 // QueryEditorRow pulls in real datasource plugin loading (DataSourcePluginContextProvider, the
 // plugin's own QueryEditor component) to render anything meaningful — none of which runs in jsdom.
@@ -129,8 +136,8 @@ const getDataSourceInstance = jest.fn(async (..._args: unknown[]) => ({
   getDefaultQuery: () => defaultQueryForNewType,
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: jest.fn(async (ref?: DataSourceRef | string) => settingsForRef(ref)),
   getDataSourceInstance: (...args: unknown[]) => getDataSourceInstance(...args),
   useDataSourceInstanceSettings: (ref?: DataSourceRef | string) => ({
@@ -163,6 +170,7 @@ function buildPanel(queries?: Array<Record<string, unknown>>) {
   }
 
   const cell = new NotebookCellItem({ elementName: 'query-1', source: 'user', body: panel });
+  cell.initializeAutoSuggest(true);
   const scene = new NotebookScene({
     title: 'Test notebook',
     body: new NotebookLayoutManager({ cells: [cell] }),
@@ -357,7 +365,7 @@ describe('PanelQueryEditor', () => {
     const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
     const runQueries = jest.spyOn(runner, 'runQueries');
-    const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+    const changePluginType = jest.spyOn(panel, 'changePluginType');
     getVizSuggestionForQuery.mockResolvedValue({ pluginId: 'table', options: { showHeader: true } });
     const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
@@ -365,10 +373,34 @@ describe('PanelQueryEditor', () => {
 
     await waitFor(() => expect(runQueries).toHaveBeenCalled());
     expect(getVizSuggestionForQuery).toHaveBeenCalledWith(runner.state.queries[0], expect.anything());
-    expect(changePluginType).toHaveBeenCalledWith('table', { showHeader: true }, undefined);
+    expect(changePluginType).toHaveBeenCalledWith(
+      'table',
+      { showHeader: true },
+      {
+        defaults: { custom: {} },
+        overrides: [],
+      }
+    );
     // The real run must come after the plugin swap, not before — a viz change mid-flight after data
     // has already arrived would otherwise briefly render the old plugin against new data.
     expect(changePluginType.mock.invocationCallOrder[0]).toBeLessThan(runQueries.mock.invocationCallOrder[0]);
+  });
+
+  it('records an automatic visualization suggestion in notebook history', async () => {
+    const { panel, cell, history } = buildPanel();
+    const originalPluginId = panel.state.pluginId;
+    getVizSuggestionForQuery.mockResolvedValue({ pluginId: 'table', options: { showHeader: true } });
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(history.state.undoLabel).toBe('Change visualization'));
+    expect(panel.state.pluginId).toBe('table');
+
+    act(() => history.undo());
+    await waitFor(() => expect(panel.state.pluginId).toBe(originalPluginId));
+
+    act(() => history.redo());
+    await waitFor(() => expect(panel.state.pluginId).toBe('table'));
   });
 
   it('still runs the query when the suggestion fails', async () => {
@@ -400,6 +432,99 @@ describe('PanelQueryEditor', () => {
 
     // The query itself hasn't changed between clicks, so the (query-running) suggestion fetch only
     // has to happen once — the second "Run query" click should go straight to the real run.
+    expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the suggestion choice when the query editor is closed and reopened', async () => {
+    const { panel, cell } = buildPanel();
+    const runner = getQueryRunnerFor(panel)!;
+    const runQueries = jest.spyOn(runner, 'runQueries');
+    const firstEditor = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+    await firstEditor.user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+    firstEditor.unmount();
+
+    const reopenedEditor = render(<PanelQueryEditor panel={panel} cell={cell} />);
+    await reopenedEditor.user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(2));
+
+    expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not replace a manually chosen visualization when running the same query', async () => {
+    const { panel, cell } = buildPanel();
+    const runner = getQueryRunnerFor(panel)!;
+    const runQueries = jest.spyOn(runner, 'runQueries');
+    cell.disableAutoSuggest();
+    cell.recordSuggestedQuery(runner.state.queries[0]);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+
+    expect(getVizSuggestionForQuery).not.toHaveBeenCalled();
+  });
+
+  it('does not auto-replace an existing visualization after reload or query edits', async () => {
+    const { panel, cell } = buildPanel();
+    const runner = getQueryRunnerFor(panel)!;
+    const runQueries = jest.spyOn(runner, 'runQueries');
+    cell.disableAutoSuggest();
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+    expect(getVizSuggestionForQuery).not.toHaveBeenCalled();
+  });
+
+  it('does not apply a delayed suggestion after leaving edit mode', async () => {
+    const { panel, cell } = buildPanel();
+    let finishSuggestion!: (suggestion: { pluginId: string; options: {} }) => void;
+    getVizSuggestionForQuery.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishSuggestion = resolve;
+        })
+    );
+    const changeVisualization = jest.spyOn(cell, 'onVisualizationChange');
+    const runQueries = jest.spyOn(getQueryRunnerFor(panel)!, 'runQueries');
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1));
+    cell.getParentLayout().editModeChanged(false);
+    finishSuggestion({ pluginId: 'table', options: {} });
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+
+    expect(changeVisualization).not.toHaveBeenCalled();
+  });
+
+  it('ignores an in-flight automatic suggestion after a manual choice starts', async () => {
+    const { panel, cell } = buildPanel();
+    let finishSuggestion!: (suggestion: { pluginId: string; options: {} }) => void;
+    jest.mocked(getVizSuggestionForQuery).mockReturnValue(
+      new Promise((resolve) => {
+        finishSuggestion = resolve;
+      })
+    );
+    const changeVisualization = jest.spyOn(cell, 'onVisualizationChange');
+    const runner = getQueryRunnerFor(panel)!;
+    const runQueries = jest.spyOn(runner, 'runQueries');
+    const editor = render(<PanelQueryEditor panel={panel} cell={cell} />);
+    await editor.user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1));
+
+    cell.disableAutoSuggest();
+    finishSuggestion({ pluginId: 'table', options: {} });
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+    expect(changeVisualization).not.toHaveBeenCalled();
+
+    editor.unmount();
+    cell.initializeAutoSuggest(true);
+    const reopened = render(<PanelQueryEditor panel={panel} cell={cell} />);
+    await reopened.user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(2));
     expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1);
   });
 
@@ -439,19 +564,10 @@ describe('PanelQueryEditor', () => {
 
   it('renders nothing for a panel with no query runner', () => {
     const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
-    const { container } = render(<PanelQueryEditor panel={panel} />);
+    const cell = new NotebookCellItem({ elementName: 'text', source: 'user', body: panel });
+    const { container } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     expect(container).toBeEmptyDOMElement();
-  });
-
-  it('still writes queries when rendered without an owning cell', async () => {
-    const { panel } = buildPanel();
-    const runner = getQueryRunnerFor(panel)!;
-    const { user } = render(<PanelQueryEditor panel={panel} />);
-
-    await user.click(await screen.findByRole('button', { name: 'edit query A' }));
-
-    expect(runner.state.queries[0]).toEqual(expect.objectContaining({ expr: 'up' }));
   });
 
   describe('row collapse state', () => {

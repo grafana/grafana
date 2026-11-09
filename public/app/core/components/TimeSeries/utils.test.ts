@@ -7,6 +7,7 @@ import {
   type EventBus,
   FieldColorModeId,
   FieldType,
+  getDisplayProcessor,
   type TimeRange,
 } from '@grafana/data';
 import { getTheme } from '@grafana/ui';
@@ -649,5 +650,61 @@ describe('x-axis time range', () => {
 
     expect(getXTimeRange(builder)()).toEqual([2000, 4000]);
     expect(builder.getState().isPanning).toBe(false);
+  });
+});
+
+describe('show values', () => {
+  // The draw hook only reads data, series state, the plot box and the canvas context.
+  type MockUPlot = {
+    data: number[][];
+    series: Array<{ show: boolean; points: { show: () => boolean }; scale: string }>;
+    bbox: { width: number };
+    ctx: Partial<CanvasRenderingContext2D>;
+    valToPos: () => number;
+  };
+
+  function makeValuesFrame(): DataFrame {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [1000, 2000, 3000, 4000] },
+        { name: 'A', type: FieldType.number, config: { custom: { showValues: true } }, values: [1, 2, 3, 2] },
+        // B lands on or next to A at the second and fourth points, so its labels collide with A's
+        { name: 'B', type: FieldType.number, config: { custom: { showValues: true } }, values: [3, 2.01, 1, 2] },
+      ],
+    });
+
+    frame.fields.forEach((field) => {
+      field.display = getDisplayProcessor({ field, theme: createTheme() });
+    });
+
+    return frame;
+  }
+
+  function drawValues(visible: boolean[]) {
+    const fillText = jest.fn();
+    const frame = makeValuesFrame();
+    const builder = buildBuilder(frame);
+    const draw = builder.getConfig().hooks!.draw![0] as unknown as (u: MockUPlot) => void;
+
+    draw({
+      data: frame.fields.map((field) => field.values),
+      series: [
+        { show: true, points: { show: () => false }, scale: 'x' },
+        ...visible.map((show) => ({ show, points: { show: () => true }, scale: 'y' })),
+      ],
+      bbox: { width: 200 },
+      ctx: { save: jest.fn(), restore: jest.fn(), fillText },
+      valToPos: () => 0,
+    });
+
+    return fillText.mock.calls.map((call) => call[0]);
+  }
+
+  it('draws a value for every point of both series', () => {
+    expect(drawValues([true, true])).toEqual(['1', '2', '3', '2', '3', '2.01', '1', '2']);
+  });
+
+  it('draws no values for a series hidden through the legend', () => {
+    expect(drawValues([true, false])).toEqual(['1', '2', '3', '2']);
   });
 });

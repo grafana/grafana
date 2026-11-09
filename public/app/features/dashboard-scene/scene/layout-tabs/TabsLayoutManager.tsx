@@ -12,6 +12,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { addElement } from '../../actions/element/addElement';
 import { moveElement } from '../../actions/element/moveElement';
@@ -243,14 +244,13 @@ export class TabsLayoutManager
     }
 
     addElement({
+      meta: { actionId: 'tab.add' },
       addedObject: newTab,
       source: this,
       perform: () => {
         this.setState({ tabs: [...this.state.tabs, newTab], currentTabSlug: newTab.getSlug() });
         const dashboard = getDashboardSceneFor(this);
-        if (dashboard.state.isEditing) {
-          newTab.getLayout().editModeChanged?.(true);
-        }
+        newTab.getLayout().editModeChanged?.(isFullDashboardEditing(dashboard.state));
       },
       undo: () => {
         this.setState({
@@ -395,6 +395,7 @@ export class TabsLayoutManager
     let nextVariables: SceneVariable[] | undefined;
 
     edit({
+      meta: { actionId: 'tab.ungroup' },
       description: t('dashboard.tabs-layout.edit.ungroup-tabs', 'Ungroup tabs'),
       source: scene,
       perform: () => {
@@ -579,6 +580,7 @@ export class TabsLayoutManager
       perform();
     } else {
       removeElement({
+        meta: { actionId: 'tab.remove' },
         removedObject: tab,
         source: this,
         perform,
@@ -614,6 +616,7 @@ export class TabsLayoutManager
     const originalToIndex = this.state.tabs.findIndex((tab) => tab === destinationTab);
 
     moveElement({
+      meta: { actionId: 'tab.reorder' },
       source: this,
       movedObject: objectToMove,
       perform: () => {

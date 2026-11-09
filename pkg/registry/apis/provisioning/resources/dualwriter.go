@@ -82,7 +82,12 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 		return nil, fmt.Errorf("error running dryRun: %w", err)
 	}
 
-	if err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbGet); err != nil {
+	if parsed.IsPreviewRead(r.repo.Config().Branch()) {
+		err = r.authorizer.AuthorizeResourcePreview(ctx, parsed)
+	} else {
+		err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbGet)
+	}
+	if err != nil {
 		return nil, fmt.Errorf("authorize read resource: %w", err)
 	}
 
@@ -365,6 +370,10 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := checkSecureValues(parsed); err != nil {
 		return nil, err
 	}
 
@@ -662,6 +671,13 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	newParsed, err := r.parser.Parse(ctx, newInfo)
 	if err != nil {
 		return nil, fmt.Errorf("parse new file: %w", err)
+	}
+
+	// This path writes the resource to storage below, so it is guarded whether or
+	// not the caller supplied content: relocating a file that already carries a
+	// secret would otherwise replay its create or remove against the secret store.
+	if err := checkSecureValues(newParsed); err != nil {
+		return nil, err
 	}
 
 	// Make sure the new resource is valid

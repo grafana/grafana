@@ -177,14 +177,12 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 					Value: []byte(resourceJSON),
 					Key:   key,
 				})
-				require.NoError(t, err)
-
 				if tc.expectSuccess {
-					require.Nil(t, created.Error)
+					require.NoError(t, err)
 					require.True(t, created.ResourceVersion > 0)
 				} else {
-					require.NotNil(t, created.Error)
-					require.Equal(t, tc.expectedError, created.Error.Code)
+					require.Nil(t, created)
+					require.Equal(t, tc.expectedError, requireRPCErrorResult(t, err).Code)
 				}
 
 				require.Len(t, checksPerformed, tc.expectedChecks)
@@ -244,14 +242,12 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 					Value:           []byte(targetResourceJSON),
 					ResourceVersion: created.ResourceVersion,
 				})
-				require.NoError(t, err)
-
 				if tc.expectSuccess {
-					require.Nil(t, updated.Error)
+					require.NoError(t, err)
 					require.True(t, updated.ResourceVersion > created.ResourceVersion)
 				} else {
-					require.NotNil(t, updated.Error)
-					require.Equal(t, tc.expectedError, updated.Error.Code)
+					require.Nil(t, updated)
+					require.Equal(t, tc.expectedError, requireRPCErrorResult(t, err).Code)
 				}
 
 				require.Len(t, checksPerformed, tc.expectedChecks)

@@ -9,16 +9,20 @@ import {
   type FieldConfigSource,
   type InterpolateFunction,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import {
   useFlagTableAutoColumnWidths,
   useFlagTablePaginationPageSize,
   useFlagTableRefresh,
+  useFlagTableRefreshNewFeatures,
+  useFlagTableSharedCrosshair,
 } from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
 import { usePanelContext } from '@grafana/ui';
+import { getSourceFrameIndex, useColumnTransformations } from '@grafana/ui/internal';
 import { getConfig } from 'app/core/config';
 
+import { TABLE_TRANSFORMATIONS_OWNER } from './constants';
+import { supportsColumnManagement } from './tableCapabilities';
 import { getCellActions } from './utils';
 
 type GetActions = (frame: DataFrame, field: Field, rowIndex: number) => Array<ActionModel<Field>>;
@@ -52,12 +56,9 @@ export function useCellActions(replaceVariables: InterpolateFunction | undefined
  * the panel context to have cursor sync enabled to something other than `Off`.
  */
 export function useTableSharedCrosshair(): boolean {
+  const tableSharedCrosshair = useFlagTableSharedCrosshair();
   const panelContext = usePanelContext();
-  return (
-    Boolean(config.featureToggles.tableSharedCrosshair) &&
-    Boolean(panelContext.sync) &&
-    panelContext.sync!() !== DashboardCursorSync.Off
-  );
+  return tableSharedCrosshair && Boolean(panelContext.sync) && panelContext.sync!() !== DashboardCursorSync.Off;
 }
 
 type CommonTableOptions = Pick<
@@ -72,6 +73,7 @@ type CommonTableOptions = Pick<
   | 'maxRowHeight'
   | 'disableKeyboardEvents'
   | 'hoverOverflow'
+  | 'zebraStriping'
 >;
 
 /**
@@ -83,6 +85,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
   const paginationPageSizeEnabled = useFlagTablePaginationPageSize();
   const tableRefreshEnabled = useFlagTableRefresh();
+  const refreshNewFeaturesEnabled = useFlagTableRefreshNewFeatures();
 
   return useMemo(
     () => ({
@@ -99,9 +102,12 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       maxRowHeight: options.maxRowHeight,
       disableKeyboardEvents: options.disableKeyboardEvents,
       hoverOverflow: options.hoverOverflow ?? true,
+      zebraStriping: refreshNewFeaturesEnabled && options.zebraStriping,
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
       contentAwareWidthsEnabled,
       tableRefreshEnabled,
+      jsonSyntaxHighlightingEnabled: refreshNewFeaturesEnabled,
+      rangeFiltersEnabled: refreshNewFeaturesEnabled,
     }),
     [
       options.showHeader,
@@ -114,10 +120,56 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       options.maxRowHeight,
       options.disableKeyboardEvents,
       options.hoverOverflow,
+      options.zebraStriping,
       fieldConfig.defaults.noValue,
       contentAwareWidthsEnabled,
       paginationPageSizeEnabled,
       tableRefreshEnabled,
+      refreshNewFeaturesEnabled,
     ]
   );
+}
+
+export function useTableRefreshNewFeatures(): boolean {
+  // Read both hooks unconditionally to keep hook order stable.
+  const newFeaturesEnabled = useFlagTableRefreshNewFeatures();
+  const refreshEnabled = useFlagTableRefresh();
+
+  return newFeaturesEnabled && refreshEnabled;
+}
+
+/** Returns column state when column controls are supported for the selected frame. */
+export function useAdHocColumnState(
+  frames: DataFrame[],
+  frameIndex: number,
+  enabled: boolean,
+  configuredSourceSeries?: readonly DataFrame[]
+) {
+  const api = usePanelContext().adHocTransformations;
+  const sourceSeries = configuredSourceSeries ?? api?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER);
+  const sourceIndex = getEligibleColumnSourceIndex(frames, frameIndex, sourceSeries, enabled);
+
+  return useColumnTransformations(sourceIndex, api, TABLE_TRANSFORMATIONS_OWNER, enabled, sourceSeries);
+}
+
+function getEligibleColumnSourceIndex(
+  frames: DataFrame[],
+  frameIndex: number,
+  sourceSeries: readonly DataFrame[] | undefined,
+  enabled: boolean
+): number {
+  if (!enabled) {
+    return -1;
+  }
+
+  let sourceIndex = -1;
+  if (sourceSeries && supportsColumnManagement(frames[frameIndex])) {
+    sourceIndex = getSourceFrameIndex(frames, frameIndex, sourceSeries);
+  }
+
+  if (sourceIndex >= 0 && !supportsColumnManagement(sourceSeries?.[sourceIndex])) {
+    return -1;
+  }
+
+  return sourceIndex;
 }

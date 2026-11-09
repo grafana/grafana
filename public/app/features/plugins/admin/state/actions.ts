@@ -3,10 +3,12 @@ import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
 import { type PanelPlugin, type PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
-import { refetchPanelPluginMetas } from '@grafana/runtime/internal';
+import { refetchPluginMetasAfterPluginChange } from '@grafana/runtime/internal';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
+import { type PluginDashboard } from 'app/types/plugins';
 import { type StoreState, type ThunkResult } from 'app/types/store';
 
+import { getDatasourceSrv } from '../../datasource_srv';
 import { clearPluginInfoInCache } from '../../loader/pluginInfoCache';
 import {
   getRemotePlugins,
@@ -191,6 +193,20 @@ export const fetchPluginInsights = createAsyncThunk<Update<CatalogPlugin, string
 
 export const addPlugins = createAction<CatalogPlugin[]>(`${STATE_PREFIX}/addPlugins`);
 
+// Panels and data sources carry the meta of their plugin, and a data source of a newly installed
+// plugin only shows up after a reload. One payload serves the metas and the reload. The metas come
+// first, because the reload joins the data sources with them. The plugin change has succeeded, so
+// a failed refresh must not fail it.
+async function refreshAfterPluginChange() {
+  try {
+    const settings = await getBackendSrv().get('/api/frontend/settings');
+    await refetchPluginMetasAfterPluginChange(settings);
+    await getDatasourceSrv().reload(settings);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 // We are also using the install API endpoint to update the plugin
 export const install = createAsyncThunk<
   Update<CatalogPlugin, string>,
@@ -211,7 +227,7 @@ export const install = createAsyncThunk<
 
   try {
     await installPlugin(id, version);
-    await refetchPanelPluginMetas();
+    await refreshAfterPluginChange();
 
     if (installType !== PluginStatus.INSTALL) {
       clearPluginInfoInCache(id);
@@ -237,7 +253,7 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
   async (id, thunkApi) => {
     try {
       await uninstallPlugin(id);
-      await refetchPanelPluginMetas();
+      await refreshAfterPluginChange();
 
       clearPluginInfoInCache(id);
 
@@ -256,13 +272,16 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
 // We need this to be backwards-compatible with other parts of Grafana.
 // (Originally in "public/app/features/plugins/state/actions.ts")
 // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
-export const loadPluginDashboards = createAsyncThunk(`${STATE_PREFIX}/loadPluginDashboards`, async (_, thunkApi) => {
-  const state = thunkApi.getState() as StoreState;
-  const dataSourceType = state.dataSources.dataSource.type;
-  const url = `api/plugins/${dataSourceType}/dashboards`;
+export const loadPluginDashboards = createAsyncThunk<PluginDashboard[], void, { state: StoreState }>(
+  `${STATE_PREFIX}/loadPluginDashboards`,
+  async (_, thunkApi) => {
+    const state = thunkApi.getState();
+    const dataSourceType = state.dataSources.dataSource.type;
+    const url = `api/plugins/${dataSourceType}/dashboards`;
 
-  return getBackendSrv().get(url);
-});
+    return getBackendSrv().get<PluginDashboard[]>(url);
+  }
+);
 
 export const panelPluginLoaded = createAction<PanelPlugin>(`${STATE_PREFIX}/panelPluginLoaded`);
 

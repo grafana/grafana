@@ -70,10 +70,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     }
 
     const vals = await datasource.getScenarios();
-    const hideAlias = [TestDataQueryType.Simulation, TestDataQueryType.Annotations];
+    const hideAlias: string[] = [TestDataQueryType.Simulation, TestDataQueryType.Annotations];
     return vals.map((v) => ({
       ...v,
-      hideAliasField: hideAlias.includes(v.id as TestDataQueryType),
+      hideAliasField: hideAlias.includes(v.id),
     }));
   }, []);
 
@@ -183,7 +183,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onUpdate({ ...query, [field]: { ...(query as any)[field], [name]: newValue } });
   };
 
-  const onEndPointChange = ({ value }: SelectableValue) => {
+  const onEndPointChange = ({ value }: SelectableValue<string>) => {
     onUpdate({ ...query, stringInput: value });
   };
 

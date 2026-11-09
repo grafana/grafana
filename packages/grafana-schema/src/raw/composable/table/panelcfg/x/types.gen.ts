@@ -12,7 +12,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "13.3.0-pre";
+export const pluginVersion = "13.4.0-pre";
 
 /**
  * @deprecated - use common in /packages/grafana-schema/src/common/table.cue instead i.e. `import { TableOptions } from '@grafana/schema';`
@@ -53,6 +53,10 @@ export interface Options {
    */
   pageSize?: number;
   /**
+   * Whether the column management sidebar starts open
+   */
+  showColumnsSidebar?: boolean;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;
@@ -64,6 +68,11 @@ export interface Options {
    * Used to control row sorting
    */
   sortBy?: Array<ui.TableSortByFieldState>;
+  /**
+   * Alternates the background color of every other row. Only applies when the
+   * `table.refreshNewFeatures` feature toggle is enabled.
+   */
+  zebraStriping?: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
@@ -73,6 +82,7 @@ export const defaultOptions: Partial<Options> = {
   showHeader: true,
   showTypeIcons: false,
   sortBy: [],
+  zebraStriping: false,
 };
 
 export interface FieldConfig extends ui.TableFieldOptions {}

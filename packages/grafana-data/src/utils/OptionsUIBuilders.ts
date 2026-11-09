@@ -243,7 +243,7 @@ class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<TSub, a
     return this.cfg.build;
   };
 
-  getNestedValueAccess = (parent: NestedValueAccess) => {
+  getNestedValueAccess = (parent: NestedValueAccess): NestedValueAccess => {
     const values = this.cfg.values;
     if (values) {
       return values(parent);
@@ -251,7 +251,7 @@ class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<TSub, a
     // by default prefix the path
     return {
       getValue: (path: string) => parent.getValue(`${this.path}.${path}`),
-      onChange: (path: string, value: any) => parent.onChange(`${this.path}.${path}`, value),
+      onChange: (path: string, value: unknown) => parent.onChange(`${this.path}.${path}`, value),
     };
   };
 }

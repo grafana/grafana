@@ -6,6 +6,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { selectors } from '@grafana/e2e-selectors';
 import { LocationServiceProvider, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import {
@@ -19,12 +20,15 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
-import { ToolbarActions } from './NavToolbarActions';
+import { NavToolbarActions, ToolbarActions } from './NavToolbarActions';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
+    editPeriodStarted: jest.fn(),
+    editPeriodEnded: jest.fn(),
+    editActorFirstChange: jest.fn(),
     editButtonClicked: jest.fn(),
   },
 }));
@@ -318,3 +322,78 @@ function setup(meta?: DashboardMeta, editable?: boolean) {
 
   return { dashboard, actions };
 }
+
+describe('when previewing an unbuilt dashboard plan', () => {
+  afterEach(() => {
+    setTestFlags({});
+  });
+
+  // Render through the shared wrapper to cover planning behavior in both toolbar variants.
+  function setupPlanning(phase: 'preview' | 'building' = 'preview') {
+    const onBuild = jest.fn();
+    const onDismiss = jest.fn();
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      meta: { canEdit: true, canSave: true, canShare: true, canStar: true },
+      title: 'hello',
+      editable: true,
+      uid: 'dash-1',
+      isEditing: true,
+      planning:
+        phase === 'preview'
+          ? { phase, planId: 'plan-1', planTitle: 'Kafka overview', onBuild, onDismiss }
+          : { phase, planId: 'plan-1', planTitle: 'Kafka overview' },
+      body: DefaultGridLayoutManager.fromVizPanels([
+        new VizPanel({ title: 'Panel A', key: 'panel-1', pluginId: 'table' }),
+      ]),
+    });
+
+    const context = getGrafanaContextMock();
+    locationService.push('/');
+
+    render(
+      <TestProvider grafanaContext={context}>
+        <LocationServiceProvider service={locationService}>
+          <UrlSyncContextProvider scene={dashboard}>
+            <NavToolbarActions dashboard={dashboard} />
+          </UrlSyncContextProvider>
+        </LocationServiceProvider>
+      </TestProvider>
+    );
+
+    // AppChromeUpdate hands the toolbar to app chrome rather than rendering it in place.
+    render(<TestProvider grafanaContext={context}>{context.chrome.state.getValue().actions}</TestProvider>);
+
+    return { dashboard, onBuild, onDismiss };
+  }
+
+  it.each([true, false])('offers only Build and Dismiss (dashboardNewLayouts=%s)', async (newLayouts) => {
+    setTestFlags({ dashboardNewLayouts: newLayouts });
+    setupPlanning();
+
+    expect(await screen.findByText('Kafka overview')).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningBuildButton)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningDismissButton)).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.settingsButton)).not.toBeInTheDocument();
+  });
+
+  it('drops the banner once the plan is building', async () => {
+    setupPlanning('building');
+
+    expect(
+      screen.queryByTestId(selectors.components.NavToolbar.editDashboard.planningBuildButton)
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Kafka overview')).not.toBeInTheDocument();
+  });
+
+  it('wires the banner actions to the plan callbacks', async () => {
+    const { onBuild, onDismiss } = setupPlanning();
+
+    await userEvent.click(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningBuildButton));
+    expect(onBuild).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningDismissButton));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+});

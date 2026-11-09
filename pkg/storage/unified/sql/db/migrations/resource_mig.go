@@ -308,6 +308,21 @@ func initResourceTables(mg *migrator.Migrator) string {
 	mg.AddMigration("create table "+resource_version_policy_table.Name, migrator.NewAddTableMigration(resource_version_policy_table))
 	mg.AddMigration("Change key_path collation of resource_version_policy in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_version_policy ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
 
+	resource_blob_upload_chunk_table := migrator.Table{
+		Name: "resource_blob_upload_chunk",
+		Columns: []*migrator.Column{
+			{Name: "upload_id", Type: migrator.DB_Uuid, Length: 36, Nullable: false},
+			{Name: "chunk_index", Type: migrator.DB_Int, Nullable: false},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "value", Type: migrator.DB_LongBlob, Nullable: false},
+		},
+		PrimaryKeys: []string{"upload_id", "chunk_index"},
+	}
+	mg.AddMigration("create resource_blob_upload_chunk table", migrator.NewAddTableMigration(resource_blob_upload_chunk_table))
+	mg.AddMigration("add resource_blob_upload_chunk created index", migrator.NewAddIndexMigration(resource_blob_upload_chunk_table, &migrator.Index{
+		Cols: []string{"created"}, Type: migrator.IndexType,
+	}))
+
 	return marker
 }
 

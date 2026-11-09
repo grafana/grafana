@@ -76,8 +76,8 @@ func (s *cachingLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx co
 
 	ds, err := s.retriever.GetDataSource(ctx, &datasources.GetDataSourceQuery{
 		OrgID: user.GetOrgID(),
-		Name:  name,
-		ID:    id,
+		Name:  name, //nolint:staticcheck // Preserve legacy field compatibility.
+		ID:    id,   //nolint:staticcheck // Preserve legacy field compatibility.
 	})
 	if err != nil {
 		s.log.Error("failed to get datasource from retriever", "error", err)

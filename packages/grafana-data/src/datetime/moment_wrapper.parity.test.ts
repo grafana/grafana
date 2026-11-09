@@ -1,28 +1,10 @@
-import type * as MomentWrapper from './moment_wrapper';
+import * as wrapper from './moment_wrapper';
 
 describe('Luxon-backed DateTime wrapper', () => {
-  const flagName = '__grafanaUseLuxon';
-  let originalDescriptor: PropertyDescriptor | undefined;
-  let originalLocale: string;
-  let wrapper: typeof MomentWrapper;
-
-  beforeAll(async () => {
-    originalDescriptor = Object.getOwnPropertyDescriptor(window, flagName);
-    Object.defineProperty(window, flagName, { configurable: true, value: true });
-    wrapper = await import('./moment_wrapper');
-    originalLocale = wrapper.getLocale();
-  });
+  const originalLocale = wrapper.getLocale();
 
   afterEach(() => {
     wrapper.setLocale(originalLocale);
-  });
-
-  afterAll(() => {
-    if (originalDescriptor) {
-      Object.defineProperty(window, flagName, originalDescriptor);
-    } else {
-      Reflect.deleteProperty(window, flagName);
-    }
   });
 
   it('subtracts shorthand through the public DateTime API without replacing the instance', () => {
@@ -79,6 +61,29 @@ describe('Luxon-backed DateTime wrapper', () => {
     expect(wrapper.getLocaleData().firstDayOfWeek()).toBe(1);
     expect(wrapper.toUtc('2024-05-08').startOf('week').toISOString()).toBe('2024-05-06T00:00:00.000Z');
   });
+
+  it.each(['en-US', 'fr-FR'])(
+    'resolves %s timezone labels and DST offsets with a custom week start',
+    async (locale) => {
+      const expectedLabel = (month: number) =>
+        new Intl.DateTimeFormat(locale, { timeZone: 'EST5EDT', timeZoneName: 'short' })
+          .formatToParts(Date.UTC(2026, month, 15))
+          .find((part) => part.type === 'timeZoneName')!.value;
+      const { getTimeZoneInfo } = await import('./timezones');
+      wrapper.setLocale(locale);
+      wrapper.setWeekStart('Monday');
+
+      expect(getTimeZoneInfo('EST5EDT', Date.UTC(2026, 0, 15))).toMatchObject({
+        abbreviation: expectedLabel(0),
+        offsetInMins: 300,
+      });
+      expect(getTimeZoneInfo('EST5EDT', Date.UTC(2026, 6, 15))).toMatchObject({
+        abbreviation: expectedLabel(6),
+        offsetInMins: 240,
+      });
+      expect(wrapper.toUtc('2026-01-15').startOf('week').format('YYYY-MM-DD')).toBe('2026-01-12');
+    }
+  );
 
   it('uses the same localized L pattern for public parsing and formatting', () => {
     wrapper.setLocale('de');

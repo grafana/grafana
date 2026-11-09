@@ -17,14 +17,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type ruleAccessControlService interface {
 	AuthorizeRuleGroupRead(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
-	AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error
+	AuthorizeNotificationSettings(ctx context.Context, user identity.Requester, receivers []accesscontrol.ReceiverRef) error
 	AuthorizeRuleRead(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 	// CanReadAllRules returns true if the user has full access to read rules via provisioning API and bypass regular checks
 	CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error)
@@ -116,6 +117,8 @@ type ListAlertRulesOptions struct {
 	TargetDatasourceUIDFilter ListRuleStringFilter
 	DatasourceUIDs            []string
 	SearchTitle               string
+	StateFilter               ListRuleStringFilter
+	HealthFilter              ListRuleStringFilter
 }
 
 // extractSingleValue returns the single value from a ListRuleStringFilter's Include or Exclude slice,
@@ -246,9 +249,13 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 			DataSourceUIDs:                   opts.DatasourceUIDs,
 			SearchTitle:                      opts.SearchTitle,
 		},
-		RuleType:      opts.RuleType,
-		Limit:         opts.Limit,
-		ContinueToken: opts.ContinueToken,
+		RuleType:       opts.RuleType,
+		Limit:          opts.Limit,
+		ContinueToken:  opts.ContinueToken,
+		States:         opts.StateFilter.Include,
+		ExcludeStates:  opts.StateFilter.Exclude,
+		Healths:        opts.HealthFilter.Include,
+		ExcludeHealths: opts.HealthFilter.Exclude,
 	}
 
 	can, err := service.authz.CanReadAllRules(ctx, user)
@@ -492,7 +499,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 			return models.AlertRule{}, err
 		}
 	} else {
-		delta, err := store.CalculateRuleCreate(ctx, service.ruleStore, &rule)
+		delta, err := rulestore.CalculateRuleCreate(ctx, service.ruleStore, &rule)
 		if err != nil {
 			return models.AlertRule{}, fmt.Errorf("failed to calculate delta: %w", err)
 		}
@@ -516,9 +523,16 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	}
 	rule.Updated = time.Now()
 	if rule.NotificationSettings != nil {
+		// The receivers are authorized, and then validated, against the same configuration. In that order so that who
+		// cannot use a receiver is not told whether it exists.
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
 			return models.AlertRule{}, err
+		}
+		if !canWriteAllRules {
+			if err := service.authz.AuthorizeNotificationSettings(ctx, user, accesscontrol.ReceiverRefs(validator.Config(), *rule.NotificationSettings)); err != nil {
+				return models.AlertRule{}, err
+			}
 		}
 		if err := validator.Validate(*rule.NotificationSettings); err != nil {
 			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
@@ -667,15 +681,15 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 				NamespaceUID: namespaceUID,
 				RuleGroup:    ruleGroup,
 			}
-			ruleDeltas := make([]store.RuleDelta, 0, len(ruleList))
+			ruleDeltas := make([]rulestore.RuleDelta, 0, len(ruleList))
 			for _, upd := range updateRules {
 				updNew := upd.New
-				ruleDeltas = append(ruleDeltas, store.RuleDelta{
+				ruleDeltas = append(ruleDeltas, rulestore.RuleDelta{
 					Existing: upd.Existing,
 					New:      &updNew,
 				})
 			}
-			delta := &store.GroupDelta{
+			delta := &rulestore.GroupDelta{
 				GroupKey: groupKey,
 				AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 					groupKey: ruleList,
@@ -738,9 +752,16 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 
 	newOrUpdatedNotificationSettings := delta.NewOrUpdatedNotificationSettings()
 	if len(newOrUpdatedNotificationSettings) > 0 {
+		// The receivers are authorized, and then validated, against the same configuration. In that order so that who
+		// cannot use a receiver is not told whether it exists.
 		validator, err := service.nsValidatorProvider.Validator(ctx, delta.GroupKey.OrgID)
 		if err != nil {
 			return err
+		}
+		if !can {
+			if err := service.authz.AuthorizeNotificationSettings(ctx, user, accesscontrol.ReceiverRefs(validator.Config(), newOrUpdatedNotificationSettings...)); err != nil {
+				return err
+			}
 		}
 		for _, s := range newOrUpdatedNotificationSettings {
 			if err := validator.Validate(s); err != nil {
@@ -779,7 +800,7 @@ func (service *AlertRuleService) DeleteRuleGroups(ctx context.Context, user iden
 	q = filterOpts.apply(q)
 	q.OrgID = user.GetOrgID()
 
-	deltas, err := store.CalculateRuleGroupsDelete(ctx, service.ruleStore, user.GetOrgID(), &q)
+	deltas, err := rulestore.CalculateRuleGroupsDelete(ctx, service.ruleStore, user.GetOrgID(), &q)
 	if err != nil {
 		return err
 	}
@@ -805,7 +826,7 @@ func (service *AlertRuleService) DeleteRuleGroups(ctx context.Context, user iden
 	})
 }
 
-func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Requester, group models.AlertRuleGroup) (*store.GroupDelta, error) {
+func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Requester, group models.AlertRuleGroup) (*rulestore.GroupDelta, error) {
 	// If the provided request did not provide the rules list at all, treat it as though it does not wish to change rules.
 	// This is done for backwards compatibility. Requests which specify only the interval must update only the interval.
 	if group.Rules == nil {
@@ -843,16 +864,16 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 		}
 		rules = append(rules, &models.AlertRuleWithOptionals{AlertRule: group.Rules[i], HasPause: true})
 	}
-	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
+	delta, err := rulestore.CalculateChanges(ctx, service.ruleStore, key, rules)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate diff for alert rules: %w", err)
 	}
 
 	// Refresh all calculated fields across all rules.
-	return store.UpdateCalculatedRuleFields(delta), nil
+	return rulestore.UpdateCalculatedRuleFields(delta), nil
 }
 
-func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *store.GroupDelta, manager utils.ManagerProperties, versionMessage string) error {
+func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *rulestore.GroupDelta, manager utils.ManagerProperties, versionMessage string) error {
 	// Group replace does not flow through CreateAlertRule/UpdateAlertRule.
 	mutated := make([]*models.AlertRule, 0, len(delta.New)+len(delta.Update))
 	mutated = append(mutated, delta.New...)
@@ -943,6 +964,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 // UpdateAlertRule updates an alert rule.
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, manager utils.ManagerProperties) (models.AlertRule, error) {
 	var storedRule *models.AlertRule
+	var changedNotificationSettings []models.NotificationSettings // Needs authorizing unless the user can write all rules.
 	if err := service.ensureNamespace(ctx, user, rule.OrgID, rule.NamespaceUID); err != nil {
 		return models.AlertRule{}, err
 	}
@@ -963,7 +985,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		}
 		storedRule = existing
 	} else {
-		delta, err := store.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule})
+		delta, err := rulestore.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule})
 		if err != nil {
 			return models.AlertRule{}, err
 		}
@@ -974,6 +996,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 			// No changes to the rule.
 			return rule, nil
 		}
+		changedNotificationSettings = delta.NewOrUpdatedNotificationSettings()
 		// new rules not allowed in update for a single rule
 		if len(delta.New) > 0 {
 			return models.AlertRule{}, fmt.Errorf("failed to update rule with UID %s because %w", rule.UID, models.ErrAlertRuleNotFound)
@@ -1001,9 +1024,16 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		})
 	}
 	if rule.NotificationSettings != nil {
+		// The receivers are authorized, and then validated, against the same configuration. In that order so that who
+		// cannot use a receiver is not told whether it exists.
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
 			return models.AlertRule{}, err
+		}
+		if len(changedNotificationSettings) > 0 {
+			if err := service.authz.AuthorizeNotificationSettings(ctx, user, accesscontrol.ReceiverRefs(validator.Config(), changedNotificationSettings...)); err != nil {
+				return models.AlertRule{}, err
+			}
 		}
 		if err := validator.Validate(*rule.NotificationSettings); err != nil {
 			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
@@ -1073,7 +1103,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 		return err
 	}
 	if !can {
-		delta, err := store.CalculateRuleDelete(ctx, service.ruleStore, rule.GetKey())
+		delta, err := rulestore.CalculateRuleDelete(ctx, service.ruleStore, rule.GetKey())
 		if err != nil {
 			if errors.Is(err, models.ErrAlertRuleNotFound) {
 				// Rule already gone; return early so non-admin users

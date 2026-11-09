@@ -173,7 +173,6 @@ const defaultOptions: Options = {
 
 const defaultPropsNoFrames: Partial<HistogramProps> = {
   options: defaultOptions,
-  theme,
   legend: defaultLegendOptions,
   width: 400,
   height: 300,
@@ -218,6 +217,15 @@ describe('Histogram', () => {
         expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeInTheDocument();
         expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
         expect(screen.queryByTestId(selectors.components.VizLegend.legend)).not.toBeInTheDocument();
+      });
+
+      it('does not render legend when displayMode is hidden, even if showLegend is true', () => {
+        setUp(undefined, {
+          legend: { ...defaultLegendOptions, showLegend: true, displayMode: LegendDisplayMode.Hidden },
+        });
+
+        expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
+        expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
       });
 
       it('renders with combine: false', async () => {

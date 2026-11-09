@@ -7,7 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -21,7 +20,12 @@ type Validator interface {
 // ValidatorFactory creates a validator when given the runtime dependencies.
 // This allows validator configuration to be defined at registration time,
 // while actual validator instances are created when dependencies are available.
-type ValidatorFactory func(client resourcepb.ResourceIndexClient, driverName string) Validator
+type ValidatorFactory func(client resourcepb.ResourceIndexClient, opts ValidatorOptions) Validator
+
+type ValidatorOptions struct {
+	DriverName         string
+	EnableSQLKVBackend bool
+}
 
 // MigratorFunc is the signature for resource migration functions.
 type MigratorFunc = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
@@ -41,25 +45,21 @@ type ResourceInfo struct {
 // MigrationDefinition defines a resource migration.
 // This is the public API for defining and registering migrations.
 type MigrationDefinition struct {
-	ID              string                                // Unique identifier for registry lookup (e.g., "folders-dashboards", "playlists")
-	MigrationID     string                                // ID for the migration log table entry (e.g., "folders and dashboards migration")
-	Resources       []ResourceInfo                        // Resources to migrate together, with their lock tables
-	Migrators       map[schema.GroupResource]MigratorFunc // Direct migrator functions per resource
-	Validators      []ValidatorFactory                    // Validator factories (validators created lazily)
-	RenameTables    []string                              // Legacy tables to rename with _legacy suffix after successful migration
-	SkipWhenMissing bool                                  // For fully migrated resources, the table may not exist at all
-	// ResourceGroupsFunc, when set, is called before opening the bulk stream to
-	// resolve the actual groups present in the namespace, replacing the static
-	// Resources list for stream pre-authorization. The ResourceClient is provided
-	// so implementations can also account for stale groups in unified storage.
-	ResourceGroupsFunc func(ctx context.Context, namespace string, client resource.ResourceClient) ([]schema.GroupResource, error)
+	ID                  string                                // Unique identifier for registry lookup (e.g., "folders-dashboards", "playlists")
+	MigrationID         string                                // ID for the migration log table entry (e.g., "folders and dashboards migration")
+	Resources           []ResourceInfo                        // Resources to migrate together, with their lock tables
+	Migrators           map[schema.GroupResource]MigratorFunc // Direct migrator functions per resource
+	Validators          []ValidatorFactory                    // Validator factories (validators created lazily)
+	RenameTables        []string                              // Legacy tables to rename with _legacy suffix after successful migration
+	SkipWhenMissing     bool                                  // For fully migrated resources, the table may not exist at all
+	RequiresInlineBlobs bool                                  // RequiresInlineBlobs prevents sending resources to servers that cannot consume blob frames.
 }
 
 // CreateValidators creates validators from the stored factory functions.
-func (d MigrationDefinition) CreateValidators(client resourcepb.ResourceIndexClient, driverName string) []Validator {
+func (d MigrationDefinition) CreateValidators(client resourcepb.ResourceIndexClient, opts ValidatorOptions) []Validator {
 	validators := make([]Validator, 0, len(d.Validators))
 	for _, factory := range d.Validators {
-		validators = append(validators, factory(client, driverName))
+		validators = append(validators, factory(client, opts))
 	}
 	return validators
 }
@@ -174,18 +174,4 @@ func (r *MigrationRegistry) HasResource(gr schema.GroupResource) bool {
 		}
 	}
 	return false
-}
-
-// GetResourceGroupsFunc returns the ResourceGroupsFunc for the definition that
-// covers the given resource, or nil if none is registered or the definition has
-// no dynamic resolver.
-func (r *MigrationRegistry) GetResourceGroupsFunc(gr schema.GroupResource) func(ctx context.Context, namespace string, client resource.ResourceClient) ([]schema.GroupResource, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	for _, def := range r.definitions {
-		if _, ok := def.Migrators[gr]; ok {
-			return def.ResourceGroupsFunc
-		}
-	}
-	return nil
 }

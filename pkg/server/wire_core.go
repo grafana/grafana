@@ -25,11 +25,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
-	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metricsservice"
 	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
@@ -45,6 +46,7 @@ import (
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	snapshotmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot/migrator"
 	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	iamsso "github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	legacypreferences "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
@@ -123,7 +125,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
@@ -136,6 +141,7 @@ import (
 	pluginDashboards "github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth/tokenexchange"
 	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	promTypeMigration "github.com/grafana/grafana/pkg/services/promtypemigration"
@@ -182,6 +188,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	legacydualwrite "github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 	secretdatabase "github.com/grafana/grafana/pkg/storage/secret/database"
 	secretencryption "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
@@ -189,7 +196,6 @@ import (
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -202,6 +208,8 @@ var withOTelSet = wire.NewSet(
 )
 
 var wireBasicSet = wire.NewSet(
+	iam.ProvideFeatures,
+	wire.Bind(new(acimpl.IAMFeatures), new(iam.Features)),
 	annotationsimpl.ProvideService,
 	wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)),
 	New,
@@ -239,7 +247,6 @@ var wireBasicSet = wire.NewSet(
 	pluginsintegration.WireSet,
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
-	cloudwatch.ProvideService,
 	azuremonitor.ProvideService,
 	legacydualwrite.ProvideService,
 	httpclientprovider.New,
@@ -260,6 +267,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),
 	authinfoimpl.ProvideService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoimpl.Service)),
+	authinfoimpl.ProvideLegacyStore,
 	authinfoimpl.ProvideStore,
 	datasourceproxy.ProvideService,
 	sort.ProvideService,
@@ -275,6 +283,10 @@ var wireBasicSet = wire.NewSet(
 	jwt.ProvideService,
 	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
 	ngstore.ProvideDBStore,
+	ngprovenance.ProvideProvenanceStore,
+	ngrules.ProvideRuleStore,
+	ngrulesvc.ProvideService,
+	wire.Bind(new(ngrules.Store), new(*ngrulesvc.Service)),
 	ngimage.ProvideDeleteExpiredService,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
@@ -291,7 +303,7 @@ var wireBasicSet = wire.NewSet(
 	github.ProvideFactory,
 	ghconnection.ProvideFactory,
 	tracing.ProvideService,
-	tracing.ProvideTracingConfig,
+	tracingsetting.ProvideTracingConfig,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
 	infranats.ProvideNATSConfig,
 	infranats.ProvideServer,
@@ -311,6 +323,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsManager.ProvideSecretsService,
 	ofrep.ProvideService,
+	tokenexchange.ProvideService,
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)), //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsDatabase.ProvideSecretsStore,
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)), //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
@@ -375,9 +388,9 @@ var wireBasicSet = wire.NewSet(
 	annotationsapi.ProvideTokenExchanger,
 	annotationsapi.ProvideMigrationProxy,
 	starApi.ProvideK8sClients,
-	userimpl.ProvideService,
+	userimpl.ProvideServiceWithWatch,
 	wire.Bind(new(user.Service), new(*userimpl.Service)),
-	orgimpl.ProvideService,
+	orgimpl.ProvideServiceWithWatch,
 	orgimpl.ProvideDeletionService,
 	orgimpl.ProvideDeleteRegistrar,
 	wire.Bind(new(org.DeletionService), new(*orgimpl.DeletionService)),
@@ -385,7 +398,7 @@ var wireBasicSet = wire.NewSet(
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
-	teamimpl.ProvideService,
+	teamimpl.ProvideServiceWithWatch,
 	wire.Bind(new(team.Service), new(*teamimpl.Service)),
 	teamapi.ProvideTeamAPI,
 	tempuserimpl.ProvideService,
@@ -403,6 +416,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(pluginaccesscontrol.ActionSetRegistry), new(resourcepermissions.ActionSetService)),
 	permreg.ProvidePermissionRegistry,
 	acimpl.ProvideAccessControl,
+	acimpl.ProvideScopeResolverRegistry,
 	accesscontrol.ProvideFixedRolesLoader,
 	accesscontrol.ProvideNoopIAMRolesSyncer,
 	accesscontrol.ProvideNoopGlobalRoleSeeder,
@@ -472,6 +486,8 @@ var wireBasicSet = wire.NewSet(
 	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
+	router.ProvideGrafanaRouter,
+	wire.Bind(new(resource.ManifestDiscovery), new(*router.GrafanaRouter)),
 	router.ProvideService,
 	wire.Bind(new(grafanaapiserver.RequestRouter), new(*router.Service)),
 	apiregistry.WireSet,
@@ -482,7 +498,9 @@ var wireBasicSet = wire.NewSet(
 
 var wireSet = wire.NewSet(
 	wireBasicSet,
-	metrics.WireSet,
+	legacywatch.ProvidePublisher,
+	wire.Bind(new(legacywatch.Bus), new(*infranats.PublisherService)),
+	metricsservice.WireSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -492,7 +510,7 @@ var wireSet = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
-	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	wire.Bind(new(ngrules.MaintenanceStore), new(*ngrulesvc.Service)),
 	// Server only — builds the kvlease-backed Elector for the embedded zanzana
 	// reconciler. CLI/test sets bind Elector to NewDefaultElector instead, so
 	// the unified-storage KV is never opened from grafana-cli.
@@ -502,7 +520,8 @@ var wireSet = wire.NewSet(
 var wireCLISet = wire.NewSet(
 	NewRunner,
 	wireBasicSet,
-	metrics.WireSet,
+	legacywatch.ProvideDisabledPublisher, // No need for real legacywatch support
+	metricsservice.WireSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -520,8 +539,10 @@ var wireCLISet = wire.NewSet(
 
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
+	legacywatch.ProvidePublisher,
+	wire.Bind(new(legacywatch.Bus), new(*infranats.PublisherService)),
 	ProvideTestEnv,
-	metrics.WireSetForTest,
+	metricsservice.WireSetForTest,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideService,
 	notifications.MockNotificationService,
@@ -533,7 +554,7 @@ var wireTestSet = wire.NewSet(
 	oauthtoken.ProvideService,
 	oauthtokentest.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
-	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	wire.Bind(new(ngrules.MaintenanceStore), new(*ngrulesvc.Service)),
 	// Tests get a default elector — none of the integration tests today need to
 	// exercise real leader election.
 	leaderelection.NewDefaultElector,

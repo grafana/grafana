@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -21,73 +22,102 @@ func set(uids ...string) map[string]struct{} {
 
 func TestDiffFolderKeys(t *testing.T) {
 	tests := []struct {
-		name      string
-		withRules map[string]struct{}
-		labeled   map[string]struct{}
-		expected  []models.FolderKey
+		name       string
+		withAlerts map[string]struct{}
+		withRecs   map[string]struct{}
+		labeled    map[string]labelState
+		expected   []models.FolderKey
 	}{
 		{
-			name:      "holds rules but unlabelled: needs the label added",
-			withRules: set("a"),
-			labeled:   set(),
-			expected:  []models.FolderKey{{OrgID: 1, UID: "a"}},
+			name:       "holds rules but unlabelled: needs the labels added",
+			withAlerts: set("a"),
+			withRecs:   set("b"),
+			expected:   []models.FolderKey{{OrgID: 1, UID: "a"}, {OrgID: 1, UID: "b"}},
 		},
 		{
-			name:      "labelled but holds no rules: needs the label removed",
-			withRules: set(),
-			labeled:   set("a"),
-			expected:  []models.FolderKey{{OrgID: 1, UID: "a"}},
+			name:    "labelled but holds no rules: needs the labels removed",
+			labeled: map[string]labelState{"a": {alert: true}, "b": {recording: true}},
+			expected: []models.FolderKey{
+				{OrgID: 1, UID: "a"}, {OrgID: 1, UID: "b"},
+			},
 		},
 		{
-			name:      "already agrees: left alone",
-			withRules: set("a", "b"),
-			labeled:   set("a", "b"),
-			expected:  nil,
+			name:       "already agrees: left alone",
+			withAlerts: set("a", "c"),
+			withRecs:   set("b", "c"),
+			labeled: map[string]labelState{
+				"a": {alert: true},
+				"b": {recording: true},
+				"c": {alert: true, recording: true},
+			},
+			expected: nil,
 		},
 		{
-			name:      "both directions at once, with an agreeing folder excluded",
-			withRules: set("a", "b"),
-			labeled:   set("b", "c"),
-			expected:  []models.FolderKey{{OrgID: 1, UID: "a"}, {OrgID: 1, UID: "c"}},
+			name:       "label for the wrong kind of rule",
+			withAlerts: set("a"),
+			labeled:    map[string]labelState{"a": {recording: true}},
+			expected:   []models.FolderKey{{OrgID: 1, UID: "a"}},
 		},
 		{
-			name:      "empty org has nothing to do",
-			withRules: set(),
-			labeled:   set(),
-			expected:  nil,
+			name:       "missing one of two labels",
+			withAlerts: set("a"),
+			withRecs:   set("a"),
+			labeled:    map[string]labelState{"a": {alert: true}},
+			expected:   []models.FolderKey{{OrgID: 1, UID: "a"}},
+		},
+		{
+			name:       "legacy label is stale even when the new labels are right",
+			withAlerts: set("a"),
+			labeled:    map[string]labelState{"a": {alert: true, legacy: true}},
+			expected:   []models.FolderKey{{OrgID: 1, UID: "a"}},
+		},
+		{
+			name:     "legacy label on a folder with no rules",
+			labeled:  map[string]labelState{"a": {legacy: true}},
+			expected: []models.FolderKey{{OrgID: 1, UID: "a"}},
+		},
+		{
+			name:     "empty org has nothing to do",
+			expected: nil,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			require.ElementsMatch(t, tc.expected, diffFolderKeys(1, tc.withRules, tc.labeled))
+			require.ElementsMatch(t, tc.expected, diffFolderKeys(1, tc.withAlerts, tc.withRecs, tc.labeled))
 		})
 	}
 }
 
 func TestFullSyncOrg(t *testing.T) {
 	t.Run("queues only the folders whose label disagrees", func(t *testing.T) {
-		// folder-a holds rules but is unlabelled; folder-c is labelled with none; folder-b agrees.
-		store := &fakeSyncerStore{folderUIDs: set("folder-a", "folder-b")}
+		// folder-a holds rules but is unlabelled; folder-c is labelled with none; folder-b agrees;
+		// folder-d agrees but still carries the legacy label.
+		store := &fakeSyncerStore{
+			folderUIDs:          set("folder-a", "folder-b"),
+			recordingFolderUIDs: set("folder-d"),
+		}
 		folders := &fakeFolderClient{list: []*folderv1.Folder{
-			folderWithLabels("folder-b", map[string]string{HasRulesLabel: "true"}),
-			folderWithLabels("folder-c", map[string]string{HasRulesLabel: "true"}),
+			folderWithLabels("folder-b", map[string]string{HasAlertRulesLabel: "true"}),
+			folderWithLabels("folder-c", map[string]string{HasRecordingRulesLabel: "true"}),
+			folderWithLabels("folder-d", map[string]string{HasRecordingRulesLabel: "true", legacyHasRulesLabel: "true"}),
 		}}
 		s := newTestService(store, folders)
 
 		n, err := s.fullSyncOrg(context.Background(), 1)
 		require.NoError(t, err)
-		require.Equal(t, 2, n)
+		require.Equal(t, 3, n)
 		require.ElementsMatch(t, []models.FolderKey{
 			{OrgID: 1, UID: "folder-a"},
 			{OrgID: 1, UID: "folder-c"},
+			{OrgID: 1, UID: "folder-d"},
 		}, s.take())
 	})
 
 	t.Run("queues nothing when the org already agrees", func(t *testing.T) {
 		store := &fakeSyncerStore{folderUIDs: set("folder-a")}
 		folders := &fakeFolderClient{list: []*folderv1.Folder{
-			folderWithLabels("folder-a", map[string]string{HasRulesLabel: "true"}),
+			folderWithLabels("folder-a", map[string]string{HasAlertRulesLabel: "true"}),
 		}}
 		s := newTestService(store, folders)
 
@@ -97,19 +127,39 @@ func TestFullSyncOrg(t *testing.T) {
 		require.Empty(t, s.take())
 	})
 
-	t.Run("selects folders on the has-rules label", func(t *testing.T) {
+	t.Run("selects folders on each of the syncer's labels, including the legacy one", func(t *testing.T) {
 		folders := &fakeFolderClient{}
 		s := newTestService(&fakeSyncerStore{}, folders)
 
 		_, err := s.fullSyncOrg(context.Background(), 1)
 		require.NoError(t, err)
-		require.Equal(t, []string{HasRulesLabel + "=true"}, folders.lastFilter)
+		require.Equal(t, [][]string{
+			{HasAlertRulesLabel + "=true"},
+			{HasRecordingRulesLabel + "=true"},
+			{legacyHasRulesLabel + "=true"},
+		}, folders.filters)
+	})
+
+	t.Run("attaches the per-org identity before resolving GetAllFoldersWithRulesByType", func(t *testing.T) {
+		// A context-dependent LegacyDatabaseProvider resolves the target database from the
+		// requester on ctx; without this, every org would resolve against whatever (if any)
+		// identity the long-lived Run context happened to carry.
+		store := &fakeSyncerStore{}
+		s := newTestService(store, &fakeFolderClient{})
+
+		_, err := s.fullSyncOrg(context.Background(), 7)
+		require.NoError(t, err)
+
+		require.NotNil(t, store.gotCtx)
+		requester, err := identity.GetRequester(store.gotCtx)
+		require.NoError(t, err)
+		require.Equal(t, int64(7), requester.GetOrgID())
 	})
 
 	t.Run("surfaces errors from either side of the diff", func(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{folderUIDsErr: errors.New("boom")}, &fakeFolderClient{})
 		_, err := s.fullSyncOrg(context.Background(), 1)
-		require.ErrorContains(t, err, "list folders with rules")
+		require.ErrorContains(t, err, "list folders with alert rules")
 
 		s = newTestService(&fakeSyncerStore{}, &fakeFolderClient{listErr: errors.New("boom")})
 		_, err = s.fullSyncOrg(context.Background(), 1)
@@ -160,6 +210,6 @@ func TestFullSync(t *testing.T) {
 		require.ElementsMatch(t, []models.FolderKey{{OrgID: 1, UID: "folder-a"}, {OrgID: 2, UID: "folder-a"}}, s.take())
 		// Skipped before the folder walk, not merely filtered when queueing: the walk is the expensive
 		// part of the pass, so a disabled org must not trigger one.
-		require.Equal(t, 2, folders.listCalls, "the disabled org's folders should never be listed")
+		require.Equal(t, 6, folders.listCalls, "the disabled org's folders should never be listed")
 	})
 }

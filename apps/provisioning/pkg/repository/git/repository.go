@@ -35,6 +35,19 @@ import (
 // ErrNoBranches is returned when a repository has no branches (e.g., a completely empty repository).
 var ErrNoBranches = errors.New("no branches found in repository")
 
+// defaultUserAgent identifies Grafana to the Git server when no User-Agent is configured.
+// The nanogit default ("nanogit/0") is rejected by github.com.
+const defaultUserAgent = "grafana-provisioning"
+
+// UserAgent returns the User-Agent Grafana sends to Git servers by default: defaultUserAgent
+// followed by the Grafana build version, so a Git host can tell which release is calling.
+func UserAgent(version string) string {
+	if version == "" {
+		return defaultUserAgent
+	}
+	return defaultUserAgent + "/" + version
+}
+
 type RepositoryConfig struct {
 	URL              string
 	Branch           string
@@ -45,6 +58,8 @@ type RepositoryConfig struct {
 	SMIMECertificate string
 	Path             string
 	SkipGitSuffix    bool
+	// UserAgent overrides the User-Agent sent to the Git server. Empty means defaultUserAgent.
+	UserAgent string
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
@@ -67,7 +82,7 @@ func NewRepository(
 	metrics *repository.OperationMetrics,
 	clientMetrics *ClientMetrics,
 ) (GitRepository, error) {
-	opts := []options.Option{options.WithCapabilityNegotiation()}
+	opts := []options.Option{options.WithCapabilityNegotiation(), options.WithUserAgent(cmp.Or(gitConfig.UserAgent, defaultUserAgent))}
 	if gitConfig.SkipGitSuffix {
 		opts = append(opts, options.WithoutGitSuffix())
 	}
@@ -130,7 +145,7 @@ func (r *gitRepository) GetDefaultBranch(ctx context.Context) (string, error) {
 	// Get all refs to find the default branch
 	refs, err := r.client.ListRefs(ctx)
 	if err != nil {
-		return "", fmt.Errorf("list refs: %w", err)
+		return "", wrapNanogitError("list refs", err)
 	}
 
 	var hasMain, hasMaster bool
@@ -235,8 +250,8 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		r.SetBranch(branch)
 	}
 
-	// Check authorization
-	if ok, err := r.client.CanRead(ctx); err != nil || !ok {
+	// Check authorization. A missing repository is reported by the existence check below.
+	if ok, err := r.client.CanRead(ctx); (err != nil || !ok) && !errors.Is(err, client.ErrRepositoryNotFound) {
 		// Map nanogit errors to repository errors for proper HTTP status codes
 		if err != nil {
 			err = mapNanogitError(err)
@@ -391,7 +406,7 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (out *re
 	// TODO: Fix GetTree in nanogit as it does not work commit hash
 	commit, err := r.client.GetCommit(ctx, refHash)
 	if err != nil {
-		return nil, fmt.Errorf("get commit: %w", mapNanogitError(err))
+		return nil, wrapNanogitError("get commit", err)
 	}
 
 	// Check if the path represents a directory
@@ -404,7 +419,7 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (out *re
 				return nil, repository.ErrFileNotFound
 			}
 
-			return nil, fmt.Errorf("get tree by path: %w", mapNanogitError(err))
+			return nil, wrapNanogitError("get tree by path", err)
 		}
 
 		return &repository.FileInfo{
@@ -420,7 +435,7 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (out *re
 			return nil, repository.ErrFileNotFound
 		}
 
-		return nil, fmt.Errorf("read blob: %w", mapNanogitError(err))
+		return nil, wrapNanogitError("read blob", err)
 	}
 
 	if max := r.maxBytes.Load(); max > 0 && int64(len(blob.Content)) > max {
@@ -460,16 +475,14 @@ func (r *gitRepository) ReadTree(ctx context.Context, ref string) (out []reposit
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
 			return nil, repository.ErrRefNotFound
 		}
-		return nil, fmt.Errorf("get flat tree: %w", mapNanogitError(err))
+		return nil, wrapNanogitError("get flat tree", err)
 	}
 
 	entries := make([]repository.FileTreeEntry, 0, len(tree.Entries))
 	for _, entry := range tree.Entries {
 		isBlob := entry.Type == protocol.ObjectTypeBlob
-		// Apply path prefix filtering
 		relativePath, err := safepath.RelativeTo(entry.Path, r.gitConfig.Path)
-		if err != nil {
-			// File is outside configured path, skip it
+		if err != nil || repository.IsIgnoredPath(relativePath, !isBlob) {
 			continue
 		}
 
@@ -506,7 +519,7 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 
 	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
-		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
+		return wrapNanogitError("create staged writer", err)
 	}
 
 	if err := r.create(ctx, path, data, writer); err != nil {
@@ -533,7 +546,7 @@ func (r *gitRepository) create(ctx context.Context, path string, data []byte, wr
 			return repository.ErrFileAlreadyExists
 		}
 
-		return fmt.Errorf("create blob: %w", mapNanogitError(err))
+		return wrapNanogitError("create blob", err)
 	}
 
 	return nil
@@ -561,7 +574,7 @@ func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byt
 	// Create a staged writer
 	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
-		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
+		return wrapNanogitError("create staged writer", err)
 	}
 
 	if err := r.update(ctx, path, data, writer); err != nil {
@@ -583,7 +596,7 @@ func (r *gitRepository) update(ctx context.Context, path string, data []byte, wr
 			return repository.ErrFileNotFound
 		}
 
-		return fmt.Errorf("update blob: %w", mapNanogitError(err))
+		return wrapNanogitError("update blob", err)
 	}
 
 	return nil
@@ -631,7 +644,7 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) (
 	// Create a staged writer
 	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
-		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
+		return wrapNanogitError("create staged writer", err)
 	}
 
 	if err := r.delete(ctx, path, writer); err != nil {
@@ -659,7 +672,7 @@ func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment
 	// Create a staged writer
 	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
-		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
+		return wrapNanogitError("create staged writer", err)
 	}
 
 	if err := r.move(ctx, oldPath, newPath, writer); err != nil {
@@ -678,14 +691,14 @@ func (r *gitRepository) delete(ctx context.Context, path string, writer nanogit.
 			if errors.Is(err, nanogit.ErrObjectNotFound) {
 				return repository.ErrFileNotFound
 			}
-			return fmt.Errorf("delete tree: %w", mapNanogitError(err))
+			return wrapNanogitError("delete tree", err)
 		}
 	} else {
 		if _, err := writer.DeleteBlob(ctx, finalPath); err != nil {
 			if errors.Is(err, nanogit.ErrObjectNotFound) {
 				return repository.ErrFileNotFound
 			}
-			return fmt.Errorf("delete blob: %w", mapNanogitError(err))
+			return wrapNanogitError("delete blob", err)
 		}
 	}
 
@@ -709,7 +722,7 @@ func (r *gitRepository) move(ctx context.Context, oldPath, newPath string, write
 			if errors.Is(err, nanogit.ErrObjectAlreadyExists) {
 				return repository.ErrFileAlreadyExists
 			}
-			return fmt.Errorf("move tree: %w", mapNanogitError(err))
+			return wrapNanogitError("move tree", err)
 		}
 	} else if !safepath.IsDir(oldPath) && !safepath.IsDir(newPath) {
 		// For files, use MoveBlob operation
@@ -720,7 +733,7 @@ func (r *gitRepository) move(ctx context.Context, oldPath, newPath string, write
 			if errors.Is(err, nanogit.ErrObjectAlreadyExists) {
 				return repository.ErrFileAlreadyExists
 			}
-			return fmt.Errorf("move blob: %w", mapNanogitError(err))
+			return wrapNanogitError("move blob", err)
 		}
 	} else {
 		// Mismatched types (file to directory or vice versa)
@@ -744,7 +757,7 @@ func (r *gitRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, e
 	logger.Info("list refs")
 	refs, err := r.client.ListRefs(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list refs: %w", err)
+		return nil, wrapNanogitError("list refs", err)
 	}
 	refItems := make([]provisioning.RefItem, 0, len(refs))
 	for _, ref := range refs {
@@ -767,7 +780,7 @@ func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
 	logger.Info("get latest ref")
 	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch))
 	if err != nil {
-		return "", fmt.Errorf("get branch ref: %w", err)
+		return "", wrapNanogitError("get branch ref", err)
 	}
 
 	return branchRef.Hash.String(), nil
@@ -810,16 +823,17 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 
 	files, err := r.client.CompareCommits(ctx, baseHash, refHash, nanogit.WithRenameDetection())
 	if err != nil {
-		return nil, fmt.Errorf("compare commits: %w", err)
+		return nil, wrapNanogitError("compare commits", err)
 	}
 
 	changes = make([]repository.VersionedFileChange, 0)
 	for _, f := range files {
+		currentPath, pathErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
+		ignoreCurrentPath := pathErr != nil || repository.IsIgnoredPath(currentPath, f.Type == protocol.ObjectTypeTree)
+
 		switch f.Status {
 		case protocol.FileStatusAdded:
-			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			if err != nil {
-				// do nothing as it's outside of configured path
+			if ignoreCurrentPath {
 				continue
 			}
 
@@ -829,9 +843,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 				Action: repository.FileActionCreated,
 			})
 		case protocol.FileStatusModified:
-			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			if err != nil {
-				// do nothing as it's outside of configured path
+			if ignoreCurrentPath {
 				continue
 			}
 
@@ -842,10 +854,11 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 				Action:      repository.FileActionUpdated,
 			})
 		case protocol.FileStatusDeleted:
-			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			if err != nil {
-				// do nothing as it's outside of configured path
+			if ignoreCurrentPath {
 				continue
+			}
+			if f.Type == protocol.ObjectTypeTree {
+				currentPath = safepath.EnsureTrailingSlash(currentPath)
 			}
 
 			changes = append(changes, repository.VersionedFileChange{
@@ -857,9 +870,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 			})
 		case protocol.FileStatusTypeChanged:
 			// Handle type changes as modifications
-			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			if err != nil {
-				// do nothing as it's outside of configured path
+			if ignoreCurrentPath {
 				continue
 			}
 
@@ -869,14 +880,12 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 				Action: repository.FileActionUpdated,
 			})
 		case protocol.FileStatusRenamed:
-			newPath, newPathErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
+			newPath := currentPath
 			oldPath, oldPathErr := safepath.RelativeTo(f.OldPath, r.gitConfig.Path)
 
-			// A rename may span the repository boundary: one side inside the
-			// configured path and the other outside. Resolve this upfront so
-			// the switch below only deals with the four semantic cases.
-			newInsidePath := newPathErr == nil
-			oldInsidePath := oldPathErr == nil
+			// A rename can cross the configured path or move into or out of a hidden directory.
+			newInsidePath := !ignoreCurrentPath
+			oldInsidePath := oldPathErr == nil && !repository.IsIgnoredPath(oldPath, f.Type == protocol.ObjectTypeTree)
 
 			// Tree entries (directories) are emitted with trailing slashes so
 			// downstream code can identify them via safepath.IsDir.
@@ -953,7 +962,7 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
 			return hash.Zero, fmt.Errorf("ref not found: %s: %w", ref, repository.ErrRefNotFound)
 		}
-		return hash.Zero, fmt.Errorf("get ref %s: %w", ref, mapNanogitError(err))
+		return hash.Zero, wrapNanogitError(fmt.Sprintf("get ref %s", ref), err)
 	}
 
 	return branchRef.Hash, nil
@@ -983,14 +992,14 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 
 	// If error is not "ref not found", return the error
 	if !errors.Is(err, nanogit.ErrObjectNotFound) {
-		return nanogit.Ref{}, fmt.Errorf("check branch exists: %w", err)
+		return nanogit.Ref{}, wrapNanogitError("check branch exists", err)
 	}
 
 	// Branch doesn't exist, create it based on the configured branch
 	srcBranch := r.gitConfig.Branch
 	srcRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", srcBranch))
 	if err != nil {
-		return nanogit.Ref{}, fmt.Errorf("get source branch ref: %w", err)
+		return nanogit.Ref{}, wrapNanogitError("get source branch ref", err)
 	}
 
 	// Create the new branch reference
@@ -1000,7 +1009,7 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 	}
 
 	if err := r.client.CreateRef(ctx, newRef); err != nil {
-		return nanogit.Ref{}, fmt.Errorf("create branch: %w", err)
+		return nanogit.Ref{}, wrapNanogitError("create branch", err)
 	}
 
 	return newRef, nil
@@ -1072,7 +1081,7 @@ func (r *gitRepository) commitAndPush(ctx context.Context, writer nanogit.Staged
 	}
 
 	if err := writer.Push(ctx); err != nil {
-		return fmt.Errorf("push changes: %w", mapNanogitError(err))
+		return wrapNanogitError("push changes", err)
 	}
 
 	return nil
@@ -1185,6 +1194,17 @@ func mapNanogitError(err error) error {
 	return err
 }
 
+// wrapNanogitError maps a nanogit error to a repository error and prefixes it
+// with the given operation context. It centralizes the repeated
+// fmt.Errorf("<op>: %w", mapNanogitError(err)) pattern so every nanogit call
+// site maps errors consistently.
+func wrapNanogitError(prefix string, err error) error {
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("%s: %w", prefix, mapNanogitError(err))
+}
+
 // checkHTTPError checks if the error is a known HTTP error (401, 403, 503) and returns
 // the appropriate TestResults. Returns nil if the error is not a known HTTP error.
 func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults {
@@ -1199,7 +1219,7 @@ func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults 
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
 				Field:  field.NewPath("secure", "token").String(),
-				Detail: "authentication failed",
+				Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized",
 			}},
 		}
 	}
@@ -1211,7 +1231,7 @@ func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults 
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
 				Field:  field.NewPath("secure", "token").String(),
-				Detail: "permission denied",
+				Detail: "permission denied: the Git server returned HTTP 403 Forbidden",
 			}},
 		}
 	}

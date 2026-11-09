@@ -407,6 +407,8 @@ func (NotebookV2TransformationKind) OpenAPIModelName() string {
 // Dashboard v2 shape: no `id`, it is carried by the parent's `group`.
 // +k8s:openapi-gen=true
 type NotebookV2TransformationSpec struct {
+	// Unique identifier of the instance of the transformer
+	RefId *string `json:"refId,omitempty"`
 	// Disabled transformations are skipped
 	Disabled *bool `json:"disabled,omitempty"`
 	// Optional frame matcher. When missing it will be applied to all results
@@ -1225,9 +1227,13 @@ func (NotebookNotebookLayoutItemKind) OpenAPIModelName() string {
 
 // One ordered item in a notebook layout. `element` references either a CellKind
 // (markdown/code content) or a V2PanelKind in the notebook's elements map. `source`
-// records who authored the cell; `collapsed` hides the body in the UI.
+// records who authored the cell; `collapsed` hides the body in the UI. `id` identifies the cell
+// itself, as opposed to the element name, which clients choose and can reuse.
 // +k8s:openapi-gen=true
 type NotebookNotebookLayoutItemSpec struct {
+	// Assigned by the server on create or update and never changed by clients (a UUID v4).
+	// Comments anchor to this rather than to the element name.
+	Id        *string                              `json:"id,omitempty"`
 	Element   NotebookElementReference             `json:"element"`
 	Source    NotebookNotebookLayoutItemSpecSource `json:"source"`
 	Collapsed *bool                                `json:"collapsed,omitempty"`
@@ -1428,6 +1434,9 @@ func (NotebookNotebookLayoutItemSpecSource) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookNotebookLayoutItemSpecSource"
 }
 
+// A notebook element is a narrative cell, a panel, or a library panel. Unlike the dashboard
+// Element union, this one includes CellKind — and it is referenced ONLY by NotebookSpec.
+// CellKind is listed first so it is the generated default (a notebook is narrative-first).
 // +k8s:openapi-gen=true
 type NotebookCellKindOrV2PanelKindOrLibraryPanelKind struct {
 	CellKind         *NotebookCellKind         `json:"CellKind,omitempty"`
@@ -1507,6 +1516,8 @@ func (NotebookCellKindOrV2PanelKindOrLibraryPanelKind) OpenAPIModelName() string
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookCellKindOrV2PanelKindOrLibraryPanelKind"
 }
 
+// Pluggable cell content discriminated by `kind`. New content types are added
+// by extending this union with another <Name>CellContentKind member.
 // +k8s:openapi-gen=true
 type NotebookMarkdownCellContentKindOrCodeCellContentKind struct {
 	MarkdownCellContentKind *NotebookMarkdownCellContentKind `json:"MarkdownCellContentKind,omitempty"`

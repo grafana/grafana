@@ -672,6 +672,10 @@ func testPrivateEndpointGitRepository(repoType provisioning.RepositoryType, rawU
 }
 
 func newAdmissionValidatorTestAttributes(obj, old runtime.Object, op admission.Operation) admission.Attributes {
+	return newAdmissionValidatorTestAttributesWithSubresource(obj, old, op, "")
+}
+
+func newAdmissionValidatorTestAttributesWithSubresource(obj, old runtime.Object, op admission.Operation, subresource string) admission.Attributes {
 	return admission.NewAttributesRecord(
 		obj,
 		old,
@@ -679,7 +683,7 @@ func newAdmissionValidatorTestAttributes(obj, old runtime.Object, op admission.O
 		"default",
 		"test",
 		provisioning.RepositoryResourceInfo.GroupVersionResource(),
-		"",
+		subresource,
 		op,
 		nil,
 		false,
@@ -959,6 +963,59 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 	}
 }
 
+func TestAdmissionValidator_Validate_SkipsSubresourcePatches(t *testing.T) {
+	mockFactory := NewMockFactory(t)
+	// No EXPECT() set up for Validate: the mock will fail the test if it's called,
+	// confirming the factory/extras validation never runs for status patches.
+
+	validator := NewValidator(false, mockFactory)
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
+		validator,
+	)
+
+	// Missing finalizers and title would normally fail RepositoryValidator.Validate,
+	// but since old carries the exact same spec/secure, this is a pure status patch.
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec:       provisioning.RepositorySpec{},
+	}
+	old := repo.DeepCopy()
+
+	attr := newAdmissionValidatorTestAttributesWithSubresource(repo, old, admission.Update, "status")
+
+	require.NoError(t, admissionValidator.Validate(context.Background(), attr, nil))
+}
+
+func TestAdmissionValidator_Validate_RunsForBundledSpecChange(t *testing.T) {
+	old := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{Title: "Test Repo"},
+	}
+	// Bundled onto a /status request: spec.title is cleared, which
+	// RepositoryValidator.Validate rejects.
+	repo := old.DeepCopy()
+	repo.Spec.Title = ""
+
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Once()
+
+	validator := NewValidator(false, mockFactory)
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
+		validator,
+	)
+
+	attr := newAdmissionValidatorTestAttributesWithSubresource(repo, old, admission.Update, "status")
+
+	err := admissionValidator.Validate(context.Background(), attr, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "spec.title: Required value")
+}
+
 func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
@@ -1014,6 +1071,7 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 		oldURL          string
 		newURL          string
 		newToken        common.InlineSecureValue
+		connection      string
 		wantErr         bool
 		wantErrContains string
 	}{
@@ -1037,6 +1095,29 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 			newURL:  "https://github.com/grafana/repo",
 			wantErr: false,
 		},
+		{
+			name:       "allows url change on the same host for a connection-backed repository",
+			oldURL:     "https://github.com/grafana/old",
+			newURL:     "https://github.com/grafana/new",
+			connection: "gh-app",
+			wantErr:    false,
+		},
+		{
+			name:            "rejects url change when the stored token reference is echoed back",
+			oldURL:          "https://github.com/grafana/old",
+			newURL:          "https://github.com/grafana/new",
+			newToken:        common.InlineSecureValue{Name: "old-token"},
+			wantErr:         true,
+			wantErrContains: "secure.token",
+		},
+		{
+			name:            "rejects host change for a connection-backed repository",
+			oldURL:          "https://github.com/grafana/old",
+			newURL:          "https://attacker.example.com/grafana/old",
+			connection:      "gh-app",
+			wantErr:         true,
+			wantErrContains: "secure.token",
+		},
 	}
 
 	for _, tt := range tests {
@@ -1055,6 +1136,10 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 
 			newRepo := newGitHubRepositoryForURLChangeTest(tt.newURL)
 			newRepo.Secure.Token = tt.newToken
+			if tt.connection != "" {
+				oldRepo.Spec.Connection = &provisioning.ConnectionInfo{Name: tt.connection}
+				newRepo.Spec.Connection = &provisioning.ConnectionInfo{Name: tt.connection}
+			}
 
 			attr := newAdmissionValidatorTestAttributes(newRepo, oldRepo, admission.Update)
 
@@ -1062,7 +1147,7 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErrContains)
-				assert.True(t, newRepo.Secure.Token.IsZero(), "old token should not be copied after rejection")
+				assert.Equal(t, tt.newToken, newRepo.Secure.Token, "secure values should not be copied after rejection")
 				return
 			}
 

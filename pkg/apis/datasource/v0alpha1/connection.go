@@ -39,11 +39,9 @@ type DataSourceConnection struct {
 
 	APIGroup string `json:"group"`
 
-	APIVersion string `json:"version"`
-
 	Plugin string `json:"plugin,omitempty"`
 
-	// TODO: labels? things the UI would need to show in a list
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 func (DataSourceConnection) OpenAPIModelName() string {

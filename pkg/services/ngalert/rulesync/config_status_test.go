@@ -25,12 +25,12 @@ func TestComputeSyncStatus_PreservesSiblingStatusFields(t *testing.T) {
 	}
 
 	t.Run("success path", func(t *testing.T) {
-		got := computeSyncStatus(prev, "ds1", originAPI, nil, time.Now())
+		got := computeSyncStatus(prev, "ds1", originAPI, nil, time.Now(), "hash-1")
 		assertSiblingFieldsPreserved(t, prev, &got)
 	})
 
 	t.Run("failure path", func(t *testing.T) {
-		got := computeSyncStatus(prev, "ds1", originAPI, errors.New("boom"), time.Now())
+		got := computeSyncStatus(prev, "ds1", originAPI, errors.New("boom"), time.Now(), "")
 		assertSiblingFieldsPreserved(t, prev, &got)
 	})
 }

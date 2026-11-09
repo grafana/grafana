@@ -8,9 +8,11 @@
   "name": "aaa",
   "rv": 1234,
   "_rv": "1234",
+  "groupResource": "playlist.grafana.app/playlists",
   "title": "Test AAA",
   "title_ngram": "Test AAA",
   "title_phrase": "test aaa",
   "created": 1731336353000,
-  "createdBy": "user:t000000001"
+  "createdBy": "user:t000000001",
+  "updated": 1731336353000
 }

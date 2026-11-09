@@ -18,8 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/service"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -796,6 +798,93 @@ func TestIntegrationDeleteByDashboardUIDs(t *testing.T) {
 		require.NoError(t, err)
 		assert.Nil(t, pubdash)
 	})
+}
+
+// dbSpy wraps a db.DB and records whether WithDbSession was called on it, and the session it last
+// handed out, so a test can prove a write went through this specific connection/session rather
+// than through the store's own sqlStore directly.
+type dbSpy struct {
+	db.DB
+	withDbSessionCalled bool
+	lastSession         *db.Session
+}
+
+func (s *dbSpy) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	s.withDbSessionCalled = true
+	return s.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		s.lastSession = sess
+		return callback(sess)
+	})
+}
+
+// TestIntegration_DeleteByDashboardUIDs_DoesNotReuseAmbientSession is a regression test:
+// sqlstore.startSessionOrUseExisting reuses whatever session is on ctx regardless of which db.DB
+// created it, so a routed delete must strip that session first or it silently runs on the wrong
+// connection when called from inside another db.DB's InTransaction (as the folder/dashboard
+// cascade-delete paths do).
+func TestIntegration_DeleteByDashboardUIDs_DoesNotReuseAmbientSession(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	store := ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+	savedDashboard := createTestDashboard("testDashie", 1, "", true)
+	insertPublicDashboard(t, store, savedDashboard.UID, savedDashboard.OrgID, true, models.PublicShareType)
+
+	spy := &dbSpy{DB: sqlStore}
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{
+			DB:    spy,
+			Table: func(n string) string { return n },
+		}, nil
+	}
+
+	var ambientSess *db.Session
+	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		return store.DeleteByDashboardUIDs(ctx, savedDashboard.OrgID, []string{savedDashboard.UID})
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.NotSame(t, ambientSess, spy.lastSession, "routed delete should not reuse the ambient session from the caller's transaction")
+}
+
+// TestIntegration_DeleteByDashboardUIDs_DefaultPathJoinsAmbientSession asserts the opposite: when
+// LegacyDatabaseProvider is unset, the delete must still join whatever transaction the caller
+// already opened, so it stays atomic with the rest of the cascade delete.
+func TestIntegration_DeleteByDashboardUIDs_DefaultPathJoinsAmbientSession(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	store := ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+	savedDashboard := createTestDashboard("testDashie", 1, "", true)
+	insertPublicDashboard(t, store, savedDashboard.UID, savedDashboard.OrgID, true, models.PublicShareType)
+
+	spy := &dbSpy{DB: sqlStore}
+	store.sqlStore = spy
+
+	var ambientSess *db.Session
+	err := spy.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := spy.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		spy.lastSession = nil // the setup call above also recorded a session; reset so only the target call below can set it
+		return store.DeleteByDashboardUIDs(ctx, savedDashboard.OrgID, []string{savedDashboard.UID})
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
+	assert.Same(t, ambientSess, spy.lastSession, "default delete should join the caller's ambient transaction")
 }
 
 func TestIntegrationGetMetrics(t *testing.T) {

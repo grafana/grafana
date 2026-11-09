@@ -1204,6 +1204,118 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.ErrorIs(t, invalidFolderMetadata[0], resources.ErrInvalidFolderMetadata)
 		require.Equal(t, repository.FileActionRenamed, invalidFolderMetadata[0].Action)
 	})
+
+	for _, action := range []repository.FileAction{repository.FileActionCreated, repository.FileActionUpdated} {
+		t.Run(fmt.Sprintf("root metadata %s is ignored and never replaces the root folder", action), func(t *testing.T) {
+			repo := newCompositeRepoWithConfig(t)
+			diff := []repository.VersionedFileChange{
+				{Action: action, Path: "_folder.json", Ref: "new-ref"},
+			}
+
+			diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
+			filteredDiff, relocations, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, rootFolderResourceList(repo.Config().Name))
+
+			require.NoError(t, err)
+			require.Empty(t, filteredDiff)
+			require.Empty(t, relocations)
+			require.Empty(t, replacedFolders)
+			require.Empty(t, invalidFolderMetadata)
+		})
+	}
+
+	t.Run("root metadata deletion is ignored and never replaces the root folder", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionDeleted, Path: "_folder.json", PreviousRef: "old-ref"},
+		}
+
+		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, rootFolderResourceList(repo.Config().Name))
+
+		require.NoError(t, err)
+		require.Empty(t, filteredDiff)
+		require.Empty(t, replacedFolders)
+		require.Empty(t, invalidFolderMetadata)
+	})
+
+	t.Run("metadata renamed from root into a folder only applies to the destination folder", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionRenamed, Path: "alpha/_folder.json", PreviousPath: "_folder.json", PreviousRef: "old-ref", Ref: "new-ref"},
+		}
+		expectFolderMetadataRead(repo, "alpha/", "new-ref", "alpha-stable-uid")
+
+		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, rootFolderResourceList(repo.Config().Name))
+
+		require.NoError(t, err)
+		require.Empty(t, invalidFolderMetadata)
+		require.ElementsMatch(t, []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/", Ref: "new-ref"},
+			{Action: repository.FileActionUpdated, Path: "alpha/dashboard.json", Ref: "new-ref"},
+		}, filteredDiff)
+		require.Equal(t, []replacedFolder{{
+			Path:   "alpha/",
+			OldUID: "alpha-hash-uid",
+			Reason: provisioning.ReasonFolderMetadataCreated,
+		}}, replacedFolders)
+	})
+
+	t.Run("metadata renamed from a folder to the root only reverts the source folder", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionRenamed, Path: "_folder.json", PreviousPath: "alpha/_folder.json", PreviousRef: "old-ref", Ref: "new-ref"},
+		}
+		repo.MockReader.On("Read", mock.Anything, "alpha/", "new-ref").Return(&repository.FileInfo{Path: "alpha/"}, nil).Once()
+
+		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
+		filteredDiff, _, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, rootFolderResourceList(repo.Config().Name))
+
+		require.NoError(t, err)
+		require.Empty(t, invalidFolderMetadata)
+		require.ElementsMatch(t, []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/", Ref: "new-ref"},
+			{Action: repository.FileActionUpdated, Path: "alpha/dashboard.json", Ref: "new-ref"},
+		}, filteredDiff)
+		require.Equal(t, []replacedFolder{{
+			Path:   "alpha/",
+			OldUID: "alpha-hash-uid",
+			Reason: provisioning.ReasonFolderMetadataDeleted,
+		}}, replacedFolders)
+	})
+}
+
+// rootFolderResourceList returns the managed resources of a repository synced
+// into its own root folder, which is stored at the empty path.
+func rootFolderResourceList(repoName string) *provisioning.ResourceList {
+	return &provisioning.ResourceList{
+		Items: []provisioning.ResourceListItem{
+			{
+				Name:     repoName,
+				Group:    resources.FolderResource.Group,
+				Resource: resources.FolderResource.Resource,
+				Path:     "",
+			},
+			{
+				Name:     "alpha-hash-uid",
+				Group:    resources.FolderResource.Group,
+				Resource: resources.FolderResource.Resource,
+				Path:     "alpha/",
+			},
+			{
+				Name:     "alpha-dash-uid",
+				Group:    "dashboards",
+				Resource: "dashboards",
+				Path:     "alpha/dashboard.json",
+			},
+			{
+				Name:     "root-dash-uid",
+				Group:    "dashboards",
+				Resource: "dashboards",
+				Path:     "dashboard.json",
+			},
+		},
+	}
 }
 
 func expectFolderMetadataReadTimes(repo *compositeRepo, folderPath, ref, uid string, times int) {
@@ -1214,6 +1326,13 @@ func expectFolderMetadataReadTimes(repo *compositeRepo, folderPath, ref, uid str
 
 func expectFolderMetadataRead(repo *compositeRepo, folderPath, ref, uid string) {
 	expectFolderMetadataReadTimes(repo, folderPath, ref, uid, 1)
+}
+
+func TestFolderPathForMetadataChange_Root(t *testing.T) {
+	for _, metadataPath := range []string{"_folder.json", "/_folder.json", "./_folder.json"} {
+		require.True(t, resources.IsRootFolderPath(folderPathForMetadataChange(metadataPath)), "%q is root metadata", metadataPath)
+	}
+	require.False(t, resources.IsRootFolderPath(folderPathForMetadataChange("a/_folder.json")))
 }
 
 func TestIsFolderRelocating(t *testing.T) {

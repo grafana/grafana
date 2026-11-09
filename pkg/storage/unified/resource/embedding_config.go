@@ -41,6 +41,29 @@ func (r *EmbeddingConfigRegistry) For(gvr schema.GroupVersionResource) (Embeddin
 	return config, ok
 }
 
+func (r *EmbeddingConfigRegistry) HasResource(gr schema.GroupResource) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for gvr := range r.configs {
+		if gvr.GroupResource() == gr {
+			return true
+		}
+	}
+	return false
+}
+
+// Snapshot keeps every resource's fields and revision from the same reload.
+func (r *EmbeddingConfigRegistry) Snapshot() map[schema.GroupVersionResource]EmbeddingConfig {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	configs := make(map[schema.GroupVersionResource]EmbeddingConfig, len(r.configs))
+	for gvr, config := range r.configs {
+		config.Fields = slices.Clone(config.Fields)
+		configs[gvr] = config
+	}
+	return configs
+}
+
 // Reload uses increasing source priority, with the first manifest winning ties
 // within a source. Ownership covers the entire resource, including versions the
 // winner omits, so fields cannot inherit another source's re-embedding revision.

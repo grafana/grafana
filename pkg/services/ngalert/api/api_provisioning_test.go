@@ -25,7 +25,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -48,7 +47,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	rulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -1998,8 +2000,8 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 						Receiver: postableReceiver.Name,
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{postableReceiver},
 			},
+			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{&postableReceiver}),
 		}
 
 		amConfig, err := legacy_storage.SerializeAlertmanagerConfig(postable)
@@ -2159,7 +2161,7 @@ func TestApiGetSnapshots(t *testing.T) {
 	cfg := policy_exports.Config()
 
 	// Route
-	cfg.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(cfg.AlertmanagerConfig.Route, cfg.ManagedRoutes)
+	cfg.AlertmanagerConfig.Route = notifier.RouteFromAPI(notifier.WithManagedRoutes(cfg))
 
 	// Templates
 	t1 := v1.NewTemplateGroup("", "templateA", "{{ define \"templateA\" }}A{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
@@ -2187,7 +2189,10 @@ func TestApiGetSnapshots(t *testing.T) {
 	receiver := models.ReceiverGen(models.ReceiverMuts.WithName(allIntegrationsName), models.ReceiverMuts.WithIntegrations(allIntegrations...))()
 	postableReceiver, err := legacy_storage.ReceiverToPostableApiReceiver(&receiver)
 	require.NoError(t, err)
-	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, postableReceiver)
+	if cfg.Receivers == nil {
+		cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
+	}
+	cfg.Receivers[v1.ReceiverUID(postableReceiver.Name)] = postableReceiver
 
 	// Mute Timings
 	location, err := time.LoadLocation("America/Montreal")
@@ -2222,10 +2227,10 @@ func TestApiGetSnapshots(t *testing.T) {
 	// Add to the intervals already present in the base config (referenced by routes) rather than
 	// replacing the map, otherwise the route references become dangling and validation fails.
 	for _, interval := range []v1.TimeInterval{
-		v1.NewTimeInterval("MuteTimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
-		v1.NewTimeInterval("MuteTimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
-		v1.NewTimeInterval("TimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
-		v1.NewTimeInterval("TimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval(v1.TimeIntervalUID("MuteTimeIntervalA"), "MuteTimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval(v1.TimeIntervalUID("MuteTimeIntervalB"), "MuteTimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval(v1.TimeIntervalUID("TimeIntervalA"), "TimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval(v1.TimeIntervalUID("TimeIntervalB"), "TimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
 	} {
 		cfg.TimeIntervals[interval.UID] = interval
 	}
@@ -2278,6 +2283,7 @@ type testEnvironment struct {
 	secrets          secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	log              log.Logger
 	store            store.DBstore
+	ruleStore        rulestore.Store
 	folderService    folder.Service
 	dashboardService dashboards.DashboardService
 	xact             provisioning.TransactionManager
@@ -2299,7 +2305,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	// Encrypt secure settings.
 	c, err := notifier.Load([]byte(testConfig))
 	require.NoError(t, err)
-	err = notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+	err = notifier.EncryptReceiverConfigs(c.GetReceivers(), func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)
@@ -2363,20 +2369,26 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		folder2,
 		folder3,
 	}
-	// if not one of the two above, return ErrFolderNotFound
-	folderService.ExpectedError = dashboards.ErrFolderNotFound
 	settings := setting.UnifiedAlertingSettings{
 		BaseInterval:         time.Second * 10,
 		DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
 	}
 	store := store.DBstore{
+		Logger:   log,
+		SQLStore: sqlStore,
+	}
+	ruleStore := &rulestore.RuleStore{
 		Logger:         log,
 		SQLStore:       sqlStore,
 		Cfg:            settings,
 		FolderService:  folderService,
-		Bus:            bus.ProvideBus(tracing.InitializeTracerForTest()),
 		FeatureToggles: featuremgmt.WithFeatures(),
+		Provenance:     provenance.ProvideProvenanceStore(featuremgmt.WithFeatures(), sqlStore),
 	}
+	ruleService, err := rulesvc.ProvideService(ruleStore, folderService)
+	require.NoError(t, err)
+	// if not one of the two above, return ErrFolderNotFound
+	folderService.ExpectedError = dashboards.ErrFolderNotFound
 	err = store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(raw),
 		ConfigurationVersion:      "v1",
@@ -2401,6 +2413,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		secrets:          secretsService,
 		log:              log,
 		store:            store,
+		ruleStore:        ruleService,
 		folderService:    folderService,
 		dashboardService: dashboardService,
 		xact:             xact,
@@ -2427,15 +2440,15 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	tracer := tracing.InitializeTracerForTest()
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(&env.store, notifier.NewExtraConfigsCrypto(env.secrets), env.features)
-	routeAccess := ac.NewRouteAccess[*legacy_storage.ManagedRoute](env.ac, ngalertfakes.NewFakeRoutePermissionsService(), true)
-	rs := routes.NewService(configStore, env.store, env.xact, env.settings, env.features, env.log, validation.ValidateProvenanceRelaxed, tracer, routeAccess)
+	routeAccess := ac.NewRouteAccess[*v1.ManagedRoute](env.ac, ngalertfakes.NewFakeRoutePermissionsService(), true)
+	rs := routes.NewService(configStore, env.prov, env.xact, env.settings, env.features, env.log, validation.ValidateProvenanceRelaxed, tracer, routeAccess)
 
 	receiverAuthz := ac.NewReceiverAccess[*models.Receiver](env.ac, true)
 	receiverSvc := notifier.NewReceiverService(
 		receiverAuthz,
 		configStore,
 		env.prov,
-		env.store,
+		env.ruleStore,
 		rs,
 		env.secrets,
 		env.xact,
@@ -2446,6 +2459,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		false,
 		nil,
 		&notifier.NoopOrgEmailValidator{},
+		notifier.NoopReceiverStatusFetcher{},
 	)
 	provisionRouteService := routes.NewService(
 		configStore,
@@ -2461,10 +2475,10 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            provisioning.NewNotificationPolicyService(configStore, env.prov, env.xact, provisionRouteService, env.settings, env.log, validation.ValidateProvenanceRelaxed),
-		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService(), nil, &notifier.NoopOrgEmailValidator{}),
+		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.ruleStore, ngalertfakes.NewFakeReceiverPermissionsService(), nil, &notifier.NoopOrgEmailValidator{}),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log, validation.ValidateProvenanceRelaxed),
-		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store, rs, validation.ValidateProvenanceRelaxed),
-		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz, provisioning.NoopRuleMutationValidator{}),
+		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.ruleStore, rs, validation.ValidateProvenanceRelaxed),
+		alertRules:          provisioning.NewAlertRuleService(env.ruleStore, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz, provisioning.NoopRuleMutationValidator{}),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,
 	}
@@ -2510,7 +2524,7 @@ func createFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	}
 }
 
-func (f *fakeNotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error) {
+func (f *fakeNotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (v1.ManagedRoute, error) {
 	return routes.NewFakeService(f.config).GetManagedRoute(ctx, orgID, name, user)
 }
 
@@ -2527,7 +2541,7 @@ func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, or
 	if orgID != 1 {
 		return definitions.Route{}, "", store.ErrNoAlertmanagerConfiguration
 	}
-	f.config.Config.AlertmanagerConfig.Route = v1.RouteToModel(&tree)
+	f.config.Config.AlertmanagerConfig.Route = notifier.RouteFromAPI(&tree)
 	f.prov = p
 	return tree, "some", nil
 }
@@ -2900,3 +2914,22 @@ var testContactPointConfig = `
 	}
 }
 `
+
+func TestEscapeContactPointReturnsErrorOnInvalidSettings(t *testing.T) {
+	cp := definitions.ContactPointExport{
+		Name: "invalid-settings",
+		Receivers: []definitions.ReceiverExport{
+			{UID: "uid", Type: "webhook", Settings: definitions.RawMessage(`{`)},
+		},
+	}
+
+	t.Run("escapeContactPoint returns an error instead of panicking", func(t *testing.T) {
+		_, err := escapeContactPoint(cp)
+		require.ErrorContains(t, err, "failed to marshal settings to JSON")
+	})
+
+	t.Run("escapeAlertingFileExport propagates the error", func(t *testing.T) {
+		_, err := escapeAlertingFileExport(definitions.AlertingFileExport{ContactPoints: []definitions.ContactPointExport{cp}})
+		require.ErrorContains(t, err, "failed to marshal settings to JSON")
+	})
+}

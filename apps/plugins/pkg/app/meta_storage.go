@@ -20,6 +20,7 @@ import (
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
@@ -144,7 +145,17 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 				ParentID: plugin.Spec.ParentId,
 			})
 			if err != nil {
+				reason := "error"
+				if errors.Is(err, meta.ErrMetaNotFound) {
+					reason = "not_found"
+				}
+				metrics.MetaResolutionFailuresTotal.WithLabelValues(plugin.Spec.Id, reason).Inc()
 				logger.Warn("Failed to fetch metadata for plugin", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
+				return nil
+			}
+
+			if isAlpha(result.Meta) {
+				logger.Debug("Excluding alpha plugin from meta list response", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version)
 				return nil
 			}
 
@@ -235,6 +246,15 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to fetch plugin metadata: %w", err))
 	}
 
+	if isAlpha(result.Meta) {
+		logger.Debug("Excluding alpha plugin from meta fetch response", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version)
+		gr := schema.GroupResource{
+			Group:    pluginsv0alpha1.APIGroup,
+			Resource: name,
+		}
+		return nil, apierrors.NewNotFound(gr, plugin.Spec.Id)
+	}
+
 	pluginMeta := &pluginsv0alpha1.Meta{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      plugin.Name,
@@ -256,4 +276,10 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 		"duration", duration.Milliseconds())
 
 	return pluginMeta, nil
+}
+
+// isAlpha reports whether the given plugin metadata is in the alpha release state, mirroring the filtering the
+// legacy /api/plugins endpoint applies.
+func isAlpha(spec pluginsv0alpha1.MetaSpec) bool {
+	return spec.PluginJson.State != nil && *spec.PluginJson.State == pluginsv0alpha1.MetaJSONDataStateAlpha
 }

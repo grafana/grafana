@@ -151,7 +151,7 @@ export function alertInstanceKey(alert: Alert): string {
   return JSON.stringify(alert.labels);
 }
 
-export function isRulerNotSupportedResponse(resp: AsyncRequestState<any>) {
+export function isRulerNotSupportedResponse(resp: AsyncRequestState<unknown>) {
   return resp.error && resp.error?.message?.includes(RULER_NOT_SUPPORTED_MSG);
 }
 
@@ -241,7 +241,9 @@ export interface RulePluginOrigin {
   pluginId: string;
 }
 
-export function getRulePluginOrigin(rule?: Rule | PromRuleDTO | RulerRuleDTO): RulePluginOrigin | undefined {
+export function getRulePluginOrigin(
+  rule?: Rule | PromRuleDTO | RulerRuleDTO | { labels?: Record<string, string> }
+): RulePluginOrigin | undefined {
   if (!rule) {
     return undefined;
   }
@@ -334,7 +336,7 @@ export const flattenCombinedRules = (rules: CombinedRuleNamespace[]) => {
 
 export function alertStateToState(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): State {
   let key: PromAlertingRuleState | GrafanaAlertState | AlertState;
-  if (Object.values(AlertState).includes(state as AlertState)) {
+  if (Object.values<string>(AlertState).includes(state)) {
     key = state as AlertState;
   } else {
     key = mapStateWithReasonToBaseState(state as GrafanaAlertStateWithReason | PromAlertingRuleState);

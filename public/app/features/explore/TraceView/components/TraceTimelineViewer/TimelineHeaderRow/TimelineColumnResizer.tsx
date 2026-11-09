@@ -14,13 +14,16 @@
 
 import { css } from '@emotion/css';
 import cx from 'clsx';
-import { useEffect, useEffectEvent, useRef, useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties } from 'react';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import type TNil from '../../types/TNil';
-import DraggableManager from '../../utils/DraggableManager/DraggableManager';
 import { type DraggableBounds, type DraggingUpdate } from '../../utils/DraggableManager/types';
+import { useDraggableManager } from '../../utils/DraggableManager/useDraggableManager';
 
-export const getStyles = () => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   TimelineColumnResizer: css({
     left: 0,
     position: 'absolute',
@@ -42,7 +45,7 @@ export const getStyles = () => ({
     width: '1px',
     zIndex: 10,
     '&:hover': {
-      borderLeft: '2px solid rgba(0, 0, 0, 0.3)',
+      borderLeft: `2px solid ${theme.colors.border.strong}`,
     },
     '&::before': {
       position: 'absolute',
@@ -54,7 +57,7 @@ export const getStyles = () => ({
     },
   }),
   draggerDragging: css({
-    background: 'rgba(136, 0, 136, 0.05)',
+    background: theme.colors.accent.subtleBackground,
     width: 'unset',
     '&::before': {
       left: -2000,
@@ -62,19 +65,21 @@ export const getStyles = () => ({
     },
   }),
   draggerDraggingLeft: css({
-    borderLeft: '2px solid #808',
-    borderRight: '1px solid #999',
+    borderLeft: `2px solid ${theme.colors.accent.border}`,
+    borderRight: `1px solid ${theme.colors.border.strong}`,
   }),
   draggerDraggingRight: css({
-    borderLeft: '1px solid #999',
-    borderRight: '2px solid #808',
+    borderLeft: `1px solid ${theme.colors.border.strong}`,
+    borderRight: `2px solid ${theme.colors.accent.border}`,
   }),
   gripIcon: css({
     position: 'absolute',
     top: 0,
     bottom: 0,
     '&::before, &::after': {
-      borderRight: '1px solid #ccc',
+      // A drag affordance, so it needs to read as a control rather than a divider —
+      // the border tokens are too low-contrast at 1px to be seen.
+      borderRight: `1px solid ${theme.colors.text.secondary}`,
       content: '" "',
       height: '9px',
       position: 'absolute',
@@ -87,7 +92,7 @@ export const getStyles = () => ({
   }),
   gripIconDragging: css({
     '&::before, &::after': {
-      borderRight: '1px solid rgba(136, 0, 136, 0.5)',
+      borderRight: `1px solid ${theme.colors.accent.borderEmphasis}`,
     },
   }),
 });
@@ -110,9 +115,7 @@ export default function TimelineColumnResizer({
   const [dragPosition, setDragPosition] = useState<number | TNil>(null);
   const rootElmRef = useRef<HTMLDivElement>(null);
 
-  // The manager captures its callbacks once at construction, so these have to keep a stable
-  // identity while still seeing the latest props. They only ever run from mouse handlers.
-  const getDraggingBounds = useEffectEvent((): DraggableBounds => {
+  const getDraggingBounds = (): DraggableBounds => {
     if (!rootElmRef.current) {
       throw new Error('invalid state');
     }
@@ -123,37 +126,32 @@ export default function TimelineColumnResizer({
       maxValue: max,
       minValue: min,
     };
-  });
+  };
 
-  const handleDragUpdate = useEffectEvent(({ value }: DraggingUpdate) => {
+  const handleDragUpdate = ({ value }: DraggingUpdate) => {
     setDragPosition(value);
-  });
+  };
 
-  const handleDragEnd = useEffectEvent(({ manager, value }: DraggingUpdate) => {
+  const handleDragEnd = ({ manager, value }: DraggingUpdate) => {
     manager.resetBounds();
     setDragPosition(null);
     onChange(value);
+  };
+
+  const dragger = useDraggableManager({
+    getBounds: getDraggingBounds,
+    onDragEnd: handleDragEnd,
+    onDragMove: handleDragUpdate,
+    onDragStart: handleDragUpdate,
   });
 
-  const [dragManager] = useState(
-    () =>
-      new DraggableManager({
-        getBounds: getDraggingBounds,
-        onDragEnd: handleDragEnd,
-        onDragMove: handleDragUpdate,
-        onDragStart: handleDragUpdate,
-      })
-  );
-
-  useEffect(() => () => dragManager.dispose(), [dragManager]);
-
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
   const gripStyle = { left: `${position * 100}%` };
   let draggerStyle: CSSProperties;
   let isDraggingLeft = false;
   let isDraggingRight = false;
 
-  if (dragManager.isDragging() && rootElmRef.current && dragPosition != null) {
+  if (dragPosition != null) {
     isDraggingLeft = dragPosition < position;
     isDraggingRight = dragPosition > position;
     // Draw a highlight from the current dragged position back to the original
@@ -185,7 +183,7 @@ export default function TimelineColumnResizer({
           isDraggingRight && styles.draggerDraggingRight,
           isDraggingLeft && styles.draggerDraggingLeft
         )}
-        onMouseDown={dragManager.handleMouseDown}
+        onMouseDown={dragger.onMouseDown}
         style={draggerStyle}
         data-testid="TimelineColumnResizer--dragger"
       />

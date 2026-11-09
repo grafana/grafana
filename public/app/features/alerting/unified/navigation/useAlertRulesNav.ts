@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
-import { shouldAllowRecoveringDeletedRules } from '../featureToggles';
+import { isAdmin } from '../utils/environment';
 
 import { useAlertRulesExtensionTabs } from './extensions';
 
@@ -55,7 +55,7 @@ export function useAlertRulesNav() {
   ];
 
   // Add Recently deleted tab if user has permission
-  if (shouldAllowRecoveringDeletedRules()) {
+  if (isAdmin()) {
     tabs.push({
       id: 'alert-rules-recently-deleted',
       text: t('alerting.navigation.recently-deleted', 'Recently deleted'),

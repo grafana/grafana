@@ -54,6 +54,10 @@ type deleteTokenResponse struct {
 }
 
 func TestIntegrationServiceAccountTokens(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationServiceAccountTokens)
+}
+
+func testIntegrationServiceAccountTokens(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1}

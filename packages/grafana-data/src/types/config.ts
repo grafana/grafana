@@ -9,7 +9,13 @@ import { type IconName } from './icon';
 import { type NavLinkDTO } from './navModel';
 import { type OrgRole } from './orgs';
 import { type PanelPluginMeta } from './panel';
-import { type AngularMeta, type PluginDependencies, type PluginExtensions, type PluginLoadingStrategy } from './plugin';
+import {
+  type AngularMeta,
+  type PluginDependencies,
+  type PluginExtensions,
+  type PluginInclude,
+  type PluginLoadingStrategy,
+} from './plugin';
 import { type TimeOption } from './time';
 
 export interface AzureSettings {
@@ -39,6 +45,17 @@ export type AppPluginConfig = {
   extensions: PluginExtensions;
   moduleHash?: string;
   buildMode?: string;
+  // Display and navigation fields, absent from the bootdata-sourced configs and
+  // populated only when these come from the plugins.grafana.app metas API
+  name?: string;
+  includes?: PluginInclude[];
+  info?: {
+    description?: string;
+    logos?: {
+      small: string;
+      large: string;
+    };
+  };
 };
 
 export type PreinstalledPlugin = {
@@ -120,6 +137,7 @@ export interface UnifiedAlertingConfig {
   minInterval: string;
   stateHistory?: UnifiedAlertingStateHistoryConfig;
   recordingRulesEnabled?: boolean;
+  notificationHistoryEnabled?: boolean;
   defaultRecordingRulesTargetDatasourceUID?: string;
 
   // Backward compatibility aliases - deprecated
@@ -213,6 +231,22 @@ export interface BootData {
  * If you want to access these values, use the `config` object from `@grafana/runtime`.
  * @internal
  */
+/** Where an operator has placed an app plugin, or one of its pages, in the nav */
+export interface NavigationPlacement {
+  sectionId: string;
+  sortWeight?: number;
+}
+
+/**
+ * The [navigation.app_sections] and [navigation.app_standalone_pages] overrides,
+ * keyed by plugin id and by page path. A section id that no section has hides the
+ * entry, which is how Grafana Cloud hides an installed app.
+ */
+export interface NavigationConfig {
+  appSections?: Record<string, NavigationPlacement>;
+  appStandalonePages?: Record<string, NavigationPlacement>;
+}
+
 export interface GrafanaConfig {
   publicDashboardAccessToken: string;
   publicDashboardsEnabled: boolean;
@@ -283,6 +317,7 @@ export interface GrafanaConfig {
   geomapDisableCustomBaseLayer: boolean;
   unifiedAlertingEnabled: boolean;
   unifiedAlerting: UnifiedAlertingConfig;
+  navigation: NavigationConfig;
   feedbackLinksEnabled: boolean;
   supportBundlesEnabled: boolean;
   secureSocksDSProxyEnabled: boolean;
@@ -296,6 +331,7 @@ export interface GrafanaConfig {
   rudderstackV3SdkUrl: string;
   rudderstackConfigUrl: string;
   rudderstackIntegrationsUrl: string;
+  rudderstackBatchInterval: number;
   applicationInsightsConnectionString: string;
   applicationInsightsEndpointUrl: string;
   applicationInsightsAutoRouteTracking: boolean;

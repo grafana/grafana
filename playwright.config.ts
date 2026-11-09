@@ -50,7 +50,7 @@ export default defineConfig<PluginOptions>({
   ...baseConfig,
   ...(!process.env.GRAFANA_URL && {
     webServer: {
-      command: 'yarn e2e:plugin:build && ./e2e-playwright/start-server',
+      command: 'pnpm run e2e:plugin:build && ./e2e-playwright/start-server',
       url: DEFAULT_URL,
       stdout: 'pipe',
       stderr: 'pipe',
@@ -92,10 +92,6 @@ export default defineConfig<PluginOptions>({
       dependencies: ['createUserAndAuthenticate'],
     },
     withAuth({
-      name: 'mysql',
-      testDir: path.join(pluginDirRoot, '/mysql'),
-    }),
-    withAuth({
       name: 'extensions-test-app',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-extensionstest-app'),
     }),
@@ -117,20 +113,12 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/test-plugins/grafana-test-datasource'),
     }),
     withAuth({
-      name: 'cloudwatch',
-      testDir: path.join(pluginDirRoot, '/cloudwatch'),
-    }),
-    withAuth({
       name: 'azuremonitor',
       testDir: path.join(pluginDirRoot, '/azuremonitor'),
     }),
     withAuth({
       name: 'graphite',
       testDir: path.join(pluginDirRoot, '/graphite'),
-    }),
-    withAuth({
-      name: 'influxdb',
-      testDir: path.join(pluginDirRoot, '/influxdb'),
     }),
     withAuth({
       name: 'canvas',
@@ -140,6 +128,10 @@ export default defineConfig<PluginOptions>({
       name: 'unauthenticated',
       testDir: path.join(testDirRoot, '/unauthenticated'),
     },
+    withAuth({
+      name: 'mt-instant-fallback',
+      testDir: path.join(testDirRoot, '/mt-instant-fallback-suite'),
+    }),
     withAuth({
       name: 'various',
       testDir: path.join(testDirRoot, '/various-suite'),
@@ -155,6 +147,10 @@ export default defineConfig<PluginOptions>({
     withAuth({
       name: 'dashboards',
       testDir: path.join(testDirRoot, '/dashboards-suite'),
+    }),
+    withAuth({
+      name: 'notebooks',
+      testDir: path.join(testDirRoot, '/notebooks-suite'),
     }),
     withAuth({
       name: 'diagnostics',
@@ -196,8 +192,10 @@ export default defineConfig<PluginOptions>({
       name: 'journey-tracking',
       testDir: path.join(testDirRoot, '/journey-tracking'),
       use: {
-        featureToggles: {
-          cujTracking: true,
+        openFeature: {
+          flags: {
+            cujTracking: true,
+          },
         },
       },
     }),

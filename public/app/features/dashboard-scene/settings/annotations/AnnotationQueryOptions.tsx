@@ -2,8 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
-import { useDataSourceInstance } from '@grafana/runtime/unstable';
+import { getAppEvents, useDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Box, Button, ButtonGroup } from '@grafana/ui';
 import { updateAnnotationFromSavedQuery } from 'app/features/annotations/utils/savedQueryUtils';
@@ -11,6 +10,7 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 
 import { type AnnotationLayer } from './AnnotationEditableElement';
 import { AnnotationQueryEditorModal } from './AnnotationQueryEditorModal';
+import { annotationEditActions } from './actions';
 
 export function AnnotationQueryEditorButton({ layer }: { layer: AnnotationLayer }) {
   const { queryLibraryEnabled } = useQueryLibraryContext();
@@ -53,8 +53,12 @@ function QueryLibraryButton({ layer, onQuerySelected }: { layer: AnnotationLayer
       onSelectQuery: async (selectedQuery: DataQuery) => {
         try {
           const updatedQuery = await updateAnnotationFromSavedQuery(query, selectedQuery);
-          layer.setState({ query: updatedQuery });
-          layer.runLayer();
+          annotationEditActions.changeAnnotationQuery({
+            source: layer,
+            oldValue: query,
+            newValue: updatedQuery,
+            scope: 'query-library',
+          });
         } catch (error) {
           console.error('Failed to replace annotation query!', error);
           getAppEvents().publish({

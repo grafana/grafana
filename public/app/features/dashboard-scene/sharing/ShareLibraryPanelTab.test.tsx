@@ -28,20 +28,20 @@ setPluginImportUtils({
 });
 
 describe('ShareLibraryPanelTab', () => {
-  it('renders library panel content for auto grid panels', () => {
+  it('renders library panel content for auto grid panels', async () => {
     const { tab } = setupAutoGridScenario();
 
     render(<tab.Component model={tab} />);
 
-    expect(screen.getByTestId('share-library-panel')).toHaveTextContent('panel-title:Auto panel');
+    expect(await screen.findByTestId('share-library-panel')).toHaveTextContent('panel-title:Auto panel');
   });
 
-  it('renders library panel content for default grid panels', () => {
+  it('renders library panel content for default grid panels', async () => {
     const { tab } = setupDefaultGridScenario();
 
     render(<tab.Component model={tab} />);
 
-    expect(screen.getByTestId('share-library-panel')).toHaveTextContent('panel-title:Default panel');
+    expect(await screen.findByTestId('share-library-panel')).toHaveTextContent('panel-title:Default panel');
   });
 });
 

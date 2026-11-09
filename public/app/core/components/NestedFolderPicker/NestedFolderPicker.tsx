@@ -8,14 +8,13 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type QueryResponse } from 'app/features/search/service/types';
-import { queryResultToViewItem } from 'app/features/search/service/utils';
+import { extractManagerId, extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { useStarredItems } from 'app/features/stars/hooks';
@@ -49,6 +48,9 @@ export interface NestedFolderPickerProps {
 
   /* Custom root folder item, default is "Dashboards" */
   rootFolderItem?: DashboardsTreeItem;
+
+  /* Only show folders that match this predicate. Non-folder rows such as loading placeholders are kept. */
+  folderFilter?: (folder: DashboardViewItem) => boolean;
 
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
   permission?: 'view' | 'edit';
@@ -88,13 +90,14 @@ export function NestedFolderPicker({
   excludeUIDs,
   rootFolderUID,
   rootFolderItem,
+  folderFilter,
   permission = 'edit',
   onChange,
   id,
   disabled = false,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
-  const getSelectedFolderResult = useGetFolderQueryFacade(value);
+  const getSelectedFolderResult = useGetCombinedFolderQuery(value);
 
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
@@ -247,29 +250,30 @@ export function NestedFolderPicker({
     if (isBrowsing) {
       flatTree = browseFlatTree;
 
-      // Theoretically this and excluded items could be done in a single iteration, but as these are used infrequently,
-      // it does not seem worth the tradeoff of readability.
       if (!showRootFolder) {
         flatTree = filterRootItem(flatTree);
       }
 
       // Only show team folders when browsing the full tree (no rootFolderUID scope)
-      const fullTree = rootFolderUID ? flatTree : [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
-      // Add "Team folders" at the top of the tree list.
-      return filterExcludedItems(fullTree, excludeUIDs);
+      if (!rootFolderUID && !rootFolderItem) {
+        flatTree = [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
+      }
     } else {
       flatTree = (searchResults?.items ?? []).map((item) => ({ isOpen: false, level: 0, item }));
-      return filterExcludedItems(flatTree, excludeUIDs);
     }
+
+    return filterItems(flatTree, excludeUIDs, folderFilter);
   }, [
     browseFlatTree,
     excludeUIDs,
+    folderFilter,
     isBrowsing,
     searchResults?.items,
     showRootFolder,
     teamFolderTreeItems,
     starredFolderTreeItems,
     rootFolderUID,
+    rootFolderItem,
   ]);
 
   const isItemLoaded = useCallback(
@@ -300,16 +304,18 @@ export function NestedFolderPicker({
     visible: overlayOpen,
   });
 
-  let label = getSelectedFolderResult.data?.title;
-  if (value === '') {
-    label = t('browse-dashboards.folder-picker.root-title', 'Dashboards');
-  }
+  // A custom root row is not a stored folder, so its label and badge come from the row itself.
+  const selectedRootItem =
+    rootFolderItem?.item.kind === 'folder' && value === rootFolderItem.item.uid ? rootFolderItem.item : undefined;
+  const selectedFolder = selectedRootItem ?? getSelectedFolderResult.data;
+  const label =
+    selectedFolder?.title || (value === '' ? t('browse-dashboards.folder-picker.root-title', 'Dashboards') : undefined);
 
   // Display the folder name and provisioning status when the picker is closed
   const labelComponent = label ? (
     <Stack alignItems={'center'}>
       <Text truncate>{label}</Text>
-      <FolderRepo folder={getSelectedFolderResult.data} canEdit={permission === 'edit'} />
+      <FolderRepo folder={selectedFolder} canEdit={permission === 'edit'} />
     </Stack>
   ) : (
     ''
@@ -461,6 +467,8 @@ function useTeamFolders(
           title: folder.title,
           uid: folder.name,
           parentUID: TEAM_FOLDERS_UID,
+          managedBy: extractManagerKind(folder.managedBy),
+          managerId: extractManagerId(folder.managedBy),
         },
       }));
     });
@@ -488,7 +496,7 @@ function useTeamFolders(
 }
 
 function useStarredFolders(foldersOpenState: Record<string, boolean>, permission?: PermissionLevel) {
-  const { data: uids, error } = useStarredItems('folder.grafana.app', 'Folder', { skip: !starredFoldersEnabled() });
+  const { data: uids, error } = useStarredItems('folder.grafana.app', 'Folder');
 
   const [folders, setFolders] = useState<DashboardViewItem[]>([]);
 
@@ -544,6 +552,8 @@ function useStarredFolders(foldersOpenState: Record<string, boolean>, permission
         title: folder.title,
         uid: folder.uid,
         parentUID: STARRED_FOLDERS_UID,
+        managedBy: folder.managedBy,
+        managerId: folder.managerId,
       },
     }));
 
@@ -573,11 +583,17 @@ function filterRootItem(items: DashboardsTreeItem[]) {
   return itemsFiltered;
 }
 
-function filterExcludedItems(items: DashboardsTreeItem[], excludeUIDs: string[] | undefined) {
-  if (excludeUIDs?.length) {
-    return items.filter((i) => !excludeUIDs?.includes(i.item.uid));
+function filterItems(
+  items: DashboardsTreeItem[],
+  excludeUIDs: string[] | undefined,
+  folderFilter: ((folder: DashboardViewItem) => boolean) | undefined
+) {
+  if (!excludeUIDs?.length && !folderFilter) {
+    return items;
   }
-  return items;
+  return items.filter(
+    ({ item }) => !excludeUIDs?.includes(item.uid) && (item.kind !== 'folder' || !folderFilter || folderFilter(item))
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

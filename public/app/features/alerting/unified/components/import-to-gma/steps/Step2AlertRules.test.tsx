@@ -4,10 +4,19 @@ import React, { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { mockBoundingClientRect } from '@grafana/test-utils';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui/unstable';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
+import { alertingFactory } from 'app/features/alerting/unified/mocks/server/db';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import {
+  failRecordingTargetDiscovery,
+  holdRecordingTargetDiscovery,
+} from 'app/features/alerting/unified/testSetup/recordingTargets';
 import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type PromRulesResponse, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
@@ -16,7 +25,22 @@ import { type ImportFormValues } from '../ImportToGMA';
 
 import { Step2Content, useStep2Validation } from './Step2AlertRules';
 
+jest.mock('@grafana/runtime/unstable', () => {
+  const actual = jest.requireActual('@grafana/runtime/unstable');
+  return { ...actual, useDataSourceInstanceList: jest.fn(actual.useDataSourceInstanceList) };
+});
+
+const runtime = jest.requireActual('@grafana/runtime/unstable');
+const hookMock = jest.mocked(useDataSourceInstanceList);
+
 const server = setupMswServer();
+
+jest.mock('@grafana/ui/unstable', () => ({
+  ...jest.requireActual('@grafana/ui/unstable'),
+  CodeMirrorEditor: jest.fn(({ value, readOnly, 'aria-label': label }: CodeMirrorEditorProps) => (
+    <textarea aria-label={label} value={value} readOnly={readOnly} />
+  )),
+}));
 
 // Wrapper to provide react-hook-form context
 function TestWrapper({
@@ -121,6 +145,127 @@ describe('Step2AlertRules', () => {
 
   afterEach(() => {
     consoleErrorSpy.mockRestore();
+    hookMock.mockImplementation(runtime.useDataSourceInstanceList);
+  });
+
+  it('previews overwritten rules as read-only JSON when warning details are expanded', async () => {
+    const rule = alertingFactory.ruler.grafana.alertingRule.build({ grafana_alert: { title: 'Existing alert' } });
+    const group = alertingFactory.ruler.grafana.group.build({ name: 'existing-group', rules: [rule] });
+    server.use(
+      getCustomSearchHandler([
+        {
+          resource: 'folders',
+          name: 'existing-folder',
+          title: 'existing-namespace',
+          folder: 'target-folder',
+          field: {},
+        },
+      ]),
+      http.get('/api/ruler/grafana/api/v1/rules/existing-folder', () =>
+        HttpResponse.json({ 'existing-namespace': [group] })
+      )
+    );
+    const user = userEvent.setup();
+    render(
+      <TestWrapper
+        defaultValues={{
+          rulesSource: 'yaml',
+          rulesYamlFile: new File(
+            [
+              'namespace: existing-namespace\ngroups:\n  - name: incoming-group\n    rules:\n      - alert: Incoming alert\n        expr: up == 0\n',
+            ],
+            'existing-namespace.yaml',
+            { type: 'application/yaml' }
+          ),
+          targetFolder: { uid: 'target-folder', title: 'Target folder' },
+        }}
+      >
+        <Step2Content step1Completed={false} step1Skipped={true} canImport={true} />
+      </TestWrapper>
+    );
+
+    await user.click(await screen.findByText('Rules that might be overwritten'));
+
+    expect(await screen.findByRole('textbox', { name: 'Rules that might be overwritten' })).toHaveAttribute('readonly');
+    expect(jest.mocked(CodeMirrorEditor).mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({
+        height: '300px',
+        language: 'json',
+        readOnly: true,
+        value: expect.stringContaining('Existing alert'),
+      })
+    );
+    expect(jest.mocked(CodeMirrorEditor).mock.lastCall?.[0].lineWrapping).toBeFalsy();
+  });
+
+  describe('recording rules target', () => {
+    // The picker only lists data sources that declare a capability such as alerting.
+    const prometheus = mockDataSource(
+      { name: 'Prometheus', uid: 'prometheus-uid', type: 'prometheus' },
+      { alerting: true }
+    );
+    const loki = mockDataSource({ name: 'Loki', uid: 'loki-uid', type: 'loki' }, { alerting: true });
+    const optedOut = mockDataSource(
+      { name: 'Opted out', uid: 'opted-out-uid', type: 'prometheus', jsonData: { allowAsRecordingRulesTarget: false } },
+      { alerting: true }
+    );
+
+    beforeEach(() => {
+      setupDataSources(prometheus, loki, optedOut);
+    });
+
+    function renderStep2() {
+      const view = render(
+        <TestWrapper defaultValues={{ rulesSource: 'datasource' }}>
+          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+        </TestWrapper>
+      );
+      const [sourcePicker, targetPicker] = screen.getAllByTestId(selectors.components.DataSourcePicker.inputV2);
+      return { ...view, sourcePicker, targetPicker };
+    }
+
+    it('disables the source and target pickers until the valid targets are known', async () => {
+      const releaseDiscovery = holdRecordingTargetDiscovery(hookMock, runtime.useDataSourceInstanceList);
+      const { sourcePicker, targetPicker } = renderStep2();
+
+      expect(sourcePicker).toBeDisabled();
+      expect(targetPicker).toBeDisabled();
+
+      releaseDiscovery();
+
+      await waitFor(() => expect(targetPicker).toBeEnabled());
+      expect(sourcePicker).toBeEnabled();
+    });
+
+    it('fills the target with the selected source when the source accepts recording rules', async () => {
+      const { user, sourcePicker, targetPicker } = renderStep2();
+      await waitFor(() => expect(sourcePicker).toBeEnabled());
+
+      await user.click(sourcePicker);
+      await user.click(await screen.findByRole('option', { name: /Prometheus/ }));
+
+      await waitFor(() => expect(targetPicker).toHaveAttribute('placeholder', 'Prometheus'));
+    });
+
+    it('offers only data sources that accept recording rules as targets', async () => {
+      const { user, targetPicker } = renderStep2();
+      await waitFor(() => expect(targetPicker).toBeEnabled());
+
+      await user.click(targetPicker);
+
+      expect(await screen.findByRole('option', { name: /Prometheus/ })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: /Opted out/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: /Loki/ })).not.toBeInTheDocument();
+    });
+
+    it('shows an error on the target field when the valid targets cannot be loaded', async () => {
+      failRecordingTargetDiscovery(hookMock);
+      renderStep2();
+
+      expect(
+        await screen.findByText('Failed to load the list of data sources that can store recording rules')
+      ).toBeInTheDocument();
+    });
   });
 
   describe('Step2Content rendering', () => {

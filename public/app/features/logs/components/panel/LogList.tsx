@@ -282,6 +282,7 @@ const LogListComponent = ({
     fontSize,
     forceEscape,
     hasLogsWithErrors,
+    hasLogsWithErrorAttributes,
     hasSampledLogs,
     onClickFilterString,
     onClickFilterOutString,
@@ -466,7 +467,9 @@ const LogListComponent = ({
         // Event handled by the parent.
         return;
       }
-      toggleDetails(log);
+      const modifierKeyPressed = e.ctrlKey || e.metaKey || e.shiftKey;
+
+      toggleDetails(log, modifierKeyPressed);
     },
     [handleTextSelection, toggleDetails]
   );
@@ -562,13 +565,15 @@ const LogListComponent = ({
           virtualization={virtualization}
           wrapLogMessage={wrapLogMessage}
         >
-          {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+          {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
             <VariableSizeList
               className={styles.logList}
               height={listHeight}
               itemCount={itemCount}
+              itemData={itemData}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
                 hasLogsWithErrors,
+                hasLogsWithErrorAttributes,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
                 showTime,
@@ -583,7 +588,7 @@ const LogListComponent = ({
               style={wrapLogMessage ? { overflowY: 'scroll' } : { overflow: 'scroll' }}
               width="100%"
             >
-              {Renderer}
+              {Log}
             </VariableSizeList>
           )}
         </InfiniteScroll>

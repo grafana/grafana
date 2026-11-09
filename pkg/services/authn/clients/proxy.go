@@ -41,8 +41,8 @@ var (
 )
 
 var (
-	_ authn.HookClient         = new(Proxy)
-	_ authn.ContextAwareClient = new(Proxy)
+	_ authn.HookClient         = (*Proxy)(nil)
+	_ authn.ContextAwareClient = (*Proxy)(nil)
 )
 
 func ProvideProxy(cfg *setting.Cfg, cache proxyCache, tracer trace.Tracer, clients ...authn.ProxyClient) (*Proxy, error) {
@@ -168,6 +168,11 @@ func (c *Proxy) Priority() uint {
 func (c *Proxy) Hook(ctx context.Context, id *authn.Identity, r *authn.Request) error {
 	ctx, span := c.tracer.Start(ctx, "authn.proxy.Hook")
 	defer span.End()
+
+	if c.cfg.AuthProxy.SyncTTL == 0 {
+		return nil
+	}
+
 	if id.ClientParams.CacheAuthProxyKey == "" {
 		return nil
 	}

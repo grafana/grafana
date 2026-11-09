@@ -47,18 +47,20 @@ func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store
 		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "plugin-dashboard", "message": message})
 	}
 
+	statusErr := storageStatusError(err)
+
 	// --- 413 Payload Too Large ---
-	if apierrors.IsRequestEntityTooLargeError(err) {
+	if apierrors.IsRequestEntityTooLargeError(err) || (statusErr != nil && apierrors.IsRequestEntityTooLargeError(statusErr)) {
 		return response.Error(http.StatusRequestEntityTooLarge, fmt.Sprintf("Dashboard is too large, max is %d MB", apiserver.MaxRequestBodyBytes/1024/1024), err)
 	}
 
 	// --- Kubernetes status errors ---
-	if statusErr, ok := errors.AsType[*apierrors.StatusError](err); ok {
+	if statusErr != nil {
 		// The k8s dashboard apiserver returns NotFound on the folders resource when the
 		// referenced folder UID does not exist. Map that back to the legacy
 		// /api/dashboards/db contract (400 + "folder not found") so existing clients keep
 		// working after the direct-to-client routing change.
-		if apierrors.IsNotFound(err) {
+		if apierrors.IsNotFound(statusErr) {
 			if d := statusErr.ErrStatus.Details; d != nil && d.Group == folderv1.APIGroup && d.Kind == folderv1.RESOURCE {
 				return response.Error(http.StatusBadRequest, dashboards.ErrFolderNotFound.Error(), nil)
 			}

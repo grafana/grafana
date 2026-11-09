@@ -1,38 +1,26 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
-import { Alert, Button, Drawer, Field, Input, Spinner, Stack } from '@grafana/ui';
+import { Alert, Button, Drawer, Field, Input, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
-import {
-  type Job,
-  type RepositoryView,
-  useCreateRepositoryFilesWithPathMutation,
-  useGetRepositoryFilesWithPathQuery,
-} from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
-import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
-import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
-import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
-import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
-import { type StatusInfo } from '../../types';
+import { useCommitTarget } from '../../hooks/useCommitTarget';
+import { useResourceJob } from '../../hooks/useResourceJob';
 import { type ProvisionedDashboardFormData } from '../../types/form';
+import { type MoveJobSpec } from '../../types/job';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
-import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
-import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
-import { getTargetFolderPathInRepo, isResourceAlreadyInTarget } from '../BulkActions/utils';
+import { getRequestRef } from '../../utils/workflow';
+import { getResourceTargetPath, getTargetFolderPathInRepo, isResourceAlreadyInTarget } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { joinPath } from '../utils/path';
+import { ResourceJobStatus } from '../Shared/ResourceJobStatus';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -40,26 +28,20 @@ export interface Props {
   readOnly: boolean;
   isNew?: boolean;
   canPushToConfiguredBranch: boolean;
-  loadedFromRef?: string;
   targetFolderUID?: string;
-  targetFolderTitle?: string;
   repository?: RepositoryView;
   onDismiss: () => void;
-  onSuccess: (folderUID: string, folderTitle: string) => void;
 }
 
 export function MoveProvisionedDashboardForm({
   dashboard,
   defaultValues,
-  loadedFromRef,
   readOnly,
   isNew,
   canPushToConfiguredBranch,
   targetFolderUID,
-  targetFolderTitle,
   repository,
   onDismiss,
-  onSuccess,
 }: Props) {
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { editPanel: panelEditor } = dashboard.useState();
@@ -67,7 +49,7 @@ export function MoveProvisionedDashboardForm({
   const { handleSubmit, watch } = methods;
   const appEvents = getAppEvents();
 
-  const [ref, workflow] = watch(['ref', 'workflow']);
+  const ref = watch('ref') ?? '';
 
   const templateVars: CommitTemplateVars = {
     action: 'move',
@@ -84,51 +66,29 @@ export function MoveProvisionedDashboardForm({
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  const { locked: lockBranch } = useBranchTemplate({
+  const { workflow, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
-    workflow,
-    value: ref ?? '',
-    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
-  });
-
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
-
-  const { data: currentFileData, isLoading: isLoadingFileData } = useGetRepositoryFilesWithPathQuery({
-    name: defaultValues.repo,
-    path: defaultValues.path,
+    ref,
+    isRefDirty: Boolean(methods.formState.dirtyFields.ref),
+    setRef: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 
   const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID! } : skipToken);
+  const targetFolderPath = getTargetFolderPathInRepo({ targetFolderUID, targetFolder, repoName: repository?.name });
+  const targetPath = targetFolderPath ? getResourceTargetPath(defaultValues.path, targetFolderPath) : '';
 
-  const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
-  const [moveFile, moveRequest] = useCreateRepositoryFilesWithPathMutation();
-  const [targetPath, setTargetPath] = useState<string>('');
-  const [job, setJob] = useState<Job>();
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [jobError, setJobError] = useState<string | StatusInfo>();
-
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const currentSourcePath = currentFileData?.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
-    if (!currentSourcePath || targetFolderUID === undefined) {
-      return;
-    }
-
-    const filename = currentSourcePath.split('/').pop();
-    const targetFolderPath = getTargetFolderPathInRepo({
-      targetFolderUID,
-      targetFolder,
-      repoName: repository?.name,
-      hidePrependSlash: true,
-    });
-    const newPath = joinPath(targetFolderPath ?? '', filename ?? '');
-    setTargetPath(newPath);
-  }, [currentFileData, targetFolder, targetFolderUID, targetFolderTitle, repository]);
+  const { submitted, submit, isCreating, handleSuccess } = useResourceJob({
+    repository,
+    prTitle,
+    onBeforeLeave: () => {
+      dashboard.setState({ isDirty: false });
+      panelEditor?.onDiscard();
+    },
+  });
 
   // Helper function to show error messages
-  const showError = (error?: unknown) => {
+  const showError = (error?: string) => {
     const payload = [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard'), error];
 
     appEvents.publish({
@@ -137,52 +97,13 @@ export function MoveProvisionedDashboardForm({
     });
   };
 
-  const onBranchSuccess = (urls: Record<string, string> | undefined, info: ProvisionedOperationInfo) => {
-    dashboard.setState({ isDirty: false });
-    panelEditor?.onDiscard();
-    const url = buildResourceBranchRedirectUrl({
-      paramName: 'new_pull_request_url',
-      paramValue: urls?.newPullRequestURL,
-      repoType: info.repoType,
-      prTitle,
-    });
-    navigate(url);
-  };
-
-  const { handleSuccess } = useProvisionedRequestHandler({
-    workflow,
-    resourceType: 'dashboard',
-    repository,
-    selectedBranch: ref || loadedFromRef,
-    successMessage: t(
-      'dashboard-scene.move-provisioned-dashboard-form.success-message',
-      'Dashboard moved successfully'
-    ),
-    handlers: {
-      onBranchSuccess: ({ urls }, info) => onBranchSuccess(urls, info),
-      onDismiss,
-    },
-  });
-
   const handleSubmitForm = async ({ repo, path }: ProvisionedDashboardFormData) => {
-    if (!repo || !repository) {
+    if (!repo || !path || !repository || !targetFolderPath) {
       showError();
       return;
     }
 
-    const targetFolderPath = getTargetFolderPathInRepo({
-      targetFolderUID,
-      targetFolder,
-      repoName: repository?.name,
-    });
-
-    if (!targetFolderPath) {
-      showError();
-      return;
-    }
-
-    const currentSourcePath = currentFileData?.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
-    if (currentSourcePath && isResourceAlreadyInTarget(currentSourcePath, targetFolderPath)) {
+    if (isResourceAlreadyInTarget(path, targetFolderPath)) {
       showError(
         t(
           'dashboard-scene.move-provisioned-dashboard-form.already-in-folder',
@@ -195,92 +116,36 @@ export function MoveProvisionedDashboardForm({
     reportInteraction('grafana_provisioning_dashboard_move_submitted', {
       workflow,
       repositoryName: repo,
-      repositoryType: repository?.type ?? 'unknown',
+      repositoryType: repository.type ?? 'unknown',
     });
 
-    // Branch workflow: use /files API for direct file operations
-    if (workflow === 'branch') {
-      if (!currentFileData?.resource?.file) {
-        appEvents.publish({
-          type: AppEvents.alertError.name,
-          payload: [
-            t(
-              'dashboard-scene.move-provisioned-dashboard-form.current-file-not-found',
-              'Current dashboard file could not be found'
-            ),
-          ],
-        });
-        return;
-      }
-
-      const branchRef = ref;
-
-      try {
-        const data = await moveFile({
-          name: repo,
-          path: targetPath,
-          ref: branchRef,
-          message,
-          body: currentFileData.resource.file,
-          originalPath: path,
-        }).unwrap();
-        handleSuccess(data);
-      } catch (error) {
-        showError(error);
-      }
-      return;
-    }
-
-    // Write workflow: use Job API
-    const effectiveRef = isNew ? undefined : loadedFromRef;
-    const jobSpec = {
-      action: 'move' as const,
+    const jobSpec: MoveJobSpec = {
+      action: 'move',
       message,
       move: {
-        ref: effectiveRef,
+        ref: getRequestRef(repository, ref),
         targetPath: targetFolderPath,
         resources: [
           {
             name: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
-            group: 'dashboard.grafana.app' as const,
-            kind: 'Dashboard' as const,
+            group: 'dashboard.grafana.app',
+            kind: 'Dashboard',
           },
         ],
       },
     };
 
     try {
-      const result = await createBulkJob(repository, jobSpec);
-      if (!result.success) {
-        showError();
-        return;
-      }
-
-      if (result.job) {
-        setJob(result.job);
-        setHasSubmitted(true);
-      }
+      await submit(jobSpec);
     } catch (error) {
-      showError(error);
+      showError(
+        extractErrorMessage(
+          error,
+          t('browse-dashboards.bulk-actions.error-generic', 'Unexpected error happened when creating job')
+        )
+      );
     }
   };
-
-  const handleJobStatusChange = useCallback(
-    (statusInfo: StepStatusInfo) => {
-      if (statusInfo.status === 'success') {
-        dashboard.setState({ isDirty: false });
-        panelEditor?.onDiscard();
-        navigate('/dashboards');
-      }
-
-      if (statusInfo.status === 'error' && statusInfo.error) {
-        setJobError(statusInfo.error);
-      }
-    },
-    [dashboard, panelEditor, navigate]
-  );
-
-  const isLoading = isCreatingJob || moveRequest.isLoading;
 
   return (
     <Drawer
@@ -288,11 +153,8 @@ export function MoveProvisionedDashboardForm({
       subtitle={dashboard.state.title}
       onClose={onDismiss}
     >
-      {hasSubmitted && job ? (
-        <>
-          <ProvisioningAlert error={jobError} />
-          <JobStatus watch={job} jobType="move" onStatusChange={handleJobStatusChange} />
-        </>
+      {submitted ? (
+        <ResourceJobStatus job={submitted.job} jobType="move" onSuccess={handleSuccess} />
       ) : (
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitForm)}>
@@ -308,32 +170,6 @@ export function MoveProvisionedDashboardForm({
                     This dashboard cannot be moved directly from Grafana because the repository is read-only. To move
                     this dashboard, please move the file in your Git repository.
                   </Trans>
-                </Alert>
-              )}
-
-              {isLoadingFileData && (
-                <Stack alignItems="center" gap={2}>
-                  <Spinner />
-                  <div>
-                    {t(
-                      'dashboard-scene.move-provisioned-dashboard-form.loading-dashboard-data',
-                      'Loading dashboard data'
-                    )}
-                  </div>
-                </Stack>
-              )}
-
-              {currentFileData?.errors?.length && currentFileData.errors.length > 0 && (
-                <Alert
-                  title={t(
-                    'dashboard-scene.move-provisioned-dashboard-form.file-load-error',
-                    'Error loading dashboard'
-                  )}
-                  severity="error"
-                >
-                  {currentFileData.errors.map((error, index) => (
-                    <div key={index}>{error}</div>
-                  ))}
                 </Alert>
               )}
 
@@ -356,17 +192,13 @@ export function MoveProvisionedDashboardForm({
               />
 
               <Stack gap={2}>
-                <Button variant="secondary" onClick={onDismiss} fill="outline">
-                  <Trans i18nKey="dashboard-scene.move-provisioned-dashboard-form.cancel-action">Cancel</Trans>
-                </Button>
-                <Button
-                  variant="primary"
-                  type="submit"
-                  disabled={isLoading || readOnly || isLoadingFileData || !currentFileData?.resource?.file}
-                >
-                  {isLoading
+                <Button variant="primary" type="submit" disabled={isCreating || isResolving || readOnly}>
+                  {isCreating
                     ? t('dashboard-scene.move-provisioned-dashboard-form.moving', 'Moving...')
                     : t('dashboard-scene.move-provisioned-dashboard-form.move-action', 'Move dashboard')}
+                </Button>
+                <Button variant="secondary" onClick={onDismiss} fill="outline">
+                  <Trans i18nKey="dashboard-scene.move-provisioned-dashboard-form.cancel-action">Cancel</Trans>
                 </Button>
               </Stack>
             </Stack>

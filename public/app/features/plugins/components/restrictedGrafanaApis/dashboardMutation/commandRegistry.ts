@@ -6,25 +6,38 @@
  */
 
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { DASHBOARD_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
+import {
+  PENDING_CHANGES_COMMANDS,
+  isPendingChangesEnabled,
+} from 'app/features/dashboard-scene/lifecycle/pendingChangesFlag';
+import { DASHBOARD_COMMAND_SCHEMAS } from 'app/features/dashboard-scene/mutation-api/commands/schemaRegistry';
 import type { MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
 import { NOTEBOOK_COMMANDS } from 'app/features/notebook/mutation-api/registry';
 
 /**
  * A function, not a module-level array, and that is load-bearing.
  *
- * A dashboard command reaches PanelMenuBehavior, which reaches the plugin extensions registry, which
- * imports RestrictedGrafanaApisProvider -> dashboardMutationApi -> this module. So by the time this
- * module is evaluated, `DASHBOARD_COMMANDS` may still be mid-initialization and read as undefined.
- * Deferring the read to call time steps over the cycle instead of depending on module order.
+ * With the former `DASHBOARD_COMMANDS` import, a dashboard command reached PanelMenuBehavior, which
+ * reached the plugin extensions registry, which imports RestrictedGrafanaApisProvider ->
+ * dashboardMutationApi -> this module. So by the time this module was evaluated, `DASHBOARD_COMMANDS`
+ * could still be mid-initialization and read as undefined.
+ * Deferring the read to call time stepped over the cycle instead of depending on module order.
  *
- * Notebook commands are flag-gated for the same reason `DashboardMutationClient` gates them.
+ * Dashboard schemas now avoid command implementations, but keep registry reads and notebook flag
+ * evaluation at call time.
+ * Notebook commands are flag-gated for the same reason `DashboardMutationClient` gates them, and so
+ * are the pending changes commands: a plugin reads RELOAD_FROM_SERVER's schema to tell whether this
+ * build previews its pending changes.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous by construction: commands from every resource, each typed on its own scene
-export function allMutationCommands(): Array<MutationCommand<any, any>> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- schemas come from commands with heterogeneous payload and scene types
+export function allMutationCommands(): Array<Pick<MutationCommand<any, any>, 'name' | 'payloadSchema'>> {
   const notebookCommands = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)
     ? NOTEBOOK_COMMANDS
     : [];
 
-  return [...DASHBOARD_COMMANDS, ...notebookCommands];
+  const dashboardCommands = isPendingChangesEnabled()
+    ? DASHBOARD_COMMAND_SCHEMAS
+    : DASHBOARD_COMMAND_SCHEMAS.filter((command) => !PENDING_CHANGES_COMMANDS.has(command.name));
+
+  return [...dashboardCommands, ...notebookCommands];
 }

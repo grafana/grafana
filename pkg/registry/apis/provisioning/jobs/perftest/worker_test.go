@@ -3,6 +3,7 @@ package perftest
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/mock"
@@ -46,59 +47,67 @@ func TestWorker_IsSupported(t *testing.T) {
 
 func TestWorker_Process(t *testing.T) {
 	t.Run("sleeps for the duration then completes", func(t *testing.T) {
-		progress := jobs.NewMockJobProgressRecorder(t)
-		// 80ms can't deliver the default count without out-pacing the throttle, so
-		// the total is clamped to 1.
-		progress.On("SetTotal", mock.Anything, 1).Return()
-		progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
-		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
-		progress.On("SetFinalMessage", mock.Anything, mock.Anything).Return()
+		synctest.Test(t, func(t *testing.T) {
+			progress := jobs.NewMockJobProgressRecorder(t)
+			// 80ms can't deliver the default count without out-pacing the throttle, so
+			// the total is clamped to 1.
+			progress.On("SetTotal", mock.Anything, 1).Return()
+			progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
+			progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
+			progress.On("SetFinalMessage", mock.Anything, mock.Anything).Return()
 
-		start := time.Now()
-		err := NewWorker(enabledFunc(true)).Process(context.Background(), nil, testJob(80*time.Millisecond, 0), progress)
-		require.NoError(t, err)
-		require.GreaterOrEqual(t, time.Since(start), 80*time.Millisecond)
+			start := time.Now()
+			err := NewWorker(enabledFunc(true)).Process(t.Context(), nil, testJob(80*time.Millisecond, 0), progress)
+			require.NoError(t, err)
+			require.GreaterOrEqual(t, time.Since(start), 80*time.Millisecond)
+		})
 	})
 
 	t.Run("caps progress updates that out-pace the throttle", func(t *testing.T) {
-		progress := jobs.NewMockJobProgressRecorder(t)
-		// 50ms / 3 is far tighter than the throttle, so the total is clamped to 1.
-		progress.On("SetTotal", mock.Anything, 1).Return()
-		progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
-		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
-		progress.On("SetFinalMessage", mock.Anything, mock.Anything).Return()
+		synctest.Test(t, func(t *testing.T) {
+			progress := jobs.NewMockJobProgressRecorder(t)
+			// 50ms / 3 is far tighter than the throttle, so the total is clamped to 1.
+			progress.On("SetTotal", mock.Anything, 1).Return()
+			progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
+			progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
+			progress.On("SetFinalMessage", mock.Anything, mock.Anything).Return()
 
-		err := NewWorker(enabledFunc(true)).Process(context.Background(), nil, testJob(50*time.Millisecond, 3), progress)
-		require.NoError(t, err)
+			err := NewWorker(enabledFunc(true)).Process(t.Context(), nil, testJob(50*time.Millisecond, 3), progress)
+			require.NoError(t, err)
+		})
 	})
 
 	t.Run("honors configured progress updates when the duration allows", func(t *testing.T) {
-		progress := jobs.NewMockJobProgressRecorder(t)
-		// 2 updates over 4× the interval are deliverable, so the count is honored.
-		// Cancel early; SetTotal is recorded before the loop starts.
-		progress.On("SetTotal", mock.Anything, 2).Return()
-		progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
-		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
+		synctest.Test(t, func(t *testing.T) {
+			progress := jobs.NewMockJobProgressRecorder(t)
+			// 2 updates over 4× the interval are deliverable, so the count is honored.
+			// Cancel early; SetTotal is recorded before the loop starts.
+			progress.On("SetTotal", mock.Anything, 2).Return()
+			progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
+			progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
 
-		duration := 4 * jobs.NotifyThrottleInterval
-		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
-		defer cancel()
+			duration := 4 * jobs.NotifyThrottleInterval
+			ctx, cancel := context.WithTimeout(t.Context(), 20*time.Millisecond)
+			defer cancel()
 
-		err := NewWorker(enabledFunc(true)).Process(ctx, nil, testJob(duration, 2), progress)
-		require.ErrorIs(t, err, context.DeadlineExceeded)
+			err := NewWorker(enabledFunc(true)).Process(ctx, nil, testJob(duration, 2), progress)
+			require.ErrorIs(t, err, context.DeadlineExceeded)
+		})
 	})
 
 	t.Run("records results so progress advances", func(t *testing.T) {
-		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetTotal", mock.Anything, 2).Return()
-		// Each tick must Record a result; without it JobStatus.Progress stays 0.
-		progress.On("Record", mock.Anything, mock.Anything).Return()
-		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
-		progress.On("SetFinalMessage", mock.Anything, mock.Anything).Return()
+		synctest.Test(t, func(t *testing.T) {
+			progress := jobs.NewMockJobProgressRecorder(t)
+			progress.On("SetTotal", mock.Anything, 2).Return()
+			// Each tick must Record a result; without it JobStatus.Progress stays 0.
+			progress.On("Record", mock.Anything, mock.Anything).Return()
+			progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
+			progress.On("SetFinalMessage", mock.Anything, mock.Anything).Return()
 
-		// 2 updates over 4× the interval: both ticks fire before completion.
-		err := NewWorker(enabledFunc(true)).Process(context.Background(), nil, testJob(4*jobs.NotifyThrottleInterval, 2), progress)
-		require.NoError(t, err)
+			// 2 updates over 4× the interval: both ticks fire before completion.
+			err := NewWorker(enabledFunc(true)).Process(t.Context(), nil, testJob(4*jobs.NotifyThrottleInterval, 2), progress)
+			require.NoError(t, err)
+		})
 	})
 
 	t.Run("missing test options", func(t *testing.T) {
@@ -115,15 +124,17 @@ func TestWorker_Process(t *testing.T) {
 	})
 
 	t.Run("honors context cancellation", func(t *testing.T) {
-		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetTotal", mock.Anything, defaultProgressUpdates).Return()
-		progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
-		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
+		synctest.Test(t, func(t *testing.T) {
+			progress := jobs.NewMockJobProgressRecorder(t)
+			progress.On("SetTotal", mock.Anything, defaultProgressUpdates).Return()
+			progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
+			progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
-		defer cancel()
+			ctx, cancel := context.WithTimeout(t.Context(), 20*time.Millisecond)
+			defer cancel()
 
-		err := NewWorker(enabledFunc(true)).Process(ctx, nil, testJob(10*time.Second, 0), progress)
-		require.ErrorIs(t, err, context.DeadlineExceeded)
+			err := NewWorker(enabledFunc(true)).Process(ctx, nil, testJob(10*time.Second, 0), progress)
+			require.ErrorIs(t, err, context.DeadlineExceeded)
+		})
 	})
 }

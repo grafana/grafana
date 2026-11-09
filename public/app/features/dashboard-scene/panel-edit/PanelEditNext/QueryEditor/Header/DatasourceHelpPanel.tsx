@@ -7,15 +7,24 @@ import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
-export function DatasourceHelpPanel() {
+import { type QueryActionTarget } from './headerActionTarget';
+
+interface DatasourceHelpPanelProps {
+  /** The query to show help for. Defaults to the selected query and its data source. */
+  target?: Pick<QueryActionTarget, 'query' | 'dsData' | 'dsLoading'>;
+}
+
+export function DatasourceHelpPanel({ target }: DatasourceHelpPanelProps = {}) {
   const { selectedQuery, selectedQueryDsData, selectedQueryDsLoading, toggleDatasourceHelp } =
     useQueryEditorUIContext();
   const { updateSelectedQuery } = useActionsContext();
-  const datasource = selectedQueryDsData?.datasource;
+  const query = target ? target.query : selectedQuery;
+  const datasource = target ? target.dsData?.datasource : selectedQueryDsData?.datasource;
+  const dsLoading = target ? target.dsLoading : selectedQueryDsLoading;
 
   const styles = useStyles2(getStyles);
 
-  if (selectedQueryDsLoading || !datasource?.components?.QueryEditorHelp || !selectedQuery) {
+  if (dsLoading || !datasource?.components?.QueryEditorHelp || !query) {
     return null;
   }
 
@@ -25,10 +34,10 @@ export function DatasourceHelpPanel() {
     // Preserve refId and datasource from current query
     const updatedQuery = {
       ...exampleQuery,
-      refId: selectedQuery.refId,
-      datasource: exampleQuery.datasource ?? selectedQuery.datasource,
+      refId: query.refId,
+      datasource: exampleQuery.datasource ?? query.datasource,
     };
-    updateSelectedQuery(updatedQuery, selectedQuery.refId);
+    updateSelectedQuery(updatedQuery, query.refId);
     toggleDatasourceHelp();
   };
 
@@ -42,7 +51,7 @@ export function DatasourceHelpPanel() {
         className={styles.closeButton}
         aria-label={t('query-editor-next.help.close-aria', 'Close help panel')}
       />
-      <DatasourceCheatsheet query={selectedQuery} datasource={datasource} onClickExample={onClickExample} />
+      <DatasourceCheatsheet query={query} datasource={datasource} onClickExample={onClickExample} />
     </div>
   );
 }

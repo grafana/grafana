@@ -114,6 +114,48 @@ describe('fieldConfigSchema matcher validation', () => {
   });
 });
 
+describe('transformation refId', () => {
+  function transformation(spec: Record<string, unknown>) {
+    return { kind: 'Transformation', group: 'limit', spec };
+  }
+
+  function parseUpdatePanelTransformation(spec: Record<string, unknown>) {
+    const result = payloads.updatePanel.safeParse({
+      element: { name: 'panel-1' },
+      panel: { spec: { data: { spec: { transformations: [transformation(spec)] } } } },
+    });
+    if (!result.success) {
+      throw new Error(`expected parse success: ${result.error.message}`);
+    }
+    return result.data.panel!.spec.data!.spec.transformations![0].spec;
+  }
+
+  it('keeps a user-set refId on UPDATE_PANEL', () => {
+    expect(parseUpdatePanelTransformation({ refId: 'T1', options: { limitField: 10 } }).refId).toBe('T1');
+  });
+
+  it('leaves refId unset when the caller omits it', () => {
+    expect(parseUpdatePanelTransformation({ options: {} }).refId).toBeUndefined();
+  });
+
+  it('keeps a user-set refId on ADD_PANEL', () => {
+    const result = payloads.addPanel.safeParse({
+      panel: {
+        spec: {
+          title: 'Transform panel',
+          data: { spec: { queries: [], transformations: [transformation({ refId: 'T1', options: {} })] } },
+          vizConfig: { group: 'timeseries', spec: {} },
+        },
+      },
+    });
+
+    if (!result.success) {
+      throw new Error(`expected parse success: ${result.error.message}`);
+    }
+    expect(result.data.panel.spec.data.spec.transformations[0].spec.refId).toBe('T1');
+  });
+});
+
 describe('GET_METADATA_ANNOTATIONS payload', () => {
   const key = 'grafana.app/useCrossDashboardVariables';
 

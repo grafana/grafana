@@ -11,7 +11,7 @@ import { folderAPIv1beta1 } from './index';
 setBackendSrv(backendSrv);
 setupMockServer();
 
-describe('folderAPIv1beta1 cache invalidation', () => {
+describe('folderAPIv1beta1 getAffectedItems', () => {
   const createTestStore = () =>
     configureStore({
       reducer: {
@@ -24,30 +24,33 @@ describe('folderAPIv1beta1 cache invalidation', () => {
     folderAPIVersionResolver.set('v1beta1');
   });
 
-  it('does not refetch an active getFolder subscription after deleting that folder', async () => {
+  it('aggregates variable counts', async () => {
     const store = createTestStore();
-    const folderQueryArg = { name: 'folder-1' };
 
-    const getFolderSpy = jest.fn();
-    const deleteFolderSpy = jest.fn();
     server.use(
-      http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/folder-1', () => {
-        getFolderSpy();
-        return HttpResponse.json({ metadata: { name: 'folder-1' } });
-      }),
-      http.delete('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/folder-1', () => {
-        deleteFolderSpy();
-        return HttpResponse.json({});
+      http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/counts', () =>
+        HttpResponse.json({
+          kind: 'DescendantCounts',
+          apiVersion: 'folder.grafana.app/v1beta1',
+          counts: [{ group: 'dashboard.grafana.app', resource: 'variables', count: 4 }],
+        })
+      )
+    );
+
+    const result = await store.dispatch(
+      folderAPIv1beta1.endpoints.getAffectedItems.initiate({
+        folderUIDs: ['folder-1'],
+        dashboardUIDs: [],
       })
     );
 
-    const subscription = store.dispatch(folderAPIv1beta1.endpoints.getFolder.initiate(folderQueryArg));
-    await subscription;
-    await store.dispatch(folderAPIv1beta1.endpoints.deleteFolder.initiate({ name: 'folder-1' }));
-
-    expect(getFolderSpy).toHaveBeenCalledTimes(1);
-    expect(deleteFolderSpy).toHaveBeenCalledTimes(1);
-
-    subscription.unsubscribe();
+    expect(result.data).toEqual({
+      folders: 1,
+      dashboards: 0,
+      librarypanels: 0,
+      alertrules: 0,
+      recordingrules: 0,
+      variables: 4,
+    });
   });
 });

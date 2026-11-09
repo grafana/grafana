@@ -1,8 +1,6 @@
 package provisioning
 
 import (
-	"fmt"
-	"net/http"
 	"testing"
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -12,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-// We currently block permission updates for folders managed by provisioning.
 func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 	repoName := "nested-folder-repo"
 	helper := sharedHelper(t)
@@ -23,27 +20,11 @@ func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 			"testdata/all-panels.json": "folder/subfolder/dashboard.json",
 		},
 	})
-	t.Run("should fail to update permissions for provisioned nested folder", func(t *testing.T) {
+	t.Run("should update permissions for provisioned nested folders", func(t *testing.T) {
 		provisionedFolders := helper.RequireRepoFolderCount(t, repoName, 3)
 
-		permissionsPayload := map[string]interface{}{
-			"items": []map[string]interface{}{
-				{
-					"role":       "Viewer",
-					"permission": common.FolderPermissionView,
-				},
-			},
-		}
-
-		// Test that permission updates fail for all provisioned folders
 		for _, folder := range provisionedFolders {
-			folderName := folder.GetName()
-			permissionsURL := fmt.Sprintf("/api/folders/%s/permissions", folderName)
-			permissionsData, code, err := common.PostHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
-			require.Error(t, err, "should fail to update permissions for folder %s", folderName)
-			require.Equal(t, http.StatusForbidden, code, "should return forbidden status for folder %s", folderName)
-			require.NotNil(t, permissionsData, "should have error response for folder %s", folderName)
-			require.Equal(t, "Cannot update permissions for folders managed by provisioning.", permissionsData["message"], "should have correct error message for folder %s", folderName)
+			common.SetFolderPermissions(t, helper, folder.GetName(), common.RolePermission{Role: "Viewer", Permission: common.FolderPermissionView})
 		}
 	})
 }

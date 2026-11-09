@@ -5,8 +5,10 @@ import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
+import { useIsMobileEditDeprecated } from '../../utils/mobileEditDeprecation';
 import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
 import { type DashboardScene } from '../DashboardScene';
+import { getDashboardMode } from '../dashboardModes';
 
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
 import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButton';
@@ -17,9 +19,10 @@ import { SaveDashboard } from './actions/SaveDashboard';
 import { getDynamicActions, renderActionElements } from './utils';
 
 export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
-  const { editPanel, editable, editview, isEditing, meta, viewPanel } = dashboard.useState();
+  const { editPanel, editable, editview, isEditing, meta, mode, viewPanel } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const styles = useStyles2(getStyles);
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   const isEditable = Boolean(editable);
   const canSave = Boolean(meta.canSave);
@@ -70,13 +73,15 @@ export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
             key: 'save-dashboard',
             component: SaveDashboard,
             group: 'panel',
-            condition: isEditingDashboard && (canSave || canSaveInFolder),
+            condition:
+              isEditingDashboard && getDashboardMode({ mode, isEditing }) !== 'view' && (canSave || canSaveInFolder),
           },
           {
             key: 'make-dashboard-editable-button',
             component: MakeDashboardEditableButton,
             group: 'save-edit',
-            condition: !isEditing && canEditDashboard && !isViewingPanel && !isEditable && !isPlaying,
+            condition:
+              !isEditing && canEditDashboard && !isViewingPanel && !isEditable && !isPlaying && !isMobileEditDeprecated,
           },
         ],
         dashboard

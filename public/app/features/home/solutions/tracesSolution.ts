@@ -2,8 +2,8 @@ import memoize from 'micro-memoize';
 
 import { formattedValueToString, getValueFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { HOSTED_TRACES_APP_ID } from 'app/core/appPluginIds';
 
-import { HOSTED_TRACES_APP_ID } from './appPluginIds';
 import { drilldownActiveCta } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { probeFound, tempoHasTraces } from './solutionDataProbes';

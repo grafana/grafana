@@ -18,8 +18,7 @@ import (
 // previewTestNamespace is allowlisted in setupPreviewTestMux.
 const previewTestNamespace = "stacks-123456"
 
-// previewTestManifest is served by the mock bucket server in preview assets tests.
-// set esModule true here so tests can confirm the served page's <script type>
+// The mock bucket serves this manifest at the CI upload path.
 const previewTestManifest = `{
 	"entrypoints": {
 		"esModule": true,
@@ -31,20 +30,20 @@ const previewTestManifest = `{
 		},
 		"dark": { "assets": { "css": ["public/build/grafana.dark.preview.css"] } },
 		"light": { "assets": { "css": ["public/build/grafana.light.preview.css"] } }
-	}
+	},
+	"runtime.js": { "src": "public/build/runtime.preview.js", "integrity": "sha256-preview-runtime" },
+	"app.js": { "src": "public/build/app.preview.js", "integrity": "sha256-preview-app" }
 }`
 
-// newPreviewBucketServer returns a server that serves previewTestManifest for
-// the given folder, mimicking the GCS bucket layout the CI workflow uploads.
 func newPreviewBucketServer(t *testing.T, folder string) *httptest.Server {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/"+folder+"/public/build/assets-manifest.json" {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(previewTestManifest))
+		if r.URL.Path != "/"+folder+"/public/build/assets-manifest.json" {
+			http.NotFound(w, r)
 			return
 		}
-		http.NotFound(w, r)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(previewTestManifest))
 	}))
 	t.Cleanup(server.Close)
 	return server
@@ -59,10 +58,11 @@ func setupPreviewTestMux(t *testing.T, previewBaseURL string) *web.Mux {
 	raw.Section("frontend_service").Key("preview_assets_allowed_namespaces").SetValue(previewTestNamespace)
 
 	cfg := &setting.Cfg{
-		Raw:            raw,
-		HTTPPort:       "3000",
-		StaticRootPath: setupTestWebAssets(t),
-		Env:            setting.Dev,
+		Raw:                   raw,
+		HTTPPort:              "3000",
+		StaticRootPath:        setupTestWebAssets(t),
+		Env:                   setting.Dev,
+		AssetSriChecksEnabled: true,
 	}
 	service := createTestService(t, cfg)
 

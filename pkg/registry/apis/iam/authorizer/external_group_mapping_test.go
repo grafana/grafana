@@ -79,7 +79,7 @@ func TestExternalGroupMapping_FilterList(t *testing.T) {
 			*newExternalGroupMapping("team-2", "mapping-2"),
 		},
 		ListMeta: metav1.ListMeta{
-			SelfLink: "/apis/iam.grafana.app/v0alpha1/namespaces/org-2/externalgroupmappings",
+			SelfLink: "/apis/iam.grafana.app/v0alpha1/namespaces/org-2/externalgroupmappings", //nolint:staticcheck // Exercise legacy list metadata compatibility.
 		},
 	}
 

@@ -1883,6 +1883,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDataTransformerConfig(ref common
 							Format:      "",
 						},
 					},
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique identifier of the instance of the transformer",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"disabled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Disabled transformations are skipped",
@@ -3299,7 +3306,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPanelKindOrLibraryPanelKind(ref 
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "Supported dashboard elements |* more element types in the future",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"PanelKind": {
 						SchemaProps: spec.SchemaProps{
@@ -4083,12 +4091,24 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardRowsLayoutRowSpec(ref common.Ref
 							},
 						},
 					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardAnnotationQueryKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"layout"},
 			},
 		},
 		Dependencies: []string{
-			DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardRowRepeatOptions{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardRowRepeatOptions{}.OpenAPIModelName()},
 	}
 }
 
@@ -4617,12 +4637,24 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTabsLayoutTabSpec(ref common.Ref
 							},
 						},
 					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardAnnotationQueryKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"layout"},
 			},
 		},
 		Dependencies: []string{
-			DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTabRepeatOptions{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTabRepeatOptions{}.OpenAPIModelName()},
 	}
 }
 
@@ -5638,7 +5670,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookCellKindOrV2PanelKindOrLibraryPan
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "A notebook element is a narrative cell, a panel, or a library panel. Unlike the dashboard Element union, this one includes CellKind — and it is referenced ONLY by NotebookSpec. CellKind is listed first so it is the generated default (a notebook is narrative-first).",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"CellKind": {
 						SchemaProps: spec.SchemaProps{
@@ -6525,7 +6558,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookMarkdownCellContentKindOrCodeCell
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "Pluggable cell content discriminated by `kind`. New content types are added by extending this union with another <Name>CellContentKind member.",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"MarkdownCellContentKind": {
 						SchemaProps: spec.SchemaProps{
@@ -6633,9 +6667,16 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutItemSpec(ref common
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
+				Description: "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI. `id` identifies the cell itself, as opposed to the element name, which clients choose and can reuse.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Assigned by the server on create or update and never changed by clients (a UUID v4). Comments anchor to this rather than to the element name.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"element": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
@@ -7428,6 +7469,13 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookV2TransformationSpec(ref common.R
 				Description: "Dashboard v2 shape: no `id`, it is carried by the parent's `group`.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique identifier of the instance of the transformer",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"disabled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Disabled transformations are skipped",

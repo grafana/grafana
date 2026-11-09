@@ -4,23 +4,28 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	sdkk8s "github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/singleflight"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -29,28 +34,45 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	signedInUserFetchTimeout = 10 * time.Second
+	signedInUserCacheTTL     = 5 * time.Second
+)
+
 type UserK8sService struct {
-	logger          log.Logger
-	namespaceMapper request.NamespaceMapper
-	configProvider  apiserver.DirectRestConfigProvider
-	config          *setting.Cfg
-	tracer          tracing.Tracer
+	logger            log.Logger
+	namespaceMapper   request.NamespaceMapper
+	configProvider    apiserver.DirectRestConfigProvider
+	config            *setting.Cfg
+	tracer            tracing.Tracer
+	openFeatureClient *openfeature.Client
+	cache             *localcache.CacheService
+	signedInUserSF    singleflight.Group
 }
 
 var _ user.Service = (*UserK8sService)(nil)
 
+// ErrPasswordUpdateNotSupported is returned by Update when the command sets a password or old password.
+var ErrPasswordUpdateNotSupported = errutil.NotImplemented(
+	"user.k8s-password-update-unsupported",
+	errutil.WithPublicMessage("Changing the password is not supported"),
+).Errorf("password updates are not supported by the kubernetes user service")
+
 func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *UserK8sService {
 	return &UserK8sService{
-		logger:          logger,
-		namespaceMapper: request.GetNamespaceMapper(cfg),
-		configProvider:  configProvider,
-		config:          cfg,
-		tracer:          tracer,
+		logger:            logger,
+		namespaceMapper:   request.GetNamespaceMapper(cfg),
+		configProvider:    configProvider,
+		config:            cfg,
+		tracer:            tracer,
+		openFeatureClient: openfeature.NewDefaultClient(),
+		cache:             localcache.New(signedInUserCacheTTL, 2*signedInUserCacheTTL),
 	}
 }
 
@@ -116,18 +138,25 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 		return nil, err
 	}
 
+	if cmd.Email == "" {
+		cmd.Email = cmd.Login
+	}
+	if cmd.Login == "" {
+		cmd.Login = cmd.Email
+	}
+
 	uid := cmd.UID
 	if uid == "" {
-		uid = util.GenerateShortUID()
+		if s.isDeterministicUIDEnabled(ctx) {
+			uid = user.GenerateDeterministicUID(namespace, cmd.Email, cmd.Login)
+		} else {
+			uid = util.GenerateShortUID()
+		}
 	}
 
 	role := cmd.DefaultOrgRole
 	if role == "" && s.config != nil {
 		role = s.config.AutoAssignOrgRole
-	}
-
-	if cmd.Email == "" {
-		cmd.Email = cmd.Login
 	}
 
 	k8sUser := &iamv0alpha1.User{
@@ -150,6 +179,10 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 
 	created, err := client.Create(ctx, k8sUser, resource.CreateOptions{})
 	if err != nil {
+		if apierrors.IsAlreadyExists(err) || apierrors.IsConflict(err) {
+			ctxLogger.Debug("k8s user already exists", "namespace", namespace, "orgID", orgID, "login", cmd.Login, "err", err)
+			return nil, user.ErrUserAlreadyExists
+		}
 		ctxLogger.Error("k8s user create failed", "namespace", namespace, "orgID", orgID, "login", cmd.Login, "err", err)
 		span.RecordError(err)
 		return nil, err
@@ -449,6 +482,14 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 
 	ctxLogger := s.logger.FromContext(ctx)
 
+	// The user resource doesn't store credentials, so reporting success here would skip the
+	// old password check and leave the stored hash unchanged.
+	if cmd.Password != nil || cmd.OldPassword != nil {
+		span.RecordError(ErrPasswordUpdateNotSupported)
+		span.SetStatus(codes.Error, ErrPasswordUpdateNotSupported.Error())
+		return ErrPasswordUpdateNotSupported
+	}
+
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
 		ctxLogger.Error("failed to get orgID from context in Update", "err", err)
@@ -468,7 +509,7 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 		return err
 	}
 
-	existing, err := s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
+	existing, err := s.getForUpdate(ctx, ctxLogger, client, cmd, namespace)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -519,6 +560,11 @@ func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateU
 		attribute.Int64("userID", cmd.UserID),
 	))
 	defer span.End()
+
+	// Authn already loaded this timestamp while resolving the signed-in user.
+	if !cmd.LastSeenAt.IsZero() && time.Since(cmd.LastSeenAt) <= s.config.UserLastSeenUpdateInterval {
+		return user.ErrLastSeenUpToDate
+	}
 
 	ctxLogger := s.logger.FromContext(ctx)
 
@@ -590,17 +636,34 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
+	found, err := s.getCachedSignedInUserResource(ctx, namespace, cmd)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	// Org context belongs to this request, not to the cached resource.
+	return toSignedInUser(found, orgID), nil
+}
+
+func (s *UserK8sService) getSignedInUserResource(ctx context.Context, namespace string, cmd *user.GetSignedInUserQuery) (*iamv0alpha1.User, error) {
+	ctxLogger := s.logger.FromContext(ctx)
+
 	client, err := s.getUserClient(ctx)
 	if err != nil {
 		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
 	var found *iamv0alpha1.User
 	var lookupErr error
 	switch {
+	case cmd.UserUID != "":
+		found, lookupErr = client.Get(ctx, resource.Identifier{Namespace: namespace, Name: cmd.UserUID})
+		if apierrors.IsNotFound(lookupErr) {
+			lookupErr = user.ErrUserNotFound
+		}
 	case cmd.UserID > 0:
 		found, lookupErr = s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
 	case cmd.Login != "":
@@ -608,18 +671,86 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 	case cmd.Email != "":
 		found, lookupErr = s.getByFieldSelectorRaw(ctx, ctxLogger, client, "spec.email", strings.ToLower(cmd.Email), namespace)
 	default:
-		span.RecordError(user.ErrNoUniqueID)
-		span.SetStatus(codes.Error, user.ErrNoUniqueID.Error())
 		return nil, user.ErrNoUniqueID
 	}
 
 	if lookupErr != nil {
-		span.RecordError(lookupErr)
-		span.SetStatus(codes.Error, lookupErr.Error())
 		return nil, lookupErr
 	}
 
-	return toSignedInUser(found, orgID), nil
+	return found, nil
+}
+
+func (s *UserK8sService) getCachedSignedInUserResource(ctx context.Context, namespace string, cmd *user.GetSignedInUserQuery) (*iamv0alpha1.User, error) {
+	if s.cache == nil || (cmd.UserUID == "" && cmd.UserID <= 0) || cmd.SkipTeamLookup {
+		return s.getSignedInUserResource(ctx, namespace, cmd)
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	query := *cmd
+	needsUIDMapping := query.UserUID == "" && query.UserID > 0
+
+	// Session tokens still carry numeric IDs. Cache only their UID mapping under that ID.
+	aliasKey := fmt.Sprintf("signed-in-user-uid/%s/%d", namespace, query.UserID)
+	lookup := func() (*iamv0alpha1.User, bool) {
+		if query.UserUID == "" {
+			if uid, found := s.cache.Get(aliasKey); found {
+				query.UserUID = uid.(string)
+			}
+		}
+		if query.UserUID != "" {
+			if cached, found := s.cache.Get(signedInUserCacheKey(namespace, query.UserUID)); found {
+				return cached.(*iamv0alpha1.User), true
+			}
+		}
+		return nil, false
+	}
+	if cached, found := lookup(); found {
+		return cached.DeepCopy(), nil
+	}
+
+	flightKey := aliasKey
+	if query.UserUID != "" {
+		flightKey = signedInUserCacheKey(namespace, query.UserUID)
+	}
+
+	ch := s.signedInUserSF.DoChan(flightKey, func() (any, error) {
+		if cached, found := lookup(); found {
+			return cached, nil
+		}
+		// One cancelled caller must not cancel the shared lookup; still bound its lifetime.
+		fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), signedInUserFetchTimeout)
+		defer cancel()
+		result, err := s.getSignedInUserResource(fetchCtx, namespace, &query)
+		if err != nil {
+			return nil, err
+		}
+		if result.Name != "" {
+			s.cache.Set(signedInUserCacheKey(namespace, result.Name), result, signedInUserCacheTTL)
+			if needsUIDMapping {
+				s.cache.Set(aliasKey, result.Name, signedInUserCacheTTL)
+			}
+		}
+		return result, nil
+	})
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case result := <-ch:
+		if result.Err != nil {
+			return nil, result.Err
+		}
+		// Never expose the cached resource to mutations by callers.
+		cached := result.Val.(*iamv0alpha1.User)
+		return cached.DeepCopy(), nil
+	}
+}
+
+func signedInUserCacheKey(namespace, uid string) string {
+	return "signed-in-user/" + namespace + "/" + uid
 }
 
 func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
@@ -822,6 +953,23 @@ func (s *UserK8sService) getByInternalID(ctx context.Context, logger log.Logger,
 	return &list.Items[0], nil
 }
 
+// getForUpdate resolves the user to update, preferring a direct Get by UID over a list by internal ID.
+func (s *UserK8sService) getForUpdate(ctx context.Context, logger log.Logger, client *iamv0alpha1.UserClient, cmd *user.UpdateUserCommand, namespace string) (*iamv0alpha1.User, error) {
+	if cmd.UID == "" {
+		return s.getByInternalID(ctx, logger, client, cmd.UserID, namespace)
+	}
+
+	found, err := client.Get(ctx, resource.Identifier{Namespace: namespace, Name: cmd.UID})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, user.ErrUserNotFound
+		}
+		logger.Error("k8s user get by UID failed", "namespace", namespace, "userUID", cmd.UID, "err", err)
+		return nil, err
+	}
+	return found, nil
+}
+
 func (s *UserK8sService) getByFieldSelectorRaw(ctx context.Context, logger log.Logger, client *iamv0alpha1.UserClient, field, value, namespace string) (*iamv0alpha1.User, error) {
 	list, err := client.List(ctx, namespace, resource.ListOptions{
 		FieldSelectors: []string{field + "=" + value},
@@ -842,6 +990,14 @@ func (s *UserK8sService) getByFieldSelector(ctx context.Context, logger log.Logg
 		return nil, err
 	}
 	return toUser(found, orgID), nil
+}
+
+func (s *UserK8sService) isDeterministicUIDEnabled(ctx context.Context) bool {
+	if s.openFeatureClient == nil {
+		return false
+	}
+
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersDeterministicUID, false, openfeature.TransactionContext(ctx))
 }
 
 func toSignedInUser(u *iamv0alpha1.User, orgID int64) *user.SignedInUser {

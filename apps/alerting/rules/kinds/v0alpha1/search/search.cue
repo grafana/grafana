@@ -1,5 +1,6 @@
 // Package search mirrors pkg/apis/search/v0alpha1 for alerting's per-kind
-// /searchRules compatibility routes, including the search.grafana.app envelopes.
+// /searchAlertRules and /searchRecordingRules routes, including the
+// search.grafana.app envelopes.
 // Keep these schemas aligned with the generic contract.
 package search
 
@@ -28,7 +29,9 @@ package search
 	lte?:  float64
 }
 
-// Retained for generic schema compatibility; rejected by the compatibility handler.
+// Supported on the "labels" field only, as "key=<value regex>": the key is
+// literal, and the value regex matches the whole label value, case-sensitively
+// unless it starts with (?i). A missing label is matched as an empty value.
 #SearchRegexLeaf: {
 	field:   string
 	pattern: string
@@ -41,7 +44,7 @@ package search
 }
 
 // Exactly one key must be set. The compatibility handler accepts only a
-// text/filter leaf or a top-level "and" of those leaves.
+// text/filter/regex leaf or a top-level "and" of those leaves.
 #SearchWhereNode: {
 	and?: [...#SearchWhereNode]
 	or?: [...#SearchWhereNode]

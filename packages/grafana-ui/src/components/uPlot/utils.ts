@@ -89,9 +89,13 @@ export function getStackingBands(group: StackingGroup) {
 }
 
 // expects an AlignedFrame
+// with prevGroups, a series keeps its previous direction unless the sampled signs clearly flipped
 /** @internal */
-export function getStackingGroups(frame: DataFrame) {
+export function getStackingGroups(frame: DataFrame, prevGroups?: StackingGroup[]) {
   let groups: Map<string, StackingGroup> = new Map();
+
+  let prevDirs = new Map<number, StackDirection>();
+  prevGroups?.forEach(({ series, dir }) => series.forEach((seriesIdx) => prevDirs.set(seriesIdx, dir)));
 
   frame.fields.forEach(({ config, values, type }, i) => {
     // skip x or time field
@@ -126,7 +130,7 @@ export function getStackingGroups(frame: DataFrame) {
 
     // will this be stacked up or down after any transforms applied
     let transform = custom.transform;
-    let stackDir = getStackDirection(transform, values);
+    let stackDir = getStackDirection(transform, values, prevDirs.get(i));
 
     let drawStyle: GraphDrawStyle = custom.drawStyle;
     let drawStyle2: BarAlignment | LineInterpolation | null =
@@ -347,21 +351,34 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
   return y;
 }
 
-function getStackDirection(transform: GraphTransform, data: unknown[]) {
-  const hasNegSamp = hasNegSample(data);
+// a series near a 50/50 sign split would otherwise flip direction (and force a plot rebuild) on most data updates
+const STACK_DIR_FLIP_MARGIN = 0.1;
 
-  if (transform === GraphTransform.NegativeY) {
+function getStackDirection(transform: GraphTransform, data: unknown[], prevDir?: StackDirection) {
+  const negShare = getNegSampleShare(data);
+  const isNegativeY = transform === GraphTransform.NegativeY;
+
+  let hasNegSamp = negShare > 0.5;
+
+  if (prevDir != null) {
+    const prevHasNegSamp = (prevDir === StackDirection.Neg) !== isNegativeY;
+
+    hasNegSamp = prevHasNegSamp ? negShare >= 0.5 - STACK_DIR_FLIP_MARGIN : negShare > 0.5 + STACK_DIR_FLIP_MARGIN;
+  }
+
+  if (isNegativeY) {
     return hasNegSamp ? StackDirection.Pos : StackDirection.Neg;
   }
   return hasNegSamp ? StackDirection.Neg : StackDirection.Pos;
 }
 
 // similar to isLikelyAscendingVector()
-function hasNegSample(data: unknown[], samples = 100) {
+// share of sampled non-zero values that are negative, 0 when there are none
+function getNegSampleShare(data: unknown[], samples = 100) {
   const len = data.length;
 
   if (len === 0) {
-    return false;
+    return 0;
   }
 
   // skip leading & trailing nullish
@@ -394,12 +411,12 @@ function hasNegSample(data: unknown[], samples = 100) {
       }
     }
 
-    if (negCount > posCount) {
-      return true;
+    if (negCount + posCount > 0) {
+      return negCount / (negCount + posCount);
     }
   }
 
-  return false;
+  return 0;
 }
 
 export const getDisplayValuesForCalcs = (calcs: string[], field: Field, theme: GrafanaTheme2) => {

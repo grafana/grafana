@@ -1,11 +1,4 @@
-import { config } from '@grafana/runtime';
-import {
-  type AdHocFiltersVariable,
-  type GroupByVariable,
-  type MultiValueVariable,
-  sceneGraph,
-  SceneRefreshPicker,
-} from '@grafana/scenes';
+import { type AdHocFiltersVariable, type MultiValueVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import { type Dashboard, type VariableModel } from '@grafana/schema';
 import {
   type Spec as DashboardV2Spec,
@@ -25,8 +18,8 @@ import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/Dashboard
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getTestDashboardSceneFromSaveModel } from '../utils/test-utils';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSerializer';
 import nestedDashboard from './testfiles/nested_dashboard.json';
@@ -192,65 +185,6 @@ describe('DashboardSceneSerializer', () => {
       });
 
       describe('Experimental variables', () => {
-        beforeAll(() => {
-          config.featureToggles.groupByVariable = true;
-        });
-
-        afterAll(() => {
-          config.featureToggles.groupByVariable = false;
-        });
-
-        it('Can detect group by static options change', () => {
-          const dashboard = transformSaveModelToScene({
-            dashboard: {
-              title: 'hello',
-              uid: 'my-uid',
-              schemaVersion: 30,
-              panels: [
-                {
-                  id: 1,
-                  title: 'Panel 1',
-                  type: 'text',
-                },
-              ],
-              version: 10,
-              templating: {
-                list: [
-                  {
-                    type: 'groupby',
-                    datasource: {
-                      type: 'ds',
-                      uid: 'ds-uid',
-                    },
-                    name: 'GroupBy',
-                    options: [
-                      {
-                        text: 'Host',
-                        value: 'host',
-                      },
-                      {
-                        text: 'Region',
-                        value: 'region',
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
-            meta: {},
-          });
-          const initialSaveModel = transformSceneToSaveModel(dashboard);
-          dashboard.setInitialSaveModel(initialSaveModel);
-
-          const variable = sceneGraph.lookupVariable('GroupBy', dashboard) as GroupByVariable;
-          variable.setState({ defaultOptions: [{ text: 'Host', value: 'host' }] });
-          const result = dashboard.getDashboardChanges(false, true);
-
-          expect(result.hasVariableValueChanges).toBe(false);
-          expect(result.hasChanges).toBe(true);
-          expect(result.diffCount).toBe(1);
-        });
-
         it('Can detect adhoc filter static options change', () => {
           const adhocVar = {
             id: 'adhoc',
@@ -635,56 +569,6 @@ describe('DashboardSceneSerializer', () => {
       });
 
       describe('Experimental variables', () => {
-        beforeAll(() => {
-          config.featureToggles.groupByVariable = true;
-        });
-
-        afterAll(() => {
-          config.featureToggles.groupByVariable = false;
-        });
-
-        it('Can detect group by static options change', () => {
-          const dashboard = setupV2({
-            variables: [
-              {
-                kind: 'GroupByVariable',
-                group: 'ds',
-                datasource: {
-                  name: 'ds-uid',
-                },
-                spec: {
-                  current: {
-                    text: 'Host',
-                    value: 'host',
-                  },
-                  name: 'GroupBy',
-                  options: [
-                    {
-                      text: 'Host',
-                      value: 'host',
-                    },
-                    {
-                      text: 'Region',
-                      value: 'region',
-                    },
-                  ],
-                  multi: false,
-                  hide: 'dontHide',
-                  skipUrlSync: false,
-                },
-              },
-            ],
-          });
-
-          const variable = sceneGraph.lookupVariable('GroupBy', dashboard) as GroupByVariable;
-          variable.setState({ defaultOptions: [{ text: 'Host', value: 'host' }] });
-          const result = dashboard.getDashboardChanges(false, true);
-
-          expect(result.hasVariableValueChanges).toBe(false);
-          expect(result.hasChanges).toBe(true);
-          expect(result.diffCount).toBe(1);
-        });
-
         it('Can detect adhoc filter static options change', () => {
           const dashboard = setupV2({
             variables: [

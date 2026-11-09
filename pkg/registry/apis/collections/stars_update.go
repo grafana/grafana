@@ -12,9 +12,9 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 )
 
 type starItem struct {
@@ -28,8 +28,8 @@ type starsREST struct {
 }
 
 var (
-	_ = rest.Connecter(&starsREST{})
-	_ = rest.StorageMetadata(&starsREST{})
+	_ rest.Connecter       = (*starsREST)(nil)
+	_ rest.StorageMetadata = (*starsREST)(nil)
 )
 
 func (r *starsREST) New() runtime.Object {
@@ -60,8 +60,8 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 	if !ok {
 		return nil, fmt.Errorf("stars must belong to a namespace")
 	}
-	parsed, found := utils.ParseOwnerFromName(name)
-	if !found || parsed.Owner != utils.UserResourceOwner {
+	parsed, found := resource.ParseOwnerFromName(name)
+	if !found || parsed.Owner != resource.UserResourceOwner {
 		return nil, fmt.Errorf("only works with user stars")
 	}
 

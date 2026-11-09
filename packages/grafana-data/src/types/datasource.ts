@@ -4,6 +4,7 @@ import { type Observable } from 'rxjs';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 
+import type { PanelStatusActions, PanelStatusActionContext, PanelStatusItem } from '../panel/PanelNotices';
 import { deprecationWarning } from '../utils/deprecationWarning';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 import { throwIfAngular } from '../utils/throwIfAngular';
@@ -61,10 +62,11 @@ export interface DataSourcePluginOptionsEditorProps<
 }
 
 // Utility type to extract the query type TQuery from a class extending DataSourceApi<TQuery, TOptions>
-export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQuery, any> ? TQuery : never;
+export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQuery, infer _TOptions> ? TQuery : never;
 
 // Utility type to extract the options type TOptions from a class extending DataSourceApi<TQuery, TOptions>
-export type DataSourceOptionsType<DSType> = DSType extends DataSourceApi<any, infer TOptions> ? TOptions : never;
+export type DataSourceOptionsType<DSType> =
+  DSType extends DataSourceApi<infer _TQuery, infer TOptions> ? TOptions : never;
 
 export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
@@ -392,6 +394,12 @@ abstract class DataSourceApi<
    * we attach the components to this instance for easy access
    */
   components?: DataSourcePluginComponents<DataSourceApi<TQuery, TOptions>, TQuery, TOptions>;
+
+  /** Supplies runtime actions for this datasource's query errors and notices. @alpha */
+  getPanelStatusActions?(
+    statusItem: Readonly<PanelStatusItem>,
+    context: PanelStatusActionContext
+  ): PanelStatusActions | undefined;
 
   /**
    * static information about the datasource
@@ -846,10 +854,8 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 export interface DataSourceInstanceListItem {
   uid: string;
   type: string;
-  apiVersion?: string;
   name: string;
   meta: DataSourcePluginMeta;
-  isDefault: boolean;
 }
 
 /**

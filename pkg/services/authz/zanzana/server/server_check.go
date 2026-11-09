@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -58,6 +59,10 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 func (s *Server) check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
 	if err := authorize(ctx, r.GetNamespace(), s.cfg); err != nil {
 		return nil, err
+	}
+
+	if isLegacyPermissionDelegation(r.GetGroup(), r.GetResource(), r.GetSubresource()) {
+		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
 	store, err := s.getStoreInfo(ctx, r.GetNamespace())
@@ -171,7 +176,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 		folderIdent         = resource.FolderIdent()
 		resourceCtx         = resource.Context()
 		folderRelation      = common.SubresourceRelation(relation)
-		folderCheckRelation = common.FolderPermissionRelation(relation)
+		folderCheckRelation = common.FolderContentPermissionRelation(relation)
 	)
 
 	if folderIdent != "" && isFolderPermissionBasedResource(resource.GroupResource()) {
@@ -262,4 +267,11 @@ var folderPermissionBasedResourceExceptions = map[string]bool{
 
 func isFolderPermissionBasedResource(resource string) bool {
 	return !folderPermissionBasedResourceExceptions[resource]
+}
+
+// IAM uses the original RBAC action as a subresource of the permissions pseudo-resource.
+// Zanzana does not model these delegation permissions yet. Deny them before constructing
+// OpenFGA objects, where the action's colon would make the object ID invalid.
+func isLegacyPermissionDelegation(group, resource, subresource string) bool {
+	return group == "iam.grafana.app" && resource == "permissions" && strings.Contains(subresource, ":")
 }

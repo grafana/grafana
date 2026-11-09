@@ -7,10 +7,10 @@ import {
   useGetLibraryElementByUidQuery,
 } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { Trans } from '@grafana/i18n';
-import { useDataSourceInstanceListItem } from '@grafana/runtime/unstable';
+import { useDataSourceInstanceListItem } from '@grafana/runtime';
 import { type CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 
 import { type LocalPlugin } from '../../plugins/admin/types';
 
@@ -127,7 +127,7 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
   const folderUID = data.refId;
   const skipApiCall = !!data.name && !!data.parentName;
 
-  const { data: folderData, isLoading, isError } = useGetFolderQueryFacade(skipApiCall ? undefined : folderUID);
+  const { data: folderData, isLoading, isError } = useGetCombinedFolderQuery(skipApiCall ? undefined : folderUID);
 
   const folderName = data.name || folderData?.title;
   const folderParentName = data.parentName || folderData?.parents?.[folderData.parents.length - 1]?.title;

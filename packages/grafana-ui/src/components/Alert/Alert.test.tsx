@@ -71,14 +71,20 @@ describe('Alert', () => {
     });
   });
 
-  describe('backward compatibility', () => {
-    it('renders buttonContent with onRemove as before', () => {
+  describe('button accessible names and onRemove', () => {
+    it('uses visible string buttonContent as the accessible name', () => {
       render(<Alert title="Test" buttonContent="Go back" onRemove={jest.fn()} />);
-      expect(screen.getByRole('button', { name: /close alert/i })).toBeInTheDocument();
-      expect(screen.getByText('Go back')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /close alert/i })).not.toBeInTheDocument();
     });
 
-    it('renders dismiss X icon when only onRemove is set', () => {
+    it('uses visible element buttonContent as the accessible name', () => {
+      render(<Alert title="Test" buttonContent={<span>Go back</span>} onRemove={jest.fn()} />);
+      expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /close alert/i })).not.toBeInTheDocument();
+    });
+
+    it('renders dismiss X icon when only onRemove is set and announces as Close alert', () => {
       render(<Alert title="Test" onRemove={jest.fn()} />);
       expect(screen.getByRole('button', { name: /close alert/i })).toBeInTheDocument();
     });

@@ -265,3 +265,18 @@ func histogramCount(t *testing.T, reg *prometheus.Registry, name string) uint64 
 	require.NotEmpty(t, f.GetMetric())
 	return f.GetMetric()[0].GetHistogram().GetSampleCount()
 }
+
+func histogramCountWithLabel(t *testing.T, reg *prometheus.Registry, name, labelName, labelValue string) uint64 {
+	t.Helper()
+	families := gatherMetrics(t, reg)
+	f, ok := families[name]
+	require.True(t, ok, "metric %s not found", name)
+	for _, metric := range f.GetMetric() {
+		for _, lp := range metric.GetLabel() {
+			if lp.GetName() == labelName && lp.GetValue() == labelValue {
+				return metric.GetHistogram().GetSampleCount()
+			}
+		}
+	}
+	return 0
+}

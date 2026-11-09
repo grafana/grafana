@@ -1,15 +1,7 @@
 import * as React from 'react';
 
 import { textUtil } from '@grafana/data';
-
-export const isHttpUrl = (value: string): boolean => {
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-};
+import { isHttpUrl } from 'app/core/utils/url';
 
 export const renderValue = (value: string): string | React.ReactNode => {
   if (!isHttpUrl(value)) {

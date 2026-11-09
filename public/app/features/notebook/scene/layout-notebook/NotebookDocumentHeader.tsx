@@ -1,4 +1,6 @@
+import { dateTimeFormat, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { type TimeZone } from '@grafana/schema';
 import { Stack, TagList, Text } from '@grafana/ui';
 
 import { NotebookTagsField } from '../../NotebookTagsField';
@@ -10,8 +12,9 @@ const TAGS_INPUT_ID = 'notebook-tags';
 interface Props {
   title?: string;
   tags?: string[];
-  timeFrom: string;
-  timeTo: string;
+  /** Omitted on screen, where the time picker already shows it. */
+  timeRange?: TimeRange;
+  timeZone?: TimeZone;
   isEditing?: boolean;
   onTagsChange?: (tags: string[]) => void;
   onTitleChange?: (title: string) => void;
@@ -23,8 +26,8 @@ interface Props {
 export function NotebookDocumentHeader({
   title,
   tags,
-  timeFrom,
-  timeTo,
+  timeRange,
+  timeZone,
   isEditing,
   onTagsChange,
   onTitleChange,
@@ -46,11 +49,13 @@ export function NotebookDocumentHeader({
         </Text>
       ) : null}
 
-      <MetaRow label={t('dashboard.notebook-layout.time', 'Time')}>
-        <Text variant="bodySmall">
-          {timeFrom} → {timeTo}
-        </Text>
-      </MetaRow>
+      {timeRange ? (
+        <MetaRow label={t('dashboard.notebook-layout.time', 'Time')}>
+          <Text variant="bodySmall">
+            {dateTimeFormat(timeRange.from, { timeZone })} → {dateTimeFormat(timeRange.to, { timeZone })}
+          </Text>
+        </MetaRow>
+      ) : null}
 
       {showTags ? (
         <MetaRow label={tagsLabel} htmlFor={canEditTags ? TAGS_INPUT_ID : undefined}>

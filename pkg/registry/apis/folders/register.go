@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
@@ -33,6 +34,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -60,6 +62,8 @@ type FolderAPIBuilder struct {
 	parents              parentsGetter
 	searcher             resourcepb.ResourceIndexClient
 	maxNestedFolderDepth int
+	deleteChecks         *deleteCheckMetrics
+	countMetrics         *countMetrics
 
 	// Flags
 	useZanzana          bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -84,7 +88,8 @@ type FolderAPIBuilder struct {
 	variableSvc           *dynamic.NamespaceableResourceInterface
 	variableSvcMu         sync.Mutex
 	// contentsDeleter removes alert rules and library elements contained in a folder during cascade
-	// delete. Nil in MT (NewAPIService), where that cleanup is handled elsewhere.
+	// delete. Always set by RegisterAPIService (embedded); set by NewAPIService (standalone) only
+	// when the deployment opts into that cleanup.
 	contentsDeleter FolderContentsDeleter
 }
 
@@ -142,6 +147,7 @@ func (b *FolderAPIBuilder) variableClient(ctx context.Context) (*dynamic.Namespa
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	iamFeatures iamapi.Features,
 	apiregistration builder.APIRegistrar,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessClient authlib.AccessClient,
@@ -159,11 +165,13 @@ func RegisterAPIService(cfg *setting.Cfg,
 		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
 		contentsDeleter:      contentsDeleter,
+		deleteChecks:         newDeleteCheckMetrics(registerer, true), // the monolith always joins legacy storage
+		countMetrics:         newCountMetrics(registerer, true),
 	}
 
 	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
 	// unwired (so its folderStorage wrapper isn't installed); otherwise keep the legacy path.
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+	if iamFeatures.ResourcePermissionsAPI {
 		builder.restConfigProvider = restConfigProvider
 	} else {
 		builder.folderPermissionsSvc = folderPermissionsSvc
@@ -176,8 +184,8 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, variableSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
-	return &FolderAPIBuilder{
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, variableSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int, contentsDeleter FolderContentsDeleter, opts ...APIServiceOption) *FolderAPIBuilder {
+	b := &FolderAPIBuilder{
 		accessClient:           ac,
 		searcher:               searcher,
 		permissionStore:        NewZanzanaPermissionStore(zanzanaClient),
@@ -185,8 +193,26 @@ func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, fe
 		dashboardSvc:           dashboardSvc, // injected so cascade delete can remove dashboards in MT
 		variableSvc:            variableSvc,  // injected so cascade delete can remove variables in MT
 		maxNestedFolderDepth:   maxNestedFolderDepth,
+		contentsDeleter:        contentsDeleter,                                     // injected so cascade delete can remove alert rules and library panels in standalone mode
 		useZanzana:             features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
 	}
+	for _, opt := range opts {
+		opt(b)
+	}
+	return b
+}
+
+// APIServiceOption configures NewAPIService.
+type APIServiceOption func(*FolderAPIBuilder)
+
+// WithDeleteCheckMetrics exports the delete-check counter on reg.
+func WithDeleteCheckMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) APIServiceOption {
+	return func(b *FolderAPIBuilder) { b.deleteChecks = newDeleteCheckMetrics(reg, legacyJoinEnabled) }
+}
+
+// WithCountMetrics exports the folder count counter on reg.
+func WithCountMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) APIServiceOption {
+	return func(b *FolderAPIBuilder) { b.countMetrics = newCountMetrics(reg, legacyJoinEnabled) }
 }
 
 func (b *FolderAPIBuilder) GetGroupVersions() []schema.GroupVersion {
@@ -289,15 +315,18 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
+	// Status writes go straight to the unified store: the ST and cascade wrappers only override
+	// Create/Delete, and the status strategy keeps spec and metadata intact.
+	storage[folders.StoragePath("status")] = grafanaregistry.NewStatusREST(unified, newFolderStatusStrategy(opts.Scheme, folders.GroupVersion()))
 
-	b.parents = newParentsGetter(b.storage, b.maxNestedFolderDepth) // used for validation
+	b.parents = newParentsGetter(b.storage) // used for validation
 	storage[folders.StoragePath("parents")] = &subParentsREST{
 		getter:  b.storage,
 		parents: b.parents,
 	}
 	storage[folders.StoragePath("counts")] = &subCountREST{
 		getter:   b.storage,
-		searcher: b.searcher,
+		searcher: b.countMetrics.wrap(b.searcher, countCallerEndpoint),
 	}
 	storage[folders.StoragePath("access")] = &subAccessREST{
 		getter:       b.storage,
@@ -526,6 +555,15 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Grafana folders"
+
+	// status is server-written; clients creating or replacing a folder never send it.
+	if oas.Components != nil {
+		if s, ok := oas.Components.Schemas[foldersv1.OpenAPIPrefix+"Folder"]; ok && s != nil {
+			// Copy first: v1 and v1beta1 share the generated definitions, so editing in place
+			// would corrupt the other version's required list.
+			s.Required = slices.DeleteFunc(slices.Clone(s.Required), func(f string) bool { return f == "status" })
+		}
+	}
 	return oas, nil
 }
 
@@ -543,6 +581,15 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 			return fmt.Errorf("obj is not folders.Folder")
 		}
 		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
+		if verb == admission.Create {
+			applyCascadeDeleteFinalizerOnCreate(f, folderAsyncCascadeDeleteEnabled(ctx))
+			return nil
+		}
+		old, ok := a.GetOldObject().(*foldersv1.Folder)
+		if !ok {
+			return fmt.Errorf("old obj is not folders.Folder")
+		}
+		preserveCascadeDeleteFinalizerOnUpdate(f, old)
 		return nil
 	}
 	return nil
@@ -576,10 +623,10 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if err := validateOwnerReferencesOnManagedFolder(f, nil); err != nil {
 			return err
 		}
-		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
+		return validateOnCreate(ctx, f, newCreateParentsGetter(b.storage), b.maxNestedFolderDepth, a.IsDryRun())
 	case admission.Delete:
 		deleteOptions, _ := a.GetOperationOptions().(*metav1.DeleteOptions)
-		return validateOnDelete(ctx, f, b.searcher, deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx))
+		return validateOnDelete(ctx, f, b.countMetrics.wrap(b.searcher, countCallerDeleteCheck), deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx), b.deleteChecks.withDryRun(a.IsDryRun()))
 	case admission.Update:
 		old, ok := a.GetOldObject().(*foldersv1.Folder)
 		if !ok {
