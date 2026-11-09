@@ -1063,6 +1063,57 @@ describe('drag selection', () => {
     });
   });
 
+  it('outlines only what it picks: the first 20 elements it covers', async () => {
+    const scene = transformSaveModelToScene({
+      dashboard: {
+        title: 'Many panels',
+        uid: 'overlay-test',
+        version: 1,
+        schemaVersion: 39,
+        panels: Array.from({ length: 22 }, (_, index) => ({
+          id: index + 1,
+          type: 'text',
+          title: `Panel ${index + 1}`,
+          gridPos: { x: 0, y: index * 8, w: 12, h: 8 },
+        })),
+        // The built-in layer stays off, as in `setup`: it would query a data source these tests lack.
+        annotations: {
+          list: [
+            {
+              builtIn: 1,
+              iconColor: 'rgba(0, 211, 255, 1)',
+              enable: false,
+              hide: true,
+              name: 'Annotations & Alerts',
+              type: 'dashboard',
+              datasource: { uid: '-- Grafana --', type: 'grafana' },
+            },
+          ],
+        },
+      },
+      meta: { canEdit: true, canSave: true },
+    });
+    deactivate = scene.activate();
+    const session = ComposerSession.enter(scene);
+    render(<ComposerOverlay session={session} />);
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    // Every stand-in root measures as the same panel box, so the drag covers all 22.
+    for (let id = 1; id <= 22; id++) {
+      const root = document.createElement('div');
+      root.setAttribute('data-viz-panel-key', `panel-${id}`);
+      overlay.parentElement!.parentElement!.appendChild(root);
+    }
+    const pick = pickElements(session);
+
+    fireEvent.pointerDown(overlay, { clientX: 50, clientY: 150, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 300, clientY: 350 });
+    expect(screen.getAllByTestId('composer-drag-covered')).toHaveLength(20);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 350 });
+
+    const { elements } = (await pick) as { elements: Array<{ ref: { panelId: number } }> };
+    expect(elements.map((element) => element.ref.panelId)).toEqual(Array.from({ length: 20 }, (_, index) => index + 1));
+  });
+
   it('keeps the point inside the panel when the drag ends past it', async () => {
     const { session } = setupInBody();
     const pick = pickElements(session);

@@ -41,6 +41,8 @@ const MAX_AROUND_LENGTH = 40;
 const MAX_TEXT_RECTS = 20;
 /** The most elements one Select drag picks, as many as a comment covers. */
 const MAX_DRAG_ELEMENTS = 20;
+/** The point a root is resolved at to learn which element it is; the pick itself uses where the drag ended. */
+const NO_POINT = { x: 0, y: 0 };
 
 type HintCopy =
   | 'element'
@@ -123,6 +125,8 @@ export function ComposerOverlay({
    * each is in the dashboard body, where the sticky controls cover it.
    */
   const [covered, setCovered] = useState<Array<{ box: Box; inBody: boolean }>>([]);
+  /** Each covered root's element by ref, for the drag in progress: see `dragRefOf`. */
+  const dragRefCacheRef = useRef(new Map<string, string | null>());
   /**
    * The pick hint that follows the pointer. React state holds only which copy shows (or none); its position
    * is written to the element once per animation frame, so moving the pointer renders nothing.
@@ -252,6 +256,7 @@ export function ComposerOverlay({
       swallowClickRef.current = true;
       setDraft(null);
       setCovered([]);
+      dragRefCacheRef.current.clear();
     }
   }, []);
 
@@ -310,6 +315,23 @@ export function ComposerOverlay({
    * Shows a draft rectangle given in viewport coordinates and, when the drag picks elements, outlines those
    * it covers.
    */
+  /**
+   * Which element a root the drag covers is, by its ref, or null when it doesn't resolve: resolved once per root
+   * per drag, so outlining what the drag covers on every pointer move stays cheap.
+   */
+  const dragRefOf = useCallback(
+    ({ root, kind, key }: DragRoot): string | null => {
+      const cache = dragRefCacheRef.current;
+      const cacheKey = `${kind}:${key}`;
+      if (!cache.has(cacheKey)) {
+        const pick = resolveDragRoot(session, kind, key, root, NO_POINT);
+        cache.set(cacheKey, pick ? JSON.stringify(pick.ref) : null);
+      }
+      return cache.get(cacheKey) ?? null;
+    },
+    [session]
+  );
+
   const showDraft = useCallback(
     (rect: Box) => {
       const root = rootRef.current;
@@ -319,7 +341,7 @@ export function ComposerOverlay({
       if (!dragSelectsElements || !container || !rootRect) {
         return;
       }
-      const next = elementRootsIn(container, session.elementSelector, rect).map(({ root: element, kind }) => {
+      const next = selectDragRoots(session, container, rect, dragRefOf).map(({ root: element, kind }) => {
         const bounds = element.getBoundingClientRect();
         const box = {
           left: bounds.left - rootRect.left,
@@ -331,12 +353,13 @@ export function ComposerOverlay({
       });
       setCovered((current) => (sameCovered(current, next) ? current : next));
     },
-    [dragSelectsElements, session]
+    [dragSelectsElements, session, dragRefOf]
   );
 
   const clearDraft = useCallback(() => {
     setDraft(null);
     setCovered([]);
+    dragRefCacheRef.current.clear();
   }, []);
 
   /**
@@ -347,7 +370,7 @@ export function ComposerOverlay({
     (rect: Box, end: { x: number; y: number }, modifiers: { metaKey: boolean; ctrlKey: boolean }) => {
       if (dragSelectsElements) {
         const container = rootRef.current?.parentElement;
-        const elements = container ? pickElementsIn(session, container, rect, end) : [];
+        const elements = container ? pickElementsIn(session, container, rect, end, dragRefOf) : [];
         if (elements.length > 0) {
           session.completePick({ elements, additive: modifiers.metaKey || modifiers.ctrlKey });
         }
@@ -361,7 +384,7 @@ export function ComposerOverlay({
         session.completePick(withModifier(region, modifiers));
       }
     },
-    [dragSelectsElements, session]
+    [dragSelectsElements, session, dragRefOf]
   );
 
   const hintAllowed = pickMode === 'element' && !paused && !capturing;
@@ -1407,31 +1430,53 @@ function elementRootsIn(
   });
 }
 
+/** A root a drag covers, with the key that resolves it. */
+interface DragRoot {
+  root: HTMLElement;
+  kind: DragRootKind;
+  key: string;
+}
+
 /**
- * What a Select drag over `rect` picks: each element, variable and layer it covers once (a repeated panel
- * resolves to its source), in layout order, at most 20. An element's point is `end`, kept inside it; a
- * variable or a layer keeps its own point, its control's top-right corner.
+ * What a Select drag over `rect` selects: the roots of the first 20 distinct elements, variables and layers it
+ * covers, in layout order, with the clones of a repeated panel it picks. `refOf` names each root's element. The
+ * outline while the drag runs and the pick on release both read this, so the comment holds what was outlined.
+ */
+function selectDragRoots(
+  session: ComposerSession<unknown>,
+  container: HTMLElement,
+  rect: Box,
+  refOf: (root: DragRoot) => string | null
+): Array<DragRoot & { id: string }> {
+  const ids = new Set<string>();
+  return elementRootsIn(container, session.elementSelector, rect).flatMap(({ root, kind }) => {
+    const key = root.getAttribute(kind === 'element' ? session.elementKeyAttribute : 'data-dashboard-element-key');
+    const id = key ? refOf({ root, kind, key }) : null;
+    if (!key || !id || (!ids.has(id) && ids.size >= MAX_DRAG_ELEMENTS)) {
+      return [];
+    }
+    ids.add(id);
+    return [{ root, kind, key, id }];
+  });
+}
+
+/**
+ * What a Select drag over `rect` picks: each element `selectDragRoots` selects, once (a repeated panel resolves
+ * to its source). An element's point is `end`, kept inside it; a variable or a layer keeps its own point, its
+ * control's top-right corner.
  */
 function pickElementsIn(
   session: ComposerSession<unknown>,
   container: HTMLElement,
   rect: Box,
-  end: { x: number; y: number }
+  end: { x: number; y: number },
+  refOf: (root: DragRoot) => string | null
 ): ElementPick[] {
   const picks = new Map<string, ElementPick>();
-  for (const { root, kind } of elementRootsIn(container, session.elementSelector, rect)) {
-    const key = root.getAttribute(kind === 'element' ? session.elementKeyAttribute : 'data-dashboard-element-key');
-    if (!key) {
-      continue;
-    }
-    const pick = resolveDragRoot(session, kind, key, root, end);
-    const id = pick && JSON.stringify(pick.ref);
-    if (!pick || !id || picks.has(id)) {
-      continue;
-    }
-    picks.set(id, pick);
-    if (picks.size >= MAX_DRAG_ELEMENTS) {
-      break;
+  for (const { root, kind, key, id } of selectDragRoots(session, container, rect, refOf)) {
+    const pick = picks.has(id) ? null : resolveDragRoot(session, kind, key, root, end);
+    if (pick) {
+      picks.set(id, pick);
     }
   }
   return [...picks.values()];
