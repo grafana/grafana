@@ -36,9 +36,7 @@
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "i18n-extract": "i18next-cli extract --sync-primary",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json"
+    "i18n-extract": "i18next-cli extract --sync-primary"
   },
   "dependencies": {
     "@emotion/css": "^11.13.5",
