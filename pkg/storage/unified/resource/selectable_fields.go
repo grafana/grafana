@@ -55,7 +55,7 @@ func selectableFieldsForManifest(m *app.ManifestData) map[LowerGroupResource][]s
 		slices.Sort(fs)
 
 		fields[NewLowerGroupResource(m.Group, v.Kind)] = fs
-		fields[NewLowerGroupResource(m.Group, v.Plural)] = fs
+		fields[NewLowerGroupResource(m.Group, v.Resource)] = fs
 	}
 
 	return fields

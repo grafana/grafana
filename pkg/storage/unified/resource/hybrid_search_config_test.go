@@ -17,7 +17,7 @@ func hybridConfigVersion(name string, hybrid *bool) app.ManifestVersion {
 	return app.ManifestVersion{
 		Name: name, Served: true,
 		Kinds: []app.ManifestVersionKind{{
-			Kind: "Widget", Scope: "Namespaced",
+			Kind: "Widget", Plural: "Widgets", Resource: "widgets", Scope: "Namespaced",
 			Search: &app.ManifestVersionKindSearch{Hybrid: hybrid},
 		}},
 	}
@@ -64,6 +64,7 @@ func TestHybridSearchConfigRegistry_Reload(t *testing.T) {
 	absent.Versions[0].Kinds[0].Kind = "NoSearchWidget"
 	for _, manifest := range []*app.ManifestData{enabled, disabled, absent} {
 		manifest.Versions[0].Kinds[0].Plural = "widgets"
+		manifest.Versions[0].Kinds[0].Resource = "widgets"
 	}
 	absent.Versions[0].Kinds[0].Search = nil
 	registry := NewHybridSearchConfigRegistry([]*app.ManifestData{enabled})
@@ -95,9 +96,11 @@ func TestHybridSearchConfigRegistry_CustomPluralUsesEligibleVersionKind(t *testi
 	old := hybridConfigVersion("v1", ptr.To(false))
 	old.Kinds[0].Kind = "OldWidget"
 	old.Kinds[0].Plural = "widgets"
+	old.Kinds[0].Resource = "widgets"
 	newer := hybridConfigVersion("v2", ptr.To(true))
 	newer.Kinds[0].Kind = "NewWidget"
 	newer.Kinds[0].Plural = "widgets"
+	newer.Kinds[0].Resource = "widgets"
 	registry := NewHybridSearchConfigRegistry([]*app.ManifestData{hybridConfigManifest(old, newer)})
 
 	assert.Equal(t, hybridSearchConfig{enabled: true, kind: "NewWidget"}, registry.lookup("example.ext.grafana.app", "widgets"))

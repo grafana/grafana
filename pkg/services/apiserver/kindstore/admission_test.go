@@ -478,7 +478,7 @@ func TestNewAdmissionCapabilities(t *testing.T) {
 		t.Helper()
 		opts, _ := newStoreOpts(t, gvk)
 		s, err := New(gvk, app.ManifestVersionKind{
-			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced", Admission: capabilities,
+			Kind: "TestKind", Plural: "testkinds", Resource: "testkinds", Scope: "Namespaced", Admission: capabilities,
 		}, client, nil, opts, nil)
 		require.NoError(t, err)
 		return s
@@ -519,7 +519,7 @@ func TestNewAdmissionCapabilities(t *testing.T) {
 func TestNewRequiresClientForAdmission(t *testing.T) {
 	gvk := schema.GroupVersionKind{Group: "example-app", Version: "v1alpha1", Kind: "TestKind"}
 	kind := app.ManifestVersionKind{
-		Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
+		Kind: "TestKind", Plural: "testkinds", Resource: "testkinds", Scope: "Namespaced",
 		Admission: &app.AdmissionCapabilities{
 			Validation: &app.ValidationCapability{Operations: []app.AdmissionOperation{
 				app.AdmissionOperationCreate,

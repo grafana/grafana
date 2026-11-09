@@ -166,7 +166,7 @@ func BuildForServedGroupVersions(
 				if kind.Scope != namespacedScope {
 					continue
 				}
-				resourceName := resource.ManifestResourceName(kind)
+				resourceName := kind.Resource
 				gvr := gv.WithResource(resourceName)
 				if mounted[gvr] {
 					continue

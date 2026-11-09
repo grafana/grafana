@@ -152,7 +152,7 @@ func offlineManifest(t *testing.T) *app.ManifestData {
 			Served: true,
 			Kinds: []app.ManifestVersionKind{{
 				Kind:   "TestKind",
-				Plural: "TestKinds",
+				Plural: "TestKinds", Resource: "testkinds",
 				Scope:  "Namespaced",
 				Schema: &schema,
 				// Declared search fields are what enrol a kind in the

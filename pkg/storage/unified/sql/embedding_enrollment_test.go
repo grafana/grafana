@@ -46,7 +46,7 @@ func TestEmbeddingEnrollmentUsesInitialAndReloadedManifests(t *testing.T) {
 			Group: "notes.example.test",
 			Embed: map[string]app.ManifestResourceEmbed{"notes": {ReembedVersion: revision}},
 			Versions: []app.ManifestVersion{{Name: "v1", Kinds: []app.ManifestVersionKind{{
-				Kind: "Note", Plural: "notes", Embed: &app.ManifestVersionKindEmbed{Fields: []app.ManifestVersionKindEmbedField{{Name: "text", Path: "spec.text"}}},
+				Kind: "Note", Plural: "notes", Resource: "notes", Embed: &app.ManifestVersionKindEmbed{Fields: []app.ManifestVersionKindEmbedField{{Name: "text", Path: "spec.text"}}},
 			}}}},
 		}})
 		require.NoError(t, provider.Validate())

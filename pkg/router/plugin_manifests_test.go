@@ -390,7 +390,7 @@ func TestPluginManifestsTargetServesKindsWithoutBackendClient(t *testing.T) {
 	entry.Host = ""
 	folderScoped := false
 	entry.Definition.Manifests[0].Versions[0].Kinds = []app.ManifestVersionKind{{
-		Kind: "Thing", Plural: "things", Scope: "Namespaced", FolderScoped: &folderScoped,
+		Kind: "Thing", Plural: "things", Resource: "things", Scope: "Namespaced", FolderScoped: &folderScoped,
 	}}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.NoError(t, json.NewEncoder(w).Encode(deployment))

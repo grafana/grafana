@@ -207,8 +207,8 @@ func TestRegisterStorageOptions(t *testing.T) {
 		installer := &mockAppInstallerWithStorageOpts{
 			mockAppInstaller: &mockAppInstaller{},
 			manifest: makeManifest("test.grafana.app",
-				app.ManifestVersionKind{Kind: "Foo", Plural: enabledResource},
-				app.ManifestVersionKind{Kind: "Bar", Plural: "bars"},
+				app.ManifestVersionKind{Kind: "Foo", Plural: enabledResource, Resource: enabledResource},
+				app.ManifestVersionKind{Kind: "Bar", Plural: "bars", Resource: "bars"},
 			),
 			getOpts: func(gr schema.GroupResource) *apistore.StorageOptions {
 				called = append(called, gr)
@@ -234,8 +234,8 @@ func TestRegisterStorageOptions(t *testing.T) {
 				AppName: "test-app",
 				Group:   "test.grafana.app",
 				Versions: []app.ManifestVersion{
-					{Name: "v0alpha1", Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "foos"}}},
-					{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "foos"}}},
+					{Name: "v0alpha1", Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "foos", Resource: "foos"}}},
+					{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "foos", Resource: "foos"}}},
 				},
 			},
 			getOpts: func(gr schema.GroupResource) *apistore.StorageOptions {
@@ -304,8 +304,8 @@ func twoVersionManifest(group string) *app.ManifestData {
 		AppName: "test-app",
 		Group:   group,
 		Versions: []app.ManifestVersion{
-			{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "Foos"}}},
-			{Name: "v2alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "Foos"}}},
+			{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "Foos", Resource: "foos"}}},
+			{Name: "v2alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "Foos", Resource: "foos"}}},
 		},
 	}
 }

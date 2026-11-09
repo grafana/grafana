@@ -48,10 +48,10 @@ func kindPolicies(manifest *app.ManifestData) map[string]kindPolicy {
 			continue
 		}
 		for _, kind := range version.Kinds {
-			if kind.Plural == "" {
+			if kind.Resource == "" {
 				continue // kindstore.New refuses these, so they have no resource
 			}
-			resource := strings.ToLower(kind.Plural)
+			resource := kind.Resource
 			policy, seen := policies[resource]
 			if !seen {
 				policy = kindPolicy{
@@ -69,7 +69,7 @@ func kindPolicies(manifest *app.ManifestData) map[string]kindPolicy {
 				continue
 			}
 			sub, _, _ := strings.Cut(route.Subresource, "/")
-			policies[strings.ToLower(route.Kind.Plural)].customRoutes[sub] = true
+			policies[route.Kind.Resource].customRoutes[sub] = true
 		}
 	}
 	return policies

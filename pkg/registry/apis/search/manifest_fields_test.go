@@ -1,7 +1,6 @@
 package search
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -44,11 +43,7 @@ func servedVersions(t *testing.T, group, resourceName string) []string {
 }
 
 func resourceNameFor(kind app.ManifestVersionKind) string {
-	plural := kind.Plural
-	if plural == "" {
-		plural = kind.Kind + "s"
-	}
-	return strings.ToLower(plural)
+	return kind.Resource
 }
 
 // The search route is mounted on every served version of a kind, and validation

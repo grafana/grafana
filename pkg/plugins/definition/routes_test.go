@@ -17,8 +17,8 @@ func TestMigrateDeprecatedRoutes(t *testing.T) {
 		manifest := &app.ManifestData{Versions: []app.ManifestVersion{{
 			Name: "v1",
 			Kinds: []app.ManifestVersionKind{
-				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", Routes: map[string]spec3.PathProps{"/reload": get}},
-				{Kind: "Node", Plural: "Nodes", Scope: "Cluster", Routes: map[string]spec3.PathProps{"rebuild": get}},
+				{Kind: "Thing", Plural: "Things", Resource: "things", Scope: "Namespaced", Routes: map[string]spec3.PathProps{"/reload": get}},
+				{Kind: "Node", Plural: "Nodes", Resource: "nodes", Scope: "Cluster", Routes: map[string]spec3.PathProps{"rebuild": get}},
 			},
 			Routes: app.ManifestVersionRoutes{ //nolint:staticcheck // SA1019: the input being migrated.
 				Cluster:    map[string]spec3.PathProps{"/status": get},
@@ -53,7 +53,7 @@ func TestMigrateDeprecatedRoutes(t *testing.T) {
 		manifest := &app.ManifestData{Versions: []app.ManifestVersion{{
 			Name: "v1",
 			Kinds: []app.ManifestVersionKind{{
-				Kind: "Thing", Plural: "Things", Scope: "Namespaced",
+				Kind: "Thing", Plural: "Things", Resource: "things", Scope: "Namespaced",
 				Routes: map[string]spec3.PathProps{"/stale": get},
 			}},
 			Routes:  app.ManifestVersionRoutes{Cluster: map[string]spec3.PathProps{"/stale": get}}, //nolint:staticcheck // SA1019: the input being migrated.

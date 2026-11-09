@@ -23,8 +23,8 @@ import (
 func TestGetAuthorizerManifestKinds(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds,
-		app.ManifestVersionKind{Kind: "Secret", Plural: "Secrets", Scope: kindstore.ClusterScope},
-		app.ManifestVersionKind{Kind: "Setting", Plural: "Settings", Scope: kindstore.ClusterScope, UserReadable: true},
+		app.ManifestVersionKind{Kind: "Secret", Plural: "Secrets", Resource: "secrets", Scope: kindstore.ClusterScope},
+		app.ManifestVersionKind{Kind: "Setting", Plural: "Settings", Resource: "settings", Scope: kindstore.ClusterScope, UserReadable: true},
 	)
 	manifest.Versions[1].OpenAPI.Paths["/secrets/{name}/rotate"] = spec3.PathProps{Post: &spec3.Operation{}}
 	manifest.Versions[1].OpenAPI.Paths["/settings/{name}/reload"] = spec3.PathProps{Post: &spec3.Operation{}}
@@ -278,7 +278,7 @@ func builderWithClusterKind(t *testing.T) *manifestBuilder {
 	t.Helper()
 	manifest := testManifest(t)
 	manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds,
-		app.ManifestVersionKind{Kind: "Secret", Plural: "Secrets", Scope: kindstore.ClusterScope})
+		app.ManifestVersionKind{Kind: "Secret", Plural: "Secrets", Resource: "secrets", Scope: kindstore.ClusterScope})
 	manifest.Versions[1].OpenAPI.Paths["/secrets/{name}/rotate"] = spec3.PathProps{Post: &spec3.Operation{}}
 	return &manifestBuilder{
 		pluginID:      "test-app",
@@ -321,7 +321,7 @@ func TestKindPoliciesSkipKindsWithoutPlural(t *testing.T) {
 func TestGetAuthorizerParameterizedCustomRoute(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds,
-		app.ManifestVersionKind{Kind: "Secret", Plural: "Secrets", Scope: kindstore.ClusterScope})
+		app.ManifestVersionKind{Kind: "Secret", Plural: "Secrets", Resource: "secrets", Scope: kindstore.ClusterScope})
 	manifest.Versions[1].OpenAPI.Paths["/secrets/{name}/rotate/{key}"] = spec3.PathProps{Post: &spec3.Operation{}}
 	b := &manifestBuilder{
 		pluginID:      "test-app",

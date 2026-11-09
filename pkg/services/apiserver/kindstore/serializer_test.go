@@ -48,7 +48,7 @@ func TestConversionSerializer(t *testing.T) {
 		}}.Build(), nil
 	})
 	opts, scoped := newStoreOpts(t, gvk)
-	_, err := New(gvk, app.ManifestVersionKind{Kind: gvk.Kind, Plural: "testkinds", Conversion: true}, nil, client, opts, nil)
+	_, err := New(gvk, app.ManifestVersionKind{Kind: gvk.Kind, Plural: "testkinds", Resource: "testkinds", Conversion: true}, nil, client, opts, nil)
 	require.NoError(t, err)
 	require.NotNil(t, scoped.Serializer)
 	serializer := scoped.Serializer
@@ -85,7 +85,7 @@ func TestConversionSerializer(t *testing.T) {
 	require.Equal(t, 2, calls)
 
 	opts, scoped = newStoreOpts(t, gvk)
-	_, err = New(gvk, app.ManifestVersionKind{Kind: gvk.Kind, Plural: "testkinds"}, nil, nil, opts, nil)
+	_, err = New(gvk, app.ManifestVersionKind{Kind: gvk.Kind, Plural: "testkinds", Resource: "testkinds"}, nil, nil, opts, nil)
 	require.NoError(t, err)
 	require.Nil(t, scoped.Serializer)
 }
@@ -155,7 +155,7 @@ func TestConversionSerializerErrors(t *testing.T) {
 			client := conversionClientFunc(func(context.Context, *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {
 				return tc.response, tc.err
 			})
-			_, err := New(gvk, app.ManifestVersionKind{Kind: gvk.Kind, Plural: "testkinds"}, nil, client, opts, nil)
+			_, err := New(gvk, app.ManifestVersionKind{Kind: gvk.Kind, Plural: "testkinds", Resource: "testkinds"}, nil, client, opts, nil)
 			require.NoError(t, err)
 			_, err = scoped.Serializer.Decode(context.Background(), []byte(`{"apiVersion":"example-app/v1","kind":"TestKind"}`), nil)
 			require.ErrorContains(t, err, tc.want)

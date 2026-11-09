@@ -373,7 +373,7 @@ func TestDropUnstructuredModels(t *testing.T) {
 	t.Run("kept for a kind that declares no schema", func(t *testing.T) {
 		manifest := testManifest(t)
 		manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds, app.ManifestVersionKind{
-			Kind: "Schemaless", Plural: "schemaless", Scope: "Namespaced",
+			Kind: "Schemaless", Plural: "schemaless", Resource: "schemaless", Scope: "Namespaced",
 		})
 		b := &manifestBuilder{group: manifest.Group, manifest: manifest}
 
@@ -436,7 +436,7 @@ func TestPostProcessClusterScopedKind(t *testing.T) {
 		Versions: []app.ManifestVersion{{
 			Name: "v1", Served: true,
 			Kinds: []app.ManifestVersionKind{{
-				Kind: "Node", Plural: "Nodes", Scope: kindstore.ClusterScope,
+				Kind: "Node", Plural: "Nodes", Resource: "nodes", Scope: kindstore.ClusterScope,
 				Schema: testVersionSchema(t, `{"Node":{"type":"object","properties":{"spec":{"type":"object"}}}}`),
 			}},
 		}},
