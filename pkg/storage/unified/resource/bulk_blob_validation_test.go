@@ -310,12 +310,12 @@ func TestBulkProcessBlobUploadFailureDoesNotPublish(t *testing.T) {
 		{"transport error", func(context.Context, *resourcepb.PutBlobRequest, io.Reader) (*resourcepb.PutBlobResponse, error) {
 			return nil, status.Error(codes.Unavailable, "upload unavailable")
 		}, []*resourcepb.BulkRequest{bulkTestChunk("dashboard", []byte("abc"), false), bulkTestChunk("dashboard", nil, true)}},
-		{"response error", func(_ context.Context, _ *resourcepb.PutBlobRequest, reader io.Reader) (*resourcepb.PutBlobResponse, error) {
+		{"status error", func(_ context.Context, _ *resourcepb.PutBlobRequest, reader io.Reader) (*resourcepb.PutBlobResponse, error) {
 			_, err := io.Copy(io.Discard, reader)
 			if err != nil {
 				return nil, err
 			}
-			return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "upload rejected"}}, nil
+			return nil, GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "upload rejected"})
 		}, []*resourcepb.BulkRequest{bulkTestChunk("dashboard", []byte("abc"), false), bulkTestChunk("dashboard", nil, true)}},
 		{"invalid chunk", func(_ context.Context, _ *resourcepb.PutBlobRequest, reader io.Reader) (*resourcepb.PutBlobResponse, error) {
 			return completedBulkBlobUpload(reader)
@@ -337,6 +337,10 @@ func TestBulkProcessBlobUploadFailureDoesNotPublish(t *testing.T) {
 			require.False(t, backend.rollback)
 			require.Nil(t, stream.response)
 			require.Error(t, err)
+			if tc.name == "status error" {
+				require.Equal(t, codes.Unavailable, status.Code(err))
+				requireRPCError(t, err, &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "upload rejected"})
+			}
 		})
 	}
 }
