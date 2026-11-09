@@ -170,6 +170,12 @@ function RulesCardContent({ formData, willImportRules, styles }: RulesCardConten
             : formData.rulesDatasourceName || 'Data source'}
         </Text>
       </div>
+      {formData.rulesSource === 'yaml' && formData.yamlImportTargetDatasourceUID && (
+        <div className={styles.row}>
+          <Text color="secondary">{t('alerting.import-to-gma.review.yaml-datasource', 'Data source')}</Text>
+          <Text>{formData.yamlImportTargetDatasourceName ?? formData.yamlImportTargetDatasourceUID}</Text>
+        </div>
+      )}
       <div className={styles.row}>
         <Text color="secondary">{t('alerting.import-to-gma.review.routing', 'Notification routing')}</Text>
         <Text>

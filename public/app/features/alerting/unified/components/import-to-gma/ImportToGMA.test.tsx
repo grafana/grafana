@@ -191,6 +191,8 @@ jest.mock('./steps/Step2AlertRules', () => {
       useEffect(() => {
         if (mockRulesScenario === 'yaml') {
           setValue('rulesSource', 'yaml');
+          setValue('yamlImportTargetDatasourceUID', 'yaml-target-uid');
+          setValue('yamlImportTargetDatasourceName', 'Yaml Target');
           setValue(
             'rulesYamlFile',
             new File(
@@ -904,27 +906,27 @@ describe('ImportToGMA wizard — reveal/hide secrets toggle', () => {
   });
 });
 
-describe('ImportToGMA wizard — rules preview (no redaction)', () => {
-  /**
-   * Drives the wizard from notifications through to Review, completing (not skipping) the Rules
-   * step so its card renders a Preview control.
-   */
-  async function navigateToReviewWithRulesCompleted(user: ReturnType<typeof render>['user']) {
-    await screen.findByRole('group', { name: /import notification configuration/i });
-    await waitFor(
-      () =>
-        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
-          'aria-disabled',
-          'false'
-        ),
-      { timeout: 3000 }
-    );
-    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
-    await screen.findByRole('group', { name: /import rules/i });
-    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
-    await screen.findByText(/review import/i);
-  }
+/**
+ * Drives the wizard from notifications through to Review, completing (not skipping) the Rules
+ * step so its card renders a Preview control.
+ */
+async function navigateToReviewWithRulesCompleted(user: ReturnType<typeof render>['user']) {
+  await screen.findByRole('group', { name: /import notification configuration/i });
+  await waitFor(
+    () =>
+      expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+        'aria-disabled',
+        'false'
+      ),
+    { timeout: 3000 }
+  );
+  await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+  await screen.findByRole('group', { name: /import rules/i });
+  await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+  await screen.findByText(/review import/i);
+}
 
+describe('ImportToGMA wizard — rules preview (no redaction)', () => {
   beforeEach(() => {
     mockRulesScenario = 'yaml';
   });
@@ -1560,5 +1562,48 @@ describe('ImportToGMA wizard — data source rules with a namespace and group fi
     expect(JSON.stringify(postedBody)).toContain('Kept');
     expect(JSON.stringify(postedBody)).not.toMatch(/PluginManaged|OtherGroup|OtherNamespace/);
     expect(JSON.parse(preview)).toEqual(postedBody);
+  });
+});
+
+describe('ImportToGMA wizard — rules from a YAML file', () => {
+  const RULES_URL = '/api/convert/prometheus/config/v1/rules';
+
+  beforeEach(() => {
+    mockRulesScenario = 'yaml';
+  });
+
+  afterEach(() => {
+    mockRulesScenario = 'datasource';
+  });
+
+  it('imports them to the data source chosen for the file', async () => {
+    let rulesRequest: Request | undefined;
+    let rulesBody: unknown;
+    server.use(
+      http.post(RULES_URL, async ({ request }) => {
+        rulesRequest = request.clone();
+        rulesBody = await request.json();
+        return HttpResponse.json(convertResponse());
+      })
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    await navigateToReviewWithRulesCompleted(user);
+    await user.click(await screen.findByRole('button', { name: /start import/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /start import/i }));
+
+    await waitFor(() => expect(rulesRequest).toBeDefined());
+    expect(rulesRequest!.headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('yaml-target-uid');
+    expect(Object.values(rulesBody as object)).toEqual([[expect.objectContaining({ name: 'g' })]]);
+  });
+
+  it('shows the data source and the number of rules on the review', async () => {
+    const { user } = render(<ImportWizardGate />);
+
+    await navigateToReviewWithRulesCompleted(user);
+
+    expect(await screen.findByText('Yaml Target')).toBeInTheDocument();
+    expect(screen.getByText(/will import 1 rules/i)).toBeInTheDocument();
   });
 });
