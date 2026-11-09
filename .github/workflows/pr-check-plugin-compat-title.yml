@@ -24,24 +24,28 @@ jobs:
     # The release PR bumps the version and writes the changelog, so it never triggers a release of its own.
     if: github.event.pull_request.draft == false && github.head_ref != 'nx-release-branch--main'
     runs-on: ubuntu-x64-small
-    permissions: {}
+    permissions:
+      pull-requests: read
     steps:
-      # nx release reads the squash-merged title to decide the version bump. The scope is optional, but
-      # nx drops the breaking marker when the scope is not the project, so feat(other)!: releases as a
-      # minor change. A breaking title therefore takes no scope or the package's own name.
+      # nx release reads the squash-merged title to decide the version bump, so it has to be a
+      # conventional commit. The types are the ones nx knows; see "Independent packages" in packages/README.md.
       - name: Check title
+        uses: amannn/action-semantic-pull-request@2252a14e810aa9b85c2d560bd7070c802206ecf6 # v6.1.2
         env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          pattern='^(feat|fix|perf|refactor|docs|build|types|chore|examples|test|style|ci|revert)(\(([^)]+)\))?(!)?: .+'
-          if [[ ! "$PR_TITLE" =~ $pattern ]]; then
-            echo "::error::Pull requests that change @grafana/plugin-compat must use a conventional commit title, such as 'feat: Add useThing', 'fix(plugin-compat): ...' or 'feat!: ...' for a breaking change. The title decides the next version. See \"Independent packages\" in packages/README.md."
-            exit 1
-          fi
-          scope="${BASH_REMATCH[3]}"
-          breaking="${BASH_REMATCH[4]}"
-          if [ -n "$breaking" ] && [ -n "$scope" ] && [ "$scope" != 'plugin-compat' ] && [ "$scope" != '@grafana/plugin-compat' ]; then
-            echo "::error::A breaking change title can only have the scope plugin-compat or no scope, but this one has the scope '$scope'. nx release would release it without the breaking change. Use 'feat!: ...' or 'feat(plugin-compat)!: ...'."
-            exit 1
-          fi
-          echo "Title is a valid conventional commit for plugin-compat."
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            perf
+            refactor
+            docs
+            build
+            types
+            chore
+            examples
+            test
+            style
+            ci
+            revert
+          requireScope: false

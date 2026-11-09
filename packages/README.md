@@ -47,7 +47,7 @@ Some packages have their own version instead of following the Grafana version. T
 
 A pull request that changes an independent package must have a title of the form `<type>(<scope>): <description>`, where the scope is optional, for example `feat: Add useDataSourceInstanceList` or `fix(plugin-compat): Handle a missing host API`. The `Check plugin-compat pull request title` workflow fails the pull request otherwise. The title becomes the squash-merged commit message that Nx reads, so the description should make sense to consumers.
 
-A breaking change (`feat!: ...`) can have no scope or the scope of the package it changes, such as `plugin-compat` for `@grafana/plugin-compat`. Nx finds the package from the files a pull request changes and drops the breaking marker when the scope is something else, so `feat(datasources)!: ...` would be released as a minor change. The check rejects that title.
+A breaking change (`feat!: ...`) can have no scope or the scope of the package it changes, such as `plugin-compat` for `@grafana/plugin-compat`. Nx finds the package from the files a pull request changes and drops the breaking marker when the scope is something else, so `feat(datasources)!: ...` would be released as a minor change. The check does not catch this, so stick to those scopes for breaking changes.
 
 Below 1.0 Nx shifts the bump down one level (its [`adjustSemverBumpsForZeroMajorVersion`](https://nx.dev/docs/reference/nx-json) option, on by default), so choose by intent:
 
