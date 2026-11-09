@@ -22,6 +22,7 @@ spec:
       conversion: false
       kind: AlertRule
       plural: AlertRules
+      resource: alertrules
       schemas:
         AlertRule:
           properties:
@@ -504,6 +505,7 @@ spec:
       conversion: false
       kind: RecordingRule
       plural: RecordingRules
+      resource: recordingrules
       schemas:
         DatasourceUID:
           pattern: ^[a-zA-Z0-9_-]+$
@@ -756,6 +758,7 @@ spec:
       conversion: false
       kind: RuleSequence
       plural: RuleSequences
+      resource: rulesequences
       schemas:
         IntervalTrigger:
           additionalProperties: false
@@ -883,6 +886,7 @@ spec:
       conversion: false
       kind: Config
       plural: Configs
+      resource: configs
       schemas:
         Condition:
           additionalProperties: false
@@ -2316,6 +2320,7 @@ spec:
       conversion: false
       kind: AlertRule
       plural: AlertRules
+      resource: alertrules
       schemas:
         AlertRule:
           properties:
@@ -2798,6 +2803,7 @@ spec:
       conversion: false
       kind: RecordingRule
       plural: RecordingRules
+      resource: recordingrules
       schemas:
         DatasourceUID:
           pattern: ^[a-zA-Z0-9_-]+$
@@ -3050,6 +3056,7 @@ spec:
       conversion: false
       kind: RuleSequence
       plural: RuleSequences
+      resource: rulesequences
       schemas:
         IntervalTrigger:
           additionalProperties: false
