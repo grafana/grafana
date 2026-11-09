@@ -25,7 +25,7 @@ const mockUseAlertingAbility = jest.mocked(useAlertingAbility);
 const mockUseSilenceSupport = jest.mocked(useGrafanaRulesSilenceSupport);
 const mockUseCanSilenceInFolder = jest.mocked(useCanSilenceInFolder);
 
-function rule(overrides: Partial<AlertRule['metadata'] & { spec?: Partial<AlertRule['spec']> }> = {}): AlertRule {
+function rule(annotationOverrides: Record<string, string> = {}): AlertRule {
   return {
     ...mockK8sAlertRule({ uid: 'rule-1', title: 'CPU high' }),
     metadata: {
@@ -33,7 +33,7 @@ function rule(overrides: Partial<AlertRule['metadata'] & { spec?: Partial<AlertR
       annotations: {
         [K8sAnnotations.AccessWrite]: 'true',
         [K8sAnnotations.AccessDelete]: 'true',
-        ...overrides,
+        ...annotationOverrides,
       },
     },
   };
