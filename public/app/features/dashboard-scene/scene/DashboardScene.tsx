@@ -59,6 +59,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { type RecoverToNewBranch } from 'app/features/provisioning/types';
+import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 import { VariablesChanged } from 'app/features/variables/types';
 import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
@@ -139,6 +140,7 @@ import {
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import { persistUseCrossDashboardVariables } from '../utils/persistUseCrossDashboardVariables';
 import { fetchPredefinedVariables, isPredefinedOrigin } from '../utils/predefinedVariables';
+import { getEmptyQueryRunnerState } from '../utils/queryRunnerState';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -1918,8 +1920,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           $data: new SceneQueryRunner({
             // The query editor needs the datasource type, which config.defaultDatasource does not provide.
             datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined,
-            queries: pluginMeta?.skipDefaultQuery ? [] : [{ refId: 'A' }],
-            _hasFetchedData: pluginMeta?.skipDefaultQuery || undefined,
+            ...(pluginMeta?.skipDefaultQuery ? getEmptyQueryRunnerState() : { queries: [createDefaultQuery()] }),
           }),
           transformations: [],
         }),

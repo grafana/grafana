@@ -15,7 +15,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { getPanelPluginMetasMapSync, useListedPanelPluginMetas } from '@grafana/runtime/internal';
+import { getPanelPluginMetaSync, useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   type DeepPartial,
   type SceneComponentProps,
@@ -68,9 +68,13 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     if (!newState && this.state.isNewPanel && !this.state.hasPickedViz) {
       const panel = this.state.panelRef.resolve();
       const pluginId = this._selectedPluginId ?? panel.state.pluginId;
-      if (getPanelPluginMetasMapSync()[pluginId]?.skipDefaultQuery) {
+      if (getPanelPluginMetaSync(pluginId)?.skipDefaultQuery) {
         clearDefaultQuery(panel);
       }
+    }
+
+    if (!newState) {
+      this._selectedPluginId = undefined;
     }
 
     this.setState({

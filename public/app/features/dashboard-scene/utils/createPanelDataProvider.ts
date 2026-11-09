@@ -5,17 +5,21 @@ import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 
+import { getEmptyQueryRunnerState } from './queryRunnerState';
+
 export function createPanelDataProvider(
   panel: PanelModel,
   panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
 ): SceneDataProvider | undefined {
+  const pluginMeta = panelMetas[panel.type];
+
   // Skip setting query runner for panels without queries
-  if (!panel.targets?.length && !panelMetas[panel.type]?.skipDefaultQuery) {
+  if (!panel.targets?.length && !pluginMeta?.skipDefaultQuery) {
     return undefined;
   }
 
   // Skip setting query runner for panel plugins with skipDataQuery
-  if (panelMetas[panel.type]?.skipDataQuery) {
+  if (pluginMeta?.skipDataQuery) {
     return undefined;
   }
 
@@ -24,9 +28,7 @@ export function createPanelDataProvider(
   dataProvider = new SceneQueryRunner({
     // If panel.datasource is not defined, we use the first datasource from the targets (queries)
     datasource: panel.datasource ?? findFirstDatasource(panel.targets ?? []),
-    queries: panel.targets ?? [],
-    // Scenes waits for a first result; an intentionally empty runner has none to fetch.
-    _hasFetchedData: !panel.targets?.length || undefined,
+    ...(panel.targets?.length ? { queries: panel.targets } : getEmptyQueryRunnerState()),
     maxDataPoints: panel.maxDataPoints ?? undefined,
     maxDataPointsFromWidth: true,
     cacheTimeout: panel.cacheTimeout,

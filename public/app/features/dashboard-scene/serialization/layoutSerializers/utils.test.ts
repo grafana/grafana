@@ -621,6 +621,16 @@ describe('empty panel query defaults', () => {
     panel.spec.data.spec.queries = [defaultPanelQueryKind()];
     expect(getQueryRunnerFor(buildVizPanel(panel))?.state.queries).toEqual([{ refId: 'A', hide: false }]);
   });
+
+  it('preserves empty queries when plugin metadata is missing', () => {
+    const panel: PanelKind = { kind: 'Panel', spec: defaultPanelSpec() };
+    panel.spec.vizConfig.group = 'missing';
+    panel.spec.data.spec.queries = [];
+
+    const queryRunner = getQueryRunnerFor(buildVizPanel(panel));
+    expect(queryRunner?.state.queries).toEqual([]);
+    expect(queryRunner?.isDataReadyToDisplay()).toBe(true);
+  });
 });
 
 describe('legacy panel query defaults', () => {

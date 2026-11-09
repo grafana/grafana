@@ -80,6 +80,7 @@ export { type JourneyStartOptions, setJourneyTracker, setJourneyRegistry } from 
 export {
   getListedPanelPluginMetas,
   getPanelPluginMeta,
+  getPanelPluginMetaSync,
   getPanelPluginMetas,
   getPanelPluginMetasMap,
   getPanelPluginMetasMapSync,
