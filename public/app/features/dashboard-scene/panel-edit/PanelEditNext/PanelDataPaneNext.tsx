@@ -35,6 +35,7 @@ import { type QueryGroupOptions } from 'app/types/query';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { setQueryRunnerQueries } from '../../utils/queryRunnerState';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
@@ -303,14 +304,14 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
 
     const updatedQueries = mutator(queries[index], index, queries);
-    queryRunner.setState({ queries: updatedQueries });
+    setQueryRunnerQueries(queryRunner, updatedQueries);
   }
 
   // Query Operations
   public updateQueries = (queries: DataQuery[]) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (queryRunner) {
-      queryRunner.setState({ queries });
+      setQueryRunnerQueries(queryRunner, queries);
       this.resolveUniformDatasource();
     }
   };
@@ -364,7 +365,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       }
     }
 
-    queryRunner.setState({ queries: updatedQueries });
+    setQueryRunnerQueries(queryRunner, updatedQueries);
 
     return newItem?.refId;
   };

@@ -21,7 +21,7 @@ import {
   generateUUID,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
-import { getPanelPluginMetasMapSync } from '@grafana/runtime/internal';
+import { getPanelPluginMetaSync } from '@grafana/runtime/internal';
 import { type LibraryPanel, type LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -34,6 +34,7 @@ import {
 import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { createDefaultQuery } from '../../query/state/queryDefaults';
 
 import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
@@ -110,7 +111,7 @@ const mustKeepProps: { [str: string]: boolean } = {
 
 const defaults: Record<string, unknown> = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
-  targets: [{ refId: 'A' }],
+  targets: [createDefaultQuery()],
   cachedPluginOptions: {},
   transparent: false,
   options: {},
@@ -249,7 +250,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       this,
       cloneDeep({
         ...defaults,
-        targets: getPanelPluginMetasMapSync()[this.type]?.skipDefaultQuery ? [] : defaults.targets,
+        targets: getPanelPluginMetaSync(this.type)?.skipDefaultQuery ? [] : defaults.targets,
       })
     );
 
