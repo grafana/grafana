@@ -8261,6 +8261,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "打开查询窗格",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "打开查询窗格"
     },
     "viz-panel-links-renderer": {
@@ -9684,7 +9686,6 @@
     "api": {
       "anonymous-user": "匿名",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "文件夹已删除",
       "folder-move-error-provisioned": "无法移动已预置的文件夹。要移动它，请在存储库中移动它，然后同步以应用更改。",
       "folder-moved-success": "文件夹已移动"
     }
@@ -11620,8 +11621,8 @@
           },
           "website-monitoring": {
             "cta": "开始设置",
-            "description": "从不同位置跟踪网站的可用性及其性能。",
-            "title": "监测网站正常运行时间和性能"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "显示部分指南",
@@ -11742,10 +11743,10 @@
       "switchSolution": "切换解决方案",
       "synthetic-monitoring": {
         "action": "启用合成监测",
-        "context": "对您的集群所运行的服务进行黑盒检查",
-        "description": "通过 HTTP、DNS 和 ping 检查从全球位置探测您的端点，并在停机时发出警报。",
+        "context": "",
+        "description": "",
         "setup-action": "创建您的第一个检查",
-        "title": "从外部监测正常运行时间"
+        "title": ""
       },
       "title": "针对您的堆栈的建议"
     },
@@ -11833,7 +11834,7 @@
       },
       "synthetics": {
         "create-check": "创建检查",
-        "description": "通过世界各地的探测器监测端点的正常运行时间和性能。",
+        "description": "",
         "failing-worst": "{{check}} 为 {{percent}}%",
         "filter": {
           "instances": "忽略目标",
@@ -13446,8 +13447,12 @@
       "code": "代码",
       "heading": "标题",
       "label": "点击以在上方添加",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "段落",
       "prompt": "键入以开始撰写 — 按 / 以插入块",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "可视化"
     },
     "cell": {
@@ -13752,7 +13757,7 @@
         "description-no-value": "没有值时要显示的内容",
         "description-value-mappings": "根据输入值修改显示文字",
         "name-actions": "操作",
-        "name-ad-hoc": "从值筛选",
+        "name-ad-hoc": "",
         "name-color-scheme": "配色方案",
         "name-data-links": "数据关联",
         "name-decimals": "小数点位数",
@@ -14690,6 +14695,7 @@
       "delete-confirm": "您确定要删除此连接吗？此操作无法撤销。",
       "delete-title": "删除连接",
       "error-loading": "加载连接失败",
+      "export": "",
       "kind-github-app": "GitHub 应用",
       "kind-oauth-app": "OAuth 应用",
       "no-connections": "未配置关联",
@@ -15177,6 +15183,7 @@
       "view-folder": "查看文件夹"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "上次同步日期：{{date}}",
       "settings": "设置",
       "view": "查看"

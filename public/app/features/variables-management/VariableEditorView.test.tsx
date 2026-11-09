@@ -16,7 +16,7 @@ jest.mock('app/features/dashboard-scene/settings/variables/VariableEditorForm', 
 }));
 
 jest.mock('app/api/clients/folder/v1beta1/hooks', () => ({
-  useGetFolderQueryFacade: (uid?: string) => ({
+  useGetCombinedFolderQuery: (uid?: string) => ({
     data: uid ? { uid, canEdit: true } : undefined,
   }),
 }));

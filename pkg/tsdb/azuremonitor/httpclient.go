@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azhttpclient"
@@ -43,8 +44,31 @@ func newHTTPClient(ctx context.Context, route types.AzRoute, model types.Datasou
 		// Allows requests from the same identity but different Grafana users to be identified as such by the server
 		authOpts.AddRateLimitSession(true)
 		authOpts.Scopes(route.Scopes)
+		if route.URL != "" {
+			// The SDK attaches the Azure token only for hosts on this list.
+			// "*.host" matches any subdomain of the route host, so regional
+			// data-plane hosts such as westus2.metrics.monitor.azure.com stay reachable.
+			endpoints, err := azureAllowedEndpoints(route.URL)
+			if err != nil {
+				return nil, err
+			}
+			if err := authOpts.AllowedEndpoints(endpoints); err != nil {
+				return nil, fmt.Errorf("failed to configure Azure endpoint allow list: %w", err)
+			}
+		}
 		azhttpclient.AddAzureAuthentication(&clientOpts, authOpts, model.Credentials)
 	}
 
 	return clientProvider.New(clientOpts)
+}
+
+func azureAllowedEndpoints(routeURL string) ([]string, error) {
+	u, err := url.Parse(routeURL)
+	if err != nil || u.Scheme == "" || u.Hostname() == "" {
+		return nil, fmt.Errorf("invalid Azure route URL %q", routeURL)
+	}
+	return []string{
+		routeURL,
+		u.Scheme + "://*." + u.Hostname(),
+	}, nil
 }

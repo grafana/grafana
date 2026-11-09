@@ -466,11 +466,12 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searchClient.last.ResultFormat)
 	})
 
-	t.Run("returns an embedded search error", func(t *testing.T) {
+	t.Run("returns a search status error", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
-			Error: NewBadRequestError("search failed"),
-		}}
+		result := NewBadRequestError("search failed")
+		st, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
+		require.NoError(t, err)
+		searchClient := &stubSearchClient{err: st.Err()}
 		s := createTestServer(searchClient, 1024)
 		req := &resourcepb.ListRequest{
 			Limit: 10,
@@ -480,7 +481,7 @@ func TestListWithSelectors(t *testing.T) {
 			},
 		}
 
-		_, err := s.listWithSelectors(ctx, req)
+		_, err = s.listWithSelectors(ctx, req)
 		respErr := rpcErrorResult(t, err)
 		require.NotNil(t, respErr)
 		require.Equal(t, int32(http.StatusBadRequest), respErr.Code)
@@ -489,9 +490,7 @@ func TestListWithSelectors(t *testing.T) {
 
 	t.Run("asks for the store scan when the index lacks a requested field", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
-			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
-		}}
+		searchClient := &stubSearchClient{err: selectableFieldNotIndexedGRPCError(t)}
 		s := createTestServer(searchClient, 1024)
 		req := &resourcepb.ListRequest{
 			Limit: 10,
@@ -508,9 +507,7 @@ func TestListWithSelectors(t *testing.T) {
 
 	t.Run("keeps the error mid-pagination, where the store scan cannot resume", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
-			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
-		}}
+		searchClient := &stubSearchClient{err: selectableFieldNotIndexedGRPCError(t)}
 		s := createTestServer(searchClient, 1024)
 		req := &resourcepb.ListRequest{
 			Limit:         10,
@@ -988,9 +985,6 @@ func selectableFieldNotIndexedGRPCError(t *testing.T) error {
 
 func TestListFallsBackToStoreWhenIndexLacksField(t *testing.T) {
 	for name, searchClient := range map[string]*stubSearchClient{
-		"embedded error": {resp: &resourcepb.ResourceSearchResponse{
-			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
-		}},
 		"gRPC error": {err: selectableFieldNotIndexedGRPCError(t)},
 	} {
 		t.Run(name, func(t *testing.T) {

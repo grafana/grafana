@@ -8261,6 +8261,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "クエリペインを開く",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "クエリペインを開く"
     },
     "viz-panel-links-renderer": {
@@ -9684,7 +9686,6 @@
     "api": {
       "anonymous-user": "匿名",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "フォルダは削除されました",
       "folder-move-error-provisioned": "プロビジョニングされたフォルダを移動できません。フォルダを移動するには、リポジトリ内で移動して同期し、変更を適用してください。",
       "folder-moved-success": "フォルダが移動されました"
     }
@@ -11620,8 +11621,8 @@
           },
           "website-monitoring": {
             "cta": "セットアップを開始",
-            "description": "さまざまな場所からウェブサイトの可用性とパフォーマンスを追跡します。",
-            "title": "Webサイトの稼働状況とパフォーマンスを監視"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "ガイドを減らす",
@@ -11742,10 +11743,10 @@
       "switchSolution": "ソリューションを切り替える",
       "synthetic-monitoring": {
         "action": "合成モニタリングを有効にする",
-        "context": "クラスターが実行するサービスのブラックボックスチェック",
-        "description": "世界各地からHTTP、DNS、pingチェックでエンドポイントをプローブし、ダウンタイムを警告します。",
+        "context": "",
+        "description": "",
         "setup-action": "最初のチェックを作成",
-        "title": "外部から稼働状況を監視"
+        "title": ""
       },
       "title": "スタックの推奨事項"
     },
@@ -11833,7 +11834,7 @@
       },
       "synthetics": {
         "create-check": "チェックを作成",
-        "description": "世界中のプローブからエンドポイントの稼働状況とパフォーマンスを監視します。",
+        "description": "",
         "failing-worst": "{{percent}}%の{{check}}",
         "filter": {
           "instances": "ターゲットを無視",
@@ -13446,8 +13447,12 @@
       "code": "コード",
       "heading": "見出し",
       "label": "クリックして上に追加",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "段落",
       "prompt": "入力して書き始めてください。ブロックの場合は「/」を押してください",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "‌可視化"
     },
     "cell": {
@@ -13752,7 +13757,7 @@
         "description-no-value": "値がない場合に表示するものです",
         "description-value-mappings": "入力値に基づいて表示テキストを変更します",
         "name-actions": "アクション",
-        "name-ad-hoc": "値からフィルター",
+        "name-ad-hoc": "",
         "name-color-scheme": "配色",
         "name-data-links": "データリンク",
         "name-decimals": "小数点以下",
@@ -14690,6 +14695,7 @@
       "delete-confirm": "本当にこの接続を削除してもよろしいですか？この操作は元に戻せません。",
       "delete-title": "接続を削除する",
       "error-loading": "接続の読み込みに失敗しました",
+      "export": "",
       "kind-github-app": "GitHubアプリ",
       "kind-oauth-app": "OAuthアプリ",
       "no-connections": "接続が設定されていません",
@@ -15177,6 +15183,7 @@
       "view-folder": "フォルダを表示"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "最後の同期日：{{date}}",
       "settings": "設定",
       "view": "表示"

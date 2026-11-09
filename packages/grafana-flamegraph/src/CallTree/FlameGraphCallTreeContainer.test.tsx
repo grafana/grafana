@@ -315,4 +315,47 @@ describe('FlameGraphCallTreeContainer', () => {
     // jsdom reports the inherit keyword instead of the row fill it resolves to.
     expect(pinned.map((cell) => window.getComputedStyle(cell).backgroundColor)).toEqual(pinned.map(() => 'inherit'));
   });
+
+  it('scrolls to the first search match when the tree renders with a search', async () => {
+    const scrollTo = jest.spyOn(HTMLElement.prototype, 'scrollTo').mockImplementation(() => {});
+
+    await setup({ search: 'runtime.mallocgc' });
+
+    expect(scrollTo).toHaveBeenCalledWith(
+      expect.objectContaining({ top: expect.any(Number), left: expect.any(Number) })
+    );
+    scrollTo.mockRestore();
+  });
+
+  it('expands and collapses a row when it is clicked anywhere', async () => {
+    const { mocks } = await setup();
+    const [toggle] = screen.getAllByRole('button', { expanded: false, name: (name) => name !== 'Actions' });
+    const totalCell = within(toggle.closest('tr')!).getAllByRole('cell').at(-1)!;
+    const rowCount = screen.getAllByRole('row').length;
+
+    await user.click(totalCell);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getAllByRole('row').length).toBeGreaterThan(rowCount);
+    expect(mocks.onSymbolClick).toHaveBeenCalledWith(toggle.textContent);
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getAllByRole('row')).toHaveLength(rowCount);
+  });
+
+  it('does not toggle a row when its actions menu is used', async () => {
+    const { mocks } = await setup();
+    const [toggle] = screen.getAllByRole('button', { expanded: false, name: (name) => name !== 'Actions' });
+
+    await user.click(within(toggle.closest('tr')!).getByLabelText('Actions'));
+    await user.click(screen.getByText('Search'));
+    await act(async () => {
+      jest.runAllTimers();
+    });
+
+    expect(mocks.onSearch).toHaveBeenCalled();
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
 });
