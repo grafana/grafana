@@ -3464,6 +3464,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "grafana.dashboardSidebarExplicitOpen",
+			Description:  "In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "grafana.folderPickerFolderEditAccess",
 			Description:  "Shows folders the user cannot edit as read only in the folder picker, instead of hiding them",
 			Stage:        FeatureStageExperimental,
