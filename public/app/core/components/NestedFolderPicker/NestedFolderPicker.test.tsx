@@ -609,7 +609,7 @@ describe('NestedFolderPicker', () => {
 
     it('shows folders the user cannot pick as read only, and does not select them', async () => {
       setTestFlags(readOnlyFlags);
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} showReadOnlyFolders />);
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
       const readOnlyRow = await screen.findByRole('treeitem', { name: new RegExp(folderC.item.title) });
@@ -627,7 +627,7 @@ describe('NestedFolderPicker', () => {
 
     it('does not select a read only folder with the keyboard', async () => {
       setTestFlags(readOnlyFlags);
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} showReadOnlyFolders />);
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
       const readOnlyRow = await screen.findByRole('treeitem', { name: new RegExp(folderC.item.title) });
@@ -641,22 +641,22 @@ describe('NestedFolderPicker', () => {
       expect(mockOnChange).not.toHaveBeenCalled();
     });
 
-    it('keeps the permission filter, and leaves read only folders out of typed search', async () => {
+    it('keeps a permission filter, and leaves read only folders out of typed search', async () => {
       setTestFlags(readOnlyFlags);
       const requests: URLSearchParams[] = [];
-      // A server without include support filters by permission and never sets canCreate
+      // A server without include support filters by the requested permission and never sets canCreate
       server.use(
         http.get(searchRoute, ({ request }) => {
           const params = new URL(request.url).searchParams;
           requests.push(params);
           const hits = [{ resource: 'folders', name: folderA.item.uid, title: folderA.item.title }];
-          if (params.get('permission') !== 'edit') {
+          if (!params.has('permission')) {
             hits.push({ resource: 'folders', name: folderC.item.uid, title: folderC.item.title });
           }
           return HttpResponse.json({ totalHits: hits.length, hits });
         })
       );
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} showReadOnlyFolders />);
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
       expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
       expect(screen.queryByLabelText(folderC.item.title)).not.toBeInTheDocument();
@@ -665,17 +665,56 @@ describe('NestedFolderPicker', () => {
       await waitFor(() => expect(requests.some((params) => params.get('query') === 'Folder')).toBe(true));
 
       for (const params of requests) {
-        expect(params.get('permission')).toBe('edit');
-        expect(params.get('include')).toBe(params.has('query') ? null : 'pathToCreatable');
+        const isTypedSearch = params.has('query');
+        expect(params.get('permission')).toBe(isTypedSearch ? 'edit' : 'create');
+        expect(params.get('include')).toBe(isTypedSearch ? null : 'pathToCreatable');
       }
     });
 
-    it.each<{ name: string; flags: Parameters<typeof setTestFlags>[0]; permission?: 'view' | 'edit' }>([
-      { name: 'the feature flag is off', flags: {} },
-      { name: 'the picker lists folders the user can view', flags: readOnlyFlags, permission: 'view' },
-    ])('does not show read only folders when $name', async ({ flags, permission }) => {
+    it('lets the user expand a read only folder and pick a folder inside it', async () => {
+      setTestFlags(readOnlyFlags);
+      server.use(
+        http.get(searchRoute, ({ request }) => {
+          const parent = new URL(request.url).searchParams.get('folder');
+          const hits =
+            parent === folderA.item.uid
+              ? [
+                  {
+                    resource: 'folders',
+                    name: folderA_folderA.item.uid,
+                    title: folderA_folderA.item.title,
+                    folder: folderA.item.uid,
+                    field: { canCreate: true },
+                  },
+                ]
+              : [
+                  {
+                    resource: 'folders',
+                    name: folderA.item.uid,
+                    title: folderA.item.title,
+                    field: { canCreate: false },
+                  },
+                ];
+          return HttpResponse.json({ totalHits: hits.length, hits });
+        })
+      );
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} showReadOnlyFolders />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      const readOnlyRow = await screen.findByRole('treeitem', { name: new RegExp(folderA.item.title) });
+      expect(readOnlyRow).toHaveAttribute('aria-disabled', 'true');
+      fireEvent.mouseDown(screen.getByRole('button', { name: `Expand folder ${folderA.item.title}` }));
+
+      await user.click(await screen.findByLabelText(folderA_folderA.item.title));
+      expect(mockOnChange).toHaveBeenCalledWith(folderA_folderA.item.uid, folderA_folderA.item.title);
+    });
+
+    it.each<{ name: string; flags: Parameters<typeof setTestFlags>[0]; showReadOnlyFolders: boolean }>([
+      { name: 'the feature flag is off', flags: {}, showReadOnlyFolders: true },
+      { name: 'the picker does not opt in', flags: readOnlyFlags, showReadOnlyFolders: false },
+    ])('does not show read only folders when $name', async ({ flags, showReadOnlyFolders }) => {
       setTestFlags(flags);
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} permission={permission} />);
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} showReadOnlyFolders={showReadOnlyFolders} />);
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
       expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();

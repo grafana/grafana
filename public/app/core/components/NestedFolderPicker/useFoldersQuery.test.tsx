@@ -149,7 +149,7 @@ describe('useFoldersQuery', () => {
     act(() => result.current.requestNextPage(undefined));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(searchParams?.get('permission')).toBe('edit');
+    expect(searchParams?.get('permission')).toBe('create');
     expect(searchParams?.get('include')).toBe('pathToCreatable');
     const byUid = (uid: string) => result.current.items.find((treeItem) => treeItem.item.uid === uid);
     expect(byUid('on-the-way')).toMatchObject({ readOnly: true, disabled: true });

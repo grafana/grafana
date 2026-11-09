@@ -113,9 +113,9 @@ export function useFoldersQuery({
         return;
       }
 
-      // Keep the permission filter, so a server that ignores `include` still only lists folders the user can pick
+      // Keep a create filter, so a server that ignores `include` still only lists folders the user can pick
       const args = showReadOnly
-        ? ({ folder: finalParentUid, type: 'folder', permission, include: 'pathToCreatable' } as const)
+        ? ({ folder: finalParentUid, type: 'folder', permission: 'create', include: 'pathToCreatable' } as const)
         : ({ folder: finalParentUid, type: 'folder', permission } as const);
 
       // Make a request
