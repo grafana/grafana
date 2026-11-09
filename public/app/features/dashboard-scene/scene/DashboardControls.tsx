@@ -49,6 +49,7 @@ import { DashboardControlsButton } from './dashboard-controls-menu/DashboardCont
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
 import { DashboardFiltersOverviewPaneToggle } from './dashboard-filters-overview/DashboardFiltersOverviewPaneToggle';
 import { dashboardModesEnabled, getPickerMode } from './dashboardModes';
+import { DashboardEditHistoryControls } from './new-toolbar/actions/DashboardEditHistoryControls';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
@@ -265,6 +266,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
             <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)} data-dashboard-actions>
               <div className={styles.fixedControls}>
+                <DashboardEditHistoryControls dashboard={dashboard} />
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
               </div>
             </div>
@@ -289,14 +291,17 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
       {/* Composer does not capture a region that covers the dashboard's own buttons. */}
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)} data-dashboard-actions>
+        {/* Undo and redo share a group with whatever comes first, so they never wrap onto a line of their own. */}
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
+            <DashboardEditHistoryControls dashboard={dashboard} />
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
         {(dashboardNewLayoutsEnabled || editPanel) && (
           <div className={styles.fixedControls}>
+            {hideTimeControls && <DashboardEditHistoryControls dashboard={dashboard} />}
             <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
           </div>
         )}
