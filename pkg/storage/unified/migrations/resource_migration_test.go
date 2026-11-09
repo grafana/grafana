@@ -172,17 +172,24 @@ func TestIntegrationRun_Postgres_SetsStatementTimeoutOnSession(t *testing.T) {
 	}}
 	runner, _ := newRunnerCfg(t, cfg, locker, &transactionalTableRenamer{log: logger}, testDef(dummyGR(), []string{"dashboard"}, nil))
 
-	mg := migrator.NewMigrator(env.engine, setting.NewCfg())
-	sess := env.engine.NewSession()
+	// One connection, so the check after commit runs on the connection the migration used: a
+	// session-level SET would still show there, while rollback would have reverted it too.
+	engine, err := xorm.NewEngine(env.engine.DriverName(), env.engine.DataSourceName())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = engine.Close() })
+	engine.DB().SetMaxOpenConns(1)
+
+	mg := migrator.NewMigrator(engine, setting.NewCfg())
+	sess := engine.NewSession()
 	defer sess.Close()
 	require.NoError(t, sess.Begin())
-	err := runner.Run(t.Context(), sess, mg, RunOptions{DriverName: migrator.Postgres})
+	err = runner.Run(t.Context(), sess, mg, RunOptions{DriverName: migrator.Postgres})
 	require.ErrorIs(t, err, errStopAfterLock)
 	require.Equal(t, "15min", inside, "table locks and validators run on the migration session")
-	require.NoError(t, sess.Rollback())
+	require.NoError(t, sess.Commit())
 
 	var after string
-	_, err = env.engine.SQL("SHOW statement_timeout").Get(&after)
+	_, err = engine.SQL("SHOW statement_timeout").Get(&after)
 	require.NoError(t, err)
 	require.NotEqual(t, "15min", after, "the override ends with the migration transaction")
 }
