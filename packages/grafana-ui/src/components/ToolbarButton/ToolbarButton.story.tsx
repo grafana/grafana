@@ -36,7 +36,7 @@ const meta: Meta<typeof ToolbarButton> = {
       control: {
         type: 'select',
       },
-      options: ['default', 'primary', 'active', 'destructive'],
+      options: ['default', 'canvas', 'primary', 'active', 'destructive'],
     },
     icon: {
       control: {
@@ -121,6 +121,15 @@ export const Examples: StoryFn<typeof ToolbarButton> = (args) => {
         <ToolbarButtonRow>
           {variants.map((variant) => (
             <ToolbarButton icon="sync" tooltip="Sync" variant={variant} key={variant}>
+              {variant}
+            </ToolbarButton>
+          ))}
+        </ToolbarButtonRow>
+        <br />
+        Disabled variants
+        <ToolbarButtonRow>
+          {variants.map((variant) => (
+            <ToolbarButton icon="sync" variant={variant} key={variant} disabled>
               {variant}
             </ToolbarButton>
           ))}
