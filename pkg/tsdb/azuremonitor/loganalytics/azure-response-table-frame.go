@@ -209,11 +209,17 @@ var dynamicConverter = data.FieldConverter{
 			return nil, nil
 		}
 
-		// Already-encoded JSON passes through untouched; anything else is
-		// encoded, so strings stay readable instead of double-escaped.
-		if s, ok := v.(string); ok && json.Valid([]byte(s)) {
-			raw := json.RawMessage(s)
-			return &raw, nil
+		// Already-encoded JSON objects and arrays pass through untouched;
+		// anything else is encoded. The brace check comes first because
+		// json.Valid also accepts bare primitives, and a plain string like
+		// "true" or "443" must stay a string rather than become a JSON
+		// boolean or number.
+		if s, ok := v.(string); ok {
+			if trimmed := strings.TrimSpace(s); trimmed != "" &&
+				(trimmed[0] == '{' || trimmed[0] == '[') && json.Valid([]byte(s)) {
+				raw := json.RawMessage(s)
+				return &raw, nil
+			}
 		}
 
 		marshalled, err := json.Marshal(v)

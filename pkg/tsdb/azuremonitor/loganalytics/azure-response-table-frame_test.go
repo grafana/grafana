@@ -110,6 +110,34 @@ func TestDynamicConverter(t *testing.T) {
 		assert.Equal(t, `"just text"`, string(*raw))
 	})
 
+	t.Run("primitive-looking strings stay strings", func(t *testing.T) {
+		for _, s := range []string{"true", "false", "null", "443", "1.0"} {
+			out, err := dynamicConverter.Converter(s)
+			require.NoError(t, err)
+			raw, ok := out.(*json.RawMessage)
+			require.True(t, ok)
+			assert.Equal(t, `"`+s+`"`, string(*raw), "input %q", s)
+		}
+	})
+
+	t.Run("native scalars keep their JSON type", func(t *testing.T) {
+		out, err := dynamicConverter.Converter(443.0)
+		require.NoError(t, err)
+		assert.Equal(t, `443`, string(*(out.(*json.RawMessage))))
+
+		out, err = dynamicConverter.Converter(true)
+		require.NoError(t, err)
+		assert.Equal(t, `true`, string(*(out.(*json.RawMessage))))
+	})
+
+	t.Run("objects with leading whitespace still pass through", func(t *testing.T) {
+		out, err := dynamicConverter.Converter("  {\"a\":1}")
+		require.NoError(t, err)
+		raw, ok := out.(*json.RawMessage)
+		require.True(t, ok)
+		assert.Equal(t, `  {"a":1}`, string(*raw))
+	})
+
 	t.Run("decoded objects are encoded", func(t *testing.T) {
 		out, err := dynamicConverter.Converter(map[string]any{"a": 1.0})
 		require.NoError(t, err)
