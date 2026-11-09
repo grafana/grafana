@@ -1,3 +1,5 @@
+import { type Folder } from '../../types/rule-form';
+
 /**
  * Types for the Import to Grafana Alerting feature
  */
@@ -33,3 +35,49 @@ export interface DryRunValidationResult {
 
 /** UI state for a dry-run validation, derived from the underlying mutation's async state. */
 export type DryRunState = 'idle' | 'loading' | 'success' | 'warning' | 'error';
+
+export interface ImportFormValues {
+  // Step 1: Alertmanager resources
+  step1Completed: boolean;
+  step1Skipped: boolean;
+  /**
+   * Name of the imported policy tree (the config identifier for the imported Alertmanager config).
+   * For now, this is free-form as we don't have an API to retrieve the list of available policy trees.
+   */
+  policyTreeName: string;
+  notificationsSource: 'datasource' | 'yaml';
+  notificationsDatasourceUID?: string;
+  notificationsDatasourceName: string | null;
+  notificationsYamlFile: File | null;
+  notificationsTemplateFiles: File[];
+  /** Checked in Step 1 when the source is a data source; enables continuous sync instead of staging. */
+  autoSyncNotificationsEnabled?: boolean;
+
+  // Step 2: Alert rules
+  step2Completed: boolean;
+  step2Skipped: boolean;
+  selectedRoutingTree: string; // Routing tree name from the API or from Step 1
+  rulesSource: 'datasource' | 'yaml';
+  rulesDatasourceUID?: string;
+  rulesDatasourceName: string | null;
+  rulesYamlFile: File | null;
+  // Filters
+  namespace?: string;
+  ruleGroup?: string;
+  // Settings
+  targetFolder?: Folder;
+  pauseAlertingRules: boolean;
+  pauseRecordingRules: boolean;
+  targetDatasourceUID?: string;
+}
+
+export type Step1Values = Pick<
+  ImportFormValues,
+  | 'policyTreeName'
+  | 'notificationsSource'
+  | 'notificationsDatasourceUID'
+  | 'notificationsDatasourceName'
+  | 'notificationsYamlFile'
+  | 'notificationsTemplateFiles'
+  | 'autoSyncNotificationsEnabled'
+>;

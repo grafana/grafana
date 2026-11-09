@@ -21,7 +21,7 @@ import { type SupportedRulesSourceType } from 'app/features/alerting/unified/uti
 import { AccessControlAction } from 'app/types/accessControl';
 import { type PromRulesResponse, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { type ImportFormValues } from '../ImportToGMA';
+import { type ImportFormValues } from '../types';
 
 import { Step2Content, useStep2Validation } from './Step2AlertRules';
 

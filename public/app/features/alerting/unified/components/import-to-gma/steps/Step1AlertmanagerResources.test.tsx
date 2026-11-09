@@ -25,7 +25,8 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { type ImportFormValues, buildDryRunArgs } from '../ImportToGMA';
+import { buildDryRunArgs } from '../ImportToGMA';
+import { type ImportFormValues } from '../types';
 
 import {
   Step1Content,
