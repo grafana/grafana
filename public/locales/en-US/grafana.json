@@ -10781,7 +10781,9 @@
       "error-label": "CodeMirror editor failed to load",
       "language-load-failed": "Syntax highlighting failed to load",
       "language-load-failed-description": "The editor will continue without language-specific features.",
-      "loading-placeholder": "Loading editor"
+      "loading-placeholder": "Loading editor",
+      "scroll-horizontally": "Scroll horizontally",
+      "scroll-vertically": "Scroll vertically"
     },
     "color-picker": {
       "input-label": "RGBA value"

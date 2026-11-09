@@ -2465,6 +2465,9 @@ importers:
       '@codemirror/legacy-modes':
         specifier: ^6.5.4
         version: 6.5.4
+      '@codemirror/lint':
+        specifier: ^6.8.0
+        version: 6.9.7
       '@codemirror/merge':
         specifier: ^6.12.3
         version: 6.12.3
