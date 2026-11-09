@@ -1,3 +1,6 @@
+import { ExpressionDatasourceUID, ExpressionQueryType } from 'app/features/expressions/types';
+
+import { EvalFunction } from '../../../../state/alertDef';
 import { mockDataQuery, mockReduceExpression, mockResampleExpression, mockThresholdExpression } from '../../../mocks';
 import { getDefaultFormValues } from '../../../rule-editor/formDefaults';
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
@@ -184,6 +187,47 @@ describe('toExpression', () => {
     const result = toExpression(mockThresholdExpression(), 'C');
 
     expect(result.source).toBe(true);
+  });
+});
+
+const dynamicThresholdMetadata = {
+  version: 1 as const,
+  policy: {
+    inputRefId: 'A',
+    valueField: 'value',
+    matchLabel: 'env',
+    labelColumns: ['env'],
+    evaluator: EvalFunction.IsAbove,
+    mappings: [{ labelValue: 'prod', thresholds: [90] }],
+    defaultThreshold: [100],
+  },
+};
+
+describe('dynamic threshold metadata', () => {
+  const sqlModel = {
+    refId: 'B',
+    type: ExpressionQueryType.sql,
+    expression: 'SELECT * FROM A',
+    format: 'alerting',
+    dynamicThreshold: dynamicThresholdMetadata,
+  };
+  const values: RuleFormValues = {
+    ...getDefaultFormValues(),
+    type: RuleFormType.grafana,
+    condition: 'B',
+    folder: { uid: 'folder-uid', title: 'Folder' },
+    group: 'group',
+    queries: [{ refId: 'B', datasourceUid: ExpressionDatasourceUID, queryType: '', model: sqlModel }],
+  };
+
+  it('keeps dynamicThreshold on the SQL expression model', () => {
+    expect(toExpression(values.queries[0], values.condition).model).toEqual(sqlModel);
+  });
+
+  it('keeps dynamicThreshold when building the alert rule resource', () => {
+    const resource = buildAlertRuleResource(values);
+
+    expect(resource.spec.expressions.B.model).toEqual(sqlModel);
   });
 });
 

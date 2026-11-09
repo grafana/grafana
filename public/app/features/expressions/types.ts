@@ -151,9 +151,30 @@ export interface ExpressionQuery extends DataQuery {
   settings?: ExpressionQuerySettings;
 }
 
+export interface DynamicThresholdMapping {
+  labelValue: string;
+  thresholds: Array<number | undefined>;
+}
+
+export interface DynamicThresholdPolicyV1 {
+  inputRefId: string;
+  valueField: string;
+  matchLabel: string;
+  labelColumns: string[];
+  evaluator: EvalFunction;
+  mappings: DynamicThresholdMapping[];
+  defaultThreshold: Array<number | undefined>;
+}
+
+export interface DynamicThresholdMetadataV1 {
+  version: 1;
+  policy: DynamicThresholdPolicyV1;
+}
+
 export interface SqlExpressionQuery extends ExpressionQuery {
   /** Format `alerting` is expected when using SQL expressions in alert rules */
   format?: 'alerting';
+  dynamicThreshold?: DynamicThresholdMetadataV1;
 }
 
 export interface ThresholdExpressionQuery extends ExpressionQuery {

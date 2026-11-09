@@ -20,6 +20,8 @@ export const FlagKeys = {
   AlertRuleRestore: "alertRuleRestore",
   /** Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin */
   AlertingDataSourceManagedRouteProxy: "alerting.dataSourceManagedRouteProxy",
+  /** Enables dynamic threshold expressions for Grafana-managed alert rules */
+  AlertingDynamicThresholdExpression: "alerting.dynamicThresholdExpression",
   /** Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list */
   AlertingGmaOnlyListView: "alerting.gmaOnlyListView",
   /** Enable manually starting an Assistant investigation from the alert instance drawer. */
@@ -441,6 +443,17 @@ export const useFlagAlertRuleRestore = (options?: ReactFlagEvaluationOptions): b
  */
 export const useFlagAlertingDataSourceManagedRouteProxy = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.dataSourceManagedRouteProxy", false, options).value;
+};
+
+/**
+ * Enables dynamic threshold expressions for Grafana-managed alert rules
+ *
+ * **Details:**
+ * - flag key: `alerting.dynamicThresholdExpression`
+ * - default value: `false`
+ */
+export const useFlagAlertingDynamicThresholdExpression = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.dynamicThresholdExpression", false, options).value;
 };
 
 /**

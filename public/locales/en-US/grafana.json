@@ -1235,6 +1235,8 @@
       "tooltip-export-new-grafana-rule": "Export new grafana rule"
     },
     "expression": {
+      "dynamic-threshold-mismatch-body": "The saved SQL does not match the SQL generated from the dynamic threshold settings. The SQL is kept as it is and is now edited as a regular SQL expression. The dynamic threshold settings are removed when you save the rule.",
+      "dynamic-threshold-mismatch-title": "Dynamic threshold settings discarded",
       "not-supported": "Expression not supported: {{expression}}",
       "title-expression-failed": "Expression failed",
       "title-expression-warning": "Expression warning"
@@ -1247,6 +1249,8 @@
       "title-alerts-preview": "Alerts preview"
     },
     "expression-preview": {
+      "dynamic-threshold": "Dynamic threshold",
+      "dynamic-threshold-generated-sql": "Generated SQL",
       "expression-not-supported": "Expression not supported: {{type}}",
       "title-expression-failed": "Expression failed"
     },
@@ -3976,7 +3980,9 @@
       "state-pending": "Pending"
     },
     "type-selector-button": {
-      "add-expression": "Add expression"
+      "add-expression": "Add expression",
+      "dynamic-threshold": "Dynamic threshold",
+      "dynamic-threshold-description": "Create an alert condition with thresholds that vary by label value."
     },
     "unknown-contact-point-details": {
       "unknown-contact-point": "Unknown contact point",
@@ -9676,6 +9682,56 @@
       "of": "OF",
       "to": "TO",
       "when": "WHEN"
+    },
+    "dynamic-threshold": {
+      "add-mapping": "Add mapping",
+      "change-label-body": "Changing the match label clears the existing mappings and default threshold.",
+      "change-label-confirm": "Change label",
+      "change-label-title": "Change match label?",
+      "default-label": "Default",
+      "default-lower-threshold-input": "Default lower threshold",
+      "default-threshold-input": "Default threshold",
+      "default-upper-threshold-input": "Default upper threshold",
+      "edit-as-sql": "Edit as SQL",
+      "edit-as-sql-body": "The generated SQL becomes a regular SQL expression. This conversion cannot be reversed automatically.",
+      "edit-as-sql-confirm": "Edit as SQL",
+      "edit-as-sql-title": "Edit as SQL?",
+      "error-blank-mapping": "Mapping row {{row}} requires a label value.",
+      "error-default-range": "The default threshold lower value must be less than its upper value.",
+      "error-default-threshold-arity": "The default threshold requires {{expectedArity}} value(s).",
+      "error-default-threshold-value": "The default threshold must contain finite values.",
+      "error-duplicate-mapping": "Mapping row {{row}} duplicates another label value.",
+      "error-input-query": "Select an input query.",
+      "error-label-column-collision": "Label column {{column}} conflicts with a generated output column.",
+      "error-label-column-names": "Label column names must be unique and non-empty.",
+      "error-mapping-range": "Mapping row {{row}} must have a lower value that is less than its upper value.",
+      "error-mapping-threshold-arity": "Mapping row {{row}} requires {{expectedArity}} threshold value(s).",
+      "error-mapping-threshold-value": "Mapping row {{row}} must contain finite threshold values.",
+      "error-match-label": "Select a match label.",
+      "error-match-label-schema": "The match label must be a known label column.",
+      "error-operator": "Select an operator.",
+      "error-query-length": "Generated SQL must not exceed {{limit}} characters.",
+      "error-value-field": "Select a numeric field.",
+      "error-value-field-label": "The numeric value field cannot be a label column.",
+      "generated-sql": "Generated SQL",
+      "hide-sql": "Hide SQL",
+      "input-label": "Input",
+      "input-query": "Input query",
+      "label-value-placeholder": "Select label value",
+      "mapping-label-value": "Mapping row {{row}} label value",
+      "mapping-lower-threshold-input": "Mapping row {{row}} lower threshold",
+      "mapping-threshold-input": "Mapping row {{row}} threshold",
+      "mapping-upper-threshold-input": "Mapping row {{row}} upper threshold",
+      "match-label": "Match label",
+      "numeric-field": "Numeric field",
+      "operator": "Operator",
+      "remove-mapping": "Remove mapping row {{row}}",
+      "schema-empty": "No fields found",
+      "schema-empty-body": "The selected query returned no usable fields.",
+      "schema-error": "Unable to load source schema",
+      "schema-loading": "Loading source schema",
+      "validation-error": "Unable to generate SQL",
+      "view-sql": "View SQL"
     },
     "expression-query-editor": {
       "helper-text-sql": "Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie \"A\", \"B\") are available as tables and referenced by query-name. Fields are available as columns, as returned from the data source.",

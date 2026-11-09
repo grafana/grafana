@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { type FC, Suspense, lazy, useCallback, useState } from 'react';
+import { type FC, Suspense, lazy, useCallback, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
@@ -13,15 +13,22 @@ import {
   isTimeSeriesFrames,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useFlagAlertingDynamicThresholdExpression } from '@grafana/runtime/internal';
 import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
+import {
+  hasDynamicThresholdSqlMismatch,
+  withoutDynamicThreshold,
+} from 'app/features/expressions/components/DynamicThreshold/utils';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
 import { Threshold } from 'app/features/expressions/components/Threshold';
+import { isDynamicThresholdQuery } from 'app/features/expressions/guards';
 import {
   type ExpressionQuery,
   ExpressionQueryType,
+  type SqlExpressionQuery,
   expressionTypes,
   getExpressionLabel,
 } from 'app/features/expressions/types';
@@ -37,11 +44,73 @@ import { AlertStateTag } from '../rules/AlertStateTag';
 import { ExpressionStatusIndicator } from './ExpressionStatusIndicator';
 import { formatLabels, formatSeriesValue, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
 
+const DynamicThresholdEditor = lazy(() =>
+  import('app/features/expressions/components/DynamicThreshold/DynamicThresholdEditor').then((module) => ({
+    default: module.DynamicThresholdEditor,
+  }))
+);
 const SqlExpr = lazy(() =>
   import('app/features/expressions/components/SqlExpressions/SqlExpr').then((module) => ({
     default: module.SqlExpr,
   }))
 );
+
+interface SqlExpressionEditorProps {
+  query: SqlExpressionQuery;
+  queries: AlertQuery[];
+  refIds: Array<{ value: string; label: string }>;
+  onChange: (query: ExpressionQuery) => void;
+}
+
+function isDynamicThresholdBuilderMode(query: ExpressionQuery, dynamicThresholdEnabled: boolean) {
+  return dynamicThresholdEnabled && isDynamicThresholdQuery(query) && !hasDynamicThresholdSqlMismatch(query);
+}
+
+function SqlExpressionEditor({ query, queries, refIds, onChange }: SqlExpressionEditorProps) {
+  const dynamicThresholdEnabled = useFlagAlertingDynamicThresholdExpression();
+  const [discardedPolicy, setDiscardedPolicy] = useState(false);
+  const hasMismatch =
+    dynamicThresholdEnabled && isDynamicThresholdQuery(query) && hasDynamicThresholdSqlMismatch(query);
+
+  if (hasMismatch && !discardedPolicy) {
+    setDiscardedPolicy(true);
+  }
+
+  // The saved SQL stays as it is; only the policy that no longer reproduces it is dropped from form state.
+  useEffect(() => {
+    if (hasMismatch) {
+      onChange(withoutDynamicThreshold(query));
+    }
+  }, [hasMismatch, onChange, query]);
+
+  if (isDynamicThresholdBuilderMode(query, dynamicThresholdEnabled)) {
+    return <DynamicThresholdEditor query={query} queries={queries} onChange={onChange} />;
+  }
+
+  return (
+    <>
+      {discardedPolicy && (
+        <Alert
+          title={t('alerting.expression.dynamic-threshold-mismatch-title', 'Dynamic threshold settings discarded')}
+          severity="warning"
+        >
+          <Trans i18nKey="alerting.expression.dynamic-threshold-mismatch-body">
+            The saved SQL does not match the SQL generated from the dynamic threshold settings. The SQL is kept as it is
+            and is now edited as a regular SQL expression. The dynamic threshold settings are removed when you save the
+            rule.
+          </Trans>
+        </Alert>
+      )}
+      <SqlExpr
+        onChange={(sqlQuery) => onChange(withoutDynamicThreshold(sqlQuery))}
+        query={query}
+        refIds={refIds}
+        alerting
+        queries={[]}
+      />
+    </>
+  );
+}
 
 interface ExpressionProps {
   isAlertCondition?: boolean;
@@ -69,8 +138,10 @@ export const Expression: FC<ExpressionProps> = ({
   onChangeQuery,
 }) => {
   const styles = useStyles2(getStyles);
+  const dynamicThresholdEnabled = useFlagAlertingDynamicThresholdExpression();
 
   const queryType = query?.type;
+  const isDynamicThresholdBuilder = isDynamicThresholdBuilderMode(query, dynamicThresholdEnabled);
 
   const { setError, clearErrors, watch } = useFormContext<RuleFormValues>();
   const type = watch('type');
@@ -138,13 +209,7 @@ export const Expression: FC<ExpressionProps> = ({
         case ExpressionQueryType.sql:
           return (
             <Suspense fallback={null}>
-              <SqlExpr
-                onChange={(query) => onChangeQuery(query)}
-                query={query}
-                refIds={availableRefIds}
-                alerting
-                queries={[]}
-              />
+              <SqlExpressionEditor query={query} queries={queries} refIds={availableRefIds} onChange={onChangeQuery} />
             </Suspense>
           );
 
@@ -160,7 +225,15 @@ export const Expression: FC<ExpressionProps> = ({
   );
 
   const selectedExpressionType = expressionTypes.find((o) => o.value === queryType);
-  const selectedExpressionDescription = selectedExpressionType?.description ?? '';
+  const selectedExpressionDescription = isDynamicThresholdBuilder
+    ? t(
+        'alerting.type-selector-button.dynamic-threshold-description',
+        'Create an alert condition with thresholds that vary by label value.'
+      )
+    : (selectedExpressionType?.description ?? '');
+  const expressionLabel = isDynamicThresholdBuilder
+    ? t('alerting.type-selector-button.dynamic-threshold', 'Dynamic threshold')
+    : getExpressionLabel(queryType);
 
   return (
     <div
@@ -174,7 +247,7 @@ export const Expression: FC<ExpressionProps> = ({
       <div className={styles.expression.stack}>
         <Header
           refId={query.refId}
-          queryType={queryType}
+          label={expressionLabel}
           onRemoveExpression={() => onRemoveExpression(query.refId)}
           onUpdateRefId={(newRefId) => onUpdateRefId(query.refId, newRefId)}
           onSetCondition={onSetCondition}
@@ -346,7 +419,7 @@ export function getGroupedByStateAndSeriesCount(series: DataFrame[]) {
 
 interface HeaderProps {
   refId: string;
-  queryType: ExpressionQueryType;
+  label: string;
   onUpdateRefId: (refId: string) => void;
   onRemoveExpression: () => void;
   onSetCondition: (refId: string) => void;
@@ -356,7 +429,7 @@ interface HeaderProps {
 
 const Header: FC<HeaderProps> = ({
   refId,
-  queryType,
+  label,
   onUpdateRefId,
   onRemoveExpression,
   onSetCondition,
@@ -398,7 +471,7 @@ const Header: FC<HeaderProps> = ({
               }}
             />
           )}
-          <div>{getExpressionLabel(queryType)}</div>
+          <div>{label}</div>
         </Stack>
         <Spacer />
         <ExpressionStatusIndicator

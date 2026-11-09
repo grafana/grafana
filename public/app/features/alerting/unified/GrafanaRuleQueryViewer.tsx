@@ -11,7 +11,8 @@ import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 }
 import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { type AlertDataQuery, type AlertQuery } from '../../../types/unified-alerting-dto';
-import { isExpressionQuery } from '../../expressions/guards';
+import { hasDynamicThresholdSqlMismatch } from '../../expressions/components/DynamicThreshold/utils';
+import { isDynamicThresholdQuery, isExpressionQuery } from '../../expressions/guards';
 import {
   type ExpressionQuery,
   ExpressionQueryType,
@@ -224,6 +225,7 @@ interface ExpressionPreviewProps extends Pick<AlertQuery, 'refId'> {
 }
 
 function ExpressionPreview({ refId, model, evalData, isAlertCondition, isLoading = false }: ExpressionPreviewProps) {
+  const showDynamicThreshold = isDynamicThresholdQuery(model) && !hasDynamicThresholdSqlMismatch(model);
   const styles = useStyles2(getQueryBoxStyles);
 
   function renderPreview() {
@@ -244,6 +246,16 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition, isLoading
         return <ThresholdExpressionViewer model={model} />;
 
       case ExpressionQueryType.sql:
+        if (showDynamicThreshold) {
+          return (
+            <Stack direction="column" gap={1}>
+              <Text color="secondary" variant="bodySmall">
+                <Trans i18nKey="alerting.expression-preview.dynamic-threshold-generated-sql">Generated SQL</Trans>
+              </Text>
+              <Preview rawSql={model.expression || ''} datasourceType={model.datasource?.type} />
+            </Stack>
+          );
+        }
         return <Preview rawSql={model.expression || ''} datasourceType={model.datasource?.type} />;
 
       default:
@@ -260,7 +272,9 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition, isLoading
       refId={refId}
       headerItems={[
         <Text color="secondary" key="expression-type">
-          {startCase(model.type)}
+          {showDynamicThreshold
+            ? t('alerting.expression-preview.dynamic-threshold', 'Dynamic threshold')
+            : startCase(model.type)}
         </Text>,
       ]}
       isAlertCondition={isAlertCondition}

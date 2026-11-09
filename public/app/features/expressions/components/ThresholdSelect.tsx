@@ -9,11 +9,20 @@ import { thresholdFunctions } from '../types';
 export interface ThresholdSelectProps {
   onChange: (value: SelectableValue<EvalFunction>) => void;
   value: SelectableValue<EvalFunction> | undefined;
+  id?: string;
+  'aria-label'?: string;
 }
-export function ThresholdSelect({ onChange, value }: ThresholdSelectProps) {
+export function ThresholdSelect({ onChange, value, id, 'aria-label': ariaLabel }: ThresholdSelectProps) {
   const styles = useStyles2(getStyles);
   return (
-    <ButtonSelect className={styles.buttonSelectText} options={thresholdFunctions} onChange={onChange} value={value} />
+    <ButtonSelect
+      className={styles.buttonSelectText}
+      options={thresholdFunctions}
+      onChange={onChange}
+      value={value}
+      id={id}
+      aria-label={ariaLabel}
+    />
   );
 }
 

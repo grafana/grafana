@@ -1,16 +1,20 @@
 import { type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
+import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { buildDynamicThreshold } from 'app/features/expressions/components/DynamicThreshold/buildDynamicThreshold';
 import {
   ExpressionDatasourceUID,
   type ExpressionQuery,
   ExpressionQueryType,
   ReducerMode,
+  type SqlExpressionQuery,
 } from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
   type QueriesAndExpressionsState,
+  addDynamicThresholdExpression,
   addNewDataQuery,
   addNewExpression,
   duplicateQuery,
@@ -161,6 +165,39 @@ describe('Query and expressions reducer', () => {
     const newState = queriesAndExpressionsReducer(initialState, addNewExpression(ExpressionQueryType.math));
     expect(newState.queries).toHaveLength(2);
     expect(newState).toMatchSnapshot();
+  });
+
+  it('should add a dynamic threshold as an incomplete alerting SQL expression', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, addDynamicThresholdExpression());
+
+    expect(newState.queries.at(-1)).toEqual({
+      datasourceUid: ExpressionDatasourceUID,
+      model: expect.objectContaining({
+        refId: 'B',
+        type: ExpressionQueryType.sql,
+        format: 'alerting',
+        expression: '',
+        dynamicThreshold: {
+          version: 1,
+          policy: {
+            inputRefId: '',
+            valueField: '',
+            matchLabel: '',
+            labelColumns: [],
+            evaluator: 'gt',
+            mappings: [],
+            defaultThreshold: [],
+          },
+        },
+      }),
+      queryType: '',
+      refId: 'B',
+      relativeTimeRange: undefined,
+    });
   });
 
   it('should remove an expression or alert query', () => {
@@ -468,5 +505,44 @@ describe('Query and expressions reducer', () => {
       optimizeReduceExpression({ updatedQueries: [alertQuery], expressionQueries: [thresholdExpression] })
     );
     expect(newState).toMatchSnapshot();
+  });
+
+  it('should regenerate the dynamic threshold SQL when the input refId is renamed', () => {
+    const policy = {
+      inputRefId: 'A',
+      valueField: 'value',
+      matchLabel: 'region',
+      labelColumns: ['region'],
+      evaluator: EvalFunction.IsAbove,
+      mappings: [],
+      defaultThreshold: [10],
+    };
+    const built = buildDynamicThreshold(policy);
+    if (!built.ok) {
+      throw new Error('test policy must compile');
+    }
+    const dynamicThresholdQuery: AlertQuery<SqlExpressionQuery> = {
+      refId: 'B',
+      queryType: '',
+      datasourceUid: ExpressionDatasourceUID,
+      model: {
+        refId: 'B',
+        type: ExpressionQueryType.sql,
+        datasource: { type: '__expr__', uid: '__expr__' },
+        format: 'alerting',
+        expression: built.expressionSql,
+        dynamicThreshold: { version: 1, policy },
+      },
+    };
+
+    const newState = queriesAndExpressionsReducer(
+      { queries: [alertQuery, dynamicThresholdQuery] },
+      updateExpressionRefId({ oldRefId: 'A', newRefId: 'C' })
+    );
+
+    const model = newState.queries[1].model as SqlExpressionQuery;
+    expect(newState.queries[0].refId).toBe('C');
+    expect(model.dynamicThreshold?.policy.inputRefId).toBe('C');
+    expect(model.expression).toContain('FROM `C`');
   });
 });

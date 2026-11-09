@@ -67,6 +67,14 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
+			Name:        "alerting.dynamicThresholdExpression",
+			Description: "Enables dynamic threshold expressions for Grafana-managed alert rules",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "alertingRuleGroupSortByFolderFullpath",
 			Description: "Sort alert rule groups by folder full path in the Prometheus rules API",
 			Stage:       FeatureStageExperimental,
