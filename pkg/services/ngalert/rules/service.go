@@ -82,6 +82,10 @@ func (s *Service) GetOrCreateNamespaceByTitle(ctx context.Context, title string,
 	return s.sql.GetOrCreateNamespaceByTitle(ctx, title, orgID, user, parentUID)
 }
 
+func (s *Service) GetOrCreateNamespaceByUID(ctx context.Context, uid, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error) {
+	return s.sql.GetOrCreateNamespaceByUID(ctx, uid, title, orgID, user, parentUID)
+}
+
 func (s *Service) GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.FolderReference, error) {
 	return s.sql.GetNamespaceChildren(ctx, uid, orgID, user)
 }
