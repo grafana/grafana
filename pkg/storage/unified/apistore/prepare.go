@@ -335,16 +335,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
-	if err := identity.CheckManagerOnUpdate(info, obj, previous); err != nil {
-		if !s.allowOrphanedUpdateBypass(ctx, obj, previous) {
-			return v, err
-		}
-	}
-
-	// If staying in the same folder but manager properties changed, re-validate
-	// consistency with the parent folder. Without this, removing or changing
-	// manager annotations would leave unmanaged resources in a repo-managed folder.
-	if err := s.revalidateFolderOnManagerChange(ctx, obj, previous); err != nil {
+	if err := s.checkManagerOnUpdate(ctx, info, obj, previous); err != nil {
 		return v, err
 	}
 
@@ -411,6 +402,19 @@ func (s *Storage) revalidateFolderOnManagerChange(ctx context.Context, obj, prev
 		return nil
 	}
 	return s.ensureRepoManagedByParentFolder(ctx, obj)
+}
+
+func (s *Storage) checkManagerOnUpdate(ctx context.Context, info authlib.AuthInfo, obj, previous utils.GrafanaMetaAccessor) error {
+	if err := identity.CheckManagerOnUpdate(info, obj, previous); err != nil {
+		if !s.allowOrphanedUpdateBypass(ctx, obj, previous) {
+			return err
+		}
+	}
+
+	// If staying in the same folder but manager properties changed, re-validate
+	// consistency with the parent folder. Without this, removing or changing
+	// manager annotations would leave unmanaged resources in a repo-managed folder.
+	return s.revalidateFolderOnManagerChange(ctx, obj, previous)
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
