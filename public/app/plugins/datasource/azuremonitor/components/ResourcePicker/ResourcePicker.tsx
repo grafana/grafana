@@ -77,6 +77,7 @@ const ResourcePicker = ({
   const [selectedRows, setSelectedRows] = useState<ResourceRowGroup>([]);
   const [internalSelected, setInternalSelected] = useState(resources);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [filterErrorMessage, setFilterErrorMessage] = useState<string | undefined>(undefined);
   const [shouldShowLimitFlag, setShouldShowLimitFlag] = useState(false);
   const selectionNoticeText = selectionNotice?.(selectedRows);
   const [subscriptions, setSubscriptions] = useState<Array<ComboboxOption<string>>>([]);
@@ -98,35 +99,45 @@ const ResourcePicker = ({
   }, [resources]);
 
   const loadFilterOptions = useCallback(async () => {
+    setFilterErrorMessage(undefined);
     setIsLoadingSubscriptions(true);
-    const subscriptions = await datasource.getSubscriptions();
-    setSubscriptions(subscriptions.map((sub) => ({ label: sub.text, value: sub.value })));
-    setIsLoadingSubscriptions(false);
+    try {
+      const subscriptions = await datasource.getSubscriptions();
+      setSubscriptions(subscriptions.map((sub) => ({ label: sub.text, value: sub.value })));
+      setIsLoadingSubscriptions(false);
 
-    if (queryType === 'metrics') {
-      setIsLoadingNamespaces(true);
-      const initialNamespaces = await datasource.getMetricNamespaces(
-        subscriptions[0]?.value || datasource.getDefaultSubscriptionId()
-      );
-      setNamespaces(
-        initialNamespaces?.map((ns) => ({
-          label: resourceTypeDisplayNames[ns.value.toLowerCase()] || ns.value,
-          value: ns.value,
+      if (queryType === 'metrics') {
+        setIsLoadingNamespaces(true);
+        try {
+          const initialNamespaces = await datasource.azureResourceGraphDatasource.getResourceTypes();
+          setNamespaces(
+            initialNamespaces.map((ns) => ({
+              label: resourceTypeDisplayNames[ns.value.toLowerCase()] || ns.value,
+              value: ns.value,
+            }))
+          );
+        } catch (error) {
+          setFilterErrorMessage(messageFromError(error));
+        } finally {
+          setIsLoadingNamespaces(false);
+        }
+      }
+
+      setIsLoadingLocations(true);
+      // We only retrieve locations from the first 3 subscriptions to avoid performance issues.
+      const initialLocations = await datasource.getLocations(subscriptions.map((s) => s.value).slice(0, 3));
+      setLocations(
+        Array.from(initialLocations.values()).map((location) => ({
+          label: location.displayName,
+          value: location.name,
         }))
       );
-      setIsLoadingNamespaces(false);
+    } catch (error) {
+      setFilterErrorMessage(messageFromError(error));
+    } finally {
+      setIsLoadingSubscriptions(false);
+      setIsLoadingLocations(false);
     }
-
-    setIsLoadingLocations(true);
-    // We only retrieve locations from the first 3 subscriptions to avoid performance issues.
-    const initialLocations = await datasource.getLocations(subscriptions.map((s) => s.value).slice(0, 3));
-    setLocations(
-      Array.from(initialLocations.values()).map((location) => ({
-        label: location.displayName,
-        value: location.name,
-      }))
-    );
-    setIsLoadingLocations(false);
   }, [datasource, queryType]);
 
   const loadInitialData = useCallback(async () => {
@@ -307,6 +318,13 @@ const ResourcePicker = ({
   const resourceTable = (resourceRows: ResourceRowGroup) => {
     return (
       <>
+        {queryType === 'metrics' && (
+          <Alert title="" severity="info">
+            <Trans i18nKey="components.resource-picker.metrics-availability-notice">
+              Some resources do not have metrics. Select a resource to load its available metrics.
+            </Trans>
+          </Alert>
+        )}
         <table className={styles.table}>
           <thead>
             <tr className={cx(styles.row, styles.header)}>
@@ -408,7 +426,7 @@ const ResourcePicker = ({
               renderAdvanced={renderAdvanced}
             />
           )}
-          {errorMessage && (
+          {(errorMessage || filterErrorMessage) && (
             <>
               <Space v={2} />
               <Alert
@@ -418,7 +436,7 @@ const ResourcePicker = ({
                   'An error occurred while requesting resources from Azure Monitor'
                 )}
               >
-                {errorMessage}
+                {errorMessage || filterErrorMessage}
               </Alert>
             </>
           )}

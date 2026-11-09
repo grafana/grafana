@@ -449,6 +449,37 @@ describe('AzureResourceGraphDatasource', () => {
     });
   });
 
+  describe('getResourceTypes', () => {
+    it('lists accessible resource types without a subscription sample or metrics allowlist', async () => {
+      const datasource = new AzureResourceGraphDatasource(createMockInstanceSetttings());
+      const postResource = jest.spyOn(datasource, 'postResource').mockResolvedValue({
+        data: [{ type: 'contoso.monitor/widgets' }, { type: 'microsoft.compute/virtualmachines' }],
+      });
+
+      const types = await datasource.getResourceTypes();
+
+      expect(postResource).toHaveBeenCalledWith(
+        'resourcegraph/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01',
+        {
+          query: 'resources | distinct type | order by tolower(type) asc',
+          options: { resultFormat: 'objectArray' },
+        }
+      );
+      expect(types).toEqual([
+        { text: 'contoso.monitor/widgets', value: 'contoso.monitor/widgets' },
+        { text: 'microsoft.compute/virtualmachines', value: 'microsoft.compute/virtualmachines' },
+      ]);
+    });
+
+    it('propagates discovery failures instead of reporting no resource types', async () => {
+      const datasource = new AzureResourceGraphDatasource(createMockInstanceSetttings());
+      const error = new Error('Resource Graph access denied');
+      jest.spyOn(datasource, 'postResource').mockRejectedValue(error);
+
+      await expect(datasource.getResourceTypes()).rejects.toBe(error);
+    });
+  });
+
   describe('getResourceNames', () => {
     let datasource: AzureResourceGraphDatasource;
     let pagedResourceGraphRequest: jest.SpyInstance;

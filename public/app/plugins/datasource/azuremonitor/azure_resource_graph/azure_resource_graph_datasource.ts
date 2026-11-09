@@ -134,7 +134,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     // We can use subscription ID for the filtering here as they're unique
     // The logic of this query is:
     // Retrieve _all_ resources a user/app registration/identity has access to
-    // Filter by the namespaces that support metrics (if this request is from the resource picker)
+    // Apply a resource-type filter when the caller supplies one
     // Filter to resources contained within the subscription
     // Conduct a left-outer join on the resourcecontainers table to allow us to get the case-sensitive resource group name
     // Return the count of resources in a group, the URI, and name of the group in ascending order
@@ -201,6 +201,13 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
       }
     );
     return (await Promise.all(promises)).flat();
+  }
+
+  async getResourceTypes() {
+    const resources = await this.pagedResourceGraphRequest<Pick<RawAzureResourceItem, 'type'>>(
+      'resources | distinct type | order by tolower(type) asc'
+    );
+    return resources.map(({ type }) => ({ text: type, value: type }));
   }
 
   // Retrieve metric namespaces relevant to a subscription/resource group/resource
