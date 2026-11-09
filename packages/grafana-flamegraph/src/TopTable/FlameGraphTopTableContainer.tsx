@@ -74,13 +74,22 @@ const FlameGraphTopTableContainer = memo(
     // The truncated "other" node is not actionable resource consumption, so it gets its own
     // note below the table instead of a row. Diff tables keep it as a row: the note's
     // self/total wording does not apply to baseline/comparison/diff values.
-    const { table, truncated } = useMemo(() => {
+    const { table, truncated, unfilteredMinTotal } = useMemo(() => {
       const full = buildFilteredTable(data, matchedLabels);
       if (isDiff) {
-        return { table: full, truncated: undefined };
+        return { table: full, truncated: undefined, unfilteredMinTotal: undefined };
       }
       const { [TRUNCATED_NODE_LABEL]: other, ...rest } = full;
-      return { table: rest, truncated: other };
+      if (other && Object.keys(rest).length === 0) {
+        // The filter matched only `other` (e.g. highlighting it from the
+        // note): keep it as a row so the table does not go blank.
+        return { table: full, truncated: undefined, unfilteredMinTotal: undefined };
+      }
+      // The threshold sentence states a global fact, so its minimum comes
+      // from the unfiltered table, not the visible rest.
+      const unfiltered = buildFilteredTable(data);
+      delete unfiltered[TRUNCATED_NODE_LABEL];
+      return { table: rest, truncated: other, unfilteredMinTotal: minTotal(unfiltered) };
     }, [data, matchedLabels, isDiff]);
 
     const styles = useStyles2(getStyles, Boolean(useTableNG), tableRefreshEnabled);
@@ -157,7 +166,7 @@ const FlameGraphTopTableContainer = memo(
         {truncated && (
           <TruncatedStacksNote
             truncated={truncated}
-            minTotal={minTotal(table)}
+            minTotal={unfilteredMinTotal}
             display={data.valueDisplayProcessor}
             search={search}
             sandwichItem={sandwichItem}

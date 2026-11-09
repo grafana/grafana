@@ -638,6 +638,49 @@ describe.each([false, true])('truncated stacks note with useTableNG=%s', (useTab
     expect(onSandwich).toHaveBeenCalledWith('other');
   });
 
+  it('keeps the other row when the filter matches only it', async () => {
+    mockTableSize();
+    const container = new FlameGraphDataContainer(createDataFrame(dataWithOther), { collapsing: true });
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={useTableNG}
+        matchedLabels={new Set(['other'])}
+        search="^other$"
+      />
+    );
+
+    // The single matching row renders instead of a blank table ...
+    expect(await screen.findByText('other', { exact: true })).toBeInTheDocument();
+    // ... and the note hides since there is no separate rest to explain.
+    expect(screen.queryByTestId('truncatedStacksNote')).not.toBeInTheDocument();
+  });
+
+  it('keeps the global threshold when a partial filter is applied', async () => {
+    mockTableSize();
+    const container = new FlameGraphDataContainer(createDataFrame(dataWithOther), { collapsing: true });
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={useTableNG}
+        matchedLabels={new Set(['foo', 'other'])}
+      />
+    );
+
+    // The visible rest is just foo (60), but the threshold still reports
+    // the unfiltered minimum (bar, 25).
+    const note = await screen.findByTestId('truncatedStacksNote');
+    expect(note).toHaveTextContent('Each truncated stacktrace had a total resource consumption of "25".');
+  });
+
   it('shows no note when nothing was truncated', async () => {
     mockTableSize();
 
