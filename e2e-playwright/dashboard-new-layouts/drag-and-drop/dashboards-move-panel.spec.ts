@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures';
-import { expectNoUnsavedChanges, flows, getPanelBox, movePanel } from '../helpers';
+import { dragAndDrop, expectNoUnsavedChanges, flows, getPanelBox } from '../helpers';
 
 import { buildDashboardCustomGridSpec } from './fixtures/dashboard-custom-grid-spec';
 import { expectPanelBoxesToBe } from './helpers/assertions';
@@ -30,7 +30,13 @@ test.describe(
       const initialBoxes = await getPanelBoxes(panels, PANEL_TITLES);
 
       // Move panel three to panel one position
-      await movePanel(page, panels, /^Panel three$/, /^Panel one$/);
+      await dragAndDrop(
+        page,
+        'panel "Panel three"',
+        panels.getHeader(/^Panel three$/),
+        'panel "Panel one"',
+        panels.getHeader(/^Panel one$/)
+      );
 
       // Verify panel three is now above panel one
       const panel3Box = await getPanelBox(panels, 'Panel three');
@@ -45,7 +51,13 @@ test.describe(
       await expectPanelBoxesToBe(panels, firstMoveBoxes);
 
       // Move panel two to panel three position
-      await movePanel(page, panels, /^Panel two$/, /^Panel three$/);
+      await dragAndDrop(
+        page,
+        'panel "Panel two"',
+        panels.getHeader(/^Panel two$/),
+        'panel "Panel three"',
+        panels.getHeader(/^Panel three$/)
+      );
 
       // Verify panel two is now above panel three
       const panel2Box = await getPanelBox(panels, 'Panel two');

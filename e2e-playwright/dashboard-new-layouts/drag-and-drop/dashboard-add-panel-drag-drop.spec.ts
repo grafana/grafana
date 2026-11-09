@@ -44,7 +44,7 @@ test.describe('Dashboard add panel by drag and drop', { tag: ['@dashboards'] }, 
     await controls.enterEditMode();
     await sidebar.toolbar.clickButton('Add');
 
-    await dragAndDrop(page, 'Drag a new panel after B2', sidebar.addOptions.getNewPanelButton(), () =>
+    await dragAndDrop(page, 'a new panel', sidebar.addOptions.getNewPanelButton(), 'the right half of panel "B2"', () =>
       getPanelHalfPoint(panels, 'B2', 'right')
     );
 
@@ -106,8 +106,12 @@ test.describe('Dashboard add panel by drag and drop', { tag: ['@dashboards'] }, 
     await sidebar.copySelection();
     await sidebar.toolbar.clickButton('Add');
 
-    await dragAndDrop(page, 'Drag the pasted panel after B2', sidebar.addOptions.getPastePanelButton(), () =>
-      getPanelHalfPoint(panels, 'B2', 'right')
+    await dragAndDrop(
+      page,
+      'the pasted panel',
+      sidebar.addOptions.getPastePanelButton(),
+      'the right half of panel "B2"',
+      () => getPanelHalfPoint(panels, 'B2', 'right')
     );
 
     const pasted = { 'Row A': ['A1', 'A2'], 'Row B': ['B1', 'B2', 'A1'], 'Row C': COLLAPSED_ROW };
@@ -135,8 +139,12 @@ test.describe('Dashboard add panel by drag and drop', { tag: ['@dashboards'] }, 
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Add');
 
-      await dragAndDrop(page, 'Drag a new panel before B1', sidebar.addOptions.getNewPanelButton(), () =>
-        getPanelHalfPoint(panels, 'B1', 'left')
+      await dragAndDrop(
+        page,
+        'a new panel',
+        sidebar.addOptions.getNewPanelButton(),
+        'the left half of panel "B1"',
+        () => getPanelHalfPoint(panels, 'B1', 'left')
       );
 
       await expectRowsToHold(rows, panels, {

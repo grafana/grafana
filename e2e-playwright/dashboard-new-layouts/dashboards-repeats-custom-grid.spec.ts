@@ -7,7 +7,7 @@ import {
   expectDashboardChangesToContain,
   expectNoUnsavedChanges,
   flows,
-  movePanel,
+  dragAndDrop,
   getPanelBox,
 } from './helpers';
 import { type Panels } from './page-objects';
@@ -290,7 +290,14 @@ test.describe(
         const initialOrder = [...repeatedTitles, 'New panel', 'New panel'];
         await expect(panels.getHeaders()).toHaveText(initialOrder);
 
-        await movePanel(page, panels, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`, 'New panel');
+        const repeatedPanel = `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`;
+        await dragAndDrop(
+          page,
+          `panel "${repeatedPanel}"`,
+          panels.getHeader(repeatedPanel),
+          'panel "New panel"',
+          panels.getHeader('New panel')
+        );
 
         // verify move by panel title order
         const movedOrder = ['New panel', 'New panel', ...repeatedTitles];

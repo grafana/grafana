@@ -126,7 +126,7 @@ Construction is wired in `fixtures.ts` through `buildGetByGrafanaSelector`. Spec
 
 ## Helpers Reference
 
-Shared spec helpers live in `helpers/` and are imported from its barrel (`import { flows, movePanel, expectRowVisibility } from './helpers'`). Each file has one responsibility: put new helpers in the right one:
+Shared spec helpers live in `helpers/` and are imported from its barrel (`import { flows, dragAndDrop, expectRowVisibility } from './helpers'`). Each file has one responsibility: put new helpers in the right one:
 
 | File                                             | Responsibility                                                                                           | Extract when…                                                                       |
 | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |

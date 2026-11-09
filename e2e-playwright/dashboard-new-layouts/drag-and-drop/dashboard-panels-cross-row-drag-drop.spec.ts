@@ -44,7 +44,7 @@ test.describe('Dashboard panels cross-row drag and drop', { tag: ['@dashboards']
     await controls.enterEditMode();
     await expectRowsToHold(rows, panels, INITIAL_ROWS);
 
-    await dragAndDrop(page, 'Drag A1 onto the collapsed Row C', panels.getHeader('A1'), rows.getTitle('Row C'));
+    await dragAndDrop(page, 'panel "A1"', panels.getHeader('A1'), 'the collapsed row "Row C"', rows.getTitle('Row C'));
 
     const movedRows = { 'Row A': ['A2'], 'Row B': ['B1', 'B2'], 'Row C': COLLAPSED_ROW };
     await expectRowsToHold(rows, panels, movedRows);

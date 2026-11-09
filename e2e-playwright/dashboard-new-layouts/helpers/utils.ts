@@ -50,20 +50,6 @@ export async function getPanelBox(
   return boundingBox!;
 }
 
-export async function movePanel(
-  page: Page,
-  panels: Panels,
-  sourcePanel: string | RegExp,
-  targetPanel: string | RegExp
-) {
-  await dragAndDrop(
-    page,
-    `Move panel "${sourcePanel}" onto "${targetPanel}"`,
-    panels.getHeader(sourcePanel),
-    panels.getHeader(targetPanel)
-  );
-}
-
 export async function getTabBox(
   tabs: Tabs,
   tabTitle: string
@@ -195,19 +181,20 @@ export async function startPointerDrag(
 }
 
 /**
- * Drags `source` onto `target` and releases it there, as a single named step in the report.
+ * Drags `source` onto `target` and releases it there, as a single step named after both in the report.
  * `target` is either a locator, whose center is the drop point, or a callback that measures the
  * drop point once the drag has started, since starting it may scroll or change the layout.
  * Drags that need intermediate moves or checks before the release use `startPointerDrag` directly.
  */
 export async function dragAndDrop(
   page: Page,
-  description: string,
+  sourceName: string,
   source: Locator,
+  targetName: string,
   target: Locator | (() => Promise<Point>)
 ) {
-  await test.step(description, async () => {
-    const drag = await startPointerDrag(page, 'source', source);
+  await test.step(`Drag ${sourceName} to ${targetName}`, async () => {
+    const drag = await startPointerDrag(page, sourceName, source);
     if (typeof target === 'function') {
       await drag.moveToPoint(await target());
     } else {

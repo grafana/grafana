@@ -88,11 +88,17 @@ test.describe('Dashboard panels cross-tab drag and drop', { tag: ['@dashboards']
       await expect(panels.getHeaders(undefined, tabs.getContent('Tab 1'))).toHaveText(TAB_1_PANELS);
       const boxesBefore = await getTab1PanelBoxes(panels);
 
-      await dragAndDrop(page, 'Drag P1 between the Tab 1 and Tab 2 headers', panels.getHeader('P1'), async () => {
-        const tab1Box = await getTabBox(tabs, 'Tab 1');
-        const tab2Box = await getTabBox(tabs, 'Tab 2');
-        return { x: (tab1Box.x + tab1Box.width + tab2Box.x) / 2, y: tab1Box.y + tab1Box.height / 2 };
-      });
+      await dragAndDrop(
+        page,
+        'panel "P1"',
+        panels.getHeader('P1'),
+        'the gap between the Tab 1 and Tab 2 headers',
+        async () => {
+          const tab1Box = await getTabBox(tabs, 'Tab 1');
+          const tab2Box = await getTabBox(tabs, 'Tab 2');
+          return { x: (tab1Box.x + tab1Box.width + tab2Box.x) / 2, y: tab1Box.y + tab1Box.height / 2 };
+        }
+      );
 
       await expectTab1Unchanged({ tabs, panels }, boxesBefore);
       await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
@@ -128,10 +134,13 @@ test.describe('Dashboard panels cross-tab drag and drop', { tag: ['@dashboards']
         const boxesBefore = await getTab1PanelBoxes(panels);
 
         // straight to the left, so the pointer leaves the viewport without crossing other panels
-        await dragAndDrop(page, 'Drag P1 out of the left edge of the viewport', panels.getHeader('P1'), async () => ({
-          x: -50,
-          y: boxesBefore[0].y + 10,
-        }));
+        await dragAndDrop(
+          page,
+          'panel "P1"',
+          panels.getHeader('P1'),
+          'a point past the left edge of the viewport',
+          async () => ({ x: -50, y: boxesBefore[0].y + 10 })
+        );
 
         await expectTab1Unchanged({ tabs, panels }, boxesBefore);
         await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
