@@ -5326,11 +5326,6 @@
       "open-saved-queries": "Open saved queries",
       "scopes": "Scopes"
     },
-    "deep-search": {
-      "more-panels_one": "{{count}} more matched panel",
-      "more-panels_other": "{{count}} more matched panels",
-      "no-matches": "No matches"
-    },
     "dialog-label": "Command palette",
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
@@ -5347,7 +5342,6 @@
     "section": {
       "actions": "Actions",
       "dashboard-search-results": "Dashboards",
-      "deep-search": "Dashboards deep search",
       "folder-search-results": "Folders",
       "notebook-search-results": "Notebooks",
       "pages": "Pages",
