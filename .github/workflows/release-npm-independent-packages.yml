@@ -84,7 +84,7 @@ jobs:
       - name: Select packages that are not published yet
         id: select
         run: |
-          ./.github/workflows/scripts/select-unpublished-npm-packages.sh ./npm-artifacts
+          node scripts/release/select-unpublished-npm-packages.mts ./npm-artifacts
           count=$(find ./npm-artifacts -maxdepth 1 -name '*.tgz' | wc -l | tr -d ' ')
           echo "count=$count" >> "$GITHUB_OUTPUT"
           if [ "$count" = '0' ]; then
