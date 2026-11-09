@@ -79,6 +79,33 @@ describe('Combobox', () => {
     expect(screen.getByRole('combobox')).toBeInTheDocument();
   });
 
+  it('ignores option selection after the open Combobox becomes disabled', async () => {
+    const props = { options, value: '1', onChange: onChangeHandler };
+    const { rerender } = render(<Combobox {...props} />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.keyboard('{ArrowDown}');
+
+    rerender(<Combobox {...props} disabled />);
+    expect(input).toBeDisabled();
+    await user.click(screen.getByRole('option', { name: 'Option 2' }));
+
+    expect(onChangeHandler).not.toHaveBeenCalled();
+  });
+
+  it('does not commit a highlighted option when disabling the focused Combobox blurs it', async () => {
+    const props = { options, value: '1', onChange: onChangeHandler };
+    const { rerender } = render(<Combobox {...props} />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.keyboard('{ArrowDown}');
+
+    rerender(<Combobox {...props} disabled />);
+    fireEvent.blur(input, { relatedTarget: document.body });
+
+    expect(onChangeHandler).not.toHaveBeenCalled();
+  });
+
   it('does not observe floating element changes while hidden in collapsed details', () => {
     const renderCombobox = () => (
       <details>
