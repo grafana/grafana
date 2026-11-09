@@ -3,10 +3,10 @@ package apistore
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,12 +14,14 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientrest "k8s.io/client-go/rest"
 
 	authtypes "github.com/grafana/authlib/types"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -713,197 +715,6 @@ func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
 	}
 }
 
-func TestManagerNotFound(t *testing.T) {
-	tests := []struct {
-		name        string
-		status      int
-		annotations map[string]string
-		want        bool
-	}{
-		{
-			name:   "repository not found",
-			status: http.StatusNotFound,
-			annotations: map[string]string{
-				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-				utils.AnnoKeyManagerIdentity: "my-repo",
-			},
-			want: true,
-		},
-		{
-			name:   "repository exists",
-			status: http.StatusOK,
-			annotations: map[string]string{
-				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-				utils.AnnoKeyManagerIdentity: "my-repo",
-			},
-			want: false,
-		},
-		{
-			name:   "lookup fails with a server error",
-			status: http.StatusInternalServerError,
-			annotations: map[string]string{
-				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-				utils.AnnoKeyManagerIdentity: "my-repo",
-			},
-			want: false,
-		},
-		{
-			name:        "resource is not managed",
-			status:      http.StatusNotFound,
-			annotations: nil,
-			want:        false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(tt.status)
-				_, _ = w.Write([]byte(`{"kind":"Status","apiVersion":"v1","status":"Failure","code":` + strconv.Itoa(tt.status) + `}`))
-			}))
-			t.Cleanup(server.Close)
-
-			s := &Storage{configProvider: &fakeRestConfigProvider{host: server.URL}}
-			obj := &dashboard.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d", Namespace: "default", Annotations: tt.annotations}}
-			accessor, err := utils.MetaAccessor(obj)
-			require.NoError(t, err)
-			_, err = s.getManager(context.Background(), accessor)
-			require.Equal(t, tt.want, apierrors.IsNotFound(err))
-		})
-	}
-}
-
-func TestAllowOrphanedUpdate(t *testing.T) {
-	notFound := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte(`{"kind":"Status","apiVersion":"v1","status":"Failure","code":404}`))
-	}))
-	t.Cleanup(notFound.Close)
-
-	newObj := func(t *testing.T, mgr utils.ManagerProperties, src utils.SourceProperties) utils.GrafanaMetaAccessor {
-		accessor, err := utils.MetaAccessor(&dashboard.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d", Namespace: "default"}})
-		require.NoError(t, err)
-		accessor.SetManagerProperties(mgr)
-		accessor.SetSourceProperties(src)
-		return accessor
-	}
-	repoMgr := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"}
-	s := &Storage{configProvider: &fakeRestConfigProvider{host: notFound.URL}}
-	ctx := context.Background()
-
-	t.Run("allows a write that changes nothing but metadata", func(t *testing.T) {
-		old := newObj(t, repoMgr, utils.SourceProperties{})
-		cur := newObj(t, repoMgr, utils.SourceProperties{})
-		require.True(t, s.allowOrphanedUpdate(ctx, errResourceIsManagedInRepository, cur, old, false))
-	})
-	t.Run("rejects a write that changes the content", func(t *testing.T) {
-		old := newObj(t, repoMgr, utils.SourceProperties{})
-		cur := newObj(t, repoMgr, utils.SourceProperties{})
-		require.False(t, s.allowOrphanedUpdate(ctx, errResourceIsManagedInRepository, cur, old, true))
-	})
-	t.Run("rejects a write that changes the manager", func(t *testing.T) {
-		old := newObj(t, repoMgr, utils.SourceProperties{})
-		cur := newObj(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other"}, utils.SourceProperties{})
-		require.False(t, s.allowOrphanedUpdate(ctx, errResourceIsManagedInRepository, cur, old, false))
-	})
-	t.Run("rejects a write that changes the source path", func(t *testing.T) {
-		old := newObj(t, repoMgr, utils.SourceProperties{Path: "a.json"})
-		cur := newObj(t, repoMgr, utils.SourceProperties{Path: "b.json"})
-		require.False(t, s.allowOrphanedUpdate(ctx, errResourceIsManagedInRepository, cur, old, false))
-	})
-	t.Run("ignores other errors", func(t *testing.T) {
-		old := newObj(t, repoMgr, utils.SourceProperties{})
-		require.False(t, s.allowOrphanedUpdate(ctx, errors.New("boom"), old, old, false))
-	})
-	t.Run("does not apply to managers other than a repository", func(t *testing.T) {
-		mgr := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf"}
-		old := newObj(t, mgr, utils.SourceProperties{})
-		_, err := s.getManager(ctx, old)
-		require.NoError(t, err)
-	})
-}
-
-// ctxCapturingRestConfigProvider records the context each rest config is requested with.
-type ctxCapturingRestConfigProvider struct {
-	fakeRestConfigProvider
-	ctx context.Context
-}
-
-func (p *ctxCapturingRestConfigProvider) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
-	p.ctx = ctx
-	return p.fakeRestConfigProvider.GetRestConfig(ctx)
-}
-
-func TestGetRepositoryIdentity(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"kind":"Repository","apiVersion":"provisioning.grafana.app/v0alpha1"}`))
-	}))
-	t.Cleanup(server.Close)
-
-	callerCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{Login: "caller", OrgRole: identity.RoleNone})
-
-	tests := []struct {
-		name                      string
-		allowProvisioningIdentity bool
-		wantProvisioningIdentity  bool
-	}{
-		{"runs as the caller by default", false, false},
-		{"runs as the provisioning identity when allowed", true, true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			provider := &ctxCapturingRestConfigProvider{fakeRestConfigProvider: fakeRestConfigProvider{host: server.URL}}
-			s := &Storage{configProvider: provider}
-
-			require.NoError(t, s.getRepository(callerCtx, "default", "my-repo", tt.allowProvisioningIdentity))
-
-			requester, err := identity.GetRequester(provider.ctx)
-			require.NoError(t, err)
-			require.Equal(t, tt.wantProvisioningIdentity, identity.IsProvisioningServiceIdentity(requester))
-		})
-	}
-}
-
-func TestContentChanged(t *testing.T) {
-	newDash := func(t *testing.T, mutate func(*dashboard.Dashboard)) utils.GrafanaMetaAccessor {
-		d := &dashboard.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d", Namespace: "default"}}
-		d.Spec.Object = map[string]any{"title": "a"}
-		if mutate != nil {
-			mutate(d)
-		}
-		accessor, err := utils.MetaAccessor(d)
-		require.NoError(t, err)
-		return accessor
-	}
-	previous := newDash(t, nil)
-
-	t.Run("unchanged", func(t *testing.T) {
-		require.False(t, contentChanged(newDash(t, nil), previous))
-	})
-	t.Run("starting a delete only sets the deletion timestamp", func(t *testing.T) {
-		now := v1.Now()
-		cur := newDash(t, func(d *dashboard.Dashboard) { d.DeletionTimestamp = &now })
-		require.False(t, contentChanged(cur, previous))
-	})
-	t.Run("label only", func(t *testing.T) {
-		cur := newDash(t, func(d *dashboard.Dashboard) { d.Labels = map[string]string{"x": "y"} })
-		require.False(t, contentChanged(cur, previous))
-	})
-	t.Run("spec changed", func(t *testing.T) {
-		cur := newDash(t, func(d *dashboard.Dashboard) { d.Spec.Object = map[string]any{"title": "b"} })
-		require.True(t, contentChanged(cur, previous))
-	})
-	t.Run("moved to another folder", func(t *testing.T) {
-		cur := newDash(t, nil)
-		cur.SetFolder("other")
-		require.True(t, contentChanged(cur, previous))
-	})
-}
-
 func TestEnsureSameRepoManager(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -1018,4 +829,367 @@ func TestEnsureSameRepoManager(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIsRepositoryNotFound(t *testing.T) {
+	repoGR := provisioning.RepositoryResourceInfo.GroupResource()
+
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"missing repository", apierrors.NewNotFound(repoGR, "my-repo"), true},
+		{"missing repository, wrapped", fmt.Errorf("delete: %w", apierrors.NewNotFound(repoGR, "my-repo")), true},
+		{"other repository", apierrors.NewNotFound(repoGR, "other-repo"), false},
+		{"missing raw file", apierrors.NewNotFound(repoGR, "dashboards/d.json"), false},
+		{"plain 404 without a status body", apierrors.NewGenericServerResponse(http.StatusNotFound, http.MethodGet, repoGR, "my-repo", "404 page not found", 0, true), false},
+		{"missing file", repository.ErrFileNotFound, false},
+		{"missing ref", repository.ErrRefNotFound, false},
+		{"missing dashboard", apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, "d"), false},
+		{"forbidden repository", apierrors.NewForbidden(repoGR, "my-repo", errors.New("denied")), false},
+		{"plain error", errors.New("boom"), false},
+		{"no error", nil, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, isRepositoryNotFound(tt.err, "my-repo"))
+		})
+	}
+}
+
+// repositoryServer answers a repository GET with status and records the paths it was asked for.
+func repositoryServer(t *testing.T, status int) (*Storage, *[]string) {
+	t.Helper()
+	var paths []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		if status == http.StatusNotFound {
+			_, _ = w.Write([]byte(`{"kind":"Status","apiVersion":"v1","status":"Failure","code":404,` +
+				`"reason":"NotFound","details":{"group":"provisioning.grafana.app","kind":"repositories","name":"my-repo"}}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"kind":"Repository","apiVersion":"provisioning.grafana.app/v0alpha1"}`))
+	}))
+	t.Cleanup(server.Close)
+	return &Storage{configProvider: &fakeRestConfigProvider{host: server.URL}}, &paths
+}
+
+// managedObject builds a repo-managed object. An empty path leaves the source annotation off, as a
+// repository root folder has it.
+func managedObject(t *testing.T, manager utils.ManagerProperties, path string, mutate func(*dashboard.Dashboard)) utils.GrafanaMetaAccessor {
+	t.Helper()
+	d := &dashboard.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	d.Spec.Object = map[string]any{"title": "a"}
+	if mutate != nil {
+		mutate(d)
+	}
+	accessor, err := utils.MetaAccessor(d)
+	require.NoError(t, err)
+	accessor.SetManagerProperties(manager)
+	accessor.SetSourceProperties(utils.SourceProperties{Path: path})
+	return accessor
+}
+
+var repoManager = utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"}
+
+func TestIsOrphanedRepositoryRootFolder(t *testing.T) {
+	tests := []struct {
+		name       string
+		status     int
+		manager    utils.ManagerProperties
+		path       string
+		want       bool
+		wantLookup bool
+	}{
+		{name: "root folder of a deleted repository", status: http.StatusNotFound, manager: repoManager, want: true, wantLookup: true},
+		{name: "root folder of a live repository", status: http.StatusOK, manager: repoManager, wantLookup: true},
+		{name: "lookup fails", status: http.StatusInternalServerError, manager: repoManager, wantLookup: true},
+		{name: "resource with a source path", status: http.StatusNotFound, manager: repoManager, path: "dashboards/d.json"},
+		{name: "manager is not a repository", status: http.StatusNotFound, manager: utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf"}},
+		{name: "not managed", status: http.StatusNotFound},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, paths := repositoryServer(t, tt.status)
+			obj := managedObject(t, tt.manager, tt.path, nil)
+
+			require.Equal(t, tt.want, s.isOrphanedRepositoryRootFolder(t.Context(), obj))
+			require.Equal(t, tt.wantLookup, len(*paths) > 0, "repository lookups: %v", *paths)
+		})
+	}
+}
+
+func TestRepositoryExists(t *testing.T) {
+	t.Run("runs as the provisioning identity", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"kind":"Repository","apiVersion":"provisioning.grafana.app/v0alpha1"}`))
+		}))
+		t.Cleanup(server.Close)
+
+		provider := &identityCapturingRestConfigProvider{fakeRestConfigProvider: fakeRestConfigProvider{host: server.URL}}
+		s := &Storage{configProvider: provider}
+		callerCtx := identity.WithRequester(t.Context(), &identity.StaticRequester{Login: "caller", OrgRole: identity.RoleNone})
+
+		exists, err := s.repositoryExists(callerCtx, "default", "my-repo")
+
+		require.NoError(t, err)
+		require.True(t, exists)
+		require.True(t, provider.wasProvisioning, "the probe must not need the caller's repository read permission")
+	})
+
+	t.Run("assumes the repository exists when provisioning is not wired up", func(t *testing.T) {
+		s := &Storage{}
+
+		exists, err := s.repositoryExists(t.Context(), "default", "my-repo")
+
+		require.NoError(t, err)
+		require.True(t, exists)
+	})
+}
+
+// identityCapturingRestConfigProvider records whether the rest config was requested as the
+// provisioning identity.
+type identityCapturingRestConfigProvider struct {
+	fakeRestConfigProvider
+	wasProvisioning bool
+}
+
+func (p *identityCapturingRestConfigProvider) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
+	if requester, err := identity.GetRequester(ctx); err == nil {
+		p.wasProvisioning = identity.IsProvisioningServiceIdentity(requester)
+	}
+	return p.fakeRestConfigProvider.GetRestConfig(ctx)
+}
+
+func TestAllowOrphanedUpdate(t *testing.T) {
+	terminating := func(d *dashboard.Dashboard) {
+		d.Labels = map[string]string{"grafana.app/folder-terminating": "true"}
+	}
+	// released drops the manager and source annotations, as the release path does.
+	released := func(t *testing.T, previous utils.GrafanaMetaAccessor) utils.GrafanaMetaAccessor {
+		t.Helper()
+		obj := managedObject(t, repoManager, "", nil)
+		obj.SetManagerProperties(utils.ManagerProperties{})
+		obj.SetSourceProperties(utils.SourceProperties{})
+		require.Equal(t, previous.GetFolder(), obj.GetFolder())
+		return obj
+	}
+
+	t.Run("release", func(t *testing.T) {
+		t.Run("is allowed for an orphaned root folder", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "", nil)
+
+			require.True(t, s.allowOrphanedUpdateBypass(t.Context(), released(t, previous), previous))
+		})
+
+		t.Run("is allowed for an orphaned resource with a source path", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "dashboards/d.json", nil)
+
+			require.True(t, s.allowOrphanedUpdateBypass(t.Context(), released(t, previous), previous))
+		})
+
+		t.Run("stays admin-only while the repository is alive", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusOK)
+			previous := managedObject(t, repoManager, "dashboards/d.json", nil)
+
+			require.False(t, s.allowOrphanedUpdateBypass(t.Context(), released(t, previous), previous))
+		})
+
+		t.Run("covers a release that also changes the spec", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "", nil)
+			obj := managedObject(t, repoManager, "", func(d *dashboard.Dashboard) {
+				d.Spec.Object = map[string]any{"title": "b"}
+			})
+			obj.SetManagerProperties(utils.ManagerProperties{})
+
+			require.True(t, s.allowOrphanedUpdateBypass(t.Context(), obj, previous))
+		})
+
+		t.Run("does not cover a release that also moves the resource", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "", nil)
+			obj := released(t, previous)
+			obj.SetFolder("other")
+
+			require.False(t, s.allowOrphanedUpdateBypass(t.Context(), obj, previous))
+		})
+
+		t.Run("does not apply to managers other than a repository", func(t *testing.T) {
+			s, paths := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf"}, "", nil)
+
+			require.False(t, s.allowOrphanedUpdateBypass(t.Context(), released(t, previous), previous))
+			require.Empty(t, *paths)
+		})
+	})
+
+	t.Run("delete", func(t *testing.T) {
+		t.Run("allows the terminating label on an orphaned root folder", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "", nil)
+			obj := managedObject(t, repoManager, "", terminating)
+
+			require.True(t, s.allowOrphanedUpdateBypass(t.Context(), obj, previous))
+		})
+
+		t.Run("allows the terminating label on an orphaned nested folder", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "folders/nested.json", nil)
+			obj := managedObject(t, repoManager, "folders/nested.json", terminating)
+
+			require.True(t, s.allowOrphanedUpdateBypass(t.Context(), obj, previous))
+		})
+
+		t.Run("rejects it while the repository is alive", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusOK)
+			previous := managedObject(t, repoManager, "", nil)
+			obj := managedObject(t, repoManager, "", terminating)
+
+			require.False(t, s.allowOrphanedUpdateBypass(t.Context(), obj, previous))
+		})
+
+		t.Run("rejects a write that changes the spec", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "", nil)
+			obj := managedObject(t, repoManager, "", func(d *dashboard.Dashboard) {
+				d.Spec.Object = map[string]any{"title": "b"}
+			})
+
+			require.False(t, s.allowOrphanedUpdateBypass(t.Context(), obj, previous))
+		})
+
+		t.Run("rejects a write that moves the resource to another manager", func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			previous := managedObject(t, repoManager, "", nil)
+			obj := managedObject(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other"}, "", nil)
+
+			require.False(t, s.allowOrphanedUpdateBypass(t.Context(), obj, previous))
+		})
+	})
+}
+
+func TestIsManagerRelease(t *testing.T) {
+	previous := managedObject(t, repoManager, "dashboards/d.json", nil)
+
+	t.Run("manager and source dropped", func(t *testing.T) {
+		obj := managedObject(t, repoManager, "", nil)
+		obj.SetManagerProperties(utils.ManagerProperties{})
+		obj.SetSourceProperties(utils.SourceProperties{})
+		require.True(t, isManagerRelease(obj, previous))
+	})
+
+	t.Run("spec changed", func(t *testing.T) {
+		obj := managedObject(t, repoManager, "", func(d *dashboard.Dashboard) {
+			d.Spec.Object = map[string]any{"title": "b"}
+		})
+		obj.SetManagerProperties(utils.ManagerProperties{})
+		require.True(t, isManagerRelease(obj, previous))
+	})
+
+	t.Run("still managed", func(t *testing.T) {
+		require.False(t, isManagerRelease(managedObject(t, repoManager, "dashboards/d.json", nil), previous))
+	})
+
+	t.Run("was never managed", func(t *testing.T) {
+		unmanaged := managedObject(t, utils.ManagerProperties{}, "", nil)
+		require.False(t, isManagerRelease(unmanaged, unmanaged))
+	})
+}
+
+func TestIsMarkForDeleteOnly(t *testing.T) {
+	previous := managedObject(t, repoManager, "folders/f.json", nil)
+	terminating := func(d *dashboard.Dashboard) {
+		d.Labels = map[string]string{folderTerminatingLabel: folderTerminatingLabelValue}
+	}
+
+	t.Run("terminating label", func(t *testing.T) {
+		require.True(t, isMarkForDeleteOnly(managedObject(t, repoManager, "folders/f.json", terminating), previous))
+	})
+
+	t.Run("terminating label that is already set", func(t *testing.T) {
+		labeled := managedObject(t, repoManager, "folders/f.json", terminating)
+		require.True(t, isMarkForDeleteOnly(managedObject(t, repoManager, "folders/f.json", terminating), labeled))
+	})
+
+	t.Run("deletion timestamp", func(t *testing.T) {
+		now := v1.Now()
+		require.True(t, isMarkForDeleteOnly(managedObject(t, repoManager, "folders/f.json", func(d *dashboard.Dashboard) {
+			d.DeletionTimestamp = &now
+		}), previous))
+	})
+
+	t.Run("unchanged", func(t *testing.T) {
+		require.False(t, isMarkForDeleteOnly(managedObject(t, repoManager, "folders/f.json", nil), previous))
+	})
+
+	t.Run("other labels", func(t *testing.T) {
+		require.False(t, isMarkForDeleteOnly(managedObject(t, repoManager, "folders/f.json", func(d *dashboard.Dashboard) {
+			d.Labels = map[string]string{folderTerminatingLabel: folderTerminatingLabelValue, "x": "y"}
+		}), previous))
+	})
+
+	t.Run("source path", func(t *testing.T) {
+		require.False(t, isMarkForDeleteOnly(managedObject(t, repoManager, "folders/other.json", terminating), previous))
+	})
+
+	t.Run("server-set annotations", func(t *testing.T) {
+		obj := managedObject(t, repoManager, "folders/f.json", terminating)
+		obj.SetUpdatedBy("user:other")
+		obj.SetUpdatedTimestampMillis(1)
+		require.True(t, isMarkForDeleteOnly(obj, previous))
+	})
+
+	t.Run("other annotations", func(t *testing.T) {
+		obj := managedObject(t, repoManager, "folders/f.json", terminating)
+		obj.SetAnnotation("x", "y")
+		require.False(t, isMarkForDeleteOnly(obj, previous))
+	})
+
+	t.Run("other annotations on a folder that is already terminating", func(t *testing.T) {
+		labeled := managedObject(t, repoManager, "folders/f.json", terminating)
+		obj := managedObject(t, repoManager, "folders/f.json", terminating)
+		obj.SetAnnotation("x", "y")
+		require.False(t, isMarkForDeleteOnly(obj, labeled))
+	})
+
+	t.Run("finalizers", func(t *testing.T) {
+		require.False(t, isMarkForDeleteOnly(managedObject(t, repoManager, "folders/f.json", func(d *dashboard.Dashboard) {
+			terminating(d)
+			d.Finalizers = []string{"block"}
+		}), previous))
+	})
+
+	t.Run("owner references", func(t *testing.T) {
+		require.False(t, isMarkForDeleteOnly(managedObject(t, repoManager, "folders/f.json", func(d *dashboard.Dashboard) {
+			terminating(d)
+			d.OwnerReferences = []v1.OwnerReference{{Kind: "Folder", Name: "other"}}
+		}), previous))
+	})
+
+	t.Run("spec", func(t *testing.T) {
+		require.False(t, isMarkForDeleteOnly(managedObject(t, repoManager, "folders/f.json", func(d *dashboard.Dashboard) {
+			terminating(d)
+			d.Spec.Object = map[string]any{"title": "b"}
+		}), previous))
+	})
+
+	t.Run("folder", func(t *testing.T) {
+		moved := managedObject(t, repoManager, "folders/f.json", terminating)
+		moved.SetFolder("other")
+		require.False(t, isMarkForDeleteOnly(moved, previous))
+	})
+
+	t.Run("manager", func(t *testing.T) {
+		other := managedObject(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other"}, "folders/f.json", terminating)
+		require.False(t, isMarkForDeleteOnly(other, previous))
+	})
 }

@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"regexp"
+	"slices"
 
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,8 +26,19 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+const (
+	provisioningGroup    = "provisioning.grafana.app"
+	provisioningVersion  = "v0alpha1"
+	repositoriesResource = "repositories"
+
+	// Keep in sync with the label that folder cascade delete sets.
+	folderTerminatingLabel      = "grafana.app/folder-terminating"
+	folderTerminatingLabelValue = "true"
+)
+
 var (
 	errResourceIsManagedInRepository = fmt.Errorf("this resource is managed by a repository")
+	errManagerGone                   = errors.New("the repository managing this resource no longer exists")
 
 	// terraformUserAgentPattern matches the User-Agent based manager ID format used by Terraform providers.
 	// Format: "Terraform/{version} (+https://www.terraform.io) terraform-provider-{name}/{version}"
@@ -243,70 +257,145 @@ func (s *Storage) provisioningClient(ctx context.Context) (rest.Interface, error
 	}
 	cfg.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
 	cfg.GroupVersion = &schema.GroupVersion{
-		Group:   "provisioning.grafana.app",
-		Version: "v0alpha1",
+		Group:   provisioningGroup,
+		Version: provisioningVersion,
 	}
 	return rest.RESTClientFor(cfg)
 }
 
-// getManager looks up the manager of obj. The error is a NotFound error once the manager no
-// longer exists, so a write cannot be routed to it. Managers that cannot be looked up are
-// returned without an error.
-func (s *Storage) getManager(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.ManagerProperties, error) {
-	manager, ok := obj.GetManagerProperties()
-	if !ok {
-		return manager, fmt.Errorf("expected managed resource")
-	}
-	switch manager.Kind {
-	case utils.ManagerKindRepo:
-		return manager, s.getRepository(ctx, obj.GetNamespace(), manager.Identity, true)
-	default:
-		return manager, nil
-	}
-}
-
-// with allowProvisioningIdentity, the
-// lookup runs as the provisioning identity instead of the caller. Only set it for existence
-// probes, where the caller may be allowed to write a resource without being allowed to read
-// repositories.
-func (s *Storage) getRepository(ctx context.Context, namespace, name string, allowProvisioningIdentity bool) error {
+// The lookup runs as the
+// provisioning identity because a caller may be allowed to write a resource without being allowed
+// to read repositories, and this is only an existence probe.
+func (s *Storage) repositoryExists(ctx context.Context, namespace, name string) (bool, error) {
 	if s.configProvider == nil || name == "" {
-		return nil
+		return true, nil
 	}
-	if allowProvisioningIdentity {
-		var err error
-		ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
-		if err != nil {
-			return err
-		}
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
+	if err != nil {
+		return false, err
 	}
 	client, err := s.provisioningClient(ctx)
 	if err != nil {
-		return err
+		return false, err
 	}
-	return client.Get().
+	err = client.Get().
 		Namespace(namespace).
-		Resource("repositories").
+		Resource(repositoriesResource).
 		Name(name).
 		Do(ctx).
 		Error()
+	switch {
+	case err == nil:
+		return true, nil
+	case isRepositoryNotFound(err, name):
+		return false, nil
+	default:
+		return false, err
+	}
 }
 
-// allowOrphanedUpdate reports whether an update to a resource that the managed-resource check
-// rejected may proceed because its manager no longer exists. Only updates that leave the content,
-// folder and ownership untouched pass, such as the label write that starts a folder deletion.
-func (s *Storage) allowOrphanedUpdate(ctx context.Context, err error, obj, previous utils.GrafanaMetaAccessor, contentChanged bool) bool {
-	newManager, _ := obj.GetManagerProperties()
-	oldManager, _ := previous.GetManagerProperties()
-	newSource, _ := obj.GetSourceProperties()
-	oldSource, _ := previous.GetSourceProperties()
-	_, managerErr := s.getManager(ctx, previous)
+func isRepositoryNotFound(err error, name string) bool {
+	statusErr, ok := errors.AsType[*apierrors.StatusError](err)
+	if !ok || statusErr.ErrStatus.Reason != metav1.StatusReasonNotFound {
+		return false
+	}
+	details := statusErr.ErrStatus.Details
+	if details == nil ||
+		details.Group != provisioningGroup ||
+		details.Kind != repositoriesResource ||
+		details.Name != name {
+		return false
+	}
+	// When provisioning is disabled, the API Server returns a 404,
+	// which should not count as the repository is gone
+	for _, cause := range details.Causes {
+		if cause.Type == metav1.CauseTypeUnexpectedServerResponse {
+			return false
+		}
+	}
+	return true
+}
 
-	return errors.Is(err, errResourceIsManagedInRepository) &&
-		!contentChanged &&
-		newManager == oldManager &&
-		newSource == oldSource &&
-		apierrors.IsNotFound(managerErr)
+func (s *Storage) managerRepositoryGone(ctx context.Context, obj utils.GrafanaMetaAccessor) bool {
+	manager, ok := obj.GetManagerProperties()
+	if !ok || manager.Kind != utils.ManagerKindRepo {
+		return false
+	}
+	exists, err := s.repositoryExists(ctx, obj.GetNamespace(), manager.Identity)
+	return err == nil && !exists
+}
+
+// The root folder stands for the repository itself rather than a
+// file so it has no source path. If there's no repository, nothing can be routed to the root folder and it is orphaned.
+func (s *Storage) isOrphanedRepositoryRootFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) bool {
+	if src, ok := obj.GetSourceProperties(); ok && src.Path != "" {
+		return false
+	}
+	return s.managerRepositoryGone(ctx, obj)
+}
+
+// allowOrphanedUpdateBypass allows orphan updates when:
+// 1. the parent folder does not change
+// AND
+// 2. One of:
+//   - drops the manager annotations, which releases it from the manager
+//   - marks the resource for delete (i.e. with the folder terminating label), with no spec change
+//
+// Other updates keep the original error.
+func (s *Storage) allowOrphanedUpdateBypass(ctx context.Context, obj, previous utils.GrafanaMetaAccessor) bool {
+	sameFolder := obj.GetFolder() == previous.GetFolder()
+	return sameFolder &&
+		(isManagerRelease(obj, previous) ||
+			isMarkForDeleteOnly(obj, previous)) &&
+		s.managerRepositoryGone(ctx, previous)
+}
+
+func isManagerRelease(obj, previous utils.GrafanaMetaAccessor) bool {
+	_, managed := obj.GetManagerProperties()
+	_, wasManaged := previous.GetManagerProperties()
+
+	return !managed && wasManaged
+}
+
+// isMarkForDeleteOnly ignores the annotations that prepareObjectForUpdate sets itself. The manager
+// and source annotations must not change.
+func isMarkForDeleteOnly(obj, previous utils.GrafanaMetaAccessor) bool {
+	if !maps.Equal(mapWithout(obj.GetLabels(), folderTerminatingLabel), mapWithout(previous.GetLabels(), folderTerminatingLabel)) {
+		return false
+	}
+	serverAnnotations := []string{utils.AnnoKeyUpdatedBy, utils.AnnoKeyUpdatedTimestamp, utils.AnnoKeyGrantPermissions}
+	if !maps.Equal(mapWithout(obj.GetAnnotations(), serverAnnotations...), mapWithout(previous.GetAnnotations(), serverAnnotations...)) {
+		return false
+	}
+	if !slices.Equal(obj.GetFinalizers(), previous.GetFinalizers()) ||
+		!apiequality.Semantic.DeepEqual(obj.GetOwnerReferences(), previous.GetOwnerReferences()) {
+		return false
+	}
+	terminating := obj.GetLabels()[folderTerminatingLabel] == folderTerminatingLabelValue
+	if !terminating && obj.GetDeletionTimestamp() == nil {
+		return false
+	}
+	return specAndFolderUnchanged(obj, previous)
+}
+
+func mapWithout(m map[string]string, keys ...string) map[string]string {
+	m = maps.Clone(m)
+	for _, key := range keys {
+		delete(m, key)
+	}
+	return m
+}
+
+func specAndFolderUnchanged(obj, previous utils.GrafanaMetaAccessor) bool {
+	if obj.GetFolder() != previous.GetFolder() {
+		return false
+	}
+	spec, specErr := obj.GetSpec()
+	oldSpec, oldSpecErr := previous.GetSpec()
+	if specErr != nil || oldSpecErr != nil {
+		return false
+	}
+	return apiequality.Semantic.DeepEqual(spec, oldSpec)
 }
 
 // handleManagedResourceRouting re-routes a write for a repo-managed resource to the provisioning
@@ -358,7 +447,14 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 			Suffix("files", src.Path).
 			Param("message", managedResourceCommitMessage(obj, action)).
 			Do(ctx)
-		return false, result.Error()
+		if err := result.Error(); err != nil {
+			// The repository was deleted between reading the resource and this call.
+			if isRepositoryNotFound(err, repo.Identity) {
+				return true, errManagerGone
+			}
+			return false, err
+		}
+		return false, nil
 	}
 
 	var req *rest.Request

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -25,11 +27,15 @@ func orphanRepository(t *testing.T, helper *common.ProvisioningTestHelper, repo 
 	})
 	helper.RequireRepoDashboardCount(t, repo, 3)
 	helper.RequireRepoFolderCount(t, repo, 6)
+	deleteRepositoryKeepResources(t, helper, repo)
+}
 
-	// Keep only the cleanup finalizer, so the repository goes away and its resources stay.
-	_, err := helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
-		{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup"]}
-	]`), metav1.PatchOptions{})
+// deleteRepositoryKeepResources keeps only the cleanup finalizer, so the repository goes away and its
+// resources stay.
+func deleteRepositoryKeepResources(t *testing.T, helper *common.ProvisioningTestHelper, repo string) {
+	t.Helper()
+	patch := fmt.Appendf(nil, `[{"op":"replace","path":"/metadata/finalizers","value":[%q]}]`, repository.CleanFinalizer)
+	_, err := helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, patch, metav1.PatchOptions{})
 	require.NoError(t, err)
 	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
 	helper.WaitForRepositoryDeleted(t, repo)

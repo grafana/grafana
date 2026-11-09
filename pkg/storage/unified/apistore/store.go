@@ -485,16 +485,14 @@ func (s *Storage) Delete(
 			return fmt.Errorf("unable to read object %w", err)
 		}
 		if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
-			// Route to the manager when it exists. An orphaned resource has no manager to
-			// route to, so it falls through to a direct delete.
-			_, managerErr := s.getManager(ctx, meta)
-			if managerErr == nil {
+			// Nothing left in git to delete, so remove the resource here rather than strand it.
+			if !s.isOrphanedRepositoryRootFolder(ctx, meta) {
 				_, err = s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
-				return err
+				if !errors.Is(err, errManagerGone) {
+					return err
+				}
 			}
-			if !apierrors.IsNotFound(managerErr) {
-				return managerErr
-			}
+			logging.FromContext(ctx).Info("deleting managed resource whose repository is gone", "key", key)
 		}
 
 		cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
