@@ -204,6 +204,10 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 	raw := make(chan Event, opts.BufferSize)
 	out := make(chan Event, opts.BufferSize)
 	go settleEvents(ctx, raw, out, opts)
+	lost := func() {
+		opts.lost()
+		n.invalidate()
+	}
 
 	handler := func(subject string, data []byte) {
 		evt, ok := n.decode(subject, data)
@@ -215,7 +219,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 		default:
 			n.drop(dropReasonBufferFull, "dropped watch notification, channel full", "subject", subject)
 			// Every watch missed this write, so force their clients to re-list.
-			n.invalidate()
+			lost()
 		}
 	}
 
@@ -226,21 +230,21 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 	started := subscriberStarted(n.subscriber)
 	select {
 	case <-started:
-		if n.trySubscribe(ctx, handler) {
+		if n.trySubscribe(ctx, handler, lost) {
 			opts.captured(nil)
 			return out
 		}
-		go n.retrySubscribe(ctx, handler, opts, nil)
+		go n.retrySubscribe(ctx, handler, lost, opts, nil)
 	default:
 		// The monolith builds the storage server before it starts the subscriber.
-		go n.retrySubscribe(ctx, handler, opts, started)
+		go n.retrySubscribe(ctx, handler, lost, opts, started)
 	}
 	return out
 }
 
 // retrySubscribe subscribes once started is closed, or after a backoff when
 // started is nil, and retries until it succeeds or ctx ends.
-func (n *natsNotifier) retrySubscribe(ctx context.Context, handler func(subject string, data []byte), opts WatchOptions, started <-chan struct{}) {
+func (n *natsNotifier) retrySubscribe(ctx context.Context, handler func(subject string, data []byte), lost func(), opts WatchOptions, started <-chan struct{}) {
 	bo := backoff.New(ctx, backoff.Config{
 		MinBackoff: opts.MinBackoff,
 		MaxBackoff: opts.MaxBackoff,
@@ -256,13 +260,13 @@ func (n *natsNotifier) retrySubscribe(ctx context.Context, handler func(subject 
 		bo.Wait()
 	}
 	for bo.Ongoing() {
-		if n.trySubscribe(ctx, handler) {
+		if n.trySubscribe(ctx, handler, lost) {
 			if ctx.Err() != nil {
 				return
 			}
 			// Watches may have opened while capture was unavailable. The first
 			// successful connection does not necessarily emit a reconnect callback.
-			n.invalidate()
+			lost()
 			opts.captured(nil)
 			return
 		}
@@ -272,8 +276,8 @@ func (n *natsNotifier) retrySubscribe(ctx context.Context, handler func(subject 
 
 // trySubscribe subscribes to the whole change stream once. On success it
 // unsubscribes on ctx cancel and returns true; on failure it logs and returns
-// false so the caller can retry.
-func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject string, data []byte)) bool {
+// false so the caller can retry. lost is called after each reconnect.
+func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject string, data []byte), lost func()) bool {
 	reconnected := make(chan struct{}, 1)
 	sub, err := n.subscriber.Subscribe(ctx, resourcewatch.SubjectAllResources, handler, func() {
 		select {
@@ -299,7 +303,7 @@ func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject st
 	// acknowledged. Keep the old generation until restored capture is ready so
 	// watches started during restoration also expire. This runs independently of
 	// event delivery; repeated reconnect signals can safely coalesce.
-	go reportReconnects(ctx, []Subscription{sub}, reconnected, n.invalidate)
+	go reportReconnects(ctx, []Subscription{sub}, reconnected, lost)
 	n.log.Info("subscribed to nats watch stream")
 	context.AfterFunc(ctx, func() {
 		if err := sub.Unsubscribe(); err != nil {

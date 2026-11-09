@@ -837,7 +837,7 @@ func TestKvStorageBackend_WatchWriteEvents_BatchesValueReads(t *testing.T) {
 	tripsBefore, keysBefore := kvStore.stats()
 
 	out := make(chan *WrittenEvent, numEvents)
-	require.True(t, backend.emitWriteEvents(ctx, batch, out))
+	require.True(t, backend.emitWriteEvents(ctx, batch, out, nil))
 	close(out)
 
 	receivedRVs := make([]int64, 0, numEvents)
@@ -955,7 +955,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 		backend := setupTestStorageBackend(t, withKV(kvStore), withLogger(logger))
 
 		out := make(chan *WrittenEvent, dataBatchSize)
-		assert.True(t, backend.emitWriteEvents(t.Context(), newBatch(), out),
+		assert.True(t, backend.emitWriteEvents(t.Context(), newBatch(), out, nil),
 			"a storage error should not tear down the watch stream")
 
 		assert.Empty(t, out)
@@ -971,7 +971,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 		cancel()
 
 		out := make(chan *WrittenEvent, dataBatchSize)
-		assert.False(t, backend.emitWriteEvents(ctx, newBatch(), out),
+		assert.False(t, backend.emitWriteEvents(ctx, newBatch(), out, nil),
 			"a cancelled context should stop the stream rather than drain the backlog")
 
 		assert.Empty(t, out)
@@ -1019,7 +1019,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 		require.Len(t, batch, numEvents)
 
 		out := make(chan *WrittenEvent, numEvents)
-		require.True(t, backend.emitWriteEvents(ctx, batch, out),
+		require.True(t, backend.emitWriteEvents(ctx, batch, out, nil),
 			"one unreadable value should not tear down the watch stream")
 		close(out)
 

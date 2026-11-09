@@ -116,6 +116,9 @@ type kvStorageBackend struct {
 	keyPathReconciliationDone <-chan struct{}
 
 	watchOpts WatchOptions
+	// watchInvalidator expires the watches when the seeded watch stream loses
+	// a write.
+	watchInvalidator Invalidator
 
 	// leaseManager serializes writes per resource and bulk imports per collection.
 	leaseManager *lease.Manager
@@ -474,6 +477,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		watchNotificationMetadata: opts.WatchNotificationMetadata,
 		keysSubscriber:            keysSubscriber(opts),
 		watchOpts:                 opts.WatchOptions.normalize(),
+		watchInvalidator:          opts.WatchInvalidator,
 		resourceVersions:          processResourceVersions,
 		resourceVersionMaxWait:    resourceVersionMaxWait,
 		log:                       logger,
@@ -2792,7 +2796,7 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 			if !ok {
 				return
 			}
-			if !k.emitWriteEvents(ctx, batch, events) {
+			if !k.emitWriteEvents(ctx, batch, events, nil) {
 				return
 			}
 		}
@@ -2823,9 +2827,10 @@ func nextEventBatch(notifications <-chan Event, buf []Event) ([]Event, bool) {
 }
 
 // emitWriteEvents resolves the values a batch of notifications refers to and
-// forwards them, preserving resource version order. It reports false when ctx is
-// done and the stream should stop.
-func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, out chan<- *WrittenEvent) bool {
+// forwards them, preserving resource version order. lost, if set, gets the
+// events it cannot resolve before any of the batch is forwarded. It reports
+// false when ctx is done and the stream should stop.
+func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, out chan<- *WrittenEvent, lost func([]Event)) bool {
 	keys := make([]DataKey, len(batch))
 	for i, event := range batch {
 		keys[i] = eventDataKey(event)
@@ -2860,15 +2865,25 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 		values[obj.Key] = data
 	}
 
-	// Emit in notification order rather than in the order the read returned.
+	var missing []Event
 	for i, event := range batch {
-		data, ok := values[keys[i]]
-		if !ok {
+		if _, ok := values[keys[i]]; !ok {
 			// BatchGet omits keys it has no value for rather than erroring — but a failed
 			// batch read reported on none of them, and an unreadable value already did.
 			if !readFailed && !unreadable[keys[i]] {
 				k.log.Error("no data for event", "key", keys[i].String())
 			}
+			missing = append(missing, event)
+		}
+	}
+	if len(missing) > 0 && lost != nil {
+		lost(missing)
+	}
+
+	// Emit in notification order rather than in the order the read returned.
+	for i, event := range batch {
+		data, ok := values[keys[i]]
+		if !ok {
 			continue
 		}
 

@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"sync"
 	"time"
+
+	"github.com/grafana/dskit/backoff"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -110,12 +113,14 @@ func (k *kvStorageBackend) loadWatchSeedWithLimit(ctx context.Context, handoffRV
 	return seed, ctx.Err()
 }
 
-func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
+func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, floors *raisedFloors, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	started := false
+	gaps := &unknownGaps{floors: floors, signal: make(chan struct{}, 1)}
 	opts := k.watchOpts
 	ready := make(chan error, 1)
 	opts.CaptureReady = ready
+	opts.Lost = gaps.report
 	notifications := k.notifier.Watch(ctx, opts)
 	boundary := make(chan int64)
 	startDelivery := make(chan struct{})
@@ -130,10 +135,11 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, capture
 			for range notifications {
 			}
 		}()
-		k.runSeededWatchEvents(ctx, notifications, boundary, startDelivery, opts.BufferSize, overflow, out)
+		k.runSeededWatchEvents(ctx, notifications, boundary, startDelivery, opts.BufferSize, overflow, out, k.lostWatchEvents(floors))
 	}()
 	defer func() {
 		if !started {
+			gaps.abandon()
 			cancel()
 			for range out {
 			}
@@ -147,6 +153,7 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, capture
 			return watchSeed{}, nil, fmt.Errorf("establish watch capture: %w", err)
 		}
 	}
+	gaps.capture()
 	if captured != nil {
 		captured()
 	}
@@ -216,7 +223,119 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, capture
 	}
 
 	started = true
+	go k.raiseFloorsAfterUnknownGaps(ctx, gaps)
 	return seed, out, nil
+}
+
+// lostWatchEvents raises the floors above writes the stream could not read
+// back, then expires the watches. A resume admitted after the expiry takes the
+// new generation, so only a floor raised before it can reject the resume.
+func (k *kvStorageBackend) lostWatchEvents(floors *raisedFloors) func([]Event) {
+	return func(events []Event) {
+		if floors != nil {
+			for _, e := range events {
+				floors.Raise(GroupResource{Group: e.Group, Resource: e.Resource}, e.ResourceVersion)
+			}
+		}
+		if k.watchInvalidator != nil {
+			k.watchInvalidator.Invalidate()
+		}
+	}
+}
+
+// unknownGaps holds every resume after a bus drop or reconnect until the floors
+// are raised above the writes it may have lost, as the legacy SQL NATS
+// notifier does.
+type unknownGaps struct {
+	floors *raisedFloors
+	signal chan struct{}
+
+	mu        sync.Mutex
+	captured  bool
+	reported  int64
+	abandoned bool
+}
+
+// capture starts counting gaps. Earlier ones, such as the one a retried first
+// subscription reports, are covered by the seed read after capture.
+func (g *unknownGaps) capture() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.captured = true
+}
+
+func (g *unknownGaps) report() {
+	g.mu.Lock()
+	if g.floors == nil || !g.captured || g.abandoned {
+		g.mu.Unlock()
+		return
+	}
+	g.reported++
+	g.floors.Hold()
+	g.mu.Unlock()
+	select {
+	case g.signal <- struct{}{}:
+	default:
+	}
+}
+
+func (g *unknownGaps) count() int64 {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return g.reported
+}
+
+// abandon releases the hold of a stream that failed to start. Later reports
+// are ignored, so a late gap cannot hold the floors again.
+func (g *unknownGaps) abandon() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.abandoned = true
+	if g.reported > 0 {
+		g.floors.Release()
+	}
+}
+
+// release lets resumes through again unless a gap was reported after the
+// first covered ones.
+func (g *unknownGaps) release(covered int64) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.reported == covered {
+		g.floors.Release()
+	}
+}
+
+// raiseFloorsAfterUnknownGaps raises every collection's floor to the latest
+// RV, which is above any write lost before a bus drop or reconnect was
+// reported, and only then releases the held resumes. It retries until the RV
+// can be read: until then a resume could miss the lost writes.
+func (k *kvStorageBackend) raiseFloorsAfterUnknownGaps(ctx context.Context, gaps *unknownGaps) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-gaps.signal:
+		}
+		covered := gaps.count()
+		bo := backoff.New(ctx, backoff.Config{MinBackoff: defaultMinBackoff, MaxBackoff: defaultMaxBackoff})
+		var latest int64
+		for bo.Ongoing() {
+			var err error
+			if latest, err = k.latestResourceVersion(ctx); err == nil {
+				break
+			}
+			if ctx.Err() == nil {
+				k.log.Warn("failed to raise watch resume floors after a bus drop or reconnect, resumes stay held", "error", err)
+			}
+			bo.Wait()
+		}
+		if ctx.Err() != nil {
+			return
+		}
+		gaps.floors.raiseAll(latest)
+		gaps.release(covered)
+	}
 }
 
 // Drain capture throughout snapshot reads so startup cannot backpressure an
@@ -232,6 +351,7 @@ func (k *kvStorageBackend) runSeededWatchEvents(
 	pendingThreshold int,
 	overflow chan<- struct{},
 	out chan<- *WrittenEvent,
+	lost func([]Event),
 ) {
 	var pending []Event
 	var highestRV int64
@@ -274,7 +394,7 @@ waiting:
 			return event.ResourceVersion <= highestRV || event.PreviousRV < 0
 		})
 		for batch := range slices.Chunk(events, dataBatchSize) {
-			if !k.emitWriteEvents(ctx, batch, out) {
+			if !k.emitWriteEvents(ctx, batch, out, lost) {
 				return false
 			}
 		}

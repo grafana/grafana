@@ -304,7 +304,7 @@ type gatedWatchBackend struct {
 	stopCapture <-chan struct{}
 }
 
-func (b *gatedWatchBackend) watchWriteEventsWithSeed(ctx context.Context, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
+func (b *gatedWatchBackend) watchWriteEventsWithSeed(ctx context.Context, _ *raisedFloors, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
 	select {
 	case <-ctx.Done():
 		return watchSeed{}, nil, ctx.Err()
@@ -394,7 +394,7 @@ type recoverableWatchBackend struct {
 	events   chan *WrittenEvent
 }
 
-func (b *recoverableWatchBackend) watchWriteEventsWithSeed(ctx context.Context, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
+func (b *recoverableWatchBackend) watchWriteEventsWithSeed(ctx context.Context, _ *raisedFloors, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
 	if b.attempts.Add(1) == 1 {
 		return watchSeed{}, nil, b.err
 	}

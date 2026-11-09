@@ -67,11 +67,21 @@ type WatchOptions struct {
 	// CaptureReady, when set, is a buffered channel that gets one value: nil
 	// once the notifier captures every later write, or the error that stopped it.
 	CaptureReady chan<- error
+
+	// Lost, when set, is called when this watch may have missed writes, before
+	// the notifier expires the watches. It must not block.
+	Lost func()
 }
 
 func (opts WatchOptions) captured(err error) {
 	if opts.CaptureReady != nil {
 		opts.CaptureReady <- err
+	}
+}
+
+func (opts WatchOptions) lost() {
+	if opts.Lost != nil {
+		opts.Lost()
 	}
 }
 

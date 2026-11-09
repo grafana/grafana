@@ -9,8 +9,9 @@ import (
 // not satisfy the global ordering required by these resume boundaries.
 type seededWatchBackend interface {
 	// watchWriteEventsWithSeed calls captured once the bus captures every later
-	// write, before it reads the seed.
-	watchWriteEventsWithSeed(ctx context.Context, captured func()) (watchSeed, <-chan *WrittenEvent, error)
+	// write, before it reads the seed. floors, if set, take the writes the
+	// stream loses later.
+	watchWriteEventsWithSeed(ctx context.Context, floors *raisedFloors, captured func()) (watchSeed, <-chan *WrittenEvent, error)
 }
 
 // ResumeFloorWatchBackend reports, per collection, the RV from which its watch
@@ -37,11 +38,10 @@ type ResumeFloors interface {
 
 type resumeFloorWatchBackend struct {
 	backend ResumeFloorWatchBackend
-	raised  *raisedFloors
 }
 
-func (b resumeFloorWatchBackend) watchWriteEventsWithSeed(ctx context.Context, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
-	floors, events, err := b.backend.WatchWriteEventsWithResumeFloors(ctx, b.raised, captured)
+func (b resumeFloorWatchBackend) watchWriteEventsWithSeed(ctx context.Context, raised *raisedFloors, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
+	floors, events, err := b.backend.WatchWriteEventsWithResumeFloors(ctx, raised, captured)
 	if err != nil {
 		return watchSeed{}, nil, err
 	}
@@ -73,8 +73,8 @@ func (w *watchStartup) expiryAtCapture() <-chan struct{} {
 	return w.expiry
 }
 
-// raised may be nil when the backend never loses writes after startup.
-func (s *server) initSeededWatcher(backend seededWatchBackend, raised *raisedFloors) {
+func (s *server) initSeededWatcher(backend seededWatchBackend) {
+	raised := newRaisedFloors()
 	out := make(chan *WrittenEvent, producerChanSize)
 	startup := &watchStartup{stopped: make(chan struct{})}
 	var metrics *BroadcasterMetrics
@@ -84,7 +84,7 @@ func (s *server) initSeededWatcher(backend seededWatchBackend, raised *raisedFlo
 
 	var capture sync.WaitGroup
 	initialize := func(ctx context.Context) (cacheSeed[*WrittenEvent], error) {
-		seed, events, err := backend.watchWriteEventsWithSeed(ctx, func() {
+		seed, events, err := backend.watchWriteEventsWithSeed(ctx, raised, func() {
 			startup.setExpiry(s.watchExpiry.WatchInvalidation())
 		})
 		if err != nil {
