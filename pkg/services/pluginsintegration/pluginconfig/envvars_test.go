@@ -1574,6 +1574,7 @@ func TestPluginEnvVarsProvider_goRuntimeEnvVars(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := setOpenFeatureFlags(t, marketplaceLicensingOff)
 			t.Setenv("GOMEMLIMIT", tc.hostLimit)
 			t.Setenv("GOGC", tc.hostGOGC)
 			settings := map[string]string{"custom_env_var": "customVal"}
@@ -1588,7 +1589,7 @@ func TestPluginEnvVarsProvider_goRuntimeEnvVars(t *testing.T) {
 			}
 			provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
 
-			envVars := provider.PluginEnvVars(context.Background(), p)
+			envVars := provider.PluginEnvVars(ctx, p)
 
 			require.Equal(t, tc.wantLimit, getEnvVar(envVars, "GOMEMLIMIT"))
 			require.Equal(t, tc.wantGOGC, getEnvVar(envVars, "GOGC"))
