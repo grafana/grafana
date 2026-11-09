@@ -224,6 +224,28 @@ func TestCanSearchByTitle(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("zz"), nil)
 	})
 
+	t.Run("multi-word queries match words shorter than ngram min as word prefixes", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "QA Weekly Report - Billing",
+			"name2": "QA Weekly Report - Search",
+			"name3": "Weekly Ops",
+			"name4": "Path to Prod",
+		})
+
+		// Every word is too short to have n-grams.
+		checkSearchQueryUnordered(t, index, newTestQuery("QA W"), []string{"name1", "name2"})
+		checkSearchQueryUnordered(t, index, newTestQuery("QA We"), []string{"name1", "name2"})
+		checkSearchQueryUnordered(t, index, newTestQuery("qa w"), []string{"name1", "name2"})
+		checkSearchQuery(t, index, newTestQuery("XX W"), nil)
+		// Short words are required, not dropped, when mixed with longer ones.
+		checkSearchQueryUnordered(t, index, newTestQuery("QA Wee"), []string{"name1", "name2"})
+		checkSearchQueryUnordered(t, index, newTestQuery("QA Weekly Re"), []string{"name1", "name2"})
+		// Stop words are not indexed in title, so they can't be required.
+		checkSearchQuery(t, index, newTestQuery("to Pr"), []string{"name4"})
+		checkSearchQuery(t, index, newTestQuery("Path to Pr"), []string{"name4"})
+	})
+
 	t.Run("title filter ignores empty tokens from split values", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, noop)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
@@ -255,7 +277,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		}
 	})
 
-	t.Run("title search will ignore terms < 3 characters", func(t *testing.T) {
+	t.Run("title search will match terms < 3 characters as word prefixes", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, noop)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "new dashboard",
@@ -265,8 +287,8 @@ func TestCanSearchByTitle(t *testing.T) {
 
 		// matches everything
 		checkSearchQuery(t, index, newTestQuery("new"), []string{"name3", "name2", "name1"})
-		// ignore terms shorter than 3 chars
-		checkSearchQuery(t, index, newTestQuery("new d"), []string{"name3", "name2", "name1"})
+		// terms shorter than 3 chars must prefix a word
+		checkSearchQueryUnordered(t, index, newTestQuery("new d"), []string{"name2", "name1"})
 		// include terms shorter that are exactly 3 chars
 		checkSearchQuery(t, index, newTestQuery("new das"), []string{"name2", "name1"})
 	})
