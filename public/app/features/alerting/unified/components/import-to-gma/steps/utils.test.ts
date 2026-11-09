@@ -3,7 +3,14 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { mockImportFormValues } from '../testUtils';
 import { type Step1Values } from '../types';
 
-import { buildDryRunArgs, canRunDryRun, isStep1Valid, pickStep1Values, validatePolicyTreeName } from './utils';
+import {
+  buildDryRunArgs,
+  canRunDryRun,
+  getRoutingTreeOptions,
+  isStep1Valid,
+  pickStep1Values,
+  validatePolicyTreeName,
+} from './utils';
 
 describe('validatePolicyTreeName', () => {
   it.each(['prometheus-prod', 'my-alertmanager', 'a', 'abc123', 'my.config.name', 'a-b.c-d', '0', '1abc2'])(
@@ -328,5 +335,31 @@ describe('pickStep1Values', () => {
       notificationsTemplateFiles: [],
       autoSyncNotificationsEnabled: true,
     });
+  });
+});
+
+describe('getRoutingTreeOptions', () => {
+  const existing = [
+    { label: 'default', value: 'default' },
+    { label: 'other', value: 'other' },
+  ];
+
+  it('lists the trees the API knows when step 1 has not been completed', () => {
+    expect(getRoutingTreeOptions(existing, 'imported', false)).toEqual(existing);
+  });
+
+  it('offers the tree step 1 will create first, since the API does not know it yet', () => {
+    expect(getRoutingTreeOptions(existing, 'imported', true)).toEqual([
+      { label: 'imported', value: 'imported' },
+      ...existing,
+    ]);
+  });
+
+  it('does not list a tree twice when the API already knows it', () => {
+    expect(getRoutingTreeOptions(existing, 'other', true)).toEqual(existing);
+  });
+
+  it('adds nothing when step 1 will not create a tree', () => {
+    expect(getRoutingTreeOptions(existing, '', true)).toEqual(existing);
   });
 });
