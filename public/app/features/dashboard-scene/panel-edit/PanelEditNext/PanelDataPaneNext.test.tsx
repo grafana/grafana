@@ -1544,7 +1544,21 @@ describe('PanelDataPaneNext', () => {
         _hasFetchedData: true,
         data: undefined,
       });
-      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+      expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
+    });
+
+    it('deleteQuery does not run queries after removing the final query', () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
+
+      dataPane.deleteQuery('A');
+
+      expect(mockQueryRunner.cancelQuery).toHaveBeenCalledTimes(1);
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: [],
+        _hasFetchedData: true,
+        data: undefined,
+      });
+      expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
     });
 
     it('bulkToggleQueriesHide hides the specified queries', () => {

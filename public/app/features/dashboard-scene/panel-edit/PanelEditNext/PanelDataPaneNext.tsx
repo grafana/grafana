@@ -305,6 +305,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
     const updatedQueries = mutator(queries[index], index, queries);
     setQueryRunnerQueries(queryRunner, updatedQueries);
+    return updatedQueries;
   }
 
   // Query Operations
@@ -371,12 +372,14 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   };
 
   public deleteQuery = (refId: string) => {
-    this.mutateQuery(refId, (_query, index, queries) => {
+    const queries = this.mutateQuery(refId, (_query, index, queries) => {
       queries.splice(index, 1);
       return queries;
     });
     this.resolveUniformDatasource();
-    this.runQueries();
+    if (queries?.length) {
+      this.runQueries();
+    }
   };
 
   public duplicateQuery = (refId: string) => {
@@ -419,7 +422,9 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const queries = queryRunner.state.queries.filter(({ refId }) => !refIdSet.has(refId));
     setQueryRunnerQueries(queryRunner, queries);
     this.resolveUniformDatasource();
-    this.runQueries();
+    if (queries.length) {
+      this.runQueries();
+    }
   };
 
   public bulkToggleQueriesHide = (refIds: readonly string[], hide: boolean) => {
