@@ -101,17 +101,19 @@ type kvStorageBackend struct {
 	log                     logging.Logger
 	disableStorageServices  bool
 	dashboardVersionsToKeep int
-	eventRetentionPeriod    time.Duration
-	eventPruningInterval    time.Duration
-	historyPruner           Pruner
-	garbageCollection       GarbageCollectionConfig
-	gcGate                  *GCGate
-	blobGC                  *BlobGarbageCollector
-	blobGCMu                sync.Mutex
-	blobGCMetrics           *BlobGCMetrics
-	lastImportStore         *lastImportStore
-	lastImportTimeMaxAge    time.Duration
-	metrics                 *kvBackendMetrics
+	// migrationStatementTimeout overrides the Postgres statement_timeout for bulk import writes
+	migrationStatementTimeout time.Duration
+	eventRetentionPeriod      time.Duration
+	eventPruningInterval      time.Duration
+	historyPruner             Pruner
+	garbageCollection         GarbageCollectionConfig
+	gcGate                    *GCGate
+	blobGC                    *BlobGarbageCollector
+	blobGCMu                  sync.Mutex
+	blobGCMetrics             *BlobGCMetrics
+	lastImportStore           *lastImportStore
+	lastImportTimeMaxAge      time.Duration
+	metrics                   *kvBackendMetrics
 
 	keyPathReconciliationDone <-chan struct{}
 
@@ -345,6 +347,10 @@ type KVBackendOptions struct {
 
 	DashboardVersionsToKeep int
 
+	// MigrationStatementTimeout overrides the Postgres statement_timeout for bulk import writes.
+	// Zero keeps the database or role setting.
+	MigrationStatementTimeout time.Duration
+
 	// Holder identifies this process for lease ownership. When empty, the
 	// backend generates a process-specific holder.
 	Holder string
@@ -369,18 +375,19 @@ type KVBackendOptions struct {
 // rather than only the one it was added to.
 func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 	return KVBackendOptions{
-		Holder:                  newLeaseHolder(cfg.InstanceID),
-		LeaseTTL:                cfg.KVLeaseTTL,
-		ResourceVersionMaxWait:  cfg.ResourceVersionMaxWait,
-		LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
-		EventRetentionPeriod:    cfg.EventRetentionPeriod,
-		EventPruningInterval:    cfg.EventPruningInterval,
-		SearchLookback:          cfg.SearchLookback,
-		WatchOptions:            WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
-		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
-		FastLatestKeyLookup:     cfg.FastLatestKeyLookupEnabled,
-		TenantWatcherConfig:     NewTenantWatcherConfig(cfg),
-		TenantDeleterConfig:     NewTenantDeleterConfig(cfg),
+		Holder:                    newLeaseHolder(cfg.InstanceID),
+		LeaseTTL:                  cfg.KVLeaseTTL,
+		ResourceVersionMaxWait:    cfg.ResourceVersionMaxWait,
+		LastImportTimeMaxAge:      cfg.MaxFileIndexAge,
+		EventRetentionPeriod:      cfg.EventRetentionPeriod,
+		EventPruningInterval:      cfg.EventPruningInterval,
+		SearchLookback:            cfg.SearchLookback,
+		WatchOptions:              WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
+		DashboardVersionsToKeep:   cfg.DashboardVersionsToKeep,
+		MigrationStatementTimeout: cfg.MigrationStatementTimeout,
+		FastLatestKeyLookup:       cfg.FastLatestKeyLookupEnabled,
+		TenantWatcherConfig:       NewTenantWatcherConfig(cfg),
+		TenantDeleterConfig:       NewTenantDeleterConfig(cfg),
 		// Callers that know better override this. Without a default, a wiring
 		// that forgets to set it runs garbage collection on every replica.
 		DisableStorageServices: !cfg.StorageServicesEnabled(),
@@ -490,6 +497,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		searchLookback:            opts.SearchLookback,
 		disableStorageServices:    opts.DisableStorageServices,
 		dashboardVersionsToKeep:   opts.DashboardVersionsToKeep,
+		migrationStatementTimeout: opts.MigrationStatementTimeout,
 		cancel:                    cancel,
 		metrics:                   metrics,
 	}
@@ -2977,6 +2985,83 @@ func (s *singleBulkRequestBatchIterator) RollbackRequested() bool {
 
 func (*kvStorageBackend) RequiresBulkPreflight() {}
 
+// clearCollectionForImport deletes a collection's events and history before a bulk import, each in
+// its own step, and returns how many history rows it had.
+func (b *kvStorageBackend) clearCollectionForImport(ctx context.Context, key *resourcepb.ResourceKey) (int64, error) {
+	if err := b.inBulkStep(ctx, func(ctx context.Context) error {
+		return b.deleteCollectionEvents(ctx, key)
+	}); err != nil {
+		return 0, err
+	}
+	var previous int64
+	err := b.inBulkStep(ctx, func(ctx context.Context) error {
+		var err error
+		previous, err = b.deleteCollectionHistory(ctx, key)
+		return err
+	})
+	return previous, err
+}
+
+func (b *kvStorageBackend) deleteCollectionEvents(ctx context.Context, key *resourcepb.ResourceKey) error {
+	events := make([]string, 0)
+	for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
+		if err != nil {
+			return fmt.Errorf("failed to list event: %w", err)
+		}
+
+		evtKey, err := ParseEventKey(evtKeyStr)
+		if err != nil {
+			return fmt.Errorf("error parsing event key: %w", err)
+		}
+
+		if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
+			continue
+		}
+
+		events = append(events, evtKeyStr)
+	}
+
+	if err := b.eventStore.batchDelete(ctx, events); err != nil {
+		return fmt.Errorf("failed to delete events: %w", err)
+	}
+	return nil
+}
+
+func (b *kvStorageBackend) deleteCollectionHistory(ctx context.Context, key *resourcepb.ResourceKey) (int64, error) {
+	historyKeys := make([]DataKey, 0)
+	for dataKey, err := range b.dataStore.Keys(ctx, ListRequestKey{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+	}, SortOrderAsc) {
+		if err != nil {
+			return 0, fmt.Errorf("failed to list collection before delete: %w", err)
+		}
+
+		historyKeys = append(historyKeys, dataKey)
+	}
+
+	if err := b.dataStore.BatchDelete(ctx, historyKeys); err != nil {
+		return 0, fmt.Errorf("failed to delete collection: %w", err)
+	}
+	return int64(len(historyKeys)), nil
+}
+
+// statementTimeoutKV is a KV store that can run a step under a per-transaction statement timeout.
+type statementTimeoutKV interface {
+	WithStatementTimeout(ctx context.Context, d time.Duration, fn func(context.Context) error) error
+}
+
+// inBulkStep runs one bulk import write step under the migration statement timeout, when one is set
+// and the store supports it. Without it the step's statements get the database default.
+func (b *kvStorageBackend) inBulkStep(ctx context.Context, fn func(context.Context) error) error {
+	store, ok := b.kv.(statementTimeoutKV)
+	if b.migrationStatementTimeout <= 0 || !ok {
+		return fn(ctx)
+	}
+	return store.WithStatementTimeout(ctx, b.migrationStatementTimeout, fn)
+}
+
 //nolint:gocyclo
 func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ProcessBulk")
@@ -3018,45 +3103,9 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 
 	for _, key := range setting.Collection {
-		events := make([]string, 0)
-		for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
-			if err != nil {
-				return nil, reportError(err, "failed to list event")
-			}
-
-			evtKey, err := ParseEventKey(evtKeyStr)
-			if err != nil {
-				return nil, reportError(err, "error parsing event key")
-			}
-
-			if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
-				continue
-			}
-
-			events = append(events, evtKeyStr)
-		}
-
-		if err := b.eventStore.batchDelete(ctx, events); err != nil {
-			return nil, reportError(err, "failed to delete events")
-		}
-
-		historyKeys := make([]DataKey, 0)
-
-		for dataKey, err := range b.dataStore.Keys(ctx, ListRequestKey{
-			Namespace: key.Namespace,
-			Group:     key.Group,
-			Resource:  key.Resource,
-		}, SortOrderAsc) {
-			if err != nil {
-				return nil, reportError(err, "failed to list collection before delete")
-			}
-
-			historyKeys = append(historyKeys, dataKey)
-		}
-
-		previousCount := int64(len(historyKeys))
-		if err := b.dataStore.BatchDelete(ctx, historyKeys); err != nil {
-			return nil, reportError(err, "failed to delete collection")
+		previousCount, err := b.clearCollectionForImport(ctx, key)
+		if err != nil {
+			return nil, reportError(err, "failed to clear collection before import")
 		}
 
 		summary := &resourcepb.BulkResponse_Summary{
@@ -3075,7 +3124,9 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		defer cancel()
 
 		// we don't have transactions in the kv store, so we simply delete everything we created
-		err = b.dataStore.BatchDelete(rollbackCtx, saved)
+		err = b.inBulkStep(rollbackCtx, func(ctx context.Context) error {
+			return b.dataStore.BatchDelete(ctx, saved)
+		})
 		if err != nil {
 			b.log.Error("failed to delete during rollback", "error", err)
 		}
@@ -3201,7 +3252,12 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			batchRows = append(batchRows, importRow)
 		}
 
-		usedBatchWriter, err := b.dataStore.insertDataImportBatch(ctx, batchRows)
+		var usedBatchWriter bool
+		err := b.inBulkStep(ctx, func(ctx context.Context) error {
+			var err error
+			usedBatchWriter, err = b.dataStore.insertDataImportBatch(ctx, batchRows)
+			return err
+		})
 		if err != nil {
 			rollback()
 			return nil, fmt.Errorf("failed to save resource batch: %w", err)
@@ -3237,9 +3293,11 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	var lastImportErr error
 	now := time.Now()
 	for nsr := range updatedResources {
-		err := b.lastImportStore.Save(ctx, ResourceLastImportTime{
-			NamespacedResource: nsr,
-			LastImportTime:     now,
+		err := b.inBulkStep(ctx, func(ctx context.Context) error {
+			return b.lastImportStore.Save(ctx, ResourceLastImportTime{
+				NamespacedResource: nsr,
+				LastImportTime:     now,
+			})
 		})
 		if err != nil {
 			lastImportErr = reportError(err, "failed to save last import time for resource %s", nsr.String())

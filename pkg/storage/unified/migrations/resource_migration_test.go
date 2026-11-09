@@ -3,6 +3,7 @@ package migrations
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -142,6 +143,57 @@ func assertNotRenamed(t *testing.T, engine *xorm.Engine, table string) {
 
 func noopLocker() *tableLockerMock {
 	return &tableLockerMock{unlockFunc: func(context.Context) error { return nil }}
+}
+
+var errStopAfterLock = errors.New("stop after lock")
+
+// sessionLocker inspects the migration session when tables are locked, then ends the run.
+type sessionLocker struct {
+	inspect func(*xorm.Session)
+}
+
+func (l *sessionLocker) LockMigrationTables(_ context.Context, sess *xorm.Session, _ []string) (func(context.Context) error, error) {
+	l.inspect(sess)
+	return nil, errStopAfterLock
+}
+
+func TestIntegrationRun_Postgres_SetsStatementTimeoutOnSession(t *testing.T) {
+	if !db.IsTestDbPostgres() {
+		t.Skip("Postgres-only")
+	}
+	env := newTestEnv(t)
+
+	cfg := setting.NewCfg()
+	cfg.MigrationStatementTimeout = 15 * time.Minute
+	var inside string
+	locker := &sessionLocker{inspect: func(sess *xorm.Session) {
+		_, err := sess.SQL("SHOW statement_timeout").Get(&inside)
+		require.NoError(t, err)
+	}}
+	runner, _ := newRunnerCfg(t, cfg, locker, &transactionalTableRenamer{log: logger}, testDef(dummyGR(), []string{"dashboard"}, nil))
+
+	mg := migrator.NewMigrator(env.engine, setting.NewCfg())
+	sess := env.engine.NewSession()
+	defer sess.Close()
+	require.NoError(t, sess.Begin())
+	err := runner.Run(t.Context(), sess, mg, RunOptions{DriverName: migrator.Postgres})
+	require.ErrorIs(t, err, errStopAfterLock)
+	require.Equal(t, "15min", inside, "table locks and validators run on the migration session")
+	require.NoError(t, sess.Rollback())
+
+	var after string
+	_, err = env.engine.SQL("SHOW statement_timeout").Get(&after)
+	require.NoError(t, err)
+	require.NotEqual(t, "15min", after, "the override ends with the migration transaction")
+}
+
+func TestMigrationRunnerStatementTimeoutIsPostgresOnly(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.MigrationStatementTimeout = time.Minute
+	runner, _ := newRunnerCfg(t, cfg, noopLocker(), &transactionalTableRenamer{log: logger}, testDef(dummyGR(), nil, nil))
+	require.Equal(t, time.Minute, runner.statementTimeout(RunOptions{DriverName: migrator.Postgres}))
+	require.Zero(t, runner.statementTimeout(RunOptions{DriverName: migrator.MySQL}))
+	require.Zero(t, runner.statementTimeout(RunOptions{DriverName: migrator.SQLite}))
 }
 
 func TestIntegrationRun_Postgres_LocksOnSession(t *testing.T) {
