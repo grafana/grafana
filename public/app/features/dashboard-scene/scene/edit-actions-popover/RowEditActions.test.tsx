@@ -39,9 +39,9 @@ function renderRowEditActions() {
 describe.each([
   { enabled: false, state: 'disabled' },
   { enabled: true, state: 'enabled' },
-])('<RowEditActionsWrapper /> with grafana.panelActionsPopover $state', ({ enabled }) => {
+])('<RowEditActionsWrapper /> with grafana.dashboardSidebarExplicitOpen $state', ({ enabled }) => {
   beforeEach(() => {
-    setTestFlags({ 'grafana.panelActionsPopover': enabled });
+    setTestFlags({ 'grafana.dashboardSidebarExplicitOpen': enabled });
     jest.useFakeTimers();
     jest.spyOn(window, 'matchMedia').mockImplementation((query) => ({
       matches: true,

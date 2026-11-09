@@ -1,7 +1,7 @@
 import { type JSX, useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
-import { useFlagGrafanaPanelActionsPopover } from '@grafana/runtime/internal';
+import { useFlagGrafanaDashboardSidebarExplicitOpen } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -78,13 +78,13 @@ export function TabEditActionsWrapper({
 }) {
   const theme = useTheme2();
   const isPopoverSupported = useHoverPopoverSupported();
-  const panelActionsPopover = useFlagGrafanaPanelActionsPopover();
+  const sidebarExplicitOpen = useFlagGrafanaDashboardSidebarExplicitOpen();
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
 
   return (
     <EditActionsPopover
       content={<TabEditActions tab={tab} />}
-      disabled={!panelActionsPopover || disabled || !isPopoverSupported}
+      disabled={!sidebarExplicitOpen || disabled || !isPopoverSupported}
       placement="top-end"
       portalRoot={getPortalRoot}
       zIndex={theme.zIndex.dropdown}

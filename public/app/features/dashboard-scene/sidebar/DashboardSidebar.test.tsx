@@ -5,14 +5,14 @@ import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
-  type MultiValueVariable,
-  type SceneObject,
   SceneGridLayout,
   SceneTimeRange,
   SceneVariableSet,
   StateCommittedEvent,
   TestVariable,
   VizPanel,
+  type MultiValueVariable,
+  type SceneObject,
 } from '@grafana/scenes';
 import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
@@ -1691,8 +1691,8 @@ function buildPopoverSelectionScene() {
 describe.each([
   { enabled: false, state: 'disabled' },
   { enabled: true, state: 'enabled' },
-])('DashboardSidebar with grafana.panelActionsPopover $state', ({ enabled }) => {
-  testWithFlags({ 'grafana.panelActionsPopover': enabled });
+])('DashboardSidebar with grafana.dashboardSidebarExplicitOpen $state', ({ enabled }) => {
+  testWithFlags({ 'grafana.dashboardSidebarExplicitOpen': enabled });
 
   it.each(['panel', 'row', 'tab'] as const)(
     `when selecting a %s with the sidebar closed, settings ${enabled ? 'stay closed' : 'open'}`,
