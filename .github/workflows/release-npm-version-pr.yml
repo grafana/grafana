@@ -82,7 +82,7 @@ jobs:
           hardened-mode: 'true'
 
       - name: Version and generate changelogs
-        run: ./.github/workflows/scripts/version-and-changelog.sh "$RELEASE_GROUPS"
+        run: node scripts/release/version-and-changelog.ts "$RELEASE_GROUPS"
 
       - name: Describe the release
         id: describe
