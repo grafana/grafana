@@ -141,6 +141,25 @@ func (aq *AlertQuery) IsHysteresisExpression() (bool, error) {
 	return expr.IsHysteresisExpression(aq.modelProps), nil
 }
 
+// ThresholdReferenceVar returns the RefID of the query this threshold expression reads from. ok is false
+// if aq is not a threshold expression, or its model has no "expression" field. Like IsHysteresisExpression,
+// but unlike it, this also checks the datasource UID itself, so a regular data source query whose model
+// coincidentally has a matching "type" field is never mistaken for a threshold expression. Returns error if
+// the Model is not a valid JSON.
+func (aq *AlertQuery) ThresholdReferenceVar() (value string, ok bool, err error) {
+	if isExpr, _ := aq.IsExpression(); !isExpr {
+		return "", false, nil
+	}
+	if aq.modelProps == nil {
+		err := aq.setModelProps()
+		if err != nil {
+			return "", false, err
+		}
+	}
+	v, ok := expr.ThresholdReferenceVar(aq.modelProps)
+	return v, ok, nil
+}
+
 // PatchHysteresisExpression updates the AlertQuery to include loaded metrics into hysteresis
 func (aq *AlertQuery) PatchHysteresisExpression(loadedMetrics map[data.Fingerprint]struct{}) error {
 	if aq.modelProps == nil {

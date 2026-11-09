@@ -13,6 +13,7 @@ import (
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search"
 	index "github.com/blevesearch/bleve_index_api"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -594,6 +596,281 @@ func TestGlobalIndexFolderTreeSearchEndsAtALoop(t *testing.T) {
 	assert.ElementsMatch(t, []string{"loop-a", "loop-b", "dash-a"}, searchFolderTree(t, index, "loop-a"))
 }
 
+// folderAccessClient allows everything but the folders it names.
+type folderAccessClient struct {
+	denied       map[string]bool
+	folderErrors map[string]error
+	// Fails batch checks of folders alone, which only folder paths send: the
+	// results' checks include other types.
+	failFolders bool
+}
+
+func (c *folderAccessClient) allowed(resource, name string) bool {
+	return resource != folderResource || !c.denied[name]
+}
+
+func (c *folderAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: c.allowed(req.Resource, req.Name)}, nil
+}
+
+func (c *folderAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(name, _ string) bool { return c.allowed(req.Resource, name) }, authlib.NoopZookie{}, nil
+}
+
+func (c *folderAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	if c.failFolders && !slices.ContainsFunc(req.Checks, func(check authlib.BatchCheckItem) bool { return check.Resource != folderResource }) {
+		return authlib.BatchCheckResponse{}, errors.New("authz unavailable")
+	}
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, check := range req.Checks {
+		result := authlib.BatchCheckResult{Allowed: c.allowed(check.Resource, check.Name)}
+		if check.Resource == folderResource && c.folderErrors[check.Name] != nil {
+			result.Allowed = false
+			result.Error = c.folderErrors[check.Name]
+		}
+		results[check.CorrelationID] = result
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
+}
+
+// searchFolderPaths searches everything, returning the fields named, and gives
+// each folder path as its folders from the top down: "name:title", or "name!"
+// for a detached one.
+func searchFolderPaths(t *testing.T, index resource.ResourceIndex, access authlib.AccessClient, fields ...string) map[string][]string {
+	t.Helper()
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
+	rsp, err := index.Search(ctx, access, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "default"}},
+		Fields:  fields,
+		Limit:   100,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, rsp.Error)
+	require.NotEmpty(t, rsp.Rows)
+	if rsp.FolderPaths == nil {
+		return nil
+	}
+	paths := make(map[string][]string, len(rsp.FolderPaths))
+	for name, path := range rsp.FolderPaths {
+		folders := []string{}
+		for _, f := range path.Folders {
+			if f.Detached {
+				require.Empty(t, f.Title, "a detached folder is named only")
+				folders = append(folders, f.Name+"!")
+			} else {
+				folders = append(folders, f.Name+":"+f.Title)
+			}
+		}
+		paths[name] = folders
+	}
+	return paths
+}
+
+// A global search returns folder paths from the top down, ending with each
+// result's folder. Like the folder API's parents, the nearest unreadable or
+// missing folder comes first, named only and detached, with nothing above it.
+func TestGlobalSearchReturnsFolderPaths(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	key := resource.GlobalSearchKey("default")
+	index, err := backend.BuildIndex(t.Context(), key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			folderTreeDoc(key, "folders", "top", ""),
+			folderTreeDoc(key, "folders", "mid", "top"),
+			folderTreeDoc(key, "folders", "leaf", "mid"),
+			folderTreeDoc(key, "folders", "hidden", "top"),
+			folderTreeDoc(key, "folders", "below-hidden", "hidden"),
+			folderTreeDoc(key, "folders", "orphan", "missing"),
+			folderTreeDoc(key, "folders", "loop-a", "loop-b"),
+			folderTreeDoc(key, "folders", "loop-b", "loop-a"),
+			folderTreeDoc(key, "dashboards", "dash-leaf", "leaf"),
+			folderTreeDoc(key, "dashboards", "dash-root", ""),
+			folderTreeDoc(key, "dashboards", "dash-general", "general"),
+			folderTreeDoc(key, "dashboards", "dash-below-hidden", "below-hidden"),
+		}})
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	access := &folderAccessClient{denied: map[string]bool{"hidden": true}}
+
+	assert.Equal(t, map[string][]string{
+		"top":          {"top:top"},
+		"mid":          {"top:top", "mid:mid"},
+		"leaf":         {"top:top", "mid:mid", "leaf:leaf"},
+		"hidden":       {"hidden!"},
+		"below-hidden": {"hidden!", "below-hidden:below-hidden"},
+		"missing":      {"missing!"},
+		"loop-a":       {"loop-b:loop-b", "loop-a:loop-a"},
+		"loop-b":       {"loop-a:loop-a", "loop-b:loop-b"},
+	}, searchFolderPaths(t, index, access, resource.SEARCH_FIELD_FOLDER), "no path for the root, however it is named")
+
+	assert.Nil(t, searchFolderPaths(t, index, access, resource.SEARCH_FIELD_TITLE),
+		"without the folder field the paths cannot be matched to the results")
+
+	// Paths follow renames and moves at once.
+	renamed := folderTreeDoc(key, "folders", "mid", "")
+	renamed.Doc.Title = "Mid"
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{renamed}}))
+	assert.Equal(t, []string{"mid:Mid", "leaf:leaf"}, searchFolderPaths(t, index, access, resource.SEARCH_FIELD_FOLDER)["leaf"])
+
+	assert.Nil(t, searchFolderPaths(t, index, &folderAccessClient{failFolders: true}, resource.SEARCH_FIELD_FOLDER),
+		"a failed folder check leaves the paths out, not the results")
+}
+
+// An unavailable ancestor must detach only the paths that pass through it.
+func TestGlobalSearchFolderPathsDetachUnavailableAncestors(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		cached       bool
+		deleteFolder bool
+		folderError  error
+	}{
+		{
+			// Authorization may still allow a deleted UID, so index existence must bound the path.
+			name:         "deleted before tree load",
+			deleteFolder: true,
+		},
+		{
+			// A cached tree must not retain the deleted folder's ancestors.
+			name:         "deleted after tree load",
+			cached:       true,
+			deleteFolder: true,
+		},
+		{
+			// One failed folder check must leave unrelated paths available.
+			name:        "folder check error",
+			folderError: errors.New("folder check failed"),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend, _ := setupBleveBackend(t)
+			key := resource.GlobalSearchKey("default")
+			index := buildFolderTreeIndex(t, backend, key,
+				folderTreeDoc(key, "folders", "top", ""),
+				folderTreeDoc(key, "folders", "mid", "top"),
+				folderTreeDoc(key, "folders", "leaf", "mid"),
+				folderTreeDoc(key, "folders", "other", "top"),
+				folderTreeDoc(key, "dashboards", "dash-mid", "mid"),
+				folderTreeDoc(key, "dashboards", "dash-leaf", "leaf"),
+				folderTreeDoc(key, "dashboards", "dash-other", "other"),
+			)
+			access := &folderAccessClient{folderErrors: map[string]error{"mid": tc.folderError}}
+			if tc.cached {
+				require.Equal(t, []string{"top:top", "mid:mid", "leaf:leaf"},
+					searchFolderPaths(t, index, access, resource.SEARCH_FIELD_FOLDER)["leaf"])
+			}
+
+			if tc.deleteFolder {
+				require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+					Action: resource.ActionDelete,
+					Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: folderGroup, Resource: folderResource, Name: "mid"},
+				}}}))
+			}
+
+			assert.Equal(t, map[string][]string{
+				"mid":   {"mid!"},
+				"leaf":  {"mid!", "leaf:leaf"},
+				"top":   {"top:top"},
+				"other": {"top:top", "other:other"},
+			}, searchFolderPaths(t, index, access, resource.SEARCH_FIELD_FOLDER))
+		})
+	}
+}
+
+// verbAccessClient reads everything. Of the other verbs it allows update in the
+// folder "team" and set_permissions on the object named "cpu", and it fails any
+// batch that checks set_permissions on folders, as when the calling service may
+// not check that on the caller's behalf.
+type verbAccessClient struct{}
+
+func (verbAccessClient) allowed(c authlib.BatchCheckItem) bool {
+	switch c.Verb {
+	case utils.VerbGet:
+		return true
+	case utils.VerbUpdate:
+		return c.Folder == "team"
+	case utils.VerbSetPermissions:
+		return c.Name == "cpu"
+	}
+	return false
+}
+
+func (verbAccessClient) Check(context.Context, authlib.AuthInfo, authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: true}, nil
+}
+
+func (verbAccessClient) Compile(context.Context, authlib.AuthInfo, authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(string, string) bool { return true }, authlib.NoopZookie{}, nil
+}
+
+func (c verbAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, check := range req.Checks {
+		if check.Resource == folderResource && check.Verb == utils.VerbSetPermissions {
+			return authlib.BatchCheckResponse{}, errors.New("the service may not check this on the caller's behalf")
+		}
+		// A playlist has no folder, so it must be checked without one.
+		if check.Resource == "playlists" && check.Folder != "" {
+			return authlib.BatchCheckResponse{}, fmt.Errorf("playlist %s checked in folder %q", check.Name, check.Folder)
+		}
+		results[check.CorrelationID] = authlib.BatchCheckResult{Allowed: c.allowed(authlib.BatchCheckItem{Verb: check.Verb, Name: check.Name, Folder: check.Folder})}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
+}
+
+// A search can say, for each returned row, whether the caller may update,
+// delete or set permissions on it. Each row is checked in its own folder, even
+// when the search does not return the folder field, and a verb that cannot be
+// checked for a type is left out rather than answered no.
+func TestSearchReturnsRowAccess(t *testing.T) {
+	// Both authorization paths build the rows differently.
+	t.Run("in-searcher authz", func(t *testing.T) { testSearchReturnsRowAccess(t) })
+	t.Run("post-rank authz", func(t *testing.T) { testSearchReturnsRowAccess(t, withPostRankAuthzEnabled()) })
+}
+
+func testSearchReturnsRowAccess(t *testing.T, options ...setupOption) {
+	backend, _ := setupBleveBackend(t, options...)
+	key := resource.GlobalSearchKey("default")
+	index := buildFolderTreeIndex(t, backend, key,
+		folderTreeDoc(key, "folders", "top", ""),
+		folderTreeDoc(key, "folders", "team", "top"),
+		folderTreeDoc(key, "dashboards", "cpu", "team"),
+		folderTreeDoc(key, "dashboards", "memory", "top"),
+		// Of a type that has no folders: checked without one, like its reads.
+		folderTreeDoc(key, "playlists", "tv", ""),
+	)
+	fields := []string{resource.SEARCH_FIELD_TITLE}
+	search := func(verbs ...string) map[string]map[string]bool {
+		ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
+		rsp, err := index.Search(ctx, verbAccessClient{}, &resourcepb.ResourceSearchRequest{
+			Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "default"}},
+			Fields:      fields,
+			Limit:       100,
+			AccessVerbs: verbs,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		access := map[string]map[string]bool{}
+		for _, row := range rsp.Rows {
+			access[row.Key.Resource+"/"+row.Key.Name] = row.Access
+		}
+		return access
+	}
+
+	want := map[string]map[string]bool{
+		"dashboards/cpu":    {"update": true, "delete": false, "set_permissions": true},
+		"dashboards/memory": {"update": false, "delete": false, "set_permissions": false},
+		"folders/team":      {"update": false, "delete": false},
+		"folders/top":       {"update": false, "delete": false},
+		"playlists/tv":      {"update": false, "delete": false, "set_permissions": false},
+	}
+	require.Equal(t, want, search(utils.VerbUpdate, utils.VerbDelete, utils.VerbSetPermissions))
+	fields = []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_FOLDER}
+	require.Equal(t, want, search(utils.VerbUpdate, utils.VerbDelete, utils.VerbSetPermissions), "with the folders the search returned")
+
+	require.Equal(t, map[string]map[string]bool{
+		"dashboards/cpu": nil, "dashboards/memory": nil, "folders/team": nil, "folders/top": nil, "playlists/tv": nil,
+	}, search(), "nothing is checked unless asked")
+}
+
 // The tree is read from the index, so an index reopened from disk answers too.
 func TestGlobalIndexFolderTreeSurvivesReopening(t *testing.T) {
 	dir := t.TempDir()
@@ -626,7 +903,7 @@ func TestPerResourceIndexRequiresFolderIndexForTreeSearches(t *testing.T) {
 	index, err := backend.BuildIndex(t.Context(), key, 1, "test", func(resource.ResourceIndex) (int64, error) { return 1, nil }, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
-	rsp, err := index.Search(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"}), NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+	_, err = index.Search(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"}), NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{Namespace: "default", Group: key.Group, Resource: key.Resource},
 			Fields: []*resourcepb.Requirement{{
@@ -635,9 +912,9 @@ func TestPerResourceIndexRequiresFolderIndexForTreeSearches(t *testing.T) {
 		},
 		Limit: 10,
 	}, nil, nil)
-	require.NoError(t, err)
-	require.NotNil(t, rsp.Error)
-	assert.Equal(t, int32(400), rsp.Error.Code)
+	rspErr := resourceutil.ErrorResultFromGRPCDetails(err)
+	require.NotNil(t, rspErr)
+	assert.Equal(t, int32(400), rspErr.Code)
 }
 
 func buildFolderTreeIndex(t *testing.T, backend *bleveBackend, key resource.NamespacedResource, items ...*resource.BulkIndexItem) *bleveIndex {
@@ -759,9 +1036,8 @@ func TestPerResourceFolderTreeUsesCurrentFolderIndex(t *testing.T) {
 	}, nil, true, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	rsp, err = search(folders)
-	require.NoError(t, err)
-	require.NotNil(t, rsp.Error)
-	assert.Contains(t, rsp.Error.Message, bleve.ErrorIndexClosed.Error())
+	require.Nil(t, rsp)
+	assert.Contains(t, resourceutil.ErrorResultFromGRPCDetails(err).GetMessage(), bleve.ErrorIndexClosed.Error())
 	rsp, err = search(current)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
@@ -1004,8 +1280,8 @@ func TestFolderTreeSearchOperators(t *testing.T) {
 	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
-	search := func(operator string, values ...string) *resourcepb.ResourceSearchResponse {
-		rsp, err := index.Search(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"}),
+	search := func(operator string, values ...string) (*resourcepb.ResourceSearchResponse, error) {
+		return index.Search(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"}),
 			NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true}), &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{
 					Key:    &resourcepb.ResourceKey{Namespace: "default"},
@@ -1013,15 +1289,13 @@ func TestFolderTreeSearchOperators(t *testing.T) {
 				},
 				Limit: 10,
 			}, nil, nil)
-		require.NoError(t, err)
-		return rsp
 	}
 
-	rsp := search(string(selection.Equals), "top")
-	require.Nil(t, rsp.Error)
+	rsp, err := search(string(selection.Equals), "top")
+	require.NoError(t, err)
 	assert.Len(t, rsp.Rows, 1)
-	rsp = search(string(selection.Equals), "general")
-	require.Nil(t, rsp.Error)
+	rsp, err = search(string(selection.Equals), "general")
+	require.NoError(t, err)
 	assert.Len(t, rsp.Rows, 2, "everything is below the top")
 
 	for _, tc := range []struct {
@@ -1032,9 +1306,9 @@ func TestFolderTreeSearchOperators(t *testing.T) {
 		{string(selection.DoubleEquals), []string{"top", "other"}},
 		{string(selection.NotIn), []string{"top"}},
 	} {
-		rsp := search(tc.operator, tc.values...)
-		require.NotNil(t, rsp.Error, "%s %v", tc.operator, tc.values)
-		assert.Equal(t, int32(400), rsp.Error.Code)
+		rsp, err := search(tc.operator, tc.values...)
+		require.Nil(t, rsp, "%s %v", tc.operator, tc.values)
+		assert.Equal(t, int32(400), resourceutil.ErrorResultFromGRPCDetails(err).GetCode())
 	}
 }
 

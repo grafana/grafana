@@ -107,7 +107,8 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 			return nil, err
 		}
 	}
-	targets, err := s.prepareHybridTargets(ctx, req, keys)
+	phaseCtx := withHybridPhaseObserver(ctx, s.vectorMetrics)
+	targets, err := s.prepareHybridTargets(phaseCtx, req, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +118,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 			return nil, err
 		}
 	}
-	candidates, err := s.hybridSearchCandidates(ctx, user, req, targets, semanticQuery, hybridFetchDepth(limit))
+	candidates, err := s.hybridSearchCandidates(phaseCtx, user, req, targets, semanticQuery, hybridFetchDepth(limit))
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +127,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		results = interleaveHybridCandidates(candidates)
 	}
 	if !req.SkipRerank {
-		results, err = s.rerankHybridResults(ctx, semanticQuery, results, req.MinRelevance)
+		results, err = s.rerankHybridResults(phaseCtx, semanticQuery, results, req.MinRelevance)
 		if err != nil {
 			return nil, err
 		}
@@ -158,9 +159,11 @@ func (s *searchServer) checkAllowedReadService(user types.AuthInfo, group, resou
 }
 
 type hybridTarget struct {
-	key        *resourcepb.ResourceKey
-	collection vector.Collection
-	kind       string
+	key              *resourcepb.ResourceKey
+	collection       vector.Collection
+	storageNamespace string
+	shared           bool
+	kind             string
 }
 
 type hybridCandidates struct {
@@ -168,37 +171,49 @@ type hybridCandidates struct {
 	results  []*resourcepb.HybridSearchResult
 	lexUIDs  map[string]struct{}
 	external bool
+	shared   bool
 }
 
 func (s *searchServer) prepareHybridTargets(ctx context.Context, req *resourcepb.HybridSearchRequest, keys []*resourcepb.ResourceKey) ([]hybridTarget, error) {
 	targets := make([]hybridTarget, len(keys))
 	for i, key := range keys {
-		var coll vector.Collection
-		if s.embedder != nil && s.vectorBackend != nil {
-			var allowed bool
-			var err error
-			coll, allowed, err = s.resolveAllowedCollection(ctx, key.Group, key.Resource)
+		target := hybridTarget{key: key, storageNamespace: key.Namespace}
+		sharedConfigured := s.sharedCollectionAllowlist.Allows(vector.Collection{Group: key.Group, Resource: key.Resource, IsExternal: true})
+		if s.vectorBackend != nil {
+			resolved, allowed, err := s.resolveAllowedCollection(ctx, key.Namespace, key.Group, key.Resource)
 			if err != nil {
 				return nil, s.grpcStatusError(ctx, "hybrid search: resolve collection", err)
 			}
 			if !allowed {
-				return nil, status.Error(codes.NotFound, "collection not found")
+				if s.embedder != nil || sharedConfigured || resolved.collection.IsExternal || resolved.collection.Scope == vector.ScopeShared {
+					return nil, status.Error(codes.NotFound, "collection not found")
+				}
+			} else {
+				target.collection, target.storageNamespace, target.shared = resolved.collection, resolved.storageNamespace, resolved.shared
 			}
-			if coll.IsExternal && s.externalLexical == nil {
+		} else if sharedConfigured {
+			return nil, status.Error(codes.Unavailable, "shared collection backend unavailable")
+		}
+		if target.collection.IsExternal {
+			if s.externalLexical == nil {
 				return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
+			}
+			if s.embedder == nil || s.vectorBackend == nil {
+				return nil, status.Error(codes.Unavailable, "external hybrid search backend unavailable")
 			}
 		}
 		config := hybridSearchConfig{}
-		if !coll.IsExternal {
+		if !target.collection.IsExternal {
 			config = s.hybridSearchConfig.lookup(key.Group, key.Resource)
 		}
-		if req.RequireHybridEnabled && !coll.IsExternal && !config.enabled {
+		if req.RequireHybridEnabled && !target.collection.IsExternal && !config.enabled {
 			return nil, status.Errorf(codes.InvalidArgument, "hybrid search is not enabled for %s/%s", key.Group, key.Resource)
 		}
-		if err := validateHybridSearchFilters(req.Filters, key, coll.IsExternal); err != nil {
+		if err := validateHybridSearchFilters(req.Filters, key, target.collection.IsExternal); err != nil {
 			return nil, err
 		}
-		targets[i] = hybridTarget{key: key, collection: coll, kind: config.kind}
+		target.kind = config.kind
+		targets[i] = target
 	}
 	return targets, nil
 }
@@ -254,7 +269,7 @@ func (s *searchServer) hybridSearchCandidates(ctx context.Context, user types.Au
 		}
 		candidates[i] = hybridCandidates{
 			key: target.key, results: fuseRRF(target.key, lex[i], sem[i]),
-			lexUIDs: lexicalUIDSet(lex[i]), external: target.collection.IsExternal,
+			lexUIDs: lexicalUIDSet(lex[i]), external: target.collection.IsExternal, shared: target.shared,
 		}
 	}
 	trace.SpanFromContext(ctx).SetAttributes(attribute.Int("lexical_results_truncated", lexicalResultsTruncated))
@@ -277,7 +292,7 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 				}
 			}
 		})
-		if err := searchCallError(lexResp, err); err != nil {
+		if err := searchCallError(err); err != nil {
 			return nil, fmt.Errorf("lexical leg: %w", err)
 		}
 		hits, err := lexicalHitsFromResponse(lexResp)
@@ -287,14 +302,17 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 		return hits, nil
 	}
 
-	hits, err := s.externalLexical.LexicalSearch(ctx, vector.LexicalQuery{
-		Namespace: key.Namespace,
+	lexicalQuery := vector.LexicalQuery{
+		Namespace: target.storageNamespace,
 		Model:     s.embedder.Model,
 		Resource:  coll.PartitionKey,
 		Query:     req.Query,
 		Limit:     depth,
 		Filters:   filters,
-	})
+	}
+	lexicalStart := hybridPhaseStart(ctx)
+	hits, err := s.externalLexical.LexicalSearch(ctx, lexicalQuery)
+	observeHybridPhase(ctx, "database", lexicalStart, err)
 	if err != nil {
 		return nil, fmt.Errorf("lexical leg: %w", err)
 	}
@@ -302,7 +320,7 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 	for i, h := range hits {
 		items[i] = vector.VectorSearchResult{UID: h.UID, Folder: h.Folder}
 	}
-	allowed, err := s.batchCheckVectorSearchResults(ctx, user, key, items)
+	allowed, err := s.authorizeVectorSearchResults(ctx, user, key, target.shared, items)
 	if err != nil {
 		return nil, fmt.Errorf("authz batch check: %w", err)
 	}
@@ -326,13 +344,15 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 // hybridSemanticLeg filters vector hits using the target resource's authorization.
 func (s *searchServer) hybridSemanticLeg(ctx context.Context, user types.AuthInfo, target hybridTarget, dense []float32, depth int, filters []vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	key, coll := target.key, target.collection
+	searchStart := hybridPhaseStart(ctx)
 	results, err := s.vectorBackend.Search(ctx,
-		key.Namespace, s.embedder.Model, coll.PartitionKey,
+		target.storageNamespace, s.embedder.Model, coll.PartitionKey,
 		dense, depth, filters...)
+	observeHybridPhase(ctx, "database", searchStart, err)
 	if err != nil {
 		return nil, fmt.Errorf("vector backend: %w", err)
 	}
-	allowed, err := s.batchCheckVectorSearchResults(ctx, user, key, results)
+	allowed, err := s.authorizeVectorSearchResults(ctx, user, key, target.shared, results)
 	if err != nil {
 		return nil, fmt.Errorf("authz batch check: %w", err)
 	}
@@ -380,7 +400,7 @@ func (s *searchServer) resolveSemanticMetadata(ctx context.Context, key *resourc
 		Fields:       []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_TAGS},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := searchCallError(resp, err); err != nil {
+	if err := searchCallError(err); err != nil {
 		s.log.Warn("hybrid search: semantic metadata resolution failed", "err", err)
 		return
 	}
@@ -441,7 +461,7 @@ func (s *searchServer) resolveFolderTitles(ctx context.Context, namespace string
 		Fields:       []string{SEARCH_FIELD_TITLE},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := searchCallError(resp, err); err != nil {
+	if err := searchCallError(err); err != nil {
 		s.log.Warn("hybrid search: folder title resolution failed", "err", err)
 		return
 	}
@@ -461,22 +481,49 @@ func (s *searchServer) resolveFolderTitles(ctx context.Context, namespace string
 	}
 }
 
-// resolveAllowedCollection is the shared vector-entry guard for
-// VectorSearch and HybridSearch. Unprovisioned and config-disallowed
-// collections are deliberately indistinguishable (allowed=false for
-// both) so callers can't probe which collections exist.
-func (s *searchServer) resolveAllowedCollection(ctx context.Context, group, resource string) (vector.Collection, bool, error) {
+// resolvedReadTarget separates the caller namespace from the collection's storage scope.
+type resolvedReadTarget struct {
+	collection       vector.Collection
+	storageNamespace string
+	shared           bool
+}
+
+// resolveAllowedCollection verifies catalog scope against trusted enrollment.
+func (s *searchServer) resolveAllowedCollection(ctx context.Context, namespace, group, resource string) (resolvedReadTarget, bool, error) {
+	resolveStart := hybridPhaseStart(ctx)
 	coll, found, err := s.vectorBackend.ResolveCollection(ctx, group, resource)
+	observeHybridPhase(ctx, "database", resolveStart, err)
 	if err != nil {
-		return vector.Collection{}, false, err
+		return resolvedReadTarget{}, false, err
 	}
-	if !found || !s.collectionAllowlist.Allows(coll) {
-		return coll, false, nil
+	if !found {
+		return resolvedReadTarget{}, false, nil
 	}
-	if !coll.IsExternal && s.embeddingBuilders != nil {
-		return coll, s.embeddingBuilders.Has(group, resource), nil
+	shared := s.sharedCollectionAllowlist.Allows(vector.Collection{Group: group, Resource: resource, IsExternal: true})
+	tenant := s.collectionAllowlist.Allows(coll)
+	if shared && s.collectionAllowlist.AllowsInternalOrExternal(group, resource) {
+		s.log.Error("search: overlapping collection enrollment", "group", group, "resource", resource)
+		return resolvedReadTarget{}, false, status.Error(codes.Internal, "invalid collection enrollment")
 	}
-	return coll, true, nil
+	unsupportedCatalogScope := coll.Scope != vector.ScopeTenant && coll.Scope != vector.ScopeShared
+	internalSharedCollection := coll.Scope == vector.ScopeShared && !coll.IsExternal
+	sharedEnrollmentWithoutSharedScope := shared && coll.Scope != vector.ScopeShared
+	tenantEnrollmentWithoutTenantScope := tenant && coll.Scope != vector.ScopeTenant
+	if unsupportedCatalogScope || internalSharedCollection || sharedEnrollmentWithoutSharedScope || tenantEnrollmentWithoutTenantScope {
+		s.log.Error("search: collection policy mismatch", "group", group, "resource", resource, "scope", coll.Scope, "external", coll.IsExternal)
+		return resolvedReadTarget{}, false, status.Error(codes.Internal, "collection policy mismatch")
+	}
+	if !shared && !tenant {
+		return resolvedReadTarget{collection: coll}, false, nil
+	}
+	if !coll.IsExternal && s.embeddingBuilders != nil && !s.embeddingBuilders.Has(group, resource) {
+		return resolvedReadTarget{}, false, nil
+	}
+	storageNamespace := namespace
+	if shared {
+		storageNamespace = vector.SharedNamespace
+	}
+	return resolvedReadTarget{collection: coll, storageNamespace: storageNamespace, shared: shared}, true, nil
 }
 
 func (s *searchServer) grpcStatusError(ctx context.Context, op string, err error) error {
@@ -509,13 +556,13 @@ func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
 	}
 }
 
-// searchCallError maps an ErrorResult — embedded in the response or attached
-// to a grpc error's details — to a single error, so either form yields
-// the same code. The result replaces the grpc error rather than joining
-// it, which would let the grpc status win status.Code.
-func searchCallError(resp *resourcepb.ResourceSearchResponse, err error) error {
+// searchCallError maps an ErrorResult attached to a grpc error's details
+// through grpcErrorFromErrorResult, so every in-process search failure
+// yields the same code. The result replaces the grpc error rather than
+// joining it, which would let the grpc status win status.Code.
+func searchCallError(err error) error {
 	if err == nil {
-		return grpcErrorFromErrorResult(resp.GetError())
+		return nil
 	}
 	if res := resourceutil.ErrorResultFromGRPCDetails(err); res != nil {
 		return grpcErrorFromErrorResult(res)
@@ -555,7 +602,9 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 	}
 	trace.SpanFromContext(ctx).SetAttributes(attribute.Int("lexical_rerank_texts_truncated", lexicalRerankTextsTruncated))
 
+	scoreStart := hybridPhaseStart(ctx)
 	scores, err := s.reranker.Score(ctx, query, texts)
+	observeHybridPhase(ctx, "reranking", scoreStart, err)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, status.FromContextError(ctx.Err()).Err()

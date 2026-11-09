@@ -3,6 +3,7 @@ package setting
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"slices"
 	"strings"
@@ -232,12 +233,12 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
 	cfg.MigrationChunkedWrites = section.Key("migration_chunked_writes").MustBool(false)
 	cfg.MigrationChunkMaxBytes = section.Key("migration_chunk_max_bytes").MustInt64(256 * 1024 * 1024)
+	cfg.MigrationStatementTimeout = postgresStatementTimeout(section.Key("migration_statement_timeout").MustDuration(0))
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
 	cfg.UnifiedStorageAuthzExemptionEnabled = section.Key("authz_exemption_enabled").MustBool(false)
 	cfg.UnifiedStorageAuthzExemptResources = parseCommaSeparatedList(section.Key("authz_exempt_resources").String())
 	cfg.HybridSearchDefaultResources = parseCommaSeparatedList(section.Key("hybrid_search_default_resources").String())
-	cfg.UnifiedStorageGRPCErrorResultToStatus = section.Key("grpc_error_result_to_status").MustBool(false)
 	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
 	if cfg.SearchInjectFailuresPercent < 0 {
 		cfg.SearchInjectFailuresPercent = 0
@@ -358,6 +359,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
+	cfg.KeyPathReconciliationEnabled = section.Key("key_path_reconciliation_enabled").MustBool(true)
 	// TTL for per-resource write leases; 0 uses the backend default (10s).
 	cfg.KVLeaseTTL = section.Key("kv_lease_ttl").MustDuration(0)
 	if cfg.KVLeaseTTL > 0 && cfg.KVLeaseTTL < minimumKVLeaseTTL {
@@ -584,4 +586,14 @@ func (cfg *Cfg) EnableMode5(resource string) {
 	config.DualWriterMode = rest.Mode5
 	config.EnableMigration = true
 	cfg.UnifiedStorage[resource] = config
+}
+
+// postgresStatementTimeout keeps a positive timeout within what Postgres accepts: whole milliseconds up
+// to 2147483647. A larger value fails the SET at migration startup, and a sub-millisecond one would
+// become 0, which disables the timeout.
+func postgresStatementTimeout(d time.Duration) time.Duration {
+	if d <= 0 {
+		return 0
+	}
+	return min(max(d, time.Millisecond), math.MaxInt32*time.Millisecond)
 }

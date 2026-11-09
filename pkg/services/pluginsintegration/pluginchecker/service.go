@@ -8,7 +8,6 @@ import (
 	"github.com/Masterminds/semver"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
@@ -21,7 +20,6 @@ type PluginUpdateChecker interface {
 var _ PluginUpdateChecker = (*Service)(nil)
 
 type Service struct {
-	managedPluginsManager     managedplugins.Manager
 	provisionedPluginsManager provisionedplugins.Manager
 	pluginPreinstall          Preinstall
 	provisionedPlugins        []string
@@ -29,20 +27,14 @@ type Service struct {
 }
 
 func ProvideService(
-	managedPluginsManager managedplugins.Manager,
 	provisionedPluginsManager provisionedplugins.Manager,
 	pluginPreinstall Preinstall,
 ) *Service {
 	return &Service{
-		managedPluginsManager:     managedPluginsManager,
 		provisionedPluginsManager: provisionedPluginsManager,
 		pluginPreinstall:          pluginPreinstall,
 		log:                       log.New("plugin.updatechecker"),
 	}
-}
-
-func (s *Service) isManaged(ctx context.Context, pluginID string) bool {
-	return slices.Contains(s.managedPluginsManager.ManagedPlugins(ctx), pluginID)
 }
 
 func (s *Service) isProvisioned(ctx context.Context, pluginID string) bool {
@@ -62,11 +54,6 @@ func (s *Service) isProvisioned(ctx context.Context, pluginID string) bool {
 func (s *Service) IsUpdatable(ctx context.Context, plugin pluginstore.Plugin) bool {
 	if plugin.IsCorePlugin() {
 		s.log.Debug("Skipping core plugin", "plugin", plugin.ID)
-		return false
-	}
-
-	if s.isManaged(ctx, plugin.ID) {
-		s.log.Debug("Skipping managed plugin", "plugin", plugin.ID)
 		return false
 	}
 

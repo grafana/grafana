@@ -334,7 +334,7 @@ func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree
 		Text:       "Notebooks",
 		Id:         navtree.NavIDNotebooks,
 		SubTitle:   "Create and manage notebooks to tell a story with your data",
-		Icon:       "book",
+		Icon:       "gf-notebook",
 		SortWeight: navtree.WeightNotebooks,
 		Url:        s.cfg.AppSubURL + "/notebooks",
 	}

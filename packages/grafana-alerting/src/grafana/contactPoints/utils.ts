@@ -1,9 +1,7 @@
 import { countBy, isEmpty } from 'lodash';
 
 import { type ContactPoint, type Receiver } from '../api/notifications';
-
-// Annotation key that indicates whether a contact point can be used in routes and rules
-const CAN_USE_ANNOTATION = 'grafana.com/canUse';
+import { hasCanUseEnabled } from '../common/hasCanUseEnabled';
 
 /**
  * Minimal structural type that any k8s alerting entity satisfies.
@@ -22,8 +20,7 @@ type WithContactPointAnnotations = {
  * @returns `true` if the contact point can be used, `false` otherwise
  */
 export function isUsableContactPoint(contactPoint: ContactPoint | Receiver): boolean {
-  const canUse = contactPoint.metadata?.annotations?.[CAN_USE_ANNOTATION];
-  return canUse === 'true';
+  return hasCanUseEnabled(contactPoint);
 }
 
 /**

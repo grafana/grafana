@@ -1,6 +1,7 @@
 package setting
 
 import (
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -204,6 +205,33 @@ func TestSeededWatchesEnabled(t *testing.T) {
 	}
 }
 
+func TestKeyPathReconciliationEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured string
+		env        string
+		want       bool
+	}{
+		{name: "default on", want: true},
+		{name: "enabled", configured: "true", want: true},
+		{name: "disabled", configured: "false"},
+		{name: "environment enables", configured: "false", env: "true", want: true},
+		{name: "environment disables", configured: "true", env: "false"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.configured != "" {
+				cfg.Raw.Section("unified_storage").Key("key_path_reconciliation_enabled").SetValue(tc.configured)
+			}
+			if tc.env != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_KEY_PATH_RECONCILIATION_ENABLED", tc.env)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.KeyPathReconciliationEnabled)
+		})
+	}
+}
+
 func TestFastLatestKeyLookupEnabled(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
@@ -256,16 +284,6 @@ func TestGlobalSearchIndexStartupBuild(t *testing.T) {
 			require.Equal(t, tc.want, cfg.GlobalSearchIndexStartupBuild)
 		})
 	}
-}
-
-func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
-	cfg := NewCfg()
-	cfg.setUnifiedStorageConfig()
-	require.False(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
-
-	cfg.Raw.Section("unified_storage").Key("grpc_error_result_to_status").SetValue("true")
-	cfg.setUnifiedStorageConfig()
-	require.True(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
 }
 
 func TestSearchClientForwardAuthEnabled(t *testing.T) {
@@ -602,6 +620,30 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		assert.True(t, cfg.MigrationChunkedWrites)
 		assert.Equal(t, int64(134217728), cfg.MigrationChunkMaxBytes)
+	})
+
+	t.Run("migration statement timeout is kept within the Postgres range", func(t *testing.T) {
+		for _, tc := range []struct {
+			value string
+			want  time.Duration
+		}{
+			{"", 0},
+			{"15m", 15 * time.Minute},
+			{"1000h", math.MaxInt32 * time.Millisecond},
+			{"500us", time.Millisecond},
+			{"-5s", 0},
+		} {
+			t.Run(tc.value, func(t *testing.T) {
+				t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_STATEMENT_TIMEOUT", tc.value)
+				cfg := NewCfg()
+				err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+				assert.NoError(t, err)
+
+				cfg.setUnifiedStorageConfig()
+
+				assert.Equal(t, tc.want, cfg.MigrationStatementTimeout)
+			})
+		}
 	})
 
 	t.Run("vector_embedder bedrock config", func(t *testing.T) {

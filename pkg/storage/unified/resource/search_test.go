@@ -387,6 +387,9 @@ type mockSearchBackend struct {
 	// Skips the build function, as for an index reused from disk.
 	reusesFromDisk bool
 
+	// Recorded as the build time of every index this backend builds.
+	buildTime time.Time
+
 	mu                sync.Mutex
 	buildIndexCalls   []buildIndexCall
 	cache             map[NamespacedResource]ResourceIndex
@@ -404,8 +407,9 @@ func (m *mockSearchBackend) SnapshotCountThreshold() int64 {
 func (m *mockSearchBackend) RemoveExpiredTrash(context.Context) {}
 
 type buildIndexCall struct {
-	key  NamespacedResource
-	size int64
+	key            NamespacedResource
+	size           int64
+	lastImportTime time.Time
 }
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
@@ -492,7 +496,7 @@ func (m *mockSearchBackend) PeekIndex(key NamespacedResource) ResourceIndex {
 }
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration, _ BuildIndexOptions) (ResourceIndex, error) {
-	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: featuresForTestIndex(m.keepsDeletedDocuments)}}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: m.buildTime, Features: featuresForTestIndex(m.keepsDeletedDocuments)}}
 	m.mu.Lock()
 	m.lastUpdater = updater
 	m.mu.Unlock()
@@ -517,8 +521,9 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 	// Determine if this is an empty index based on size
 	// Empty indexes are characterized by size == 0
 	m.buildIndexCalls = append(m.buildIndexCalls, buildIndexCall{
-		key:  key,
-		size: size,
+		key:            key,
+		size:           size,
+		lastImportTime: lastImportTime,
 	})
 
 	return index, nil
@@ -593,6 +598,38 @@ func newInitialBuildTestServer(t *testing.T, backend *initialBuildTestBackend, s
 		}
 	})
 	return server
+}
+
+// A global index searched recently before a restart is reopened with its last
+// search, so its idle time carries on. One idle for longer than the timeout is
+// not reopened at all.
+func TestStartupKeepsGlobalIndexIdleTimeAcrossRestart(t *testing.T) {
+	recent := time.Now().Add(-time.Hour).Truncate(time.Millisecond)
+	var mu sync.Mutex
+	reopened := map[NamespacedResource]time.Time{}
+	backend := &initialBuildTestBackend{beforeBuild: func(_ context.Context, key NamespacedResource, options BuildIndexOptions) error {
+		mu.Lock()
+		defer mu.Unlock()
+		reopened[key] = options.LastSearchedAt
+		return nil
+	}}
+	backend.openIndexStats = []ResourceStats{
+		{NamespacedResource: dashboardType("ns"), Count: 1},
+		{NamespacedResource: GlobalSearchKey("recent"), Count: 1, LastSearchedAt: recent},
+		{NamespacedResource: GlobalSearchKey("idle"), Count: 1, LastSearchedAt: time.Now().Add(-7 * time.Hour)},
+		{NamespacedResource: GlobalSearchKey("unknown"), Count: 1},
+	}
+	server := newInitialBuildTestServer(t, backend, nil, 1)
+	server.globalIndexIdleTimeout = 6 * time.Hour
+	require.NoError(t, server.init(t.Context()))
+
+	mu.Lock()
+	defer mu.Unlock()
+	require.Equal(t, map[NamespacedResource]time.Time{
+		dashboardType("ns"):        {},
+		GlobalSearchKey("recent"):  recent,
+		GlobalSearchKey("unknown"): {},
+	}, reopened, "an older list without search times reopens global indexes as before")
 }
 
 func TestStartupBuildsDeferHeldLocksWithoutOccupyingWorker(t *testing.T) {
@@ -838,9 +875,8 @@ func TestBackgroundGlobalBuildsStartAfterBlockingIndexes(t *testing.T) {
 			Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: namespace, Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		require.NoError(t, err)
-		require.Equal(t, NewServiceUnavailableError("the global search index for this namespace is still being built"), rsp.Error,
-			"both queued and active global builds must return 503 without waiting")
+		require.Nil(t, rsp)
+		requireRPCError(t, err, NewServiceUnavailableError("the global search index for this namespace is still being built"))
 	}
 	close(releaseGlobals)
 	require.Eventually(t, func() bool {
@@ -1780,6 +1816,24 @@ func TestCombineBuildRequests(t *testing.T) {
 			expOK: true,
 			exp:   rebuildRequest{minBuildTime: now.Add(2 * time.Hour)},
 		},
+		"use max import time": {
+			a:     rebuildRequest{lastImportTime: now},
+			b:     rebuildRequest{lastImportTime: now.Add(time.Hour)},
+			expOK: true,
+			exp:   rebuildRequest{lastImportTime: now.Add(time.Hour)},
+		},
+		"preserve nonzero import time": {
+			a:     rebuildRequest{},
+			b:     rebuildRequest{lastImportTime: now},
+			expOK: true,
+			exp:   rebuildRequest{lastImportTime: now},
+		},
+		"merge build and import times independently": {
+			a:     rebuildRequest{minBuildTime: now.Add(time.Hour), lastImportTime: now},
+			b:     rebuildRequest{minBuildTime: now, lastImportTime: now.Add(time.Hour)},
+			expOK: true,
+			exp:   rebuildRequest{minBuildTime: now.Add(time.Hour), lastImportTime: now.Add(time.Hour)},
+		},
 		"use max version": {
 			a:     rebuildRequest{minBuildVersion: semver.MustParse("12.10.99")},
 			b:     rebuildRequest{minBuildVersion: semver.MustParse("10.15.20")},
@@ -2197,8 +2251,12 @@ func TestScanForIndexesToRebuildContinuesAfterImportTimeReadError(t *testing.T) 
 			require.Zero(t, storage.singleCalls, "a failed batch must not cause per-type reads")
 			queued := server.rebuildQueue.Elements()
 			if failBeforeRead {
-				require.Len(t, queued, 1, "age-based rebuilds still run without import times")
-				require.Equal(t, folderType("namespace"), queued[0].NamespacedResource)
+				keys := make([]NamespacedResource, 0, len(queued))
+				for _, req := range queued {
+					keys = append(keys, req.NamespacedResource)
+				}
+				require.ElementsMatch(t, []NamespacedResource{GlobalSearchKey("namespace"), folderType("namespace")}, keys,
+					"age-based rebuilds still run without import times")
 			} else {
 				require.Len(t, queued, 3, "available import times still trigger both kinds of index rebuild")
 			}
@@ -2251,6 +2309,8 @@ func TestFindIndexesForRebuild(t *testing.T) {
 			{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 			{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 			{Namespace: "resource-newer-version", Group: "group", Resource: "folder"},
+			GlobalSearchKey("global-2h"),
+			GlobalSearchKey("global-10h"),
 
 			// We report this index as open, but it's really not. This can happen if index expires between the call
 			// to GetOpenIndexes and the call to PeekIndex.
@@ -2307,6 +2367,16 @@ func TestFindIndexesForRebuild(t *testing.T) {
 			{Namespace: "resource-newer-version", Group: "group", Resource: "folder"}: &MockResourceIndex{
 				buildInfo: IndexBuildInfo{BuildTime: now, BuildVersion: semver.MustParse("7.0.0")},
 			},
+
+			// Not rebuilt: a global index follows the default max age (5h), not the dashboard one.
+			GlobalSearchKey("global-2h"): &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), BuildVersion: semver.MustParse("6.0.0"), SearchFieldsHash: GlobalSearchFieldsHash()},
+			},
+
+			// To be rebuilt because of minTime
+			GlobalSearchKey("global-10h"): &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now.Add(-10 * time.Hour), BuildVersion: semver.MustParse("6.0.0"), SearchFieldsHash: GlobalSearchFieldsHash()},
+			},
 		},
 	}
 
@@ -2339,7 +2409,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	}
 
 	support.findIndexesToRebuild(importTimes, nil, now, false)
-	require.Equal(t, 8, support.rebuildQueue.Len())
+	require.Equal(t, 9, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
@@ -2347,7 +2417,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
 	support.findIndexesToRebuild(importTimes, nil, now5m, false)
 	require.Zero(t, search.getIndexCalls, "rebuild inspection must not refresh index idle timestamps")
-	require.Equal(t, 8, support.rebuildQueue.Len())
+	require.Equal(t, 9, support.rebuildQueue.Len())
 
 	// Values that we expect to find in rebuild requests.
 	minBuildVersion := semver.MustParse("5.5.5")
@@ -2368,10 +2438,15 @@ func TestFindIndexesForRebuild(t *testing.T) {
 
 		// Index built by newer version than running (7.0.0 > 6.5.0)
 		{NamespacedResource: NamespacedResource{Namespace: "resource-newer-version", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
+
+		{NamespacedResource: GlobalSearchKey("global-10h"), minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
 	}
 	// None of these kinds declares fields, so the standard fields' hash is expected.
 	for i := range expected {
 		expected[i].expectedSearchFieldsHash = StandardSearchFieldsHash()
+		if expected[i].IsGlobal() {
+			expected[i].expectedSearchFieldsHash = GlobalSearchFieldsHash()
+		}
 	}
 	if diff := cmp.Diff(expected, vals, cmpopts.IgnoreFields(rebuildRequest{}, "completeChannels"), cmp.AllowUnexported(rebuildRequest{})); diff != "" {
 		t.Errorf("rebuildQueue mismatch (-want +got):\n%s", diff)
@@ -2661,12 +2736,12 @@ func TestRebuildIndexesRejectsStaleIndexAfterFailedRebuild(t *testing.T) {
 		Namespace: key.Namespace,
 		Keys:      []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
 	}
+	// The rebuild was attempted, but the partial count is not returned with the error.
 	rsp, err := support.RebuildIndexes(t.Context(), request)
-	require.NoError(t, err)
-	require.Equal(t, int64(1), rsp.RebuildCount)
+	require.Nil(t, rsp)
 	require.Equal(t, int32(1), search.buildCalls.Load())
-	require.Empty(t, rsp.BuildTimes)
-	require.ErrorContains(t, ErrorFromResponse(rsp.GetError(), nil), "not built after last import")
+	require.Equal(t, codes.Internal, status.Code(err))
+	require.Contains(t, rpcErrorResult(t, err).Message, "not built after last import")
 }
 
 func TestRebuildIndexesForResource(t *testing.T) {
@@ -2713,8 +2788,8 @@ func TestRebuildIndexesForResource(t *testing.T) {
 			Resource:  key.Resource,
 		}}}
 	rsp, err := support.RebuildIndexes(t.Context(), rebuildReq)
-	require.NoError(t, err)
-	require.Equal(t, "key namespace does not match request namespace", rsp.Error.Message)
+	require.Nil(t, rsp)
+	requireRPCError(t, err, NewBadRequestError("key namespace does not match request namespace"))
 
 	rebuildReq.Namespace = key.Namespace
 
@@ -2739,9 +2814,11 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		LastImportTime:     time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
 	}}
 
+	search.buildTime = time.Date(2026, 1, 2, 12, 0, 0, 0, time.UTC)
 	rsp, err = support.RebuildIndexes(t.Context(), rebuildReq)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rsp.RebuildCount)
+	require.Len(t, rsp.BuildTimes, 1)
 
 	// rebuild waited for rebuild queue to process
 	require.Equal(t, 0, support.rebuildQueue.Len())
@@ -2822,14 +2899,13 @@ func TestSearchUsesRequestScopedFolderIndex(t *testing.T) {
 				req.Federated = []*resourcepb.ResourceKey{{Namespace: folderKey.Namespace, Group: folderKey.Group, Resource: folderKey.Resource}}
 			}
 			rsp, err := s.searchIndex(t.Context(), NewSearchStats("test"), req, tc.primary, nil)
-			require.NoError(t, err)
 			if tc.refreshError {
-				require.NotNil(t, rsp.Error)
-				require.Contains(t, rsp.Error.Message, "folder refresh failed")
+				require.Nil(t, rsp)
+				require.Contains(t, rpcErrorResult(t, err).Message, "folder refresh failed")
 				require.Nil(t, primary.req, "a failed folder refresh must prevent searching")
 				return
 			}
-			require.Nil(t, rsp.Error)
+			require.NoError(t, err)
 			require.Same(t, req, primary.req)
 			if tc.wantFolder {
 				require.Same(t, folderIndex, primary.indexes.Folders)
@@ -2901,11 +2977,37 @@ func TestSearchRejectsInvalidFolderTreeBeforeResolvingIndexes(t *testing.T) {
 				IsDeleted:    tc.deleted,
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			})
-			require.NoError(t, err)
-			require.NotNil(t, rsp.Error)
-			require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+			require.Nil(t, rsp)
+			require.Equal(t, int32(http.StatusBadRequest), rpcErrorResult(t, err).Code)
 			require.Zero(t, backend.getIndexCalls)
 			require.Empty(t, backend.buildIndexCalls)
+		})
+	}
+}
+
+// Only verbs a row can be checked for are accepted, and not where rows come from
+// another index or trash, whose checks differ.
+func TestValidateAccessVerbs(t *testing.T) {
+	for name, tc := range map[string]struct {
+		req     *resourcepb.ResourceSearchRequest
+		wantErr bool
+	}{
+		"none":            {req: &resourcepb.ResourceSearchRequest{}},
+		"supported verbs": {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update", "delete", "set_permissions"}}},
+		"unknown verb":    {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update", "get"}}, wantErr: true},
+		"deleted":         {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update"}, IsDeleted: true}, wantErr: true},
+		"federated": {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update"}, Federated: []*resourcepb.ResourceKey{
+			{Group: "folder.grafana.app", Resource: "folders"},
+		}}, wantErr: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			err := ValidateAccessVerbs(tc.req)
+			if tc.wantErr {
+				require.NotNil(t, err)
+				require.Equal(t, int32(http.StatusBadRequest), err.Code)
+			} else {
+				require.Nil(t, err)
+			}
 		})
 	}
 }
@@ -2937,11 +3039,10 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 			Limit:        -100,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
-		rsp, err := support.Search(context.Background(), req)
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
-		require.Equal(t, "limit cannot be negative", rsp.Error.Message)
+		_, err := support.Search(context.Background(), req)
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, http.StatusBadRequest, int(rspErr.Code))
+		require.Equal(t, "limit cannot be negative", rspErr.Message)
 	})
 
 	t.Run("negative offset returns error", func(t *testing.T) {
@@ -2957,11 +3058,10 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 			Offset:       -50,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
-		rsp, err := support.Search(context.Background(), req)
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
-		require.Equal(t, "offset cannot be negative", rsp.Error.Message)
+		_, err := support.Search(context.Background(), req)
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, http.StatusBadRequest, int(rspErr.Code))
+		require.Equal(t, "offset cannot be negative", rspErr.Message)
 	})
 }
 
@@ -3003,11 +3103,10 @@ func TestSearchRejectsFederatedTrashQueries(t *testing.T) {
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
-	rsp, err := support.Search(context.Background(), req)
-	require.NoError(t, err)
-	require.NotNil(t, rsp.Error)
-	require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
-	require.Equal(t, "searching deleted resources does not support federated queries", rsp.Error.Message)
+	_, err = support.Search(context.Background(), req)
+	rspErr := rpcErrorResult(t, err)
+	require.Equal(t, http.StatusBadRequest, int(rspErr.Code))
+	require.Equal(t, "searching deleted resources does not support federated queries", rspErr.Message)
 
 	backend.mu.Lock()
 	defer backend.mu.Unlock()
@@ -3161,6 +3260,7 @@ func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
 	firstReq := rebuildRequest{
 		NamespacedResource: key,
 		minBuildTime:       time.Now().Add(-1 * time.Hour),
+		lastImportTime:     time.Now().Add(-time.Hour),
 		completeChannels:   []chan<- struct{}{firstDone},
 	}
 	firstReturned := make(chan struct{})
@@ -3197,6 +3297,7 @@ func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
 		req := rebuildRequest{
 			NamespacedResource: key,
 			minBuildTime:       mbt,
+			lastImportTime:     mbt,
 			completeChannels:   []chan<- struct{}{deferredChans[i]},
 		}
 		returned := make(chan struct{})
@@ -3260,9 +3361,25 @@ func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
 		"follow-up should carry the strictest minBuildTime; got %v want %v",
 		req.minBuildTime, latestMinBuildTime)
 
+	require.Equal(t, latestMinBuildTime, req.lastImportTime)
+
 	// Still only one BuildIndex call: the deferred follow-up has been
 	// enqueued but no worker is running in this test to pick it up.
 	require.Equal(t, int32(1), search.buildCalls.Load())
+
+	req, err = support.rebuildQueue.Next(t.Context())
+	require.NoError(t, err)
+	support.rebuildIndex(t.Context(), req)
+	require.Len(t, search.buildIndexCalls, 2)
+	require.Equal(t, firstReq.lastImportTime, search.buildIndexCalls[0].lastImportTime)
+	require.Equal(t, latestMinBuildTime, search.buildIndexCalls[1].lastImportTime)
+	for _, ch := range deferredChans {
+		select {
+		case <-ch:
+		default:
+			t.Fatal("completion channel should be closed after the follow-up rebuild")
+		}
+	}
 }
 
 // TestRebuildIndexNoFollowUpWhenNotInFlight verifies the happy path: a single
@@ -3289,9 +3406,11 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 	require.NoError(t, err)
 
 	done := make(chan struct{})
+	lastImportTime := time.Now().Add(-30 * time.Minute)
 	support.rebuildIndex(t.Context(), rebuildRequest{
 		NamespacedResource: key,
 		minBuildTime:       time.Now().Add(-1 * time.Hour),
+		lastImportTime:     lastImportTime,
 		completeChannels:   []chan<- struct{}{done},
 	})
 
@@ -3308,6 +3427,7 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 	require.Equal(t, 0, support.rebuildQueue.Len(), "no follow-up should be re-enqueued")
 	require.Len(t, search.buildIndexCalls, 1)
 	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
+	require.Equal(t, lastImportTime, search.buildIndexCalls[0].lastImportTime)
 	require.Zero(t, storage.statsCalls.Load(), "rebuild should use the current index doc count instead of GetResourceStats")
 }
 

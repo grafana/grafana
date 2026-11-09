@@ -14,11 +14,12 @@ import { ShowModalReactEvent } from 'app/types/events';
 import { type FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
 
+import { useMoveFolders } from '../../../../api/clients/folder/v1beta1/hooks';
 import {
-  useDeleteMultipleFoldersMutationFacade,
-  useMoveMultipleFoldersMutationFacade,
-} from '../../../../api/clients/folder/v1beta1/hooks';
-import { useDeleteDashboardsMutation, useMoveDashboardsMutation } from '../../api/browseDashboardsAPI';
+  useDeleteDashboardsMutation,
+  useDeleteFoldersMutation,
+  useMoveDashboardsMutation,
+} from '../../api/browseDashboardsAPI';
 import { useActionSelectionState, useHasSelection } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { type DashboardTreeSelection } from '../../types';
@@ -52,8 +53,8 @@ export function BrowseActions({ folderDTO }: Props) {
   const hasSelection = useHasSelection();
   const selectedItems = useActionSelectionState();
   const [deleteDashboards] = useDeleteDashboardsMutation();
-  const deleteFolders = useDeleteMultipleFoldersMutationFacade();
-  const [moveFolders] = useMoveMultipleFoldersMutationFacade();
+  const [deleteFolders] = useDeleteFoldersMutation();
+  const [moveFolders] = useMoveFolders();
   const [moveDashboards] = useMoveDashboardsMutation();
   const [, stateManager] = useSearchStateManager();
   const provisioningEnabled = config.provisioningEnabled;
