@@ -8,6 +8,7 @@ export function clearDefaultQuery(panel: VizPanel) {
   const runner = getQueryRunnerFor(panel);
   const queries = runner?.state.queries;
   if (queries?.length === 1 && isDefaultQuery(queries[0])) {
-    runner?.setState(getEmptyQueryRunnerState());
+    runner.cancelQuery();
+    runner.setState({ ...getEmptyQueryRunnerState(), data: undefined });
   }
 }
