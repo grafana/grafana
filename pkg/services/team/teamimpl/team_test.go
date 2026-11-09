@@ -185,69 +185,6 @@ func TestGetUserTeamMembershipsByUIDRouting(t *testing.T) {
 	}
 }
 
-type teamByIDStore struct {
-	store
-	calls int
-}
-
-func (s *teamByIDStore) GetByID(_ context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	s.calls++
-	return &team.TeamDTO{ID: query.ID, UID: "legacy-team"}, nil
-}
-
-func TestGetTeamByIDRouting(t *testing.T) {
-	client := newStackRedirectClient(t)
-	k8sTeam := &team.TeamDTO{ID: 1, UID: "k8s-team"}
-
-	tests := []struct {
-		name         string
-		targetingKey string
-		ctx          context.Context
-		wantLegacy   bool
-	}{
-		{
-			name:         "redirect reads through k8s without the users API",
-			targetingKey: "enabled",
-			ctx:          context.Background(),
-		},
-		{
-			name:         "background service calls read legacy SQL",
-			targetingKey: "enabled",
-			ctx:          identity.WithServiceIdentityContext(context.Background(), 1),
-			wantLegacy:   true,
-		},
-		{
-			name:         "reads legacy SQL without the redirect",
-			targetingKey: "disabled",
-			ctx:          context.Background(),
-			wantLegacy:   true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			legacyStore := &teamByIDStore{}
-			service := &Service{
-				openFeatureClient: client,
-				iamFeatures:       iamapi.Features{},
-				k8sService:        &teamtest.FakeService{ExpectedTeamDTO: k8sTeam},
-				legacyService:     &LegacyService{store: legacyStore, tracer: tracing.InitializeTracerForTest()},
-			}
-			ctx := openfeature.WithTransactionContext(tt.ctx, openfeature.NewEvaluationContext(tt.targetingKey, nil))
-
-			got, err := service.GetTeamByID(ctx, &team.GetTeamByIDQuery{OrgID: 1, ID: 1})
-			require.NoError(t, err)
-			if tt.wantLegacy {
-				require.Equal(t, "legacy-team", got.UID)
-				require.Equal(t, 1, legacyStore.calls)
-			} else {
-				require.Equal(t, k8sTeam, got)
-				require.Zero(t, legacyStore.calls)
-			}
-		})
-	}
-}
-
 type stackRedirectProvider struct {
 	openfeature.NoopProvider
 }

@@ -99,9 +99,8 @@ func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery)
 	return s.legacyService.SearchTeams(ctx, query)
 }
 
-// GetTeamByID needs no k8s users resource, so the teams redirect alone routes it to k8s.
 func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	if s.isK8sRedirectFlagEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+	if s.isK8sRedirectEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
 		return s.k8sService.GetTeamByID(ctx, query)
 	}
 
@@ -196,7 +195,8 @@ func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int6
 
 // GetUserTeamMembershipsByUID doesn't fall back on k8s errors: unified storage may be
 // authoritative, so legacy SQL can be stale and callers would act on the wrong memberships.
-// Like the other lookups, background service calls read legacy SQL (see shouldFallbackToLegacy).
+// Like the other lookups, background service calls read legacy SQL (see shouldFallbackToLegacy),
+// which is only current while teams are in dual writer modes 0 to 3.
 func (s *Service) GetUserTeamMembershipsByUID(ctx context.Context, query *team.GetUserTeamMembershipsByUIDQuery) ([]team.UserTeamMembership, error) {
 	if s.isK8sRedirectFlagEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
 		return s.k8sService.GetUserTeamMembershipsByUID(ctx, query)
@@ -219,7 +219,9 @@ func (s *Service) RegisterDelete(renderer teamdelete.Renderer) {
 	s.legacyService.RegisterDelete(renderer)
 }
 
-// isK8sRedirectEnabled gates team operations on the k8s apiserver path.
+// isK8sRedirectEnabled gates team operations on the k8s apiserver path. Without the users API they
+// use legacy SQL, which is only current while teams are in dual writer modes 0 to 3, so teams in
+// modes 4 and 5 assume the users API is enabled.
 // FIXME: drop the UsersApi requirement once teamk8s no longer needs the k8s users resource for enrichment.
 func (s *Service) isK8sRedirectEnabled(ctx context.Context) bool {
 	return s.isK8sRedirectFlagEnabled(ctx) && s.iamFeatures.UsersAPI

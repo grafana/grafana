@@ -77,7 +77,7 @@ type TeamK8sService struct {
 var _ team.Service = (*TeamK8sService)(nil)
 
 // NewTeamK8sService relies on the k8s users resource for member enrichment;
-// teamimpl gates the redirect on kubernetesUsersApi, except for GetTeamByID and GetUserTeamMembershipsByUID.
+// teamimpl gates the redirect on kubernetesUsersApi, except for GetUserTeamMembershipsByUID.
 func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *TeamK8sService {
 	return &TeamK8sService{
 		logger:          logger,

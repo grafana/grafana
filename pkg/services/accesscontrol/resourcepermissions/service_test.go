@@ -875,10 +875,8 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	cfg := setting.NewCfg()
 	tracer := tracing.InitializeTracerForTest()
 
-	teamImpl, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracer, nil, iam.Features{})
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracer, nil, iam.Features{})
 	require.NoError(t, err)
-	// Teams are seeded in legacy SQL and no apiserver runs, so team lookups must not follow the redirect to k8s.
-	teamSvc := teamImpl.LegacySearchService()
 
 	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
