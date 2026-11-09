@@ -250,13 +250,9 @@ func TestListTrashWithSearchFallsBackWhenIndexCannotServeTrash(t *testing.T) {
 
 func TestListTrashWithSearchFallsBackFromRemoteUnavailableError(t *testing.T) {
 	ctx, metricsState := withRequestMetricsState(identity.WithServiceIdentityContext(context.Background(), 1))
-	searchErr := NewServiceUnavailableError("sorting trash by resource version is not available")
-	grpcStatus, err := status.New(codes.Unavailable, searchErr.Message).WithDetails(searchErr)
-	require.NoError(t, err)
-
 	backend := &trashBatchFakeBackend{listRV: 77}
 	s, searchClient := newSearchBackedTrashTestServer(nil, backend)
-	searchClient.err = grpcStatus.Err()
+	searchClient.err = status.Error(codes.Unavailable, "sorting trash by resource version is not available")
 
 	resp, err := s.List(ctx, trashListRequest())
 
