@@ -7,7 +7,7 @@ import { useTableAdoption } from './useTableAdoption';
 
 jest.mock('@grafana/runtime', () => ({ reportInteraction: jest.fn() }));
 
-it('reports first usable view and changed state, without duplicate refresh or StrictMode events', () => {
+it('reports usable view and changed state, without duplicate refresh or StrictMode events', () => {
   const availability = {
     column_management_available: true,
     filtering_available: true,
@@ -27,7 +27,6 @@ it('reports first usable view and changed state, without duplicate refresh or St
   rerender({ hasData: true, enabled: false });
   expect(reportInteraction).toHaveBeenLastCalledWith('grafana_table_viewed_features', {
     ...availability,
-    first_view: true,
   });
   rerender({ hasData: false, enabled: false });
   rerender({ hasData: true, enabled: false });
@@ -36,7 +35,6 @@ it('reports first usable view and changed state, without duplicate refresh or St
   expect(reportInteraction).toHaveBeenLastCalledWith('grafana_table_viewed_features', {
     ...availability,
     zebra_striping_enabled: true,
-    first_view: false,
   });
   expect(reportInteraction).toHaveBeenCalledTimes(2);
 });

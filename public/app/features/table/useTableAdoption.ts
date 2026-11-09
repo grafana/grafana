@@ -18,7 +18,6 @@ export function useTableAdoption(hasData: boolean, availability: TableAvailabili
     if (hasData && state !== previous.current) {
       reportInteraction('grafana_table_viewed_features', {
         ...JSON.parse(state),
-        first_view: previous.current === undefined,
       });
       previous.current = state;
     }
