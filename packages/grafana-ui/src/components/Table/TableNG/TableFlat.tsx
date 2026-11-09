@@ -204,6 +204,17 @@ export function TableFlat(props: TableNGProps) {
     [preparedFields, columnOrder]
   );
 
+  // Also filter controlled data during the render before its transformed frame arrives.
+  const displayedFields = useMemo(
+    () => filterFieldsByHiddenColumns(orderedVisibleFields, hiddenColumns),
+    [orderedVisibleFields, hiddenColumns]
+  );
+  // The order the grid header actually renders in: display order minus hidden.
+  const displayedRawFields = useMemo(
+    () => filterFieldsByHiddenColumns(orderFieldsByDisplayNames(visibleFields, columnOrder), hiddenColumns),
+    [visibleFields, columnOrder, hiddenColumns]
+  );
+
   const resizeHandler = useColumnResize(onColumnResize);
 
   const frameToRecords = useRowCompiler(data);
@@ -222,23 +233,20 @@ export function TableFlat(props: TableNGProps) {
   const canHideAnotherColumn =
     (columnCatalog ?? preparedFields.map(getDisplayName)).filter((name) => !hiddenColumns.has(name)).length > 1;
 
+  // Column index to focus in the header row after a hide-column re-render.
+  // Set by handleHideColumn; consumed and cleared by the effect near gridRef
+  // (below) so the grid has already re-rendered without the hidden column.
+  const [pendingHeaderFocusIdx, setPendingHeaderFocusIdx] = useState<number | null>(null);
+
   // Shared state updates for hiding a column; no focus management. Used by
   // both the header menu (which then also moves focus) and the sidebar
   // (which must keep focus on the sidebar checkbox the user clicked).
   const hideColumnStateUpdates = useCallback(
     (displayName: string) => {
       setHiddenColumns(new Set(hiddenColumns).add(displayName));
-      setFilter((current) => {
-        if (!(displayName in current)) {
-          return current;
-        }
-        const next = { ...current };
-        delete next[displayName];
-        return next;
-      });
       setSortColumns((current) => current.filter((sort) => sort.columnKey !== displayName));
     },
-    [hiddenColumns, setFilter, setHiddenColumns, setSortColumns]
+    [hiddenColumns, setHiddenColumns, setSortColumns]
   );
 
   const handleHideColumn = useCallback(
@@ -250,9 +258,10 @@ export function TableFlat(props: TableNGProps) {
       // Determine which visible column should receive focus after this one is
       // hidden: the next sibling, or the previous one when hiding the last.
       // Without this the unmounted header cell's focus falls to <body> and the
-      // next Tab restarts from the top of the page.
-      const catalog = columnCatalog ?? preparedFields.map(getDisplayName);
-      const visibleBefore = catalog.filter((name) => !hiddenColumns.has(name));
+      // next Tab restarts from the top of the page. Derive the index from the
+      // columns the grid actually renders (display order), not the catalog, so
+      // a manual reorder or a catalog-only column cannot shift it.
+      const visibleBefore = displayedRawFields.map(getDisplayName);
       const hideIdx = visibleBefore.indexOf(displayName);
 
       hideColumnStateUpdates(displayName);
@@ -263,7 +272,7 @@ export function TableFlat(props: TableNGProps) {
         setPendingHeaderFocusIdx(focusIdx);
       }
     },
-    [canHideAnotherColumn, hiddenColumns, columnCatalog, preparedFields, hideColumnStateUpdates]
+    [canHideAnotherColumn, displayedRawFields, hideColumnStateUpdates]
   );
 
   // Sidebar-driven visibility toggle: hides through the shared state updates
@@ -281,16 +290,6 @@ export function TableFlat(props: TableNGProps) {
       setHiddenColumns(next);
     },
     [canHideAnotherColumn, hideColumnStateUpdates, hiddenColumns, setHiddenColumns]
-  );
-
-  // Also filter controlled data during the render before its transformed frame arrives.
-  const displayedFields = useMemo(
-    () => filterFieldsByHiddenColumns(orderedVisibleFields, hiddenColumns),
-    [orderedVisibleFields, hiddenColumns]
-  );
-  const displayedRawFields = useMemo(
-    () => filterFieldsByHiddenColumns(orderFieldsByDisplayNames(visibleFields, columnOrder), hiddenColumns),
-    [visibleFields, columnOrder, hiddenColumns]
   );
 
   // Catalog-only columns were necessarily hideable.
@@ -311,10 +310,6 @@ export function TableFlat(props: TableNGProps) {
   const [sidebarFocusRequest, setSidebarFocusRequest] = useState(0);
   const columnSidebarOpener = useRef<string | null>(null);
 
-  // Column index to focus in the header row after a hide-column re-render.
-  // Set by handleHideColumn; consumed and cleared by the effect near gridRef
-  // (below) so the grid has already re-rendered without the hidden column.
-  const [pendingHeaderFocusIdx, setPendingHeaderFocusIdx] = useState<number | null>(null);
   const restoreFocusOnSidebarClose = useRef(false);
   const openColumnSidebar = useCallback((columnKey: string) => {
     columnSidebarOpener.current = columnKey;
@@ -387,9 +382,20 @@ export function TableFlat(props: TableNGProps) {
   // position. Runs after re-render (the hidden column's DOM is gone) so the
   // grid indices are current. Without this, the unmounted header cell drops
   // focus to <body> and the next Tab restarts from the top of the page.
+  //
+  // setActivePosition alone is not enough: when the active position already
+  // matches the target index (the common case when hiding the first column),
+  // the grid short-circuits on "same position" and never calls focus(), and
+  // with shouldFocus it only moves the roving tabindex. Focusing the rendered
+  // header cell directly is what keeps keyboard focus in the header row.
   useEffect(() => {
     if (pendingHeaderFocusIdx !== null && gridRef.current) {
-      gridRef.current.setActivePosition({ rowIdx: -1, idx: pendingHeaderFocusIdx });
+      gridRef.current.setActivePosition({ rowIdx: -1, idx: pendingHeaderFocusIdx }, { shouldFocus: true });
+      const grid = gridRef.current.element;
+      const header = grid?.querySelector<HTMLElement>(
+        `[role="columnheader"][aria-colindex="${pendingHeaderFocusIdx + 1}"]`
+      );
+      (header ?? grid)?.focus();
       setPendingHeaderFocusIdx(null);
     }
   }, [pendingHeaderFocusIdx]);
