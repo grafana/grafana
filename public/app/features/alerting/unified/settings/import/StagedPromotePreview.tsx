@@ -54,7 +54,7 @@ function MergePreview({ stats }: { stats: PromoteStatsSummary }) {
       </Text>
       {stats.receivers > 0 && (
         <MergeRow
-          icon="comment-alt"
+          icon="at"
           count={stats.receivers}
           noun={t('alerting.settings.import.promote.merge-contact-points', '', {
             count: stats.receivers,

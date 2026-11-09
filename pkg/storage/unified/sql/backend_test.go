@@ -1030,10 +1030,9 @@ func TestBackend_StorageDisabled(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTestStorageDisabled(t)
 
-		resp := b.ProcessBulk(ctx, resource.BulkSettings{}, nil)
-		require.NotNil(t, resp)
-		require.NotNil(t, resp.Error)
-		require.Contains(t, resp.Error.Message, "storage backend is not enabled")
+		resp, err := b.ProcessBulk(ctx, resource.BulkSettings{}, nil)
+		require.ErrorContains(t, err, "storage backend is not enabled")
+		require.Nil(t, resp)
 	})
 
 	t.Run("WatchWriteEvents returns error when storage is disabled", func(t *testing.T) {
