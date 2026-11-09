@@ -258,6 +258,32 @@ func TestInstallRegistrar_Register(t *testing.T) {
 			},
 		},
 		{
+			name: "updates plugin with an empty source",
+			install: &PluginInstall{
+				ID:      "plugin-1",
+				Version: "2.0.0",
+				Source:  SourcePluginStore,
+			},
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:       "org-1",
+					Name:            "plugin-1",
+					ResourceVersion: "12",
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation: "",
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "plugin-1",
+					Version: "1.0.0",
+				},
+			},
+			expectedUpdates: 1,
+			validateUpdate: func(t *testing.T, updated *pluginsv0alpha1.Plugin) {
+				require.Equal(t, SourcePluginStore, updated.Annotations[PluginInstallSourceAnnotation])
+			},
+		},
+		{
 			name: "returns error on unexpected get failure",
 			install: &PluginInstall{
 				ID:      "plugin-err",
@@ -1268,6 +1294,24 @@ func TestInstallRegistrar_SyncNamespace(t *testing.T) {
 		require.Empty(t, c.gets)
 		require.Zero(t, c.creates+c.updates+c.deletes)
 		require.Equal(t, float64(1), testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("register", "skipped"))-registerSkips)
+	})
+
+	t.Run("takes over a plugin with an empty source", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			[]pluginsv0alpha1.Plugin{newRecord("plugin-1", "plugin-1", "1.0.0", "")},
+			[]pluginsv0alpha1.Plugin{newRecord("plugin-1", "plugin-1", "2.0.0", SourcePluginStore)},
+		)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
+			{ID: "plugin-1", Version: "2.0.0", Source: SourcePluginStore},
+		}, nil)
+		require.NoError(t, err)
+		require.Equal(t, 2, c.lists)
+		require.Equal(t, []string{"plugin-1"}, c.gets)
+		require.Equal(t, 1, c.updates)
+		require.Zero(t, c.creates+c.deletes)
 	})
 
 	t.Run("re-lists after a write and keeps still-valid skips", func(t *testing.T) {
