@@ -12,6 +12,10 @@ import (
 )
 
 // QueryResponseCollector collects JSON protobuf chunks into an ordinary response.
+// A non-empty frameId identifies a logical frame within one refId, not a batch.
+// Producers must reuse that ID for all batches of the same frame, with schema
+// and metadata on the first batch and matching columns on continuations.
+// Distinct IDs remain separate frames even when their schemas are identical.
 type QueryResponseCollector struct {
 	responses backend.Responses
 	frames    map[string]map[string]*data.Frame

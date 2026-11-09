@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestCollectorPreservesSilentQueries(t *testing.T) {
@@ -71,13 +72,24 @@ func TestCollectorRejectsMalformedInitialFrame(t *testing.T) {
 }
 
 func TestAccumulatorPreservesStatusAfterFrames(t *testing.T) {
-	body := `{"refId":"A"}` + "\n" + `{"kind":"Status","status":"Failure","reason":"Forbidden","message":"bad query","code":403}` + "\n"
-	response, err := AccumulateJSONLines(strings.NewReader(body), "A", "B")
-	require.Nil(t, response)
-	var status *apierrors.StatusError
-	require.ErrorAs(t, err, &status)
-	require.EqualValues(t, 403, status.ErrStatus.Code)
-	require.Equal(t, "bad query", status.ErrStatus.Message)
+	for _, kind := range []string{"Status", ""} {
+		t.Run("kind="+kind, func(t *testing.T) {
+			frame, err := data.NewFrame("result", data.NewField("value", nil, []int64{1})).MarshalJSON()
+			require.NoError(t, err)
+			terminal, err := json.Marshal(metav1.Status{
+				TypeMeta: metav1.TypeMeta{Kind: kind}, Status: metav1.StatusFailure,
+				Reason: metav1.StatusReasonForbidden, Message: "bad query", Code: 403,
+			})
+			require.NoError(t, err)
+			body := `{"refId":"A","frameId":"0","frame":` + string(frame) + "}\n" + string(terminal) + "\n"
+			response, err := AccumulateJSONLines(strings.NewReader(body), "A", "B")
+			require.Nil(t, response)
+			var status *apierrors.StatusError
+			require.ErrorAs(t, err, &status)
+			require.EqualValues(t, 403, status.ErrStatus.Code)
+			require.Equal(t, "bad query", status.ErrStatus.Message)
+		})
+	}
 }
 
 type typedErrorRecorder struct {
@@ -105,4 +117,28 @@ func TestProcessTypedResponsePreservesSource(t *testing.T) {
 			require.Equal(t, backend.ErrorSourceDownstream, recorder.source)
 		})
 	}
+}
+
+// Identical schemas do not imply identical logical frames. Only the (refId,
+// frameId) pair determines where a continuation belongs, even if interleaved.
+func TestCollectorKeepsLogicalFrameIdentity(t *testing.T) {
+	collector := NewQueryResponseCollector("A", "B")
+	for _, chunk := range []struct {
+		refID, frameID string
+		value          int64
+	}{
+		{"A", "first", 1}, {"A", "second", 10}, {"B", "first", 100},
+		{"A", "first", 2}, {"A", "second", 20}, {"B", "first", 200},
+	} {
+		require.NoError(t, collector.WriteFrame(context.Background(), chunk.refID, chunk.frameID,
+			data.NewFrame("result", data.NewField("value", nil, []int64{chunk.value}))))
+	}
+	response := collector.Response()
+	require.Equal(t, data.Frames{
+		{Name: "result", RefID: "A", Fields: []*data.Field{data.NewField("value", nil, []int64{1, 2})}},
+		{Name: "result", RefID: "A", Fields: []*data.Field{data.NewField("value", nil, []int64{10, 20})}},
+	}, response.Responses["A"].Frames)
+	require.Equal(t, data.Frames{
+		{Name: "result", RefID: "B", Fields: []*data.Field{data.NewField("value", nil, []int64{100, 200})}},
+	}, response.Responses["B"].Frames)
 }

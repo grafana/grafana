@@ -26,12 +26,17 @@ func AccumulateJSONLines(reader io.Reader, refIDs ...string) (*backend.QueryData
 			return nil, fmt.Errorf("reading chunked datasource response: %w", err)
 		}
 		var header struct {
-			Kind string `json:"kind"`
+			Kind   string          `json:"kind"`
+			RefID  string          `json:"refId"`
+			Status json.RawMessage `json:"status"`
 		}
 		if err := json.Unmarshal(raw, &header); err != nil {
 			return nil, err
 		}
-		if header.Kind == "Status" {
+		// TypeMeta is optional when a Kubernetes Status is encoded directly.
+		// Recognize its string-valued failure status before decoding the numeric
+		// status of a query record, while keeping records with a refId separate.
+		if header.Kind == "Status" || (header.Kind == "" && header.RefID == "" && string(header.Status) == `"Failure"`) {
 			var status metav1.Status
 			if err := json.Unmarshal(raw, &status); err != nil {
 				return nil, err
