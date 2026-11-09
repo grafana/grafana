@@ -33,7 +33,10 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 
 	switch a.GetResource().Resource {
 	case dashboardV0.DASHBOARD_RESOURCE:
-		return b.mutateDashboard(ctx, a)
+		if err := b.mutateDashboard(ctx, a); err != nil {
+			return err
+		}
+		return b.lifecycle().Mutate(ctx, a)
 	// Reachability invariant: variable storage is always registered, but
 	// FlagGrafanaDashboardGlobalVariables is gated per request in GetAuthorizer.
 	// When the feature is disabled the authorizer denies the request (403)
