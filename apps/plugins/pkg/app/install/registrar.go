@@ -190,11 +190,12 @@ func hasDependencyParents(plugin *pluginsv0alpha1.Plugin) bool {
 }
 
 // ownedByOtherSource reports whether a record belongs to a source other than
-// source. Dependency records are the exception: installing the plugin
-// directly promotes them to the installing source.
+// source. A missing or empty source belongs to no one. Dependency records are
+// the exception: installing the plugin directly promotes them to the
+// installing source.
 func ownedByOtherSource(record *pluginsv0alpha1.Plugin, source Source) bool {
-	existingSource, ok := record.Annotations[PluginInstallSourceAnnotation]
-	return ok && existingSource != source && existingSource != SourceDependencyPlugin
+	existingSource := record.Annotations[PluginInstallSourceAnnotation]
+	return existingSource != "" && existingSource != source && existingSource != SourceDependencyPlugin
 }
 
 type InstallRegistrar struct {
