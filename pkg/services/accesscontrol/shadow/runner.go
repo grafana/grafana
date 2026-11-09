@@ -5,6 +5,7 @@ package shadow
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -30,19 +31,6 @@ type SkipReason string
 
 const Capacity SkipReason = "capacity"
 
-type RunOption func(*runOptions)
-
-type runOptions struct {
-	skip func(context.Context) SkipReason
-}
-
-// WithSkip checks the original context before acquiring capacity or preparing
-// work. An empty reason allows shadowing. The policy applies only to this Run;
-// without it, admission is limited only by capacity.
-func WithSkip(check func(context.Context) SkipReason) RunOption {
-	return func(options *runOptions) { options.skip = check }
-}
-
 // Observer binds instrumentation to an operation. Implementations must be safe
 // for concurrent calls. Keeping registration outside Runner lets adapters retain
 // existing metrics or bind shared collectors to fixed operation labels.
@@ -50,16 +38,34 @@ type Observer interface {
 	ObserveDuration(Implementation, time.Duration)
 	ObserveOutcome(Outcome)
 	ObserveSkip(SkipReason)
+	ObserveError(context.Context, error)
 	ObservePanic(context.Context, any)
 }
 
 // Work captures operation-specific state without requiring untyped results.
 // Snapshot copies the primary result synchronously, before the caller can mutate
 // it. Call and Compare run sequentially in the background; only Call is timed.
+// All callbacks are required; use an explicit no-op Snapshot if no copy is needed.
 type Work struct {
 	Snapshot func()
 	Call     func(context.Context)
 	Compare  func(context.Context) Outcome
+}
+
+func (w Work) Validate() error {
+	if w.Snapshot == nil {
+		return errors.New("shadow work Snapshot callback is required")
+	}
+
+	if w.Call == nil {
+		return errors.New("shadow work Call callback is required")
+	}
+
+	if w.Compare == nil {
+		return errors.New("shadow work Compare callback is required")
+	}
+
+	return nil
 }
 
 // Runner's capacity is shared by all operations using this instance. Reuse one
@@ -91,13 +97,19 @@ func (r *Runner) Run(ctx context.Context, observer Observer, primary func(), pre
 		primary()
 		return
 	}
+
 	var opts runOptions
 	for _, option := range options {
 		option(&opts)
 	}
+
 	if opts.skip != nil {
 		var reason SkipReason
-		if !safely(ctx, observer, func() { reason = opts.skip(ctx) }) {
+		if !safely(
+			ctx,
+			observer,
+			func() { reason = opts.skip(ctx) },
+		) {
 			primary()
 			return
 		}
@@ -116,6 +128,7 @@ func (r *Runner) Run(ctx context.Context, observer Observer, primary func(), pre
 		primary()
 		return
 	}
+
 	launched := false
 	defer func() {
 		// Until handoff, this also releases capacity if primary panics.
@@ -127,9 +140,23 @@ func (r *Runner) Run(ctx context.Context, observer Observer, primary func(), pre
 	// WithoutCancel would retain SQL sessions and other caller-owned values.
 	background := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
 	var work Work
-	prepared := safely(background, observer, func() { work = prepare() })
+	prepared := safely(
+		background,
+		observer,
+		func() { work = prepare() },
+	)
+
 	measure(observer, Primary, primary)
-	if !prepared || !safely(background, observer, work.Snapshot) {
+	if !prepared {
+		return
+	}
+
+	if err := work.Validate(); err != nil {
+		observer.ObserveError(background, err)
+		observer.ObserveOutcome(Failed)
+		return
+	}
+	if !safely(background, observer, work.Snapshot) {
 		return
 	}
 

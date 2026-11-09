@@ -2,6 +2,7 @@ package shadow
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -21,6 +22,7 @@ type recordingObserver struct {
 	durations []observation
 	outcomes  []Outcome
 	skips     []SkipReason
+	errors    []error
 	panics    []any
 }
 
@@ -30,6 +32,9 @@ func (o *recordingObserver) ObserveDuration(i Implementation, d time.Duration) {
 
 func (o *recordingObserver) ObserveOutcome(outcome Outcome) { o.outcomes = append(o.outcomes, outcome) }
 func (o *recordingObserver) ObserveSkip(reason SkipReason)  { o.skips = append(o.skips, reason) }
+func (o *recordingObserver) ObserveError(_ context.Context, err error) {
+	o.errors = append(o.errors, err)
+}
 func (o *recordingObserver) ObservePanic(_ context.Context, value any) {
 	o.panics = append(o.panics, value)
 }
@@ -66,6 +71,65 @@ func matchingWork() Work {
 		Snapshot: func() {},
 		Call:     func(context.Context) {},
 		Compare:  func(context.Context) Outcome { return Match },
+	}
+}
+
+func TestRunnerInvalidWorkPreservesPrimary(t *testing.T) {
+	for _, missing := range []string{"Snapshot", "Call", "Compare", "all"} {
+		t.Run(missing, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				runner := newTestRunner(t)
+				observer := &recordingObserver{}
+				primaryCalls, shadowCallbacks := 0, 0
+				wantErr := errors.New("primary failure")
+				var result int
+				var primaryErr error
+				runner.Run(t.Context(), observer, func() {
+					primaryCalls++
+					result, primaryErr = 42, wantErr
+				}, func() Work {
+					work := Work{
+						Snapshot: func() { shadowCallbacks++ },
+						Call:     func(context.Context) { shadowCallbacks++ },
+						Compare: func(context.Context) Outcome {
+							shadowCallbacks++
+							return Match
+						},
+					}
+					switch missing {
+					case "Snapshot":
+						work.Snapshot = nil
+					case "Call":
+						work.Call = nil
+					case "Compare":
+						work.Compare = nil
+					case "all":
+						work = Work{}
+					}
+					return work
+				})
+				synctest.Wait()
+				require.Equal(t, 1, primaryCalls)
+				require.Equal(t, 42, result)
+				require.ErrorIs(t, primaryErr, wantErr)
+				require.Zero(t, shadowCallbacks)
+				require.Equal(t, []Outcome{Failed}, observer.outcomes)
+				require.Len(t, observer.errors, 1)
+				callback := missing
+				if missing == "all" {
+					callback = "Snapshot"
+				}
+				require.EqualError(t, observer.errors[0], "shadow work "+callback+" callback is required")
+				require.Empty(t, observer.panics)
+				require.Empty(t, runner.inFlight)
+
+				next := &recordingObserver{}
+				runner.Run(t.Context(), next, func() {}, matchingWork)
+				synctest.Wait()
+				require.Equal(t, []Outcome{Match}, next.outcomes)
+				require.Empty(t, next.errors)
+			})
+		})
 	}
 }
 

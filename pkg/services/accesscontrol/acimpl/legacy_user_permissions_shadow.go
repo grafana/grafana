@@ -140,6 +140,10 @@ func (s *LegacyUserPermissionsShadow) ObserveSkip(shadow.SkipReason) {
 	s.skipped.Inc()
 }
 
+func (s *LegacyUserPermissionsShadow) ObserveError(ctx context.Context, err error) {
+	s.logger.FromContext(ctx).Warn("Permission shadow work failed", "error", err)
+}
+
 func (s *LegacyUserPermissionsShadow) ObservePanic(ctx context.Context, recovered any) {
 	s.logger.FromContext(ctx).Warn("Permission shadow call panicked", "panic", recovered)
 }
