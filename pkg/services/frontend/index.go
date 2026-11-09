@@ -162,7 +162,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
-	liveDisabled, _ := ofClient.BooleanValue(ctx, "frontend.disableGrafanaLive", false, openfeature.TransactionContext(ctx))
+	liveDisabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendDisableGrafanaLive, false, openfeature.TransactionContext(ctx))
 	meticulousAIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaMeticulousAIMode, "off", openfeature.TransactionContext(ctx))
 	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
 	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"

@@ -2746,6 +2746,20 @@
     },
     {
       "metadata": {
+        "name": "frontend.disableGrafanaLive",
+        "resourceVersion": "1794214178361",
+        "creationTimestamp": "2026-11-09T08:49:38Z"
+      },
+      "spec": {
+        "description": "Disable the Grafana Live functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "frontendService.reducedBootDataAPI",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-21T08:53:25Z"
