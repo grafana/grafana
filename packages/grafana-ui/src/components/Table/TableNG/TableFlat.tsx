@@ -15,7 +15,6 @@ import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
 import { TableSidebar, type SidebarColumn } from './components/TableSidebar';
-import { useTableFilters } from './TableFilterContext';
 import { COLUMN_SETTLE_MS, FIRST_COLUMN_EXTRA_PADDING, getPaginationChromeHeight, TABLE } from './constants';
 import {
   useColumnResize,
@@ -234,7 +233,10 @@ export function TableFlat(props: TableNGProps) {
   const canHideAnotherColumn =
     (columnCatalog ?? preparedFields.map(getDisplayName)).filter((name) => !hiddenColumns.has(name)).length > 1;
 
-  const view = useTableFilters();
+  // Column index to focus in the header row after a hide-column re-render.
+  // Set by handleHideColumn; consumed and cleared by the effect near gridRef
+  // (below) so the grid has already re-rendered without the hidden column.
+  const [pendingHeaderFocusIdx, setPendingHeaderFocusIdx] = useState<number | null>(null);
 
   // Shared state updates for hiding a column; no focus management. Used by
   // both the header menu (which then also moves focus) and the sidebar
@@ -242,16 +244,9 @@ export function TableFlat(props: TableNGProps) {
   const hideColumnStateUpdates = useCallback(
     (displayName: string) => {
       setHiddenColumns(new Set(hiddenColumns).add(displayName));
-      // A hidden column loses its filter control, so drop its filter like the
-      // sort below. Filter configs match by display name (see matchesTableFilter),
-      // which is exactly how the column is addressed here.
-      const field = visibleFields.find((candidate) => getDisplayName(candidate) === displayName);
-      if (field) {
-        view?.clearFilter(field);
-      }
       setSortColumns((current) => current.filter((sort) => sort.columnKey !== displayName));
     },
-    [hiddenColumns, visibleFields, view, setHiddenColumns, setSortColumns]
+    [hiddenColumns, setHiddenColumns, setSortColumns]
   );
 
   const handleHideColumn = useCallback(
@@ -315,10 +310,6 @@ export function TableFlat(props: TableNGProps) {
   const [sidebarFocusRequest, setSidebarFocusRequest] = useState(0);
   const columnSidebarOpener = useRef<string | null>(null);
 
-  // Column index to focus in the header row after a hide-column re-render.
-  // Set by handleHideColumn; consumed and cleared by the effect near gridRef
-  // (below) so the grid has already re-rendered without the hidden column.
-  const [pendingHeaderFocusIdx, setPendingHeaderFocusIdx] = useState<number | null>(null);
   const restoreFocusOnSidebarClose = useRef(false);
   const openColumnSidebar = useCallback((columnKey: string) => {
     columnSidebarOpener.current = columnKey;
@@ -391,12 +382,20 @@ export function TableFlat(props: TableNGProps) {
   // position. Runs after re-render (the hidden column's DOM is gone) so the
   // grid indices are current. Without this, the unmounted header cell drops
   // focus to <body> and the next Tab restarts from the top of the page.
-  // shouldFocus is what makes the grid call focus() on the newly active
-  // header cell; without it only the roving-tabindex selection moves and
-  // keyboard focus still falls to <body>.
+  //
+  // setActivePosition alone is not enough: when the active position already
+  // matches the target index (the common case when hiding the first column),
+  // the grid short-circuits on "same position" and never calls focus(), and
+  // with shouldFocus it only moves the roving tabindex. Focusing the rendered
+  // header cell directly is what keeps keyboard focus in the header row.
   useEffect(() => {
     if (pendingHeaderFocusIdx !== null && gridRef.current) {
       gridRef.current.setActivePosition({ rowIdx: -1, idx: pendingHeaderFocusIdx }, { shouldFocus: true });
+      const grid = gridRef.current.element;
+      const header = grid?.querySelector<HTMLElement>(
+        `[role="columnheader"][aria-colindex="${pendingHeaderFocusIdx + 1}"]`
+      );
+      (header ?? grid)?.focus();
       setPendingHeaderFocusIdx(null);
     }
   }, [pendingHeaderFocusIdx]);
