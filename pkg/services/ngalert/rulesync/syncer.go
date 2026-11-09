@@ -32,9 +32,8 @@ import (
 
 // rootFolderTitle is the title of the dedicated folder the syncer lands imported
 // namespaces under, isolating them from user-managed folders. One folder per
-// ruler datasource UID so distinct rulers never collide. prune and
-// IsManagedFolder key on the folder UID, not this title, so a pre-existing user
-// folder with the same title is harmless.
+// ruler datasource UID so distinct rulers never collide. Once its UID is
+// recorded, the title no longer identifies the folder.
 func rootFolderTitle(dsUID string) string {
 	return fmt.Sprintf("[Alerting Admin] External Ruler Sync (%s)", dsUID)
 }
@@ -392,12 +391,9 @@ func (s *ExternalRulerSyncer) IsConfiguredForOrg(ctx context.Context, orgID int6
 	return rc.uid != "", nil
 }
 
-// IsManagedFolder reports whether folderUID is inside the org's sync-managed
-// folder subtree — the dedicated root folder (resolved by its deterministic
-// title) or one of its namespace subfolders. The convert API uses it to fold the
-// 409 gate down to just the folders the sync worker owns, so manual imports into
-// unrelated folders are still allowed. If the root folder doesn't exist yet
-// nothing is managed, so this returns false (allow).
+// IsManagedFolder reports whether folderUID is the sync root folder or one of its
+// namespace subfolders, so the convert API blocks imports only into those. With
+// no UID recorded yet, it looks the root up read-only the way the first sync does.
 func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, folderUID string) (bool, error) {
 	rc, err := s.resolveExternalRulerConfig(ctx, orgID)
 	if err != nil {
@@ -407,12 +403,24 @@ func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, 
 		return false, nil
 	}
 	svcCtx, user := identity.WithServiceIdentity(ctx, orgID)
-	root, err := s.namespaceStore.GetNamespaceByTitle(svcCtx, rootFolderTitle(rc.uid), orgID, user, "")
-	if err != nil {
-		if errors.Is(err, dashboards.ErrFolderNotFound) {
+	var root *folder.FolderReference
+	if rc.rootFolderUID != "" {
+		f, err := s.namespaceStore.GetNamespaceByUID(svcCtx, rc.rootFolderUID, orgID, user)
+		if err != nil {
+			if errors.Is(err, folder.ErrAccessDenied) {
+				return false, nil
+			}
+			return false, fmt.Errorf("look up sync root folder: %w", err)
+		}
+		root = f.ToFolderReference()
+	} else {
+		root, err = s.findRootFolder(svcCtx, user, orgID, rc.uid)
+		if err != nil {
+			return false, fmt.Errorf("look up sync root folder: %w", err)
+		}
+		if root == nil {
 			return false, nil
 		}
-		return false, fmt.Errorf("look up sync root folder: %w", err)
 	}
 	if folderUID == root.UID {
 		return true, nil

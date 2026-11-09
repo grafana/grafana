@@ -411,3 +411,93 @@ func TestBuildSyncStatus_RootFolderUIDCarriesForwardOnlyForTheSameDatasource(t *
 		assert.Equal(t, "root-2", *got.ExternalRulerSync.RootFolderUid)
 	})
 }
+
+func TestIsManagedFolder_FollowsTheRecordedRootFolder(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("a renamed root and its namespaces stay managed", func(t *testing.T) {
+		_, ns, _, rs, s := rootFolderRecordedAndReused(t)
+		root := ns.rootUID(t, "ds1")
+		ns.folders[root].Title = "Renamed by a user"
+		ns.add("someone-elses", "Renamed by a user", "")
+
+		managed, err := s.IsManagedFolder(ctx, 1, root)
+		require.NoError(t, err)
+		assert.True(t, managed, "the root, found by its UID")
+		managed, err = s.IsManagedFolder(ctx, 1, rs.replaced[0].FolderUID)
+		require.NoError(t, err)
+		assert.True(t, managed, "a namespace folder under it")
+		managed, err = s.IsManagedFolder(ctx, 1, "someone-elses")
+		require.NoError(t, err)
+		assert.False(t, managed, "a user folder that now carries the title the root used to have")
+	})
+
+	t.Run("only the recorded UID finds an adopted folder with an unrelated UID once it is renamed", func(t *testing.T) {
+		cs := newFakeConfigClient()
+		cs.setSpec(1, "ds1")
+		ns := newMemNamespaceStore()
+		ns.add("hand-made-uid", rootFolderTitle("ds1"), "")
+		rs := &fakeRuleService{}
+		s := newRootFolderSyncer(t, cs, ns, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+		s.SyncOrg(ctx, 1)
+		ns.folders["hand-made-uid"].Title = "Renamed by a user"
+
+		managed, err := s.IsManagedFolder(ctx, 1, rs.replaced[0].FolderUID)
+		require.NoError(t, err)
+		assert.True(t, managed)
+	})
+
+	t.Run("a deleted root manages nothing", func(t *testing.T) {
+		_, ns, _, _, s := rootFolderRecordedAndReused(t)
+		root := ns.rootUID(t, "ds1")
+		delete(ns.folders, root)
+
+		managed, err := s.IsManagedFolder(ctx, 1, root)
+		require.NoError(t, err)
+		assert.False(t, managed)
+	})
+
+	t.Run("a lookup error is returned, not read as unmanaged", func(t *testing.T) {
+		_, ns, _, _, s := rootFolderRecordedAndReused(t)
+		ns.getErr = errors.New("folder service unavailable")
+
+		_, err := s.IsManagedFolder(ctx, 1, ns.rootUID(t, "ds1"))
+		require.Error(t, err)
+	})
+
+	t.Run("before a UID is recorded the legacy folder is already gated, without creating anything", func(t *testing.T) {
+		_, ns, _, s, legacyUID := legacyInstance(t, false)
+
+		managed, err := s.IsManagedFolder(ctx, 1, legacyUID)
+		require.NoError(t, err)
+		assert.True(t, managed)
+		managed, err = s.IsManagedFolder(ctx, 1, "legacy-ns")
+		require.NoError(t, err)
+		assert.True(t, managed)
+		assert.Empty(t, ns.created)
+	})
+
+	t.Run("before a UID is recorded and with no folder, nothing is managed", func(t *testing.T) {
+		cs := newFakeConfigClient()
+		cs.setSpec(1, "ds1")
+		s := newRootFolderSyncer(t, cs, newMemNamespaceStore(), &fakeFetcher{}, &fakeRuleService{})
+
+		managed, err := s.IsManagedFolder(ctx, 1, "anything")
+		require.NoError(t, err)
+		assert.False(t, managed)
+	})
+
+	t.Run("the ini path follows the in-memory UID", func(t *testing.T) {
+		ns := newMemNamespaceStore()
+		rs := &fakeRuleService{}
+		s := newRootFolderSyncer(t, newFakeConfigClient(), ns, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+		s.settings.ExternalRulerUID = "ds1"
+		s.SyncOrg(ctx, 1)
+		root := ns.rootUID(t, "ds1")
+		ns.folders[root].Title = "Renamed by a user"
+
+		managed, err := s.IsManagedFolder(ctx, 1, rs.replaced[0].FolderUID)
+		require.NoError(t, err)
+		assert.True(t, managed)
+	})
+}
