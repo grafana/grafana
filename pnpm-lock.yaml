@@ -226,7 +226,7 @@ overrides:
 
 packageExtensionsChecksum: sha256-HvE2tpjtVmkeRQLKlKfzfhNNPprtx2LC//uPw9mBzCw=
 
-pnpmfileChecksum: sha256-qE26ienewxJwAXLoYFgBEvB5uIpq/H8Q8/0aWY0zCI4=
+pnpmfileChecksum: sha256-T1Cg+yzSxNWlqZCbUUs+yD3UM5zVtzm1Map/HqxItTM=
 
 patchedDependencies:
   history@4.10.1: 59f0d46e6f153d50eca0dd02e201978d26ff20d01917acd8ba8e7769d585b15d

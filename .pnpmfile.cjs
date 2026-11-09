@@ -6,8 +6,8 @@ function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-// The source condition points at files that are not in the tarball, so attw fails on it and
-// entries that only exist for in-repo imports (e.g. ./internal) must not be published.
+// Removes all mentions of `@grafana-app/source` at pack time so consumers cannot end up with references to source
+// code that doesn't exist in the published packages
 function stripSourceCondition(exportsMap) {
   const stripped = {};
   for (const [key, value] of Object.entries(exportsMap)) {
