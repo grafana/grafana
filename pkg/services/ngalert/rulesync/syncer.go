@@ -466,6 +466,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	hashStr := strconv.FormatUint(hash, 10)
 	if rc.persistedHash != "" && rc.persistedHash == hashStr {
 		s.logger.Debug("External ruler config unchanged since last sync (persisted)", "org_id", orgID)
+		s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil, hashStr)
 		return
 	}
 	s.stateMu.RLock()
@@ -474,6 +475,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	s.stateMu.RUnlock()
 	if unchanged {
 		s.logger.Debug("External ruler config unchanged since last sync", "org_id", orgID)
+		s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil, hashStr)
 		return
 	}
 

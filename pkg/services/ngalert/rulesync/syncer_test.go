@@ -601,6 +601,75 @@ func TestSyncOrg_PersistedHashSurvivesAFailedTick(t *testing.T) {
 	assert.Equal(t, "7", *st.ExternalRulerSync.LastAppliedHash, "failure must not clear the persisted dedup hash")
 }
 
+func syncedCondition(t *testing.T, st *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigCondition {
+	t.Helper()
+	require.NotNil(t, st)
+	for _, c := range st.Conditions {
+		if c.Type == conditionTypeExternalRulerSynced {
+			return c
+		}
+	}
+	require.Fail(t, "no ExternalRulerSynced condition")
+	return alertingrulesv0alpha1.ConfigCondition{}
+}
+
+func TestSyncOrg_UnchangedTickClearsFailedStatus(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+
+	s.SyncOrg(context.Background(), 1)
+	require.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, syncedCondition(t, cs.statusFor(1)).Status)
+
+	fetch.err = errors.New("transient fetch failure")
+	s.SyncOrg(context.Background(), 1)
+	require.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusFalse, syncedCondition(t, cs.statusFor(1)).Status)
+
+	fetch.err = nil
+	rs.replaced = nil
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "upstream is unchanged, so nothing is re-applied")
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, syncedCondition(t, cs.statusFor(1)).Status,
+		"an unchanged tick that succeeds must clear a stale failed status")
+}
+
+func TestSyncOrg_UnchangedPersistedTickClearsFailedStatus(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, &fakeRuleService{})
+	s.SyncOrg(context.Background(), 1)
+
+	fetch.err = errors.New("transient fetch failure")
+	s.SyncOrg(context.Background(), 1)
+	require.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusFalse, syncedCondition(t, cs.statusFor(1)).Status)
+
+	// A fresh syncer has no in-memory hash, so only the persisted one can skip.
+	rs2 := &fakeRuleService{}
+	s2 := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}, rs2)
+	s2.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs2.replaced, "upstream is unchanged, so nothing is re-applied")
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, syncedCondition(t, cs.statusFor(1)).Status,
+		"an unchanged tick that succeeds must clear a stale failed status")
+}
+
+func TestSyncOrg_UnchangedTickDoesNotRewriteStatus(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}, &fakeRuleService{})
+	s.SyncOrg(context.Background(), 1)
+	before := cs.updateCallCount(1)
+
+	s.SyncOrg(context.Background(), 1)
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Equal(t, before, cs.updateCallCount(1), "recording an unchanged result must not write the status again")
+}
+
 func TestWriteStatus_RetriesOnUpdateConflict(t *testing.T) {
 	cs := newFakeConfigClient()
 	cs.setSpec(1, "ds1") // existing object: writeStatus takes the Update path
