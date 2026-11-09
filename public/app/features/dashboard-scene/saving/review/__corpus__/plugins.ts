@@ -7,6 +7,7 @@ import {
 } from '@grafana/data';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { plugin as gauge } from 'app/plugins/panel/gauge/module';
+import { plugin as piechart } from 'app/plugins/panel/piechart/module';
 import { plugin as stat } from 'app/plugins/panel/stat/module';
 import { plugin as timeseries } from 'app/plugins/panel/timeseries/module';
 
@@ -29,6 +30,7 @@ const plugins: Record<CorpusPluginId, { plugin: PanelPlugin; name: string }> = {
   timeseries: { plugin: timeseries, name: 'Time series' },
   stat: { plugin: stat, name: 'Stat' },
   gauge: { plugin: gauge, name: 'Gauge' },
+  piechart: { plugin: piechart, name: 'Pie chart' },
 };
 
 function withMeta(id: CorpusPluginId): PanelPlugin {

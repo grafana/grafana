@@ -2,13 +2,22 @@ import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Icon, Text, useStyles2 } from '@grafana/ui';
 
-import { type ReviewChange } from '../types';
+import { type LazyText, type ReviewChange } from '../types';
 
-import { ElementIcon, MarkerSlot, hasElementIcon, isAddedOrRemoved } from './ReviewMarks';
-import { ReviewPropertyList } from './ReviewPropertyList';
+import {
+  ElementIcon,
+  hasElementIcon,
+  isAddedOrRemoved,
+  MarkerSlot,
+  ReviewPropertyList,
+  ShowValueToggle,
+  Slot,
+  toggleStyles,
+  ValueBlock,
+} from './ReviewPrimitives';
 
 export function ReviewChangeList({ changes }: { changes: ReviewChange[] }) {
   const styles = useStyles2(getStyles);
@@ -63,15 +72,13 @@ function ReviewChangeLine({ change, columns }: { change: ReviewChange; columns: 
     <span className={styles.lead}>
       {columns.marker &&
         (expandable && !marked ? (
-          <span className={styles.slot}>
+          <Slot>
             <Icon name={open ? 'angle-down' : 'angle-right'} className={styles.chevron} />
-          </span>
+          </Slot>
         ) : (
           <MarkerSlot kind={marked ? change.kind : undefined} />
         ))}{' '}
-      {columns.icon && (
-        <span className={styles.iconSlot}>{change.subject && <ElementIcon kind={change.subject} />}</span>
-      )}
+      {columns.icon && <Slot>{change.subject && <ElementIcon kind={change.subject} />}</Slot>}
     </span>
   );
   const label = (
@@ -106,21 +113,7 @@ function ReviewChangeLine({ change, columns }: { change: ReviewChange; columns: 
           {lead}
           {label}
           {details && (
-            <Button
-              size="sm"
-              variant="secondary"
-              fill="text"
-              className={styles.showButton}
-              aria-expanded={showDetails}
-              aria-describedby={textId}
-              onClick={() => setShowDetails(!showDetails)}
-            >
-              {showDetails ? (
-                <Trans i18nKey="dashboard-scene.review.hide-details">Hide</Trans>
-              ) : (
-                <Trans i18nKey="dashboard-scene.review.show-details">Show</Trans>
-              )}
-            </Button>
+            <ShowValueToggle open={showDetails} describedBy={textId} onToggle={() => setShowDetails(!showDetails)} />
           )}
         </div>
       )}
@@ -144,7 +137,7 @@ function ReviewChangeLine({ change, columns }: { change: ReviewChange; columns: 
   );
 }
 
-function ReviewValue({ label, value }: { label: string; value: string }) {
+function ReviewValue({ label, value }: { label: string; value: LazyText }) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -154,7 +147,7 @@ function ReviewValue({ label, value }: { label: string; value: string }) {
           {label}
         </Text>
       </figcaption>
-      <pre className={styles.pre}>{value}</pre>
+      <ValueBlock className={styles.valueBlock} value={value} />
     </figure>
   );
 }
@@ -182,30 +175,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: `calc(${theme.typography.body.fontSize} * ${theme.typography.body.lineHeight})`,
   }),
   toggle: css({
-    display: 'flex',
-    alignItems: 'flex-start',
+    ...toggleStyles(theme),
     gap: theme.spacing(0.75),
-    width: '100%',
     padding: 0,
-    background: 'none',
-    border: 'none',
-    borderRadius: theme.shape.radius.default,
-    color: theme.colors.text.primary,
-    font: 'inherit',
-    textAlign: 'left',
-    cursor: 'pointer',
-    '&:hover': {
-      background: theme.colors.action.hover,
-    },
-    '&:focus-visible': {
-      outline: `2px solid ${theme.colors.primary.main}`,
-      outlineOffset: '-2px',
-    },
-  }),
-  slot: css({
-    display: 'inline-flex',
-    flexShrink: 0,
-    width: theme.spacing(2),
   }),
   chevron: css({
     color: theme.colors.text.secondary,
@@ -216,19 +188,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingLeft: theme.spacing(1.5),
     borderLeft: `1px solid ${theme.colors.border.weak}`,
   }),
-  iconSlot: css({
-    display: 'inline-flex',
-    flexShrink: 0,
-    width: theme.spacing(2),
-  }),
   text: css({
     minWidth: 0,
     overflowWrap: 'anywhere',
-  }),
-  showButton: css({
-    flexShrink: 0,
-    height: 'auto',
-    padding: theme.spacing(0, 0.5),
   }),
   details: css({
     display: 'flex',
@@ -239,17 +201,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   value: css({
     margin: 0,
   }),
-  pre: css({
+  valueBlock: css({
     margin: theme.spacing(0.25, 0, 0),
-    padding: theme.spacing(1),
-    maxHeight: 320,
-    overflow: 'auto',
-    fontFamily: theme.typography.fontFamilyMonospace,
-    fontSize: theme.typography.bodySmall.fontSize,
-    whiteSpace: 'pre-wrap',
-    overflowWrap: 'anywhere',
-    background: theme.colors.background.canvas,
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
   }),
 });

@@ -1,20 +1,9 @@
-import { readdirSync } from 'fs';
-import { join } from 'path';
-
-import { type ReviewCorpusCase } from '../__corpus__/types';
-import { emptyBaselineFor } from '../describe/emptyBaseline';
+import { corpusCases } from '../__corpus__/cases';
+import { emptyBaselineFor } from '../describe/paths';
 import { richToPlain } from '../richText';
 
 import { buildStructure } from './buildStructure';
 import { claimProblems, layoutDiffsOf, moveStatusText } from './testUtils';
-
-const casesDir = join(__dirname, '../__corpus__/cases');
-
-async function loadCases(): Promise<ReviewCorpusCase[]> {
-  const files = readdirSync(casesDir).filter((file) => file.endsWith('.ts') && file !== 'index.ts');
-  const modules = await Promise.all(files.map((file) => import(join(casesDir, file))));
-  return modules.flatMap((module) => Object.values<ReviewCorpusCase>(module));
-}
 
 /** The node headers with a status and the "removed with it" lines, as the corpus expects them. */
 function expectedStatusLines(expected: string): string[] {
@@ -48,16 +37,16 @@ function expectedStatusLines(expected: string): string[] {
  * and the node statuses, removed contents and moved-in contents the expected text shows.
  */
 describe('buildStructure over the corpus', () => {
-  it('claims every layout diff exactly once and shows the expected statuses', async () => {
-    const cases = await loadCases();
-    expect(cases.length).toBeGreaterThan(0);
-
+  it('claims every layout diff exactly once and shows the expected statuses', () => {
     const problems: string[] = [];
-    for (const { name, input, expected } of cases) {
+    for (const { name, input, expected } of corpusCases) {
       const baseline = input.mode === 'new' || !input.baseline ? emptyBaselineFor(input.payload) : input.baseline;
       const diffs = layoutDiffsOf(baseline, input.payload);
       const structure = buildStructure(baseline, input.payload, diffs);
-      problems.push(...claimProblems(structure, diffs).map((problem) => `${name}: ${problem}`));
+      const claims = claimProblems(structure, diffs);
+      if (claims) {
+        problems.push(`${name}:\n${claims}`);
+      }
 
       const actual = structure.nodes.flatMap((node) => {
         const name = richToPlain(node.name ?? []);
@@ -66,7 +55,7 @@ describe('buildStructure over the corpus', () => {
           ...(node.status === 'added' ? [`+ ${name}`] : []),
           ...(node.status === 'removed' ? [`- ${name}`] : []),
           ...(node.removedContents ?? []).map((content) => `removed with it: ${richToPlain(content)}`),
-          ...(node.movedInContents ?? []).map((content) => `• ${richToPlain(content)}`),
+          ...(node.movedIn ?? []).map(({ name }) => `• ${richToPlain(name)}`),
         ];
       });
       const wanted = expectedStatusLines(expected);

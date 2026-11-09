@@ -2301,25 +2301,5 @@ describe('SaveProvisionedDashboardForm branch name template', () => {
         expect(props.drawer.saveFormDraft).toEqual({ title: 'Typed title', description: 'Test Description' })
       );
     });
-
-    it('when handed a Copy tags value by the Save As form, parks it back unchanged for the next swap', async () => {
-      const drawer = {
-        onClose: jest.fn(),
-        saveFormDraft: { title: 'Test Dashboard Copy', description: 'Test Description', copyTags: true },
-      } as unknown as SaveDashboardDrawer;
-      const { user, props } = setup({ drawer });
-
-      const titleInput = await screen.findByRole('textbox', { name: /title/i });
-      await user.clear(titleInput);
-      await user.type(titleInput, 'Typed title');
-
-      await waitFor(() =>
-        expect(props.drawer.saveFormDraft).toEqual({
-          title: 'Typed title',
-          description: 'Test Description',
-          copyTags: true,
-        })
-      );
-    });
   });
 });

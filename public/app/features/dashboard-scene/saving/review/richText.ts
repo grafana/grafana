@@ -67,12 +67,12 @@ export function asSelf(text: RichText): RichText {
 export function kindWord(kind: NamedElement['kind']): string {
   switch (kind) {
     case 'row':
-      return t('dashboard-scene.review.kind.row', 'Row');
+      return t('dashboard.sidebar.elements.row', 'Row');
     case 'tab':
-      return t('dashboard-scene.review.kind.tab', 'Tab');
+      return t('dashboard.sidebar.elements.tab', 'Tab');
     case 'panel':
     default:
-      return t('dashboard-scene.review.kind.panel', 'Panel');
+      return t('dashboard.sidebar.elements.panel', 'Panel');
   }
 }
 
@@ -108,4 +108,23 @@ function append(result: RichText, part: string | NamedElement) {
       result.push(part);
     }
   }
+}
+
+/** "showLegend" → "Show legend", "maxDataPoints" → "Max data points". */
+export function humanizeKey(key: string): string {
+  if (/^\d+$/.test(key)) {
+    return t('dashboard-scene.review.label.list-item', 'Item {{number}}', { number: Number(key) + 1 });
+  }
+  const words = key
+    .replace(/([a-z\d])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .replace(/[_\-.]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word, index) => {
+      const lower = word === word.toUpperCase() && word.length > 1 ? word : word.toLowerCase();
+      return index === 0 ? lower.charAt(0).toUpperCase() + lower.slice(1) : lower;
+    });
+  return words.join(' ') || key;
 }

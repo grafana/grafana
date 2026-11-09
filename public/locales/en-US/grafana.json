@@ -8123,11 +8123,6 @@
         "transformations": "Transformation order",
         "variables": "Variable order"
       },
-      "kind": {
-        "panel": "Panel",
-        "row": "Row",
-        "tab": "Tab"
-      },
       "label": {
         "list-item": "Item {{number}}",
         "path": "{{parent}} › {{child}}"
@@ -8253,19 +8248,11 @@
       "system-defaults-note": "Values Grafana filled in automatically. You didn't edit them.",
       "value": {
         "color-fixed": "{{name}} ({{color}})",
-        "cursor-sync-crosshair": "Shared crosshair",
-        "cursor-sync-off": "Default",
-        "cursor-sync-tooltip": "Shared tooltip",
         "direction-horizontal": "horizontal",
         "direction-vertical": "vertical",
-        "grid-auto": "Auto grid",
-        "grid-custom": "Custom grid",
         "refresh-off": "Off",
-        "rule-equals": "Equals \"{{value}}\"",
         "rule-line": "{{label}}: {{value}}",
-        "rule-matches": "Matches \"{{value}}\"",
-        "rule-not-equals": "Not equals \"{{value}}\"",
-        "rule-not-matches": "Not matches \"{{value}}\"",
+        "rule-operator": "{{operator}} {{value}}",
         "size": "{{width}} × {{height}}",
         "size-narrower": "narrower",
         "size-shorter": "shorter",
@@ -8275,16 +8262,7 @@
         "thresholds-mode-absolute": "Mode: Absolute",
         "thresholds-mode-percentage": "Mode: Percentage",
         "thresholds-step": "{{value}}: {{color}}",
-        "time-range": "{{from}} to {{to}}",
-        "variable-kind-adhoc": "Ad hoc filters",
-        "variable-kind-constant": "Constant",
-        "variable-kind-custom": "Custom",
-        "variable-kind-datasource": "Data source",
-        "variable-kind-group-by": "Group by",
-        "variable-kind-interval": "Interval",
-        "variable-kind-query": "Query",
-        "variable-kind-switch": "Switch",
-        "variable-kind-text": "Text box"
+        "time-range": "{{from}} to {{to}}"
       },
       "value-after": "After",
       "value-before": "Before"

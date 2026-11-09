@@ -5,37 +5,50 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 
 import { type Diff } from '../../../settings/version-history/utils';
 import { unescapeSegment } from '../describe/paths';
-import { joinPath, noEscape, rich } from '../richText';
+import { humanizeKey, joinPath, noEscape, rich } from '../richText';
 import {
+  AUTO_GRID_SETTINGS,
   type ChangeKind,
   DASHBOARD_NODE_ID,
+  type MovedInEntry,
+  panelNodeId,
   type PathKey,
+  pathKey,
   type RawChange,
   type ReviewCategory,
   type RichText,
   type Structure,
   type StructureFieldKey,
-  settingRank,
   type StructureNode,
 } from '../types';
 
-import { longestCommonSubsequence } from './lcs';
-import { matchSections, type SectionMatching } from './matchSections';
-import { nameSide, type SideNames } from './naming';
 import {
   childArrayKey,
   isPanelLayoutKind,
+  nameSide,
+  type SideNames,
   type WalkedContainer,
   type WalkedLayout,
   type WalkedPlacement,
   type WalkedSection,
   walkLayout,
-} from './walkLayout';
+} from './layout';
+import { longestCommonSubsequence, matchSections, type SectionMatching } from './matching';
 
 type Side = 'baseline' | 'payload';
 
 /** Who a diff path is attributed to: a node's status, or one of the RawChanges. */
 type ClaimTarget = { node: StructureNode } | { change: RawChange };
+
+/** What a panel or section node id stands for: an element, or a section on the side the id was made from. */
+type NodeRef = { elementName: string } | { side: Side; section: WalkedSection };
+
+/** A layout owner that exists on both sides, with its layout on each. */
+interface OwnerPair {
+  ownerId: string;
+  before: WalkedContainer;
+  after: WalkedContainer;
+}
 
 /**
  * A structural event in one layout array (an item entering, leaving or changing order), which index-shift
@@ -101,6 +114,8 @@ class StructureBuilder {
   private fallbackByOwner = new Map<string, RawChange>();
   /** Moved nodes by id: the baseline section a panel came from, or `sameSection` for a reorder among siblings. */
   private moves = new Map<string, { sameSection: true } | { sameSection: false; fromSectionPath?: PathKey }>();
+  private refs = new Map<string, NodeRef>();
+  private ownerPairs: OwnerPair[] = [];
 
   constructor(
     private baseline: DashboardV2Spec,
@@ -111,31 +126,30 @@ class StructureBuilder {
   ) {}
 
   build(layoutDiffs: Diff[]): Structure {
+    this.indexRefs();
+    this.ownerPairs = this.matchedOwners().map((ownerId) => {
+      const [before, after] = this.containerPair(ownerId)!;
+      return { ownerId, before, after };
+    });
     this.findMoves();
     this.createNodes();
     this.findChanges();
     this.findEvents();
+    const claimed = new Set<PathKey>();
     for (const diff of layoutDiffs) {
       const target = this.resolve(diff.path);
-      if (target) {
-        const key = diff.path.join('/');
-        const claims = 'node' in target ? target.node.claims : target.change.claims;
-        if (!claims.includes(key)) {
-          claims.push(key);
-        }
+      const key = pathKey(diff.path);
+      // The same path always resolves to the same target, so one set tells whether that target has it already.
+      if (target && !claimed.has(key)) {
+        claimed.add(key);
+        ('node' in target ? target.node.claims : target.change.claims).push(key);
       }
     }
 
     const nodes = this.orderNodes();
     const order = new Map(nodes.map((node, index) => [node.id, index]));
     const changes = [...this.changes].sort((a, b) => (order.get(a.nodeId) ?? 0) - (order.get(b.nodeId) ?? 0));
-    const panelIds = new Map<string, string>();
-    for (const node of nodes) {
-      if (node.elementName !== undefined) {
-        panelIds.set(node.elementName, node.id);
-      }
-    }
-    return { nodes, changes, panelNodeId: (elementName) => panelIds.get(elementName) };
+    return { nodes, changes };
   }
 
   // Identity
@@ -149,7 +163,36 @@ class StructureBuilder {
   }
 
   panelId(elementName: string): string {
-    return `panel:${elementName}`;
+    return panelNodeId(elementName);
+  }
+
+  /** Records what every panel and section id stands for, so ids are never parsed. */
+  private indexRefs() {
+    for (const side of ['payload', 'baseline'] as const) {
+      for (const section of this.walked[side].sections) {
+        const id = this.sectionId(side, section.path);
+        // A matched baseline section has its payload id, already recorded with the payload section.
+        if (!this.refs.has(id)) {
+          this.refs.set(id, { side, section });
+        }
+      }
+      const elements = [...Object.keys(this[side].elements ?? {}), ...this.walked[side].placementByElement.keys()];
+      for (const elementName of elements) {
+        this.refs.set(this.panelId(elementName), { elementName });
+      }
+    }
+  }
+
+  /** The element a panel id stands for. */
+  private elementOf(id: string): string | undefined {
+    const ref = this.refs.get(id);
+    return ref && 'elementName' in ref ? ref.elementName : undefined;
+  }
+
+  /** The section a section id stands for, when made from that side: `section:` payload, `section-removed:` baseline. */
+  private sectionOf(id: string, side: Side): WalkedSection | undefined {
+    const ref = this.refs.get(id);
+    return ref && 'section' in ref && ref.side === side ? ref.section : undefined;
   }
 
   private parentOf(side: Side, sectionPath: PathKey | undefined): string | undefined {
@@ -178,20 +221,15 @@ class StructureBuilder {
     });
 
     for (const section of this.walked.payload.sections) {
+      const id = this.sectionId('payload', section.path);
       const matched = this.matching.payloadToBaseline.has(section.path);
-      this.addNode({
-        id: this.sectionId('payload', section.path),
-        kind: 'section',
-        sectionKind: section.kind,
-        name: this.payloadLabel(this.sectionId('payload', section.path)),
-        itemPath: section.path,
-        ...this.parentPathOf('payload', section.parentPath),
-        parentId: this.parentOf('payload', section.parentPath),
-        ...(matched
-          ? this.moveStatus(this.sectionId('payload', section.path))
-          : { status: 'added' as const, ...this.movedIn(section) }),
-        claims: [],
-      });
+      this.addNode(
+        this.sectionNode(
+          'payload',
+          section,
+          matched ? this.moveStatus(id) : { status: 'added', ...this.movedIn(section) }
+        )
+      );
     }
 
     for (const section of this.walked.baseline.sections) {
@@ -200,63 +238,69 @@ class StructureBuilder {
       }
       const parentRemoved =
         section.parentPath !== undefined && !this.matching.baselineToPayload.has(section.parentPath);
-      this.addNode({
-        id: this.sectionId('baseline', section.path),
-        kind: 'section',
-        sectionKind: section.kind,
-        name: this.names.baseline.segments.get(section.path)!.label,
-        itemPath: section.path,
-        ...this.parentPathOf('baseline', section.parentPath),
-        parentId: this.parentOf('baseline', section.parentPath),
-        ...(parentRemoved ? {} : { status: 'removed' as const, removedContents: this.removedContents(section) }),
-        claims: [],
-      });
+      this.addNode(
+        this.sectionNode(
+          'baseline',
+          section,
+          parentRemoved ? {} : { status: 'removed', removedContents: this.removedContents(section) }
+        )
+      );
     }
 
     const baselineElements = this.baseline.elements ?? {};
     const payloadElements = this.payload.elements ?? {};
     for (const name of Object.keys(payloadElements)) {
-      const placement = this.walked.payload.placementByElement.get(name);
-      const node: StructureNode = {
-        id: this.panelId(name),
-        kind: 'panel',
-        elementName: name,
-        name: this.payloadLabel(this.panelId(name)),
-        ...(placement ? { itemPath: placement.path } : {}),
-        ...this.parentPathOf('payload', placement?.sectionPath),
-        ownerLabel: this.names.payload.owners.get(name),
-        parentId: this.parentOf('payload', placement?.sectionPath),
-        claims: [],
-      };
-      Object.assign(
-        node,
-        Object.hasOwn(baselineElements, name) ? this.moveStatus(node.id) : { status: 'added' as const }
+      const existed = Object.hasOwn(baselineElements, name);
+      this.addNode(
+        this.panelNode('payload', name, existed ? this.moveStatus(this.panelId(name)) : { status: 'added' })
       );
-      this.addNode(node);
     }
 
     for (const name of Object.keys(baselineElements)) {
       if (Object.hasOwn(payloadElements, name)) {
         continue;
       }
-      const placement = this.walked.baseline.placementByElement.get(name);
-      const parentId = this.parentOf('baseline', placement?.sectionPath);
+      const node = this.panelNode('baseline', name, {});
       // Deleted along with a removed section: listed in that section's removedContents instead.
-      const inRemovedSection = parentId?.startsWith('section-removed:') ?? false;
-      const removed: StructureNode = {
-        id: this.panelId(name),
-        kind: 'panel',
-        elementName: name,
-        name: this.names.baseline.panels.get(name)!.label,
-        ...(placement ? { itemPath: placement.path } : {}),
-        ...this.parentPathOf('baseline', placement?.sectionPath),
-        ownerLabel: this.names.baseline.owners.get(name),
-        parentId,
-        ...(inRemovedSection ? {} : { status: 'removed' as const }),
-        claims: [],
-      };
-      this.addNode(removed);
+      if (node.parentId === undefined || !this.sectionOf(node.parentId, 'baseline')) {
+        node.status = 'removed';
+      }
+      this.addNode(node);
     }
+  }
+
+  /** A row or tab's node, named on its own side; `status` and what goes with it come from the caller. */
+  private sectionNode(side: Side, section: WalkedSection, status: Partial<StructureNode>): StructureNode {
+    const id = this.sectionId(side, section.path);
+    return {
+      id,
+      kind: 'section',
+      sectionKind: section.kind,
+      name: side === 'payload' ? this.payloadLabel(id) : this.names.baseline.segments.get(section.path)!.label,
+      itemPath: section.path,
+      ...this.parentPathOf(side, section.parentPath),
+      parentId: this.parentOf(side, section.parentPath),
+      ...status,
+      claims: [],
+    };
+  }
+
+  /** A panel's node, named and placed on its own side; `status` and what goes with it come from the caller. */
+  private panelNode(side: Side, name: string, status: Partial<StructureNode>): StructureNode {
+    const id = this.panelId(name);
+    const placement = this.walked[side].placementByElement.get(name);
+    return {
+      id,
+      kind: 'panel',
+      elementName: name,
+      name: side === 'payload' ? this.payloadLabel(id) : this.names.baseline.panels.get(name)!.label,
+      ...(placement ? { itemPath: placement.path } : {}),
+      ...this.parentPathOf(side, placement?.sectionPath),
+      ownerLabel: this.names[side].owners.get(name),
+      parentId: this.parentOf(side, placement?.sectionPath),
+      ...status,
+      claims: [],
+    };
   }
 
   /**
@@ -282,14 +326,14 @@ class StructureBuilder {
    * without a move of their own: a restructure put them there (e.g. grouping a grid into rows), so nothing else
    * says where they went. Real moves keep their own node and move text.
    */
-  private movedIn(section: WalkedSection): Pick<StructureNode, 'movedInContents' | 'movedInNodeIds'> {
+  private movedIn(section: WalkedSection): { movedIn: MovedInEntry[] } {
     const baselineElements = this.baseline.elements ?? {};
-    const existed = (id: string) =>
-      id.startsWith('panel:')
-        ? Object.hasOwn(baselineElements, id.slice('panel:'.length))
-        : this.isMatchedSectionId(id);
+    const existed = (id: string) => {
+      const element = this.elementOf(id);
+      return element !== undefined ? Object.hasOwn(baselineElements, element) : this.isMatchedSectionId(id);
+    };
     const ids = this.readingOrder(section.container, 'payload').filter((id) => existed(id) && !this.moves.has(id));
-    return { movedInContents: ids.map((id) => this.payloadName(id)!.label), movedInNodeIds: ids };
+    return { movedIn: ids.map((nodeId) => ({ name: this.payloadName(nodeId)!.label, nodeId })) };
   }
 
   /** Panels deleted with a removed section and its nested sections, in baseline reading order. */
@@ -341,7 +385,8 @@ class StructureBuilder {
   }
 
   private isMatchedSectionId(id: string): boolean {
-    return id.startsWith('section:') && this.matching.payloadToBaseline.has(id.slice('section:'.length));
+    const section = this.sectionOf(id, 'payload');
+    return section !== undefined && this.matching.payloadToBaseline.has(section.path);
   }
 
   private isRestructured(ownerId: string): boolean {
@@ -362,8 +407,7 @@ class StructureBuilder {
       }
     }
 
-    for (const ownerId of this.matchedOwners()) {
-      const [before, after] = this.containerPair(ownerId)!;
+    for (const { before, after } of this.ownerPairs) {
       if (isPanelLayoutKind(before.kind) !== isPanelLayoutKind(after.kind)) {
         continue;
       }
@@ -376,7 +420,9 @@ class StructureBuilder {
       if (isEqual(beforeCommon, afterCommon)) {
         continue;
       }
-      const stable = (id: string) => this.coordinatesUnchanged(before, after, id);
+      const beforeById = this.placementsById(before);
+      const afterById = this.placementsById(after);
+      const stable = (id: string) => coordinatesUnchanged(beforeById.get(id), afterById.get(id));
       const kept = new Set(longestCommonSubsequence(beforeCommon, afterCommon, stable));
       for (const id of afterCommon) {
         if (!kept.has(id)) {
@@ -386,21 +432,23 @@ class StructureBuilder {
     }
   }
 
-  /** Grid coordinates of a panel unchanged; always true for items without coordinates. */
-  private coordinatesUnchanged(before: WalkedContainer, after: WalkedContainer, id: string): boolean {
-    const a = before.placements.find((p) => this.panelId(p.elementName) === id);
-    const b = after.placements.find((p) => this.panelId(p.elementName) === id);
-    if (a?.layoutKind !== 'GridLayout' || b?.layoutKind !== 'GridLayout') {
-      return true;
+  /** A layout's placements by panel node id, the first one for an element placed twice. */
+  private placementsById(container: WalkedContainer): Map<string, WalkedPlacement> {
+    const byId = new Map<string, WalkedPlacement>();
+    for (const placement of container.placements) {
+      const id = this.panelId(placement.elementName);
+      if (!byId.has(id)) {
+        byId.set(id, placement);
+      }
     }
-    return a.item.x === b.item.x && a.item.y === b.item.y;
+    return byId;
   }
 
   /**
    * A moved node's status: the move text, and its new position when its name is ambiguous (its header then
    * shows the name only). describe/ composes the final statusText from both.
    */
-  private moveStatus(nodeId: string): Pick<StructureNode, 'status' | 'moveText' | 'movePosition' | 'movedFromId'> {
+  private moveStatus(nodeId: string): Pick<StructureNode, 'status' | 'move' | 'movedFromId'> {
     const move = this.moves.get(nodeId);
     if (!move) {
       return {};
@@ -409,9 +457,11 @@ class StructureBuilder {
     const from = move.sameSection ? undefined : move.fromSectionPath;
     return {
       status: 'moved',
-      moveText: this.moveRelation(nodeId, move),
+      move: {
+        text: this.moveRelation(nodeId, move),
+        ...(own?.ambiguous ? { position: own.position } : {}),
+      },
       ...(from !== undefined ? { movedFromId: this.sectionId('baseline', from) } : {}),
-      ...(own?.ambiguous ? { movePosition: own.position } : {}),
     };
   }
 
@@ -465,9 +515,11 @@ class StructureBuilder {
 
   /** The new section's full path, or the top level for the root. */
   private destinationLabel(nodeId: string): RichText {
-    const sectionPath = nodeId.startsWith('panel:')
-      ? this.walked.payload.placementByElement.get(nodeId.slice('panel:'.length))?.sectionPath
-      : this.walked.payload.sectionByPath.get(nodeId.slice('section:'.length))?.parentPath;
+    const element = this.elementOf(nodeId);
+    const sectionPath =
+      element !== undefined
+        ? this.walked.payload.placementByElement.get(element)?.sectionPath
+        : this.sectionOf(nodeId, 'payload')?.parentPath;
     return sectionPath === undefined ? [topLevel()] : this.names.payload.sections.get(sectionPath)!;
   }
 
@@ -485,11 +537,12 @@ class StructureBuilder {
   /** Payload ids of the node's siblings (its new section's children), in reading order. */
   private payloadSiblings(nodeId: string): string[] {
     let container: WalkedContainer | undefined;
-    if (nodeId.startsWith('panel:')) {
-      const placement = this.walked.payload.placementByElement.get(nodeId.slice('panel:'.length));
+    const element = this.elementOf(nodeId);
+    if (element !== undefined) {
+      const placement = this.walked.payload.placementByElement.get(element);
       container = placement && this.payloadContainerOf(placement.sectionPath);
     } else {
-      const section = this.walked.payload.sectionByPath.get(nodeId.slice('section:'.length));
+      const section = this.sectionOf(nodeId, 'payload');
       container = section && this.payloadContainerOf(section.parentPath);
     }
     return container ? this.readingOrder(container, 'payload') : [];
@@ -508,9 +561,12 @@ class StructureBuilder {
 
   /** The moved node's own name among its new siblings. */
   private payloadName(id: string) {
-    return id.startsWith('panel:')
-      ? this.names.payload.panels.get(id.slice('panel:'.length))
-      : this.names.payload.segments.get(id.slice('section:'.length));
+    const element = this.elementOf(id);
+    if (element !== undefined) {
+      return this.names.payload.panels.get(element);
+    }
+    const section = this.sectionOf(id, 'payload');
+    return section && this.names.payload.segments.get(section.path);
   }
 
   /** Baseline and payload layouts of an owner that exists on both sides. */
@@ -518,18 +574,12 @@ class StructureBuilder {
     if (ownerId === DASHBOARD_NODE_ID) {
       return [this.walked.baseline.root, this.walked.payload.root];
     }
-    if (!ownerId.startsWith('section:')) {
+    const section = this.sectionOf(ownerId, 'payload');
+    const baselinePath = section && this.matching.payloadToBaseline.get(section.path);
+    if (!section || baselinePath === undefined) {
       return undefined;
     }
-    const payloadPath = ownerId.slice('section:'.length);
-    const baselinePath = this.matching.payloadToBaseline.get(payloadPath);
-    if (baselinePath === undefined) {
-      return undefined;
-    }
-    return [
-      this.walked.baseline.sectionByPath.get(baselinePath)!.container,
-      this.walked.payload.sectionByPath.get(payloadPath)!.container,
-    ];
+    return [this.walked.baseline.sectionByPath.get(baselinePath)!.container, section.container];
   }
 
   /** Every owner on both sides: the dashboard, then matched sections in payload order. */
@@ -544,11 +594,11 @@ class StructureBuilder {
 
   // Changes
 
-  /** `setting` tells apart the several layoutSettings changes of one layout. */
-  private addChange(change: Omit<RawChange, 'claims' | 'kind'> & { kind?: ChangeKind }, setting?: string): RawChange {
+  /** `subField` tells apart the several layoutSettings changes of one layout. */
+  private addChange(change: Omit<RawChange, 'claims' | 'kind'> & { kind?: ChangeKind }): RawChange {
     const full: RawChange = { kind: kindOf(change.before, change.after), ...change, claims: [] };
     this.changes.push(full);
-    this.changeByKey.set(changeKey(full.nodeId, full.field, setting), full);
+    this.changeByKey.set(changeKey(full.nodeId, full.field, full.subField), full);
     return full;
   }
 
@@ -557,8 +607,7 @@ class StructureBuilder {
   }
 
   private findChanges() {
-    for (const ownerId of this.matchedOwners()) {
-      const [before, after] = this.containerPair(ownerId)!;
+    for (const { ownerId, before, after } of this.ownerPairs) {
       if (before.kind !== after.kind) {
         this.addChange({
           nodeId: ownerId,
@@ -583,8 +632,7 @@ class StructureBuilder {
       }
     }
 
-    for (const ownerId of this.matchedOwners()) {
-      const [before, after] = this.containerPair(ownerId)!;
+    for (const { ownerId, before, after } of this.ownerPairs) {
       if (before.kind !== after.kind) {
         continue;
       }
@@ -621,6 +669,7 @@ class StructureBuilder {
     };
     const beforeSettings = settings(before);
     const afterSettings = settings(after);
+    // In the order the layout options list them, unknown settings last: describe/ keeps this order.
     const keys = [...new Set([...Object.keys(beforeSettings), ...Object.keys(afterSettings)])].sort(
       (a, b) => settingRank(a) - settingRank(b) || (a < b ? -1 : a > b ? 1 : 0)
     );
@@ -628,17 +677,14 @@ class StructureBuilder {
       const beforeValue = ownValue(beforeSettings, key);
       const afterValue = ownValue(afterSettings, key);
       if (!isEqual(beforeValue, afterValue)) {
-        this.addChange(
-          {
-            nodeId: ownerId,
-            category: 'layout',
-            field: 'layoutSettings',
-            subField: key,
-            before: beforeValue,
-            after: afterValue,
-          },
-          key
-        );
+        this.addChange({
+          nodeId: ownerId,
+          category: 'layout',
+          field: 'layoutSettings',
+          subField: key,
+          before: beforeValue,
+          after: afterValue,
+        });
       }
     }
   }
@@ -705,8 +751,7 @@ class StructureBuilder {
 
   /** Structural events per owner's child array, for attributing index-shift noise. */
   private findEvents() {
-    for (const ownerId of this.matchedOwners()) {
-      const [before, after] = this.containerPair(ownerId)!;
+    for (const { ownerId, before, after } of this.ownerPairs) {
       if (before.kind !== after.kind) {
         continue;
       }
@@ -809,8 +854,8 @@ class StructureBuilder {
     const rest = path.slice(offset + 3);
 
     if (isPanelLayoutKind(after.kind)) {
-      const a = before.placements.find((p) => p.index === index);
-      const b = after.placements.find((p) => p.index === index);
+      const a = before.placementByIndex.get(index);
+      const b = after.placementByIndex.get(index);
       if (a && b && a.elementName === b.elementName && rest.length > 0) {
         return this.resolvePanelItem(ownerId, b, index, rest);
       }
@@ -820,11 +865,11 @@ class StructureBuilder {
       if (own) {
         return { change: own };
       }
-      return this.misaligned(ownerId, index, a && `panel:${a.elementName}`, b && `panel:${b.elementName}`);
+      return this.misaligned(ownerId, index, a && this.panelId(a.elementName), b && this.panelId(b.elementName));
     }
 
-    const a = before.sections.find((s) => s.index === index);
-    const b = after.sections.find((s) => s.index === index);
+    const a = before.sectionByIndex.get(index);
+    const b = after.sectionByIndex.get(index);
     const aId = a && this.sectionId('baseline', a.path);
     const bId = b && this.sectionId('payload', b.path);
     if (a && b && aId === bId && rest.length > 0) {
@@ -921,24 +966,14 @@ class StructureBuilder {
 
     const payloadChildren = (ownerId: string): string[] => {
       const container =
-        ownerId === DASHBOARD_NODE_ID
-          ? this.walked.payload.root
-          : ownerId.startsWith('section:')
-            ? this.walked.payload.sectionByPath.get(ownerId.slice('section:'.length))?.container
-            : undefined;
+        ownerId === DASHBOARD_NODE_ID ? this.walked.payload.root : this.sectionOf(ownerId, 'payload')?.container;
       return container ? this.readingOrder(container, 'payload') : [];
     };
     const baselineChildren = (ownerId: string): string[] => {
-      let container: WalkedContainer | undefined;
-      if (ownerId === DASHBOARD_NODE_ID) {
-        container = this.walked.baseline.root;
-      } else if (ownerId.startsWith('section-removed:')) {
-        container = this.walked.baseline.sectionByPath.get(ownerId.slice('section-removed:'.length))?.container;
-      } else {
-        const baselinePath = this.matching.payloadToBaseline.get(ownerId.slice('section:'.length));
-        container =
-          baselinePath !== undefined ? this.walked.baseline.sectionByPath.get(baselinePath)?.container : undefined;
-      }
+      const container =
+        ownerId === DASHBOARD_NODE_ID
+          ? this.walked.baseline.root
+          : (this.sectionOf(ownerId, 'baseline')?.container ?? this.containerPair(ownerId)?.[0]);
       return container ? this.readingOrder(container, 'baseline') : [];
     };
 
@@ -1013,24 +1048,24 @@ export function layoutKindName(kind: string): string {
     default:
       // A kind this version doesn't know (a newer schema): name it from the kind itself.
       return t('dashboard-scene.review.structure.layout-kind.unknown', '{{kind}}', {
-        kind: humanizeKind(String(kind ?? '')),
+        kind: humanizeKey(String(kind ?? '')),
         interpolation: noEscape,
       });
   }
 }
 
-/** `FancyLayout` → `Fancy layout`, `FreeFormLayout` → `Free form layout`. */
-function humanizeKind(kind: string): string {
-  const words = kind
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((word) => word.toLowerCase());
-  if (!words.length) {
-    return kind;
+/** Grid coordinates of a panel unchanged; always true for items without coordinates. */
+function coordinatesUnchanged(a: WalkedPlacement | undefined, b: WalkedPlacement | undefined): boolean {
+  if (a?.layoutKind !== 'GridLayout' || b?.layoutKind !== 'GridLayout') {
+    return true;
   }
-  return [words[0].charAt(0).toUpperCase() + words[0].slice(1), ...words.slice(1)].join(' ');
+  return a.item.x === b.item.x && a.item.y === b.item.y;
+}
+
+function settingRank(key: string): number {
+  const order: readonly string[] = AUTO_GRID_SETTINGS;
+  const rank = order.indexOf(key);
+  return rank === -1 ? order.length : rank;
 }
 
 function kindOf(before: unknown, after: unknown): ChangeKind {

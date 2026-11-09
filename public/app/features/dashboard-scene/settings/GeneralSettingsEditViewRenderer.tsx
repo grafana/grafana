@@ -24,12 +24,11 @@ import { MoveProvisionedDashboardDrawer } from 'app/features/provisioning/compon
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
-import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
 import { DeleteDashboardButton } from './DeleteDashboardButton';
 import { type GeneralSettingsEditView } from './GeneralSettingsEditView';
 import { TimePickerSettings } from './TimePickerSettings';
+import { getDefaultGridOptions, getGraphTooltipOptions } from './generalSettingsOptions';
 import { useDashboardEditPageNav } from './utils';
 
 export function GeneralSettingsEditViewRenderer({ model }: SceneComponentProps<GeneralSettingsEditView>) {
@@ -53,39 +52,11 @@ export function GeneralSettingsEditViewRenderer({ model }: SceneComponentProps<G
     },
   ];
 
-  const DEFAULT_GRID_OPTIONS = [
-    {
-      label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.auto', 'Auto grid'),
-      value: AutoGridLayoutManager.descriptor.id,
-    },
-    {
-      label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.custom', 'Custom grid'),
-      value: DefaultGridLayoutManager.descriptor.id,
-    },
-  ];
+  const DEFAULT_GRID_OPTIONS = getDefaultGridOptions();
 
   const defaultGrid = dashboard.getDefaultLayoutType();
 
-  const GRAPH_TOOLTIP_OPTIONS = [
-    {
-      value: 0,
-      label: t('dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.default', 'Default'),
-    },
-    {
-      value: 1,
-      label: t(
-        'dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.shared-crosshair',
-        'Shared crosshair'
-      ),
-    },
-    {
-      value: 2,
-      label: t(
-        'dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.shared-tooltip',
-        'Shared tooltip'
-      ),
-    },
-  ];
+  const GRAPH_TOOLTIP_OPTIONS = getGraphTooltipOptions();
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>

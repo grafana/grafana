@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -7,10 +8,17 @@ import { Text, useStyles2 } from '@grafana/ui';
 import { type ReviewNode, type SectionReviewNode } from '../types';
 
 import { ReviewChangeList } from './ReviewChangeList';
-import { ReviewDisclosure } from './ReviewDisclosure';
-import { AddRemoveMarker, ElementIcon, RichTextView, isAddedOrRemoved, nodeElementKind } from './ReviewMarks';
-import { ReviewPropertyList } from './ReviewPropertyList';
-import { type ReviewExpansion } from './useReviewExpansion';
+import {
+  AddRemoveMarker,
+  ElementIcon,
+  isAddedOrRemoved,
+  nodeElementKind,
+  ReviewDisclosure,
+  type ReviewExpansion,
+  ReviewPropertyList,
+  RichTextView,
+  useIsExpanded,
+} from './ReviewPrimitives';
 
 interface Props {
   node: ReviewNode;
@@ -23,24 +31,19 @@ function hasContent(node: ReviewNode): boolean {
     (node.properties?.length ?? 0) > 0 ||
     node.categories.length > 0 ||
     (node.kind === 'section' &&
-      (node.children.length > 0 || (node.removedContents?.length ?? 0) > 0 || (node.movedInContents?.length ?? 0) > 0))
+      (node.children.length > 0 || (node.removedContents?.length ?? 0) > 0 || (node.movedIn?.length ?? 0) > 0))
   );
 }
 
-export function ReviewNodeView({ node, level, expansion }: Props) {
+// Memoized, with a stable `expansion`, so opening or closing one node re-renders that node only
+export const ReviewNodeView = memo(function ReviewNodeView({ node, level, expansion }: Props) {
   const styles = useStyles2(getStyles);
-  const children = node.kind === 'section' ? node.children : [];
   const removedContents = node.kind === 'section' ? (node.removedContents ?? []) : [];
-  const movedInContents = node.kind === 'section' ? (node.movedInContents ?? []) : [];
-  // A moved-in element that also changed is shown once, as its own collapsible line in its place in the list
-  const childById = new Map(children.map((child) => [child.id, child]));
-  const movedInNodes = movedInContents.map((_, index) =>
-    node.kind === 'section' ? childById.get(node.movedInNodeIds?.[index] ?? '') : undefined
-  );
-  const placed = new Set(movedInNodes.flatMap((child) => (child ? [child.id] : [])));
-  const otherChildren = children.filter((child) => !placed.has(child.id));
+  const movedIn = node.kind === 'section' ? (node.movedIn ?? []) : [];
+  const { movedInNodes, otherChildren } = useMemo(() => placeMovedInNodes(node), [node]);
   const expandable = hasContent(node);
-  const expanded = expandable ? expansion.isExpanded(nodeKey(node)) : undefined;
+  const isExpanded = useIsExpanded(expansion, nodeKey(node));
+  const expanded = expandable ? isExpanded : undefined;
   // In the chevron's place, and the toggle when there is something to reveal. The label of an added or removed
   // node starts with the word, so the marker stays silent.
   const marker = isAddedOrRemoved(node.status) ? <AddRemoveMarker kind={node.status} decorative /> : undefined;
@@ -85,22 +88,22 @@ export function ReviewNodeView({ node, level, expansion }: Props) {
           <ReviewChangeList changes={group.changes} />
         </div>
       ))}
-      {movedInContents.length > 0 && (node.properties?.length ?? 0) > 0 && (
+      {movedIn.length > 0 && (node.properties?.length ?? 0) > 0 && (
         <div role="heading" aria-level={Math.min(level + 1, 6)} className={styles.categoryHeading}>
           {t('dashboard-scene.review.moved-in-heading', 'Moved to it')}
         </div>
       )}
-      {movedInContents.length > 0 && (
+      {movedIn.length > 0 && (
         <ul className={styles.movedInList}>
-          {movedInContents.map((item, index) => {
+          {movedIn.map(({ name, nodeId }, index) => {
             const child = movedInNodes[index];
             return child ? (
-              <li key={child.id} className={styles.movedInNode}>
+              <li key={nodeId} className={styles.movedInNode}>
                 <ReviewNodeView node={child} level={level + 1} expansion={expansion} />
               </li>
             ) : (
-              <li key={index}>
-                <RichTextView text={item} capitalize />
+              <li key={nodeId}>
+                <RichTextView text={name} capitalize />
               </li>
             );
           })}
@@ -118,6 +121,17 @@ export function ReviewNodeView({ node, level, expansion }: Props) {
       )}
     </ReviewDisclosure>
   );
+});
+
+/** A moved-in element that also changed is shown once, as its own collapsible line in its place in the list. */
+function placeMovedInNodes(node: ReviewNode) {
+  if (node.kind !== 'section') {
+    return { movedInNodes: [], otherChildren: [] };
+  }
+  const childById = new Map(node.children.map((child) => [child.id, child]));
+  const movedInNodes = (node.movedIn ?? []).map(({ nodeId }) => childById.get(nodeId));
+  const placed = new Set(movedInNodes.flatMap((child) => (child ? [child.id] : [])));
+  return { movedInNodes, otherChildren: node.children.filter((child) => !placed.has(child.id)) };
 }
 
 function RemovedContents({
@@ -132,6 +146,7 @@ function RemovedContents({
   const styles = useStyles2(getStyles);
   const items = node.removedContents ?? [];
   const key = removedContentsKey(node);
+  const expanded = useIsExpanded(expansion, key);
 
   return (
     <div className={styles.category}>
@@ -146,7 +161,7 @@ function RemovedContents({
             })}
           </Text>
         }
-        expanded={expansion.isExpanded(key)}
+        expanded={expanded}
         onToggle={() => expansion.toggle(key)}
       >
         <ul className={styles.removedList}>

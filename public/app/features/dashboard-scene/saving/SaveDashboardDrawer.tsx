@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaHumanFriendlyDashDiffs } from '@grafana/runtime/internal';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
@@ -90,6 +92,9 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
   static Component = SaveDashboardDrawerComponent;
 }
 
+/** Which form the drawer's Details tab shows, in the order they take precedence. */
+type SaveForm = 'template' | 'saveAsTemplate' | 'repository' | 'loading' | 'saveAs' | 'provisioned' | 'save';
+
 function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboardDrawer>) {
   const {
     showDiff,
@@ -130,7 +135,25 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   const target = getSaveTarget(view, saveTarget);
   const humanFriendlyDiffsEnabled = useFlagGrafanaHumanFriendlyDashDiffs();
 
-  // Review covers the normal save and the Save As form (new dashboards and copies) of v2 dashboards only
+  // A template flag without its extension registered falls through to the other forms
+  const SaveDashboardTemplateForm = saveDashboardTemplate ? getSaveDashboardTemplateForm() : null;
+  const SaveAsTemplateForm = saveAsDashboardTemplate ? getSaveAsTemplateForm() : null;
+  const form: SaveForm = SaveDashboardTemplateForm
+    ? 'template'
+    : SaveAsTemplateForm
+      ? 'saveAsTemplate'
+      : target === 'repository'
+        ? 'repository'
+        : view.status === RepoViewStatus.Loading
+          ? 'loading'
+          : isNewSave
+            ? 'saveAs'
+            : isProvisioned || managedResourceCannotBeEdited
+              ? 'provisioned'
+              : 'save';
+
+  // Review covers the normal save and the Save As form (new dashboards and copies) of v2 dashboards only. Template
+  // saves never get it, even when they fall through to one of those forms.
   const isReviewAvailable =
     humanFriendlyDiffsEnabled &&
     isDashboardV2Spec(initialSaveModel) &&
@@ -138,10 +161,8 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     !hasMigratedToV2 &&
     !saveAsDashboardTemplate &&
     !saveDashboardTemplate &&
-    target !== 'repository' &&
-    view.status !== RepoViewStatus.Loading &&
     !managedResourceCannotBeEdited &&
-    (isNewSave || !isProvisioned);
+    (form === 'save' || form === 'saveAs');
   const isReviewActive = Boolean(showReview) && !showDiff && isReviewAvailable;
 
   const tabs = (
@@ -188,49 +209,57 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     typeof initialAnnotation === 'string' ? initialAnnotation : undefined
   );
   const newPredefinedVariables = formatPredefinedVariablesAnnotationLabel(currentAnnotation);
+  // Built from primitives so the Review summary recomputes only when one of them changes
+  const reviewMetadata = useMemo(
+    () => ({
+      ...(hasFolderChanges ? { folder: { before: oldFolder, after: folderTitle } } : {}),
+      ...(hasPredefinedVariablesChanges
+        ? { predefinedVariables: { before: oldPredefinedVariables, after: newPredefinedVariables } }
+        : {}),
+    }),
+    [
+      hasFolderChanges,
+      oldFolder,
+      folderTitle,
+      hasPredefinedVariablesChanges,
+      oldPredefinedVariables,
+      newPredefinedVariables,
+    ]
+  );
 
   const renderForm = () => {
-    if (saveDashboardTemplate) {
-      const SaveDashboardTemplateForm = getSaveDashboardTemplateForm();
-      if (SaveDashboardTemplateForm) {
-        return <SaveDashboardTemplateForm dashboard={dashboard} drawer={model} changeInfo={changeInfo} />;
-      }
+    switch (form) {
+      case 'template':
+        return (
+          SaveDashboardTemplateForm && (
+            <SaveDashboardTemplateForm dashboard={dashboard} drawer={model} changeInfo={changeInfo} />
+          )
+        );
+      case 'saveAsTemplate':
+        return SaveAsTemplateForm && <SaveAsTemplateForm dashboard={dashboard} />;
+      case 'repository':
+        return (
+          <SaveProvisionedDashboard
+            dashboard={dashboard}
+            changeInfo={changeInfo}
+            drawer={model}
+            saveAsCopy={saveAsCopy}
+            recoverToNewBranch={recoverToNewBranch}
+            view={view}
+          />
+        );
+      case 'loading':
+        // First lookup of a new save: nothing settled to hold, so the form waits
+        return <Spinner />;
+      case 'saveAs':
+        return (
+          <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} isHeld={view.isHeld} />
+        );
+      case 'provisioned':
+        return <SaveProvisionedDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+      case 'save':
+        return <SaveDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
     }
-
-    if (saveAsDashboardTemplate) {
-      const SaveAsTemplateForm = getSaveAsTemplateForm();
-      if (SaveAsTemplateForm) {
-        return <SaveAsTemplateForm dashboard={dashboard} />;
-      }
-    }
-
-    if (target === 'repository') {
-      return (
-        <SaveProvisionedDashboard
-          dashboard={dashboard}
-          changeInfo={changeInfo}
-          drawer={model}
-          saveAsCopy={saveAsCopy}
-          recoverToNewBranch={recoverToNewBranch}
-          view={view}
-        />
-      );
-    }
-
-    // First lookup of a new save: nothing settled to hold, so the form waits
-    if (view.status === RepoViewStatus.Loading) {
-      return <Spinner />;
-    }
-
-    if (isNewSave) {
-      return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} isHeld={view.isHeld} />;
-    }
-
-    if (isProvisioned || managedResourceCannotBeEdited) {
-      return <SaveProvisionedDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
-    }
-
-    return <SaveDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
   };
 
   return (
@@ -262,17 +291,11 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       {isReviewActive && (
         <LazyReviewPane
           dashboard={dashboard}
-          mode={changeInfo.isNew ? 'new' : isNewSave ? 'saveAsCopy' : 'save'}
+          mode={changeInfo.isNew ? 'new' : form === 'saveAs' ? 'saveAsCopy' : 'save'}
           draft={model.saveFormDraft}
-          metadata={{
-            ...(hasFolderChanges ? { folder: { before: oldFolder, after: folderTitle } } : {}),
-            ...(hasPredefinedVariablesChanges
-              ? { predefinedVariables: { before: oldPredefinedVariables, after: newPredefinedVariables } }
-              : {}),
-          }}
-          saveTimeRange={saveTimeRange}
-          saveVariables={saveVariables}
-          saveRefresh={saveRefresh}
+          initialSaveModel={initialSaveModel}
+          changedSaveModel={changedSaveModel}
+          metadata={reviewMetadata}
           onBackToDetails={() => model.setState({ showReview: false })}
           onShowChanges={() => model.setState({ showDiff: true, showReview: false })}
         />

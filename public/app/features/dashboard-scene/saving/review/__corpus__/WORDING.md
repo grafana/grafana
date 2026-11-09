@@ -288,7 +288,7 @@ Special formatters:
 | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Default time range (`from` + `to`, one line, claims both)                | `Default time range: Last 6 hours → Last 24 hours` via `rangeUtil.describeTimeRange({ from, to })`                                                                                                                                                                   |
 | Auto refresh (`autoRefresh`)                                             | `''` reads `Off`: `Auto refresh: Off → 1m`                                                                                                                                                                                                                           |
-| Graph tooltip (`cursorSync`)                                             | `Off` → `Default`, `Crosshair` → `Shared crosshair`, `Tooltip` → `Shared tooltip`                                                                                                                                                                                    |
+| Graph tooltip (`cursorSync`)                                             | the general settings' choices: `Off` → `Default`, `Crosshair` → `Shared crosshair`, `Tooltip` → `Shared tooltip`                                                                                                                                                     |
 | Editable (`editable`)                                                    | boolean: `Editable: turned off`                                                                                                                                                                                                                                      |
 | Layout type                                                              | `Layout: changed from rows to tabs`; kinds read `custom grid` (GridLayout), `auto grid` (AutoGridLayout), `rows`, `tabs`                                                                                                                                             |
 | Default grid (`preferences.layout` kind)                                 | `Default grid: Custom grid → Auto grid`; other changes inside it: `Default grid: changed` + details                                                                                                                                                                  |
@@ -297,7 +297,7 @@ Special formatters:
 | Panel position (grid `x`/`y`, one line, claims both)                     | Only when the reading order didn't change (otherwise the node is moved, §3): `Position: moved right`, `moved down`, `moved down and left` (vertical first; by the sign of Δy, Δx)                                                                                    |
 | Panel size (grid `width`/`height`, one line, claims both)                | In words, width first, joined with the conjunction list: `Size: wider`, `narrower`, `taller`, `shorter`, `Size: wider and taller`; details: before `12 × 8`, after `24 × 8` (width × height)                                                                         |
 | Thresholds (field config `thresholds`, defaults or an override property) | `Thresholds: changed`; details are readable steps, one per line, in stored order: the first step is `Base: <color>`, the others `<value>: <color>` (`80: red`); when the mode differs between the sides, each side starts with `Mode: Absolute` / `Mode: Percentage` |
-| Variable type (`kind`)                                                   | `Type: Custom → Query` (kind without `Variable`, humanized: `Ad hoc filters`, `Group by`, `Data source`, `Interval`, `Text box`, `Constant`, `Switch`)                                                                                                               |
+| Variable type (`kind`)                                                   | `Type: Custom → Query`, in the dashboard type picker's names (`getVariableTypeLabel`): `Query`, `Custom`, `Filter`, `Group by`, `Data source`, `Interval`, `Textbox`, `Constant`, `Switch`; an unknown kind without `Variable`, humanized                            |
 
 **Visualization type changes** (`vizConfig.group`):
 
@@ -414,15 +414,19 @@ Item fields:
 - **Transformation:** each key of `spec.options` (humanized), `spec.disabled` → `Disabled`,
   `spec.filter` → `Filter`, `spec.topic` → `Applies to`.
 - **Override:** each property by its field config label; the matcher is the identity.
-- **Variable:** `label` Label, `description` Description, `hide` Display, `query` Query, `regex` Regex,
-  `sort` Sort, `refresh` Refresh, `multi` Multi-value, `includeAll` Include All option, `allValue` Custom all
-  value, `current` Current value, `options` Options, `datasource` Data source, `allowCustomValue` Allow custom
-  values, `skipUrlSync` Skip URL sync; anything else humanized.
+- **Variable:** the type (`kind`) Type, then `label` Label, `description` Description, `hide` Display,
+  `datasource` Data source, `query` Query, `regex` Regex, `sort` Sort, `refresh` Refresh, `multi` Multi-value,
+  `allowCustomValue` Allow custom values, `includeAll` Include All option, `allValue` Custom all value,
+  `current` Current value, `options` Options, `skipUrlSync` Skip URL sync; anything else humanized.
 - **Annotation:** `enable` Enabled, `hide` Hidden, `iconColor` Color, `query` Query, `filter` Show in;
   anything else humanized.
 - **Link:** `url` URL, `tooltip` Tooltip, `icon` Icon, `type` Type, `tags` Tags, `asDropdown` Show as dropdown,
   `targetBlank` Open in new tab, `includeVars` Include current template variable values, `keepTime` Include
   current time range, `placement` Placement.
+
+When several fields of one item change, they are listed under the item in the order above (for a variable, the
+variable editor's order; for a query: data source, the query body's keys, then `Hide response`); fields
+without a label come after, by key.
 
 ## 9. Field labels
 

@@ -1,117 +1,152 @@
 import { type ReviewCorpusCase } from '../types';
 
-import { addedPanelProperties } from './addedElementProperties';
-import { annotationsAndLinks } from './annotationsAndLinks';
-import { autoGridSettings } from './autoGridSettings';
 import {
+  annotationsAndLinks,
+  bookkeepingOnly,
+  dashboardProperties,
+  folderMoved,
+  noChanges,
+  overviewMixed,
+  predefinedVariablesChanged,
+  renamedAndRenamedBack,
+  timeRangeAndRefresh,
+  variableFieldsGrouped,
+  variableRenamed,
+  variablesByName,
+} from './dashboard';
+import {
+  autoGridSettings,
+  gridGroupedIntoTabs,
+  gridItemRemovedFromMiddle,
+  groupedIntoRowsThenMovedToNewRow,
   itemFitContentInherited,
   itemFitContentOverridden,
   matchRowHeightsTurnedOff,
   matchRowHeightsTurnedOn,
-} from './autoGridTriState';
-import { bookkeepingOnly } from './bookkeepingOnly';
-import { dashboardProperties } from './dashboardProperties';
-import { deepNesting } from './deepNesting';
+  movedInPanelAlsoChanged,
+  newPanelAlongsideMovedIn,
+  panelMovedBetweenRows,
+  panelMovedBetweenTabs,
+  panelMovedToFirst,
+  panelPositionAndSize,
+  panelPositionOnly,
+  panelsSwappedBetweenRows,
+  rowsGroupedIntoTab,
+  rowsToTabs,
+  sectionsReordered,
+  unknownLayoutKind,
+} from './layout';
 import {
+  duplicateRefIdChanged,
+  fieldConfigUnit,
+  overridesAddedAndChanged,
+  pluginOptionChanged,
+  pluginOptionChangedWithoutPlugin,
+  pluginVersionsBumped,
+  queryAppended,
+  queryExpressionChanged,
+  queryInsertedBeforeA,
+  queryOptionsChanged,
+  thresholdsChanged,
+  thresholdsModeChanged,
+  transformationAdded,
+  unconfiguredToGauge,
+  unconfiguredToGaugeWithoutPlugin,
+  unconfiguredToStat,
+  visualizationChanged,
+} from './panelConfig';
+import {
+  addedPanelProperties,
+  duplicateMovedAndUpdated,
   duplicateMovedFirst,
   duplicatesRemovedWithRow,
   duplicateSystemDefaultOwner,
   duplicateUpdated,
-} from './duplicateNames';
-import { elementKeyWithSlash } from './elementKeyWithSlash';
+  elementKeyWithSlash,
+  fieldConfigTextValue,
+  fieldConfigTextValueWithoutPlugin,
+  libraryPanelCreated,
+  libraryPanelRemoved,
+  libraryPanelUnlinked,
+  manyPanels,
+  panelAdded,
+  panelRemoved,
+  panelRenamed,
+  panelTitleEmptied,
+  prototypeElementNames,
+  transparentTurnedOn,
+  untitledAndDuplicatePanels,
+} from './panels';
 import {
-  descriptionCleared,
-  emptyDescriptionDropped,
-  emptyDescriptionDroppedInCopy,
-  longDescriptionRemoved,
-} from './emptyDescription';
-import { fieldConfigUnit } from './fieldConfigUnit';
-import { gridItemRemovedFromMiddle } from './gridItemRemovedFromMiddle';
-import { libraryPanelCreated } from './libraryPanel';
-import { manyPanels } from './manyPanels';
-import { folderMoved, predefinedVariablesChanged } from './metadataOnly';
-import {
-  gridGroupedIntoTabs,
-  groupedIntoRowsThenMovedToNewRow,
-  movedInPanelAlsoChanged,
-  newPanelAlongsideMovedIn,
-  rowsGroupedIntoTab,
-} from './movedInByLayoutChange';
-import { panelMovedBetweenTabs, panelMovedToFirst, panelPositionOnly, sectionsReordered } from './moves';
+  newDashboard,
+  newDashboardAutoGrid,
+  pendingChangesBaseline,
+  saveAsCopy,
+  saveAsCopyUndefinedDescription,
+} from './saveModes';
 import {
   autoGridToRowsScenario,
+  deepNesting,
+  emptyAndMissingRowTitles,
+  nestedDashboardEdited,
+  nestedDashboardUnchanged,
+  rowAdded,
+  rowCollapsed,
+  rowRemovedWithPanels,
+  rowRenamed,
+  rowRenamedKeepingFewPanels,
+  rowRenamedWithPanelAdded,
+  rowSettings,
   rowsSwappedAtDepth1,
   rowsSwappedAtDepth2,
   rowsSwappedAtDepth3,
+  sectionVariables,
   tabsSwappedAtDepth1,
   tabsSwappedAtDepth2,
   tabsSwappedAtDepth3,
   underDroppedForDirectParent,
   underKeptForCompressedParent,
-} from './nestedHeaders';
-import { newDashboard } from './newDashboard';
-import { newDashboardAutoGrid } from './newDashboardAutoGrid';
-import { noChanges } from './noChanges';
-import { overridesAddedAndChanged } from './overridesAddedAndChanged';
-import { overviewMixed } from './overviewMixed';
-import { panelAdded } from './panelAdded';
-import { panelMovedBetweenRows } from './panelMovedBetweenRows';
-import { panelPositionAndSize } from './panelPositionAndSize';
-import { panelRemoved } from './panelRemoved';
-import { panelRenamed } from './panelRenamed';
-import { pendingChangesBaseline } from './pendingChangesBaseline';
-import { pluginOptionChanged, pluginOptionChangedWithoutPlugin } from './pluginOptionChanged';
-import { pluginVersionsBumped } from './pluginVersionsBumped';
-import { prototypeElementNames } from './prototypeElementNames';
-import { queryAppended } from './queryAppended';
-import { queryExpressionChanged } from './queryExpressionChanged';
-import { queryInsertedBeforeA } from './queryInsertedBeforeA';
-import { queryOptionsChanged } from './queryOptionsChanged';
-import { rowAdded } from './rowAdded';
-import { rowRemovedWithPanels } from './rowRemovedWithPanels';
-import { rowRenamed } from './rowRenamed';
-import { rowSettings } from './rowSettings';
-import { rowsToTabs } from './rowsToTabs';
-import { saveAsCopy } from './saveAsCopy';
-import { sectionVariables } from './sectionVariables';
+  untitledAndDuplicateSections,
+} from './sections';
 import {
   panelRuleSetAddedWithLayoutChange,
+  rowPanelTimeRangeRuleChanged,
   ruleSetAddedToTab,
   ruleSetRemovedFromTab,
   singleRuleVisibilityChanged,
+  singleRuleVisibilityWording,
   timeRangeRuleChanged,
+  timeRangeRuleWording,
   variableRulesAddedRemovedChanged,
   visibilityAndMatchChanged,
+  visibilityMatchAndVariableRuleWording,
 } from './showHideRules';
 import {
+  descriptionCleared,
+  emptyDescriptionDropped,
+  emptyDescriptionDroppedInCopy,
+  longDescriptionRemoved,
   optionAddedWithNonDefaultValue,
   optionAddedWithoutPlugin,
   optionChangedToDefault,
   pluginOptionDefaultFilledIn,
   pluginVersionFilledIn,
+  systemDefaultsEmptyValues,
+  timeseriesToGaugeFixesThresholds,
+  unconfiguredToPieChart,
 } from './systemDefaults';
-import { systemDefaultsEmptyValues } from './systemDefaultsEmptyValues';
-import { fieldConfigTextValue, fieldConfigTextValueWithoutPlugin } from './textValues';
-import { thresholdsChanged, thresholdsModeChanged } from './thresholdsChanged';
-import { timeRangeAndRefresh } from './timeRangeAndRefresh';
-import { transformationAdded } from './transformationAdded';
-import { transparentTurnedOn } from './transparentTurnedOn';
-import { unconfiguredToGauge, unconfiguredToGaugeWithoutPlugin } from './unconfiguredToGauge';
-import { unknownLayoutKind } from './unknownLayoutKind';
-import { untitledAndDuplicatePanels } from './untitledAndDuplicatePanels';
-import { untitledAndDuplicateSections } from './untitledAndDuplicateSections';
-import { variableFieldsGrouped, variablesByName } from './variablesByName';
-import { visualizationChanged } from './visualizationChanged';
 
 /** Every corpus case, in the order the runner reports them. */
 export const corpusCases: ReviewCorpusCase[] = [
   // No changes, and dashboard-level edits
   noChanges,
+  renamedAndRenamedBack,
   bookkeepingOnly,
   dashboardProperties,
   timeRangeAndRefresh,
   variablesByName,
   variableFieldsGrouped,
+  variableRenamed,
   addedPanelProperties,
   annotationsAndLinks,
   autoGridSettings,
@@ -120,11 +155,13 @@ export const corpusCases: ReviewCorpusCase[] = [
   queryAppended,
   queryInsertedBeforeA,
   queryExpressionChanged,
+  duplicateRefIdChanged,
   transformationAdded,
   queryOptionsChanged,
   visualizationChanged,
   unconfiguredToGauge,
   unconfiguredToGaugeWithoutPlugin,
+  unconfiguredToStat,
   pluginOptionChanged,
   pluginOptionChangedWithoutPlugin,
   fieldConfigUnit,
@@ -135,24 +172,32 @@ export const corpusCases: ReviewCorpusCase[] = [
   overridesAddedAndChanged,
   transparentTurnedOn,
   libraryPanelCreated,
+  libraryPanelRemoved,
+  libraryPanelUnlinked,
   // Panels added, removed and moved
   panelAdded,
   panelRemoved,
   gridItemRemovedFromMiddle,
   panelMovedBetweenRows,
+  panelsSwappedBetweenRows,
   panelMovedBetweenTabs,
   panelPositionAndSize,
   panelPositionOnly,
   panelMovedToFirst,
   // Sections
   rowRenamed,
+  rowRenamedWithPanelAdded,
+  rowRenamedKeepingFewPanels,
   rowRemovedWithPanels,
   rowAdded,
   rowSettings,
+  rowCollapsed,
   sectionVariables,
   rowsToTabs,
   sectionsReordered,
   deepNesting,
+  nestedDashboardUnchanged,
+  nestedDashboardEdited,
   rowsSwappedAtDepth1,
   tabsSwappedAtDepth1,
   rowsSwappedAtDepth2,
@@ -168,9 +213,12 @@ export const corpusCases: ReviewCorpusCase[] = [
   rowsGroupedIntoTab,
   newPanelAlongsideMovedIn,
   untitledAndDuplicatePanels,
+  panelTitleEmptied,
   untitledAndDuplicateSections,
+  emptyAndMissingRowTitles,
   duplicateMovedFirst,
   duplicateUpdated,
+  duplicateMovedAndUpdated,
   duplicateSystemDefaultOwner,
   duplicatesRemovedWithRow,
   overviewMixed,
@@ -182,6 +230,10 @@ export const corpusCases: ReviewCorpusCase[] = [
   variableRulesAddedRemovedChanged,
   ruleSetAddedToTab,
   ruleSetRemovedFromTab,
+  timeRangeRuleWording,
+  rowPanelTimeRangeRuleChanged,
+  singleRuleVisibilityWording,
+  visibilityMatchAndVariableRuleWording,
   // System defaults
   pluginVersionFilledIn,
   pluginVersionsBumped,
@@ -190,9 +242,12 @@ export const corpusCases: ReviewCorpusCase[] = [
   optionAddedWithoutPlugin,
   optionChangedToDefault,
   optionAddedWithNonDefaultValue,
+  unconfiguredToPieChart,
+  timeseriesToGaugeFixesThresholds,
   // Save flows
   newDashboard,
   saveAsCopy,
+  saveAsCopyUndefinedDescription,
   folderMoved,
   predefinedVariablesChanged,
   manyPanels,

@@ -8,7 +8,7 @@ export interface OwnedClaim {
   owner: string;
 }
 
-export interface CompletenessReport {
+interface CompletenessReport {
   /** Diff paths no claim covers. */
   uncovered: PathKey[];
   /** Diff paths more than one claim covers, with the claims that do. */
@@ -107,7 +107,10 @@ export function collectTexts(summary: ReviewSummary): string[] {
     texts.push(richToPlain(node.label), richToPlain(node.statusText ?? ''), node.summary, ...propertyTexts(node));
     node.categories.forEach((group) => texts.push(group.label, ...group.changes.flatMap(changeTexts)));
     if (node.kind === 'section') {
-      texts.push(...(node.removedContents ?? []).map(richToPlain), ...(node.movedInContents ?? []).map(richToPlain));
+      texts.push(
+        ...(node.removedContents ?? []).map(richToPlain),
+        ...(node.movedIn ?? []).map(({ name }) => richToPlain(name))
+      );
       node.children.forEach(visit);
     }
   };

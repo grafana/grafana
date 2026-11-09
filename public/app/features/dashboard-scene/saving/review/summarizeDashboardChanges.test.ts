@@ -10,7 +10,14 @@ import {
 import { joinPath, named, richToPlain } from './richText';
 import { buildStructure } from './structure/buildStructure';
 import { summarizeDashboardChanges } from './summarizeDashboardChanges';
-import { type RawChange, type ReviewNode, type RichText, type Structure, type StructureNode } from './types';
+import {
+  panelNodeId,
+  type RawChange,
+  type ReviewNode,
+  type RichText,
+  type Structure,
+  type StructureNode,
+} from './types';
 
 jest.mock('./structure/buildStructure', () => ({ buildStructure: jest.fn() }));
 
@@ -30,13 +37,21 @@ function fakeStructure(nodes: StructureNode[], changes: RawChange[] = []): Struc
   return {
     nodes: [{ id: 'dashboard', kind: 'dashboard', claims: [] }, ...nodes],
     changes,
-    panelNodeId: (name) => nodes.find((node) => node.elementName === name)?.id,
   };
 }
 
 const tab = (title: string) => [named('tab', title)];
 const row = (title: string) => [named('row', title)];
 const panelName = (title: string) => [named('panel', title)];
+/** A panel node with the id buildStructure gives it, which summarize attributes the element's diffs to. */
+const panelNode = (element: string, title: string, rest: Partial<StructureNode> = {}): StructureNode => ({
+  id: panelNodeId(element),
+  kind: 'panel',
+  name: panelName(title),
+  elementName: element,
+  claims: [],
+  ...rest,
+});
 
 const outline = (nodes: ReviewNode[], depth = 0): string[] =>
   nodes.flatMap((node) => [
@@ -64,8 +79,8 @@ describe('summarizeDashboardChanges', () => {
           parentId: 'tab',
           claims: [],
         },
-        { id: 'p1', kind: 'panel', name: panelName('CPU'), parentId: 'row', elementName: 'panel-1', claims: [] },
-        { id: 'p2', kind: 'panel', name: panelName('Memory'), parentId: 'row', elementName: 'panel-2', claims: [] },
+        panelNode('panel-1', 'CPU', { parentId: 'row' }),
+        panelNode('panel-2', 'Memory', { parentId: 'row' }),
       ])
     );
     const payload = cloneDeep(baseline);
@@ -109,7 +124,7 @@ describe('summarizeDashboardChanges', () => {
             parentId: 'tab',
             claims: [],
           },
-          { id: 'p1', kind: 'panel', name: panelName('CPU'), parentId: 'row', elementName: 'panel-1', claims: [] },
+          panelNode('panel-1', 'CPU', { parentId: 'row' }),
         ],
         changes
       )
@@ -209,14 +224,7 @@ describe('summarizeDashboardChanges', () => {
           removedContents: [panelName('CPU')],
           claims: ['layout/spec/rows/0'],
         },
-        {
-          id: 'p1',
-          kind: 'panel',
-          name: panelName('CPU'),
-          parentId: 'row',
-          elementName: 'panel-1',
-          claims: ['elements/panel-1'],
-        },
+        panelNode('panel-1', 'CPU', { parentId: 'row', claims: ['elements/panel-1'] }),
       ])
     );
 
@@ -331,9 +339,7 @@ describe('summarizeDashboardChanges', () => {
   });
 
   it('claims bookkeeping without showing it', () => {
-    buildStructureMock.mockReturnValue(
-      fakeStructure([{ id: 'p1', kind: 'panel', name: panelName('CPU'), elementName: 'panel-1', claims: [] }])
-    );
+    buildStructureMock.mockReturnValue(fakeStructure([panelNode('panel-1', 'CPU')]));
     const payload = cloneDeep(baseline);
     payload.elements['panel-1'].spec.id = 7;
     payload.revision = 3;
@@ -347,11 +353,7 @@ describe('summarizeDashboardChanges', () => {
   it('starts panels collapsed above 10 changed panels', () => {
     const names = Array.from({ length: 11 }, (_, index) => `panel-${index}`);
     const many = spec(Object.fromEntries(names.map((name, index) => [name, panel(`P${index}`, index)])));
-    buildStructureMock.mockReturnValue(
-      fakeStructure(
-        names.map((name) => ({ id: name, kind: 'panel', name: panelName(name), elementName: name, claims: [] }))
-      )
-    );
+    buildStructureMock.mockReturnValue(fakeStructure(names.map((name) => panelNode(name, name))));
     const payload = cloneDeep(many);
     names.forEach((name) => (payload.elements[name].spec.title += ' (new)'));
 

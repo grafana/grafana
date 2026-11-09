@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { isEqual } from 'lodash';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -48,6 +48,7 @@ import {
 import { summarizeDashboardChanges } from './review/summarizeDashboardChanges';
 import { type ReviewInput, type ReviewSummary } from './review/types';
 import { type DashboardChangesRequest, type DashboardChangesResponse } from './shared';
+import { useParkSaveFormDraft } from './useParkSaveFormDraft';
 
 jest.mock('./review/summarizeDashboardChanges', () => ({ summarizeDashboardChanges: jest.fn() }));
 
@@ -1433,7 +1434,7 @@ describe('SaveDashboardDrawer with grafana.humanFriendlyDashDiffs enabled', () =
                 {
                   kind: 'changed',
                   text: 'Description: changed',
-                  details: { before: 'Old description', after: 'New description' },
+                  details: { before: () => 'Old description', after: () => 'New description' },
                   claims: ['description'],
                 },
               ],
@@ -1780,5 +1781,27 @@ describe('SaveDashboardDrawer with grafana.humanFriendlyDashDiffs enabled', () =
       expect(screen.getByRole('tab', { name: /Changes/ })).toHaveAttribute('aria-selected', 'true');
       expect(await screen.findByTestId('schema-diff-editor')).toBeInTheDocument();
     });
+  });
+});
+
+describe('useParkSaveFormDraft', () => {
+  it('keeps the Copy tags value another form parked when this form has no switch', () => {
+    const drawer = {
+      saveFormDraft: { title: 'Copy', description: '', copyTags: true },
+    } as unknown as SaveDashboardDrawer;
+
+    renderHook(() => useParkSaveFormDraft(drawer, 'Typed title', 'Typed description'));
+
+    expect(drawer.saveFormDraft).toEqual({ title: 'Typed title', description: 'Typed description', copyTags: true });
+  });
+
+  it('overwrites Copy tags when this form has the switch', () => {
+    const drawer = {
+      saveFormDraft: { title: 'Copy', description: '', copyTags: true },
+    } as unknown as SaveDashboardDrawer;
+
+    renderHook(() => useParkSaveFormDraft(drawer, 'Copy', '', false));
+
+    expect(drawer.saveFormDraft).toEqual({ title: 'Copy', description: '', copyTags: false });
   });
 });

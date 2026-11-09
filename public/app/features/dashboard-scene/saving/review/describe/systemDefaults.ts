@@ -1,6 +1,6 @@
-import { isEqual } from 'lodash';
+import { cloneDeep, isEqual } from 'lodash';
 
-import { FieldColorModeId, FieldConfigProperty, fieldColorModeRegistry, type PanelPlugin } from '@grafana/data';
+import { getPanelOptionsWithDefaults, type OptionDefaults, type PanelPlugin } from '@grafana/data';
 import {
   defaultAdhocVariableSpec,
   defaultAnnotationQuerySpec,
@@ -26,7 +26,7 @@ import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import { type Diff } from '../../../settings/version-history/utils';
 
-import { hasValueAt, isUnset, safely, valueAt } from './paths';
+import { isUnset, safely, valueAt } from './paths';
 
 const NOT_A_DEFAULT = Symbol('not a default');
 type DefaultValue = unknown | typeof NOT_A_DEFAULT;
@@ -35,6 +35,8 @@ export interface DefaultsContext {
   baseline: DashboardV2Spec;
   payload: DashboardV2Spec;
   getPlugin?: (pluginId: string) => PanelPlugin | undefined;
+  /** Whether a panel switched visualization type (`typeChanged` in rules.ts). */
+  pluginChanged?: (element: string) => boolean;
 }
 
 /**
@@ -42,7 +44,8 @@ export interface DefaultsContext {
  * value equals the plugin, field config or schema default. Anything it can't establish is a user change.
  */
 export function isSystemDefault(diff: Diff, ctx: DefaultsContext): boolean {
-  return isDefaultValue(diff.path, diff.op, diff.value, (path) => hasValueAt(ctx.baseline, path), ctx);
+  // compare only adds what the baseline lacks.
+  return isDefaultValue(diff.path, diff.op, diff.value, () => false, ctx);
 }
 
 /**
@@ -75,29 +78,11 @@ function isPluginVersion(path: string[]): boolean {
 
 /** Compared the way the serializer writes both sides: sorted, without nulls, ±Infinity as 0. */
 function matchesDefault(value: unknown, expected: unknown): boolean {
-  return isEqual(
-    withoutBaseStepValue(sortedDeepCloneWithoutNulls(value, true)),
-    withoutBaseStepValue(sortedDeepCloneWithoutNulls(expected, true))
-  );
+  return isEqual(asWritten(value), asWritten(expected));
 }
 
-/** A thresholds base step always means −∞, however it was written (−Infinity, 0, null or left out). */
-function withoutBaseStepValue(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(withoutBaseStepValue);
-  }
-  if (!isRecord(value)) {
-    return value;
-  }
-  const copy: Record<string, unknown> = {};
-  for (const [key, item] of Object.entries(value)) {
-    copy[key] = withoutBaseStepValue(item);
-  }
-  if (Array.isArray(copy.steps) && isRecord(copy.steps[0])) {
-    const { value: base, ...first } = copy.steps[0];
-    copy.steps = [first, ...copy.steps.slice(1)];
-  }
-  return copy;
+function asWritten(value: unknown): unknown {
+  return sortedDeepCloneWithoutNulls({ value }, true).value;
 }
 
 function defaultAt(path: string[], ctx: DefaultsContext): DefaultValue {
@@ -108,17 +93,17 @@ function defaultAt(path: string[], ctx: DefaultsContext): DefaultValue {
     case 'layout':
       return NOT_A_DEFAULT;
     case 'timeSettings':
-      return lookup(defaultTimeSettingsSpec(), rest);
+      return lookup(schemaDefaults.timeSettings(), rest);
     case 'variables':
       return listItemDefaultAt(rest, (index) => variableDefault(valueAt(ctx.payload, ['variables', index, 'kind'])));
     case 'annotations':
-      return listItemDefaultAt(rest, () => ({ kind: 'AnnotationQuery', spec: annotationDefault() }));
+      return listItemDefaultAt(rest, schemaDefaults.annotation);
     case 'links':
-      return listItemDefaultAt(rest, () => withoutPlacement(defaultDashboardLink()));
+      return listItemDefaultAt(rest, schemaDefaults.dashboardLink);
     case 'liveNow':
       return rest.length ? NOT_A_DEFAULT : false;
     default:
-      return lookup(defaultSpec(), path);
+      return lookup(schemaDefaults.dashboard(), path);
   }
 }
 
@@ -139,7 +124,7 @@ function elementDefaultAt(path: string[], ctx: DefaultsContext): DefaultValue {
     case 'transparent':
       return below.length ? NOT_A_DEFAULT : false;
     case 'links':
-      return listItemDefaultAt(below, () => defaultDataLink(), []);
+      return listItemDefaultAt(below, schemaDefaults.dataLink, []);
     case 'data':
       return dataDefaultAt(below);
     case 'vizConfig':
@@ -156,9 +141,9 @@ function dataDefaultAt(path: string[]): DefaultValue {
   const [field, ...below] = path.slice(1);
   switch (field) {
     case 'queries':
-      return listItemDefaultAt(below, () => ({ kind: 'PanelQuery', spec: queryDefault() }), []);
+      return listItemDefaultAt(below, schemaDefaults.query, []);
     case 'transformations':
-      return listItemDefaultAt(below, () => ({ spec: defaultTransformationSpec() }), []);
+      return listItemDefaultAt(below, schemaDefaults.transformation, []);
     case 'queryOptions':
       return below.length ? NOT_A_DEFAULT : {};
     default:
@@ -170,62 +155,61 @@ function vizConfigDefaultAt(element: string, path: string[], pluginId: unknown, 
   if (path[0] !== 'spec') {
     return NOT_A_DEFAULT;
   }
-  const plugin = typeof pluginId === 'string' ? safely(() => ctx.getPlugin?.(pluginId)) : undefined;
-  const [field, ...below] = path.slice(1);
-  if (field === 'options') {
-    if (!below.length) {
-      return plugin ? (safely(() => plugin.defaults) ?? {}) : {};
-    }
-    return plugin ? lookup(safely(() => plugin.defaults) ?? {}, below) : NOT_A_DEFAULT;
-  }
-  if (field === 'fieldConfig') {
-    const [part, ...rest] = below;
-    if (!part) {
+  const [field, part, ...rest] = path.slice(1);
+  if (field === 'fieldConfig' && part !== 'defaults') {
+    if (part === undefined) {
       return { defaults: {}, overrides: [] };
     }
-    if (part === 'overrides') {
-      return rest.length ? NOT_A_DEFAULT : [];
-    }
-    if (part === 'defaults') {
-      const previous = valueAt(ctx.baseline, ['elements', element, 'spec', 'vizConfig']);
-      if (plugin && rest.length === 1 && rest[0] === 'color' && isRecord(previous) && previous.group !== pluginId) {
-        const adapted = colorAfterPluginChange(plugin, valueAt(previous, ['spec', 'fieldConfig', 'defaults', 'color']));
-        if (adapted) {
-          return adapted;
-        }
-      }
-      if (!rest.length) {
-        return plugin ? (safely(() => plugin.fieldConfigDefaults.defaults) ?? {}) : {};
-      }
-      return plugin ? lookup(safely(() => plugin.fieldConfigDefaults.defaults) ?? {}, rest) : NOT_A_DEFAULT;
-    }
+    return part === 'overrides' && !rest.length ? [] : NOT_A_DEFAULT;
   }
-  return NOT_A_DEFAULT;
+  if (field !== 'options' && field !== 'fieldConfig') {
+    return NOT_A_DEFAULT;
+  }
+  const plugin = typeof pluginId === 'string' ? safely(() => ctx.getPlugin?.(pluginId)) : undefined;
+  const written = plugin ? safely(() => writtenBy(plugin, element, ctx)) : undefined;
+  const root: unknown = field === 'options' ? written?.options : written?.fieldConfig.defaults;
+  const below = field === 'options' ? path.slice(2) : rest;
+  if (!below.length) {
+    return root ?? {};
+  }
+  return root ? lookup(root, below) : NOT_A_DEFAULT;
 }
 
 /**
- * The color `getPanelOptionsWithDefaults` picks when a panel switches to `plugin`: classic palette for
- * plugins without value colors, thresholds for those that prefer them.
+ * What `VizPanel` writes once `plugin` is loaded: its defaults, or after a visualization change, the panel's previous
+ * field config adapted to it, with custom options cleared as the panel editor does before `changePluginType`.
  */
-function colorAfterPluginChange(plugin: PanelPlugin, previous: unknown): { mode: string } | undefined {
-  const settings = safely(() => plugin.fieldConfigRegistry.getIfExists(FieldConfigProperty.Color)?.settings);
-  if (!isRecord(settings)) {
-    return undefined;
+function writtenBy(plugin: PanelPlugin, element: string, ctx: DefaultsContext): OptionDefaults {
+  const isAfterPluginChange = ctx.pluginChanged?.(element) ?? false;
+  // The result only depends on the plugin, the baseline element and whether the type changed, and every diff of
+  // the element asks for it: compute it once per element.
+  const byPlugin = getOrSet(writtenCache, ctx.baseline, () => new WeakMap<PanelPlugin, Map<string, OptionDefaults>>());
+  const byElement = getOrSet(byPlugin, plugin, () => new Map<string, OptionDefaults>());
+  const key = `${isAfterPluginChange}/${element}`;
+  return getOrSet(byElement, key, () => {
+    const previous = isAfterPluginChange
+      ? valueAt(ctx.baseline, ['elements', element, 'spec', 'vizConfig', 'spec', 'fieldConfig', 'defaults'])
+      : undefined;
+    return getPanelOptionsWithDefaults({
+      plugin,
+      currentOptions: {},
+      // Cloned because getPanelOptionsWithDefaults fixes thresholds in place. Overrides don't affect the defaults.
+      currentFieldConfig: { defaults: { ...cloneDeep(isRecord(previous) ? previous : {}), custom: {} }, overrides: [] },
+      isAfterPluginChange,
+    });
+  });
+}
+
+const writtenCache = new WeakMap<DashboardV2Spec, WeakMap<PanelPlugin, Map<string, OptionDefaults>>>();
+
+function getOrSet<K, V>(map: { get(key: K): V | undefined; set(key: K, value: V): unknown }, key: K, make: () => V): V {
+  const cached = map.get(key);
+  if (cached !== undefined) {
+    return cached;
   }
-  const previousMode = valueAt(previous, ['mode']);
-  const mode = typeof previousMode === 'string' ? fieldColorModeRegistry.getIfExists(previousMode) : undefined;
-  if (!settings.byValueSupport && (!mode || mode.isByValue)) {
-    return { mode: FieldColorModeId.PaletteClassic };
-  }
-  if (settings.byValueSupport && settings.preferThresholdsMode && mode?.id !== FieldColorModeId.Fixed) {
-    if (!mode || !mode.isByValue) {
-      return { mode: FieldColorModeId.Thresholds };
-    }
-  }
-  if (settings.bySeriesSupport && mode?.isByValue) {
-    return { mode: FieldColorModeId.PaletteClassic };
-  }
-  return undefined;
+  const value = make();
+  map.set(key, value);
+  return value;
 }
 
 /** For a list path (`[]`, `[index]` or `[index, ...field]`), the default of the item's field. */
@@ -245,46 +229,54 @@ function lookup(root: unknown, path: string[]): DefaultValue {
   return value === undefined ? NOT_A_DEFAULT : value;
 }
 
-function queryDefault() {
-  const { query, ...rest } = defaultPanelQuerySpec();
-  const { refId, ...withoutRefId } = rest;
-  const { group, ...queryWithoutGroup } = query;
-  return { ...withoutRefId, query: { ...queryWithoutGroup, spec: {} } };
+/** The schema's defaults are pure: each is built once, on first use, and frozen because every summary shares it. */
+function shared<T>(make: () => T): () => T {
+  let value: T | undefined;
+  return () => (value ??= deepFreeze(make()));
 }
 
-function annotationDefault() {
-  const { placement, query, ...rest } = defaultAnnotationQuerySpec();
-  const { group, ...queryWithoutGroup } = defaultDataQueryKind();
-  return { ...rest, query: queryWithoutGroup };
+function deepFreeze<T>(value: T): T {
+  if (typeof value === 'object' && value !== null && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    Object.values(value).forEach(deepFreeze);
+  }
+  return value;
 }
 
-function withoutPlacement<T extends { placement?: unknown }>(value: T): Omit<T, 'placement'> {
-  const { placement, ...rest } = value;
-  return rest;
-}
+const schemaDefaults = {
+  dashboard: shared(defaultSpec),
+  timeSettings: shared(defaultTimeSettingsSpec),
+  annotation: shared(() => {
+    const { placement, query, ...rest } = defaultAnnotationQuerySpec();
+    const { group, ...queryWithoutGroup } = defaultDataQueryKind();
+    return { kind: 'AnnotationQuery', spec: { ...rest, query: queryWithoutGroup } };
+  }),
+  dashboardLink: shared(() => {
+    const { placement, ...rest } = defaultDashboardLink();
+    return rest;
+  }),
+  dataLink: shared(defaultDataLink),
+  query: shared(() => {
+    const { query, refId, ...rest } = defaultPanelQuerySpec();
+    const { group, ...queryWithoutGroup } = query;
+    return { kind: 'PanelQuery', spec: { ...rest, query: { ...queryWithoutGroup, spec: {} } } };
+  }),
+  transformation: shared(() => ({ spec: defaultTransformationSpec() })),
+};
+
+const variableDefaults: Record<string, () => unknown> = {
+  QueryVariable: shared(() => ({ spec: defaultQueryVariableSpec() })),
+  TextVariable: shared(() => ({ spec: defaultTextVariableSpec() })),
+  ConstantVariable: shared(() => ({ spec: defaultConstantVariableSpec() })),
+  DatasourceVariable: shared(() => ({ spec: defaultDatasourceVariableSpec() })),
+  IntervalVariable: shared(() => ({ spec: defaultIntervalVariableSpec() })),
+  CustomVariable: shared(() => ({ spec: defaultCustomVariableSpec() })),
+  GroupByVariable: shared(() => ({ spec: defaultGroupByVariableSpec() })),
+  AdhocVariable: shared(() => ({ spec: defaultAdhocVariableSpec() })),
+  SwitchVariable: shared(() => ({ spec: defaultSwitchVariableSpec() })),
+};
 
 /** A variable kind's schema defaults, as `{ spec }`. */
 export function variableDefault(kind: unknown): unknown {
-  switch (kind) {
-    case 'QueryVariable':
-      return { spec: defaultQueryVariableSpec() };
-    case 'TextVariable':
-      return { spec: defaultTextVariableSpec() };
-    case 'ConstantVariable':
-      return { spec: defaultConstantVariableSpec() };
-    case 'DatasourceVariable':
-      return { spec: defaultDatasourceVariableSpec() };
-    case 'IntervalVariable':
-      return { spec: defaultIntervalVariableSpec() };
-    case 'CustomVariable':
-      return { spec: defaultCustomVariableSpec() };
-    case 'GroupByVariable':
-      return { spec: defaultGroupByVariableSpec() };
-    case 'AdhocVariable':
-      return { spec: defaultAdhocVariableSpec() };
-    case 'SwitchVariable':
-      return { spec: defaultSwitchVariableSpec() };
-    default:
-      return {};
-  }
+  return typeof kind === 'string' && Object.hasOwn(variableDefaults, kind) ? variableDefaults[kind]() : {};
 }

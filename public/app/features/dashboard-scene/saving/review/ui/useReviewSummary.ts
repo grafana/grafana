@@ -1,16 +1,13 @@
-import { debounce } from 'lodash';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { logError } from '@grafana/runtime';
-import { SceneObjectStateChangedEvent } from '@grafana/scenes';
+import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 import { getScenePendingChangePreview } from '../../../lifecycle/pendingChangePreview';
 import { type DashboardScene } from '../../../scene/DashboardScene';
-import { DashboardStateChangedEvent } from '../../../sidebar/events';
-import { DashboardSceneChangeTracker } from '../../DashboardSceneChangeTracker';
 import { summarizeDashboardChanges } from '../summarizeDashboardChanges';
 import { type ReviewInput, type ReviewMode, type ReviewSummary } from '../types';
 
@@ -26,60 +23,43 @@ export type ReviewSummaryState =
 export interface UseReviewSummaryOptions {
   dashboard: DashboardScene;
   mode: ReviewMode;
+  /** The drawer's change info models (useDashboardSaveChanges), already masked by the save options. */
+  initialSaveModel: Dashboard | DashboardV2Spec;
+  changedSaveModel: Dashboard | DashboardV2Spec;
   /** The Save As form's parked values (the drawer's saveFormDraft); read for 'new' and 'saveAsCopy'. */
   draft?: { title?: string; description?: string; copyTags?: boolean };
   metadata?: ReviewInput['metadata'];
-  saveTimeRange?: boolean;
-  saveVariables?: boolean;
-  saveRefresh?: boolean;
 }
 
 /**
  * Summarizes the save for the Review tab. Mount it only while Review is open: it computes on mount and
- * again when the dashboard, a save option or a Save As value changes, never on every render.
+ * again when the drawer's change info, the metadata or a Save As value changes, never on every render.
  */
-export function useReviewSummary(options: UseReviewSummaryOptions): ReviewSummaryState {
+export function useReviewSummary({
+  dashboard,
+  mode,
+  initialSaveModel,
+  changedSaveModel,
+  draft,
+  metadata,
+}: UseReviewSummaryOptions): ReviewSummaryState {
+  // Plugins that failed to load or missed the timeout: waiting for them again would hold up every refresh.
+  const unloadable = useRef(new Set<string>());
+
+  const { title, description, copyTags } = draft ?? {};
   // Results are tagged with the inputs they were computed for, so a stale result reads as loading.
-  const [result, setResult] = useState<{ key: string; state: ReviewSummaryState }>();
-
-  // The options are rebuilt on every drawer render, so they are read from here rather than keyed on:
-  // keying on their identity would recompute forever.
-  const latest = useRef(options);
-  useEffect(() => {
-    latest.current = options;
-  });
-
-  const { dashboard, mode, draft, metadata, saveTimeRange, saveVariables, saveRefresh } = options;
-
-  // The same signal that keeps the Changes tab current: an edit while Review is open (by the Assistant,
-  // say) can leave the diff count unchanged, so the count alone can't tell that the summary is stale.
-  const [revision, setRevision] = useState(0);
-  useEffect(() => {
-    const invalidate = debounce(() => setRevision((current) => current + 1), 100);
-    const subscription = dashboard.subscribeToEvent(SceneObjectStateChangedEvent, (event) => {
-      if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
-        invalidate();
-      }
-    });
-    const actionsSubscription = dashboard.subscribeToEvent(DashboardStateChangedEvent, invalidate);
-    return () => {
-      actionsSubscription.unsubscribe();
-      subscription.unsubscribe();
-      invalidate.cancel();
-    };
-  }, [dashboard]);
-
-  const recomputeKey = JSON.stringify([
-    revision,
-    mode,
-    saveTimeRange,
-    saveVariables,
-    saveRefresh,
-    draft?.title,
-    draft?.description,
-    draft?.copyTags,
-    metadata,
-  ]);
+  const inputs = useMemo(
+    (): UseReviewSummaryOptions => ({
+      dashboard,
+      mode,
+      initialSaveModel,
+      changedSaveModel,
+      draft: { title, description, copyTags },
+      metadata,
+    }),
+    [dashboard, mode, initialSaveModel, changedSaveModel, title, description, copyTags, metadata]
+  );
+  const [result, setResult] = useState<{ inputs: typeof inputs; state: ReviewSummaryState }>();
 
   useEffect(() => {
     let cancelled = false;
@@ -91,31 +71,31 @@ export function useReviewSummary(options: UseReviewSummaryOptions): ReviewSummar
         return;
       }
 
-      const input = buildReviewInput(latest.current);
-      await preloadPanelPlugins([input.baseline, input.payload]);
+      const input = buildReviewInput(inputs);
+      await preloadPanelPlugins([input.baseline, input.payload], unloadable.current);
       if (cancelled) {
         return;
       }
 
       const summary = summarizeDashboardChanges({ ...input, getPlugin: syncGetPanelPlugin });
       if (!cancelled) {
-        setResult({ key: recomputeKey, state: { status: 'ready', summary } });
+        setResult({ inputs, state: { status: 'ready', summary } });
       }
     };
 
     run().catch((error: unknown) => {
       logError(error instanceof Error ? error : new Error(String(error)), { source: 'dashboard-review-summary' });
       if (!cancelled) {
-        setResult({ key: recomputeKey, state: { status: 'error' } });
+        setResult({ inputs, state: { status: 'error' } });
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [recomputeKey]);
+  }, [inputs]);
 
-  if (result?.key === recomputeKey) {
+  if (result?.inputs === inputs) {
     return result.state;
   }
   return result?.state.status === 'ready' ? { ...result.state, refreshing: true } : { status: 'loading' };
@@ -124,18 +104,11 @@ export function useReviewSummary(options: UseReviewSummaryOptions): ReviewSummar
 function buildReviewInput({
   dashboard,
   mode,
+  initialSaveModel,
+  changedSaveModel,
   draft,
   metadata,
-  saveTimeRange,
-  saveVariables,
-  saveRefresh,
 }: UseReviewSummaryOptions): ReviewInput {
-  // Read now rather than from the drawer's last render, which may predate the edit that triggered this
-  const { initialSaveModel, changedSaveModel } = dashboard.getDashboardChanges(
-    saveTimeRange,
-    saveVariables,
-    saveRefresh
-  );
   if (!isDashboardV2Spec(initialSaveModel) || !isDashboardV2Spec(changedSaveModel)) {
     throw new Error('Review supports v2 dashboards only');
   }
@@ -147,6 +120,8 @@ function buildReviewInput({
     return { ...common, mode, baseline: initialSaveModel, payload: changedSaveModel };
   }
 
+  // Save As serializes the scene again rather than reuse changedSaveModel: the save options' masking rewrote that
+  // model's time settings and variable values in place, and Save As sends them unmasked.
   if (mode === 'new') {
     const payload = dashboard.getSaveAsModel({
       isNew: true,
@@ -180,7 +155,7 @@ function asV2Spec(model: unknown): DashboardV2Spec {
   return model;
 }
 
-async function preloadPanelPlugins(specs: Array<DashboardV2Spec | null>) {
+async function preloadPanelPlugins(specs: Array<DashboardV2Spec | null>, unloadable: Set<string>) {
   const ids = new Set<string>();
   for (const spec of specs) {
     for (const element of Object.values(spec?.elements ?? {})) {
@@ -190,7 +165,7 @@ async function preloadPanelPlugins(specs: Array<DashboardV2Spec | null>) {
     }
   }
 
-  const missing = [...ids].filter((id) => !syncGetPanelPlugin(id));
+  const missing = [...ids].filter((id) => !unloadable.has(id) && !syncGetPanelPlugin(id));
   if (missing.length === 0) {
     return;
   }
@@ -199,7 +174,10 @@ async function preloadPanelPlugins(specs: Array<DashboardV2Spec | null>) {
   const timeout = new Promise<void>((resolve) => {
     timer = setTimeout(resolve, PLUGIN_PRELOAD_TIMEOUT_MS);
   });
+  const pending = new Set(missing);
+  const loads = missing.map((id) => importPanelPlugin(id).then(() => pending.delete(id)));
   // allSettled: a plugin that fails to load only costs its labels.
-  await Promise.race([Promise.allSettled(missing.map((id) => importPanelPlugin(id))), timeout]);
+  await Promise.race([Promise.allSettled(loads), timeout]);
   clearTimeout(timer);
+  pending.forEach((id) => unloadable.add(id));
 }

@@ -29,15 +29,24 @@ import {
   tabs,
   transformation,
 } from '../__corpus__/builders';
-import { addedPanelProperties } from '../__corpus__/cases/addedElementProperties';
+import { addedPanelProperties } from '../__corpus__/cases/panels';
 import { getPluginLoader } from '../__corpus__/plugins';
 import { richToPlain } from '../richText';
 import { summarizeDashboardChanges } from '../summarizeDashboardChanges';
-import { type PanelReviewNode, type ReviewChange, type ReviewNode, type ReviewSummary } from '../types';
+import {
+  type PanelReviewNode,
+  type ReviewChange,
+  type ReviewNode,
+  type ReviewProperty,
+  type ReviewSummary,
+} from '../types';
 
 import { property, recordProperties, withoutDefaults } from './properties';
 
 const noDefaults = () => false;
+
+/** A property as the UI shows it once its Show is clicked. */
+const shown = (item: ReviewProperty | undefined) => item && { ...item, details: item.details?.() };
 
 describe('withoutDefaults', () => {
   it('drops defaults, false and empty values at any depth, and is undefined when nothing is left', () => {
@@ -71,12 +80,12 @@ describe('property', () => {
 
   it('shows a few short names inline and anything else as JSON behind Show, with a count for lists', () => {
     expect(property('Tags', ['prod', 'eu'])).toEqual({ label: 'Tags', value: '"prod", "eu"' });
-    expect(property('Queries', [{ refId: 'A' }])).toEqual({
+    expect(shown(property('Queries', [{ refId: 'A' }]))).toEqual({
       label: 'Queries (1)',
       details: JSON.stringify([{ refId: 'A' }], null, 2),
     });
-    expect(property('Options', { a: 1 })).toEqual({ label: 'Options', details: '{\n  "a": 1\n}' });
-    expect(property('Query', 'line 1\nline 2')).toEqual({ label: 'Query', details: 'line 1\nline 2' });
+    expect(shown(property('Options', { a: 1 }))).toEqual({ label: 'Options', details: '{\n  "a": 1\n}' });
+    expect(shown(property('Query', 'line 1\nline 2'))).toEqual({ label: 'Query', details: 'line 1\nline 2' });
   });
 });
 
@@ -104,7 +113,7 @@ describe('an added panel', () => {
     const node = summary.tree.find((candidate): candidate is PanelReviewNode => candidate.kind === 'panel');
 
     const fieldConfig = node?.properties?.find((item) => item.label === 'Field config');
-    expect(JSON.parse(fieldConfig?.details ?? '')).toEqual({ defaults: { unit: 'percent' } });
+    expect(JSON.parse(fieldConfig?.details?.() ?? '')).toEqual({ defaults: { unit: 'percent' } });
   });
 });
 
@@ -161,7 +170,7 @@ describe('every added or removed element is reviewable', () => {
       // A section is reviewable through what it holds too: its panels, what moved to it or was removed with it.
       const holds =
         node.kind === 'section' &&
-        (node.children.length > 0 || Boolean(node.movedInContents?.length || node.removedContents?.length));
+        (node.children.length > 0 || Boolean(node.movedIn?.length || node.removedContents?.length));
       if ((node.status === 'added' || node.status === 'removed') && !node.properties?.length && !holds) {
         missing.push(richToPlain(node.label));
       }

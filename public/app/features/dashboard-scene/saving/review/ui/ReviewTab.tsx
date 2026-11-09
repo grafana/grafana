@@ -1,34 +1,32 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { type ReactNode, useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  Box,
-  Button,
-  EmptyState,
-  LoadingPlaceholder,
-  ScrollContainer,
-  Stack,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Button, EmptyState, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { noEscape } from '../richText';
 import { type ChangeKind, type ReviewNode, type ReviewSummary } from '../types';
 
 import { ReviewChangeList } from './ReviewChangeList';
-import { ReviewDisclosure } from './ReviewDisclosure';
-import { AddRemoveMarker, RichTextView, isAddedOrRemoved } from './ReviewMarks';
-import { ReviewNodeView, nodeKey, removedContentsKey } from './ReviewNodeView';
-import { useReviewExpansion } from './useReviewExpansion';
-import { type ReviewSummaryState } from './useReviewSummary';
+import { nodeKey, removedContentsKey, ReviewNodeView } from './ReviewNodeView';
+import {
+  AddRemoveMarker,
+  isAddedOrRemoved,
+  ReviewDisclosure,
+  type ReviewExpansion,
+  RichTextView,
+  useIsExpanded,
+  useReviewExpansion,
+} from './ReviewPrimitives';
+import { ReviewTabFrame } from './ReviewTabFrame';
+import { type ReviewSummaryState, useReviewSummary, type UseReviewSummaryOptions } from './useReviewSummary';
 
 const METADATA_KEY = 'metadata';
 const SYSTEM_DEFAULTS_KEY = 'systemDefaults';
 const COUNT_ORDER: ChangeKind[] = ['added', 'changed', 'removed', 'moved'];
 
-export interface ReviewTabProps {
+interface ReviewTabProps {
   state: ReviewSummaryState;
   onBackToDetails: () => void;
   /** Switches the drawer to the Changes tab, the fallback when the summary fails. */
@@ -38,28 +36,14 @@ export interface ReviewTabProps {
 /** Read-only, human-friendly overview of what the save changes. Saving happens in Details. */
 export function ReviewTab({ state, onBackToDetails, onShowChanges }: ReviewTabProps) {
   return (
-    <Box display="flex" direction="column" height="100%">
-      <ScrollContainer showScrollIndicators>
-        <Box padding={0.5}>
-          {(state.status === 'loading' || (state.status === 'ready' && state.refreshing)) && (
-            <LoadingPlaceholder text={t('dashboard-scene.review.loading', 'Summarizing changes…')} />
-          )}
-          {state.status === 'error' && (
-            <Alert severity="warning" title={t('dashboard-scene.review.error-title', 'Unable to summarize changes')}>
-              <Button variant="primary" fill="text" size="sm" onClick={onShowChanges}>
-                <Trans i18nKey="dashboard-scene.review.error-show-changes">See the technical diff in Changes</Trans>
-              </Button>
-            </Alert>
-          )}
-          {state.status === 'ready' && <ReviewSummaryView summary={state.summary} />}
-        </Box>
-      </ScrollContainer>
-      <Box paddingTop={2}>
-        <Button variant="secondary" icon="arrow-left" onClick={onBackToDetails}>
-          <Trans i18nKey="dashboard-scene.review.back-to-details">Back to details</Trans>
-        </Button>
-      </Box>
-    </Box>
+    <ReviewTabFrame
+      loading={state.status === 'loading' || (state.status === 'ready' && state.refreshing)}
+      failed={state.status === 'error'}
+      onBackToDetails={onBackToDetails}
+      onShowChanges={onShowChanges}
+    >
+      {state.status === 'ready' && <ReviewSummaryView summary={state.summary} />}
+    </ReviewTabFrame>
   );
 }
 
@@ -73,9 +57,11 @@ function ReviewSummaryView({ summary }: { summary: ReviewSummary }) {
       ]),
     [summary]
   );
-  const expansion = useReviewExpansion(
-    (key) => key !== METADATA_KEY && key !== SYSTEM_DEFAULTS_KEY && !collapsedByDefault.has(key)
+  const defaultExpanded = useCallback(
+    (key: string) => key !== METADATA_KEY && key !== SYSTEM_DEFAULTS_KEY && !collapsedByDefault.has(key),
+    [collapsedByDefault]
   );
+  const expansion = useReviewExpansion(defaultExpanded);
 
   const { tree, metadata, systemDefaults, overview } = summary;
   const systemDefaultsCount = systemDefaults.reduce((count, group) => count + group.changes.length, 0);
@@ -149,37 +135,27 @@ function ReviewSummaryView({ summary }: { summary: ReviewSummary }) {
       {(metadata.length > 0 || systemDefaultsCount > 0) && (
         <div className={styles.extras}>
           {metadata.length > 0 && (
-            <ReviewDisclosure
-              level={3}
-              header={
-                <Text weight="medium">
-                  {t('dashboard-scene.review.metadata-heading', '', {
-                    count: metadata.length,
-                    defaultValue_one: 'Metadata ({{count}})',
-                    defaultValue_other: 'Metadata ({{count}})',
-                  })}
-                </Text>
-              }
-              expanded={expansion.isExpanded(METADATA_KEY)}
-              onToggle={() => expansion.toggle(METADATA_KEY)}
+            <ExtraSection
+              expansion={expansion}
+              expansionKey={METADATA_KEY}
+              heading={t('dashboard-scene.review.metadata-heading', '', {
+                count: metadata.length,
+                defaultValue_one: 'Metadata ({{count}})',
+                defaultValue_other: 'Metadata ({{count}})',
+              })}
             >
               <ReviewChangeList changes={metadata} />
-            </ReviewDisclosure>
+            </ExtraSection>
           )}
           {systemDefaultsCount > 0 && (
-            <ReviewDisclosure
-              level={3}
-              header={
-                <Text weight="medium">
-                  {t('dashboard-scene.review.system-defaults-heading', '', {
-                    count: systemDefaultsCount,
-                    defaultValue_one: 'System defaults ({{count}})',
-                    defaultValue_other: 'System defaults ({{count}})',
-                  })}
-                </Text>
-              }
-              expanded={expansion.isExpanded(SYSTEM_DEFAULTS_KEY)}
-              onToggle={() => expansion.toggle(SYSTEM_DEFAULTS_KEY)}
+            <ExtraSection
+              expansion={expansion}
+              expansionKey={SYSTEM_DEFAULTS_KEY}
+              heading={t('dashboard-scene.review.system-defaults-heading', '', {
+                count: systemDefaultsCount,
+                defaultValue_one: 'System defaults ({{count}})',
+                defaultValue_other: 'System defaults ({{count}})',
+              })}
             >
               <Text element="p" color="secondary" variant="bodySmall">
                 {t(
@@ -195,11 +171,37 @@ function ReviewSummaryView({ summary }: { summary: ReviewSummary }) {
                   <ReviewChangeList changes={group.changes} />
                 </div>
               ))}
-            </ReviewDisclosure>
+            </ExtraSection>
           )}
         </div>
       )}
     </Stack>
+  );
+}
+
+/** A collapsed-by-default section below the tree, for what is saved besides the dashboard's content. */
+function ExtraSection({
+  expansion,
+  expansionKey,
+  heading,
+  children,
+}: {
+  expansion: ReviewExpansion;
+  expansionKey: string;
+  heading: string;
+  children: ReactNode;
+}) {
+  const expanded = useIsExpanded(expansion, expansionKey);
+
+  return (
+    <ReviewDisclosure
+      level={3}
+      header={<Text weight="medium">{heading}</Text>}
+      expanded={expanded}
+      onToggle={() => expansion.toggle(expansionKey)}
+    >
+      {children}
+    </ReviewDisclosure>
   );
 }
 
@@ -219,7 +221,7 @@ function ReviewIntro({ summary }: { summary: ReviewSummary }) {
           {t(
             'dashboard-scene.review.intro-save-as-copy',
             'This saves a copy of "{{title}}". The original dashboard isn\'t changed. Differences from the original:',
-            { title: summary.sourceTitle ?? '', interpolation: { escapeValue: false } }
+            { title: summary.sourceTitle ?? '', interpolation: noEscape }
           )}
         </Text>
       )}
@@ -331,3 +333,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
   }),
 });
+
+export interface ReviewPaneProps extends UseReviewSummaryOptions {
+  onBackToDetails: () => void;
+  onShowChanges: () => void;
+}
+
+/** The Review tab's content. The drawer mounts it only while Review is open, so the summary is computed only then. */
+export function ReviewPane({ onBackToDetails, onShowChanges, ...options }: ReviewPaneProps) {
+  const state = useReviewSummary(options);
+
+  return <ReviewTab state={state} onBackToDetails={onBackToDetails} onShowChanges={onShowChanges} />;
+}

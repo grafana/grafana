@@ -52,21 +52,13 @@ export interface ReviewInput {
 
 export type ChangeKind = 'added' | 'changed' | 'removed' | 'moved';
 
-export type DashboardCategory = 'properties' | 'layout' | 'controls' | 'other';
-export type SectionCategory = 'properties' | 'layout' | 'repeat' | 'showHide' | 'controls' | 'other';
-export type PanelCategory =
-  | 'properties'
-  | 'layout'
-  | 'showHide'
-  | 'data'
-  | 'visualization'
-  | 'pluginOptions'
-  | 'fieldConfig'
-  | 'other';
-export type ReviewCategory = DashboardCategory | SectionCategory | PanelCategory;
-
 /** Id of the dashboard's own node, the root of every structure. */
 export const DASHBOARD_NODE_ID = 'dashboard';
+
+/** Id of a panel's node, on either side: panels are identified by their element name. */
+export function panelNodeId(elementName: string): string {
+  return `panel:${elementName}`;
+}
 
 /** Auto grid settings in the order the layout options list them. */
 export const AUTO_GRID_SETTINGS = [
@@ -84,18 +76,14 @@ export const AUTO_GRID_SETTINGS = [
   'matchRowHeights',
 ] as const;
 
-export function settingRank(key: string): number {
-  const order: readonly string[] = AUTO_GRID_SETTINGS;
-  const rank = order.indexOf(key);
-  return rank === -1 ? order.length : rank;
-}
-
 /** Display order of categories per node kind, as in the plan's structure table. */
 export const CATEGORY_ORDER = {
   dashboard: ['properties', 'layout', 'controls', 'other'],
   section: ['properties', 'layout', 'repeat', 'showHide', 'controls', 'other'],
   panel: ['properties', 'layout', 'showHide', 'data', 'visualization', 'pluginOptions', 'fieldConfig', 'other'],
-} as const satisfies Record<ReviewNodeKind, readonly ReviewCategory[]>;
+} as const satisfies Record<ReviewNodeKind, readonly string[]>;
+
+export type ReviewCategory = (typeof CATEGORY_ORDER)[ReviewNodeKind][number];
 
 /**
  * A diff path key: jsonDiff's path segments joined with '/', exactly as jsonDiff returns them
@@ -133,6 +121,11 @@ export type ReviewElementKind =
   | 'rule';
 
 /**
+ * A long value, pretty-printed when its "Show" is clicked: every added panel has some, few are ever opened.
+ */
+export type LazyText = () => string;
+
+/**
  * One property of an added or removed element, listed when its toggle is opened: what the element is set to,
  * not what changed. Only what's set is listed: empty values and defaults are left out.
  */
@@ -142,7 +135,7 @@ export interface ReviewProperty {
   /** A literal value, shown next to the label: `"Cache hits"`, `5`, `Yes`, `Time series`. */
   value?: string;
   /** An object or array, pretty-printed JSON revealed by a "Show" button. */
-  details?: string;
+  details?: LazyText;
 }
 
 export interface ReviewChange {
@@ -156,7 +149,7 @@ export interface ReviewChange {
   /** Set when the line is about one element (a variable, a query, …), so the UI can prefix its icon. */
   subject?: ReviewElementKind;
   /** Long or structured values, revealed by a "Show" toggle. Pretty-printed; absent side means none. */
-  details?: { before?: string; after?: string };
+  details?: { before?: LazyText; after?: LazyText };
   /** Added or removed element: what it is set to, revealed by its +/− toggle. */
   properties?: ReviewProperty[];
   /**
@@ -180,7 +173,7 @@ export interface ReviewCategoryGroup {
   changes: ReviewChange[];
 }
 
-export type ReviewNodeKind = 'dashboard' | 'section' | 'panel';
+type ReviewNodeKind = 'dashboard' | 'section' | 'panel';
 export type NodeStatus = 'added' | 'removed' | 'moved';
 
 interface ReviewNodeBase {
@@ -227,15 +220,17 @@ export interface SectionReviewNode extends ReviewNodeBase {
   /** Removed section only: translated names of the panels and sections removed with it, in baseline reading order. */
   removedContents?: RichText[];
   /**
-   * Added section only: translated names of the panels and sections that already existed and were placed in it
-   * by a layout change (no move of their own), in reading order. Not counted as changes: the layout change is.
+   * Added section only: the panels and sections that already existed and were placed in it by a layout change
+   * (no move of their own), in reading order, by translated name and node id. Not counted as changes: the layout
+   * change is. An entry whose element also changed is one of `children`: it is shown in the entry's place, as its
+   * own collapsible line, and nowhere else.
    */
-  movedInContents?: RichText[];
-  /**
-   * Node ids of `movedInContents`, entry for entry. An entry whose element also changed is one of `children`:
-   * it is shown in the entry's place, as its own collapsible line, and nowhere else.
-   */
-  movedInNodeIds?: string[];
+  movedIn?: MovedInEntry[];
+}
+
+export interface MovedInEntry {
+  name: RichText;
+  nodeId: string;
 }
 
 export type ReviewNode = DashboardReviewNode | SectionReviewNode | PanelReviewNode;
@@ -305,6 +300,14 @@ export interface RawChange {
   text?: string;
 }
 
+/** How structure/ says a node moved. */
+export interface NodeMove {
+  /** The move text, without the node's own position, e.g. `moved from Tab "Tab 2" to Tab "Tab 1", after Panel "P2"`. */
+  text: RichText;
+  /** Set when the node's name is ambiguous: its new 1-based position, appended by describe/ ("at position 1"). */
+  position?: number;
+}
+
 export interface StructureNode {
   id: string;
   kind: ReviewNodeKind;
@@ -322,13 +325,8 @@ export interface StructureNode {
   /** Parent node id; undefined for the dashboard and for root-level sections and panels. */
   parentId?: string;
   status?: NodeStatus;
-  /**
-   * Moved nodes: the move text, without the node's own position, e.g.
-   * `moved from Tab "Tab 2" to Tab "Tab 1", after Panel "P2"`. describe/ composes the final statusText.
-   */
-  moveText?: RichText;
-  /** Moved nodes with an ambiguous name: their new 1-based position, appended by describe/ ("at position 1"). */
-  movePosition?: number;
+  /** Moved nodes: how they moved. describe/ composes the final statusText. */
+  move?: NodeMove;
   /** Panel nodes: the element name (key in `elements`). */
   elementName?: string;
   /**
@@ -342,9 +340,7 @@ export interface StructureNode {
    */
   ownerLabel?: RichText;
   removedContents?: RichText[];
-  movedInContents?: RichText[];
-  /** Node ids of `movedInContents`, entry for entry. */
-  movedInNodeIds?: string[];
+  movedIn?: MovedInEntry[];
   /** A node moved out of another section: that section's node id (it lost the node, so it changed too). */
   movedFromId?: string;
   claims: PathKey[];
@@ -353,8 +349,9 @@ export interface StructureNode {
 export interface Structure {
   /** Every dashboard, section and panel node from both sides, in display order; describe/ prunes unchanged ones. */
   nodes: StructureNode[];
-  /** Semantic changes inside `layout`. Together with node claims, these claim every diff path under `layout`. */
+  /**
+   * Semantic changes inside `layout`, in node order and, within a node, in display order (e.g. layout settings
+   * as the layout options list them). Together with node claims, these claim every diff path under `layout`.
+   */
   changes: RawChange[];
-  /** Panel node id by element name, for elements on either side. */
-  panelNodeId(elementName: string): string | undefined;
 }

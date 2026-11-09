@@ -269,6 +269,11 @@ export function gridOf(...names: string[]): GridLayoutKind {
   return grid(names.map((name, i) => gridItem(name, { x: (i % 2) * 12, y: Math.floor(i / 2) * 8, w: 12, h: 8 })));
 }
 
+/** A grid of 12 × 8 panels in a single column, in the order given. */
+export function stackOf(...names: string[]): GridLayoutKind {
+  return grid(names.map((name, i) => gridItem(name, { x: 0, y: i * 8, w: 12, h: 8 })));
+}
+
 export function autoGridItem(
   name: string,
   extra: Partial<Omit<AutoGridLayoutItemSpec, 'element'>> = {}

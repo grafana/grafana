@@ -2,12 +2,12 @@ import { lazy, Suspense } from 'react';
 
 import { ErrorBoundary } from '@grafana/ui';
 
-import { type ReviewPaneProps } from './ReviewPane';
-import { ReviewTab } from './ReviewTab';
+import { type ReviewPaneProps } from './ReviewTab';
+import { ReviewTabFrame } from './ReviewTabFrame';
 
 // The summary engine is loaded only once someone opens Review
 const ReviewPane = lazy(() =>
-  import(/* webpackChunkName: "dashboard-review" */ './ReviewPane').then((module) => ({ default: module.ReviewPane }))
+  import(/* webpackChunkName: "dashboard-review" */ './ReviewTab').then((module) => ({ default: module.ReviewPane }))
 );
 
 /**
@@ -21,16 +21,10 @@ export function LazyReviewPane(props: ReviewPaneProps) {
     <ErrorBoundary boundaryName="dashboard-review">
       {({ error }) =>
         error ? (
-          <ReviewTab state={{ status: 'error' }} onBackToDetails={onBackToDetails} onShowChanges={onShowChanges} />
+          <ReviewTabFrame failed onBackToDetails={onBackToDetails} onShowChanges={onShowChanges} />
         ) : (
           <Suspense
-            fallback={
-              <ReviewTab
-                state={{ status: 'loading' }}
-                onBackToDetails={onBackToDetails}
-                onShowChanges={onShowChanges}
-              />
-            }
+            fallback={<ReviewTabFrame loading onBackToDetails={onBackToDetails} onShowChanges={onShowChanges} />}
           >
             <ReviewPane {...props} />
           </Suspense>

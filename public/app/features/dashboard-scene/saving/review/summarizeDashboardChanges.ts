@@ -6,36 +6,42 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 
 import { type Diff } from '../../settings/version-history/utils';
 
-import { describeDefaultDiff, describeField, type DescribeContext } from './describe/describeFields';
-import { emptyBaselineFor } from './describe/emptyBaseline';
-import { flatDiff } from './describe/flatDiff';
-import { getPanelLabels, humanizePath, type PanelLabels } from './describe/labels';
-import { listItemsOf } from './describe/listKinds';
-import { type ListContext } from './describe/namedLists';
+import {
+  attribute,
+  type AttributionContext,
+  type DescribeContext,
+  describeDefaultDiff,
+  describeField,
+  describeNewPluginDefaults,
+  fieldConfigFormat,
+  type FieldTarget,
+  typeChanged,
+} from './describe/fields';
+import { type ListContext, listItemsOf, ruleSetText } from './describe/lists';
+import { asArray, emptyBaselineFor, flatDiff, isUnset, safely, unescapeSegment, valueAt } from './describe/paths';
+import { type IsDefault, panelProperties, sectionProperties } from './describe/properties';
 import {
   categoryLabel,
   changeCount,
   countChanges,
   describeMetadata,
-  type NodeMove,
-  type TopLevelCounts,
-  sectionContentsText,
+  describeRawChange,
   nodeStatusText,
   nodeSummary,
   overviewLine,
-} from './describe/overview';
-import { asArray, isUnset, safely, unescapeSegment, valueAt } from './describe/paths';
-import { type IsDefault, panelProperties, sectionProperties } from './describe/properties';
-import { attribute, type AttributionContext, fieldConfigFormat, type FieldTarget, typeChanged } from './describe/rules';
-import { ruleSetText } from './describe/showHideRules';
-import { describeRawChange, rawFieldDefault } from './describe/structureChanges';
+  rawFieldDefault,
+  sectionContentsText,
+  type TopLevelCounts,
+} from './describe/structureText';
 import { isDefaultValue, isSystemDefault, type DefaultsContext } from './describe/systemDefaults';
+import { getPanelLabels, humanizePath, type PanelLabels } from './describe/wording';
 import { asSelf, noEscape, rich } from './richText';
 import { buildStructure } from './structure/buildStructure';
 import {
   CATEGORY_ORDER,
   claimCovers,
   DASHBOARD_NODE_ID,
+  panelNodeId,
   type PathKey,
   pathKey,
   type RawChange,
@@ -65,18 +71,26 @@ interface NodeEntry {
   change: ReviewChange;
 }
 
+/** The diffs buildStructure is responsible for: everything under `layout`, plus whole-element adds and removes. */
+export function isStructureDiff(diff: Diff): boolean {
+  return diff.path[0] === 'layout' || (diff.path[0] === 'elements' && diff.path.length === 2);
+}
+
 /** Builds the Review tab's summary of what a save changes. Pure and synchronous. */
 export function summarizeDashboardChanges(input: ReviewInput): ReviewSummary {
   const payload = input.payload;
   const baseline = input.baseline ?? emptyBaselineFor(payload);
   const diffs = flatDiff(baseline, payload);
 
-  const isStructureDiff = (diff: Diff) =>
-    diff.path[0] === 'layout' || (diff.path[0] === 'elements' && diff.path.length === 2);
   const structure = buildStructure(baseline, payload, diffs.filter(isStructureDiff));
 
   const getPlugin = (id: string): PanelPlugin | undefined => safely(() => input.getPlugin?.(id));
-  const defaultsCtx: DefaultsContext = { baseline, payload, getPlugin };
+  const defaultsCtx: DefaultsContext = {
+    baseline,
+    payload,
+    getPlugin,
+    pluginChanged: (element) => typeChanged(element, { baseline, payload }),
+  };
   // Read from the element's own side: a removed element's defaults are judged against the saved dashboard.
   const isDefaultOn = (side: DashboardV2Spec): IsDefault => {
     const ctx = side === payload ? defaultsCtx : { ...defaultsCtx, payload: side };
@@ -98,7 +112,7 @@ export function summarizeDashboardChanges(input: ReviewInput): ReviewSummary {
       }
       return labels;
     },
-    pluginName: (id) => getPlugin(id)?.meta?.name,
+    getPlugin,
   };
   const describeCtx: DescribeContext = {
     baseline,
@@ -134,7 +148,10 @@ export function summarizeDashboardChanges(input: ReviewInput): ReviewSummary {
       continue;
     }
     // '' ↔ absent (or an empty list or object): both mean "not set", so nothing a person would call a change.
-    if (isUnset(valueAt(baseline, diff.path)) && isUnset(valueAt(payload, diff.path))) {
+    // compare adds only what the baseline lacks and removes only what the payload lacks.
+    const unsetOn = (side: DashboardV2Spec, absentFor: Diff['op']) =>
+      diff.op === absentFor || isUnset(valueAt(side, diff.path));
+    if (unsetOn(payload, 'remove') && unsetOn(baseline, 'add')) {
       bookkeeping.push(pathKey(diff.path));
       continue;
     }
@@ -150,9 +167,7 @@ export function summarizeDashboardChanges(input: ReviewInput): ReviewSummary {
   }
 
   const nodeIdOf = (target: FieldTarget) =>
-    target.owner.kind === 'panel'
-      ? (structure.panelNodeId(unescapeSegment(target.owner.element)) ?? DASHBOARD_NODE_ID)
-      : DASHBOARD_NODE_ID;
+    target.owner.kind === 'panel' ? panelNodeId(unescapeSegment(target.owner.element)) : DASHBOARD_NODE_ID;
 
   const entriesByNode = new Map<string, NodeEntry[]>();
   const defaultsByNode = new Map<string, NodeEntry[]>();
@@ -178,17 +193,13 @@ export function summarizeDashboardChanges(input: ReviewInput): ReviewSummary {
         push(entriesByNode, nodeId, { category: target.category, order: target.order, key: target.key, change });
       }
     }
-    const newPlugin = newPluginOf(target, baseline, payload, getPlugin);
-    const ownDefaults =
-      target.category === 'pluginOptions' ||
-      (target.category === 'fieldConfig' && target.describe.type !== 'namedList');
-    if (newPlugin && ownDefaults) {
+    if (target.newPluginDefaults) {
       const key = `${nodeId}|${target.category}`;
       const aggregate = newPluginDefaults.get(key) ?? {
         nodeId,
         category: target.category,
         claims: [],
-        name: newPlugin,
+        name: target.newPluginDefaults,
       };
       aggregate.claims.push(...defaults.map((diff) => pathKey(diff.path)));
       newPluginDefaults.set(key, aggregate);
@@ -236,7 +247,7 @@ export function summarizeDashboardChanges(input: ReviewInput): ReviewSummary {
         node.elementName,
         node.itemPath,
         isDefaultOn(side),
-        attributionCtx.pluginName,
+        (id) => getPlugin(id)?.meta?.name,
         ruleSetText
       );
     }
@@ -244,7 +255,7 @@ export function summarizeDashboardChanges(input: ReviewInput): ReviewSummary {
       return [];
     }
     const hasContents =
-      Boolean(node.movedInContents?.length || node.removedContents?.length) ||
+      Boolean(node.movedIn?.length || node.removedContents?.length) ||
       structure.nodes.some((other) => other.parentId === node.id);
     return sectionProperties(side, node.itemPath, ruleSetText, hasContents);
   };
@@ -308,10 +319,7 @@ function isBookkeeping(diff: Diff, baseline: DashboardV2Spec, payload: Dashboard
   return false;
 }
 
-/**
- * Whole-value lines (a converted library panel, a new visualization's options) take every diff they imply.
- * Inside a list, only an item that stays at its index can have defaults filled in: anything else is shift noise.
- */
+/** Inside a list, only an item that stays at its index can have defaults filled in: anything else is shift noise. */
 function mayBeDefault(
   target: FieldTarget,
   diff: Diff,
@@ -320,11 +328,7 @@ function mayBeDefault(
   ctx: DescribeContext
 ): boolean {
   const { describe } = target;
-  if (describe.type === 'libraryConversion') {
-    return false;
-  }
-  // With a new visualization type, the version change is part of the Visualization line.
-  if (diff.path[3] === 'vizConfig' && diff.path[4] === 'version' && isVizTypeChange(target, baseline, payload)) {
+  if (target.neverDefault) {
     return false;
   }
   if (describe.type === 'namedList') {
@@ -338,39 +342,6 @@ function mayBeDefault(
     return before !== undefined && after !== undefined && items.keyOf(before) === items.keyOf(after);
   }
   return true;
-}
-
-/** The new plugin's name when a panel switched visualization to a plugin that is loaded. */
-function newPluginOf(
-  target: FieldTarget,
-  baseline: DashboardV2Spec,
-  payload: DashboardV2Spec,
-  getPlugin: (id: string) => PanelPlugin | undefined
-): string | undefined {
-  if (!isVizTypeChange(target, baseline, payload) || target.owner.kind !== 'panel') {
-    return undefined;
-  }
-  const id = valueAt(payload, ['elements', target.owner.element, 'spec', 'vizConfig', 'group']);
-  const plugin = typeof id === 'string' ? getPlugin(id) : undefined;
-  return plugin ? (plugin.meta?.name ?? String(id)) : undefined;
-}
-
-function describeNewPluginDefaults(category: ReviewCategory, name: string, claims: PathKey[]): ReviewChange {
-  const text =
-    category === 'pluginOptions'
-      ? t('dashboard-scene.review.default.plugin-options', 'Plugin options: set to the {{name}} defaults', {
-          name,
-          interpolation: noEscape,
-        })
-      : t('dashboard-scene.review.default.field-config', 'Field config: set to the {{name}} defaults', {
-          name,
-          interpolation: noEscape,
-        });
-  return { kind: 'changed', text, claims };
-}
-
-function isVizTypeChange(target: FieldTarget, baseline: DashboardV2Spec, payload: DashboardV2Spec): boolean {
-  return target.owner.kind === 'panel' && typeChanged(target.owner.element, { baseline, payload });
 }
 
 interface DiffIndex {
@@ -510,7 +481,10 @@ function buildTree(
       const added = node.children
         .filter((child) => child.status === 'added' && nodeById.get(child.id)?.parentId === node.id)
         .map((child) => (child.kind === 'section' ? child.sectionKind : 'panel'));
-      node.statusText = sectionContentsText(node.movedInContents ?? [], added);
+      node.statusText = sectionContentsText(
+        (node.movedIn ?? []).map((entry) => entry.name),
+        added
+      );
     }
   }
   const dashboard = tree.filter((node) => node.kind === 'dashboard');
@@ -524,7 +498,7 @@ function groupByCategory(node: StructureNode, entries: NodeEntry[]): ReviewCateg
     .map((category) => {
       const changes = entries
         .filter((entry) => entry.category === category)
-        .sort((a, b) => a.order - b.order || compareKeys(a.key, b.key) || a.sequence - b.sequence)
+        .sort(compareEntries)
         .map((entry) => entry.change);
       const note = changes.find((change) => change.categoryNote)?.categoryNote;
       return { category, label: categoryLabel(category), ...(note && { note }), changes };
@@ -574,10 +548,6 @@ function nodeHeader(node: StructureNode, inDirectParent: boolean): RichText {
     : name;
 }
 
-function moveOf(node: StructureNode): NodeMove | undefined {
-  return node.moveText ? { text: node.moveText, position: node.movePosition } : undefined;
-}
-
 function toReviewNode(
   node: StructureNode,
   categories: ReviewCategoryGroup[],
@@ -594,7 +564,7 @@ function toReviewNode(
     status: node.status,
     // In a new dashboard everything is new: "was updated" would say nothing.
     // An added section's contents are counted once its children are known (buildTree).
-    statusText: isNew && node.kind === 'dashboard' ? undefined : nodeStatusText(node.status, moveOf(node), lines),
+    statusText: isNew && node.kind === 'dashboard' ? undefined : nodeStatusText(node.status, node.move, lines),
     summary: nodeSummary(categories.map((group) => group.category)),
     categories,
     claims,
@@ -606,8 +576,7 @@ function toReviewNode(
       sectionKind: node.sectionKind ?? 'row',
       children: [],
       removedContents: node.removedContents,
-      movedInContents: node.movedInContents,
-      movedInNodeIds: node.movedInNodeIds,
+      movedIn: node.movedIn,
     };
     return section;
   }
@@ -624,13 +593,7 @@ function groupDefaults(nodes: StructureNode[], defaultsByNode: Map<string, NodeE
         return index === -1 ? order.length : index;
       };
       const changes = [...defaultsByNode.get(node.id)!]
-        .sort(
-          (a, b) =>
-            rank(a.category) - rank(b.category) ||
-            a.order - b.order ||
-            compareKeys(a.key, b.key) ||
-            a.sequence - b.sequence
-        )
+        .sort((a, b) => rank(a.category) - rank(b.category) || compareEntries(a, b))
         .map((entry) => entry.change);
       return { label: node.ownerLabel ?? nodeHeader(node, true), changes };
     });
@@ -677,4 +640,9 @@ function flatten(tree: ReviewNode[]): ReviewNode[] {
 
 function compareKeys(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/** Within a category: by rule order, then path, then the order the diffs came in. */
+function compareEntries(a: NodeEntry, b: NodeEntry): number {
+  return a.order - b.order || compareKeys(a.key, b.key) || a.sequence - b.sequence;
 }

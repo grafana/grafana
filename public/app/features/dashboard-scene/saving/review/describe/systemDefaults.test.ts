@@ -5,7 +5,7 @@ import { plugin as timeseries } from 'app/plugins/panel/timeseries/module';
 
 import { type Diff } from '../../../settings/version-history/utils';
 
-import { emptyBaselineFor } from './emptyBaseline';
+import { emptyBaselineFor } from './paths';
 import { isSystemDefault, type DefaultsContext } from './systemDefaults';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
@@ -88,18 +88,19 @@ describe('isSystemDefault', () => {
     ).toBe(true);
   });
 
-  it('ignores the thresholds base step value when comparing with the default', () => {
-    const thresholds = (base: number | undefined) => ({
+  it('compares the thresholds base step as the serializer writes it: −∞ as 0', () => {
+    const path = 'elements/panel-1/spec/vizConfig/spec/fieldConfig/defaults/thresholds';
+    const thresholds = {
       mode: 'absolute',
       steps: [
-        { color: 'green', ...(base === undefined ? {} : { value: base }) },
+        { color: 'green', value: 0 },
         { color: 'red', value: 80 },
       ],
-    });
-    const path = 'elements/panel-1/spec/vizConfig/spec/fieldConfig/defaults/thresholds';
+    };
 
-    expect(isSystemDefault(diff('add', path, thresholds(0)), loaded)).toBe(true);
-    expect(isSystemDefault(diff('add', path, thresholds(undefined)), loaded)).toBe(true);
+    expect(isSystemDefault(diff('add', path, thresholds), loaded)).toBe(true);
+    expect(isSystemDefault(diff('add', `${path}/steps/0/value`, 0), loaded)).toBe(true);
+    expect(isSystemDefault(diff('add', `${path}/steps/0/value`, 10), loaded)).toBe(false);
   });
 
   it('accepts schema defaults of the dashboard', () => {

@@ -53,7 +53,7 @@ function buildChangedPanel(): PanelReviewNode {
           {
             kind: 'changed',
             text: 'Query A: changed',
-            details: { before: 'rate(cpu[5m])', after: 'rate(cpu[1m])' },
+            details: { before: () => 'rate(cpu[5m])', after: () => 'rate(cpu[1m])' },
             claims: ['elements/panel-1/spec/data/spec/queries/0/spec/query/spec/expr'],
           },
         ],
@@ -434,7 +434,7 @@ describe('<ReviewTab />', () => {
         ...buildAddedPanel(),
         properties: [
           { label: 'Description', value: '"Cache hits during last week"' },
-          { label: 'Queries (1)', details: '[\n  { "refId": "A" }\n]' },
+          { label: 'Queries (1)', details: () => '[\n  { "refId": "A" }\n]' },
         ],
       };
 
@@ -543,7 +543,10 @@ describe('<ReviewTab />', () => {
         summary: '',
         categories: [],
         children: [],
-        movedInContents: [[named('panel', '"P3"')], [named('panel', '"P4"')]],
+        movedIn: [
+          { name: [named('panel', '"P3"')], nodeId: 'panel-3' },
+          { name: [named('panel', '"P4"')], nodeId: 'panel-4' },
+        ],
         claims: [],
       };
 
@@ -577,8 +580,10 @@ describe('<ReviewTab />', () => {
               tree: [
                 {
                   ...newRow,
-                  movedInContents: [[named('panel', '"P3"')], [named('panel', '"CPU usage"')]],
-                  movedInNodeIds: ['panel-3', changed.id],
+                  movedIn: [
+                    { name: [named('panel', '"P3"')], nodeId: 'panel-3' },
+                    { name: [named('panel', '"CPU usage"')], nodeId: changed.id },
+                  ],
                   children: [changed],
                 },
               ],
@@ -615,7 +620,7 @@ describe('<ReviewTab />', () => {
       panel.categories[0].changes.unshift({
         kind: 'added',
         text: 'Query B: added',
-        details: { after: 'up{job="api"}' },
+        details: { after: () => 'up{job="api"}' },
         claims: ['elements/panel-1/spec/data/spec/queries/1'],
       });
 

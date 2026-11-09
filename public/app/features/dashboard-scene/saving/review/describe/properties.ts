@@ -2,12 +2,12 @@ import { t } from '@grafana/i18n';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
 
+import { humanizeKey, noEscape } from '../richText';
 import { layoutKindName } from '../structure/buildStructure';
 import { type PathKey, type ReviewProperty } from '../types';
 
-import { type DisplayValue } from './formatters';
-import { humanizeKey } from './labels';
 import { escapeSegment, isUnset, valueAt } from './paths';
+import { detailOf, type DisplayValue, labels } from './wording';
 
 /**
  * Whether a value at an absolute spec path (escaped segments) is what Grafana fills in for a new element:
@@ -23,8 +23,6 @@ export interface PropertyFormat {
   /** `false` is listed, as "No", instead of left out. */
   showFalse?: boolean;
 }
-
-const noEscape = { escapeValue: false };
 
 /** What a property list stays readable with: a longer list of names is shown as JSON instead. */
 const MAX_INLINE_NAMES = 5;
@@ -77,7 +75,7 @@ export function property(label: string, value: unknown, format: PropertyFormat =
   }
   if (typeof value === 'string') {
     if (value.includes('\n')) {
-      return { label, details: value };
+      return { label, details: () => value };
     }
     return { label, value: format.quoted ? quoted(value) : value };
   }
@@ -97,9 +95,9 @@ export function property(label: string, value: unknown, format: PropertyFormat =
         }),
       };
     }
-    return { label: withCount(label, value.length), details: JSON.stringify(value, null, 2) };
+    return { label: withCount(label, value.length), details: () => detailOf(value) };
   }
-  return { label, details: JSON.stringify(value, null, 2) };
+  return { label, details: () => detailOf(value) };
 }
 
 function isFewShortNames(values: unknown[]): values is string[] {
@@ -124,7 +122,7 @@ function withCount(label: string, count: number): string {
   });
 }
 
-export interface RecordProperties {
+interface RecordProperties {
   /** Labels by key; other keys are humanized. */
   labels?: Record<string, string>;
   formats?: Record<string, PropertyFormat>;
@@ -171,19 +169,13 @@ export function panelProperties(
   // The title is the header's name: not repeated here.
   const properties: Array<ReviewProperty | undefined> = [];
   if (valueAt(element, ['kind']) === 'LibraryPanel') {
-    properties.push(
-      property(
-        t('dashboard-scene.review.field.library-panel', 'Library panel'),
-        at(['spec', 'libraryPanel', 'name']),
-        text
-      )
-    );
+    properties.push(property(labels.libraryPanel(), at(['spec', 'libraryPanel', 'name']), text));
   } else {
     const plugin = valueAt(element, ['spec', 'vizConfig', 'group']);
     properties.push(
-      property(t('dashboard-scene.review.field.description', 'Description'), at(['spec', 'description']), text),
-      property(t('dashboard-scene.review.field.subtitle', 'Subtitle'), at(['spec', 'subtitle']), text),
-      property(t('dashboard-scene.review.field.visualization', 'Visualization'), plugin, {
+      property(labels.description(), at(['spec', 'description']), text),
+      property(labels.subtitle(), at(['spec', 'subtitle']), text),
+      property(labels.visualization(), plugin, {
         display: (id) => (typeof id === 'string' ? (pluginName(id) ?? id) : undefined),
       }),
       property(t('dashboard-scene.review.property.queries', 'Queries'), at(['spec', 'data', 'spec', 'queries'])),
@@ -196,15 +188,12 @@ export function panelProperties(
         at(['spec', 'data', 'spec', 'queryOptions'])
       ),
       property(t('dashboard-scene.review.property.links', 'Links'), at(['spec', 'links'])),
-      property(t('dashboard-scene.review.field.transparent', 'Transparent background'), at(['spec', 'transparent'])),
+      property(labels.transparent(), at(['spec', 'transparent'])),
       property(
         t('dashboard-scene.review.category.plugin-options', 'Plugin options'),
         at(['spec', 'vizConfig', 'spec', 'options'])
       ),
-      property(
-        t('dashboard-scene.review.field.field-config', 'Field config'),
-        at(['spec', 'vizConfig', 'spec', 'fieldConfig'])
-      )
+      property(labels.fieldConfig(), at(['spec', 'vizConfig', 'spec', 'fieldConfig']))
     );
   }
   properties.push(...layoutItemProperties(spec, itemPath, 'panel', rulesText));
@@ -249,7 +238,7 @@ export function sectionProperties(
 
 /** Repeat and show/hide rules, which live on the layout item (or the row or tab) rather than the element. */
 /** A rule set in the rules editor's words, one line each ("Panel visibility: Hide"). */
-export type RulesText = (owner: 'panel' | 'row' | 'tab', group: unknown) => string;
+type RulesText = (owner: 'panel' | 'row' | 'tab', group: unknown) => string;
 
 function layoutItemProperties(
   spec: DashboardV2Spec,
@@ -273,7 +262,7 @@ function layoutItemProperties(
       ? undefined
       : {
           label: t('dashboard-scene.review.field.conditional-rendering', 'Conditional rendering'),
-          details: rulesText(owner, rules),
+          details: () => rulesText(owner, rules),
         },
   ];
 }

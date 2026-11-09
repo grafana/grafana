@@ -154,10 +154,7 @@ export function SaveProvisionedDashboardForm({
     }
   }, [defaultValues, reset, isNew, getValues, setValue]);
 
-  // This form has no Copy tags switch: hand back the value it was given, so a Save As form that
-  // replaces it after another folder pick still shows the user's choice
-  const [copyTags] = useState(() => drawer.saveFormDraft?.copyTags);
-  useParkSaveFormDraft(drawer, title, description, copyTags);
+  useParkSaveFormDraft(drawer, title, description);
 
   const templateVars: CommitTemplateVars = {
     action: createsFile ? 'create' : 'update',

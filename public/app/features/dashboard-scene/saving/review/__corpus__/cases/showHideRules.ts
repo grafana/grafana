@@ -1,3 +1,5 @@
+import { type ConditionalRenderingGroupKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+
 import {
   autoGrid,
   autoGridItem,
@@ -8,6 +10,8 @@ import {
   elements,
   gridOf,
   panel,
+  row,
+  rows,
   showHideRules,
   tab,
   tabs,
@@ -254,5 +258,97 @@ Tab "DB" was updated (1 change) · conditional rendering
       · Match rules: Match any
       · Query result: No data
       · Time range less than: 7 days
+`,
+};
+
+const latencyWithRules = (conditionalRendering: ConditionalRenderingGroupKind) =>
+  dashboard({
+    elements: elements(['panel-1', panel('Latency', { id: 1 })], ['panel-2', panel('Errors', { id: 2 })]),
+    layout: autoGrid([autoGridItem('panel-1', { conditionalRendering }), autoGridItem('panel-2')]),
+  });
+
+const latencyInRowWithRules = (conditionalRendering: ConditionalRenderingGroupKind) =>
+  dashboard({
+    elements: elements(['panel-1', panel('Latency', { id: 1 })], ['panel-2', panel('Errors', { id: 2 })]),
+    layout: rows([
+      row('Memory', autoGrid([autoGridItem('panel-1', { conditionalRendering }), autoGridItem('panel-2')])),
+    ]),
+  });
+
+export const rowPanelTimeRangeRuleChanged: ReviewCorpusCase = {
+  name: 'words a rule of an auto grid panel inside a row the same way',
+  input: {
+    mode: 'save',
+    baselineKind: 'saved',
+    baseline: latencyInRowWithRules(showHideRules('show', 'and', [timeRangeRule('6h')])),
+    payload: latencyInRowWithRules(showHideRules('show', 'and', [timeRangeRule('3h')])),
+  },
+  expected: text`
+Changes to 1 row
+Counts: 0 added, 1 changed, 0 removed, 0 moved
+
+Row "Memory"
+  Panel "Latency" was updated (1 change) · conditional rendering
+    [Conditional rendering]
+      Time range less than: 6 hours → 3 hours
+`,
+};
+
+// The product owner's scenario: a "Time range less than" rule changed from 1 hour to 3 hours.
+export const timeRangeRuleWording: ReviewCorpusCase = {
+  name: "words a changed time range rule in the editor's words",
+  input: {
+    mode: 'save',
+    baselineKind: 'saved',
+    baseline: latencyWithRules(showHideRules('show', 'and', [timeRangeRule('1h')])),
+    payload: latencyWithRules(showHideRules('show', 'and', [timeRangeRule('3h')])),
+  },
+  expected: text`
+Changes to 1 panel
+Counts: 0 added, 1 changed, 0 removed, 0 moved
+
+Panel "Latency" was updated (1 change) · conditional rendering
+  [Conditional rendering]
+    Time range less than: 1 hour → 3 hours
+`,
+};
+
+export const singleRuleVisibilityWording: ReviewCorpusCase = {
+  name: 'says just "Panel visibility" when there is a single rule',
+  input: {
+    mode: 'save',
+    baselineKind: 'saved',
+    baseline: latencyWithRules(showHideRules('show', 'and', [timeRangeRule('1h')])),
+    payload: latencyWithRules(showHideRules('hide', 'and', [timeRangeRule('1h')])),
+  },
+  expected: text`
+Changes to 1 panel
+Counts: 0 added, 1 changed, 0 removed, 0 moved
+
+Panel "Latency" was updated (1 change) · conditional rendering
+  [Conditional rendering]
+    Panel visibility: Show → Hide
+`,
+};
+
+export const visibilityMatchAndVariableRuleWording: ReviewCorpusCase = {
+  name: 'words visibility, match rules and an added variable rule granularly',
+  input: {
+    mode: 'save',
+    baselineKind: 'saved',
+    baseline: latencyWithRules(showHideRules('show', 'and', [timeRangeRule('1h')])),
+    payload: latencyWithRules(
+      showHideRules('hide', 'or', [timeRangeRule('1h'), variableRule('cluster', 'equals', 'blue')])
+    ),
+  },
+  expected: text`
+Changes to 1 panel
+Counts: 1 added, 2 changed, 0 removed, 0 moved
+
+Panel "Latency" was updated (3 changes) · conditional rendering
+  [Conditional rendering (Match any)]
+    Panel visibility when the rules match: Show → Hide
+    Match rules: Match all → Match any
+    + Rule added: Template variable "cluster" Equals "blue"
 `,
 };

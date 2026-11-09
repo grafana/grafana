@@ -1,23 +1,35 @@
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { buildStructure } from './buildStructure';
 import {
   autoGrid,
-  changeList,
-  claimProblems,
+  autoGridItem,
   dashboard,
   grid,
-  layoutDiffsOf,
-  plainNodes,
-  outline,
+  gridItem,
+  gridOf,
+  type Layout,
+  libraryPanel,
+  panel,
   row,
   rows,
-  structureOf,
+  stackOf,
   tab,
   tabs,
-} from './testUtils';
+} from '../__corpus__/builders';
+import { panelNodeId } from '../types';
+
+import { buildStructure } from './buildStructure';
+import { changeList, claimProblems, layoutDiffsOf, plainNodes, outline, structureOf } from './testUtils';
 
 const panels = { a: 'CPU', b: 'Memory', c: 'Disk', d: 'Network', e: 'Errors' };
+
+/** A dashboard with the given layout and panels (element name → title). */
+function dashboardOf(layout: Layout, titles: Record<string, string>): DashboardV2Spec {
+  return dashboard({
+    elements: Object.fromEntries(Object.entries(titles).map(([name, title], i) => [name, panel(title, { id: i + 1 })])),
+    layout,
+  });
+}
 
 /** The test panels with the given element names. */
 function only(...names: Array<keyof typeof panels>): Record<string, string> {
@@ -35,8 +47,8 @@ function nodeByLabel(structure: ReturnType<typeof structureOf>, label: string) {
 describe('buildStructure', () => {
   describe('nodes', () => {
     it('lists the dashboard, then every section and panel of either side', () => {
-      const layout = rows(row('API', grid(['a', 0, 0], ['b', 12, 0])), row('DB', grid(['c', 0, 0])));
-      const structure = structureOf(dashboard(layout, panels), dashboard(layout, panels));
+      const layout = rows([row('API', gridOf('a', 'b')), row('DB', gridOf('c'))]);
+      const structure = structureOf(dashboardOf(layout, panels), dashboardOf(layout, panels));
 
       expect(outline(structure)).toEqual([
         'Dashboard',
@@ -50,13 +62,14 @@ describe('buildStructure', () => {
         'Panel "Errors"',
       ]);
       expect(structure.changes).toEqual([]);
-      expect(structure.panelNodeId('a')).toBe(nodeByLabel(structure, 'Panel "CPU"').id);
-      expect(structure.panelNodeId('nope')).toBeUndefined();
+      // describe/ attributes an element's diffs to this id without looking it up.
+      const panelIds = structure.nodes.filter((node) => node.kind === 'panel').map((node) => node.id);
+      expect(panelIds).toEqual(Object.keys(panels).map(panelNodeId));
     });
 
     it('gives stable ids, with parents for nesting', () => {
-      const layout = tabs(tab('Cluster', rows(row('Nodes', grid(['a', 0, 0])))));
-      const structure = structureOf(dashboard(layout, { a: 'CPU' }), dashboard(layout, { a: 'CPU' }));
+      const layout = tabs([tab('Cluster', rows([row('Nodes', gridOf('a'))]))]);
+      const structure = structureOf(dashboardOf(layout, { a: 'CPU' }), dashboardOf(layout, { a: 'CPU' }));
 
       expect(structure.nodes.map((n) => [n.id, n.kind, n.sectionKind, n.parentId])).toEqual([
         ['dashboard', 'dashboard', undefined, undefined],
@@ -69,22 +82,26 @@ describe('buildStructure', () => {
 
   describe('naming', () => {
     it('uses the title when it is unique', () => {
-      const structure = structureOf(
-        dashboard(grid(['a', 0, 0]), { a: 'CPU' }),
-        dashboard(grid(['a', 0, 0]), { a: 'CPU' })
-      );
+      const structure = structureOf(dashboardOf(gridOf('a'), { a: 'CPU' }), dashboardOf(gridOf('a'), { a: 'CPU' }));
 
       expect(nodeByLabel(structure, 'Panel "CPU"').id).toBe('panel:a');
     });
 
     it('names a duplicate title by its position only when a sibling shares it', () => {
-      const layout = rows(
-        row('API', grid(['a', 0, 0], ['b', 0, 8])),
-        row('DB', grid(['c', 0, 0])),
-        row('Edge', grid(['d', 0, 0], ['e', 0, 8], ['f', 12, 8]))
-      );
+      const layout = rows([
+        row('API', stackOf('a', 'b')),
+        row('DB', gridOf('c')),
+        row(
+          'Edge',
+          grid([
+            gridItem('d', { x: 0, y: 0, w: 12, h: 8 }),
+            gridItem('e', { x: 0, y: 8, w: 12, h: 8 }),
+            gridItem('f', { x: 12, y: 8, w: 12, h: 8 }),
+          ])
+        ),
+      ]);
       const titles = { a: 'Errors', b: 'Latency', c: 'Errors', d: 'Errors', e: 'Errors', f: 'Errors' };
-      const structure = structureOf(dashboard(layout, titles), dashboard(layout, titles));
+      const structure = structureOf(dashboardOf(layout, titles), dashboardOf(layout, titles));
 
       expect(outline(structure)).toEqual([
         'Dashboard',
@@ -101,12 +118,20 @@ describe('buildStructure', () => {
     });
 
     it('names untitled panels by their position among all siblings when another sibling is untitled', () => {
-      const layout = tabs(
-        tab('Cluster', grid(['c', 0, 8], ['b', 12, 0], ['a', 0, 0], ['t', 0, 16])),
-        tab('API', grid(['d', 0, 0]))
-      );
+      const layout = tabs([
+        tab(
+          'Cluster',
+          grid([
+            gridItem('c', { x: 0, y: 8, w: 12, h: 8 }),
+            gridItem('b', { x: 12, y: 0, w: 12, h: 8 }),
+            gridItem('a', { x: 0, y: 0, w: 12, h: 8 }),
+            gridItem('t', { x: 0, y: 16, w: 12, h: 8 }),
+          ])
+        ),
+        tab('API', gridOf('d')),
+      ]);
       const titles = { a: '', b: '', c: ' ', t: 'Titled', d: '' };
-      const structure = structureOf(dashboard(layout, titles), dashboard(layout, titles));
+      const structure = structureOf(dashboardOf(layout, titles), dashboardOf(layout, titles));
 
       expect(outline(structure)).toEqual([
         'Dashboard',
@@ -118,14 +143,16 @@ describe('buildStructure', () => {
         'Tab "API"',
         '  Panel (unnamed)',
       ]);
-      expect(structure.panelNodeId('a')).toBe('panel:a');
-      expect(nodeByLabel(structure, 'Panel (unnamed) at position 1').elementName).toBe('a');
+      expect(nodeByLabel(structure, 'Panel (unnamed) at position 1')).toMatchObject({
+        id: 'panel:a',
+        elementName: 'a',
+      });
     });
 
     it('names root-level panels without a section', () => {
       const titles = { a: '', b: 'Same', c: 'Same' };
-      const layout = grid(['a', 0, 0], ['b', 0, 8], ['c', 0, 16]);
-      const structure = structureOf(dashboard(layout, titles), dashboard(layout, titles));
+      const layout = stackOf('a', 'b', 'c');
+      const structure = structureOf(dashboardOf(layout, titles), dashboardOf(layout, titles));
 
       expect(outline(structure)).toEqual([
         'Dashboard',
@@ -136,14 +163,20 @@ describe('buildStructure', () => {
     });
 
     it('labels sections with their full path, and untitled or duplicate sections by position', () => {
-      const layout = tabs(
+      const layout = tabs([
         tab(
           'Cluster',
-          rows(row('Nodes', grid()), row(undefined, grid()), row('', grid()), row('Dup', grid()), row('Dup', grid()))
+          rows([
+            row('Nodes', gridOf()),
+            row(undefined, gridOf()),
+            row('', gridOf()),
+            row('Dup', gridOf()),
+            row('Dup', gridOf()),
+          ])
         ),
-        tab(undefined, grid())
-      );
-      const structure = structureOf(dashboard(layout, {}), dashboard(layout, {}));
+        tab(undefined, gridOf()),
+      ]);
+      const structure = structureOf(dashboardOf(layout, {}), dashboardOf(layout, {}));
 
       expect(outline(structure)).toEqual([
         'Dashboard',
@@ -158,8 +191,8 @@ describe('buildStructure', () => {
     });
 
     it('names panels in deeply nested sections without their section path', () => {
-      const layout = tabs(tab('Cluster', rows(row('Nodes', tabs(tab('Detail', grid(['a', 0, 0], ['b', 0, 8])))))));
-      const structure = structureOf(dashboard(layout, { a: '', b: '' }), dashboard(layout, { a: '', b: '' }));
+      const layout = tabs([tab('Cluster', rows([row('Nodes', tabs([tab('Detail', stackOf('a', 'b'))]))]))]);
+      const structure = structureOf(dashboardOf(layout, { a: '', b: '' }), dashboardOf(layout, { a: '', b: '' }));
 
       expect(outline(structure).slice(-2)).toEqual([
         '      Panel (unnamed) at position 1',
@@ -168,25 +201,24 @@ describe('buildStructure', () => {
     });
 
     it('names removed panels by their baseline position', () => {
-      const before = dashboard(grid(['a', 0, 0], ['b', 0, 8]), { a: '', b: '' });
-      const after = dashboard(grid(['a', 0, 0]), { a: '' });
+      const before = dashboardOf(stackOf('a', 'b'), { a: '', b: '' });
+      const after = dashboardOf(gridOf('a'), { a: '' });
       const structure = structureOf(before, after);
 
       expect(outline(structure)).toEqual(['Dashboard', 'Panel (unnamed)', '- Panel (unnamed) at position 2']);
     });
 
     it('uses the title of library panels', () => {
-      const spec = dashboard(grid(['lib', 0, 0]), {});
-      spec.elements.lib = {
-        kind: 'LibraryPanel',
-        spec: { id: 1, title: 'Shared CPU', libraryPanel: { uid: 'u', name: 'cpu-lib' } },
-      };
+      const spec = dashboard({
+        elements: { lib: libraryPanel('Shared CPU', 'cpu-lib', 'u', 1) },
+        layout: gridOf('lib'),
+      });
 
       expect(outline(structureOf(spec, spec))).toEqual(['Dashboard', 'Panel "Shared CPU"']);
     });
 
     it('shows dashboard titles as is, without HTML escaping', () => {
-      const spec = dashboard(rows(row('A & <B>', grid(['a', 0, 0]))), { a: "it's" });
+      const spec = dashboardOf(rows([row('A & <B>', gridOf('a'))]), { a: "it's" });
 
       expect(outline(structureOf(spec, spec))).toEqual(['Dashboard', 'Row "A & <B>"', `  Panel "it's"`]);
     });
@@ -194,8 +226,8 @@ describe('buildStructure', () => {
 
   describe('section matching', () => {
     it('matches sections by title at the same parent; a reordered section is moved', () => {
-      const before = dashboard(rows(row('API', grid(['a', 0, 0])), row('DB', grid(['b', 0, 0]))), panels);
-      const after = dashboard(rows(row('DB', grid(['b', 0, 0])), row('API', grid(['a', 0, 0]))), panels);
+      const before = dashboardOf(rows([row('API', gridOf('a')), row('DB', gridOf('b'))]), panels);
+      const after = dashboardOf(rows([row('DB', gridOf('b')), row('API', gridOf('a'))]), panels);
       const structure = structureOf(before, after);
 
       // On a tie the section that comes first in the baseline stays put.
@@ -211,8 +243,8 @@ describe('buildStructure', () => {
     });
 
     it('matches the k-th section with a duplicate title to the k-th one', () => {
-      const before = dashboard(rows(row('Dup', grid(['a', 0, 0])), row('Dup', grid(['b', 0, 0]))), panels);
-      const after = dashboard(rows(row('Dup', grid(['a', 0, 0])), row('Dup', grid(['b', 0, 0], ['c', 0, 8]))), panels);
+      const before = dashboardOf(rows([row('Dup', gridOf('a')), row('Dup', gridOf('b'))]), panels);
+      const after = dashboardOf(rows([row('Dup', gridOf('a')), row('Dup', stackOf('b', 'c'))]), panels);
       const structure = structureOf(before, after);
 
       expect(outline(structure).slice(0, 6)).toEqual([
@@ -227,8 +259,8 @@ describe('buildStructure', () => {
     });
 
     it('treats a different title at the same position with mostly the same panels as a title change', () => {
-      const before = dashboard(rows(row('API', grid(['a', 0, 0], ['b', 0, 8], ['c', 0, 16]))), only('a', 'b', 'c'));
-      const after = dashboard(rows(row('Backend', grid(['a', 0, 0], ['b', 0, 8], ['d', 0, 16]))), only('a', 'b', 'd'));
+      const before = dashboardOf(rows([row('API', stackOf('a', 'b', 'c'))]), only('a', 'b', 'c'));
+      const after = dashboardOf(rows([row('Backend', stackOf('a', 'b', 'd'))]), only('a', 'b', 'd'));
       const structure = structureOf(before, after);
 
       expect(outline(structure)).toEqual([
@@ -252,8 +284,8 @@ describe('buildStructure', () => {
     });
 
     it('treats a different title with mostly different panels as a removal and an addition', () => {
-      const before = dashboard(rows(row('API', grid(['a', 0, 0], ['b', 0, 8]))), { a: 'CPU', b: 'Memory' });
-      const after = dashboard(rows(row('Backend', grid(['a', 0, 0], ['c', 0, 8]))), { a: 'CPU', c: 'Disk' });
+      const before = dashboardOf(rows([row('API', stackOf('a', 'b'))]), { a: 'CPU', b: 'Memory' });
+      const after = dashboardOf(rows([row('Backend', stackOf('a', 'c'))]), { a: 'CPU', c: 'Disk' });
       const structure = structureOf(before, after);
 
       // The removed row keeps its baseline position: first.
@@ -269,8 +301,8 @@ describe('buildStructure', () => {
     });
 
     it('prefers a title match over a position match', () => {
-      const before = dashboard(rows(row('A', grid(['a', 0, 0])), row('B', grid(['b', 0, 0]))), panels);
-      const after = dashboard(rows(row('B', grid(['a', 0, 0])), row('C', grid(['b', 0, 0]))), panels);
+      const before = dashboardOf(rows([row('A', gridOf('a')), row('B', gridOf('b'))]), panels);
+      const after = dashboardOf(rows([row('B', gridOf('a')), row('C', gridOf('b'))]), panels);
       const structure = structureOf(before, after);
 
       // B keeps its identity through its title even though A's panel is in it now.
@@ -281,15 +313,15 @@ describe('buildStructure', () => {
     });
 
     it('matches empty sections at the same position as a title change', () => {
-      const before = dashboard(rows(row('Old', grid())), {});
-      const after = dashboard(rows(row('New', grid())), {});
+      const before = dashboardOf(rows([row('Old', gridOf())]), {});
+      const after = dashboardOf(rows([row('New', gridOf())]), {});
 
       expect(changeList(structureOf(before, after))).toEqual(['Row "New": title changed']);
     });
 
     it('only matches nested sections under matched parents', () => {
-      const before = dashboard(tabs(tab('T1', rows(row('R', grid(['a', 0, 0]))))), { a: 'CPU' });
-      const after = dashboard(tabs(tab('T2', rows(row('R', grid(['b', 0, 0]))))), { b: 'Memory' });
+      const before = dashboardOf(tabs([tab('T1', rows([row('R', gridOf('a'))]))]), { a: 'CPU' });
+      const after = dashboardOf(tabs([tab('T2', rows([row('R', gridOf('b'))]))]), { b: 'Memory' });
       const structure = structureOf(before, after);
 
       expect(outline(structure)).toEqual([
@@ -307,15 +339,25 @@ describe('buildStructure', () => {
 
   describe('ordering', () => {
     it('puts removed sections at their baseline position and panels in reading order', () => {
-      const before = dashboard(
-        rows(row('A', grid(['a', 0, 0])), row('B', grid(['b', 0, 0])), row('C', grid(['c', 12, 0], ['d', 0, 0]))),
+      const before = dashboardOf(
+        rows([
+          row('A', gridOf('a')),
+          row('B', gridOf('b')),
+          row('C', grid([gridItem('c', { x: 12, y: 0, w: 12, h: 8 }), gridItem('d', { x: 0, y: 0, w: 12, h: 8 })])),
+        ]),
         panels
       );
-      const after = dashboard(rows(row('A', grid(['a', 0, 0])), row('C', grid(['c', 12, 0], ['d', 0, 0]))), {
-        a: 'CPU',
-        c: 'Disk',
-        d: 'Network',
-      });
+      const after = dashboardOf(
+        rows([
+          row('A', gridOf('a')),
+          row('C', grid([gridItem('c', { x: 12, y: 0, w: 12, h: 8 }), gridItem('d', { x: 0, y: 0, w: 12, h: 8 })])),
+        ]),
+        {
+          a: 'CPU',
+          c: 'Disk',
+          d: 'Network',
+        }
+      );
       const structure = structureOf(before, after);
 
       expect(outline(structure)).toEqual([
@@ -333,15 +375,18 @@ describe('buildStructure', () => {
     });
 
     it('puts a removed first section first', () => {
-      const before = dashboard(rows(row('A', grid()), row('B', grid())), {});
-      const after = dashboard(rows(row('B', grid())), {});
+      const before = dashboardOf(rows([row('A', gridOf()), row('B', gridOf())]), {});
+      const after = dashboardOf(rows([row('B', gridOf())]), {});
 
       expect(outline(structureOf(before, after))).toEqual(['Dashboard', '- Row "A"', 'Row "B"']);
     });
 
     it('puts removed panels at their baseline position within their section', () => {
-      const before = dashboard(grid(['a', 0, 0], ['b', 0, 8], ['c', 0, 16]), { a: 'A', b: 'B', c: 'C' });
-      const after = dashboard(grid(['a', 0, 0], ['c', 0, 16]), { a: 'A', c: 'C' });
+      const before = dashboardOf(stackOf('a', 'b', 'c'), { a: 'A', b: 'B', c: 'C' });
+      const after = dashboardOf(
+        grid([gridItem('a', { x: 0, y: 0, w: 12, h: 8 }), gridItem('c', { x: 0, y: 16, w: 12, h: 8 })]),
+        { a: 'A', c: 'C' }
+      );
 
       expect(outline(structureOf(before, after))).toEqual(['Dashboard', 'Panel "A"', '- Panel "B"', 'Panel "C"']);
     });
@@ -349,8 +394,8 @@ describe('buildStructure', () => {
 
   describe('statuses', () => {
     it('marks added and removed panels, claiming the element and its layout item', () => {
-      const before = dashboard(grid(['a', 0, 0], ['b', 0, 8]), { a: 'CPU', b: 'Memory' });
-      const after = dashboard(grid(['a', 0, 0], ['c', 0, 8]), { a: 'CPU', c: 'Disk' });
+      const before = dashboardOf(stackOf('a', 'b'), { a: 'CPU', b: 'Memory' });
+      const after = dashboardOf(stackOf('a', 'c'), { a: 'CPU', c: 'Disk' });
       const structure = structureOf(before, after);
 
       expect(nodeByLabel(structure, 'Panel "Disk"')).toMatchObject({ status: 'added' });
@@ -362,11 +407,11 @@ describe('buildStructure', () => {
     });
 
     it('marks a removed section and lists the panels and nested sections removed with it', () => {
-      const before = dashboard(
-        rows(row('Keep', grid(['a', 0, 0])), row('API', tabs(tab('Inner', grid(['b', 0, 0], ['c', 0, 8]))))),
+      const before = dashboardOf(
+        rows([row('Keep', gridOf('a')), row('API', tabs([tab('Inner', stackOf('b', 'c'))]))]),
         panels
       );
-      const after = dashboard(rows(row('Keep', grid(['a', 0, 0], ['c', 0, 8]))), { a: 'CPU', c: 'Disk' });
+      const after = dashboardOf(rows([row('Keep', stackOf('a', 'c'))]), { a: 'CPU', c: 'Disk' });
       const structure = structureOf(before, after);
 
       const removed = nodeByLabel(structure, 'Row "API"');
@@ -383,8 +428,8 @@ describe('buildStructure', () => {
     });
 
     it('marks an added section and the panels added with it', () => {
-      const before = dashboard(rows(row('Keep', grid(['a', 0, 0]))), { a: 'CPU' });
-      const after = dashboard(rows(row('Keep', grid(['a', 0, 0])), row('New', grid(['b', 0, 0]))), {
+      const before = dashboardOf(rows([row('Keep', gridOf('a'))]), { a: 'CPU' });
+      const after = dashboardOf(rows([row('Keep', gridOf('a')), row('New', gridOf('b'))]), {
         a: 'CPU',
         b: 'Memory',
       });
@@ -402,8 +447,8 @@ describe('buildStructure', () => {
     });
 
     it('marks a panel moved between sections that exist on both sides', () => {
-      const before = dashboard(rows(row('API', grid(['a', 0, 0], ['b', 0, 8])), row('DB', grid(['c', 0, 0]))), panels);
-      const after = dashboard(rows(row('API', grid(['a', 0, 0])), row('DB', grid(['c', 0, 0], ['b', 0, 8]))), panels);
+      const before = dashboardOf(rows([row('API', stackOf('a', 'b')), row('DB', gridOf('c'))]), panels);
+      const after = dashboardOf(rows([row('API', gridOf('a')), row('DB', stackOf('c', 'b'))]), panels);
       const structure = structureOf(before, after);
 
       expect(nodeByLabel(structure, 'Panel "Memory"')).toMatchObject({
@@ -419,14 +464,8 @@ describe('buildStructure', () => {
     });
 
     it('names the source section of a move by its current title when it was renamed', () => {
-      const before = dashboard(
-        rows(row('API', grid(['a', 0, 0], ['b', 0, 8], ['c', 0, 16])), row('DB', grid())),
-        panels
-      );
-      const after = dashboard(
-        rows(row('Backend', grid(['a', 0, 0], ['b', 0, 8])), row('DB', grid(['c', 0, 0]))),
-        panels
-      );
+      const before = dashboardOf(rows([row('API', stackOf('a', 'b', 'c')), row('DB', gridOf())]), panels);
+      const after = dashboardOf(rows([row('Backend', stackOf('a', 'b')), row('DB', gridOf('c'))]), panels);
 
       expect(nodeByLabel(structureOf(before, after), 'Panel "Disk"').moveText).toBe(
         'moved from Row "Backend" to Row "DB"'
@@ -437,8 +476,8 @@ describe('buildStructure', () => {
   describe('ambiguous names', () => {
     it('drops the position from a moved node header and ends the move text with its new position', () => {
       const titles = { a: 'New panel', b: 'New panel', c: 'Latency' };
-      const before = dashboard(autoGrid(['a', 'b', 'c']), titles);
-      const after = dashboard(autoGrid(['b', 'a', 'c']), titles);
+      const before = dashboardOf(autoGrid([autoGridItem('a'), autoGridItem('b'), autoGridItem('c')]), titles);
+      const after = dashboardOf(autoGrid([autoGridItem('b'), autoGridItem('a'), autoGridItem('c')]), titles);
 
       expect(outline(structureOf(before, after))).toEqual([
         'Dashboard',
@@ -449,8 +488,8 @@ describe('buildStructure', () => {
     });
 
     it('does the same for a moved section with a shared title', () => {
-      const before = dashboard(rows(row('Dup', grid(['a', 0, 0])), row('Dup', grid(['b', 0, 0]))), panels);
-      const after = dashboard(rows(row('Dup', grid(['b', 0, 0])), row('Dup', grid(['a', 0, 0]))), panels);
+      const before = dashboardOf(rows([row('Dup', gridOf('a')), row('Dup', gridOf('b'))]), panels);
+      const after = dashboardOf(rows([row('Dup', gridOf('b')), row('Dup', gridOf('a'))]), panels);
       const structure = structureOf(before, after);
 
       // Title matching pairs the k-th 'Dup' with the k-th, so only their panels moved.
@@ -464,7 +503,7 @@ describe('buildStructure', () => {
       ]);
 
       const tabbed = (order: string[]) =>
-        dashboard(tabs(tab('Cluster', rows(...order.map((title) => row(title, grid()))))), {});
+        dashboardOf(tabs([tab('Cluster', rows(order.map((title) => row(title, gridOf()))))]), {});
       const moved = structureOf(tabbed(['X', 'Dup', 'Dup']), tabbed(['Dup', 'X', 'Dup']));
       expect(
         plainNodes(moved)
@@ -478,11 +517,8 @@ describe('buildStructure', () => {
 
     it('gives panels an owner label with their section when the title is not unique in the dashboard', () => {
       const titles = { a: 'Errors', b: 'Errors', c: 'Errors', d: 'Unique', e: '' };
-      const layout = tabs(
-        tab('API', grid(['a', 0, 0], ['d', 0, 8])),
-        tab('DB', grid(['b', 0, 0], ['c', 0, 8], ['e', 0, 16]))
-      );
-      const structure = structureOf(dashboard(layout, titles), dashboard(layout, titles));
+      const layout = tabs([tab('API', stackOf('a', 'd')), tab('DB', stackOf('b', 'c', 'e'))]);
+      const structure = structureOf(dashboardOf(layout, titles), dashboardOf(layout, titles));
       const owner = (name: string) => plainNodes(structure).find((n) => n.elementName === name)?.ownerLabel;
 
       expect(['a', 'b', 'c', 'd', 'e'].map(owner)).toEqual([
@@ -493,10 +529,7 @@ describe('buildStructure', () => {
         'Panel (unnamed)',
       ]);
 
-      const root = structureOf(
-        dashboard(grid(['a', 0, 0], ['b', 0, 8]), titles),
-        dashboard(grid(['a', 0, 0], ['b', 0, 8]), titles)
-      );
+      const root = structureOf(dashboardOf(stackOf('a', 'b'), titles), dashboardOf(stackOf('a', 'b'), titles));
       expect(
         plainNodes(root)
           .filter((n) => n.kind === 'panel')
@@ -505,11 +538,11 @@ describe('buildStructure', () => {
     });
 
     it('names nested sections removed with a section relative to it, and panels by their baseline name', () => {
-      const before = dashboard(
-        rows(row('Keep', grid()), row('API', tabs(tab('Inner', rows(row('Deep', grid(['a', 0, 0], ['b', 0, 8]))))))),
+      const before = dashboardOf(
+        rows([row('Keep', gridOf()), row('API', tabs([tab('Inner', rows([row('Deep', stackOf('a', 'b'))]))]))]),
         { a: 'New panel', b: 'New panel' }
       );
-      const after = dashboard(rows(row('Keep', grid())), {});
+      const after = dashboardOf(rows([row('Keep', gridOf())]), {});
 
       expect(nodeByLabel(structureOf(before, after), 'Row "API"').removedContents).toEqual([
         'Tab "Inner"',
@@ -522,8 +555,8 @@ describe('buildStructure', () => {
 
   describe('restructures', () => {
     it('reports rows to tabs as one layout change on the dashboard, matching sections by title', () => {
-      const before = dashboard(rows(row('API', grid(['a', 0, 0])), row('DB', grid(['b', 0, 0]))), panels);
-      const after = dashboard(tabs(tab('DB', grid(['b', 0, 0])), tab('API', grid(['a', 0, 0]))), panels);
+      const before = dashboardOf(rows([row('API', gridOf('a')), row('DB', gridOf('b'))]), panels);
+      const after = dashboardOf(tabs([tab('DB', gridOf('b')), tab('API', gridOf('a'))]), panels);
       const structure = structureOf(before, after);
 
       expect(changeList(structure)).toEqual(['Dashboard: Layout: changed from rows to tabs']);
@@ -542,8 +575,8 @@ describe('buildStructure', () => {
     });
 
     it('still reports a move between two sections that survive a rows to tabs change', () => {
-      const before = dashboard(rows(row('API', grid(['a', 0, 0], ['b', 0, 8])), row('DB', grid())), panels);
-      const after = dashboard(tabs(tab('API', grid(['a', 0, 0])), tab('DB', grid(['b', 0, 0]))), panels);
+      const before = dashboardOf(rows([row('API', stackOf('a', 'b')), row('DB', gridOf())]), panels);
+      const after = dashboardOf(tabs([tab('API', gridOf('a')), tab('DB', gridOf('b'))]), panels);
 
       expect(nodeByLabel(structureOf(before, after), 'Panel "Memory"').moveText).toBe(
         'moved from Tab "API" to Tab "DB"'
@@ -551,9 +584,9 @@ describe('buildStructure', () => {
     });
 
     it('keeps the identity of rows wrapped into a new tab', () => {
-      const before = dashboard(rows(row('API', grid(['a', 0, 0])), row('DB', grid(['b', 0, 0]))), panels);
-      const after = dashboard(
-        tabs(tab('New tab', rows(row('API', grid(['a', 0, 0])), row('DB', grid(['b', 0, 0]))))),
+      const before = dashboardOf(rows([row('API', gridOf('a')), row('DB', gridOf('b'))]), panels);
+      const after = dashboardOf(
+        tabs([tab('New tab', rows([row('API', gridOf('a')), row('DB', gridOf('b'))]))]),
         panels
       );
       const structure = structureOf(before, after);
@@ -567,11 +600,11 @@ describe('buildStructure', () => {
     });
 
     it('keeps the identity of rows unwrapped from a removed tab', () => {
-      const before = dashboard(
-        tabs(tab('Wrapper', rows(row('API', grid(['a', 0, 0])), row('DB', grid(['b', 0, 0]))))),
+      const before = dashboardOf(
+        tabs([tab('Wrapper', rows([row('API', gridOf('a')), row('DB', gridOf('b'))]))]),
         panels
       );
-      const after = dashboard(rows(row('API', grid(['a', 0, 0])), row('DB', grid(['b', 0, 0]))), panels);
+      const after = dashboardOf(rows([row('API', gridOf('a')), row('DB', gridOf('b'))]), panels);
       const structure = structureOf(before, after);
 
       expect(changeList(structure)).toEqual(['Dashboard: Layout: changed from tabs to rows']);
@@ -581,8 +614,8 @@ describe('buildStructure', () => {
     });
 
     it('marks a panel added inside the new rows of a restructure as added, claiming only its element', () => {
-      const before = dashboard(grid(['a', 0, 0]), only('a'));
-      const after = dashboard(rows(row('Overview', grid(['a', 0, 0], ['b', 0, 8]))), only('a', 'b'));
+      const before = dashboardOf(gridOf('a'), only('a'));
+      const after = dashboardOf(rows([row('Overview', stackOf('a', 'b'))]), only('a', 'b'));
       const structure = structureOf(before, after);
 
       expect(nodeByLabel(structure, 'Panel "Memory"')).toMatchObject({ status: 'added', claims: ['elements/b'] });
@@ -590,8 +623,8 @@ describe('buildStructure', () => {
     });
 
     it('reports grid to rows without moving every panel; the new rows are added', () => {
-      const before = dashboard(grid(['a', 0, 0], ['b', 0, 8]), { a: 'CPU', b: 'Memory' });
-      const after = dashboard(rows(row('Overview', grid(['a', 0, 0], ['b', 0, 8]))), { a: 'CPU', b: 'Memory' });
+      const before = dashboardOf(stackOf('a', 'b'), { a: 'CPU', b: 'Memory' });
+      const after = dashboardOf(rows([row('Overview', stackOf('a', 'b'))]), { a: 'CPU', b: 'Memory' });
       const structure = structureOf(before, after);
 
       expect(changeList(structure)).toEqual(['Dashboard: Layout: changed from custom grid to rows']);
@@ -600,11 +633,8 @@ describe('buildStructure', () => {
     });
 
     it('reports rows to grid without moving every panel; the old rows are removed', () => {
-      const before = dashboard(
-        rows(row('A', grid(['a', 0, 0])), row('B', grid(['b', 0, 0], ['c', 0, 8]))),
-        only('a', 'b', 'c')
-      );
-      const after = dashboard(grid(['a', 0, 0], ['b', 0, 8]), only('a', 'b'));
+      const before = dashboardOf(rows([row('A', gridOf('a')), row('B', stackOf('b', 'c'))]), only('a', 'b', 'c'));
+      const after = dashboardOf(stackOf('a', 'b'), only('a', 'b'));
       const structure = structureOf(before, after);
 
       expect(changeList(structure)).toEqual(['Dashboard: Layout: changed from rows to custom grid']);
@@ -623,8 +653,8 @@ describe('buildStructure', () => {
     });
 
     it('reports a nested layout change on the owning section', () => {
-      const before = dashboard(tabs(tab('Cluster', grid(['a', 0, 0], ['b', 0, 8]))), panels);
-      const after = dashboard(tabs(tab('Cluster', autoGrid(['a', 'b']))), panels);
+      const before = dashboardOf(tabs([tab('Cluster', stackOf('a', 'b'))]), panels);
+      const after = dashboardOf(tabs([tab('Cluster', autoGrid([autoGridItem('a'), autoGridItem('b')]))]), panels);
       const structure = structureOf(before, after);
 
       expect(changeList(structure)).toEqual(['Tab "Cluster": Layout: changed from custom grid to auto grid']);
@@ -632,12 +662,16 @@ describe('buildStructure', () => {
     });
 
     it('reports a nested section move and auto grid settings on the owning sections', () => {
-      const before = dashboard(
-        tabs(tab('Cluster', rows(row('A', grid()), row('B', autoGrid(['a'], { maxColumnCount: 3 }))))),
+      const before = dashboardOf(
+        tabs([
+          tab('Cluster', rows([row('A', gridOf()), row('B', autoGrid([autoGridItem('a')], { maxColumnCount: 3 }))])),
+        ]),
         panels
       );
-      const after = dashboard(
-        tabs(tab('Cluster', rows(row('B', autoGrid(['a'], { maxColumnCount: 2 })), row('A', grid())))),
+      const after = dashboardOf(
+        tabs([
+          tab('Cluster', rows([row('B', autoGrid([autoGridItem('a')], { maxColumnCount: 2 })), row('A', gridOf())])),
+        ]),
         panels
       );
       const structure = structureOf(before, after);
@@ -661,8 +695,8 @@ describe('buildStructure', () => {
 
   describe('index-shift noise', () => {
     it('claims shifted grid items with the removal that caused them, without changing untouched panels', () => {
-      const before = dashboard(grid(['a', 0, 0], ['b', 0, 8], ['c', 0, 16], ['d', 0, 24]), only('a', 'b', 'c', 'd'));
-      const after = dashboard(grid(['b', 0, 0], ['c', 0, 8], ['d', 0, 16]), only('b', 'c', 'd'));
+      const before = dashboardOf(stackOf('a', 'b', 'c', 'd'), only('a', 'b', 'c', 'd'));
+      const after = dashboardOf(stackOf('b', 'c', 'd'), only('b', 'c', 'd'));
       const structure = structureOf(before, after);
 
       expect(structure.changes).toEqual([]);
@@ -675,8 +709,8 @@ describe('buildStructure', () => {
     });
 
     it('does not report panels pushed down by an inserted panel', () => {
-      const before = dashboard(grid(['a', 0, 0], ['b', 0, 8]), only('a', 'b'));
-      const after = dashboard(grid(['c', 0, 0], ['a', 0, 8], ['b', 0, 16]), only('a', 'b', 'c'));
+      const before = dashboardOf(stackOf('a', 'b'), only('a', 'b'));
+      const after = dashboardOf(stackOf('c', 'a', 'b'), only('a', 'b', 'c'));
       const structure = structureOf(before, after);
 
       expect(structure.changes).toEqual([]);
@@ -688,11 +722,11 @@ describe('buildStructure', () => {
     });
 
     it('claims shifted rows with the removed row', () => {
-      const before = dashboard(
-        rows(row('A', grid(['a', 0, 0])), row('B', grid(['b', 0, 0])), row('C', grid(['c', 0, 0]))),
+      const before = dashboardOf(
+        rows([row('A', gridOf('a')), row('B', gridOf('b')), row('C', gridOf('c'))]),
         only('a', 'b', 'c')
       );
-      const after = dashboard(rows(row('B', grid(['b', 0, 0])), row('C', grid(['c', 0, 0]))), only('b', 'c'));
+      const after = dashboardOf(rows([row('B', gridOf('b')), row('C', gridOf('c'))]), only('b', 'c'));
       const structure = structureOf(before, after);
 
       expect(structure.changes).toEqual([]);
@@ -704,8 +738,14 @@ describe('buildStructure', () => {
     });
 
     it('claims shifted auto grid items with the inserted panel', () => {
-      const before = dashboard(autoGrid(['a', 'b', 'c']), only('a', 'b', 'c'));
-      const after = dashboard(autoGrid(['d', 'a', 'b', 'c']), only('a', 'b', 'c', 'd'));
+      const before = dashboardOf(
+        autoGrid([autoGridItem('a'), autoGridItem('b'), autoGridItem('c')]),
+        only('a', 'b', 'c')
+      );
+      const after = dashboardOf(
+        autoGrid([autoGridItem('d'), autoGridItem('a'), autoGridItem('b'), autoGridItem('c')]),
+        only('a', 'b', 'c', 'd')
+      );
       const structure = structureOf(before, after);
 
       expect(structure.changes).toEqual([]);
@@ -726,10 +766,11 @@ describe('buildStructure', () => {
         kind: 'ConditionalRenderingGroup',
         spec: { visibility: 'show', condition: 'and', items: [] },
       };
-      const before = dashboard(rows(row('API', grid(['a', 0, 0]))), panels);
-      const after = dashboard(
-        rows(
-          row('API', grid(['a', 0, 0]), {
+      // Without the serializer's `collapse: false`, so every setting here is added.
+      const before = dashboardOf(rows([row('API', gridOf('a'), { collapse: undefined })]), panels);
+      const after = dashboardOf(
+        rows([
+          row('API', gridOf('a'), {
             hideHeader: true,
             collapse: true,
             fillScreen: true,
@@ -737,8 +778,8 @@ describe('buildStructure', () => {
             conditionalRendering: condition as never,
             variables: [variable as never],
             annotations: [],
-          })
-        ),
+          }),
+        ]),
         panels
       );
       const structure = structureOf(before, after);
@@ -760,8 +801,8 @@ describe('buildStructure', () => {
 
     it('claims every diff inside a section list field with that one change', () => {
       const v = (name: string) => ({ kind: 'CustomVariable', spec: { name, query: name } }) as never;
-      const before = dashboard(tabs(tab('T', grid(), { variables: [v('a'), v('b')] })), {});
-      const after = dashboard(tabs(tab('T', grid(), { variables: [v('b')] })), {});
+      const before = dashboardOf(tabs([tab('T', gridOf(), { variables: [v('a'), v('b')] })]), {});
+      const after = dashboardOf(tabs([tab('T', gridOf(), { variables: [v('b')] })]), {});
       const structure = structureOf(before, after);
 
       expect(structure.changes).toMatchObject([
@@ -771,8 +812,11 @@ describe('buildStructure', () => {
     });
 
     it('reports panel position and size from its grid item', () => {
-      const before = dashboard(grid(['a', 0, 0, 12, 8], ['b', 12, 0, 12, 8]), panels);
-      const after = dashboard(grid(['a', 0, 0, 24, 8], ['b', 0, 8, 12, 8]), panels);
+      const before = dashboardOf(gridOf('a', 'b'), panels);
+      const after = dashboardOf(
+        grid([gridItem('a', { x: 0, y: 0, w: 24, h: 8 }), gridItem('b', { x: 0, y: 8, w: 12, h: 8 })]),
+        panels
+      );
       const structure = structureOf(before, after);
 
       expect(structure.changes).toMatchObject([
@@ -788,8 +832,11 @@ describe('buildStructure', () => {
     });
 
     it('does not report panels the grid pushed down when another panel grew', () => {
-      const before = dashboard(grid(['a', 0, 0, 12, 8], ['b', 0, 8, 12, 8]), panels);
-      const after = dashboard(grid(['a', 0, 0, 12, 16], ['b', 0, 16, 12, 8]), panels);
+      const before = dashboardOf(stackOf('a', 'b'), panels);
+      const after = dashboardOf(
+        grid([gridItem('a', { x: 0, y: 0, w: 12, h: 16 }), gridItem('b', { x: 0, y: 16, w: 12, h: 8 })]),
+        panels
+      );
       const structure = structureOf(before, after);
 
       expect(changeList(structure)).toEqual(['Panel "CPU": size changed']);
@@ -800,8 +847,8 @@ describe('buildStructure', () => {
     });
 
     it('reports a panel dragged past others as moved, not as a position change of every panel', () => {
-      const before = dashboard(grid(['a', 0, 0], ['b', 0, 8], ['c', 0, 16]), panels);
-      const after = dashboard(grid(['b', 0, 0], ['c', 0, 8], ['a', 0, 16]), panels);
+      const before = dashboardOf(stackOf('a', 'b', 'c'), panels);
+      const after = dashboardOf(stackOf('b', 'c', 'a'), panels);
       const structure = structureOf(before, after);
 
       expect(outline(structure).slice(0, 4)).toEqual([
@@ -815,8 +862,11 @@ describe('buildStructure', () => {
     });
 
     it('reports a position change when the reading order stays the same', () => {
-      const before = dashboard(grid(['a', 0, 0], ['b', 0, 8]), only('a', 'b'));
-      const after = dashboard(grid(['a', 0, 0], ['b', 12, 8]), only('a', 'b'));
+      const before = dashboardOf(stackOf('a', 'b'), only('a', 'b'));
+      const after = dashboardOf(
+        grid([gridItem('a', { x: 0, y: 0, w: 12, h: 8 }), gridItem('b', { x: 12, y: 8, w: 12, h: 8 })]),
+        only('a', 'b')
+      );
       const structure = structureOf(before, after);
 
       expect(changeList(structure)).toEqual(['Panel "Memory": position changed']);
@@ -824,16 +874,25 @@ describe('buildStructure', () => {
     });
 
     it('keeps the panel whose coordinates did not change in place on a tie', () => {
-      const before = dashboard(grid(['a', 0, 0], ['b', 0, 8]), only('a', 'b'));
-      const after = dashboard(grid(['b', 0, 8], ['a', 0, 16]), only('a', 'b'));
+      const before = dashboardOf(stackOf('a', 'b'), only('a', 'b'));
+      const after = dashboardOf(
+        grid([gridItem('b', { x: 0, y: 8, w: 12, h: 8 }), gridItem('a', { x: 0, y: 16, w: 12, h: 8 })]),
+        only('a', 'b')
+      );
       const structure = structureOf(before, after);
 
       expect(outline(structure)).toEqual(['Dashboard', 'Panel "Memory"', 'Panel "CPU" moved after Panel "Memory"']);
     });
 
     it('keeps the earlier baseline item in place on a tie, and words a move to the front by the next item', () => {
-      const before = dashboard(autoGrid(['a', 'b', 'c']), only('a', 'b', 'c'));
-      const after = dashboard(autoGrid(['c', 'a', 'b']), only('a', 'b', 'c'));
+      const before = dashboardOf(
+        autoGrid([autoGridItem('a'), autoGridItem('b'), autoGridItem('c')]),
+        only('a', 'b', 'c')
+      );
+      const after = dashboardOf(
+        autoGrid([autoGridItem('c'), autoGridItem('a'), autoGridItem('b')]),
+        only('a', 'b', 'c')
+      );
       const structure = structureOf(before, after);
 
       expect(outline(structure)).toEqual([
@@ -845,15 +904,15 @@ describe('buildStructure', () => {
       expect(structure.changes).toEqual([]);
 
       const swapped = structureOf(
-        dashboard(autoGrid(['a', 'b']), only('a', 'b')),
-        dashboard(autoGrid(['b', 'a']), only('a', 'b'))
+        dashboardOf(autoGrid([autoGridItem('a'), autoGridItem('b')]), only('a', 'b')),
+        dashboardOf(autoGrid([autoGridItem('b'), autoGridItem('a')]), only('a', 'b'))
       );
       expect(outline(swapped)).toEqual(['Dashboard', 'Panel "Memory" moved before Panel "CPU"', 'Panel "CPU"']);
     });
 
     it('names the top level of the dashboard as an end of a move, and leaves statusText to describe/', () => {
-      const before = dashboard(rows(row('API', grid(['a', 0, 0])), row('DB', grid(['b', 0, 0]))), only('a', 'b'));
-      const after = dashboard(rows(row('API', grid()), row('DB', grid(['b', 0, 0], ['a', 0, 8]))), only('a', 'b'));
+      const before = dashboardOf(rows([row('API', gridOf('a')), row('DB', gridOf('b'))]), only('a', 'b'));
+      const after = dashboardOf(rows([row('API', gridOf()), row('DB', stackOf('b', 'a'))]), only('a', 'b'));
       const node = nodeByLabel(structureOf(before, after), 'Panel "CPU"');
 
       expect(node).toMatchObject({
@@ -864,12 +923,12 @@ describe('buildStructure', () => {
     });
 
     it('words a move into another section by its neighbour there, or alone', () => {
-      const before = dashboard(
-        rows(row('API', grid(['a', 0, 0], ['b', 0, 8])), row('DB', grid(['c', 0, 0])), row('Empty', grid())),
+      const before = dashboardOf(
+        rows([row('API', stackOf('a', 'b')), row('DB', gridOf('c')), row('Empty', gridOf())]),
         panels
       );
-      const after = dashboard(
-        rows(row('API', grid()), row('DB', grid(['a', 0, 0], ['c', 0, 8])), row('Empty', grid(['b', 0, 0]))),
+      const after = dashboardOf(
+        rows([row('API', gridOf()), row('DB', stackOf('a', 'c')), row('Empty', gridOf('b'))]),
         panels
       );
       const structure = structureOf(before, after);
@@ -881,19 +940,18 @@ describe('buildStructure', () => {
     });
 
     it('reports auto grid item repeat, show/hide rules and fit content', () => {
-      const before = dashboard(autoGrid(['a']), panels);
+      const before = dashboardOf(autoGrid([autoGridItem('a')]), panels);
       const condition = {
         kind: 'ConditionalRenderingGroup',
         spec: { visibility: 'hide', condition: 'and', items: [] },
       };
-      const after = dashboard(
+      const after = dashboardOf(
         autoGrid([
-          {
-            name: 'a',
+          autoGridItem('a', {
             repeat: { mode: 'variable', value: 'env' },
             fitContent: true,
             conditionalRendering: condition as never,
-          },
+          }),
         ]),
         panels
       );
@@ -907,9 +965,9 @@ describe('buildStructure', () => {
     });
 
     it('reports each auto grid setting as its own layout settings change, keyed by the setting', () => {
-      const before = dashboard(autoGrid(['a'], { maxColumnCount: 3 }), panels);
-      const after = dashboard(
-        autoGrid(['a'], { maxColumnCount: 4, columnWidthMode: 'wide', fillScreen: true }),
+      const before = dashboardOf(autoGrid([autoGridItem('a')], { maxColumnCount: 3 }), panels);
+      const after = dashboardOf(
+        autoGrid([autoGridItem('a')], { maxColumnCount: 4, columnWidthMode: 'wide', fillScreen: true }),
         panels
       );
       const structure = structureOf(before, after);
@@ -964,11 +1022,11 @@ describe('buildStructure', () => {
     it.each(['constructor', 'toString', '__proto__', 'hasOwnProperty'])(
       'treats an element named %s like any other element',
       (name) => {
-        const before = dashboard(grid(['a', 0, 0]), only('a'));
-        const after = dashboard(grid(['a', 0, 0], [name, 0, 8]), { ...only('a') });
+        const before = dashboardOf(gridOf('a'), only('a'));
+        const after = dashboardOf(stackOf('a', name), { ...only('a') });
         after.elements = { ...after.elements };
         Object.defineProperty(after.elements, name, {
-          value: dashboard(grid(), { x: 'Odd' }).elements.x,
+          value: panel('Odd'),
           enumerable: true,
           writable: true,
           configurable: true,
@@ -988,11 +1046,8 @@ describe('buildStructure', () => {
     );
 
     it('names an unknown layout kind from the kind itself and claims its diffs', () => {
-      const before = dashboard(grid(['a', 0, 0]), only('a'));
-      const after = dashboard(
-        { kind: 'MasonryLayout', spec: { columns: 3 } } as unknown as ReturnType<typeof grid>,
-        only('a')
-      );
+      const before = dashboardOf(gridOf('a'), only('a'));
+      const after = dashboardOf({ kind: 'MasonryLayout', spec: { columns: 3 } } as unknown as Layout, only('a'));
       const structure = structureOf(before, after);
 
       expect(changeList(structure)).toEqual(['Dashboard: Layout: changed from custom grid to Masonry layout']);
@@ -1000,8 +1055,8 @@ describe('buildStructure', () => {
 
     it('walks an unknown layout kind on both sides without throwing, claiming its diffs', () => {
       const unknown = (columns: number) =>
-        ({ kind: 'MasonryLayout', spec: { columns, items: [{ odd: true }] } }) as unknown as ReturnType<typeof grid>;
-      const structure = structureOf(dashboard(unknown(3), {}), dashboard(unknown(4), {}));
+        ({ kind: 'MasonryLayout', spec: { columns, items: [{ odd: true }] } }) as unknown as Layout;
+      const structure = structureOf(dashboardOf(unknown(3), {}), dashboardOf(unknown(4), {}));
 
       expect(structure.changes).toMatchObject([
         { nodeId: 'dashboard', field: 'layoutSettings', text: 'Layout: changed', claims: ['layout/spec/columns'] },
@@ -1011,51 +1066,41 @@ describe('buildStructure', () => {
 
   describe('claims', () => {
     const cases: Array<[string, DashboardV2Spec, DashboardV2Spec]> = [
-      ['no change', dashboard(grid(['a', 0, 0]), panels), dashboard(grid(['a', 0, 0]), panels)],
+      ['no change', dashboardOf(gridOf('a'), panels), dashboardOf(gridOf('a'), panels)],
       [
         'nested everything',
-        dashboard(
-          tabs(
-            tab('T1', rows(row('R1', grid(['a', 0, 0], ['b', 0, 8])), row('R2', autoGrid(['c'])))),
-            tab('T2', grid(['d', 0, 0]))
-          ),
+        dashboardOf(
+          tabs([
+            tab('T1', rows([row('R1', stackOf('a', 'b')), row('R2', autoGrid([autoGridItem('c')]))])),
+            tab('T2', gridOf('d')),
+          ]),
           panels
         ),
-        dashboard(
-          tabs(
-            tab('T2', grid(['d', 0, 8], ['e', 0, 0])),
-            tab('T1 renamed', rows(row('R2', autoGrid(['c', 'b'], { fillScreen: true })), row('R3', grid(['f', 0, 0]))))
-          ),
+        dashboardOf(
+          tabs([
+            tab('T2', grid([gridItem('d', { x: 0, y: 8, w: 12, h: 8 }), gridItem('e', { x: 0, y: 0, w: 12, h: 8 })])),
+            tab(
+              'T1 renamed',
+              rows([
+                row('R2', autoGrid([autoGridItem('c'), autoGridItem('b')], { fillScreen: true })),
+                row('R3', gridOf('f')),
+              ])
+            ),
+          ]),
           { ...panels, f: 'New' }
         ),
       ],
       [
         'root kind and nested changes at once',
-        dashboard(rows(row('A', tabs(tab('X', grid(['a', 0, 0]))))), panels),
-        dashboard(autoGrid(['a', 'b']), panels),
+        dashboardOf(rows([row('A', tabs([tab('X', gridOf('a'))]))]), panels),
+        dashboardOf(autoGrid([autoGridItem('a'), autoGridItem('b')]), panels),
       ],
-      ['new dashboard', dashboard(grid(), {}), dashboard(rows(row('A', grid(['a', 0, 0]))), { a: 'CPU' })],
+      ['new dashboard', dashboardOf(gridOf(), {}), dashboardOf(rows([row('A', gridOf('a'))]), { a: 'CPU' })],
     ];
 
     it.each(cases)('claims every diff exactly once: %s', (_, before, after) => {
       const diffs = layoutDiffsOf(before, after);
-      expect(claimProblems(buildStructure(before, after, diffs), diffs)).toEqual([]);
-    });
-
-    it('the claim helper reports unclaimed, doubly claimed and phantom claims', () => {
-      const before = dashboard(grid(['a', 0, 0]), panels);
-      const after = dashboard(grid(['a', 0, 8]), panels);
-      const diffs = layoutDiffsOf(before, after);
-      const structure = buildStructure(before, after, diffs);
-      structure.changes[0].claims.push('layout/spec/items/0', 'layout/nothing');
-
-      expect(claimProblems(structure, diffs)).toEqual([
-        'layout/spec/items/0/spec/y: claimed 2 times (change panel:a/position, change panel:a/position)',
-        'layout/nothing: phantom claim by change panel:a/position',
-      ]);
-      expect(claimProblems({ ...structure, changes: [] }, diffs)).toEqual([
-        'layout/spec/items/0/spec/y: claimed 0 times',
-      ]);
+      expect(claimProblems(buildStructure(before, after, diffs), diffs)).toBe('');
     });
   });
 });
