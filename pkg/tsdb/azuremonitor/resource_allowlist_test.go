@@ -32,6 +32,8 @@ func Test_isAllowedResourcePath_legitimateCalls(t *testing.T) {
 		{"metric namespaces, nested resource type (server/database)", azureMonitor, http.MethodGet, "/subscriptions/sub-1/resourceGroups/rg-1/providers/Microsoft.Sql/servers/srv-1/databases/db-1/providers/microsoft.insights/metricNamespaces"},
 		{"metric namespaces, mixed case provider", azureMonitor, http.MethodGet, "/subscriptions/sub-1/resourceGroups/rg-1/providers/Microsoft.Storage/storageAccounts/acct-1/providers/Microsoft.Insights/metricNamespaces"},
 		{"metric definitions", azureMonitor, http.MethodGet, "/subscriptions/sub-1/resourceGroups/rg-1/providers/Microsoft.Compute/virtualMachines/vm-1/providers/microsoft.insights/metricdefinitions"},
+		{"dimension values (metrics)", azureMonitor, http.MethodGet, "/subscriptions/sub-1/resourceGroups/rg-1/providers/Microsoft.Compute/virtualMachines/vm-1/providers/microsoft.insights/metrics"},
+		{"dimension values, mixed case provider", azureMonitor, http.MethodGet, "/subscriptions/sub-1/resourceGroups/rg-1/providers/Microsoft.Storage/storageAccounts/acct-1/providers/Microsoft.Insights/Metrics"},
 		{"log analytics table plan", azureMonitor, http.MethodGet, "/subscriptions/sub-1/resourceGroups/rg-1/providers/Microsoft.OperationalInsights/workspaces/ws-1/tables/MyTable"},
 		{"log analytics metadata, global", azureLogAnalytics, http.MethodGet, "/v1/metadata"},
 		{"log analytics metadata, workspace scoped", azureLogAnalytics, http.MethodGet, "/v1/subscriptions/sub-1/resourceGroups/rg-1/providers/Microsoft.OperationalInsights/workspaces/ws-1/metadata"},
@@ -93,6 +95,7 @@ func Test_isAllowedResourcePath_rejectsUnsupportedPaths(t *testing.T) {
 	}{
 		{"GET where only POST is legitimate (resourcegraph)", azureResourceGraph, http.MethodGet, "/providers/Microsoft.ResourceGraph/resources"},
 		{"POST where only GET is legitimate (metric namespaces)", azureMonitor, http.MethodPost, "/subscriptions/sub-1/resourceGroups/rg-1/providers/Microsoft.Compute/virtualMachines/vm-1/providers/microsoft.insights/metricNamespaces"},
+		{"POST where only GET is legitimate (dimension values)", azureMonitor, http.MethodPost, "/subscriptions/sub-1/resourceGroups/rg-1/providers/Microsoft.Compute/virtualMachines/vm-1/providers/microsoft.insights/metrics"},
 		{"PUT on an otherwise-allowed subscriptions path", azureMonitor, http.MethodPut, "/subscriptions"},
 		{"DELETE on an otherwise-allowed subscriptions path", azureMonitor, http.MethodDelete, "/subscriptions"},
 	}
@@ -230,6 +233,15 @@ func Test_isAllowedResourcePath_cannotBeRestrictedToGETOnly(t *testing.T) {
 				"this call is POST-only in the frontend; forcing GET here would break the feature")
 			require.False(t, isAllowedResourcePath(tt.subDataSource, http.MethodGet, tt.path),
 				"and it must not also be reachable via GET")
+		})
+	}
+}
+
+func Test_isAllowedResourcePath_rejectsNearMissesOfAllowedOperations(t *testing.T) {
+	base := "/subscriptions/sub-1/resourceGroups/rg-1/providers/Microsoft.Compute/virtualMachines/vm-1/providers/microsoft.insights/"
+	for _, op := range []string{"metrics/extra", "metricsbaselines", "metricnamespaces/extra", "metricdefinitions/extra"} {
+		t.Run(op, func(t *testing.T) {
+			require.False(t, isAllowedResourcePath(azureMonitor, http.MethodGet, base+op))
 		})
 	}
 }
