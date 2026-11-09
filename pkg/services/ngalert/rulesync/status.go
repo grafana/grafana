@@ -48,10 +48,8 @@ func (r SyncReason) ConditionReason() string {
 	}
 }
 
-// InvalidatesDedup reports whether a failure with this reason may have left the
-// stored rules out of step with the last applied upstream hash. Such a failure
-// must not leave that hash in place, or an upstream that returns to it would
-// be skipped without re-applying.
+// InvalidatesDedup reports whether a failure may have left the stored rules out
+// of step with the last applied hash, so that hash must not be skipped on.
 func (r SyncReason) InvalidatesDedup() bool {
 	switch r {
 	case ReasonSave, ReasonPrune, ReasonPanic:

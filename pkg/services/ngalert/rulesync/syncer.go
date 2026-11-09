@@ -229,8 +229,6 @@ func (s *ExternalRulerSyncer) recordSyncResult(ctx context.Context, orgID int64,
 	})
 }
 
-// recordUnchanged records a tick that skipped the apply because the upstream
-// hash is unchanged. See computeUnchangedStatus for which failures it clears.
 func (s *ExternalRulerSyncer) recordUnchanged(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, appliedHash string) {
 	now := time.Now()
 	s.writeStatus(ctx, orgID, func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {

@@ -49,18 +49,9 @@ func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, ori
 	return st
 }
 
-// computeUnchangedStatus is computeSyncStatus for a tick that found the
-// upstream unchanged and skipped the apply. It clears a failed status only
-// when the failure happened before anything was applied: datasource lookup,
-// ruler fetch and not-a-ruler. Panic and unclassified failures never clear on
-// a skip, since they may have come from the apply. A save or prune failure
-// drops the stored hash, so a tick on this replica cannot skip after one. A
-// replica that still holds the old hash in memory can, and must not report
-// success for a failure it did not see.
-//
-// appliedHash is only stored when prev carries no hash. A stored hash may
-// have been replaced by another replica since this tick read the Config, and
-// writing ours back would undo that.
+// computeUnchangedStatus clears only failures from before the apply, since a
+// skip applies nothing. It stores the hash only if none is stored, so a newer
+// one from another replica survives.
 func computeUnchangedStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, now time.Time, appliedHash string) alertingrulesv0alpha1.ConfigStatus {
 	if prev != nil && !failureClearableBySkip(prev) {
 		return cloneStatus(prev)
