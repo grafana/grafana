@@ -94,7 +94,7 @@ func (ss *sqlStatsService) getResourceCounts(ctx context.Context, orgs []*org.Or
 			Namespace: ss.namespacer(org.ID),
 			Kinds:     kinds,
 		})
-		if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
+		if err != nil {
 			return nil, err
 		}
 		for i, s := range resp.Stats {
@@ -224,11 +224,13 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 	result.Folders = resourceCounts[kindFolder]
 	result.Dashboards = resourceCounts[kindDashboard]
 
-	provisioned, err := ss.getProvisionedDashboardCount(ctx, orgs)
-	if err != nil {
-		return result, err
+	if query == nil || !query.SkipProvisionedDashboardCount {
+		provisioned, err := ss.getProvisionedDashboardCount(ctx, orgs)
+		if err != nil {
+			return result, err
+		}
+		result.ProvisionedDashboards = provisioned
 	}
-	result.ProvisionedDashboards = provisioned
 
 	return result, err
 }

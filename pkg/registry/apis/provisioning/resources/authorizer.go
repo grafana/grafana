@@ -375,8 +375,8 @@ func (a *ProvisioningAuthorizer) authorizeFileVerb(ctx context.Context, path, fo
 //   - For update: Checks permission using the folder's own ID as context (modifying the folder)
 //   - For create: Should be checked on the parent folder instead
 //
-// When folder metadata is enabled, folder IDs are determined by reading _folder.json.
-// Otherwise, it falls back to hash-based ID.
+// Folder IDs are determined by reading _folder.json.
+// Missing metadata falls back to a hash-based ID.
 func (a *ProvisioningAuthorizer) authorizeFolder(ctx context.Context, path, verb string) error {
 	// Get the folder's ID
 	folderID, err := a.getFolderID(ctx, path)
@@ -418,7 +418,7 @@ func (a *ProvisioningAuthorizer) authorizeFolder(ctx context.Context, path, verb
 // Authorization is checked against the parent folder: to create a new folder, the user
 // must have create permissions on the parent folder where it will be placed.
 //
-// When folder metadata is enabled, the parent folder ID is determined by reading
+// The parent folder ID is determined by reading
 // the _folder.json file if it exists. Otherwise, it falls back to hash-based ID.
 //
 // Example:
@@ -459,7 +459,7 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path
 // grant at least that level of access to all children, so checking the folder is sufficient.
 // Individual nested resources are not checked separately.
 //
-// When folder metadata is enabled, the folder ID is determined by reading _folder.json.
+// The folder ID is determined by reading _folder.json.
 //
 // Example:
 //
@@ -507,7 +507,7 @@ func (a *ProvisioningAuthorizer) AuthorizeDeleteByPath(ctx context.Context, path
 // Individual nested resources are not checked separately. Permissions on the source folder
 // apply to all its contents, so checking the folder itself is sufficient.
 //
-// When folder metadata is enabled, folder IDs are determined by reading _folder.json files.
+// Folder IDs are determined by reading _folder.json files.
 //
 // Example:
 //

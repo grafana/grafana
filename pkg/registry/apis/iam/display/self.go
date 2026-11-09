@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -84,6 +86,7 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		DisplayName:     authInfo.GetName(),
 		Namespace:       authInfo.GetNamespace(),
 		Email:           authInfo.GetEmail(),
+		Teams:           authInfo.GetGroups(),
 		AuthenticatedBy: authInfo.GetAuthenticatedBy(),
 	}
 
@@ -111,6 +114,17 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		// (e.g. "user:u000000001"), so the caller identifies itself purely from context.
 		key := authInfo.GetUID()
 
+		// The cluster-scoped whoami route has no namespace in the request context,
+		// but downstream clients (e.g. search) require one. When the route already
+		// carries one, it must agree with the caller's namespace.
+		if existing := request.NamespaceValue(ctx); existing == "" {
+			ctx = request.WithNamespace(ctx, ns.Value)
+		} else if existing != ns.Value {
+			errhttp.Write(ctx, apierrors.NewForbidden(schema.GroupResource{Group: iam.GROUP, Resource: "users"}, CurrentUserName,
+				fmt.Errorf("request namespace does not match the caller's namespace")), w)
+			return
+		}
+
 		for _, p := range r.resolvers {
 			partial, err := p.GetDisplayList(ctx, ns, []string{key})
 			if err != nil {
@@ -121,7 +135,8 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 				if item.Identity != rsp.Identity {
 					continue
 				}
-				if item.DisplayName != "" {
+				// Access-policy resolvers only provide a generic label; prefer the authenticated name.
+				if item.DisplayName != "" && (rsp.Identity.Type != authlib.TypeAccessPolicy || rsp.DisplayName == "") {
 					rsp.DisplayName = item.DisplayName
 				}
 				rsp.AvatarURL = item.AvatarURL

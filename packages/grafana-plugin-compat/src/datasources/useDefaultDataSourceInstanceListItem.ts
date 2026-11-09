@@ -1,6 +1,5 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { useDefaultDataSourceInstanceListItem as stableUseDefaultDataSourceInstanceListItem } from '@grafana/runtime';
-import { useDefaultDataSourceInstanceListItem as unstableUseDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 
 import { backwardsCompatibleGetDefaultDataSourceInstanceListItem } from './getDefaultDataSourceInstanceListItem';
 
@@ -20,9 +19,7 @@ export const useDefaultDataSourceInstanceListItem: (
 ) => UseDefaultDataSourceInstanceListItemResult =
   typeof stableUseDefaultDataSourceInstanceListItem === 'function'
     ? stableUseDefaultDataSourceInstanceListItem
-    : typeof unstableUseDefaultDataSourceInstanceListItem === 'function'
-      ? unstableUseDefaultDataSourceInstanceListItem
-      : useBackwardsCompatibleDefaultDataSourceInstanceListItem;
+    : useBackwardsCompatibleDefaultDataSourceInstanceListItem;
 
 function useBackwardsCompatibleDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -32,9 +33,12 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
@@ -44,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -130,9 +135,10 @@ func TestSimpleServer(t *testing.T) {
 
 		// should return 404 if not found
 		found, err := server.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.NotNil(t, found.Error)
-		require.Equal(t, int32(http.StatusNotFound), found.Error.Code)
+		foundErr := rpcErrorResult(t, err)
+		require.Nil(t, found)
+		require.NotNil(t, foundErr)
+		require.Equal(t, int32(http.StatusNotFound), foundErr.Code)
 
 		created, err := server.Create(ctx, &resourcepb.CreateRequest{
 			Value: raw,
@@ -168,8 +174,9 @@ func TestSimpleServer(t *testing.T) {
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
-		require.NoError(t, err)
-		require.Equal(t, int32(400), updated.Error.Code) // bad request
+		updatedErr := rpcErrorResult(t, err)
+		require.Nil(t, updated)
+		require.Equal(t, int32(400), updatedErr.Code) // bad request
 
 		// remove the invalid labels
 		obj.SetLabels(nil)
@@ -237,10 +244,10 @@ func TestSimpleServer(t *testing.T) {
 		require.True(t, deleted.ResourceVersion > updated.ResourceVersion)
 
 		// We should get not found status when trying to read the latest value
-		found, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.NotNil(t, found.Error)
-		require.Equal(t, int32(404), found.Error.Code)
+		_, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		foundErr = rpcErrorResult(t, err)
+		require.NotNil(t, foundErr)
+		require.Equal(t, int32(404), foundErr.Code)
 
 		// And the deleted value should not be in the results
 		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
@@ -356,8 +363,10 @@ func TestSimpleServer(t *testing.T) {
 			Key:   key,
 		})
 
-		require.NoError(t, err)
-		require.NotNil(t, created)
+		// The name passes key validation; the create then fails only because
+		// it does not match the object's name.
+		require.Nil(t, created)
+		require.ErrorContains(t, err, "key/name do not match")
 
 		// legacy name - also valid
 		key = &resourcepb.ResourceKey{
@@ -372,8 +381,10 @@ func TestSimpleServer(t *testing.T) {
 			Key:   key,
 		})
 
-		require.NoError(t, err)
-		require.NotNil(t, created)
+		// The name passes key validation; the create then fails only because
+		// it does not match the object's name.
+		require.Nil(t, created)
+		require.ErrorContains(t, err, "key/name do not match")
 
 		// legacy name - also valid
 		key = &resourcepb.ResourceKey{
@@ -388,8 +399,10 @@ func TestSimpleServer(t *testing.T) {
 			Key:   key,
 		})
 
-		require.NoError(t, err)
-		require.NotNil(t, created)
+		// The name passes key validation; the create then fails only because
+		// it does not match the object's name.
+		require.Nil(t, created)
+		require.ErrorContains(t, err, "key/name do not match")
 
 		invalidQualifiedNames := []string{
 			"",                                     // empty
@@ -466,7 +479,7 @@ func TestSimpleServer(t *testing.T) {
     	"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {
-				"name": "fdgsv37qslr0ga",
+				"name": "occ-check",
 				"namespace": "default",
 				"uid": "xyz",
 				"annotations": {
@@ -491,7 +504,7 @@ func TestSimpleServer(t *testing.T) {
 			Group:     "playlist.grafana.app",
 			Resource:  "rrrr", // can be anything :(
 			Namespace: "default",
-			Name:      "fdgsv37qslr0ga",
+			Name:      "occ-check",
 		}
 
 		created, err := server.Create(ctx, &resourcepb.CreateRequest{
@@ -510,13 +523,13 @@ func TestSimpleServer(t *testing.T) {
 
 		// Second update with stale RV and different bytes should return a conflict.
 		rawV3 := []byte(strings.Replace(string(raw), `"title": "hello"`, `"title": "again"`, 1))
-		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{
+		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           rawV3,
 			ResourceVersion: created.ResourceVersion})
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusConflict), rsp.Error.Code)
-		require.Contains(t, rsp.Error.Message, "requested RV does not match current RV")
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusConflict), rspErr.Code)
+		require.Contains(t, rspErr.Message, "requested RV does not match current RV")
 	})
 
 	t.Run("playlist update with identical bytes does not increment RV", func(t *testing.T) {
@@ -671,17 +684,20 @@ func TestRunInQueue(t *testing.T) {
 	})
 
 	t.Run("should time out if a task is sitting in the queue beyond the timeout", func(t *testing.T) {
-		s, _ := newTestServerWithQueue(t, 1, 1)
-		executed := make(chan struct{}, 1)
-		runnable := func(ctx context.Context) {
-			time.Sleep(1 * time.Second)
-			executed <- struct{}{}
-		}
+		synctest.Test(t, func(t *testing.T) {
+			s, _ := newTestServerWithQueue(t, 1, 1)
+			executed := make(chan struct{})
+			runnable := func(ctx context.Context) {
+				<-ctx.Done()
+				close(executed)
+			}
 
-		err := s.runInQueue(context.Background(), testTenantID, "read", runnable)
-		require.Error(t, err)
-		assert.Equal(t, context.DeadlineExceeded, err)
-		<-executed
+			err := s.runInQueue(t.Context(), testTenantID, "read", runnable)
+			require.ErrorIs(t, err, errQueueTimeout)
+			require.NotErrorIs(t, err, context.DeadlineExceeded)
+			require.NoError(t, t.Context().Err())
+			<-executed
+		})
 	})
 
 	t.Run("should use cluster-scoped tenant for empty tenantID", func(t *testing.T) {
@@ -777,41 +793,44 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 		log:                            log.NewNopLogger(),
 	}
 
-	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {
-		slept := s.sleepAfterSuccessfulWriteOperation(ctx, "test", &resourcepb.ResourceKey{}, res, err)
+	check := func(t *testing.T, expectedSleep bool, err error) {
+		slept := s.sleepAfterSuccessfulWriteOperation(ctx, "test", &resourcepb.ResourceKey{}, err)
 		require.Equal(t, expectedSleep, slept)
 	}
 
-	// Successful responses should sleep
-	check(t, true, nil, nil)
+	// Successful operations should sleep
+	check(t, true, nil)
 
-	check(t, true, (responseWithErrorResult)((*resourcepb.CreateResponse)(nil)), nil)
-	check(t, true, &resourcepb.CreateResponse{}, nil)
-
-	check(t, true, (responseWithErrorResult)((*resourcepb.UpdateResponse)(nil)), nil)
-	check(t, true, &resourcepb.UpdateResponse{}, nil)
-
-	check(t, true, (responseWithErrorResult)((*resourcepb.DeleteResponse)(nil)), nil)
-	check(t, true, &resourcepb.DeleteResponse{}, nil)
-
-	// Failed responses should return without sleeping
-	check(t, false, nil, errors.New("some error"))
-	check(t, false, &resourcepb.CreateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
-	check(t, false, &resourcepb.UpdateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
-	check(t, false, &resourcepb.DeleteResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
+	// Failed operations should return without sleeping
+	check(t, false, errors.New("some error"))
+	check(t, false, GRPCStatusError(AsErrorResult(errors.New("some error"))))
 }
 
 type fakeResourceIndexClient struct {
 	resourcepb.ResourceIndexClient
 	statsResponse *resourcepb.ResourceStatsResponse
+	statsError    error
+	statsRequests []*resourcepb.ResourceStatsRequest
+}
+
+type quotaLogRecorder struct {
+	log.Logger
+	messages []string
+}
+
+func (l *quotaLogRecorder) FromContext(context.Context) log.Logger { return l }
+
+func (l *quotaLogRecorder) Info(message string, _ ...any) {
+	l.messages = append(l.messages, message)
 }
 
 func newFakeResourceIndexClient() *fakeResourceIndexClient {
 	return &fakeResourceIndexClient{}
 }
 
-func (f *fakeResourceIndexClient) GetStats(context.Context, *resourcepb.ResourceStatsRequest, ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
-	return f.statsResponse, nil
+func (f *fakeResourceIndexClient) GetStats(_ context.Context, req *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	f.statsRequests = append(f.statsRequests, req)
+	return f.statsResponse, f.statsError
 }
 
 func TestGetQuotaUsage(t *testing.T) {
@@ -823,17 +842,17 @@ func TestGetQuotaUsage(t *testing.T) {
 			log:              log.NewNopLogger(),
 		}
 
-		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
+		_, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
 			Key: &resourcepb.ResourceKey{
 				Namespace: "stacks-123",
 				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, resp.Error)
-		assert.Equal(t, int32(http.StatusNotImplemented), resp.Error.Code)
-		assert.Equal(t, "overrides service not configured on resource server", resp.Error.Message)
+		respErr := rpcErrorResult(t, err)
+		require.NotNil(t, respErr)
+		assert.Equal(t, int32(http.StatusNotImplemented), respErr.Code)
+		assert.Equal(t, "overrides service not configured on resource server", respErr.Message)
 	})
 
 	t.Run("returns usage and limit successfully", func(t *testing.T) {
@@ -885,7 +904,7 @@ func TestGetQuotaUsage(t *testing.T) {
 		assert.Equal(t, int64(500), resp.Limit)
 	})
 
-	t.Run("surfaces stats response error on the response", func(t *testing.T) {
+	t.Run("surfaces returned stats error", func(t *testing.T) {
 		tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 		content := `overrides:
   "123":
@@ -901,9 +920,7 @@ func TestGetQuotaUsage(t *testing.T) {
 		require.NoError(t, err)
 
 		searchClient := newFakeResourceIndexClient()
-		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
-			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
-		}
+		searchClient.statsError = GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"})
 
 		s, err := NewResourceServer(ResourceServerOptions{
 			Backend:          &mockStorageBackend{},
@@ -915,17 +932,17 @@ func TestGetQuotaUsage(t *testing.T) {
 			_ = s.Stop(ctx)
 		})
 
-		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
+		_, err = s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
 			Key: &resourcepb.ResourceKey{
 				Namespace: "stacks-123",
 				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, resp.Error)
-		assert.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
-		assert.Equal(t, "stats blew up", resp.Error.Message)
+		respErr := rpcErrorResult(t, err)
+		require.NotNil(t, respErr)
+		assert.Equal(t, int32(http.StatusInternalServerError), respErr.Code)
+		assert.Equal(t, "stats blew up", respErr.Message)
 	})
 }
 
@@ -934,18 +951,22 @@ func TestCheckQuotas(t *testing.T) {
 		name              string
 		limit             int
 		enforcedResources map[string]bool
+		loggedResources   map[string]bool
+		expectStats       int
 		expectError       bool
 	}{
 		{
 			name:              "enforced resource returns error if quota exceeded",
 			limit:             1,
 			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
 			expectError:       true,
 		},
 		{
 			name:              "enforced resource returns nil if within quota",
 			limit:             2,
 			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
 			expectError:       false,
 		},
 		{
@@ -959,6 +980,44 @@ func TestCheckQuotas(t *testing.T) {
 			limit:             1,
 			enforcedResources: nil,
 			expectError:       false,
+		},
+		{
+			name:            "log-only resource counts and logs without enforcement",
+			limit:           1,
+			loggedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:     1,
+		},
+		{
+			name:            "log-only resource within quota counts without logging an exceeded quota",
+			limit:           2,
+			loggedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:     1,
+		},
+		{
+			name:              "enforced and logged resource counts once and enforces",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			loggedResources:   map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
+			expectError:       true,
+		},
+		{
+			name:              "zero quota is still enforced",
+			limit:             0,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
+			expectError:       true,
+		},
+		{
+			name:              "false entries do not request counts",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": false},
+			loggedResources:   map[string]bool{"grafana.dashboard.app/dashboards": false},
+		},
+		{
+			name:            "same resource name in another group is not selected",
+			limit:           1,
+			loggedResources: map[string]bool{"other.group/dashboards": true},
 		},
 	}
 
@@ -1000,14 +1059,26 @@ func TestCheckQuotas(t *testing.T) {
 				Backend:          &mockStorageBackend{},
 				SearchClient:     searchClient,
 				OverridesService: overridesService,
-				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources},
+				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources, LoggedResources: tt.loggedResources},
 			})
 			require.NoError(t, err)
 			t.Cleanup(func() {
 				_ = server.Stop(ctx)
 			})
 
+			logger := &quotaLogRecorder{Logger: log.NewNopLogger()}
+			server.log = logger
 			err = server.checkQuota(ctx, nsr)
+			require.Len(t, searchClient.statsRequests, tt.expectStats)
+			if tt.expectStats > 0 {
+				require.Equal(t, nsr.Namespace, searchClient.statsRequests[0].Namespace)
+				require.Equal(t, []string{nsr.GroupResource()}, searchClient.statsRequests[0].Kinds)
+			}
+			if tt.expectStats > 0 && tt.limit <= 1 {
+				require.Equal(t, []string{"Quota exceeded on create"}, logger.messages)
+			} else {
+				require.Empty(t, logger.messages)
+			}
 			if tt.expectError {
 				require.Error(t, err)
 				return
@@ -1016,52 +1087,150 @@ func TestCheckQuotas(t *testing.T) {
 		})
 	}
 
-	t.Run("stats response error fails open (no quota error returned)", func(t *testing.T) {
-		ctx := t.Context()
+	for _, transportError := range []bool{false, true} {
+		t.Run(fmt.Sprintf("stats error fails open (transport=%v)", transportError), func(t *testing.T) {
+			ctx := t.Context()
 
-		overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
-		overrides := `overrides:
+			overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
+			overrides := `overrides:
   "123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 1
 `
-		require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
+			require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
 
-		tcr := tracing.NewNoopTracerService()
-		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
-			FilePath: overridesFile,
+			tcr := tracing.NewNoopTracerService()
+			overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
+				FilePath: overridesFile,
+			})
+			require.NoError(t, err)
+
+			nsr := NamespacedResource{
+				Namespace: "stacks-123",
+				Group:     "grafana.dashboard.app",
+				Resource:  "dashboards",
+			}
+
+			searchClient := newFakeResourceIndexClient()
+			searchClient.statsError = GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"})
+
+			if transportError {
+				searchClient.statsResponse = nil
+				searchClient.statsError = status.Error(codes.Unavailable, "stats unavailable")
+			}
+
+			metrics := ProvideStorageMetrics(prometheus.NewRegistry())
+			server, err := NewResourceServer(ResourceServerOptions{
+				Backend:          &mockStorageBackend{},
+				SearchClient:     searchClient,
+				OverridesService: overridesService,
+				StorageMetrics:   metrics,
+				QuotasConfig:     QuotasConfig{EnforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true}},
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = server.Stop(ctx)
+			})
+
+			require.NoError(t, server.checkQuota(ctx, nsr))
+			require.Equal(t, float64(1), testutil.ToFloat64(
+				metrics.DegradedOperations.WithLabelValues("check_quota", "stats_error", nsr.Group, nsr.Resource)))
+			require.Len(t, searchClient.statsRequests, 1)
 		})
-		require.NoError(t, err)
+	}
+}
 
-		nsr := NamespacedResource{
-			Namespace: "stacks-123",
-			Group:     "grafana.dashboard.app",
-			Resource:  "dashboards",
-		}
-
-		searchClient := newFakeResourceIndexClient()
-		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
-			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
-		}
-
-		metrics := ProvideStorageMetrics(prometheus.NewRegistry())
-		server, err := NewResourceServer(ResourceServerOptions{
-			Backend:          &mockStorageBackend{},
-			SearchClient:     searchClient,
-			OverridesService: overridesService,
-			StorageMetrics:   metrics,
-			QuotasConfig:     QuotasConfig{EnforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true}},
+func TestCheckQuotaSkipsUnselectedKindsBeforeLookup(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		config QuotasConfig
+		key    NamespacedResource
+	}{
+		{
+			name:   "plugin kind not selected",
+			config: QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+			key:    NamespacedResource{Namespace: "stacks-123", Group: "plugins.grafana.app", Resource: "plugins"},
+		},
+		{
+			name: "no kinds selected",
+			key:  NamespacedResource{Namespace: "stacks-123", Group: "plugins.grafana.app", Resource: "plugins"},
+		},
+		{
+			name:   "namespace missing even for selected kind",
+			config: QuotasConfig{LoggedResources: map[string]bool{"plugins.grafana.app/plugins": true}},
+			key:    NamespacedResource{Group: "plugins.grafana.app", Resource: "plugins"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// An uninitialized overrides service would fail if the lookup were reached.
+			s := &server{quotasConfig: tc.config, overridesService: &OverridesService{}}
+			require.NoError(t, s.checkQuota(t.Context(), tc.key))
 		})
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			_ = server.Stop(ctx)
-		})
+	}
+}
 
-		require.NoError(t, server.checkQuota(ctx, nsr))
-		require.Equal(t, float64(1), testutil.ToFloat64(
-			metrics.DegradedOperations.WithLabelValues("check_quota", "stats_error", nsr.Group, nsr.Resource)))
-	})
+func TestQuotaSelectionOnCreate(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		config    QuotasConfig
+		wantStats int
+		wantCode  int32
+	}{
+		{
+			name:   "ignored plugin create is stored without stats",
+			config: QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+		},
+		{
+			name:      "log-only plugin create is stored despite zero quota",
+			config:    QuotasConfig{LoggedResources: map[string]bool{"plugins.grafana.app/plugins": true}},
+			wantStats: 1,
+		},
+		{
+			name:      "enforced plugin create is rejected at zero quota",
+			config:    QuotasConfig{EnforcedResources: map[string]bool{"plugins.grafana.app/plugins": true}},
+			wantStats: 1,
+			wantCode:  http.StatusForbidden,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := identity.WithServiceIdentityForSingleNamespaceContext(t.Context(), "stacks-123")
+			db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, db.Close()) })
+			backend, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
+			require.NoError(t, err)
+			file := filepath.Join(t.TempDir(), "overrides.yaml")
+			require.NoError(t, os.WriteFile(file, []byte("overrides:\n  \"123\":\n    quotas:\n      plugins.grafana.app/plugins:\n        limit: 0\n"), 0o600))
+			overrides, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tracing.NewNoopTracerService(), ReloadOptions{FilePath: file})
+			require.NoError(t, err)
+			stats := newFakeResourceIndexClient()
+			stats.statsResponse = &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{{Group: "plugins.grafana.app", Resource: "plugins"}}}
+			s, err := NewResourceServer(ResourceServerOptions{Backend: backend, SearchClient: stats, OverridesService: overrides, QuotasConfig: tc.config})
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, s.Stop(context.WithoutCancel(ctx))) })
+			key := &resourcepb.ResourceKey{Namespace: "stacks-123", Group: "plugins.grafana.app", Resource: "plugins", Name: "test-plugin"}
+			response, err := s.Create(ctx, &resourcepb.CreateRequest{
+				Key:   key,
+				Value: []byte(`{"apiVersion":"plugins.grafana.app/v0alpha1","kind":"Plugin","metadata":{"name":"test-plugin","namespace":"stacks-123"},"spec":{"id":"test-plugin"}}`),
+			})
+			if tc.wantCode != 0 {
+				require.Nil(t, response)
+				require.Equal(t, tc.wantCode, rpcErrorResult(t, err).GetCode())
+			} else {
+				require.NoError(t, err)
+			}
+			require.Len(t, stats.statsRequests, tc.wantStats)
+			read, err := s.Read(ctx, &resourcepb.ReadRequest{Key: key})
+			if tc.wantCode != 0 {
+				require.Nil(t, read)
+				require.Equal(t, int32(http.StatusNotFound), rpcErrorResult(t, err).GetCode())
+			} else {
+				require.NoError(t, err)
+				require.NotEmpty(t, read.Value)
+			}
+		})
+	}
 }
 
 func TestNewResourceServer_RequiresStatsSourceWhenQuotasEnabled(t *testing.T) {
@@ -1399,30 +1568,6 @@ func (m *mockWatchServer) SetTrailer(metadata.MD)       {}
 func (m *mockWatchServer) SendMsg(any) error            { return nil }
 func (m *mockWatchServer) RecvMsg(any) error            { return nil }
 
-// mockDailyStatsServer implements resourcepb.ResourceStats_GetResourceDailyStatsServer
-// for testing, collecting everything sent by the server.
-type mockDailyStatsServer struct {
-	grpc.ServerStream
-	ctx  context.Context
-	days []*resourcepb.DailyStat
-}
-
-func newMockDailyStatsServer(ctx context.Context) *mockDailyStatsServer {
-	return &mockDailyStatsServer{ctx: ctx}
-}
-
-func (m *mockDailyStatsServer) Send(d *resourcepb.DailyStat) error {
-	m.days = append(m.days, d)
-	return nil
-}
-
-func (m *mockDailyStatsServer) Context() context.Context     { return m.ctx }
-func (m *mockDailyStatsServer) SetHeader(metadata.MD) error  { return nil }
-func (m *mockDailyStatsServer) SendHeader(metadata.MD) error { return nil }
-func (m *mockDailyStatsServer) SetTrailer(metadata.MD)       {}
-func (m *mockDailyStatsServer) SendMsg(any) error            { return nil }
-func (m *mockDailyStatsServer) RecvMsg(any) error            { return nil }
-
 const (
 	watchTestGroup     = "playlist.grafana.app"
 	watchTestResource  = "playlists"
@@ -1708,14 +1853,20 @@ func startBookmarkWatch(t *testing.T, req *resourcepb.WatchRequest, configure fu
 	t.Cleanup(func() {
 		cancel()
 		srv.cancel()
+
+		// Finish watch cancellation before checking that the watch goroutine returned.
 		synctest.Wait()
+
 		select {
 		case err := <-done:
 			assert.NoError(t, err)
 		default: // An error-path test already consumed the result.
 		}
 	})
+
+	// Start the watch and its bookmark timer before returning control to the test.
 	synctest.Wait()
+
 	return events, stream, done
 }
 
@@ -1740,7 +1891,10 @@ func bookmarkWrittenEvent(rv int64) *WrittenEvent {
 
 func requireBookmarkEvent(t *testing.T, stream *bookmarkWatchServer, eventType resourcepb.WatchEvent_Type, rv int64) {
 	t.Helper()
+
+	// Finish pending watch delivery before reading the expected event or bookmark.
 	synctest.Wait()
+
 	require.NotEmpty(t, stream.events, "expected %s at RV %d", eventType, rv)
 	event := <-stream.events
 	require.Equal(t, eventType, event.Type)
@@ -1764,6 +1918,8 @@ func TestWatchPreviousReadError(t *testing.T) {
 		event.Type = resourcepb.WatchEvent_MODIFIED
 		event.PreviousRV = 150
 		events <- event
+
+		// Process the failed previous-version read before checking that the watch remains open.
 		synctest.Wait()
 
 		require.Empty(t, done, "watch should remain open after the previous version read fails")
@@ -1819,6 +1975,8 @@ func TestWatchDeleteRetainsPreviousJobRevisionAfterPruning(t *testing.T) {
 			PreviousRV:      previousRV,
 			Value:           objectToJSONBytes(t, previous),
 		}
+
+		// Finish the previous-version lookup and its error handling before checking watch shutdown.
 		synctest.Wait()
 
 		select {
@@ -1866,13 +2024,22 @@ func TestIncrementalBookmarksProgressLag(t *testing.T) {
 				}
 
 				time.Sleep(10 * time.Second)
+
+				// Finish the bookmark tick before verifying that elapsed time alone establishes no progress.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "the clock alone must not establish progress")
 
 				events <- filteredEvent(rvAt(time.Now()) + 1)
+
+				// Consume the filtered write before testing the bookmark's lag window.
 				synctest.Wait()
+
 				time.Sleep(20 * time.Second)
+
+				// Finish the lagged bookmark tick before checking that it cannot precede Since.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "lagged progress must not precede Since")
 				time.Sleep(10 * time.Second)
 				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rvAt(time.Now().Add(-time.Minute)))
@@ -1881,7 +2048,10 @@ func TestIncrementalBookmarksProgressLag(t *testing.T) {
 				// postponing all progress until the newest event is a minute old.
 				for range 2 {
 					events <- filteredEvent(rvAt(time.Now()) + 1)
+
+					// Consume each filtered write before advancing the next bookmark interval.
 					synctest.Wait()
+
 					time.Sleep(10 * time.Second)
 					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rvAt(time.Now().Add(-time.Minute)))
 				}
@@ -1907,7 +2077,10 @@ func TestIncrementalBookmarksLagDoesNotDelayObjects(t *testing.T) {
 		filtered := bookmarkWrittenEvent(objectRV + 1)
 		filtered.Key.Name = "other"
 		events <- filtered
+
+		// Consume the filtered write before checking that it cannot move progress past the delivered object.
 		synctest.Wait()
+
 		time.Sleep(10 * time.Second)
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, objectRV)
 
@@ -1916,7 +2089,10 @@ func TestIncrementalBookmarksLagDoesNotDelayObjects(t *testing.T) {
 		events <- bookmarkWrittenEvent(olderRV)
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, olderRV)
 		time.Sleep(10 * time.Second)
+
+		// Finish the next bookmark tick before checking that an older event cannot repeat progress.
 		synctest.Wait()
+
 		require.Empty(t, stream.events)
 	})
 }
@@ -1934,12 +2110,18 @@ func TestIncrementalBookmarksLaggedResume(t *testing.T) {
 		foreign := bookmarkWrittenEvent(snowflakeFromTime(now))
 		foreign.Key.Resource = "other"
 		events <- foreign
+
+		// Process the foreign collection's write before measuring progress for the watched collection.
 		synctest.Wait()
+
 		time.Sleep(10 * time.Second)
 		resumeRV := snowflakeFromTime(time.Now().Add(-time.Minute))
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, resumeRV)
 		close(events)
+
+		// Finish watch shutdown after its input closes before checking its returned error.
 		synctest.Wait()
+
 		require.NoError(t, <-done)
 
 		// The lagged bookmark leaves a late lower-RV notification eligible.
@@ -2001,12 +2183,18 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 					tt.filter(event)
 				}
 				events <- event
+
+				// Process the filtered object before checking that only its progress can produce a bookmark.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "filtered objects must not be sent")
 				time.Sleep(time.Second)
 				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 101)
 				time.Sleep(2 * time.Second)
+
+				// Finish later bookmark ticks before checking that unchanged progress is not repeated.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "unchanged progress must not repeat")
 			})
 		})
@@ -2019,9 +2207,15 @@ func TestIncrementalBookmarksLegacySQLCollectionOrdering(t *testing.T) {
 		foreign := bookmarkWrittenEvent(300)
 		foreign.Key.Resource = "other"
 		events <- foreign
+
+		// Consume the foreign collection's event before checking SQL watch progress.
 		synctest.Wait()
+
 		time.Sleep(2 * time.Second)
+
+		// Finish bookmark ticks before verifying that another collection cannot establish progress.
 		synctest.Wait()
+
 		require.Empty(t, stream.events, "other collections cannot establish SQL progress")
 
 		events <- bookmarkWrittenEvent(110)
@@ -2033,7 +2227,10 @@ func TestIncrementalBookmarksLegacySQLCollectionOrdering(t *testing.T) {
 		events <- bookmarkWrittenEvent(105)
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 105)
 		time.Sleep(time.Second)
+
+		// Finish the bookmark tick before checking that progress cannot regress.
 		synctest.Wait()
+
 		require.Empty(t, stream.events, "bookmarks must not regress")
 	})
 }
@@ -2062,7 +2259,10 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 					}
 				})
 				events <- bookmarkWrittenEvent(101)
+
+				// Enter the blocked Send before supplying the next pending event.
 				synctest.Wait()
+
 				select {
 				case <-entered:
 				default:
@@ -2072,11 +2272,17 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				pending.Key.Resource = "other"
 				events <- pending
 				time.Sleep(2 * time.Second)
+
+				// Finish bookmark ticks while Send is blocked before checking that pending events are not covered.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "blocked events must not be covered")
 
 				close(release)
+
+				// Finish the released Send and its error handling before inspecting the watch result.
 				synctest.Wait()
+
 				if fail {
 					require.ErrorIs(t, <-done, sendErr)
 					require.Empty(t, stream.events)
@@ -2084,7 +2290,10 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				}
 
 				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 101)
+
+				// Finish the pending bookmark after the delivered object before reading it.
 				synctest.Wait()
+
 				require.NotEmpty(t, stream.events)
 				bookmark := <-stream.events
 				require.Equal(t, resourcepb.WatchEvent_BOOKMARK, bookmark.Type)
@@ -2135,9 +2344,15 @@ func TestIncrementalBookmarksInitialBackfill(t *testing.T) {
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 2)
 
 		events <- bookmarkWrittenEvent(initialRV + 1)
+
+		// Consume the live write while the initial-list bookmark is still blocked.
 		synctest.Wait()
+
 		time.Sleep(2 * time.Second)
+
+		// Finish bookmark ticks before checking that live delivery is held behind the initial list.
 		synctest.Wait()
+
 		require.Empty(t, stream.events, "live events must wait for backfill")
 
 		close(release)
@@ -2480,12 +2695,18 @@ func TestWatchEventMetricsPhaseIncludesInitialBookmark(t *testing.T) {
 		})
 		// Let the blocked bookmark send finish.
 		time.Sleep(3 * time.Second)
+
+		// Finish the released initial-list bookmark before inspecting its write timestamp.
 		synctest.Wait()
+
 		require.False(t, wroteAt.IsZero())
 
 		events <- bookmarkWrittenEvent(snowflakeFromTime(wroteAt))
 		events <- bookmarkWrittenEvent(snowflakeFromTime(time.Now()))
+
+		// Process the writes on both sides of readiness before comparing their metric phases.
 		synctest.Wait()
+
 		requireReadyPhaseCounts(t, metrics, 1, 1)
 	})
 }
@@ -2779,16 +3000,16 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
 
-		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.Equal(t, codes.PermissionDenied, status.Code(err), "reads are denied too, so no resource version is known")
+		_, err = srv.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           makeValue(""),
-			ResourceVersion: latest.ResourceVersion,
+			ResourceVersion: 0,
 		})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("regular update is allowed when user has update permission", func(t *testing.T) {
@@ -2814,10 +3035,10 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		}
 		srv := newServer(t, ac)
 
-		rsp, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: makeValue("")})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: makeValue("")})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("folder move is denied when user cannot update in source folder", func(t *testing.T) {
@@ -2834,15 +3055,15 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
-		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+		_, err = srv.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           makeValue(folderB), // move to folder-b
 			ResourceVersion: latest.ResourceVersion,
 		})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
-		require.Contains(t, rsp.Error.Message, "not allowed to update resource in the source folder")
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
+		require.Contains(t, rspErr.Message, "not allowed to update resource in the source folder")
 	})
 
 	t.Run("folder move is denied when user cannot create in destination folder", func(t *testing.T) {
@@ -2859,15 +3080,15 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
-		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+		_, err = srv.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           makeValue(folderB),
 			ResourceVersion: latest.ResourceVersion,
 		})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
-		require.Contains(t, rsp.Error.Message, "not allowed to create resource in the destination folder")
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
+		require.Contains(t, rspErr.Message, "not allowed to create resource in the destination folder")
 	})
 
 	t.Run("folder move is allowed when user has permission on both folders", func(t *testing.T) {
@@ -2893,10 +3114,10 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
 
-		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("read is allowed when user has get permission", func(t *testing.T) {
@@ -2937,9 +3158,9 @@ func TestNewEventPermissionChecks(t *testing.T) {
 			return authlib.CheckResponse{}, errors.New("authz service unavailable")
 		}
 
-		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
 	})
 
 	t.Run("delete is denied when user lacks delete permission", func(t *testing.T) {
@@ -2948,12 +3169,12 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
 
-		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: latest.ResourceVersion})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.Equal(t, codes.PermissionDenied, status.Code(err), "reads are denied too, so no resource version is known")
+		_, err = srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: 0})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("delete is allowed when user has delete permission", func(t *testing.T) {
@@ -2987,236 +3208,6 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
 		require.Equal(t, folderA, capturedFolder)
-	})
-}
-
-// TestStatsAccessChecks covers the authorization behavior of the usage-stats
-// RPCs: reads must be equivalent to reading the object (folder-aware authz),
-// while ingest only requires an authenticated caller.
-func TestStatsAccessChecks(t *testing.T) {
-	user := &identity.StaticRequester{
-		Type:      authlib.TypeUser,
-		Login:     "testuser",
-		UserID:    123,
-		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
-		Namespace: "default",
-	}
-	ctx := authlib.WithAuthInfo(context.Background(), user)
-
-	const (
-		group     = "playlist.grafana.app"
-		resource  = "playlists"
-		namespace = "default"
-		name      = "test-resource"
-		folderA   = "folder-a"
-	)
-
-	value := []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"` + name + `","uid":"test-uid","namespace":"` + namespace + `","annotations":{"grafana.app/folder":"` + folderA + `"}},"spec":{"title":"t","interval":"5m","items":[]}}`)
-
-	key := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: namespace, Name: name}
-
-	// newStatsServer builds a stats-enabled server backed by an in-memory KV
-	// store (leases are required by the ingester) and seeds one resource in
-	// folderA using an always-allow client before switching to ac.
-	newStatsServer := func(t *testing.T, ac *callbackAccessClient) *server {
-		t.Helper()
-		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
-		require.NoError(t, err)
-		t.Cleanup(func() { _ = db.Close() })
-
-		kv := NewBadgerKV(db)
-		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, Holder: "test"})
-		require.NoError(t, err)
-
-		srv, err := NewResourceServer(ResourceServerOptions{
-			Backend:           store,
-			AccessClient:      ac,
-			UsageStatsEnabled: true,
-		})
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			_ = srv.Stop(stopCtx)
-		})
-
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
-		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
-		require.NoError(t, err)
-		require.Nil(t, created.Error)
-		return srv
-	}
-
-	t.Run("GetResourceDailyStats passes the resolved folder to the access check", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac)
-
-		var capturedReq authlib.CheckRequest
-		var capturedFolder string
-		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-			capturedReq, capturedFolder = req, folder
-			return allow()
-		}
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
-		require.NoError(t, err)
-		require.Equal(t, utils.VerbGet, capturedReq.Verb)
-		require.Equal(t, name, capturedReq.Name)
-		require.Equal(t, folderA, capturedFolder, "read must resolve the object folder, not pass an empty one")
-	})
-
-	t.Run("GetResourceDailyStats is denied when the user cannot read the object", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac)
-
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
-		require.Equal(t, codes.PermissionDenied, status.Code(err))
-	})
-
-	t.Run("RecordEvent does not perform an object-level access check", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac)
-
-		// Even a deny-all access client must not block ingest: the path only
-		// requires an authenticated caller.
-		accessCalled := false
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
-			accessCalled = true
-			return deny()
-		}
-
-		_, err := srv.RecordEvent(ctx, &resourcepb.RecordEventRequest{
-			Key:    key,
-			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 1}},
-		})
-		require.NoError(t, err)
-		require.False(t, accessCalled, "ingest must not call the access client")
-	})
-
-	t.Run("RecordEvent requires an authenticated caller", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac)
-
-		_, err := srv.RecordEvent(context.Background(), &resourcepb.RecordEventRequest{
-			Key:    key,
-			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 1}},
-		})
-		require.Equal(t, codes.Unauthenticated, status.Code(err))
-	})
-}
-
-func TestGetResourceDailyStats(t *testing.T) {
-	user := &identity.StaticRequester{
-		Type:      authlib.TypeUser,
-		Login:     "testuser",
-		UserID:    123,
-		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
-		Namespace: "default",
-	}
-	ctx := authlib.WithAuthInfo(context.Background(), user)
-
-	const (
-		group     = "dashboard.grafana.app"
-		resource  = "dashboards"
-		namespace = "default"
-		name      = "test-dashboard"
-		folderA   = "folder-a"
-	)
-
-	value := []byte(`{"apiVersion":"dashboard.grafana.app/v1beta1","kind":"Dashboard","metadata":{"name":"` + name + `","uid":"test-uid","namespace":"` + namespace + `","annotations":{"grafana.app/folder":"` + folderA + `"}},"spec":{"title":"t"}}`)
-
-	key := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: namespace, Name: name}
-
-	newStatsServer := func(t *testing.T, ac *callbackAccessClient, enabled bool) *server {
-		t.Helper()
-		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
-		require.NoError(t, err)
-		t.Cleanup(func() { _ = db.Close() })
-
-		kv := NewBadgerKV(db)
-		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, Holder: "test"})
-		require.NoError(t, err)
-
-		srv, err := NewResourceServer(ResourceServerOptions{
-			Backend:           store,
-			AccessClient:      ac,
-			UsageStatsEnabled: enabled,
-		})
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			_ = srv.Stop(stopCtx)
-		})
-
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
-		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
-		require.NoError(t, err)
-		require.Nil(t, created.Error)
-		return srv
-	}
-
-	t.Run("returns the recorded daily stats", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, true)
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
-
-		_, err := srv.RecordEvent(ctx, &resourcepb.RecordEventRequest{
-			Key:    key,
-			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 3}, {Metric: "queries", Value: 1}},
-		})
-		require.NoError(t, err)
-
-		// Buffered events only surface after a flush to the KV store.
-		require.NoError(t, srv.statsIngester.Flush(ctx))
-
-		stream := newMockDailyStatsServer(ctx)
-		err = srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, stream)
-		require.NoError(t, err)
-		require.Len(t, stream.days, 1)
-		require.Equal(t, uint64(3), stream.days[0].Metrics["views"])
-		require.Equal(t, uint64(1), stream.days[0].Metrics["queries"])
-	})
-
-	t.Run("returns no days when nothing has been recorded", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, true)
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
-
-		stream := newMockDailyStatsServer(ctx)
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, stream)
-		require.NoError(t, err)
-		require.Empty(t, stream.days)
-	})
-
-	t.Run("is unimplemented when usage stats are disabled", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, false)
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
-		require.Equal(t, codes.Unimplemented, status.Code(err))
-	})
-
-	t.Run("requires an authenticated caller", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, true)
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(context.Background()))
-		require.Equal(t, codes.Unauthenticated, status.Code(err))
-	})
-
-	t.Run("rejects an invalid request key", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, true)
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{
-			Key: &resourcepb.ResourceKey{Namespace: namespace, Resource: resource, Name: name},
-		}, newMockDailyStatsServer(ctx))
-		require.Equal(t, codes.InvalidArgument, status.Code(err))
 	})
 }
 
@@ -3302,12 +3293,12 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
 
-		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: folderKey})
-		require.NoError(t, err)
-		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: folderKey, ResourceVersion: latest.ResourceVersion})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: folderKey})
+		require.Equal(t, codes.PermissionDenied, status.Code(err), "reads are denied too, so no resource version is known")
+		_, err = srv.Delete(ctx, &resourcepb.DeleteRequest{Key: folderKey, ResourceVersion: 0})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("folder delete is allowed when user has delete permission", func(t *testing.T) {
@@ -3459,9 +3450,9 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 
 	t.Run("rejects when no user in context", func(t *testing.T) {
 		srv, _, blob := newBlobAuthzTestServer(t, nil)
-		rsp, err := srv.PutBlob(context.Background(), &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusUnauthorized), rsp.Error.Code)
+		_, err := srv.PutBlob(context.Background(), &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusUnauthorized), rspErr.Code)
 		require.False(t, blob.putReached)
 	})
 
@@ -3507,9 +3498,9 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 		srv, ac, blob := newBlobAuthzTestServer(t, nil)
 		ac.fn = folderOnlyCreate("folder-x")
 
-		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 		require.False(t, blob.putReached)
 	})
 
@@ -3534,9 +3525,9 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 		srv, ac, blob := newBlobAuthzTestServer(t, nil)
 		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
 
-		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 		require.False(t, blob.putReached)
 	})
 
@@ -3545,9 +3536,9 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 		seedParent(t, srv, ac)
 		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
 
-		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 		require.False(t, blob.putReached)
 	})
 
@@ -3558,9 +3549,9 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 			return authlib.CheckResponse{}, errors.New("authz backend unavailable")
 		}
 
-		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
 		require.False(t, blob.putReached)
 	})
 
@@ -3593,10 +3584,10 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 			return &errorOnReadResourceBackend{StorageBackend: real, readErr: backendErr}
 		})
 
-		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.Equal(t, backendErr.Code, rsp.Error.Code, "must surface the backend error code, not collapse to 404")
-		require.Equal(t, backendErr.Message, rsp.Error.Message)
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, backendErr.Code, rspErr.Code, "must surface the backend error code, not collapse to 404")
+		require.Equal(t, backendErr.Message, rspErr.Message)
 		require.False(t, blob.putReached)
 	})
 }
@@ -3641,22 +3632,22 @@ func TestDelegatedRPCsNamespaceGate(t *testing.T) {
 		invoke func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult
 	}{
 		{"GetBlob", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.GetBlob(ctx, &resourcepb.GetBlobRequest{
+			_, err := srv.GetBlob(ctx, &resourcepb.GetBlobRequest{
 				Resource: &resourcepb.ResourceKey{Namespace: ns, Group: "g", Resource: "r", Name: "n"},
 			})
-			return rsp.Error
+			return resourceutil.ErrorResultFromGRPCDetails(err)
 		}},
 		{"ListManagedObjects", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{Namespace: ns})
-			return rsp.Error
+			_, err := srv.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{Namespace: ns})
+			return resourceutil.ErrorResultFromGRPCDetails(err)
 		}},
 		{"CountManagedObjects", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{Namespace: ns})
-			return rsp.Error
+			_, err := srv.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{Namespace: ns})
+			return resourceutil.ErrorResultFromGRPCDetails(err)
 		}},
 		{"RebuildIndexes", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{Namespace: ns})
-			return rsp.Error
+			_, err := srv.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{Namespace: ns})
+			return resourceutil.ErrorResultFromGRPCDetails(err)
 		}},
 	}
 	scenarios := []struct {
@@ -3682,9 +3673,9 @@ func TestDelegatedRPCsNamespaceGate(t *testing.T) {
 
 func TestGetBlob_RejectsMissingResourceKey(t *testing.T) {
 	srv, _, _ := newBlobAuthzTestServer(t, nil)
-	rsp, err := srv.GetBlob(ctxWithUserInNs("org-1"), &resourcepb.GetBlobRequest{Uid: "blob-uid"})
-	require.NoError(t, err)
-	require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+	_, err := srv.GetBlob(ctxWithUserInNs("org-1"), &resourcepb.GetBlobRequest{Uid: "blob-uid"})
+	rspErr := rpcErrorResult(t, err)
+	require.Equal(t, int32(http.StatusBadRequest), rspErr.Code)
 }
 
 func TestGetBlobReferenceChecks(t *testing.T) {
@@ -3701,11 +3692,19 @@ func TestGetBlobReferenceChecks(t *testing.T) {
 		require.Nil(t, rsp.Error)
 		return rsp.ResourceVersion
 	}
-	getBlob := func(t *testing.T, srv *server, req *resourcepb.GetBlobRequest) *resourcepb.GetBlobResponse {
+	type getBlobResult struct {
+		Value       []byte
+		ContentType string
+		Error       *resourcepb.ErrorResult
+	}
+	getBlob := func(t *testing.T, srv *server, req *resourcepb.GetBlobRequest) getBlobResult {
 		t.Helper()
 		rsp, err := srv.GetBlob(ctx, req)
-		require.NoError(t, err)
-		return rsp
+		if err != nil {
+			require.Nil(t, rsp)
+			return getBlobResult{Error: rpcErrorResult(t, err)}
+		}
+		return getBlobResult{Value: rsp.Value, ContentType: rsp.ContentType}
 	}
 
 	t.Run("rejects a request without a resource name", func(t *testing.T) {
@@ -4336,10 +4335,10 @@ func TestServerListKeysOnly(t *testing.T) {
 					KeysOnly: true,
 					Source:   source,
 				})
-				require.NoError(t, err)
-				require.NotNil(t, rsp.Error, "keys_only must be refused, not silently served")
-				require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
-				require.Empty(t, rsp.Items)
+				rspErr := rpcErrorResult(t, err)
+				require.NotNil(t, rspErr, "keys_only must be refused, not silently served")
+				require.Equal(t, int32(http.StatusBadRequest), rspErr.Code)
+				require.Nil(t, rsp)
 			})
 		}
 	})
@@ -4472,15 +4471,14 @@ func TestCrossNamespaceKeysListRequiresWildcardIdentity(t *testing.T) {
 				}},
 				KeysOnly: true,
 			})
-			require.NoError(t, err)
 
 			if tc.wantErr != "" {
-				require.NotNil(t, rsp.Error, "the list must not succeed")
-				assert.Contains(t, rsp.Error.Message, tc.wantErr)
+				require.Nil(t, rsp, "the list must not succeed")
+				assert.Contains(t, rpcErrorResult(t, err).Message, tc.wantErr)
 				return
 			}
 
-			require.Nil(t, rsp.Error)
+			require.NoError(t, err)
 			got := make([]string, 0, len(rsp.Items))
 			for _, item := range rsp.Items {
 				got = append(got, item.Namespace)
@@ -4613,13 +4611,13 @@ func TestServerListKeysOnly_RefusesEverySelector(t *testing.T) {
 			require.Nil(t, created.Error)
 
 			rsp, err := srv.List(ctx, &resourcepb.ListRequest{Options: opts, KeysOnly: true})
-			require.NoError(t, err)
-			require.NotNil(t, rsp.Error, "must be refused, not served as if the selector matched")
-			require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+			rspErr := rpcErrorResult(t, err)
+			require.NotNil(t, rspErr, "must be refused, not served as if the selector matched")
+			require.Equal(t, int32(http.StatusBadRequest), rspErr.Code)
 			// Named, so these cannot start passing because some other validation
 			// began rejecting the request first.
-			require.Contains(t, rsp.Error.Message, "selectors")
-			require.Empty(t, rsp.Items)
+			require.Contains(t, rspErr.Message, "selectors")
+			require.Nil(t, rsp)
 		})
 	}
 }
@@ -4662,7 +4660,7 @@ func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
 	require.Equal(t, []string{"ns-one"}, slices.Compact(batches))
 	require.Equal(t, map[string]string{"aaa": "ns-one", "bbb": "ns-one"}, items)
 
-	wrongScope, err := srv.List(ctx, &resourcepb.ListRequest{
+	_, err := srv.List(ctx, &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 			Group: group, Resource: resource, Namespace: "ns-one",
 		}},
@@ -4671,12 +4669,12 @@ func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
 			Namespace: "ns-two", KeysOnly: true, Name: "aaa", ResourceVersion: rsp.ResourceVersion,
 		}.String(),
 	})
-	require.NoError(t, err)
-	require.NotNil(t, wrongScope.Error)
-	require.Equal(t, int32(http.StatusBadRequest), wrongScope.Error.Code)
-	require.Contains(t, wrongScope.Error.Message, "list scope does not match")
+	wrongScopeErr := rpcErrorResult(t, err)
+	require.NotNil(t, wrongScopeErr)
+	require.Equal(t, int32(http.StatusBadRequest), wrongScopeErr.Code)
+	require.Contains(t, wrongScopeErr.Message, "list scope does not match")
 
-	missingScope, err := srv.List(ctx, &resourcepb.ListRequest{
+	_, err = srv.List(ctx, &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 			Group: group, Resource: resource, Namespace: "ns-one",
 		}},
@@ -4685,18 +4683,21 @@ func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
 			KeysOnly: true, Name: "bbb", ResourceVersion: rsp.ResourceVersion,
 		}.String(),
 	})
-	require.NoError(t, err)
-	require.NotNil(t, missingScope.Error)
-	require.Equal(t, int32(http.StatusBadRequest), missingScope.Error.Code)
-	require.Contains(t, missingScope.Error.Message, "list scope does not match")
+	missingScopeErr := rpcErrorResult(t, err)
+	require.NotNil(t, missingScopeErr)
+	require.Equal(t, int32(http.StatusBadRequest), missingScopeErr.Code)
+	require.Contains(t, missingScopeErr.Message, "list scope does not match")
 
 	for _, namespace := range []string{"ns-empty", "ns-two"} {
 		t.Run("rejects unauthorized namespace "+namespace, func(t *testing.T) {
-			foreign := list(namespace)
-			require.NotNil(t, foreign.Error)
-			require.Equal(t, int32(http.StatusForbidden), foreign.Error.Code)
-			require.Contains(t, foreign.Error.Message, "namespace mismatch")
-			require.Empty(t, foreign.Items)
+			foreign, err := srv.List(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: group, Resource: resource, Namespace: namespace,
+				}},
+				KeysOnly: true,
+			})
+			require.Nil(t, foreign)
+			requireRPCError(t, err, &resourcepb.ErrorResult{Message: "namespace mismatch", Code: http.StatusForbidden})
 		})
 	}
 }
@@ -4803,54 +4804,154 @@ func TestResourceServerQOSTenantIsolation(t *testing.T) {
 		require.Nil(t, rsp.Error)
 		keys[namespace] = key
 	}
-	q := scheduler.NewQueue(&scheduler.QueueOptions{MaxConcurrentPerTenant: 4})
-	startQOSTestService(t, q)
-	worker, err := scheduler.NewScheduler(q, &scheduler.Config{NumWorkers: 32})
-	require.NoError(t, err)
-	startQOSTestService(t, worker)
-	srv.queue = q
-	srv.queueConfig.Timeout = 5 * time.Second
+	synctest.Test(t, func(t *testing.T) {
+		q := scheduler.NewQueue(&scheduler.QueueOptions{MaxConcurrentPerTenant: 4})
+		startQOSTestService(t, q)
+		worker, err := scheduler.NewScheduler(q, &scheduler.Config{NumWorkers: 32})
+		require.NoError(t, err)
+		startQOSTestService(t, worker)
+		srv.queue = q
+		srv.queueConfig.Timeout = 5 * time.Second
 
-	started := make(chan struct{}, 5)
-	release := make(chan struct{})
-	unblock := sync.OnceFunc(func() { close(release) })
-	t.Cleanup(unblock)
-	access.fn = func(req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
-		if req.Namespace == "slow" {
-			started <- struct{}{}
-			<-release
+		started := make(chan struct{}, 5)
+		release := make(chan struct{})
+		unblock := sync.OnceFunc(func() { close(release) })
+		t.Cleanup(unblock)
+		access.fn = func(req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+			if req.Namespace == "slow" {
+				started <- struct{}{}
+				<-release
+			}
+			return authlib.CheckResponse{Allowed: true}, nil
 		}
-		return authlib.CheckResponse{Allowed: true}, nil
-	}
-	type result struct {
-		rsp *resourcepb.ReadResponse
-		err error
-	}
-	read := func(namespace string) result {
-		rsp, err := srv.Read(ctxFor(namespace), &resourcepb.ReadRequest{Key: keys[namespace]})
-		return result{rsp: rsp, err: err}
-	}
-	assertRead := func(r result) {
-		t.Helper()
-		require.NoError(t, r.err)
-		require.NotNil(t, r.rsp)
-		require.Nil(t, r.rsp.Error)
-		require.NotEmpty(t, r.rsp.Value)
-	}
-	slowResults := make(chan result, 5)
-	for range 5 {
-		go func() { slowResults <- read("slow") }()
-	}
-	for range 4 {
-		awaitQOSTestResult(t, started)
-	}
-	require.Eventually(t, func() bool { return q.Len() == 1 }, time.Second, time.Millisecond)
-	assertRead(read("healthy"))
-	require.Equal(t, 1, q.Len())
-	require.Empty(t, started, "fifth authorization must stay queued")
-	unblock()
-	for range 5 {
-		assertRead(awaitQOSTestResult(t, slowResults))
+		type result struct {
+			rsp *resourcepb.ReadResponse
+			err error
+		}
+		read := func(namespace string) result {
+			rsp, err := srv.Read(ctxFor(namespace), &resourcepb.ReadRequest{Key: keys[namespace]})
+			return result{rsp: rsp, err: err}
+		}
+		assertRead := func(r result) {
+			t.Helper()
+			require.NoError(t, r.err)
+			require.NotNil(t, r.rsp)
+			require.Nil(t, r.rsp.Error)
+			require.NotEmpty(t, r.rsp.Value)
+		}
+		slowResults := make(chan result, 5)
+		for range 5 {
+			go func() { slowResults <- read("slow") }()
+		}
+		for range 4 {
+			awaitQOSTestResult(t, started)
+		}
+
+		// Finish queue admission while execution remains blocked.
+		synctest.Wait()
+
+		require.Equal(t, 1, q.Len())
+		assertRead(read("healthy"))
+		require.Equal(t, 1, q.Len())
+		require.Empty(t, started, "fifth authorization must stay queued")
+		unblock()
+		for range 5 {
+			assertRead(awaitQOSTestResult(t, slowResults))
+		}
+	})
+}
+
+func TestResourceServerQOSTimeoutStatus(t *testing.T) {
+	for _, mode := range []string{"enqueue", "queued", "executing", "inline"} {
+		t.Run(mode, func(t *testing.T) {
+			for _, tc := range []struct {
+				name     string
+				httpCode int32
+				grpcCode codes.Code
+			}{
+				{"server timeout", http.StatusInternalServerError, codes.Internal},
+				{"caller deadline", http.StatusGatewayTimeout, codes.DeadlineExceeded},
+				{"caller cancellation", 499, codes.Canceled},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					synctest.Test(t, func(t *testing.T) {
+						access := &callbackAccessClient{}
+						srv := &server{
+							backend:     &internalReadBackend{},
+							access:      access,
+							log:         log.NewNopLogger(),
+							queueConfig: QueueConfig{Timeout: time.Second, MinBackoff: time.Second, MaxBackoff: time.Second, MaxRetries: 10},
+						}
+						ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
+						key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace, Name: "timeout-test"}
+						if mode == "inline" {
+							srv.queue = scheduler.NewNoopQueue()
+						} else {
+							q := scheduler.NewQueue(&scheduler.QueueOptions{MaxSizePerTenant: 1})
+							startQOSTestService(t, q)
+							srv.queue = q
+							if mode == "enqueue" {
+								require.NoError(t, q.Enqueue(t.Context(), watchTestNamespace, func() { t.Error("queued work ran") }))
+							}
+							if mode == "executing" {
+								worker, err := scheduler.NewScheduler(q, &scheduler.Config{NumWorkers: 1})
+								require.NoError(t, err)
+								startQOSTestService(t, worker)
+							}
+						}
+
+						release := make(chan struct{})
+						unblock := sync.OnceFunc(func() { close(release) })
+						t.Cleanup(unblock)
+						started := make(chan struct{}, 1)
+						access.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+							started <- struct{}{}
+							<-release
+							return authlib.CheckResponse{Allowed: true}, nil
+						}
+						callerCtx, cancel := context.WithCancel(ctx)
+						defer cancel()
+						if tc.name == "caller deadline" {
+							var deadlineCancel context.CancelFunc
+							callerCtx, deadlineCancel = context.WithTimeout(callerCtx, 100*time.Millisecond)
+							defer deadlineCancel()
+						}
+						type result struct {
+							rsp *resourcepb.ReadResponse
+							err error
+						}
+						results := make(chan result, 1)
+						go func() {
+							rsp, err := srv.Read(callerCtx, &resourcepb.ReadRequest{Key: key})
+							results <- result{rsp, err}
+						}()
+						synctest.Wait()
+						if mode == "executing" || mode == "inline" {
+							require.Len(t, started, 1)
+						} else {
+							require.Empty(t, started)
+						}
+						if tc.name == "caller cancellation" {
+							cancel()
+						}
+
+						// Keep execution blocked until the server budget has expired too.
+						time.Sleep(2 * time.Second)
+						if tc.name == "server timeout" {
+							require.NoError(t, callerCtx.Err())
+							_, hasDeadline := callerCtx.Deadline()
+							require.False(t, hasDeadline)
+						}
+						unblock()
+						r := awaitQOSTestResult(t, results)
+						require.Nil(t, r.rsp)
+						require.Equal(t, tc.grpcCode, status.Code(r.err))
+						require.Equal(t, tc.httpCode, rpcErrorResult(t, r.err).Code)
+						synctest.Wait()
+					})
+				})
+			}
+		})
 	}
 }
 
@@ -4882,25 +4983,35 @@ func TestResourceServerQOSQueueWaitSpan(t *testing.T) {
 		require.Contains(t, spans[0].Attributes(), attribute.String("stack", "cs"))
 	})
 	t.Run("ends on queued cancellation", func(t *testing.T) {
-		recorder := newQOSTestSpanRecorder(t)
-		q := scheduler.NewQueue(&scheduler.QueueOptions{})
-		startQOSTestService(t, q)
-		srv := &server{queue: q, queueConfig: QueueConfig{Timeout: time.Minute}}
-		ctx, cancel := context.WithCancel(t.Context())
-		defer cancel()
-		result := make(chan error, 1)
-		go func() {
-			result <- srv.runInQueue(ctx, "stack-a", "read", func(context.Context) { t.Error("canceled work ran") })
-		}()
-		require.Eventually(t, func() bool { return q.Len() == 1 }, time.Second, time.Millisecond)
-		cancel()
-		require.ErrorIs(t, awaitQOSTestResult(t, result), context.Canceled)
-		spans := recorder.Ended()
-		require.Len(t, spans, 1)
-		require.Equal(t, otelcodes.Error, spans[0].Status().Code)
-		require.Len(t, spans[0].Events(), 1)
-		require.Equal(t, "exception", spans[0].Events()[0].Name)
-		require.Eventually(t, func() bool { return q.Len() == 0 }, time.Second, time.Millisecond)
+		synctest.Test(t, func(t *testing.T) {
+			recorder := newQOSTestSpanRecorder(t)
+			q := scheduler.NewQueue(&scheduler.QueueOptions{})
+			startQOSTestService(t, q)
+			srv := &server{queue: q, queueConfig: QueueConfig{Timeout: time.Minute}}
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			result := make(chan error, 1)
+			go func() {
+				result <- srv.runInQueue(ctx, "stack-a", "read", func(context.Context) { t.Error("canceled work ran") })
+			}()
+
+			// Finish queue admission while execution remains blocked.
+			synctest.Wait()
+
+			require.Equal(t, 1, q.Len())
+			cancel()
+			require.ErrorIs(t, awaitQOSTestResult(t, result), context.Canceled)
+			spans := recorder.Ended()
+			require.Len(t, spans, 1)
+			require.Equal(t, otelcodes.Error, spans[0].Status().Code)
+			require.Len(t, spans[0].Events(), 1)
+			require.Equal(t, "exception", spans[0].Events()[0].Name)
+
+			// Let the queued cancellation callback release its queue slot.
+			synctest.Wait()
+
+			require.Zero(t, q.Len())
+		})
 	})
 	t.Run("execution cancellation leaves the completed wait successful", func(t *testing.T) {
 		recorder := newQOSTestSpanRecorder(t)
@@ -4976,4 +5087,149 @@ func newQOSTestSpanRecorder(t *testing.T) *tracetest.SpanRecorder {
 		require.NoError(t, provider.Shutdown(context.Background()))
 	})
 	return recorder
+}
+
+func TestQueueRPCError(t *testing.T) {
+	err := queueRPCError(fmt.Errorf("enqueue: %w", scheduler.ErrTenantQueueFull))
+	requireRPCError(t, err, NewTooManyRequestsError("tenant queue is full, please try again later"))
+	require.Equal(t, codes.ResourceExhausted, status.Code(err))
+
+	// Matches the error HandleQueueError embeds in the response.
+	other := errors.New("timeout")
+	legacy, legacyErr := HandleQueueError(other, func(e *resourcepb.ErrorResult) *resourcepb.ReadResponse {
+		return &resourcepb.ReadResponse{Error: e}
+	})
+	require.NoError(t, legacyErr)
+	requireRPCError(t, queueRPCError(other), legacy.Error)
+}
+
+// Servers return native status errors without any conversion interceptor, both
+// to direct Go callers and over a real gRPC transport.
+func TestServerReturnsStatusErrorsWithoutConversion(t *testing.T) {
+	srv, err := NewResourceServer(ResourceServerOptions{Backend: &missingReadBackend{}})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "example.grafana.app", Resource: "widgets", Name: "missing"}
+	want := &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "missing"}
+	ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+
+	t.Run("direct call", func(t *testing.T) {
+		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.Nil(t, rsp)
+		requireRPCError(t, err, want)
+	})
+
+	t.Run("remote gRPC", func(t *testing.T) {
+		listener := bufconn.Listen(1 << 20)
+		grpcServer := grpc.NewServer(grpc.UnaryInterceptor(func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+			return handler(authlib.WithAuthInfo(ctx, &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, UserUID: "u1", Namespace: "default"}), req)
+		}))
+		resourcepb.RegisterResourceStoreServer(grpcServer, srv)
+		go func() { _ = grpcServer.Serve(listener) }()
+		t.Cleanup(grpcServer.Stop)
+		conn, err := grpc.NewClient("passthrough:///bufnet",
+			grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }),
+			grpc.WithTransportCredentials(insecure.NewCredentials()))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = conn.Close() })
+
+		rsp, err := resourcepb.NewResourceStoreClient(conn).Read(t.Context(), &resourcepb.ReadRequest{Key: key})
+		require.Nil(t, rsp)
+		requireRPCError(t, err, want)
+		var apiStatus apierrors.APIStatus
+		require.ErrorAs(t, StatusErrorFromGRPC(err), &apiStatus)
+		require.Equal(t, int32(http.StatusNotFound), apiStatus.Status().Code)
+	})
+}
+
+// resultBlob is a blob backend that returns fixed results from both calls.
+type resultBlob struct {
+	stubBlobSupport
+	putRsp *resourcepb.PutBlobResponse
+	getRsp *resourcepb.GetBlobResponse
+	err    error
+}
+
+func (b *resultBlob) PutResourceBlob(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	return b.putRsp, b.err
+}
+
+func (b *resultBlob) GetResourceBlob(context.Context, *resourcepb.ResourceKey, *utils.BlobInfo, bool) (*resourcepb.GetBlobResponse, error) {
+	return b.getRsp, b.err
+}
+
+func TestBlobRPCsReturnBackendFailures(t *testing.T) {
+	const namespace = "default"
+	ctx := ctxWithUserInNs(namespace)
+	missing := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: namespace, Name: "missing"}
+	existing := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: namespace, Name: "existing"}
+	newServer := func(t *testing.T, blob BlobSupport) *server {
+		t.Helper()
+		srv, _, _ := newBlobAuthzTestServer(t, nil)
+		// GetBlob only reaches the backend for an existing resource.
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: existing, Value: []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"existing","namespace":"default"},"spec":{"title":"t","interval":"5m","items":[]}}`)})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+		srv.blob = blob
+		return srv
+	}
+	noResponse := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "blob backend returned no response"}
+	statusFailure := &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "empty content"}
+
+	for _, tc := range []struct {
+		name string
+		err  error
+		want *resourcepb.ErrorResult
+	}{
+		{"status error keeps code and details", GRPCStatusError(statusFailure), statusFailure},
+		{"plain error becomes internal", errors.New("disk failed"), &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "disk failed"}},
+		{"nil response becomes internal", nil, noResponse},
+	} {
+		t.Run("PutBlob/"+tc.name, func(t *testing.T) {
+			srv := newServer(t, &resultBlob{err: tc.err})
+			rsp, err := srv.PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: missing})
+			require.Nil(t, rsp)
+			requireRPCError(t, err, tc.want)
+		})
+		t.Run("GetBlob/"+tc.name, func(t *testing.T) {
+			srv := newServer(t, &resultBlob{err: tc.err})
+			rsp, err := srv.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: existing, Uid: "blob-a"})
+			require.Nil(t, rsp)
+			requireRPCError(t, err, tc.want)
+		})
+	}
+
+	t.Run("PutBlob/returns the backend response", func(t *testing.T) {
+		want := &resourcepb.PutBlobResponse{Uid: "blob-a", Size: 2, MimeType: "application/json"}
+		rsp, err := newServer(t, &resultBlob{putRsp: want}).PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: missing})
+		require.NoError(t, err)
+		require.True(t, proto.Equal(want, rsp))
+	})
+	t.Run("GetBlob/returns the backend response", func(t *testing.T) {
+		want := &resourcepb.GetBlobResponse{Value: []byte("{}"), ContentType: "application/json"}
+		rsp, err := newServer(t, &resultBlob{getRsp: want}).GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: existing, Uid: "blob-a"})
+		require.NoError(t, err)
+		require.True(t, proto.Equal(want, rsp))
+	})
+}
+
+func TestGetStatsPassesThroughClientResult(t *testing.T) {
+	want := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats failed"}
+	stats := newFakeResourceIndexClient()
+	stats.statsError = GRPCStatusError(want)
+	srv, err := NewResourceServer(ResourceServerOptions{Backend: &missingReadBackend{}, SearchClient: stats})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
+	ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+
+	rsp, err := srv.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default"})
+	require.Nil(t, rsp)
+	requireRPCError(t, err, want)
+
+	require.Same(t, stats.statsError, err)
+
+	stats.statsResponse, stats.statsError = &resourcepb.ResourceStatsResponse{}, nil
+	rsp, err = srv.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default"})
+	require.NoError(t, err)
+	require.Same(t, stats.statsResponse, rsp)
 }

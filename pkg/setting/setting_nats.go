@@ -45,10 +45,23 @@ type NATSSettings struct {
 	// server is prepended automatically.
 	ClientURLs []string
 
+	// ListenAddress binds the cluster port. Empty lets the embedded server choose
+	// from the database type and whether discovery is on.
 	ListenAddress    string
 	ClientPort       int
 	ClusterPort      int
 	AdvertiseAddress string
+
+	// ClientListen opens the embedded server's client port for tools outside the
+	// process. Grafana connects in-process and other instances join over cluster
+	// routes; the port has no TLS or auth, so it isn't for other Grafana instances.
+	ClientListen bool
+	// ClientListenAddress is where the client port listens when ClientListen is
+	// on. It is separate from ListenAddress, which also binds the cluster port.
+	ClientListenAddress string
+
+	// ClusterTLS secures routes between embedded servers with mutual TLS.
+	ClusterTLS NATSClusterTLSSettings
 
 	// DiscoveryEnabled turns on KV-backed peer discovery so embedded replicas
 	// self-assemble into a mesh; disabling it runs a single standalone node.
@@ -64,6 +77,10 @@ type NATSSettings struct {
 	// NotifierShadow runs a NATS-backed notifier beside the primary notifier for
 	// testing: comparison metrics only, never feeds the watch pipeline.
 	NotifierShadow bool
+
+	// NotificationMetadata adds allowlisted labels, annotations, finalizers and
+	// ObjectMeta fields to published watch notifications so consumers can skip a GET.
+	NotificationMetadata bool
 
 	// Notifier feeds the watch pipeline directly from the NATS bus instead of
 	// polling. Delivery is at-most-once; a disabled or unavailable bus degrades
@@ -87,6 +104,28 @@ type NATSTLSSettings struct {
 	ServerName string
 	// InsecureSkipVerify is for testing only; never enable in production.
 	InsecureSkipVerify bool
+}
+
+// NATSClusterTLSSettings configures mutual TLS on the embedded server's cluster
+// port. All three paths are required together: each instance presents its
+// certificate and verifies its peers against the CA.
+type NATSClusterTLSSettings struct {
+	CertPath string
+	KeyPath  string
+	CAPath   string
+}
+
+// Enabled reports whether any cluster TLS path is set; validate rejects a
+// partial configuration.
+func (c NATSClusterTLSSettings) Enabled() bool {
+	return c.CertPath != "" || c.KeyPath != "" || c.CAPath != ""
+}
+
+func (c NATSClusterTLSSettings) validate() error {
+	if c.Enabled() && (c.CertPath == "" || c.KeyPath == "" || c.CAPath == "") {
+		return fmt.Errorf("nats cluster tls requires cluster_tls_cert_path, cluster_tls_key_path and cluster_tls_ca_path together")
+	}
+	return nil
 }
 
 // NATSAuthSettings configures the connection identity. Mode selects the auth
@@ -141,20 +180,28 @@ func readNATSSettings(cfg *Cfg) error {
 	}
 
 	cfg.NATS = NATSSettings{
-		Enabled:          section.Key("enabled").MustBool(false),
-		Mode:             mode,
-		ClientURLs:       util.SplitString(section.Key("client_urls").MustString("")),
-		ListenAddress:    section.Key("listen_address").MustString("127.0.0.1"),
-		ClientPort:       section.Key("client_port").MustInt(4222),
-		ClusterPort:      section.Key("cluster_port").MustInt(6222),
-		AdvertiseAddress: section.Key("advertise_address").MustString(""),
+		Enabled:             section.Key("enabled").MustBool(false),
+		Mode:                mode,
+		ClientURLs:          util.SplitString(section.Key("client_urls").MustString("")),
+		ListenAddress:       section.Key("listen_address").MustString(""),
+		ClientPort:          section.Key("client_port").MustInt(4222),
+		ClusterPort:         section.Key("cluster_port").MustInt(6222),
+		AdvertiseAddress:    section.Key("advertise_address").MustString(""),
+		ClientListen:        section.Key("client_listen").MustBool(false),
+		ClientListenAddress: section.Key("client_listen_address").MustString("127.0.0.1"),
+		ClusterTLS: NATSClusterTLSSettings{
+			CertPath: section.Key("cluster_tls_cert_path").MustString(""),
+			KeyPath:  section.Key("cluster_tls_key_path").MustString(""),
+			CAPath:   section.Key("cluster_tls_ca_path").MustString(""),
+		},
 
-		DiscoveryEnabled:    section.Key("discovery_enabled").MustBool(true),
-		DiscoveryInterval:   section.Key("discovery_interval").MustDuration(5 * time.Second),
-		DiscoveryTTL:        section.Key("discovery_ttl").MustDuration(30 * time.Second),
-		NotifierShadow:      section.Key("notifier_shadow").MustBool(false),
-		Notifier:            section.Key("notifier").MustBool(false),
-		NotifierWatchMaxAge: section.Key("notifier_watch_max_age").MustDuration(0),
+		DiscoveryEnabled:     section.Key("discovery_enabled").MustBool(true),
+		DiscoveryInterval:    section.Key("discovery_interval").MustDuration(5 * time.Second),
+		DiscoveryTTL:         section.Key("discovery_ttl").MustDuration(15 * time.Second),
+		NotifierShadow:       section.Key("notifier_shadow").MustBool(false),
+		Notifier:             section.Key("notifier").MustBool(false),
+		NotificationMetadata: section.Key("notification_metadata").MustBool(false),
+		NotifierWatchMaxAge:  section.Key("notifier_watch_max_age").MustDuration(0),
 		TLS: NATSTLSSettings{
 			Enabled:            section.Key("tls_enabled").MustBool(false),
 			CACertPath:         section.Key("tls_ca_cert_path").MustString(""),
@@ -177,6 +224,11 @@ func readNATSSettings(cfg *Cfg) error {
 	}
 	if err := cfg.NATS.Auth.validate(cfg.NATS.Enabled); err != nil {
 		return err
+	}
+	if cfg.NATS.Enabled && cfg.NATS.Embedded() {
+		if err := cfg.NATS.ClusterTLS.validate(); err != nil {
+			return err
+		}
 	}
 	return nil
 }

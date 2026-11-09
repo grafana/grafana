@@ -39,8 +39,6 @@ type BleveIndexMetrics struct {
 	IndexDiskCleanupRuns        *prometheus.CounterVec
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
 
-	SearchCapabilityViolations      *prometheus.CounterVec
-	SearchResultFormats             *prometheus.CounterVec
 	SearchServicePermissionFailures *prometheus.CounterVec
 
 	BuildPhaseSeconds *prometheus.CounterVec
@@ -120,8 +118,8 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		}, []string{}),
 		OpenIndexes: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
 			Name: "grafana_index_server_open_indexes",
-			Help: "Number of open indexes per storage type. An open index corresponds to single resource group.",
-		}, []string{"index_storage"}), // index_storage is either "file" or "memory"
+			Help: "Number of open indexes by storage type and kind. Global indexes use kind=\"global\".",
+		}, []string{"index_storage", "kind"}), // index_storage is either "file" or "memory"
 		IndexBuilds: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_index_build_total",
 			Help: "Number of times index build was attempted due to specific reason",
@@ -234,27 +232,12 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_build_indexed_bytes_total",
 			Help: "Bytes the index reports for the documents it was given. Compare with source bytes to see how much bigger or smaller search documents are.",
 		}, []string{"path", "group", "resource"}),
-		SearchCapabilityViolations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_index_server_search_capability_violations_total",
-			Help: "Number of search requests that used a field in a way its declaration does not allow. Counted whether or not the request was rejected.",
-		}, []string{"resource", "capability"}),
 		SearchServicePermissionFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_search_service_permission_failures_total",
 			Help: "Search preflight checks where the service token lacks a required direct or delegated permission, regardless of RBAC exemption. With exempt=\"false\", a search of one type was rejected, and a global search left the type out.",
 		}, []string{"group", "resource", "verb", "mode", "exempt"}),
-		SearchResultFormats: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_index_server_search_result_format_total",
-			Help: "Number of search responses by result format.",
-		}, []string{"format"}),
 	}
 
-	// Always-on label series. Snapshot-specific series are initialised separately
-	// in InitSnapshotMetrics so they don't appear on instances where the feature
-	// is disabled — see InitSnapshotMetrics for rationale.
-	m.OpenIndexes.WithLabelValues("file").Set(0)
-	m.OpenIndexes.WithLabelValues("memory").Set(0)
-	m.SearchResultFormats.WithLabelValues("resource_table").Add(0)
-	m.SearchResultFormats.WithLabelValues("field_values").Add(0)
 	return m
 }
 

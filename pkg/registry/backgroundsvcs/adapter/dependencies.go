@@ -1,6 +1,7 @@
 package adapter
 
 import (
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -54,6 +55,12 @@ const (
 	// lease.
 	GlobalRoleSeeder = accesscontrol.GlobalRoleSeederServiceName
 
+	// NATSServer, NATSPublisher and NATSSubscriber are the module names of the
+	// NATS bus services.
+	NATSServer     = nats.ServerServiceName
+	NATSPublisher  = nats.PublisherServiceName
+	NATSSubscriber = nats.SubscriberServiceName
+
 	// SQLStore is the module name for the SQLStore background service.
 	// It is the root of the dependency graph so that the database engine is
 	// closed last during shutdown, after every other service has stopped.
@@ -66,9 +73,14 @@ const (
 // unless they are explicitly listed in this map.
 func dependencyMap() map[string][]string {
 	return map[string][]string{
-		SQLStore:           {},
-		Tracing:            {SQLStore},
-		GrafanaAPIServer:   {Tracing},
+		SQLStore:       {},
+		Tracing:        {SQLStore},
+		NATSServer:     {SQLStore},
+		NATSPublisher:  {NATSServer},
+		NATSSubscriber: {NATSServer},
+		// API server post-start hooks start NATS informers, and its writes
+		// publish watch notifications.
+		GrafanaAPIServer:   {Tracing, NATSPublisher, NATSSubscriber},
 		Router:             {GrafanaAPIServer},
 		PluginStore:        {GrafanaAPIServer},
 		PluginInstaller:    {PluginStore},

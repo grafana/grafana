@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -132,11 +133,11 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 	require.NoError(t, svc.router.reconcile(t.Context()))
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if middleware {
-			req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{AccessToken: "access"}))
+			req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{Namespace: "stacks-1", AccessToken: "access"}))
 			svc.HandleFunc(w, req, http.NotFoundHandler())
 			return
 		}
-		svc.metrics.instrumentRequest(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		svc.metrics.instrumentRequest(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())))
 	}))
 	t.Cleanup(server.Close)
 	t.Cleanup(func() {
@@ -152,12 +153,17 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 // openWatch starts a watch and returns a reader over its events.
 func openWatch(ctx context.Context, t *testing.T, target string) *bufio.Reader {
 	t.Helper()
+	return openWatchWithClient(ctx, t, target, http.DefaultClient)
+}
+
+func openWatchWithClient(ctx context.Context, t *testing.T, target string, client *http.Client) *bufio.Reader {
+	t.Helper()
 	// A watch that should end but doesn't fails the test instead of hanging it.
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	t.Cleanup(cancel)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 	require.NoError(t, err)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = resp.Body.Close() })
 	require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -185,6 +191,9 @@ func TestWatchThroughEveryBackendAndMode(t *testing.T) {
 			mode := "standalone"
 			if middleware {
 				mode = "middleware"
+			}
+			if middleware && kind == "single-tenant" {
+				continue // only the standalone router has the single-tenant fallback
 			}
 			t.Run(kind+"/"+mode, func(t *testing.T) {
 				t.Parallel()
@@ -238,59 +247,85 @@ func TestWatchThroughEveryBackendAndMode(t *testing.T) {
 }
 
 func TestWatchReleasesHalfOpenBreakerOnceItsStatusIsKnown(t *testing.T) {
-	backend := newWatchBackend()
-	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
-		Name:        watchGroup,
-		Timeout:     10 * time.Millisecond,
-		ReadyToTrip: func(counts gobreaker.Counts) bool { return counts.ConsecutiveFailures >= 1 },
+	synctest.Test(t, func(t *testing.T) {
+		backend := newWatchBackend()
+		cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
+			Name:        watchGroup,
+			Timeout:     10 * time.Millisecond,
+			ReadyToTrip: func(counts gobreaker.Counts) bool { return counts.ConsecutiveFailures >= 1 },
+		})
+		router := withGroupHandlerAndBreaker(watchGroup, backend, cb)
+		server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			router.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())))
+		}))
+		client := server.Client()
+		t.Cleanup(func() { close(backend.release) })
+
+		tripBreaker(cb)
+
+		// Expire the open breaker before starting the watch as its half-open trial.
+		synctest.Sleep(10*time.Millisecond + time.Nanosecond)
+
+		require.Equal(t, gobreaker.StateHalfOpen, cb.State())
+
+		// The watch is the half-open trial. Once its 200 is written, the breaker
+		// closes, although the watch is still streaming.
+		events := openWatchWithClient(t.Context(), t, server.URL+watchPath+"?watch=true", client)
+		requireEvent(t, events, addedEvent)
+		require.Equal(t, gobreaker.StateClosed, cb.State())
+
+		resp, err := client.Get(server.URL + watchPath)
+		require.NoError(t, err)
+		_ = resp.Body.Close()
+		require.Equal(t, http.StatusNoContent, resp.StatusCode, "other requests must not wait for the watch to end")
 	})
-	router := withGroupHandlerAndBreaker(watchGroup, backend, cb)
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		router.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
-	}))
-	t.Cleanup(server.Close)
-	t.Cleanup(func() { close(backend.release) })
-
-	tripBreaker(cb)
-	require.Eventually(t, func() bool { return cb.State() == gobreaker.StateHalfOpen }, time.Second, time.Millisecond)
-
-	// The watch is the half-open trial. Once its 200 is written, the breaker
-	// closes, although the watch is still streaming.
-	events := openWatch(t.Context(), t, server.URL+watchPath+"?watch=true")
-	requireEvent(t, events, addedEvent)
-	require.Equal(t, gobreaker.StateClosed, cb.State())
-
-	resp, err := http.Get(server.URL + watchPath)
-	require.NoError(t, err)
-	_ = resp.Body.Close()
-	require.Equal(t, http.StatusNoContent, resp.StatusCode, "other requests must not wait for the watch to end")
 }
 
 func TestWatchMetricsAreSeparate(t *testing.T) {
-	rig := newWatchRig(t, "in-process", false)
-	metrics := rig.service.metrics
+	synctest.Test(t, func(t *testing.T) {
+		backend := newWatchBackend()
+		router := NewGrafanaRouter(&mutableLoader{backends: []Backend{
+			&fakeBackend{group: metav1.APIGroup{Name: watchGroup}, key: "1", handler: backend},
+		}}, nil)
+		svc := newService(router, prometheus.NewRegistry())
+		require.NoError(t, router.reconcile(t.Context()))
+		server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			svc.metrics.instrumentRequest(router, w, req.WithContext(authenticatedTestContext(req.Context())))
+		}))
+		client := server.Client()
+		t.Cleanup(func() {
+			select {
+			case <-backend.release:
+			default:
+				close(backend.release)
+			}
+		})
+		metrics := svc.metrics
 
-	events := openWatch(t.Context(), t, rig.url+watchPath+"?watch=true")
-	requireEvent(t, events, addedEvent)
-	require.Equal(t, 1.0, testutil.ToFloat64(metrics.longRunning.WithLabelValues(watchGroup)))
-	require.Equal(t, 0.0, testutil.ToFloat64(metrics.inFlight))
+		events := openWatchWithClient(t.Context(), t, server.URL+watchPath+"?watch=true", client)
+		requireEvent(t, events, addedEvent)
+		require.Equal(t, 1.0, testutil.ToFloat64(metrics.longRunning.WithLabelValues(watchGroup)))
+		require.Equal(t, 0.0, testutil.ToFloat64(metrics.inFlight))
 
-	rig.backend.events <- modifiedEvent
-	requireEvent(t, events, modifiedEvent)
-	close(rig.backend.release)
-	requireCleanEnd(t, events)
-	require.Eventually(t, func() bool {
-		return testutil.ToFloat64(metrics.longRunning.WithLabelValues(watchGroup)) == 0
-	}, time.Second, time.Millisecond)
-	require.Zero(t, testutil.CollectAndCount(metrics.duration), "a watch is not observed as a request duration")
-	require.Equal(t, 1.0, testutil.ToFloat64(metrics.requests.WithLabelValues(watchGroup, "watch", routeBackend, "200")), "a watch is counted when it ends")
+		backend.events <- modifiedEvent
+		requireEvent(t, events, modifiedEvent)
+		close(backend.release)
+		requireCleanEnd(t, events)
 
-	resp, err := http.Get(rig.url + watchPath)
-	require.NoError(t, err)
-	_ = resp.Body.Close()
-	require.Equal(t, 1, testutil.CollectAndCount(metrics.duration))
-	require.Equal(t, uint64(1), histogramCount(t, metrics.duration.WithLabelValues(watchGroup, "list", routeBackend)))
-	require.Equal(t, 1.0, testutil.ToFloat64(metrics.requests.WithLabelValues(watchGroup, "list", routeBackend, "204")))
+		// Finish watch shutdown and its metric accounting after the client reads EOF.
+		synctest.Wait()
+
+		require.Zero(t, testutil.ToFloat64(metrics.longRunning.WithLabelValues(watchGroup)))
+		require.Zero(t, testutil.CollectAndCount(metrics.duration), "a watch is not observed as a request duration")
+		require.Equal(t, 1.0, testutil.ToFloat64(metrics.requests.WithLabelValues(watchGroup, "watch", routeBackend, "200")), "a watch is counted when it ends")
+
+		resp, err := client.Get(server.URL + watchPath)
+		require.NoError(t, err)
+		_ = resp.Body.Close()
+		require.Equal(t, 1, testutil.CollectAndCount(metrics.duration))
+		require.Equal(t, uint64(1), histogramCount(t, metrics.duration.WithLabelValues(watchGroup, "list", routeBackend)))
+		require.Equal(t, 1.0, testutil.ToFloat64(metrics.requests.WithLabelValues(watchGroup, "list", routeBackend, "204")))
+	})
 }
 
 func histogramCount(t *testing.T, observer prometheus.Observer) uint64 {
@@ -359,15 +394,39 @@ func TestUpgradeRequestsAreRejected(t *testing.T) {
 	}
 }
 
-func TestRequestVerbIsParsedOncePerRequest(t *testing.T) {
-	req, outcome := withRequestOutcome(httptest.NewRequest(http.MethodGet, "/apis/g/v1/namespaces/ns/things?watch=true", nil))
-	require.Equal(t, "watch", requestVerb(req))
-	require.Equal(t, "watch", outcome.verb)
+// The deprecated path form puts "watch" before the namespace. The router
+// doesn't serve it, on routed groups or the fallback, and doesn't count it
+// as a watch.
+func TestRouterRejectsDeprecatedWatchPath(t *testing.T) {
+	router := NewGrafanaRouter(&mutableLoader{}, nil)
+	served := false
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		served = true
+		w.WriteHeader(http.StatusNoContent)
+	})
+	snapshot := map[string]servingEntry{"example": {handler: handler, breaker: newGroupBreaker("example")}}
+	router.snapshot.Store(&snapshot)
+	router.unregisteredGroupHandler = handler
+	for _, path := range []string{
+		"/apis/example/v1/watch/namespaces/stacks-1/widgets",
+		"/apis/example/v1/watch/widgets",
+		"/apis/unknown/v1/watch/namespaces/stacks-1/widgets",
+	} {
+		req := newAuthenticatedRequest(http.MethodGet, path, nil)
+		require.Equal(t, "get", requestVerb(req), path)
+		rec := httptest.NewRecorder()
+		router.HandleFunc(rec, req)
+		require.Equal(t, http.StatusBadRequest, rec.Code, path)
+	}
+	require.False(t, served)
 
-	// A later call reads the recorded verb instead of parsing the request.
-	outcome.verb = "recorded"
-	require.Equal(t, "recorded", requestVerb(req))
-
-	// Without an outcome, as for the router's own sub-requests, it parses.
-	require.Equal(t, "list", requestVerb(httptest.NewRequest(http.MethodGet, "/apis/g/v1/namespaces/ns/things", nil)))
+	// A resource or object named watch is still served.
+	for _, path := range []string{
+		"/apis/example/v1/namespaces/stacks-1/watch",
+		"/apis/example/v1/namespaces/stacks-1/widgets/watch",
+	} {
+		rec := httptest.NewRecorder()
+		router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil))
+		require.Equal(t, http.StatusNoContent, rec.Code, path)
+	}
 }

@@ -647,6 +647,30 @@ describe('RowsLayoutManager', () => {
       expect(edit).not.toHaveBeenCalled();
       expect(lastEditUndo).toBeUndefined();
     });
+
+    it.each(['view', 'agent'] as const)(
+      'should toggle rows without an edit action in %s mode, where edit actions are refused',
+      (mode) => {
+        setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+        const rowsLayoutManager = new RowsLayoutManager({
+          rows: [new RowItem({ title: 'Row 1', collapse: false }), new RowItem({ title: 'Row 2', collapse: true })],
+        });
+        new DashboardScene({ body: rowsLayoutManager, isEditing: mode === 'agent', mode });
+        const [row1, row2] = rowsLayoutManager.state.rows;
+
+        rowsLayoutManager.collapseAllRows();
+
+        expect(edit).not.toHaveBeenCalled();
+        expect(row1.getCollapsedState()).toBe(true);
+        expect(row2.getCollapsedState()).toBe(true);
+
+        rowsLayoutManager.expandAllRows();
+
+        expect(edit).not.toHaveBeenCalled();
+        expect(row1.getCollapsedState()).toBe(false);
+        expect(row2.getCollapsedState()).toBe(false);
+      }
+    );
   });
 
   describe('duplicate', () => {

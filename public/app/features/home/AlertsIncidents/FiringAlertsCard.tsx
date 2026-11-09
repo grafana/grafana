@@ -1,6 +1,5 @@
 import { t, Trans } from '@grafana/i18n';
-import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { Badge, LinkButton, Stack, Tooltip } from '@grafana/ui';
+import { LinkButton, Tooltip } from '@grafana/ui';
 import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { type SeverityLevel } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
@@ -9,10 +8,8 @@ import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 import { TimeAgoCell } from '../TimeAgoCell';
 import { ctaClicked } from '../analytics/main';
 
-import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
-import { SummaryCard, SummaryCardPrefix } from './SummaryCard';
+import { AllClearGrot, SummaryCard } from './SummaryCard';
 import { type FilterScope, formatFilterLabel } from './filterSelection';
-import { severityLevelColor } from './severity';
 import { type FiringAlertsData } from './useFiringAlerts';
 
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
@@ -52,72 +49,25 @@ function severityLabel(level?: SeverityLevel): string {
 function emptyMessage(filterScope: FilterScope, hasTeams: boolean): string {
   switch (filterScope.kind) {
     case 'all':
-      return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+      return t('home.firing-alerts-card.empty', 'All clear! No alerts are firing.');
     case 'label':
-      return t('home.firing-alerts-card.empty-selected-label', 'No firing alerts with {{label}}.', {
+      return t('home.firing-alerts-card.empty-selected-label', 'All clear! No alerts are firing with {{label}}.', {
         label: formatFilterLabel(filterScope.label),
         interpolation: { escapeValue: false },
       });
     case 'default':
       return hasTeams
-        ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
-        : t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+        ? t('home.firing-alerts-card.empty-teams', 'All clear! No alerts are firing for your teams.')
+        : t('home.firing-alerts-card.empty', 'All clear! No alerts are firing.');
   }
 }
 
 /** Render-only card body; data comes from useFiringAlerts so callers control where the hook runs. */
-export function FiringAlertsCard({
-  data,
-  hideFooterActions = false,
-}: {
-  data: FiringAlertsData;
-  hideFooterActions?: boolean;
-}) {
-  const redesignEnabled = useFlagGrafanaGrowthHomepage();
-  const {
-    count,
-    criticalCount,
-    highCount,
-    visibleAlerts,
-    hasAlerts,
-    hasTeams,
-    filterScope,
-    loading,
-    error,
-    refetch,
-    canCreate,
-    newRuleHref,
-    viewAllHref,
-  } = data;
+export function FiringAlertsCard({ data }: { data: FiringAlertsData }) {
+  const { visibleAlerts, hasTeams, filterScope, loading, error, refetch, canCreate, newRuleHref } = data;
 
   return (
     <SummaryCard
-      title={t('home.firing-alerts-card.title', 'Firing alerts')}
-      count={count}
-      headerExtra={
-        <Stack>
-          {criticalCount > 0 && (
-            <Badge
-              text={t('home.firing-alerts-card.critical-count', '', {
-                count: criticalCount,
-                defaultValue_one: '{{count}} critical',
-                defaultValue_other: '{{count}} critical',
-              })}
-              color="red"
-            />
-          )}
-          {highCount > 0 && (
-            <Badge
-              text={t('home.firing-alerts-card.high-count', '', {
-                count: highCount,
-                defaultValue_one: '{{count}} high',
-                defaultValue_other: '{{count}} high',
-              })}
-              color="orange"
-            />
-          )}
-        </Stack>
-      }
       loading={loading}
       error={
         error
@@ -133,26 +83,15 @@ export function FiringAlertsCard({
         const detailHref = alertDetailHref(alert);
         return (
           <ListRow
-            isCompact
-            showDivider={redesignEnabled}
             title={alert.labels.alertname}
             subtitle={alert.labels.team}
-            // when redesignEnabled is false, we want to show the subtitle inline with the title
-            // when its true, we want to show the subtitle below the title
-            oneRow={!redesignEnabled}
             prefix={
-              redesignEnabled ? (
-                <Tooltip content={severityLabel(level)}>
-                  <span>
-                    <SeverityBars level={level} />
-                    <span className="sr-only">{severityLabel(level)}</span>
-                  </span>
-                </Tooltip>
-              ) : (
-                <SummaryCardPrefix>
-                  <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
-                </SummaryCardPrefix>
-              )
+              <Tooltip content={severityLabel(level)}>
+                <span>
+                  <SeverityBars level={level} />
+                  <span className="sr-only">{severityLabel(level)}</span>
+                </span>
+              </Tooltip>
             }
             trailing={<TimeAgoCell date={startedAt} />}
             href={detailHref}
@@ -161,10 +100,12 @@ export function FiringAlertsCard({
         );
       }}
       emptyMessage={emptyMessage(filterScope, hasTeams)}
+      emptyImage={<AllClearGrot />}
       emptyAction={
         canCreate ? (
           <LinkButton
             variant="primary"
+            size="sm"
             icon="plus"
             href={newRuleHref}
             onClick={() => ctaClicked({ surface: 'alerts_card', action: 'create_rule', placement: 'empty_state' })}
@@ -172,16 +113,6 @@ export function FiringAlertsCard({
             <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
           </LinkButton>
         ) : undefined
-      }
-      footer={
-        !hideFooterActions && (
-          <CreateAndViewAlertsButtons
-            hasAlerts={hasAlerts}
-            canCreate={canCreate}
-            newRuleHref={newRuleHref}
-            viewAllHref={viewAllHref}
-          />
-        )
       }
     />
   );

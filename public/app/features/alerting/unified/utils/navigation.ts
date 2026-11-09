@@ -39,7 +39,7 @@ export const ALERTING_PATHS: Record<string, RelativeUrl> = {
   TIME_INTERVALS: '/alerting/routes/mute-timing',
   ROUTES: '/alerting/routes',
   ALERTS_ACTIVITY: '/alerting/alerts',
-  IMPORT_TO_GMA: '/alerting/import-to-gma',
+  IMPORT_TO_GMA: '/alerting/admin/import',
   IMPORT_DATASOURCE_MANAGED_RULES: '/alerting/import-datasource-managed-rules',
 };
 
@@ -150,6 +150,16 @@ export const rulesNav = {
       params,
       { skipSubPath: options?.skipSubPath }
     ),
+};
+
+/**
+ * Links to a Grafana-managed rule by its UID alone, for pages that have no rules source or group to encode.
+ */
+export const grafanaRulesNav = {
+  viewLink: (uid: string, options?: { includeReturnTo?: boolean }) => {
+    const params: Record<string, string> = options?.includeReturnTo ? { returnTo: createReturnTo() } : {};
+    return createRelativeUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`, params);
+  },
 };
 
 export const notificationPolicies = {

@@ -25,6 +25,8 @@ func TestRegisterAndRecord(t *testing.T) {
 	CheckRegistrationTotal.WithLabelValues("success").Inc()
 	OrgIDErrorsTotal.Inc()
 	StepPanicsTotal.WithLabelValues("step-1").Inc()
+	CheckItemsTotal.WithLabelValues("datasource").Add(10)
+	CheckFailuresTotal.WithLabelValues("datasource", "health-check").Inc()
 
 	metrics, err := registry.Gather()
 	require.NoError(t, err)

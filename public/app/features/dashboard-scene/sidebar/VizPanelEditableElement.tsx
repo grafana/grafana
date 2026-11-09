@@ -11,11 +11,11 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { duplicatePanel } from '../actions/layout/duplicatePanel';
+import { removePanel } from '../actions/layout/removePanels';
 import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
-  editPanelTitleAction,
 } from '../panel-edit/getPanelFrameOptions';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -26,7 +26,6 @@ import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../scene/types/EditableDashboardElement';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
@@ -119,9 +118,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   public useSidebarOptions = useSidebarOptions.bind(this);
 
   public onDelete(source: EditActionSource = 'edit_pane') {
-    DashboardInteractions.panelActionClicked('delete', getPanelIdForVizPanel(this.panel), source);
-    const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
-    layout.removePanel?.(this.panel);
+    removePanel(this.panel, source);
   }
 
   public onConfirmDelete() {
@@ -152,7 +149,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onChangeName(name: string) {
-    editPanelTitleAction(this.panel, name);
+    getDashboardSceneFor(this.panel).updatePanelTitle(this.panel, name);
   }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
@@ -176,7 +173,7 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
         locationService.partial({ editPanel: panelId });
         DashboardInteractions.panelActionClicked('configure', panelId, 'edit_pane');
       }}
-      icon="graph-bar"
+      icon="pen"
       variant="secondary"
       fullWidth
       tooltip={t(

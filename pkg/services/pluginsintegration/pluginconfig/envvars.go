@@ -7,11 +7,14 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
+	appplugin "github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -25,6 +28,8 @@ import (
 )
 
 var _ envvars.Provider = (*EnvVarsProvider)(nil)
+
+const marketplaceLicenseEnvTimeout = 10 * time.Second
 
 type EnvVarsProvider struct {
 	cfg                  *PluginInstanceCfg
@@ -108,8 +113,14 @@ func marketplaceLicensePluginID(plugin *plugins.Plugin) string {
 }
 
 func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginID string) []string {
-	// Marketplace plugins require the feature toggle and a valid Grafana Pro/Enterprise license.
-	if p.cfg.Features == nil || !p.cfg.Features.GetEnabled(ctx)[featuremgmt.FlagPluginsMarketplaceLicensing] {
+	// Plugin restarts reuse the context the plugin was initialized with, which can already be canceled
+	// (for example, the request that installed the plugin). Keep its values but not its cancellation, and
+	// bound both the feature flag evaluation and the license token lookup instead.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), marketplaceLicenseEnvTimeout)
+	defer cancel()
+
+	// Marketplace plugins require the feature flag and a valid Grafana Pro/Enterprise license.
+	if !p.marketplaceLicensingEnabled(ctx) {
 		return nil
 	}
 	if p.license == nil || !p.license.HasValidLicense() {
@@ -141,6 +152,16 @@ func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginI
 		variables = append(variables, p.envVar("GF_MARKETPLACE_LICENSE_PATH", licensePath))
 	}
 	return variables
+}
+
+// marketplaceLicensingEnabled evaluates the marketplace licensing kill switch. Evaluation errors disable it.
+func (p *EnvVarsProvider) marketplaceLicensingEnabled(ctx context.Context) bool {
+	enabled, err := openfeature.NewDefaultClient().BooleanValue(ctx, featuremgmt.FlagPluginsMarketplaceLicensing, false, openfeature.TransactionContext(ctx))
+	if err != nil {
+		p.logger.Warn("Could not evaluate feature flag, not providing marketplace licenses", "flag", featuremgmt.FlagPluginsMarketplaceLicensing, "error", err)
+		return false
+	}
+	return enabled
 }
 
 func (p *EnvVarsProvider) featureToggleEnableVars(ctx context.Context) []string {
@@ -317,16 +338,21 @@ func (p *EnvVarsProvider) signingKeysEnvVars(plugin *plugins.Plugin) []string {
 		p.logger.Error("Failed to get the local plugin signing keys", "pluginId", plugin.PluginID(), "error", err)
 		return nil
 	}
-	return []string{p.envVar(v3.EnvVarSigningKeys, jwks)}
+	return []string{p.envVar(appplugin.EnvVarGrafanaJWKS, jwks)}
 }
 
-// apiAccessHostEnvVars are the API_ACCESS_* variables that configure where and
+// apiAccessHostEnvVars are the GF_API_ACCESS_* variables that configure where and
 // how the app SDK calls Grafana's API. go-plugin forwards the host environment
 // after the variables Grafana sets, so host values would win over them.
 var apiAccessHostEnvVars = []string{
-	v3.EnvVarRouterURL,
-	v3.EnvVarTokenExchangeURL,
-	v3.EnvVarAccessPolicyToken,
+	appplugin.EnvVarAPIAccessRouterURL,
+	appplugin.EnvVarAPIAccessTokenExchangeURL,
+	appplugin.EnvVarAPIAccessCAPToken,
+	appplugin.EnvVarAPIAccessBearerToken, //nolint:gosec,staticcheck // SA1019: deprecated variable name, not a credential
+	// The app SDK still reads these unprefixed names when the GF_ ones are unset.
+	"API_ACCESS_ROUTER_URL",
+	"API_ACCESS_TOKEN_EXCHANGE_URL",
+	"API_ACCESS_CAP_TOKEN",
 	"API_ACCESS_BEARER_TOKEN",
 }
 
@@ -368,9 +394,9 @@ func (p *EnvVarsProvider) apiAccessEnvVars(plugin *plugins.Plugin) []string {
 		return nil
 	}
 	return []string{
-		p.envVar(v3.EnvVarRouterURL, apiURL),
-		p.envVar(v3.EnvVarTokenExchangeURL, apiURL+pluginauth.TokenExchangePath),
-		p.envVar(v3.EnvVarAccessPolicyToken, token),
+		p.envVar(appplugin.EnvVarAPIAccessRouterURL, apiURL),
+		p.envVar(appplugin.EnvVarAPIAccessTokenExchangeURL, apiURL+pluginauth.TokenExchangePath),
+		p.envVar(appplugin.EnvVarAPIAccessCAPToken, token),
 	}
 }
 

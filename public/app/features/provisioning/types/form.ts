@@ -1,11 +1,8 @@
-import { type WorkflowOption } from '../types';
-
 export interface BaseProvisionedFormData {
   ref?: string;
   path: string;
   comment?: string;
   repo: string;
-  workflow?: WorkflowOption;
   title: string;
 }
 

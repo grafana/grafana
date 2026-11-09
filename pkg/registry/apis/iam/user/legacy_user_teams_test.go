@@ -34,9 +34,9 @@ func TestLegacyUserTeams(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &fakeUserTeamsStore{pages: []*legacy.ListUserTeamsResult{
-				{Items: []legacy.UserTeam{{UID: "team-c", Permission: team.PermissionTypeMember}}, Continue: 11},
-				{Items: []legacy.UserTeam{{UID: "team-a", Permission: team.PermissionTypeAdmin}}, Continue: 22},
-				{Items: []legacy.UserTeam{{UID: "team-b", Permission: team.PermissionTypeMember, External: true}}},
+				{Items: []legacy.UserTeam{{ID: 3, UID: "team-c", Permission: team.PermissionTypeMember}}, Continue: 11},
+				{Items: []legacy.UserTeam{{ID: 1, UID: "team-a", Permission: team.PermissionTypeAdmin}}, Continue: 22},
+				{Items: []legacy.UserTeam{{ID: 2, UID: "team-b", Permission: team.PermissionTypeMember, External: true}}},
 			}}
 			backend := NewLegacyUserTeamsBackend(store, tracing.NewNoopTracerService())
 			page, err := backend.ListUserTeams(t.Context(), UserTeamsQuery{Namespace: "stacks-1", UserUID: "alice", Limit: tt.limit, After: tt.after})
@@ -53,6 +53,8 @@ func TestLegacyUserTeams(t *testing.T) {
 			for _, item := range page.Items {
 				names = append(names, item.Team)
 				require.Equal(t, "alice", item.User)
+				require.NotNil(t, item.TeamInternalId)
+				require.Equal(t, map[string]int64{"team-a": 1, "team-b": 2, "team-c": 3}[item.Team], *item.TeamInternalId)
 				if item.Team == "team-a" {
 					require.Equal(t, "admin", item.Permission)
 				} else {

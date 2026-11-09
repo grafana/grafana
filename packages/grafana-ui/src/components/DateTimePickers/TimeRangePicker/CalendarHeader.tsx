@@ -7,7 +7,7 @@ import { Stack } from '../../Layout/Stack/Stack';
 import { type TimePickerCalendarProps } from './TimePickerCalendar';
 import { TimePickerTitle } from './TimePickerTitle';
 
-export function Header({ onClose }: TimePickerCalendarProps) {
+export function Header({ onClose }: Pick<TimePickerCalendarProps, 'onClose'>) {
   return (
     <Stack justifyContent="space-between">
       <TimePickerTitle>

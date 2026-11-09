@@ -106,11 +106,20 @@ func newConntrackRoundTripper(name string, transport *http.Transport) *http.Tran
 	return transport
 }
 
-// setDefaultTimeoutOptions overrides the default timeout options for the SDK.
-//
-// Note: Not optimal changing global state, but hard to not do in this case.
-func setDefaultTimeoutOptions(cfg *setting.Cfg) {
-	sdkhttpclient.DefaultTimeoutOptions = sdkhttpclient.TimeoutOptions{
+// sdkDefaultTimeoutOptions keeps the SDK's own defaults, captured at package
+// initialization before setDefaultTimeoutOptions overwrites the global. Out-of-process
+// plugins still run with these values.
+var sdkDefaultTimeoutOptions = sdkhttpclient.DefaultTimeoutOptions
+
+// SDKDefaultTimeoutOptions returns the SDK's default timeout options, as used by
+// plugins running outside the Grafana process.
+func SDKDefaultTimeoutOptions() sdkhttpclient.TimeoutOptions {
+	return sdkDefaultTimeoutOptions
+}
+
+// TimeoutOptionsFromConfig returns the timeout options configured in the [dataproxy] section.
+func TimeoutOptionsFromConfig(cfg *setting.Cfg) sdkhttpclient.TimeoutOptions {
+	return sdkhttpclient.TimeoutOptions{
 		Timeout:               time.Duration(cfg.DataProxyTimeout) * time.Second,
 		DialTimeout:           time.Duration(cfg.DataProxyDialTimeout) * time.Second,
 		KeepAlive:             time.Duration(cfg.DataProxyKeepAlive) * time.Second,
@@ -121,4 +130,11 @@ func setDefaultTimeoutOptions(cfg *setting.Cfg) {
 		MaxIdleConnsPerHost:   cfg.DataProxyMaxIdleConns,
 		IdleConnTimeout:       time.Duration(cfg.DataProxyIdleConnTimeout) * time.Second,
 	}
+}
+
+// setDefaultTimeoutOptions overrides the default timeout options for the SDK.
+//
+// Note: Not optimal changing global state, but hard to not do in this case.
+func setDefaultTimeoutOptions(cfg *setting.Cfg) {
+	sdkhttpclient.DefaultTimeoutOptions = TimeoutOptionsFromConfig(cfg)
 }

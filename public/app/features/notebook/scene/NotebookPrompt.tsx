@@ -42,7 +42,10 @@ function LeavePromptModal({ onStay, onDismiss, ...props }: LeavePromptModalProps
 
 export function needsConfirmBeforeLeaving(scene: NotebookScene): boolean {
   const { status } = scene.autosave.state;
-  return Boolean(scene.state.isEditing) && status !== 'idle' && status !== 'saved';
+  return (
+    Boolean(scene.state.isEditing) &&
+    (scene.state.body.hasPendingVizChanges() || (status !== 'idle' && status !== 'saved'))
+  );
 }
 
 /**

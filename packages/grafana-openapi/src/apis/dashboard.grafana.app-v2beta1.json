@@ -5996,7 +5996,7 @@
         }
       },
       "NotebookNotebookLayoutItemSpec": {
-        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
+        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI. `id` identifies the cell itself, as opposed to the element name, which clients choose and can reuse.",
         "type": "object",
         "required": ["element", "source"],
         "properties": {
@@ -6010,6 +6010,10 @@
                 "$ref": "#/components/schemas/NotebookElementReference"
               }
             ]
+          },
+          "id": {
+            "description": "Assigned by the server on create or update and never changed by clients (a UUID v4). Comments anchor to this rather than to the element name.",
+            "type": "string"
           },
           "source": {
             "type": "string",
@@ -6955,7 +6959,7 @@
             "default": ""
           },
           "resources": {
-            "description": "Resources is required for global hybrid search and rejected by per-resource routes. It must be nonempty and contain unique group/resource pairs.",
+            "description": "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HybridSearchResource"
@@ -7022,6 +7026,14 @@
             "type": "number",
             "format": "double",
             "default": 0
+          },
+          "tags": {
+            "description": "Tags from the lexical index. Omitted when unavailable.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "title": {
             "type": "string",

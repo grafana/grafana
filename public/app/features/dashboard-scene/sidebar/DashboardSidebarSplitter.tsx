@@ -24,7 +24,6 @@ import { KioskMode } from 'app/types/dashboard';
 import { DashboardControlsChrome } from '../scene/DashboardControlsChrome';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { EditActionsLayoutProvider } from '../scene/edit-actions-popover/EditActionsLayoutContext';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
@@ -40,6 +39,8 @@ interface Props {
   isPlanning?: boolean;
   body?: React.ReactNode;
   controls?: React.ReactNode;
+  /** Covers the controls and body, for example the Composer overlay. */
+  overlay?: React.ReactNode;
 }
 
 export function DashboardSidebarSplitter(props: Props) {
@@ -65,7 +66,7 @@ function DashboardSidebarSplitterLegacy({ dashboard, isPlanning, body, controls 
   );
 }
 
-function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, body, controls }: Props) {
+function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, body, controls, overlay }: Props) {
   const { sidebar } = dashboard.state;
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
@@ -131,10 +132,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
   };
 
   function renderBody() {
-    const renderWithoutSidebar =
-      isPlaying ||
-      kioskMode === KioskMode.Full ||
-      (dashboardModesEnabled() && getDashboardMode(dashboard.state) !== 'edit' && !dashboard.state.viewPanel);
+    const renderWithoutSidebar = isPlaying || kioskMode === KioskMode.Full;
 
     // Full-page views use document scrolling.
     if (renderWithoutSidebar) {
@@ -193,6 +191,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
           {renderBody()}
         </ElementSelectionContext.Provider>
       </EditActionsLayoutProvider>
+      {overlay}
     </div>
   );
 }

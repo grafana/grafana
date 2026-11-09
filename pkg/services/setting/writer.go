@@ -8,6 +8,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
@@ -73,19 +74,56 @@ func (s *remoteSettingService) Delete(ctx context.Context, section, key string) 
 		return fmt.Errorf("missing namespace in context")
 	}
 
-	// Server-assigned names, so delete by (section, key) labels (idempotent).
-	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{
-		MatchLabels: map[string]string{"section": section, "key": key},
-	})
+	// The apiserver does not allow DeleteCollection and assigns the names,
+	// so list by (section, key) labels and delete each by name.
+	// source=us pins the list to stored overrides, skipping the defaults merge.
+	matchLabels := map[string]string{"source": "us"}
+	// The apiserver stores a sanitized label for a section or key that isn't a
+	// valid label value, so those can only be matched on the spec below.
+	if len(validation.IsValidLabelValue(section)) == 0 {
+		matchLabels["section"] = section
+	}
+	if len(validation.IsValidLabelValue(key)) == 0 {
+		matchLabels["key"] = key
+	}
+	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: matchLabels})
 	if err != nil {
 		return fmt.Errorf("delete setting %s/%s: %w", section, key, err)
 	}
-	if err := s.restClient.Delete().
+	raw, err := s.restClient.Get().
 		Resource(resource).
 		Namespace(namespace).
 		Param("labelSelector", selector.String()).
-		Do(ctx).Error(); err != nil {
-		return fmt.Errorf("delete setting %s/%s: %w", section, key, err)
+		Do(ctx).Raw()
+	if err != nil {
+		return fmt.Errorf("delete setting %s/%s: list: %w", section, key, err)
+	}
+	var list struct {
+		Items []struct {
+			Metadata struct {
+				Name string `json:"name"`
+			} `json:"metadata"`
+			Spec struct {
+				Section string `json:"section"`
+				Key     string `json:"key"`
+			} `json:"spec"`
+		} `json:"items"`
+	}
+	if err := json.Unmarshal(raw, &list); err != nil {
+		return fmt.Errorf("delete setting %s/%s: decode list: %w", section, key, err)
+	}
+	for _, item := range list.Items {
+		if item.Spec.Section != section || item.Spec.Key != key {
+			continue
+		}
+		err := s.restClient.Delete().
+			Resource(resource).
+			Namespace(namespace).
+			Name(item.Metadata.Name).
+			Do(ctx).Error()
+		if err != nil && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("delete setting %s/%s: %w", section, key, err)
+		}
 	}
 	return nil
 }

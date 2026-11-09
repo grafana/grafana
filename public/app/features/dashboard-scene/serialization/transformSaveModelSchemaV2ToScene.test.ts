@@ -91,12 +91,46 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('transformSaveModelSchemaV2ToScene', () => {
-  beforeAll(() => {
-    config.featureToggles.groupByVariable = true;
-  });
+  it('should merge a default GroupByVariable into the default adhoc variable on the same datasource', () => {
+    const scene = transformSaveModelSchemaV2ToScene(defaultDashboard, {
+      uid: 'dashboard-uid',
+      route: DashboardRoutes.Normal,
+      defaultVariables: [
+        {
+          kind: 'AdhocVariable',
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: {
+            name: 'defaultFilter',
+            baseFilters: [],
+            filters: [],
+            defaultKeys: [],
+            hide: 'dontHide',
+            skipUrlSync: false,
+            allowCustomValue: true,
+          },
+        },
+        {
+          kind: 'GroupByVariable',
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: {
+            name: 'defaultGroupBy',
+            current: { text: ['job'], value: ['job'] },
+            options: [],
+            multi: true,
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+    });
 
-  afterAll(() => {
-    config.featureToggles.groupByVariable = false;
+    const variables = scene.state.$variables!.state.variables;
+    const filter = variables.find((v) => v.state.name === 'defaultFilter') as AdHocFiltersVariable;
+    expect(filter.state.enableGroupBy).toBe(true);
+    expect(filter.state.filters).toEqual([expect.objectContaining({ key: 'job', operator: 'groupBy' })]);
+    expect(variables.find((v) => v.state.name === 'defaultGroupBy')).toBeUndefined();
   });
 
   it('should initialize the DashboardScene with the model state', () => {
