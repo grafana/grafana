@@ -96,7 +96,7 @@ export function useColumnTransformations(
             const next = columnTransformations.columnOrder.write(current, order, context);
             const after = columnTransformations.columnOrder.read(next, context).columnOrder ?? context.catalog;
             orderChanged = !isEqual(before, after);
-            return next;
+            return orderChanged ? next : current;
           },
           () => {
             if (orderChanged) {

@@ -99,7 +99,7 @@ export interface TableSortByFieldState {
 export type SortByBehavior = 'initial' | 'managed';
 
 export interface TableFilterInteraction {
-  filter_type: 'local' | 'transformation';
+  filter_type: 'local' | 'transformation' | 'adhoc';
   filter_kind: 'values' | 'numeric_range' | 'date_range' | 'other';
 }
 

@@ -271,7 +271,7 @@ it.each([false, true])('recovers a missing output frame only when enabled=%s', (
 
 it('reports accepted column changes but not hydration or repeated actions', () => {
   const onInteraction = jest.fn();
-  const { result } = renderColumnState([sourceFrame(['A', 'B', 'C'])], [], onInteraction);
+  const { result, api } = renderColumnState([sourceFrame(['A', 'B', 'C'])], [], onInteraction);
   expect(result.current?.columnCatalog).toEqual(['A', 'B', 'C']);
   expect(onInteraction).not.toHaveBeenCalled();
   act(() => result.current?.onHiddenColumnsChange(new Set(['B'])));
@@ -280,4 +280,5 @@ it('reports accepted column changes but not hydration or repeated actions', () =
   act(() => result.current?.onColumnOrderChange(['C', 'A', 'B']));
   act(() => result.current?.onColumnOrderChange(['C', 'A', 'B']));
   expect(onInteraction.mock.calls).toEqual([['visibility'], ['visibility'], ['reorder']]);
+  expect(api.set).toHaveBeenCalledTimes(3);
 });
