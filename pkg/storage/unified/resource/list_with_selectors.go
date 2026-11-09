@@ -44,21 +44,13 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 	if errRes != nil {
 		return nil, GRPCStatusError(errRes)
 	}
-	searchErr := err
-	if searchErr == nil {
-		searchErr = ErrorFromResponse(page.response.GetError(), nil)
-	}
-	if searchErr != nil {
-		result := AsErrorResult(searchErr)
+	if err != nil {
 		// A later page carries a position in search results that the store cannot resume from.
-		if IsSelectableFieldNotIndexed(result) && req.NextPageToken == "" {
-			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerList, searchErr)
+		if IsSelectableFieldNotIndexed(AsErrorResult(err)) && req.NextPageToken == "" {
+			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerList, err)
 		}
-		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", searchErr)
-		if err != nil {
-			return nil, err
-		}
-		return nil, GRPCStatusError(result)
+		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
+		return nil, err
 	}
 
 	rsp := &resourcepb.ListResponse{
@@ -135,9 +127,7 @@ func (s *server) executeSearchListPage(
 		s.log.Error("Invalid search response for List", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
 		return nil, AsErrorResult(err), nil
 	}
-	if searchResp.GetError() == nil {
-		span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.GetTotalHits())))
-	}
+	span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.GetTotalHits())))
 	return page, nil, nil
 }
 
@@ -199,17 +189,14 @@ type listSearchRow struct {
 	sortFields []string
 }
 
-// decodeSearchListPage turns a search response into a list page. A response that
-// reports an error carries no rows. listRV is the version a continued list is
-// pinned to; the first page takes the version of the search response.
+// decodeSearchListPage turns a search response into a list page. listRV is the
+// version a continued list is pinned to; the first page takes the version of the
+// search response.
 func decodeSearchListPage(response *resourcepb.ResourceSearchResponse, listRV int64) (*searchListPage, error) {
 	if response == nil {
 		return nil, fmt.Errorf("empty search response")
 	}
 	page := &searchListPage{response: response, resourceVersion: listRV}
-	if response.GetError() != nil {
-		return page, nil
-	}
 	if page.resourceVersion <= 0 {
 		page.resourceVersion = response.GetResourceVersion()
 	}

@@ -2,7 +2,9 @@ package folder
 
 import (
 	"context"
+	"strconv"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -11,6 +13,7 @@ import (
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // queueGroup is the NATS queue group the controllers' subscriptions join, so each live notification
@@ -28,7 +31,17 @@ func newFolderInformer(subscriber nats.Subscriber, keys keysapi.Lister) *usinfor
 	}
 	inf := usinformer.NewInformer(subscriber, folderGVR, "", cascadedelete.ResyncPeriod, queueGroup, nil, newObject, list)
 	inf.AllowDegradedStart()
+	inf.SetObjectUpdater(stampResourceVersion)
 	return inf
+}
+
+// stampResourceVersion gives a live event the version a re-list reports for the same change, so the
+// controller can tell a resync of a folder it already handled from a new one.
+func stampResourceVersion(obj runtime.Object, evt *resourcepb.WatchNotification) runtime.Object {
+	if acc, err := meta.Accessor(obj); err == nil && evt.ResourceVersion > 0 {
+		acc.SetResourceVersion(strconv.FormatInt(evt.ResourceVersion, 10))
+	}
+	return obj
 }
 
 // listFolderKeys projects a keys snapshot to the objects the informer diffs.

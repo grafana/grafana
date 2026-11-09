@@ -2148,22 +2148,18 @@ func TestBuildIndex(t *testing.T) {
 				secondIndexDocsCount = 1000
 			)
 
-			var lastImportTime time.Time
-			if rebuild {
-				// Pass time.Now() to force rebuild
-				lastImportTime = time.Now()
-			}
-			// else: zero time means no rebuild based on import time
-
 			{
 				backend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir))
-				_, err := backend.BuildIndex(context.Background(), ns, firstIndexDocsCount, "test", indexTestDocs(ns, firstIndexDocsCount, 100), nil, false, lastImportTime, 0, resource.BuildIndexOptions{})
+				_, err := backend.BuildIndex(context.Background(), ns, firstIndexDocsCount, "test", indexTestDocs(ns, firstIndexDocsCount, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 				require.NoError(t, err)
 				backend.Stop()
 			}
 
-			// Make sure we pass at least 1 nanosecond (alwaysRebuildDueToAge) to ensure that the index needs to be rebuild.
-			time.Sleep(1 * time.Millisecond)
+			var lastImportTime time.Time
+			if rebuild {
+				// The import must follow the first build to prevent index reuse.
+				lastImportTime = time.Now()
+			}
 
 			newBackend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir))
 			idx, err := newBackend.BuildIndex(context.Background(), ns, secondIndexDocsCount, "test", indexTestDocs(ns, secondIndexDocsCount, 100), nil, false, lastImportTime, 0, resource.BuildIndexOptions{})

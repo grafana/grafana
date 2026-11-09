@@ -730,6 +730,9 @@ type Cfg struct {
 	// MigrationChunkMaxBytes is the soft maximum byte budget per migration chunk
 	// when MigrationChunkedWrites is enabled. Default: 256 MiB.
 	MigrationChunkMaxBytes int64
+	// MigrationStatementTimeout overrides the Postgres statement_timeout for the migration's
+	// own transactions only. Zero keeps the database or role setting. Default: 0.
+	MigrationStatementTimeout time.Duration
 	// RenameWaitDeadline is the maximum time to wait for MySQL RENAME TABLE
 	// statements to appear in the processlist. Default: 1 minute.
 	RenameWaitDeadline          time.Duration
