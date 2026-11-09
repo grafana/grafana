@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/features/browse-dashboards/hooks/useNavModel';
 
@@ -18,7 +18,7 @@ const { useRulerNamespaceQuery } = alertRuleApi;
 
 export function BrowseFolderAlertingPage() {
   const { uid: folderUID = '' } = useParams();
-  const { data: folderDTO, isLoading: isFolderLoading } = useGetFolderQueryFacade(folderUID);
+  const { data: folderDTO, isLoading: isFolderLoading } = useGetCombinedFolderQuery(folderUID);
 
   const {
     data: rulerNamespace = {},

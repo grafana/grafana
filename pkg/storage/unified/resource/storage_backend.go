@@ -197,10 +197,7 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Name: "grafana_storage_server_event_emit_after_commit_failures_total",
 			Help: "Total number of writes whose data was committed but whose event failed to be emitted",
 		}, []string{"resource", "action"}),
-		NatsNotifierDropped: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_storage_server_nats_notifier_dropped_events_total",
-			Help: "Notifications dropped by the NATS notifier before delivery, by reason (unmarshal_error, unknown_type, buffer_full).",
-		}, []string{"reason"}),
+		NatsNotifierDropped: NewNatsNotifierDroppedMetric(reg),
 		GCCycleDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "grafana_storage_server_gc_cycle_duration_seconds",
 			Help:    "Elapsed duration of a garbage-collection cycle, including batch waits, by outcome.",
@@ -770,12 +767,28 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
+				b.runGarbageCollectionWithLease(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
 			}
 		}
 	}()
 
 	return nil
+}
+
+func (b *kvStorageBackend) runGarbageCollectionWithLease(ctx context.Context, cutoffTimeStamp int64) {
+	// Own the complete resource and blob pass, including dry runs. This lease
+	// coordinates collectors; it does not fence in-flight storage operations.
+	ctx, release, err := b.acquireStorageLeases(ctx, []string{"garbage-collection"}, lease.WithAutoRenew())
+	if err != nil {
+		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+			b.log.Debug("Garbage collection is running on another instance; skipping this cycle")
+		} else {
+			b.log.Error("Failed to acquire garbage collection lease", "error", err)
+		}
+		return
+	}
+	defer release()
+	b.runGarbageCollection(ctx, cutoffTimeStamp)
 }
 
 func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
@@ -3161,7 +3174,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				Resource:        req.Key.Resource,
 				Namespace:       req.Key.Namespace,
 				Name:            req.Key.Name,
-				ResourceVersion: bulkRvGenerator.next(obj),
+				ResourceVersion: bulkRvGenerator.next(SearchID(req.Key), obj),
 				Action:          action,
 				Folder:          req.Folder,
 			}

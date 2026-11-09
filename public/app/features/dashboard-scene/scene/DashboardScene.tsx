@@ -131,6 +131,7 @@ import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getLayoutManagerFor } from '../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../utils/interactions';
 import {
+  isEditEntryBlocked,
   isMobileEditDeprecated,
   notifyMobileEditNotAvailable,
   redirectAwayFromMobileEdit,
@@ -144,6 +145,7 @@ import {
   getDefaultVizPanel,
   getLayoutForObject,
   hasActualSaveChanges,
+  isLibraryPanel,
 } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
@@ -169,6 +171,8 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
+import { promotePanelAdHocChanges } from './panel-actions/promote/promotePanelAdHocChanges';
+import { PromotePanelAdHocChangesEvent } from './panel-actions/promote/utils';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { takePendingPlanBuild } from './pendingPlanBuild';
 import { DashboardPlanningEvent } from './planningEvents';
@@ -590,6 +594,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.closeComposerSession();
     });
 
+    // Panel actions ask for their ad hoc changes to be saved with an event, so they do not import the dashboard's saving code.
+    const promoteAdHocChangesSubscription = this.subscribeToEvent(
+      PromotePanelAdHocChangesEvent,
+      ({ payload: { panel } }) => promotePanelAdHocChanges(this, panel)
+    );
+
     // Closing the tab or reloading never deactivates the scene, so an open edit period would go unreported.
     const onPageHide = () => this.endEditPeriod('abandoned');
     window.addEventListener('pagehide', onPageHide);
@@ -601,6 +611,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.exitComposerMode();
       this.closeComposerSession();
       composerSubscription.unsubscribe();
+      promoteAdHocChangesSubscription.unsubscribe();
       window.removeEventListener('pagehide', onPageHide);
       this.endEditPeriod('abandoned');
       this.cancelPendingViews();
@@ -977,7 +988,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.setState({ composerEditing: true });
       return;
     }
-    if (this.getComposerSession()?.getOverlayState().paused) {
+    if (this.getComposerSession()?.assistantWorking) {
       appEvents.publish(
         new ShowConfirmModalEvent({
           title: t('dashboard-scene.dashboard-scene.modal.title.composer-stop-editing', 'Switch to Viewing?'),
@@ -1046,7 +1057,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * turn, so while one runs it asks first: Keep working stays in Composer. Never saves or discards.
    */
   public leaveComposer() {
-    if (!this.getComposerSession()?.getOverlayState().paused) {
+    if (!this.getComposerSession()?.assistantWorking) {
       this.exitComposerMode();
       return;
     }
@@ -1347,6 +1358,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public canDiscard() {
     return this._initialState !== undefined;
+  }
+
+  /**
+   * After the dashboard was reloaded into this scene in place, mid edit session: discarding goes back
+   * to what was reloaded, as it would after a fresh load in edit mode, not to the tree it replaced.
+   */
+  public rebaselineEditSession() {
+    if (!this.state.isEditing) {
+      return;
+    }
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false, planning: undefined });
+    this._initialUrlState = locationService.getLocation();
   }
 
   /**
@@ -2041,6 +2064,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (!canManuallyEditDashboard(this.state)) {
       return;
     }
+    if (isEditEntryBlocked(this)) {
+      notifyMobileEditNotAvailable();
+      return;
+    }
     const editview = this.state.meta.isDashboardTemplate ? 'template' : 'settings';
     locationService.partial({ editview });
   };
@@ -2408,6 +2435,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   isManaged() {
     return Boolean(this.getManagerKind());
+  }
+
+  isLibraryPanel(vizPanel: VizPanel) {
+    return isLibraryPanel(vizPanel);
   }
 
   isManagedRepository() {

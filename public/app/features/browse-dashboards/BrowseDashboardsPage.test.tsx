@@ -209,14 +209,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
     describe('folder owner', () => {
       beforeEach(() => {
-        setTestFlags({ foldersAppPlatformAPI: true });
         jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
-      });
-
-      afterEach(async () => {
-        await act(async () => {
-          setTestFlags({});
-        });
       });
 
       it('allows choosing a team to own the folder', async () => {

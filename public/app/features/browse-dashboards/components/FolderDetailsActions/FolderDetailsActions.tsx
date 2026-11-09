@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { type CombinedFolder, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { type CombinedFolder, useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { OwnerReference } from 'app/core/components/OwnerReferences/OwnerReference';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
@@ -30,7 +30,7 @@ interface Props {
 
 export const FolderDetailsActions = ({ folderDTO, showRecentlyDeleted = true }: Props) => {
   // Fetch the root (aka general) folder if we're not in a specific folder
-  const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
+  const { data: rootFolderDTO } = useGetCombinedFolderQuery(folderDTO ? undefined : 'general');
   // At the root this resolves no repository on purpose. Creating a folder in the database is always
   // valid there, so a read-only Git repository must not disable the New menu
   const { isReadOnlyRepo, repoType, repository } = useGetResourceRepositoryView({ folderName: folderDTO?.uid });

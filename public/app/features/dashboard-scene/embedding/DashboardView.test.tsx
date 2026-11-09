@@ -9,6 +9,7 @@ import { defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
+import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getSavedDashboard } from '../lifecycle/lifecycleApi';
 import { clearPendingChangePreview, loadPendingChangePreview } from '../lifecycle/pendingChangePreview';
@@ -24,6 +25,7 @@ const render = (element: ReactElement) =>
 
 let mockDashboard: DashboardScene;
 const reload = jest.fn(async (): Promise<void> => undefined);
+const reloadInPlace = jest.fn(async (): Promise<boolean> => true);
 const saveDashboard = jest.fn();
 const pending = {
   baseGeneration: 0,
@@ -33,7 +35,11 @@ const pending = {
 };
 
 jest.mock('../pages/DashboardScenePageStateManager', () => ({
+  reloadDashboardInPlace: (...args: unknown[]) => reloadInPlace(...(args as [])),
   UnifiedDashboardScenePageStateManager: jest.fn(() => ({
+    get state() {
+      return { dashboard: mockDashboard };
+    },
     useState: () => ({ dashboard: mockDashboard }),
     loadDashboard: jest.fn(),
     clearState: jest.fn(),
@@ -97,6 +103,41 @@ afterEach(() => {
   config.provisioningEnabled = provisioningEnabled;
   setTestFlags({});
   jest.restoreAllMocks();
+});
+
+it('loads a newer revision in place and reports each revision it shows', async () => {
+  const shown = jest.fn();
+  const { rerender } = render(
+    <DashboardView uid="draft-1" pendingChanges="chat-1" revision={1} onRevisionShown={shown} />
+  );
+  await waitFor(() => expect(shown).toHaveBeenCalledWith(1));
+
+  rerender(<DashboardView uid="draft-1" pendingChanges="chat-1" revision={2} onRevisionShown={shown} />);
+
+  await waitFor(() => expect(shown).toHaveBeenLastCalledWith(2));
+  expect(reloadInPlace).toHaveBeenCalledWith(expect.anything(), mockDashboard, {
+    uid: 'draft-1',
+    route: DashboardRoutes.Embedded,
+    pendingChanges: 'chat-1',
+  });
+  expect(reload).not.toHaveBeenCalled();
+});
+
+// A fresh load would replace the scene the newer revision is reloading in place.
+it('leaves a failed reload of an overtaken revision to the newer one', async () => {
+  let failOlder = (_error: Error) => {};
+  reloadInPlace.mockImplementationOnce(() => new Promise((_resolve, reject) => (failOlder = reject)));
+  const shown = jest.fn();
+  const { rerender } = render(
+    <DashboardView uid="draft-1" pendingChanges="chat-1" revision={1} onRevisionShown={shown} />
+  );
+  rerender(<DashboardView uid="draft-1" pendingChanges="chat-1" revision={2} onRevisionShown={shown} />);
+  rerender(<DashboardView uid="draft-1" pendingChanges="chat-1" revision={3} onRevisionShown={shown} />);
+
+  await act(async () => failOlder(new Error('offline')));
+
+  await waitFor(() => expect(shown).toHaveBeenLastCalledWith(3));
+  expect(reload).not.toHaveBeenCalled();
 });
 
 it('opens the native save form and saves the draft without navigating the host', async () => {

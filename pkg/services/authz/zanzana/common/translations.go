@@ -6,6 +6,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
+	annotationv0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
@@ -76,12 +77,29 @@ var (
 	notebookGroup    = dashv2beta1.NotebookResourceInfo.GroupResource().Group
 	notebookResource = dashv2beta1.NotebookResourceInfo.GroupResource().Resource
 
+	annotationGroup    = annotationv0.AnnotationKind().GroupVersionResource().Group
+	annotationResource = annotationv0.AnnotationKind().GroupVersionResource().Resource
+
 	iamGroup      = iamv0.TeamResourceInfo.GroupResource().Group
 	teamsResource = iamv0.TeamResourceInfo.GroupResource().Resource
 	usersResource = iamv0.UserResourceInfo.GroupResource().Resource
 )
 
+// annotationsSubresource is the subresource for dashboard-scoped annotations.
+const annotationsSubresource = "annotations"
+
 var resourceTranslations = map[string]resourceTranslation{
+	KindAnnotations: {
+		typ:      TypeResource,
+		group:    annotationGroup,
+		resource: annotationResource,
+		mapping: map[string]actionMapping{
+			"annotations:read":   newMapping(RelationGet, ""),
+			"annotations:write":  newMapping(RelationUpdate, ""),
+			"annotations:create": newMapping(RelationCreate, ""),
+			"annotations:delete": newMapping(RelationDelete, ""),
+		},
+	},
 	"datasources": {
 		typ:      TypeResource,
 		group:    "datasource.grafana.app",
@@ -131,6 +149,11 @@ var resourceTranslations = map[string]resourceTranslation{
 			"notebooks:view":   newScopedMapping(RelationSetView, notebookGroup, notebookResource, ""),
 			"notebooks:edit":   newScopedMapping(RelationSetEdit, notebookGroup, notebookResource, ""),
 			"notebooks:admin":  newScopedMapping(RelationSetAdmin, notebookGroup, notebookResource, ""),
+			// Dashboard annotations, scoped to the dashboards annotations subresource
+			"annotations:read":   newScopedMapping(RelationGet, dashboardGroup, dashboardResource, annotationsSubresource),
+			"annotations:write":  newScopedMapping(RelationUpdate, dashboardGroup, dashboardResource, annotationsSubresource),
+			"annotations:create": newScopedMapping(RelationCreate, dashboardGroup, dashboardResource, annotationsSubresource),
+			"annotations:delete": newScopedMapping(RelationDelete, dashboardGroup, dashboardResource, annotationsSubresource),
 		},
 	},
 	KindDashboards: {
@@ -149,6 +172,11 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:view":  newMapping(RelationSetView, ""),
 			"dashboards:edit":  newMapping(RelationSetEdit, ""),
 			"dashboards:admin": newMapping(RelationSetAdmin, ""),
+			// Dashboard annotations
+			"annotations:read":   newMapping(RelationGet, annotationsSubresource),
+			"annotations:write":  newMapping(RelationUpdate, annotationsSubresource),
+			"annotations:create": newMapping(RelationCreate, annotationsSubresource),
+			"annotations:delete": newMapping(RelationDelete, annotationsSubresource),
 		},
 	},
 	KindNotebooks: {

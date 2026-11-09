@@ -1,6 +1,7 @@
 package setting
 
 import (
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -619,6 +620,30 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		assert.True(t, cfg.MigrationChunkedWrites)
 		assert.Equal(t, int64(134217728), cfg.MigrationChunkMaxBytes)
+	})
+
+	t.Run("migration statement timeout is kept within the Postgres range", func(t *testing.T) {
+		for _, tc := range []struct {
+			value string
+			want  time.Duration
+		}{
+			{"", 0},
+			{"15m", 15 * time.Minute},
+			{"1000h", math.MaxInt32 * time.Millisecond},
+			{"500us", time.Millisecond},
+			{"-5s", 0},
+		} {
+			t.Run(tc.value, func(t *testing.T) {
+				t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_STATEMENT_TIMEOUT", tc.value)
+				cfg := NewCfg()
+				err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+				assert.NoError(t, err)
+
+				cfg.setUnifiedStorageConfig()
+
+				assert.Equal(t, tc.want, cfg.MigrationStatementTimeout)
+			})
+		}
 	})
 
 	t.Run("vector_embedder bedrock config", func(t *testing.T) {
