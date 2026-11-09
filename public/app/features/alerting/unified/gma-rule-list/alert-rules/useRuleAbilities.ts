@@ -106,7 +106,7 @@ export function useRuleAbilities(rule: AlertRule): RuleAbilities {
     isGranted(enrichmentReadAbility) && alertEnrichmentEnabled && alertingEnrichmentPerRuleEnabled;
 
   const { silenceSupported, silenceLoading } = useGrafanaRulesSilenceSupport();
-  const canSilenceInFolder = useCanSilenceInFolder(rule.metadata?.namespace);
+  const canSilenceInFolder = useCanSilenceInFolder(rule.metadata?.annotations?.['grafana.app/folder']);
 
   return useMemo(
     () =>
