@@ -2132,6 +2132,9 @@ importers:
       '@grafana/schema':
         specifier: 13.4.0-pre
         version: link:../grafana-schema
+      '@grafana/ui':
+        specifier: 13.4.0-pre
+        version: link:../grafana-ui
       '@openfeature/core':
         specifier: ^1.12.0
         version: 1.12.0

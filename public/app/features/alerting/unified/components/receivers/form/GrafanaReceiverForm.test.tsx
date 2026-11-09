@@ -1,5 +1,4 @@
 import 'core-js/stable/structured-clone';
-import { type UserEvent } from '@testing-library/user-event';
 import { type MemoryHistoryBuildOptions } from 'history';
 import { HttpResponse, delay, http } from 'msw';
 import { type ComponentProps, type ReactNode } from 'react';
@@ -46,12 +45,6 @@ const renderWithProvider = (
     </AlertmanagerProvider>,
     { historyOptions }
   );
-
-// Payload tests need complete values, not a form re-render for every character.
-async function pasteInto(user: UserEvent, input: HTMLElement, value: string) {
-  await user.click(input);
-  await user.paste(value);
-}
 
 const server = setupMswServer();
 
@@ -165,21 +158,21 @@ describe('GrafanaReceiverForm', () => {
       (req) => req.url.includes('/v1beta1/namespaces/default/receivers') && req.method === 'POST'
     );
     const { user } = renderWithProvider(<GrafanaReceiverForm />);
-    const { click } = user;
+    const { type, click } = user;
 
     await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
     // Select MQTT receiver and fill out basic required fields for contact point
     await clickSelectOption(ui.typeSelector.get(), 'MQTT');
 
-    await pasteInto(user, screen.getByLabelText(/^name/i), 'mqtt contact point');
-    await pasteInto(user, screen.getByLabelText(/broker url/i), 'broker url');
-    await pasteInto(user, screen.getByLabelText(/topic/i), 'topic');
+    await type(screen.getByLabelText(/^name/i), 'mqtt contact point');
+    await type(screen.getByLabelText(/broker url/i), 'broker url');
+    await type(screen.getByLabelText(/topic/i), 'topic');
 
     // Fill out fields that we know will be nested secure fields
     await click(screen.getByText(/optional mqtt settings/i));
     await click(screen.getByRole('button', { name: /^Add$/i }));
-    await pasteInto(user, screen.getByLabelText(/ca certificate/i), 'some cert');
+    await type(screen.getByLabelText(/ca certificate/i), 'some cert');
 
     await click(ui.saveButton.get());
 
@@ -360,8 +353,8 @@ describe('GrafanaReceiverForm', () => {
       await user.click(resetButtons[0]); // Reset access key
       expect(ui.sns.accessKey.get()).toBeEnabled();
       expect(ui.sns.accessKey.get()).toHaveValue('');
-      await pasteInto(user, ui.sns.accessKey.get(), 'new-access-key');
-      await pasteInto(user, ui.sns.topicArn.get(), 'arn:aws:sns:us-east-1:123456789012:MyTopic');
+      await user.type(ui.sns.accessKey.get(), 'new-access-key');
+      await user.type(ui.sns.topicArn.get(), 'arn:aws:sns:us-east-1:123456789012:MyTopic');
 
       await user.click(ui.saveButton.get());
 

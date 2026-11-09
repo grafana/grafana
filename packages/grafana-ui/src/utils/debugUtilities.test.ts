@@ -1,10 +1,10 @@
-import { attachDebugger, createLogger } from '@grafana/data';
 import { attachDebugger as uiAttachDebugger, createLogger as uiCreateLogger } from '@grafana/ui';
+import { attachDebugger, createLogger } from '@grafana/ui/debug';
 
 import { attachDebugger as legacyAttachDebugger } from './debug';
 import { createLogger as legacyCreateLogger } from './logger';
 
-it('keeps data, UI public exports, and legacy UI paths on the same implementations', () => {
+it('keeps narrow, public, and relative UI exports on the same implementations', () => {
   expect(uiCreateLogger).toBe(createLogger);
   expect(legacyCreateLogger).toBe(createLogger);
   expect(uiAttachDebugger).toBe(attachDebugger);
@@ -27,30 +27,30 @@ describe('shared logger throttling', () => {
   });
 
   it('shares one leading/trailing 500ms throttle across logger instances and all import paths', () => {
-    const data = createLogger('data');
+    const narrow = createLogger('narrow');
     const ui = uiCreateLogger('ui');
     const legacy = legacyCreateLogger('legacy');
-    data.enable();
+    narrow.enable();
     ui.enable();
     legacy.enable();
 
-    data.logger('first', true, 1);
+    narrow.logger('first', true, 1);
     ui.logger('superseded', true, 2);
     legacy.logger('last', true, 3);
-    expect(log.mock.calls).toEqual([['[data: first]:', 1]]);
+    expect(log.mock.calls).toEqual([['[narrow: first]:', 1]]);
 
     jest.advanceTimersByTime(499);
-    expect(log.mock.calls).toEqual([['[data: first]:', 1]]);
+    expect(log.mock.calls).toEqual([['[narrow: first]:', 1]]);
     jest.advanceTimersByTime(1);
     expect(log.mock.calls).toEqual([
-      ['[data: first]:', 1],
+      ['[narrow: first]:', 1],
       ['[legacy: last]:', 3],
     ]);
 
     jest.advanceTimersByTime(500);
     ui.logger('next', true, 4);
     expect(log.mock.calls).toEqual([
-      ['[data: first]:', 1],
+      ['[narrow: first]:', 1],
       ['[legacy: last]:', 3],
       ['[ui: next]:', 4],
     ]);

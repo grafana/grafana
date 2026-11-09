@@ -277,8 +277,6 @@ export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { toOption } from './utils/selectUtils';
 export * as arrayUtils from './utils/arrayUtils';
 export { store, Store } from './utils/store';
-export { createLogger, type Logger } from './utils/logger';
-export { attachDebugger } from './utils/debug';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
 export { throwIfAngular } from './utils/throwIfAngular';
 export { fuzzySearch } from './utils/fuzzySearch';
