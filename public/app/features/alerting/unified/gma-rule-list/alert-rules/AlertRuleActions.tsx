@@ -14,10 +14,11 @@ import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { EnrichmentDrawerExtension } from 'app/features/alerting/unified/components/rule-list/extensions/EnrichmentDrawerExtension';
 import { RedirectToCloneRule } from 'app/features/alerting/unified/components/rules/CloneRule';
 import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/silences/SilenceGrafanaRuleDrawer';
-import { isGranted, isProvisioned } from 'app/features/alerting/unified/hooks/abilities/abilityUtils';
+import { isGranted } from 'app/features/alerting/unified/hooks/abilities/abilityUtils';
 import { useEnrichmentAbility } from 'app/features/alerting/unified/hooks/abilities/otherAbilities';
 import { EnrichmentAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { isK8sEntityProvisioned } from 'app/features/alerting/unified/utils/k8s/utils';
 import { type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { grafanaRulesNav } from '../../utils/navigation';
@@ -182,7 +183,7 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
       {redirectToClone && (
         <RedirectToCloneRule
           identifier={identifier}
-          isProvisioned={isProvisioned(abilities.edit)}
+          isProvisioned={isK8sEntityProvisioned(rule)}
           onDismiss={() => setRedirectToClone(false)}
         />
       )}
