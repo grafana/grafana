@@ -3814,8 +3814,8 @@ func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *res
 			// The ngram variant must be analyzed with TITLE_ANALYZER, not the standard
 			// analyzer (which splits on punctuation and drops sub-ngram-length fragments).
 			// Words too short to have n-grams are looked up in the standard variant.
-			prefixField := strings.TrimSuffix(field.Name, "_ngram")
-			if b.textQueryKindFor(prefixField) != textQueryStandard {
+			prefixField, ok := b.searchFields.ngramWordFields[field.Name]
+			if !ok {
 				prefixField = field.Name
 			}
 			disjoin.AddQuery(b.wordsTextQuery(req.Query, field.Name, TITLE_ANALYZER, prefixField, field.Boost))
