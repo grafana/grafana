@@ -22,7 +22,8 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { type ImportFormValues, buildDryRunArgs } from '../ImportToGMA';
+import { buildDryRunArgs } from '../ImportToGMA';
+import { type ImportFormValues } from '../types';
 
 import {
   Step1Content,
