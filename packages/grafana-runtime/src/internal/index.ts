@@ -55,6 +55,7 @@ export {
   getDatasourcePluginMetas,
   setDatasourcePluginMetas,
   refetchDatasourcePluginMetas,
+  syncDatasourcePluginMetas,
   getPluginIdFromDatasourceInstanceType,
 } from '../services/pluginMeta/datasources';
 export {
@@ -88,6 +89,7 @@ export {
   refetchPanelPluginMetas,
 } from '../services/pluginMeta/panels';
 export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
+export { refetchPluginMetasAfterPluginChange } from '../services/pluginMeta/pluginChange';
 export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
 export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
 export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
@@ -97,8 +99,9 @@ export {
   setDataSourceInstanceSettings,
   syncDataSourceInstanceSettings,
 } from '../services/dataSource/settings';
-export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
-export { getRuntimePlugin } from '../services/dataSource/pluginCache';
+export { loadDataSourceInstanceFromSettings, setDataSourcePluginImporter } from '../services/dataSource/dataSource';
+export { DataSourcePluginImportError } from '../services/dataSource/errors';
+export { clearPluginCache, getCachedPlugin, getRuntimePlugin } from '../services/dataSource/pluginCache';
 // Exported so test helpers can assert a suite never resolved through the legacy fallback.
 // Delete along with the fallbacks themselves once `DataSourceSrv` is gone.
 export {

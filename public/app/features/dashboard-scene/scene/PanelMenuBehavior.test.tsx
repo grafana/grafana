@@ -1397,6 +1397,19 @@ describe('panelMenuBehavior', () => {
 
       expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeUndefined();
     });
+
+    it('still offers Edit for a session already in full editing', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true, isEditing: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeDefined();
+    });
   });
 });
 

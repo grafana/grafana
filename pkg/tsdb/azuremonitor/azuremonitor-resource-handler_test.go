@@ -118,12 +118,12 @@ func Test_handleResourceReq(t *testing.T) {
 		logger: log.DefaultLogger,
 	}
 	rw := httptest.NewRecorder()
-	req, err := http.NewRequest(http.MethodGet, "http://foo/azuremonitor/subscriptions/44693801", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://foo/azuremonitor/subscriptions/44693801/locations", nil)
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
 	s.handleResourceReq(azureMonitor)(rw, req)
-	expectedURL := "https://management.azure.com/subscriptions/44693801"
+	expectedURL := "https://management.azure.com/subscriptions/44693801/locations"
 	if proxy.requestedURL != expectedURL {
 		t.Errorf("Unexpected result URL. Got %s, expecting %s", proxy.requestedURL, expectedURL)
 	}

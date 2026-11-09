@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
 
+	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -29,6 +30,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// assistantServiceIdentity is the service identity in the access tokens of Grafana Assistant.
+const assistantServiceIdentity = "assistant"
 
 var (
 	logger = log.New("oauthtoken")
@@ -562,23 +566,21 @@ func getExpiryWithSkew(expiry time.Time) (adjustedExpiry time.Time, hasTokenExpi
 
 // getExternalSession fetches the external session based on the user and session token.
 // When using the render module, it fetches the most recent external session for the user
-// since the session token ID is not available.
+// since the session token ID is not available. Grafana Assistant calling Grafana on the user's
+// behalf with an extended JWT gets the external session of the user's most recent valid session.
 // For regular users, it uses the session token ID to fetch the external session.
 func (o *Service) getExternalSession(ctx context.Context, usr identity.Requester, userID int64, sessionToken *auth.UserToken) (*auth.ExternalSession, error) {
 	if usr.GetAuthenticatedBy() == login.RenderModule {
 		// When using render module, we don't have the session token ID, so we need to fetch the most recent session
 		// entry for the user (as it is done with the old flow).
 		// In the future, we might want to consider passing the session token ID to the render module to make this more robust.
-		externalSessions, err := o.sessionService.FindExternalSessions(ctx, &auth.ListExternalSessionQuery{UserID: userID})
-		if err != nil {
-			return nil, err
-		}
+		return o.getLatestExternalSession(ctx, userID)
+	}
 
-		if len(externalSessions) == 0 || externalSessions[0] == nil {
-			return nil, auth.ErrExternalSessionNotFound
-		}
-
-		return externalSessions[0], nil
+	if canForwardForDelegatingService(usr) {
+		// A service acting for the user has no session token either, so data sources with OAuth pass-through
+		// receive the identity from the user's most recent valid session instead.
+		return o.getLatestValidExternalSession(ctx, userID)
 	}
 
 	if sessionToken == nil {
@@ -587,4 +589,66 @@ func (o *Service) getExternalSession(ctx context.Context, usr identity.Requester
 
 	// For regular users, we use the session token ID to fetch the external session
 	return o.sessionService.GetExternalSession(ctx, sessionToken.ExternalSessionId)
+}
+
+// canForwardForDelegatingService reports whether usr is Grafana Assistant acting for a user with an extended JWT,
+// the only service allowed to forward the user's OAuth identity without a session.
+func canForwardForDelegatingService(usr identity.Requester) bool {
+	if usr.GetAuthenticatedBy() != login.ExtendedJWTModule {
+		return false
+	}
+	ids := serviceIdentities(usr)
+	return len(ids) == 1 && strings.TrimSpace(ids[0]) == assistantServiceIdentity
+}
+
+// serviceIdentities returns the service identities in the access token that authenticated usr.
+func serviceIdentities(usr identity.Requester) []string {
+	// OAuthTokenMiddleware passes the user.SignedInUser the context handler derives from the authn.Identity.
+	// It keeps the access token claims but, unlike authn.Identity, doesn't report the service identity in GetExtra.
+	if u, ok := usr.(*user.SignedInUser); ok {
+		if u.AccessTokenClaims == nil || u.AccessTokenClaims.Rest.ServiceIdentity == "" {
+			return nil
+		}
+		return []string{u.AccessTokenClaims.Rest.ServiceIdentity}
+	}
+	return usr.GetExtra()[authnlib.ServiceIdentityKey]
+}
+
+func (o *Service) getLatestExternalSession(ctx context.Context, userID int64) (*auth.ExternalSession, error) {
+	externalSessions, err := o.sessionService.FindExternalSessions(ctx, &auth.ListExternalSessionQuery{UserID: userID})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(externalSessions) == 0 || externalSessions[0] == nil {
+		return nil, auth.ErrExternalSessionNotFound
+	}
+
+	return externalSessions[0], nil
+}
+
+// getLatestValidExternalSession returns the external session of the user's most recent session that is
+// neither revoked nor expired, so the user's OAuth identity stops being forwarded once they log out or
+// their sessions are revoked or expire.
+func (o *Service) getLatestValidExternalSession(ctx context.Context, userID int64) (*auth.ExternalSession, error) {
+	sessions, err := o.sessionService.GetUserTokens(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var latest *auth.UserToken
+	for _, session := range sessions {
+		if session.ExternalSessionId == 0 {
+			continue
+		}
+		if latest == nil || session.CreatedAt > latest.CreatedAt {
+			latest = session
+		}
+	}
+
+	if latest == nil {
+		return nil, auth.ErrExternalSessionNotFound
+	}
+
+	return o.sessionService.GetExternalSession(ctx, latest.ExternalSessionId)
 }

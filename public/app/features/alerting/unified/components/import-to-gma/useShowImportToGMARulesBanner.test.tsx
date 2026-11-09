@@ -1,7 +1,9 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { getWrapper, testWithFeatureToggles } from 'test/test-utils';
 
 import { OrgRole } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
@@ -13,6 +15,11 @@ import { DataSourceType } from '../../utils/datasource';
 import { useShowImportToGMARulesBanner } from './useShowImportToGMARulesBanner';
 
 const server = setupMswServer();
+
+const IMPORT_WIZARD_FLAGS = {
+  [FlagKeys.AlertingMigrationWizardUI]: true,
+  [FlagKeys.AlertingImportAlertmanagerAPI]: true,
+};
 
 function renderUseShowImportToGMARulesBanner() {
   const wrapper = getWrapper({ renderWithRouter: false });
@@ -43,7 +50,13 @@ describe('useShowImportToGMARulesBanner', () => {
   });
 
   describe('with alertingMigrationWizardUI enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingMigrationWizardUI'] });
+    beforeEach(() => setTestFlags(IMPORT_WIZARD_FLAGS));
+    // The reset fires OpenFeature events while components are still mounted, so it needs act.
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags();
+      });
+    });
 
     it('shows the banner when the user can import rules and a rule source exists', () => {
       const { result } = renderUseShowImportToGMARulesBanner();
@@ -57,8 +70,30 @@ describe('useShowImportToGMARulesBanner', () => {
     });
   });
 
+  describe('with alertingMigrationWizardUI enabled but the Alertmanager import API off', () => {
+    beforeEach(() => setTestFlags({ [FlagKeys.AlertingMigrationWizardUI]: true }));
+    // The reset fires OpenFeature events while components are still mounted, so it needs act.
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags();
+      });
+    });
+
+    it('does not show the banner, since it promotes importing an Alertmanager', () => {
+      const { result } = renderUseShowImportToGMARulesBanner();
+      expect(result.current).toBe(false);
+    });
+  });
+
   describe('with alertingMigrationWizardUI and alerting.syncExternalAlertmanager enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingMigrationWizardUI', 'alerting.syncExternalAlertmanager'] });
+    testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
+    beforeEach(() => setTestFlags(IMPORT_WIZARD_FLAGS));
+    // The reset fires OpenFeature events while components are still mounted, so it needs act.
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags();
+      });
+    });
 
     it('hides the banner while Mimir Alertmanager auto-sync is active', async () => {
       setupAutoSyncConfig(server, { specUid: 'mimir-uid' });

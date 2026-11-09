@@ -151,10 +151,6 @@ const (
 	// Enable finalizer-driven asynchronous cascade deletion of folder.grafana.app folders: deleting a folder marks it terminating and a controller removes its descendants, reporting progress in status.cascadeDelete
 	FlagFolderAsyncCascadeDeleteThroughController = "folder.asyncCascadeDeleteThroughController"
 
-	// FlagKubernetesFolderCountsLegacyStorage
-	// Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise
-	FlagKubernetesFolderCountsLegacyStorage = "kubernetesFolderCountsLegacyStorage"
-
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
@@ -586,6 +582,10 @@ const (
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
 
+	// FlagAuthzDelegationChecks
+	// Use AuthZ Check and LegacyCheck for single-org IAM delegation checks (resolved at startup)
+	FlagAuthzDelegationChecks = "authzDelegationChecks"
+
 	// FlagKubernetesAuthzZanzanaSync
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
 	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
@@ -669,10 +669,6 @@ const (
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
-
-	// FlagCdnPluginsUrls
-	// Enable loading plugins via declarative URLs
-	FlagCdnPluginsUrls = "cdnPluginsUrls"
 
 	// FlagPluginInstallAPISync
 	// Enable syncing plugin installations to the installs API

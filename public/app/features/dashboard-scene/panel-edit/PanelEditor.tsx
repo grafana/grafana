@@ -28,7 +28,7 @@ import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/d
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
-import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { dispatch } from 'app/store/store';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';

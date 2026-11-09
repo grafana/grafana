@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type JobQueueGetter interface {
@@ -40,6 +41,8 @@ type jobsConnector struct {
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
 	perfTestingEnabled    func(ctx context.Context) bool
+	// maxBodySize caps the size in bytes of a job request body.
+	maxBodySize int64
 }
 
 func NewJobsConnector(
@@ -61,7 +64,15 @@ func NewJobsConnector(
 		clients:               clients,
 		folderMetadataEnabled: folderMetadataEnabled,
 		perfTestingEnabled:    perfTestingEnabled,
+		maxBodySize:           setting.ProvisioningMaxJobBodySizeDefault,
 	}
+}
+
+func (c *jobsConnector) SetMaxBodySize(maxBodySize int64) {
+	if maxBodySize <= 0 {
+		maxBodySize = setting.ProvisioningMaxJobBodySizeDefault
+	}
+	c.maxBodySize = maxBodySize
 }
 
 func (*jobsConnector) New() runtime.Object {
@@ -107,7 +118,7 @@ func (c *jobsConnector) Connect(
 		}
 
 		spec := provisioning.JobSpec{}
-		if err := unmarshalJSON(r, defaultMaxBodySize, &spec); err != nil {
+		if err := unmarshalJSON(r, c.maxBodySize, &spec); err != nil {
 			logger := logging.FromContext(ctx).With("logger", "jobs-connector", "repository_name", name)
 			logger.Warn("failed to decode job request", "error", err, "content_length", r.ContentLength)
 			responder.Error(newDecodeError("provisioning.Job", err))
