@@ -59,7 +59,8 @@ Use the metric query mode when a metric is non-zero only at the moments you want
 
 To add a Graphite annotation to your dashboard:
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Annotation query**.
 1. Enter a name for the annotation query.
@@ -77,7 +78,7 @@ To add a Graphite annotation to your dashboard:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 {{< admonition type="note" >}}
 Enter a value in either the **Graphite Query** field or the **Graphite events tags** field, not both. If you provide a metric query, Grafana uses the metric query mode and ignores the tags.

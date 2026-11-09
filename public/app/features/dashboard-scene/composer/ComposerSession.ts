@@ -79,6 +79,8 @@ export interface ComposerOverlayState {
   /** A region capture is running: picking and tab switching wait for it. */
   capturing: boolean;
   paused: boolean;
+  /** A turn runs without pausing: see `setWorking`. */
+  working: boolean;
   highlight: ElementRef | null;
   annotations: ComposerAnnotation[];
   /** Bumps when the dashboard definition changes, so the overlay re-measures. */
@@ -92,6 +94,7 @@ const INITIAL_OVERLAY_STATE: ComposerOverlayState = {
   drag: 'region',
   capturing: false,
   paused: false,
+  working: false,
   highlight: null,
   annotations: [],
   layoutTick: 0,
@@ -356,6 +359,17 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
       this.cancelPick();
     }
     this.setOverlayState({ paused });
+  }
+
+  public setWorking(working: boolean): void {
+    if (!this.ended) {
+      this.setOverlayState({ working });
+    }
+  }
+
+  /** @internal Whether the Assistant is running a turn, paused or not: leaving then stops it. */
+  public get assistantWorking(): boolean {
+    return this.overlayState.paused || this.overlayState.working;
   }
 
   public setAnnotations(items: ComposerAnnotation[]): void {

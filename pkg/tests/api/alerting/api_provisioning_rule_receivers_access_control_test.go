@@ -79,7 +79,7 @@ func testIntegrationProvisioningRuleNotificationSettingsAccessControl(t *testing
 	forbiddenOnly := e.createUserAndClient(t, provisioningTestCase{permissions: grants(nil, readReceiver(uids[forbiddenName]))})
 	// Can read all receivers, including those that do not exist yet.
 	allReceivers := e.createUserAndClient(t, provisioningTestCase{permissions: grants([]string{accesscontrol.ActionAlertingNotificationsRead})})
-	// Can read every receiver that exists.
+	// Can read every receiver that exists, but this does not extend to those that do not.
 	everyUID := e.createUserAndClient(t, provisioningTestCase{permissions: grants(nil, readReceiver("*"))})
 	noReceivers := e.createUserAndClient(t, provisioningTestCase{permissions: grants(nil)})
 
@@ -112,7 +112,7 @@ func testIntegrationProvisioningRuleNotificationSettingsAccessControl(t *testing
 		{"no access to receivers", noReceivers, allowedName, http.StatusForbidden},
 		{"read of all receivers", allReceivers, forbiddenName, http.StatusOK},
 		{"scoped read of every receiver", everyUID, forbiddenName, http.StatusOK},
-		{"scoped read of every receiver, receiver does not exist", everyUID, missingName, http.StatusBadRequest},
+		{"scoped read of every receiver, receiver does not exist", everyUID, missingName, http.StatusForbidden},
 		{"scoped read, receiver does not exist", allowedOnly, missingName, http.StatusForbidden},
 		// The name of a receiver that does not exist is not taken for the UID of the receiver the user can read.
 		{"scoped read, receiver is named like the UID of the one that can be read", forbiddenOnly, uids[forbiddenName], http.StatusForbidden},

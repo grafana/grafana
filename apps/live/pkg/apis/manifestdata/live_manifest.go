@@ -38,6 +38,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Channel",
 					Plural:     "Channels",
+					Resource:   "channels",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{

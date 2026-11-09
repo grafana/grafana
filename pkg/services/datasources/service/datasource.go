@@ -318,12 +318,11 @@ func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceC
 	}
 
 	return &queryV0.DataSourceConnection{
-		Title:      ds.Name,
-		APIGroup:   fmt.Sprintf("%s.datasource.grafana.app", ds.Type),
-		APIVersion: "v0alpha1", // TODO, get this from the plugin
-		Name:       ds.UID,
-		Plugin:     ds.Type,
-		Labels:     labels,
+		Title:    ds.Name,
+		APIGroup: fmt.Sprintf("%s.datasource.grafana.app", ds.Type),
+		Name:     ds.UID,
+		Plugin:   ds.Type,
+		Labels:   labels,
 	}, nil
 }
 

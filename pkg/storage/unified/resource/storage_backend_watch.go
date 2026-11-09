@@ -13,6 +13,7 @@ import (
 type watchSeed struct {
 	events            []*WrittenEvent
 	initialCacheFloor int64
+	collectionFloors  map[GroupResource]int64
 	highestRV         int64 // fixed before settling; retained events may end below this boundary
 }
 

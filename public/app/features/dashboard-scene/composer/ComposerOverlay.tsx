@@ -261,8 +261,8 @@ export function ComposerOverlay({
       cancelDrag();
       return;
     }
-    // Escape cancels a drag, else the pick, before any other Escape handler (exit edit, close view panel)
-    // sees it, except inside an annotation anchor: that Escape belongs to the plugin's editor.
+    // Escape cancels a drag, else leaves Composer, before any other Escape handler (exit edit, close view
+    // panel) sees it, except inside an annotation anchor: that Escape belongs to the plugin's editor.
     const onKeyDown = (event: KeyboardEvent) => {
       const fromAnchor = event.target instanceof Node && anchorHostRef.current?.contains(event.target);
       if (event.key !== 'Escape' || fromAnchor) {
@@ -273,7 +273,7 @@ export function ComposerOverlay({
       if (dragStartRef.current) {
         cancelDrag();
       } else {
-        session.completePick(null);
+        session.exit();
       }
     };
     window.addEventListener('keydown', onKeyDown, true);

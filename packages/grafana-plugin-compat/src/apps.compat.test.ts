@@ -4,11 +4,6 @@ import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
 import { getAppPluginHealth, getPluginSettings, updateAppPluginSettings } from './apps';
 import { getMockedBackendSrv } from './utils/mocks';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  getPluginSettings: undefined,
-  updateAppPluginSettings: undefined,
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginSettings: undefined,
