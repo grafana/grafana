@@ -2725,11 +2725,14 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	if err != nil {
 		return nil, rpcErrorFrom(err)
 	}
-	// Blob backends may still report failure in the body.
-	if rsp.GetError() != nil {
-		return nil, GRPCStatusError(rsp.GetError())
+	if rsp == nil {
+		return nil, errBlobBackendNoResponse()
 	}
 	return rsp, nil
+}
+
+func errBlobBackendNoResponse() error {
+	return GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "blob backend returned no response"})
 }
 
 func (s *server) authorizeBlobPut(ctx context.Context, req *resourcepb.PutBlobRequest) *resourcepb.ErrorResult {
@@ -2849,9 +2852,8 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 	if err != nil {
 		return nil, rpcErrorFrom(err)
 	}
-	// Blob backends may still report failure in the body.
-	if rsp.GetError() != nil {
-		return nil, GRPCStatusError(rsp.GetError())
+	if rsp == nil {
+		return nil, errBlobBackendNoResponse()
 	}
 	return rsp, nil
 }

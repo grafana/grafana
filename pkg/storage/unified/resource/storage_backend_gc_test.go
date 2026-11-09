@@ -1083,7 +1083,7 @@ func TestGarbageCollectionKeepsRecentlyDeletedBulkImports(t *testing.T) {
 	}
 
 	// Both dashboards were last edited two years ago; one was deleted yesterday, the other 400 days ago
-	resp := backend.ProcessBulk(ctx, BulkSettings{
+	resp, err := backend.ProcessBulk(ctx, BulkSettings{
 		Collection: []*resourcepb.ResourceKey{{Namespace: namespace, Group: "dashboard.grafana.app", Resource: "dashboards"}},
 	}, newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
 		dashboard("deleted-yesterday", resourcepb.BulkRequest_ADDED, time.Time{}),
@@ -1091,11 +1091,11 @@ func TestGarbageCollectionKeepsRecentlyDeletedBulkImports(t *testing.T) {
 		dashboard("deleted-long-ago", resourcepb.BulkRequest_ADDED, time.Time{}),
 		dashboard("deleted-long-ago", resourcepb.BulkRequest_DELETED, now.Add(-400*24*time.Hour)),
 	}))
-	require.Nil(t, resp.Error)
+	require.NoError(t, err)
 	require.Empty(t, resp.Rejected)
 
 	cutoff := backend.garbageCollectionCutoffTimestamp("dashboard.grafana.app", "dashboards", now.UnixMicro())
-	_, err := backend.garbageCollectGroupResource(ctx, "dashboard.grafana.app", "dashboards", cutoff)
+	_, err = backend.garbageCollectGroupResource(ctx, "dashboard.grafana.app", "dashboards", cutoff)
 	require.NoError(t, err)
 
 	remaining := map[string]int{}

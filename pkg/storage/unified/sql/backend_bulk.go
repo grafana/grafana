@@ -156,17 +156,13 @@ func buildKeyPath(key *resourcepb.ResourceKey, rv int64, action resourcepb.BulkR
 		key.Group, key.Resource, key.Namespace, key.Name, snowflakeRV, actionStr, folder)
 }
 
-func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	if b.disableStorageServices {
-		return &resourcepb.BulkResponse{
-			Error: resource.AsErrorResult(errors.New("storage backend is not enabled")),
-		}
+		return nil, errors.New("storage backend is not enabled")
 	}
 	err := b.bulkLock.Start(setting.Collection)
 	if err != nil {
-		return &resourcepb.BulkResponse{
-			Error: resource.AsErrorResult(err),
-		}
+		return nil, err
 	}
 	defer b.bulkLock.Finish(setting.Collection)
 
@@ -182,16 +178,12 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 	if useParquet && b.dialect.DialectName() == "sqlite" {
 		if b.tmpDir != "" {
 			if err := os.MkdirAll(b.tmpDir, 0750); err != nil {
-				return &resourcepb.BulkResponse{
-					Error: resource.AsErrorResult(fmt.Errorf("create tmp dir: %w", err)),
-				}
+				return nil, fmt.Errorf("create tmp dir: %w", err)
 			}
 		}
 		file, err := os.CreateTemp(b.tmpDir, "grafana-bulk-export-*.parquet")
 		if err != nil {
-			return &resourcepb.BulkResponse{
-				Error: resource.AsErrorResult(err),
-			}
+			return nil, err
 		}
 		defer func() {
 			// Close is best-effort; the parquet writer may have already closed the file.
@@ -203,15 +195,13 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 
 		writer, err := parquet.NewParquetWriter(file)
 		if err != nil {
-			return &resourcepb.BulkResponse{
-				Error: resource.AsErrorResult(err),
-			}
+			return nil, err
 		}
 
 		// write bulk to parquet (ProcessBulk closes the file via writer.Close)
-		rsp := writer.ProcessBulk(ctx, setting, iter)
-		if rsp.Error != nil {
-			return rsp
+		rsp, err := writer.ProcessBulk(ctx, setting, iter)
+		if err != nil {
+			return nil, err
 		}
 
 		b.log.Info("using parquet buffer", "path", file.Name(), "processed", rsp.Processed)
@@ -219,9 +209,7 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 		// Replace the iterator with one from parquet
 		iter, err = parquet.NewParquetReader(file.Name(), 50)
 		if err != nil {
-			return &resourcepb.BulkResponse{
-				Error: resource.AsErrorResult(err),
-			}
+			return nil, err
 		}
 	}
 
@@ -231,11 +219,10 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 			rsp := &resourcepb.BulkResponse{}
 			// Let migrator rollback its transaction on error
 			tx := &noRollbackTx{dbimpl.NewTx(externalTx)}
-			err := b.processBulkWithTx(ctx, tx, setting, iter, rsp)
-			if err != nil {
-				rsp.Error = resource.AsErrorResult(err)
+			if err := b.processBulkWithTx(ctx, tx, setting, iter, rsp); err != nil {
+				return nil, err
 			}
-			return rsp
+			return rsp, nil
 		}
 	}
 
@@ -247,7 +234,7 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 }
 
 // internal bulk process
-func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	rsp := &resourcepb.BulkResponse{}
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		if err := b.setMigrationStatementTimeout(ctx, tx); err != nil {
@@ -256,9 +243,9 @@ func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings
 		return b.processBulkWithTx(ctx, tx, setting, iter, rsp)
 	})
 	if err != nil {
-		rsp.Error = resource.AsErrorResult(err)
+		return nil, err
 	}
-	return rsp
+	return rsp, nil
 }
 
 // setMigrationStatementTimeout applies the configured Postgres statement_timeout override
@@ -406,7 +393,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 //
 // Note: mid-stream rollback is not possible. A RollbackRequested signal or error
 // returns a hard error after best-effort re-wiping the committed chunks.
-func (b *backend) processBulkChunked(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *backend) processBulkChunked(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	rsp := &resourcepb.BulkResponse{}
 	budget := b.migrationChunkMaxBytes
 
@@ -415,8 +402,7 @@ func (b *backend) processBulkChunked(ctx context.Context, setting resource.BulkS
 	for _, key := range setting.Collection {
 		summary, err := b.deleteCollectionChunked(ctx, key)
 		if err != nil {
-			rsp.Error = resource.AsErrorResult(err)
-			return rsp
+			return nil, err
 		}
 		summaries[resource.NSGR(key)] = summary
 		rsp.Summary = append(rsp.Summary, summary)
@@ -429,10 +415,9 @@ func (b *backend) processBulkChunked(ctx context.Context, setting resource.BulkS
 				b.log.Warn("cleanup after failed chunked migration", "key", resource.NSGR(key), "error", derr)
 			}
 		}
-		rsp.Error = resource.AsErrorResult(err)
-		return rsp
+		return nil, err
 	}
-	return rsp
+	return rsp, nil
 }
 
 // txChunker owns a sequence of bounded transactions on a db.DB. Callers Exec

@@ -550,6 +550,8 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/user/userimpl"
 	_ "github.com/grafana/grafana/pkg/services/validations"
 	_ "github.com/grafana/grafana/pkg/setting"
+	_ "github.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1"
+	_ "github.com/grafana/grafana/pkg/storage/dbproxy/client"
 	_ "github.com/grafana/grafana/pkg/storage/dbproxy/sqldriver"
 	_ "github.com/grafana/grafana/pkg/storage/legacysql"
 	_ "github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
