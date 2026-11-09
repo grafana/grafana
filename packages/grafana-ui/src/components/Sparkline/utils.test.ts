@@ -3,11 +3,11 @@ import type uPlot from 'uplot';
 
 import {
   createTheme,
-  type DataFrame,
   type Field,
   FieldColorModeId,
   type FieldSparkline,
   FieldType,
+  ThresholdsMode,
   toDataFrame,
 } from '@grafana/data';
 
@@ -358,30 +358,66 @@ describe('prepareConfig', () => {
     expect(config.series[0].getConfig().points?.show).not.toBe(true);
   });
 
-  describe('series color with a by-value color scheme', () => {
+  describe('series color', () => {
     const theme = createTheme();
+    const green = theme.visualization.getColorByName('green');
+    const orange = theme.visualization.getColorByName('orange');
+    const red = theme.visualization.getColorByName('red');
+    const blue = theme.visualization.getColorByName('blue');
 
-    const getStroke = (values: number[]) => {
-      const sparkline: FieldSparkline = {
-        x: { name: 'x', values: values.map((_, i) => i), type: FieldType.number, config: {} },
-        y: {
-          name: 'y',
-          values,
-          type: FieldType.number,
-          config: { color: { mode: FieldColorModeId.ContinuousRdYlGr } },
-          state: { range: { min: Math.min(...values), max: Math.max(...values), delta: 0 } },
-        },
-      };
-      const dataFrame: DataFrame = { fields: [sparkline.x!, sparkline.y], length: values.length };
-      return prepareConfig(sparkline, dataFrame, theme).series[0].getConfig().stroke;
+    const thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 50, color: 'orange' },
+        { value: 80, color: 'red' },
+      ],
     };
 
-    it('uses the scheme color for the last value', () => {
-      const green = theme.visualization.getColorByName('green');
-      const red = theme.visualization.getColorByName('red');
+    const getStroke = (values: number[], config: Field['config']) => {
+      const dataFrame = toDataFrame({
+        fields: [
+          { name: 'x', values: values.map((_, i) => i), type: FieldType.number },
+          { name: 'y', values, type: FieldType.number, config },
+        ],
+      });
+      const [x, y] = dataFrame.fields;
+      return String(prepareConfig({ x, y }, dataFrame, theme).series[0].getConfig().stroke);
+    };
 
-      expect(tinycolor.equals(String(getStroke([1, 2, 3, 4, 5])), green)).toBe(true);
-      expect(tinycolor.equals(String(getStroke([5, 4, 3, 2, 1])), red)).toBe(true);
+    it.each([
+      { description: 'the top of the range', values: [1, 2, 3, 4, 5], expected: green },
+      { description: 'the middle of the range', values: [1, 5, 3], expected: 'rgb(226, 192, 61)' },
+      { description: 'the bottom of the range', values: [5, 4, 3, 2, 1], expected: red },
+    ])('uses the scheme color when the last value is at $description', ({ values, expected }) => {
+      const stroke = getStroke(values, { color: { mode: FieldColorModeId.ContinuousRdYlGr } });
+
+      expect(tinycolor.equals(stroke, expected)).toBe(true);
+    });
+
+    it.each([
+      { description: 'above the top step', values: [1, 99], expected: red },
+      { description: 'in a middle step', values: [99, 60], expected: orange },
+      { description: 'in the base step', values: [99, 1], expected: green },
+    ])('uses the threshold color when the last value is $description', ({ values, expected }) => {
+      const stroke = getStroke(values, { color: { mode: FieldColorModeId.Thresholds }, thresholds });
+
+      expect(tinycolor.equals(stroke, expected)).toBe(true);
+    });
+
+    it('uses the threshold color for color.seriesBy instead of the last value', () => {
+      const stroke = getStroke([99, 1], { color: { mode: FieldColorModeId.Thresholds, seriesBy: 'max' }, thresholds });
+
+      expect(tinycolor.equals(stroke, red)).toBe(true);
+    });
+
+    it.each([
+      { description: 'rising', values: [1, 99] },
+      { description: 'falling', values: [99, 1] },
+    ])('uses the fixed color for a $description series', ({ values }) => {
+      const stroke = getStroke(values, { color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' } });
+
+      expect(tinycolor.equals(stroke, blue)).toBe(true);
     });
   });
 });
