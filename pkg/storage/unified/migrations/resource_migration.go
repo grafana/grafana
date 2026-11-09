@@ -71,6 +71,14 @@ func (r *MigrationRunner) legacyTableRenameEnabled() bool {
 	return r.cfg.Raw.Section("unified_storage").Key("migration_locking").MustBool(true)
 }
 
+// statementTimeout is the Postgres statement_timeout override for this migration, or zero.
+func (r *MigrationRunner) statementTimeout(opts RunOptions) time.Duration {
+	if opts.DriverName != migrator.Postgres {
+		return 0
+	}
+	return r.cfg.MigrationStatementTimeout
+}
+
 // Run executes the migration logic for all organizations.
 func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migrator.Migrator, opts RunOptions) error {
 	orgs, err := r.getAllOrgs(sess)
@@ -106,6 +114,13 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 			"unified-storage data for folders/dashboards.",
 			"resources", r.definition.ConfigResources())
 		return nil
+	}
+
+	if timeout := r.statementTimeout(opts); timeout > 0 {
+		// Covers the table locks and validators run on the migration session
+		if _, err := sess.Exec(StatementTimeoutSQL(timeout)); err != nil {
+			return fmt.Errorf("failed to set migration statement timeout: %w", err)
+		}
 	}
 
 	if opts.DriverName == migrator.SQLite {
@@ -209,9 +224,10 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 	startTime := time.Now()
 
 	migrateOpts := MigrateOptions{
-		Namespace:   info.Value,
-		Resources:   r.resources,
-		WithHistory: true, // Migrate with full history
+		Namespace:        info.Value,
+		Resources:        r.resources,
+		WithHistory:      true, // Migrate with full history
+		StatementTimeout: r.statementTimeout(opts),
 		Progress: func(count int, msg string) {
 			r.log.Info("Migration progress", "org_id", info.OrgID, "count", count, "message", msg)
 		},
