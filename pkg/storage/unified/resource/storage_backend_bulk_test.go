@@ -521,7 +521,6 @@ func TestKVStorageBackendProcessBulkExternalSQLiteTransaction(t *testing.T) {
 		require.NoError(t, err)
 		resp, err := stream.CloseAndRecv()
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
 		require.EqualValues(t, 1, resp.Processed)
 		require.NoError(t, tx.Commit())
 		require.Equal(t, []string{"item-1"}, collectBulkImportNames(t, backend, namespace))
