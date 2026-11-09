@@ -261,8 +261,10 @@ func TestRealSDKEarlyThrottleSuppressesHedgeDuringNativeBackoff(t *testing.T) {
 		cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: &http.Client{Transport: transport}, BaseEndpoint: aws.String("https://bedrock.test"), Retryer: func() aws.Retryer { return retryer }}
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
+		start := time.Now()
 		scores, err := NewRerankerWithHedgeDelay(NewClient(bedrockruntime.NewFromConfig(cfg)), "m", 500*time.Millisecond).Score(ctx, "q", []string{"a"})
 		require.NoError(t, err)
+		require.Equal(t, 750*time.Millisecond, time.Since(start))
 		require.Equal(t, []float64{0.8}, scores)
 		require.EqualValues(t, 2, calls.Load())
 		require.EqualValues(t, 1, retryer.quota.Load())
