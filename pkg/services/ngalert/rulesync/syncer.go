@@ -34,7 +34,7 @@ import (
 // IsManagedFolder key on the folder UID, not this title, so a pre-existing user
 // folder with the same title is harmless.
 func rootFolderTitle(dsUID string) string {
-	return fmt.Sprintf("[Alerting] External Ruler Sync (%s)", dsUID)
+	return fmt.Sprintf("[Alerting Admin] External Ruler Sync (%s)", dsUID)
 }
 
 const versionMessage = "external ruler sync"
