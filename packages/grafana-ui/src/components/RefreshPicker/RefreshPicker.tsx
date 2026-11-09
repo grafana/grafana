@@ -131,7 +131,7 @@ const RefreshPickerComponent = memo((props: Props) => {
   return (
     <ButtonGroup className="refresh-picker">
       <ToolbarButton
-        aria-label={loadingText && isLoading ? loadingText : text || tooltip || refreshLabel}
+        aria-label={isLoading ? loadingText || tooltip || text || refreshLabel : text || tooltip || refreshLabel}
         tooltip={tooltip ?? (iconOnly ? refreshLabel : undefined)}
         onClick={onRefresh}
         variant={variant}

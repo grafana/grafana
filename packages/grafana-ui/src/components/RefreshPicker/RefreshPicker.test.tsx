@@ -114,5 +114,13 @@ describe('RefreshPicker', () => {
       render(<RefreshPicker onIntervalChanged={jest.fn()} isLoading tooltip="Cancel all queries" />);
       expect(screen.getByRole('button', { name: 'Cancel all queries' })).toBeInTheDocument();
     });
+    it('should use the tooltip as its name while loading when it has text but no loading text', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} text="5s" isLoading tooltip="Cancel all queries" />);
+      expect(screen.getByRole('button', { name: 'Cancel all queries' })).toBeInTheDocument();
+    });
+    it('should use the loading text as its name while loading', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} text="Refresh" loadingText="Cancel" isLoading />);
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    });
   });
 });
