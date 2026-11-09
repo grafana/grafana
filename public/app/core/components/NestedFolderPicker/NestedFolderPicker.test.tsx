@@ -175,8 +175,8 @@ describe('NestedFolderPicker', () => {
     await user.click(button);
 
     // The team folders group, its folder, the root and the virtual "Shared with me" folder come first,
-    // then the regular tree.
-    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{Enter}');
+    // then the regular tree in server order; Folder C is its third row.
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{Enter}');
     expect(mockOnChange).toHaveBeenCalledWith(folderC.item.uid, folderC.item.title);
   });
 
@@ -442,8 +442,9 @@ describe('NestedFolderPicker', () => {
     await user.click(button);
     await screen.findByLabelText(folderA.item.title);
 
-    // The root and the virtual "Shared with me" folder come first, then the sorted tree; Folder A is the fifth row.
-    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowRight}');
+    // The root and the virtual "Shared with me" folder come first, then the tree in server order; Folder A is the
+    // third row.
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowRight}');
 
     // Folder A's children are visible
     expect(await screen.findByLabelText(folderA_folderA.item.title)).toBeInTheDocument();
@@ -460,7 +461,7 @@ describe('NestedFolderPicker', () => {
 
     // Select the first child
     await user.keyboard('{ArrowDown}{Enter}');
-    expect(mockOnChange).toHaveBeenCalledWith(folderA_folderC.item.uid, folderA_folderC.item.title);
+    expect(mockOnChange).toHaveBeenCalledWith(folderA_folderA.item.uid, folderA_folderA.item.title);
   });
 
   it('shows an error when folder browsing fails', async () => {
