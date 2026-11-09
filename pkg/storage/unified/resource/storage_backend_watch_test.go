@@ -987,7 +987,7 @@ func TestKVWatchHoldsResumesUntilFloorsAreRaised(t *testing.T) {
 		require.True(t, held, "resumes stay held while the latest RV cannot be read")
 
 		store.failing.Store(false)
-		time.Sleep(defaultMaxBackoff)
+		time.Sleep(10 * time.Second)
 		synctest.Wait()
 		floor, held := floors.get(other)
 		require.False(t, held)
