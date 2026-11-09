@@ -26,6 +26,43 @@ starsV1alpha1: {
 			"UPDATE",
 		]
 	}
+	routes: {
+		"/update/{group}/{kind}/{id}": {
+			"PUT": {
+				operationId:        "addStar"
+				description:        "Add a starred item"
+				responseKind:       "Stars"
+				allowMissingParent: true
+				request: parameters: _itemParams
+			}
+			"DELETE": {
+				operationId:        "removeStar"
+				description:        "Remove a starred item"
+				responseKind:       "Stars"
+				allowMissingParent: true
+				request: parameters: _itemParams
+			}
+		}
+	}
+	_itemParams: [
+		{
+			name:        "group"
+			in:          "path"
+			description: "API group for stared item"
+			example:     "dashboard.grafana.app"
+		},
+		{
+			name:        "kind"
+			in:          "path"
+			description: "Kind for stared item"
+			example:     "Dashboard"
+		},
+		{
+			name:        "id"
+			in:          "path"
+			description: "The k8s name for the selected item"
+		},
+	]
 	schema: {
 		#Resource: {
 			group: string
