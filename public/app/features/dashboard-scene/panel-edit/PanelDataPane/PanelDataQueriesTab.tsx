@@ -284,7 +284,9 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   };
 
   public onRunQueries = () => {
-    this.queryRunner.runQueries();
+    if (this.queryRunner.state.queries.length > 0) {
+      this.queryRunner.runQueries();
+    }
   };
 
   public getQueries() {

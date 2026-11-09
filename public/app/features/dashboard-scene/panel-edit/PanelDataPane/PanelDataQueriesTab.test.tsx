@@ -917,6 +917,18 @@ describe('PanelDataQueriesTab', () => {
             },
           ]);
         });
+
+        it('does not run the empty query runner after removing the final query', async () => {
+          const { queriesTab } = await setupScene('panel-1');
+          const runQueries = jest.spyOn(queriesTab.queryRunner, 'runQueries');
+
+          queriesTab.onQueriesChange([]);
+          queriesTab.onRunQueries();
+
+          expect(queriesTab.queryRunner.state.queries).toEqual([]);
+          expect(queriesTab.queryRunner.isDataReadyToDisplay()).toBe(true);
+          expect(runQueries).not.toHaveBeenCalled();
+        });
       });
 
       describe('dashboard queries', () => {
