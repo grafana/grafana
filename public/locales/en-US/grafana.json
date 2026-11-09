@@ -16229,6 +16229,9 @@
     "off-option": {
       "label": "Off"
     },
+    "refresh-button": {
+      "label": "Refresh"
+    },
     "tooltip": {
       "interval-selected": "Set auto refresh interval",
       "turned-off": "Auto refresh off"
