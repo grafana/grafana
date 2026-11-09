@@ -22,6 +22,7 @@ const (
 	PluginInstallSourceAnnotation = "plugins.grafana.app/install-source"
 	// PluginStoreSyncServiceIdentity identifies writes made by install sync.
 	PluginStoreSyncServiceIdentity = "plugins.installsync"
+	StackStateServiceIdentity      = "stack-state-service"
 	// AppliedDependenciesAnnotation records the dependency plugin IDs that the
 	// plugin storage hooks have applied for a plugin. The hooks stamp it
 	// authoritatively from plugin metadata on create/update.
@@ -42,10 +43,11 @@ var ErrSyncDidNotConverge = errors.New("plugin install sync did not converge")
 type Source = string
 
 const (
-	SourceUnknown          Source = "unknown"
-	SourcePluginStore      Source = "plugin-store"
-	SourceChildPlugin      Source = "child-plugin"
-	SourceDependencyPlugin Source = "dependency-plugin"
+	SourceUnknown           Source = "unknown"
+	SourcePluginStore       Source = "plugin-store"
+	SourceChildPlugin       Source = "child-plugin"
+	SourceDependencyPlugin  Source = "dependency-plugin"
+	SourceStackStateService Source = "stack-state-service"
 )
 
 // Registrar is an interface for registering plugin installations.
