@@ -9,42 +9,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/mock/gomock"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
-
-type observation struct {
-	implementation Implementation
-	duration       time.Duration
-}
-
-type recordingObserver struct {
-	durations []observation
-	outcomes  []Outcome
-	skips     []SkipReason
-	errors    []error
-	panics    []any
-}
-
-func (o *recordingObserver) ObserveDuration(i Implementation, d time.Duration) {
-	o.durations = append(o.durations, observation{i, d})
-}
-
-func (o *recordingObserver) ObserveOutcome(outcome Outcome) {
-	o.outcomes = append(o.outcomes, outcome)
-}
-
-func (o *recordingObserver) ObserveSkip(reason SkipReason) {
-	o.skips = append(o.skips, reason)
-}
-
-func (o *recordingObserver) ObserveError(_ context.Context, err error) {
-	o.errors = append(o.errors, err)
-}
-
-func (o *recordingObserver) ObservePanic(_ context.Context, value any) {
-	o.panics = append(o.panics, value)
-}
 
 func newTestRunner(t *testing.T) *Runner {
 	t.Helper()
@@ -88,8 +56,20 @@ func TestRunnerInvalidWorkPreservesPrimary(t *testing.T) {
 	for _, missing := range []string{"Snapshot", "Call", "Compare", "all"} {
 		t.Run(missing, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
+				controller := gomock.NewController(t)
 				runner := newTestRunner(t)
-				observer := &recordingObserver{}
+				observer := NewMockObserver(controller)
+
+				callback := missing
+				if missing == "all" {
+					callback = "Snapshot"
+				}
+
+				observer.EXPECT().ObserveDuration(Primary, gomock.Any())
+				observer.EXPECT().ObserveError(gomock.Any(), gomock.Cond(func(err error) bool {
+					return err != nil && err.Error() == "shadow work "+callback+" callback is required"
+				}))
+				observer.EXPECT().ObserveOutcome(Failed)
 
 				primaryCalls, shadowCallbacks := 0, 0
 				wantErr := errors.New("primary failure")
@@ -129,24 +109,15 @@ func TestRunnerInvalidWorkPreservesPrimary(t *testing.T) {
 				require.ErrorIs(t, primaryErr, wantErr)
 
 				require.Zero(t, shadowCallbacks)
-				require.Equal(t, []Outcome{Failed}, observer.outcomes)
-				require.Len(t, observer.errors, 1)
-
-				callback := missing
-				if missing == "all" {
-					callback = "Snapshot"
-				}
-
-				require.EqualError(t, observer.errors[0], "shadow work "+callback+" callback is required")
-				require.Empty(t, observer.panics)
 				require.Empty(t, runner.inFlight)
 
-				next := &recordingObserver{}
+				next := NewMockObserver(controller)
+				next.EXPECT().ObserveDuration(Primary, gomock.Any())
+				next.EXPECT().ObserveDuration(Shadow, gomock.Any())
+				next.EXPECT().ObserveOutcome(Match)
+
 				runner.Run(t.Context(), next, func() {}, matchingWork)
 				synctest.Wait()
-
-				require.Equal(t, []Outcome{Match}, next.outcomes)
-				require.Empty(t, next.errors)
 			})
 		})
 	}
@@ -154,8 +125,12 @@ func TestRunnerInvalidWorkPreservesPrimary(t *testing.T) {
 
 func TestRunnerDetachesRequestAndSnapshotsBeforeReturn(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
+		controller := gomock.NewController(t)
 		runner := newTestRunner(t)
-		observer := &recordingObserver{}
+		observer := NewMockObserver(controller)
+		primaryTiming := observer.EXPECT().ObserveDuration(Primary, 2*time.Millisecond)
+		observer.EXPECT().ObserveDuration(Shadow, 3*time.Millisecond).After(primaryTiming)
+		observer.EXPECT().ObserveOutcome(Match)
 
 		type requestKey struct{}
 		ctx, cancel := context.WithCancel(context.WithValue(t.Context(), requestKey{}, "mutable state"))
@@ -204,16 +179,15 @@ func TestRunnerDetachesRequestAndSnapshotsBeforeReturn(t *testing.T) {
 		<-finished
 		synctest.Wait()
 
-		require.Equal(t, []Outcome{Match}, observer.outcomes)
 		require.Nil(t, actualContext.Value(requestKey{}))
 		require.Equal(t, span, trace.SpanContextFromContext(actualContext))
-		require.Equal(t, []observation{{Primary, 2 * time.Millisecond}, {Shadow, 3 * time.Millisecond}}, observer.durations)
 		require.Empty(t, runner.inFlight)
 	})
 }
 
 func TestRunnerSkipPolicyIsOptionalAndPerRun(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
+		controller := gomock.NewController(t)
 		runner := newTestRunner(t)
 		ctx := context.WithValue(t.Context(), sqlstore.ContextSessionKey{}, &sqlstore.DBSession{})
 
@@ -240,7 +214,15 @@ func TestRunnerSkipPolicyIsOptionalAndPerRun(t *testing.T) {
 				})},
 			},
 		} {
-			observer := &recordingObserver{}
+			observer := NewMockObserver(controller)
+			if tc.skipped {
+				observer.EXPECT().ObserveSkip(SkipReason("test-policy"))
+			} else {
+				observer.EXPECT().ObserveDuration(Primary, gomock.Any())
+				observer.EXPECT().ObserveDuration(Shadow, gomock.Any())
+				observer.EXPECT().ObserveOutcome(Match)
+			}
+
 			calls, prepared := 0, false
 
 			runner.Run(ctx, observer, func() { calls++ }, func() Work {
@@ -252,17 +234,6 @@ func TestRunnerSkipPolicyIsOptionalAndPerRun(t *testing.T) {
 
 			require.Equal(t, 1, calls, tc.name)
 			require.Equal(t, !tc.skipped, prepared, tc.name)
-
-			if tc.skipped {
-				require.Equal(t, []SkipReason{"test-policy"}, observer.skips, tc.name)
-				require.Empty(t, observer.outcomes, tc.name)
-				require.Empty(t, observer.durations, tc.name)
-			} else {
-				require.Empty(t, observer.skips, tc.name)
-				require.Equal(t, []Outcome{Match}, observer.outcomes, tc.name)
-			}
-
-			require.Empty(t, observer.panics, tc.name)
 			require.Empty(t, runner.inFlight, tc.name)
 		}
 	})
@@ -270,8 +241,12 @@ func TestRunnerSkipPolicyIsOptionalAndPerRun(t *testing.T) {
 
 func TestRunnerSkipPolicyPanicPreservesPrimary(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
+		controller := gomock.NewController(t)
 		runner := newTestRunner(t)
-		observer := &recordingObserver{}
+		observer := NewMockObserver(controller)
+		observer.EXPECT().ObservePanic(gomock.Any(), "policy")
+		observer.EXPECT().ObserveOutcome(Failed)
+
 		calls := 0
 
 		runner.Run(t.Context(), observer, func() { calls++ }, func() Work {
@@ -281,23 +256,30 @@ func TestRunnerSkipPolicyPanicPreservesPrimary(t *testing.T) {
 		}, WithSkip(func(context.Context) SkipReason { panic("policy") }))
 
 		require.Equal(t, 1, calls)
-		require.Equal(t, []Outcome{Failed}, observer.outcomes)
-		require.Equal(t, []any{"policy"}, observer.panics)
-		require.Empty(t, observer.skips)
 		require.Empty(t, runner.inFlight)
 
-		next := &recordingObserver{}
+		next := NewMockObserver(controller)
+		next.EXPECT().ObserveDuration(Primary, gomock.Any())
+		next.EXPECT().ObserveDuration(Shadow, gomock.Any())
+		next.EXPECT().ObserveOutcome(Match)
+
 		runner.Run(t.Context(), next, func() {}, matchingWork)
 		synctest.Wait()
-
-		require.Equal(t, []Outcome{Match}, next.outcomes)
 	})
 }
 
 func TestRunnerSharesCapacityAcrossOperations(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
+		controller := gomock.NewController(t)
 		runner := newTestRunner(t)
-		first, second := &recordingObserver{}, &recordingObserver{}
+		first := NewMockObserver(controller)
+		first.EXPECT().ObserveDuration(Primary, gomock.Any())
+		first.EXPECT().ObserveDuration(Shadow, gomock.Any())
+		first.EXPECT().ObserveOutcome(Match)
+
+		second := NewMockObserver(controller)
+		second.EXPECT().ObserveSkip(Capacity)
+
 		release := make(chan struct{})
 
 		runner.Run(t.Context(), first, func() {}, func() Work {
@@ -312,24 +294,29 @@ func TestRunnerSharesCapacityAcrossOperations(t *testing.T) {
 		runner.Run(t.Context(), second, func() { primaryCalled = true }, func() Work { panic("must not prepare") })
 
 		require.True(t, primaryCalled)
-		require.Equal(t, []SkipReason{Capacity}, second.skips)
-		require.Empty(t, second.panics)
 
 		close(release)
 		synctest.Wait()
 
+		second.EXPECT().ObserveDuration(Primary, gomock.Any())
+		second.EXPECT().ObserveDuration(Shadow, gomock.Any())
+		second.EXPECT().ObserveOutcome(Match)
+
 		runner.Run(t.Context(), second, func() {}, matchingWork)
 		synctest.Wait()
-
-		require.Equal(t, []Outcome{Match}, first.outcomes)
-		require.Equal(t, []Outcome{Match}, second.outcomes)
 	})
 }
 
 func TestRunnerDeadlineDoesNotReleaseRunningWork(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
+		controller := gomock.NewController(t)
 		runner := newTestRunner(t)
-		observer := &recordingObserver{}
+		observer := NewMockObserver(controller)
+		observer.EXPECT().ObserveDuration(Primary, gomock.Any())
+		observer.EXPECT().ObserveDuration(Shadow, gomock.Any())
+		// Even a callback claiming success cannot turn an expired call into a match.
+		observer.EXPECT().ObserveOutcome(Failed)
+
 		timedOut, release := make(chan struct{}), make(chan struct{})
 		var deadlineErr error
 
@@ -347,15 +334,14 @@ func TestRunnerDeadlineDoesNotReleaseRunningWork(t *testing.T) {
 		<-timedOut
 		require.ErrorIs(t, deadlineErr, context.DeadlineExceeded)
 
-		skipped := &recordingObserver{}
+		skipped := NewMockObserver(controller)
+		skipped.EXPECT().ObserveSkip(Capacity)
+
 		runner.Run(t.Context(), skipped, func() {}, func() Work { panic("must not prepare") })
-		require.Equal(t, []SkipReason{Capacity}, skipped.skips)
 
 		close(release)
 		synctest.Wait()
 
-		// Even a callback claiming success cannot turn an expired call into a match.
-		require.Equal(t, []Outcome{Failed}, observer.outcomes)
 		require.Empty(t, runner.inFlight)
 	})
 }
@@ -364,8 +350,12 @@ func TestRunnerReleasesSlotOnEveryOutcome(t *testing.T) {
 	for _, outcome := range []Outcome{Match, Mismatch, Failed} {
 		t.Run(string(outcome), func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
+				controller := gomock.NewController(t)
 				runner := newTestRunner(t)
-				observer := &recordingObserver{}
+				observer := NewMockObserver(controller)
+				observer.EXPECT().ObserveDuration(Primary, gomock.Any())
+				observer.EXPECT().ObserveDuration(Shadow, gomock.Any())
+				observer.EXPECT().ObserveOutcome(outcome)
 
 				runner.Run(t.Context(), observer, func() {}, func() Work {
 					work := matchingWork()
@@ -375,7 +365,6 @@ func TestRunnerReleasesSlotOnEveryOutcome(t *testing.T) {
 				})
 				synctest.Wait()
 
-				require.Equal(t, []Outcome{outcome}, observer.outcomes)
 				require.Empty(t, runner.inFlight)
 			})
 		})
@@ -386,8 +375,16 @@ func TestRunnerShadowPanicsPreservePrimary(t *testing.T) {
 	for _, stage := range []string{"prepare", "snapshot", "call", "compare"} {
 		t.Run(stage, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
+				controller := gomock.NewController(t)
 				runner := newTestRunner(t)
-				observer := &recordingObserver{}
+				observer := NewMockObserver(controller)
+				observer.EXPECT().ObserveDuration(Primary, gomock.Any())
+				if stage == "call" || stage == "compare" {
+					observer.EXPECT().ObserveDuration(Shadow, gomock.Any())
+				}
+				observer.EXPECT().ObservePanic(gomock.Any(), stage)
+				observer.EXPECT().ObserveOutcome(Failed)
+
 				calls := 0
 
 				runner.Run(t.Context(), observer, func() { calls++ }, func() Work {
@@ -409,8 +406,6 @@ func TestRunnerShadowPanicsPreservePrimary(t *testing.T) {
 				synctest.Wait()
 
 				require.Equal(t, 1, calls)
-				require.Equal(t, []Outcome{Failed}, observer.outcomes)
-				require.Equal(t, []any{stage}, observer.panics)
 				require.Empty(t, runner.inFlight)
 			})
 		})
@@ -418,14 +413,14 @@ func TestRunnerShadowPanicsPreservePrimary(t *testing.T) {
 }
 
 func TestRunnerPrimaryPanicPropagatesAndReleasesSlot(t *testing.T) {
+	controller := gomock.NewController(t)
 	runner := newTestRunner(t)
-	observer := &recordingObserver{}
+	observer := NewMockObserver(controller)
+	observer.EXPECT().ObserveDuration(Primary, gomock.Any())
 
 	require.PanicsWithValue(t, "primary", func() {
 		runner.Run(t.Context(), observer, func() { panic("primary") }, matchingWork)
 	})
 
 	require.Empty(t, runner.inFlight)
-	require.Empty(t, observer.outcomes)
-	require.Empty(t, observer.panics)
 }

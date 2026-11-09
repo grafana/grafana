@@ -37,6 +37,8 @@ const (
 // Observer binds instrumentation to an operation. Implementations must be safe
 // for concurrent calls. Keeping registration outside Runner lets adapters retain
 // existing metrics or bind shared collectors to fixed operation labels.
+//
+//go:generate go run go.uber.org/mock/mockgen -source=runner.go -destination=observer_mock_test.go -package=shadow
 type Observer interface {
 	ObserveDuration(Implementation, time.Duration)
 	ObserveOutcome(Outcome)
