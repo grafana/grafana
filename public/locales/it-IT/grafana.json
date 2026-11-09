@@ -8327,6 +8327,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Apri il riquadro della query",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Apri il riquadro della query"
     },
     "viz-panel-links-renderer": {
@@ -9757,7 +9759,6 @@
     "api": {
       "anonymous-user": "Anonimo",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Cartella eliminata",
       "folder-move-error-provisioned": "Impossibile spostare la cartella configurata. Per spostarla, trasferiscila nel repository ed esegui la sincronizzazione per applicare le modifiche.",
       "folder-moved-success": "Cartella spostata"
     }
@@ -11704,8 +11705,8 @@
           },
           "website-monitoring": {
             "cta": "Inizia configurazione",
-            "description": "Monitora la disponibilità del tuo sito web e le sue prestazioni da diverse posizioni.",
-            "title": "Monitora il tempo di attività e le prestazioni del sito web"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Mostra meno guide",
@@ -11826,10 +11827,10 @@
       "switchSolution": "Cambia soluzione",
       "synthetic-monitoring": {
         "action": "Abilita il monitoraggio sintetico",
-        "context": "Controlli black-box per i servizi eseguiti dal tuo cluster",
-        "description": "Controlla i tuoi endpoint da qualsiasi parte del mondo con test HTTP, DNS e ping, e ricevi avvisi sui tempi di inattività.",
+        "context": "",
+        "description": "",
         "setup-action": "Crea il tuo primo controllo",
-        "title": "Monitora il tempo di attività dall'esterno"
+        "title": ""
       },
       "title": "Consigli per il tuo stack"
     },
@@ -11928,7 +11929,7 @@
       },
       "synthetics": {
         "create-check": "Crea un controllo",
-        "description": "Monitora il tempo di attività e le prestazioni dei tuoi endpoint tramite sonde dislocate in tutto il mondo.",
+        "description": "",
         "failing-worst": "{{check}} al {{percent}}%",
         "filter": {
           "instances": "",
@@ -13557,8 +13558,12 @@
       "code": "Codice",
       "heading": "Intestazione",
       "label": "Fai clic per aggiungere in alto",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Paragrafo",
       "prompt": "Digita per iniziare a scrivere: premi / per i blocchi",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Visualizzazione"
     },
     "cell": {
@@ -14805,6 +14810,7 @@
       "delete-confirm": "Vuoi davvero eliminare questa connessione? Quest'azione non può essere annullata.",
       "delete-title": "Elimina connessione",
       "error-loading": "Impossibile caricare le connessioni",
+      "export": "",
       "kind-github-app": "App GitHub",
       "kind-oauth-app": "App OAuth",
       "no-connections": "Nessuna connessione configurata",
@@ -15307,6 +15313,7 @@
       "view-folder": "Visualizza cartella"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Ultima sincronizzazione: {{date}}",
       "settings": "Impostazioni",
       "view": "Visualizza"

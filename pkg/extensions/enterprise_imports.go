@@ -811,6 +811,7 @@ import (
 	_ "k8s.io/client-go/testing"
 	_ "k8s.io/client-go/tools/cache"
 	_ "k8s.io/client-go/tools/clientcmd"
+	_ "k8s.io/client-go/tools/pager"
 	_ "k8s.io/client-go/transport"
 	_ "k8s.io/client-go/util/flowcontrol"
 	_ "k8s.io/client-go/util/retry"

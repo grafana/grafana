@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
+import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
@@ -57,11 +57,6 @@ describe('NestedFolderPicker', () => {
 
   beforeEach(() => {
     originalProvisioningEnabled = config.provisioningEnabled;
-    // These tests were written against the legacy folder tree, so pin the flag off by default.
-    // The describes below that need the app-platform tree opt in explicitly.
-    // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
-    // that production actually uses.
-    setTestFlags({ foldersAppPlatformAPI: false });
 
     const { useFoldersQuery: realUseFoldersQuery } = jest.requireActual('./useFoldersQuery');
     useFoldersQueryMock.mockImplementation(realUseFoldersQuery);
@@ -86,11 +81,8 @@ describe('NestedFolderPicker', () => {
     window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     config.provisioningEnabled = originalProvisioningEnabled;
-    await act(async () => {
-      setTestFlags({});
-    });
     jest.resetAllMocks();
   });
 
@@ -183,8 +175,9 @@ describe('NestedFolderPicker', () => {
 
     await user.click(button);
 
-    // First two items are the team folders group and its folder, then the regular tree
-    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{Enter}');
+    // The team folders group, its folder, the root and the virtual "Shared with me" folder come first,
+    // then the regular tree.
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{Enter}');
     expect(mockOnChange).toHaveBeenCalledWith(folderC.item.uid, folderC.item.title);
   });
 
@@ -223,8 +216,6 @@ describe('NestedFolderPicker', () => {
   });
 
   it('applies the folder filter while browsing and keeps the owning root selectable', async () => {
-    setTestFlags({ foldersAppPlatformAPI: true });
-
     const rootFolderItem = getCustomRootFolderItem({
       title: 'Infra dashboards',
       managedBy: ManagerKind.Repo,
@@ -340,7 +331,6 @@ describe('NestedFolderPicker', () => {
   });
 
   it('keeps the team and starred sections for a local move and hides their managed children', async () => {
-    setTestFlags({ foldersAppPlatformAPI: true });
     useGetTeamFoldersMock.mockReturnValue({
       foldersByTeam: [
         {
@@ -412,6 +402,8 @@ describe('NestedFolderPicker', () => {
   });
 
   it('can expand and collapse a folder to show its children', async () => {
+    // Drop the team section so Folder A's children stay inside the virtualized window.
+    useGetTeamFoldersMock.mockReturnValue({ foldersByTeam: [], isLoading: false, error: undefined });
     const { user } = render(<NestedFolderPicker permission="view" onChange={mockOnChange} />);
 
     // Open the picker and wait for children to load
@@ -443,13 +435,16 @@ describe('NestedFolderPicker', () => {
   });
 
   it('can expand and collapse a folder to show its children with the keyboard', async () => {
+    // Drop the team section so Folder A's children stay inside the virtualized window.
+    useGetTeamFoldersMock.mockReturnValue({ foldersByTeam: [], isLoading: false, error: undefined });
     const { user } = render(<NestedFolderPicker permission="view" onChange={mockOnChange} />);
     const button = await screen.findByRole('button', { name: 'Select folder' });
 
     await user.click(button);
+    await screen.findByLabelText(folderA.item.title);
 
-    // Expand Folder A (first two items are the team folders group and its folder)
-    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowRight}');
+    // The root and the virtual "Shared with me" folder come first, then the sorted tree; Folder A is the fifth row.
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowRight}');
 
     // Folder A's children are visible
     expect(await screen.findByLabelText(folderA_folderA.item.title)).toBeInTheDocument();
@@ -600,7 +595,7 @@ describe('NestedFolderPicker', () => {
   });
 
   describe('read only folders', () => {
-    const readOnlyFlags = { 'grafana.folderPickerFolderEditAccess': true, foldersAppPlatformAPI: true };
+    const readOnlyFlags = { 'grafana.folderPickerFolderEditAccess': true };
 
     beforeEach(() => {
       // The shared handler ignores `include`, so answer as the server would
@@ -676,11 +671,7 @@ describe('NestedFolderPicker', () => {
     });
 
     it.each<{ name: string; flags: Parameters<typeof setTestFlags>[0]; permission?: 'view' | 'edit' }>([
-      { name: 'the feature flag is off', flags: { foldersAppPlatformAPI: true } },
-      {
-        name: 'the app platform folders API is off',
-        flags: { 'grafana.folderPickerFolderEditAccess': true, foldersAppPlatformAPI: false },
-      },
+      { name: 'the feature flag is off', flags: {} },
       { name: 'the picker lists folders the user can view', flags: readOnlyFlags, permission: 'view' },
     ])('does not show read only folders when $name', async ({ flags, permission }) => {
       setTestFlags(flags);

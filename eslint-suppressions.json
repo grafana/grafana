@@ -2421,24 +2421,9 @@
       "count": 3
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelEditNext/VizAndDataPaneNext.tsx": {
-    "react-hooks/refs": {
-      "count": 4
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelEditNext/hooks.ts": {
-    "react-hooks/refs": {
-      "count": 3
-    }
-  },
   "public/app/features/dashboard-scene/panel-edit/PanelEditorRenderer.tsx": {
     "react-hooks/immutability": {
       "count": 3
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/splitter/useSnappingSplitter.ts": {
-    "react-hooks/immutability": {
-      "count": 19
     }
   },
   "public/app/features/dashboard-scene/saving/useParkSaveFormDraft.ts": {
@@ -4115,11 +4100,6 @@
   "public/app/features/variables/query/actions.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "public/app/features/variables/query/operators.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/variables/query/queryRunners.ts": {
