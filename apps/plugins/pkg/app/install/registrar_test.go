@@ -1090,6 +1090,22 @@ func TestInstallRegistrar_Unregister(t *testing.T) {
 			expectedCalls: 1,
 		},
 		{
+			name:       "deletes plugin with an empty source",
+			namespace:  "org-1",
+			pluginName: "plugin-1",
+			source:     SourcePluginStore,
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "org-1",
+					Name:      "plugin-1",
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation: "",
+					},
+				},
+			},
+			expectedCalls: 1,
+		},
+		{
 			name:       "demotes plugin with dependency parents instead of deleting",
 			namespace:  "org-1",
 			pluginName: "dependency-panel",
@@ -1310,6 +1326,45 @@ func TestInstallRegistrar_SyncNamespace(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 2, c.lists)
 		require.Equal(t, []string{"plugin-1"}, c.gets)
+		require.Equal(t, 1, c.updates)
+		require.Zero(t, c.creates+c.deletes)
+	})
+
+	t.Run("leaves a plugin another source claimed after the list", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c, []pluginsv0alpha1.Plugin{
+			newRecord("plugin-1", "plugin-1", "1.0.0", SourcePluginStore),
+		})
+		fakeClient.getFunc = func(_ context.Context, identifier resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+			c.gets = append(c.gets, identifier.Name)
+			fresh := newRecord("plugin-1", "plugin-1", "1.0.0", SourceStackStateService)
+			return &fresh, nil
+		}
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
+			{ID: "plugin-1", Version: "2.0.0", Source: SourcePluginStore},
+		}, nil)
+		require.NoError(t, err)
+		require.Equal(t, []string{"plugin-1"}, c.gets)
+		require.Equal(t, 1, c.lists)
+		require.Zero(t, c.creates+c.updates+c.deletes)
+	})
+
+	t.Run("promotes a dependency record to the sync source", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			[]pluginsv0alpha1.Plugin{newRecord("plugin-1", "plugin-1", DependencyPluginVersion, SourceDependencyPlugin)},
+			[]pluginsv0alpha1.Plugin{newRecord("plugin-1", "plugin-1", "2.0.0", SourcePluginStore)},
+		)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
+			{ID: "plugin-1", Version: "2.0.0", Source: SourcePluginStore},
+		}, nil)
+		require.NoError(t, err)
+		require.Equal(t, []string{"plugin-1"}, c.gets)
+		require.Equal(t, 2, c.lists)
 		require.Equal(t, 1, c.updates)
 		require.Zero(t, c.creates+c.deletes)
 	})
@@ -1675,6 +1730,21 @@ func TestInstallRegistrar_SyncNamespace(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Namespace: "org-1", Name: "plugin-1"},
 				Spec:       pluginsv0alpha1.PluginSpec{Id: "plugin-1", Version: "1.0.0"},
 			}},
+			nil,
+		)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, []string{"plugin-1"}, c.gets)
+		require.Equal(t, 2, c.lists)
+		require.Equal(t, 1, c.deletes)
+	})
+
+	t.Run("unregisters a plugin with an empty source", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			[]pluginsv0alpha1.Plugin{newRecord("plugin-1", "plugin-1", "1.0.0", "")},
 			nil,
 		)
 		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})

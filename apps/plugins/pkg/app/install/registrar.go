@@ -418,8 +418,8 @@ func (r *InstallRegistrar) unregisterIsNoOp(record *pluginsv0alpha1.Plugin, sour
 	if record.Name != record.Spec.Id {
 		return false
 	}
-	existingSource, ok := record.Annotations[PluginInstallSourceAnnotation]
-	return ok && existingSource != source
+	existingSource := record.Annotations[PluginInstallSourceAnnotation]
+	return existingSource != "" && existingSource != source
 }
 
 // Unregister removes a plugin install from the registry.
@@ -458,9 +458,10 @@ func (r *InstallRegistrar) unregister(ctx context.Context, namespace string, nam
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
 		return false, nil
 	}
-	// if the source is different, do not unregister. unregisterIsNoOp relies
-	// on this check running before the dependency-parents demote below.
-	if existingSource, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && existingSource != source {
+	// if another source owns the record, do not unregister. A missing or empty
+	// source belongs to no one. unregisterIsNoOp relies on this check running
+	// before the dependency-parents demote below.
+	if existingSource := existing.Annotations[PluginInstallSourceAnnotation]; existingSource != "" && existingSource != source {
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
 		return false, nil
 	}
