@@ -8,12 +8,14 @@ import {
   keymap,
   type KeyBinding,
   ViewPlugin,
+  WidgetType,
   type ViewUpdate,
 } from '@codemirror/view';
 import { type SyntaxNode, type SyntaxNodeRef, type Tree } from '@lezer/common';
-import { Strikethrough } from '@lezer/markdown';
+import { Strikethrough, TaskList } from '@lezer/markdown';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { toggleSurround } from 'app/plugins/panel/text/v2/editor/editorCommands';
 
 import { headingStyles } from './markdownHeadingStyles';
@@ -27,7 +29,7 @@ export const INLINE_CODE_NODE = 'InlineCode';
 export const LINK_NODE = 'Link';
 export const STRIKETHROUGH_NODE = 'Strikethrough';
 
-export const markdownLanguageSupport = markdown({ base: markdownLanguage, extensions: [Strikethrough] });
+export const markdownLanguageSupport = markdown({ base: markdownLanguage, extensions: [Strikethrough, TaskList] });
 
 /**
  * Walks from `pos` up through its ancestor nodes, returning the first one whose type is in
@@ -60,8 +62,11 @@ export function findEnclosingMarkNode(tree: Tree, pos: number, typeNames: readon
  * active state, the same way `findEnclosingMarkNode` drives Bold/Italic/etc. (a plain node-type check
  * doesn't fit here: both list kinds share the `ListItem` node, so the answer depends on its parent).
  */
-export function enclosingListKind(tree: Tree, pos: number): 'bullet' | 'ordered' | undefined {
+export function enclosingListKind(tree: Tree, pos: number): 'bullet' | 'ordered' | 'checklist' | undefined {
   const listItem = findEnclosingMarkNode(tree, pos, ['ListItem']);
+  if (listItem?.getChild('Task')) {
+    return 'checklist';
+  }
   if (listItem?.parent?.name === 'BulletList') {
     return 'bullet';
   }
@@ -85,11 +90,15 @@ export function nextListContinuation(state: EditorState, pos: number): string | 
     return undefined;
   }
 
-  const hasContent = state.sliceDoc(marker.to, listItem.to).trim().length > 0;
+  const taskMarker = listItem.getChild('Task')?.getChild('TaskMarker');
+  const hasContent = state.sliceDoc(taskMarker?.to ?? marker.to, listItem.to).trim().length > 0;
   if (!hasContent) {
     return undefined;
   }
 
+  if (taskMarker) {
+    return '- [ ] ';
+  }
   if (listItem.parent?.name === 'BulletList') {
     return '- ';
   }
@@ -98,6 +107,104 @@ export function nextListContinuation(state: EditorState, pos: number): string | 
     return Number.isNaN(currentNumber) ? undefined : `${currentNumber + 1}. `;
   }
   return undefined;
+}
+
+/** Converts selected lines to checklist items, or removes the markers when all are already tasks. */
+export function toggleChecklist(view: EditorView): void {
+  toggleList(view, 'checklist');
+}
+
+export function toggleBulletedList(view: EditorView): void {
+  toggleList(view, 'bullet');
+}
+
+function toggleList(view: EditorView, kind: 'bullet' | 'checklist'): void {
+  const { state } = view;
+  const { from, to } = state.selection.main;
+  const first = state.doc.lineAt(from).number;
+  const last = state.doc.lineAt(to > from && state.doc.lineAt(to).from === to ? to - 1 : to).number;
+  const lines = Array.from({ length: last - first + 1 }, (_, index) => state.doc.line(first + index));
+  const prefix = /^([ \t]*)(?:#{1,6}[ \t]+|(?:[-+*]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)/;
+  const task = /^\s*(?:[-+*]|\d+[.)])\s+\[[ xX]\]\s+/;
+  const bullet = /^[ \t]*[-+*][ \t]+/;
+  const remove = lines.every((line) =>
+    kind === 'checklist' ? task.test(line.text) : bullet.test(line.text) && !task.test(line.text)
+  );
+  const changes = state.changes(
+    lines.map((line) => {
+      const match = prefix.exec(line.text);
+      const indentation = match?.[1] ?? /^\s*/.exec(line.text)![0];
+      return {
+        from: line.from + indentation.length,
+        to: line.from + (match?.[0].length ?? indentation.length),
+        insert: remove
+          ? ''
+          : kind === 'bullet'
+            ? '- '
+            : task.test(line.text)
+              ? match![0].slice(indentation.length)
+              : '- [ ] ',
+      };
+    })
+  );
+  view.dispatch({ changes, selection: state.selection.map(changes, 1), userEvent: 'input' });
+  view.focus();
+}
+
+class TaskCheckboxWidget extends WidgetType {
+  constructor(
+    private checked: boolean,
+    private label: string
+  ) {
+    super();
+  }
+
+  eq(other: TaskCheckboxWidget): boolean {
+    return this.checked === other.checked && this.label === other.label;
+  }
+
+  toDOM(view: EditorView): HTMLElement {
+    const wrapper = document.createElement('span');
+    wrapper.contentEditable = 'false';
+    wrapper.className = 'cm-md-task-checkbox';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    wrapper.appendChild(checkbox);
+    this.updateDOM(wrapper, view);
+    checkbox.addEventListener('click', (event) => {
+      if (view.state.readOnly) {
+        return;
+      }
+      // Widgets can be reused after edits earlier in the document, so resolve their current position.
+      const from = view.posAtDOM(wrapper);
+      if (!/^\[[ xX]\]$/.test(view.state.sliceDoc(from, from + 3))) {
+        return;
+      }
+      view.dispatch({
+        changes: { from: from + 1, to: from + 2, insert: checkbox.checked ? 'x' : ' ' },
+        selection: event.detail > 0 ? { anchor: view.state.doc.lineAt(from).to } : undefined,
+        userEvent: 'input',
+      });
+      // Pointer ticking should not leave subsequent typing trapped on the checkbox.
+      // Keyboard activation keeps focus so Space can still toggle the native control.
+      if (event.detail > 0) {
+        view.focus();
+      }
+    });
+    return wrapper;
+  }
+
+  updateDOM(dom: HTMLElement, view: EditorView): boolean {
+    const checkbox = dom.querySelector('input')!;
+    checkbox.checked = this.checked;
+    checkbox.disabled = view.state.readOnly;
+    checkbox.setAttribute('aria-label', this.label || t('notebook.cell.markdown.checklist-item', 'Checklist item'));
+    return true;
+  }
+
+  ignoreEvent(): boolean {
+    return true;
+  }
 }
 
 // The closing-marker child name for each inline mark node Shift+Enter needs to step around — see
@@ -279,9 +386,8 @@ function blockquoteDecorations(
   }
 }
 
-// Unlike every other construct above, list markers (`-`, `1.`) are never hidden: there is no styled
-// substitute for them the way bold text substitutes for `**bold**` — the marker *is* the list's visual
-// affordance. Only indentation/spacing is applied, and it applies unconditionally (no reveal rule).
+// Ordinary list markers stay visible. Task items replace theirs with the checkbox below,
+// but share the same indentation and spacing.
 function listItemDecorations(
   node: SyntaxNodeRef,
   state: EditorState,
@@ -366,7 +472,16 @@ export function buildDecorations(state: EditorState, styles: MarkdownEditorStyle
         linkDecorations(node, overlapsSelection(main, node.from, node.to), styles, ranges, hide);
       } else if (node.name === 'Blockquote') {
         blockquoteDecorations(node, state, styles, ranges, hide);
+      } else if (node.name === 'TaskMarker') {
+        const label = state.sliceDoc(node.to, state.doc.lineAt(node.to).to).trim();
+        const widget = new TaskCheckboxWidget(state.sliceDoc(node.from + 1, node.to - 1).toLowerCase() === 'x', label);
+        ranges.push(Decoration.replace({ widget }).range(node.from, node.to));
+        hiddenRanges.push(Decoration.replace({}).range(node.from, node.to));
       } else if (node.name === 'ListItem') {
+        const listMark = node.node.getChild('ListMark');
+        if (node.node.getChild('Task') && listMark) {
+          hide(listMark.from, listMark.to + 1);
+        }
         listItemDecorations(node, state, styles, ranges);
       }
       // Deliberately out of scope for now: HorizontalRule, FencedCode, and GFM tables (the base
@@ -430,6 +545,15 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
     // read in the same proportional font MarkdownCell.tsx's static (non-editing) render uses.
     '.cm-scroller': {
       fontFamily: theme.typography.fontFamily,
+    },
+    '.cm-md-task-checkbox input': {
+      width: '1em',
+      height: '1em',
+      margin: 0,
+      marginInlineEnd: theme.spacing(0.5),
+      verticalAlign: 'middle',
+      transform: 'translateY(-1px)',
+      cursor: 'pointer',
     },
     '.cm-content': {
       caretColor: theme.colors.text.primary,
@@ -508,6 +632,30 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
 /** `Mod-` is CM6's platform-aware modifier (Cmd on macOS, Ctrl elsewhere). */
 function buildKeymap(): readonly KeyBinding[] {
   return [
+    {
+      key: 'Space',
+      run: (view) => {
+        const { state } = view;
+        const { main } = state.selection;
+        if (!main.empty || state.readOnly || view.composing) {
+          return false;
+        }
+        const line = state.doc.lineAt(main.head);
+        const prefix = state.sliceDoc(line.from, main.head);
+        if (
+          !/^[ \t]*\[\]$/.test(prefix) ||
+          findEnclosingMarkNode(syntaxTree(state), main.head, ['FencedCode', 'CodeBlock', 'InlineCode'])
+        ) {
+          return false;
+        }
+        view.dispatch({
+          changes: { from: main.head - 2, to: main.head, insert: '- [ ] ' },
+          selection: { anchor: main.head + 4 },
+          userEvent: 'input',
+        });
+        return true;
+      },
+    },
     {
       key: 'Mod-b',
       run: (view) => {
