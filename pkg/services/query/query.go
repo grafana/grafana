@@ -40,9 +40,9 @@ const (
 	HeaderDashboardTitle = "X-Dashboard-Title" // used for identifying the dashboard with heavy query load
 	HeaderPanelTitle     = "X-Panel-Title"     // used for identifying the panel with heavy query load
 	HeaderPanelPluginId  = "X-Panel-Plugin-Id"
-	HeaderQueryGroupID   = "X-Query-Group-Id"    // mainly useful for finding related queries with query chunking
-	HeaderFromExpression = "X-Grafana-From-Expr" // used by datasources to identify expression queries
-	HeaderCallerID       = "X-Grafana-Caller-Id" // identifies the caller that initiated this query (e.g. an app plugin id or external tool name)
+	HeaderQueryGroupID   = "X-Query-Group-Id"        // mainly useful for finding related queries with query chunking
+	HeaderFromExpression = expr.HeaderFromExpression // used by datasources to identify expression queries
+	HeaderCallerID       = "X-Grafana-Caller-Id"     // identifies the caller that initiated this query (e.g. an app plugin id or external tool name)
 )
 
 func ProvideService(

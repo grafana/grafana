@@ -301,6 +301,7 @@ func RenameResourceUsagesInRoutes(routes []*v1.Route, renames RenameResources) {
 // renamed original names to their new unique names, and the UIDs of the incoming receivers (post-rename) in their
 // original order. The items of the existing map are added to the result as is whereas the items of the incoming
 // list are copied (shallow copy) and renamed if necessary.
+// Incoming UIDs are derived from name; a collision with an existing UID falls back to a random one.
 func Receivers(existing map[v1.ResourceUID]v1.PostableApiReceiver, incoming []*v1.PostableApiReceiver, identifier string) (map[v1.ResourceUID]v1.PostableApiReceiver, map[string]string, []v1.ResourceUID) {
 	dedupSuffix := getDedupSuffix(identifier)
 	usedNames := createIndexReceivers(existing, incoming)
@@ -316,8 +317,16 @@ func Receivers(existing map[v1.ResourceUID]v1.PostableApiReceiver, incoming []*v
 		if i, ok := usedNames[cpy.Name]; ok && i != idx {
 			newName := getUniqueName(cpy.Name, dedupSuffix, usedNames)
 			renames[cpy.Name] = newName
-			cpy = v1.NewReceiver(newName, cpy.GrafanaManagedReceivers, cpy.Provenance)
+			// Rebuild rather than assigning the name so UID and Version are recomputed from the new name.
+			cpy = v1.NewReceiver(v1.ReceiverUID(newName), newName, cpy.GrafanaManagedReceivers, cpy.Provenance)
 			usedNames[cpy.Name] = i
+		}
+		if _, occupied := result[cpy.UID]; occupied {
+			// The name-derived UID collides with something already in the merged result - most
+			// likely a Grafana-managed receiver renamed away from this name, leaving its old UID
+			// still occupied (UID no longer moves with a rename). Fall back to a random UID rather
+			// than silently overwriting it.
+			cpy.UID = v1.ResourceUID(util.GenerateShortUID())
 		}
 		added = append(added, cpy.UID)
 		result[cpy.UID] = cpy

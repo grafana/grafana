@@ -292,10 +292,9 @@ func TestVectorSearch_UnavailableCollectionsConsumeRateLimit(t *testing.T) {
 			s := newTestSearchServerWithCache(newTestEmbedder(fake), backend, nil, rl)
 			s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
 
-			resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "q"})
-			require.NoError(t, err)
-			require.NotNil(t, resp.Error)
-			assert.EqualValues(t, http.StatusNotFound, resp.Error.Code)
+			_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "q"})
+			respErr := rpcErrorResult(t, err)
+			assert.EqualValues(t, http.StatusNotFound, respErr.Code)
 			assert.Equal(t, 1, rl.calls)
 			assert.Equal(t, 1, backend.resolveCalls)
 			assert.Empty(t, fake.gotIn.Texts)

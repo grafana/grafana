@@ -48,6 +48,7 @@ type RuleAccessControlService interface {
 	HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error)
 	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error
+	AuthorizeNotificationSettings(ctx context.Context, user identity.Requester, receivers []accesscontrol.ReceiverRef) error
 	AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 	AuthorizeDatasourceAccessForRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error
@@ -90,7 +91,7 @@ type API struct {
 	SilenceLimitsProvider notifier.LimitsProvider
 	// ExternalRulerSync gates manual convert-API rule imports when external
 	// ruler sync owns the org's rules. Always set in RegisterAPIEndpoints.
-	ExternalRulerSync ExternalRulerSyncChecker
+	ExternalRulerSync externalRulerSyncChecker
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks

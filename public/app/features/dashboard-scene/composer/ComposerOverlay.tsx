@@ -9,7 +9,7 @@ import { getFocusStyles } from '@grafana/ui/internal';
 import { FLOATING_DRAG_HANDLE_ATTRIBUTE } from 'app/core/components/AppChrome/ExtensionSidebar/useFloatingDrag';
 
 import { type ComposerSession } from './ComposerSession';
-import { type Box, PICKABLE_CONTROL_SELECTOR, VARIABLE_CONTROL_SELECTOR } from './composerGeometry';
+import { type Box, DATA_LAYER_CONTROL_SELECTOR, VARIABLE_CONTROL_SELECTOR } from './composerGeometry';
 import { type ComposerAnnotation, type ElementPick, type ElementRef, type RegionPick } from './types';
 
 const TAB_SELECTOR = '[role="tab"]';
@@ -33,9 +33,14 @@ interface Layout {
   /** The overlay's own size, which pins are kept inside. */
   width: number;
   height: number;
+  /**
+   * The bottom of the sticky dashboard controls, relative to the overlay, or -Infinity without them. Content
+   * scrolled above it is under the controls, so its outlines and pins are not drawn over them.
+   */
+  controlsBottom: number;
 }
 
-const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, also: {}, width: 0, height: 0 };
+const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, also: {}, width: 0, height: 0, controlsBottom: -Infinity };
 
 /**
  * A layer over the dashboard controls and body while Composer is active.
@@ -83,7 +88,7 @@ export function ComposerOverlay({
    * The pick hint that follows the pointer. React state holds only which copy shows (or none); its position
    * is written to the element once per animation frame, so moving the pointer renders nothing.
    */
-  const [hintCopy, setHintCopy] = useState<'element' | 'region' | null>(null);
+  const [hintCopy, setHintCopy] = useState<'element' | 'variable' | 'region' | null>(null);
   const hintRef = useRef<HTMLDivElement>(null);
   const hintPointerRef = useRef<{ x: number; y: number } | null>(null);
   const hintFrameRef = useRef(0);
@@ -105,12 +110,14 @@ export function ComposerOverlay({
     coverContent(root);
     const rootRect = root.getBoundingClientRect();
     const { highlight, annotations: items } = session.getOverlayState();
+    const controls = root.parentElement?.querySelector(CONTROLS_SELECTOR)?.getBoundingClientRect();
     const next: Layout = {
       highlight: highlight ? session.resolveBox(highlight, rootRect) : null,
       items: {},
       also: {},
       width: rootRect.width,
       height: rootRect.height,
+      controlsBottom: controls ? controls.bottom - rootRect.top : -Infinity,
     };
     for (const item of items) {
       const box = session.resolveBox(item.ref, rootRect);
@@ -128,7 +135,7 @@ export function ComposerOverlay({
     session.getAnchors().forEach((anchor, id) => {
       const item = items.find((candidate) => candidate.id === id);
       const box = next.items[id];
-      const position = item && box ? anchorPosition(box, pinCentre(box, item, next), rootRect) : null;
+      const position = item && box ? anchorPosition(box, item, next, rootRect) : null;
       if (!position) {
         anchor.style.display = 'none';
         return;
@@ -211,8 +218,8 @@ export function ComposerOverlay({
       cancelDrag();
       return;
     }
-    // Escape cancels a drag, else the pick, before any other Escape handler (exit edit, close view panel)
-    // sees it, except inside an annotation anchor: that Escape belongs to the plugin's editor.
+    // Escape cancels a drag, else leaves Composer, before any other Escape handler (exit edit, close view
+    // panel) sees it, except inside an annotation anchor: that Escape belongs to the plugin's editor.
     const onKeyDown = (event: KeyboardEvent) => {
       const fromAnchor = event.target instanceof Node && anchorHostRef.current?.contains(event.target);
       if (event.key !== 'Escape' || fromAnchor) {
@@ -223,7 +230,7 @@ export function ComposerOverlay({
       if (dragStartRef.current) {
         cancelDrag();
       } else {
-        session.completePick(null);
+        session.exit();
       }
     };
     window.addEventListener('keydown', onKeyDown, true);
@@ -291,7 +298,7 @@ export function ComposerOverlay({
     element.style.transform = `translate(${Math.round(x - rootRect.left)}px, ${Math.round(y - rootRect.top)}px)`;
   }, []);
 
-  const followHint = (x: number, y: number) => {
+  const followHint = (x: number, y: number, copy?: 'variable') => {
     if (!hintAllowed || dragStartRef.current?.moved) {
       hideHint();
       return;
@@ -299,7 +306,7 @@ export function ComposerOverlay({
     hintPointerRef.current = { x, y };
     cancelAnimationFrame(hintFrameRef.current);
     hintFrameRef.current = requestAnimationFrame(() => {
-      setHintCopy(elementAt(x, y, session.elementSelector) ? 'element' : 'region');
+      setHintCopy(copy ?? (elementAt(x, y, session.elementSelector) ? 'element' : 'region'));
       positionHint();
     });
   };
@@ -408,7 +415,7 @@ export function ComposerOverlay({
       if (swallowControlsClickRef.current) {
         swallowControlsClickRef.current = false;
         event.preventDefault();
-        // Also keeps the variable-label pick below from treating it as a click.
+        // Also keeps the annotation-label and variable picks below from treating it as a click.
         event.stopImmediatePropagation();
       }
     };
@@ -424,8 +431,7 @@ export function ComposerOverlay({
     };
   }, []);
 
-  // With Select, a click on a variable's or an annotation's label picks it; its value picker or toggle still
-  // works as usual.
+  // With Select, a click on an annotation's label picks it; its toggle still works as usual.
   useEffect(() => {
     if (pickMode !== 'element' || paused || capturing) {
       return;
@@ -433,15 +439,13 @@ export function ComposerOverlay({
     const onClick = (event: MouseEvent) => {
       const container = rootRef.current?.parentElement;
       const target = event.target instanceof Element ? event.target : null;
-      const control = target?.closest<HTMLElement>(PICKABLE_CONTROL_SELECTOR);
+      const control = target?.closest<HTMLElement>(DATA_LAYER_CONTROL_SELECTOR);
       const label = target?.closest('label');
       const key = control?.getAttribute('data-dashboard-element-key');
       if (!container?.contains(control ?? null) || !label || !control?.contains(label) || !key) {
         return;
       }
-      const resolved = control.matches(VARIABLE_CONTROL_SELECTOR)
-        ? session.resolveVariablePick(key)
-        : session.resolveAnnotationPick(key);
+      const resolved = session.resolveAnnotationPick(key);
       const pick = resolved && withModifier(resolved, event);
       if (pick) {
         // The label would otherwise focus the value picker.
@@ -486,14 +490,30 @@ export function ComposerOverlay({
     const onBody = (event: MouseEvent): event is MouseEvent & { target: Element } =>
       isOnDocumentBody(event.target) && !isOverControls(event.clientX, event.clientY);
 
+    /** With Select, a variable's control is picked whole, like a panel: its value picker does not open. */
+    const variableAt = (target: EventTarget | null): HTMLElement | null => {
+      if (!picking || paused || capturing || pickMode !== 'element' || !(target instanceof Element)) {
+        return null;
+      }
+      const control = target.closest<HTMLElement>(VARIABLE_CONTROL_SELECTOR);
+      return control && rootRef.current?.parentElement?.contains(control) ? control : null;
+    };
+
     const block = (event: MouseEvent) => {
-      if (onBody(event) && !isUsableTab(event.target)) {
+      if ((onBody(event) && !isUsableTab(event.target)) || variableAt(event.target)) {
         event.preventDefault();
         event.stopPropagation();
       }
     };
 
     const onPointerDown = (event: PointerEvent) => {
+      if (variableAt(event.target)) {
+        // Kept from the value picker; a drag from here still draws a region, through the controls' drag.
+        event.preventDefault();
+        event.stopPropagation();
+        hideHint();
+        return;
+      }
       if (!onBody(event) || isUsableTab(event.target)) {
         return;
       }
@@ -536,25 +556,35 @@ export function ComposerOverlay({
       if (!picking || paused || capturing) {
         return;
       }
-      if (!onBody(event) || isOverExtensionSidebar(event.clientX, event.clientY)) {
+      const variable = variableAt(event.target);
+      if (!variable && (!onBody(event) || isOverExtensionSidebar(event.clientX, event.clientY))) {
         hoverPointerRef.current = null;
         hideHint();
         setHovered(null);
         return;
       }
-      hoverPointerRef.current = { x: event.clientX, y: event.clientY };
-      hoverAt(event.clientX, event.clientY);
+      // The controls do not scroll, so a variable needs no re-hover on scroll.
+      hoverPointerRef.current = variable ? null : { x: event.clientX, y: event.clientY };
+      hoverAt(event.clientX, event.clientY, variable);
     };
 
-    const hoverAt = (x: number, y: number) => {
-      followHint(x, y);
+    const hoverAt = (x: number, y: number, variable: HTMLElement | null = null) => {
+      followHint(x, y, variable ? 'variable' : undefined);
       if (pickMode !== 'element') {
         return;
       }
-      const elementRoot = elementAt(x, y, session.elementSelector);
-      const key = elementRoot?.getAttribute(session.elementKeyAttribute);
-      const box = elementRoot ? boxFor(elementRoot) : null;
-      setHovered(key && box ? { key, box } : null);
+      const picked = pickableAt(x, y, variable);
+      const box = picked ? boxFor(picked.element) : null;
+      setHovered(picked && box ? { key: picked.key, box } : null);
+    };
+
+    /** What Select picks at a point: the variable the pointer is on, else the element under it. */
+    const pickableAt = (x: number, y: number, variable: HTMLElement | null) => {
+      const element = variable ?? elementAt(x, y, session.elementSelector);
+      const key = variable
+        ? variable.getAttribute('data-dashboard-element-key')
+        : element?.getAttribute(session.elementKeyAttribute);
+      return element && key ? { element, key } : null;
     };
 
     // The wheel scrolls the document under a still pointer, which fires no pointer move.
@@ -594,7 +624,8 @@ export function ComposerOverlay({
     };
 
     const onClick = (event: MouseEvent) => {
-      if (!onBody(event) || isUsableTab(event.target)) {
+      const variable = variableAt(event.target);
+      if (!variable && (!onBody(event) || isUsableTab(event.target))) {
         return;
       }
       // Legends, links and panel menus never respond to a click while Composer is open.
@@ -614,17 +645,16 @@ export function ComposerOverlay({
       ) {
         return;
       }
-      const elementRoot = elementAt(event.clientX, event.clientY, session.elementSelector);
-      const key = elementRoot?.getAttribute(session.elementKeyAttribute);
-      if (!elementRoot || !key) {
+      const picked = pickableAt(event.clientX, event.clientY, variable);
+      if (!picked) {
         return;
       }
-      const rect = elementRoot.getBoundingClientRect();
+      const rect = picked.element.getBoundingClientRect();
       const point = {
         x: rect.width > 0 ? (event.clientX - rect.left) / rect.width : 0,
         y: rect.height > 0 ? (event.clientY - rect.top) / rect.height : 0,
       };
-      const pick = session.resolveElementPick(key, point);
+      const pick = variable ? session.resolveVariablePick(picked.key) : session.resolveElementPick(picked.key, point);
       if (pick) {
         session.completePick(withModifier(pick, event));
       }
@@ -672,10 +702,19 @@ export function ComposerOverlay({
     if (!container) {
       return;
     }
-    const className = picking && !paused && !capturing ? styles.cursorPicking : styles.cursorInert;
-    container.classList.add(className);
-    return () => container.classList.remove(className);
-  }, [picking, paused, capturing, styles.cursorPicking, styles.cursorInert]);
+    const active = picking && !paused && !capturing;
+    const classNames = [active ? styles.cursorPicking : styles.cursorInert];
+    if (active && pickMode === 'element') {
+      classNames.push(styles.cursorPickingVariables);
+    }
+    container.classList.add(...classNames);
+    return () => container.classList.remove(...classNames);
+  }, [picking, pickMode, paused, capturing, styles.cursorPicking, styles.cursorInert, styles.cursorPickingVariables]);
+
+  const highlightBox =
+    layout.highlight && overlayState.highlight
+      ? belowControls(overlayState.highlight, layout.highlight, layout.controlsBottom)
+      : null;
 
   return (
     <div
@@ -690,7 +729,7 @@ export function ComposerOverlay({
         role="presentation"
         aria-hidden
       >
-        {layout.highlight && <div className={cx(styles.box, styles.highlight)} style={layout.highlight} />}
+        {highlightBox && <div className={cx(styles.box, styles.highlight)} style={highlightBox} />}
         {annotations.flatMap(({ id, ref, state }) => {
           // The comment's own element, then the others it covers, each outlined by its kind.
           const outlines = [
@@ -700,7 +739,8 @@ export function ComposerOverlay({
               testId: `composer-annotation-outline-${id}-also-${index}`,
             })),
           ];
-          return outlines.map(({ ref: outlined, box, testId }) => {
+          return outlines.map(({ ref: outlined, box: measured, testId }) => {
+            const box = measured && belowControls(outlined, measured, layout.controlsBottom);
             // Panels are outlined only while active; regions always, faint while staged.
             if (!box || (outlined.kind !== 'region' && state !== 'active')) {
               return null;
@@ -728,7 +768,7 @@ export function ComposerOverlay({
       {annotations.map((item) => {
         const { id, label, state } = item;
         const box = layout.items[id];
-        if (!box) {
+        if (!box || isPinUnderControls(box, item, layout)) {
           return null;
         }
         return (
@@ -761,7 +801,12 @@ export function ComposerOverlay({
         <div ref={hintRef} className={styles.hint} role="tooltip" aria-hidden>
           {hintCopy === 'element'
             ? session.elementHint()
-            : t('dashboard.composer.overlay.hint-region', 'Drag to draw a region')}
+            : hintCopy === 'variable'
+              ? t(
+                  'dashboard.composer.overlay.hint-variable',
+                  'Click to comment on a variable, or drag to draw a region'
+                )
+              : t('dashboard.composer.overlay.hint-region', 'Drag to draw a region')}
         </div>
       )}
       <div ref={anchorHostRef} className={styles.anchorHost} />
@@ -815,6 +860,39 @@ function pinTail(box: Box, { point, state }: Pick<ComposerAnnotation, 'point' | 
   };
 }
 
+/**
+ * Whether an element lies in the dashboard body, so content scrolled under the sticky controls covers it.
+ * Variables and annotation layers are in the controls, and a region may be drawn over them.
+ */
+function scrollsUnderControls(ref: ElementRef): boolean {
+  return ref.kind === 'panel' || ref.kind === 'row' || ref.kind === 'tab' || ref.kind === 'cell';
+}
+
+/** How far an outline is drawn outside its box (2px), and room for it when the box is clipped. */
+const OUTLINE_BLEED = 4;
+/** The space between the sticky controls and an open editor held below them: one spacing step. */
+const CONTROLS_GAP = 8;
+
+/**
+ * A body element's box with the part under the sticky controls clipped off, so its outline never draws over
+ * them; null when the controls cover all of it. Anything else is returned as it is.
+ */
+function belowControls(ref: ElementRef, box: Box, controlsBottom: number): (Box & { clipPath?: string }) | null {
+  const covered = controlsBottom - box.top;
+  if (!scrollsUnderControls(ref) || covered <= 0) {
+    return box;
+  }
+  if (covered >= box.height) {
+    return null;
+  }
+  return { ...box, clipPath: `inset(${covered}px -${OUTLINE_BLEED}px -${OUTLINE_BLEED}px)` };
+}
+
+/** Whether a body element's pin would sit on the sticky controls: it is hidden, with its editor anchor. */
+function isPinUnderControls(box: Box, item: Pick<ComposerAnnotation, 'ref' | 'point' | 'state'>, layout: Layout) {
+  return scrollsUnderControls(item.ref) && pinTail(box, item, layout).top - pinSize(item.state) < layout.controlsBottom;
+}
+
 /** The pin's visual centre, where the editor anchor sits: half a pin right of and above the tail tip. */
 function pinCentre(box: Box, item: Pick<ComposerAnnotation, 'point' | 'state'>, overlay: Size) {
   const tail = pinTail(box, item, overlay);
@@ -823,23 +901,33 @@ function pinCentre(box: Box, item: Pick<ComposerAnnotation, 'point' | 'state'>, 
 }
 
 /**
- * The pin's centre, clamped to the viewport, relative to the overlay. Null when no part of the element is
- * in the viewport.
+ * Where an item's editor anchor sits, relative to the overlay: the pin's centre, clamped to what is visible
+ * (the viewport, below the sticky controls for an element in the dashboard body). An active item's anchor
+ * holds the open editor, so it stays at the nearest visible edge however far its element scrolls, and the
+ * editor never disappears mid-comment. A staged item's anchor (a hover preview) is null, and hidden, while
+ * its pin is not shown: its element entirely off-screen, or its pin under the controls.
  */
 function anchorPosition(
   box: Box,
-  pin: { left: number; top: number },
+  item: Pick<ComposerAnnotation, 'ref' | 'point' | 'state'>,
+  layout: Layout,
   root: DOMRect
 ): { left: number; top: number } | null {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   const left = root.left + box.left;
   const top = root.top + box.top;
-  if (left > viewportWidth || top > viewportHeight || left + box.width < 0 || top + box.height < 0) {
+  const offScreen = left > viewportWidth || top > viewportHeight || left + box.width < 0 || top + box.height < 0;
+  if (item.state !== 'active' && (offScreen || isPinUnderControls(box, item, layout))) {
     return null;
   }
+  const minTop =
+    scrollsUnderControls(item.ref) && Number.isFinite(layout.controlsBottom)
+      ? root.top + layout.controlsBottom + CONTROLS_GAP
+      : 0;
+  const pin = pinCentre(box, item, layout);
   const x = clamp(root.left + pin.left, 0, viewportWidth);
-  const y = clamp(root.top + pin.top, 0, viewportHeight);
+  const y = clamp(root.top + pin.top, Math.min(minTop, viewportHeight), viewportHeight);
   return { left: x - root.left, top: y - root.top };
 }
 
@@ -909,6 +997,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     cursorInert: css({
       [`& *:not(${OWN_CURSORS})`]: { cursor: 'default' },
+    }),
+    // With Select, variables in the controls are picked like panels.
+    cursorPickingVariables: css({
+      [`& ${VARIABLE_CONTROL_SELECTOR}, & ${VARIABLE_CONTROL_SELECTOR} *`]: { cursor: 'crosshair' },
     }),
     box: css({
       position: 'absolute',

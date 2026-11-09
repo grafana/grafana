@@ -378,7 +378,7 @@ func TestKVWatchSeedSkipsMissingPayloads(t *testing.T) {
 			}
 			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
-			seed, stream, err := backend.watchWriteEventsWithSeed(ctx)
+			seed, stream, err := backend.watchWriteEventsWithSeed(ctx, nil)
 			defer func() {
 				cancel()
 				if stream != nil {
@@ -500,7 +500,7 @@ func TestKVWatchRestartHandoff(t *testing.T) {
 			}
 			done := make(chan result, 1)
 			go func() {
-				seed, stream, err := backend.watchWriteEventsWithSeed(ctx)
+				seed, stream, err := backend.watchWriteEventsWithSeed(ctx, nil)
 				done <- result{seed, stream, err}
 			}()
 			select {
@@ -564,7 +564,7 @@ func TestKVWatchSeedCleanupHandoff(t *testing.T) {
 				saveWatchEvent(t, backend, captured)
 				backend.notifier.Publish(captured)
 			}
-			seed, stream, err := backend.watchWriteEventsWithSeed(ctx)
+			seed, stream, err := backend.watchWriteEventsWithSeed(ctx, nil)
 			defer func() {
 				cancel()
 				if stream != nil {
@@ -605,7 +605,7 @@ func TestKVWatchCancelDuringSeedRead(t *testing.T) {
 	backend := setupTestStorageBackend(t, withKV(store), withLogger(logger))
 	done := make(chan error, 1)
 	go func() {
-		_, _, err := backend.watchWriteEventsWithSeed(ctx)
+		_, _, err := backend.watchWriteEventsWithSeed(ctx, nil)
 		done <- err
 	}()
 	<-reading
@@ -832,7 +832,7 @@ func TestKVWatchEventWorkerJoinsCapture(t *testing.T) {
 				started := make(chan struct{})
 				done := make(chan error, 1)
 				go func() {
-					_, stream, err := backend.watchWriteEventsWithSeed(ctx)
+					_, stream, err := backend.watchWriteEventsWithSeed(ctx, nil)
 					if err == nil {
 						close(started)
 						for range stream {
@@ -890,7 +890,7 @@ func TestKVWatchNATSReadinessAndCancellation(t *testing.T) {
 	defer cancel()
 	done := make(chan error, 1)
 	go func() {
-		_, _, err := backend.watchWriteEventsWithSeed(ctx)
+		_, _, err := backend.watchWriteEventsWithSeed(ctx, nil)
 		done <- err
 	}()
 	select {
@@ -913,7 +913,7 @@ func TestKVWatchNATSReadinessAndCancellation(t *testing.T) {
 	ctx, cancel = context.WithCancel(t.Context())
 	defer cancel()
 	go func() {
-		_, _, err := backend.watchWriteEventsWithSeed(ctx)
+		_, _, err := backend.watchWriteEventsWithSeed(ctx, nil)
 		done <- err
 	}()
 	cancel()
