@@ -67,19 +67,9 @@ export function DashboardImportK8s({ queryParams }: Props) {
 
     try {
       const response = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
-      const dashboard = response.json;
-      const format = detectExportFormat(dashboard);
-      const inputs =
-        format === ExportFormat.V2Resource ? await extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
-
-      setState({
-        status: LoadingState.Done,
-        dashboard,
-        dashboardUid: undefined,
-        inputs,
-        meta: { updatedAt: response.updatedAt, orgName: response.orgName },
-        source: DashboardSource.Gcom,
-        format,
+      await processDashboardJson(response.json, DashboardSource.Gcom, {
+        updatedAt: response.updatedAt,
+        orgName: response.orgName,
       });
     } catch (error) {
       setState((prev) => ({ ...prev, status: LoadingState.Error }));
@@ -118,7 +108,11 @@ export function DashboardImportK8s({ queryParams }: Props) {
     await processDashboardJson(json);
   }
 
-  async function processDashboardJson(json: unknown) {
+  async function processDashboardJson(
+    json: unknown,
+    source = DashboardSource.Json,
+    meta: ImportState['meta'] = { updatedAt: '', orgName: '' }
+  ) {
     setState((prev) => ({ ...prev, status: LoadingState.Loading }));
 
     try {
@@ -135,8 +129,8 @@ export function DashboardImportK8s({ queryParams }: Props) {
         dashboard,
         dashboardUid,
         inputs,
-        meta: { updatedAt: '', orgName: '' },
-        source: DashboardSource.Json,
+        meta,
+        source,
         format,
       });
     } catch (error) {
