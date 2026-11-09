@@ -1073,6 +1073,7 @@ func (b *bleveIndex) addRowAccess(ctx context.Context, access authlib.AccessClie
 			Namespace: c.row.Key.Namespace,
 		}
 	}
+	ctx = withUserToReportTo(ctx, checks)
 	checkAll := func(checks []accessCheck) error {
 		allowed := make(map[accessCheck]bool, len(checks))
 		for c, err := range authz.FilterAuthorized(ctx, access, slices.Values(checks), check, authz.WithTracer(tracer), authz.WithSizeHint(len(checks))) {
@@ -1107,6 +1108,38 @@ func (b *bleveIndex) addRowAccess(ctx context.Context, access authlib.AccessClie
 			logger.Warn("Failed to check access to search results", "check", group, "error", err)
 		}
 	}
+}
+
+// userToReportTo is the user a search reports access to. The service checks are
+// for a service acting on a user's behalf: whether it may do the verb for the
+// user. The search only tells the user what they may do, so the user is given
+// the delegated permissions the checks need, and authz checks the user. The
+// calling service still had to be allowed to read each type to get the results.
+type userToReportTo struct {
+	authlib.AuthInfo
+	permissions []string
+}
+
+func (u userToReportTo) GetTokenDelegatedPermissions() []string {
+	return u.permissions
+}
+
+// withUserToReportTo puts the caller in ctx as a user to report to. A service
+// acting for itself is still checked on its own permissions, which delegated
+// permissions do not change.
+func withUserToReportTo(ctx context.Context, checks []accessCheck) context.Context {
+	user, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return ctx
+	}
+	var permissions []string
+	for _, c := range checks {
+		permission := c.row.Key.Group + "/" + c.row.Key.Resource + ":" + c.verb
+		if !slices.Contains(permissions, permission) {
+			permissions = append(permissions, permission)
+		}
+	}
+	return authlib.WithAuthInfo(ctx, userToReportTo{AuthInfo: user, permissions: permissions})
 }
 
 // recordAccess sets each check's answer on its row: allowed when allowed is nil.

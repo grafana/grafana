@@ -29,9 +29,7 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resourcepb.PutBlobRe
 	defer span.End()
 
 	if req.Method == resourcepb.PutBlobRequest_HTTP {
-		return &resourcepb.PutBlobResponse{
-			Error: resource.NewBadRequestError("signed url upload not supported"),
-		}, nil
+		return nil, resource.GRPCStatusError(resource.NewBadRequestError("signed url upload not supported"))
 	}
 
 	hasher := md5.New() // same as s3
@@ -48,9 +46,7 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resourcepb.PutBlobRe
 	info.SetContentType(req.ContentType)
 
 	if info.Size < 1 {
-		return &resourcepb.PutBlobResponse{
-			Error: resource.NewBadRequestError("empty content"),
-		}, nil
+		return nil, resource.GRPCStatusError(resource.NewBadRequestError("empty content"))
 	}
 
 	// Insert the value
@@ -67,9 +63,7 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resourcepb.PutBlobRe
 	})
 
 	if err != nil {
-		return &resourcepb.PutBlobResponse{
-			Error: resource.AsErrorResult(err),
-		}, nil
+		return nil, resource.GRPCStatusError(resource.AsErrorResult(err))
 	}
 	return &resourcepb.PutBlobResponse{
 		Uid:      info.UID,
@@ -85,12 +79,11 @@ func (b *backend) GetResourceBlob(ctx context.Context, key *resourcepb.ResourceK
 	defer span.End()
 
 	if info == nil {
-		return &resourcepb.GetBlobResponse{
-			Error: resource.NewBadRequestError("missing blob info"),
-		}, nil
+		return nil, resource.GRPCStatusError(resource.NewBadRequestError("missing blob info"))
 	}
 
 	rsp := &resourcepb.GetBlobResponse{}
+	found := false
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceBlobQuery, sqlResourceBlobQueryRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
@@ -106,15 +99,18 @@ func (b *backend) GetResourceBlob(ctx context.Context, key *resourcepb.ResourceK
 			if info.UID != "" && info.UID != uid {
 				return fmt.Errorf("unexpected uid in result")
 			}
+			found = err == nil
 			return err
-		}
-		rsp.Error = &resourcepb.ErrorResult{
-			Code: http.StatusNotFound,
 		}
 		return err
 	})
 	if err != nil {
-		rsp.Error = resource.AsErrorResult(err)
+		return nil, resource.GRPCStatusError(resource.AsErrorResult(err))
+	}
+	if !found {
+		return nil, resource.GRPCStatusError(&resourcepb.ErrorResult{
+			Code: http.StatusNotFound,
+		})
 	}
 	return rsp, nil
 }

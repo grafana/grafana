@@ -20,7 +20,8 @@ func TestReadNATSSettings(t *testing.T) {
 		require.False(t, cfg.NATS.Enabled)
 		require.Equal(t, NATSModeEmbedded, cfg.NATS.Mode)
 		require.True(t, cfg.NATS.Embedded())
-		require.Equal(t, "127.0.0.1", cfg.NATS.ListenAddress)
+		// The embedded server chooses the listen address when it is unset.
+		require.Empty(t, cfg.NATS.ListenAddress)
 		require.Equal(t, 4222, cfg.NATS.ClientPort)
 		require.Equal(t, 6222, cfg.NATS.ClusterPort)
 		require.Empty(t, cfg.NATS.ClientURLs)
@@ -57,6 +58,21 @@ cluster_tls_ca_path = /etc/nats/ca.crt
 			KeyPath:  "/etc/nats/tls.key",
 			CAPath:   "/etc/nats/ca.crt",
 		}, cfg.NATS.ClusterTLS)
+	})
+
+	t.Run("keeps an explicit listen address and an empty one unset", func(t *testing.T) {
+		for raw, want := range map[string]string{
+			"listen_address = 10.0.0.5\n": "10.0.0.5",
+			"listen_address =\n":          "",
+		} {
+			cfg := NewCfg()
+			f, err := ini.Load([]byte("[nats]\n" + raw))
+			require.NoError(t, err)
+			cfg.Raw = f
+
+			require.NoError(t, readNATSSettings(cfg))
+			require.Equal(t, want, cfg.NATS.ListenAddress)
+		}
 	})
 
 	t.Run("rejects a partial cluster tls configuration", func(t *testing.T) {

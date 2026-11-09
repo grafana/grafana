@@ -743,3 +743,4 @@
 "ensure folder_fullpath column sorts the same way as golang"
 "alter alert_rule missing_series_evals_to_resolve column to bigint"
 "alter alert_rule_version missing_series_evals_to_resolve column to bigint"
+"copy receiver permissions to the uids of receivers"

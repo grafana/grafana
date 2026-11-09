@@ -1463,6 +1463,15 @@
         "count-unavailable": "",
         "expand": ""
       },
+      "instances": {
+        "error": "",
+        "firing": "",
+        "healthy": "",
+        "nodata": "",
+        "pending": "",
+        "recovering": "",
+        "view-instances": ""
+      },
       "interval": "",
       "recorded-metric": {
         "records": "",
@@ -1479,6 +1488,11 @@
         "retry-rules-in-folder": "",
         "rules-error": "",
         "search-issues": ""
+      },
+      "routing": {
+        "default-policy": "",
+        "delivered-to": "",
+        "policy": ""
       },
       "rule-count": {
         "alert-rules_one": "",
@@ -2047,7 +2061,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "Applica"
+      "apply": "Applica",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -2485,6 +2500,7 @@
       "no-condition-tooltip": "Seleziona una condizione di query per visualizzare l'anteprima del percorso",
       "permission-warning": "Anteprima non disponibile",
       "permission-warning-message": "Non disponi dell'autorizzazione per visualizzare i criteri di notifica. Anteprima non disponibile.",
+      "policy-not-found": "",
       "preview-routing": "Anteprima routing",
       "select-folder-tooltip": "Seleziona una cartella per visualizzare l'anteprima del percorso",
       "text-loading-preview": "Caricamento anteprima in corso...",
@@ -2916,6 +2932,10 @@
       "revert-button": "Torna all'esperienza precedente",
       "see-activity-button": "Visualizza l'attività degli avvisi",
       "title": "Torna all'esperienza precedente"
+    },
+    "route-timings": {
+      "error-format": "",
+      "error-zero": ""
     },
     "routing": {
       "routing": "Instradamento"
@@ -5762,7 +5782,8 @@
       "apply-undo-title": "",
       "overlay": {
         "hint-panel": "",
-        "hint-region": ""
+        "hint-region": "",
+        "hint-variable": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -5944,6 +5965,9 @@
       "render-label": {
         "tooltip-remove-property": "Rimuovi proprietà"
       }
+    },
+    "edit": {
+      "mobile-not-available": ""
     },
     "edit-actions": {
       "add": "Aggiungi {{typeName}}",
@@ -6250,7 +6274,6 @@
     },
     "modes": {
       "agent-edit": "",
-      "change-mode": "",
       "composer": "",
       "composer-description": "",
       "composer-no-permission": "",
@@ -6266,8 +6289,6 @@
       "empty": "",
       "label": "",
       "save-before-viewing": "",
-      "switch-to-editing": "",
-      "switch-to-viewing": "",
       "view": "",
       "view-changes": "",
       "view-description": ""
@@ -6441,6 +6462,9 @@
           "hide-header": "Nascondi intestazione riga",
           "title": "Titolo"
         },
+        "section-annotations": {
+          "title": ""
+        },
         "section-filters": {
           "title": "Filtri"
         },
@@ -6522,11 +6546,10 @@
         "data-source": "Origine dei dati",
         "display": "Mostra i comandi delle annotazioni in",
         "display-options": {
-          "above-dashboard": "Sopra la dashboard",
           "controls-menu": "Menu comandi",
-          "controls-menu-description": "È possibile accedervi quando il menu dei comandi è aperto",
+          "controls-menu-description": "",
           "hidden": "Nascosto",
-          "hidden-description": "Nasconde l'interruttore per attivare o disattivare questa annotazione"
+          "hidden-description": ""
         },
         "enabled": "Abilitata",
         "enabled-description": "Se abilitata, la query di annotazione viene emessa a ogni aggiornamento della dashboard",
@@ -6629,7 +6652,9 @@
         "tab": "Scheda",
         "tabs": "Schede",
         "variable": "{{type}} variabile",
-        "variable-set": "Variabili"
+        "variable-set": "Variabili",
+        "selected-panels_one": "",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "Esporta"
@@ -6808,6 +6833,9 @@
             "description": "Ripeti questa scheda per ogni valore nella variabile selezionata.",
             "title": "Ripeti per variabile"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "Filtri"
@@ -7172,7 +7200,8 @@
         "change-annotation-panel-filter": "Modifica il filtro del pannello delle annotazioni",
         "change-annotation-query": ""
       },
-      "edit-query": "Modifica query"
+      "tooltip-edit-annotation-query": "",
+      "tooltip-edit-annotation-settings": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Elimina query di annotazione",
@@ -7255,7 +7284,6 @@
       "duplicate-tooltip": "Duplica",
       "duplicate-tooltip-disabled": "I pannelli ripetuti non possono essere duplicati singolarmente",
       "remove-tooltip": "",
-      "settings": "Impostazioni",
       "view": ""
     },
     "conversion-warning-banner": {
@@ -7372,6 +7400,11 @@
         "button-moved": "Portami lì",
         "description-moved": "Il modello JSON è stato spostato nella barra laterale della dashboard, in \"Modifica come codice\".",
         "title-moved": "Cerchi il modello JSON?"
+      },
+      "links": {
+        "button-moved": "",
+        "description-moved": "",
+        "title-moved": ""
       },
       "variables": {
         "button-moved": "Portami lì",
@@ -7584,6 +7617,7 @@
       "error-invalid-json": "JSON non valido",
       "error-invalid-layout": "Il file JSON del layout non ha superato la convalida. Controlla il file JSON e riprova.",
       "error-invalid-v2-panel": "Il file JSON del pannello non ha superato la convalida. Controlla il file JSON e riprova.",
+      "mobile-edit-unavailable": "",
       "validation-error": "Errore di convalida"
     },
     "interval-variable-form": {
@@ -7676,6 +7710,7 @@
     "link-edit-actions": {
       "add-link": "Aggiungi link",
       "remove-link": "Rimuovi collegamento",
+      "tooltip-links-settings": "",
       "update-link": "Aggiorna collegamento"
     },
     "link-editable-element": {
@@ -7760,7 +7795,10 @@
       "title-delete-all-transformations": "Eliminare tutte le trasformazioni?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Modifica visualizzazione"
+      "tooltip-edit-panel-visualization": "",
+      "tooltip-panel-settings": "",
+      "panels-selected_one": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Attiva/disattiva visualizzazione tabella",
@@ -8193,7 +8231,9 @@
     },
     "variable-edit-actions": {
       "edit-custom-values": "Modifica valori",
-      "edit-query": "Modifica query"
+      "edit-query": "Modifica query",
+      "tooltip-filter-settings": "",
+      "tooltip-variable-settings": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Elimina variabile",
@@ -8287,6 +8327,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Apri il riquadro della query",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Apri il riquadro della query"
     },
     "viz-panel-links-renderer": {
@@ -9717,7 +9759,6 @@
     "api": {
       "anonymous-user": "Anonimo",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Cartella eliminata",
       "folder-move-error-provisioned": "Impossibile spostare la cartella configurata. Per spostarla, trasferiscila nel repository ed esegui la sincronizzazione per applicare le modifiche.",
       "folder-moved-success": "Cartella spostata"
     }
@@ -11664,8 +11705,8 @@
           },
           "website-monitoring": {
             "cta": "Inizia configurazione",
-            "description": "Monitora la disponibilità del tuo sito web e le sue prestazioni da diverse posizioni.",
-            "title": "Monitora il tempo di attività e le prestazioni del sito web"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Mostra meno guide",
@@ -11786,10 +11827,10 @@
       "switchSolution": "Cambia soluzione",
       "synthetic-monitoring": {
         "action": "Abilita il monitoraggio sintetico",
-        "context": "Controlli black-box per i servizi eseguiti dal tuo cluster",
-        "description": "Controlla i tuoi endpoint da qualsiasi parte del mondo con test HTTP, DNS e ping, e ricevi avvisi sui tempi di inattività.",
+        "context": "",
+        "description": "",
         "setup-action": "Crea il tuo primo controllo",
-        "title": "Monitora il tempo di attività dall'esterno"
+        "title": ""
       },
       "title": "Consigli per il tuo stack"
     },
@@ -11888,7 +11929,7 @@
       },
       "synthetics": {
         "create-check": "Crea un controllo",
-        "description": "Monitora il tempo di attività e le prestazioni dei tuoi endpoint tramite sonde dislocate in tutto il mondo.",
+        "description": "",
         "failing-worst": "{{check}} al {{percent}}%",
         "filter": {
           "instances": "",
@@ -12363,7 +12404,8 @@
     "log-details": {
       "error": {
         "diagnose-with-assistant": "",
-        "error-details": ""
+        "error-details": "",
+        "expand-stacktrace": ""
       }
     },
     "log-labels": {
@@ -12420,8 +12462,6 @@
       "inline-no-scrolls": "Passa alla visualizzazione espansa",
       "inline-with-scrolls": "Passa alla visualizzazione ridotta",
       "link-fallback-label": "",
-      "link-value-tooltip": "Collega il valore",
-      "links-section": "Collegamenti",
       "log-attributes-field": "Attributi del registro",
       "log-line-field": "Riga registro",
       "log-line-section": "Riga registro",
@@ -13518,8 +13558,12 @@
       "code": "Codice",
       "heading": "Intestazione",
       "label": "Fai clic per aggiungere in alto",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Paragrafo",
       "prompt": "Digita per iniziare a scrivere: premi / per i blocchi",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Visualizzazione"
     },
     "cell": {
@@ -13757,8 +13801,12 @@
     "view": {
       "available-once-created": "Disponibile dopo aver scritto qualcosa",
       "copy-link": "Copia link",
-      "mode-edit": "Modifica",
-      "mode-view": "Visualizza",
+      "mode-current": "",
+      "mode-edit-description": "",
+      "mode-editing": "",
+      "mode-label": "",
+      "mode-view-description": "",
+      "mode-viewing": "",
       "more-actions": "Altre azioni"
     }
   },
@@ -14016,6 +14064,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Non è stato possibile trovare nulla che corrispondesse alla tua query"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {
@@ -14756,6 +14810,7 @@
       "delete-confirm": "Vuoi davvero eliminare questa connessione? Quest'azione non può essere annullata.",
       "delete-title": "Elimina connessione",
       "error-loading": "Impossibile caricare le connessioni",
+      "export": "",
       "kind-github-app": "App GitHub",
       "kind-oauth-app": "App OAuth",
       "no-connections": "Nessuna connessione configurata",
@@ -15024,6 +15079,11 @@
     },
     "managed-by-repository-tooltip": "Gestito da: repository",
     "managed-by-repository-tooltip-with-title": "Gestito da: repository {{title}}",
+    "managed-read-only-banner": {
+      "body": "",
+      "title": ""
+    },
+    "managed-read-only-tooltip": "",
     "message": {
       "show-less": "mostra meno",
       "show-more": "mostra di più",
@@ -15253,6 +15313,7 @@
       "view-folder": "Visualizza cartella"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Ultima sincronizzazione: {{date}}",
       "settings": "Impostazioni",
       "view": "Visualizza"
@@ -15360,6 +15421,8 @@
     "resource-kind": {
       "dashboard": "dashboard",
       "dashboards": "Dashboard",
+      "datasource": "",
+      "datasources": "",
       "folder": "cartella",
       "folders": "Cartelle",
       "library-panel": "pannello della libreria",
@@ -15937,29 +16000,18 @@
       "give-feedback": "Lascia un feedback",
       "tooltip": "Opzioni delle funzionalità sperimentali"
     },
-    "footer": {
-      "edit-option": "Modifica {{label}}",
-      "inspect-queries": "Ispeziona query",
-      "label": {
-        "interval": "Intervallo",
-        "max-data-points": "Punti dati massimi",
-        "min-interval": "Intervallo minimo",
-        "relative-time": "Tempo relativo",
-        "time-shift": "Spostamento temporale"
-      },
-      "placeholder": {
-        "no-limit": "Nessun limite"
-      },
-      "query-inspector": "Ispettore query",
-      "query-options": "Opzioni query"
-    },
     "header": {
       "alert": "Avviso",
+      "enter-stacked-view": "",
+      "exit-stacked-view": "",
       "pending-expression": "Seleziona un'espressione",
       "pending-expression-cancel": "Annulla",
       "pending-transformation": "Seleziona una trasformazione",
       "pending-transformation-cancel": "Annulla",
-      "transformation": "Trasformazione"
+      "stacked-view": "",
+      "transformation": "Trasformazione",
+      "showing-items_one": "",
+      "showing-items_other": ""
     },
     "help": {
       "close": "Chiudi la guida",
@@ -15976,13 +16028,28 @@
       "add-query": "Aggiungi query",
       "message": "Aggiungi una query, un'espressione o una trasformazione per iniziare"
     },
+    "query-options-bar": {
+      "edit-option": "",
+      "inspect-queries": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-inspector": "",
+      "query-options": ""
+    },
     "sidebar": {
       "add": "Aggiungi",
       "add-below": "Aggiungi {{id}} sotto",
       "add-expression": "Aggiungi espressione",
       "add-expression-disabled": "Le espressioni non sono supportate con l'origine di dati della dashboard",
       "add-query": "Aggiungi query",
-      "add-query-or-expression": "Aggiungi query o espressione",
       "add-saved-query": "Aggiungi query salvata",
       "add-transformation": "Aggiungi trasformazione",
       "add-transformation-below": "Aggiungi trasformazione sotto {{id}}",
@@ -15990,14 +16057,12 @@
       "card-click": "Seleziona scheda {{id}}",
       "card-multi-select": "Includi la scheda {{id}} nella selezione in blocco",
       "data": "Dati",
-      "enter-stacked-view": "Entra nella visualizzazione sovrapposta",
-      "exit-stacked-view": "Esci dalla visualizzazione sovrapposta",
       "footer-select": "Seleziona...",
       "footer-select-label": "Seleziona più elementi",
+      "more-add-options": "",
       "new-type": "Nuovo {{type}}",
       "queries-empty": "Nessuna query o espressione",
       "queries-expressions": "Query ed espressioni",
-      "stacked": "Stack",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
       "transformations": "Trasformazioni",
       "transformations-empty": "Nessuna trasformazione",
@@ -16010,13 +16075,9 @@
       "footer-items-alert_other": "{{count}} avvisi"
     },
     "stacked": {
-      "exit": "Esci dalla visualizzazione sovrapposta",
-      "exit-aria-label": "Esci dalla visualizzazione sovrapposta",
-      "hidden-aria-label": "Nascosto",
-      "scroll-area-aria-label": "Elementi editor sovrapposti",
-      "transformation": "Trasformazione",
-      "showing-items_one": "Visualizzazione di {{count}} elemento",
-      "showing-items_other": "Visualizzazione di {{count}} elementi"
+      "heading": "",
+      "heading-with-detail": "",
+      "scroll-area-aria-label": "Elementi editor sovrapposti"
     },
     "transformation-debug": {
       "copy-input-data": "Copia i dati di input negli appunti",
