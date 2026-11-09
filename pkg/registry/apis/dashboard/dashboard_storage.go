@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -36,6 +37,19 @@ type dashboardStorageWrapper struct {
 
 	// Skip the legacy permission deletion when the App Platform path owns permissions
 	iamFeatures iamapi.Features
+
+	// Hide draft dashboards from List by default
+	lifecycleExtras DashboardLifecycleExtras
+}
+
+func (d dashboardStorageWrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	if options == nil {
+		options = &internalversion.ListOptions{}
+	}
+	hide := d.lifecycleExtras != nil && d.lifecycleExtras.HideDraftsByDefault(ctx)
+	opts := *options
+	opts.LabelSelector = applyDraftListSelector(options.LabelSelector, hide)
+	return d.Storage.List(ctx, &opts)
 }
 
 func (d dashboardStorageWrapper) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {

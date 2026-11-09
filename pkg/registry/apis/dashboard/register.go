@@ -220,6 +220,8 @@ func RegisterAPIService(
 		lifecycleExtras:          lifecycleExtras,
 	}
 
+	builder.search.lifecycleExtras = lifecycleExtras
+
 	accessControl.RegisterScopeAttributeResolver(VariableUIDScopeResolver(folderService))
 
 	// Opt into the App Platform permission path (lazy ResourcePermission client) when the flag is on.
@@ -1303,6 +1305,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
 		live:                    b.dashboardActivityChannel,
 		iamFeatures:             b.iamFeatures,
+		lifecycleExtras:         b.lifecycleExtras,
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits

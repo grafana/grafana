@@ -54,6 +54,8 @@ type SearchHandler struct {
 	client   resourcepb.ResourceIndexClient
 	tracer   trace.Tracer
 	features featuremgmt.FeatureToggles
+
+	lifecycleExtras DashboardLifecycleExtras
 }
 
 func NewSearchHandler(tracer trace.Tracer, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
@@ -613,6 +615,11 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, err, w)
 		}
 		return
+	}
+
+	hideDrafts := s.lifecycleExtras != nil && s.lifecycleExtras.HideDraftsByDefault(ctx)
+	if req := draftSearchRequirement(queryParams.Get("lifecycle"), hideDrafts); req != nil {
+		searchRequest.Options.Labels = append(searchRequest.Options.Labels, req)
 	}
 
 	result, err := s.client.Search(ctx, searchRequest)
@@ -1281,4 +1288,19 @@ func nameLookupRequest(key *resourcepb.ResourceKey, names []string, permission d
 			}},
 		},
 	}
+}
+
+// draftSearchRequirement maps the `lifecycle` query param to a label requirement:
+// "draft" returns only drafts, "all" returns everything, and no value hides drafts when hideDrafts is set.
+func draftSearchRequirement(lifecycle string, hideDrafts bool) *resourcepb.Requirement {
+	switch lifecycle {
+	case utils.LifecycleDraft:
+		return &resourcepb.Requirement{Key: utils.LabelKeyLifecycle, Operator: string(selection.Equals), Values: []string{utils.LifecycleDraft}}
+	case "all":
+		return nil
+	}
+	if !hideDrafts {
+		return nil
+	}
+	return &resourcepb.Requirement{Key: utils.LabelKeyLifecycle, Operator: string(selection.NotIn), Values: []string{utils.LifecycleDraft}}
 }
