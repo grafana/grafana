@@ -88,6 +88,7 @@ export interface SearchState {
   includePanels?: boolean;
   eventTrackingNamespace: EventTrackingNamespace;
   deleted: boolean;
+  draftsOnly?: boolean;
 }
 
 export enum SearchLayout {

@@ -37,6 +37,8 @@ export interface SearchQuery {
   starred?: boolean;
   permission?: PermissionLevel;
   deleted?: boolean;
+  // Dashboard lifecycle filter. 'draft' returns only drafts, 'all' includes them; unset uses the server default
+  lifecycle?: 'draft' | 'all';
   // Same as from, but as we have 2 different searcher backends, one uses from and the other offset
   offset?: number;
 }

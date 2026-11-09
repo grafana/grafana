@@ -51,6 +51,7 @@ import { DashboardFiltersOverviewPaneToggle } from './dashboard-filters-overview
 import { dashboardModesEnabled, getPickerMode } from './dashboardModes';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
+import { PublishDraftButton } from './new-toolbar/actions/PublishDraftButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
 import { type ToolbarActionProps } from './new-toolbar/types';
@@ -369,9 +370,11 @@ function DashboardControlActions({
     (hasUid || isDraft) && !isPlaying && canEditDashboard && isEditable && !editPanel && !isMobileEditDeprecated;
   const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing && !isMobileEditDeprecated;
   const showPanelEditButtons = Boolean(editPanel);
+  const showPublishDraftButton = hasUid && !isEditing && !editPanel && !isPlaying && canSave && dashboard.isDraft(meta);
 
   return (
     <>
+      {showPublishDraftButton && <PublishDraftButton dashboard={dashboard} />}
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
       {showSaveButton && <SaveDashboard dashboard={dashboard} />}
       {!modesEnabled && showEditButton && <EditDashboardSwitch dashboard={dashboard} />}

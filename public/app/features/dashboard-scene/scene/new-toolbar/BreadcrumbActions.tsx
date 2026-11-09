@@ -4,6 +4,7 @@ import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction'
 import { type DashboardScene } from '../DashboardScene';
 import { ManagedDashboardNavBarBadge } from '../ManagedDashboardNavBarBadge';
 
+import { DraftDashboardBadge } from './actions/DraftDashboardBadge';
 import { OpenSnapshotOriginButton } from './actions/OpenSnapshotOriginButton';
 import { PublicDashboardBadge } from './actions/PublicDashboardBadge';
 import { StarButton } from './actions/StarButton';
@@ -37,6 +38,12 @@ export const BreadcrumbActions = ({ dashboard }: { dashboard: DashboardScene }) 
         component: PublicDashboardBadge,
         group: 'actions',
         condition: hasUid && canStar && isShowingDashboard && !isEditingDashboard,
+      },
+      {
+        key: 'draft-dashboard-badge',
+        component: DraftDashboardBadge,
+        group: 'actions',
+        condition: hasUid && dashboard.isDraft(meta),
       },
       {
         key: 'managed-dashboard-badge',

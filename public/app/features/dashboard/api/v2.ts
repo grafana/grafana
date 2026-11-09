@@ -16,6 +16,7 @@ import {
   type ResourceForCreate,
   type ResourceList,
 } from 'app/features/apiserver/types';
+import { getDraftDashboardExtension } from 'app/features/dashboard-scene/saving/enterprise-components/DraftDashboardExtension';
 import { convertSpecToWireFormat } from 'app/features/dashboard-scene/serialization/transformationCompat';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -165,6 +166,11 @@ export class K8sDashboardV2API
 
     // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
     delete obj.metadata.labels?.[DeprecatedInternalId];
+
+    const createLabels = await getDraftDashboardExtension()?.getCreateLabels();
+    if (createLabels && Object.keys(createLabels).length > 0) {
+      obj.metadata.labels = { ...obj.metadata.labels, ...createLabels };
+    }
     return await this.client.create(obj, undefined, requestOptions).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 

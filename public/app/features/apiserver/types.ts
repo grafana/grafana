@@ -104,6 +104,11 @@ export const AnnoKeyUseCrossDashboardVariables = 'grafana.app/useCrossDashboardV
 
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
+// Dashboard lifecycle state. A missing label means published.
+export const LabelKeyLifecycle = 'grafana.app/lifecycle';
+export const LifecycleDraft = 'draft';
+// Request-only list flag (never stored) that includes drafts when they are hidden by default
+export const LabelKeyIncludeDrafts = 'grafana.app/include-drafts';
 
 // Annotations provided by the API
 type GrafanaAnnotations = {
@@ -147,6 +152,7 @@ type GrafanaClientAnnotations = {
 // Labels
 type GrafanaLabels = {
   [DeprecatedInternalId]?: string;
+  [LabelKeyLifecycle]?: string;
 };
 
 export interface GroupVersionResource {
