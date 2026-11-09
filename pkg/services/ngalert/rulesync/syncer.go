@@ -229,6 +229,15 @@ func (s *ExternalRulerSyncer) recordSyncResult(ctx context.Context, orgID int64,
 	})
 }
 
+// recordUnchanged records a tick that skipped the apply because the upstream
+// hash is unchanged. See computeUnchangedStatus for which failures it clears.
+func (s *ExternalRulerSyncer) recordUnchanged(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, appliedHash string) {
+	now := time.Now()
+	s.writeStatus(ctx, orgID, func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {
+		return computeUnchangedStatus(prev, uid, origin, now, appliedHash)
+	})
+}
+
 // recordNotConfigured records Synced=Unknown/NotConfigured for the org, seeding
 // the singleton if absent (writeStatus creates on missing). Best-effort. Called
 // only when the API path is reachable (flag on) but no datasourceUid is set —
@@ -466,7 +475,9 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	hashStr := strconv.FormatUint(hash, 10)
 	if rc.persistedHash != "" && rc.persistedHash == hashStr {
 		s.logger.Debug("External ruler config unchanged since last sync (persisted)", "org_id", orgID)
-		s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil, hashStr)
+		// The stored hash is already current, and another replica may have
+		// stored a newer one since rc was read, so don't write it back.
+		s.recordUnchanged(ctx, orgID, rc.uid, rc.origin, "")
 		return
 	}
 	s.stateMu.RLock()
@@ -475,7 +486,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	s.stateMu.RUnlock()
 	if unchanged {
 		s.logger.Debug("External ruler config unchanged since last sync", "org_id", orgID)
-		s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil, hashStr)
+		s.recordUnchanged(ctx, orgID, rc.uid, rc.origin, hashStr)
 		return
 	}
 

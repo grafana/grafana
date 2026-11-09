@@ -44,6 +44,33 @@ func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, ori
 	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusFalse, reasonOf(syncErr).ConditionReason(), syncErr.Error(), now, "")
 }
 
+// computeUnchangedStatus is computeSyncStatus for a tick that found the
+// upstream unchanged and skipped the apply. It clears a failed status only
+// when that failure happened before anything was applied. After a save or
+// prune failure the stored rules may not match the last applied hash, and
+// the skip re-applies nothing, so reporting success there would be wrong.
+func computeUnchangedStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, now time.Time, appliedHash string) alertingrulesv0alpha1.ConfigStatus {
+	if prev != nil && !failureClearableBySkip(prev) {
+		return cloneStatus(prev)
+	}
+	return computeSyncStatus(prev, uid, origin, nil, now, appliedHash)
+}
+
+func failureClearableBySkip(st *alertingrulesv0alpha1.ConfigStatus) bool {
+	for _, c := range st.Conditions {
+		if c.Type != conditionTypeExternalRulerSynced || c.Status != alertingrulesv0alpha1.ConfigConditionStatusFalse {
+			continue
+		}
+		switch c.Reason {
+		case ReasonDatasourceLookup.ConditionReason(), ReasonRulerFetch.ConditionReason(), ReasonNotARuler.ConditionReason():
+			return true
+		default:
+			return false
+		}
+	}
+	return true
+}
+
 // computeNotConfiguredStatus returns prev with only the ExternalRulerSynced
 // condition updated to Unknown/NotConfigured (used when the API path is
 // reachable but no datasourceUid is configured). externalRulerSync is left
