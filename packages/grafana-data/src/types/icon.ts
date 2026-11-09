@@ -308,6 +308,7 @@ export const availableIconsIndex = {
   'ai-sparkle': true,
   'message-sparkles': true,
   'ai-select': true,
+  'marquee-select': true,
   bitbucket: true,
   git: true,
   'tachometer-fast': true,

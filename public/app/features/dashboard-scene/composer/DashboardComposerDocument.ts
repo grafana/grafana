@@ -69,8 +69,10 @@ export class DashboardComposerDocument implements ComposerDocument<ComposerDashb
     this.target = { resource: 'dashboard', uid: scene.state.uid ?? '' };
   }
 
-  public elementHint(): string {
-    return t('dashboard.composer.overlay.hint-panel', 'Click to comment on a panel, or drag to draw a region');
+  public elementHint(drag: 'region' | 'elements'): string {
+    return drag === 'elements'
+      ? t('dashboard.composer.overlay.hint-panel-select', 'Click to comment on a panel, or drag to select panels')
+      : t('dashboard.composer.overlay.hint-panel', 'Click to comment on a panel, or drag to draw a region');
   }
 
   public attach(session: ComposerSession): boolean {

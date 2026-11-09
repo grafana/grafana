@@ -31,8 +31,11 @@ export interface ComposerDocument<Spec, Session = unknown> {
   readonly elementKeyAttribute: string;
   /** Whether `exit` resolves with a save outcome. Dashboards never save, so theirs returns nothing. */
   readonly reportsSave: boolean;
-  /** The pick hint shown over a pickable element. */
-  elementHint(): string;
+  /**
+   * The pick hint shown over a pickable element, for what a drag does: draw a region, or select the
+   * elements it covers.
+   */
+  elementHint(drag: 'region' | 'elements'): string;
 
   /** Puts the scene in its Composer state for `session`. False when the scene refuses. */
   attach(session: Session): boolean;
