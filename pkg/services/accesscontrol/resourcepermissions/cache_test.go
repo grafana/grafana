@@ -8,13 +8,29 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestServiceWithoutRoutesOrPermissionCache(t *testing.T) {
+	// A nil SQLStore also proves construction does not subscribe to its bus.
+	s, err := New(setting.NewCfg(), Options{Resource: "receivers", Assignments: Assignments{Users: true}},
+		featuremgmt.WithFeatures(), nil, nil, nil, nil, nil, nil,
+		&usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{UserID: 7}},
+		nil, NewActionSetService(), iam.Features{})
+	require.NoError(t, err)
+	s.store = cachePermissionStore{}
+	_, err = s.SetUserPermission(t.Context(), 1, accesscontrol.User{ID: 7}, "receiver", "")
+	require.NoError(t, err)
+	_, err = s.SetPermissions(t.Context(), 1, "receiver", accesscontrol.SetResourcePermissionCommand{UserID: 7})
+	require.NoError(t, err)
+}
 
 func TestIntegrationPermissionCacheInvalidationAfterCommit(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)

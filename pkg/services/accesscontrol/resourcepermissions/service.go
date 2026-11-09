@@ -83,6 +83,8 @@ type Store interface {
 	GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, scope string, roleNames []string) (map[string]int64, error)
 }
 
+// New also supports internal callers without HTTP endpoints or an RBAC cache:
+// pass nil for router and service to skip their process-lifetime registrations.
 func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore *sqlstore.SQLStore,
@@ -137,12 +139,17 @@ func New(cfg *setting.Cfg,
 
 	s.api = newApi(cfg, ac, router, s, s.options.RestConfigProvider, iamFeatures)
 
-	if err := s.declareFixedRoles(); err != nil {
-		return nil, err
+	if service != nil {
+		if err := s.declareFixedRoles(); err != nil {
+			return nil, err
+		}
 	}
-
-	s.api.registerEndpoints()
-	sqlStore.Bus().AddEventListener(s.onPermissionCachesInvalidated)
+	if router != nil {
+		s.api.registerEndpoints()
+	}
+	if service != nil {
+		sqlStore.Bus().AddEventListener(s.onPermissionCachesInvalidated)
+	}
 
 	return s, nil
 }
@@ -511,6 +518,9 @@ type resourcePermissionCachesInvalidated struct {
 }
 
 func (s *Service) invalidatePermissionCachesAfterCommit(ctx context.Context, orgID int64, userIDs []int64) {
+	if s.service == nil {
+		return
+	}
 	event := &resourcePermissionCachesInvalidated{owner: s, orgID: orgID, userIDs: slices.Clone(userIDs)}
 	if sess := sqlstore.SessionFromContext(ctx); sess != nil {
 		sess.PublishAfterCommit(event)
@@ -622,6 +632,9 @@ func (s *Service) DeleteResourcePermissions(ctx context.Context, orgID int64, re
 // It clears both regular user and service account cache keys since we don't
 // know the identity type from just the user ID.
 func (s *Service) clearUserPermissionCache(orgID int64, userID int64) {
+	if s.service == nil {
+		return
+	}
 	s.service.ClearUserPermissionCache(&user.SignedInUser{
 		OrgID:  orgID,
 		UserID: userID,
