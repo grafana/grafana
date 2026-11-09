@@ -270,7 +270,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       (tableRefreshEnabled && (!noPanelPadding || transparent) ? TABLE.FRAME_BORDER_WIDTH * 2 : 0),
     [width, scrollbarWidth, parentGutterWidth, tableRefreshEnabled, noPanelPadding, transparent]
   );
-  const nestedAvailableWidth = Math.max(0, availableWidth - nestedGutterWidth);
+  const nestedAvailableWidth = Math.max(0, availableWidth - TABLE.CELL_PADDING - 1 - nestedGutterWidth);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
