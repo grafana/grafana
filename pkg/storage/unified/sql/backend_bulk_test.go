@@ -566,7 +566,7 @@ func TestProcessBulkRollsBackSQLFailures(t *testing.T) {
 			for _, table := range []string{"resource", "resource_history"} {
 				rows, err := originalDB.QueryContext(ctx, "SELECT name, value FROM "+table+" WHERE namespace = ?", original.Key.Namespace)
 				require.NoError(t, err)
-				defer rows.Close()
+				defer func() { require.NoError(t, rows.Close()) }()
 				require.True(t, rows.Next())
 				var name string
 				var value []byte
@@ -621,7 +621,7 @@ func (t *bulkFailureTx) Commit() error {
 	t.commitAttempted = true
 	if t.failCommit {
 		// Model a commit failure that aborts the underlying transaction.
-		if err := t.Tx.Rollback(); err != nil {
+		if err := t.Rollback(); err != nil {
 			return err
 		}
 		return t.err
