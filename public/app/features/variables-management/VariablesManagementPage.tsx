@@ -8,7 +8,7 @@ import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
 import { Alert, Button, ConfirmModal, EmptyState, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type Variable } from 'app/api/clients/dashboard/v2beta1';
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
@@ -30,6 +30,10 @@ import {
 } from './api';
 import { MoveVariablesModal } from './components/MoveVariablesModal';
 import { VariablesTable } from './components/VariablesTable';
+import {
+  getSharedVariablesEntryPoint,
+  SharedVariablesEntryPoint,
+} from './enterprise-components/SharedVariablesEntryPointExtension';
 import {
   buildVariablesTree,
   canManageGlobalVariables,
@@ -60,7 +64,7 @@ export default function VariablesManagementPage() {
   // and back navigation return there instead of the global list.
   const [searchParams] = useSearchParams();
   const originFolderUid = (isNew || editName ? searchParams.get('folderUid') : null) || undefined;
-  const { data: originFolder } = useGetFolderQueryFacade(originFolderUid);
+  const { data: originFolder } = useGetCombinedFolderQuery(originFolderUid);
   const originFolderNav = useMemo(() => {
     if (!originFolder || originFolder.uid !== originFolderUid) {
       return undefined;
@@ -270,16 +274,22 @@ export default function VariablesManagementPage() {
 
   // An error must never look like "no variables yet" — the CTA would be misleading.
   const isEmpty = !isLoading && !isError && variables.length === 0;
+  const hasSharedVariablesEntryPoint = getSharedVariablesEntryPoint() !== null;
+  const showNewVariable = !isEmpty && canCreate;
 
   return (
     <Page
       navId="dashboards/variables"
       actions={
-        !isEmpty &&
-        canCreate && (
-          <Button icon="plus" onClick={() => locationService.push(`${LIST_URL}/new`)}>
-            <Trans i18nKey="variables-management.page.new-variable">New variable</Trans>
-          </Button>
+        (hasSharedVariablesEntryPoint || showNewVariable) && (
+          <Stack gap={1}>
+            <SharedVariablesEntryPoint />
+            {showNewVariable && (
+              <Button icon="plus" onClick={() => locationService.push(`${LIST_URL}/new`)}>
+                <Trans i18nKey="variables-management.page.new-variable">New variable</Trans>
+              </Button>
+            )}
+          </Stack>
         )
       }
     >

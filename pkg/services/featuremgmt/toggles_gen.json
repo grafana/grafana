@@ -2732,7 +2732,8 @@
       "metadata": {
         "name": "foldersAppPlatformAPI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-03T14:15:23Z"
+        "creationTimestamp": "2025-07-03T14:15:23Z",
+        "deletionTimestamp": "2026-11-04T06:40:00Z"
       },
       "spec": {
         "description": "Enables use of app platform API for folders",
@@ -2967,6 +2968,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardSidebarExplicitOpen",
+        "resourceVersion": "1794214035595",
+        "creationTimestamp": "2026-11-09T08:47:15Z"
+      },
+      "spec": {
+        "description": "In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardVariablesMigration",
         "resourceVersion": "1792033601704",
         "creationTimestamp": "2026-10-15T03:06:41Z"
@@ -3078,6 +3094,21 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.folderPickerFolderEditAccess",
+        "resourceVersion": "1793975376541",
+        "creationTimestamp": "2026-11-06T14:29:36Z"
+      },
+      "spec": {
+        "description": "Shows folders the user cannot edit as read only in the folder picker, instead of hiding them",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -3762,6 +3793,7 @@
         "name": "grafana.vectorSearchCmdk",
         "resourceVersion": "1793824807529",
         "creationTimestamp": "2026-07-01T12:42:40Z",
+        "deletionTimestamp": "2026-11-03T14:53:22Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-11-04 20:40:07.529765 +0000 UTC"
         }
@@ -4322,6 +4354,7 @@
         "name": "kubernetesFolderCountsLegacyStorage",
         "resourceVersion": "1793306194106",
         "creationTimestamp": "2026-09-11T15:39:49Z",
+        "deletionTimestamp": "2026-11-06T19:12:02Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-10-29 20:36:34.106495 +0000 UTC"
         }

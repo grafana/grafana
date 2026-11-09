@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fullstorydev/grpchan"
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
@@ -20,6 +19,7 @@ import (
 	userutils "github.com/grafana/dskit/user"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -54,7 +54,7 @@ func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring 
 		&resourcepb.ResourceIndex_ServiceDesc,
 		&resourcepb.ManagedObjectIndex_ServiceDesc,
 	} {
-		srv.RegisterService(grpchan.InterceptServer(desc, UnaryErrorResultInterceptor(), nil), s)
+		srv.RegisterService(desc, s)
 	}
 	_, _ = grpcserver.ProvideReflectionService(cfg, provider)
 	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
@@ -230,7 +230,10 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 		wg.Go(func() {
 			// Every instance must be contacted, so retry the same one instead of failing over.
 			rsp, _, err := callWithRetries(rCtx, logger, ds.clientPool, []ring.InstanceDesc{inst}, r, ResourceClient.RebuildIndexes)
-			if err := ErrorFromResponse(rsp.GetError(), err); err != nil {
+			if err == nil && rsp == nil {
+				err = status.Error(codes.Internal, "rebuild index request returned no response")
+			}
+			if err != nil {
 				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %w", inst.Id, err)
 				return
 			}
@@ -287,7 +290,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	// Determine if all instances were contacted
 	contactedAllInstances := contactedInstances == expectedInstances && expectedInstances > 0
 
-	// Partial results are not returned with the error, as with the conversion interceptor.
+	// Partial results are not returned with the error; callers must handle err without reading the response.
 	if len(errs) > 0 {
 		return nil, GRPCStatusError(AsErrorResult(errors.Join(errs...)))
 	}
@@ -398,7 +401,7 @@ func callWithRetries[Req, Resp any](
 			resp, err = call(client.(*RingClient).Client, ctx, req)
 		}
 
-		code, failure := callFailure(resp, err)
+		code := AsErrorResult(err).GetCode()
 		// A client pool error means we could not connect to the instance.
 		// 429 is not retried: search rate limits are shared by all replicas, and
 		// each retry would use up more of the tenant's limit.
@@ -406,25 +409,9 @@ func callWithRetries[Req, Resp any](
 		if !retryable || attempt == maxAttempts-1 {
 			break
 		}
-		logger.Warn("search instance failed, retrying", "err", failure, "searchApiInstanceId", inst.Id, "attempt", attempt+1)
+		logger.Warn("search instance failed, retrying", "err", err, "searchApiInstanceId", inst.Id, "attempt", attempt+1)
 	}
 	return resp, instID, err
-}
-
-// callFailure returns the HTTP code and error of a failed call, or 0 and nil
-// on success. Search servers can report errors as a gRPC status or inside the
-// response, depending on their version.
-func callFailure(resp any, err error) (int32, error) {
-	if err != nil {
-		return AsErrorResult(err).GetCode(), err
-	}
-	r, ok := resp.(interface {
-		GetError() *resourcepb.ErrorResult
-	})
-	if !ok || r.GetError() == nil {
-		return 0, nil
-	}
-	return r.GetError().GetCode(), StatusError(r.GetError())
 }
 
 // shuffled returns the instances in random order, which spreads the load

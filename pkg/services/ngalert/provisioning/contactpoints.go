@@ -253,7 +253,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 		if err := ecp.authz.AuthorizeCreate(ctx, user); err != nil {
 			return apimodels.EmbeddedContactPoint{}, err
 		}
-		newReceiver := v1.NewReceiver(v1.ReceiverUID(grafanaReceiver.Name), grafanaReceiver.Name, []*v1.PostableGrafanaReceiver{grafanaReceiver}, models.ProvenanceNone)
+		newReceiver := v1.NewReceiver(v1.ResourceUID(util.GenerateShortUID()), grafanaReceiver.Name, []*v1.PostableGrafanaReceiver{grafanaReceiver}, models.ProvenanceNone)
 		if revision.Config.Receivers == nil {
 			revision.Config.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
 		}
@@ -281,6 +281,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	return contactPoint, nil
 }
 
+//nolint:gocyclo
 func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID int64, user identity.Requester, contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) error {
 	// set all redacted values with the latest known value from the store
 	if contactPoint.Settings == nil {
@@ -368,8 +369,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		renamed := newReceiver != nil && oldReceiver.UID != newReceiver.UID
-		if renamed {
+		if newReceiver != nil {
 			if newReceiverCreated {
 				// Copy receiver permissions
 				permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, user, string(oldReceiver.UID), string(newReceiver.UID))
@@ -381,10 +381,15 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 				}
 			}
 
-			if fullRemoval {
+			// Routes and rules refer to receivers by name, so they need to follow the receiver when it is either
+			// replaced by the one the integration moved to or renamed. Not when the integration merely left a
+			// receiver that has others, as they still use the old name.
+			if oldReceiver.Name != newReceiver.Name && (fullRemoval || oldReceiver.UID == newReceiver.UID) {
 				if err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision, oldReceiver.Name, newReceiver.Name, provenance); err != nil {
 					return err
 				}
+			}
+			if fullRemoval {
 				if err := ecp.resourcePermissions.DeleteResourcePermissions(ctx, orgID, string(oldReceiver.UID)); err != nil {
 					return err
 				}
@@ -402,7 +407,8 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 }
 
 // authorizeUpdate checks authorization for a contact point update, handling the
-// different cases: simple update, rename into existing receiver, and rename creating a new receiver.
+// different cases: simple update (including renaming a group of a single integration, which keeps its UID), rename into
+// existing receiver, and rename creating a new receiver.
 func (ecp *ContactPointService) authorizeUpdate(ctx context.Context, user identity.Requester, oldReceiver, newReceiver *v1.PostableApiReceiver, fullRemoval, newReceiverCreated bool) error {
 	renamed := newReceiver != nil && oldReceiver.UID != newReceiver.UID
 	if !renamed {
@@ -599,7 +605,8 @@ func (ecp *ContactPointService) checkProtectedFields(
 
 // stitchReceiver modifies a receiver, target, in an alertmanager configStore. It modifies the given configStore in-place.
 // Returns true if the configStore was altered in any way, and false otherwise.
-// If integration was moved to another group and it was the last in the previous group, the second parameter contains the name of the old group that is gone
+// If the integration was moved to another group and it was the last in the previous group, fullRemoval is true as the old group is gone.
+// If it was the only one in its group and the new name is unused, the group is renamed in place instead and keeps its UID.
 func stitchReceiver(cfg *v1.AMConfigV1, target *v1.PostableGrafanaReceiver) (oldReceiver, newReceiver *v1.PostableApiReceiver, fullRemoval, newReceiverCreated bool) {
 	// Algorithm to fix up receivers. Receivers are very complex and depend heavily on internal consistency.
 	// All receivers in a given receiver group have the same name. We must maintain this across renames.
@@ -640,6 +647,19 @@ groupLoop:
 					}
 				}
 
+				// A group that only holds this integration is renamed along with it, keeping its UID so that what
+				// is keyed by it, such as permissions, is unaffected.
+				if !movedToExistingGroup && len(receiverGroup.GrafanaManagedReceivers) == 1 {
+					renamedGroup := receiverGroup
+					oldReceiver = &renamedGroup // Keep the old name for the caller, as the group is modified below.
+					receiverGroup.Name = target.Name
+					receiverGroup.GrafanaManagedReceivers = []*v1.PostableGrafanaReceiver{target}
+					receiverGroup.RefreshVersion()
+					cfg.Receivers[groupUID] = receiverGroup
+					newReceiver = &receiverGroup
+					break groupLoop
+				}
+
 				// If this was the last one in the old group, we can remove the group entirely.
 				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
 					fullRemoval = true
@@ -658,7 +678,7 @@ groupLoop:
 
 				// Target didn't match an existing group, so we create a new one.
 				newReceiverCreated = true
-				newGroup := v1.NewReceiver(v1.ReceiverUID(target.Name), target.Name, []*v1.PostableGrafanaReceiver{target}, models.ProvenanceNone)
+				newGroup := v1.NewReceiver(v1.ResourceUID(util.GenerateShortUID()), target.Name, []*v1.PostableGrafanaReceiver{target}, models.ProvenanceNone)
 				cfg.Receivers[newGroup.UID] = newGroup
 				newReceiver = &newGroup
 				break groupLoop
