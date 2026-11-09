@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -281,7 +282,7 @@ func TestBulkProcessReturnsDiskSpoolReplayErrors(t *testing.T) {
 		{name: "invalid record", corruption: []byte{1, 0xff}, message: "unmarshal"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			backend := &corruptBulkSpoolBackend{corruption: tc.corruption}
+			backend := &corruptBulkSpoolBackend{corruption: tc.corruption, failure: errors.New("backend failed")}
 			blob := bulkBlobEndpointSupport{StreamingBlobSupport: bulkBlobUploadFunc{put: func(_ context.Context, _ *resourcepb.PutBlobRequest, reader io.Reader) (*resourcepb.PutBlobResponse, error) {
 				return completedBulkBlobUpload(reader)
 			}}}
@@ -297,8 +298,40 @@ func TestBulkProcessReturnsDiskSpoolReplayErrors(t *testing.T) {
 			require.True(t, backend.rollback)
 			require.Nil(t, stream.response)
 			require.Contains(t, rpcErrorResult(t, err).Message, tc.message)
+			require.NotContains(t, rpcErrorResult(t, err).Message, "backend failed")
 		})
 	}
+}
+
+func TestBulkProcessRemoteBackendFailure(t *testing.T) {
+	failure := &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "import conflict", Reason: "Conflict"}
+	srv := &server{
+		backend:          &failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1}, err: GRPCStatusError(failure)},
+		access:           authlib.FixedAccessClient(true),
+		bulkBatchOptions: DefaultBulkBatchOptions(),
+	}
+	listener := bufconn.Listen(1 << 20)
+	grpcServer := grpc.NewServer(grpc.StreamInterceptor(func(_ any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, next grpc.StreamHandler) error {
+		ctx := authlib.WithAuthInfo(stream.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
+		return next(srv, contextStream{ServerStream: stream, ctx: ctx})
+	}))
+	resourcepb.RegisterBulkStoreServer(grpcServer, srv)
+	go func() { _ = grpcServer.Serve(listener) }()
+	t.Cleanup(func() { grpcServer.Stop(); _ = listener.Close() })
+	conn, err := grpc.NewClient("passthrough:///bulk-failure", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+
+	req := newTestBulkRequest("item")
+	md := (&BulkSettings{Collection: []*resourcepb.ResourceKey{req.Key}}).ToMD()
+	ctx, cancel := context.WithTimeout(metadata.NewOutgoingContext(t.Context(), md), 10*time.Second)
+	defer cancel()
+	stream, err := resourcepb.NewBulkStoreClient(conn).BulkProcess(ctx)
+	require.NoError(t, err)
+	require.NoError(t, stream.Send(req))
+	rsp, err := stream.CloseAndRecv()
+	require.Nil(t, rsp)
+	requireRPCError(t, err, failure)
 }
 
 func TestBulkProcessBlobUploadFailureDoesNotPublish(t *testing.T) {
@@ -429,7 +462,7 @@ type bulkBlobValidationBackend struct {
 	diskBacked bool
 }
 
-func (b *bulkBlobValidationBackend) ProcessBulk(ctx context.Context, settings BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *bulkBlobValidationBackend) ProcessBulk(ctx context.Context, settings BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	b.called = true
 	b.settings = settings
 	_, b.diskBacked = iter.(*spooledBulkRequests)
@@ -452,7 +485,7 @@ func (b *bulkBlobValidationBackend) ProcessBulk(ctx context.Context, settings Bu
 			b.forwarded = append(b.forwarded, iter.Request())
 		}
 	}
-	return &resourcepb.BulkResponse{Processed: int64(len(b.forwarded))}
+	return &resourcepb.BulkResponse{Processed: int64(len(b.forwarded))}, nil
 }
 
 type corruptBulkSpoolBackend struct {
@@ -460,21 +493,23 @@ type corruptBulkSpoolBackend struct {
 	corruption []byte
 	rollback   bool
 	err        error
+	// failure is returned after the replay, to check that the spool error wins.
+	failure error
 }
 
-func (b *corruptBulkSpoolBackend) ProcessBulk(ctx context.Context, _ BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *corruptBulkSpoolBackend) ProcessBulk(ctx context.Context, _ BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	spool := iter.(*spooledBulkRequests)
 	if b.err = spool.file.Truncate(0); b.err != nil {
-		return &resourcepb.BulkResponse{}
+		return &resourcepb.BulkResponse{}, nil
 	}
 	if _, b.err = spool.file.Seek(0, io.SeekStart); b.err != nil {
-		return &resourcepb.BulkResponse{}
+		return &resourcepb.BulkResponse{}, nil
 	}
 	if _, b.err = spool.file.Write(b.corruption); b.err != nil {
-		return &resourcepb.BulkResponse{}
+		return &resourcepb.BulkResponse{}, nil
 	}
 	if _, b.err = spool.file.Seek(0, io.SeekStart); b.err != nil {
-		return &resourcepb.BulkResponse{}
+		return &resourcepb.BulkResponse{}, nil
 	}
 	spool.reader.Reset(spool.file)
 	batchIter := iter.(BulkRequestBatchIterator)
@@ -484,7 +519,10 @@ func (b *corruptBulkSpoolBackend) ProcessBulk(ctx context.Context, _ BulkSetting
 			break
 		}
 	}
-	return &resourcepb.BulkResponse{}
+	if b.failure != nil {
+		return nil, b.failure
+	}
+	return &resourcepb.BulkResponse{}, nil
 }
 
 type bulkBlobValidationStream struct {

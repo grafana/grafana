@@ -2,16 +2,22 @@ package sql
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 
+	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -328,10 +334,74 @@ func TestProcessBulkChunkedRollbackRequested(t *testing.T) {
 		rollback: []bool{true},
 	}
 
-	rsp := b.processBulkChunked(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, iter)
-	require.NotNil(t, rsp.Error)
-	require.Contains(t, rsp.Error.Message, "rollback requested")
+	rsp, err := b.processBulkChunked(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, iter)
+	require.ErrorContains(t, err, "rollback requested")
+	require.Nil(t, rsp)
 	require.NoError(t, b.SQLMock.ExpectationsWereMet())
+}
+
+func TestProcessBulkReturnsTransactionError(t *testing.T) {
+	b, ctx := setupBackendTest(t)
+	want := errors.New("begin failed")
+	b.SQLMock.ExpectBegin().WillReturnError(want)
+
+	rsp, err := b.processBulk(ctx, resource.BulkSettings{}, unitest.ToBulkIterator(nil))
+	require.ErrorIs(t, err, want)
+	require.Nil(t, rsp)
+	require.NoError(t, b.SQLMock.ExpectationsWereMet())
+}
+
+// A failure while staging the parquet buffer must fail the bulk call before
+// the collection is cleared, rather than importing the truncated buffer.
+func TestProcessBulkParquetBufferWriteErrorKeepsCollection(t *testing.T) {
+	if !db.IsTestDbSQLite() {
+		t.Skip("the parquet buffer is only used with SQLite")
+	}
+	ctx := t.Context()
+	eDB, err := dbimpl.ProvideResourceDB(db.NewTestStore(t), setting.NewCfg(), nil)
+	require.NoError(t, err)
+	storageBackend, err := NewBackend(BackendOptions{
+		DBProvider:             eDB,
+		DisablePruner:          true,
+		MigrationParquetBuffer: true,
+		TmpDir:                 t.TempDir(),
+	})
+	require.NoError(t, err)
+	b := storageBackend.(*backend)
+	require.Equal(t, "sqlite", b.dialect.DialectName())
+	svc := storageBackend.(services.Service)
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+	t.Cleanup(func() { require.NoError(t, services.StopAndAwaitTerminated(context.Background(), svc)) })
+
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "shorturl.grafana.app", Resource: "shorturls"}
+	settings := resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}
+	value := func(name string) []byte {
+		return []byte(`{"apiVersion":"shorturl.grafana.app/v1beta1","kind":"ShortURL","metadata":{"name":"` + name + `","namespace":"default"},"spec":{"path":"d/test"}}`)
+	}
+
+	rsp, err := b.ProcessBulk(ctx, settings, unitest.ToBulkIterator([]*resourcepb.BulkRequest{
+		newSQLBulkRequest("item-1", resourcepb.BulkRequest_ADDED, value("item-1")),
+		newSQLBulkRequest("item-2", resourcepb.BulkRequest_ADDED, value("item-2")),
+	}))
+	require.NoError(t, err)
+	require.EqualValues(t, 2, rsp.Processed)
+
+	rsp, err = b.ProcessBulk(ctx, settings, unitest.ToBulkIterator([]*resourcepb.BulkRequest{
+		newSQLBulkRequest("item-3", resourcepb.BulkRequest_ADDED, value("item-3")),
+		newSQLBulkRequest("bad", resourcepb.BulkRequest_ADDED, []byte("{not json")),
+	}))
+	require.Error(t, err)
+	require.Nil(t, rsp)
+
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{Backend: storageBackend})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, server.Stop(context.Background())) })
+	list, err := server.List(authlib.WithAuthInfo(ctx, testBulkBlobRequester()), &resourcepb.ListRequest{
+		Source:  resourcepb.ListRequest_STORE,
+		Options: &resourcepb.ListOptions{Key: key},
+	})
+	require.NoError(t, err)
+	require.Len(t, list.Items, 2)
 }
 
 func TestBulkHistoryInsertRowLimit(t *testing.T) {
@@ -498,10 +568,10 @@ func TestIntegrationBulkProcessAnalyzesResourceHistory(t *testing.T) {
 		newSQLBulkRequest("item-3", resourcepb.BulkRequest_ADDED, []byte(`{"apiVersion":"shorturl.grafana.app/v1beta1","kind":"ShortURL","metadata":{"name":"item-3","namespace":"default"},"spec":{"path":"d/c"}}`)),
 	})
 
-	resp := b.ProcessBulk(ctx, resource.BulkSettings{
+	resp, err := b.ProcessBulk(ctx, resource.BulkSettings{
 		Collection: []*resourcepb.ResourceKey{key},
 	}, iter)
-	require.Nil(t, resp.Error)
+	require.NoError(t, err)
 	require.Equal(t, int64(3), resp.Processed)
 
 	// The backfill must have populated the resource table from history.
