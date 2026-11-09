@@ -11,8 +11,6 @@
 
 export * from './utils/skeleton';
 
-export { CodeMirrorDiffEditor } from './components/CodeMirror/DiffEditorLazy';
-export type { CodeMirrorDiffEditorProps } from './components/CodeMirror/types';
 export { getQueryFieldConfig } from './components/QueryFieldConfig/queryFieldConfig';
 export type { QueryFieldConfig, QueryFieldConfigOptions } from './components/QueryFieldConfig/queryFieldConfig';
 export { TableNG } from './components/Table/TableNG/TableNG';

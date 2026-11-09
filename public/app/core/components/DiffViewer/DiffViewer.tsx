@@ -1,7 +1,6 @@
 import { type ReactElement } from 'react';
 
-import { Box, Stack } from '@grafana/ui';
-import { CodeMirrorDiffEditor as DiffEditor, type CodeMirrorDiffEditorProps } from '@grafana/ui/unstable';
+import { Box, CodeMirrorDiffEditor as DiffEditor, type CodeMirrorDiffEditorProps, Stack } from '@grafana/ui';
 
 import { InlineDiffToggle, useInlineDiffPreference } from '../MonacoDiffEditor/inlineDiffPreference';
 
