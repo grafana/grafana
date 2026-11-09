@@ -18,13 +18,15 @@ aliases:
 
 ## Grafana Operator
 
-The Grafana Operator is a Kubernetes operator built to help you manage your Grafana instances and its resources in a Kubernetes environment. The Grafana Operator automatically syncs Kubernetes custom resources and actual resources in your Grafana instance, and allows you to install and manage local Grafana instances, dashboards and data sources in Kubernetes or OpenShift.
+{{< admonition type="important" >}}
 
-{{< admonition type="note" >}}
+The Grafana Operator is a community project and it's not commercially supported by Grafana. 
 
 This document may not contain the latest information about the Grafana Operator. For the most up-to-date information refer to [Grafana Operator](https://grafana.github.io/grafana-operator/) in GitHub.
 
 {{< /admonition >}}
+
+The Grafana Operator is a Kubernetes operator built to help you manage your Grafana instances and its resources in a Kubernetes environment. The Grafana Operator automatically syncs Kubernetes custom resources and actual resources in your Grafana instance, and allows you to install and manage local Grafana instances, dashboards and data sources in Kubernetes or OpenShift.
 
 While the Grafana Operator simplifies many aspects of operating Grafana and its resources on Kubernetes, its current support is mainly focused on managing dashboards, folders, alerts, and data sources. For a full list of the supported resources refer to [Operator Resources](https://grafana.github.io/grafana-operator/docs/examples/) in the canonical documentation.
 
