@@ -875,7 +875,7 @@
   },
   "packages/grafana-ui/src/components/Table/TableNG/hooks.ts": {
     "react-hooks/immutability": {
-      "count": 2
+      "count": 1
     },
     "react-hooks/preserve-manual-memoization": {
       "count": 2
