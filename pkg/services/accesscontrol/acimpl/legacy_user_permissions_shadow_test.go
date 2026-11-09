@@ -258,14 +258,17 @@ func TestPermissionShadowConcurrencyLimit(t *testing.T) {
 func TestPermissionShadowPrimaryPanicReleasesCapacity(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := newPermissionShadow(t, nil, 1)
+
 		require.PanicsWithValue(t, "primary", func() {
 			_, _ = s.GetUserPermissions(t.Context(), nil, shadowRequester(), ac.Options{}, setting.NewCfg(), func() ([]ac.Permission, error) {
 				panic("primary")
 			})
 		})
+
 		_, err := s.GetUserPermissions(t.Context(), nil, shadowRequester(), ac.Options{}, setting.NewCfg(), func() ([]ac.Permission, error) { return nil, nil })
 		require.NoError(t, err)
 		synctest.Wait()
+
 		require.Zero(t, testutil.ToFloat64(s.skipped))
 		require.Equal(t, float64(1), testutil.ToFloat64(s.results.WithLabelValues("error")))
 	})
@@ -280,14 +283,19 @@ func TestPermissionShadowMismatchLogs(t *testing.T) {
 		s := newPermissionShadow(t, nil, 1)
 		logger := &permissionShadowLogger{}
 		s.logger = logger
+
 		client := shadowLegacyClient{get: func(context.Context, legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
 			return legacyclient.LegacyGetUserPermissionsResponse{Permissions: []types.Permission{{Action: "read", Scope: "new"}}}, nil
 		}}
 		want := []ac.Permission{{Action: "read", Scope: "old"}}
+
 		got, err := s.GetUserPermissions(t.Context(), client, shadowRequester(), ac.Options{}, setting.NewCfg(), func() ([]ac.Permission, error) { return want, nil })
+
 		require.NoError(t, err)
 		require.Equal(t, want, got)
+
 		synctest.Wait()
+
 		require.Equal(t, 1, logger.WarnLogs.Calls)
 		require.Equal(t, "Permission shadow results differ", logger.WarnLogs.Message)
 		require.Equal(t, []any{
