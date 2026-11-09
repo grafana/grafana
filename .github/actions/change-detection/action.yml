@@ -295,8 +295,6 @@ runs:
             - 'cypress.config.js'
             - '${{ inputs.self }}'
           e2e_cloud_plugins:
-            - 'pkg/tsdb/azuremonitor/**'
-            - 'public/app/plugins/datasource/azuremonitor/**'
             - 'e2e-playwright/cloud-plugins-suite/azure-monitor.spec.ts'
             - '${{ inputs.self }}'
           dev_tooling:

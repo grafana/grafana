@@ -113,10 +113,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/test-plugins/grafana-test-datasource'),
     }),
     withAuth({
-      name: 'azuremonitor',
-      testDir: path.join(pluginDirRoot, '/azuremonitor'),
-    }),
-    withAuth({
       name: 'graphite',
       testDir: path.join(pluginDirRoot, '/graphite'),
     }),
