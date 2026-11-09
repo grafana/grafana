@@ -10,6 +10,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult, type QueryResponse, type SearchQuery } from 'app/features/search/service/types';
+import { useStarredSearch } from 'app/features/stars/hooks';
 
 import { DashListItem } from './DashListItem';
 import { type Options } from './panelcfg.gen';
@@ -18,7 +19,6 @@ import { useDashListUrlParams } from './utils';
 export type Dashboard = DashboardQueryResult & {
   isSearchResult?: boolean;
   isRecent?: boolean;
-  isStarred?: boolean;
 };
 
 interface DashboardGroup {
@@ -29,14 +29,8 @@ interface DashboardGroup {
 
 async function fetchDashboards(options: Options, replaceVars: InterpolateFunction) {
   const searcher = getGrafanaSearcher();
-  let starredDashboards: Promise<QueryResponse | void> = Promise.resolve();
   let recentDashboards: Promise<QueryResponse | void> = Promise.resolve();
   let searchedDashboards: Promise<QueryResponse | void> = Promise.resolve();
-
-  if (options.showStarred) {
-    const params: SearchQuery = { limit: options.maxItems, starred: true };
-    starredDashboards = searcher.starred(params);
-  }
 
   let dashUIDs: string[] = [];
   if (options.showRecentlyViewed) {
@@ -59,11 +53,7 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
     searchedDashboards = searcher.search(params);
   }
 
-  const [starred, searched, recent] = await Promise.allSettled([
-    starredDashboards,
-    searchedDashboards,
-    recentDashboards,
-  ]);
+  const [searched, recent] = await Promise.allSettled([searchedDashboards, recentDashboards]);
 
   // We deliberately deal with recent dashboards first so that the order of dash IDs is preserved
   let dashMap = new Map<string, DashboardQueryResult>();
@@ -91,25 +81,13 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
     });
   }
 
-  if (starred && starred.status === 'fulfilled') {
-    starred?.value?.view.forEach((dash) => {
-      if (!dash.uid) {
-        return;
-      }
-      if (dashMap.has(dash.uid)) {
-        dashMap.get(dash.uid)!.isStarred = true;
-      } else {
-        dashMap.set(dash.uid, { ...dash, isStarred: true });
-      }
-    });
-  }
-
   return dashMap;
 }
 
 const collator = new Intl.Collator();
 
 export function DashList(props: PanelProps<Options>) {
+  const { showStarred, showRecentlyViewed, showHeadings, showFolderNames, showSearch, maxItems } = props.options;
   const [dashboards, setDashboards] = useState(new Map<string, Dashboard>());
 
   const throttledRenderCount = useThrottle(props.renderCounter, 5000);
@@ -120,20 +98,25 @@ export function DashList(props: PanelProps<Options>) {
     });
   }, [props.options, props.replaceVariables, throttledRenderCount]);
 
-  const { foldersByUid } = useDashboardLocationInfo(props.options.showFolderNames && dashboards.size > 0);
+  // Searched in full and cut after sorting, so the panel shows the first `maxItems` alphabetically
+  const { rows: starredRows } = useStarredSearch({ skip: !showStarred });
+  const starredDashboards = useMemo(
+    () => [...(starredRows ?? [])].sort((a, b) => collator.compare(a.name, b.name)).slice(0, maxItems),
+    [starredRows, maxItems]
+  );
 
-  const [starredDashboards, recentDashboards, searchedDashboards] = useMemo(() => {
+  const { foldersByUid } = useDashboardLocationInfo(
+    showFolderNames && (dashboards.size > 0 || starredDashboards.length > 0)
+  );
+
+  const [recentDashboards, searchedDashboards] = useMemo(() => {
     const dashboardList = [...dashboards.values()];
     const dashboardsGroupsMap: Record<string, Dashboard[]> = {
-      starred: [],
       recent: [],
       searched: [],
     };
 
     for (const dash of dashboardList) {
-      if (dash.isStarred) {
-        dashboardsGroupsMap.starred.push(dash);
-      }
       if (dash.isRecent) {
         dashboardsGroupsMap.recent.push(dash);
       }
@@ -141,14 +124,8 @@ export function DashList(props: PanelProps<Options>) {
         dashboardsGroupsMap.searched.push(dash);
       }
     }
-    return [
-      dashboardsGroupsMap.starred.sort((a, b) => collator.compare(a.name, b.name)),
-      dashboardsGroupsMap.recent,
-      dashboardsGroupsMap.searched.sort((a, b) => collator.compare(a.name, b.name)),
-    ];
+    return [dashboardsGroupsMap.recent, dashboardsGroupsMap.searched.sort((a, b) => collator.compare(a.name, b.name))];
   }, [dashboards]);
-
-  const { showStarred, showRecentlyViewed, showHeadings, showFolderNames, showSearch } = props.options;
 
   const dashboardGroups: DashboardGroup[] = [
     {
@@ -168,12 +145,6 @@ export function DashList(props: PanelProps<Options>) {
     },
   ];
 
-  const handleStarChange = (id: string, isStarred: boolean) => {
-    const updatedDashboards = new Map(dashboards);
-    updatedDashboards.set(id, { ...dashboards.get(id)!, isStarred });
-    setDashboards(updatedDashboards);
-  };
-
   const urlParams = useDashListUrlParams(props);
 
   const renderList = (dashboards: Dashboard[]) => (
@@ -191,7 +162,6 @@ export function DashList(props: PanelProps<Options>) {
               showFolderNames={showFolderNames}
               locationInfo={locationInfo}
               layoutMode="list"
-              onStarChange={handleStarChange}
               source="dashListView"
             />
           </li>

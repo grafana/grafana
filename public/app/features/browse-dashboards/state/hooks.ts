@@ -1,8 +1,12 @@
-import { useCallback, useRef } from 'react';
+import { isEqual } from 'lodash';
+import { useCallback, useEffect, useRef } from 'react';
 import { useStore } from 'react-redux';
 import { createSelector } from 'reselect';
 
+import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { STARRED_FOLDERS_UID } from 'app/features/search/constants';
 import { type DashboardViewItem } from 'app/features/search/types';
+import { useStarredItems } from 'app/features/stars/hooks';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/constants';
@@ -15,7 +19,7 @@ import {
 } from '../types';
 import { isVirtualStarredFolder } from '../utils/dashboards';
 
-import { fetchNextChildrenPage } from './actions';
+import { fetchNextChildrenPage, refetchChildren } from './actions';
 import { collectionGeneration, collectionKeyOf, getPaginationPlaceholders } from './utils';
 
 export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
@@ -104,6 +108,27 @@ export function useChildrenByParentUIDState() {
 
 export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
+}
+
+/**
+ * Refetches the virtual "Starred folders" collection when the user's folder star set changes. The browse tree keeps
+ * its own normalized copy of children, so it follows the Stars cache by refetching rather than by selecting it.
+ */
+export function useSyncStarredFolders(): void {
+  const dispatch = useDispatch();
+  const { data: starredFolderUids } = useStarredItems(FOLDER_API_GROUP, 'Folder');
+  const previous = useRef<string[] | undefined>(undefined);
+
+  useEffect(() => {
+    if (starredFolderUids === undefined) {
+      return;
+    }
+    // The value on mount is the set the collection was loaded with, so only a later change needs a refetch
+    if (previous.current !== undefined && !isEqual(previous.current, starredFolderUids)) {
+      dispatch(refetchChildren({ parentUID: STARRED_FOLDERS_UID, pageSize: PAGE_SIZE }));
+    }
+    previous.current = starredFolderUids;
+  }, [starredFolderUids, dispatch]);
 }
 
 export function useLoadNextChildrenPage(

@@ -8,9 +8,8 @@ import { getFolderFixtures, setMockStarredDashboards, setMockStarredFolders } fr
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type GrafanaSearcher, type SearchQuery } from 'app/features/search/service/types';
-import { useSelector } from 'app/types/store';
 
-import { useStarItem, useSyncStarredItemsInNav } from './hooks';
+import { useNavTreeWithStarred, useStarItem } from './hooks';
 
 jest.mock('app/features/search/service/searcher');
 
@@ -23,16 +22,15 @@ const starredDashboards = [dashbdD.item, folderA_dashbdD.item];
 setBackendSrv(backendSrv);
 setupMockServer();
 
-/** Renders the hook plus a read-only component that reflects Redux starred state */
+/** Renders the hook plus a read-only list of the tree's starred children */
 const TestHarness = () => {
-  const { isLoading, isError } = useSyncStarredItemsInNav();
-  const navTree = useSelector((state) => state.navBarTree);
+  const { navTree, starredLoading, starredError } = useNavTreeWithStarred();
   const starred = navTree.find((item) => item.id === 'starred');
 
   return (
     <>
-      <span data-testid="loading-state">{String(isLoading)}</span>
-      <span data-testid="error-state">{String(isError)}</span>
+      <span data-testid="loading-state">{String(starredLoading)}</span>
+      <span data-testid="error-state">{String(starredError)}</span>
       <ul data-testid="starred-list">
         {starred?.children?.map((child) => (
           <li key={child.id} data-testid={`synced-${child.id}`} data-icon={child.icon}>
@@ -48,14 +46,14 @@ const TestHarness = () => {
 const StarFolderHarness = ({ uid }: { uid: string }) => {
   const starItem = useStarItem('folder.grafana.app', 'Folder');
   const [starDone, setStarDone] = useState(false);
-  const navTree = useSelector((state) => state.navBarTree);
+  const { navTree } = useNavTreeWithStarred();
   const starred = navTree.find((item) => item.id === 'starred');
 
   return (
     <>
       <button
         onClick={async () => {
-          await starItem({ id: uid, title: 'My Folder' }, true);
+          await starItem(uid, true);
           setStarDone(true);
         }}
       >
@@ -103,13 +101,16 @@ function setupSearchMock(items: SearchRow[]) {
   return mockSearcher;
 }
 
-describe('useSyncStarredItemsInNav', () => {
+describe('useNavTreeWithStarred', () => {
   beforeEach(() => {
-    // Provide a starred section in the nav tree so the reducer has a target
+    // The backend ships the Starred section empty; the hook fills its children
     config.bootData.navTree = [
       { id: 'home', text: 'Home', url: '/' },
       { id: 'starred', text: 'Starred', children: [] },
     ];
+    // Star sets are module-level in the mock server, so start each case from the fixture set
+    setMockStarredDashboards(starredDashboards.map((d) => d.uid));
+    setMockStarredFolders([]);
   });
 
   it('populates the starred nav section with metadata from search', async () => {
@@ -147,7 +148,7 @@ describe('useSyncStarredItemsInNav', () => {
     expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
   });
 
-  it('dispatches empty items when no stars exist', async () => {
+  it('keeps the starred section empty when no stars exist', async () => {
     server.use(
       http.get('/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars', () =>
         HttpResponse.json({
@@ -264,8 +265,8 @@ describe('useSyncStarredItemsInNav', () => {
       setMockStarredFolders([folderUid]);
 
       // The single search matches the uid union against BOTH kinds, so it returns an UNSTARRED folder that shares
-      // the starred dashboard's uid. That bogus row is deliberately last: setStarredItems keeps the last item per
-      // uid, so without the per-kind post-filter it would replace the legit dashboard row in the nav.
+      // the starred dashboard's uid. Without the per-kind post-filter both rows would carry the same id and the
+      // bogus folder row would render beside the dashboard.
       setupSearchMock([
         { uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' },
         { uid: folderUid, name: 'My Folder', url: `/dashboards/f/${folderUid}`, kind: 'folder' },
@@ -316,16 +317,21 @@ describe('useSyncStarredItemsInNav', () => {
 
 describe('useStarItem', () => {
   beforeEach(() => {
-    // Provide a starred section in the nav tree so the reducer has a target
+    // The backend ships the Starred section empty; the hook fills its children
     config.bootData.navTree = [
       { id: 'home', text: 'Home', url: '/' },
       { id: 'starred', text: 'Starred', children: [] },
     ];
+    // Star sets are module-level in the mock server, so start each case with no stars
+    setMockStarredDashboards([]);
+    setMockStarredFolders([]);
   });
 
   it('adds a starred folder to the nav starred section with the folder url and icon', async () => {
     const folderUid = folderA.item.uid;
-    setMockStarredFolders([]);
+    setupSearchMock([
+      { uid: folderUid, name: 'My Folder', url: `/dashboards/f/${folderUid}/my-folder`, kind: 'folder' },
+    ]);
 
     const { user } = render(<StarFolderHarness uid={folderUid} />);
 
@@ -333,14 +339,14 @@ describe('useStarItem', () => {
 
     const entry = await screen.findByTestId(`synced-starred/${folderUid}`);
     expect(entry).toHaveTextContent('My Folder');
-    expect(entry).toHaveAttribute('data-url', expect.stringContaining(`/dashboards/f/${folderUid}/`));
+    expect(entry).toHaveAttribute('data-url', `/dashboards/f/${folderUid}/my-folder`);
     expect(entry).toHaveAttribute('data-icon', 'folder');
   });
 
   // A successful folder star lands in the nav, so a rejected one must not.
   it('leaves the nav starred section untouched when the server rejects the star', async () => {
     const folderUid = folderA.item.uid;
-    setMockStarredFolders([]);
+    setupSearchMock([]);
 
     server.use(
       http.put(

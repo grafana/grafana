@@ -1,27 +1,22 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
+import { type NavModelItem } from '@grafana/data';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
-import { setStarred, setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
+import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
-import { dispatch } from 'app/store/store';
+import { useSelector } from 'app/types/store';
 
 import { useSearchStarredQuery } from './api';
-import { STARRED_KINDS, findStarredKind, findStarredKindBySearchKind } from './kinds';
+import { STARRED_KINDS, findStarredKindBySearchKind } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
-type StarItemArgs = {
-  id: string;
-  /** Title of the item - this is displayed in the nav */
-  title: string;
-};
-
-/** Star or unstar an item */
+/** Star or unstar the item with this id. Every starred view follows the `Stars` cache the mutation invalidates. */
 export const useStarItem = (group: string, kind: string) => {
   const [addStar] = useAddStarMutation();
   const [removeStar] = useRemoveStarMutation();
 
-  return async ({ id, title }: StarItemArgs, newStarredState: boolean) => {
+  return async (id: string, newStarredState: boolean) => {
     const name = `user-${contextSrv.user.uid}`;
     const mutationArgs = { id, name, group, kind };
     try {
@@ -31,15 +26,7 @@ export const useStarItem = (group: string, kind: string) => {
         await removeStar(mutationArgs).unwrap();
       }
     } catch {
-      // Server rejected the change — leave the nav as-is rather than showing state that didn't persist
-      return;
-    }
-
-    const starredKind = findStarredKind(group, kind);
-    // A star of a kind the nav doesn't show is stored all the same
-    if (starredKind) {
-      const { icon, sortWeight } = starredKind;
-      dispatch(setStarred({ id, title, url: starredKind.url(id), icon, sortWeight, isStarred: newStarredState }));
+      // The mutation's own onQueryStarted reports the failure, and the star set keeps the value the server kept.
     }
   };
 };
@@ -77,10 +64,11 @@ export const useStarredItems = (group: string, kind: string) => {
 /**
  * The user's starred items of every kind Grafana shows, as search rows that follow the star set. The set is RTK
  * cache every star toggle invalidates and the search is keyed by it, so a toggle anywhere re-searches while the
- * previous rows stay up. `cap` bounds the uids searched, in uid order; without it the whole set is.
+ * previous rows stay up. `cap` bounds the uids searched, in uid order; without it the whole set is. `skip` leaves
+ * both requests unmade for a view that does not render stars.
  */
-export const useStarredSearch = (cap?: number) => {
-  const stars = useListStarsQuery({ fieldSelector: userStarsFieldSelector() });
+export const useStarredSearch = ({ cap, skip }: { cap?: number; skip?: boolean } = {}) => {
+  const stars = useListStarsQuery(skip ? skipToken : { fieldSelector: userStarsFieldSelector() });
 
   // Sorted so the cache key is the set, not the order the API listed it in; deduped so a uid starred as several
   // kinds takes one cap slot.
@@ -120,30 +108,40 @@ export const useStarredSearch = (cap?: number) => {
 // Bounds the nav section and the uid list its search request carries
 const STARRED_NAV_CAP = 50;
 
+// Created once, not per sort
+const collator = new Intl.Collator();
+
 /**
- * Sync starred items into the nav tree on mount and when the star set changes.
- * Replaces whatever the backend shipped in bootData (which is empty in dual-writer mode 5).
+ * The nav tree with the Starred section's children derived from the stars query. The redux tree holds only the
+ * empty section the backend ships, so every reader of the tree shows the same stars as the star buttons.
  */
-export const useSyncStarredItemsInNav = () => {
-  const { uids, rows, loading, error } = useStarredSearch(STARRED_NAV_CAP);
+export const useNavTreeWithStarred = (): {
+  navTree: NavModelItem[];
+  starredLoading: boolean;
+  starredError: boolean;
+} => {
+  const navTree = useSelector((state) => state.navBarTree);
+  const { rows, loading, error } = useStarredSearch({ cap: STARRED_NAV_CAP });
 
-  // Initialized from the search so a remount with a warm RTK cache doesn't flash a loading state: the nav tree is
-  // already correct from the prior sync.
-  const [hasSynced, setHasSynced] = useState(rows !== undefined);
-
-  useEffect(() => {
-    if (!uids || !rows) {
-      return;
+  const starredChildren = useMemo(() => {
+    if (!rows) {
+      return [];
     }
-    const items = rows.flatMap((row): StarredNavItem[] => {
-      const kind = findStarredKindBySearchKind(row.kind);
-      // The search row carries the slugged url, which the nav keeps over the kind's plain one
-      return kind ? [{ id: row.uid, title: row.name, url: row.url, icon: kind.icon, sortWeight: kind.sortWeight }] : [];
-    });
-    dispatch(setStarredItems({ uids, items }));
-    setHasSynced(true);
-  }, [uids, rows]);
+    return rows
+      .flatMap((row): NavModelItem[] => {
+        const kind = findStarredKindBySearchKind(row.kind);
+        // A row nobody can star, or one whose kind has no nav entry, is not a starred item to show
+        return kind
+          ? [{ id: ID_PREFIX + row.uid, text: row.name, url: row.url, icon: kind.icon, sortWeight: kind.sortWeight }]
+          : [];
+      })
+      .sort((a, b) => (a.sortWeight ?? 0) - (b.sortWeight ?? 0) || collator.compare(a.text, b.text));
+  }, [rows]);
 
-  // A failed search resolves loading too, rather than spinning forever.
-  return { isLoading: loading || (!hasSynced && !error), isError: error };
+  const tree = useMemo(
+    () => navTree.map((item) => (item.id === 'starred' ? { ...item, children: starredChildren } : item)),
+    [navTree, starredChildren]
+  );
+
+  return { navTree: tree, starredLoading: loading, starredError: error };
 };

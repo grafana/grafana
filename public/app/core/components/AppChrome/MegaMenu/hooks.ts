@@ -13,7 +13,8 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { findNavByUrl } from 'app/core/navtree/utils';
 import { setBookmark } from 'app/core/reducers/navBarTree';
-import { useDispatch, useSelector } from 'app/types/store';
+import { useNavTreeWithStarred } from 'app/features/stars/hooks';
+import { useDispatch } from 'app/types/store';
 
 import { contextSrv } from '../../../services/context_srv';
 
@@ -290,7 +291,7 @@ const useSectionOrdering = ({
  * and the derived nav structures, keeping `MegaMenu` a thin renderer.
  */
 export const useNavCustomization = () => {
-  const navTree = useSelector((state) => state.navBarTree);
+  const { navTree, starredLoading, starredError } = useNavTreeWithStarred();
   const location = useLocation();
   const { chrome } = useGrafana();
   const state = chrome.useState();
@@ -480,5 +481,7 @@ export const useNavCustomization = () => {
     onResetToDefault,
     onReorderPinned,
     onReorderSection,
+    starredLoading,
+    starredError,
   };
 };

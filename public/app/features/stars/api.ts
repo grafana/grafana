@@ -11,7 +11,10 @@ interface StarredNames {
   names: string[];
 }
 
-const starsAPI = collectionsAPIv1alpha1.injectEndpoints({
+/** Tag for the starred search rows, invalidated by changes that rewrite rows without changing the star set. */
+export const STARRED_SEARCH_TAG = 'StarredSearch';
+
+const starsAPI = collectionsAPIv1alpha1.enhanceEndpoints({ addTagTypes: [STARRED_SEARCH_TAG] }).injectEndpoints({
   endpoints: (build) => ({
     /**
      * Starred items as search rows. The star set is the argument, so a changed set is a new cache entry: the
@@ -20,6 +23,7 @@ const starsAPI = collectionsAPIv1alpha1.injectEndpoints({
      * search shows on its button once the search returns.
      */
     searchStarred: build.query<DashboardQueryResult[], StarredNames[]>({
+      providesTags: [STARRED_SEARCH_TAG],
       queryFn: async (starred) => {
         // Every kind Grafana shows is in the dashboard search index, under its search kind
         const byKind = starred.flatMap(({ group, kind, names }) => {
@@ -49,4 +53,12 @@ const starsAPI = collectionsAPIv1alpha1.injectEndpoints({
   }),
 });
 
+/**
+ * Re-searches the starred rows. Renames and deletions change a row without changing the star set, so nothing the
+ * star mutations invalidate would refresh it. Subscribed entries refetch; unmounted ones are dropped and searched
+ * again on their next mount.
+ */
+export const invalidateStarredSearch = () => starsAPI.util.invalidateTags([STARRED_SEARCH_TAG]);
+
+export { starsAPI };
 export const { useSearchStarredQuery } = starsAPI;

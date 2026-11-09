@@ -4,8 +4,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { NavID, NavWeight } from '../constants';
 import { isSignedIn, type NavEntryBuilder } from '../utils';
 
-// Both are empty containers filled at runtime (starred dashboards by
-// useSyncStarredItemsInNav, bookmarks from preferences), same as with the
+// Both are empty containers filled at runtime (starred items by
+// useNavTreeWithStarred, bookmarks from preferences), same as with the
 // server-built tree.
 
 export const starredNavEntry: NavEntryBuilder = {

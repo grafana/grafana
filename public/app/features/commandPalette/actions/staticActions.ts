@@ -22,8 +22,8 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
 import { notebookNewEditHref } from 'app/features/notebook/urls';
+import { useNavTreeWithStarred } from 'app/features/stars/hooks';
 import { AccessControlAction } from 'app/types/accessControl';
-import { useSelector } from 'app/types/store';
 
 import { type CommandPaletteAction } from '../types';
 import {
@@ -174,7 +174,7 @@ function getGlobalActions(): CommandPaletteAction[] {
 }
 
 export function useStaticActions(): CommandPaletteAction[] {
-  const navBarTree = useSelector((state) => state.navBarTree);
+  const { navTree: navBarTree } = useNavTreeWithStarred();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
