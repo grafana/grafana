@@ -45,6 +45,12 @@ preferencesV1alpha1: {
 
 	// Access is decided by the owner in the name, not by a folder.
 	folderScoped: false
+	namingStrategy: {
+		mode: "owner"
+		owner: owners: ["namespace", "user", "team"]
+	}
+	// The merged preferences of the caller are never stored.
+	fixedNames: ["merged"]
 
 	// Generic read routes cannot apply the owner filtering used by normal list reads.
 	listKeys: false
@@ -70,6 +76,12 @@ preferencesV1: {
 
 	// Access is decided by the owner in the name, not by a folder.
 	folderScoped: false
+	namingStrategy: {
+		mode: "owner"
+		owner: owners: ["namespace", "user", "team"]
+	}
+	// The merged preferences of the caller are never stored.
+	fixedNames: ["merged"]
 
 	// Generic read routes cannot apply the owner filtering used by normal list reads.
 	listKeys: false

@@ -7,6 +7,13 @@ starsV1alpha1: {
 
 	// Access is decided by the owner in the name, not by a folder.
 	folderScoped: false
+	namingStrategy: {
+		mode: "owner"
+		owner: {
+			owners: ["user"]
+			allowOrgAdmin: true
+		}
+	}
 
 	// Generic read routes cannot apply the caller filtering used by normal list reads.
 	listKeys: false

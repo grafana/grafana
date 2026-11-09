@@ -250,8 +250,8 @@ routes the rendered spec always includes.
 
 Stars and Preferences are authorized by the owner in an object's name
 (`user-<id>`, `team-<uid>`, `namespace`) instead of by folder. Everything the
-router knows about them is in `hardcoded_kinds.go`, which stands in for what the
-app manifest will declare:
+router knows about them is the kind's `namingStrategy` and `fixedNames` in the
+app manifest, except for what `hardcoded_kinds.go` still holds:
 
 - `ownerFromName` allows a request by its name: the owners a kind accepts, fixed
   names such as `merged`, and whether org admins may do anything. An access

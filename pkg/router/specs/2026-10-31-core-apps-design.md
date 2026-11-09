@@ -46,8 +46,9 @@ Objects are named for their owner: `user-<id>`, `team-<uid>`, `namespace`. Acces
   (`allowMissingParent`), but only for a not-found. Any other failure to read the parent is the
   storage layer refusing the caller.
 
-All the router knows about Stars and Preferences is in `pluginroute/hardcoded_kinds.go`. It is the
-file that gets replaced by what the manifest declares.
+What the router knows about Stars and Preferences comes from the manifest: each kind's
+`namingStrategy` (owners, org admin access) and `fixedNames`, and `allowMissingParent` on a route
+operation. `pluginroute/hardcoded_kinds.go` keeps only what the manifest cannot declare yet.
 
 ## What is temporary
 
@@ -62,14 +63,11 @@ the app's `Config` (`hardcodedVirtualGetter`, `Options.PreferencesConfig`, `Core
    for a name the kind declares. Then `merged` is an ordinary route the app serves, listing as the
    caller and merging, and the temporary getter above is deleted. Implemented in app-sdk PR 1658
    (branch `kind-fixed-names`).
-2. **Authorization by name in the manifest**: owners, fixed names, org-admin access, what other
-   identities see, and `allowMissingParent`. The owner naming helpers (`ParseOwnerFromName`) move to
-   the SDK with it, which also removes the pinned `pkg/apimachinery` that `apps/*` carry only for
-   that helper. Replaces `hardcoded_kinds.go`.
-3. **Route documentation**: summaries, descriptions, path parameter details and an operation ID
-   override on CUE routes. Today Stars' route carries them through an explicit OpenAPI document
-   imported by the manifest (`importOpenAPIFile`, a version property), because the CUE regex only
-   allows verb-prefixed operation IDs and `addStar` / `removeStar` cannot be expressed.
+2. **Authorization by name in the manifest**: done in app-sdk v0.62.1 (`namingStrategy`, `fixedNames`,
+   `allowMissingParent`, and the owner naming helpers). Still missing: what other identities
+   (an access policy, the image renderer) list, which `hardcoded_kinds.go` keeps for Preferences.
+3. **Route documentation**: done in app-sdk v0.62.1. Stars declares `addStar` / `removeStar` and
+   their path parameters in CUE.
 4. **Upsert of a missing object**: a storage option next to `listKeys`, so the owner store's create
    on update and its resource version fill-in become generic.
 

@@ -59,6 +59,15 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaPreferencesv1,
+					FixedNames: []string{
+						"merged",
+					},
+					NamingStrategy: &app.ManifestKindNamingStrategy{
+						Mode: "owner",
+						Owner: &app.ManifestKindNamingStrategyOwner{
+							Owners: []resource.Owner{"namespace", "user", "team"},
+						},
+					},
 				},
 			},
 		},
@@ -89,6 +98,15 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaPreferencesv1alpha1,
+					FixedNames: []string{
+						"merged",
+					},
+					NamingStrategy: &app.ManifestKindNamingStrategy{
+						Mode: "owner",
+						Owner: &app.ManifestKindNamingStrategyOwner{
+							Owners: []resource.Owner{"namespace", "user", "team"},
+						},
+					},
 				},
 			},
 		},

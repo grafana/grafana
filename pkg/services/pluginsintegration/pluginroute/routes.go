@@ -298,6 +298,18 @@ func (b *manifestBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRoutes 
 	return nil
 }
 
+// allowsMissingParent is whether the route's operation for the method is
+// served when no object is stored under the name, so the plugin answers for
+// the name alone.
+func allowsMissingParent(route manifestroutes.Route, method string) bool {
+	op := manifestroutes.Operations(&route.Operations)[method]
+	if op == nil {
+		return false
+	}
+	allowed, _ := op.Extensions[manifestroutes.ExtensionAllowMissingParent].(bool)
+	return allowed
+}
+
 // routeHandler forwards a manifest route to the plugin's v3 route service. A
 // kind subresource route also carries the parent object, named by the path.
 func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestroutes.Route) http.HandlerFunc {
@@ -354,7 +366,7 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 					return
 				}
 				parentObj, parentMeta = obj, m
-			case apierrors.IsNotFound(err) && b.kindPolicies[resource].allowMissingParent:
+			case apierrors.IsNotFound(err) && allowsMissingParent(route, r.Method):
 				// The plugin is called with the name alone.
 			default:
 				_ = errhttp.Write(ctx, err, w)
