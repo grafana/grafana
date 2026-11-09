@@ -2,8 +2,8 @@ import { render, type RenderResult } from '@testing-library/react';
 
 import { createTheme, type FieldDisplay } from '@grafana/data';
 
-import { SpotlightGradient } from './effects';
 import { RadialArcPathEndpointMarks, type RadialArcPathEndpointMarksProps } from './RadialArcPathEndpointMarks';
+import { SpotlightGradient } from './effects';
 import { type RadialGaugeDimensions } from './types';
 
 const ser = new XMLSerializer();
