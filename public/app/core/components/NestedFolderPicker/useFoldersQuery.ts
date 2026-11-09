@@ -69,7 +69,8 @@ type FolderChildrenRequest = {
 interface FolderChildren {
   folders: DashboardSearchResults['hits'];
   isLoading: boolean;
-  fullyLoaded: boolean;
+  /** Rows still to load, capped at one page; 0 once every page has loaded */
+  pendingCount: number;
 }
 
 /**
@@ -111,9 +112,9 @@ export function useFoldersQuery({
         error ??= response.error;
 
         const folders = response.data?.pages.flatMap((page) => page.hits) ?? [];
-        const fullyLoaded = response.data !== undefined && !response.hasNextPage;
-        childrenByParent[parentName] = { folders, isLoading: response.isLoading, fullyLoaded };
-        if (fullyLoaded && folders.length === 0) {
+        const pendingCount = countPendingRows(response.data?.pages.at(-1), response.hasNextPage, folders.length);
+        childrenByParent[parentName] = { folders, isLoading: response.isLoading, pendingCount };
+        if (pendingCount === 0 && folders.length === 0) {
           emptyFolders.add(parentName);
         }
       }
@@ -130,7 +131,7 @@ export function useFoldersQuery({
       const finalParentUid = parentUid ?? rootFolderToken;
       const children = state.childrenByParent[finalParentUid];
 
-      if (children?.isLoading || children?.fullyLoaded) {
+      if (children?.isLoading || children?.pendingCount === 0) {
         return;
       }
 
@@ -210,12 +211,9 @@ export function useFoldersQuery({
       });
 
       // We could return early but we are adding the "shared with me" folder statically, so even if response is empty
-      // there could be a folder to process
-      if (!children?.fullyLoaded) {
-        // The pagination placeholders are what actually triggers the call to the next page. They stay until every
-        // page for this parent has loaded.
-        list.push(...getPaginationPlaceholders(PAGE_SIZE, parentUid, level));
-      }
+      // there could be a folder to process.
+      // The pagination placeholders are what actually triggers the call to the next page.
+      list.push(...getPaginationPlaceholders(children?.pendingCount ?? PAGE_SIZE, parentUid, level));
       return list;
     }
 
@@ -242,4 +240,14 @@ function makeSharedWithMeFolder() {
     folder: rootFolderToken,
     resource: 'folder',
   };
+}
+
+function countPendingRows(lastPage: DashboardSearchResults | undefined, hasNextPage: boolean, loaded: number) {
+  if (!lastPage) {
+    // Nothing has loaded, so the size is unknown
+    return PAGE_SIZE;
+  }
+  // Sized to the rows still on the server, so the list keeps its height when the last page lands. totalHits is exact
+  // or an overcount, so this never shows too few.
+  return hasNextPage ? Math.min(PAGE_SIZE, lastPage.totalHits - loaded) : 0;
 }

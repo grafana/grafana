@@ -210,6 +210,8 @@ describe('useFoldersQuery', () => {
 
       loadNextPage();
       await waitFor(() => expect(folderUids(result.current.items)).toEqual(expectedUids(100)));
+      // Only the 3 folders still on the server get a placeholder, so the last page doesn't shrink the list
+      expect(placeholdersUnder(result.current.items, parent)).toHaveLength(3);
 
       loadNextPage();
       await waitFor(() => expect(folderUids(result.current.items)).toEqual(expectedUids(103)));
