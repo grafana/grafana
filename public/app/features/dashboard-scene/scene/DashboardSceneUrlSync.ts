@@ -5,6 +5,7 @@ import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPane
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { isEditEntryBlocked } from '../utils/mobileEditDeprecation';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
@@ -75,20 +76,24 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { viewPanel, isEditing, editPanel, editview, shareView } = this._scene.state;
+    const { viewPanel, isEditing, editPanel, shareView } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
     let panelToEdit: VizPanel | undefined;
 
     // Reachable directly via ?editview=, independent of any settings entry point: without this
     // check, the branch below calls onEnterEditMode() unconditionally when not already editing,
     // undoing the invariant a plan preview depends on (see refuseWhilePlanning).
-    if (typeof values.editview === 'string' && this._scene.canEditDashboard() && !refuseWhilePlanning(this._scene)) {
+    if (
+      typeof values.editview === 'string' &&
+      this._scene.canEditDashboard() &&
+      !isEditEntryBlocked(this._scene) &&
+      !refuseWhilePlanning(this._scene)
+    ) {
       if (isEditing) {
         this._scene.openFullEditor();
       }
       update.editview = createDashboardEditViewFor(values.editview);
 
-      // If we are not in editing (for example after full page reload)
       if (!isEditing) {
         if (this._scene.state.editable) {
           // Not sure what is best to do here.
@@ -98,7 +103,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
           update.editview = undefined;
         }
       }
-    } else if (editview && values.hasOwnProperty('editview')) {
+    } else if (values.hasOwnProperty('editview')) {
+      // Clear the param whenever it was not honoured
+      // without this a later sync with the same search string keeps re-triggering the branch above.
       update.editview = undefined;
     }
 
@@ -115,7 +122,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     // Same reason as editview above: the branch below calls onEnterEditMode() unconditionally
     // if not already editing, so this must be checked first.
-    if (typeof values.editPanel === 'string' && !refuseWhilePlanning(this._scene)) {
+    if (typeof values.editPanel === 'string' && !isEditEntryBlocked(this._scene) && !refuseWhilePlanning(this._scene)) {
       const panel = findEditPanel(this._scene, values.editPanel);
 
       if (!panel) {
@@ -150,8 +157,8 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
       panelToEdit = panel;
     } else if (typeof values.editPanel === 'string') {
-      // Refused while planning: clear the param rather than leaving it to keep re-triggering on
-      // every sync tick.
+      // Refused (while planning, or edit entry blocked on mobile): clear the param rather than
+      // leaving it to keep re-triggering on every sync tick.
       update.editPanel = undefined;
     } else if (values.editPanel === null) {
       // Closing the pane supersedes a re-open still waiting on a library panel.

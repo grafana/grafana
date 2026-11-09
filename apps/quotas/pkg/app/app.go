@@ -58,7 +58,7 @@ func (h *QuotasHandler) GetQuota(ctx context.Context, writer app.CustomRouteResp
 		},
 	}
 	quota, err := h.ResourceClient.GetQuotaUsage(ctx, quotaReq)
-	if err := resourceutil.StatusErrorFromResponse(quota.GetError(), err); err != nil {
+	if err := resourceutil.StatusErrorFromGRPC(err); err != nil {
 		var apiStatus apierrors.APIStatus
 		if !errors.As(err, &apiStatus) {
 			return err

@@ -229,12 +229,6 @@ func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRe
 func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) RecordEvent(ctx context.Context, in *resourcepb.RecordEventRequest, opts ...grpc.CallOption) (*resourcepb.RecordEventResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) GetResourceDailyStats(ctx context.Context, in *resourcepb.GetResourceDailyStatsRequest, opts ...grpc.CallOption) (resourcepb.ResourceStats_GetResourceDailyStatsClient, error) {
-	return nil, nil
-}
 func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
 	return nil, nil
 }
@@ -592,13 +586,6 @@ func TestParseResults(t *testing.T) {
 		require.NoError(t, err)
 		assert.Empty(t, sr.Hits)
 		assert.Zero(t, sr.TotalHits)
-	})
-
-	t.Run("error in response is propagated", func(t *testing.T) {
-		_, err := parseResults(&resourcepb.ResourceSearchResponse{
-			Error: &resourcepb.ErrorResult{Code: 500, Message: "boom"},
-		})
-		require.Error(t, err)
 	})
 
 	t.Run("missing rows preserve totals and scores", func(t *testing.T) {

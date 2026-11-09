@@ -414,7 +414,11 @@ func (w *ManifestWatcher) runPollCycle(ctx context.Context) {
 	w.metrics.lastSuccess.SetToCurrentTime()
 	if len(result) == 0 {
 		w.metrics.polls.WithLabelValues("empty").Inc()
-		w.log.Warn("manifest watcher poll cycle: zero manifests, keeping previous set")
+		// An empty list is a normal, steady state on installs without app
+		// manifests, so log it at debug: warning on every poll was about
+		// 3,500 log lines a day there (#137058). A failed list is still an
+		// error, and a source failure a warning; only the empty case is quiet.
+		w.log.Debug("manifest watcher poll cycle: zero manifests, keeping previous set")
 		return
 	}
 	w.metrics.polls.WithLabelValues("success").Inc()
@@ -469,7 +473,7 @@ func (w *ManifestWatcher) listFirst(ctx context.Context, prev map[string]*app.Ma
 			errs = append(errs, fmt.Errorf("%s: %w", src.name, err))
 		case len(result) == 0:
 			w.metrics.sourcePolls.WithLabelValues(src.name, "empty").Inc()
-			w.log.Warn("manifest watcher: source listed zero manifests", "source", src.name)
+			w.log.Debug("manifest watcher: source listed zero manifests", "source", src.name)
 			listed = true
 		default:
 			w.metrics.sourcePolls.WithLabelValues(src.name, "success").Inc()

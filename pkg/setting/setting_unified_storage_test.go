@@ -1,6 +1,9 @@
 package setting
 
 import (
+	"math"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -9,6 +12,76 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestRerankHedgeDelayConfig(t *testing.T) {
+	t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "")
+	for _, tc := range []struct {
+		name, configured string
+		setKey           bool
+		want             time.Duration
+	}{
+		{name: "omitted", want: 500 * time.Millisecond},
+		{name: "empty", setKey: true, want: 500 * time.Millisecond},
+		{name: "malformed", configured: "later", want: 500 * time.Millisecond},
+		{name: "positive", configured: "750ms", want: 750 * time.Millisecond},
+		{name: "zero", configured: "0s"},
+		{name: "negative", configured: "-1s", want: -time.Second},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.setKey || tc.configured != "" {
+				cfg.Raw.Section("vector_reranker").Key("hedge_delay").SetValue(tc.configured)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.RerankHedgeDelay)
+		})
+	}
+}
+
+func TestRerankHedgeDelayLoadsCustomINI(t *testing.T) {
+	t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "")
+	path := filepath.Join(t.TempDir(), "custom.ini")
+	require.NoError(t, os.WriteFile(path, []byte("[vector_reranker]\nhedge_delay = 750ms\n"), 0600))
+	cfg := NewCfg()
+	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: path}))
+	require.Equal(t, 750*time.Millisecond, cfg.RerankHedgeDelay)
+
+	t.Run("environment wins over custom configuration", func(t *testing.T) {
+		t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "250ms")
+		cfg := NewCfg()
+		require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: path}))
+		require.Equal(t, 250*time.Millisecond, cfg.RerankHedgeDelay)
+	})
+
+	t.Run("command line wins over environment", func(t *testing.T) {
+		t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "250ms")
+		cfg := NewCfg()
+		require.NoError(t, cfg.Load(CommandLineArgs{
+			HomePath: "../../", Config: path,
+			Args: []string{"cfg:vector_reranker.hedge_delay=900ms"},
+		}))
+		require.Equal(t, 900*time.Millisecond, cfg.RerankHedgeDelay)
+	})
+}
+
+func TestRerankHedgeDelayExpandsEnvironmentValue(t *testing.T) {
+	t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "")
+	t.Setenv("RERANK_DELAY_VALUE", "850ms")
+	path := filepath.Join(t.TempDir(), "custom.ini")
+	require.NoError(t, os.WriteFile(path, []byte("[vector_reranker]\nhedge_delay = $__env{RERANK_DELAY_VALUE}\n"), 0600))
+	cfg := NewCfg()
+	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: path}))
+	require.Equal(t, 850*time.Millisecond, cfg.RerankHedgeDelay)
+}
+
+func TestRerankHedgeDelayEnvironmentAddsKeyToExistingSection(t *testing.T) {
+	t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "750ms")
+	path := filepath.Join(t.TempDir(), "custom.ini")
+	require.NoError(t, os.WriteFile(path, []byte("[vector_reranker]\nprovider = vertex\n"), 0600))
+	cfg := NewCfg()
+	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: path}))
+	require.Equal(t, 750*time.Millisecond, cfg.RerankHedgeDelay)
+}
 
 func TestUnifiedStorageQuotaResources(t *testing.T) {
 	for _, tc := range []struct {
@@ -283,16 +356,6 @@ func TestGlobalSearchIndexStartupBuild(t *testing.T) {
 			require.Equal(t, tc.want, cfg.GlobalSearchIndexStartupBuild)
 		})
 	}
-}
-
-func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
-	cfg := NewCfg()
-	cfg.setUnifiedStorageConfig()
-	require.False(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
-
-	cfg.Raw.Section("unified_storage").Key("grpc_error_result_to_status").SetValue("true")
-	cfg.setUnifiedStorageConfig()
-	require.True(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
 }
 
 func TestSearchClientForwardAuthEnabled(t *testing.T) {
@@ -629,6 +692,30 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		assert.True(t, cfg.MigrationChunkedWrites)
 		assert.Equal(t, int64(134217728), cfg.MigrationChunkMaxBytes)
+	})
+
+	t.Run("migration statement timeout is kept within the Postgres range", func(t *testing.T) {
+		for _, tc := range []struct {
+			value string
+			want  time.Duration
+		}{
+			{"", 0},
+			{"15m", 15 * time.Minute},
+			{"1000h", math.MaxInt32 * time.Millisecond},
+			{"500us", time.Millisecond},
+			{"-5s", 0},
+		} {
+			t.Run(tc.value, func(t *testing.T) {
+				t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_STATEMENT_TIMEOUT", tc.value)
+				cfg := NewCfg()
+				err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+				assert.NoError(t, err)
+
+				cfg.setUnifiedStorageConfig()
+
+				assert.Equal(t, tc.want, cfg.MigrationStatementTimeout)
+			})
+		}
 	})
 
 	t.Run("vector_embedder bedrock config", func(t *testing.T) {

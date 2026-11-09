@@ -38,49 +38,72 @@ describe('NotebookEditToggle', () => {
     return { notebook, ...render(<NotebookEditToggle notebook={notebook} />) };
   }
 
-  it('offers both modes to a user who can edit', () => {
-    setup({ canEdit: true });
+  const modeButton = () => screen.getByRole('button', { name: /^Notebook mode:/ });
 
-    expect(screen.getByRole('radio', { name: 'View' })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'Edit' })).toBeInTheDocument();
+  it('offers both modes in one dropdown to a user who can edit', async () => {
+    const { user } = setup({ canEdit: true });
+
+    await user.click(modeButton());
+
+    expect(screen.getAllByRole('menuitemradio').map((item) => item.textContent)).toEqual([
+      'ViewingView and explore the notebook.',
+      'EditingEdit text and panels.',
+    ]);
   });
 
-  it('hides the mode switch from a user who cannot edit', () => {
+  it('hides the mode picker from a user who cannot edit', () => {
     setup({ canEdit: false });
 
-    expect(screen.queryByRole('radio', { name: 'Edit' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Notebook mode:/ })).not.toBeInTheDocument();
   });
 
   it('puts the notebook into edit mode', async () => {
     const { notebook, user } = setup({ canEdit: true });
 
-    await user.click(screen.getByRole('radio', { name: 'Edit' }));
+    await user.click(modeButton());
+    await user.click(screen.getByRole('menuitemradio', { name: /Editing/ }));
 
     expect(notebook.state.isEditing).toBe(true);
+    expect(modeButton()).toHaveAccessibleName('Notebook mode: Editing');
   });
 
   it('takes it back out again', async () => {
     const { notebook, user } = setup({ canEdit: true });
-    // act: the switch subscribes to the scene, so entering edit mode re-renders it.
+    // act: the picker subscribes to the scene, so entering edit mode re-renders it.
     act(() => notebook.onEnterEditMode());
 
-    await user.click(screen.getByRole('radio', { name: 'View' }));
+    await user.click(modeButton());
+    await user.click(screen.getByRole('menuitemradio', { name: /Viewing/ }));
 
     expect(notebook.state.isEditing).toBe(false);
   });
 
-  it('reflects edit mode the scene is already in', () => {
-    const { notebook } = setup({ canEdit: true });
+  it('does not restart editing when Editing is chosen again', async () => {
+    const { notebook, user } = setup({ canEdit: true });
+    act(() => notebook.onEnterEditMode());
+    const enter = jest.spyOn(notebook, 'onEnterEditMode');
+
+    await user.click(modeButton());
+    await user.click(screen.getByRole('menuitemradio', { name: /Editing/ }));
+
+    expect(enter).not.toHaveBeenCalled();
+    expect(notebook.state.isEditing).toBe(true);
+  });
+
+  it('reflects edit mode the scene is already in', async () => {
+    const { notebook, user } = setup({ canEdit: true });
 
     act(() => notebook.onEnterEditMode());
+    expect(modeButton()).toHaveAccessibleName('Notebook mode: Editing');
+    await user.click(modeButton());
 
-    expect(screen.getByRole('radio', { name: 'Edit' })).toBeChecked();
-    expect(screen.getByRole('radio', { name: 'View' })).not.toBeChecked();
+    expect(screen.getByRole('menuitemradio', { name: /Editing/ })).toBeChecked();
+    expect(screen.getByRole('menuitemradio', { name: /Viewing/ })).not.toBeChecked();
   });
 
   it('starts on view mode', () => {
     setup({ canEdit: true });
 
-    expect(screen.getByRole('radio', { name: 'View' })).toBeChecked();
+    expect(modeButton()).toHaveAccessibleName('Notebook mode: Viewing');
   });
 });

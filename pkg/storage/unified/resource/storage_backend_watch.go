@@ -13,6 +13,7 @@ import (
 type watchSeed struct {
 	events            []*WrittenEvent
 	initialCacheFloor int64
+	collectionFloors  map[GroupResource]int64
 	highestRV         int64 // fixed before settling; retained events may end below this boundary
 }
 
@@ -109,12 +110,12 @@ func (k *kvStorageBackend) loadWatchSeedWithLimit(ctx context.Context, handoffRV
 	return seed, ctx.Err()
 }
 
-func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context) (watchSeed, <-chan *WrittenEvent, error) {
+func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	started := false
 	opts := k.watchOpts
 	ready := make(chan error, 1)
-	opts.captureReady = ready
+	opts.CaptureReady = ready
 	notifications := k.notifier.Watch(ctx, opts)
 	boundary := make(chan int64)
 	startDelivery := make(chan struct{})
@@ -145,6 +146,9 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context) (watchS
 		if err != nil {
 			return watchSeed{}, nil, fmt.Errorf("establish watch capture: %w", err)
 		}
+	}
+	if captured != nil {
+		captured()
 	}
 
 	// Fix the snapshot ceiling before settling. An unrestricted snapshot taken

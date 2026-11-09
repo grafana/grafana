@@ -16,7 +16,7 @@ func (rev *ConfigRevision) DeleteReceiver(uid string) {
 
 func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Receiver, error) {
 	if _, exists := rev.Config.Receivers[v1.ResourceUID(receiver.GetUID())]; exists {
-		return nil, models.ErrReceiverExists.Errorf("")
+		return nil, models.MakeErrReceiverUidExists(receiver.GetUID())
 	}
 
 	if err := validateAndSetIntegrationUIDs(receiver); err != nil {
@@ -46,30 +46,21 @@ func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Re
 	return rev.setReceiver(receiver)
 }
 
+// setReceiver stores the receiver under its own UID. The caller is responsible for that UID
+// already being right: a create assigns a fresh one if necessary, an update carries the existing one forward
+// so a rename doesn't change identity.
 func (rev *ConfigRevision) setReceiver(receiver *models.Receiver) (*models.Receiver, error) {
 	postable, err := ReceiverToPostableApiReceiver(receiver)
 	if err != nil {
 		return nil, err
 	}
 
-	// The UID is derived from the name, so always key by the name's UID rather than trusting
-	// the caller's value. On rename the caller passes the old UID (to locate the existing entry);
-	// recomputing here ensures the renamed receiver is stored under its new UID instead of
-	// overwriting and then being deleted under the old one.
-	oldUID := postable.UID
-	postable.UID = v1.ReceiverUID(postable.Name)
 	postable.RefreshVersion()
 
 	if rev.Config.Receivers == nil {
 		rev.Config.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
 	}
 	rev.Config.Receivers[postable.UID] = postable
-
-	if postable.UID != oldUID {
-		// Since the UID is derived from the name, a rename must move the entry to a new key rather than
-		// trusting the caller's (now-stale) UID.
-		delete(rev.Config.Receivers, oldUID)
-	}
 
 	return PostableApiReceiverToReceiver(postable, receiver.Origin)
 }
@@ -109,8 +100,9 @@ func (rev *ConfigRevision) GetReceiver(uid string) (*models.Receiver, error) {
 	return recv, nil
 }
 
-func (rev *ConfigRevision) GetReceivers(uids []string) ([]*models.Receiver, error) {
-	capacity := len(uids)
+// GetReceivers returns receivers whose name is in names, or all receivers if names is empty.
+func (rev *ConfigRevision) GetReceivers(names []string) ([]*models.Receiver, error) {
+	capacity := len(names)
 	if capacity == 0 {
 		capacity = len(rev.Config.Receivers)
 	}
@@ -119,7 +111,7 @@ func (rev *ConfigRevision) GetReceivers(uids []string) ([]*models.Receiver, erro
 		if r == nil {
 			continue
 		}
-		if len(uids) > 0 && !slices.Contains(uids, string(r.UID)) {
+		if len(names) > 0 && !slices.Contains(names, r.Name) {
 			continue
 		}
 		recv, err := PostableApiReceiverToReceiver(*r, models.ResourceOriginGrafana)

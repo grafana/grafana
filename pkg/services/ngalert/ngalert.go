@@ -21,9 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/folderlabelsyncer"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
-	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	rulesstore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -37,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -100,7 +102,7 @@ func ProvideService(
 	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
 	alertingStore *store.DBstore,
-	ruleStore *rules.RuleStore,
+	ruleStore rulesstore.Store,
 	provenanceStore *provenance.ProvenanceStore,
 	httpClientProvider httpclient.Provider,
 	pluginContextProvider *plugincontext.Provider,
@@ -204,7 +206,7 @@ type AlertNG struct {
 	FolderResourcePermissions accesscontrol.FolderPermissionsService
 	annotationsRepo           annotations.Repository
 	store                     *store.DBstore
-	ruleStore                 *rules.RuleStore
+	ruleStore                 rulesstore.Store
 	provenanceStore           *provenance.ProvenanceStore
 	userService               user.Service
 	orgService                org.Service
@@ -591,6 +593,10 @@ func (ng *AlertNG) init() error {
 		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
 		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator)
 
+	legacyRuleService := legacy.NewLegacyRuleService(ng.ruleStore, ng.provenanceStore, ng.folderService, ng.QuotaService, ng.store,
+		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()), ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
+		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator)
+
 	// External Mimir ruler sync worker. Routes the ruler config GET through
 	// the datasource proxy service (same transport, auth and egress validation as
 	// the user-driven proxy). Runs operator-wide via the external_ruler_uid
@@ -636,6 +642,7 @@ func (ng *AlertNG) init() error {
 		MuteTimings:           muteTimingService,
 		InhibitionRules:       inhibitionRuleService,
 		AlertRules:            alertRuleService,
+		LegacyRuleService:     legacyRuleService,
 		AlertsRouter:          alertsRouter,
 		ExternalRulerSync:     ng.externalRulerSyncer,
 		EvaluatorFactory:      evalFactory,
@@ -754,6 +761,16 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		if err := ng.BackfillFolderFullpaths(subCtx); err != nil {
 			ng.Log.Warn("Failed to backfill folder fullpaths", "error", err)
 		}
+		return nil
+	})
+
+	children.Go(func() error {
+		orgIDs, err := ng.store.FetchOrgIds(subCtx)
+		if err != nil {
+			ng.Log.Warn("Failed to backfill alert UIDs on annotations", "error", err)
+			return nil
+		}
+		annotationsimpl.BackfillAlertUIDs(subCtx, ng.SQLStore, ng.ruleStore, orgIDs, ng.Log.New("component", "annotation-alert-uid-backfill"))
 		return nil
 	})
 

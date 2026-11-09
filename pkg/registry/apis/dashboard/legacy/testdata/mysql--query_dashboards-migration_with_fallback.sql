@@ -28,6 +28,6 @@ LEFT OUTER JOIN `grafana`.`user` as updated_user ON COALESCE(dashboard_version.c
 WHERE dashboard.is_folder = FALSE
   AND dashboard.org_id = 1
   ORDER BY
-    COALESCE(dashboard_version.created, dashboard.updated) ASC,
-    COALESCE(dashboard_version.version, dashboard.version) ASC,
-    dashboard.uid ASC
+    dashboard.id ASC,
+    COALESCE(dashboard_version.version, dashboard.version) ASC
+  LIMIT 500

@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -177,11 +177,11 @@ func TestLegacyStatusValues_recordingRuleIgnoresTotals(t *testing.T) {
 }
 
 type statusSearchAccessControl struct {
-	provisioning.RuleAccessControlService
+	legacy.RuleAccessControlService
 }
 
 type statusSearchStore struct {
-	provisioning.RuleStore
+	legacy.RuleStore
 	rule *ngmodels.AlertRule
 }
 
@@ -198,8 +198,8 @@ func legacyStatusHandler(t *testing.T, rule *ngmodels.AlertRule) (*Handler, *log
 	rule.OrgID = 1
 	store := statusSearchStore{rule: rule}
 	logger := &logtest.Fake{}
-	service := provisioning.NewAlertRuleService(store, fakes.NewFakeProvisioningStore(), nil, nil, nil,
-		60, 10, 0, logger, nil, statusSearchAccessControl{}, nil)
+	service := legacy.NewLegacyRuleService(store, fakes.NewFakeProvisioningStore(), nil, nil, nil,
+		60, logger, nil, statusSearchAccessControl{}, nil)
 	client := NewLegacyClient(*service)
 	client.logger = logger
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1, UserID: 1})
