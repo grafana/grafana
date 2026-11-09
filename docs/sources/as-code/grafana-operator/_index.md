@@ -20,7 +20,7 @@ aliases:
 
 {{< admonition type="important" >}}
 
-The Grafana Operator is a community project and it's not commercially supported by Grafana. 
+The Grafana Operator is a community project and it's not commercially supported by Grafana.
 
 This document may not contain the latest information about the Grafana Operator. For the most up-to-date information refer to [Grafana Operator](https://grafana.github.io/grafana-operator/) in GitHub.
 
