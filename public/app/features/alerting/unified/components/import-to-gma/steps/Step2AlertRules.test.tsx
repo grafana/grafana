@@ -295,6 +295,72 @@ describe('Step2AlertRules', () => {
     });
   });
 
+  describe('namespace and group filter', () => {
+    const prometheus = mockDataSource(
+      { name: 'Prometheus', uid: 'prometheus-uid', type: 'prometheus' },
+      { alerting: true }
+    );
+    const alertRule = (alert: string) => ({ alert, expr: 'up == 0' });
+
+    beforeEach(() => {
+      setupDataSources(prometheus);
+      // Namespaces come from the data source's ruler API, once its features are discovered.
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+        AccessControlAction.AlertingRuleExternalRead,
+      ]);
+      server.use(
+        http.get('/api/datasources/proxy/uid/:uid/api/v1/status/buildinfo', () =>
+          HttpResponse.json({ status: 'success', data: { version: '2.0.0', features: { ruler_config_api: 'true' } } })
+        )
+      );
+      mockAlertRuleApi(server).rulerRules('prometheus-uid', {
+        'ns-a': [
+          { name: 'group-1', rules: [alertRule('A1')] },
+          { name: 'group-2', rules: [alertRule('A2')] },
+        ],
+        'ns-b': [{ name: 'group-3', rules: [alertRule('B1')] }],
+      });
+    });
+
+    async function pick(user: ReturnType<typeof render>['user'], testId: string, option: string) {
+      await waitFor(() => expect(screen.getByTestId(testId)).toBeEnabled());
+      await user.click(screen.getByTestId(testId));
+      await user.click(await screen.findByRole('option', { name: option }));
+    }
+
+    it('clears the group when another namespace is picked', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ rulesDatasourceUID: 'prometheus-uid', rulesDatasourceName: 'Prometheus' }}>
+          <Step2Content step1Completed={false} canImport={true} />
+        </TestWrapper>
+      );
+      const { namespaceInput, groupInput } = selectors.pages.Alerting.ImportToGMA;
+
+      await pick(user, namespaceInput, 'ns-a');
+      await pick(user, groupInput, 'group-1');
+      expect(screen.getByTestId(groupInput)).toHaveValue('group-1');
+
+      await pick(user, namespaceInput, 'ns-b');
+
+      expect(screen.getByTestId(groupInput)).toHaveValue('');
+    });
+
+    it('routes to the policy tree picked, including the one step 1 will create', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ policyTreeName: 'imported', step1Completed: true }}>
+          <Step2Content step1Completed={true} canImport={true} />
+        </TestWrapper>
+      );
+      const { policyTreeInput } = selectors.pages.Alerting.ImportToGMA;
+
+      await pick(user, policyTreeInput, 'imported');
+
+      expect(screen.getByTestId(policyTreeInput)).toHaveValue('imported');
+    });
+  });
+
   describe('Step2Content rendering', () => {
     it('should render permission warning when canImport=false', () => {
       render(

@@ -14,7 +14,7 @@ import { stringifyErrorLike } from '../../utils/misc';
 import { useStepperState } from './Wizard/StepperState';
 import { isAutoSyncSelected } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
-import { usePredictedAutoSyncIdentifier } from './steps/Step1AlertmanagerResources';
+import { usePredictedAutoSyncIdentifier } from './steps/useAutoSyncPrediction';
 import { buildDryRunArgs } from './steps/utils';
 import { type ImportFormValues, type Step1Values } from './types';
 import { deriveDryRunResult, deriveDryRunState, parseDryRunResponse } from './useImport';
