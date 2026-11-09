@@ -242,7 +242,7 @@ function PanelActions({
         {hoverHeader && <div ref={onHoverSlotChange} className={styles.headerSlot} />}
         {showsHoverSlotItems && <ActionsSeparator />}
         <PanelEditActionsBulk panel={panel} />
-        {hoverHeader && hasDragHandle && <ActionsSeparator />}
+        {hoverHeader && hasDragHandle && <ActionsSeparator className={styles.dragHandleSeparator} />}
         {hoverHeader && <div ref={onDragHandleSlotChange} className={styles.headerSlot} />}
       </>
     );
@@ -371,11 +371,15 @@ function PanelActions({
   );
 }
 
-function ActionsSeparator() {
+function ActionsSeparator({ className }: { className?: string }) {
   const styles = useStyles2(getStyles);
   const actionStyles = useStyles2(getActionStyles);
   return (
-    <div role="separator" aria-orientation="vertical" className={cx(actionStyles.actionsDivider, styles.separator)} />
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      className={cx(actionStyles.actionsDivider, styles.separator, className)}
+    />
   );
 }
 
@@ -429,6 +433,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   moreActions: css({
     display: 'inline-flex',
+  }),
+  // The drag handle is hidden on small screens, where panels can't be dragged, so its separator is hidden with it.
+  dragHandleSeparator: css({
+    [theme.breakpoints.down('md')]: {
+      display: 'none',
+    },
   }),
   separator: css({
     backgroundColor: theme.colors.border.strong,
