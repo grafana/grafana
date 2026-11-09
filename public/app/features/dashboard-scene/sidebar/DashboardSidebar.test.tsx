@@ -52,6 +52,7 @@ import { ElementEditPane } from './ElementEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
+import { openAddFilterForm } from './add-new/AddFilters';
 import { AddNewPane } from './add-new/AddNewPane';
 import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { DashboardStateChangedEvent } from './events';
@@ -1736,6 +1737,18 @@ describe.each([
     expect(sidebar.state.openPane).toBeInstanceOf(ElementEditPane);
   });
 
+  it('when opening settings for another element, clears the new-element autofocus request', () => {
+    const { sidebar, panel, row } = buildPopoverSelectionScene();
+    sidebar.openElementSettings(panel);
+    sidebar.setState({ isNewElement: true });
+
+    sidebar.openElementSettings(row);
+
+    expect(sidebar.getSelectedObject()).toBe(row);
+    expect(sidebar.state.openPane?.getId()).toBe('element');
+    expect(sidebar.state.isNewElement).toBe(false);
+  });
+
   it('when adding a panel to the selection, both panels stay selected', () => {
     const { sidebar, panel, secondPanel } = buildPopoverSelectionScene();
     sidebar.selectObject(panel);
@@ -1758,5 +1771,20 @@ describe.each([
 
     expect(sidebar.getSelectedObject()).toBe(scene[kind]);
     expect(sidebar.state.openPane).toBeInstanceOf(ElementEditPane);
+  });
+
+  it('when adding a filter with the sidebar closed, opens the new filter configuration', async () => {
+    const dashboard = new DashboardScene({ isEditing: true });
+    const sidebar = dashboard.state.sidebar;
+    const deactivate = sidebar.activate();
+
+    try {
+      await openAddFilterForm(dashboard, dashboard);
+
+      expect(sidebar.getSelectedObject()?.state).toMatchObject({ name: 'filter0' });
+      expect(sidebar.state.openPane?.getId()).toBe('element');
+    } finally {
+      deactivate();
+    }
   });
 });

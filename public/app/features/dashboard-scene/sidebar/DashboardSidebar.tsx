@@ -582,8 +582,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       return;
     }
 
-    this.selectObject(source, { force: true });
-    if (!this.state.openPane) {
+    this.cancelPaneRequest();
+    // Reselecting a newly added element would clear the state that requests autofocus.
+    if (this.state.selectionContext.selected.length !== 1 || this.getSelectedObject() !== source) {
+      this.selectObject(source, { force: true });
+    }
+    if (this.state.openPane?.getId() !== 'element') {
       this.openPane(new ElementEditPane({}));
     }
   }

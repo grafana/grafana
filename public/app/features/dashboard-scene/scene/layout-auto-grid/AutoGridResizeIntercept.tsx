@@ -305,7 +305,7 @@ function getLayoutScope(container: SceneObject): AutoLayoutScope {
 }
 
 function selectAndEditLayout(container: SceneObject): void {
-  getDashboardSceneFor(container).state.sidebar.selectObject(container, { force: true });
+  getDashboardSceneFor(container).state.sidebar.openElementSettings(container);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

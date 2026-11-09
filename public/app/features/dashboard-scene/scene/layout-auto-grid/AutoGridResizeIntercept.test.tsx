@@ -1,10 +1,11 @@
 import { act, screen } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { render, userEvent } from 'test/test-utils';
 
 import type { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
 import { CustomVariable, SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -13,7 +14,7 @@ import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutMan
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayout } from './AutoGridLayout';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
-import { interceptorTestId } from './AutoGridResizeIntercept';
+import { AutoGridResizeIntercept, interceptorTestId } from './AutoGridResizeIntercept';
 
 function TestVizPanel(props: PanelProps) {
   return <div>{props.title}</div>;
@@ -80,6 +81,55 @@ describe('AutoGridResizeIntercept', () => {
     expect(getInterceptors()).toHaveLength(0);
   });
 });
+
+describe('AutoGridResizeIntercept with explicit sidebar opening enabled', () => {
+  testWithFlags({ 'grafana.dashboardSidebarExplicitOpen': true });
+
+  it('when choosing Edit auto layout with the sidebar closed, opens the container settings', async () => {
+    const { scene, item } = buildResizeInterceptScene();
+    const { actions } = renderResizeIntercept(item);
+
+    await actions.editAutoLayout();
+
+    expect(scene.state.sidebar.state.openPane?.getId()).toBe('element');
+    expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
+  });
+});
+
+function buildResizeInterceptScene() {
+  const item = new AutoGridItem({ body: new VizPanel({ key: 'panel-1', pluginId: 'table' }) });
+  const scene = new DashboardScene({
+    isEditing: true,
+    body: new AutoGridLayoutManager({ layout: new AutoGridLayout({ children: [item] }) }),
+  });
+
+  return { scene, item };
+}
+
+function renderResizeIntercept(item: AutoGridItem) {
+  const user = userEvent.setup();
+  const result = render(<AutoGridResizeIntercept item={item} />);
+  const elements = {
+    resizeHandle: () => result.getByTestId(interceptorTestId),
+    editAutoLayout: () => result.findByRole('menuitem', { name: 'Edit auto layout' }),
+  };
+
+  return {
+    ...result,
+    user,
+    elements,
+    actions: {
+      async editAutoLayout() {
+        await user.pointer([
+          { keys: '[MouseLeft>]', target: elements.resizeHandle(), coords: { x: 0, y: 0 } },
+          { coords: { x: 30, y: 30 } },
+          { keys: '[/MouseLeft]' },
+        ]);
+        await user.click(await elements.editAutoLayout());
+      },
+    },
+  };
+}
 
 const buildAutoGridScene = async ({ isEditing = true, repeat = true } = {}) => {
   const panel = new VizPanel({ title: 'Panel $values', key: 'panel-1', pluginId: 'table' });
