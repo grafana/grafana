@@ -357,7 +357,6 @@
     },
     "ai": {
       "error-boundary": {
-        "alert-rule-button": "AI Generate Alert Rule button failed to load",
         "template-button": "AI Template Button failed to load",
         "triage-button": "AI Triage Button failed to load"
       }
