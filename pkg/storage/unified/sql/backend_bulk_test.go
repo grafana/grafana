@@ -2,8 +2,11 @@ package sql
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"errors"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
@@ -493,6 +496,137 @@ func TestProcessBulkParquetBufferWriteErrorKeepsCollection(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, list.Items, 2)
+	names := make([]string, 0, len(list.Items))
+	for _, item := range list.Items {
+		var obj struct {
+			Metadata struct {
+				Name string `json:"name"`
+			} `json:"metadata"`
+		}
+		require.NoError(t, json.Unmarshal(item.Value, &obj))
+		names = append(names, obj.Metadata.Name)
+		require.NotEqual(t, "item-3", obj.Metadata.Name)
+		require.JSONEq(t, string(value(obj.Metadata.Name)), string(item.Value))
+	}
+	require.ElementsMatch(t, []string{"item-1", "item-2"}, names)
+
+	// The failed staging call must also release the collection's bulk lock.
+	rsp, err = b.ProcessBulk(ctx, settings, unitest.ToBulkIterator([]*resourcepb.BulkRequest{
+		newSQLBulkRequest("item-3", resourcepb.BulkRequest_ADDED, value("item-3")),
+	}))
+	require.NoError(t, err)
+	require.EqualValues(t, 1, rsp.Processed)
+}
+
+func TestProcessBulkRollsBackSQLFailures(t *testing.T) {
+	if !db.IsTestDbSQLite() {
+		t.Skip("rollback assertions use an isolated SQLite database")
+	}
+	for _, failCommit := range []bool{false, true} {
+		name := "second insert"
+		if failCommit {
+			name = "commit"
+		}
+		t.Run(name, func(t *testing.T) {
+			ctx := t.Context()
+			eDB, err := dbimpl.ProvideResourceDB(db.NewTestStore(t), setting.NewCfg(), nil)
+			require.NoError(t, err)
+			storageBackend, err := NewBackend(BackendOptions{DBProvider: eDB, DisablePruner: true})
+			require.NoError(t, err)
+			b := storageBackend.(*backend)
+			svc := storageBackend.(services.Service)
+			require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+			t.Cleanup(func() { require.NoError(t, services.StopAndAwaitTerminated(context.Background(), svc)) })
+
+			request := func(name string) *resourcepb.BulkRequest {
+				return newSQLBulkRequest(name, resourcepb.BulkRequest_ADDED, []byte(`{"apiVersion":"shorturl.grafana.app/v1beta1","kind":"ShortURL","metadata":{"name":"`+name+`","namespace":"default"},"spec":{"path":"d/test"}}`))
+			}
+			original := request("original")
+			settings := resource.BulkSettings{Collection: []*resourcepb.ResourceKey{original.Key}}
+			_, err = b.ProcessBulk(ctx, settings, unitest.ToBulkIterator([]*resourcepb.BulkRequest{original}))
+			require.NoError(t, err)
+
+			want := errors.New("SQL bulk failure")
+			fault := &bulkFailureTx{err: want, failCommit: failCommit}
+			originalDB := b.db
+			b.db = &bulkFailureDB{DB: originalDB, fault: fault}
+			t.Cleanup(func() { b.db = originalDB })
+			rsp, err := b.ProcessBulk(ctx, settings, &fakeBatchIterator{batches: [][]*resourcepb.BulkRequest{
+				{request("item-1")}, {request("item-2")},
+			}})
+			require.ErrorIs(t, err, want)
+			require.Nil(t, rsp)
+			if failCommit {
+				require.Equal(t, 2, fault.successfulInserts)
+				require.True(t, fault.commitAttempted)
+			} else {
+				require.Equal(t, 1, fault.successfulInserts)
+			}
+			// Check real persisted rows, not only a mocked Rollback call.
+			for _, table := range []string{"resource", "resource_history"} {
+				rows, err := originalDB.QueryContext(ctx, "SELECT name, value FROM "+table+" WHERE namespace = ?", original.Key.Namespace)
+				require.NoError(t, err)
+				defer rows.Close()
+				require.True(t, rows.Next())
+				var name string
+				var value []byte
+				require.NoError(t, rows.Scan(&name, &value))
+				require.Equal(t, "original", name)
+				require.JSONEq(t, string(original.Value), string(value))
+				require.False(t, rows.Next())
+				require.NoError(t, rows.Err())
+			}
+		})
+	}
+}
+
+type bulkFailureDB struct {
+	sqldb.DB
+	fault *bulkFailureTx
+}
+
+func (d *bulkFailureDB) WithTx(ctx context.Context, opts *sql.TxOptions, fn sqldb.TxFunc) error {
+	return sqldb.NewWithTxFunc(func(ctx context.Context, opts *sql.TxOptions) (sqldb.Tx, error) {
+		tx, err := d.DB.BeginTx(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+		d.fault.Tx = tx
+		return d.fault, nil
+	}).WithTx(ctx, opts, fn)
+}
+
+type bulkFailureTx struct {
+	sqldb.Tx
+	err               error
+	failCommit        bool
+	successfulInserts int
+	commitAttempted   bool
+}
+
+func (t *bulkFailureTx) ExecContext(ctx context.Context, query string, args ...any) (sqldb.Result, error) {
+	words := strings.Fields(strings.ToLower(query))
+	isInsert := len(words) > 2 && words[0] == "insert" && words[1] == "into" && strings.Trim(words[2], "\"`") == "resource_history"
+	if isInsert && !t.failCommit && t.successfulInserts == 1 {
+		return nil, t.err
+	}
+	result, err := t.Tx.ExecContext(ctx, query, args...)
+	if isInsert && err == nil {
+		t.successfulInserts++
+	}
+	return result, err
+}
+
+func (t *bulkFailureTx) Commit() error {
+	t.commitAttempted = true
+	if t.failCommit {
+		// Model a commit failure that aborts the underlying transaction.
+		if err := t.Tx.Rollback(); err != nil {
+			return err
+		}
+		return t.err
+	}
+	return t.Tx.Commit()
 }
 
 func TestBulkRVUsesDeletionTime(t *testing.T) {

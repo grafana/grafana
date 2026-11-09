@@ -306,7 +306,7 @@ func TestBulkProcessReturnsDiskSpoolReplayErrors(t *testing.T) {
 func TestBulkProcessRemoteBackendFailure(t *testing.T) {
 	failure := &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "import conflict", Reason: "Conflict"}
 	srv := &server{
-		backend:          &failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1}, err: GRPCStatusError(failure)},
+		backend:          &failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1}, err: GRPCStatusError(failure), consume: true},
 		access:           authlib.FixedAccessClient(true),
 		bulkBatchOptions: DefaultBulkBatchOptions(),
 	}

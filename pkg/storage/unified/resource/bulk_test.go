@@ -428,7 +428,7 @@ func TestBulkProcessStreamErrorTakesPrecedence(t *testing.T) {
 
 func TestBulkProcessCloseAndRecvReturnsBackendStatus(t *testing.T) {
 	failure := &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "import conflict", Reason: "Conflict"}
-	srv := newBulkProcessTestServer(&failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1}, err: GRPCStatusError(failure)})
+	srv := newBulkProcessTestServer(&failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1}, err: GRPCStatusError(failure), consume: true})
 	key := newTestBulkRequest("item").Key
 	settings := BulkSettings{Collection: []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}}}
 	ctx := identity.WithServiceIdentityForSingleNamespaceContext(t.Context(), key.Namespace)

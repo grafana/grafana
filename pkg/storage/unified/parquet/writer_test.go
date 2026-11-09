@@ -66,6 +66,35 @@ func TestParquetWriterProcessBulk(t *testing.T) {
 		require.Nil(t, rsp)
 	})
 
+	t.Run("returns close-only error after successful flush", func(t *testing.T) {
+		closeErr := errors.New("close failed")
+		out := &bulkErrorWriter{closeErr: closeErr}
+		writer, err := NewParquetWriter(out)
+		require.NoError(t, err)
+		// Flush during Write so that closing has no buffered rows left.
+		writer.buffer = 0
+
+		rsp, err := writer.ProcessBulk(t.Context(), settings, &sliceBulkIterator{requests: []*resourcepb.BulkRequest{
+			testBulkRequest("a", validBulkValue("a")),
+		}})
+		require.ErrorIs(t, err, closeErr)
+		require.Nil(t, rsp)
+	})
+
+	t.Run("preserves distinct write and close errors", func(t *testing.T) {
+		closeErr := errors.New("close failed")
+		out := &bulkErrorWriter{closeErr: closeErr}
+		writer, err := NewParquetWriter(out)
+		require.NoError(t, err)
+
+		rsp, err := writer.ProcessBulk(t.Context(), settings, &sliceBulkIterator{requests: []*resourcepb.BulkRequest{
+			testBulkRequest("bad", []byte("{not json")),
+		}})
+		require.ErrorContains(t, err, "invalid character 'n'")
+		require.ErrorIs(t, err, closeErr)
+		require.Nil(t, rsp)
+	})
+
 	// The iterator reports the rollback cause itself; the writer only has to
 	// prevent the caller from consuming a partial file.
 	t.Run("returns error on rollback", func(t *testing.T) {
@@ -105,6 +134,13 @@ func (w *failAfterWriter) Write(p []byte) (int, error) {
 	}
 	return len(p), nil
 }
+
+type bulkErrorWriter struct {
+	bytes.Buffer
+	closeErr error
+}
+
+func (w *bulkErrorWriter) Close() error { return w.closeErr }
 
 type sliceBulkIterator struct {
 	requests   []*resourcepb.BulkRequest
