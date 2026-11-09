@@ -14,7 +14,9 @@ export interface StarredResourceRef {
  * App plugins get this through {@link getStarsSrv}. Stars of any kind are stored. Grafana shows
  * its own kinds (dashboards, folders), and the kinds of installed app plugins that it can link to
  * and whose API serves search, wherever starred dashboards appear; {@link StarsSrv.canStar} tells
- * which. Its Starred navigation and lists follow every change.
+ * which. Its Starred navigation and lists follow every change: stars through {@link StarsSrv.star}
+ * and {@link StarsSrv.unstar}, and the objects themselves through {@link StarsSrv.resourceUpdated}
+ * and {@link StarsSrv.resourceDeleted}, which whatever writes an object of a starrable kind calls.
  */
 export interface StarsSrv {
   /** Whether Grafana shows starred objects of the kind. Stars of other kinds are stored but not shown. */
@@ -25,6 +27,10 @@ export interface StarsSrv {
   unstar(ref: StarredResourceRef): Promise<void>;
   /** Names (`metadata.name`) of the user's starred objects of a kind. Emits the current set on subscribe and again whenever it changes, including changes made elsewhere in Grafana. */
   starred(group: string, kind: string): Observable<string[]>;
+  /** Tells Grafana the object was saved under `title`, so a starred one is listed under it at once rather than when its search index catches up. */
+  resourceUpdated(ref: StarredResourceRef): void;
+  /** Tells Grafana the object is gone, so a starred one leaves the Starred navigation at once. Its star stays stored. */
+  resourceDeleted(ref: Pick<StarredResourceRef, 'group' | 'kind' | 'id'>): void;
 }
 
 let singletonInstance: StarsSrv | undefined;

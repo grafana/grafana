@@ -201,3 +201,36 @@ describe('CollectionsStarsSrv error handling', () => {
     expect(starredChildren()).toEqual([]);
   });
 });
+
+describe('CollectionsStarsSrv.resourceUpdated and resourceDeleted', () => {
+  const uid = 'written-dashboard';
+  const dashboard = { group: DASHBOARD_GROUP, kind: 'Dashboard', id: uid };
+
+  beforeEach(async () => {
+    setMockStarredDashboards([uid]);
+    await srv.star({ ...dashboard, title: 'Before' });
+  });
+
+  it('retitles the nav row of a starred object once it is saved', () => {
+    srv.resourceUpdated({ ...dashboard, title: 'After' });
+
+    expect(starredChildren().find((item) => item.id === `starred/${uid}`)).toMatchObject({
+      text: 'After',
+      url: `/d/${uid}`,
+    });
+  });
+
+  it('removes the nav row of a starred object once it is deleted', () => {
+    srv.resourceDeleted(dashboard);
+
+    expect(starredChildren().some((item) => item.id === `starred/${uid}`)).toBe(false);
+  });
+
+  it('leaves the nav alone for another object or for a kind nobody can star', () => {
+    srv.resourceDeleted({ ...dashboard, id: 'other' });
+    srv.resourceDeleted({ group: 'playlist.grafana.app', kind: 'Playlist', id: uid });
+    srv.resourceUpdated({ group: 'playlist.grafana.app', kind: 'Playlist', id: uid, title: 'Playlist' });
+
+    expect(starredChildren().find((item) => item.id === `starred/${uid}`)).toMatchObject({ text: 'Before' });
+  });
+});

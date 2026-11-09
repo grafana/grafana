@@ -3,13 +3,14 @@ import { type Store } from 'redux';
 import { act, renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { config, setAppEvents, setBackendSrv } from '@grafana/runtime';
+import { config, setAppEvents, setBackendSrv, setStarsSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { folderHandlers, getFolderFixtures } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { CollectionsStarsSrv } from 'app/features/stars/service';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type StoreState } from 'app/types/store';
@@ -21,6 +22,8 @@ import { getWrapperWithNotifications, setupCreateFolder, setupUpdateFolder } fro
 
 setAppEvents(appEvents);
 setBackendSrv(backendSrv);
+// The hooks tell the stars service about renames; the real one patches whichever store configureStore set
+setStarsSrv(new CollectionsStarsSrv());
 setupMockServer();
 
 const [_, { folderA, folderA_folderA, folderB }] = getFolderFixtures();

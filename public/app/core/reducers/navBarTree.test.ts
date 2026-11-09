@@ -1,6 +1,6 @@
 import { type NavModelItem } from '@grafana/data';
 
-import { ID_PREFIX, navTreeReducer, setStarred, setStarredItems, updateDashboardName } from './navBarTree';
+import { ID_PREFIX, navTreeReducer, setStarred, setStarredItems, updateStarredItem } from './navBarTree';
 
 function buildState(starredChildren: NavModelItem[] = []): NavModelItem[] {
   return [
@@ -64,7 +64,7 @@ describe('navBarTree reducer', () => {
   describe('updateDashboardName', () => {
     it('updates a starred item matching ID_PREFIX + id', () => {
       const state = buildState([{ id: ID_PREFIX + 'abc', text: 'Old Name', url: '/d/abc/old-name' }]);
-      const next = navTreeReducer(state, updateDashboardName({ id: 'abc', title: 'New Name', url: '/d/abc/new-name' }));
+      const next = navTreeReducer(state, updateStarredItem({ id: 'abc', title: 'New Name', url: '/d/abc/new-name' }));
       const starred = next.find((n) => n.id === 'starred');
       expect(starred?.children?.[0]).toMatchObject({
         id: 'starred/abc',
@@ -75,7 +75,7 @@ describe('navBarTree reducer', () => {
 
     it('no-ops when the dashboard is not starred', () => {
       const state = buildState([{ id: ID_PREFIX + 'other', text: 'Other Dash', url: '/d/other' }]);
-      const next = navTreeReducer(state, updateDashboardName({ id: 'abc', title: 'New Name', url: '/d/abc/new-name' }));
+      const next = navTreeReducer(state, updateStarredItem({ id: 'abc', title: 'New Name', url: '/d/abc/new-name' }));
       const starred = next.find((n) => n.id === 'starred');
       expect(starred?.children).toHaveLength(1);
       expect(starred?.children?.[0]).toMatchObject({ id: 'starred/other', text: 'Other Dash', url: '/d/other' });
@@ -88,7 +88,7 @@ describe('navBarTree reducer', () => {
         { id: ID_PREFIX + 'c', text: 'Charlie', url: '/d/c' },
       ]);
       // Rename 'Alpha' to 'Zulu' — should move to end
-      const next = navTreeReducer(state, updateDashboardName({ id: 'a', title: 'Zulu', url: '/d/a/zulu' }));
+      const next = navTreeReducer(state, updateStarredItem({ id: 'a', title: 'Zulu', url: '/d/a/zulu' }));
       const starred = next.find((n) => n.id === 'starred');
       const names = starred?.children?.map((c) => c.text);
       expect(names).toEqual(['Beta', 'Charlie', 'Zulu']);
@@ -100,7 +100,7 @@ describe('navBarTree reducer', () => {
         { id: ID_PREFIX + 'a', text: 'A dash', url: '/d/a' },
         { id: ID_PREFIX + 'f1', text: 'AAA folder', url: '/dashboards/f/f1', sortWeight: 1 },
       ]);
-      const next = navTreeReducer(state, updateDashboardName({ id: 'a', title: 'ZZZ dash', url: '/d/a/zzz-dash' }));
+      const next = navTreeReducer(state, updateStarredItem({ id: 'a', title: 'ZZZ dash', url: '/d/a/zzz-dash' }));
       const starred = next.find((n) => n.id === 'starred');
       expect(starred?.children?.map((c) => c.text)).toEqual(['BBB dash', 'ZZZ dash', 'AAA folder']);
     });
@@ -112,7 +112,7 @@ describe('navBarTree reducer', () => {
       ]);
       const next = navTreeReducer(
         state,
-        updateDashboardName({ id: 'f1', title: 'New Folder', url: '/dashboards/f/f1/new' })
+        updateStarredItem({ id: 'f1', title: 'New Folder', url: '/dashboards/f/f1/new' })
       );
       const starred = next.find((n) => n.id === 'starred');
       const folder = starred?.children?.find((c) => c.id === ID_PREFIX + 'f1');

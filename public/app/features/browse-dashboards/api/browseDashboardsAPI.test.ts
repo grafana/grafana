@@ -5,13 +5,12 @@ import { waitFor } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import * as quotasAPI from '@grafana/api-clients/rtkq/quotas/v0alpha1';
-import { config, setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv, type StarredResourceRef, type StarsSrv, setStarsSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { legacyAPI } from 'app/api/clients/legacy';
-import { setStarred } from 'app/core/reducers/navBarTree';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -79,24 +78,30 @@ describe('browseDashboardsAPI', () => {
     return store;
   };
 
-  // Records setStarred dispatches so tests can assert on nav-star cleanup
-  const createStoreWithSetStarredRecorder = () => {
-    const setStarredPayloads: Array<{ id: string; isStarred: boolean }> = [];
-    const recorder: Middleware = () => (next) => (action) => {
-      if (isAnyOf(setStarred)(action)) {
-        setStarredPayloads.push({ id: action.payload.id, isStarred: action.payload.isStarred });
-      }
-      return next(action);
-    };
-
-    return { store: makeRecorderStore(recorder), setStarredPayloads };
+  // The stars service the browse API tells about deleted folders and dashboards and saved dashboards
+  const starsSrv: jest.Mocked<StarsSrv> = {
+    canStar: jest.fn(),
+    star: jest.fn(),
+    unstar: jest.fn(),
+    starred: jest.fn(),
+    resourceUpdated: jest.fn(),
+    resourceDeleted: jest.fn(),
   };
+  setStarsSrv(starsSrv);
+  const deletedRefs = () => starsSrv.resourceDeleted.mock.calls.map(([ref]) => ref);
+  const folderRef = (id: string): Pick<StarredResourceRef, 'group' | 'kind' | 'id'> => ({
+    group: 'folder.grafana.app',
+    kind: 'Folder',
+    id,
+  });
 
   let originalProvisioningEnabled: boolean;
 
   beforeEach(() => {
     originalProvisioningEnabled = config.provisioningEnabled;
     config.provisioningEnabled = false;
+    starsSrv.resourceDeleted.mockClear();
+    starsSrv.resourceUpdated.mockClear();
     getDashboardAPIMock.mockReset();
     folderAPIVersionResolver.set('v1beta1');
     server.use(http.get('/api/access-control/user/actions', () => HttpResponse.json({})));
@@ -218,8 +223,8 @@ describe('browseDashboardsAPI', () => {
     expect(deleteFolderSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('removes a deleted folder from the nav starred section', async () => {
-    const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
+  it('tells the stars service a folder was deleted', async () => {
+    const store = createTestStore();
 
     server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({})));
 
@@ -228,7 +233,7 @@ describe('browseDashboardsAPI', () => {
     );
 
     await waitFor(() => {
-      expect(setStarredPayloads).toEqual([{ id: 'folder-1', isStarred: false }]);
+      expect(deletedRefs()).toEqual([folderRef('folder-1')]);
     });
   });
 
@@ -344,13 +349,9 @@ describe('browseDashboardsAPI', () => {
 
     it('refreshes parents for requested folders even when bulk delete yields no successes', async () => {
       const refetchParents: Array<string | undefined> = [];
-      const setStarredPayloads: Array<{ id: string; isStarred: boolean }> = [];
       const recorder: Middleware = () => (next) => (action) => {
         if (isAnyOf(refetchChildren.pending)(action)) {
           refetchParents.push(action.meta.arg.parentUID);
-        }
-        if (isAnyOf(setStarred)(action)) {
-          setStarredPayloads.push({ id: action.payload.id, isStarred: action.payload.isStarred });
         }
         return next(action);
       };
@@ -370,8 +371,8 @@ describe('browseDashboardsAPI', () => {
         expect(refetchParents).toContain(undefined);
       });
 
-      // Nothing was deleted, so no folder is removed from the starred nav section.
-      expect(setStarredPayloads).toEqual([]);
+      // Nothing was deleted, so the stars service hears of no deletion.
+      expect(deletedRefs()).toEqual([]);
     });
 
     it('does not delete provisioned folders during bulk delete', async () => {
@@ -483,8 +484,8 @@ describe('browseDashboardsAPI', () => {
       }
     });
 
-    it('removes each bulk-deleted folder from the nav starred section', async () => {
-      const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
+    it('tells the stars service about each bulk-deleted folder', async () => {
+      const store = createTestStore();
 
       server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({})));
 
@@ -493,16 +494,13 @@ describe('browseDashboardsAPI', () => {
       );
 
       await waitFor(() => {
-        expect(setStarredPayloads).toEqual([
-          { id: 'folder-1', isStarred: false },
-          { id: 'folder-2', isStarred: false },
-        ]);
+        expect(deletedRefs()).toEqual([folderRef('folder-1'), folderRef('folder-2')]);
       });
     });
 
-    it('only un-stars folders that were actually deleted when some are provisioned', async () => {
+    it('reports only folders that were actually deleted when some are provisioned', async () => {
       config.provisioningEnabled = true;
-      const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
+      const store = createTestStore();
 
       const deletedUids: string[] = [];
 
@@ -544,12 +542,12 @@ describe('browseDashboardsAPI', () => {
 
       await waitFor(() => {
         expect(deletedUids).toEqual(['folder-2']);
-        expect(setStarredPayloads).toEqual([{ id: 'folder-2', isStarred: false }]);
+        expect(deletedRefs()).toEqual([folderRef('folder-2')]);
       });
     });
 
-    it('does not un-star folders whose delete failed', async () => {
-      const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
+    it('does not report a folder whose delete failed', async () => {
+      const store = createTestStore();
 
       const deleteFolder1Spy = jest.fn();
       const deleteFolder2Spy = jest.fn();
@@ -572,7 +570,7 @@ describe('browseDashboardsAPI', () => {
       await waitFor(() => {
         expect(deleteFolder1Spy).toHaveBeenCalledTimes(1);
         expect(deleteFolder2Spy).toHaveBeenCalledTimes(1);
-        expect(setStarredPayloads).toEqual([{ id: 'folder-2', isStarred: false }]);
+        expect(deletedRefs()).toEqual([folderRef('folder-2')]);
       });
     });
   });

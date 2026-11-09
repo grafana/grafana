@@ -34,7 +34,7 @@ export interface StarredNavItem {
 // Single shared collator avoids per-call Intl.Collator construction
 const collator = new Intl.Collator();
 // Starred children group by sortWeight (dashboards carry none, folders a positive weight), alphabetical within a group.
-// Shared so setStarred (optimistic), setStarredItems (sync), and updateDashboardName (rename) never diverge and reorder the nav.
+// Shared so setStarred (optimistic), setStarredItems (sync), and updateStarredItem (rename) never diverge and reorder the nav.
 const compareStarredChildren = (a: NavModelItem, b: NavModelItem): number =>
   (a.sortWeight ?? 0) - (b.sortWeight ?? 0) || collator.compare(a.text, b.text);
 
@@ -89,7 +89,7 @@ const navTreeSlice = createSlice({
         }
       }
     },
-    updateDashboardName: (state, action: PayloadAction<{ id: string; title: string; url: string }>) => {
+    updateStarredItem: (state, action: PayloadAction<{ id: string; title: string; url: string }>) => {
       const { id, title, url } = action.payload;
       const starredItems = state.find((navItem) => navItem.id === 'starred');
       if (starredItems) {
@@ -145,6 +145,6 @@ const navTreeSlice = createSlice({
   },
 });
 
-export const { setStarred, setStarredItems, removePluginFromNavTree, updateDashboardName, setBookmark } =
+export const { setStarred, setStarredItems, removePluginFromNavTree, updateStarredItem, setBookmark } =
   navTreeSlice.actions;
 export const navTreeReducer = navTreeSlice.reducer;

@@ -2,10 +2,12 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { handleRequestError } from '@grafana/api-clients';
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
+import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
-import { AppEvents, locationUtil } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getStarsSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
@@ -13,7 +15,6 @@ import { appEvents } from 'app/core/app_events';
 import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyFolder, type Resource } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -76,7 +77,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
           refreshTeamFolders();
           invalidateQuotaUsage(dispatch);
-          dispatch(setStarred({ id: uid, title: '', url: '', isStarred: false }));
+          getStarsSrv().resourceDeleted({ group: FOLDER_API_GROUP, kind: 'Folder', id: uid });
         } catch {
           // Error handled by mutation caller
         } finally {
@@ -148,8 +149,8 @@ export const browseDashboardsAPI = createApi({
               params: deleteFolderParams,
             });
             if (!response.error) {
-              // Only clear the nav starred entry for folders that were actually deleted
-              api.dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
+              // Only folders that were actually deleted leave the Starred nav
+              getStarsSrv().resourceDeleted({ group: FOLDER_API_GROUP, kind: 'Folder', id: folderUID });
             }
           }
         } finally {
@@ -224,20 +225,12 @@ export const browseDashboardsAPI = createApi({
 
         return { data: undefined };
       },
-      onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, getState }) => {
+      onQueryStarted: ({ dashboardUIDs }, { queryFulfilled }) => {
         queryFulfilled.then(() => {
           dispatch(refreshParents({ kind: 'dashboard', uids: dashboardUIDs }));
           invalidateQuotaUsage(dispatch);
           for (const uid of dashboardUIDs) {
-            dispatch(
-              setStarred({
-                id: uid,
-                // We don't need to send the title or url as we're removing the starred items here
-                title: '',
-                url: '',
-                isStarred: false,
-              })
-            );
+            getStarsSrv().resourceDeleted({ group: DASHBOARD_API_GROUP, kind: 'Dashboard', id: uid });
           }
         });
       },
@@ -301,11 +294,14 @@ export const browseDashboardsAPI = createApi({
           if (data.version === 1) {
             invalidateQuotaUsage(dispatch);
           }
-          // Update starred dashboard name in nav sidebar (no-ops if dashboard isn't starred)
-          const title = dashboard.title;
-          if (title && data.url) {
-            const url = locationUtil.stripBaseFromUrl(data.url);
-            dispatch(updateDashboardName({ id: data.uid, title, url }));
+          // A starred dashboard is listed under its new title at once
+          if (dashboard.title) {
+            getStarsSrv().resourceUpdated({
+              group: DASHBOARD_API_GROUP,
+              kind: 'Dashboard',
+              id: data.uid,
+              title: dashboard.title,
+            });
           }
         });
       },

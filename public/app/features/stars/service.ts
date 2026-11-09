@@ -3,14 +3,14 @@ import { defer, distinctUntilChanged, filter, finalize, from, map, type Observab
 
 import { type StarredResourceRef, type StarsSrv } from '@grafana/runtime';
 import { collectionsAPIv1alpha1, type StarsList } from 'app/api/clients/collections/v1alpha1';
-import { setStarred } from 'app/core/reducers/navBarTree';
+import { setStarred, updateStarredItem } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch, store } from 'app/store/store';
 
 import { findStarredKind, isGrafanaKind, loadStarredKinds, type StarredKind } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
-/** Stars objects over the collections API and keeps Grafana's Starred nav and lists in sync. */
+/** Stars objects over the collections API and keeps Grafana's Starred nav in step with stars and with the objects. */
 export class CollectionsStarsSrv implements StarsSrv {
   async canStar(group: string, kind: string): Promise<boolean> {
     return (await this.starredKindFor(group, kind)) !== undefined;
@@ -45,6 +45,20 @@ export class CollectionsStarsSrv implements StarsSrv {
         finalize(() => query.unsubscribe())
       );
     });
+  }
+
+  resourceUpdated({ group, kind, id, title }: StarredResourceRef): void {
+    // A kind not found yet has no nav row to retitle: app kinds reach the nav only after discovery
+    const starredKind = findStarredKind(group, kind);
+    if (starredKind) {
+      dispatch(updateStarredItem({ id, title, url: starredKind.url(id) }));
+    }
+  }
+
+  resourceDeleted({ group, kind, id }: Pick<StarredResourceRef, 'group' | 'kind' | 'id'>): void {
+    if (findStarredKind(group, kind)) {
+      dispatch(setStarred({ id, title: '', url: '', isStarred: false }));
+    }
   }
 
   private async mutate(ref: StarredResourceRef, isStarred: boolean): Promise<void> {

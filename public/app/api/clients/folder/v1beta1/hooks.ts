@@ -1,10 +1,11 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 
+import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getAppEvents } from '@grafana/runtime';
+import { config, getAppEvents, getStarsSrv } from '@grafana/runtime';
 import {
   API_GROUP as IAM_API_GROUP,
   API_VERSION as IAM_API_VERSION,
@@ -13,9 +14,8 @@ import {
   useLazyGetDisplayMappingQuery,
 } from 'app/api/clients/iam/v0alpha1';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
-import { getSelectedUIDs, getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
+import { getSelectedUIDs } from 'app/features/browse-dashboards/utils/dashboards';
 import { type FolderDTO, type NewFolder } from 'app/types/folders';
 import { dispatch } from 'app/types/store';
 
@@ -385,9 +385,9 @@ export function useUpdateFolder() {
 
     const result = await updateFolderMutation(payload);
     refresh({ childrenOf: folder.parentUid });
-    // Browse-tree refetch doesn't touch the mounted Starred nav row; update its label directly.
+    // A starred folder is listed under its new title at once
     if (!result.error && folder.title) {
-      dispatch(updateDashboardName({ id: folder.uid, title: folder.title, url: getStarredFolderURL(folder.uid) }));
+      getStarsSrv().resourceUpdated({ group: FOLDER_API_GROUP, kind: 'Folder', id: folder.uid, title: folder.title });
     }
 
     return {
