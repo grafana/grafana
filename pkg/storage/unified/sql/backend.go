@@ -1248,7 +1248,7 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 		clusterWide: req.KeysOnly && req.Options.Key.Namespace == "",
 	}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-		if resource.IndexBuildReadFromContext(ctx) {
+		if resource.MigrationReadFromContext(ctx) {
 			if err := b.setMigrationStatementTimeout(ctx, tx); err != nil {
 				return err
 			}

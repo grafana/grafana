@@ -1765,6 +1765,9 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	defer span.End()
 	defer func() { recordSpanError(span, err) }()
 
+	if k.migrationStatementTimeout > 0 && MigrationReadFromContext(ctx) {
+		ctx = kv.ContextWithKeysStatementTimeout(ctx, k.migrationStatementTimeout)
+	}
 	listRV, keys, err := k.listResourceKeys(ctx, req)
 	if err != nil {
 		return 0, err

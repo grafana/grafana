@@ -2789,7 +2789,7 @@ func (s *searchServer) indexResourceType(
 	listStart := time.Now()
 	gotIterator := false
 	docs := 0
-	listRV, err := s.storage.ListIterator(ContextWithIndexBuildRead(ctx), &resourcepb.ListRequest{
+	listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
 				Group:     src.Group,

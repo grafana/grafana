@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -192,6 +193,33 @@ func TestIntegrationRun_Postgres_SetsStatementTimeoutOnSession(t *testing.T) {
 	_, err = engine.SQL("SHOW statement_timeout").Get(&after)
 	require.NoError(t, err)
 	require.NotEqual(t, "15min", after, "the override ends with the migration transaction")
+}
+
+// readCtxValidator records whether validation runs with the migration read mark.
+type readCtxValidator struct{ migrationRead *bool }
+
+func (v readCtxValidator) Name() string { return "read-ctx" }
+
+func (v readCtxValidator) Validate(ctx context.Context, _ *xorm.Session, _ *resourcepb.BulkResponse, _ log.Logger) error {
+	*v.migrationRead = resource.MigrationReadFromContext(ctx)
+	return nil
+}
+
+func TestRunMarksRebuildAndValidationAsMigrationReads(t *testing.T) {
+	engine, err := xorm.NewEngine("sqlite3", ":memory:")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = engine.Close() })
+	_, err = engine.Exec("CREATE TABLE org (id INTEGER PRIMARY KEY, name TEXT); INSERT INTO org (id, name) VALUES (1, 'test')")
+	require.NoError(t, err)
+
+	var validationMigrationRead bool
+	fake := &fakeUnifiedMigrator{migrateResponse: &resourcepb.BulkResponse{}}
+	runner := NewMigrationRunner(fake, noopLocker(), &transactionalTableRenamer{log: logger}, setting.NewCfg(),
+		testDef(dummyGR(), nil, nil), []Validator{readCtxValidator{migrationRead: &validationMigrationRead}})
+
+	runMigration(t, engine, runner, migrator.SQLite)
+	require.True(t, fake.rebuildMigrationRead, "index rebuild runs as a migration read")
+	require.True(t, validationMigrationRead, "validation runs as a migration read")
 }
 
 func TestMigrationRunnerStatementTimeoutIsPostgresOnly(t *testing.T) {

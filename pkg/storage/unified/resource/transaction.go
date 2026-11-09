@@ -3,11 +3,13 @@ package resource
 import (
 	"context"
 	"database/sql"
+
+	"github.com/fullstorydev/grpchan/inprocgrpc"
 )
 
 type transactionContextKey struct{}
 type parquetBufferContextKey struct{}
-type indexBuildReadContextKey struct{}
+type migrationReadContextKey struct{}
 
 // ContextWithTransaction returns a new context with the transaction stored directly.
 // This is used for SQLite migrations where the transaction needs to be shared
@@ -38,15 +40,22 @@ func ParquetBufferFromContext(ctx context.Context) bool {
 	return v
 }
 
-// ContextWithIndexBuildRead marks the listing that builds a search index. It reads every resource
-// of the index in one statement, and a migration waits for it when validating, so storage runs it
-// under the migration statement timeout.
-func ContextWithIndexBuildRead(ctx context.Context) context.Context {
-	return context.WithValue(ctx, indexBuildReadContextKey{}, true)
+// ContextWithMigrationRead marks the requests a migration makes after writing, such as the
+// validation that builds the search index. Storage runs their listings under the migration
+// statement timeout, since a search index build reads a whole index in one statement.
+func ContextWithMigrationRead(ctx context.Context) context.Context {
+	return context.WithValue(ctx, migrationReadContextKey{}, true)
 }
 
-// IndexBuildReadFromContext returns true if the context is a search index build listing.
-func IndexBuildReadFromContext(ctx context.Context) bool {
-	v, _ := ctx.Value(indexBuildReadContextKey{}).(bool)
-	return v
+// MigrationReadFromContext returns true if the context, or the in-process client context of the
+// request it serves, is marked by ContextWithMigrationRead.
+func MigrationReadFromContext(ctx context.Context) bool {
+	if v, _ := ctx.Value(migrationReadContextKey{}).(bool); v {
+		return true
+	}
+	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
+		v, _ := clientCtx.Value(migrationReadContextKey{}).(bool)
+		return v
+	}
+	return false
 }

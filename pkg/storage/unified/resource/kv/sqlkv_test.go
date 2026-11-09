@@ -366,6 +366,47 @@ func TestSQLKVWithStatementTimeout(t *testing.T) {
 	}
 }
 
+func TestSQLKVKeysStatementTimeout(t *testing.T) {
+	keysRows := func() *sqlmock.Rows { return sqlmock.NewRows([]string{"key_path"}).AddRow(DataSection + "/a") }
+	listKeys := func(t *testing.T, ctx context.Context, sqlKV *SqlKV) {
+		t.Helper()
+		var keys []string
+		for key, err := range sqlKV.Keys(ctx, DataSection, ListOptions{}) {
+			require.NoError(t, err)
+			keys = append(keys, key)
+		}
+		require.Equal(t, []string{"a"}, keys)
+	}
+
+	t.Run("postgres lists in a read-only transaction with the timeout", func(t *testing.T) {
+		sqlKV, _, mock := setupSQLKVMock(t, "postgres")
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta("SET LOCAL statement_timeout = 60000")).WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectQuery("(?i)select .*key_path").WillReturnRows(keysRows())
+		mock.ExpectRollback()
+
+		listKeys(t, ContextWithKeysStatementTimeout(context.Background(), time.Minute), sqlKV)
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	for _, tc := range []struct {
+		name       string
+		driverName string
+		timeout    time.Duration
+	}{
+		{name: "no timeout", driverName: "postgres"},
+		{name: "mysql", driverName: "mysql", timeout: time.Minute},
+	} {
+		t.Run("lists without a transaction with "+tc.name, func(t *testing.T) {
+			sqlKV, _, mock := setupSQLKVMock(t, tc.driverName)
+			mock.ExpectQuery("(?i)select .*key_path").WillReturnRows(keysRows())
+
+			listKeys(t, ContextWithKeysStatementTimeout(context.Background(), tc.timeout), sqlKV)
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
 func TestSQLKVInsertDataImportBatchUsesPlaceholderFields(t *testing.T) {
 	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
 	rows := buildDataImportRows(1)

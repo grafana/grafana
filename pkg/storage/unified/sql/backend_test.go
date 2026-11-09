@@ -1334,26 +1334,26 @@ func TestIntegrationReadHistoryVersions(t *testing.T) {
 	require.Empty(t, found)
 }
 
-func TestListLatestIndexBuildReadStatementTimeout(t *testing.T) {
+func TestListLatestMigrationReadStatementTimeout(t *testing.T) {
 	req := &resourcepb.ListRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: "gr", Resource: "rs"}}}
 	for _, tc := range []struct {
-		name       string
-		indexBuild bool
-		dialect    sqltemplate.Dialect
-		timeout    time.Duration
-		wantSet    bool
+		name      string
+		migration bool
+		dialect   sqltemplate.Dialect
+		timeout   time.Duration
+		wantSet   bool
 	}{
-		{name: "index build on postgres", indexBuild: true, dialect: sqltemplate.PostgreSQL, timeout: 15 * time.Minute, wantSet: true},
-		{name: "other list", dialect: sqltemplate.PostgreSQL, timeout: 15 * time.Minute},
-		{name: "index build without override", indexBuild: true, dialect: sqltemplate.PostgreSQL},
-		{name: "index build on mysql", indexBuild: true, dialect: sqltemplate.MySQL, timeout: 15 * time.Minute},
+		{name: "migration read on postgres", migration: true, dialect: sqltemplate.PostgreSQL, timeout: 15 * time.Minute, wantSet: true},
+		{name: "other read", dialect: sqltemplate.PostgreSQL, timeout: 15 * time.Minute},
+		{name: "migration read without override", migration: true, dialect: sqltemplate.PostgreSQL},
+		{name: "migration read on mysql", migration: true, dialect: sqltemplate.MySQL, timeout: 15 * time.Minute},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			b, ctx := setupBackendTest(t)
 			b.dialect = tc.dialect
 			b.migrationStatementTimeout = tc.timeout
-			if tc.indexBuild {
-				ctx = resource.ContextWithIndexBuildRead(ctx)
+			if tc.migration {
+				ctx = resource.ContextWithMigrationRead(ctx)
 			}
 
 			b.SQLMock.ExpectBegin()

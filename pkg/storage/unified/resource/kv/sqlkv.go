@@ -284,7 +284,24 @@ func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 		sortAsc := opt.Sort != SortOrderDesc
 
 		query, args := qb.buildKeysQuery(startKey, endKey, sortAsc, opt.Limit)
-		rows, err := k.conn(ctx).QueryContext(ctx, query, args...)
+		conn := k.conn(ctx)
+		if _, inTx := dbtxFromCtx(ctx); !inTx && k.dialect.Name() == "postgres" {
+			if d := keysStatementTimeoutFromCtx(ctx); d > 0 {
+				tx, err := k.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+				if err != nil {
+					yield("", fmt.Errorf("failed to begin transaction: %w", err))
+					return
+				}
+				// Read-only, so ending it with a rollback loses nothing.
+				defer func() { _ = tx.Rollback() }()
+				if _, err := tx.ExecContext(ctx, fmt.Sprintf("SET LOCAL statement_timeout = %d", d.Milliseconds())); err != nil {
+					yield("", fmt.Errorf("failed to set statement timeout: %w", err))
+					return
+				}
+				conn = tx
+			}
+		}
+		rows, err := conn.QueryContext(ctx, query, args...)
 		if err != nil {
 			yield("", err)
 			return

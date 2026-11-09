@@ -3,6 +3,7 @@ package kv
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 // dbtx is a common interface satisfied by both *sql.DB and *sql.Tx.
@@ -15,6 +16,19 @@ type dbtx interface {
 }
 
 type dbtxContextKey struct{}
+type keysStatementTimeoutContextKey struct{}
+
+// ContextWithKeysStatementTimeout makes SqlKV run the key listings made with ctx in a transaction
+// whose Postgres statement_timeout is d. A listing's query stays open while its caller works
+// through the keys, as a search index build does.
+func ContextWithKeysStatementTimeout(ctx context.Context, d time.Duration) context.Context {
+	return context.WithValue(ctx, keysStatementTimeoutContextKey{}, d)
+}
+
+func keysStatementTimeoutFromCtx(ctx context.Context) time.Duration {
+	d, _ := ctx.Value(keysStatementTimeoutContextKey{}).(time.Duration)
+	return d
+}
 
 // ContextWithDBTX stores a *sql.Tx in the context for the bulk import path
 // on SQLite. This makes conn() return the migration's transaction instead of
