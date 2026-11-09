@@ -98,7 +98,14 @@ export interface TableSortByFieldState {
  */
 export type SortByBehavior = 'initial' | 'managed';
 
+export interface TableFilterInteraction {
+  action: 'apply' | 'remove';
+  filter_type: 'local' | 'transformation';
+  filter_kind: 'values' | 'numeric_range' | 'date_range' | 'other';
+}
+
 interface BaseTableProps {
+  onFilterInteraction?: (interaction: TableFilterInteraction) => void;
   /** Experimental transformation-backed table view, explicitly owned by its host. */
   rowTransformationsEnabled?: boolean;
   rowTransformations?: TableRowTransformations;

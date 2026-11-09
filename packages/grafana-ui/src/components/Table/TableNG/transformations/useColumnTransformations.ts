@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { type DataFrame } from '@grafana/data';
@@ -30,7 +31,8 @@ export function useColumnTransformations(
   api: PanelRuntimeTransformations | undefined,
   owner: string,
   enabled = sourceIndex >= 0,
-  sourceSeries: readonly DataFrame[] | undefined = api?.getSourceSeries(owner)
+  sourceSeries: readonly DataFrame[] | undefined = api?.getSourceSeries(owner),
+  onInteraction?: (action: 'hide' | 'show' | 'reorder') => void
 ) {
   const { transformations, update } = useTableTransformations(api, owner);
   useEffect(() => {
@@ -73,18 +75,46 @@ export function useColumnTransformations(
   const onHiddenColumnsChange = useCallback(
     (hidden: ReadonlySet<string>) => {
       if (context) {
-        update((current) => columnTransformations.columnVisibility.write(current, hidden, context));
+        let hid = false;
+        let showed = false;
+        update(
+          (current) => {
+            const before =
+              columnTransformations.columnVisibility.read(current, context).hiddenColumns ?? new Set<string>();
+            const next = columnTransformations.columnVisibility.write(current, hidden, context);
+            const after = columnTransformations.columnVisibility.read(next, context).hiddenColumns ?? new Set<string>();
+            hid = [...after].some((name) => !before.has(name));
+            showed = [...before].some((name) => !after.has(name));
+            return isEqual(current, next) ? current : next;
+          },
+          () => {
+            if (hid) {
+              onInteraction?.('hide');
+            }
+            if (showed) {
+              onInteraction?.('show');
+            }
+          }
+        );
       }
     },
-    [context, update]
+    [context, update, onInteraction]
   );
   const onColumnOrderChange = useCallback(
     (order: string[]) => {
       if (context) {
-        update((current) => columnTransformations.columnOrder.write(current, order, context));
+        update(
+          (current) => {
+            const before = columnTransformations.columnOrder.read(current, context).columnOrder ?? context.catalog;
+            const next = columnTransformations.columnOrder.write(current, order, context);
+            const after = columnTransformations.columnOrder.read(next, context).columnOrder ?? context.catalog;
+            return isEqual(before, after) ? current : next;
+          },
+          () => onInteraction?.('reorder')
+        );
       }
     },
-    [context, update]
+    [context, update, onInteraction]
   );
 
   return useMemo(() => {

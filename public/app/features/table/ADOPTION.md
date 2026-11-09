@@ -1,6 +1,6 @@
 # Table Cloud adoption measurement
 
-Implementation draft for grafana/grafana-org#1038. No events described below have been shipped yet.
+Implementation for grafana/grafana-org#1038. Events are implemented on this branch but have not been validated in Cloud or released.
 
 ## Initial audit
 
@@ -13,23 +13,25 @@ At main commit `7ba691e5fb2`, neither `public/app/features/table` nor the Table 
 
 ## Proposed measurement contract
 
-Use distinct events for actions, with bounded properties. Names below are proposed, pending the reference-dashboard review.
+Use distinct events for actions, with bounded properties. The following events are implemented; reference-dashboard alignment remains pending.
 
-| Event                             | Trigger                                      | Properties                                                                                                                                                     |
-| --------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `grafana_table_viewed_features`   | Eligible Table renders usable data           | Boolean availability properties for column management, filtering, pagination, zebra striping, and row numbers; `zebra_striping_enabled`, `row_numbers_enabled` |
-| `grafana_table_changed_columns`   | User successfully changes column state       | `action`: hide, show, reorder                                                                                                                                  |
-| `grafana_table_changed_filter`    | User applies or removes a filter             | `action`: apply, remove; `filter_type`: local, transformation, adhoc; `filter_kind`: values, numeric_range, date_range, other                                  |
-| `grafana_table_cleared_changes`   | User clears existing Table changes           | No user-derived content                                                                                                                                        |
-| `grafana_table_started_promotion` | User starts promoting existing Table changes | No user-derived content                                                                                                                                        |
+| Event                             | Trigger                                      | Properties                                                                                                                                                                  |
+| --------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `grafana_table_viewed_features`   | Eligible Table renders usable data           | `column_management_available`, `filtering_available`, `range_filters_available`, `pagination_available`, `zebra_striping_available`, `zebra_striping_enabled`, `first_view` |
+| `grafana_table_changed_columns`   | User successfully changes column state       | `action`: hide, show, reorder                                                                                                                                               |
+| `grafana_table_changed_filter`    | User applies or removes a filter             | `action`: apply, remove; `filter_type`: local, transformation, adhoc; `filter_kind`: values, numeric_range, date_range, other                                               |
+| `grafana_table_cleared_changes`   | User clears existing Table changes           | No user-derived content                                                                                                                                                     |
+| `grafana_table_started_promotion` | User starts promoting existing Table changes | No user-derived content                                                                                                                                                     |
 
 `filter_type` describes the filter execution path; `filter_kind` describes the control used. Record `numeric_range` and `date_range` on both application and removal, using the removed filter's kind for removal. Never include range bounds or selected values.
 
-For zebra striping and row numbers, record availability separately from effective enabled state on the view event. Enabled state means the feature is actually rendered, accounting for feature gates and local overrides, not merely saved as a panel option. Row numbers include the temporary Columns sidebar override introduced by grafana/grafana#136862; a local visibility change should update the view measurement without being counted as a new exposure. Finalize state-change deduplication with the view event implementation.
+Zebra striping records availability separately from effective enabled state. Views require a non-empty frame and emit once per mounted panel, then only when the availability or enabled-state tuple changes. `first_view` is true only for the first emission in that mount; refreshes and StrictMode effect replay do not duplicate it. Remounts can emit again, so use distinct user/stack counts rather than raw event totals. Pagination availability means pagination is configured.
+
+Row-number tracking remains pending grafana/grafana#136862, which is still open. Its implementation must record effective visibility including the temporary Columns sidebar override, separately from capability availability. Do not emit a false `row_numbers_enabled` value while the feature is absent.
 
 Pagination remains an availability dimension only; no pagination interaction event is planned.
 
-Do not emit interaction events on hydration, data refresh, no-op changes, or rejected operations. Define exposure deduplication before implementing the view event; raw view counts are not unique users. Do not include field names, values, filter expressions, dashboard titles, or duplicate automatically attached identity fields.
+Do not emit interaction events on hydration, data refresh, no-op changes, or rejected operations. Raw view counts are not unique users. Do not include field names, values, filter expressions, dashboard titles, or duplicate automatically attached identity fields.
 
 ## Dashboard contract
 
@@ -44,6 +46,10 @@ Do not emit interaction events on hydration, data refresh, no-op changes, or rej
 
 The Text panel v2 reference dashboard UID is `adbm6b2`. The connected Grafana API returned HTTP 401 during the initial review; its queries and event model have not been inspected. Dashboard JSON and production SQL must wait for verified datasource, schemas, and identity semantics.
 
-Complete shared-component event audit; implement and test actual interaction callbacks; inspect the reference dashboard; validate representative Cloud records; create staging models and dashboard; link the deployed dashboard from issues #1038 and #1003.
+Complete row-number integration after its dependency lands; inspect the reference dashboard; validate representative Cloud records; create staging models and dashboard; link the deployed dashboard from issues #1038 and #1003.
 
 Analytics opt-out, blocked SDKs, missing identities, and rollout/version differences can reduce coverage. Starting promotion measures intent, not persistence. Existing production records cannot validate events that have not shipped.
+
+## Current coverage limitations
+
+Column callbacks report accepted hide/show/reorder changes and suppress no-ops and automatic schema reconciliation. Filter callbacks cover Table panel header/local and transformation-backed edits, preserving numeric/date range kind on individual removal. The data-source ad-hoc callback reports handoff, not query success; downstream removal is outside this Table callback. Programmatic bulk filter clearing is not a per-filter interaction. Clear/promote events are limited to the Table panel; promotion measures entry into the save flow, not a completed save. Shared Table consumers outside the Table panel do not yet report filter/view events.
