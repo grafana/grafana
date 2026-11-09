@@ -193,7 +193,7 @@ type UnifiedAlertingSettings struct {
 	ExternalRulerUID string
 
 	// FolderLabelFullSyncInterval is how often the folder label syncer walks every folder to correct
-	// any drift in the has-rules label, on top of the pass it makes at startup.
+	// any drift in the folder rule labels, on top of the pass it makes at startup.
 	// Configured via the [unified_alerting] ini key "folder_label_full_sync_interval" or the
 	// GF_UNIFIED_ALERTING_FOLDER_LABEL_FULL_SYNC_INTERVAL environment variable.
 	FolderLabelFullSyncInterval time.Duration

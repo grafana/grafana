@@ -8261,6 +8261,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "開啟查詢窗格",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "開啟查詢窗格"
     },
     "viz-panel-links-renderer": {
@@ -9684,7 +9686,6 @@
     "api": {
       "anonymous-user": "匿名",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "資料夾已刪除",
       "folder-move-error-provisioned": "無法移動已佈建的資料夾。若要移動，請將其移至儲存庫中，並同步以套用變更。",
       "folder-moved-success": "資料夾已移動"
     }
@@ -11620,8 +11621,8 @@
           },
           "website-monitoring": {
             "cta": "開始設定",
-            "description": "從不同位置追蹤網站的可用性及其效能。",
-            "title": "監控網站正常運作時間和效能"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "顯示更少指南",
@@ -11742,10 +11743,10 @@
       "switchSolution": "切換解決方案",
       "synthetic-monitoring": {
         "action": "啟用綜合監控",
-        "context": "針對叢集所執行服務的黑箱檢查",
-        "description": "從全球各地透過 HTTP、DNS 和 ping 檢查探測您的端點，並在停機時發出警報。",
+        "context": "",
+        "description": "",
         "setup-action": "建立您的第一個檢查",
-        "title": "從外部監控正常運作時間"
+        "title": ""
       },
       "title": "針對您的堆疊的建議"
     },
@@ -11833,7 +11834,7 @@
       },
       "synthetics": {
         "create-check": "建立檢查",
-        "description": "透過世界各地的探測器監控端點的運作時間和效能。",
+        "description": "",
         "failing-worst": "{{check}} 為 {{percent}}%",
         "filter": {
           "instances": "略過目標",
@@ -13446,8 +13447,12 @@
       "code": "代碼",
       "heading": "標題",
       "label": "點選以在上方新增",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "段落",
       "prompt": "輸入內容以開始撰寫 — 按下 / 以新增區塊",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "視覺化"
     },
     "cell": {
@@ -13752,7 +13757,7 @@
         "description-no-value": "沒有數值時顯示的內容",
         "description-value-mappings": "根據輸入值修改顯示文字",
         "name-actions": "動作",
-        "name-ad-hoc": "從值篩選",
+        "name-ad-hoc": "",
         "name-color-scheme": "配色方案",
         "name-data-links": "資料連結",
         "name-decimals": "小數位數",
@@ -14690,6 +14695,7 @@
       "delete-confirm": "確定要刪除此連線嗎？此動作無法還原。",
       "delete-title": "刪除連線",
       "error-loading": "無法載入連線",
+      "export": "",
       "kind-github-app": "GitHub 應用程式",
       "kind-oauth-app": "OAuth 應用程式",
       "no-connections": "未設定任何連線",
@@ -15177,6 +15183,7 @@
       "view-folder": "檢視資料夾"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "上次同步：{{date}}",
       "settings": "設定",
       "view": "檢視"
