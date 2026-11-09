@@ -54,7 +54,7 @@ describe('GenAIButton', () => {
     it('should not render anything', async () => {
       setup();
 
-      waitFor(async () => expect(await screen.findByText('Auto-generate')).not.toBeInTheDocument());
+      expect(screen.queryByText('Auto-generate')).not.toBeInTheDocument();
     });
   });
 
@@ -82,12 +82,12 @@ describe('GenAIButton', () => {
     it('should render text', async () => {
       setup();
 
-      waitFor(async () => expect(await screen.findByText('Auto-generate')).toBeInTheDocument());
+      expect(await screen.findByText('Auto-generate')).toBeInTheDocument();
     });
 
     it('should enable the button', async () => {
       setup();
-      waitFor(async () => expect(await screen.findByRole('button')).toBeEnabled());
+      expect(await screen.findByRole('button')).toBeEnabled();
     });
 
     it('should send the configured messages', async () => {
@@ -168,12 +168,12 @@ describe('GenAIButton', () => {
     it('should render loading text', async () => {
       setup();
 
-      waitFor(async () => expect(await screen.findByText('Auto-generate')).toBeInTheDocument());
+      expect(await screen.findByText('Stop generating')).toBeInTheDocument();
     });
 
     it('should enable the button', async () => {
       setup();
-      waitFor(async () => expect(await screen.findByRole('button')).toBeEnabled());
+      expect(await screen.findByRole('button')).toBeEnabled();
     });
 
     it('shows the stop button while generating', async () => {
@@ -233,12 +233,12 @@ describe('GenAIButton', () => {
     it('should render improve text ', async () => {
       setup();
 
-      waitFor(async () => expect(await screen.findByText('Improve')).toBeInTheDocument());
+      expect(await screen.findByText('Improve')).toBeInTheDocument();
     });
 
     it('should enable the button', async () => {
       setup();
-      waitFor(async () => expect(await screen.findByRole('button')).toBeEnabled());
+      expect(await screen.findByRole('button')).toBeEnabled();
     });
 
     it('should call onGenerate when the text is completed', async () => {
@@ -274,12 +274,12 @@ describe('GenAIButton', () => {
     it('should render error state text', async () => {
       setup();
 
-      waitFor(async () => expect(await screen.findByText('Retry')).toBeInTheDocument());
+      expect(await screen.findByText('Retry')).toBeInTheDocument();
     });
 
     it('should enable the button', async () => {
       setup();
-      waitFor(async () => expect(await screen.findByRole('button')).toBeEnabled());
+      expect(await screen.findByRole('button')).toBeEnabled();
     });
 
     it('should retry when clicking', async () => {
