@@ -295,8 +295,14 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	writeQuery := func() {
 		// The order of queries is not important as they represent an expression tree.
 		// Therefore, the order of elements should not change the hash. Sort by RefID because it is the unique key.
+		var thresholdRef string
+		isThreshold := false
 		for i, q := range rule.Data {
 			keys[i] = q.RefID
+			if q.RefID == rule.Condition {
+				cq := q
+				thresholdRef, isThreshold, _ = cq.ThresholdReferenceVar()
+			}
 		}
 		sub := keys[:len(rule.Data)]
 		sort.Strings(sub)
@@ -308,7 +314,15 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 					writeString(q.QueryType)
 					writeInt(int64(q.RelativeTimeRange.From))
 					writeInt(int64(q.RelativeTimeRange.To))
-					writeBytes(q.Model)
+					// The rule's condition decides its state, and a threshold expression passes its input's labels
+					// through unchanged. So nothing about a threshold condition's own model can change the state
+					// cache ID, except which upstream query it reads from (its "expression" field), which is hashed
+					// instead of the model in that case.
+					if q.RefID == rule.Condition && isThreshold {
+						writeString(thresholdRef)
+					} else {
+						writeBytes(q.Model)
+					}
 					break
 				}
 			}

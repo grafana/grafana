@@ -177,6 +177,12 @@ export function Overview({ solutions }: OverviewProps) {
   );
   const [open, setOpen] = useState(false);
 
+  // Every placement settled without a card and the guides settled empty: nothing any filter could
+  // show, so drop the section instead of a heading over an empty-state message.
+  if (settled && cards.length === 0 && !guidesOffered) {
+    return null;
+  }
+
   return (
     <Stack direction="column" gap={2} ref={ref}>
       <Stack direction="row" alignItems="center" justifyContent="space-between" columnGap={2} rowGap={1} wrap="wrap">

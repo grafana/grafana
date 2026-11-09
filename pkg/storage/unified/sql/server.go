@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/grafana/authlib/types"
@@ -89,7 +90,6 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withSearchClient,
 		withQuotaConfig,
 		withStorageMetrics,
-		withUsageStats,
 		withSeededWatches,
 		withNatsWatchMaxAge,
 	)
@@ -143,9 +143,8 @@ func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceSe
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
-		Reg:                     opts.Reg,
-		SecureValues:            opts.SecureValues,
-		GRPCErrorResultToStatus: opts.Cfg != nil && opts.Cfg.UnifiedStorageGRPCErrorResultToStatus,
+		Reg:          opts.Reg,
+		SecureValues: opts.SecureValues,
 	}
 	for _, optFn := range withOpts {
 		if err := optFn(opts, serverOptions); err != nil {
@@ -220,12 +219,6 @@ func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceSe
 
 func withAuthorizeBeforeFetch(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.AuthorizeBeforeFetchEnabled = opts.Cfg.AuthorizeBeforeFetchEnabled
-	return nil
-}
-
-func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
-	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
 	return nil
 }
 
@@ -330,6 +323,11 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.IndexMetrics = opts.IndexMetrics
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
 
+	resourceOpts.Search.SharedExternalCollections = make([]string, 0, len(opts.Cfg.VectorSharedExternalCollections))
+	for collection := range opts.Cfg.VectorSharedExternalCollections {
+		resourceOpts.Search.SharedExternalCollections = append(resourceOpts.Search.SharedExternalCollections, collection)
+	}
+	slices.Sort(resourceOpts.Search.SharedExternalCollections)
 	if opts.VectorBackend != nil {
 		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
 		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections

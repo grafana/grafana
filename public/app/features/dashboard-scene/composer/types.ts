@@ -155,7 +155,10 @@ export interface RegionPick {
 
 export type RegionCapture =
   | { status: 'ready'; image: Blob; width: number; height: number; capturedAt: string }
-  | { status: 'failed'; reason: 'unsupported' | 'too_large' | 'timeout' | 'busy' | 'not_visible' | 'failed' };
+  | {
+      status: 'failed';
+      reason: 'unsupported' | 'too_large' | 'timeout' | 'busy' | 'not_visible' | 'controls' | 'failed';
+    };
 
 export interface ComposerElement {
   ref: ElementRef;
@@ -212,8 +215,10 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * Renders a region as an image, WebP where the browser encodes it, longest edge at most 1568px. One
    * capture runs at a time ('busy' otherwise), and picking and tab switching wait for it. 'not_visible'
    * unless the region is fully in view on a selected tab (reveal it, then retry); scrolling during a
-   * capture also ends it as 'not_visible'. 'too_large' when the dashboard would render past 16 megapixels,
-   * 'unsupported' for tainted or cross-origin content, 'timeout' after 10 s (a late result is dropped).
+   * capture also ends it as 'not_visible'. 'controls' when it overlaps the dashboard's own buttons (time
+   * picker, refresh, share, mode); variables are captured. 'too_large' when the dashboard would render past
+   * 16 megapixels, 'unsupported' for tainted or cross-origin content, 'timeout' after 10 s (a late result is
+   * dropped).
    */
   captureRegion(regionId: string, signal: AbortSignal): Promise<RegionCapture>;
   /** Not supported in M1: returns []. */
@@ -225,6 +230,12 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * either stops that turn.
    */
   setPaused(paused: boolean): void;
+  /**
+   * The Assistant runs a turn while picking and pins stay available, so comments made meanwhile wait for
+   * the next message. Turning Composer off or switching to Viewing asks for confirmation, as when paused.
+   * Picks and pins follow the elements the turn moves; a pin whose element the turn removes is not drawn.
+   */
+  setWorking(working: boolean): void;
 
   /**
    * Replaces the drawn annotations. Each is a comment-bubble pin whose tail (its square bottom-left corner)
@@ -242,9 +253,10 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * A stable, zero-size container for the plugin to portal its editor or a read-only preview into. Works
    * for active and staged items alike. It sits at the pin's visual centre (half a pin right of and above
    * the tail on the item's point, clamped to the viewport), so a popover placed beside it sits beside the
-   * pin, and it follows scroll, resize and layout like the pin; it is hidden
-   * (`display: none`) while the element is entirely off-screen. Core does no collision handling and never
-   * reads, styles or clears its content. Null when the item is not set or does not resolve.
+   * pin, and it follows scroll, resize and layout like the pin. An active item's anchor (the open editor)
+   * stays at the nearest visible edge while its element is scrolled away or under the sticky controls; a
+   * staged item's is hidden (`display: none`) then. Core does no collision handling and never reads, styles
+   * or clears its content. Null when the item is not set or does not resolve.
    */
   getAnnotationAnchor(id: string): HTMLElement | null;
   /**

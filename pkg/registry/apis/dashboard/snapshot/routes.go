@@ -286,6 +286,11 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 						return
 					}
 
+					if r.URL.Query().Has("dryRun") {
+						wrap.JsonApiErr(http.StatusBadRequest, "dryRun is not supported for snapshot creation", nil)
+						return
+					}
+
 					cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{}
 					if err := web.Bind(wrap.Req, &cmd); err != nil {
 						wrap.JsonApiErr(http.StatusBadRequest, "bad request data", err)
@@ -387,30 +392,17 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 					}
 
 					// Convert command to K8s Snapshot
-					snapshot := convertCreateCmdToK8sSnapshot(&cmd, namespace)
+					snapshot, err := convertCreateCmdToK8sSnapshot(&cmd, namespace)
+					if err != nil {
+						errhttp.Write(ctx, err, w)
+						return
+					}
 
 					snapshot.SetGenerateName("snapshot-")
 
 					// Set namespace in context for k8s storage layer
 					ctx = k8srequest.WithNamespace(ctx, namespace)
 
-					useBlobs := blobs != nil && !cmd.External
-					if useBlobs {
-						var err error
-						useBlobs, err = readFromUnified(ctx)
-						if err != nil {
-							errhttp.Write(ctx, err, w)
-							return
-						}
-					}
-					if useBlobs {
-						if err := moveDashboardToBlob(ctx, blobs, snapshot); err != nil {
-							errhttp.Write(ctx, err, w)
-							return
-						}
-					}
-
-					// A failed create can leave the previously uploaded blob orphaned.
 					_, err = creater.Create(ctx, snapshot, nil, &metav1.CreateOptions{})
 					if err != nil {
 						errhttp.Write(ctx, err, w)

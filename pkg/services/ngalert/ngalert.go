@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -100,7 +101,7 @@ func ProvideService(
 	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
 	alertingStore *store.DBstore,
-	ruleStore *rules.RuleStore,
+	ruleStore rules.Store,
 	provenanceStore *provenance.ProvenanceStore,
 	httpClientProvider httpclient.Provider,
 	pluginContextProvider *plugincontext.Provider,
@@ -204,7 +205,7 @@ type AlertNG struct {
 	FolderResourcePermissions accesscontrol.FolderPermissionsService
 	annotationsRepo           annotations.Repository
 	store                     *store.DBstore
-	ruleStore                 *rules.RuleStore
+	ruleStore                 rules.Store
 	provenanceStore           *provenance.ProvenanceStore
 	userService               user.Service
 	orgService                org.Service
@@ -754,6 +755,16 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		if err := ng.BackfillFolderFullpaths(subCtx); err != nil {
 			ng.Log.Warn("Failed to backfill folder fullpaths", "error", err)
 		}
+		return nil
+	})
+
+	children.Go(func() error {
+		orgIDs, err := ng.store.FetchOrgIds(subCtx)
+		if err != nil {
+			ng.Log.Warn("Failed to backfill alert UIDs on annotations", "error", err)
+			return nil
+		}
+		annotationsimpl.BackfillAlertUIDs(subCtx, ng.SQLStore, ng.ruleStore, orgIDs, ng.Log.New("component", "annotation-alert-uid-backfill"))
 		return nil
 	})
 

@@ -4,6 +4,7 @@ import { render, screen } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { setupMswServer } from '../../mockApi';
+import { convertResponse } from '../../mocks/convertApi';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from '../../mocks/server/utils';
 
 import { StagedConfiguration } from './StagedConfiguration';
@@ -75,7 +76,7 @@ const ui = {
   syncManagedNote: byText(/kept up to date by auto-sync/i),
   parseError: byText(/couldn't read the staged configuration/i),
   revertButton: byRole('button', { name: /^revert$/i }),
-  promoteButton: byRole('button', { name: /promote to live config/i }),
+  promoteButton: byRole('button', { name: /^promote$/i }),
   promoteModalTitle: byRole('heading', { name: /promote this configuration/i }),
   revertModalTitle: byRole('heading', { name: /revert this staged configuration/i }),
   noPermissionTooltip: byText(/don't have permission to modify/i),
@@ -276,7 +277,7 @@ describe('StagedConfiguration', () => {
     });
 
     it('opens the promote modal from the header action', async () => {
-      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json({ status: 'success' })));
+      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json(convertResponse())));
       const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
       await user.click(ui.promoteButton.get());
@@ -310,7 +311,7 @@ describe('StagedConfiguration', () => {
     });
 
     it('warns in the promote modal that the sync stops', async () => {
-      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json({ status: 'success' })));
+      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json(convertResponse())));
       const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert isSyncManaged />);
 
       await user.click(ui.promoteButton.get());

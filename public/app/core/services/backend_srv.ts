@@ -688,12 +688,9 @@ export class BackendSrv implements BackendService {
     return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
   }
 
-  /**
-   * @deprecated Use getFolderByUidFacade from app/api/clients/folder/v1beta1/hooks instead
-   * or manually handle calling legacy vs app platform API based on feature toggles
-   */
+  /** @deprecated Use getCombinedFolder from app/api/clients/folder/v1beta1/hooks instead */
   getFolderByUid(uid: string, options: FolderRequestOptions = {}) {
-    deprecationWarning('backend_srv', 'getFolderByUid(uid)', 'getFolderByUidFacade(uid)');
+    deprecationWarning('backend_srv', 'getFolderByUid(uid)', 'getCombinedFolder(uid)');
     const queryParams = new URLSearchParams();
     if (options.withAccessControl) {
       queryParams.set('accesscontrol', 'true');
