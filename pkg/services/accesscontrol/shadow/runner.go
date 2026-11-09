@@ -29,7 +29,10 @@ const (
 
 type SkipReason string
 
-const Capacity SkipReason = "capacity"
+const (
+	Capacity    SkipReason = "capacity"
+	Transaction SkipReason = "transaction"
+)
 
 // Observer binds instrumentation to an operation. Implementations must be safe
 // for concurrent calls. Keeping registration outside Runner lets adapters retain

@@ -81,8 +81,9 @@ func (s *LegacyUserPermissionsShadow) GetUserPermissions(ctx context.Context, cl
 func skipPermissionShadowForSQLSession(ctx context.Context) shadow.SkipReason {
 	// A detached read cannot compare the caller's uncommitted transaction state.
 	if session, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && session != nil {
-		return "transaction"
+		return shadow.Transaction
 	}
+
 	return ""
 }
 
