@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
+	"sync/atomic"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -16,11 +17,21 @@ import (
 )
 
 // Policy controls when a second attempt may start. A nonpositive delay disables it.
-// IsRetryable enables an immediate second attempt after a classified first failure.
-// A nil IsRetryable disables immediate retry but still permits a timed hedge.
 type Policy struct {
-	Delay       time.Duration
-	IsRetryable func(error) bool
+	Delay time.Duration
+}
+
+type gateKey struct{}
+
+// A single CAS orders SDK error handling against the timed duplicate.
+type gate struct{ closed atomic.Bool }
+
+// Suppress permanently prevents an unstarted duplicate for the enclosing Do.
+// Calls outside Do and repeated calls are harmless.
+func Suppress(ctx context.Context) {
+	if g, ok := ctx.Value(gateKey{}).(*gate); ok {
+		g.closed.Store(true)
+	}
 }
 
 type result[T any] struct {
@@ -38,7 +49,8 @@ func Do[T any](ctx context.Context, policy Policy, attempt func(context.Context)
 	if err := ctx.Err(); err != nil {
 		return zero, context.Cause(ctx)
 	}
-	ctx, cancel := context.WithCancel(ctx)
+	g := &gate{}
+	ctx, cancel := context.WithCancel(context.WithValue(ctx, gateKey{}, g))
 	// Returning cancels any losing request without waiting for its response.
 	defer cancel()
 	span := trace.SpanFromContext(ctx)
@@ -97,6 +109,10 @@ func Do[T any](ctx context.Context, policy Policy, attempt func(context.Context)
 				if ctx.Err() != nil || expired() {
 					return zero, deadlineCause()
 				}
+				timerC = nil
+				if !g.closed.CompareAndSwap(false, true) {
+					continue
+				}
 				started, pending = 2, 2
 				span.AddEvent("hedge.launched")
 				start(2)
@@ -118,21 +134,6 @@ func Do[T any](ctx context.Context, policy Policy, attempt func(context.Context)
 		failures = append(failures, fmt.Errorf("attempt %d: %w", completed.attempt, completed.err))
 		span.AddEvent("hedge.attempt_failed", trace.WithAttributes(attribute.Int("attempt", completed.attempt)))
 		if started == 1 {
-			retryable := false
-			if policy.Delay > 0 && policy.IsRetryable != nil {
-				retryable = policy.IsRetryable(completed.err)
-			}
-			if ctx.Err() != nil || expired() {
-				return zero, deadlineCause()
-			}
-			if retryable {
-				// A fast transient error consumes the final attempt immediately.
-				timerC = nil
-				started, pending = 2, 1
-				span.AddEvent("hedge.retry_launched")
-				start(2)
-				continue
-			}
 			return zero, failures[0]
 		}
 	}

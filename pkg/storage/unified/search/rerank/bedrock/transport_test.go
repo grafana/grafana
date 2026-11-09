@@ -11,11 +11,13 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
@@ -56,7 +58,7 @@ func TestRealSDKHedgeCancelsSlowRequest(t *testing.T) {
 	}
 }
 
-func TestRealSDKRetryableErrorUsesOneRequest(t *testing.T) {
+func TestRealSDKRetryableErrorStopsAfterTwoAttempts(t *testing.T) {
 	var calls atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls.Add(1)
@@ -70,10 +72,10 @@ func TestRealSDKRetryableErrorUsesOneRequest(t *testing.T) {
 	defer cancel()
 	_, err := NewRerankerWithHedgeDelay(client, "m", 0).Score(ctx, "q", []string{"a"})
 	require.Error(t, err)
-	require.EqualValues(t, 1, calls.Load())
+	require.EqualValues(t, 2, calls.Load())
 }
 
-func TestRealSDKTransientFailureRetriesOnceImmediately(t *testing.T) {
+func TestRealSDKTransientFailureRetriesOnce(t *testing.T) {
 	var calls atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if calls.Add(1) == 1 {
@@ -94,41 +96,46 @@ func TestRealSDKTransientFailureRetriesOnceImmediately(t *testing.T) {
 	require.EqualValues(t, 2, calls.Load())
 }
 
-func TestRealSDKThrottlingDoesNotRetryImmediately(t *testing.T) {
+func TestRealSDKThrottlingUsesNativeRetryWithTwoAttemptCap(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
 		status    int
 		errorType string
 		isModeled bool
+		attempts  int
 	}{
-		{name: "modeled throttling exception", status: http.StatusBadRequest, errorType: "ThrottlingException", isModeled: true},
-		{name: "unmodeled HTTP 429", status: http.StatusTooManyRequests},
+		{name: "modeled throttling exception", status: http.StatusBadRequest, errorType: "ThrottlingException", isModeled: true, attempts: 2},
+		{name: "unmodeled HTTP 429", status: http.StatusTooManyRequests, attempts: 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			var calls atomic.Int32
-			transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
-				calls.Add(1)
-				header := make(http.Header)
-				if tc.errorType != "" {
-					header.Set("x-amzn-errortype", tc.errorType)
-				}
-				header.Set("Content-Type", "application/json")
-				return &http.Response{StatusCode: tc.status, Header: header, Body: io.NopCloser(strings.NewReader(`{"message":"throttled"}`)), Request: r}, nil
-			})
+			synctest.Test(t, func(t *testing.T) {
+				var calls atomic.Int32
+				transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+					calls.Add(1)
+					header := make(http.Header)
+					if tc.errorType != "" {
+						header.Set("x-amzn-errortype", tc.errorType)
+					}
+					header.Set("Content-Type", "application/json")
+					return &http.Response{StatusCode: tc.status, Header: header, Body: io.NopCloser(strings.NewReader(`{"message":"throttled"}`)), Request: r}, nil
+				})
 
-			cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: &http.Client{Transport: transport}, BaseEndpoint: aws.String("https://bedrock.test")}
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-			defer cancel()
-			_, err := NewRerankerWithHedgeDelay(NewClient(bedrockruntime.NewFromConfig(cfg)), "m", 2*time.Second).Score(ctx, "q", []string{"a"})
-			require.Error(t, err)
-			require.EqualValues(t, 1, calls.Load())
-			var statusErr interface{ HTTPStatusCode() int }
-			require.ErrorAs(t, err, &statusErr)
-			require.Equal(t, tc.status, statusErr.HTTPStatusCode())
-			if tc.isModeled {
-				var throttle *types.ThrottlingException
-				require.ErrorAs(t, err, &throttle)
-			}
+				cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: &http.Client{Transport: transport}, BaseEndpoint: aws.String("https://bedrock.test"), Retryer: func() aws.Retryer {
+					return retry.NewStandard(func(o *retry.StandardOptions) { o.MaxBackoff = time.Millisecond })
+				}}
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
+				_, err := NewRerankerWithHedgeDelay(NewClient(bedrockruntime.NewFromConfig(cfg)), "m", 2*time.Second).Score(ctx, "q", []string{"a"})
+				require.Error(t, err)
+				require.EqualValues(t, tc.attempts, calls.Load())
+				var statusErr interface{ HTTPStatusCode() int }
+				require.ErrorAs(t, err, &statusErr)
+				require.Equal(t, tc.status, statusErr.HTTPStatusCode())
+				if tc.isModeled {
+					var throttle *types.ThrottlingException
+					require.ErrorAs(t, err, &throttle)
+				}
+			})
 		})
 	}
 }
@@ -157,6 +164,56 @@ type observingRetryer struct {
 	aws.NopRetryer
 	tokens     atomic.Int32
 	classified atomic.Int32
+	quota      atomic.Int32
+	backoff    atomic.Int32
+	released   atomic.Int32
+	delay      time.Duration
+}
+
+type waitingRetryer struct {
+	observingRetryer
+	secondToken chan struct{}
+}
+
+func (r *waitingRetryer) GetAttemptToken(ctx context.Context) (func(error) error, error) {
+	if r.tokens.Add(1) == 2 {
+		close(r.secondToken)
+		<-ctx.Done()
+		return nil, ctx.Err()
+	}
+	return func(error) error { return nil }, nil
+}
+
+func TestRealSDKV2AttemptTokenWaitHonorsCancellation(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var calls atomic.Int32
+		transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			calls.Add(1)
+			return &http.Response{StatusCode: http.StatusServiceUnavailable, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"message":"temporary"}`)), Request: r}, nil
+		})
+		retryer := &waitingRetryer{secondToken: make(chan struct{})}
+		cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: &http.Client{Transport: transport}, BaseEndpoint: aws.String("https://bedrock.test"), Retryer: func() aws.Retryer { return retryer }}
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		result := make(chan error, 1)
+		go func() {
+			_, err := NewRerankerWithHedgeDelay(NewClient(bedrockruntime.NewFromConfig(cfg)), "m", 0).Score(ctx, "q", []string{"a"})
+			result <- err
+		}()
+		select {
+		case <-retryer.secondToken:
+		case <-ctx.Done():
+			t.Fatal("SDK did not request a second attempt token")
+		}
+		cancel()
+		select {
+		case err := <-result:
+			require.ErrorIs(t, err, context.Canceled)
+		case <-time.After(time.Second):
+			t.Fatal("cancelled attempt token wait did not return")
+		}
+		require.EqualValues(t, 1, calls.Load())
+	})
 }
 
 func (r *observingRetryer) MaxAttempts() int { return 5 }
@@ -169,7 +226,192 @@ func (r *observingRetryer) GetAttemptToken(ctx context.Context) (func(error) err
 func (r *observingRetryer) IsErrorRetryable(err error) bool {
 	r.classified.Add(1)
 	var statusErr interface{ HTTPStatusCode() int }
+	return errors.As(err, &statusErr) && (statusErr.HTTPStatusCode() == http.StatusServiceUnavailable || statusErr.HTTPStatusCode() == http.StatusTooManyRequests)
+}
+
+func (r *observingRetryer) GetRetryToken(context.Context, error) (func(error) error, error) {
+	r.quota.Add(1)
+	return func(error) error { r.released.Add(1); return nil }, nil
+}
+
+func (r *observingRetryer) RetryDelay(int, error) (time.Duration, error) {
+	r.backoff.Add(1)
+	if r.delay != 0 {
+		return r.delay, nil
+	}
+	return time.Millisecond, nil
+}
+
+func TestRealSDKEarlyThrottleSuppressesHedgeDuringNativeBackoff(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var calls atomic.Int32
+		transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			attempt := calls.Add(1)
+			if attempt == 1 {
+				select {
+				case <-time.After(100 * time.Millisecond):
+				case <-r.Context().Done():
+					return nil, r.Context().Err()
+				}
+				return &http.Response{StatusCode: http.StatusTooManyRequests, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"message":"throttled"}`)), Request: r}, nil
+			}
+			return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"results":[{"index":0,"relevance_score":0.8}]}`)), Request: r}, nil
+		})
+		retryer := &observingRetryer{delay: 650 * time.Millisecond}
+		cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: &http.Client{Transport: transport}, BaseEndpoint: aws.String("https://bedrock.test"), Retryer: func() aws.Retryer { return retryer }}
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		scores, err := NewRerankerWithHedgeDelay(NewClient(bedrockruntime.NewFromConfig(cfg)), "m", 500*time.Millisecond).Score(ctx, "q", []string{"a"})
+		require.NoError(t, err)
+		require.Equal(t, []float64{0.8}, scores)
+		require.EqualValues(t, 2, calls.Load())
+		require.EqualValues(t, 1, retryer.quota.Load())
+		require.EqualValues(t, 1, retryer.backoff.Load())
+	})
+}
+
+func TestRealSDKAlreadyStartedHedgeMayRetryWithinFourAttemptBudget(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var calls atomic.Int32
+		secondStarted := make(chan struct{})
+		transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			attempt := calls.Add(1)
+			switch attempt {
+			case 1:
+				select {
+				case <-secondStarted:
+				case <-r.Context().Done():
+					return nil, r.Context().Err()
+				}
+			case 2:
+				close(secondStarted)
+			}
+			return &http.Response{StatusCode: http.StatusServiceUnavailable, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"message":"temporary"}`)), Request: r}, nil
+		})
+		retryer := &observingRetryer{}
+		cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: &http.Client{Transport: transport}, BaseEndpoint: aws.String("https://bedrock.test"), Retryer: func() aws.Retryer { return retryer }}
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		_, err := NewRerankerWithHedgeDelay(NewClient(bedrockruntime.NewFromConfig(cfg)), "m", 20*time.Millisecond).Score(ctx, "q", []string{"a"})
+		require.Error(t, err)
+		require.EqualValues(t, 4, calls.Load())
+		require.EqualValues(t, 2, retryer.quota.Load())
+		require.EqualValues(t, 2, retryer.backoff.Load())
+	})
+}
+
+func TestRealSDKRespectsStricterConfiguredAttemptCap(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var calls atomic.Int32
+		transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			calls.Add(1)
+			return &http.Response{StatusCode: http.StatusServiceUnavailable, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"message":"temporary"}`)), Request: r}, nil
+		})
+		retryer := &observingRetryer{}
+		cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: &http.Client{Transport: transport}, BaseEndpoint: aws.String("https://bedrock.test"), RetryMaxAttempts: 1, Retryer: func() aws.Retryer { return retryer }}
+		runtime := bedrockruntime.NewFromConfig(cfg)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		_, err := NewRerankerWithHedgeDelay(NewClient(runtime), "m", 0).Score(ctx, "q", []string{"a"})
+		require.Error(t, err)
+		require.EqualValues(t, 1, calls.Load())
+		require.Equal(t, 1, runtime.Options().RetryMaxAttempts)
+		require.EqualValues(t, 0, retryer.quota.Load())
+	})
+}
+
+type legacyObservingRetryer struct {
+	aws.Retryer
+	tokens  atomic.Int32
+	quota   atomic.Int32
+	backoff atomic.Int32
+}
+
+func (r *legacyObservingRetryer) MaxAttempts() int { return 5 }
+
+func (r *legacyObservingRetryer) IsErrorRetryable(err error) bool {
+	var statusErr interface{ HTTPStatusCode() int }
 	return errors.As(err, &statusErr) && statusErr.HTTPStatusCode() == http.StatusServiceUnavailable
+}
+
+func (r *legacyObservingRetryer) GetInitialToken() func(error) error {
+	r.tokens.Add(1)
+	return func(error) error { return nil }
+}
+
+func (r *legacyObservingRetryer) GetRetryToken(context.Context, error) (func(error) error, error) {
+	r.quota.Add(1)
+	return func(error) error { return nil }, nil
+}
+
+func (r *legacyObservingRetryer) RetryDelay(int, error) (time.Duration, error) {
+	r.backoff.Add(1)
+	return time.Millisecond, nil
+}
+
+func TestRealSDKAdaptsLegacyConfiguredRetryer(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var calls atomic.Int32
+		transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			if calls.Add(1) == 1 {
+				return &http.Response{StatusCode: http.StatusServiceUnavailable, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"message":"temporary"}`)), Request: r}, nil
+			}
+			return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"results":[{"index":0,"relevance_score":0.6}]}`)), Request: r}, nil
+		})
+		retryer := &legacyObservingRetryer{Retryer: aws.NopRetryer{}}
+		cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: &http.Client{Transport: transport}, BaseEndpoint: aws.String("https://bedrock.test"), Retryer: func() aws.Retryer { return retryer }}
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		scores, err := NewRerankerWithHedgeDelay(NewClient(bedrockruntime.NewFromConfig(cfg)), "m", 0).Score(ctx, "q", []string{"a"})
+		require.NoError(t, err)
+		require.Equal(t, []float64{0.6}, scores)
+		require.EqualValues(t, 2, calls.Load())
+		require.EqualValues(t, 2, retryer.tokens.Load())
+		require.EqualValues(t, 1, retryer.quota.Load())
+		require.EqualValues(t, 1, retryer.backoff.Load())
+	})
+}
+
+func TestRealSDKCancellationDuringNativeBackoffStopsRetry(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var calls atomic.Int32
+		transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			calls.Add(1)
+			return &http.Response{StatusCode: http.StatusServiceUnavailable, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"message":"temporary"}`)), Request: r}, nil
+		})
+		retryer := &observingRetryer{delay: time.Second}
+		cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: &http.Client{Transport: transport}, BaseEndpoint: aws.String("https://bedrock.test"), Retryer: func() aws.Retryer { return retryer }}
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+		defer cancel()
+		_, err := NewRerankerWithHedgeDelay(NewClient(bedrockruntime.NewFromConfig(cfg)), "m", 0).Score(ctx, "q", []string{"a"})
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		require.EqualValues(t, 1, calls.Load())
+		require.EqualValues(t, 1, retryer.backoff.Load())
+	})
+}
+
+func TestRealSDKUsesConfiguredRetryQuotaAndBackoffWithHedgingDisabled(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var calls atomic.Int32
+		transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			if calls.Add(1) == 1 {
+				return &http.Response{StatusCode: http.StatusServiceUnavailable, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"message":"temporary"}`)), Request: r}, nil
+			}
+			return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"results":[{"index":0,"relevance_score":0.6}]}`)), Request: r}, nil
+		})
+		retryer := &observingRetryer{}
+		cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: &http.Client{Transport: transport}, BaseEndpoint: aws.String("https://bedrock.test"), Retryer: func() aws.Retryer { return retryer }}
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		scores, err := NewRerankerWithHedgeDelay(NewClient(bedrockruntime.NewFromConfig(cfg)), "m", 0).Score(ctx, "q", []string{"a"})
+		require.NoError(t, err)
+		require.Equal(t, []float64{0.6}, scores)
+		require.EqualValues(t, 2, calls.Load())
+		require.EqualValues(t, 2, retryer.tokens.Load())
+		require.EqualValues(t, 1, retryer.quota.Load())
+		require.EqualValues(t, 1, retryer.backoff.Load())
+		require.EqualValues(t, 1, retryer.released.Load())
+	})
 }
 
 func TestRealSDKPreservesConfiguredRetryerV2(t *testing.T) {

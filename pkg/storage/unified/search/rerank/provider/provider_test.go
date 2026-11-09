@@ -26,14 +26,21 @@ func TestProvideReranker_BedrockUsesConfiguredHedgeDelay(t *testing.T) {
 		wantCalls int32
 	}{
 		{name: "disabled", delay: 0, wantCalls: 1},
-		{name: "enabled", delay: time.Second, wantCalls: 2},
+		{name: "enabled", delay: 20 * time.Millisecond, wantCalls: 2},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var calls atomic.Int32
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				calls.Add(1)
-				w.WriteHeader(http.StatusServiceUnavailable)
-				_, _ = w.Write([]byte(`{"message":"try again"}`))
+				if calls.Load() == 1 {
+					select {
+					case <-time.After(150 * time.Millisecond):
+					case <-r.Context().Done():
+						return
+					}
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"results":[{"index":0,"relevance_score":0.8}]}`))
 			}))
 			defer server.Close()
 			t.Setenv("AWS_ENDPOINT_URL", server.URL)
@@ -46,8 +53,9 @@ func TestProvideReranker_BedrockUsesConfiguredHedgeDelay(t *testing.T) {
 			require.NoError(t, err)
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
-			_, err = scorer.Score(ctx, "q", []string{"a"})
-			require.Error(t, err)
+			scores, err := scorer.Score(ctx, "q", []string{"a"})
+			require.NoError(t, err)
+			require.InDelta(t, 0.8, scores[0], 0.000001)
 			require.Equal(t, tc.wantCalls, calls.Load())
 		})
 	}

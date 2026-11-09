@@ -98,25 +98,60 @@ func TestRealSDKCertificateFailureDoesNotRetry(t *testing.T) {
 	require.EqualValues(t, 1, service.calls.Load())
 }
 
-func TestRealSDKRetryableErrorUsesOneRequest(t *testing.T) {
+func TestRealSDKUnavailableStopsAfterTwoAttemptsWithoutHedge(t *testing.T) {
 	service := &failingRankService{code: codes.Unavailable}
 	client := newTestClient(t, service)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	_, err := NewRerankerWithHedgeDelay(client, "m", 0).Score(ctx, "q", []string{"a"})
 	require.Error(t, err)
-	require.EqualValues(t, 1, service.calls.Load())
+	require.EqualValues(t, 2, service.calls.Load())
 }
 
-func TestRealSDKUnavailableRetriesOnceImmediately(t *testing.T) {
+func TestRealSDKUnavailableRetriesAfterBackoffWithoutDuplicate(t *testing.T) {
 	service := &failingRankService{code: codes.Unavailable, succeedAfterFailure: true}
 	client := newTestClient(t, service)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	scores, err := NewReranker(client, "m").Score(ctx, "q", []string{"a"})
+	scores, err := NewRerankerWithHedgeDelay(client, "m", 500*time.Millisecond).Score(ctx, "q", []string{"a"})
 	require.NoError(t, err)
 	require.InDelta(t, 0.7, scores[0], 0.000001)
 	require.EqualValues(t, 2, service.calls.Load())
+}
+
+func TestRealSDKResourceExhaustedDoesNotRetry(t *testing.T) {
+	service := &failingRankService{code: codes.ResourceExhausted}
+	client := newTestClient(t, service)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	_, err := NewRerankerWithHedgeDelay(client, "m", 500*time.Millisecond).Score(ctx, "q", []string{"a"})
+	require.Error(t, err)
+	require.EqualValues(t, 1, service.calls.Load())
+}
+
+type slowFailingRankService struct {
+	discoveryenginepb.UnimplementedRankServiceServer
+	calls atomic.Int32
+}
+
+func (s *slowFailingRankService) Rank(ctx context.Context, _ *discoveryenginepb.RankRequest) (*discoveryenginepb.RankResponse, error) {
+	s.calls.Add(1)
+	select {
+	case <-time.After(100 * time.Millisecond):
+		return nil, status.Error(codes.Unavailable, "retryable failure")
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+func TestRealSDKHedgedCallsEachStopAfterOneRetry(t *testing.T) {
+	service := &slowFailingRankService{}
+	client := newTestClient(t, service)
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	defer cancel()
+	_, err := NewRerankerWithHedgeDelay(client, "m", 20*time.Millisecond).Score(ctx, "q", []string{"a"})
+	require.Error(t, err)
+	require.EqualValues(t, 4, service.calls.Load())
 }
 
 func TestRealSDKInvalidArgumentDoesNotRetry(t *testing.T) {
@@ -186,4 +221,73 @@ func TestRealSharedSDKClientKeepsOverlappingPayloadsIndependent(t *testing.T) {
 	defer service.mu.Unlock()
 	require.Equal(t, []string{"document-a", "document-a"}, service.requests["query-a"])
 	require.Equal(t, []string{"document-b", "document-b"}, service.requests["query-b"])
+}
+
+type concurrentRetryRankService struct {
+	discoveryenginepb.UnimplementedRankServiceServer
+	mu           sync.Mutex
+	requests     map[string]int
+	firstPair    chan struct{}
+	firstArrived int
+}
+
+func (s *concurrentRetryRankService) Rank(ctx context.Context, req *discoveryenginepb.RankRequest) (*discoveryenginepb.RankResponse, error) {
+	s.mu.Lock()
+	s.requests[req.Query]++
+	attempt := s.requests[req.Query]
+	if attempt == 1 {
+		s.firstArrived++
+		if s.firstArrived == 2 {
+			close(s.firstPair)
+		}
+	}
+	s.mu.Unlock()
+	if attempt == 1 {
+		select {
+		case <-s.firstPair:
+			return nil, status.Error(codes.Unavailable, "transient failure")
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+	score := float32(0.3)
+	if req.Query == "query-b" {
+		score = 0.7
+	}
+	return &discoveryenginepb.RankResponse{Records: []*discoveryenginepb.RankingRecord{{Id: "0", Score: score}}}, nil
+}
+
+func TestRealSharedSDKClientRetriesOverlappingSearchesIndependently(t *testing.T) {
+	service := &concurrentRetryRankService{requests: make(map[string]int), firstPair: make(chan struct{})}
+	client := newTestClient(t, service)
+	scorer := NewRerankerWithHedgeDelay(client, "m", 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	defer cancel()
+	type result struct {
+		query  string
+		scores []float64
+		err    error
+	}
+	results := make(chan result, 2)
+	for _, query := range []string{"query-a", "query-b"} {
+		go func(q string) {
+			scores, err := scorer.Score(ctx, q, []string{q + "-document"})
+			results <- result{query: q, scores: scores, err: err}
+		}(query)
+	}
+	got := make(map[string][]float64)
+	for range 2 {
+		select {
+		case outcome := <-results:
+			require.NoError(t, outcome.err)
+			got[outcome.query] = outcome.scores
+		case <-ctx.Done():
+			t.Fatal("overlapping SDK retries did not complete")
+		}
+	}
+	require.InDelta(t, 0.3, got["query-a"][0], 0.000001)
+	require.InDelta(t, 0.7, got["query-b"][0], 0.000001)
+	service.mu.Lock()
+	defer service.mu.Unlock()
+	require.Equal(t, map[string]int{"query-a": 2, "query-b": 2}, service.requests)
 }

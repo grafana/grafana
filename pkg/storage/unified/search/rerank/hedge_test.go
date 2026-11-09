@@ -3,6 +3,7 @@ package rerank
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"sync/atomic"
 	"testing"
@@ -13,6 +14,8 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/util/hedge"
 )
 
 type notifyingSpan struct {
@@ -97,75 +100,49 @@ func TestInstrumentRecordsOneObservationForHedgedScore(t *testing.T) {
 	})
 }
 
-func TestHedgeScoresRetriesMarkedFastFailureImmediately(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		failure := errors.New("transient provider failure")
-		var calls atomic.Int32
-		start := time.Now()
-		scores, err := HedgeScores(context.Background(), 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) {
-			if calls.Add(1) == 1 {
-				return nil, MarkRetryable(failure)
-			}
-			return []float64{0.7}, nil
-		})
-		require.NoError(t, err)
-		require.Equal(t, []float64{0.7}, scores)
-		require.Equal(t, time.Duration(0), time.Since(start))
-		require.EqualValues(t, 2, calls.Load())
+func TestHedgeScoresReturnsFastProviderFailureWithoutDuplicate(t *testing.T) {
+	failure := errors.New("transient provider failure")
+	var calls atomic.Int32
+	_, err := HedgeScores(context.Background(), 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) {
+		calls.Add(1)
+		return nil, failure
 	})
+	require.ErrorIs(t, err, failure)
+	require.EqualValues(t, 1, calls.Load())
 }
 
-func TestHedgeScoresMarkedFailureUsesAtMostTwoAttempts(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		failure := errors.New("transient provider failure")
-		var calls atomic.Int32
-		_, err := HedgeScores(context.Background(), 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) {
-			calls.Add(1)
-			return nil, MarkRetryable(failure)
-		})
-		require.ErrorIs(t, err, failure)
-		require.EqualValues(t, 2, calls.Load())
-	})
+func TestHedgeScoresRetainsProviderErrorChain(t *testing.T) {
+	failure := errors.New("provider failure")
+	_, err := HedgeScores(context.Background(), 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) { return nil, fmt.Errorf("rank: %w", failure) })
+	require.ErrorIs(t, err, failure)
 }
 
-func TestHedgeScoresImmediateRetryDisablesOriginalHedgeTimer(t *testing.T) {
+func TestHedgeScoresSuppressionPreventsTimedDuplicateDuringRecovery(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		var calls atomic.Int32
-		start := time.Now()
 		scores, err := HedgeScores(context.Background(), 1, DefaultHedgeDelay, func(ctx context.Context) ([]float64, error) {
-			switch calls.Add(1) {
-			case 1:
-				return nil, MarkRetryable(errors.New("fast transient failure"))
-			case 2:
-				select {
-				case <-time.After(750 * time.Millisecond):
-					return []float64{0.8}, nil
-				case <-ctx.Done():
-					return nil, ctx.Err()
-				}
-			default:
-				return []float64{0.3}, nil
-			}
+			calls.Add(1)
+			hedge.Suppress(ctx)
+			<-time.After(750 * time.Millisecond)
+			return []float64{0.8}, nil
 		})
 		require.NoError(t, err)
 		require.Equal(t, []float64{0.8}, scores)
-		require.Equal(t, 750*time.Millisecond, time.Since(start))
-		require.EqualValues(t, 2, calls.Load())
+		require.EqualValues(t, 1, calls.Load())
 	})
 }
 
-func TestHedgeScoresRetryableFailuresAfterTimedHedgeKeepTwoAttemptsAndBothCauses(t *testing.T) {
+func TestHedgeScoresFailuresAfterTimedHedgeKeepBothCauses(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		first := errors.New("primary transient failure")
-		second := errors.New("hedge transient failure")
+		first, second := errors.New("primary failure"), errors.New("hedge failure")
 		var calls atomic.Int32
 		_, err := HedgeScores(context.Background(), 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) {
 			if calls.Add(1) == 1 {
 				<-time.After(600 * time.Millisecond)
-				return nil, MarkRetryable(first)
+				return nil, first
 			}
 			<-time.After(200 * time.Millisecond)
-			return nil, MarkRetryable(second)
+			return nil, second
 		})
 		require.ErrorIs(t, err, first)
 		require.ErrorIs(t, err, second)
@@ -173,32 +150,20 @@ func TestHedgeScoresRetryableFailuresAfterTimedHedgeKeepTwoAttemptsAndBothCauses
 	})
 }
 
-func TestHedgeScoresMarkedFailureDoesNotRetryWhenHedgingDisabled(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		var calls atomic.Int32
-		_, err := HedgeScores(context.Background(), 1, 0, func(context.Context) ([]float64, error) {
-			calls.Add(1)
-			return nil, MarkRetryable(errors.New("transient"))
-		})
-		require.Error(t, err)
-		require.EqualValues(t, 1, calls.Load())
-	})
+func TestHedgeScoresDisabledHedgeReturnsFailure(t *testing.T) {
+	var calls atomic.Int32
+	failure := errors.New("provider failure")
+	_, err := HedgeScores(context.Background(), 1, 0, func(context.Context) ([]float64, error) { calls.Add(1); return nil, failure })
+	require.ErrorIs(t, err, failure)
+	require.EqualValues(t, 1, calls.Load())
 }
 
-func TestHedgeScoresMarkedFailureRetriesWithinShorterDeadline(t *testing.T) {
+func TestHedgeScoresShorterDeadlineRetainsCause(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeoutCause(context.Background(), 250*time.Millisecond, ErrCallTimeout)
 		defer cancel()
-		var calls atomic.Int32
-		scores, err := HedgeScores(ctx, 1, DefaultHedgeDelay, func(context.Context) ([]float64, error) {
-			if calls.Add(1) == 1 {
-				return nil, MarkRetryable(errors.New("transient"))
-			}
-			return []float64{0.6}, nil
-		})
-		require.NoError(t, err)
-		require.Equal(t, []float64{0.6}, scores)
-		require.EqualValues(t, 2, calls.Load())
+		_, err := HedgeScores(ctx, 1, DefaultHedgeDelay, func(ctx context.Context) ([]float64, error) { <-ctx.Done(); return nil, ctx.Err() })
+		require.ErrorIs(t, err, ErrCallTimeout)
 	})
 }
 

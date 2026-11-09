@@ -1,6 +1,6 @@
 # Configure reranker hedging
 
-Set `hedge_delay` to control when a slow reranking request starts a second attempt.
+Set `hedge_delay` to control when a slow reranking request starts a duplicate SDK call.
 The setting applies to both Vertex and Bedrock rerankers.
 
 ## Set the delay
@@ -16,14 +16,20 @@ You can also set `GF_VECTOR_RERANKER_HEDGE_DELAY=750ms` in the server environmen
 Restart the server that runs search to apply the change.
 
 The default is `500ms` when the setting is absent, empty, or invalid.
-Set `hedge_delay = 0` to allow only one attempt; negative durations do the same.
-Provider SDK retries remain disabled.
+Set `hedge_delay = 0` to disable the duplicate; negative durations do the same.
+SDK retries remain available when duplication is disabled.
 
-A positive delay starts a duplicate if the first request is still pending and time remains.
-If the first request fails sooner with a retryable provider error, the second attempt starts immediately.
-Authentication, validation, and Bedrock throttling errors do not trigger an immediate retry.
-Grafana makes at most two attempts in total.
+A positive delay starts one duplicate SDK call if the first call is still pending and time remains.
+If the first call enters SDK retry handling before the duplicate starts, Grafana suppresses the duplicate for that request.
+An already started duplicate continues, and either call can return the first complete, valid result.
+Grafana cancels the other call without waiting.
+
+The SDK decides which errors to retry and applies its own backoff.
+Each SDK call makes at most two attempts, including its initial attempt.
+With a duplicate, Grafana makes at most two SDK calls and four SDK attempts in total.
+Transparent transport retries are outside this SDK attempt limit.
 Each successful response must include a valid score for every input.
-The first complete, valid response wins, and Grafana cancels the other request without waiting.
-Reranking still has a five-second limit, or an earlier request deadline.
-If the delay reaches that deadline, no timed duplicate starts; an immediate retry can still run while time remains.
+
+Both calls share a five-second limit, or an earlier request deadline.
+SDK backoff uses that same time budget.
+If the delay reaches the deadline, no duplicate starts.
