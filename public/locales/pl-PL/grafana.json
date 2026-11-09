@@ -8459,6 +8459,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Otwórz okienko zapytania",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Otwórz okienko zapytania"
     },
     "viz-panel-links-renderer": {
@@ -9903,7 +9905,6 @@
     "api": {
       "anonymous-user": "Anonimowy użytkownik",
       "folder-delete-error-provisioned": "Nie można usunąć aprowizowanego folderu. Aby usunąć zasób, usuń go z repozytorium i zsynchronizuj je w celu zastosowania zmian.",
-      "folder-deleted-success": "Folder usunięty",
       "folder-move-error-provisioned": "Nie można przenieść aprowizowanego folderu. Aby to zrobić, przenieś go do repozytorium i zsynchronizuj w celu zastosowania zmian.",
       "folder-moved-success": "Folder został przeniesiony"
     }
@@ -11872,8 +11873,8 @@
           },
           "website-monitoring": {
             "cta": "Rozpocznij konfigurację",
-            "description": "Śledź dostępność swojej strony internetowej i jej wydajność z różnych lokalizacji.",
-            "title": "Monitoruj czas działania i wydajność witryn"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Pokaż mniej przewodników",
@@ -11994,10 +11995,10 @@
       "switchSolution": "Przełącz rozwiązanie",
       "synthetic-monitoring": {
         "action": "Włącz Synthetic Monitoring",
-        "context": "Kontrole black-box dotyczące usług działających w klastrze",
-        "description": "Sprawdzaj swoje punkty końcowe z globalnych lokalizacji za pomocą testów HTTP, DNS i ping oraz otrzymuj alerty o przestojach.",
+        "context": "",
+        "description": "",
         "setup-action": "Utwórz pierwszą kontrolę",
-        "title": "Monitoruj czas działania z zewnątrz"
+        "title": ""
       },
       "title": "Zalecenia dotyczące Twojej platformy"
     },
@@ -12118,7 +12119,7 @@
       },
       "synthetics": {
         "create-check": "Utwórz kontrolę",
-        "description": "Monitoruj czas działania i wydajność punktów końcowych za pomocą sond na całym świecie.",
+        "description": "",
         "failing-worst": "{{check}}: {{percent}}%",
         "filter": {
           "instances": "Ignoruj cele",
@@ -13779,8 +13780,12 @@
       "code": "Kod",
       "heading": "Nagłówek",
       "label": "Kliknij, aby dodać powyżej",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Akapit",
       "prompt": "Zacznij pisać – naciśnij /, aby wyświetlić bloki",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Wizualizacja"
     },
     "cell": {
@@ -14088,7 +14093,7 @@
         "description-no-value": "Co pokazać, gdy nie ma wartości",
         "description-value-mappings": "Zmodyfikuj wyświetlany tekst na podstawie wartości wejściowej",
         "name-actions": "Działania",
-        "name-ad-hoc": "Filtruj na podstawie wartości",
+        "name-ad-hoc": "",
         "name-color-scheme": "Schemat kolorów",
         "name-data-links": "Połączenia danych",
         "name-decimals": "Miejsca dziesiętne",
@@ -15035,6 +15040,7 @@
       "delete-confirm": "Czy na pewno chcesz usunąć to połączenie? To działanie jest nieodwracalne.",
       "delete-title": "Usuń połączenie",
       "error-loading": "Nie udało się wczytać połączeń",
+      "export": "",
       "kind-github-app": "Aplikacja GitHub",
       "kind-oauth-app": "Aplikacja OAuth",
       "no-connections": "Nie skonfigurowano połączeń",
@@ -15567,6 +15573,7 @@
       "view-folder": "Wyświetl folder"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Ostatnia synchronizacja: {{date}}",
       "settings": "Ustawienia",
       "view": "Wyświetl"

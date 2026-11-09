@@ -1173,6 +1173,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return err
 			}
+			driver.SetTracer(b.tracer)
 
 			// Feed the driver's work queue from the jobs informer: live create
 			// events plus the periodic resync/re-list, which re-delivers unclaimed

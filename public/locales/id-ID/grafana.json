@@ -8261,6 +8261,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Buka panel kueri",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Buka panel kueri"
     },
     "viz-panel-links-renderer": {
@@ -9684,7 +9686,6 @@
     "api": {
       "anonymous-user": "Anonim",
       "folder-delete-error-provisioned": "Tidak dapat menghapus folder yang disediakan. Untuk menghapusnya, hapus dari repositori dan sinkronkan untuk menerapkan perubahan.",
-      "folder-deleted-success": "Folder dihapus",
       "folder-move-error-provisioned": "Tidak dapat memindahkan folder yang disediakan. Untuk memindahkannya, pindahkan ke repositori dan sinkronkan untuk menerapkan perubahan.",
       "folder-moved-success": "Folder dipindahkan"
     }
@@ -11620,8 +11621,8 @@
           },
           "website-monitoring": {
             "cta": "Mulai konfigurasi",
-            "description": "Lacak ketersediaan dan kinerja situs web Anda dari berbagai lokasi.",
-            "title": "Pantau uptime dan kinerja situs web"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Tampilkan lebih sedikit panduan",
@@ -11742,10 +11743,10 @@
       "switchSolution": "Ganti solusi",
       "synthetic-monitoring": {
         "action": "Aktifkan Pemantauan Synthetic",
-        "context": "Pemeriksaan black-box untuk layanan yang dijalankan klaster Anda",
-        "description": "Uji endpoint Anda dari lokasi global dengan pemeriksaan HTTP, DNS, dan ping, serta peringatkan saat terjadi downtime.",
+        "context": "",
+        "description": "",
         "setup-action": "Buat pemeriksaan pertama Anda",
-        "title": "Pantau uptime dari luar"
+        "title": ""
       },
       "title": "Rekomendasi untuk stack Anda"
     },
@@ -11833,7 +11834,7 @@
       },
       "synthetics": {
         "create-check": "Buat pemeriksaan",
-        "description": "Pantau uptime dan kinerja endpoint Anda dari probe di seluruh dunia.",
+        "description": "",
         "failing-worst": "{{check}} pada {{percent}}%",
         "filter": {
           "instances": "Abaikan target",
@@ -13446,8 +13447,12 @@
       "code": "Kode",
       "heading": "Judul",
       "label": "Klik untuk menambahkan di atas",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Paragraf",
       "prompt": "Ketik untuk mulai menulis — tekan / untuk menambahkan blok",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Visualisasi"
     },
     "cell": {
@@ -13752,7 +13757,7 @@
         "description-no-value": "Yang ditampilkan ketika tidak ada nilai",
         "description-value-mappings": "Ubah teks tampilan berdasarkan nilai input",
         "name-actions": "Tindakan",
-        "name-ad-hoc": "Filter dari nilai",
+        "name-ad-hoc": "",
         "name-color-scheme": "Skema warna",
         "name-data-links": "Tautan data",
         "name-decimals": "Desimal",
@@ -14690,6 +14695,7 @@
       "delete-confirm": "Anda yakin ingin menghapus koneksi ini? Tindakan ini tidak dapat dibatalkan.",
       "delete-title": "Hapus koneksi",
       "error-loading": "Gagal memuat koneksi",
+      "export": "",
       "kind-github-app": "Aplikasi GitHub",
       "kind-oauth-app": "Aplikasi OAuth",
       "no-connections": "Tidak ada koneksi yang dikonfigurasi",
@@ -15177,6 +15183,7 @@
       "view-folder": "Lihat folder"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Terakhir disinkronkan: {{date}}",
       "settings": "Pengaturan",
       "view": "Lihat"

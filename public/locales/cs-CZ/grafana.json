@@ -8459,6 +8459,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Otevřít podokno dotazu",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Otevřít podokno dotazu"
     },
     "viz-panel-links-renderer": {
@@ -9903,7 +9905,6 @@
     "api": {
       "anonymous-user": "Anonymní",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Složka byla odstraněna",
       "folder-move-error-provisioned": "Poskytnutou složku nelze přesunout. Přesuňte ji do úložiště a proveďte synchronizaci pro použití změn.",
       "folder-moved-success": "Složka byla přesunuta"
     }
@@ -11872,8 +11873,8 @@
           },
           "website-monitoring": {
             "cta": "Spustit nastavení",
-            "description": "Sledujte dostupnost svých webových stránek a jejich výkon z různých lokalit.",
-            "title": "Sledujte provozuschopnost a výkon webových stránek"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Zobrazit méně průvodců",
@@ -11994,10 +11995,10 @@
       "switchSolution": "Přepnout řešení",
       "synthetic-monitoring": {
         "action": "Povolit syntetické monitorování",
-        "context": "Black-box testy služeb běžících ve vašem clusteru",
-        "description": "Testujte své koncové body z globálních lokalit pomocí kontrol HTTP, DNS a pingu a dostávejte výstrahy o prostojích.",
+        "context": "",
+        "description": "",
         "setup-action": "Vytvořte svou první kontrolu",
-        "title": "Sledujte provozní dostupnost zvenčí"
+        "title": ""
       },
       "title": "Doporučení pro váš stack"
     },
@@ -12118,7 +12119,7 @@
       },
       "synthetics": {
         "create-check": "Vytvořit kontrolu",
-        "description": "Sledujte provozní dostupnost a výkon svých koncových bodů pomocí sond po celém světě.",
+        "description": "",
         "failing-worst": "{{check}} na {{percent}} %",
         "filter": {
           "instances": "Ignorovat cíle",
@@ -13779,8 +13780,12 @@
       "code": "Kód",
       "heading": "Nadpis",
       "label": "Klikněte pro přidání nahoře",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Odstavec",
       "prompt": "Zadejte a začněte psát – stiskněte / pro bloky",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Vizualizace"
     },
     "cell": {
@@ -14088,7 +14093,7 @@
         "description-no-value": "Co zobrazit, když neexistuje žádná hodnota",
         "description-value-mappings": "Upravit zobrazovaný text na základě vstupní hodnoty",
         "name-actions": "Akce",
-        "name-ad-hoc": "Filtrovat z hodnot",
+        "name-ad-hoc": "",
         "name-color-scheme": "Barevné schéma",
         "name-data-links": "Propojení dat",
         "name-decimals": "Desetinná čísla",
@@ -15035,6 +15040,7 @@
       "delete-confirm": "Opravdu chcete odstranit toto připojení? Tato akce je nevratná.",
       "delete-title": "Odstranit připojení",
       "error-loading": "Připojení se nepodařilo načíst",
+      "export": "",
       "kind-github-app": "Aplikace GitHub",
       "kind-oauth-app": "Aplikace OAuth",
       "no-connections": "Nejsou nakonfigurována žádná připojení",
@@ -15567,6 +15573,7 @@
       "view-folder": "Zobrazit složku"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Poslední synchronizace: {{date}}",
       "settings": "Nastavení",
       "view": "Zobrazit"

@@ -8327,6 +8327,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Sorgu bölmesini aç",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Sorgu bölmesini aç"
     },
     "viz-panel-links-renderer": {
@@ -9757,7 +9759,6 @@
     "api": {
       "anonymous-user": "Anonim",
       "folder-delete-error-provisioned": "Sağlanan klasör silinemiyor. Kaldırmak için klasörü depodan silin ve değişikliklerin yansıtılması için senkronize edin.",
-      "folder-deleted-success": "Klasör silindi",
       "folder-move-error-provisioned": "Sağlanan klasör taşınamıyor. Taşımak için depoya yerleştirin ve değişikliklerin uygulanması için senkronize edin.",
       "folder-moved-success": "Klasör taşındı"
     }
@@ -11704,8 +11705,8 @@
           },
           "website-monitoring": {
             "cta": "Kurulumu başlat",
-            "description": "Web sitenizin erişilebilirliğini ve farklı konumlardaki performansını takip edin.",
-            "title": "Web sitenizin çalışma süresini ve performansını izleyin"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Daha az kılavuz göster",
@@ -11826,10 +11827,10 @@
       "switchSolution": "Çözümü değiştir",
       "synthetic-monitoring": {
         "action": "Sentetik izlemeyi etkinleştir",
-        "context": "Kümenizin çalıştırdığı hizmetler için kara kutu (black-box) kontrolleri",
-        "description": "HTTP, DNS ve ping kontrolleriyle uç noktalarınızı küresel konumlardan yoklayın ve kesinti durumunda uyarı alın.",
+        "context": "",
+        "description": "",
         "setup-action": "İlk kontrolünüzü oluşturun",
-        "title": "Çalışma süresini dışarıdan izleyin"
+        "title": ""
       },
       "title": "Yığınınız için öneriler"
     },
@@ -11928,7 +11929,7 @@
       },
       "synthetics": {
         "create-check": "Kontrol oluştur",
-        "description": "Dünya genelindeki yoklamalarla uç noktalarınızın çalışma süresini ve performansını izleyin.",
+        "description": "",
         "failing-worst": "{{check}}, %{{percent}} oranında",
         "filter": {
           "instances": "Hedefleri yok say",
@@ -13557,8 +13558,12 @@
       "code": "Kod",
       "heading": "Başlık",
       "label": "Yukarıya eklemek için tıklayın",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Paragraf",
       "prompt": "Yazmaya başlamak için yazın; bloklar için / tuşuna basın",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Görselleştirme"
     },
     "cell": {
@@ -13864,7 +13869,7 @@
         "description-no-value": "Değer olmadığında ne gösterileceğini belirtin",
         "description-value-mappings": "Giriş değerine göre görüntülenen metni özelleştirin",
         "name-actions": "İşlemler",
-        "name-ad-hoc": "Değerlerden filtrele",
+        "name-ad-hoc": "",
         "name-color-scheme": "Renk düzeni",
         "name-data-links": "Veri bağlantıları",
         "name-decimals": "Ondalık",
@@ -14805,6 +14810,7 @@
       "delete-confirm": "Bu bağlantıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
       "delete-title": "Bağlantıyı sil",
       "error-loading": "Bağlantılar yüklenemedi",
+      "export": "",
       "kind-github-app": "GitHub Uygulaması",
       "kind-oauth-app": "OAuth Uygulaması",
       "no-connections": "Yapılandırılmış bağlantı yok",
@@ -15307,6 +15313,7 @@
       "view-folder": "Klasörü göster"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Son eşitleme: {{date}}",
       "settings": "Ayarlar",
       "view": "Görüntüle"

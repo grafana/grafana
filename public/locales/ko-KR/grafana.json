@@ -8261,6 +8261,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "쿼리 창 열기",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "쿼리 창 열기"
     },
     "viz-panel-links-renderer": {
@@ -9684,7 +9686,6 @@
     "api": {
       "anonymous-user": "익명",
       "folder-delete-error-provisioned": "프로비저닝된 폴더를 삭제할 수 없습니다. 제거하려면 리포지토리에서 폴더를 삭제한 후 동기화하여 변경 사항을 적용하세요.",
-      "folder-deleted-success": "폴더 삭제됨",
       "folder-move-error-provisioned": "프로비저닝된 폴더를 이동할 수 없습니다. 이동하려면 리포지토리에서 이동하고 동기화해 변경 사항을 적용하세요.",
       "folder-moved-success": "폴더 이동됨"
     }
@@ -11620,8 +11621,8 @@
           },
           "website-monitoring": {
             "cta": "설정 시작",
-            "description": "다양한 위치에서 웹사이트의 가용성과 성능을 추적하세요.",
-            "title": "웹사이트 가동 시간 및 성능 모니터링"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "가이드 간략히 보기",
@@ -11742,10 +11743,10 @@
       "switchSolution": "솔루션 전환",
       "synthetic-monitoring": {
         "action": "종합 모니터링 활성화",
-        "context": "클러스터가 실행하는 서비스에 대한 블랙박스 검사",
-        "description": "전 세계 위치에서 HTTP, DNS 및 ping 검사를 통해 엔드포인트를 점검하고 서비스 중단 발생 시 경고를 보냅니다.",
+        "context": "",
+        "description": "",
         "setup-action": "첫 번째 검사 만들기",
-        "title": "외부에서 가동 시간 모니터링"
+        "title": ""
       },
       "title": "스택 권장 사항"
     },
@@ -11833,7 +11834,7 @@
       },
       "synthetics": {
         "create-check": "검사 생성",
-        "description": "전 세계 프로브를 통해 엔드포인트의 가동 시간 및 성능을 모니터링하세요.",
+        "description": "",
         "failing-worst": "{{check}}: {{percent}}%",
         "filter": {
           "instances": "대상 무시",
@@ -13446,8 +13447,12 @@
       "code": "코드",
       "heading": "제목",
       "label": "클릭하여 위에 추가",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "문단",
       "prompt": "입력을 시작하려면 작성하세요. 블록을 추가하려면 /를 누르세요",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "시각화"
     },
     "cell": {
@@ -13752,7 +13757,7 @@
         "description-no-value": "값이 없을 때 표시할 항목",
         "description-value-mappings": "입력 값에 따라 표시할 텍스트 수정",
         "name-actions": "작업",
-        "name-ad-hoc": "값에서 필터링하기",
+        "name-ad-hoc": "",
         "name-color-scheme": "색상 구성표",
         "name-data-links": "데이터 링크",
         "name-decimals": "소수(decimal)",
@@ -14690,6 +14695,7 @@
       "delete-confirm": "이 연결을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
       "delete-title": "연결 삭제",
       "error-loading": "연결을 로드하지 못했습니다",
+      "export": "",
       "kind-github-app": "GitHub 앱",
       "kind-oauth-app": "OAuth 앱",
       "no-connections": "구성된 연결 없음",
@@ -15177,6 +15183,7 @@
       "view-folder": "폴더 보기"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "마지막 동기화: {{date}}",
       "settings": "설정",
       "view": "보기"

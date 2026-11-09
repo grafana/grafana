@@ -65,6 +65,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Dashboard",
 					Plural:     "Dashboards",
+					Resource:   "dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
@@ -209,6 +210,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Snapshot",
 					Plural:     "Snapshots",
+					Resource:   "snapshots",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Storage: &app.ManifestVersionKindStorage{
@@ -229,6 +231,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Dashboard",
 					Plural:     "Dashboards",
+					Resource:   "dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
@@ -379,6 +382,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Dashboard",
 					Plural:     "Dashboards",
+					Resource:   "dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
@@ -529,6 +533,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Dashboard",
 					Plural:     "Dashboards",
+					Resource:   "dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
@@ -679,6 +684,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Dashboard",
 					Plural:     "Dashboards",
+					Resource:   "dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
@@ -829,6 +835,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Dashboard",
 					Plural:     "Dashboards",
+					Resource:   "dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
@@ -973,6 +980,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Variable",
 					Plural:     "Variables",
+					Resource:   "variables",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -998,6 +1006,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Notebook",
 					Plural:     "Notebooks",
+					Resource:   "notebooks",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{

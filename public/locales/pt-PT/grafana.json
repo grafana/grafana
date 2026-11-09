@@ -8327,6 +8327,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abrir painel de consulta",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Abrir painel de consulta"
     },
     "viz-panel-links-renderer": {
@@ -9757,7 +9759,6 @@
     "api": {
       "anonymous-user": "Anónimo",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Pasta eliminada",
       "folder-move-error-provisioned": "Não é possível mover a pasta disponibilizada. Para a mover, mova-a no repositório e sincronize para aplicar as alterações.",
       "folder-moved-success": "Pasta movida"
     }
@@ -11704,8 +11705,8 @@
           },
           "website-monitoring": {
             "cta": "Iniciar configuração",
-            "description": "Rastreie a disponibilidade do seu site e o seu desempenho a partir de diferentes locais.",
-            "title": "Monitorizar o tempo de atividade e o desempenho do site"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Mostrar menos guias",
@@ -11826,10 +11827,10 @@
       "switchSolution": "Mudar de solução",
       "synthetic-monitoring": {
         "action": "Ativar a monitorização sintética",
-        "context": "Verificações black box para os serviços que o seu cluster executa",
-        "description": "Sonde os seus endpoints a partir de locais globais com verificações de HTTP, DNS e ping e emita alertas sobre tempo de inatividade.",
+        "context": "",
+        "description": "",
         "setup-action": "Crie a sua primeira verificação",
-        "title": "Monitorizar o tempo de atividade a partir do exterior"
+        "title": ""
       },
       "title": "Recomendações para a sua pilha"
     },
@@ -11928,7 +11929,7 @@
       },
       "synthetics": {
         "create-check": "Criar uma verificação",
-        "description": "Monitorize o tempo de atividade e o desempenho dos seus endpoints a partir de sondas em todo o mundo.",
+        "description": "",
         "failing-worst": "{{check}} a {{percent}}%",
         "filter": {
           "instances": "Ignorar objetivos",
@@ -13557,8 +13558,12 @@
       "code": "Código",
       "heading": "Título",
       "label": "Clique para adicionar acima",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Parágrafo",
       "prompt": "Escreva para começar — prima / para blocos",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Visualização"
     },
     "cell": {
@@ -13864,7 +13869,7 @@
         "description-no-value": "O que mostrar quando não existe nenhum valor",
         "description-value-mappings": "Modificar o texto de exibição com base no valor de entrada",
         "name-actions": "Ações",
-        "name-ad-hoc": "Filtrar a partir de valores",
+        "name-ad-hoc": "",
         "name-color-scheme": "Esquema de cores",
         "name-data-links": "Ligações de dados",
         "name-decimals": "Decimais",
@@ -14805,6 +14810,7 @@
       "delete-confirm": "Tem a certeza de que pretende eliminar esta ligação? Esta ação não pode ser anulada.",
       "delete-title": "Eliminar ligação",
       "error-loading": "Falha ao carregar ligações",
+      "export": "",
       "kind-github-app": "Aplicação GitHub",
       "kind-oauth-app": "Aplicação OAuth",
       "no-connections": "Nenhuma ligação configurada",
@@ -15307,6 +15313,7 @@
       "view-folder": "Visualizar pasta"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Última sincronização: {{date}}",
       "settings": "Definições",
       "view": "Ver"
