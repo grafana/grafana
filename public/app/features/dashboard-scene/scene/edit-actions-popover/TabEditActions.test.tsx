@@ -37,14 +37,16 @@ function renderTabEditActions() {
 }
 
 describe.each([
-  { enabled: false, state: 'disabled' },
-  { enabled: true, state: 'enabled' },
-])('<TabEditActionsWrapper /> with grafana.dashboardSidebarExplicitOpen $state', ({ enabled }) => {
+  { enabled: false, supportsHover: true },
+  { enabled: true, supportsHover: true },
+  { enabled: false, supportsHover: false },
+  { enabled: true, supportsHover: false },
+])('<TabEditActionsWrapper />: flag $enabled, hover $supportsHover', ({ enabled, supportsHover }) => {
   beforeEach(() => {
     setTestFlags({ 'grafana.dashboardSidebarExplicitOpen': enabled });
     jest.useFakeTimers();
     jest.spyOn(window, 'matchMedia').mockImplementation((query) => ({
-      matches: true,
+      matches: supportsHover,
       media: query,
       onchange: null,
       addListener: jest.fn(),

@@ -17,7 +17,7 @@ import {
   SettingsActionButton,
 } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
-import { EditActionsPopover, useHoverPopoverSupported } from './EditActionsPopover';
+import { EditActionsPopover } from './EditActionsPopover';
 
 function RowEditActions({ row }: { row: RowItem }) {
   const styles = useStyles2(getActionStyles);
@@ -88,14 +88,13 @@ export function RowEditActionsWrapper({
   children: JSX.Element;
 }) {
   const theme = useTheme2();
-  const isPopoverSupported = useHoverPopoverSupported();
   const sidebarExplicitOpen = useFlagGrafanaDashboardSidebarExplicitOpen();
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
 
   return (
     <EditActionsPopover
       content={<RowEditActions row={row} />}
-      disabled={!sidebarExplicitOpen || disabled || !isPopoverSupported}
+      disabled={!sidebarExplicitOpen || disabled}
       portalRoot={getPortalRoot}
       zIndex={theme.zIndex.dropdown}
       shiftPadding={getSidebarShiftPadding}
