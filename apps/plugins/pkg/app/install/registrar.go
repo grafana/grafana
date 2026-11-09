@@ -189,6 +189,14 @@ func hasDependencyParents(plugin *pluginsv0alpha1.Plugin) bool {
 	return len(parseCSVAnnotation(plugin.Annotations, DependencyParentsAnnotation)) > 0
 }
 
+// ownedByOtherSource reports whether a record belongs to a source other than
+// source. Dependency records are the exception: installing the plugin
+// directly promotes them to the installing source.
+func ownedByOtherSource(record *pluginsv0alpha1.Plugin, source Source) bool {
+	existingSource, ok := record.Annotations[PluginInstallSourceAnnotation]
+	return ok && existingSource != source && existingSource != SourceDependencyPlugin
+}
+
 type InstallRegistrar struct {
 	clientGenerator resource.ClientGenerator
 	client          *pluginsv0alpha1.PluginClient
@@ -219,7 +227,8 @@ func (r *InstallRegistrar) GetClient() (*pluginsv0alpha1.PluginClient, error) {
 	return r.client, r.clientErr
 }
 
-// Register creates or updates a plugin install in the registry.
+// Register creates or updates a plugin install in the registry. Records owned
+// by another source are left unchanged.
 func (r *InstallRegistrar) Register(ctx context.Context, namespace string, install *PluginInstall) error {
 	_, err := r.register(ctx, namespace, install)
 	return err
@@ -254,6 +263,10 @@ func (r *InstallRegistrar) register(ctx context.Context, namespace string, insta
 	}
 
 	if existing != nil {
+		if ownedByOtherSource(existing, install.Source) {
+			metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
+			return false, nil
+		}
 		if install.ShouldUpdate(existing) {
 			_, err = client.Update(ctx, install.applyTo(existing), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
 			if err != nil {
@@ -374,7 +387,7 @@ func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, 
 		// register plugins that are installed
 		for i := range desired {
 			d := &desired[i]
-			if cached := existingByName[d.ID]; cached != nil && !d.ShouldUpdate(cached) {
+			if cached := existingByName[d.ID]; cached != nil && (ownedByOtherSource(cached, d.Source) || !d.ShouldUpdate(cached)) {
 				if pass == 0 {
 					metrics.RegistrationOperationsTotal.WithLabelValues("register", "skipped").Inc()
 				}
