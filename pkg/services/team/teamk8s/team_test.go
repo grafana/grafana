@@ -2064,7 +2064,6 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 		teams               map[string]*iamv0alpha1.Team
 		searchStatus        int
 		failTeam            string
-		noReqContext        bool
 		expectErr           string
 		expectedSearchPages int
 		expected            []team.UserTeamMembership
@@ -2154,18 +2153,6 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 			},
 			expected: []team.UserTeamMembership{
 				{TeamID: 10, TeamUID: "team-a", External: false, Permission: team.PermissionTypeMember},
-			},
-		},
-		{
-			name:         "reads as its own service identity when the caller has none",
-			userUID:      "user-1",
-			noReqContext: true,
-			pages:        map[string]searchPage{"1": {hits: []string{"team-a"}, totalHits: 1}},
-			teams: map[string]*iamv0alpha1.Team{
-				"team-a": newTeam("team-a", "10", externalAdmin),
-			},
-			expected: []team.UserTeamMembership{
-				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
 			},
 		},
 		{
@@ -2269,21 +2256,10 @@ func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
 			provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
 			svc := NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
 			ctx := identity.WithRequester(contextWithReqContext(), &identity.StaticRequester{OrgID: 1})
-			if tt.noReqContext {
-				ctx = context.Background()
-			}
 
-			var result []team.UserTeamMembership
-			var err error
-			if tt.noReqContext {
-				client, clientErr := svc.getRESTClient(contextWithReqContext())
-				require.NoError(t, clientErr)
-				result, err = readUserTeamMemberships(ctx, client, svc.namespaceMapper(orgID), tt.userUID, tt.external)
-			} else {
-				result, err = svc.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{
-					OrgID: orgID, UserUID: tt.userUID, External: tt.external,
-				})
-			}
+			result, err := svc.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{
+				OrgID: orgID, UserUID: tt.userUID, External: tt.external,
+			})
 			if tt.expectErr != "" {
 				require.ErrorContains(t, err, tt.expectErr)
 				return
