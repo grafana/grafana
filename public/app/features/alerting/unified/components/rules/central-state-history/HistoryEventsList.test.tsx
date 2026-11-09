@@ -2,6 +2,7 @@ import { render, waitFor } from 'test/test-utils';
 import { byLabelText, byTestId } from 'testing-library-selector';
 
 import { dateTime, getDefaultTimeRange } from '@grafana/data';
+import * as grafanaI18n from '@grafana/i18n';
 
 import { setupMswServer } from '../../../mockApi';
 import { captureRequests } from '../../../mocks/server/events';
@@ -34,6 +35,25 @@ describe('HistoryEventsList', () => {
       expect(ui.loadingBar.query()).not.toBeInTheDocument();
     });
     expect(ui.rowHeader.getAll()).toHaveLength(4);
+  });
+  it('formats event timestamps with the active language', async () => {
+    const formatDate = jest.spyOn(grafanaI18n, 'formatDate').mockReturnValue('6月14日 06:39:00');
+    try {
+      render(
+        <HistoryEventsList
+          valueInLabelFilter={'alertname=alert1'}
+          valueInStateToFilter={StateFilterValues.all}
+          valueInStateFromFilter={StateFilterValues.all}
+          addFilter={jest.fn()}
+          timeRange={getDefaultTimeRange()}
+        />
+      );
+      await waitFor(() => expect(ui.rowHeader.getAll()).toHaveLength(2));
+      expect(ui.rowHeader.getAll()[0]).toHaveTextContent('6月14日 06:39:00');
+      expect(formatDate).toHaveBeenCalled();
+    } finally {
+      formatDate.mockRestore();
+    }
   });
   it('should render the list correctly filtered by label in filter variable', async () => {
     render(
