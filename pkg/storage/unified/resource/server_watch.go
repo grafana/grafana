@@ -61,13 +61,17 @@ func NewUnknownGaps(floors ResumeFloors, raise func(context.Context) error, log 
 	return &UnknownGaps{floors: floors, raise: raise, log: log, signal: make(chan struct{}, 1)}
 }
 
-// Capture starts counting gaps. Earlier ones, such as the one a retried first
-// subscription reports, are covered by the boundary the stream starts from,
-// which is read after capture.
-func (g *UnknownGaps) Capture() {
+// Capture starts counting gaps, then calls captured if set. Earlier ones, such
+// as the one a retried first subscription reports, are covered by the boundary
+// the stream starts from, which is read after capture. Gaps reported from
+// captured are counted.
+func (g *UnknownGaps) Capture(captured func()) {
 	g.mu.Lock()
-	defer g.mu.Unlock()
 	g.captured = true
+	g.mu.Unlock()
+	if captured != nil {
+		captured()
+	}
 }
 
 // Report holds every resume. It must be called before the watches expire: a

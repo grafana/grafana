@@ -2828,8 +2828,8 @@ func nextEventBatch(notifications <-chan Event, buf []Event) ([]Event, bool) {
 
 // emitWriteEvents resolves the values a batch of notifications refers to and
 // forwards them, preserving resource version order. lost, if set, gets the
-// events it cannot resolve before any of the batch is forwarded. It reports
-// false when ctx is done and the stream should stop.
+// events whose values could not be read before any of the batch is forwarded.
+// It reports false when ctx is done and the stream should stop.
 func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, out chan<- *WrittenEvent, lost func([]Event)) bool {
 	keys := make([]DataKey, len(batch))
 	for i, event := range batch {
@@ -2865,19 +2865,22 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 		values[obj.Key] = data
 	}
 
-	var missing []Event
+	var unread []Event
 	for i, event := range batch {
-		if _, ok := values[keys[i]]; !ok {
-			// BatchGet omits keys it has no value for rather than erroring — but a failed
-			// batch read reported on none of them, and an unreadable value already did.
-			if !readFailed && !unreadable[keys[i]] {
-				k.log.Error("no data for event", "key", keys[i].String())
-			}
-			missing = append(missing, event)
+		if _, ok := values[keys[i]]; ok {
+			continue
 		}
+		if readFailed || unreadable[keys[i]] {
+			unread = append(unread, event)
+			continue
+		}
+		// BatchGet omits keys it has no value for rather than erroring. Only the
+		// history pruner removes a notified value, once newer versions of the key
+		// exist, and those are notified too, so the stream lost no state.
+		k.log.Error("no data for event", "key", keys[i].String())
 	}
-	if len(missing) > 0 && lost != nil {
-		lost(missing)
+	if len(unread) > 0 && lost != nil {
+		lost(unread)
 	}
 
 	// Emit in notification order rather than in the order the read returned.

@@ -92,10 +92,6 @@ func (f invalidateFunc) Invalidate() { f() }
 // above what it lost, then expire the watches, so resumes from before a lost
 // write expire too.
 func (n *natsNotifier) watchWithFloors(ctx context.Context, floors resource.ResumeFloors, captured func()) (map[resource.GroupResource]int64, <-chan *resource.WrittenEvent, error) {
-	if captured == nil {
-		// The floors are only safe once the bus captures every later write.
-		captured = func() {}
-	}
 	gaps := resource.NewUnknownGaps(floors, n.raiseFloorsToLatest(floors), n.log)
 	since, events, err := n.subscribe(ctx, func(e missingEvent, _ func()) {
 		if len(e.lost) == 0 {
@@ -112,8 +108,9 @@ func (n *natsNotifier) watchWithFloors(ctx context.Context, floors resource.Resu
 		}
 		n.expireWatches(e, nil)
 	}, func() {
-		gaps.Capture()
-		captured()
+		// Always set, so subscribe reads the floors only once the bus captures
+		// every later write.
+		gaps.Capture(captured)
 	})
 	if err != nil {
 		// The bus can report a gap before the start fails, for example a

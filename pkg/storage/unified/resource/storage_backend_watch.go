@@ -121,7 +121,10 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, floors 
 	opts := k.watchOpts
 	ready := make(chan error, 1)
 	opts.CaptureReady = ready
-	opts.Lost = gaps.Report
+	opts.Invalidate = func() {
+		gaps.Report()
+		k.expireWatches()
+	}
 	notifications := k.notifier.Watch(ctx, opts)
 	boundary := make(chan int64)
 	startDelivery := make(chan struct{})
@@ -154,10 +157,7 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, floors 
 			return watchSeed{}, nil, fmt.Errorf("establish watch capture: %w", err)
 		}
 	}
-	gaps.Capture()
-	if captured != nil {
-		captured()
-	}
+	gaps.Capture(captured)
 
 	// Fix the snapshot ceiling before settling. An unrestricted snapshot taken
 	// afterwards could include newer writes ahead of still-persisting lower RVs,
@@ -228,7 +228,7 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context, floors 
 	return seed, out, nil
 }
 
-// lostWatchEvents raises the floors above writes the stream could not read
+// lostWatchEvents raises the floors above writes the stream failed to read
 // back, then expires the watches. A resume admitted after the expiry takes the
 // new generation, so only a floor raised before it can reject the resume.
 func (k *kvStorageBackend) lostWatchEvents(floors *raisedFloors) func([]Event) {
@@ -236,9 +236,13 @@ func (k *kvStorageBackend) lostWatchEvents(floors *raisedFloors) func([]Event) {
 		for _, e := range events {
 			floors.Raise(GroupResource{Group: e.Group, Resource: e.Resource}, e.ResourceVersion)
 		}
-		if k.watchInvalidator != nil {
-			k.watchInvalidator.Invalidate()
-		}
+		k.expireWatches()
+	}
+}
+
+func (k *kvStorageBackend) expireWatches() {
+	if k.watchInvalidator != nil {
+		k.watchInvalidator.Invalidate()
 	}
 }
 

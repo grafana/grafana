@@ -848,7 +848,7 @@ func TestUnknownGapsHoldAcrossANewerGap(t *testing.T) {
 			}
 			return nil
 		}, &logging.NoOpLogger{})
-		gaps.Capture()
+		gaps.Capture(nil)
 		go gaps.RaiseFloors(t.Context(), nil)
 
 		gaps.Report()

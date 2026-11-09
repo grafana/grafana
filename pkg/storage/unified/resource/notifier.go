@@ -68,20 +68,14 @@ type WatchOptions struct {
 	// once the notifier captures every later write, or the error that stopped it.
 	CaptureReady chan<- error
 
-	// Lost, when set, is called when this watch may have missed writes, before
-	// the notifier expires the watches. It must not block.
-	Lost func()
+	// Invalidate, when set, replaces the notifier's invalidator for this watch:
+	// it is called when this watch may have missed writes. It must not block.
+	Invalidate func()
 }
 
 func (opts WatchOptions) captured(err error) {
 	if opts.CaptureReady != nil {
 		opts.CaptureReady <- err
-	}
-}
-
-func (opts WatchOptions) lost() {
-	if opts.Lost != nil {
-		opts.Lost()
 	}
 }
 

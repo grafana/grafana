@@ -1037,6 +1037,49 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 	})
 }
 
+// The history pruner removes a notified value only once newer versions of the
+// key exist, which are notified too, so the seeded stream skips an absent value
+// without expiring the watches or rejecting resumes. A read failure loses the
+// write.
+func TestKvStorageBackend_SeededWatchLosesOnlyUnreadWrites(t *testing.T) {
+	gr := GroupResource{Group: appsNamespace.Group, Resource: appsNamespace.Resource}
+	batch := []Event{
+		{Namespace: appsNamespace.Namespace, Group: gr.Group, Resource: gr.Resource, Name: "first", ResourceVersion: 10, Action: DataActionCreated},
+		{Namespace: appsNamespace.Namespace, Group: gr.Group, Resource: gr.Resource, Name: "second", ResourceVersion: 20, Action: DataActionCreated},
+	}
+	for _, tc := range []struct {
+		name      string
+		kv        func(KV) KV
+		lost      bool
+		wantFloor int64
+	}{
+		{name: "pruned values", kv: func(store KV) KV { return store }},
+		{name: "failed read", kv: func(store KV) KV { return &failingBatchGetKV{KV: store, err: errors.New("storage is down")} }, lost: true, wantFloor: 20},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, withKV(tc.kv(setupBadgerKV(t))), withLogger(newFakeLogger()))
+			expiry := NewWatchExpiry()
+			backend.watchInvalidator = expiry
+			watches := expiry.WatchInvalidation()
+			floors := newRaisedFloors()
+
+			out := make(chan *WrittenEvent, len(batch))
+			require.True(t, backend.emitWriteEvents(t.Context(), batch, out, backend.lostWatchEvents(floors)))
+			require.Empty(t, out)
+
+			select {
+			case <-watches:
+				require.True(t, tc.lost, "watches expired for values the pruner removed")
+			default:
+				require.False(t, tc.lost, "watches did not expire for a failed read")
+			}
+			floor, held := floors.get(gr)
+			require.False(t, held)
+			require.Equal(t, tc.wantFloor, floor)
+		})
+	}
+}
+
 // TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites verifies that when many
 // concurrent WriteEvent calls happen, the watch stream delivers every event exactly once and
 // in ascending ResourceVersion order.
