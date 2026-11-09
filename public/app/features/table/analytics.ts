@@ -1,6 +1,6 @@
 import { reportInteraction } from '@grafana/runtime';
 
-export function reportTableColumnInteraction(action: 'hide' | 'show' | 'reorder') {
+export function reportTableColumnInteraction(action: 'visibility' | 'reorder') {
   reportInteraction('grafana_table_changed_columns', { action });
 }
 

@@ -32,7 +32,7 @@ export function useColumnTransformations(
   owner: string,
   enabled = sourceIndex >= 0,
   sourceSeries: readonly DataFrame[] | undefined = api?.getSourceSeries(owner),
-  onInteraction?: (action: 'hide' | 'show' | 'reorder') => void
+  onInteraction?: (action: 'visibility' | 'reorder') => void
 ) {
   const { transformations, update } = useTableTransformations(api, owner);
   useEffect(() => {
@@ -75,26 +75,12 @@ export function useColumnTransformations(
   const onHiddenColumnsChange = useCallback(
     (hidden: ReadonlySet<string>) => {
       if (context) {
-        let hid = false;
-        let showed = false;
         update(
           (current) => {
-            const before =
-              columnTransformations.columnVisibility.read(current, context).hiddenColumns ?? new Set<string>();
             const next = columnTransformations.columnVisibility.write(current, hidden, context);
-            const after = columnTransformations.columnVisibility.read(next, context).hiddenColumns ?? new Set<string>();
-            hid = [...after].some((name) => !before.has(name));
-            showed = [...before].some((name) => !after.has(name));
             return isEqual(current, next) ? current : next;
           },
-          () => {
-            if (hid) {
-              onInteraction?.('hide');
-            }
-            if (showed) {
-              onInteraction?.('show');
-            }
-          }
+          () => onInteraction?.('visibility')
         );
       }
     },

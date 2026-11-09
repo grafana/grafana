@@ -21,7 +21,7 @@ function sourceFrame(names: string[], refId = 'A', overrideHidden: string[] = []
 function renderColumnState(
   initialSource: DataFrame[],
   initialConfigs: DataTransformerConfig[],
-  onInteraction?: (action: 'hide' | 'show' | 'reorder') => void
+  onInteraction?: (action: 'visibility' | 'reorder') => void
 ) {
   let configs: readonly DataTransformerConfig[] = initialConfigs;
   const listeners = new Set<() => void>();
@@ -279,5 +279,5 @@ it('reports accepted column changes but not hydration or repeated actions', () =
   act(() => result.current?.onHiddenColumnsChange(new Set()));
   act(() => result.current?.onColumnOrderChange(['C', 'A', 'B']));
   act(() => result.current?.onColumnOrderChange(['C', 'A', 'B']));
-  expect(onInteraction.mock.calls).toEqual([['hide'], ['show'], ['reorder']]);
+  expect(onInteraction.mock.calls).toEqual([['visibility'], ['visibility'], ['reorder']]);
 });
