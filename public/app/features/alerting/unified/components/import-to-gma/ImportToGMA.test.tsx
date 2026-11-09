@@ -176,9 +176,9 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
   };
 });
 // Most flows skip Rules, which needs the step left empty: its single button only skips while no rules
-// source is chosen. A test that completes the step instead turns mockSeedRulesSource on, so
-// handleConfirmImport has the rulesDatasourceUID it needs to fire the import. The 'yaml' scenario seeds a
-// rules YAML upload instead, for tests that exercise the rules preview.
+// source is chosen. A test that completes the step instead turns mockSeedRulesSource on, so the import
+// (useRunImport) has the rulesDatasourceUID it needs to fire. The 'yaml' scenario seeds a rules YAML upload
+// instead, for tests that exercise the rules preview.
 let mockRulesScenario: 'datasource' | 'datasource-filtered' | 'yaml' = 'datasource';
 let mockSeedRulesSource = false;
 

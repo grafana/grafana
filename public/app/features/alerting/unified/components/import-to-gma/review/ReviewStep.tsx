@@ -5,18 +5,17 @@ import { getRoutingTreeDisplayName } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Box, Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
-import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerCloudRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { RenamedResourcesList } from '../CollapsibleRenameList';
 import { PolicyTreeNameHelp } from '../PolicyTreeNameHelp';
 import { useStepperState } from '../Wizard/StepperState';
-import { getPauseRulesLabel, isAutoSyncCommitted } from '../Wizard/steps';
+import { getImportPlan, getPauseRulesLabel } from '../Wizard/steps';
 import { StepKey } from '../Wizard/types';
 import { PreviewContentModal } from '../preview/PreviewContentModal';
 import { useNotificationsPreview } from '../preview/useNotificationsPreview';
 import { formatPreviewError, usePreviewContent } from '../preview/usePreviewContent';
 import { type DryRunValidationResult, type ImportFormValues } from '../types';
-import { filterRulerRulesConfig } from '../useImport';
 
 // Validation Status Indicator Component
 interface ValidationStatusIndicatorProps {
@@ -214,7 +213,8 @@ interface ReviewStepProps {
   formData: ImportFormValues;
   onStartImport: () => void;
   dryRunResult?: DryRunValidationResult;
-  rulesFromDatasource?: RulerRulesConfigDTO;
+  /** The rules the import will send, already filtered. Only set for a data source. */
+  rulesToImport?: RulerCloudRulesConfigDTO;
 }
 
 // True when a source is 'yaml' and its file has actually been uploaded (not just selected as the source type).
@@ -223,21 +223,15 @@ function hasYamlUpload(source: string, file: File | null): file is File {
   return source === 'yaml' && file !== null;
 }
 
-export function ReviewStep({ formData, onStartImport, dryRunResult, rulesFromDatasource }: ReviewStepProps) {
+export function ReviewStep({ formData, onStartImport, dryRunResult, rulesToImport }: ReviewStepProps) {
   const styles = useStyles2(getStyles);
   const { setActiveStep } = useStepperState();
 
-  const willImportNotifications = formData.step1Completed && !formData.step1Skipped;
+  const { willImportNotifications, willImportRules, willEnableAutoSync } = getImportPlan(formData);
   const notificationsPreview = useNotificationsPreview(formData, { enabled: willImportNotifications });
   const rulesPreview = usePreviewContent('');
 
-  const willImportRules = formData.step2Completed && !formData.step2Skipped;
   const nothingToImport = !willImportNotifications && !willImportRules;
-  const willEnableAutoSync = isAutoSyncCommitted(
-    formData.autoSyncNotificationsEnabled ?? false,
-    formData.notificationsSource,
-    formData.step1Skipped
-  );
 
   const handleBack = () => {
     setActiveStep(StepKey.Rules);
@@ -249,36 +243,26 @@ export function ReviewStep({ formData, onStartImport, dryRunResult, rulesFromDat
     rulesPreview.show(async () => {
       if (hasYamlUpload(formData.rulesSource, formData.rulesYamlFile)) {
         return formData.rulesYamlFile.text();
-      } else if (formData.rulesSource === 'datasource' && rulesFromDatasource) {
-        // Apply filters if set
-        const { filteredConfig } = filterRulerRulesConfig(rulesFromDatasource, formData.namespace, formData.ruleGroup);
-        return JSON.stringify(filteredConfig, null, 2);
+      } else if (rulesToImport) {
+        return JSON.stringify(rulesToImport, null, 2);
       }
       return '';
     }, formatPreviewError);
-  }, [
-    rulesPreview,
-    formData.rulesSource,
-    formData.rulesYamlFile,
-    formData.namespace,
-    formData.ruleGroup,
-    rulesFromDatasource,
-  ]);
+  }, [rulesPreview, formData.rulesSource, formData.rulesYamlFile, rulesToImport]);
 
   // Calculate rules count
   const rulesCount = useMemo(() => {
-    if (!willImportRules || !rulesFromDatasource) {
+    if (!willImportRules || !rulesToImport) {
       return 0;
     }
-    const { filteredConfig } = filterRulerRulesConfig(rulesFromDatasource, formData.namespace, formData.ruleGroup);
     let count = 0;
-    Object.values(filteredConfig).forEach((groups) => {
+    Object.values(rulesToImport).forEach((groups) => {
       groups.forEach((group) => {
         count += group.rules.length;
       });
     });
     return count;
-  }, [willImportRules, rulesFromDatasource, formData.namespace, formData.ruleGroup]);
+  }, [willImportRules, rulesToImport]);
 
   return (
     <Stack direction="column" gap={3}>
