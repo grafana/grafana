@@ -438,7 +438,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /public/app/core/trustedTypesPolicy.test.ts  @grafana/grafana-frontend-platform
 /public/app/core/trustedTypesPolicy.ts  @grafana/grafana-frontend-platform
 /e2e-playwright/alerting-suite/ @grafana/alerting-squad
-/e2e-playwright/cloud-plugins-suite/ @grafana/data-sources-plugins
 /e2e-playwright/diagnostics-suite/ @grafana/data-sources-plugins
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
 /e2e-playwright/notebooks-suite/ @grafana/sharing-squad

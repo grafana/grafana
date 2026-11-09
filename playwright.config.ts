@@ -153,10 +153,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/diagnostics-suite'),
     }),
     withAuth({
-      name: 'cloud-plugins',
-      testDir: path.join(testDirRoot, '/cloud-plugins-suite'),
-    }),
-    withAuth({
       name: 'alerting',
       testDir: path.join(testDirRoot, '/alerting-suite'),
     }),
