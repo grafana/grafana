@@ -320,7 +320,7 @@ describe('syntheticsSolution CTA and offer', () => {
 
     await expect(syntheticsSolution(null).offer()).resolves.toEqual({
       availability: 'setup',
-      description: 'Monitor uptime and performance of your endpoints from probes around the world.',
+      description: 'Monitor the digital experience of your endpoints and user journeys from probes around the world.',
       setupHint: 'create a check',
       cta: {
         label: 'Create a check',
@@ -338,7 +338,7 @@ describe('syntheticsSolution CTA and offer', () => {
 
     await expect(syntheticsSolution(null).offer()).resolves.toEqual({
       availability: 'setup',
-      description: 'Monitor uptime and performance of your endpoints from probes around the world.',
+      description: 'Monitor the digital experience of your endpoints and user journeys from probes around the world.',
       setupHint: 'create a check',
       cta: null,
       learnMore: { href: 'https://grafana.com/docs/grafana-cloud/testing/synthetic-monitoring/' },

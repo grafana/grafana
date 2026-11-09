@@ -54,11 +54,7 @@ func NewJobsConnector(
 	clients resources.ClientFactory,
 	folderMetadataEnabled bool,
 	perfTestingEnabled func(ctx context.Context) bool,
-	maxBodySize int64,
 ) *jobsConnector {
-	if maxBodySize <= 0 {
-		maxBodySize = setting.ProvisioningMaxJobBodySizeDefault
-	}
 	return &jobsConnector{
 		repoGetter:            repoGetter,
 		statusPatcherProvider: statusPatcherProvider,
@@ -68,8 +64,15 @@ func NewJobsConnector(
 		clients:               clients,
 		folderMetadataEnabled: folderMetadataEnabled,
 		perfTestingEnabled:    perfTestingEnabled,
-		maxBodySize:           maxBodySize,
+		maxBodySize:           setting.ProvisioningMaxJobBodySizeDefault,
 	}
+}
+
+func (c *jobsConnector) SetMaxBodySize(maxBodySize int64) {
+	if maxBodySize <= 0 {
+		maxBodySize = setting.ProvisioningMaxJobBodySizeDefault
+	}
+	c.maxBodySize = maxBodySize
 }
 
 func (*jobsConnector) New() runtime.Object {

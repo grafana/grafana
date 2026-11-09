@@ -1324,7 +1324,8 @@ func TestJobsConnector_BodySizeLimit(t *testing.T) {
 
 	post := func(t *testing.T, action string, size int) error {
 		t.Helper()
-		c := &jobsConnector{repoGetter: &fakeRepoGetter{err: errLookup}, maxBodySize: limit}
+		c := NewJobsConnector(&fakeRepoGetter{err: errLookup}, nil, nil, nil, nil, nil, false, nil)
+		c.SetMaxBodySize(limit)
 		responder := &fakeResponder{}
 		h, err := c.Connect(t.Context(), "my-repo", nil, responder)
 		require.NoError(t, err)
@@ -1350,9 +1351,16 @@ func TestJobsConnector_BodySizeLimit(t *testing.T) {
 		})
 	}
 
+	t.Run("the default limit is used without calling the setter", func(t *testing.T) {
+		c := NewJobsConnector(nil, nil, nil, nil, nil, nil, false, nil)
+		assert.Equal(t, setting.ProvisioningMaxJobBodySizeDefault, c.maxBodySize)
+	})
+
 	t.Run("a non-positive limit falls back to the default", func(t *testing.T) {
 		for _, configured := range []int64{0, -1} {
-			c := NewJobsConnector(nil, nil, nil, nil, nil, nil, false, nil, configured)
+			c := NewJobsConnector(nil, nil, nil, nil, nil, nil, false, nil)
+			c.SetMaxBodySize(limit)
+			c.SetMaxBodySize(configured)
 			assert.Equal(t, setting.ProvisioningMaxJobBodySizeDefault, c.maxBodySize)
 		}
 	})

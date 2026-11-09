@@ -7,6 +7,7 @@ import (
 	"maps"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1408,8 +1409,13 @@ func (b *DashboardsAPIBuilder) resourcePermissionsClient(ctx context.Context) (*
 	return b.resourcePermissionsSvc, nil
 }
 
+// afterDelete runs inside the delete request, which the apiserver times out at 34 s.
+const afterDeleteTimeout = 5 * time.Second
+
 func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), afterDeleteTimeout)
+	defer cancel()
+
 	log := logging.DefaultLogger
 
 	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)

@@ -163,6 +163,19 @@ linters:
               desc: Core plugins are not allowed to depend on Grafana core packages
             - pkg: github.com/grafana/grafana/pkg/tsdb/intervalv2
               desc: Core plugins are not allowed to depend on Grafana core packages
+        legacyapi:
+          list-mode: lax
+          files:
+            - '**/pkg/legacyapi/*'
+            - '**/pkg/legacyapi/**/*'
+          allow:
+            - github.com/grafana/grafana/apps/dashboard
+            - github.com/grafana/grafana/pkg/apimachinery
+            - github.com/grafana/grafana/pkg/infra/slugify
+            - github.com/grafana/grafana/pkg/legacyapi
+          deny:
+            - pkg: github.com/grafana/grafana/
+              desc: pkg/legacyapi is not allowed to import grafana core
         main:
           deny:
             - pkg: io/ioutil
