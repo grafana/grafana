@@ -10,6 +10,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type MetaStatus } from 'app/features/apiserver/types';
 
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
+import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 
 import { JsonModelEditView } from './JsonModelEditView';
 
@@ -28,8 +29,8 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
 // Only the `mvo` data source type takes multi-value operators.
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceInstanceSettings: async ({ type }: { type?: string }) =>
-    type === 'mvo'
+  getDataSourceInstanceSettings: async (ref: unknown) =>
+    typeof ref === 'object' && ref !== null && 'type' in ref && ref.type === 'mvo'
       ? ({ meta: { multiValueFilterOperators: true } } as unknown as DataSourceInstanceSettings)
       : undefined,
 }));
@@ -357,7 +358,7 @@ describe('JsonModelEditView CodeMirror editing', () => {
 });
 
 describe('JsonModelEditView.onSaveSuccess', () => {
-  it('resolves multi-value operator support on the ad hoc variables it swaps in', async () => {
+  function v2Setup() {
     const adhoc = defaultAdhocVariableKind();
     adhoc.group = 'mvo';
     adhoc.datasource = { name: 'mvo-uid' };
@@ -370,10 +371,33 @@ describe('JsonModelEditView.onSaveSuccess', () => {
       access: { canSave: true },
     } as const;
     mockGetDashboardDTO.mockResolvedValue(dto);
-    const dashboard = transformSaveModelSchemaV2ToScene({ ...dto, spec: { ...defaultSpec(), title: 'Dashboard' } });
+    return {
+      dashboard: transformSaveModelSchemaV2ToScene({ ...dto, spec: { ...defaultSpec(), title: 'Dashboard' } }),
+      jsonText: JSON.stringify({ ...dto, kind: 'Dashboard' }),
+    };
+  }
+
+  function v1Setup() {
+    const model = { uid: 'my-uid', title: 'Dashboard', panels: [], schemaVersion: 41 };
+    return {
+      dashboard: transformSaveModelToScene({ dashboard: model, meta: {} }),
+      jsonText: JSON.stringify({
+        ...model,
+        templating: {
+          list: [{ type: 'adhoc', name: 'filters', datasource: { uid: 'mvo-uid', type: 'mvo' }, filters: [] }],
+        },
+      }),
+    };
+  }
+
+  it.each([
+    { format: 'v2', setup: v2Setup },
+    { format: 'v1', setup: v1Setup },
+  ])('resolves multi-value operator support on the ad hoc variables it swaps in ($format)', async ({ setup }) => {
+    const { dashboard, jsonText } = setup();
     const view = new JsonModelEditView({});
     dashboard.setState({ editview: view });
-    view.setState({ jsonText: JSON.stringify({ ...dto, kind: 'Dashboard', spec: dto.spec }) });
+    view.setState({ jsonText });
 
     await view.onSaveSuccess({ uid: 'my-uid', version: 2, status: 'success', url: '/d/my-uid', slug: '' });
 
