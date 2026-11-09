@@ -7,6 +7,7 @@ import (
 
 type transactionContextKey struct{}
 type parquetBufferContextKey struct{}
+type indexBuildReadContextKey struct{}
 
 // ContextWithTransaction returns a new context with the transaction stored directly.
 // This is used for SQLite migrations where the transaction needs to be shared
@@ -34,5 +35,18 @@ func ContextWithParquetBuffer(ctx context.Context) context.Context {
 // ParquetBufferFromContext returns true if the context requests parquet buffering.
 func ParquetBufferFromContext(ctx context.Context) bool {
 	v, _ := ctx.Value(parquetBufferContextKey{}).(bool)
+	return v
+}
+
+// ContextWithIndexBuildRead marks the listing that builds a search index. It reads every resource
+// of the index in one statement, and a migration waits for it when validating, so storage runs it
+// under the migration statement timeout.
+func ContextWithIndexBuildRead(ctx context.Context) context.Context {
+	return context.WithValue(ctx, indexBuildReadContextKey{}, true)
+}
+
+// IndexBuildReadFromContext returns true if the context is a search index build listing.
+func IndexBuildReadFromContext(ctx context.Context) bool {
+	v, _ := ctx.Value(indexBuildReadContextKey{}).(bool)
 	return v
 }

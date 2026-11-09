@@ -69,11 +69,13 @@ func (i *docListIterator) Value() []byte          { return i.values[i.pos-1] }
 
 type docStorageBackend struct {
 	mockStorageBackend
-	values  [][]byte
-	listErr error
+	values         [][]byte
+	listErr        error
+	indexBuildRead bool
 }
 
-func (m *docStorageBackend) ListIterator(_ context.Context, _ *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+func (m *docStorageBackend) ListIterator(ctx context.Context, _ *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+	m.indexBuildRead = IndexBuildReadFromContext(ctx)
 	if m.listErr != nil {
 		time.Sleep(time.Millisecond)
 		return 0, m.listErr
@@ -101,6 +103,7 @@ func TestBuildRecordsPhaseMetrics(t *testing.T) {
 
 	_, err = server.build(t.Context(), nsr, 3, "test", false, time.Time{})
 	require.NoError(t, err)
+	require.True(t, storage.indexBuildRead, "the build listing is marked so storage can apply the migration statement timeout")
 
 	labels := []string{IndexPathBuild, nsr.Group, nsr.Resource}
 
