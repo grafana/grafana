@@ -447,6 +447,19 @@ describe('PanelDataQueriesTab', () => {
       expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(1);
     });
 
+    it('renders query controls while the first query is waiting for data', async () => {
+      const modelMock = await createModelMock();
+      jest.spyOn(modelMock.queryRunner, 'state', 'get').mockReturnValue({
+        ...modelMock.queryRunner.state,
+        data: undefined,
+      });
+
+      render(<PanelDataQueriesTabRendered model={modelMock} />);
+
+      expect(await screen.findByTestId(selectors.components.QueryTab.queryGroupTopSection)).toBeInTheDocument();
+      expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(1);
+    });
+
     it('allow to add a new query when user clicks on add new', async () => {
       const modelMock = await createModelMock();
       jest.spyOn(modelMock, 'addQueryClick');

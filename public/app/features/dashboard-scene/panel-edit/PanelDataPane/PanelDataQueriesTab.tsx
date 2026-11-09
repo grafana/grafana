@@ -1,6 +1,13 @@
 import { useCallback, useMemo } from 'react';
 
-import { CoreApp, type DataSourceApi, type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import {
+  CoreApp,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  getDataSourceRef,
+  getDefaultTimeRange,
+  LoadingState,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction, getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
@@ -380,6 +387,11 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
   const { datasource, dsSettings, scrollToRefId } = model.useState();
   const { data, queries, datasource: datasourceState } = model.queryRunner.useState();
+  const fallbackData = useMemo(
+    () => ({ series: [], state: LoadingState.Loading, timeRange: getDefaultTimeRange() }),
+    []
+  );
+  const queryData = data ?? fallbackData;
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
   const canReadQueries = hasSavedQueryReadPermissions();
 
@@ -426,7 +438,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     };
   }, [hasBackendDs]);
 
-  if (!datasource || !dsSettings || !data) {
+  if (!datasource || !dsSettings) {
     return null;
   }
 
@@ -460,7 +472,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   return (
     <div data-testid={selectors.components.QueryTab.content}>
       <QueryGroupTopSection
-        data={data}
+        data={queryData}
         dsSettings={dsSettings}
         dataSource={datasource}
         options={model.buildQueryOptions()}
@@ -471,7 +483,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
       />
 
       <QueryEditorRows
-        data={data}
+        data={queryData}
         queries={queries}
         dsSettings={dsSettings}
         onAddQuery={model.onAddQuery}
