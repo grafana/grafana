@@ -37,6 +37,11 @@ global.grafanaBootData = {
   navTree: [],
 };
 
+// BackendSrv calls FingerprintJS.load(), which randomly (0.1% of calls) sends a real XHR to the
+// FingerprintJS CDN. jsdom rejects it as cross-origin and logs to console.error, failing whichever
+// test is running. FingerprintJS skips that request when this flag is set.
+global.__fpjs_d_m = true;
+
 window.matchMedia = (query) => ({
   matches: false,
   media: query,
