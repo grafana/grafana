@@ -384,7 +384,10 @@ export function getElementStyles(theme: GrafanaTheme2) {
         outline: 'none',
       },
 
-      '&:focus-visible': getFocusStyles(theme),
+      '&:focus-visible': {
+        ...getFocusStyles(theme, true),
+        borderRadius: theme.shape.radius.default,
+      },
 
       '&:[disabled]': {
         cursor: 'default',
@@ -420,6 +423,11 @@ export function getElementStyles(theme: GrafanaTheme2) {
     // * http://patrickhlauke.github.io/touch/tests/results/#suppressing-300ms-delay
     "a, area, button, [role='button'], input, label, select, summary, textarea": {
       touchAction: 'manipulation',
+    },
+
+    ':focus-visible': {
+      ...getFocusStyles(theme, true),
+      borderRadius: theme.shape.radius.default,
     },
 
     '.text-link': {
