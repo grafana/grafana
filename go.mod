@@ -723,7 +723,7 @@ replace (
 	// and makes non-cgo the default for developer builds.
 	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana-4
 	github.com/dolthub/vitess => github.com/grafana/vitess v0.0.0-grafana-2
-	
+
 	// app-sdk v0.62.1 requires logging v0.0.0 (resolved via a replace that consumers ignore); point it at the real release.
 	github.com/grafana/grafana-app-sdk/logging v0.0.0 => github.com/grafana/grafana-app-sdk/logging v0.62.1
 
