@@ -239,7 +239,7 @@ function createPanelDataProvider(
 ): SceneDataProvider | undefined {
   const panel = panelKind.spec;
   const pluginMeta = panelMetas[panel.vizConfig?.group];
-  const skipDefaultQuery = pluginMeta?.skipDefaultQuery ?? !pluginMeta;
+  const skipDefaultQuery = pluginMeta?.skipDefaultQuery ?? false;
 
   const targets =
     // Default to an array with an empty data query with a `refId` already assigned
