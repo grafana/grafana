@@ -270,6 +270,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       (tableRefreshEnabled && (!noPanelPadding || transparent) ? TABLE.FRAME_BORDER_WIDTH * 2 : 0),
     [width, scrollbarWidth, parentGutterWidth, tableRefreshEnabled, noPanelPadding, transparent]
   );
+  const nestedAvailableWidth = Math.max(0, availableWidth - nestedGutterWidth);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
@@ -687,13 +688,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths, data, rows, sortedRows, lastColumnExtraPadding);
-
-    if (showRowNumbers) {
-      result.columns.unshift(createRowNumberColumn(1, parentGutterWidth));
-      result.cellRootRenderers[ROW_NUMBER_COLUMN_KEY] = function renderEmptyParentRowNumberCell(key, cellProps) {
-        return <Cell key={key} {...cellProps} />;
-      };
-    }
 
     // Keep the expander column even with no rows: nested tables have no first-column inset of their
     // own, so without it the first header cell sits closer to the panel edge than the panel title.
