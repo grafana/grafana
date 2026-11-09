@@ -1,14 +1,16 @@
 import { render, screen } from '@testing-library/react';
+import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import {
   FieldType,
+  type InterpolateFunction,
   LoadingState,
   type PanelData,
   type PanelPluginVisualizationSuggestion,
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, setTemplateSrv } from '@grafana/runtime';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
 
@@ -76,6 +78,25 @@ describe('VisualizationSuggestionCard', () => {
     render(<VisualizationSuggestionCard data={mockData} suggestion={suggestion} width={200} />);
 
     expect(previewModifier).toHaveBeenCalled();
+  });
+
+  it('resolves dashboard variables, scoped vars and data macros in the preview', () => {
+    setTemplateSrv(
+      initTemplateSrv('suggestion-card', [
+        { type: 'constant', name: 'host', current: { value: 'web-01', text: 'web-01' } },
+      ])
+    );
+    const [frame] = mockData.series;
+
+    render(<VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={100} />);
+    const { replaceVariables } = mockPanelRendererProps.mock.calls[0][0] as { replaceVariables: InterpolateFunction };
+
+    expect(
+      replaceVariables('${__field.name} on $host: ${reduced}', {
+        reduced: { text: '75.0%', value: '75.0%' },
+        __dataContext: { value: { data: mockData.series, frame, field: frame.fields[1], frameIndex: 0 } },
+      })
+    ).toBe('value on web-01: 75.0%');
   });
 
   it('should render successfully when isSelected is true', () => {
