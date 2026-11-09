@@ -36,21 +36,20 @@ func TestIntegrationNotificationSettingsReceiverAccessControl(t *testing.T) {
 
 	// Receivers have UIDs that are not their titles, which is what rules refer to them by.
 	const (
+		allowedUID    = "allowed-receiver-uid"
 		allowedTitle  = "allowed-receiver"
+		forbiddenUID  = "forbidden-receiver-uid"
 		forbiddenName = "forbidden-receiver"
 	)
 	receivers, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
-	createReceiver := func(title string) string {
-		created, err := receivers.Create(ctx, &v1beta1.Receiver{
-			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+	for uid, title := range map[string]string{allowedUID: allowedTitle, forbiddenUID: forbiddenName} {
+		_, err := receivers.Create(ctx, &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Name: uid, Namespace: "default"},
 			Spec:       v1beta1.ReceiverSpec{Title: title, Integrations: []v1beta1.ReceiverIntegration{}},
 		}, resource.CreateOptions{})
 		require.NoError(t, err)
-		return created.Name
 	}
-	allowedUID := createReceiver(allowedTitle)
-	createReceiver(forbiddenName)
 
 	folderGrant := resourcepermissions.SetResourcePermissionCommand{
 		Actions: []string{

@@ -195,13 +195,30 @@ describe('picking', () => {
     });
   });
 
-  it('cancels the pick on Escape', async () => {
-    const { startPick } = setup();
+  it('leaves Composer on Escape', async () => {
+    const { scene, session, startPick } = setup();
     const pick = startPick();
 
     fireEvent.keyDown(window, { key: 'Escape' });
 
     await expect(pick).resolves.toBeNull();
+    expect(session.isClosed).toBe(true);
+    expect(scene.state.mode).toBe('view');
+  });
+
+  it('cancels a drag on the first Escape and leaves Composer on the next', async () => {
+    const { session, startPick } = setup();
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0, shiftKey: true });
+    fireEvent.pointerMove(overlay, { clientX: 350, clientY: 450 });
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(session.isClosed).toBe(false);
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await expect(pick).resolves.toBeNull();
+    expect(session.isClosed).toBe(true);
   });
 
   it('leaves Escape and pointer events inside an annotation anchor to the plugin', async () => {
@@ -225,6 +242,7 @@ describe('picking', () => {
 
     fireEvent.keyDown(document.body, { key: 'Escape' });
     await expect(pick).resolves.toBeNull();
+    expect(session.isClosed).toBe(true);
   });
 });
 

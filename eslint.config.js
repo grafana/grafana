@@ -711,6 +711,30 @@ module.exports = [
     },
   },
 
+  {
+    name: 'grafana/plugin-compat-no-runtime-unstable',
+    files: ['packages/grafana-plugin-compat/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              // Duplicated because these rules override grafana/packages
+              group: ['@grafana/*/internal'],
+              message: "'internal' exports are not available in NPM packages because they are not published to NPM",
+            },
+            {
+              group: ['@grafana/runtime/unstable'],
+              message:
+                "Plugins bundling '@grafana/plugin-compat' fail to load on hosts older than Grafana 11.6, which don't register '@grafana/runtime/unstable'. Use the stable '@grafana/runtime' exports with a legacy fallback instead.",
+            },
+          ],
+        }),
+      ],
+    },
+  },
+
   // {
   //   name: 'grafana/plugin-external-import-paths',
   //   files: [

@@ -31,31 +31,28 @@ function StubQueryEditor({ query, onChange }: QueryEditorProps<DataSourceApi, Da
   );
 }
 
-const NO_EDITOR_PLUGIN_ID = 'prometheus-without-editor';
-const FAILING_PLUGIN_ID = 'prometheus-failing-import';
-const SLOW_PLUGIN_ID = 'prometheus-slow-import';
-
 const prometheus = mockDataSource({ uid: 'prom-uid', name: 'Prometheus' });
 const loki = mockDataSource({ uid: 'loki-uid', name: 'Loki', type: DataSourceType.Loki }, { id: DataSourceType.Loki });
-const noEditor = mockDataSource({ uid: 'no-editor-uid', name: 'No editor' }, { id: NO_EDITOR_PLUGIN_ID });
-const failingImport = mockDataSource({ uid: 'failing-uid', name: 'Failing' }, { id: FAILING_PLUGIN_ID });
-const slowImport = mockDataSource({ uid: 'slow-uid', name: 'Slow' }, { id: SLOW_PLUGIN_ID });
 
-async function importPlugin(meta: DataSourcePluginMeta) {
-  if (meta.id === FAILING_PLUGIN_ID) {
+// The plugin is resolved from the data source type, so all data sources of one type share a plugin.
+// Each test picks how the plugin import behaves instead of using a separate plugin id.
+type PluginBehavior = 'ok' | 'fails-to-load' | 'no-query-editor';
+let pluginBehavior: PluginBehavior = 'ok';
+
+async function importPlugin(_meta: DataSourcePluginMeta) {
+  if (pluginBehavior === 'fails-to-load') {
     throw new Error('plugin bundle failed to load');
   }
   const plugin = new DataSourcePlugin<DataSourceApi>(TestDataSource);
-  return meta.id === NO_EDITOR_PLUGIN_ID ? plugin : plugin.setQueryEditor(StubQueryEditor);
+  return pluginBehavior === 'no-query-editor' ? plugin : plugin.setQueryEditor(StubQueryEditor);
 }
 
-function holdSlowPluginImport() {
+// Holds every plugin import until the test calls the returned function.
+function holdPluginImport() {
   let finishImport!: () => void;
   const imported = new Promise<void>((resolve) => (finishImport = resolve));
   setDataSourcePluginImporter(async (meta) => {
-    if (meta.id === SLOW_PLUGIN_ID) {
-      await imported;
-    }
+    await imported;
     return importPlugin(meta);
   });
   return finishImport;
@@ -80,8 +77,9 @@ function renderRecordingRuleEditor(props: Partial<RecordingRuleEditorProps> = {}
 }
 
 beforeEach(() => {
-  setupDataSources(prometheus, loki, noEditor, failingImport, slowImport);
+  setupDataSources(prometheus, loki);
   setDataSourcePluginImporter(importPlugin);
+  pluginBehavior = 'ok';
 });
 
 afterEach(() => {
@@ -118,8 +116,8 @@ describe('RecordingRuleEditor', () => {
 
   it('shows a skeleton after 300 ms of plugin loading, then replaces it with the query editor', async () => {
     jest.useFakeTimers();
-    const finishImport = holdSlowPluginImport();
-    renderRecordingRuleEditor({ dataSourceUid: slowImport.uid });
+    const finishImport = holdPluginImport();
+    renderRecordingRuleEditor({ dataSourceUid: prometheus.uid });
 
     await act(() => jest.advanceTimersByTimeAsync(299));
     expect(screen.queryByTestId('recording-rule-editor-skeleton')).not.toBeInTheDocument();
@@ -132,7 +130,7 @@ describe('RecordingRuleEditor', () => {
     expect(screen.queryByTestId('recording-rule-editor-skeleton')).not.toBeInTheDocument();
   });
 
-  it.each([
+  it.each<{ name: string; dataSourceUid: string; behavior?: PluginBehavior; reason: string }>([
     {
       name: 'the data source does not exist',
       dataSourceUid: 'unknown-uid',
@@ -140,15 +138,18 @@ describe('RecordingRuleEditor', () => {
     },
     {
       name: 'the plugin fails to load',
-      dataSourceUid: failingImport.uid,
+      dataSourceUid: prometheus.uid,
+      behavior: 'fails-to-load',
       reason: 'plugin bundle failed to load',
     },
     {
       name: 'the plugin has no query editor',
-      dataSourceUid: noEditor.uid,
+      dataSourceUid: prometheus.uid,
+      behavior: 'no-query-editor',
       reason: 'Data source plugin does not export any Query Editor component',
     },
-  ])('shows an error when $name', async ({ dataSourceUid, reason }) => {
+  ])('shows an error when $name', async ({ dataSourceUid, behavior = 'ok', reason }) => {
+    pluginBehavior = behavior;
     renderRecordingRuleEditor({ dataSourceUid });
 
     expect(await screen.findByText(`Could not load query editor due to: ${reason}`)).toBeInTheDocument();

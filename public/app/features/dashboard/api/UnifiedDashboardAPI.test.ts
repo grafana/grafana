@@ -20,7 +20,6 @@ jest.mock('./v2');
 let mockBackendSrvGet = {};
 
 // Mocking just for the sake of not importing the entire universe.
-// backendSrv.getFolderByUid is used in the v2 client
 jest.mock('app/core/services/backend_srv', () => {
   return {
     backendSrv: {},

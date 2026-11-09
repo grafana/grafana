@@ -509,7 +509,7 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 		return err
 	}
 
-	existing, err := s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
+	existing, err := s.getForUpdate(ctx, ctxLogger, client, cmd, namespace)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -951,6 +951,23 @@ func (s *UserK8sService) getByInternalID(ctx context.Context, logger log.Logger,
 	}
 
 	return &list.Items[0], nil
+}
+
+// getForUpdate resolves the user to update, preferring a direct Get by UID over a list by internal ID.
+func (s *UserK8sService) getForUpdate(ctx context.Context, logger log.Logger, client *iamv0alpha1.UserClient, cmd *user.UpdateUserCommand, namespace string) (*iamv0alpha1.User, error) {
+	if cmd.UID == "" {
+		return s.getByInternalID(ctx, logger, client, cmd.UserID, namespace)
+	}
+
+	found, err := client.Get(ctx, resource.Identifier{Namespace: namespace, Name: cmd.UID})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, user.ErrUserNotFound
+		}
+		logger.Error("k8s user get by UID failed", "namespace", namespace, "userUID", cmd.UID, "err", err)
+		return nil, err
+	}
+	return found, nil
 }
 
 func (s *UserK8sService) getByFieldSelectorRaw(ctx context.Context, logger log.Logger, client *iamv0alpha1.UserClient, field, value, namespace string) (*iamv0alpha1.User, error) {

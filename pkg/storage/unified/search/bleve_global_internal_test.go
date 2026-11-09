@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -902,7 +903,7 @@ func TestPerResourceIndexRequiresFolderIndexForTreeSearches(t *testing.T) {
 	index, err := backend.BuildIndex(t.Context(), key, 1, "test", func(resource.ResourceIndex) (int64, error) { return 1, nil }, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
-	rsp, err := index.Search(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"}), NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+	_, err = index.Search(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"}), NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{Namespace: "default", Group: key.Group, Resource: key.Resource},
 			Fields: []*resourcepb.Requirement{{
@@ -911,9 +912,9 @@ func TestPerResourceIndexRequiresFolderIndexForTreeSearches(t *testing.T) {
 		},
 		Limit: 10,
 	}, nil, nil)
-	require.NoError(t, err)
-	require.NotNil(t, rsp.Error)
-	assert.Equal(t, int32(400), rsp.Error.Code)
+	rspErr := resourceutil.ErrorResultFromGRPCDetails(err)
+	require.NotNil(t, rspErr)
+	assert.Equal(t, int32(400), rspErr.Code)
 }
 
 func buildFolderTreeIndex(t *testing.T, backend *bleveBackend, key resource.NamespacedResource, items ...*resource.BulkIndexItem) *bleveIndex {
@@ -1035,9 +1036,8 @@ func TestPerResourceFolderTreeUsesCurrentFolderIndex(t *testing.T) {
 	}, nil, true, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	rsp, err = search(folders)
-	require.NoError(t, err)
-	require.NotNil(t, rsp.Error)
-	assert.Contains(t, rsp.Error.Message, bleve.ErrorIndexClosed.Error())
+	require.Nil(t, rsp)
+	assert.Contains(t, resourceutil.ErrorResultFromGRPCDetails(err).GetMessage(), bleve.ErrorIndexClosed.Error())
 	rsp, err = search(current)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
@@ -1280,8 +1280,8 @@ func TestFolderTreeSearchOperators(t *testing.T) {
 	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
-	search := func(operator string, values ...string) *resourcepb.ResourceSearchResponse {
-		rsp, err := index.Search(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"}),
+	search := func(operator string, values ...string) (*resourcepb.ResourceSearchResponse, error) {
+		return index.Search(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"}),
 			NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true}), &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{
 					Key:    &resourcepb.ResourceKey{Namespace: "default"},
@@ -1289,15 +1289,13 @@ func TestFolderTreeSearchOperators(t *testing.T) {
 				},
 				Limit: 10,
 			}, nil, nil)
-		require.NoError(t, err)
-		return rsp
 	}
 
-	rsp := search(string(selection.Equals), "top")
-	require.Nil(t, rsp.Error)
+	rsp, err := search(string(selection.Equals), "top")
+	require.NoError(t, err)
 	assert.Len(t, rsp.Rows, 1)
-	rsp = search(string(selection.Equals), "general")
-	require.Nil(t, rsp.Error)
+	rsp, err = search(string(selection.Equals), "general")
+	require.NoError(t, err)
 	assert.Len(t, rsp.Rows, 2, "everything is below the top")
 
 	for _, tc := range []struct {
@@ -1308,9 +1306,9 @@ func TestFolderTreeSearchOperators(t *testing.T) {
 		{string(selection.DoubleEquals), []string{"top", "other"}},
 		{string(selection.NotIn), []string{"top"}},
 	} {
-		rsp := search(tc.operator, tc.values...)
-		require.NotNil(t, rsp.Error, "%s %v", tc.operator, tc.values)
-		assert.Equal(t, int32(400), rsp.Error.Code)
+		rsp, err := search(tc.operator, tc.values...)
+		require.Nil(t, rsp, "%s %v", tc.operator, tc.values)
+		assert.Equal(t, int32(400), resourceutil.ErrorResultFromGRPCDetails(err).GetCode())
 	}
 }
 

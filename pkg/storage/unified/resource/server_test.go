@@ -5089,56 +5089,6 @@ func newQOSTestSpanRecorder(t *testing.T) *tracetest.SpanRecorder {
 	return recorder
 }
 
-// requireRPCError asserts that err is the gRPC status a handler returns for
-// want: the mapped code and want attached as the ErrorResult detail.
-func requireRPCError(t testing.TB, err error, want *resourcepb.ErrorResult) {
-	t.Helper()
-	got := rpcErrorResult(t, err)
-	require.True(t, proto.Equal(want, got), "want %v, got %v", want, got)
-}
-
-// rpcErrorResult asserts that err is a gRPC status carrying an ErrorResult
-// detail and returns it.
-func rpcErrorResult(t testing.TB, err error) *resourcepb.ErrorResult {
-	t.Helper()
-	require.Error(t, err)
-	res := resourceutil.ErrorResultFromGRPCDetails(err)
-	require.NotNil(t, res, "expected an ErrorResult detail on %v", err)
-	require.Equal(t, grpcCodeFromErrorResult(res), status.Code(err))
-	return res
-}
-
-func TestRPCErrorFrom(t *testing.T) {
-	require.NoError(t, rpcErrorFrom(nil))
-
-	t.Run("gRPC status is returned unchanged", func(t *testing.T) {
-		plain := status.Error(codes.Unavailable, "down")
-		require.Same(t, plain, rpcErrorFrom(plain))
-
-		detailed := GRPCStatusError(NewNotFoundError(&resourcepb.ResourceKey{Resource: "dashboards", Name: "a"}))
-		require.Same(t, detailed, rpcErrorFrom(detailed))
-
-		wrapped := fmt.Errorf("context: %w", plain)
-		require.Same(t, wrapped, rpcErrorFrom(wrapped))
-	})
-
-	t.Run("API status keeps its details", func(t *testing.T) {
-		apiErr := NewConflictStatusError("g", "r", "n", "changed")
-		requireRPCError(t, rpcErrorFrom(apiErr), AsErrorResult(apiErr))
-	})
-
-	t.Run("plain errors map like an embedded error", func(t *testing.T) {
-		err := rpcErrorFrom(errors.New("boom"))
-		requireRPCError(t, err, &resourcepb.ErrorResult{Message: "boom", Code: http.StatusInternalServerError})
-		require.Equal(t, codes.Internal, status.Code(err))
-	})
-
-	t.Run("cancellation keeps the existing mapping", func(t *testing.T) {
-		err := rpcErrorFrom(context.Canceled)
-		requireRPCError(t, err, AsErrorResult(context.Canceled))
-	})
-}
-
 func TestQueueRPCError(t *testing.T) {
 	err := queueRPCError(fmt.Errorf("enqueue: %w", scheduler.ErrTenantQueueFull))
 	requireRPCError(t, err, NewTooManyRequestsError("tenant queue is full, please try again later"))
@@ -5192,49 +5142,75 @@ func TestServerReturnsStatusErrorsWithoutConversion(t *testing.T) {
 	})
 }
 
-// bodyErrorBlob is a blob backend that still reports failure in the response.
-type bodyErrorBlob struct {
+// resultBlob is a blob backend that returns fixed results from both calls.
+type resultBlob struct {
 	stubBlobSupport
-	res *resourcepb.ErrorResult
+	putRsp *resourcepb.PutBlobResponse
+	getRsp *resourcepb.GetBlobResponse
+	err    error
 }
 
-func (b *bodyErrorBlob) PutResourceBlob(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
-	return &resourcepb.PutBlobResponse{Error: b.res}, nil
+func (b *resultBlob) PutResourceBlob(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	return b.putRsp, b.err
 }
 
-// Until every blob backend returns errors, a body failure from the backend is
-// still returned as the call's error rather than as a successful response.
-func TestPutBlobReturnsBackendBodyFailureAsError(t *testing.T) {
-	srv, _, _ := newBlobAuthzTestServer(t, nil)
-	want := &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "empty content"}
-	srv.blob = &bodyErrorBlob{res: want}
-	key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default", Name: "missing"}
-
-	rsp, err := srv.PutBlob(ctxWithUserInNs("default"), &resourcepb.PutBlobRequest{Resource: key})
-	require.Nil(t, rsp)
-	requireRPCError(t, err, want)
+func (b *resultBlob) GetResourceBlob(context.Context, *resourcepb.ResourceKey, *utils.BlobInfo, bool) (*resourcepb.GetBlobResponse, error) {
+	return b.getRsp, b.err
 }
 
-type bodyErrorStatsBackend struct {
-	missingReadBackend
-	result *resourcepb.ResourceStatsResponse
-}
+func TestBlobRPCsReturnBackendFailures(t *testing.T) {
+	const namespace = "default"
+	ctx := ctxWithUserInNs(namespace)
+	missing := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: namespace, Name: "missing"}
+	existing := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: namespace, Name: "existing"}
+	newServer := func(t *testing.T, blob BlobSupport) *server {
+		t.Helper()
+		srv, _, _ := newBlobAuthzTestServer(t, nil)
+		// GetBlob only reaches the backend for an existing resource.
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: existing, Value: []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"existing","namespace":"default"},"spec":{"title":"t","interval":"5m","items":[]}}`)})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+		srv.blob = blob
+		return srv
+	}
+	noResponse := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "blob backend returned no response"}
+	statusFailure := &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "empty content"}
 
-func (b *bodyErrorStatsBackend) GetStats(context.Context, *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
-	return b.result, nil
-}
+	for _, tc := range []struct {
+		name string
+		err  error
+		want *resourcepb.ErrorResult
+	}{
+		{"status error keeps code and details", GRPCStatusError(statusFailure), statusFailure},
+		{"plain error becomes internal", errors.New("disk failed"), &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "disk failed"}},
+		{"nil response becomes internal", nil, noResponse},
+	} {
+		t.Run("PutBlob/"+tc.name, func(t *testing.T) {
+			srv := newServer(t, &resultBlob{err: tc.err})
+			rsp, err := srv.PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: missing})
+			require.Nil(t, rsp)
+			requireRPCError(t, err, tc.want)
+		})
+		t.Run("GetBlob/"+tc.name, func(t *testing.T) {
+			srv := newServer(t, &resultBlob{err: tc.err})
+			rsp, err := srv.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: existing, Uid: "blob-a"})
+			require.Nil(t, rsp)
+			requireRPCError(t, err, tc.want)
+		})
+	}
 
-func TestGetStatsReturnsBackendBodyFailureAsError(t *testing.T) {
-	want := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats failed"}
-	backend := &bodyErrorStatsBackend{result: &resourcepb.ResourceStatsResponse{Error: want}}
-	srv, err := NewResourceServer(ResourceServerOptions{Backend: backend})
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
-	ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
-
-	rsp, err := srv.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default"})
-	require.Nil(t, rsp)
-	requireRPCError(t, err, want)
+	t.Run("PutBlob/returns the backend response", func(t *testing.T) {
+		want := &resourcepb.PutBlobResponse{Uid: "blob-a", Size: 2, MimeType: "application/json"}
+		rsp, err := newServer(t, &resultBlob{putRsp: want}).PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: missing})
+		require.NoError(t, err)
+		require.True(t, proto.Equal(want, rsp))
+	})
+	t.Run("GetBlob/returns the backend response", func(t *testing.T) {
+		want := &resourcepb.GetBlobResponse{Value: []byte("{}"), ContentType: "application/json"}
+		rsp, err := newServer(t, &resultBlob{getRsp: want}).GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: existing, Uid: "blob-a"})
+		require.NoError(t, err)
+		require.True(t, proto.Equal(want, rsp))
+	})
 }
 
 func TestGetStatsPassesThroughClientResult(t *testing.T) {
