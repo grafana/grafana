@@ -192,8 +192,7 @@ through an in-process v3 client (`v3.NewInProcessClient`) that verifies the call
 a plugin process does. A core app wins a group the base loader also serves. A bad app is skipped with
 a warning, but the toggle fails startup when Grafana cannot sign plugin tokens itself or has no local
 API URL, since the embedded server no longer serves the groups. Which kinds the router authorizes by the
-owner in an object's name is declared in `pluginroute/hardcoded_kinds.go`, until the app manifest
-declares it.
+owner in an object's name is declared by the kind's `namingStrategy` in the app manifest.
 
 The cloud loader serves nothing until each of its sources has polled once, successfully or not
 (`errFirstPollPending`), so the router doesn't go ready with groups missing from discovery. A

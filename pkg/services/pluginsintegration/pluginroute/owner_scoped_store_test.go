@@ -40,7 +40,7 @@ func newTestOwnerScopedStore(t *testing.T, kind string, stored ...string) (*owne
 	t.Helper()
 	owned := namespaceUserTeamOwner()
 	if kind == "stars" {
-		owned, _ = hardcodedKindAuth("collections.grafana.app", "stars")
+		owned = ownerFor(t, "collections.grafana.app", "stars")
 		require.NotNil(t, owned)
 	}
 

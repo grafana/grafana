@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
@@ -26,18 +27,22 @@ func TestRouteHandlerMissingParent(t *testing.T) {
 	gr := schema.GroupResource{Group: gv.Group, Resource: "testkinds"}
 	route := manifestroutes.Route{
 		Path: "testkinds/{name}/reload", Namespaced: true, Subresource: "reload",
-		Kind:       &app.ManifestVersionKind{Kind: "TestKind", Plural: "TestKinds"},
-		Operations: spec3.PathProps{Post: &spec3.Operation{}},
+		Kind: &app.ManifestVersionKind{Kind: "TestKind", Plural: "TestKinds"},
 	}
 
 	serve := func(t *testing.T, allowMissingParent bool, getErr error) (*httptest.ResponseRecorder, *fakeRouteClient) {
 		t.Helper()
+		route := route
+		route.Operations = spec3.PathProps{Post: &spec3.Operation{}}
+		if allowMissingParent {
+			route.Operations.Post.Extensions = spec.Extensions{manifestroutes.ExtensionAllowMissingParent: true}
+		}
 		client := &fakeRouteClient{}
 		b := &manifestBuilder{
 			group:        gv.Group,
 			clientV3:     client,
 			getter:       (&recordingGetter{err: getErr}).get,
-			kindPolicies: map[string]kindPolicy{"testkinds": {allowMissingParent: allowMissingParent}},
+			kindPolicies: map[string]kindPolicy{"testkinds": {}},
 		}
 		req := httptest.NewRequest(http.MethodPost, "/x", nil)
 		ctx := identity.WithRequester(req.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, OrgID: 2, Namespace: "org-2"})

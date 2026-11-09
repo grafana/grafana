@@ -4,17 +4,41 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+	collectionsmanifest "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
+
+// ownerFor is how the real manifest of the group authorizes the resource, or
+// nil when the group has no such kind or declares no naming strategy for it.
+func ownerFor(t *testing.T, group, resource string) *ownerFromName {
+	t.Helper()
+	var manifest *app.ManifestData
+	switch group {
+	case "collections.grafana.app":
+		manifest = collectionsmanifest.LocalManifest().ManifestData
+	default:
+		return nil
+	}
+	for _, version := range manifest.Versions {
+		for _, kind := range version.Kinds {
+			if strings.EqualFold(kind.Plural, resource) {
+				return ownerFromKind(kind)
+			}
+		}
+	}
+	return nil
+}
 
 type errChecker struct{}
 
@@ -77,7 +101,7 @@ func TestOwnerFromNameOwnedNames(t *testing.T) {
 	user := &identity.StaticRequester{UserUID: "abc", Groups: []string{"t2", "t1"}}
 
 	t.Run("stars are only the user's own", func(t *testing.T) {
-		o, _ := hardcodedKindAuth("collections.grafana.app", "stars")
+		o := ownerFor(t, "collections.grafana.app", "stars")
 		require.Equal(t, []string{"user-abc"}, o.ownedNames(user))
 	})
 
@@ -92,7 +116,7 @@ func TestOwnerFromNameOwnedNames(t *testing.T) {
 		require.True(t, scoped)
 		require.Equal(t, []string{"namespace"}, names)
 
-		o, _ = hardcodedKindAuth("collections.grafana.app", "stars")
+		o = ownerFor(t, "collections.grafana.app", "stars")
 		_, scoped = o.nonUserNames()
 		require.False(t, scoped)
 	})
@@ -107,7 +131,7 @@ func TestOwnerFromNameOwnedNames(t *testing.T) {
 	})
 
 	t.Run("other kinds are not scoped", func(t *testing.T) {
-		o, _ := hardcodedKindAuth("other.ext.grafana.app", "things")
+		o := ownerFor(t, "other.ext.grafana.app", "things")
 		require.Nil(t, o)
 	})
 }
@@ -115,7 +139,7 @@ func TestOwnerFromNameOwnedNames(t *testing.T) {
 // A kind authorized by name is decided by the caller's name, except for an
 // access policy, which is held to the permissions in its token.
 func TestGetAuthorizerOwnerFromName(t *testing.T) {
-	owner, _ := hardcodedKindAuth("collections.grafana.app", "stars")
+	owner := ownerFor(t, "collections.grafana.app", "stars")
 	b := &manifestBuilder{
 		pluginID:      "test-app",
 		kindPolicies:  map[string]kindPolicy{"stars": {ownerFromName: owner}},

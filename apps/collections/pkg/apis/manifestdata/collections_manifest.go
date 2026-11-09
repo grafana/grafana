@@ -63,6 +63,13 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaStarsv1alpha1,
+					NamingStrategy: &app.ManifestKindNamingStrategy{
+						Mode: "owner",
+						Owner: &app.ManifestKindNamingStrategyOwner{
+							Owners:        []resource.Owner{"user"},
+							AllowOrgAdmin: true,
+						},
+					},
 					Routes: map[string]spec3.PathProps{
 						"/update/{group}/{kind}/{id}": {
 							Put: &spec3.Operation{
