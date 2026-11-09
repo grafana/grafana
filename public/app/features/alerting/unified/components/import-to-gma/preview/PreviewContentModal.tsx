@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
+import { noop } from 'lodash';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, CodeEditor, Modal, Spinner, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Modal, Spinner, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 export interface PreviewContentModalProps {
   isOpen: boolean;
@@ -38,18 +40,14 @@ export function PreviewContentModal({
         </Stack>
       ) : (
         <div className={styles.editorContainer}>
-          <CodeEditor
-            width="100%"
-            height={500}
+          <CodeMirrorEditor
+            height="500px"
             language={language}
             value={content}
-            monacoOptions={{
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              lineNumbers: 'on',
-              readOnly: true,
-              wordWrap: 'on',
-            }}
+            onChange={noop}
+            readOnly
+            lineWrapping
+            aria-label={title}
           />
         </div>
       )}

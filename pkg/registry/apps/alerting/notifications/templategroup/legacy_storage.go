@@ -24,11 +24,11 @@ var (
 )
 
 type TemplateService interface {
-	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (v1.TemplateGroup, error)
+	GetTemplateByUID(ctx context.Context, orgID int64, uid string) (v1.TemplateGroup, error)
 	GetTemplates(ctx context.Context, orgID int64) ([]v1.TemplateGroup, error)
 	CreateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error)
 	UpdateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error)
-	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance ngmodels.Provenance, version string) error
+	DeleteTemplateByUID(ctx context.Context, orgID int64, uid string, provenance ngmodels.Provenance, version string) error
 }
 
 type legacyStorage struct {
@@ -96,7 +96,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return convertToK8sResource(info.OrgID, dto, s.namespacer), nil
 	}
 
-	dto, err := s.service.GetTemplate(ctx, info.OrgID, name)
+	dto, err := s.service.GetTemplateByUID(ctx, info.OrgID, name)
 	if err != nil {
 		return nil, err
 	}
@@ -121,8 +121,8 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if !ok {
 		return nil, fmt.Errorf("expected template but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
-	if p.Name != "" { // TODO remove when metadata.name can be defined by user
-		return nil, errors.NewBadRequest("object's metadata.name should be empty")
+	if p.Name == templates.DefaultTemplateName { // The default template is addressed by this name.
+		return nil, errors.NewBadRequest(fmt.Sprintf("object's metadata.name cannot be %q", templates.DefaultTemplateName))
 	}
 	domainModel, err := convertToDomainModel(p)
 	if err != nil {
@@ -148,7 +148,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	dto, err := s.service.GetTemplate(ctx, info.OrgID, name)
+	dto, err := s.service.GetTemplateByUID(ctx, info.OrgID, name)
 	if err != nil {
 		return nil, false, err
 	}
@@ -210,8 +210,8 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return nil, false, errors.NewBadRequest(err.Error())
 	}
-	err = s.service.DeleteTemplate(ctx, info.OrgID, name, prov, version) // TODO add support for dry-run option
-	return old, false, err                                               // false - will be deleted async
+	err = s.service.DeleteTemplateByUID(ctx, info.OrgID, name, prov, version) // TODO add support for dry-run option
+	return old, false, err                                                    // false - will be deleted async
 }
 
 func (s *legacyStorage) defaultTemplate() (v1.TemplateGroup, error) {

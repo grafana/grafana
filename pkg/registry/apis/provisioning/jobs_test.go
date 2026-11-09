@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // newJobAuthClients returns a ClientFactory whose ResourceClients exposes the static
@@ -1311,6 +1314,56 @@ func TestHandleOrphanCleanupJob_InsertError(t *testing.T) {
 
 	require.Error(t, responder.err)
 	assert.Contains(t, responder.err.Error(), "queue full")
+}
+
+func TestJobsConnector_BodySizeLimit(t *testing.T) {
+	// A body that decodes reaches the repository lookup, which fails with this error.
+	errLookup := fmt.Errorf("repository lookup reached")
+
+	const limit = 2048
+
+	post := func(t *testing.T, action string, size int) error {
+		t.Helper()
+		c := NewJobsConnector(&fakeRepoGetter{err: errLookup}, nil, nil, nil, nil, nil, false, nil)
+		c.SetMaxBodySize(limit)
+		responder := &fakeResponder{}
+		h, err := c.Connect(t.Context(), "my-repo", nil, responder)
+		require.NoError(t, err)
+
+		// Spaces inside the object keep the body valid JSON and count toward its size.
+		body := `{"action":"` + action + `"` + strings.Repeat(" ", size) + `}`
+		r := httptest.NewRequest(http.MethodPost, "/my-repo/jobs", strings.NewReader(body))
+		r.Header.Set("Content-Type", "application/json")
+		h.ServeHTTP(httptest.NewRecorder(), r)
+		return responder.err
+	}
+
+	for _, action := range []string{"migrate", "pull"} {
+		t.Run(action+" job under the limit is accepted", func(t *testing.T) {
+			err := post(t, action, limit/2)
+			assert.ErrorIs(t, err, errLookup)
+		})
+
+		t.Run(action+" job over the limit is a 413", func(t *testing.T) {
+			err := post(t, action, limit)
+			assert.True(t, apierrors.IsRequestEntityTooLargeError(err), "got %v", err)
+			assert.Contains(t, err.Error(), fmt.Sprintf("max size %d bytes", limit))
+		})
+	}
+
+	t.Run("the default limit is used without calling the setter", func(t *testing.T) {
+		c := NewJobsConnector(nil, nil, nil, nil, nil, nil, false, nil)
+		assert.Equal(t, setting.ProvisioningMaxJobBodySizeDefault, c.maxBodySize)
+	})
+
+	t.Run("a non-positive limit falls back to the default", func(t *testing.T) {
+		for _, configured := range []int64{0, -1} {
+			c := NewJobsConnector(nil, nil, nil, nil, nil, nil, false, nil)
+			c.SetMaxBodySize(limit)
+			c.SetMaxBodySize(configured)
+			assert.Equal(t, setting.ProvisioningMaxJobBodySizeDefault, c.maxBodySize)
+		}
+	})
 }
 
 func TestAuthorizeAdminJob(t *testing.T) {

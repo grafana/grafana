@@ -87,34 +87,32 @@ function toFixture(dataSource: SeedableDataSource): DataSourceFixture {
 }
 
 function createFixtureImporter(fixtures: DataSourceFixture[]) {
-  // Keyed on the meta object rather than meta.id: fixtures routinely share a plugin id, and the
-  // loader passes back the very meta object the settings carry, so identity is both unique and
-  // available. meta.id is the fallback for settings whose meta was cloned.
-  const byMeta = new Map<DataSourcePluginMeta, DataSourceFixture>();
-  const byPluginId = new Map<string, DataSourceFixture>();
-
-  for (const fixture of fixtures) {
-    byMeta.set(fixture.settings.meta, fixture);
-    if (!byPluginId.has(fixture.settings.meta.id)) {
-      byPluginId.set(fixture.settings.meta.id, fixture);
-    }
-  }
+  // The loader imports one plugin per plugin id, with the meta from the plugin meta cache (often a
+  // clone), and fixtures routinely share a plugin id. So the plugin cannot pick the fixture; the
+  // constructor does, from the settings it is built with.
+  const byUid = new Map(fixtures.map((fixture) => [fixture.settings.uid, fixture]));
+  const byName = new Map(fixtures.map((fixture) => [fixture.settings.name, fixture]));
 
   return async (meta: DataSourcePluginMeta): Promise<TestDataSourcePlugin> => {
-    const api = (byMeta.get(meta) ?? byPluginId.get(meta.id))?.api;
-    if (!api) {
-      throw new Error(
-        `seedDataSources: no api fixture for data source plugin "${meta.id}". Seed it as { settings, api }.`
-      );
-    }
-    // `new` on a function returning an object yields that object, so the instance is the fixture
-    // api itself and the handles a test holds (e.g. query mocks) stay live. components is returned
-    // because the loader overwrites instance.components with whatever the plugin supplies.
+    let constructed: DataSourceApi | undefined;
+
     return {
-      DataSourceClass: function () {
-        return api;
+      // `new` on a function returning an object yields that object, so the instance is the fixture
+      // api itself and the handles a test holds (e.g. query mocks) stay live.
+      DataSourceClass: function (settings: DataSourceInstanceSettings) {
+        constructed = (byUid.get(settings.uid) ?? byName.get(settings.name))?.api;
+        if (!constructed) {
+          throw new Error(
+            `seedDataSources: no api fixture for data source "${settings.uid}" (plugin "${meta.id}"). Seed it as { settings, api }.`
+          );
+        }
+        return constructed;
       } as unknown as TestDataSourcePlugin['DataSourceClass'],
-      components: api.components ?? {},
+      // The loader reads components after it constructs the instance, and then overwrites
+      // instance.components with them. So hand back the components of the fixture just built.
+      get components() {
+        return constructed?.components ?? {};
+      },
     };
   };
 }

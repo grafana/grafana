@@ -21,8 +21,7 @@ export { mockUserPreferences, setupMockUserPreferences, setMockUserPreferences }
 export { setMockStarredDashboards, setMockStarredFolders } from './fixtures/starred';
 export { mockPluginMeta, setMockPluginMetas, type MockPluginMeta } from './fixtures/pluginMetas';
 export { customSetTeamRolesHandler } from './handlers/api/access-control/handlers';
-export { customCreateFolderHandler, customFolderCountsHandler } from './handlers/api/folders/handlers';
-export { customCreateFolderHandler as customCreateFolderHandlerAppPlatform } from './handlers/apis/folder.grafana.app/v1beta1/handlers';
+export { customCreateFolderHandler } from './handlers/apis/folder.grafana.app/v1beta1/handlers';
 
 export * as folderHandlers from './handlers/apis/folder.grafana.app/v1beta1/handlers';
 

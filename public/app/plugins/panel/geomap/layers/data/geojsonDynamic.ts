@@ -1,4 +1,4 @@
-import { type FeatureLike } from 'ol/Feature';
+import { type default as Feature, type FeatureLike } from 'ol/Feature';
 import { unByKey } from 'ol/Observable';
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorImage from 'ol/layer/VectorImage';
@@ -62,7 +62,7 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
   create: async (_map, options, _eventBus, theme) => {
     const config = { ...defaultOptions, ...options.config };
 
-    const source = new VectorSource({
+    const source = new VectorSource<Feature>({
       url: config.src,
       format: new GeoJSON(),
     });

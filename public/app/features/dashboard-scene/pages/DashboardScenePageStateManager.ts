@@ -60,6 +60,7 @@ import {
   isRedirectResponse,
 } from 'app/types/dashboard';
 
+import { swapInReloadedDashboard } from '../actions/dashboard/applyDashboardSpec';
 import {
   clearPendingChangePreview,
   isPreviewingPendingChanges,
@@ -69,6 +70,8 @@ import {
   previewedDashboardUid,
   proposesNewDashboard,
 } from '../lifecycle/pendingChangePreview';
+import { resumeRecordingPendingChanges } from '../lifecycle/pendingChangesHistory';
+import { setPendingChangesPageReload } from '../lifecycle/pendingChangesPageReload';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
@@ -82,6 +85,7 @@ import {
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { registerDashboardPageStateCaches } from '../utils/cache';
 import {
+  applyUseCrossDashboardVariables,
   countPredefinedVariableOrigins,
   getGlobalVariablesMode,
   mayInjectAnyPredefinedVariables,
@@ -90,6 +94,7 @@ import {
 } from '../utils/crossDashboardVariablesSelection';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 import { DashboardInteractions } from '../utils/interactions';
+import { isMobileEditDeprecated, redirectAwayFromMobileEdit } from '../utils/mobileEditDeprecation';
 import { fetchPredefinedVariables } from '../utils/predefinedVariables';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -697,9 +702,14 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           config.featureToggles.dashboardTemplates) &&
         options.route === DashboardRoutes.Template
       ) {
-        scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
-        scene.onEnterEditMode();
-        scene.setState({ isDirty: true });
+        if (isMobileEditDeprecated()) {
+          // Building a dashboard from a template requires edit mode, which is unavailable on mobile.
+          redirectAwayFromMobileEdit();
+        } else {
+          scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
+          scene.onEnterEditMode();
+          scene.setState({ isDirty: true });
+        }
       }
 
       // We don't want to cache temporary dashboards (e.g from Explore) or public dashboards
@@ -1117,9 +1127,14 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         annotations[key] = value;
       }
     }
-    const resolutionInput = { annotations };
+    const localVariableNames = [
+      ...(rsp.spec.variables ?? []).map((variable) => variable.spec.name),
+      ...(options.defaultVariables ?? []).map((variable) => variable.spec.name),
+    ];
+    const resolutionInput = { annotations, localVariableNames };
 
-    const mode = getGlobalVariablesMode(parseUseCrossDashboardVariables(resolutionInput.annotations));
+    const selection = parseUseCrossDashboardVariables(resolutionInput.annotations);
+    const mode = getGlobalVariablesMode(selection);
 
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
       DashboardInteractions.predefinedVariablesLoaded({
@@ -1137,7 +1152,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     // Fail open on initial load: a null fetch (error) is treated as no predefined variables.
     const candidates = (await fetchPredefinedVariables(folderUid)) ?? [];
     const predefinedVariables = resolvePredefinedVariablesForDashboard(candidates, resolutionInput);
-    const counts = countPredefinedVariableOrigins(predefinedVariables);
+    // Count what the user selected, not the datasource dependencies injected alongside it.
+    const counts = countPredefinedVariableOrigins(
+      selection ? applyUseCrossDashboardVariables(predefinedVariables, selection) : []
+    );
 
     DashboardInteractions.predefinedVariablesLoaded({
       ...counts,
@@ -1194,10 +1212,14 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       }
 
       // Special handling for Template route - set up edit mode and dirty state
-      if (
+      const isTemplateRoute =
         getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) &&
-        options.route === DashboardRoutes.Template
-      ) {
+        options.route === DashboardRoutes.Template;
+
+      if (isTemplateRoute && isMobileEditDeprecated()) {
+        // Building or editing a dashboard template requires edit mode, which is unavailable on mobile.
+        redirectAwayFromMobileEdit();
+      } else if (isTemplateRoute) {
         const editMode = !!options.editTemplate;
 
         if (options.dashboardTemplateUid && editMode) {
@@ -1564,8 +1586,9 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   /**
    * Swaps in the pending changes the load asked for, unless the requester is viewing the
-   * original (see pendingChangePreview.ts). The preview is a read-only v2 dashboard that never
-   * goes through the scene cache: it shares the saved dashboard's version.
+   * original (see pendingChangePreview.ts). The preview is a v2 dashboard that never goes through
+   * the scene cache: it shares the saved dashboard's version. It is read-only unless the plugin
+   * keeps the pending changes' history, on the page: edits are then recorded in it.
    */
   private async withPendingChanges(
     rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null,
@@ -1581,12 +1604,16 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
         preview.previewing = false;
         return rsp;
       }
+      // Editable as far as the requester may edit the dashboard itself.
+      const editable = Boolean(preview.pending.history) && options.route === DashboardRoutes.Normal;
       const previewRsp = {
         ...saved,
         // A copy: building the scene adds defaults to the spec it is given, and the banner
         // diffs the pending changes as saved.
         spec: structuredClone(preview.pending.proposed),
-        access: { ...saved.access, canEdit: false, canSave: false, canDelete: false },
+        access: editable
+          ? { ...saved.access, canDelete: false }
+          : { ...saved.access, canEdit: false, canSave: false, canDelete: false },
       };
       shownPendingChanges.set(previewRsp, preview);
       return previewRsp;
@@ -1769,6 +1796,83 @@ const managers: {
   v2: undefined,
   unified: undefined,
 };
+
+// A step through a plugin's pending changes history, or a write the plugin made, loads the dashboard
+// again and leaves the requester where they were. Set here: the scene's modules can't import this one
+// without closing an import cycle.
+setPendingChangesPageReload(async (uid, editing) => {
+  const manager = getDashboardScenePageStateManager();
+  const open = manager.state.dashboard;
+  if (
+    open &&
+    previewedDashboardUid(open.state) === uid &&
+    (await reloadDashboardInPlace(manager, open, { uid, route: DashboardRoutes.Normal }))
+  ) {
+    return true;
+  }
+  await manager.reloadDashboardFresh({ uid, route: DashboardRoutes.Normal });
+  const reloaded = manager.state.dashboard;
+  if (editing && reloaded && !reloaded.state.isEditing) {
+    reloaded.onEnterEditMode();
+  }
+  return false;
+});
+
+/** Each scene's in-place reloads, one at a time, and the latest one asked for. */
+const inPlaceReloads = new WeakMap<DashboardScene, { latest: object; queue: Promise<unknown> }>();
+
+/**
+ * Loads the dashboard `options` names again into `open`, the scene `manager` shows, without its
+ * loading state or a new scene, so the view keeps its scroll position, URL state, tab and edit mode.
+ * Reloads of one scene run one after another, and one a newer reload overtook is skipped: an older
+ * response can't replace a newer dashboard. True then, as the newer reload shows it. False when it
+ * can't, for the caller to fall back to a fresh load: a v1 dashboard, or the view moved to another
+ * scene meanwhile.
+ */
+export function reloadDashboardInPlace(
+  manager: UnifiedDashboardScenePageStateManager,
+  open: DashboardScene,
+  options: LoadDashboardOptions
+): Promise<boolean> {
+  const reloads = inPlaceReloads.get(open) ?? { latest: {}, queue: Promise.resolve() };
+  const reload = {};
+  reloads.latest = reload;
+  const run = reloads.queue.then(() => reloads.latest !== reload || swapInFromServer(manager, open, options));
+  reloads.queue = run.catch(() => undefined);
+  inPlaceReloads.set(open, reloads);
+  return run;
+}
+
+async function swapInFromServer(
+  manager: UnifiedDashboardScenePageStateManager,
+  open: DashboardScene,
+  options: LoadDashboardOptions
+): Promise<boolean> {
+  manager.clearDashboardCache();
+  manager.removeSceneCache(options.uid);
+  const rsp = await manager.fetchDashboard(options);
+  if (!rsp || !isDashboardV2Resource(rsp) || manager.state.dashboard !== open) {
+    return false;
+  }
+  // As a load does: predefined variables (global, folder) join the dashboard's before it is built.
+  const enriched = await manager.enrichLoadOptions(rsp, options);
+  if (manager.state.dashboard !== open) {
+    return false;
+  }
+  const reloaded = manager.transformResponseToScene(rsp, enriched);
+  if (!reloaded) {
+    return false;
+  }
+  swapInReloadedDashboard(open, reloaded);
+  // As a load does: changes from here are measured against what was just loaded, not the spec before it.
+  open.setInitialSaveModel(rsp.spec, rsp.metadata, rsp.apiVersion);
+  open.rebaselineEditSession();
+  resumeRecordingPendingChanges(open);
+  // The page draws what goes with the scene (the pending changes banner) when its state changes, as a
+  // load changes it. The scene is the same, so tell the page: it reads the pending changes loaded now.
+  manager.setState({ dashboard: open });
+  return true;
+}
 
 export function getDashboardScenePageStateManager(): UnifiedDashboardScenePageStateManager;
 export function getDashboardScenePageStateManager(v: 'v1'): DashboardScenePageStateManager;
