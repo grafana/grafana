@@ -2823,124 +2823,6 @@ importers:
 
   packages/mapbox-jsonlint-lines-primitives: {}
 
-  public/app/plugins/datasource/azuremonitor:
-    dependencies:
-      '@emotion/css':
-        specifier: 11.13.5
-        version: 11.13.5(supports-color@7.2.0)
-      '@grafana/azure-sdk':
-        specifier: 0.1.0
-        version: 0.1.0(react@19.2.8)
-      '@grafana/data':
-        specifier: 13.4.0-pre
-        version: link:../../../../../packages/grafana-data
-      '@grafana/i18n':
-        specifier: 13.4.0-pre
-        version: link:../../../../../packages/grafana-i18n
-      '@grafana/plugin-ui':
-        specifier: ^0.17.0
-        version: 0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
-      '@grafana/runtime':
-        specifier: 13.4.0-pre
-        version: link:../../../../../packages/grafana-runtime
-      '@grafana/schema':
-        specifier: 13.4.0-pre
-        version: link:../../../../../packages/grafana-schema
-      '@grafana/ui':
-        specifier: 13.4.0-pre
-        version: link:../../../../../packages/grafana-ui
-      '@kusto/monaco-kusto':
-        specifier: ^10.0.0
-        version: 10.0.22(monaco-editor@0.34.1)
-      '@openfeature/react-sdk':
-        specifier: ^1.4.1
-        version: 1.4.1(@openfeature/web-sdk@1.10.0(@openfeature/core@1.12.0))(react@19.2.8)
-      '@openfeature/web-sdk':
-        specifier: ^1.10.0
-        version: 1.10.0(@openfeature/core@1.12.0)
-      fast-deep-equal:
-        specifier: ^3.1.3
-        version: 3.1.3
-      immer:
-        specifier: 10.2.0
-        version: 10.2.0
-      lodash:
-        specifier: ^4.17.23
-        version: 4.18.1
-      monaco-editor:
-        specifier: 0.34.1
-        version: 0.34.1
-      prismjs:
-        specifier: 1.30.0
-        version: 1.30.0
-      react:
-        specifier: 19.2.8
-        version: 19.2.8
-      react-dom:
-        specifier: 19.2.8
-        version: 19.2.8(react@19.2.8)
-      react-use:
-        specifier: 17.6.1
-        version: 17.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      rxjs:
-        specifier: 7.8.2
-        version: 7.8.2
-    devDependencies:
-      '@grafana/e2e-selectors':
-        specifier: 13.4.0-pre
-        version: link:../../../../../packages/grafana-e2e-selectors
-      '@grafana/plugin-configs':
-        specifier: 13.4.0-pre
-        version: link:../../../../../packages/grafana-plugin-configs
-      '@grafana/test-utils':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-test-utils
-      '@testing-library/dom':
-        specifier: 10.4.1
-        version: 10.4.1
-      '@testing-library/jest-dom':
-        specifier: 6.6.4
-        version: 6.6.4
-      '@testing-library/react':
-        specifier: 16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@testing-library/user-event':
-        specifier: 14.6.1
-        version: 14.6.1(@testing-library/dom@10.4.1)
-      '@types/jest':
-        specifier: 29.5.14
-        version: 29.5.14
-      '@types/lodash':
-        specifier: ^4.17.25
-        version: 4.17.25
-      '@types/node':
-        specifier: 26.6.5
-        version: 26.6.5
-      '@types/prismjs':
-        specifier: ^1.26.6
-        version: 1.26.6
-      '@types/react':
-        specifier: 19.2.18
-        version: 19.2.18
-      '@types/react-dom':
-        specifier: 19.2.4
-        version: 19.2.4(@types/react@19.2.18)
-      i18next-cli:
-        specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
-      jest:
-        specifier: 29.7.0
-        version: 29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2))
-      react-select-event:
-        specifier: 5.5.1
-        version: 5.5.1
-      typescript:
-        specifier: 6.0.2
-        version: 6.0.2
-      webpack:
-        specifier: ^5.105.0
-        version: 5.105.0(@swc/core@1.13.3(@swc/helpers@0.5.17))(clean-css@5.3.3)(esbuild@0.28.1)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.31)(uglify-js@3.17.4)(webpack-cli@6.0.1)
-
   public/app/plugins/datasource/grafana-testdata-datasource:
     dependencies:
       '@emotion/css':
@@ -4013,9 +3895,6 @@ packages:
     engines: {node: '>=24'}
     peerDependencies:
       '@grafana/plugin-ui': '>=0.14.0'
-
-  '@grafana/azure-sdk@0.1.0':
-    resolution: {integrity: sha512-+pXmnF1cdKSs5qzhM5yJk7QPktyhHrAWK6gN/U3MVYmpHCXVGEK3Cph6fD78hHwKbSjgw2I+vxPEyAIO3ybzDw==}
 
   '@grafana/eslint-config@10.0.0':
     resolution: {integrity: sha512-KdPghPTEkpT1bfph/HLRe0rWJuAEeQMy3wF8xXOHkwhqf/o9IS4d0GT3K/tW0TxXHD0AKZB/OQBo7mZwvvaq7Q==}
@@ -13085,11 +12964,6 @@ packages:
     resolution: {integrity: sha512-aEZ9qP+/M+58x2qgfSFEWH1BxLyHe5+qkLNJOZQb5iGS017jpbRnoKhNRrXPeA6RfBrZO5wZrT9DMC1UqE1f1w==}
     engines: {node: ^20.9.0 || >=22}
 
-  react-dom@18.3.1:
-    resolution: {integrity: sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==}
-    peerDependencies:
-      react: ^18.3.1
-
   react-dom@19.2.8:
     resolution: {integrity: sha512-rVprimfGBG3DR+Tq0IQG2DT5PxKth1WIGDmj5yPmlzr4YBe7uyE+Du4oVqTDXZSHGGGXRtTJEGSSePyQCMBglQ==}
     peerDependencies:
@@ -13733,9 +13607,6 @@ packages:
   saxes@6.0.0:
     resolution: {integrity: sha512-xAg7SOnEhrm5zI3puOOKyy1OMcMlIJZYNJY7xLBwSze0UjhPLnWfj2GF2EpT0jmzaJKIWKHLsaSSajf35bcYnA==}
     engines: {node: '>=v12.22.7'}
-
-  scheduler@0.23.2:
-    resolution: {integrity: sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==}
 
   scheduler@0.27.0:
     resolution: {integrity: sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==}
@@ -16382,12 +16253,6 @@ snapshots:
   '@grafana/aws-sdk@0.12.3(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))':
     dependencies:
       '@grafana/plugin-ui': 0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
-
-  '@grafana/azure-sdk@0.1.0(react@19.2.8)':
-    dependencies:
-      react-dom: 18.3.1(react@19.2.8)
-    transitivePeerDependencies:
-      - react
 
   '@grafana/eslint-config@10.0.0(@stylistic/eslint-plugin@5.10.0(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0)))(@typescript-eslint/eslint-plugin@8.56.0(@typescript-eslint/parser@8.56.0(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(@typescript-eslint/parser@8.56.0(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(@typescript/typescript6@6.0.2)(eslint-config-prettier@10.1.8(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0)))(eslint-plugin-jsdoc@52.0.2(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint-plugin-react-hooks@7.1.1(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint-plugin-react@7.37.5(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0)))(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))':
     dependencies:
@@ -27433,12 +27298,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  react-dom@18.3.1(react@19.2.8):
-    dependencies:
-      loose-envify: 1.4.0
-      react: 19.2.8
-      scheduler: 0.23.2
-
   react-dom@19.2.8(react@19.2.8):
     dependencies:
       react: 19.2.8
@@ -28188,10 +28047,6 @@ snapshots:
   saxes@6.0.0:
     dependencies:
       xmlchars: 2.2.0
-
-  scheduler@0.23.2:
-    dependencies:
-      loose-envify: 1.4.0
 
   scheduler@0.27.0: {}
 
