@@ -34,9 +34,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	alertingrules "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	alertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -73,7 +73,7 @@ func ProvideService(
 	sqlStore db.DB,
 	pluginStore pluginstore.Store,
 	alertingStore *alertstore.DBstore,
-	ruleStore rulestore.Store,
+	ruleStore alertingrules.RuleService,
 	provenanceStore *provenance.ProvenanceStore,
 	encryptionService encryption.Internal,
 	notificatonService *notifications.NotificationService,
@@ -319,7 +319,7 @@ type ProvisioningServiceImpl struct {
 	ruleMutationValidator        provisioning.RuleMutationValidator
 	pluginStore                  pluginstore.Store
 	alertingStore                *alertstore.DBstore
-	ruleStore                    rulestore.Store
+	ruleStore                    alertingrules.RuleService
 	provenanceStore              *provenance.ProvenanceStore
 	EncryptionService            encryption.Internal
 	NotificationService          *notifications.NotificationService

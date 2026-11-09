@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
-	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -30,7 +30,7 @@ const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
 func ProvideService(cfg *setting.Cfg, db db.DB, dashSvc dashboards.DashboardService, folderSvc folder.Service,
-	orgSvc org.Service, unifiedStorage resource.ResourceClient, features featuremgmt.FeatureToggles, ruleStore rules.Store) stats.Service {
+	orgSvc org.Service, unifiedStorage resource.ResourceClient, features featuremgmt.FeatureToggles, ruleStore rules.RuleService) stats.Service {
 	namespacer := request.GetNamespaceMapper(cfg)
 	return &sqlStatsService{
 		cfg:            cfg,
@@ -54,7 +54,7 @@ type sqlStatsService struct {
 	orgSvc         org.Service
 	namespacer     request.NamespaceMapper
 	unifiedStorage resource.ResourceClient
-	ruleStore      rules.Store
+	ruleStore      rules.RuleService
 }
 
 func (ss *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {

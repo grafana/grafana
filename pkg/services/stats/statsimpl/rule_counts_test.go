@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -145,7 +146,7 @@ func newRuleCountStatsService(sqlStore db.DB, ruleStore rules.Store) *sqlStatsSe
 		cfg:       cfg,
 		db:        sqlStore,
 		orgSvc:    &orgtest.FakeOrgService{},
-		ruleStore: ruleStore,
+		ruleStore: ngrulesvc.NewService(ruleStore),
 	}
 }
 

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/folderlabelsyncer"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
@@ -102,7 +103,7 @@ func ProvideService(
 	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
 	alertingStore *store.DBstore,
-	ruleStore rulesstore.Store,
+	ruleStore rules.RuleService,
 	sqlRuleStore *rulesstore.RuleStore,
 	provenanceStore *provenance.ProvenanceStore,
 	httpClientProvider httpclient.Provider,
@@ -208,10 +209,10 @@ type AlertNG struct {
 	FolderResourcePermissions accesscontrol.FolderPermissionsService
 	annotationsRepo           annotations.Repository
 	store                     *store.DBstore
-	ruleStore                 rulesstore.Store
+	ruleStore                 rules.RuleService
 	// sqlRuleStore bypasses the rules service wrapper. The legacy rule service backs the
 	// app-platform legacy storage, so routing it through the wrapper (which may delegate to
-	// that storage) would recurse.
+	// that storage) would recurse. Legacy-only fullpath maintenance uses it too.
 	sqlRuleStore    *rulesstore.RuleStore
 	provenanceStore *provenance.ProvenanceStore
 	userService     user.Service
@@ -726,7 +727,7 @@ func (ng *AlertNG) BackfillFolderFullpaths(ctx context.Context) error {
 
 		// A routed legacy database provider needs the org identity during startup too.
 		orgCtx, _ := identity.WithServiceIdentity(ctx, orgID)
-		folderUIDs, err := ng.ruleStore.GetFolderUIDsWithMissingFullpath(orgCtx, orgID)
+		folderUIDs, err := ng.sqlRuleStore.GetFolderUIDsWithMissingFullpath(orgCtx, orgID)
 		if err != nil {
 			ng.Log.Error("Failed to fetch folder UIDs for backfill", "org_id", orgID, "error", err)
 			continue
@@ -744,7 +745,7 @@ func (ng *AlertNG) BackfillFolderFullpaths(ctx context.Context) error {
 		ng.Log.Info("Backfilling folder fullpaths", "org_id", orgID, "folder_count", len(folderUIDs))
 
 		// Use the existing sync method to populate fullpaths
-		if err := ng.ruleStore.UpdateFolderFullpathsForFolders(ctx, orgID, folderUIDs); err != nil {
+		if err := ng.sqlRuleStore.UpdateFolderFullpathsForFolders(ctx, orgID, folderUIDs); err != nil {
 			ng.Log.Error("Failed to backfill folder fullpaths", "org_id", orgID, "error", err)
 			// Continue with next org instead of failing completely
 		}

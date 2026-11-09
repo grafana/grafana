@@ -2283,7 +2283,7 @@ type testEnvironment struct {
 	secrets          secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	log              log.Logger
 	store            store.DBstore
-	ruleStore        rulestore.Store
+	ruleStore        rulesvc.RuleService
 	folderService    folder.Service
 	dashboardService dashboards.DashboardService
 	xact             provisioning.TransactionManager

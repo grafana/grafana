@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules"
 )
 
 // alertRuleStore is the subset of the rule store used by the consumer. GetAllFoldersWithRules and
@@ -22,7 +22,7 @@ type AlertRuleFolderConsumer struct {
 	store alertRuleStore
 }
 
-func ProvideAlertRuleFolderConsumer(store rulestore.Store) *AlertRuleFolderConsumer {
+func ProvideAlertRuleFolderConsumer(store rules.RuleService) *AlertRuleFolderConsumer {
 	return &AlertRuleFolderConsumer{store: store}
 }
 
