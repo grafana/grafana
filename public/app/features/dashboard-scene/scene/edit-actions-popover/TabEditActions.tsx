@@ -85,7 +85,6 @@ export function TabEditActionsWrapper({
     <EditActionsPopover
       content={<TabEditActions tab={tab} />}
       disabled={!sidebarExplicitOpen || disabled || !isPopoverSupported}
-      placement="top-end"
       portalRoot={getPortalRoot}
       zIndex={theme.zIndex.dropdown}
       shiftPadding={getSidebarShiftPadding}
