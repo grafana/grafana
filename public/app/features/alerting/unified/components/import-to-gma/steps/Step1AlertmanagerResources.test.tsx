@@ -25,7 +25,6 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { buildDryRunArgs } from '../ImportToGMA';
 import { type ImportFormValues } from '../types';
 
 import {
@@ -34,6 +33,7 @@ import {
   usePredictedAutoSyncIdentifier,
   useStep1Validation,
 } from './Step1AlertmanagerResources';
+import { buildDryRunArgs } from './utils';
 
 const server = setupMswServer();
 
