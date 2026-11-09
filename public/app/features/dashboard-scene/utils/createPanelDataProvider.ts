@@ -5,13 +5,14 @@ import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 
+import { findPanelPluginMeta } from './panelPluginMeta';
 import { getEmptyQueryRunnerState } from './queryRunnerState';
 
 export function createPanelDataProvider(
   panel: PanelModel,
   panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
 ): SceneDataProvider | undefined {
-  const pluginMeta = panelMetas[panel.type];
+  const pluginMeta = findPanelPluginMeta(panelMetas, panel.type);
 
   // Skip setting query runner for panels without queries
   if (!panel.targets?.length && !pluginMeta?.skipDefaultQuery) {

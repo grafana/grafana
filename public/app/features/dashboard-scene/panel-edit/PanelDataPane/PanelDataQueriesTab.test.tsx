@@ -562,7 +562,7 @@ describe('PanelDataQueriesTab', () => {
       it('keeps opted-in panels empty when the datasource changes', async () => {
         const { queriesTab, panel } = await setupScene('panel-1');
         jest.spyOn(panel, 'getPlugin').mockReturnValue(getPanelPlugin({ skipDefaultQuery: true }));
-        queriesTab.queryRunner.setState({ queries: [] });
+        queriesTab.queryRunner.setState({ queries: [], _hasFetchedData: false });
         const settings = queriesTab.state.dsSettings;
         if (!settings) {
           throw new Error('Expected datasource settings');
@@ -577,6 +577,28 @@ describe('PanelDataQueriesTab', () => {
           uid: instance2SettingsMock.uid,
           type: instance2SettingsMock.type,
         });
+        expect(queriesTab.queryRunner.isDataReadyToDisplay()).toBe(true);
+      });
+
+      it('waits for data when a datasource change seeds the first query', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+        queriesTab.queryRunner.setState({ queries: [], _hasFetchedData: true });
+        const settings = queriesTab.state.dsSettings;
+        if (!settings) {
+          throw new Error('Expected datasource settings');
+        }
+
+        await queriesTab.onChangeDataSource(
+          {
+            ...settings,
+            uid: instance2SettingsMock.uid,
+            type: instance2SettingsMock.type,
+          },
+          [{ refId: 'A' }]
+        );
+
+        expect(queriesTab.queryRunner.state.queries).toEqual([{ refId: 'A' }]);
+        expect(queriesTab.queryRunner.isDataReadyToDisplay()).toBe(false);
       });
 
       it('should load new data source', async () => {

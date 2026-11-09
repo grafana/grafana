@@ -226,7 +226,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     const queries =
       defaultQueries || (keepEmpty ? [] : await updateQueries(nextDS, newSettings.uid, currentQueries, currentDS));
 
-    queryRunner.setState({ datasource: getDataSourceRef(newSettings), queries });
+    setQueryRunnerQueries(queryRunner, queries, { datasource: getDataSourceRef(newSettings) });
 
     if (defaultQueries) {
       queryRunner.runQueries();

@@ -621,6 +621,18 @@ describe('empty panel query defaults', () => {
     panel.spec.data.spec.queries = [defaultPanelQueryKind()];
     expect(getQueryRunnerFor(buildVizPanel(panel))?.state.queries).toEqual([{ refId: 'A', hide: false }]);
   });
+
+  it('honors skipDefaultQuery through a panel plugin alias', () => {
+    setPanelPluginMetas({ custom: { aliasIDs: ['custom-alias'], skipDefaultQuery: true } as PanelPluginMeta });
+    const panel: PanelKind = { kind: 'Panel', spec: defaultPanelSpec() };
+    panel.spec.vizConfig.group = 'custom-alias';
+    panel.spec.data.spec.queries = [];
+
+    const queryRunner = getQueryRunnerFor(buildVizPanel(panel));
+
+    expect(queryRunner?.state.queries).toEqual([]);
+    expect(queryRunner?.isDataReadyToDisplay()).toBe(true);
+  });
 });
 
 describe('legacy panel query defaults', () => {
@@ -636,5 +648,14 @@ describe('legacy panel query defaults', () => {
     expect(saved.targets).toEqual([]);
     expect(saved.transformations).toEqual([{ id: 'reduce', options: {} }]);
     expect(new PanelModel(saved).targets).toEqual([]);
+  });
+
+  it('creates an empty query runner when the panel uses a plugin alias', () => {
+    setPanelPluginMetas({ custom: { aliasIDs: ['custom-alias'], skipDefaultQuery: true } as PanelPluginMeta });
+    const model = new PanelModel({ type: 'custom-alias', targets: [] });
+    const viz = new VizPanel({ key: 'panel-1', pluginId: 'custom-alias', $data: createPanelDataProvider(model) });
+
+    expect(getQueryRunnerFor(viz)?.state.queries).toEqual([]);
+    expect(getQueryRunnerFor(viz)?.isDataReadyToDisplay()).toBe(true);
   });
 });

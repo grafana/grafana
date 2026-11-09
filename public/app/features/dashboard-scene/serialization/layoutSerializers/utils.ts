@@ -43,6 +43,7 @@ import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { pluginTransformationsEnabled } from '../../scene/systemTransformations';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { findPanelPluginMeta } from '../../utils/panelPluginMeta';
 import { getEmptyQueryRunnerState } from '../../utils/queryRunnerState';
 import { isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
@@ -238,7 +239,7 @@ function createPanelDataProvider(
   panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
 ): SceneDataProvider | undefined {
   const panel = panelKind.spec;
-  const pluginMeta = panelMetas[panel.vizConfig?.group];
+  const pluginMeta = findPanelPluginMeta(panelMetas, panel.vizConfig?.group);
   const skipDefaultQuery = pluginMeta?.skipDefaultQuery ?? false;
 
   const targets =

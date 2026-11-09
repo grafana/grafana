@@ -59,4 +59,20 @@ describe('query runner defaults', () => {
     expect(runner.state.queries).toEqual([{ refId: 'A', expr: 'up' }]);
     expect(runner.isDataReadyToDisplay()).toBe(true);
   });
+
+  it('cancels the active query and marks the runner ready when the last query is removed', () => {
+    const runner = new SceneQueryRunner({
+      queries: [{ refId: 'A' }],
+      _hasFetchedData: false,
+      data: { series: [], state: LoadingState.Loading, timeRange: getDefaultTimeRange() },
+    });
+    const cancelQuery = jest.spyOn(runner, 'cancelQuery');
+
+    setQueryRunnerQueries(runner, []);
+
+    expect(cancelQuery).toHaveBeenCalledTimes(1);
+    expect(runner.state.queries).toEqual([]);
+    expect(runner.state.data).toBeUndefined();
+    expect(runner.isDataReadyToDisplay()).toBe(true);
+  });
 });

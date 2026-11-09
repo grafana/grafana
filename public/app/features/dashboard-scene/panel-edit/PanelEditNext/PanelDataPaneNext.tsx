@@ -417,7 +417,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
     const refIdSet = new Set(refIds);
     const queries = queryRunner.state.queries.filter(({ refId }) => !refIdSet.has(refId));
-    queryRunner.setState({ queries });
+    setQueryRunnerQueries(queryRunner, queries);
     this.resolveUniformDatasource();
     this.runQueries();
   };

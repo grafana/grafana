@@ -50,6 +50,7 @@ const mockQueryRunner = {
     return mockQueryRunnerState;
   },
   setState: jest.fn(),
+  cancelQuery: jest.fn(),
   runQueries: jest.fn(),
   // onActivate subscribes to datasource changes; return an unsubscribable so activation works.
   subscribeToState: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
@@ -1529,6 +1530,20 @@ describe('PanelDataPaneNext', () => {
           queries: [{ refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' } }],
         })
       );
+      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+
+    it('bulkDeleteQueries marks the runner ready when all queries are removed', () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
+
+      dataPane.bulkDeleteQueries(['A']);
+
+      expect(mockQueryRunner.cancelQuery).toHaveBeenCalledTimes(1);
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: [],
+        _hasFetchedData: true,
+        data: undefined,
+      });
       expect(mockQueryRunner.runQueries).toHaveBeenCalled();
     });
 
