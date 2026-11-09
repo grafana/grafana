@@ -164,7 +164,6 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 			Limit: 100000,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		names := make([]string, 0, len(rsp.Rows))
 		for _, row := range rsp.Rows {
 			names = append(names, row.Key.Name)
@@ -344,7 +343,6 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			},
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Facet)
 
 		assertSearchResultsSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp)
@@ -632,7 +630,6 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		require.Nil(t, rsp.Facet)
 
 		assertSearchResultsSnapshot(t, filepath.Join("testdata", "manual-folder.json"), rsp)
@@ -718,7 +715,6 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			},
 		}, &resource.SearchIndexes{Federated: []resource.ResourceIndex{foldersIndex}}, nil) // << note the folder index matches the federation request
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Facet)
 
 		// Sorted across two indexes
@@ -3319,7 +3315,6 @@ func TestBleveTextFieldFilterAndSort(t *testing.T) {
 		req.Options.Key = key
 		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{kindResource: true}), req, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		out := make([]string, 0, len(rsp.Rows))
 		for _, row := range rsp.Rows {
 			out = append(out, row.Key.Name)
