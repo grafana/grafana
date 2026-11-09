@@ -1,16 +1,21 @@
 import { isEqual } from 'lodash';
 
-import { getDefaultTimeRange, LoadingState, type TimeRange } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, type PanelData } from '@grafana/data';
 import { type QueryRunnerState, type SceneDataQuery, type SceneQueryRunner } from '@grafana/scenes';
 import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 
 export function getEmptyQueryRunnerState(
-  timeRange: TimeRange = getDefaultTimeRange()
+  previousData?: PanelData
 ): Pick<QueryRunnerState, 'queries' | '_hasFetchedData' | 'data'> {
   return {
     queries: [],
     _hasFetchedData: true,
-    data: { series: [], state: LoadingState.Done, timeRange },
+    data: {
+      series: [],
+      state: LoadingState.Done,
+      timeRange: previousData?.timeRange ?? getDefaultTimeRange(),
+      request: previousData?.request,
+    },
   };
 }
 
@@ -21,12 +26,25 @@ export function setQueryRunnerQueries(
 ) {
   if (queries.length === 0) {
     queryRunner.cancelQuery();
-    queryRunner.setState({ ...stateUpdate, ...getEmptyQueryRunnerState(queryRunner.state.data?.timeRange) });
+    queryRunner.setState({ ...stateUpdate, ...getEmptyQueryRunnerState(queryRunner.state.data) });
     return;
   }
 
   const isFirstQuery = queryRunner.state.queries.length === 0 && queries.length > 0;
-  queryRunner.setState({ ...stateUpdate, queries, ...(isFirstQuery && { _hasFetchedData: false }) });
+  const previousData = queryRunner.state.data;
+  queryRunner.setState({
+    ...stateUpdate,
+    queries,
+    ...(isFirstQuery && {
+      _hasFetchedData: false,
+      data: {
+        series: [],
+        state: LoadingState.Loading,
+        timeRange: previousData?.timeRange ?? getDefaultTimeRange(),
+        request: previousData?.request,
+      },
+    }),
+  });
 }
 
 export function isDefaultQuery(query: SceneDataQuery): boolean {

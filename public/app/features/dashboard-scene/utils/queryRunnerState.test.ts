@@ -8,11 +8,20 @@ describe('query runner defaults', () => {
   it('marks an intentionally empty runner ready to display', () => {
     const timeRange = getDefaultTimeRange();
 
-    expect(getEmptyQueryRunnerState(timeRange)).toEqual({
+    expect(getEmptyQueryRunnerState({ series: [], state: LoadingState.Loading, timeRange })).toEqual({
       queries: [],
       _hasFetchedData: true,
-      data: { series: [], state: LoadingState.Done, timeRange },
+      data: { series: [], state: LoadingState.Done, timeRange, request: undefined },
     });
+  });
+
+  it('preserves request metadata when clearing the runner', () => {
+    const timeRange = getDefaultTimeRange();
+    const request = { app: 'dashboard', interval: '2m', maxDataPoints: 500, range: timeRange, targets: [] };
+
+    expect(
+      getEmptyQueryRunnerState({ series: [], state: LoadingState.Loading, timeRange, request }).data?.request
+    ).toBe(request);
   });
 
   it('clears only the untouched starter query', () => {
@@ -54,11 +63,21 @@ describe('query runner defaults', () => {
   });
 
   it('waits for data again when the first explicit query is added', () => {
-    const runner = new SceneQueryRunner(getEmptyQueryRunnerState());
+    const timeRange = getDefaultTimeRange();
+    const request = { app: 'dashboard', interval: '2m', maxDataPoints: 500, range: timeRange, targets: [] };
+    const runner = new SceneQueryRunner(
+      getEmptyQueryRunnerState({ series: [], state: LoadingState.Done, timeRange, request })
+    );
 
     setQueryRunnerQueries(runner, [{ refId: 'A', expr: 'up' }]);
 
     expect(runner.state.queries).toEqual([{ refId: 'A', expr: 'up' }]);
+    expect(runner.state.data).toEqual({
+      series: [],
+      state: LoadingState.Loading,
+      timeRange,
+      request,
+    });
     expect(runner.isDataReadyToDisplay()).toBe(false);
   });
 
@@ -88,6 +107,7 @@ describe('query runner defaults', () => {
       series: [],
       state: LoadingState.Done,
       timeRange,
+      request: undefined,
     });
     expect(runner.isDataReadyToDisplay()).toBe(true);
   });
