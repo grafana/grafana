@@ -1,3 +1,4 @@
+import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { clearDefaultQuery } from './clearDefaultQuery';
@@ -25,6 +26,20 @@ describe('query runner defaults', () => {
     clearDefaultQuery(panel);
 
     expect(runner.state.queries).toEqual([{ refId: 'A', hide: true }]);
+  });
+
+  it('cancels the starter query and clears its data', () => {
+    const runner = new SceneQueryRunner({
+      queries: [{ refId: 'A' }],
+      data: { series: [], state: LoadingState.Done, timeRange: getDefaultTimeRange() },
+    });
+    const cancelQuery = jest.spyOn(runner, 'cancelQuery');
+    const panel = new VizPanel({ pluginId: 'custom', $data: runner });
+
+    clearDefaultQuery(panel);
+
+    expect(cancelQuery).toHaveBeenCalledTimes(1);
+    expect(runner.state.data).toBeUndefined();
   });
 
   it('waits for data again when the first explicit query is added', () => {
