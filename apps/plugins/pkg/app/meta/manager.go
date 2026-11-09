@@ -163,9 +163,13 @@ func callerIdentity(ctx context.Context) string {
 }
 
 // originCallerIdentity returns the innermost service identity of the request, i.e. the first
-// service in the token chain. It equals callerIdentity when the caller is not acting on behalf of another service.
+// service in the token chain. Only access-token auth info sets the innermost key, so it falls back
+// to callerIdentity for any other identity type: a caller that is not delegating is its own origin.
 func originCallerIdentity(ctx context.Context) string {
-	return extraIdentity(ctx, authn.InnermostServiceIdentityKey)
+	if id := extraIdentity(ctx, authn.InnermostServiceIdentityKey); id != "unknown" {
+		return id
+	}
+	return callerIdentity(ctx)
 }
 
 func extraIdentity(ctx context.Context, key string) string {
