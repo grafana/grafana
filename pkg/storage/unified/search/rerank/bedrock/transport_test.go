@@ -58,21 +58,23 @@ func TestRealSDKHedgeCancelsSlowRequest(t *testing.T) {
 	}
 }
 
-func TestRealSDKRetryableErrorStopsAfterTwoAttempts(t *testing.T) {
-	var calls atomic.Int32
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		calls.Add(1)
-		w.WriteHeader(http.StatusServiceUnavailable)
-		_, _ = w.Write([]byte(`{"message":"retryable"}`))
-	}))
-	defer server.Close()
-	cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: server.Client(), BaseEndpoint: aws.String(server.URL)}
-	client := NewClient(bedrockruntime.NewFromConfig(cfg))
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	_, err := NewRerankerWithHedgeDelay(client, "m", 0).Score(ctx, "q", []string{"a"})
-	require.Error(t, err)
-	require.EqualValues(t, 2, calls.Load())
+func TestRealSDKRetryableErrorUsesDefaultAttemptLimit(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var calls atomic.Int32
+		transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			calls.Add(1)
+			return &http.Response{StatusCode: http.StatusServiceUnavailable, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"message":"retryable"}`)), Request: r}, nil
+		})
+		cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: &http.Client{Transport: transport}, BaseEndpoint: aws.String("https://bedrock.test"), Retryer: func() aws.Retryer {
+			return retry.NewStandard(func(o *retry.StandardOptions) { o.MaxBackoff = time.Millisecond })
+		}}
+		client := NewClient(bedrockruntime.NewFromConfig(cfg))
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		_, err := NewRerankerWithHedgeDelay(client, "m", 0).Score(ctx, "q", []string{"a"})
+		require.Error(t, err)
+		require.EqualValues(t, 3, calls.Load())
+	})
 }
 
 func TestRealSDKTransientFailureRetriesOnce(t *testing.T) {
@@ -96,7 +98,7 @@ func TestRealSDKTransientFailureRetriesOnce(t *testing.T) {
 	require.EqualValues(t, 2, calls.Load())
 }
 
-func TestRealSDKThrottlingUsesNativeRetryWithTwoAttemptCap(t *testing.T) {
+func TestRealSDKThrottlingUsesNativeRetryLimit(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
 		status    int
@@ -104,7 +106,7 @@ func TestRealSDKThrottlingUsesNativeRetryWithTwoAttemptCap(t *testing.T) {
 		isModeled bool
 		attempts  int
 	}{
-		{name: "modeled throttling exception", status: http.StatusBadRequest, errorType: "ThrottlingException", isModeled: true, attempts: 2},
+		{name: "modeled throttling exception", status: http.StatusBadRequest, errorType: "ThrottlingException", isModeled: true, attempts: 3},
 		{name: "unmodeled HTTP 429", status: http.StatusTooManyRequests, attempts: 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -272,7 +274,7 @@ func TestRealSDKEarlyThrottleSuppressesHedgeDuringNativeBackoff(t *testing.T) {
 	})
 }
 
-func TestRealSDKAlreadyStartedHedgeMayRetryWithinFourAttemptBudget(t *testing.T) {
+func TestRealSDKAlreadyStartedHedgeUsesConfiguredRetryLimit(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		var calls atomic.Int32
 		secondStarted := make(chan struct{})
@@ -296,9 +298,9 @@ func TestRealSDKAlreadyStartedHedgeMayRetryWithinFourAttemptBudget(t *testing.T)
 		defer cancel()
 		_, err := NewRerankerWithHedgeDelay(NewClient(bedrockruntime.NewFromConfig(cfg)), "m", 20*time.Millisecond).Score(ctx, "q", []string{"a"})
 		require.Error(t, err)
-		require.EqualValues(t, 4, calls.Load())
-		require.EqualValues(t, 2, retryer.quota.Load())
-		require.EqualValues(t, 2, retryer.backoff.Load())
+		require.EqualValues(t, 10, calls.Load())
+		require.EqualValues(t, 8, retryer.quota.Load())
+		require.EqualValues(t, 8, retryer.backoff.Load())
 	})
 }
 
@@ -416,23 +418,23 @@ func TestRealSDKUsesConfiguredRetryQuotaAndBackoffWithHedgingDisabled(t *testing
 	})
 }
 
-func TestRealSDKPreservesConfiguredRetryerV2(t *testing.T) {
-	var calls atomic.Int32
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		calls.Add(1)
-		w.WriteHeader(http.StatusServiceUnavailable)
-		_, _ = w.Write([]byte(`{"message":"temporary"}`))
-	}))
-	defer server.Close()
-	retryer := &observingRetryer{}
-	cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: server.Client(), BaseEndpoint: aws.String(server.URL), Retryer: func() aws.Retryer { return retryer }}
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	_, err := NewReranker(NewClient(bedrockruntime.NewFromConfig(cfg)), "m").Score(ctx, "q", []string{"a"})
-	require.Error(t, err)
-	require.EqualValues(t, 2, calls.Load())
-	require.EqualValues(t, 2, retryer.tokens.Load())
-	require.GreaterOrEqual(t, retryer.classified.Load(), int32(2))
+func TestRealSDKPreservesConfiguredRetryerV2AttemptLimit(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var calls atomic.Int32
+		transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			calls.Add(1)
+			return &http.Response{StatusCode: http.StatusServiceUnavailable, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"message":"temporary"}`)), Request: r}, nil
+		})
+		retryer := &observingRetryer{}
+		cfg := aws.Config{Region: "us-east-1", Credentials: credentials.NewStaticCredentialsProvider("key", "secret", ""), HTTPClient: &http.Client{Transport: transport}, BaseEndpoint: aws.String("https://bedrock.test"), Retryer: func() aws.Retryer { return retryer }}
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		_, err := NewReranker(NewClient(bedrockruntime.NewFromConfig(cfg)), "m").Score(ctx, "q", []string{"a"})
+		require.Error(t, err)
+		require.EqualValues(t, 5, calls.Load())
+		require.EqualValues(t, 5, retryer.tokens.Load())
+		require.GreaterOrEqual(t, retryer.classified.Load(), int32(5))
+	})
 }
 
 type notifyingSpan struct {

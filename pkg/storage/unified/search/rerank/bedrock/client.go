@@ -60,17 +60,10 @@ func (c *invokeClient) Rerank(ctx context.Context, model, query string, document
 	return resp.Results, nil
 }
 
-// hedgeRetryer limits this InvokeModel call while retaining the client's retry policy and shared quota.
+// hedgeRetryer retains the client's retry policy and shared quota while suppressing an unstarted hedge.
 type hedgeRetryer struct {
 	aws.Retryer
 	ctx context.Context
-}
-
-func (r *hedgeRetryer) MaxAttempts() int {
-	if max := r.Retryer.MaxAttempts(); max > 0 && max < 2 {
-		return max
-	}
-	return 2
 }
 
 func (r *hedgeRetryer) IsErrorRetryable(err error) bool {

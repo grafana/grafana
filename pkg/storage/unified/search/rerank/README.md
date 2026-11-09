@@ -25,9 +25,11 @@ An already started duplicate continues, and either call can return the first com
 Grafana cancels the other call without waiting.
 
 The SDK decides which errors to retry and applies its own backoff.
-Each SDK call makes at most two attempts, including its initial attempt.
-With a duplicate, Grafana makes at most two SDK calls and four SDK attempts in total.
-Transparent transport retries are outside this SDK attempt limit.
+Grafana makes at most two SDK calls, including the duplicate.
+Vertex makes at most two SDK attempts per call, or four if the duplicate starts.
+Bedrock uses its configured AWS retry limit: the default is three attempts per call, or six if the duplicate starts.
+A custom Bedrock retryer can set a different limit; a limit of zero has no attempt-count bound but still follows the shared deadline.
+Transparent transport retries are outside the Vertex SDK attempt limit.
 Each successful response must include a valid score for every input.
 
 Both calls share a five-second limit, or an earlier request deadline.
