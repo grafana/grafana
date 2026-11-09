@@ -46,8 +46,9 @@ const folderChildrenAPI = dashboardAPIv0alpha1.injectEndpoints({
         initialPageParam: 0,
         getNextPageParam: (lastPage, _allPages, lastOffset) => {
           const nextOffset = lastOffset + lastPage.hits.length;
-          // A short page means the server ran out of rows; totalHits only saves the trailing empty request.
-          return lastPage.hits.length < PAGE_SIZE || nextOffset >= lastPage.totalHits ? undefined : nextOffset;
+          // Post-rank authorization can fill a page only partially and still have rows to give, so a short page is
+          // not the end. totalHits is exact or an overcount, so reaching it is.
+          return lastPage.hits.length === 0 || nextOffset >= lastPage.totalHits ? undefined : nextOffset;
         },
       },
       query: ({ queryArg, pageParam }) => ({
@@ -87,8 +88,8 @@ export function useFoldersQuery({
 }: UseFoldersQueryProps) {
   const dispatch = useDispatch();
 
-  // One subscription per parent, kept so they can be released on unmount. `permission` is fixed for the hook's
-  // lifetime, so the parent alone identifies a cache entry.
+  // One subscription per parent. The cache entries are keyed by permission too, so a permission change releases
+  // them and the tree reloads under the new one.
   const requestsRef = useRef(new Map<string, FolderChildrenRequest>());
 
   // One selector per requested parent, so the aggregated selector below can read every loaded subtree
@@ -149,15 +150,17 @@ export function useFoldersQuery({
     [state, dispatch, permission]
   );
 
-  // Unsubscribe from all requests when the component is unmounted
+  // Release the loaded tree when the permission changes or the component unmounts
   useEffect(() => {
     const requests = requestsRef.current;
     return () => {
       for (const req of requests.values()) {
         req.unsubscribe();
       }
+      requests.clear();
+      setSelectors([]);
     };
-  }, []);
+  }, [permission]);
 
   // Convert the individual responses into a flat list of folders, with level indicating
   // the depth in the hierarchy.

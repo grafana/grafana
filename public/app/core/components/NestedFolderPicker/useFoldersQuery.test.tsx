@@ -52,9 +52,10 @@ function recordSearchRequests() {
 
 function renderFoldersQuery(props: Partial<UseFoldersQueryProps> = {}) {
   const store = configureStore();
-  const view = renderHook(() => useFoldersQuery({ isBrowsing: true, openFolders: {}, ...props }), {
-    wrapper: getWrapper({ store }),
-  });
+  const view = renderHook(
+    (current: Partial<UseFoldersQueryProps>) => useFoldersQuery({ isBrowsing: true, openFolders: {}, ...current }),
+    { initialProps: props, wrapper: getWrapper({ store }) }
+  );
   return { ...view, store };
 }
 
@@ -162,6 +163,26 @@ describe('useFoldersQuery', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.error).toEqual(new Error('search unavailable'));
+  });
+
+  it('reloads the tree under the new permission when it changes', async () => {
+    const requests = recordSearchRequests();
+    const { result, rerender } = renderFoldersQuery({ permission: 'view' });
+
+    act(() => result.current.requestNextPage(undefined));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(folderUids(result.current.items)).toContain(folderB.item.uid);
+
+    // The loaded tree belongs to the old permission, so it is dropped and the placeholders ask for it again
+    rerender({ permission: 'edit' });
+    await waitFor(() => expect(placeholdersUnder(result.current.items, 'general')).toHaveLength(PAGE_SIZE));
+
+    act(() => result.current.requestNextPage(undefined));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const [, , ...folders] = result.current.items;
+    expect(uids(folders)).toEqual(uids([folderA, folderC, folderD]));
+    expect(requests.map((request) => request.permission)).toEqual(['view', 'edit']);
   });
 
   describe('pagination', () => {
@@ -339,6 +360,41 @@ describe('useFoldersQuery', () => {
       await waitFor(() => expect(result.current.emptyFolders.has('parent')).toBe(true));
       expect(result.current.error).toBeUndefined();
       expect(placeholdersUnder(result.current.items, 'parent')).toHaveLength(0);
+    });
+
+    it('keeps paging after a short page while the server reports more rows', async () => {
+      // Post-rank authorization fills a page only as far as its candidate budget allows and reports the
+      // pre-authorization total, so a short page is not the end.
+      const hits = Array.from({ length: 70 }, (_, index) =>
+        folderHit(`folder-${index}`, `Folder ${String(index).padStart(2, '0')}`, 'general')
+      );
+      server.use(
+        http.get(searchRoute, ({ request }) => {
+          const offset = Number(new URL(request.url).searchParams.get('offset'));
+          return HttpResponse.json({ hits: hits.slice(offset, offset + 30), totalHits: 200 });
+        })
+      );
+      const requests = recordSearchRequests();
+
+      const { result } = renderFoldersQuery({ rootFolderUID: 'general' });
+      const loadNextPage = () => act(() => result.current.requestNextPage('general'));
+      const loadedUids = () => folderUids(result.current.items).slice(1);
+
+      loadNextPage();
+      await waitFor(() => expect(loadedUids()).toHaveLength(30));
+      expect(placeholdersUnder(result.current.items, 'general')).toHaveLength(PAGE_SIZE);
+
+      loadNextPage();
+      await waitFor(() => expect(loadedUids()).toHaveLength(60));
+
+      loadNextPage();
+      await waitFor(() => expect(loadedUids()).toHaveLength(70));
+
+      // The total is an overcount, so only an empty page ends paging
+      loadNextPage();
+      await waitFor(() => expect(placeholdersUnder(result.current.items, 'general')).toHaveLength(0));
+      expect(loadedUids()).toEqual(hits.map((hit) => hit.name));
+      expect(requests.map((request) => request.offset)).toEqual(['0', '30', '60', '70']);
     });
   });
 });
