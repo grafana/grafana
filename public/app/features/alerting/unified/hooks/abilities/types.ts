@@ -173,13 +173,14 @@ export type Ability =
   | { granted: false; cause: 'IN_USE'; blockedBy: Array<'routes' | 'rules'> };
 
 /**
- * Extends {@link Ability} with a `LOADING` variant for hooks that depend on async data
+ * Extends {@link Ability} with loading and lookup-failure states for hooks that depend on async data
  * (folder metadata, plugin settings, alertmanager configuration).
  *
  * Hooks returning `AsyncAbility` **may** be in a loading state — callers should guard with
  * {@link isLoading} before acting on the result.
  *
  * - `LOADING` — async checks are still in flight; re-evaluate once loading is complete
+ * - `LOOKUP_FAILED`: editing access could not be determined, not an explicit permission denial
  *
  * @example
  * // Async hook — must handle loading before acting
@@ -187,7 +188,7 @@ export type Ability =
  * if (isLoading(silenceAbility)) { return <Spinner />; }
  * if (silenceAbility.granted) { ... }
  */
-export type AsyncAbility = Ability | { granted: false; cause: 'LOADING' };
+export type AsyncAbility = Ability | { granted: false; cause: 'LOADING' } | { granted: false; cause: 'LOOKUP_FAILED' };
 
 /** Map of every action in domain T to its {@link Ability}. */
 export type Abilities<T extends Action> = Record<T, Ability>;
@@ -199,6 +200,9 @@ export const Granted: Ability = { granted: true };
 
 /** Async checks are still in flight — re-evaluate once loading is complete. */
 export const Loading: AsyncAbility = { granted: false, cause: 'LOADING' };
+
+/** Editing access could not be determined because a dependency lookup failed. */
+export const LookupFailed: AsyncAbility = { granted: false, cause: 'LOOKUP_FAILED' };
 
 /**
  * The action is not applicable in the current context.

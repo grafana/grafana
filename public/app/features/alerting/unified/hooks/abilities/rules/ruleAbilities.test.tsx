@@ -25,6 +25,7 @@ import {
 } from './ruleAbilities';
 import {
   buildSilenceAbility,
+  computePromRuleUpdateAbility,
   computeRuleDuplicateAbility,
   computeRuleEditAbility,
   skipToken,
@@ -425,6 +426,48 @@ function makePromRule(overrides?: Partial<GrafanaPromRuleDTO>): GrafanaPromRuleD
     ...overrides,
   };
 }
+
+describe('computePromRuleUpdateAbility', () => {
+  const dependencies = { loading: false, lookupFailed: false, canEdit: true, isPluginManaged: false };
+
+  it('keeps loading ahead of failures and rule-management restrictions', () => {
+    expect(
+      computePromRuleUpdateAbility(makePromRule({ provenance: 'file' }), {
+        loading: true,
+        lookupFailed: true,
+        canEdit: false,
+        isPluginManaged: true,
+      })
+    ).toEqual({ granted: false, cause: 'LOADING' });
+  });
+
+  it('does not turn a lookup failure into a permission denial or source restriction', () => {
+    expect(
+      computePromRuleUpdateAbility(makePromRule({ provenance: 'file' }), {
+        loading: false,
+        lookupFailed: true,
+        canEdit: false,
+        isPluginManaged: true,
+      })
+    ).toEqual({ granted: false, cause: 'LOOKUP_FAILED' });
+  });
+
+  it('keeps provisioning ahead of plugin ownership and permission denial', () => {
+    expect(
+      computePromRuleUpdateAbility(makePromRule({ provenance: 'file' }), {
+        ...dependencies,
+        canEdit: false,
+        isPluginManaged: true,
+      })
+    ).toEqual({ granted: false, cause: 'PROVISIONED' });
+  });
+
+  it('keeps plugin ownership ahead of permission denial', () => {
+    expect(
+      computePromRuleUpdateAbility(makePromRule(), { ...dependencies, canEdit: false, isPluginManaged: true })
+    ).toEqual({ granted: false, cause: 'IS_PLUGIN_MANAGED' });
+  });
+});
 
 describe('usePromRuleAdministrationAbility', () => {
   it('returns all NOT_SUPPORTED when skipToken is passed', async () => {

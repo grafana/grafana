@@ -111,6 +111,6 @@ export function isSupported(ability: AsyncAbility): boolean {
   if (ability.granted) {
     return true;
   }
-  // Hide entirely for structural exclusions — all other causes remain visible (disabled)
-  return ability.cause !== 'LOADING' && ability.cause !== 'NOT_SUPPORTED';
+  // Hide for structural exclusions and unresolved access checks.
+  return ability.cause !== 'LOADING' && ability.cause !== 'LOOKUP_FAILED' && ability.cause !== 'NOT_SUPPORTED';
 }
