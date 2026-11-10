@@ -2,7 +2,11 @@ import { screen, waitFor } from '@testing-library/react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { type Props } from 'react-virtualized-auto-sizer';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
-import { seedDataSources } from 'test/helpers/seedDataSources';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { render } from 'test/test-utils';
 
@@ -61,6 +65,16 @@ function setup(props: Partial<DashboardPageProxyProps> & { uid?: string }) {
     />
   );
 }
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('DashboardPageProxy', () => {
   beforeEach(() => {

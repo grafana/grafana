@@ -1,6 +1,10 @@
 import { act, screen, waitFor } from '@testing-library/react';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
-import { seedDataSources } from 'test/helpers/seedDataSources';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { render, userEvent } from 'test/test-utils';
 
@@ -53,6 +57,16 @@ function renderRow({
   render(<scene.Component model={scene} />);
   return { row, scene };
 }
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('RowItemRenderer', () => {
   it('stamps data-dashboard-element-key and data-dashboard-element-type on the row header', () => {

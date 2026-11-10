@@ -1,5 +1,9 @@
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
-import { seedDataSources } from 'test/helpers/seedDataSources';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
@@ -114,6 +118,16 @@ function getAdHocTransformations(dashboard: DashboardScene, key = 'panel-1') {
 }
 
 let deactivate: Array<() => void> = [];
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('promotePanelAdHocChanges', () => {
   afterEach(() => {

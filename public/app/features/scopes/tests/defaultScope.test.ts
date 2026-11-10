@@ -1,4 +1,5 @@
 import { waitFor } from '@testing-library/dom';
+import { type DataSourceFallbackWatcher, watchDataSourceFallbacks } from 'test/helpers/seedDataSources';
 
 import { config, locationService, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
@@ -19,6 +20,16 @@ jest.mock('@grafana/runtime', () => ({
 
 setBackendSrv(backendSrv);
 setupMockServer();
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('Default scope', () => {
   let scopesService: ScopesService;

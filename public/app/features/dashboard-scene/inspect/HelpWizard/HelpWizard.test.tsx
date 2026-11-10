@@ -1,5 +1,10 @@
 import userEvent from '@testing-library/user-event';
-import { seedDataSources } from 'test/helpers/seedDataSources';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
 import { render, screen } from 'test/test-utils';
 
 import {
@@ -42,10 +47,16 @@ const grafanaDsInstanceSettings = {
   type: 'grafana',
 } as DataSourceInstanceSettings;
 
+const panelDsInstanceSettings = makeDataSourceSettings('my-uid', 'My data source', 'prometheus');
+
 beforeEach(() => {
-  seedDataSources([{ settings: grafanaDsInstanceSettings, api: new MockDataSourceApi(grafanaDsInstanceSettings) }], {
-    legacySrv: 'mock',
-  });
+  seedDataSources(
+    [
+      { settings: grafanaDsInstanceSettings, api: new MockDataSourceApi(grafanaDsInstanceSettings) },
+      { settings: panelDsInstanceSettings, api: new MockDataSourceApi(panelDsInstanceSettings) },
+    ],
+    { legacySrv: 'mock' }
+  );
 });
 
 setPluginImportUtils({
@@ -59,6 +70,16 @@ function setup() {
 
   return render(<HelpWizard panel={panel} onClose={() => {}} />);
 }
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('HelpWizard', () => {
   it('should render support bundle info if user has support bundle access', async () => {

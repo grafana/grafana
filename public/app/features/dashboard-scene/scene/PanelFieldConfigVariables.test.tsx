@@ -1,6 +1,10 @@
 import { of } from 'rxjs';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
-import { seedDataSources } from 'test/helpers/seedDataSources';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
@@ -84,6 +88,16 @@ function buildScene(panel: VizPanel, variables: SceneVariableSet) {
 async function tick() {
   await new Promise((r) => setTimeout(r, 1));
 }
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('Variables in panel threshold steps (dashboard scene)', () => {
   it('resolves valueExpr through the real sceneGraph.interpolate path and updates on variable change', async () => {

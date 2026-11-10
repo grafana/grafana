@@ -1,6 +1,10 @@
 import { act, render } from '@testing-library/react';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
-import { seedDataSources } from 'test/helpers/seedDataSources';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
@@ -28,6 +32,16 @@ async function renderDataLayerControls(annotationLayers: DashboardAnnotationsDat
     ...renderResult,
   };
 }
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('<DashboardDataLayerControls />', () => {
   test('renders only visible annotations layers that are not in the controls menu', async () => {

@@ -5,7 +5,11 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
-import { seedDataSources } from 'test/helpers/seedDataSources';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -191,6 +195,16 @@ function setDashboardResponse(resource: unknown) {
     return Promise.resolve(resource);
   });
 }
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('DashboardScenePage', () => {
   beforeEach(() => {

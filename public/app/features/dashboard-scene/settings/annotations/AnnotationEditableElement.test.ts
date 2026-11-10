@@ -1,5 +1,9 @@
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
-import { seedDataSources } from 'test/helpers/seedDataSources';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
@@ -42,6 +46,17 @@ function buildTestScene($data: DashboardDataLayerSet) {
 }
 
 describe('AnnotationEditableElement', () => {
+  let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+  beforeEach(() => {
+    dataSourceFallbacks = watchDataSourceFallbacks();
+  });
+
+  // Declared before the clearAllMocks hook below so it runs first: clearing wipes the calls the watcher reads.
+  afterEach(() => {
+    dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });

@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { of } from 'rxjs';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
-import { seedDataSources } from 'test/helpers/seedDataSources';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
@@ -125,6 +129,16 @@ setRunRequest(runRequestMock);
 beforeEach(() => {
   const settings = makeDataSourceSettings('abcdef', 'abcdef', 'abcdef-type', { isDefault: true });
   seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
+});
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
 });
 
 describe('InspectJsonTab', () => {

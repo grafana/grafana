@@ -1,6 +1,10 @@
 import { map, of } from 'rxjs';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
-import { seedDataSources } from 'test/helpers/seedDataSources';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
 
 import {
   type DataQuery,
@@ -100,6 +104,16 @@ function toFixture(ds: DataSourceApi) {
 
 beforeEach(() => {
   seedDataSources([grafanaDs, dashboardDs, mixedDs].map(toFixture), { legacySrv: 'mock' });
+});
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
 });
 
 describe('DashboardDatasourceBehaviour', () => {
