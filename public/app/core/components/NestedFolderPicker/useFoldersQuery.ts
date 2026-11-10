@@ -14,7 +14,7 @@ import { type ManagerKind } from '../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../features/browse-dashboards/api/constants';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
-import { getRootFolderItem } from './utils';
+import { getRootFolderItem, toReadOnlyTreeItem } from './utils';
 
 export interface UseFoldersQueryProps {
   isBrowsing: boolean;
@@ -22,6 +22,8 @@ export interface UseFoldersQueryProps {
   permission?: PermissionLevel;
   rootFolderUID?: string;
   rootFolderItem?: DashboardsTreeItem;
+  /** Only list folders on the way to one the user can create dashboards in, and mark the ones they cannot as read only */
+  showReadOnly?: boolean;
 }
 
 type GetFolderChildrenQuery = ReturnType<
@@ -46,6 +48,7 @@ export function useFoldersQuery({
   rootFolderUID,
   rootFolderItem,
   permission,
+  showReadOnly,
 }: UseFoldersQueryProps) {
   const dispatch = useDispatch();
 
@@ -110,7 +113,10 @@ export function useFoldersQuery({
         return;
       }
 
-      const args = { folder: finalParentUid, type: 'folder', permission } as const;
+      // Keep a create filter, so a server that ignores `include` still only lists folders the user can pick
+      const args = showReadOnly
+        ? ({ folder: finalParentUid, type: 'folder', permission: 'create', include: 'pathToCreatable' } as const)
+        : ({ folder: finalParentUid, type: 'folder', permission } as const);
 
       // Make a request
       const subscription = dispatch(dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(args));
@@ -122,7 +128,7 @@ export function useFoldersQuery({
       // the subscriptions are saved in a ref so they can be unsubscribed on unmount
       requestsRef.current = requestsRef.current.concat([subscription]);
     },
-    [state, dispatch, permission]
+    [state, dispatch, permission, showReadOnly]
   );
 
   // Unsubscribe from all requests when the component is unmounted
@@ -159,7 +165,7 @@ export function useFoldersQuery({
       const list: DashboardsTreeItem[] = folders.flatMap((item) => {
         const name = item.name;
         const folderIsOpen = openFolders[name];
-        const flatItem: DashboardsTreeItem = {
+        const treeItem: DashboardsTreeItem = {
           isOpen: Boolean(folderIsOpen),
           level: level,
           disabled: item.name === sharedWithMeFolderToken,
@@ -175,6 +181,9 @@ export function useFoldersQuery({
             parentUID: isRootFolderUID(item.folder) ? undefined : item.folder,
           },
         };
+        // Only a folder the server marks as not creatable is read only
+        const readOnly = showReadOnly && 'field' in item && item.field?.canCreate === false;
+        const flatItem = readOnly ? toReadOnlyTreeItem(treeItem) : treeItem;
 
         const childResponse = folderIsOpen && state.responseByParent[name];
         if (childResponse) {
@@ -205,7 +214,7 @@ export function useFoldersQuery({
     rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem, showReadOnly]);
 
   return {
     emptyFolders,

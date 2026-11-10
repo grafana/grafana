@@ -7,6 +7,7 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaFolderPickerFolderEditAccess } from '@grafana/runtime/internal';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -55,6 +56,9 @@ export interface NestedFolderPickerProps {
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
   permission?: 'view' | 'edit';
 
+  /* For dashboard destinations: while browsing, also show the folders on the way to ones the user can create dashboards in, as read only */
+  showReadOnlyFolders?: boolean;
+
   /* Callback for when the user selects a folder */
   onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;
 
@@ -92,12 +96,17 @@ export function NestedFolderPicker({
   rootFolderItem,
   folderFilter,
   permission = 'edit',
+  showReadOnlyFolders = false,
   onChange,
   id,
   disabled = false,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const getSelectedFolderResult = useGetCombinedFolderQuery(value);
+
+  const isFolderEditAccessEnabled = useFlagGrafanaFolderPickerFolderEditAccess();
+  // Only when browsing: a read only search result has no way into the folders below it
+  const showReadOnly = isFolderEditAccessEnabled && showReadOnlyFolders;
 
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
@@ -140,6 +149,7 @@ export function NestedFolderPicker({
     permission,
     rootFolderUID,
     rootFolderItem,
+    showReadOnly,
   });
 
   useEffect(() => {

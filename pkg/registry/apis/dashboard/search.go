@@ -54,6 +54,9 @@ type SearchHandler struct {
 	client   resourcepb.ResourceIndexClient
 	tracer   trace.Tracer
 	features featuremgmt.FeatureToggles
+
+	creatable *CreatableTreeCache
+	folders   foldermodel.Service
 }
 
 func NewSearchHandler(tracer trace.Tracer, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
@@ -187,6 +190,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "permission needed for the resource (view, edit, admin, create). create is only valid with type=folder",
 										Required:    false,
 										Schema:      spec.StringProperty().WithEnum("view", "edit", "admin", "create"),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "include",
+										In:          "query",
+										Description: "extra results to include. pathToCreatable lists only the folders the user can create dashboards in, and the folders that lead to them, and sets field.canCreate on each. Only valid with type=folder",
+										Required:    false,
+										Schema:      spec.StringProperty().WithEnum("pathToCreatable"),
 									},
 								},
 								{
@@ -615,6 +627,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	narrowing, noMatch, err := s.narrowCreatable(ctx, user, queryParams, searchRequest)
+	if err != nil {
+		s.log.Warn("could not narrow folder search to creatable folders", "err", err)
+	}
+	if noMatch {
+		s.write(w, dashboardv0alpha1.SearchResults{Hits: []dashboardv0alpha1.DashboardHit{}})
+		return
+	}
+
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, resource.StatusErrorFromGRPC(err), w)
@@ -629,6 +650,13 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
+	}
+
+	if narrowing != nil {
+		if err := s.addCreateOnly(ctx, narrowing, searchRequest, &parsedResults); err != nil {
+			s.log.Warn("could not add create-only folders to search results", "err", err)
+		}
+		narrowing.flag(parsedResults.Hits)
 	}
 
 	if len(searchRequest.SortBy) == 0 {
