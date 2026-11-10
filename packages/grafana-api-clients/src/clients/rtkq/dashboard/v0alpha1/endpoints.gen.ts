@@ -1253,6 +1253,8 @@ export type ManagedBy = {
   kind: string;
 };
 export type DashboardHit = {
+  /** Whether the user can create dashboards in this folder; unset when not computed */
+  canCreate?: boolean;
   /** Dashboard description */
   description?: string;
   /** Stick untyped extra fields in this object (including the sort value) */

@@ -507,6 +507,13 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 							Format:      "double",
 						},
 					},
+					"canCreate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the user can create dashboards in this folder; unset when not computed",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"resource", "name", "title"},
 			},

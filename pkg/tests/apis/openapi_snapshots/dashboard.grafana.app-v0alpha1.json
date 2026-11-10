@@ -2182,6 +2182,10 @@
           "title"
         ],
         "properties": {
+          "canCreate": {
+            "description": "Whether the user can create dashboards in this folder; unset when not computed",
+            "type": "boolean"
+          },
           "description": {
             "description": "Dashboard description",
             "type": "string"

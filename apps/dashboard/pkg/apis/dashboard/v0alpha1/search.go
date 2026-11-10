@@ -94,6 +94,8 @@ type DashboardHit struct {
 	Field *common.Unstructured `json:"field,omitzero,omitempty"`
 	// When using "real" search, this is the score
 	Score float64 `json:"score,omitempty"`
+	// Whether the user can create dashboards in this folder; unset when not computed
+	CanCreate *bool `json:"canCreate,omitempty"`
 }
 
 func (DashboardHit) OpenAPIModelName() string {
