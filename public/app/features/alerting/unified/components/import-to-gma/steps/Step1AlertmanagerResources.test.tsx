@@ -6,6 +6,7 @@ import React, { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { getWrapper, render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from '@grafana/alerting/internal';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -19,10 +20,6 @@ import {
 import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
-import {
-  type AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-} from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type ImportFormValues, buildDryRunArgs } from '../ImportToGMA';
