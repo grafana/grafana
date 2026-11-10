@@ -175,8 +175,9 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	// A collection is reported as its own group, not expanded: that is the group the index counts
 	// its members under, so it is what the frontend matches stats and list rows against, and it
 	// keeps one entry per configured kind rather than one per installed member.
-	availableResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
-	for _, r := range b.supportedResources {
+	supportedResources := b.supportedResources(ctx)
+	availableResources := make([]provisioning.SupportedResource, 0, len(supportedResources))
+	for _, r := range supportedResources {
 		availableResources = append(availableResources, provisioning.SupportedResource{
 			Group:    provisioningresources.CollectionGroup(r.Group),
 			Kind:     r.Kind,
