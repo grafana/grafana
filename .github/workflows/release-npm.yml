@@ -167,7 +167,7 @@ jobs:
           else
             pnpm exec nx release version "$VERSION"
           fi
-          # packages:pack runs the pnpm beforePacking hook (.pnpmfile.cjs), which stamps
+          # packages:pack runs the pnpm beforePacking hook (scripts/pnpm-pack-hooks.cjs), which stamps
           # GRAFANA_COMMIT as gitHead into the packed manifest. Older release branches do the
           # same from each package's prepack script. npm doesn't
           # record gitHead for tarball publishes, and the nightly change-detection reads
