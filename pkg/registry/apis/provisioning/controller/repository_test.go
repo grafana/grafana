@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -20,11 +21,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	testingclock "k8s.io/utils/clock/testing"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
@@ -3142,6 +3143,22 @@ func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t
 	}
 }
 
+func TestRepositoryController_shouldGenerateTokenFromConnection_RemovedToken(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		rc := &RepositoryController{
+			tokenMetrics:   registerRepositoryTokenMetrics(prometheus.NewPedanticRegistry()),
+			resyncInterval: 5 * time.Minute,
+		}
+		repo := &provisioning.Repository{
+			Status: provisioning.RepositoryStatus{Token: provisioning.TokenStatus{
+				LastUpdated: time.Now().UnixMilli(),
+				Expiration:  time.Now().Add(time.Hour).UnixMilli(),
+			}},
+		}
+		assert.True(t, rc.shouldGenerateTokenFromConnection(repo), "a removed token must refresh even if its previous expiration is far away")
+	})
+}
+
 // TestRepositoryController_process_NotFoundIsNoOp verifies that a key whose
 // repository no longer exists reconciles as a no-op rather than a failure.
 // There is nothing left to reconcile, and the error this used to return was
@@ -4473,13 +4490,12 @@ func TestRepositoryController_process_UnauthorizedTestResultSuppressesHooks(t *t
 	stub := &hookRepoStub{
 		cfg:        repo,
 		hookErrSet: true, hookErr: nil,
-		// Mirrors gitRepository.Test's IsAuthorized(false, nil) path exactly:
-		// apps/provisioning/pkg/repository/git/repository.go's "not authorized" branch.
+		// Mirrors what gitRepository.Test returns when the Git server answers 401.
 		testResults: &provisioning.TestResults{
 			Success: false,
 			Code:    http.StatusUnauthorized,
 			Errors: []provisioning.ErrorDetails{
-				{Detail: "not authorized"},
+				{Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized"},
 			},
 		},
 	}
@@ -5003,7 +5019,7 @@ func TestRepositoryController_process_UnreachableRepoDoesNotRewriteUnchangedStat
 		testResults: &provisioning.TestResults{
 			Success: false,
 			Code:    http.StatusUnauthorized,
-			Errors:  []provisioning.ErrorDetails{{Detail: "not authorized"}},
+			Errors:  []provisioning.ErrorDetails{{Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized"}},
 		},
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
@@ -5293,6 +5309,12 @@ func TestRepositoryController_DeduplicatesEnqueueBeforeProcessing(t *testing.T) 
 // processing stops after maxAttempts total attempts. This tests the NumRequeues-based
 // attempt counting that replaced the old item.attempts field on queueItem.
 func TestRepositoryController_ServiceUnavailableRetriesUpToMaxAttempts(t *testing.T) {
+	// The process-global error backoff retains wall time from package initialization.
+	// Keep error logging while excluding that unrelated throttle from fake-time retries.
+	previousHandlers := utilruntime.ErrorHandlers
+	utilruntime.ErrorHandlers = previousHandlers[:1]
+	t.Cleanup(func() { utilruntime.ErrorHandlers = previousHandlers })
+
 	for name, processErr := range map[string]error{
 		"service unavailable":    apierrors.NewServiceUnavailable("test"),
 		"repository unavailable": repository.ErrServerUnavailable,
@@ -5300,49 +5322,52 @@ func TestRepositoryController_ServiceUnavailableRetriesUpToMaxAttempts(t *testin
 		"status write failure":   errors.Join(fmt.Errorf("build: %w", repository.ErrServerUnavailable), errors.New("status write failed")),
 	} {
 		t.Run(name, func(t *testing.T) {
-			clock := testingclock.NewFakeClock(time.Now())
-			rc := &RepositoryController{
-				queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-					workqueue.DefaultTypedControllerRateLimiter[string](),
-					workqueue.TypedRateLimitingQueueConfig[string]{
-						Name:  "test-retry",
-						Clock: clock,
-					},
-				),
-				logger: logging.DefaultLogger.With("logger", "test"),
-			}
-			t.Cleanup(rc.queue.ShutDown)
-			heartbeatWaiters := clock.Waiters()
-			processCount := 0
-
-			rc.processFn = func(key string) (string, error) {
-				processCount++
-				return "", processErr
-			}
-
-			rc.queue.Add("test/repo")
-			for attempt := range maxAttempts {
-				require.True(t, rc.processNextWorkItem(t.Context()))
-				if attempt == maxAttempts-1 {
-					break
+			synctest.Test(t, func(t *testing.T) {
+				rc := &RepositoryController{
+					queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+						workqueue.DefaultTypedControllerRateLimiter[string](),
+						workqueue.TypedRateLimitingQueueConfig[string]{
+							Name: "test-retry",
+						},
+					),
+					logger: logging.DefaultLogger.With("logger", "test"),
 				}
-				assert.Equal(t, attempt+1, rc.queue.NumRequeues("test/repo"))
-				require.Eventually(t, func() bool {
-					return clock.Waiters() > heartbeatWaiters
-				}, time.Second, time.Millisecond, "the delayed queue must register its retry timer")
+				t.Cleanup(rc.queue.ShutDown)
+				processCount := 0
 
-				delay := 5 * time.Millisecond * (1 << attempt)
-				clock.Step(delay - time.Nanosecond)
-				assert.Zero(t, rc.queue.Len(), "the retry must wait for its exponential backoff")
-				clock.Step(time.Nanosecond)
-				require.Eventually(t, func() bool {
-					return rc.queue.Len() == 1
-				}, time.Second, time.Millisecond, "the retry must become available after its backoff")
-			}
+				rc.processFn = func(key string) (string, error) {
+					processCount++
+					return "", processErr
+				}
 
-			assert.Equal(t, maxAttempts, processCount, "ServiceUnavailable should retry exactly maxAttempts times then give up")
-			assert.Zero(t, rc.queue.NumRequeues("test/repo"), "the final attempt must clear the retry budget")
-			assert.Zero(t, rc.queue.Len())
+				rc.queue.Add("test/repo")
+				for attempt := range maxAttempts {
+					require.True(t, rc.processNextWorkItem(t.Context()))
+					if attempt == maxAttempts-1 {
+						break
+					}
+					assert.Equal(t, attempt+1, rc.queue.NumRequeues("test/repo"))
+
+					// Let the delaying queue register this attempt's exponential backoff timer.
+					synctest.Wait()
+
+					delay := 5 * time.Millisecond * (1 << attempt)
+
+					// Stop just before the retry deadline to verify that backoff gates delivery.
+					synctest.Sleep(delay - time.Nanosecond)
+
+					assert.Zero(t, rc.queue.Len(), "the retry must wait for its exponential backoff")
+
+					// Reach the retry deadline and let the delaying queue make the key available.
+					synctest.Sleep(time.Nanosecond)
+
+					require.Equal(t, 1, rc.queue.Len())
+				}
+
+				assert.Equal(t, maxAttempts, processCount, "ServiceUnavailable should retry exactly maxAttempts times then give up")
+				assert.Zero(t, rc.queue.NumRequeues("test/repo"), "the final attempt must clear the retry budget")
+				assert.Zero(t, rc.queue.Len())
+			})
 		})
 	}
 }

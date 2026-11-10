@@ -155,4 +155,4 @@ func (b *embeddedBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) {
 // transient 503 would block the whole group: it opts out of breaking.
 type embeddedHandler struct{ http.Handler }
 
-func (embeddedHandler) managesCircuitBreaking() {}
+func (embeddedHandler) hasNoCircuitBreaker() {}

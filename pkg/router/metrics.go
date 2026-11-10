@@ -121,10 +121,28 @@ func (m *routerMetrics) discoveryResult(group, result string) {
 	m.discoveryResults.WithLabelValues(group, result).Inc()
 }
 
+func (m *routerMetrics) backendFailure(group, pluginID, reason string) {
+	m.backendFailures.WithLabelValues(group, pluginID, reason).Inc()
+}
+
+// forgetGroups deletes the series of groups the router no longer serves, so
+// the label-based metrics don't keep every group that ever existed. A watch
+// still running on a removed group holds its own gauge, so its end does not
+// create a series again; a group served again starts from zero.
+func (m *routerMetrics) forgetGroups(groups []string) {
+	for _, group := range groups {
+		match := prometheus.Labels{"group": group}
+		m.backendFailures.DeletePartialMatch(match)
+		m.breakerTransitions.DeletePartialMatch(match)
+		m.discoveryResults.DeletePartialMatch(match)
+		m.longRunning.DeletePartialMatch(match)
+	}
+}
+
 // newPluginGRPCRequestDuration returns the histogram of gRPC calls to plugin
 // deployments, registered with reg unless it is nil. Local plugins are
 // measured by the plugin client's grafana_plugin_request_* metrics instead.
-// The source const label lets plugins_url and core_url register on one registry.
+// The source const label lets the plugin manifests sources register on one registry.
 func newPluginGRPCRequestDuration(reg prometheus.Registerer, source string) *prometheus.HistogramVec {
 	h := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		ConstLabels:                     prometheus.Labels{"source": source},
@@ -144,7 +162,7 @@ func newPluginGRPCRequestDuration(reg prometheus.Registerer, source string) *pro
 
 // newPluginGRPCRequestRetries returns the counter of retried unary gRPC calls
 // to plugin deployments, registered with reg unless it is nil. Like the
-// request duration, the source const label lets plugins_url and core_url
+// request duration, the source const label lets the plugin manifests sources
 // register on one registry.
 func newPluginGRPCRequestRetries(reg prometheus.Registerer, source string) *prometheus.CounterVec {
 	c := prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -264,8 +282,9 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 	}
 
 	if verb == "watch" {
-		m.longRunning.WithLabelValues(metricGroup).Inc()
-		defer m.longRunning.WithLabelValues(metricGroup).Dec()
+		watches := m.longRunning.WithLabelValues(metricGroup)
+		watches.Inc()
+		defer watches.Dec()
 		defer func() { finish(time.Since(start)) }()
 		handle(rec.writer(), req)
 		return
@@ -312,8 +331,10 @@ type routerCollector struct {
 	skipped         *prometheus.Desc
 	lastSuccess     *prometheus.Desc
 	polls           *prometheus.Desc
-	stackLookups    *prometheus.Desc
-	stackDiscovery  *prometheus.Desc
+
+	reconcileDuration *prometheus.Desc
+	pollDuration      *prometheus.Desc
+	discoveryOverdue  *prometheus.Desc
 }
 
 func newRouterCollector(router *GrafanaRouter) *routerCollector {
@@ -340,17 +361,96 @@ func newRouterCollector(router *GrafanaRouter) *routerCollector {
 			"When each route source last loaded successfully, in seconds since the Unix epoch.", []string{"source"}, nil),
 		polls: prometheus.NewDesc(name("source_polls_total"),
 			"Load or poll attempts of each route source, by result: success or failure.", []string{"source", "result"}, nil),
-		stackLookups: prometheus.NewDesc(name("stack_lookups_total"),
-			"Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.", []string{"result"}, nil),
-		stackDiscovery: prometheus.NewDesc(name("stack_discovery_cache_total"),
-			"Single-tenant discovery requests looked up in the cache shared by each stack's callers, by result: hit or miss.", []string{"result"}, nil),
+		reconcileDuration: prometheus.NewDesc(name("reconcile_duration_seconds"),
+			"How long route reconciles took.", nil, nil),
+		pollDuration: prometheus.NewDesc(name("source_poll_duration_seconds"),
+			"How long each route source's load or poll attempts took, failed ones included.", []string{"source"}, nil),
+		discoveryOverdue: prometheus.NewDesc(name("discovery_fetches_overdue"),
+			"Number of backend discovery fetches still running past their deadline. A backend that ignores its context keeps one running for good, and its group serves stale discovery.", nil, nil),
+	}
+}
+
+// loaderCounterCollector reports one of the loader's counters. Each counter is
+// a collector of its own, so routers whose loaders report different counters
+// can share a registry: a collector's descriptors must match exactly for a
+// second registration to be ignored rather than fail.
+type loaderCounterCollector struct {
+	status loaderStatus
+	metric string
+	desc   *prometheus.Desc
+}
+
+// newLoaderCounterCollectors returns a collector for each of the loader's
+// counters, none if it reports no status.
+func newLoaderCounterCollectors(loader RoutesLoader) []prometheus.Collector {
+	status, ok := loader.(loaderStatus)
+	if !ok {
+		return nil
+	}
+	var collectors []prometheus.Collector
+	for _, counter := range status.counters() {
+		collectors = append(collectors, &loaderCounterCollector{
+			status: status,
+			metric: counter.Metric,
+			desc:   prometheus.NewDesc(prometheus.BuildFQName("grafana", "router", counter.Metric), counter.Help, []string{"result"}, nil),
+		})
+	}
+	return collectors
+}
+
+// loaderDurationCollector reports one of the loader's duration histograms.
+type loaderDurationCollector struct {
+	loader loaderDurations
+	metric string
+	desc   *prometheus.Desc
+}
+
+func newLoaderDurationCollectors(loader RoutesLoader) []prometheus.Collector {
+	durations, ok := loader.(loaderDurations)
+	if !ok {
+		return nil
+	}
+	var collectors []prometheus.Collector
+	for _, d := range durations.durations() {
+		collectors = append(collectors, &loaderDurationCollector{
+			loader: durations,
+			metric: d.Metric,
+			desc:   prometheus.NewDesc(prometheus.BuildFQName("grafana", "router", d.Metric), d.Help, []string{"result"}, nil),
+		})
+	}
+	return collectors
+}
+
+func (c *loaderDurationCollector) Describe(ch chan<- *prometheus.Desc) { ch <- c.desc }
+
+func (c *loaderDurationCollector) Collect(ch chan<- prometheus.Metric) {
+	for _, d := range c.loader.durations() {
+		if d.Metric != c.metric {
+			continue
+		}
+		for result, snap := range d.ByResult {
+			ch <- prometheus.MustNewConstHistogram(c.desc, snap.count, snap.sum, snap.buckets, result)
+		}
+	}
+}
+
+func (c *loaderCounterCollector) Describe(ch chan<- *prometheus.Desc) { ch <- c.desc }
+
+func (c *loaderCounterCollector) Collect(ch chan<- prometheus.Metric) {
+	for _, counter := range c.status.counters() {
+		if counter.Metric != c.metric {
+			continue
+		}
+		for result, n := range counter.ByResult {
+			ch <- prometheus.MustNewConstMetric(c.desc, prometheus.CounterValue, float64(n), result)
+		}
 	}
 }
 
 func (c *routerCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, d := range []*prometheus.Desc{
 		c.ready, c.lastReconcile, c.reconciles, c.reconcileErrors, c.groups, c.breaker,
-		c.shadowed, c.skipped, c.lastSuccess, c.polls, c.stackLookups, c.stackDiscovery,
+		c.shadowed, c.skipped, c.lastSuccess, c.polls, c.reconcileDuration, c.pollDuration, c.discoveryOverdue,
 	} {
 		ch <- d
 	}
@@ -369,12 +469,14 @@ func (c *routerCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	ch <- prometheus.MustNewConstMetric(c.reconciles, prometheus.CounterValue, float64(c.router.reconciles.Load()))
 	ch <- prometheus.MustNewConstMetric(c.reconcileErrors, prometheus.CounterValue, float64(c.router.reconcileErrors.Load()))
+	reconciles := c.router.reconcileDuration.snapshot()
+	ch <- prometheus.MustNewConstHistogram(c.reconcileDuration, reconciles.count, reconciles.sum, reconciles.buckets)
+	ch <- prometheus.MustNewConstMetric(c.discoveryOverdue, prometheus.GaugeValue, float64(c.router.discoveryCache.overdue()))
 
 	perSource := map[string]int{}
 	for group, entry := range *c.router.snapshot.Load() {
 		perSource[entry.source]++
-		// The single-tenant fallback keeps a breaker per stack, not per group.
-		if _, perDestination := entry.handler.(interface{ managesCircuitBreaking() }); perDestination || entry.breaker == nil {
+		if !entry.breakerScope.counted() {
 			continue
 		}
 		current := entry.breakerState()
@@ -408,11 +510,6 @@ func (c *routerCollector) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(c.polls, prometheus.CounterValue, float64(s.Successes), s.Source, "success")
 		ch <- prometheus.MustNewConstMetric(c.polls, prometheus.CounterValue, float64(s.Failures), s.Source, "failure")
 		ch <- prometheus.MustNewConstMetric(c.skipped, prometheus.GaugeValue, float64(s.Skipped), s.Source)
-	}
-	for result, n := range status.stackLookups() {
-		ch <- prometheus.MustNewConstMetric(c.stackLookups, prometheus.CounterValue, float64(n), result)
-	}
-	for result, n := range status.stackDiscoveryCache() {
-		ch <- prometheus.MustNewConstMetric(c.stackDiscovery, prometheus.CounterValue, float64(n), result)
+		ch <- prometheus.MustNewConstHistogram(c.pollDuration, s.Duration.count, s.Duration.sum, s.Duration.buckets, s.Source)
 	}
 }

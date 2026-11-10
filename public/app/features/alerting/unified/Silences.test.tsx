@@ -8,12 +8,12 @@ import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
+import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/constants';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import {
   MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
   MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
 } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
-import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import {
   getAlertRuleHandler,
   mockK8sAlertRule,
@@ -423,6 +423,25 @@ describe('Silence create/edit', () => {
     expect(ui.editor.matcherValue.get()).toHaveValue('bar');
     expect(ui.editor.comment.get()).toHaveValue('Happy path silence');
   });
+
+  it(
+    'includes the silence id when saving an existing silence',
+    async () => {
+      const { user } = renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING}/edit`);
+      await waitFor(() => expect(ui.editor.matcherName.get()).toHaveValue('foo'));
+
+      const postRequest = waitForServerRequest(silenceCreateHandler());
+      await user.click(ui.editor.submit.get());
+
+      const createSilenceRequest = await postRequest;
+      const requestBody = await createSilenceRequest.clone().json();
+      expect(requestBody).toMatchObject({
+        id: MOCK_SILENCE_ID_EXISTING,
+        matchers: [{ isEqual: true, isRegex: false, name: 'foo', value: 'bar' }],
+      });
+    },
+    TEST_TIMEOUT
+  );
 
   it('populates form with existing silence information that has __alert_rule_uid__', async () => {
     server.use(

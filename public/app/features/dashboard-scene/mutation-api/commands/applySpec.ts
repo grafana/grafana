@@ -22,7 +22,7 @@ import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
 import { findGroupByVariablePaths, GROUP_BY_VARIABLE_UNSUPPORTED } from './deprecatedGroupByVariable';
 import { payloads } from './schemas';
-import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
+import { enterEditModeIfNeeded, MUTATION_API_ACTOR, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
 const applySpecPayloadSchema = payloads.applySpec;
 
@@ -80,6 +80,7 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
         spec,
         description: t('dashboard.mutation-api.apply-spec.undo-title', 'Assistant schema edit'),
         scope: 'mutation-api',
+        actor: MUTATION_API_ACTOR,
       });
 
       // Return the re-serialized spec so the caller gets the rekeyed element

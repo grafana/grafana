@@ -282,6 +282,12 @@ type RepoIDHandler interface {
 	ShouldUpdateRepoID() bool
 }
 
+//go:generate mockery --name PullRequestClient --structname MockPullRequestClient --inpackage --filename pull_request_client_mock.go --with-expecter
+type PullRequestClient interface {
+	CreatePullRequestComment(ctx context.Context, number int, body string) error
+	MergeBase(ctx context.Context, base, head string) (string, error)
+}
+
 // PullRequestRepo is implemented by repositories that can be evaluated and
 // commented on as part of a pull request preview job.
 //
@@ -289,7 +295,6 @@ type RepoIDHandler interface {
 type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*FileInfo, error)
-	MergeBase(ctx context.Context, headRef string) (string, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
-	CommentPullRequest(ctx context.Context, prNumber int, comment string) error
+	PullRequestClient() PullRequestClient
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { type PanelData } from '@grafana/data';
+import { type DataFrame, DataFrameType, type PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import {
@@ -17,7 +17,6 @@ import { Box, ScrollContainer, Sidebar, Text, RadioButtonDot, Button, Spinner } 
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
-import { canManuallyEditDashboard } from '../scene/dashboardModes';
 import { getDashboardSceneLike } from '../scene/types/dashboard';
 import { DashboardInteractions } from '../utils/interactions';
 
@@ -57,9 +56,7 @@ export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
 
 function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSidePane>) {
   const dashboard = getDashboardSceneLike(model);
-  const state = dashboard.useState();
-  const { viewPanel } = state;
-  const canEditOptions = canManuallyEditDashboard(state);
+  const { viewPanel } = dashboard.useState();
   const { panelRef } = model.useState();
   const panel = panelRef.resolve();
   //const { fieldConfig, options } = panel.useState();
@@ -100,9 +97,7 @@ function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSideP
               <Trans i18nKey="dashboard.view-panel.back-to-dashboard">Back to dashboard</Trans>
             </Button>
           </Box>
-          {canEditOptions && viewPanelOptions?.quickToggles && (
-            <ViewPanelQuickToggles panel={panel} plugin={plugin.value} />
-          )}
+          {viewPanelOptions?.quickToggles && <ViewPanelQuickToggles panel={panel} plugin={plugin.value} />}
           {viewPanelOptions?.fanout?.enabled && <ViewPanelFanoutOptions panel={panel} pane={model} />}
         </Box>
       </ScrollContainer>
@@ -118,18 +113,21 @@ interface ViewPaneFanoutOptionsProps {
 function ViewPanelFanoutOptions({ panel, pane }: ViewPaneFanoutOptionsProps) {
   const { fanoutMode } = pane.useState();
   const [labels, setLabels] = useState<string[] | undefined>(undefined);
+  const [hasWideFrames, setHasWideFrames] = useState(false);
 
   const modeValue = fanoutMode ?? '$__none__$';
 
   useEffect(() => {
     const dataProvider = panel.state.$data!;
 
-    const dataSub = dataProvider.subscribeToState((state) => {
-      const labels = extractLabelsFromData(state.data);
-      setLabels(labels);
-    });
+    const update = (data: PanelData | undefined) => {
+      setLabels(extractLabelsFromData(data));
+      setHasWideFrames(Boolean(data?.series.some(isWideFrame)));
+    };
 
-    setLabels(extractLabelsFromData(dataProvider.state.data));
+    const dataSub = dataProvider.subscribeToState((state) => update(state.data));
+
+    update(dataProvider.state.data);
 
     return () => dataSub.unsubscribe();
   }, [panel]);
@@ -156,28 +154,32 @@ function ViewPanelFanoutOptions({ panel, pane }: ViewPaneFanoutOptionsProps) {
           onClick={() => pane.onSetMode(bySeriesMode)}
         />
       </Box>
-      <Box padding={1}>
-        <Text variant="bodySmall" weight="medium">
-          {t('dashboard.sidebar.view-panel.fanout-labels', 'Labels')}
-        </Text>
-      </Box>
-      <Box direction="column" gap={1} display="flex" paddingLeft={1}>
-        {labels && labels.length === 0 && (
-          <Text italic variant="bodySmall">
-            {t('dashboard.sidebar.view-panel.fanout-no-labels', 'Data has no labels')}
-          </Text>
-        )}
-        {labels?.map((label) => (
-          <RadioButtonDot
-            key={label}
-            name="fanout"
-            id={getModeForLabel(label)}
-            label={label}
-            checked={modeValue === getModeForLabel(label)}
-            onClick={() => pane.onSetMode(getModeForLabel(label))}
-          />
-        ))}
-      </Box>
+      {!hasWideFrames && (
+        <>
+          <Box padding={1}>
+            <Text variant="bodySmall" weight="medium">
+              {t('dashboard.sidebar.view-panel.fanout-labels', 'Labels')}
+            </Text>
+          </Box>
+          <Box direction="column" gap={1} display="flex" paddingLeft={1}>
+            {labels && labels.length === 0 && (
+              <Text italic variant="bodySmall">
+                {t('dashboard.sidebar.view-panel.fanout-no-labels', 'Data has no labels')}
+              </Text>
+            )}
+            {labels?.map((label) => (
+              <RadioButtonDot
+                key={label}
+                name="fanout"
+                id={getModeForLabel(label)}
+                label={label}
+                checked={modeValue === getModeForLabel(label)}
+                onClick={() => pane.onSetMode(getModeForLabel(label))}
+              />
+            ))}
+          </Box>
+        </>
+      )}
     </OptionsPaneCategory>
   );
 }
@@ -197,6 +199,12 @@ function extractLabelsFromData(panelData: PanelData | undefined): string[] {
   });
 
   return Array.from(labelSet);
+}
+
+// Fanout by label groups whole frames, so a wide frame (several value fields, each with its own
+// labels) can't be split and would collapse into one group.
+function isWideFrame(frame: DataFrame): boolean {
+  return frame.meta?.type === DataFrameType.TimeSeriesWide;
 }
 
 function getModeForLabel(label: string) {

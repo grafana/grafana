@@ -19,7 +19,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -37,9 +36,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	legacydashboards "github.com/grafana/grafana/pkg/legacyapi/dashboards"
 	"github.com/grafana/grafana/pkg/registry"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -51,13 +52,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/retryer"
 )
@@ -396,7 +397,7 @@ var _ registry.BackgroundService = (*DashboardServiceImpl)(nil)
 // This is the uber service that implements a three smaller services
 func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg,
-	sqlStore db.DB,
+	sqlStore *sqlstore.SQLStore,
 	iamFeatures iamapi.Features,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl,
@@ -448,7 +449,29 @@ func ProvideDashboardServiceImpl(
 		return nil, err
 	}
 
+	sqlStore.Bus().AddEventListener(dashSvc.onDefaultPermissionsSet)
 	return dashSvc, nil
+}
+
+type dashboardDefaultPermissionsSet struct {
+	requester identity.Requester
+}
+
+func (dr *DashboardServiceImpl) refreshCreatorAfterCommit(ctx context.Context, requester identity.Requester) {
+	if requester == nil || !requester.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		return
+	}
+	event := &dashboardDefaultPermissionsSet{requester: requester}
+	if sess := sqlstore.SessionFromContext(ctx); sess != nil {
+		sess.PublishAfterCommit(event)
+		return
+	}
+	_ = dr.onDefaultPermissionsSet(ctx, event)
+}
+
+func (dr *DashboardServiceImpl) onDefaultPermissionsSet(ctx context.Context, event *dashboardDefaultPermissionsSet) error {
+	permissioncache.RefreshCreator(ctx, dr.acService, event.requester)
+	return nil
 }
 
 func (dr *DashboardServiceImpl) RegisterDashboardPermissions(service accesscontrol.DashboardPermissionsService) {
@@ -499,53 +522,27 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 }
 
 func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*dashboards.DashboardRef, error) {
-	request := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{
-			Fields: []*resourcepb.Requirement{
-				{
-					Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
-					Operator: string(selection.Equals),
-					Values:   []string{libraryPanelUID},
-				},
-			},
-		},
-		Limit: listAllDashboardsLimit,
-		Fields: []string{
-			resource.SEARCH_FIELD_FOLDER,
-			resource.SEARCH_FIELD_LEGACY_ID,
-			// Per-label fields are requestable; this one is needed to derive the numeric legacy ID.
-			resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
-		},
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	}
+	request := dashboardsearch.LibraryPanelDashboardsRequest(libraryPanelUID, listAllDashboardsLimit)
 
 	results, err := dashboardsearch.SearchAll(ctx, orgID, request, dr.k8sclient.Search)
 	if err != nil {
 		return nil, err
 	}
 
-	dashes := make([]*dashboards.DashboardRef, 0, len(results.Hits))
-	for _, row := range results.Hits {
-		dashes = append(dashes, &dashboards.DashboardRef{
-			UID:       row.Name,
-			FolderUID: folder.ToLegacyFolderUID(row.Folder),
-			ID:        row.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID), // nolint:staticcheck
-		})
-	}
-	return dashes, nil
+	return dashboardsearch.DashboardRefsFromResults(results), nil
 }
 
 func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
 	resp, err := dr.k8sclient.GetStats(ctx, orgID)
-	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
+	if err != nil {
 		return 0, err
 	}
 
-	if len(resp.Stats) != 1 {
-		return 0, fmt.Errorf("expected 1 stat, got %d", len(resp.Stats))
+	if len(resp.GetStats()) != 1 {
+		return 0, fmt.Errorf("expected 1 stat, got %d", len(resp.GetStats()))
 	}
 
-	return resp.Stats[0].Count, nil
+	return resp.GetStats()[0].Count, nil
 }
 
 func (dr *DashboardServiceImpl) CountProvisionedDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
@@ -1256,11 +1253,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 		return err
 	}
 
-	// Clear permission cache for the user who created the dashboard, so that new permissions are fetched for their next call
-	// Required for cases when caller wants to immediately interact with the newly created object
-	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
-		dr.acService.ClearUserPermissionCache(user)
-	}
+	dr.refreshCreatorAfterCommit(ctx, user)
 
 	return nil
 }
@@ -1308,12 +1301,11 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *
 	svc := dr.getPermissionsService(dash.IsFolder)
 	if _, err := svc.SetPermissions(ctx, dto.OrgID, dash.UID, permissions...); err != nil {
 		dr.log.Error("Could not set default permissions", "dashboard", dash.Title, "error", err)
+		return
 	}
 
-	// Clear permission cache for the user who created the dashboard, so that new permissions are fetched for their next call
-	// Required for cases when caller wants to immediately interact with the newly created object
-	if !provisioned && dto.User.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
-		dr.acService.ClearUserPermissionCache(dto.User)
+	if !provisioned {
+		dr.refreshCreatorAfterCommit(ctx, dto.User)
 	}
 }
 
@@ -1669,10 +1661,10 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *das
 		Limit:        0, // Only tag counts are needed; dashboard rows would be discarded.
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
+	if err != nil {
 		return nil, err
 	}
-	facet, ok := res.Facet["tags"]
+	facet, ok := res.GetFacet()["tags"]
 	if !ok {
 		return []*dashboards.DashboardTagCloudItem{}, nil
 	}
@@ -1704,6 +1696,14 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	ctx, span := tracer.Start(ctx, "dashboards.service.DeleteInFolders")
 	defer span.End()
 
+	concurrency := folder.ParallelDashboardDeleteConcurrency(ctx)
+	parallel := concurrency > 1
+	// An already canceled request must not remove public dashboards for dashboards that will then
+	// never be deleted. Only the parallel path checks, so the sequential path stays unchanged.
+	if err := ctx.Err(); parallel && err != nil {
+		return err
+	}
+
 	// Attach the requester to ctx: a context-dependent LegacyDatabaseProvider (used by
 	// DeleteByDashboardUIDs below) can only resolve the target database from here.
 	ctx = identity.WithRequester(ctx, u)
@@ -1729,6 +1729,10 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	err = dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgID, dashboardUIDs)
 	if err != nil {
 		return err
+	}
+
+	if parallel {
+		return dr.deleteInFoldersParallel(ctx, orgID, folderUIDs, dashes, concurrency)
 	}
 
 	for _, dash := range dashes {
@@ -2147,7 +2151,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
-	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
+	if err != nil {
 		return dashboardv0.SearchResults{}, err
 	}
 
@@ -2265,114 +2269,47 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		return nil, err
 	}
 
-	dash, err := dr.unstructuredToLegacyDashboardWithUsers(item, orgID, users)
+	dash, err := legacydashboards.FromConverted(item)
 	if err != nil {
 		return nil, err
 	}
-
-	// The requested version
-	gv, _ := schema.ParseGroupVersion(item.GetAPIVersion())
-	if gv.Version != "" {
-		dash.APIVersion = gv.Version
-	}
-
-	// Use the old payload if we could not convert to the the requested version
-	conversion, ok, _ := unstructured.NestedMap(item.Object, "status", "conversion")
-	if ok && conversion != nil {
-		failed, _, _ := unstructured.NestedBool(conversion, "failed")
-		if failed {
-			dash.APIVersion, _, _ = unstructured.NestedString(conversion, "storedVersion")
-			body, ok, _ := unstructured.NestedMap(conversion, "source")
-			if ok {
-				dash.Data = simplejson.NewFromAny(body)
-			}
-		}
-	}
-
-	return dash, nil
+	return legacyDashboardModel(dash, orgID, users), nil
 }
 
 func (dr *DashboardServiceImpl) unstructuredToLegacyDashboardWithUsers(item *unstructured.Unstructured, orgID int64, users map[string]*user.User) (*dashboards.Dashboard, error) {
-	spec, ok := item.Object["spec"].(map[string]any)
-	if !ok {
-		return nil, errors.New("error parsing dashboard from k8s response")
-	}
-	obj, err := utils.MetaAccessor(item)
+	dash, err := legacydashboards.FromUnstructured(item)
 	if err != nil {
 		return nil, err
 	}
-	uid := obj.GetName()
-	spec["uid"] = uid
+	return legacyDashboardModel(dash, orgID, users), nil
+}
 
-	dashVersion := obj.GetGeneration()
-	spec["version"] = dashVersion
-
-	title, _, _ := unstructured.NestedString(spec, "title")
-	out := dashboards.Dashboard{
+func legacyDashboardModel(dash *legacydashboards.Dashboard, orgID int64, users map[string]*user.User) *dashboards.Dashboard {
+	out := &dashboards.Dashboard{
 		OrgID:      orgID,
-		ID:         obj.GetDeprecatedInternalID(), // nolint:staticcheck
-		UID:        uid,
-		Slug:       slugify.Slugify(title),
-		FolderUID:  folder.ToLegacyFolderUID(obj.GetFolder()),
-		Version:    int(dashVersion),
-		Data:       simplejson.NewFromAny(spec),
-		APIVersion: strings.TrimPrefix(item.GetAPIVersion(), dashboardv0.GROUP+"/"),
+		ID:         dash.ID, // nolint:staticcheck
+		UID:        dash.UID,
+		Slug:       dash.Slug,
+		FolderUID:  dash.FolderUID,
+		Version:    dash.Version,
+		Data:       simplejson.NewFromAny(dash.Data),
+		APIVersion: dash.APIVersion,
+		Created:    dash.Created,
+		Updated:    dash.Updated,
+		Deleted:    dash.Deleted,
+		PluginID:   dash.PluginID,
+		GnetID:     dash.GnetID,
+		IsFolder:   dash.IsFolder,
+		HasACL:     dash.HasACL,
+		Title:      dash.Title,
 	}
-
-	out.Created = obj.GetCreationTimestamp().Time
-	updated, err := obj.GetUpdatedTimestamp()
-	if err == nil && updated != nil {
-		// old apis return in local time, created is already doing that
-		localTime := updated.Local()
-		out.Updated = localTime
-	} else {
-		// by default, set updated to created
-		out.Updated = out.Created
-	}
-
-	deleted := obj.GetDeletionTimestamp()
-	if deleted != nil {
-		out.Deleted = obj.GetDeletionTimestamp().Time
-	}
-
-	out.PluginID = dashboard.GetPluginIDFromMeta(obj)
-
-	if creator, ok := users[obj.GetCreatedBy()]; ok {
+	if creator, ok := users[dash.CreatedBy]; ok {
 		out.CreatedBy = creator.ID
 	}
-	if updater, ok := users[obj.GetUpdatedBy()]; ok {
+	if updater, ok := users[dash.UpdatedBy]; ok {
 		out.UpdatedBy = updater.ID
 	}
-
-	// any dashboards that have already been synced to unified storage will have the id in the spec
-	// and not as a label. We will need to support this conversion until they have all been updated
-	// to labels
-	if id, ok := spec["id"].(int64); ok {
-		out.ID = id
-		out.Data.Del("id")
-	}
-
-	if gnetID, ok := spec["gnet_id"].(int64); ok {
-		out.GnetID = gnetID
-	}
-
-	if isFolder, ok := spec["is_folder"].(bool); ok {
-		out.IsFolder = isFolder
-	}
-
-	if hasACL, ok := spec["has_acl"].(bool); ok {
-		out.HasACL = hasACL
-	}
-
-	if title, ok := spec["title"].(string); ok {
-		out.Title = title
-		// if slug isn't in the metadata, add it via the title
-		if out.Slug == "" {
-			out.UpdateSlug()
-		}
-	}
-
-	return &out, nil
+	return out
 }
 
 func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, namespace string) (*unstructured.Unstructured, error) {

@@ -22,4 +22,4 @@ runs:
     # outside the cached browser directory.
     - name: Install Playwright browsers
       shell: bash
-      run: yarn playwright install chromium --with-deps
+      run: pnpm exec playwright install chromium --with-deps

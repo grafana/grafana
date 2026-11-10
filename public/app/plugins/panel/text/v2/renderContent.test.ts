@@ -9,13 +9,14 @@ import {
   FieldType,
   type InterpolateFunction,
   MappingType,
+  standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   ThresholdsMode,
   toDataFrame,
 } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
@@ -39,6 +40,7 @@ afterAll(() => {
 });
 
 // applyFieldOverrides copies panel defaults through this registry, which app.ts seeds.
+standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 const hosts = toDataFrame({
@@ -368,6 +370,118 @@ describe('interpolateTemplate', () => {
 
       it('resolves labels on every row', () => {
         expect(interpolate('${__field.labels.cluster}', [cpu], RenderMode.PerRow)).toBe('us\n\nus');
+      });
+    });
+  });
+
+  describe('reducer macros', () => {
+    // Each field's last non-null value sits on a different row.
+    const usage = withFieldConfig(
+      [
+        toDataFrame({
+          name: 'usage',
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000] },
+            { name: 'CPU', type: FieldType.number, values: [40, 75, null], config: { unit: 'percent', decimals: 1 } },
+            { name: 'Memory usage', type: FieldType.number, values: [100, null, 120], config: { unit: 'bytes' } },
+          ],
+        }),
+      ],
+      {}
+    );
+
+    it('reduces each field independently, without a shared row', () => {
+      expect(
+        interpolate(
+          '${__data.fields.CPU:reduce:lastNotNull} ${__data.fields["Memory usage"]:reduce:lastNotNull}',
+          usage,
+          RenderMode.Once
+        )
+      ).toBe('75.0% 120 B');
+    });
+
+    it.each([
+      ['mean', '${__data.fields.CPU:reduce:mean}', '57.5%'],
+      ['max', '${__data.fields.CPU:reduce:max}', '75.0%'],
+      ['sum', '${__data.fields[2]:reduce:sum}', '220 B'],
+      ['numeric', '${__data.fields.CPU.numeric:reduce:mean}', '57.5'],
+      ['an alias', '${__data.fields.CPU:reduce:current}', '75.0%'],
+    ])('resolves %s with the field display config', (_name, content, expected) => {
+      expect(interpolate(content, usage, RenderMode.Once)).toBe(expected);
+    });
+
+    it('drops the unit for a reducer whose result is not in it', () => {
+      expect(interpolate('${__data.fields["Memory usage"]:reduce:count}', usage, RenderMode.Once)).toBe('2');
+    });
+
+    it('renders the configured no value text for an all-null field', () => {
+      const missing = withFieldConfig(
+        [toDataFrame({ fields: [{ name: 'value', type: FieldType.number, values: [null, null] }] })],
+        { noValue: 'n/a' }
+      );
+
+      expect(interpolate('${__data.fields.value:reduce:lastNotNull}', missing, RenderMode.Once)).toBe('n/a');
+    });
+
+    it('leaves an unknown field empty, as row macros do', () => {
+      expect(interpolate('[${__data.fields.nope:reduce:mean}]', usage, RenderMode.Once)).toBe('[]');
+    });
+
+    it.each([
+      ['an unknown reducer', '${__data.fields.CPU:reduce:nope}'],
+      ['a reducer that returns every value', '${__data.fields.CPU:reduce:allValues}'],
+    ])('leaves %s literal, in both render modes', (_name, content) => {
+      expect(interpolate(content, usage, RenderMode.Once)).toBe(content);
+      expect(interpolate(content, usage, RenderMode.PerRow)).toBe([content, content, content].join('\n\n'));
+    });
+
+    it('resolves the same value on every row, leaving row macros alone', () => {
+      expect(interpolate('${__data.fields.CPU}/${__data.fields.CPU:reduce:max}', usage, RenderMode.PerRow)).toBe(
+        '40.0%/75.0%\n\n75.0%/75.0%\n\n/75.0%'
+      );
+    });
+
+    it('leaves reducer macros alone when the text.newFeatures flag is off', () => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+
+      expect(interpolate('${__data.fields.CPU:reduce:max}', usage, RenderMode.Once)).toBe(
+        '${__data.fields.CPU:reduce:max}'
+      );
+    });
+
+    it('resolves inside handlebars output', () => {
+      expect(interpolate('{{#if data.length}}${__data.fields.CPU:reduce:max}{{/if}}', usage, RenderMode.Once)).toBe(
+        '75.0%'
+      );
+    });
+
+    describe('with a string field', () => {
+      function interpolateHtml(content: string, value: string) {
+        const frame = toDataFrame({
+          name: 'labels',
+          fields: [{ name: 'host', type: FieldType.string, values: [value] }],
+        });
+
+        return interpolateTemplate(
+          { content, series: [frame], renderMode: RenderMode.Once, mode: TextMode.HTML, format: 'html' },
+          createReplaceVariables()
+        ).content;
+      }
+
+      it('escapes the result with the panel format', () => {
+        expect(interpolateHtml('${__data.fields.host:reduce:lastNotNull}', '<b>web</b>')).toBe(
+          '&lt;b&gt;web&lt;/b&gt;'
+        );
+      });
+
+      it('applies a format written after the reducer', () => {
+        expect(interpolateHtml('${__data.fields.host:reduce:lastNotNull:percentencode}', 'web 1')).toBe('web%201');
+      });
+
+      it('does not interpolate a variable reference in the data', () => {
+        expect(interpolateHtml('${__data.fields.host:reduce:lastNotNull}', '${__series.name}')).toBe(
+          '${__series.name}'
+        );
       });
     });
   });

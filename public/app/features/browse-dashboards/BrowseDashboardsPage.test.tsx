@@ -3,14 +3,14 @@ import { type ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
-import { act, render as testRender, screen, waitFor } from 'test/test-utils';
+import { render as testRender, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -209,14 +209,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
     describe('folder owner', () => {
       beforeEach(() => {
-        setTestFlags({ foldersAppPlatformAPI: true });
         jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
-      });
-
-      afterEach(async () => {
-        await act(async () => {
-          setTestFlags({});
-        });
       });
 
       it('allows choosing a team to own the folder', async () => {
@@ -408,26 +401,14 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(checkbox).toBeInTheDocument();
     });
 
-    describe('with starred folders enabled', () => {
-      beforeEach(() => {
-        setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
-      });
+    it('shows the star toggle as the first action, before "Recently deleted"', async () => {
+      render(<BrowseDashboardsPage queryParams={{}} />);
 
-      afterEach(async () => {
-        await act(async () => {
-          setTestFlags({});
-        });
-      });
+      const star = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
+      const recentlyDeleted = await screen.findByRole('link', { name: 'Recently deleted' });
 
-      it('shows the star toggle as the first action, before "Recently deleted"', async () => {
-        render(<BrowseDashboardsPage queryParams={{}} />);
-
-        const star = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
-        const recentlyDeleted = await screen.findByRole('link', { name: 'Recently deleted' });
-
-        // star precedes "Recently deleted" in document order, so it is the first action
-        expect(star.compareDocumentPosition(recentlyDeleted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      });
+      // star precedes "Recently deleted" in document order, so it is the first action
+      expect(star.compareDocumentPosition(recentlyDeleted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
   });
 
@@ -490,6 +471,8 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         historyOptions: { initialEntries: ['/dashboards?starred'] },
       });
       expect(await screen.findByRole('heading', { name: 'Starred' })).toBeInTheDocument();
+      // The heading appears before the search completes; wait for real rows before cleanup.
+      expect(await screen.findByRole('link', { name: dashbdD.item.title })).toBeInTheDocument();
     });
 
     it('displays "Starred" as the page title for the starred=true shape the filter checkbox writes', async () => {
@@ -498,6 +481,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         historyOptions: { initialEntries: ['/dashboards?starred=true'] },
       });
       expect(await screen.findByRole('heading', { name: 'Starred' })).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: dashbdD.item.title })).toBeInTheDocument();
     });
   });
 });

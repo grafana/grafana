@@ -243,6 +243,73 @@ func breakerOutcome(req *http.Request, status int, call *backendCall) error {
 // requestRouter is a handler that hands each request to another handler.
 type requestRouter interface {
 	handlerFor(*http.Request) http.Handler
+	// groupHandler is the handler of the backend that owns the group, whose
+	// breaker the group reports.
+	groupHandler() http.Handler
+}
+
+// breakerScope is what a group's breaker counts. publish records it once
+// per entry, for metrics and the status page.
+type breakerScope int
+
+const (
+	// breakerScopeRequests counts the proxied requests.
+	breakerScopeRequests breakerScope = iota
+	// breakerScopePluginCalls counts only the plugin's client calls
+	// (breaksOnClientCalls).
+	breakerScopePluginCalls
+	// breakerScopePerDestination counts nothing here: the handler keeps a
+	// breaker per destination itself (managesCircuitBreaking).
+	breakerScopePerDestination
+	// breakerScopeNone means the group has no breaker (hasNoCircuitBreaker).
+	breakerScopeNone
+)
+
+func (s breakerScope) String() string {
+	switch s {
+	case breakerScopePluginCalls:
+		return "plugin-calls"
+	case breakerScopePerDestination:
+		return "per-destination"
+	case breakerScopeNone:
+		return "none"
+	default:
+		return "requests"
+	}
+}
+
+// counted reports whether the group breaker counts anything.
+func (s breakerScope) counted() bool {
+	return s == breakerScopeRequests || s == breakerScopePluginCalls
+}
+
+// groupBreakerScope returns the scope of the group breaker in front of h. A
+// requestRouter reports the scope of the handler that owns the group.
+func groupBreakerScope(h http.Handler) breakerScope {
+	if router, ok := h.(requestRouter); ok {
+		h = router.groupHandler()
+	}
+	switch h.(type) {
+	case interface{ managesCircuitBreaking() }:
+		return breakerScopePerDestination
+	case interface{ hasNoCircuitBreaker() }:
+		return breakerScopeNone
+	case interface{ breaksOnClientCalls() }:
+		return breakerScopePluginCalls
+	}
+	return breakerScopeRequests
+}
+
+// withoutGroupBreaker reports whether h is served without the group breaker:
+// it keeps a breaker per destination itself (managesCircuitBreaking, the
+// single-tenant fallback), which must not also share a group-wide one, or it
+// has none (hasNoCircuitBreaker, the embedded API server, in process).
+func withoutGroupBreaker(h http.Handler) bool {
+	switch h.(type) {
+	case interface{ managesCircuitBreaking() }, interface{ hasNoCircuitBreaker() }:
+		return true
+	}
+	return false
 }
 
 // serveThroughBreaker proxies one request to h through cb, streaming the
@@ -259,8 +326,7 @@ func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.
 	if router, ok := h.(requestRouter); ok {
 		h = router.handlerFor(req)
 	}
-	// A handler spanning multiple destinations must not also share a group-wide breaker.
-	if _, ownsBreakers := h.(interface{ managesCircuitBreaking() }); ownsBreakers {
+	if withoutGroupBreaker(h) {
 		h.ServeHTTP(w, req)
 		return
 	}

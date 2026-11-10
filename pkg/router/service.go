@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const readinessPollInterval = time.Second
@@ -48,6 +50,16 @@ type Service struct {
 	loaderFailures  *services.FailureWatcher
 }
 
+const (
+	// routerSection holds the router's own settings. The [router.aggregate.<name>]
+	// and [router.dev.<name>] sections are separate, and have their own prefixes.
+	routerSection = "router"
+	// statusOpenKey lets requesters with the Admin role read the status, and
+	// not only Grafana admins. It is on by default in development, and off
+	// elsewhere.
+	statusOpenKey = "status_open_to_admin"
+)
+
 // ProvideGrafanaRouter creates the router without its routes loader, which
 // ProvideService attaches. The loader depends on storage, and in-process
 // storage reads the router's published manifests (as a ManifestDiscovery), so
@@ -61,7 +73,17 @@ func ProvideGrafanaRouter(cfg *setting.Cfg) (*GrafanaRouter, error) {
 			return nil, err
 		}
 	}
-	return NewGrafanaRouter(nil, auth), nil
+	r := NewGrafanaRouter(nil, auth)
+	r.statusOpenToAdmin = cfg.SectionWithEnvOverrides(routerSection).Key(statusOpenKey).MustBool(cfg.Env == setting.Dev)
+	r.builtinManifests = manifestsByGroup(resource.AppManifests())
+	internalGroups, err := util.SplitStringWithError(cfg.SectionWithEnvOverrides(routerSection).Key("internal_groups").MustString(""))
+	if err != nil {
+		return nil, fmt.Errorf("%s: internal_groups: %w", routerSection, err)
+	}
+	if err := r.SetGroupVisibility(internalGroups, nil); err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
 // ProvideService creates the router service around router, attaching loader.
@@ -106,9 +128,10 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 
 	s.ready = ready
 
-	// The standalone router is never middleware, so the fallback always applies.
-	if st, ok := s.router.loader.(loaderWithSingleTenantFallback); ok {
-		s.router.unregisteredGroupHandler = st.SingleTenantFallback()
+	// The standalone router is never middleware, so the loader's handler for
+	// unregistered groups always applies.
+	if loader, ok := s.router.loader.(unregisteredGroupLoader); ok {
+		s.router.unregisteredGroupHandler = loader.UnregisteredGroupHandler()
 	}
 
 	for _, path := range []string{apisPrefix, openapiV3Prefix} {
@@ -132,12 +155,18 @@ func newService(router *GrafanaRouter, reg prometheus.Registerer) *Service {
 	}
 	s.router.onBreakerChange = s.metrics.breakerChanged
 	s.router.onDiscovery = s.metrics.discoveryResult
+	s.router.onBackendFailure = s.metrics.backendFailure
+	s.router.onGroupsRemoved = s.metrics.forgetGroups
 	// The collector reads this router's state, so another router's must not be
 	// reused for it. A second router on one registry, as in tests, goes
 	// unreported rather than panicking.
 	var already prometheus.AlreadyRegisteredError
-	if err := reg.Register(newRouterCollector(s.router)); err != nil && !errors.As(err, &already) {
-		panic(err)
+	collectors := append([]prometheus.Collector{newRouterCollector(s.router)}, newLoaderCounterCollectors(s.router.loader)...)
+	collectors = append(collectors, newLoaderDurationCollectors(s.router.loader)...)
+	for _, collector := range collectors {
+		if err := reg.Register(collector); err != nil && !errors.As(err, &already) {
+			panic(err)
+		}
 	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
 	return s

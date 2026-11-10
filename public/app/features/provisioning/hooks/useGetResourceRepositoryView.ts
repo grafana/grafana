@@ -165,7 +165,8 @@ const useResourceRepositoryViewData = ({
     }
   }
 
-  if (!items.length) {
+  const isRepoManagedFolder = Boolean(folder && isManagedByRepository(folder) && getManagerIdentity(folder));
+  if (!isRepoManagedFolder && !items.length) {
     return { folder, isInstanceManaged: false, isReadOnlyRepo: false, status: RepoViewStatus.Ready };
   }
 

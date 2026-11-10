@@ -3,12 +3,11 @@ import { memo, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useFlagPaneleditButtonLabels } from '@grafana/runtime/internal';
-import { Button, IconButton, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { SegmentedToggle, type SegmentedToggleProps } from '../../SegmentedToggle';
 import { QueryEditorType, SidebarSize } from '../../constants';
-import { trackSidebarViewChange, trackStackedViewToggle } from '../../tracking';
+import { trackSidebarViewChange } from '../../tracking';
 import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { getSelectedStackedItem } from '../StackedEditor/utils';
 import { EMPTY_ALERT } from '../types';
@@ -25,16 +24,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: SidebarProps) {
-  const showButtonLabels = useFlagPaneleditButtonLabels();
-  const {
-    setSelectedAlert,
-    cardType,
-    pendingExpression,
-    pendingTransformation,
-    stackedMode,
-    selectedQuery,
-    selectedTransformation,
-  } = useQueryEditorUIContext();
+  const { setSelectedAlert, cardType, selectedQuery, selectedTransformation } = useQueryEditorUIContext();
   const { alertRules, loading } = useAlertingContext();
   const styles = useStyles2(getStyles, sidebarSize);
 
@@ -46,16 +36,6 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
   const handleViewChange = (view: QueryEditorType) => {
     trackSidebarViewChange(view);
     setSelectedAlert(view === QueryEditorType.Alert ? (alertRules[0] ?? EMPTY_ALERT) : null);
-  };
-
-  const handleStackedModeToggle = () => {
-    if (stackedMode.enabled) {
-      trackStackedViewToggle('exit');
-      stackedMode.exit();
-    } else {
-      trackStackedViewToggle('enter');
-      stackedMode.enter();
-    }
   };
 
   const toggleValue = cardType === QueryEditorType.Alert ? QueryEditorType.Alert : QueryEditorType.Query;
@@ -73,11 +53,6 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
     { value: QueryEditorType.Alert, label: alertsLabel, icon: 'bell' },
   ];
 
-  const showStackedModeAction = cardType !== QueryEditorType.Alert && !pendingExpression && !pendingTransformation;
-  const stackedModeLabel = stackedMode.enabled
-    ? t('query-editor-next.sidebar.exit-stacked-view', 'Exit stacked view')
-    : t('query-editor-next.sidebar.enter-stacked-view', 'Enter stacked view');
-
   return (
     <div className={styles.container}>
       <SidebarHeaderActions
@@ -85,36 +60,6 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
         setSidebarSize={setSidebarSize}
         // The alerts label is the only width-affecting content that changes at runtime.
         contentKey={alertsLabel}
-        trailing={
-          showStackedModeAction ? (
-            showButtonLabels ? (
-              <Button
-                icon="layer-group"
-                size="sm"
-                fill="text"
-                variant="secondary"
-                className={styles.stackedModeButton}
-                data-active={stackedMode.enabled}
-                onClick={handleStackedModeToggle}
-                aria-pressed={stackedMode.enabled}
-                tooltip={stackedModeLabel}
-              >
-                {t('query-editor-next.sidebar.stacked', 'Stack')}
-              </Button>
-            ) : (
-              <span className={styles.stackedModeIconButton} data-active={stackedMode.enabled}>
-                <IconButton
-                  name="layer-group"
-                  size="sm"
-                  variant="secondary"
-                  onClick={handleStackedModeToggle}
-                  aria-pressed={stackedMode.enabled}
-                  tooltip={stackedModeLabel}
-                />
-              </span>
-            )
-          ) : undefined
-        }
       >
         {(compact) => (
           <SegmentedToggle
@@ -133,7 +78,7 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
           {cardType === QueryEditorType.Alert ? (
             <AlertsView alertRules={alertRules} />
           ) : (
-            <QueriesAndTransformationsView showButtonLabels={showButtonLabels} />
+            <QueriesAndTransformationsView />
           )}
         </div>
       </ScrollContainer>
@@ -164,22 +109,6 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       background: theme.colors.background.primary,
       paddingLeft: theme.spacing(1),
       paddingRight: theme.spacing(1),
-    }),
-    stackedModeButton: css({
-      '&[data-active="true"]': {
-        color: theme.colors.primary.text,
-        backgroundColor: theme.colors.primary.transparent,
-      },
-    }),
-    stackedModeIconButton: css({
-      display: 'inline-flex',
-      '&[data-active="true"] button': {
-        color: theme.colors.primary.text,
-        '&::before, &:hover::before': {
-          backgroundColor: theme.colors.primary.transparent,
-          opacity: 1,
-        },
-      },
     }),
   };
 }

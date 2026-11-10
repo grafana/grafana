@@ -6,7 +6,9 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"regexp"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
@@ -30,6 +32,83 @@ func setupSQLKVMock(t *testing.T, driverName string) (*SqlKV, *sql.DB, sqlmock.S
 	return sqlKV, db, mock
 }
 
+func TestSQLKVUnixTimestamp(t *testing.T) {
+	for _, tc := range []struct {
+		driverName string
+		query      string
+	}{
+		{driverName: "mysql", query: "SELECT UNIX_TIMESTAMP()"},
+		{driverName: "postgres", query: "SELECT FLOOR(EXTRACT(EPOCH FROM statement_timestamp()))::BIGINT"},
+		{driverName: "sqlite", query: "SELECT unixepoch('now')"},
+	} {
+		t.Run(tc.driverName, func(t *testing.T) {
+			store, _, mock := setupSQLKVMock(t, tc.driverName)
+			const expected int64 = 1234567890
+			mock.ExpectQuery(regexp.QuoteMeta(tc.query)).
+				WillReturnRows(sqlmock.NewRows([]string{"timestamp"}).AddRow(expected))
+
+			timestamp, err := store.UnixTimestamp(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, expected, timestamp)
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestSQLKVUnixTimestampErrors(t *testing.T) {
+	queryErr := errors.New("query failed")
+	for _, tc := range []struct {
+		name string
+		rows *sqlmock.Rows
+		err  error
+	}{
+		{name: "query error", err: queryErr},
+		{name: "no rows", rows: sqlmock.NewRows([]string{"timestamp"}), err: sql.ErrNoRows},
+		{name: "invalid timestamp", rows: sqlmock.NewRows([]string{"timestamp"}).AddRow("invalid")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store, _, mock := setupSQLKVMock(t, "sqlite")
+			expectation := mock.ExpectQuery(regexp.QuoteMeta("SELECT unixepoch('now')"))
+			if tc.rows != nil {
+				expectation.WillReturnRows(tc.rows)
+			} else {
+				expectation.WillReturnError(tc.err)
+			}
+
+			timestamp, err := store.UnixTimestamp(t.Context())
+			require.ErrorContains(t, err, "failed to get unix timestamp")
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
+			}
+			require.Zero(t, timestamp)
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestSQLKVUnixTimestampUsesContextTransaction(t *testing.T) {
+	store, db, mock := setupSQLKVMock(t, "sqlite")
+	db.SetMaxOpenConns(1)
+	mock.ExpectBegin()
+	tx, err := db.BeginTx(t.Context(), nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = tx.Rollback() })
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT unixepoch('now')")).
+		WillReturnRows(sqlmock.NewRows([]string{"timestamp"}).AddRow(int64(1234567890)))
+	mock.ExpectRollback()
+
+	// Bound the pool wait if UnixTimestamp stops reusing the transaction's connection.
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+
+	timestamp, err := store.UnixTimestamp(ContextWithDBTX(ctx, tx))
+	require.NoError(t, err)
+	require.Equal(t, int64(1234567890), timestamp)
+	require.NoError(t, tx.Rollback())
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestSQLKVSaveRejectsUnknownSection(t *testing.T) {
 	store, _, _ := setupSQLKVMock(t, "sqlite")
 	w, err := store.Save(t.Context(), "unknown", "key")
@@ -44,25 +123,6 @@ func buildDataImportRows(count int) []DataImportRow {
 			GUID:    fmt.Sprintf("guid-%d", i),
 			KeyPath: fmt.Sprintf("unified/data/group/resource/ns/name-%04d/1~created~", i),
 			Value:   fmt.Appendf(nil, `{"name":"item-%04d"}`, i),
-		}
-	}
-
-	return rows
-}
-
-func buildLegacyDataImportRows(count int) []DataImportRow {
-	rows := buildDataImportRows(count)
-	for i := range rows {
-		rows[i].Legacy = &DataImportLegacyFields{
-			Group:           "group",
-			Resource:        "resource",
-			Namespace:       "ns",
-			Name:            fmt.Sprintf("name-%04d", i),
-			Action:          1,
-			Folder:          "folder",
-			ResourceVersion: int64(i + 1),
-			PreviousRV:      int64(i),
-			Generation:      int64(i + 10),
 		}
 	}
 
@@ -230,9 +290,85 @@ func TestSQLKVInsertDataImportBatchRollsBackOnExecError(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestSQLKVInsertDataImportBatchUsesLegacyFields(t *testing.T) {
+func TestSQLKVWithStatementTimeout(t *testing.T) {
+	setTimeout := regexp.QuoteMeta("SET LOCAL statement_timeout = 60000")
+	setErr := errors.New("set failed")
+	fnErr := errors.New("fn failed")
+
+	t.Run("runs fn in a committed transaction with the timeout", func(t *testing.T) {
+		sqlKV, _, mock := setupSQLKVMock(t, "postgres")
+		mock.ExpectBegin()
+		mock.ExpectExec(setTimeout).WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectCommit()
+
+		err := sqlKV.WithStatementTimeout(context.Background(), time.Minute, func(ctx context.Context) error {
+			_, ok := dbtxFromCtx(ctx)
+			require.True(t, ok, "fn gets the transaction")
+			return nil
+		})
+		require.NoError(t, err)
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("rolls back when setting the timeout fails", func(t *testing.T) {
+		sqlKV, _, mock := setupSQLKVMock(t, "postgres")
+		mock.ExpectBegin()
+		mock.ExpectExec(setTimeout).WillReturnError(setErr)
+		mock.ExpectRollback()
+
+		err := sqlKV.WithStatementTimeout(context.Background(), time.Minute, func(context.Context) error {
+			t.Fatal("fn must not run")
+			return nil
+		})
+		require.ErrorIs(t, err, setErr)
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("rolls back and returns the fn error", func(t *testing.T) {
+		sqlKV, _, mock := setupSQLKVMock(t, "postgres")
+		mock.ExpectBegin()
+		mock.ExpectExec(setTimeout).WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectRollback()
+
+		err := sqlKV.WithStatementTimeout(context.Background(), time.Minute, func(context.Context) error { return fnErr })
+		require.ErrorIs(t, err, fnErr)
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	for _, tc := range []struct {
+		name       string
+		driverName string
+		timeout    time.Duration
+		externalTx bool
+	}{
+		{name: "zero timeout", driverName: "postgres"},
+		{name: "mysql", driverName: "mysql", timeout: time.Minute},
+		{name: "sqlite", driverName: "sqlite", timeout: time.Minute},
+		{name: "context transaction", driverName: "postgres", timeout: time.Minute, externalTx: true},
+	} {
+		t.Run("runs fn as is with "+tc.name, func(t *testing.T) {
+			sqlKV, db, mock := setupSQLKVMock(t, tc.driverName)
+			ctx := context.Background()
+			if tc.externalTx {
+				mock.ExpectBegin()
+				tx, err := db.Begin()
+				require.NoError(t, err)
+				ctx = ContextWithDBTX(ctx, tx)
+			}
+
+			err := sqlKV.WithStatementTimeout(ctx, tc.timeout, func(got context.Context) error {
+				require.Equal(t, ctx, got, "fn gets the caller's context")
+				return fnErr
+			})
+			require.ErrorIs(t, err, fnErr)
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestSQLKVInsertDataImportBatchUsesPlaceholderFields(t *testing.T) {
 	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
-	rows := buildLegacyDataImportRows(1)
+	rows := buildDataImportRows(1)
 
 	mock.ExpectBegin()
 	mock.ExpectExec("(?i)insert into .*resource_history").
@@ -240,16 +376,7 @@ func TestSQLKVInsertDataImportBatchUsesLegacyFields(t *testing.T) {
 			rows[0].GUID,
 			rows[0].KeyPath,
 			rows[0].Value,
-			rows[0].Legacy.Group,
-			rows[0].Legacy.Resource,
-			rows[0].Legacy.Namespace,
-			rows[0].Legacy.Name,
-			rows[0].Legacy.Action,
-			rows[0].Legacy.Folder,
-			rows[0].Legacy.ResourceVersion,
-			rows[0].Legacy.PreviousRV,
-			rows[0].Legacy.Generation,
-			nil,
+			"", "", "", "", 0, "",
 		).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
@@ -297,51 +424,4 @@ func TestSQLKV_Batch_RejectsDataSection(t *testing.T) {
 	require.ErrorIs(t, err, ErrBatchNotSupportedOnDataSection)
 	// Reject must short-circuit before touching the DB.
 	require.NoError(t, mock.ExpectationsWereMet())
-}
-
-func TestSQLKVInsertDataImportBatchRejectsMixedLegacyRows(t *testing.T) {
-	tests := []struct {
-		name      string
-		buildRows func() []DataImportRow
-	}{
-		{
-			name: "legacy after non-legacy",
-			buildRows: func() []DataImportRow {
-				rows := buildDataImportRows(2)
-				rows[1].Legacy = &DataImportLegacyFields{
-					Group:           "group",
-					Resource:        "resource",
-					Namespace:       "ns",
-					Name:            "name-0001",
-					Action:          1,
-					Folder:          "folder",
-					ResourceVersion: 2,
-					PreviousRV:      1,
-					Generation:      11,
-				}
-				return rows
-			},
-		},
-		{
-			name: "non-legacy after legacy",
-			buildRows: func() []DataImportRow {
-				rows := buildLegacyDataImportRows(2)
-				rows[1].Legacy = nil
-				return rows
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
-
-			mock.ExpectBegin()
-			mock.ExpectRollback()
-
-			err := sqlKV.InsertDataImportBatch(context.Background(), tc.buildRows())
-			require.ErrorContains(t, err, "mixed legacy import rows")
-			require.NoError(t, mock.ExpectationsWereMet())
-		})
-	}
 }

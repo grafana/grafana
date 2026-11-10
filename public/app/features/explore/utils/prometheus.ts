@@ -1,4 +1,4 @@
-import { matchPluginId, store } from '@grafana/data';
+import { type DataSourceApi, matchPluginId, store } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 
 /**
@@ -15,6 +15,17 @@ import { type DataQuery } from '@grafana/schema';
  */
 export function isPrometheusType(type: string | undefined | null): boolean {
   return !!type && matchPluginId('prometheus', { id: type });
+}
+
+/** Whether a pane queries Prometheus: its datasource is one, or, for a Mixed pane, any of its queries uses one. */
+export function isPrometheusPane(
+  datasource: Pick<DataSourceApi, 'meta'> | null | undefined,
+  queries: Array<Pick<DataQuery, 'datasource'>>
+): boolean {
+  if (datasource?.meta.mixed) {
+    return queries.some((q) => isPrometheusType(q.datasource?.type));
+  }
+  return !!datasource && matchPluginId('prometheus', datasource.meta);
 }
 
 const EDITOR_MODE_DEFAULT_STORAGE_KEY = 'PrometheusQueryEditorModeDefault';
@@ -56,6 +67,8 @@ export type ExprTextKind = 'name' | 'value';
 
 // The text often completes something the user has opened, like `sum(` or `metric{`, so it follows without a space.
 const NO_SEPARATOR_AFTER = /[\s{([,=~]$/;
+// Nor does it need one before what continues it, like the `[5m]` in `rate(up[5m])` or the `="api"` in `{job="api"}`.
+const NO_SEPARATOR_BEFORE = /^[\s()}\],[{=!~]/;
 // `[^=!<>]=` keeps comparisons like `>=` and `==` out.
 const MATCHER_END = /(?:[^=!<>]=|!=|[=!]~)\s*$/;
 const REGEX_MATCHER_END = /[=!]~\s*$/;
@@ -91,27 +104,48 @@ function escapeForString(text: string, quote: string): string {
   return text.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replaceAll(quote, `\\${quote}`);
 }
 
-/** Appends `text` to the end of a PromQL expression, the only place the sidebar can reach. */
-export function appendToExpr(expr: string | undefined, text: string, kind: ExprTextKind): string {
-  if (!expr) {
-    return text;
-  }
+/**
+ * Puts `text` in place of `value` between `from` and `to`, spaced, quoted and escaped to fit where it lands.
+ * `text` in the result is what replaced the selection. `undefined` when it cannot go there at all.
+ */
+export function insertAtSelection(
+  value: string,
+  from: number,
+  to: number,
+  text: string,
+  kind: ExprTextKind
+): { value: string; text: string } | undefined {
+  const before = value.slice(0, from);
+  const after = value.slice(to);
+  const open = findOpenString(before);
+  const beforeValue = open ? before.slice(0, open.start) : before;
+  const escaped = kind === 'value' && REGEX_MATCHER_END.test(beforeValue) ? text.replace(REGEX_SPECIAL, '\\$&') : text;
 
-  const open = findOpenString(expr);
-  const beforeValue = open ? expr.slice(0, open.start) : expr;
-  const value = kind === 'value' && REGEX_MATCHER_END.test(beforeValue) ? text.replace(REGEX_SPECIAL, '\\$&') : text;
-
+  let inserted: string;
   if (open?.quote === '`') {
     // A raw string has no way to escape a backtick.
-    return value.includes('`') ? expr : `${expr}${value}`;
+    if (escaped.includes('`')) {
+      return undefined;
+    }
+    inserted = escaped;
+  } else if (open) {
+    inserted = escapeForString(escaped, open.quote);
+  } else if (kind === 'value' && MATCHER_END.test(before)) {
+    inserted = `"${escapeForString(escaped, '"')}"`;
+  } else {
+    inserted = before && !NO_SEPARATOR_AFTER.test(before) ? ` ${escaped}` : escaped;
   }
-  if (open) {
-    return `${expr}${escapeForString(value, open.quote)}`;
+  if (!open && after && !NO_SEPARATOR_BEFORE.test(after)) {
+    inserted = `${inserted} `;
   }
-  if (kind === 'value' && MATCHER_END.test(expr)) {
-    return `${expr}"${escapeForString(value, '"')}"`;
-  }
-  return NO_SEPARATOR_AFTER.test(expr) ? `${expr}${value}` : `${expr} ${value}`;
+
+  return { value: `${before}${inserted}${after}`, text: inserted };
+}
+
+/** Appends `text` to the end of a PromQL expression, which is where it goes when the editor's cursor is unknown. */
+export function appendToExpr(expr: string | undefined, text: string, kind: ExprTextKind): string {
+  const value = expr ?? '';
+  return insertAtSelection(value, value.length, value.length, text, kind)?.value ?? value;
 }
 
 /** Appends `text` to the expression of the query with `refId`, leaving every other query as it was. */

@@ -16,18 +16,6 @@ jest.mock('@grafana/ui', () => ({
 
 jest.mock('@grafana/runtime', () => ({ config: { featureToggles: {} } }));
 
-// Prevent heavy transitive imports (@grafana/scenes, @grafana/runtime) from loading.
-jest.mock('./constants', () => ({
-  SidebarSize: { Mini: 'mini', Full: 'full' },
-  QUERY_EDITOR_SIDEBAR_SIZE_KEY: 'grafana.dashboard.query-editor-next.sidebar-size',
-  QUERY_EDITOR_BANNER_DISMISSED_KEY: 'grafana.dashboard.query-editor-next.banner-dismissed',
-  QUERY_EDITOR_SIDEBAR_WIDTH_KEY: 'grafana.dashboard.query-editor-next.sidebar-width',
-  QUERY_EDITOR_SIDEBAR_COLLAPSED_KEY: 'grafana.dashboard.query-editor-next.sidebar-collapsed',
-  DEFAULT_SIDEBAR_WIDTH: 350,
-  SIDEBAR_COLLAPSE_BELOW_PIXELS: 260,
-  DATA_PANE_COLLAPSE_BELOW_PIXELS: 150,
-  DEFAULT_VIZ_RATIO: 0.5,
-}));
 jest.mock('../../sidebar/shared', () => ({ useSidebarCollapsed: jest.fn() }));
 jest.mock('../../utils/utils', () => ({ getDashboardSceneFor: jest.fn() }));
 jest.mock('../PanelEditor', () => ({}));
@@ -102,7 +90,7 @@ describe('useVizAndDataPaneLayout', () => {
   });
 
   // The Mini/Full toggle remounts the viz/data splitter, and useSplitter keeps a flex ratio only on
-  // the DOM node. The hook has to hold it so the toggle doesn't reset the split to 50/50.
+  // the DOM node. The hook has to hold it so the toggle doesn't reset the split to its default.
   it('feeds the settled viz/data ratio back as the splitter initial size', () => {
     const model = {
       useState: jest.fn(() => ({ dataPane: undefined, tableView: undefined })),
@@ -114,7 +102,7 @@ describe('useVizAndDataPaneLayout', () => {
     const flexCalls = () =>
       jest.mocked(useSnappingSplitter).mock.calls.filter(([options]) => options.pixelPane === undefined);
 
-    expect(flexCalls().at(-1)?.[0].initialSize).toBe(0.5);
+    expect(flexCalls().at(-1)?.[0].initialSize).toBe(0.45);
 
     // Settle a drag that leaves the viz taking 80% of the height.
     act(() => {

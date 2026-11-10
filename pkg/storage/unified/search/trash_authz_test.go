@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -170,12 +171,11 @@ func runTrashSearch(
 	ctx := authlib.WithAuthInfo(context.Background(), user)
 	res, err := index.Search(ctx, ac, q, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 	return res
 }
 
 func namesOf(res *resourcepb.ResourceSearchResponse) []string {
-	rows := res.Results.GetRows()
+	rows := res.Rows
 	out := make([]string, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, row.Key.Name)
@@ -363,10 +363,10 @@ func TestTrashAuthz_RefusesWhenThereIsNoUser(t *testing.T) {
 	index := newTestDashboardsIndex(t, threshold, 20, func(resource.ResourceIndex) (int64, error) { return 1, nil })
 	indexDocs(t, index, []*resource.BulkIndexItem{trashDoc("alices-dash", "folder-1", trashAlice)})
 
-	res, err := index.Search(context.Background(), &trashAccessClient{readAll: true}, trashQueryFor(nil), nil, nil)
-	require.NoError(t, err)
-	require.NotNil(t, res.Error)
-	assert.Equal(t, int32(401), res.Error.Code)
+	_, err := index.Search(context.Background(), &trashAccessClient{readAll: true}, trashQueryFor(nil), nil, nil)
+	resErr := resourceutil.ErrorResultFromGRPCDetails(err)
+	require.NotNil(t, resErr)
+	assert.Equal(t, int32(401), resErr.Code)
 }
 
 // The post-rank path narrows the bleve field list for count-only requests and for the
@@ -440,7 +440,7 @@ func TestTrashAuthz_AppliesOnEveryPage(t *testing.T) {
 					q.SearchAfter = after
 				})
 				res := runTrashSearch(t, index, &trashAccessClient{}, "alice", q)
-				rows := res.Results.GetRows()
+				rows := res.Rows
 				if len(rows) == 0 {
 					break
 				}
@@ -540,11 +540,11 @@ func TestTrashAuthz_CursorPageTotalIsInexactNotUnfiltered(t *testing.T) {
 
 	first := runTrashSearch(t, index, &trashAccessClient{}, "alice",
 		trashQueryFor(func(q *resourcepb.ResourceSearchRequest) { q.Limit = 2 }))
-	require.Len(t, first.Results.GetRows(), 2)
+	require.Len(t, first.Rows, 2)
 	assert.Equal(t, int64(4), first.TotalHits, "the first page sees the whole set")
 	assert.True(t, first.TotalHitsExact)
 
-	after := first.Results.GetRows()[1].SortFields
+	after := first.Rows[1].SortFields
 	require.NotEmpty(t, after)
 
 	second := runTrashSearch(t, index, &trashAccessClient{}, "alice",
@@ -619,7 +619,6 @@ func TestSearchMissingServicePermissionsReturnsError(t *testing.T) {
 								return
 							}
 							require.NoError(t, err)
-							require.Nil(t, res.Error)
 							if outcome.userAllowed {
 								require.Equal(t, []string{"dash-1"}, namesOf(res))
 							} else {

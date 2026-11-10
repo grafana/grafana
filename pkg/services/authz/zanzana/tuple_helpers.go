@@ -136,6 +136,9 @@ const (
 	scopeIdentifierWildcard = "*"
 )
 
+// Scope fragment for the organization-wide annotations resource.
+const scopeIdentifierAnnotationsOrganization = "organization"
+
 // TupleStringWithoutCondition returns the string representation of a tuple without its condition.
 // This is useful for deduplicating tuples that have the same user, relation, and object
 // but different conditions that need to be merged.
@@ -210,6 +213,40 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 				tupleMap[tuple.String()] = tuple
 			}
 			continue
+		}
+
+		if perm.Kind == common.KindServiceAccounts && perm.Identifier != "" && strings.HasPrefix(perm.Action, "serviceaccounts:") {
+			if relations := serviceAccountActionSetRelations(strings.TrimPrefix(perm.Action, "serviceaccounts:")); len(relations) > 0 {
+				for _, relation := range relations {
+					var tuple *openfgav1.TupleKey
+					if perm.Identifier == "*" {
+						tuple = NewGroupResourceTuple(subject, relation, iamGroup, common.KindServiceAccounts, "")
+					} else {
+						tuple = common.NewTypedTuple(TypeServiceAccount, subject, relation, perm.Identifier)
+					}
+					tupleMap[tuple.String()] = tuple
+				}
+				continue
+			}
+		}
+
+		if strings.HasPrefix(perm.Action, "annotations:") && (perm.Kind == common.KindAnnotations || perm.Kind == scopeIdentifierWildcard) {
+			switch perm.Identifier {
+			case scopeIdentifierAnnotationsOrganization:
+				// The organization-wide annotations resource maps onto the whole group_resource.
+				perm.Identifier = scopeIdentifierWildcard
+			case scopeIdentifierWildcard:
+				// Like legacy RBAC, a wildcard annotation scope covers every annotation type (org and dashboard-scoped)
+				for _, kind := range []string{common.KindAnnotations, common.KindDashboards} {
+					translated, _ := TranslateToResourceTuples(subject, perm.Action, kind, scopeIdentifierWildcard)
+					for _, t := range translated {
+						tupleMap[t.String()] = t
+					}
+				}
+				continue
+			default:
+				continue
+			}
 		}
 
 		// Convert RBAC action/kind to Zanzana tuples.
@@ -538,6 +575,18 @@ func GetResourcePermissionDeleteTuples(req *authzextv1.DeletePermissionOperation
 	return deleteTuples, nil
 }
 
+// Service-account Edit deliberately excludes delete, unlike the generic edit relation.
+func serviceAccountActionSetRelations(permission string) []string {
+	switch permission {
+	case RelationSetEdit:
+		return []string{RelationGet, RelationUpdate}
+	case RelationSetAdmin:
+		return []string{RelationGet, RelationUpdate, RelationDelete, RelationGetPermissions, RelationSetPermissions}
+	default:
+		return nil
+	}
+}
+
 func resourcePermissionToTuples(resource *authzextv1.Resource, permission *authzextv1.Permission) ([]*openfgav1.TupleKey, error) {
 	if resource.GetResource() == "datasources" && strings.HasSuffix(resource.GetGroup(), datasourcek8s.K8sDatasourceAPIGroupSuffix) {
 		return nil, fmt.Errorf("datasource permissions must use the %s group", datasourcek8s.Group)
@@ -548,17 +597,30 @@ func resourcePermissionToTuples(resource *authzextv1.Resource, permission *authz
 	}
 
 	relation := strings.ToLower(permission.GetVerb())
+	if resource.GetGroup() == iamGroup && resource.GetResource() == common.KindServiceAccounts {
+		relations := serviceAccountActionSetRelations(relation)
+		if len(relations) == 0 {
+			relations = []string{relation}
+		}
+		tuples := make([]*openfgav1.TupleKey, 0, len(relations))
+		for _, relation := range relations {
+			tuples = append(tuples, common.NewTypedTuple(TypeServiceAccount, subject, relation, resource.GetName()))
+		}
+		return tuples, nil
+	}
 	if isDatasourcePermission(resource) {
 		return datasourcePermissionToTuples(subject, relation, resource), nil
 	}
 
 	tuples := []*openfgav1.TupleKey{newResourcePermissionTuple(subject, relation, resource, "")}
-	if relation == RelationSetEdit || relation == RelationSetAdmin {
-		switch resource.GetGroup() + "/" + resource.GetResource() {
-		case "folder.grafana.app/folders":
+	switch resource.GetGroup() + "/" + resource.GetResource() {
+	case "folder.grafana.app/folders":
+		if relation == RelationSetEdit || relation == RelationSetAdmin {
 			tuples = append(tuples, newResourcePermissionTuple(subject, RelationCreate, resource, ""))
-		case "dashboard.grafana.app/dashboards":
-			tuples = append(tuples, newResourcePermissionTuple(subject, RelationCreate, resource, "annotations"))
+		}
+	case "dashboard.grafana.app/dashboards":
+		for _, annotationRelation := range common.DashboardAnnotationRelations(relation, false) {
+			tuples = append(tuples, newResourcePermissionTuple(subject, annotationRelation, resource, "annotations"))
 		}
 	}
 	return tuples, nil

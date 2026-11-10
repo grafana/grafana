@@ -123,12 +123,12 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "initial",
-			Limit: 10,
+			Query:        "initial",
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(2), searchResp.TotalHits)
 	})
 
@@ -190,7 +190,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			})
 			require.NoError(t, err)
 			require.NotNil(t, createResp)
-			require.Nil(t, createResp.Error)
 		}
 	})
 
@@ -203,12 +202,12 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "Document",
-			Limit: 10,
+			Query:        "Document",
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(5), searchResp.TotalHits)
 	})
 
@@ -221,12 +220,12 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "hello",
-			Limit: 10,
+			Query:        "hello",
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		// finding a document by its tag using the query field is not supported anymore, so should return nothing here
 		// https://github.com/grafana/grafana/pull/111842
 		require.Equal(t, int64(0), searchResp.TotalHits)
@@ -245,11 +244,11 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Values:   []string{"hello"},
 				}},
 			},
-			Limit: 10,
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(3), searchResp.TotalHits)
 	})
 
@@ -262,12 +261,12 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "tag1",
-			Limit: 10,
+			Query:        "tag1",
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		// finding a document by its tag using the query field is not supported anymore, so should return nothing here
 		// https://github.com/grafana/grafana/pull/111842
 		require.Equal(t, int64(0), searchResp.TotalHits)
@@ -286,11 +285,11 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Values:   []string{"tag1"},
 				}},
 			},
-			Limit: 10,
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(1), searchResp.TotalHits)
 	})
 }

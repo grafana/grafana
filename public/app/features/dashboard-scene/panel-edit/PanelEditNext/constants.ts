@@ -46,7 +46,7 @@ export const SIDEBAR_COLLAPSE_BELOW_PIXELS = 260;
  */
 export const MIN_DATA_PANE_WIDTH = 400;
 /** Share of the editor height given to the viz before the user drags the viz/data splitter. */
-export const DEFAULT_VIZ_RATIO = 0.5;
+export const DEFAULT_VIZ_RATIO = 0.45;
 /** Below this height the bottom data pane snaps fully closed. */
 export const DATA_PANE_COLLAPSE_BELOW_PIXELS = 150;
 

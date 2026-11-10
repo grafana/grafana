@@ -1,18 +1,14 @@
-import { QueryStatus } from '@reduxjs/toolkit/query';
-import { isEmpty } from 'lodash';
 import { useEffect } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
-import { base64UrlEncode } from '@grafana/alerting';
 import {
   ContactPointSelector as GrafanaManagedContactPointSelector,
-  notificationsAPIv1beta1,
+  useResolvedContactPoint,
 } from '@grafana/alerting/unstable';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
-import { stringifyFieldSelector } from 'app/features/alerting/unified/utils/k8s/utils';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 export interface ContactPointSelectorProps {
@@ -20,29 +16,21 @@ export interface ContactPointSelectorProps {
 }
 
 export function ContactPointSelector({ alertManager }: ContactPointSelectorProps) {
-  const { control, watch, trigger } = useFormContext<RuleFormValues>();
+  const { control, trigger } = useFormContext<RuleFormValues>();
 
   const selectedContactPointField = `contactPoints.${alertManager}.selectedContactPoint` as const;
-  const contactPointInForm = watch(selectedContactPointField);
+  const contactPointInForm = useWatch({ control, name: selectedContactPointField });
 
-  // check if the contact point still exists, we'll use listReceiver to check if the contact point exists because getReceiver doesn't work with
-  // contact point titles but with UUIDs (which is not what we store on the alert rule definition)
-  const encodedContactPoint = contactPointInForm ? base64UrlEncode(contactPointInForm) : '';
-  const { currentData, status } = notificationsAPIv1beta1.endpoints.listReceiver.useQuery(
-    {
-      fieldSelector: stringifyFieldSelector([['metadata.name', encodedContactPoint]]),
-    },
-    { skip: !contactPointInForm }
-  );
+  const { status, selectedContactPointId } = useResolvedContactPoint(contactPointInForm);
 
-  const contactPointNotFound = contactPointInForm && status === QueryStatus.fulfilled && isEmpty(currentData?.items);
+  const hasResolved = status === 'found' || status === 'notFound';
 
-  // validate the contact point and check if it still exists when we've gotten a response from the API
+  // validate reads the resolved status, so it has to re-run once the list answers
   useEffect(() => {
-    if (contactPointInForm && status === QueryStatus.fulfilled) {
+    if (hasResolved) {
       trigger(selectedContactPointField, { shouldFocus: true });
     }
-  }, [contactPointInForm, selectedContactPointField, status, trigger]);
+  }, [contactPointInForm, hasResolved, selectedContactPointField, trigger]);
 
   return (
     <Stack direction="row" alignItems="center">
@@ -60,7 +48,7 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
                   isClearable={false}
                   onChange={(contactPoint) => onChange(contactPoint.spec.title)}
                   width={50}
-                  value={contactPointInForm}
+                  value={selectedContactPointId ?? contactPointInForm}
                   data-testid={selectors.components.AlertRules.contactPointInput}
                 />
                 <LinkToContactPoints />
@@ -74,7 +62,7 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
           )}
           rules={{
             validate: () => {
-              if (contactPointNotFound) {
+              if (status === 'notFound') {
                 return t(
                   'alerting.contactPoints.validation.notFound',
                   `Contact point "{{contactPoint}}" could not be found`,

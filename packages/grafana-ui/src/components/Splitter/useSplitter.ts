@@ -363,33 +363,59 @@ export function useSplitter(options: UseSplitterOptions) {
     }
   }, [onSizeChanged, handleSize, measurementProp, getPrimaryFlexSize]);
 
-  // A pixel size has no 0-100 value to render up front, since that depends on the container. Measure
-  // it once laid out; drags and resets keep it current from then on. Checks after every render, not
-  // just the first: the panes can mount later than the hook, or remount as new elements.
+  // Snapping and surrounding layout changes resize panes outside the drag handlers. Observe live
+  // sizes in both sizing modes so collapsing or reopening cannot leave the announced value stale.
   useLayoutEffect(() => {
-    if (
-      !usePixels ||
-      !firstPaneRef.current ||
-      !containerRef.current ||
-      !splitterRef.current ||
-      splitterRef.current.hasAttribute('aria-valuenow')
-    ) {
+    const primaryPane = firstPaneRef.current;
+    const container = containerRef.current;
+    const handle = splitterRef.current;
+    if (!primaryPane || !container || !handle) {
       return;
     }
 
-    splitterRef.current.setAttribute(
-      'aria-valuenow',
-      pixelAriaValue(
-        firstPaneRef.current.getBoundingClientRect()[measurementProp],
-        containerRef.current.getBoundingClientRect()[measurementProp],
-        handleSize
-      )
-    );
+    const updateAriaValue = () => {
+      const containerPixels = container.getBoundingClientRect()[measurementProp];
+      if (containerPixels <= handleSize) {
+        return;
+      }
+
+      handle.setAttribute(
+        'aria-valuenow',
+        pixelAriaValue(primaryPane.getBoundingClientRect()[measurementProp], containerPixels, handleSize)
+      );
+    };
+    const observer = new ResizeObserver(updateAriaValue);
+    observer.observe(container, { box: 'border-box' });
+    observer.observe(primaryPane, { box: 'border-box' });
+    updateAriaValue();
+
+    return () => observer.disconnect();
+  });
+
+  // Floating overlays hide background controls from screen readers. Resize handles must also
+  // leave the tab order until the overlay restores them, including when an ancestor is hidden.
+  useLayoutEffect(() => {
+    const handle = splitterRef.current;
+    if (!handle) {
+      return;
+    }
+
+    const updateTabIndex = () => {
+      handle.tabIndex = handle.closest('[aria-hidden="true"]') ? -1 : 0;
+    };
+    const observer = new MutationObserver(updateTabIndex);
+    for (let element: HTMLElement | null = handle; element; element = element.parentElement) {
+      observer.observe(element, { attributes: true, attributeFilter: ['aria-hidden'] });
+    }
+    updateTabIndex();
+
+    return () => observer.disconnect();
   });
 
   const styles = useStyles2(getStyles, direction);
   const dragStyles = useStyles2(getDragStyles, dragPosition);
   const dragHandleStyle = direction === 'column' ? dragStyles.dragHandleHorizontal : dragStyles.dragHandleVertical;
+  const ariaOrientation: React.AriaAttributes['aria-orientation'] = direction === 'row' ? 'vertical' : 'horizontal';
   const id = useId();
 
   const primaryStyles: React.CSSProperties = {
@@ -447,6 +473,7 @@ export function useSplitter(options: UseSplitterOptions) {
       ref: splitterRef,
       style: { [measurementProp]: `${handleSize}px` },
       role: 'separator',
+      'aria-orientation': ariaOrientation,
       'aria-valuemin': 0,
       'aria-valuemax': 100,
       'aria-valuenow': usePixels ? undefined : initialSize * 100,

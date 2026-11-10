@@ -1,3 +1,4 @@
+import { Global } from '@emotion/react';
 import { useEffect } from 'react';
 import { useMatch, useParams } from 'react-router-dom-v5-compat';
 
@@ -61,6 +62,12 @@ export function NotebookScenePage() {
     };
   }, [stateManager, uid, isNew, notebooksEnabled]);
 
+  // Activated here, above UrlSyncContextProvider, rather than inside it. Deactivating the scene removes
+  // every listener on it, including the ones url sync registered, and with the activation inside the
+  // provider they were not restored: nothing wrote edit mode or the time range to the url again.
+  const renderedScene = notebooksEnabled && scene && !(isNew && scene.state.uid) ? scene : undefined;
+  useEffect(() => renderedScene?.activate(), [renderedScene]);
+
   if (!notebooksEnabled) {
     return <PageNotFound />;
   }
@@ -96,7 +103,6 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   // Varies with the mega menu, and this page is what knows there is an app header at all.
   const headerHeight = useChromeHeaderHeight();
 
-  useEffect(() => scene.activate(), [scene]);
   useTrackNotebookVisitForFeedback();
 
   // A blank notebook that has just been created by its first save: point the url at it instead of the
@@ -116,6 +122,10 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
 
   return (
     <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
+      {/* The page scrolls on `body`, so undo and redo make the scrollbar come and go and the content
+          would shift by its width. Only this surface: the embedded view and the PDF capture do not
+          use this page. */}
+      <Global styles={{ html: { scrollbarGutter: 'stable' } }} />
       {/* Composed here rather than by the scene: whether a surface shows the controls row is a
           property of the surface. Page's own wrapper is already a flex column, so this and the
           document below sit in it as siblings. The toolbar rides inside the row. */}

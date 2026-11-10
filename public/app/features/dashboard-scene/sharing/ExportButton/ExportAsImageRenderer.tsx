@@ -139,15 +139,15 @@ function RendererAlert() {
   }
 
   return (
-    <Alert severity="info" title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}>
-      <div>{t('share-modal.link.render-alert', 'Image renderer plugin not installed')}</div>
+    <Alert severity="info" title={t('share-modal.link.render-alert', 'Image renderer service not configured')}>
+      <div>{t('share-modal.link.render-alert', 'Image renderer service not configured')}</div>
       <div>
         <Trans i18nKey="share-modal.link.render-instructions">
-          To render an image, you must install the{' '}
-          <TextLink href="https://grafana.com/grafana/plugins/grafana-image-renderer" external>
-            Grafana image renderer plugin
+          To render an image, you must set up the{' '}
+          <TextLink href="https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/" external>
+            Grafana Image Renderer service
           </TextLink>
-          . Please contact your Grafana administrator to install the plugin.
+          . Please contact your Grafana administrator to set up the service.
         </Trans>
       </div>
     </Alert>

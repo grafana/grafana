@@ -73,7 +73,7 @@ export interface FieldConfig<TOptions = any> {
 
   /**
    * Enables viewers to update dashboard filters by interacting with this field in supported visualizations.
-   * Corresponds to the "Filter from values" option in the panel editor. Requires data source support for dashboard filters.
+   * Corresponds to the "Cross-filter" option in the panel editor. Requires data source support for dashboard filters.
    */
   filterable?: boolean;
 

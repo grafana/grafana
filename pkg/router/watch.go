@@ -10,7 +10,8 @@ import (
 
 // rejectUpgrade answers an upgrade request, which is how a client asks for a
 // watch over WebSocket. The router does not proxy upgrades, so it says so
-// rather than failing some other way.
+// rather than failing some other way. An HTTP/2 extended CONNECT (RFC 8441)
+// carries no Connection header and is not caught here.
 func rejectUpgrade(w http.ResponseWriter, req *http.Request) bool {
 	if !httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {
 		return false

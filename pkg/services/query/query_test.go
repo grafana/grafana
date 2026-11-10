@@ -20,9 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
@@ -35,15 +33,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -51,9 +45,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestIntegrationParseMetricRequest(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestParseMetricRequest(t *testing.T) {
 	t.Run("Test a simple single datasource query", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
@@ -510,9 +502,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 	})
 }
 
-func TestIntegrationQueryDataMultipleSources(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestQueryDataMultipleSources(t *testing.T) {
 	t.Run("can query multiple datasources", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		query1, err := simplejson.NewJson([]byte(`
@@ -695,9 +685,7 @@ func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 	})
 }
 
-func TestIntegrationQueryDataWithQSDSClient(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestQueryDataWithQSDSClient(t *testing.T) {
 	t.Run("can run a simple datasource query with a mt ds client", func(t *testing.T) {
 		stubbedResponse := &backend.QueryDataResponse{Responses: make(backend.Responses)}
 		testClient := &testClient{
@@ -758,6 +746,33 @@ func TestIntegrationQueryDataWithQSDSClient(t *testing.T) {
 			},
 			Debug: false,
 		}, testClient.queryDataLastCalledWith)
+	})
+}
+
+func TestQueryDataFromExpressionHeader(t *testing.T) {
+	dsQuery := `{"datasource": {"type": "mysql", "uid": "ds1"}, "refId": "A"}`
+
+	t.Run("panel query without an expression is not marked", func(t *testing.T) {
+		tc := setup(t, false, nil)
+
+		_, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricRequestWithQueries(t, dsQuery))
+		require.NoError(t, err)
+
+		require.NotNil(t, tc.pluginContext.req)
+		require.Empty(t, tc.pluginContext.req.GetHTTPHeader(HeaderFromExpression))
+	})
+
+	t.Run("expression request without the browser header is marked", func(t *testing.T) {
+		tc := setup(t, false, nil)
+
+		_, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricRequestWithQueries(t,
+			dsQuery,
+			`{"datasource": {"type": "__expr__", "uid": "__expr__"}, "refId": "B", "type": "math", "expression": "$A + 1"}`,
+		))
+		require.NoError(t, err)
+
+		require.NotNil(t, tc.pluginContext.req)
+		require.Equal(t, "true", tc.pluginContext.req.GetHTTPHeader(HeaderFromExpression))
 	})
 }
 
@@ -837,9 +852,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 	dc := &fakeDataSourceCache{cache: dss}
 	rv := &fakeDataSourceRequestValidator{}
 
-	sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+	cfg := setting.NewCfg()
 
 	fakeDatasourceService := &fakeDatasources.FakeDataSourceService{
 		DataSources:           dss,
@@ -858,7 +871,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		},
 		&fakeDatasources.FakeCacheService{},
 		fakeDatasourceService,
-		pluginSettings.ProvideService(sqlStore, secretsService),
+		&pluginsettings.FakePluginSettings{},
 		pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
 
@@ -891,7 +904,6 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 
 	return &testContext{
 		pluginContext:          pc,
-		secretStore:            ss,
 		pluginRequestValidator: rv,
 		queryService:           queryService,
 		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: identity.RoleAdmin, Namespace: "ns1"},
@@ -900,7 +912,6 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 
 type testContext struct {
 	pluginContext          *fakePluginClient
-	secretStore            secretskvs.SecretsKVStore
 	pluginRequestValidator *fakeDataSourceRequestValidator
 	queryService           *ServiceImpl // implementation belonging to this package
 	signedInUser           *user.SignedInUser

@@ -79,9 +79,26 @@ func routerTraceContext(req *http.Request) context.Context {
 }
 
 func newBackendTransport(base http.RoundTripper) http.RoundTripper {
-	return otelhttp.NewTransport(base, otelhttp.WithSpanNameFormatter(func(_ string, req *http.Request) string {
+	return otelhttp.NewTransport(base, otelhttp.WithPropagators(currentPropagator{}), otelhttp.WithSpanNameFormatter(func(_ string, req *http.Request) string {
 		return traceHTTPMethod(req.Method)
 	}))
+}
+
+// currentPropagator propagates with the global propagator of the moment, so a
+// transport built once follows otel.SetTextMapPropagator. The global one may
+// be a composite, which can't be compared, so it can't key a cache instead.
+type currentPropagator struct{}
+
+func (currentPropagator) Inject(ctx context.Context, carrier propagation.TextMapCarrier) {
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+}
+
+func (currentPropagator) Extract(ctx context.Context, carrier propagation.TextMapCarrier) context.Context {
+	return otel.GetTextMapPropagator().Extract(ctx, carrier)
+}
+
+func (currentPropagator) Fields() []string {
+	return otel.GetTextMapPropagator().Fields()
 }
 
 // internalSpanKind is the router's span kind option, built once: an option

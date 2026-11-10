@@ -3,12 +3,8 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Variable } from 'app/api/clients/dashboard/v2beta1';
 import { buildVariableResource } from 'app/features/variables-management/utils';
 
-import {
-  clearPredefinedVariablesCache,
-  fetchPredefinedVariables,
-  isPredefinedOrigin,
-  toControlSourceRef,
-} from './predefinedVariables';
+import { clearPredefinedVariablesCache } from './cache';
+import { fetchPredefinedVariables, isPredefinedOrigin, toControlSourceRef } from './predefinedVariables';
 
 const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'grafana.dashboardGlobalVariables';
 

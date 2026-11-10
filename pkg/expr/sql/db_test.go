@@ -445,6 +445,93 @@ func (ts *testSpan) AddEvent(name string, options ...trace.EventOption) {
 func (ts *testSpan) RecordError(err error, options ...trace.EventOption) {
 }
 
+func TestQueryFramesRepeatedColumnNames(t *testing.T) {
+	db := DB{}
+
+	run := func(t *testing.T, query string, input *data.Frame) *data.Frame {
+		t.Helper()
+		frame, err := db.QueryFrames(t.Context(), &testTracer{}, "B", query, []*data.Frame{input.SetRefID("A")})
+		require.NoError(t, err)
+		return frame
+	}
+
+	t.Run("SELECT * suffixes the second host column", func(t *testing.T) {
+		input := data.NewFrame("",
+			data.NewField("host", nil, []string{"a", "b"}),
+			data.NewField("host", nil, []string{"c", "d"}),
+		)
+		want := data.NewFrame("B",
+			data.NewField("host", nil, []string{"a", "b"}),
+			data.NewField("host_2", nil, []string{"c", "d"}),
+		).SetRefID("B")
+		if diff := cmp.Diff(want, run(t, "SELECT * FROM A", input), data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
+		}
+	})
+
+	t.Run("both host columns can be selected by name", func(t *testing.T) {
+		input := data.NewFrame("",
+			data.NewField("host", nil, []string{"a", "b"}),
+			data.NewField("host", nil, []string{"c", "d"}),
+		)
+		want := data.NewFrame("B",
+			data.NewField("host_2", nil, []string{"d"}),
+			data.NewField("host", nil, []string{"b"}),
+		).SetRefID("B")
+		got := run(t, "SELECT host_2, host FROM A WHERE host_2 = 'd'", input)
+		if diff := cmp.Diff(want, got, data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
+		}
+	})
+
+	t.Run("names that differ only by case are repeats", func(t *testing.T) {
+		input := data.NewFrame("",
+			data.NewField("host", nil, []string{"a"}),
+			data.NewField("Host", nil, []string{"b"}),
+		)
+		want := data.NewFrame("B",
+			data.NewField("host", nil, []string{"a"}),
+			data.NewField("Host_2", nil, []string{"b"}),
+		).SetRefID("B")
+		if diff := cmp.Diff(want, run(t, "SELECT host, Host_2 FROM A", input), data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
+		}
+	})
+
+	t.Run("a suffix the frame already uses is skipped", func(t *testing.T) {
+		input := data.NewFrame("",
+			data.NewField("host", nil, []string{"a"}),
+			data.NewField("host", nil, []string{"b"}),
+			data.NewField("HOST_2", nil, []string{"c"}),
+		)
+		want := data.NewFrame("B",
+			data.NewField("host", nil, []string{"a"}),
+			data.NewField("host_3", nil, []string{"b"}),
+			data.NewField("HOST_2", nil, []string{"c"}),
+		).SetRefID("B")
+		if diff := cmp.Diff(want, run(t, "SELECT * FROM A", input), data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
+		}
+	})
+}
+
+func TestSchemaFromFrameUniqueNames(t *testing.T) {
+	frame := data.NewFrame("",
+		data.NewField("host", nil, []string{}),
+		data.NewField("Host", nil, []string{}),
+		data.NewField("host_2", nil, []string{}),
+		data.NewField("value", nil, []float64{}),
+		data.NewField("host", nil, []string{}),
+	).SetRefID("A")
+
+	names := make([]string, 0, len(frame.Fields))
+	for _, col := range SchemaFromFrame(frame) {
+		names = append(names, col.Name)
+	}
+	require.Equal(t, []string{"host", "Host_3", "host_2", "value", "host_4"}, names)
+	require.Equal(t, "Host", frame.Fields[1].Name, "the input frame must not change")
+}
+
 func TestQueryFrames_EnumField(t *testing.T) {
 	enumConfig := &data.FieldConfig{TypeConfig: &data.FieldTypeConfig{
 		Enum: &data.EnumFieldConfig{Text: []string{"Unknown", "Up", "Down"}},
@@ -495,6 +582,55 @@ func TestQueryFrames_EnumField(t *testing.T) {
 			frame, err := db.QueryFrames(context.Background(), &testTracer{}, "B", tt.query, data.Frames{input})
 			require.NoError(t, err)
 			if diff := cmp.Diff(tt.expected, frame.Fields, data.FrameTestCompareOptions()...); diff != "" {
+				require.FailNowf(t, "Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestQueryFrames_NullFromNonNullableColumn(t *testing.T) {
+	input := data.NewFrame("A",
+		data.NewField("line", nil, []string{"a", "b", "c"}),
+		data.NewField("labels", nil, []json.RawMessage{
+			json.RawMessage(`{"level":"info"}`),
+			json.RawMessage(`{}`),
+			json.RawMessage(`{"level":"error"}`),
+		}),
+	).SetRefID("A")
+
+	info, errLevel := "info", "error"
+
+	tests := []struct {
+		name     string
+		query    string
+		expected *data.Field
+	}{
+		{
+			name:     "JSON_UNQUOTE of a missing key after a value",
+			query:    `SELECT JSON_UNQUOTE(JSON_EXTRACT(labels, '$.level')) AS level FROM A ORDER BY line`,
+			expected: data.NewField("level", nil, []*string{&info, nil, &errLevel}),
+		},
+		{
+			name:     "JSON_UNQUOTE of a missing key in the first row",
+			query:    `SELECT JSON_UNQUOTE(JSON_EXTRACT(labels, '$.level')) AS level FROM A WHERE line != 'a' ORDER BY line`,
+			expected: data.NewField("level", nil, []*string{nil, &errLevel}),
+		},
+		{
+			// go-mysql-server returns NULL here; MySQL returns 0. This case
+			// depends on that quirk, so an engine upgrade may change it.
+			name:     "JSON_LENGTH of an empty array",
+			query:    `SELECT JSON_LENGTH('[]') AS n`,
+			expected: data.NewField("n", nil, []*int64{nil}),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := DB{}
+			frame, err := db.QueryFrames(context.Background(), &testTracer{}, "B", tt.query, data.Frames{input})
+			require.NoError(t, err)
+			require.Len(t, frame.Fields, 1)
+			if diff := cmp.Diff(tt.expected, frame.Fields[0], data.FrameTestCompareOptions()...); diff != "" {
 				require.FailNowf(t, "Result mismatch (-want +got):\n%s", diff)
 			}
 		})
