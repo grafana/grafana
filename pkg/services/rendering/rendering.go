@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -64,6 +65,11 @@ type Plugin interface {
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remoteCache *remotecache.RemoteCache, rm PluginManager) (*RenderingService, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {
+		return nil, fmt.Errorf("renderAuthJWT is not supported in Grafana 12.4; disable it to use cache-based render authentication")
+	}
+
 	folders := []string{
 		cfg.ImagesDir,
 		cfg.CSVsDir,
@@ -120,9 +126,10 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		}
 	} else {
 		renderKeyProvider = &perRequestRenderKeyProvider{
-			cache:     remoteCache,
-			log:       logger,
-			keyExpiry: cfg.RendererRenderKeyLifeTime,
+			cache:      remoteCache,
+			log:        logger,
+			keyExpiry:  cfg.RendererRenderKeyLifeTime,
+			namespacer: request.GetNamespaceMapper(cfg),
 		}
 	}
 

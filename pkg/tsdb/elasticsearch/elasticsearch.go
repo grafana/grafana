@@ -204,19 +204,73 @@ func isFieldCaps(url string) bool {
 	return strings.HasSuffix(url, "/_field_caps") || url == "_field_caps"
 }
 
+func isMapping(url string) bool {
+	return strings.HasSuffix(url, "/_mapping") || url == "_mapping"
+}
+
+// isAllowedResourcePath reports whether path is one of the resource calls
+// this plugin actually issues:
+//   - empty string for fetching db version
+//   - <index>/_mapping or _mapping for fetching index mappings
+//   - <index>/_field_caps or _field_caps for fetching field capabilities
+//   - _msearch for executing getTerms queries
+//
+// Named to match isAllowedResourcePath in the sibling fix for this same
+// vulnerability class (grafana-azure-monitor-datasource#120, VUL-2026-0236)
+// so a reviewer grepping across repos for it finds this one too.
+//
+// Rejects any "." or ".." segment and any "%" in the path portion (before
+// the query string, if any). The "." /".." check matters because
+// createElasticsearchURL joins this path onto the datasource's configured
+// base URL with path.Join, which silently collapses "..": a path like
+// "../otherindex/_mapping" still ends in "/_mapping" (passing the suffix
+// check below) but resolves to a completely different index once joined,
+// escaping whatever index/tenant the base URL was meant to scope this
+// datasource to. The "%" check mirrors azure-monitor#120's rationale: a
+// literal "%" surviving Go's own single percent-decode can only be an
+// escaped escape, which risks being decoded a second time by whatever is
+// on the other end -- Elasticsearch itself, in our case.
+func isAllowedResourcePath(reqPath string) bool {
+	rawPath := reqPath
+	if i := strings.IndexByte(rawPath, '?'); i >= 0 {
+		rawPath = rawPath[:i]
+	}
+	if strings.Contains(rawPath, "%") {
+		return false
+	}
+	for _, segment := range strings.Split(rawPath, "/") {
+		if segment == "." || segment == ".." {
+			return false
+		}
+	}
+
+	return rawPath == "" || isFieldCaps(rawPath) || rawPath == "_msearch" || isMapping(rawPath)
+}
+
+// isAllowedMethod reports whether method is safe to forward for reqPath.
+// This plugin only ever reads db version, field caps, and mappings (GET)
+// and only ever POSTs to _msearch -- it never sends PUT/POST to
+// "_mapping". Without this check, CallResource forwarded req.Method
+// unchanged, and both PUT and POST to "<index>/_mapping" are real
+// Elasticsearch writes that rewrite the index's field mappings, so a
+// Viewer (who only needs datasources:query to reach this endpoint) could
+// use the resource proxy to modify index schemas.
+func isAllowedMethod(reqPath, method string) bool {
+	if reqPath == "_msearch" {
+		return method == http.MethodPost
+	}
+	return method == http.MethodGet
+}
+
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	logger := s.logger.FromContext(ctx)
-	// allowed paths for resource calls:
-	// - empty string for fetching db version
-	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
-	// - /_field_caps for fetching field capabilities, e.g. requests going to `index/_field_caps`
-	// - _msearch for executing getTerms queries
-	// - _mapping for fetching "root" index mappings
-	// - _field_caps for fetching "root" field capabilities
-	if req.Path != "" && !isFieldCaps(req.Path) && req.Path != "_msearch" &&
-		!strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_mapping" {
+	if !isAllowedResourcePath(req.Path) {
 		logger.Error("Invalid resource path", "path", req.Path)
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
+	}
+	if !isAllowedMethod(req.Path, req.Method) {
+		logger.Error("Invalid resource method", "path", req.Path, "method", req.Method)
+		return fmt.Errorf("invalid resource method %s for path: %s", req.Method, req.Path)
 	}
 
 	ds, err := s.getDSInfo(ctx, req.PluginContext)

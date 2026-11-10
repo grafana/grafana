@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -21,9 +22,10 @@ import (
 const renderKeyPrefix = "render-%s"
 
 type RenderUser struct {
-	OrgID   int64  `json:"org_id"`
-	UserID  int64  `json:"user_id"`
-	OrgRole string `json:"org_role"`
+	OrgID     int64  `json:"org_id"`
+	UserID    int64  `json:"user_id"`
+	OrgRole   string `json:"org_role"`
+	Namespace string `json:"namespace"`
 }
 
 type renderJWT struct {
@@ -31,7 +33,11 @@ type renderJWT struct {
 	jwt.RegisteredClaims
 }
 
-func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*RenderUser, bool) {
+func (rs *RenderingService) GetRenderUser(ctx context.Context, key string, orgID int64) (*RenderUser, bool) {
+	if !rs.IsAvailable(ctx) {
+		return nil, false
+	}
+
 	var from string
 	start := time.Now()
 
@@ -46,6 +52,15 @@ func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*Ren
 		renderUser = rs.getRenderUserFromCache(ctx, key)
 	}
 
+	if renderUser != nil {
+		// Subresource requests can omit the org; use the authenticated render user's org.
+		if orgID == 0 {
+			orgID = renderUser.OrgID
+		}
+		if renderUser.Namespace != request.GetNamespaceMapper(rs.Cfg)(orgID) {
+			renderUser = nil
+		}
+	}
 	found := renderUser != nil
 	success := strconv.FormatBool(found)
 	metrics.MRenderingUserLookupSummary.WithLabelValues(success, from).Observe(float64(time.Since(start)))
@@ -86,12 +101,13 @@ func (rs *RenderingService) getRenderUserFromCache(ctx context.Context, key stri
 	return ru
 }
 
-func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, renderKey string, expiry time.Duration) error {
+func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, renderKey string, expiry time.Duration, namespace string) error {
 	buf := bytes.NewBuffer(nil)
 	err := gob.NewEncoder(buf).Encode(&RenderUser{
-		OrgID:   opts.OrgID,
-		UserID:  opts.UserID,
-		OrgRole: string(opts.OrgRole),
+		OrgID:     opts.OrgID,
+		UserID:    opts.UserID,
+		OrgRole:   string(opts.OrgRole),
+		Namespace: namespace,
 	})
 	if err != nil {
 		return err
@@ -100,13 +116,13 @@ func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts Auth
 	return cache.Set(ctx, fmt.Sprintf(renderKeyPrefix, renderKey), buf.Bytes(), expiry)
 }
 
-func generateAndSetRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, expiry time.Duration) (string, error) {
+func generateAndSetRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, expiry time.Duration, namespace string) (string, error) {
 	key, err := util.GetRandomString(32)
 	if err != nil {
 		return "", err
 	}
 
-	err = setRenderKey(cache, ctx, opts, key, expiry)
+	err = setRenderKey(cache, ctx, opts, key, expiry, namespace)
 	if err != nil {
 		return "", err
 	}
@@ -123,7 +139,7 @@ type longLivedRenderKeyProvider struct {
 }
 
 func (rs *RenderingService) CreateRenderingSession(ctx context.Context, opts AuthOpts, sessionOpts SessionOpts) (Session, error) {
-	renderKey, err := generateAndSetRenderKey(rs.RemoteCacheService, ctx, opts, sessionOpts.Expiry)
+	renderKey, err := generateAndSetRenderKey(rs.RemoteCacheService, ctx, opts, sessionOpts.Expiry, "")
 	if err != nil {
 		return nil, err
 	}
@@ -145,13 +161,14 @@ func deleteRenderKey(cache *remotecache.RemoteCache, log log.Logger, ctx context
 }
 
 type perRequestRenderKeyProvider struct {
-	cache     *remotecache.RemoteCache
-	log       log.Logger
-	keyExpiry time.Duration
+	cache      *remotecache.RemoteCache
+	log        log.Logger
+	keyExpiry  time.Duration
+	namespacer request.NamespaceMapper
 }
 
 func (r *perRequestRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (string, error) {
-	return generateAndSetRenderKey(r.cache, ctx, opts, r.keyExpiry)
+	return generateAndSetRenderKey(r.cache, ctx, opts, r.keyExpiry, r.namespacer(opts.OrgID))
 }
 
 func (r *perRequestRenderKeyProvider) afterRequest(ctx context.Context, _ AuthOpts, renderKey string) {
@@ -160,7 +177,7 @@ func (r *perRequestRenderKeyProvider) afterRequest(ctx context.Context, _ AuthOp
 
 func (r *longLivedRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (string, error) {
 	if r.sessionOpts.RefreshExpiryOnEachRequest {
-		err := setRenderKey(r.cache, ctx, opts, r.renderKey, r.sessionOpts.Expiry)
+		err := setRenderKey(r.cache, ctx, opts, r.renderKey, r.sessionOpts.Expiry, "")
 		if err != nil {
 			r.log.Error("Failed to refresh render key", "error", err, "renderKey", r.renderKey)
 		}

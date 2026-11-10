@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
 	claims "github.com/grafana/authlib/types"
@@ -110,12 +111,13 @@ func TestRender_Authenticate(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			renderService := rendering.NewMockService(ctrl)
-			renderService.EXPECT().GetRenderUser(gomock.Any(), tt.renderKey).Return(tt.expectedRenderUsr, tt.expectedRenderUsr != nil)
+			renderService.EXPECT().GetRenderUser(gomock.Any(), tt.renderKey, tt.req.OrgID).Return(tt.expectedRenderUsr, tt.expectedRenderUsr != nil)
 
 			c := ProvideRender(renderService)
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			if tt.expectedErr != nil {
-				assert.ErrorIs(t, tt.expectedErr, err)
+				require.ErrorIs(t, err, tt.expectedErr)
+				assert.NotContains(t, err.Error(), tt.renderKey)
 				assert.Nil(t, identity)
 			} else {
 				assert.NoError(t, err)

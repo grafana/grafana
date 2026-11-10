@@ -68,8 +68,15 @@ func (rs *RenderingService) generateImageRendererURL(renderType RenderType, opts
 	}
 
 	queryParams := imageRendererURL.Query()
-	url := rs.getGrafanaCallbackURL(opts.Path)
-	queryParams.Add("url", url)
+	path, err := url.Parse(opts.Path)
+	if err != nil {
+		return nil, err
+	}
+	params := path.Query()
+	params.Set("orgId", strconv.FormatInt(opts.OrgID, 10))
+	params.Set("targetOrgId", strconv.FormatInt(opts.OrgID, 10))
+	path.RawQuery = params.Encode()
+	queryParams.Add("url", rs.getGrafanaCallbackURL(path.String()))
 	queryParams.Add("renderKey", renderKey)
 	queryParams.Add("domain", rs.domain)
 	queryParams.Add("timezone", isoTimeOffsetToPosixTz(opts.Timezone))

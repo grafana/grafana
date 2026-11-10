@@ -303,6 +303,52 @@ func TestIndexPattern(t *testing.T) {
 	})
 }
 
+func TestIndexPatternTimeRangeLimit(t *testing.T) {
+	huge := backend.TimeRange{From: time.UnixMilli(-30610224000000), To: time.UnixMilli(9223372036854775807)}
+
+	for _, tc := range []struct{ interval, pattern string }{
+		{intervalHourly, "[logstash-]YYYY.MM.DD.HH"},
+		{intervalDaily, "[logstash-]YYYY.MM.DD"},
+		{intervalWeekly, "[logstash-]GGGG.WW"},
+		{intervalMonthly, "[logstash-]YYYY.MM"},
+		{intervalYearly, "[logstash-]YYYY"},
+	} {
+		t.Run("Rejects an unbounded range for "+tc.interval, func(t *testing.T) {
+			ip, err := NewIndexPattern(tc.interval, tc.pattern)
+			require.NoError(t, err)
+			indices, err := ip.GetIndices(huge)
+			require.Error(t, err)
+			assert.Empty(t, indices)
+		})
+	}
+
+	t.Run("Rejects a range just over the limit", func(t *testing.T) {
+		ip, err := NewIndexPattern(intervalHourly, "[logstash-]YYYY.MM.DD.HH")
+		require.NoError(t, err)
+		from := time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC)
+		_, err = ip.GetIndices(backend.TimeRange{From: from, To: from.Add(maxIndices * time.Hour)})
+		require.Error(t, err)
+	})
+
+	t.Run("Accepts a range below the limit", func(t *testing.T) {
+		ip, err := NewIndexPattern(intervalHourly, "[logstash-]YYYY.MM.DD.HH")
+		require.NoError(t, err)
+		from := time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC)
+		indices, err := ip.GetIndices(backend.TimeRange{From: from, To: from.Add((maxIndices - 2) * time.Hour)})
+		require.NoError(t, err)
+		assert.Len(t, indices, maxIndices-1)
+	})
+
+	t.Run("Does not panic for years before 1000", func(t *testing.T) {
+		ip, err := NewIndexPattern(intervalYearly, "[logstash-]GGGG.gg")
+		require.NoError(t, err)
+		from := time.Date(999, 6, 1, 0, 0, 0, 0, time.UTC)
+		indices, err := ip.GetIndices(backend.TimeRange{From: from, To: from})
+		require.NoError(t, err)
+		assert.Equal(t, []string{"logstash-999.99"}, indices)
+	})
+}
+
 func indexPatternScenario(t *testing.T, interval string, pattern string, timeRange backend.TimeRange, fn func(indices []string)) {
 	testName := fmt.Sprintf("Index pattern (interval=%s, index=%s", interval, pattern)
 	t.Run(testName, func(t *testing.T) {

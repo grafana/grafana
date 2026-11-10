@@ -73,13 +73,49 @@ func TestResource_Execute(t *testing.T) {
 	require.NoError(t, err)
 
 	req := &backend.CallResourceRequest{
-		URL: "/test",
+		Path: "/api/v1/labels",
+		URL:  "/api/v1/labels",
 	}
 	ctx := context.Background()
 
 	resp, err := res.Execute(ctx, req)
 	require.NoError(t, err)
 	assert.NotNil(t, resp)
+}
+
+func TestResource_ExecuteRejectsDisallowedPath(t *testing.T) {
+	mockClient, settings, logger := setup()
+	res, err := resource.New(mockClient, settings, logger)
+	require.NoError(t, err)
+
+	resp, err := res.Execute(context.Background(), &backend.CallResourceRequest{
+		Path: "-/reload",
+		URL:  "/-/reload",
+	})
+	require.NoError(t, err)
+	require.Equal(t, http.StatusForbidden, resp.Status)
+}
+
+func TestResource_GetSuggestionsRejectsLabelNamePathInjection(t *testing.T) {
+	mockClient, _, logger := setup()
+	settings := backend.DataSourceInstanceSettings{
+		ID:       1,
+		URL:      "http://localhost:9090",
+		JSONData: []byte(`{"httpMethod": "GET"}`),
+	}
+	res, err := resource.New(mockClient, settings, logger)
+	require.NoError(t, err)
+
+	suggestionReq := resource.SuggestionRequest{
+		LabelName: "../../-/reload",
+		Queries:   []string{"up"},
+	}
+	body, err := json.Marshal(suggestionReq)
+	require.NoError(t, err)
+
+	resp, err := res.GetSuggestions(context.Background(), &backend.CallResourceRequest{Body: body})
+	require.NoError(t, err)
+	require.Equal(t, http.StatusForbidden, resp.Status)
 }
 
 func TestResource_GetSuggestions(t *testing.T) {
