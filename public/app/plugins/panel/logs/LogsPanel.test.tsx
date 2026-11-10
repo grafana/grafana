@@ -298,7 +298,7 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
       expect(screen.queryByText('Show context')).not.toBeInTheDocument();
     });
 
-    it('should show the toggle if the datasource does support show context', async () => {
+    it('shows the context toggle, opens LogLineContext, and delegates context requests to the datasource', async () => {
       setup(
         {
           data: {
@@ -316,6 +316,12 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
 
       await userEvent.click((await screen.findAllByLabelText('Log menu'))[0]);
       expect(await screen.findByText('Show context')).toBeInTheDocument();
+      await userEvent.click(screen.getByText('Show context'));
+      expect(screen.getByText(/LogLineContext/i)).toBeInTheDocument();
+
+      const getRowContextCb = logLineContextMock.mock.calls[0][0].getRowContext;
+      getRowContextCb({}, {});
+      expect(showContextDs.getLogRowContext).toBeCalled();
     });
 
     it('should not show the toggle if the datasource does support show context but the app is not Dashboard', async () => {
@@ -336,26 +342,6 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
 
       await userEvent.click((await screen.findAllByLabelText('Log menu'))[0]);
       expect(screen.queryByText('Show context')).not.toBeInTheDocument();
-    });
-
-    it('should render the mocked `LogLineContext` after click', async () => {
-      setup(
-        {
-          data: {
-            ...defaultProps.data,
-            series,
-            request: {
-              ...defaultProps.data.request,
-              app: CoreApp.Dashboard,
-              targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
-            },
-          },
-        },
-        showControls
-      );
-      await userEvent.click((await screen.findAllByLabelText('Log menu'))[0]);
-      await userEvent.click(screen.getByText('Show context'));
-      expect(screen.getByText(/LogLineContext/i)).toBeInTheDocument();
     });
 
     it('passes the computed storage key to LogLineContext', async () => {
@@ -383,29 +369,6 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
           logOptionsStorageKey: 'abc123.42',
         })
       );
-    });
-
-    it('should call `getLogRowContext` if the user clicks the show context toggle', async () => {
-      setup(
-        {
-          data: {
-            ...defaultProps.data,
-            series,
-            request: {
-              ...defaultProps.data.request,
-              app: CoreApp.Dashboard,
-              targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
-            },
-          },
-        },
-        showControls
-      );
-      await userEvent.click((await screen.findAllByLabelText('Log menu'))[0]);
-      await userEvent.click(screen.getByText('Show context'));
-
-      const getRowContextCb = logLineContextMock.mock.calls[0][0].getRowContext;
-      getRowContextCb({}, {});
-      expect(showContextDs.getLogRowContext).toBeCalled();
     });
 
     it('supports adding custom options to the log row menu', async () => {
