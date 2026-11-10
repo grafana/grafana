@@ -27,7 +27,7 @@ This API complies with the new Grafana API structure. To learn more refer to doc
 
 {{< /admonition >}}
 
-Also known as the `collections` API, `/apis/collections.grafana.app/*` allows you to star and unstar your resources in Grafana.
+Also known as the `collections` API, `/apis/collections.grafana.app/*` allows you to star and unstar your resources in Grafana, and to manage the list of resources that a user has starred.
 
 This API replaces `POST` and `DELETE` `/api/user/stars/dashboard/uid/{dashboard_uid}`, which are now are deprecated, although they keep working with no functional change. **Use the generic Collections Stars API for any new integrations**.
 
@@ -39,6 +39,12 @@ These are the available endpoints:
 | ------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | PUT    | [Star a resource](#star-a-resource)     | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}` | /api/user/stars/dashboard/uid/{dashboard_uid} |
 | DELETE | [Unstar a resource](#unstar-a-resource) | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}` | /api/user/stars/dashboard/uid/{dashboard_uid} |
+| GET    | [List stars](#list-stars)               | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars`                                   |                                               |
+| GET    | [Get stars](#get-stars)                 | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`                            |                                               |
+| POST   | [Create stars](#create-stars)           | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars`                                   |                                               |
+| PUT    | [Replace stars](#replace-stars)         | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`                            |                                               |
+| PATCH  | [Patch stars](#patch-stars)             | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`                            |                                               |
+| DELETE | [Delete stars](#delete-stars)           | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`                            |                                               |
 
 ## Star a resource
 
@@ -97,6 +103,368 @@ The response contains the `Stars` resource of the signed-in user.
 - **Standard 4xx errors** apply for auth/authorization failures, since you can only manage your own stars
 
 Refer to [Star a resource](#star-a-resource) for more details.
+
+## List stars
+
+`GET /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars`
+
+Lists the `Stars` resources in the namespace that you have access to. Each `Stars` resource contains the starred resources of one user.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+**Query parameters**:
+
+- **`limit`** (optional): Maximum number of `Stars` resources to return.
+- **`continue`** (optional): Continue token from a previous response to fetch the next page.
+- **`labelSelector`** (optional): Return only `Stars` resources whose labels match the selector.
+- **`fieldSelector`** (optional): Return only `Stars` resources whose fields match the selector. For example, `metadata.name=user-a1b2c3d4`.
+
+### Example request
+
+The following example shows a request to list stars:
+
+```http
+GET /apis/collections.grafana.app/v1alpha1/namespaces/default/stars HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+### Example response
+
+The following example shows the response:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "kind": "StarsList",
+  "apiVersion": "collections.grafana.app/v1alpha1",
+  "metadata": {
+    "resourceVersion": "1762790400000000"
+  },
+  "items": [
+    {
+      "kind": "Stars",
+      "apiVersion": "collections.grafana.app/v1alpha1",
+      "metadata": {
+        "name": "user-a1b2c3d4",
+        "namespace": "default",
+        "resourceVersion": "1762790400000000",
+        "creationTimestamp": "2026-11-10T16:00:00Z"
+      },
+      "spec": {
+        "resource": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "Dashboard",
+            "names": ["abc123", "def456"]
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+### Status codes
+
+- **200** – OK
+- **401** – Unauthorized
+- **403** – Access denied
+
+## Get stars
+
+`GET /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`
+
+Returns the `Stars` resource with the given name, which contains all the resources that the user has starred.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The name of the `Stars` resource of the signed-in user, in the format `user-{user_uid}`. For example, `user-a1b2c3d4`.
+
+### Example request
+
+The following example shows a request to get stars:
+
+```http
+GET /apis/collections.grafana.app/v1alpha1/namespaces/default/stars/user-a1b2c3d4 HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+### Example response
+
+The following example shows the response:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "kind": "Stars",
+  "apiVersion": "collections.grafana.app/v1alpha1",
+  "metadata": {
+    "name": "user-a1b2c3d4",
+    "namespace": "default",
+    "resourceVersion": "1762790400000000",
+    "creationTimestamp": "2026-11-10T16:00:00Z"
+  },
+  "spec": {
+    "resource": [
+      {
+        "group": "dashboard.grafana.app",
+        "kind": "Dashboard",
+        "names": ["abc123", "def456"]
+      }
+    ]
+  }
+}
+```
+
+### Status codes
+
+- **200** – Found
+- **401** – Unauthorized
+- **403** – Access denied
+- **404** – Stars resource not found
+
+## Create stars
+
+`POST /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars`
+
+Creates the `Stars` resource of a user. To add a single resource to an existing `Stars` resource, use [Star a resource](#star-a-resource) instead.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+**Request body**:
+
+- `metadata.name`: Required. The name of the `Stars` resource, in the format `user-{user_uid}`.
+- `spec.resource`: Required. The list of starred resources, grouped by resource type. Each entry has a `group`, such as `dashboard.grafana.app`, a `kind`, such as `Dashboard`, and `names`, the list of UIDs of the starred resources of that type.
+
+### Example request
+
+The following example shows a request to create stars:
+
+```http
+POST /apis/collections.grafana.app/v1alpha1/namespaces/default/stars HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "metadata": {
+    "name": "user-a1b2c3d4"
+  },
+  "spec": {
+    "resource": [
+      {
+        "group": "dashboard.grafana.app",
+        "kind": "Dashboard",
+        "names": ["abc123", "def456"]
+      }
+    ]
+  }
+}
+```
+
+### Example response
+
+The following example shows the response:
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "kind": "Stars",
+  "apiVersion": "collections.grafana.app/v1alpha1",
+  "metadata": {
+    "name": "user-a1b2c3d4",
+    "namespace": "default",
+    "resourceVersion": "1762790400000000",
+    "creationTimestamp": "2026-11-10T16:00:00Z"
+  },
+  "spec": {
+    "resource": [
+      {
+        "group": "dashboard.grafana.app",
+        "kind": "Dashboard",
+        "names": ["abc123", "def456"]
+      }
+    ]
+  }
+}
+```
+
+### Status codes
+
+- **201** – Created
+- **400** – Errors (invalid JSON, missing or invalid fields)
+- **401** – Unauthorized
+- **403** – Access denied
+- **409** – Conflict, a `Stars` resource with the same name already exists
+
+## Replace stars
+
+`PUT /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`
+
+Replaces the `Stars` resource with the given name. The list in `spec.resource` replaces all the starred resources of the user. Include `metadata.resourceVersion` from the latest version you read to avoid overwriting changes.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The name of the `Stars` resource of the signed-in user, in the format `user-{user_uid}`. For example, `user-a1b2c3d4`.
+
+**Request body**:
+
+- `metadata.name`: Required. The name of the `Stars` resource, in the format `user-{user_uid}`.
+- `spec.resource`: Required. The list of starred resources, grouped by resource type. Each entry has a `group`, such as `dashboard.grafana.app`, a `kind`, such as `Dashboard`, and `names`, the list of UIDs of the starred resources of that type.
+
+### Example request
+
+The following example shows a request to replace stars:
+
+```http
+PUT /apis/collections.grafana.app/v1alpha1/namespaces/default/stars/user-a1b2c3d4 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "metadata": {
+    "name": "user-a1b2c3d4",
+    "resourceVersion": "1762790400000000"
+  },
+  "spec": {
+    "resource": [
+      {
+        "group": "dashboard.grafana.app",
+        "kind": "Dashboard",
+        "names": ["abc123"]
+      },
+      {
+        "group": "folder.grafana.app",
+        "kind": "Folder",
+        "names": ["fold789"]
+      }
+    ]
+  }
+}
+```
+
+### Example response
+
+The response contains the updated `Stars` resource. For an example, refer to the response in [Get stars](#get-stars).
+
+### Status codes
+
+- **200** – Updated
+- **400** – Errors (invalid JSON, missing or invalid fields)
+- **401** – Unauthorized
+- **403** – Access denied
+- **404** – Stars resource not found
+- **409** – Conflict, the `Stars` resource changed since you read it
+
+## Patch stars
+
+`PATCH /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`
+
+Updates only the fields you provide. Use a JSON merge patch with the `application/merge-patch+json` content type. A merge patch replaces arrays as a whole, so `spec.resource` must contain the full list of starred resources.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The name of the `Stars` resource of the signed-in user, in the format `user-{user_uid}`. For example, `user-a1b2c3d4`.
+
+### Example request
+
+The following example shows a request to patch stars:
+
+```http
+PATCH /apis/collections.grafana.app/v1alpha1/namespaces/default/stars/user-a1b2c3d4 HTTP/1.1
+Accept: application/json
+Content-Type: application/merge-patch+json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "spec": {
+    "resource": [
+      {
+        "group": "dashboard.grafana.app",
+        "kind": "Dashboard",
+        "names": ["abc123", "def456", "ghi789"]
+      }
+    ]
+  }
+}
+```
+
+### Example response
+
+The response contains the updated `Stars` resource. For an example, refer to the response in [Get stars](#get-stars).
+
+### Status codes
+
+- **200** – Updated
+- **400** – Errors (invalid JSON or patch)
+- **401** – Unauthorized
+- **403** – Access denied
+- **404** – Stars resource not found
+
+## Delete stars
+
+`DELETE /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`
+
+Deletes the `Stars` resource with the given name, which removes all the stars of the user. To remove a single resource, use [Unstar a resource](#unstar-a-resource) instead.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The name of the `Stars` resource of the signed-in user, in the format `user-{user_uid}`. For example, `user-a1b2c3d4`.
+
+### Example request
+
+The following example shows a request to delete stars:
+
+```http
+DELETE /apis/collections.grafana.app/v1alpha1/namespaces/default/stars/user-a1b2c3d4 HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+### Example response
+
+The following example shows the response:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "status": "Success",
+  "details": {
+    "name": "user-a1b2c3d4",
+    "group": "collections.grafana.app",
+    "kind": "stars"
+  }
+}
+```
+
+### Status codes
+
+- **200** – Deleted
+- **401** – Unauthorized
+- **403** – Access denied
+- **404** – Stars resource not found
 
 ## Migration steps
 
