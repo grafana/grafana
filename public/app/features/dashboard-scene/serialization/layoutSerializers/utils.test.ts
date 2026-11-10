@@ -672,7 +672,10 @@ describe('Text query migration on load', () => {
   });
 
   it.each([
-    ['13.2.9', '${__data.fields.cpu}', 0],
+    ['13.1.9', '${__data.fields.cpu}', 0],
+    ['13.2.0-pre', '${__data.fields.cpu}', 1],
+    ['13.2.9', '${__data.fields.cpu}', 1],
+    ['13.2.0', 'Static', 0],
     ['13.3.0', 'Static', 0],
     ['13.3.1', '{{data.0.cpu}}', 1],
     ['13.4.0', 'Static', 1],

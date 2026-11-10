@@ -7,7 +7,7 @@ import { type Options } from './panelcfg.gen';
 export function shouldClearTextQueries(pluginVersion: string | undefined, options: Partial<Options>): boolean {
   const version = parse(pluginVersion ?? '');
   if (version) {
-    if (version.major < 13 || (version.major === 13 && version.minor < 3)) {
+    if (version.major < 13 || (version.major === 13 && version.minor < 2)) {
       return true;
     }
     if (version.major > 13 || version.minor >= 4) {
