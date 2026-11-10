@@ -186,7 +186,10 @@ Each instance's certificate must meet the following requirements:
   Use a DNS SAN for a host name, and an IP SAN for an IP address, including an address that Grafana detects.
 - **TLS 1.2 or later:** Grafana doesn't accept older TLS versions on the cluster port.
 
-If instance IP addresses change, for example when containers restart, set `advertise_address` to a DNS name that resolves to each instance and issue the certificates for those names.
+If instance IP addresses change, for example when containers restart or virtual machines in a scale set or an autoscaling group are replaced, set `advertise_address` to a DNS name that resolves to each instance and issue the certificates for those names.
+
+You can give every instance its own certificate, or share one certificate whose SANs cover the names of all instances, for example a wildcard DNS SAN such as `*.grafana.example.internal`.
+On virtual machines, the agent of your secret store or certificate service can write the certificate files to each machine and replace them when it rotates them, and Grafana loads the new files without a restart.
 
 The following commands show one way to create a CA and a certificate for one instance with OpenSSL.
 Use your organization's certificate tooling for production certificates.
@@ -264,6 +267,8 @@ How you open the port depends on where the instances run:
   In the Grafana Helm chart, the `networkPolicy.natsCluster.enabled` option opens the cluster port between the Grafana Pods of the release, and it's on by default when `networkPolicy.enabled` is `true`.
   The port follows `[nats] cluster_port` in `grafana.ini`, then `6222`; set `networkPolicy.natsCluster.port` to override it.
 - **Host firewalls:** Allow inbound TCP port `6222` from the addresses of the other Grafana instances.
+
+If the instances already connect to each other for alerting high availability, which uses port `9094` by default, open `6222` with the same kind of rule.
 
 ## What changes for unified storage
 
