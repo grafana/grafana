@@ -65,11 +65,17 @@ func TestValidate(t *testing.T) {
 			wantFields: []string{"spec.source.url"},
 		},
 		{
-			name: "write workflow",
+			name: "write workflow lets Grafana edit the source",
 			repo: valid(func(r *provisioning.Repository) {
 				r.Spec.Workflows = []provisioning.Workflow{provisioning.WriteWorkflow}
 			}),
-			wantFields: []string{"spec.workflows"},
+		},
+		{
+			name: "a source has no branches",
+			repo: valid(func(r *provisioning.Repository) {
+				r.Spec.Workflows = []provisioning.Workflow{provisioning.BranchWorkflow}
+			}),
+			wantFields: []string{"spec.workflows[0]"},
 		},
 		{
 			name: "git-only options",

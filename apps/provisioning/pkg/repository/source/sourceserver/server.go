@@ -47,6 +47,10 @@ type Options struct {
 	Retained int
 	// MaxPageSize caps page sizes (default 1000).
 	MaxPageSize int
+	// Writable advertises and serves the write capability, so the source can be edited.
+	Writable bool
+	// Persist is called with the whole tree before an edit is published; an error aborts the edit.
+	Persist func(files map[string][]byte) error
 }
 
 type file struct {
@@ -63,6 +67,9 @@ var _ sourcev1.SourceServiceServer = (*Server)(nil)
 
 type Server struct {
 	opts Options
+
+	// writeMu serializes edits, which read the current tree and publish a new one.
+	writeMu sync.Mutex
 
 	mu        sync.RWMutex
 	snapshots []snapshot // oldest first; the last one is current
@@ -87,8 +94,7 @@ func (s *Server) Publish(files map[string][]byte) string {
 	snap := snapshot{files: make(map[string]file, len(files))}
 	paths := make([]string, 0, len(files))
 	for p, data := range files {
-		sum := sha256.Sum256(data)
-		snap.files[p] = file{data: data, hash: hex.EncodeToString(sum[:])}
+		snap.files[p] = file{data: data, hash: hashOf(data)}
 		paths = append(paths, p)
 	}
 	slices.Sort(paths)
@@ -110,6 +116,21 @@ func (s *Server) Publish(files map[string][]byte) string {
 		s.snapshots = s.snapshots[len(s.snapshots)-keep:]
 	}
 	return snap.revision
+}
+
+func hashOf(data []byte) string {
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:])
+}
+
+// Files returns a copy of the current tree, path to content.
+func (s *Server) Files() map[string][]byte {
+	head := s.current()
+	files := make(map[string][]byte, len(head.files))
+	for p, f := range head.files {
+		files[p] = f.data
+	}
+	return files
 }
 
 func (s *Server) retained() int {
@@ -147,6 +168,7 @@ func (s *Server) GetDescriptor(ctx context.Context, req *sourcev1.GetDescriptorR
 	caps := &sourcev1.Capabilities{
 		Revision: s.opts.Tier >= TierRevision,
 		Compare:  s.opts.Tier >= TierCompare,
+		Write:    s.opts.Writable,
 		Secrets:  []string{"inline"},
 	}
 	if s.opts.Tier >= TierHistory {
@@ -158,7 +180,7 @@ func (s *Server) GetDescriptor(ctx context.Context, req *sourcev1.GetDescriptorR
 		ApiVersion:   sourcev1.APIVersion,
 		Id:           s.opts.ID,
 		Capabilities: caps,
-		Limits:       &sourcev1.Limits{MaxFiles: 5000, MaxFileBytes: 5 << 20, MaxPageSize: int32(s.opts.MaxPageSize)},
+		Limits:       &sourcev1.Limits{MaxFiles: 5000, MaxFileBytes: maxFileBytes, MaxPageSize: int32(s.opts.MaxPageSize)},
 	}, nil
 }
 

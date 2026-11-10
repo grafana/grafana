@@ -24,6 +24,9 @@ const (
 	SourceService_GetRevision_FullMethodName   = "/grafana.source.v1.SourceService/GetRevision"
 	SourceService_GetTree_FullMethodName       = "/grafana.source.v1.SourceService/GetTree"
 	SourceService_GetFile_FullMethodName       = "/grafana.source.v1.SourceService/GetFile"
+	SourceService_PutFile_FullMethodName       = "/grafana.source.v1.SourceService/PutFile"
+	SourceService_DeleteFile_FullMethodName    = "/grafana.source.v1.SourceService/DeleteFile"
+	SourceService_Move_FullMethodName          = "/grafana.source.v1.SourceService/Move"
 	SourceService_Compare_FullMethodName       = "/grafana.source.v1.SourceService/Compare"
 )
 
@@ -40,7 +43,9 @@ const (
 // string; files are capped well below 2 GiB.
 //
 // Only GetTree and GetFile are required. Everything else is advertised in the
-// Descriptor, and a source that lacks a capability answers 501.
+// Descriptor, and a source that lacks a capability answers 501. A source that
+// advertises the write capability can also be edited: PutFile, DeleteFile and
+// Move each produce one new revision.
 type SourceServiceClient interface {
 	// GetDescriptor describes what the source implements. Cacheable (max-age=300).
 	GetDescriptor(ctx context.Context, in *GetDescriptorRequest, opts ...grpc.CallOption) (*Descriptor, error)
@@ -54,6 +59,17 @@ type SourceServiceClient interface {
 	// GetFile returns the raw bytes of a file. ETag equals the tree entry's hash.
 	// Files carry secrets, so responses send Cache-Control: no-store.
 	GetFile(ctx context.Context, in *GetFileRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error)
+	// PutFile creates or replaces a file. Capability: write. The request body is the
+	// raw file, sent with Content-Type: application/octet-stream. If-None-Match: * only creates (409 if it exists), If-Match: * only
+	// replaces (404 if it is missing) and If-Match: "<hash>" only replaces that
+	// version (412 otherwise). Without a condition the file is simply written.
+	PutFile(ctx context.Context, in *PutFileRequest, opts ...grpc.CallOption) (*Mutation, error)
+	// DeleteFile deletes a file, or with recursive every file under a directory.
+	// Capability: write.
+	DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*Mutation, error)
+	// Move renames a file, or with a trailing slash on both paths a directory, in one
+	// revision. The destination must not exist. Capability: write.
+	Move(ctx context.Context, in *MoveRequest, opts ...grpc.CallOption) (*Mutation, error)
 	// Compare returns the changes that turn the tree at base into the tree at
 	// head. Capability: compare, which requires history. Paths are readable at
 	// head; deleted paths and previous_path are readable at base.
@@ -108,6 +124,36 @@ func (c *sourceServiceClient) GetFile(ctx context.Context, in *GetFileRequest, o
 	return out, nil
 }
 
+func (c *sourceServiceClient) PutFile(ctx context.Context, in *PutFileRequest, opts ...grpc.CallOption) (*Mutation, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Mutation)
+	err := c.cc.Invoke(ctx, SourceService_PutFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sourceServiceClient) DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*Mutation, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Mutation)
+	err := c.cc.Invoke(ctx, SourceService_DeleteFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sourceServiceClient) Move(ctx context.Context, in *MoveRequest, opts ...grpc.CallOption) (*Mutation, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Mutation)
+	err := c.cc.Invoke(ctx, SourceService_Move_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *sourceServiceClient) Compare(ctx context.Context, in *CompareRequest, opts ...grpc.CallOption) (*CompareResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CompareResponse)
@@ -131,7 +177,9 @@ func (c *sourceServiceClient) Compare(ctx context.Context, in *CompareRequest, o
 // string; files are capped well below 2 GiB.
 //
 // Only GetTree and GetFile are required. Everything else is advertised in the
-// Descriptor, and a source that lacks a capability answers 501.
+// Descriptor, and a source that lacks a capability answers 501. A source that
+// advertises the write capability can also be edited: PutFile, DeleteFile and
+// Move each produce one new revision.
 type SourceServiceServer interface {
 	// GetDescriptor describes what the source implements. Cacheable (max-age=300).
 	GetDescriptor(context.Context, *GetDescriptorRequest) (*Descriptor, error)
@@ -145,6 +193,17 @@ type SourceServiceServer interface {
 	// GetFile returns the raw bytes of a file. ETag equals the tree entry's hash.
 	// Files carry secrets, so responses send Cache-Control: no-store.
 	GetFile(context.Context, *GetFileRequest) (*httpbody.HttpBody, error)
+	// PutFile creates or replaces a file. Capability: write. The request body is the
+	// raw file, sent with Content-Type: application/octet-stream. If-None-Match: * only creates (409 if it exists), If-Match: * only
+	// replaces (404 if it is missing) and If-Match: "<hash>" only replaces that
+	// version (412 otherwise). Without a condition the file is simply written.
+	PutFile(context.Context, *PutFileRequest) (*Mutation, error)
+	// DeleteFile deletes a file, or with recursive every file under a directory.
+	// Capability: write.
+	DeleteFile(context.Context, *DeleteFileRequest) (*Mutation, error)
+	// Move renames a file, or with a trailing slash on both paths a directory, in one
+	// revision. The destination must not exist. Capability: write.
+	Move(context.Context, *MoveRequest) (*Mutation, error)
 	// Compare returns the changes that turn the tree at base into the tree at
 	// head. Capability: compare, which requires history. Paths are readable at
 	// head; deleted paths and previous_path are readable at base.
@@ -166,6 +225,15 @@ func (UnimplementedSourceServiceServer) GetTree(context.Context, *GetTreeRequest
 }
 func (UnimplementedSourceServiceServer) GetFile(context.Context, *GetFileRequest) (*httpbody.HttpBody, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFile not implemented")
+}
+func (UnimplementedSourceServiceServer) PutFile(context.Context, *PutFileRequest) (*Mutation, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PutFile not implemented")
+}
+func (UnimplementedSourceServiceServer) DeleteFile(context.Context, *DeleteFileRequest) (*Mutation, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteFile not implemented")
+}
+func (UnimplementedSourceServiceServer) Move(context.Context, *MoveRequest) (*Mutation, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Move not implemented")
 }
 func (UnimplementedSourceServiceServer) Compare(context.Context, *CompareRequest) (*CompareResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Compare not implemented")
@@ -254,6 +322,60 @@ func _SourceService_GetFile_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SourceService_PutFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PutFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SourceServiceServer).PutFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SourceService_PutFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceServiceServer).PutFile(ctx, req.(*PutFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SourceService_DeleteFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SourceServiceServer).DeleteFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SourceService_DeleteFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceServiceServer).DeleteFile(ctx, req.(*DeleteFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SourceService_Move_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MoveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SourceServiceServer).Move(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SourceService_Move_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceServiceServer).Move(ctx, req.(*MoveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SourceService_Compare_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CompareRequest)
 	if err := dec(in); err != nil {
@@ -294,6 +416,18 @@ var SourceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFile",
 			Handler:    _SourceService_GetFile_Handler,
+		},
+		{
+			MethodName: "PutFile",
+			Handler:    _SourceService_PutFile_Handler,
+		},
+		{
+			MethodName: "DeleteFile",
+			Handler:    _SourceService_DeleteFile_Handler,
+		},
+		{
+			MethodName: "Move",
+			Handler:    _SourceService_Move_Handler,
 		},
 		{
 			MethodName: "Compare",

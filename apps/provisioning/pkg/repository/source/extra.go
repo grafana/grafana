@@ -195,9 +195,10 @@ func (e *extra) Validate(_ context.Context, obj runtime.Object) field.ErrorList 
 		}
 	}
 
-	if len(repo.Spec.Workflows) > 0 {
-		list = append(list, field.Invalid(field.NewPath("spec", "workflows"), repo.Spec.Workflows,
-			"source repositories are read-only"))
+	for i, w := range repo.Spec.Workflows {
+		if w != provisioning.WriteWorkflow {
+			list = append(list, field.NotSupported(field.NewPath("spec", "workflows").Index(i), w, []string{string(provisioning.WriteWorkflow)}))
+		}
 	}
 	if repo.Spec.Commit != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "commit"), repo.Spec.Commit,

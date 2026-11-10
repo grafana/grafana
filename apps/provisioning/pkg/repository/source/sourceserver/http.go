@@ -2,11 +2,13 @@ package sourceserver
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/textproto"
 	"strconv"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,16 +27,18 @@ const (
 
 // httpStatus maps an error code to the HTTP status the contract specifies.
 var httpStatus = map[string]int{
-	sourcev1.CodeBadRequest:       http.StatusBadRequest,
-	sourcev1.CodeUnauthorized:     http.StatusUnauthorized,
-	sourcev1.CodeForbidden:        http.StatusForbidden,
-	sourcev1.CodeSourceNotFound:   http.StatusNotFound,
-	sourcev1.CodeFileNotFound:     http.StatusNotFound,
-	sourcev1.CodeRevisionNotFound: http.StatusNotFound,
-	sourcev1.CodeRevisionGone:     http.StatusGone,
-	sourcev1.CodeRateLimited:      http.StatusTooManyRequests,
-	sourcev1.CodeNotSupported:     http.StatusNotImplemented,
-	sourcev1.CodeUnavailable:      http.StatusServiceUnavailable,
+	sourcev1.CodeBadRequest:         http.StatusBadRequest,
+	sourcev1.CodeUnauthorized:       http.StatusUnauthorized,
+	sourcev1.CodeForbidden:          http.StatusForbidden,
+	sourcev1.CodeSourceNotFound:     http.StatusNotFound,
+	sourcev1.CodeFileNotFound:       http.StatusNotFound,
+	sourcev1.CodeRevisionNotFound:   http.StatusNotFound,
+	sourcev1.CodeRevisionGone:       http.StatusGone,
+	sourcev1.CodeAlreadyExists:      http.StatusConflict,
+	sourcev1.CodePreconditionFailed: http.StatusPreconditionFailed,
+	sourcev1.CodeRateLimited:        http.StatusTooManyRequests,
+	sourcev1.CodeNotSupported:       http.StatusNotImplemented,
+	sourcev1.CodeUnavailable:        http.StatusServiceUnavailable,
 }
 
 // NewHandler is the REST binding of any SourceServiceServer: the paths come from the
@@ -44,14 +48,17 @@ var httpStatus = map[string]int{
 // A server returns errors built with fail, and sets etag, cache-control and x-http-code
 // with grpc.SetHeader to control the response headers and status.
 func NewHandler(srv sourcev1.SourceServiceServer) http.Handler {
-	mux := runtime.NewServeMux(
-		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.HTTPBodyMarshaler{
-			Marshaler: &runtime.JSONPb{
-				// Zero values stay on the wire ("complete": false); unset messages stay off.
-				MarshalOptions:   protojson.MarshalOptions{EmitDefaultValues: true},
-				UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: true},
-			},
-		}),
+	jsonMarshaler := &runtime.HTTPBodyMarshaler{
+		Marshaler: &runtime.JSONPb{
+			// Zero values stay on the wire ("complete": false); unset messages stay off.
+			MarshalOptions:   protojson.MarshalOptions{EmitDefaultValues: true},
+			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: true},
+		},
+	}
+
+	options := make([]runtime.ServeMuxOption, 0, 4+len(rawContentTypes))
+	options = append(options,
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, jsonMarshaler),
 		runtime.WithErrorHandler(func(_ context.Context, _ *runtime.ServeMux, _ runtime.Marshaler, w http.ResponseWriter, _ *http.Request, err error) {
 			writeError(w, err)
 		}),
@@ -73,12 +80,55 @@ func NewHandler(srv sourcev1.SourceServiceServer) http.Handler {
 			return nil
 		}),
 	)
+	// A file is uploaded as it is; every other content type is JSON.
+	for _, contentType := range rawContentTypes {
+		options = append(options, runtime.WithMarshalerOption(contentType, rawBodyMarshaler{jsonMarshaler}))
+	}
+	mux := runtime.NewServeMux(options...)
 
 	// Registering against the server directly keeps the hop in process.
 	if err := sourcev1.RegisterSourceServiceHandlerServer(context.Background(), mux, srv); err != nil {
 		panic(err) // only fails on a malformed route table, which is generated
 	}
-	return mux
+	return http.MaxBytesHandler(mux, maxFileBytes+maxRequestOverhead)
+}
+
+// maxRequestOverhead leaves room around a file for the rest of a request.
+const maxRequestOverhead = 64 << 10
+
+// rawContentTypes are the content types a file may be uploaded with.
+var rawContentTypes = []string{"application/octet-stream", "application/yaml", "application/x-yaml", "text/yaml", "text/plain"}
+
+// rawBodyMarshaler reads an uploaded file into an HttpBody without parsing it, and leaves
+// the rest, including the JSON responses, to the wrapped marshaler.
+type rawBodyMarshaler struct {
+	runtime.Marshaler
+}
+
+func (m rawBodyMarshaler) NewDecoder(r io.Reader) runtime.Decoder {
+	return rawBodyDecoder{r: r, fallback: m.Marshaler.NewDecoder(r)}
+}
+
+type rawBodyDecoder struct {
+	r        io.Reader
+	fallback runtime.Decoder
+}
+
+func (d rawBodyDecoder) Decode(v any) error {
+	field, ok := v.(**httpbody.HttpBody)
+	if !ok {
+		return d.fallback.Decode(v)
+	}
+
+	data, err := io.ReadAll(d.r)
+	if err != nil {
+		return err
+	}
+	if len(data) == 0 {
+		return io.EOF // an empty file; the generated handler treats it as no body
+	}
+	*field = &httpbody.HttpBody{Data: data}
+	return nil
 }
 
 // fail builds a status error carrying the contract's error code.
@@ -126,6 +176,10 @@ func reasonFor(c codes.Code) string {
 		return sourcev1.CodeForbidden
 	case codes.NotFound:
 		return sourcev1.CodeFileNotFound
+	case codes.AlreadyExists:
+		return sourcev1.CodeAlreadyExists
+	case codes.FailedPrecondition:
+		return sourcev1.CodePreconditionFailed
 	case codes.ResourceExhausted:
 		return sourcev1.CodeRateLimited
 	case codes.Unimplemented:

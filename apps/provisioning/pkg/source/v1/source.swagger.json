@@ -7,7 +7,7 @@
   "tags": [
     {
       "name": "SourceService",
-      "description": "SourceService is the Source API: a small, provider-neutral contract that\nProvisioning pulls a namespace's desired state from, instead of Git.\n\nThe HTTP/JSON binding below is the wire contract. gRPC is generated from the\nsame definition but is not part of v1: the API crosses trust boundaries where\nREST is the norm. Sizes are int32 because protobuf JSON encodes int64 as a\nstring; files are capped well below 2 GiB.\n\nOnly GetTree and GetFile are required. Everything else is advertised in the\nDescriptor, and a source that lacks a capability answers 501."
+      "description": "SourceService is the Source API: a small, provider-neutral contract that\nProvisioning pulls a namespace's desired state from, instead of Git.\n\nThe HTTP/JSON binding below is the wire contract. gRPC is generated from the\nsame definition but is not part of v1: the API crosses trust boundaries where\nREST is the norm. Sizes are int32 because protobuf JSON encodes int64 as a\nstring; files are capped well below 2 GiB.\n\nOnly GetTree and GetFile are required. Everything else is advertised in the\nDescriptor, and a source that lacks a capability answers 501. A source that\nadvertises the write capability can also be edited: PutFile, DeleteFile and\nMove each produce one new revision."
     }
   ],
   "consumes": [
@@ -148,6 +148,146 @@
         "tags": [
           "SourceService"
         ]
+      },
+      "delete": {
+        "summary": "DeleteFile deletes a file, or with recursive every file under a directory.\nCapability: write.",
+        "operationId": "SourceService_DeleteFile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Mutation"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          },
+          {
+            "name": "message",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "recursive",
+            "description": "Required to delete a directory, which removes every file under it.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "SourceService"
+        ]
+      },
+      "put": {
+        "summary": "PutFile creates or replaces a file. Capability: write. The request body is the\nraw file, sent with Content-Type: application/octet-stream. If-None-Match: * only creates (409 if it exists), If-Match: * only\nreplaces (404 if it is missing) and If-Match: \"\u003chash\u003e\" only replaces that\nversion (412 otherwise). Without a condition the file is simply written.",
+        "operationId": "SourceService_PutFile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Mutation"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          },
+          {
+            "name": "body",
+            "description": "The raw file; its content type is ignored.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiHttpBody"
+            }
+          },
+          {
+            "name": "message",
+            "description": "An optional description of the change, for sources that keep one.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SourceService"
+        ]
+      }
+    },
+    "/v1/sources/{id}/move": {
+      "post": {
+        "summary": "Move renames a file, or with a trailing slash on both paths a directory, in one\nrevision. The destination must not exist. Capability: write.",
+        "operationId": "SourceService_Move",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Mutation"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SourceServiceMoveBody"
+            }
+          }
+        ],
+        "tags": [
+          "SourceService"
+        ]
       }
     },
     "/v1/sources/{id}/revision": {
@@ -233,6 +373,20 @@
     }
   },
   "definitions": {
+    "SourceServiceMoveBody": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "apiHttpBody": {
       "type": "object",
       "properties": {
@@ -304,6 +458,10 @@
         "notify": {
           "type": "boolean",
           "description": "The source sends change hints."
+        },
+        "write": {
+          "type": "boolean",
+          "description": "PutFile, DeleteFile and Move are served, so the source can be edited."
         },
         "secrets": {
           "type": "array",
@@ -428,6 +586,16 @@
           "format": "int32"
         }
       }
+    },
+    "v1Mutation": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "description": "The revision the edit produced."
+        }
+      },
+      "description": "Mutation is the result of an edit."
     },
     "v1TreeEntry": {
       "type": "object",

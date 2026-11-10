@@ -1,7 +1,9 @@
 package source
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -39,6 +41,13 @@ var (
 		Code:    http.StatusNotFound,
 		Reason:  metav1.StatusReasonNotFound,
 		Message: "source not found",
+	}}
+	// ErrChanged means a conditional write found the file different from the version it was based on.
+	ErrChanged error = &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusConflict,
+		Reason:  metav1.StatusReasonConflict,
+		Message: "the file changed since it was read",
 	}}
 	// ErrEmptyTree means the source returned no files for a repository that manages resources.
 	// Syncing it would delete all of them; set spec.source.emptyTreePolicy to allow to do that on purpose.
@@ -219,6 +228,68 @@ func (c *Client) Tree(ctx context.Context, revision string, limits *sourcev1.Lim
 	}
 }
 
+// PutMode is the precondition of a file write.
+type PutMode int
+
+const (
+	// PutUpsert writes the file whether or not it exists.
+	PutUpsert PutMode = iota
+	// PutCreate fails if the file exists.
+	PutCreate
+	// PutReplace fails if the file does not exist.
+	PutReplace
+)
+
+// Put writes a file. The message describes the change for sources that keep one.
+func (c *Client) Put(ctx context.Context, path string, data []byte, message string, mode PutMode) error {
+	header := http.Header{"Content-Type": {"application/octet-stream"}}
+	switch mode {
+	case PutUpsert:
+		// no precondition
+	case PutCreate:
+		header.Set("If-None-Match", "*")
+	case PutReplace:
+		header.Set("If-Match", "*")
+	}
+	return c.mutate(ctx, http.MethodPut, "/files/"+escapePath(path), messageQuery(message), header, bytes.NewReader(data))
+}
+
+// Delete deletes a file, or every file under a directory when recursive.
+func (c *Client) Delete(ctx context.Context, path, message string, recursive bool) error {
+	query := messageQuery(message)
+	if recursive {
+		query.Set("recursive", "true")
+	}
+	return c.mutate(ctx, http.MethodDelete, "/files/"+escapePath(path), query, nil, nil)
+}
+
+// Move renames a file, or a directory when both paths end with a slash.
+func (c *Client) Move(ctx context.Context, from, to, message string) error {
+	body, err := json.Marshal(map[string]string{"from": from, "to": to, "message": message})
+	if err != nil {
+		return err
+	}
+	return c.mutate(ctx, http.MethodPost, "/move", nil, http.Header{"Content-Type": {"application/json"}}, bytes.NewReader(body))
+}
+
+func (c *Client) mutate(ctx context.Context, method, path string, query url.Values, header http.Header, body io.Reader) error {
+	resp, err := c.do(ctx, method, path, query, header, body)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, maxDescriptorBodySize))
+	return nil
+}
+
+func messageQuery(message string) url.Values {
+	query := url.Values{}
+	if message != "" {
+		query.Set("message", message)
+	}
+	return query
+}
+
 // TreeEmpty reports whether a revision has no files, reading a single entry.
 func (c *Client) TreeEmpty(ctx context.Context, revision string) (bool, error) {
 	query := url.Values{"limit": {"1"}}
@@ -312,12 +383,17 @@ func decode(r io.Reader, out proto.Message) error {
 
 // get returns the response for 200 and 304; every other status becomes an error.
 func (c *Client) get(ctx context.Context, path string, query url.Values, header http.Header) (*http.Response, error) {
+	return c.do(ctx, http.MethodGet, path, query, header, nil)
+}
+
+// do sends one request. It returns the response for any 2xx or 304; every other status becomes an error.
+func (c *Client) do(ctx context.Context, method, path string, query url.Values, header http.Header, body io.Reader) (*http.Response, error) {
 	u := c.base + path
 	if len(query) > 0 {
 		u += "?" + query.Encode()
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	req, err := http.NewRequestWithContext(ctx, method, u, body)
 	if err != nil {
 		return nil, fmt.Errorf("build source request: %w", err)
 	}
@@ -340,7 +416,7 @@ func (c *Client) get(ctx context.Context, path string, query url.Values, header 
 		return nil, fmt.Errorf("%w: %w", repository.ErrServerUnavailable, err)
 	}
 
-	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotModified {
+	if resp.StatusCode/100 == 2 || resp.StatusCode == http.StatusNotModified {
 		return resp, nil
 	}
 	defer func() { _ = resp.Body.Close() }()
@@ -373,6 +449,10 @@ func errorFromResponse(resp *http.Response) error {
 		sentinel = repository.ErrRefNotFound
 	case resp.StatusCode == http.StatusNotFound:
 		sentinel = repository.ErrFileNotFound
+	case resp.StatusCode == http.StatusConflict && body.GetCode() == sourcev1.CodeAlreadyExists:
+		sentinel = repository.ErrFileAlreadyExists
+	case resp.StatusCode == http.StatusPreconditionFailed:
+		sentinel = ErrChanged
 	case resp.StatusCode == http.StatusTooManyRequests:
 		sentinel = repository.ErrTooManyRequests
 	case resp.StatusCode == http.StatusNotImplemented:

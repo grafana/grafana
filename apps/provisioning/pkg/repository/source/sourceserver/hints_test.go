@@ -64,3 +64,20 @@ func TestNotifyJob(t *testing.T) {
 	status = http.StatusForbidden
 	assert.ErrorContains(t, srv.NotifyJob(t.Context(), receiver.Client(), receiver.URL), "403")
 }
+
+func TestSaveDirRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	first := map[string][]byte{"a.json": []byte("a"), "sub/b.yaml": []byte("b"), "empty/.keep": {}}
+	require.NoError(t, sourceserver.SaveDir(dir, first))
+
+	loaded, err := sourceserver.LoadDir(dir)
+	require.NoError(t, err)
+	assert.Equal(t, first, loaded, "folder markers survive a reload")
+
+	// An edit that removes a file and an entire directory leaves nothing behind.
+	require.NoError(t, sourceserver.SaveDir(dir, map[string][]byte{"a.json": []byte("a2")}))
+	loaded, err = sourceserver.LoadDir(dir)
+	require.NoError(t, err)
+	assert.Equal(t, map[string][]byte{"a.json": []byte("a2")}, loaded)
+	assert.NoDirExists(t, dir+"/sub")
+}

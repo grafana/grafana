@@ -7,16 +7,18 @@ const APIVersion = Group + "/v1"
 
 // Error codes carried in Error.Code and in the ErrorInfo reason of a gRPC status.
 const (
-	CodeBadRequest       = "bad_request"
-	CodeUnauthorized     = "unauthorized"
-	CodeForbidden        = "forbidden"
-	CodeSourceNotFound   = "source_not_found"
-	CodeFileNotFound     = "file_not_found"
-	CodeRevisionNotFound = "revision_not_found"
-	CodeRevisionGone     = "revision_gone"
-	CodeRateLimited      = "rate_limited"
-	CodeNotSupported     = "not_supported"
-	CodeUnavailable      = "unavailable"
+	CodeBadRequest         = "bad_request"
+	CodeUnauthorized       = "unauthorized"
+	CodeForbidden          = "forbidden"
+	CodeSourceNotFound     = "source_not_found"
+	CodeFileNotFound       = "file_not_found"
+	CodeRevisionNotFound   = "revision_not_found"
+	CodeRevisionGone       = "revision_gone"
+	CodeAlreadyExists      = "already_exists"
+	CodePreconditionFailed = "precondition_failed"
+	CodeRateLimited        = "rate_limited"
+	CodeNotSupported       = "not_supported"
+	CodeUnavailable        = "unavailable"
 )
 
 // Change actions.

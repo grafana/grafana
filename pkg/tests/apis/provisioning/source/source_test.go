@@ -10,7 +10,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -243,14 +242,4 @@ func TestIntegrationSource_FullSyncWithoutRevisions(t *testing.T) {
 	})
 	helper.SyncAndWait(t, repoName, nil)
 	helper.RequireRepoDashboardCount(t, repoName, 2)
-}
-
-func TestIntegrationSource_IsReadOnly(t *testing.T) {
-	helper := sharedHelper(t)
-
-	_, url, _ := startSource(t, sourceserver.TierTree)
-	_, err := helper.Repositories.Resource.Create(t.Context(), sourceRepo("writable", url, "write"), metav1.CreateOptions{})
-	require.Error(t, err)
-	assert.True(t, apierrors.IsInvalid(err), "got %v", err)
-	assert.ErrorContains(t, err, "read-only")
 }

@@ -34,7 +34,7 @@ var (
 	_ repository.Versioned         = (*versionedSourceRepository)(nil)
 )
 
-// sourceRepository is a read-only repository backed by a Source API endpoint.
+// sourceRepository is a repository backed by a Source API endpoint. It can be edited when the source allows it.
 type sourceRepository struct {
 	config  *provisioning.Repository
 	client  *Client
@@ -78,9 +78,13 @@ func (r *sourceRepository) WithMaxFileSize(maxBytes int64) {
 
 // Test refreshes the descriptor, which proves the URL, the credentials and the contract version.
 func (r *sourceRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	_, err := r.client.Descriptor(ctx, true)
+	desc, err := r.client.Descriptor(ctx, true)
 	switch {
 	case err == nil:
+		if slices.Contains(r.config.Spec.Workflows, provisioning.WriteWorkflow) && !desc.GetCapabilities().GetWrite() {
+			return repository.FromFieldError(field.Invalid(field.NewPath("spec", "workflows"), r.config.Spec.Workflows,
+				"the source does not allow edits")), nil
+		}
 		return &provisioning.TestResults{Code: http.StatusOK, Success: true}, nil
 	case errors.Is(err, repository.ErrUnauthorized), errors.Is(err, repository.ErrPermissionDenied):
 		code := http.StatusUnauthorized
@@ -214,28 +218,87 @@ func treeEntries(entries []*sourcev1.TreeEntry) ([]repository.FileTreeEntry, err
 	return out, nil
 }
 
-// The sync worker only accepts a ReaderWriter, so the Writer half exists but refuses.
-// Admission already rejects write workflows, which keeps the UI from offering edits.
-var errReadOnly = apierrors.NewBadRequest("source repositories are read-only")
+// errReadOnly is returned for any edit of a source that does not advertise the write capability.
+var errReadOnly = apierrors.NewBadRequest("this source does not allow edits")
 
-func (r *sourceRepository) Create(context.Context, string, string, []byte, string) error {
-	return errReadOnly
+// Create writes a new file. A directory is written as a .keep marker, since sources list files only.
+func (r *sourceRepository) Create(ctx context.Context, p, ref string, data []byte, message string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+	return r.put(ctx, p, ref, data, message, PutCreate)
 }
 
-func (r *sourceRepository) Update(context.Context, string, string, []byte, string) error {
-	return errReadOnly
+func (r *sourceRepository) Update(ctx context.Context, p, ref string, data []byte, message string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
+	if safepath.IsDir(p) {
+		return apierrors.NewBadRequest("cannot update a directory")
+	}
+	return r.put(ctx, p, ref, data, message, PutReplace)
 }
 
-func (r *sourceRepository) Write(context.Context, string, string, []byte, string) error {
-	return errReadOnly
+func (r *sourceRepository) Write(ctx context.Context, p, ref string, data []byte, message string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+	return r.put(ctx, p, ref, data, message, PutUpsert)
 }
 
-func (r *sourceRepository) Delete(context.Context, string, string, string) error {
-	return errReadOnly
+func (r *sourceRepository) put(ctx context.Context, p, ref string, data []byte, message string, mode PutMode) error {
+	if err := r.writable(ref); err != nil {
+		return err
+	}
+	if safepath.IsDir(p) {
+		if data != nil {
+			return apierrors.NewBadRequest("data cannot be provided for a directory")
+		}
+		p, data = path.Join(strings.TrimSuffix(p, "/"), ".keep"), []byte{}
+	}
+	return refuseIfReadOnly(r.client.Put(ctx, p, data, message, mode))
 }
 
-func (r *sourceRepository) Move(context.Context, string, string, string, string) error {
-	return errReadOnly
+// Delete deletes a file, or every file under a directory.
+func (r *sourceRepository) Delete(ctx context.Context, p, ref, message string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Delete(start, err) }()
+
+	if err := r.writable(ref); err != nil {
+		return err
+	}
+	return refuseIfReadOnly(r.client.Delete(ctx, strings.TrimSuffix(p, "/"), message, safepath.IsDir(p)))
+}
+
+// Move renames a file or a directory in one revision.
+func (r *sourceRepository) Move(ctx context.Context, oldPath, newPath, ref, message string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Move(start, err) }()
+
+	if err := r.writable(ref); err != nil {
+		return err
+	}
+	if safepath.IsDir(oldPath) != safepath.IsDir(newPath) {
+		return apierrors.NewBadRequest("cannot move between file and directory types")
+	}
+	return refuseIfReadOnly(r.client.Move(ctx, oldPath, newPath, message))
+}
+
+// writable checks the source can be edited and the caller is not asking for a branch, which a source has none of.
+func (r *sourceRepository) writable(ref string) error {
+	if !r.desc.GetCapabilities().GetWrite() {
+		return errReadOnly
+	}
+	if ref != "" {
+		return apierrors.NewBadRequest("a source has no branches, so the ref must be empty")
+	}
+	return nil
+}
+
+// refuseIfReadOnly turns a source that stopped accepting edits into the same error as one that never did.
+func refuseIfReadOnly(err error) error {
+	if errors.Is(err, ErrNotSupported) {
+		return errReadOnly
+	}
+	return err
 }
 
 func (r *versionedSourceRepository) LatestRef(ctx context.Context) (string, error) {

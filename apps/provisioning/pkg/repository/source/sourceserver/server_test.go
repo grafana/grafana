@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -213,5 +214,199 @@ func TestWireErrors(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, status)
 		assert.Equal(t, "bad_request", got["code"])
 		assert.Equal(t, false, got["retryable"])
+	})
+}
+
+// send is get with a method and a body.
+func (w *wire) send(method, path string, body string, header ...string) (reply, []byte) {
+	w.t.Helper()
+	req, err := http.NewRequestWithContext(w.t.Context(), method, w.base+path, strings.NewReader(body))
+	require.NoError(w.t, err)
+	if method == http.MethodPut {
+		req.Header.Set("Content-Type", "application/octet-stream")
+	}
+	for i := 0; i+1 < len(header); i += 2 {
+		req.Header.Set(header[i], header[i+1])
+	}
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(w.t, err)
+	defer func() { _ = resp.Body.Close() }()
+	data, err := io.ReadAll(resp.Body)
+	require.NoError(w.t, err)
+	return reply{StatusCode: resp.StatusCode, Header: resp.Header}, data
+}
+
+func (w *wire) content(path string) (int, string) {
+	w.t.Helper()
+	resp, body := w.get("/files/" + path)
+	return resp.StatusCode, string(body)
+}
+
+func errorCode(t *testing.T, body []byte) string {
+	t.Helper()
+	var e map[string]any
+	require.NoError(t, json.Unmarshal(body, &e), string(body))
+	return e["code"].(string)
+}
+
+func TestWireWriteIsAdvertisedOnlyWhenServed(t *testing.T) {
+	for _, writable := range []bool{false, true} {
+		w, _ := newWire(t, sourceserver.Options{Writable: writable}, nil)
+		_, got := w.json("")
+		assert.Equal(t, writable, got["capabilities"].(map[string]any)["write"], "writable=%v", writable)
+	}
+
+	t.Run("a source that is not writable answers 501", func(t *testing.T) {
+		w, _ := newWire(t, sourceserver.Options{}, map[string][]byte{"a.yaml": []byte("a")})
+		resp, body := w.send(http.MethodPut, "/files/b.yaml", "b")
+		assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
+		assert.Equal(t, "not_supported", errorCode(t, body))
+
+		resp, _ = w.send(http.MethodDelete, "/files/a.yaml", "")
+		assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
+		resp, _ = w.send(http.MethodPost, "/move", `{"from":"a.yaml","to":"c.yaml"}`)
+		assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
+	})
+}
+
+func TestWirePutFile(t *testing.T) {
+	w, srv := newWire(t, sourceserver.Options{Writable: true, Tier: sourceserver.TierCompare}, map[string][]byte{"a.yaml": []byte("one")})
+	before := srv.Publish(map[string][]byte{"a.yaml": []byte("one")})
+
+	t.Run("creating answers 201 with the new version", func(t *testing.T) {
+		resp, body := w.send(http.MethodPut, "/files/dashboards/b.yaml?message=add+b", "bee", "If-None-Match", "*")
+		require.Equal(t, http.StatusCreated, resp.StatusCode, string(body))
+		assert.NotEmpty(t, resp.Header.Get("ETag"))
+
+		var mutation map[string]any
+		require.NoError(t, json.Unmarshal(body, &mutation))
+		assert.NotEqual(t, before, mutation["revision"], "an edit is a new revision")
+
+		status, content := w.content("dashboards/b.yaml")
+		assert.Equal(t, http.StatusOK, status)
+		assert.Equal(t, "bee", content)
+	})
+
+	t.Run("create-only refuses an existing file", func(t *testing.T) {
+		resp, body := w.send(http.MethodPut, "/files/a.yaml", "other", "If-None-Match", "*")
+		assert.Equal(t, http.StatusConflict, resp.StatusCode)
+		assert.Equal(t, "already_exists", errorCode(t, body))
+		_, content := w.content("a.yaml")
+		assert.Equal(t, "one", content, "nothing was written")
+	})
+
+	t.Run("replace-only refuses a missing file", func(t *testing.T) {
+		resp, body := w.send(http.MethodPut, "/files/missing.yaml", "x", "If-Match", "*")
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+		assert.Equal(t, "file_not_found", errorCode(t, body))
+	})
+
+	t.Run("a write conditioned on a version only replaces that version", func(t *testing.T) {
+		resp, _ := w.get("/files/a.yaml")
+		version := resp.Header.Get("ETag")
+
+		stale, body := w.send(http.MethodPut, "/files/a.yaml", "two", "If-Match", `"0000"`)
+		assert.Equal(t, http.StatusPreconditionFailed, stale.StatusCode, string(body))
+		assert.Equal(t, "precondition_failed", errorCode(t, body))
+
+		ok, _ := w.send(http.MethodPut, "/files/a.yaml", "two", "If-Match", version)
+		assert.Equal(t, http.StatusOK, ok.StatusCode)
+		_, content := w.content("a.yaml")
+		assert.Equal(t, "two", content)
+
+		again, _ := w.send(http.MethodPut, "/files/a.yaml", "three", "If-Match", version)
+		assert.Equal(t, http.StatusPreconditionFailed, again.StatusCode, "the version it was based on is gone")
+	})
+
+	t.Run("without a condition the file is written", func(t *testing.T) {
+		resp, _ := w.send(http.MethodPut, "/files/c.json", "{}")
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+		resp, _ = w.send(http.MethodPut, "/files/c.json", `{"a":1}`)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("a directory marker is a file", func(t *testing.T) {
+		resp, _ := w.send(http.MethodPut, "/files/empty/.keep", "")
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	})
+
+	t.Run("paths are checked", func(t *testing.T) {
+		for _, bad := range []string{"notes.txt", "a/../b.yaml", "a//b.yaml"} {
+			resp, body := w.send(http.MethodPut, "/files/"+bad, "x")
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode, bad)
+			assert.Equal(t, "bad_request", errorCode(t, body), bad)
+		}
+	})
+}
+
+func TestWireDeleteAndMove(t *testing.T) {
+	seed := map[string][]byte{
+		"a.yaml": []byte("a"), "dir/x.yaml": []byte("x"), "dir/sub/y.yaml": []byte("y"), "other/z.yaml": []byte("z"),
+	}
+	fresh := func(t *testing.T) *wire {
+		t.Helper()
+		w, _ := newWire(t, sourceserver.Options{Writable: true}, seed)
+		return w
+	}
+	paths := func(w *wire) []string {
+		_, tree := w.json("/tree")
+		entries := tree["entries"].([]any)
+		out := make([]string, 0, len(entries))
+		for _, e := range entries {
+			out = append(out, e.(map[string]any)["path"].(string))
+		}
+		return out
+	}
+
+	t.Run("delete a file", func(t *testing.T) {
+		w := fresh(t)
+		resp, _ := w.send(http.MethodDelete, "/files/a.yaml", "")
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.NotContains(t, paths(w), "a.yaml")
+	})
+	t.Run("delete a missing file", func(t *testing.T) {
+		resp, body := fresh(t).send(http.MethodDelete, "/files/nope.yaml", "")
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+		assert.Equal(t, "file_not_found", errorCode(t, body))
+	})
+	t.Run("a directory needs recursive", func(t *testing.T) {
+		w := fresh(t)
+		resp, _ := w.send(http.MethodDelete, "/files/dir", "")
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		resp, _ = w.send(http.MethodDelete, "/files/dir?recursive=true", "")
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, []string{"a.yaml", "other/z.yaml"}, paths(w), "everything under it, and nothing else")
+	})
+
+	t.Run("move a file", func(t *testing.T) {
+		w := fresh(t)
+		resp, _ := w.send(http.MethodPost, "/move", `{"from":"a.yaml","to":"renamed/a.yaml"}`)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Contains(t, paths(w), "renamed/a.yaml")
+		assert.NotContains(t, paths(w), "a.yaml")
+	})
+	t.Run("move a directory in one revision", func(t *testing.T) {
+		w := fresh(t)
+		_, before := w.json("/revision")
+		_ = before
+		resp, body := w.send(http.MethodPost, "/move", `{"from":"dir/","to":"moved/"}`)
+		require.Equal(t, http.StatusOK, resp.StatusCode, string(body))
+		assert.Equal(t, []string{"a.yaml", "moved/sub/y.yaml", "moved/x.yaml", "other/z.yaml"}, paths(w))
+	})
+	t.Run("the destination must not exist", func(t *testing.T) {
+		w := fresh(t)
+		resp, body := w.send(http.MethodPost, "/move", `{"from":"a.yaml","to":"other/z.yaml"}`)
+		assert.Equal(t, http.StatusConflict, resp.StatusCode)
+		assert.Equal(t, "already_exists", errorCode(t, body))
+		assert.Contains(t, paths(w), "a.yaml", "nothing moved")
+	})
+	t.Run("moving a missing source", func(t *testing.T) {
+		resp, _ := fresh(t).send(http.MethodPost, "/move", `{"from":"nope.yaml","to":"x.yaml"}`)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	})
+	t.Run("a file cannot become a directory", func(t *testing.T) {
+		resp, _ := fresh(t).send(http.MethodPost, "/move", `{"from":"a.yaml","to":"dir/"}`)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 }
