@@ -210,22 +210,13 @@ export function AppChrome({ children }: Props) {
               {state.sidePanel?.full}
             </div>
           )}
-          {showCompactSidePanel && (
-            <div
-              className={cx({
-                [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
-                [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-              })}
-            >
-              <div className={styles.sidePanelCompact}>{state.sidePanel?.compact}</div>
-            </div>
-          )}
           <main
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
               [styles.pageContainerSidePanel]: showSidePanel && !menuDockedAndOpen,
               [styles.pageContainerSidePanelDocked]: showSidePanel && menuDockedAndOpen,
+              [styles.pageContainerCompactSidePanel]: showCompactSidePanel,
               [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
               // Floating takes no width from the page, so the docked width is 0.
               [contentSizeStyles.contentWidth]:
@@ -235,6 +226,7 @@ export function AppChrome({ children }: Props) {
             tabIndex={-1}
             ref={fullscreenWorkspaceFeatureFlagEnabled ? portalHostRef : undefined}
           >
+            {showCompactSidePanel && <div className={styles.sidePanelCompact}>{state.sidePanel?.compact}</div>}
             {!fullscreenWorkspaceFeatureFlagEnabled && children}
           </main>
           {!state.chromeless &&
@@ -451,8 +443,30 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       }
     ),
     sidePanelCompact: css({
-      padding: visualRefreshEnabled ? theme.spacing(0.5, 0.5, 1) : theme.spacing(1, 2, 1),
+      padding: visualRefreshEnabled ? theme.spacing(1.5, 1.5, 1) : theme.spacing(1, 2, 1),
     }),
+    pageContainerCompactSidePanel: css(
+      visualRefreshEnabled && {
+        isolation: 'isolate',
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          zIndex: -1,
+          top: 0,
+          bottom: theme.spacing(0.5),
+          left: theme.spacing(0.5),
+          right: theme.spacing(0.5),
+          background: theme.colors.background.page,
+          border: `1px solid ${theme.colors.border.weak}`,
+          borderRadius: theme.shape.radius.lg,
+        },
+        '& [data-page-card]': {
+          ...pageCardJoinedToNav,
+          margin: `0 calc(${theme.spacing(0.5)} + 1px) calc(${theme.spacing(0.5)} + 1px)`,
+        },
+      }
+    ),
     sidePanelContainerDocked: css(
       {
         left: MENU_WIDTH,
