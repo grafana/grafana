@@ -581,6 +581,18 @@ describe('valueMappingsOverrideProcessor', () => {
     expect(replaceVariables).toHaveBeenCalledWith('Env $env', undefined, 'text');
   });
 
+  it('returns the mappings as they are when no display text has a $', () => {
+    const value: ValueMapping[] = [
+      { type: MappingType.ValueToText, options: { '1': { text: 'Up', index: 0 } } },
+      {
+        type: MappingType.SpecialValue,
+        options: { match: SpecialValueMatch.Null, result: { color: 'red', index: 1 } },
+      },
+    ];
+
+    expect(valueMappingsOverrideProcessor(value, makeContext({ env: 'prod' }), { interpolateText: true })).toBe(value);
+  });
+
   it('leaves the display texts as typed without interpolateText', () => {
     expect(valueMappingsOverrideProcessor(mappings, makeContext({ env: 'prod' }), {})).toBe(mappings);
   });

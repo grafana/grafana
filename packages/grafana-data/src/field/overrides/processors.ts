@@ -89,7 +89,7 @@ export const valueMappingsOverrideProcessor = (
   settings?: ValueMappingFieldConfigSettings
 ): ValueMapping[] => {
   const { replaceVariables } = context;
-  if (!settings?.interpolateText || !replaceVariables || !Array.isArray(value)) {
+  if (!settings?.interpolateText || !replaceVariables || !Array.isArray(value) || !value.some(hasTextWithDollar)) {
     return value;
   }
 
@@ -119,6 +119,12 @@ export const valueMappingsOverrideProcessor = (
     }
   });
 };
+
+function hasTextWithDollar(mapping: ValueMapping): boolean {
+  const results =
+    mapping.type === MappingType.ValueToText ? Object.values(mapping.options ?? {}) : [mapping.options?.result];
+  return results.some((result) => result?.text?.includes('$'));
+}
 
 export interface SelectFieldConfigSettings<T> {
   allowCustomValue?: boolean;
