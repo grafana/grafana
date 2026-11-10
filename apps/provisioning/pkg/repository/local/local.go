@@ -77,11 +77,20 @@ func (r *LocalFolderResolver) LocalPath(p string) (string, error) {
 
 	resolved := ResolvePath(r.HomePath, p)
 	for _, permitted := range r.PermittedPrefixes {
-		if safepath.InDir(resolved, permitted) {
+		if permits(permitted, resolved) {
 			return resolved, nil
 		}
 	}
 	return "", &InvalidLocalFolderError{p, "the path matches no permitted prefix"}
+}
+
+// permits reports whether p is the permitted directory itself or something beneath it.
+// The prefix is cleaned on the way in because the documented config form carries a trailing
+// slash, and containment is anchored on a separator so a sibling cannot match on a shared
+// name prefix.
+func permits(permitted, p string) bool {
+	permitted = safepath.Clean(permitted)
+	return p == permitted || safepath.InDir(p, safepath.EnsureTrailingSlash(permitted))
 }
 
 var (
@@ -111,10 +120,6 @@ func NewRepository(config *provisioning.Repository, resolver *LocalFolderResolve
 		r.path, _ = resolver.LocalPath(config.Spec.Local.Path)
 		if r.path != "" && !safepath.IsDir(r.path) {
 			r.path += "/"
-		}
-
-		for i, permitted := range r.resolver.PermittedPrefixes {
-			r.resolver.PermittedPrefixes[i] = safepath.Clean(permitted)
 		}
 	}
 

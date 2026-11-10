@@ -1892,3 +1892,54 @@ func TestResolvePathMatchesLocalPath(t *testing.T) {
 		})
 	}
 }
+
+func TestLocalPathAcceptsSlashSuffixedPermittedPrefix(t *testing.T) {
+	// conf/defaults.ini documents prefixes written with a trailing slash, e.g.
+	// "permitted_provisioning_paths = grafana/ | /etc/grafana/provisioning/", and an absolute
+	// entry keeps it verbatim through setting.makeAbsolute.
+	const prefix = "/srv/grafana/repo/"
+
+	for _, p := range []string{"repo", "repo/", "/srv/grafana/repo", "/srv/grafana/repo/", "repo/nested/"} {
+		t.Run(p, func(t *testing.T) {
+			r := &LocalFolderResolver{PermittedPrefixes: []string{prefix}, HomePath: "/srv/grafana"}
+
+			got, err := r.LocalPath(p)
+			require.NoError(t, err)
+			assert.Equal(t, ResolvePath("/srv/grafana", p), got)
+		})
+	}
+}
+
+func TestLocalPathRejectsSiblingOfPermittedPrefix(t *testing.T) {
+	for _, prefix := range []string{"/srv/grafana/repo", "/srv/grafana/repo/"} {
+		t.Run(prefix, func(t *testing.T) {
+			r := &LocalFolderResolver{PermittedPrefixes: []string{prefix}, HomePath: "/srv/grafana"}
+
+			_, err := r.LocalPath("repo2/")
+			require.Error(t, err, "a sibling sharing a name prefix must not be permitted")
+			assert.Contains(t, err.Error(), "matches no permitted prefix")
+		})
+	}
+}
+
+func TestLocalPathDoesNotDependOnARepositoryHavingBeenBuilt(t *testing.T) {
+	// The prefixes were once cleaned in NewRepository, which mutated the shared resolver and
+	// made admission's answer depend on whether a repository had been built first.
+	prefixes := []string{"/srv/grafana/repo/"}
+	resolver := &LocalFolderResolver{PermittedPrefixes: prefixes, HomePath: "/srv/grafana"}
+
+	before, err := resolver.LocalPath("repo/")
+	require.NoError(t, err)
+
+	NewRepository(&provisioning.Repository{
+		Spec: provisioning.RepositorySpec{
+			Type:  provisioning.LocalRepositoryType,
+			Local: &provisioning.LocalRepositoryConfig{Path: "repo/"},
+		},
+	}, resolver, nil)
+
+	after, err := resolver.LocalPath("repo/")
+	require.NoError(t, err)
+	assert.Equal(t, before, after)
+	assert.Equal(t, prefixes, resolver.PermittedPrefixes, "the resolver's prefixes must not be mutated")
+}
