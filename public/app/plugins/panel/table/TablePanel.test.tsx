@@ -269,11 +269,13 @@ describe('fit-content max height', () => {
     fitMaxHeight,
     tableOptions = pagedOptions,
     tableFieldConfig = fieldConfig,
+    fitContent = true,
   }: {
     series: DataFrame[];
     fitMaxHeight?: number;
     tableOptions?: TableOptions;
     tableFieldConfig?: FieldConfigSource;
+    fitContent?: boolean;
   }) {
     const withOverrides = applyFieldOverrides({
       data: series,
@@ -286,7 +288,7 @@ describe('fit-content max height', () => {
       fieldConfig: tableFieldConfig,
       width: 800,
       data: { series: withOverrides, state: LoadingState.Done, timeRange: getDefaultTimeRange() },
-      fitContent: true,
+      fitContent,
       fitMaxHeight,
     });
     return render(
@@ -348,6 +350,29 @@ describe('fit-content max height', () => {
     // The picker reserve leaves room for 5 rows per page instead of 6: 10 pages, not 9.
     expect(dataRowCount(container)).toBe(5);
     expect(screen.getByRole('button', { name: '10' })).toBeInTheDocument();
+  });
+
+  it('renders multi-frame tables at fixed height with a picker', () => {
+    const { container } = renderFitContentTable({
+      series: [makeRowsFrame(50, 'a'), makeRowsFrame(50, 'b')],
+      fitContent: false,
+    });
+    expect(screen.getByRole('combobox', { name: 'Query' })).toBeInTheDocument();
+    expect(dataRowCount(container)).toBeGreaterThan(0);
+  });
+
+  it('renders the picker without panel padding under table refresh', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true });
+    const capped = renderFitContentTable({
+      series: [makeRowsFrame(50, 'a'), makeRowsFrame(50, 'b')],
+      fitMaxHeight: 320,
+    });
+    expect(screen.getByRole('combobox', { name: 'Query' })).toBeInTheDocument();
+    capped.unmount();
+    renderFitContentTable({
+      series: [makeRowsFrame(50, 'a'), makeRowsFrame(50, 'b')],
+    });
+    expect(screen.getByRole('combobox', { name: 'Query' })).toBeInTheDocument();
   });
 
   it('honours a configured page size under a cap', () => {
