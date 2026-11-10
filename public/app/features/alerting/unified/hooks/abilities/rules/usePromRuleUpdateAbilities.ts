@@ -16,6 +16,7 @@ import {
 import { isFetchError } from '@grafana/runtime';
 import { useFlagFoldersAppPlatformAPI } from '@grafana/runtime/internal';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
+import { PERMISSION_LOOKUP_CONCURRENCY } from 'app/core/utils/permissionLookupQueue';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { type AppDispatch, type RootState } from 'app/store/configureStore';
 import { type FolderDTO } from 'app/types/folders';
@@ -28,7 +29,6 @@ import { type AsyncAbility } from '../types';
 
 import { computePromRuleUpdateAbility, getGrafanaRuleFolderPermissions } from './ruleAbilities.utils';
 
-const REQUEST_CONCURRENCY = 4;
 const REQUEST_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 1000;
 
@@ -140,7 +140,7 @@ export function usePromRuleUpdateAbilities(
   const dependencies = useSelector(selectDependencies);
 
   useEffect(() => {
-    const subscription = reads.pipe(mergeAll(REQUEST_CONCURRENCY)).subscribe();
+    const subscription = reads.pipe(mergeAll(PERMISSION_LOOKUP_CONCURRENCY)).subscribe();
     return () => subscription.unsubscribe();
   }, [reads]);
 

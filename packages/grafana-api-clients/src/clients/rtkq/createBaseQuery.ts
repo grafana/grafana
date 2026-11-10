@@ -10,9 +10,15 @@ export interface RequestOptions extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];
 }
 
+export interface BaseQueryExtraOptions {
+  requestScheduler?: <T>(request: () => Promise<T>, signal: AbortSignal, options: RequestOptions) => Promise<T>;
+}
+
 export type CreateBaseQueryOptions = { baseURL: string } | { getBaseURL: () => Promise<string> };
 
-export function createBaseQuery(options: CreateBaseQueryOptions): BaseQueryFn<RequestOptions> {
+export function createBaseQuery(
+  options: CreateBaseQueryOptions
+): BaseQueryFn<RequestOptions, unknown, unknown, BaseQueryExtraOptions> {
   // Get the correct resolver once for all API calls
   const resolveBaseURL = 'getBaseURL' in options ? options.getBaseURL : () => Promise.resolve(options.baseURL);
 
@@ -56,5 +62,10 @@ export function createBaseQuery(options: CreateBaseQueryOptions): BaseQueryFn<Re
     }
   }
 
-  return backendSrvBaseQuery;
+  return (requestOptions, api, extraOptions) => {
+    const request = () => backendSrvBaseQuery(requestOptions);
+    return extraOptions?.requestScheduler
+      ? extraOptions.requestScheduler(request, api.signal, requestOptions)
+      : request();
+  };
 }
