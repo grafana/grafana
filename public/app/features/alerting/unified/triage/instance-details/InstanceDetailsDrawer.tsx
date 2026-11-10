@@ -32,7 +32,7 @@ import { InstanceSilenceForm } from '../../components/silences/InstanceSilenceFo
 import { isNotificationHistoryEnabled } from '../../featureToggles';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { useIsStateHistoryAvailable } from '../../utils/config';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { labelsToMatchersParam } from '../../utils/matchers';
 import { stringifyErrorLike } from '../../utils/misc';
 import { groups, rulesNav } from '../../utils/navigation';

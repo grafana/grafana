@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -193,7 +193,7 @@ func TestRegisterAppInstaller_UnifiedAlertingEnabled(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			enabled := tt.enabled
 			cfg := &setting.Cfg{UnifiedAlerting: setting.UnifiedAlertingSettings{Enabled: &enabled}}
-			ng := &ngalert.AlertNG{Cfg: cfg, Api: &api.API{AlertRules: &provisioning.AlertRuleService{}}}
+			ng := &ngalert.AlertNG{Cfg: cfg, Api: &api.API{LegacyRuleService: &legacy.LegacyRuleService{}}}
 
 			inst, err := RegisterAppInstaller(cfg, ng, nil, nil, nil)
 			if err != nil {

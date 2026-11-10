@@ -8,8 +8,8 @@ import { useStyles2 } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
-import { isCloudRulesSource } from '../../utils/datasource';
 import { rulerRuleType } from '../../utils/rules';
+import { isCloudRulesSource } from '../../utils/rulesSource';
 import { DetailsField } from '../DetailsField';
 
 type Props = {

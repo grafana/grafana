@@ -6,8 +6,10 @@ import {
   type RuleGroupIdentifierV2,
 } from 'app/types/unified-alerting';
 
-import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, getRulesSourceName, isGrafanaRulesSource } from './datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './constants';
+import { getDatasourceAPIUid } from './datasource';
 import { rulerRuleType } from './rules';
+import { getRulesSourceName, isGrafanaRulesSource } from './rulesSource';
 
 function fromCombinedRule(rule: CombinedRule): RuleGroupIdentifierV2 {
   if (rulerRuleType.grafana.rule(rule.rulerRule) && isGrafanaRulesSource(rule.namespace.rulesSource)) {

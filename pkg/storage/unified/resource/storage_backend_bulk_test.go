@@ -18,9 +18,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -521,7 +523,6 @@ func TestKVStorageBackendProcessBulkExternalSQLiteTransaction(t *testing.T) {
 		require.NoError(t, err)
 		resp, err := stream.CloseAndRecv()
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
 		require.EqualValues(t, 1, resp.Processed)
 		require.NoError(t, tx.Commit())
 		require.Equal(t, []string{"item-1"}, collectBulkImportNames(t, backend, namespace))
@@ -671,4 +672,83 @@ func collectLatestBulkImportNames(t *testing.T, backend *kvStorageBackend, names
 
 	slices.Sort(names)
 	return names
+}
+
+func TestIntegrationKVStorageBackendProcessBulkStatementTimeout(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbPostgres() {
+		t.Skip("statement_timeout is Postgres only")
+	}
+	store, sqlDB := setupSqlKVWithDB(t)
+	ctx := t.Context()
+
+	// Record the statement_timeout every import write runs under: history deletes and inserts, and
+	// the last import time
+	_, err := sqlDB.ExecContext(ctx, `CREATE TABLE kv_timeout_probe (write text, v text);
+CREATE FUNCTION kv_timeout_probe() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN INSERT INTO kv_timeout_probe VALUES (TG_TABLE_NAME || ' ' || TG_OP, current_setting('statement_timeout')); RETURN NULL; END $$;
+CREATE TRIGGER kv_timeout_probe BEFORE INSERT OR DELETE ON resource_history FOR EACH STATEMENT EXECUTE FUNCTION kv_timeout_probe();
+CREATE TRIGGER kv_timeout_probe BEFORE INSERT ON resource_last_import_time FOR EACH STATEMENT EXECUTE FUNCTION kv_timeout_probe();`)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_, _ = sqlDB.ExecContext(context.Background(), `DROP TRIGGER IF EXISTS kv_timeout_probe ON resource_history;
+DROP TRIGGER IF EXISTS kv_timeout_probe ON resource_last_import_time;
+DROP FUNCTION IF EXISTS kv_timeout_probe();
+DROP TABLE IF EXISTS kv_timeout_probe;`)
+	})
+	var poolDefault string
+	require.NoError(t, sqlDB.QueryRowContext(ctx, "SHOW statement_timeout").Scan(&poolDefault))
+
+	for _, tc := range []struct {
+		name      string
+		namespace string
+		timeout   time.Duration
+		want      string
+	}{
+		{"override applies to every write", "timeout-set", 15 * time.Minute, "15min"},
+		{"unset keeps the database setting", "timeout-unset", 0, poolDefault},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, withKV(store), func(opts *KVBackendOptions) {
+				opts.MigrationStatementTimeout = tc.timeout
+			})
+			namespace := tc.namespace
+			importItems := func() {
+				resp, err := backend.ProcessBulk(ctx, BulkSettings{
+					Collection: []*resourcepb.ResourceKey{{Namespace: namespace, Group: testBulkImportGroup, Resource: testBulkImportResource}},
+				}, newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
+					newBulkImportRequest(namespace, "item-1", resourcepb.BulkRequest_ADDED),
+					newBulkImportRequest(namespace, "item-2", resourcepb.BulkRequest_ADDED),
+				}))
+				require.NoError(t, err)
+				require.Empty(t, resp.Rejected)
+			}
+			// The second import deletes the first one's rows before inserting again
+			importItems()
+			_, err := sqlDB.ExecContext(ctx, "DELETE FROM kv_timeout_probe")
+			require.NoError(t, err)
+			importItems()
+
+			rows, err := sqlDB.QueryContext(ctx, "SELECT write, v FROM kv_timeout_probe")
+			require.NoError(t, err)
+			seen := map[string][]string{}
+			for rows.Next() {
+				var write, v string
+				require.NoError(t, rows.Scan(&write, &v))
+				seen[write] = append(seen[write], v)
+			}
+			require.NoError(t, rows.Err())
+			require.NoError(t, rows.Close())
+			for _, write := range []string{"resource_history DELETE", "resource_history INSERT", "resource_last_import_time INSERT"} {
+				require.NotEmpty(t, seen[write], write)
+				for _, v := range seen[write] {
+					require.Equal(t, tc.want, v, write)
+				}
+			}
+
+			var after string
+			require.NoError(t, sqlDB.QueryRowContext(ctx, "SHOW statement_timeout").Scan(&after))
+			require.Equal(t, poolDefault, after, "the override ends with each write's transaction")
+		})
+	}
 }

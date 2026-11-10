@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -304,7 +306,7 @@ type gatedWatchBackend struct {
 	stopCapture <-chan struct{}
 }
 
-func (b *gatedWatchBackend) watchWriteEventsWithSeed(ctx context.Context, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
+func (b *gatedWatchBackend) watchWriteEventsWithSeed(ctx context.Context, _ *raisedFloors, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
 	select {
 	case <-ctx.Done():
 		return watchSeed{}, nil, ctx.Err()
@@ -394,7 +396,7 @@ type recoverableWatchBackend struct {
 	events   chan *WrittenEvent
 }
 
-func (b *recoverableWatchBackend) watchWriteEventsWithSeed(ctx context.Context, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
+func (b *recoverableWatchBackend) watchWriteEventsWithSeed(ctx context.Context, _ *raisedFloors, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
 	if b.attempts.Add(1) == 1 {
 		return watchSeed{}, nil, b.err
 	}
@@ -817,4 +819,71 @@ func TestWatchResumeExpiresBelowALostWrite(t *testing.T) {
 		backend.lost.Release()
 		require.NoError(t, resume(300))
 	})
+}
+
+// A gap reported while the floors are raised for an earlier one keeps every
+// resume held until they are raised again: the first raise read a boundary
+// from before the newer gap.
+func TestUnknownGapsHoldAcrossANewerGap(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		floors := &heldFloors{}
+		var (
+			mu                sync.Mutex
+			raises            int
+			heldAtSecondRaise bool
+		)
+		var gaps *UnknownGaps
+		gaps = NewUnknownGaps(floors, func(context.Context) error {
+			mu.Lock()
+			raises++
+			n := raises
+			mu.Unlock()
+			switch n {
+			case 1:
+				gaps.Report()
+			case 2:
+				mu.Lock()
+				heldAtSecondRaise = floors.isHeld()
+				mu.Unlock()
+			}
+			return nil
+		}, &logging.NoOpLogger{})
+		gaps.Capture(nil)
+		go gaps.RaiseFloors(t.Context(), nil)
+
+		gaps.Report()
+		synctest.Wait()
+
+		mu.Lock()
+		defer mu.Unlock()
+		require.Equal(t, 2, raises)
+		require.True(t, heldAtSecondRaise, "resumes were released before the floors covered the newer gap")
+		require.False(t, floors.isHeld())
+	})
+}
+
+// heldFloors records whether resumes are held.
+type heldFloors struct {
+	mu   sync.Mutex
+	held bool
+}
+
+func (f *heldFloors) Raise(GroupResource, int64) {}
+
+func (f *heldFloors) Hold() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.held = true
+}
+
+func (f *heldFloors) Release() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.held = false
+}
+
+func (f *heldFloors) isHeld() bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.held
 }

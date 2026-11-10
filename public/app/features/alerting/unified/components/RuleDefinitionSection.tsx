@@ -8,7 +8,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Field, Input, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { type RuleFormValues } from '../types/rule-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 
 import { FolderSelectorV2 } from './rule-editor/FolderSelectorV2';
 import { LabelsEditorModal } from './rule-editor/labels/LabelsEditorModal';

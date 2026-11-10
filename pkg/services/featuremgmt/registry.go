@@ -2854,6 +2854,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "frontend.disableGrafanaLive",
+			Description:  "Disable the Grafana Live functionality",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "paneledit.buttonLabels",
 			Description:  "Shows text labels on the add and stacked view buttons in PanelEditNext",
 			Stage:        FeatureStageExperimental,

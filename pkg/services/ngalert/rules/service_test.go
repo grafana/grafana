@@ -29,7 +29,6 @@ func TestService_forwardsStoreMethods(t *testing.T) {
 	byGroup := &ngmodels.GetAlertRulesGroupByRuleUIDQuery{OrgID: 41, UID: "group-rule"}
 	list := &ngmodels.ListAlertRulesQuery{OrgID: 41, NamespaceUIDs: []string{"list-folder"}}
 	page := &ngmodels.ListAlertRulesExtendedQuery{Limit: 13, ContinueToken: "input-token"}
-	byID := ngmodels.GetAlertRuleByIDQuery{OrgID: 41, ID: 59}
 	inserts := []ngmodels.InsertRule{{AlertRule: ngmodels.AlertRule{UID: "inserted"}, Message: "create"}}
 	updates := []ngmodels.UpdateRule{{Existing: rule, New: ngmodels.AlertRule{UID: "updated"}, Message: "update"}}
 	routingQuery := ngmodels.ListContactPointRoutingsQuery{OrgID: 41, ReceiverName: "receiver", TimeIntervalName: "interval"}
@@ -72,7 +71,6 @@ func TestService_forwardsStoreMethods(t *testing.T) {
 		{"GetRuleGroupInterval", []any{ctx, int64(41), "interval-folder", "interval-group"}, []any{int64(83)}, func(s *Service) []any {
 			return serviceResult(s.GetRuleGroupInterval(ctx, 41, "interval-folder", "interval-group"))
 		}},
-		{"GetRuleByID", []any{ctx, byID}, []any{rule}, func(s *Service) []any { return serviceResult(s.GetRuleByID(ctx, byID)) }},
 		{"ListAlertRulesByGroup", []any{ctx, page}, []any{rules, "next-group"}, func(s *Service) []any { return serviceThreeResults(s.ListAlertRulesByGroup(ctx, page)) }},
 		{"Count", []any{ctx, int64(41)}, []any{int64(89)}, func(s *Service) []any { return serviceResult(s.Count(ctx, 41)) }},
 		{"CountRuleGroups", []any{ctx, int64(41)}, []any{int64(97)}, func(s *Service) []any { return serviceResult(s.CountRuleGroups(ctx, 41)) }},

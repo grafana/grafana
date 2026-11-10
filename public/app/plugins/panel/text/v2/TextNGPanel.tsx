@@ -39,6 +39,7 @@ import { TextNGFooter } from './TextNGFooter';
 import { TextNGHtmlView } from './TextNGHtmlView';
 import { TextNGTruncationNotice } from './TextNGTruncationNotice';
 import { type TextSandboxProps } from './TextSandbox';
+import { TextSandboxConsentNotice } from './TextSandboxConsentNotice';
 import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
@@ -297,8 +298,17 @@ export function TextNGPanel(props: Props) {
       <TextNGFooter left={frameSelector} center={paginationBar} right={truncationNotice} />
     ) : null;
 
+  // Publishes nothing visible itself; warns through the shared panel status UI
+  // while sandboxed content is blocked pending viewer consent.
+  const consentNotice = <TextSandboxConsentNotice consent={consent} />;
+
   if (!panelFooter) {
-    return panel;
+    return (
+      <>
+        {panel}
+        {consentNotice}
+      </>
+    );
   }
 
   // Fit-content: no fixed-height flex wrapper — the footer sits below the panel
@@ -309,6 +319,7 @@ export function TextNGPanel(props: Props) {
       <Stack direction="column" gap={1}>
         {panel}
         {panelFooter}
+        {consentNotice}
       </Stack>
     );
   }
@@ -319,6 +330,7 @@ export function TextNGPanel(props: Props) {
         {panel}
       </Stack>
       {panelFooter}
+      {consentNotice}
     </Stack>
   );
 }
