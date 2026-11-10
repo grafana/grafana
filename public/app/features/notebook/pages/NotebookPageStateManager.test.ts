@@ -564,9 +564,11 @@ describe('NotebookPageStateManager', () => {
         notebookHandler((name) => HttpResponse.json(notebookResource(name))),
         http.put(NOTEBOOK_URL, async ({ request }) => {
           puts += 1;
+          // The other PUT can increment the counter while request.json() is pending.
+          const isFirstWrite = puts === 1;
           const body = (await request.json()) as Resource<NotebookSpec>;
           // The second write is a conflict, as it would be at the server: the first already moved the revision.
-          return puts === 1
+          return isFirstWrite
             ? HttpResponse.json(withId(body))
             : HttpResponse.json({ message: 'the object has been modified' }, { status: 409 });
         })
@@ -576,6 +578,7 @@ describe('NotebookPageStateManager', () => {
 
       await Promise.all([route.loadNotebook('nb-1'), embed.loadNotebook('nb-1')]);
 
+      expect(puts).toBe(2);
       expect(route.state.scene).toBe(embed.state.scene);
       expect(route.state.scene?.state.body.state.cells[0].state.id).toBe(ID);
     });
