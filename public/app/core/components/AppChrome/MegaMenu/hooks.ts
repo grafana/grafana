@@ -410,10 +410,12 @@ export const useNavCustomization = () => {
   }
 
   // Starred and Bookmarks are backend-emitted containers; only show them once they have content.
-  const navItems = removeEmptySavedSections(enrichedNavItems, {
-    starredPending: starredItemsLoading || starredItemsError,
-    bookmarksPending: pinningLoading,
-  });
+  const navItems = navigationInfoArchRefresh
+    ? removeEmptySavedSections(enrichedNavItems, {
+        starredPending: starredItemsLoading || starredItemsError,
+        bookmarksPending: pinningLoading,
+      })
+    : enrichedNavItems;
 
   // Resolve the active item from the rendered nav first (the canonical copy), falling back to the
   // pinned box. Reference equality then highlights whichever rendered row is the match.

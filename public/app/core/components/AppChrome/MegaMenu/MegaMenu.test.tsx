@@ -644,6 +644,7 @@ describe('MegaMenu', () => {
 
   describe('empty Starred and Bookmarks sections', () => {
     beforeEach(() => {
+      setTestFlags({ 'grafana.navigationInfoArchRefresh': true });
       contextSrv.isSignedIn = true;
       contextSrv.user.isSignedIn = true;
     });
@@ -651,6 +652,15 @@ describe('MegaMenu', () => {
     afterEach(() => {
       contextSrv.isSignedIn = false;
       contextSrv.user.isSignedIn = false;
+    });
+
+    it('keeps both empty sections when the refresh flag is off', async () => {
+      setTestFlags({ 'grafana.navigationInfoArchRefresh': false });
+      setMockStarredDashboards([]);
+      renderMegaMenu();
+
+      expect(await screen.findByRole('link', { name: 'Bookmarks' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Starred' })).toBeInTheDocument();
     });
 
     it('hides both sections when nothing is starred or bookmarked', async () => {
