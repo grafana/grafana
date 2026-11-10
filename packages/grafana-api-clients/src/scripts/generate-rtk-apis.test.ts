@@ -12,12 +12,19 @@ describe('withoutPerResourceSearch', () => {
     expect(include('/users/trash')).toBe(false);
   });
 
-  it('keeps the allowlisted folder and rule sequence searches, but not their hybrid variants', () => {
+  it('keeps the allowlisted folder search, but not its hybrid variant', () => {
     expect(include('/folders/search')).toBe(true);
     expect(include('/folders/search/hybrid')).toBe(false);
+  });
+
+  it('keeps the allowlisted rule sequence search, but not its hybrid variant', () => {
     expect(include('/rulesequences/search')).toBe(true);
     expect(include('/rulesequences/search/hybrid')).toBe(false);
+  });
+
+  it('drops the searches of the other rule resources', () => {
     expect(include('/alertrules/search')).toBe(false);
+    expect(include('/recordingrules/search')).toBe(false);
   });
 
   // The dashboard search at the group root is a different, older endpoint that the
