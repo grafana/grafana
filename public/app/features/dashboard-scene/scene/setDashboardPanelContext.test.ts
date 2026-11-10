@@ -21,6 +21,7 @@ import {
   sceneGraph,
   SceneDataTransformer,
   SceneQueryRunner,
+  SceneTimeRange,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
@@ -33,6 +34,8 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 
+import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
+import { type DashboardDataLayerSet, PanelDataLayerSet } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
@@ -344,6 +347,27 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAnnotationCreate', () => {
+    it('refreshes built-in annotations in active panels with time overrides after saving', async () => {
+      const { scene, vizPanel, context } = buildTestScene({ builtInAnnotationsEnabled: true });
+      const panelLayers = new PanelDataLayerSet();
+      vizPanel.setState({
+        $timeRange: new SceneTimeRange({ from: 'now-3d', to: 'now' }),
+        $data: new SceneQueryRunner({ queries: [], $data: panelLayers }),
+      });
+      const runLayer = jest.spyOn(DashboardAnnotationsDataLayer.prototype, 'runLayer').mockImplementation(() => {});
+      const deactivate = panelLayers.activate();
+      const source = (scene.state.$data as DashboardDataLayerSet).state.annotationLayers[0];
+
+      try {
+        runLayer.mockClear();
+        await context.onAnnotationCreate!({ from: 100, to: 100, description: 'deployment', tags: [] });
+        expect(runLayer.mock.contexts).toEqual([source, panelLayers.state.layers[0].resolve()]);
+      } finally {
+        deactivate();
+        runLayer.mockRestore();
+      }
+    });
+
     it('should create annotation', async () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
