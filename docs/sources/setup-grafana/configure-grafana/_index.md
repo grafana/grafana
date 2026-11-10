@@ -555,10 +555,7 @@ Required in `external` mode.
 
 The address that the embedded server binds `cluster_port` to.
 If empty, Grafana binds `0.0.0.0` when the database is MySQL or PostgreSQL, so that instances on other hosts can connect, and `127.0.0.1` otherwise.
-Routes between instances then authenticate with a random credential that Grafana stores in the database.
-To rotate it, refer to [Rotate the route credential](../set-up-nats-for-high-availability/#rotate-the-route-credential).
-Without cluster TLS, this credential crosses the network in clear text, and Grafana logs a warning at startup.
-Turn on cluster TLS, or restrict `cluster_port` to the Grafana instances, for example with firewall rules or a Kubernetes network policy.
+To secure the connections between instances, refer to [Encrypt traffic between instances](../set-up-nats-for-high-availability/#encrypt-traffic-between-instances).
 The default value is empty.
 
 #### `cluster_port`
