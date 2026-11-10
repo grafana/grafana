@@ -343,7 +343,15 @@ describe('applyPluginNav', () => {
       setup({ permissions: ['plugins.app:access', 'assistant.ext.grafana.app/pages:create'] });
       const withCreate = findById(merge(assistant()), pagesId);
       expect(ids(withCreate?.children ?? [])).toEqual(['assistant/pages/new']);
-      expect(withCreate?.children?.[0]).toMatchObject({ isCreateAction: true, hideFromTabs: true });
+      // no pluginId, so routes.tsx does not give the pages section every assistant url
+      expect(withCreate?.children?.[0]).toEqual({
+        text: 'New Grafana Page',
+        id: 'assistant/pages/new',
+        icon: 'plus',
+        url: '/a/grafana-assistant-app/pages/new',
+        hideFromTabs: true,
+        isCreateAction: true,
+      });
 
       setup({ permissions: ['plugins.app:access'] });
       expect(findById(merge(assistant()), pagesId)?.children ?? []).toEqual([]);

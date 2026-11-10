@@ -77,7 +77,11 @@ describe('buildNavTree', () => {
       });
       const withCreate = findById(buildNavTree(), NavID.notebooks);
       expect(ids(withCreate?.children ?? [])).toEqual(['notebooks/new']);
-      expect(withCreate?.children?.[0]).toMatchObject({ isCreateAction: true, hideFromTabs: true });
+      expect(withCreate?.children?.[0]).toMatchObject({
+        url: '/notebooks/new?edit=true',
+        isCreateAction: true,
+        hideFromTabs: true,
+      });
 
       setup({ permissions: [AccessControlAction.NotebooksRead], openFeatureFlags: flags });
       expect(findById(buildNavTree(), NavID.notebooks)?.children ?? []).toEqual([]);
