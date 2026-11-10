@@ -112,7 +112,9 @@ export const AutoVsNarrow: Story = {
           <Tooltip size="auto" />
         </div>
         <div className={styles.example}>
-          <div className={styles.caption}>size=&quot;narrow&quot; — capped at the sm breakpoint; label wraps (≤75%), value keeps ≥25%</div>
+          <div className={styles.caption}>
+            size=&quot;narrow&quot; — capped at the sm breakpoint; label wraps (≤75%), value keeps ≥25%
+          </div>
           <Tooltip size="narrow" />
         </div>
       </div>

@@ -32,10 +32,7 @@ export const VizTooltipWrapper = ({ children, className, size = DEFAULT_VIZ_TOOL
   const styles = useStyles2(getStyles, size);
   return (
     <VizTooltipContext.Provider value={size}>
-      <div
-        className={clsx(styles, className)}
-        data-testid={selectors.components.Panels.Visualization.Tooltip.Wrapper}
-      >
+      <div className={clsx(styles, className)} data-testid={selectors.components.Panels.Visualization.Tooltip.Wrapper}>
         {children}
       </div>
     </VizTooltipContext.Provider>
