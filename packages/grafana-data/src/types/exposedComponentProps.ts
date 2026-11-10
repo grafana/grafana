@@ -29,3 +29,34 @@ export type PrometheusQueryResultsV1Props = {
   /** Optional post-processor for data links (used by Explore for split view) */
   dataLinkPostProcessor?: DataLinkPostProcessor;
 };
+
+export interface SaveResourceDrawerV1Resource {
+  apiVersion?: string;
+  kind?: string;
+  metadata?: {
+    name?: string;
+    annotations?: Record<string, string | undefined>;
+  };
+  spec?: Record<string, unknown>;
+}
+
+export interface SaveResourceDrawerV1BranchCommit {
+  ref: string;
+  urls?: Record<string, string>;
+  repoType?: string;
+  configuredBranch?: string;
+  repoUrl?: string;
+  prTitle?: string;
+}
+
+export type SaveResourceDrawerV1Props = {
+  resource: SaveResourceDrawerV1Resource;
+  title: string;
+  successMessage?: string;
+  readOnlyMessage?: string;
+  branchPrefix?: string;
+  directory?: string;
+  onDismiss?: () => void;
+  onWriteSuccess?: () => void;
+  onBranchSuccess?: (data: SaveResourceDrawerV1BranchCommit) => void;
+} & ({ action: 'create'; repositoryName: string } | { action: 'update' | 'delete'; repositoryName?: never });

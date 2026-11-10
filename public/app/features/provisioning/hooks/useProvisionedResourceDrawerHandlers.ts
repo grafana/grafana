@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { useDispatch } from 'app/types/store';
 
 import { buildResourceBranchRedirectUrl, type ResourceBranchAction } from '../utils/redirect';
-import { type ResourceKindInfo } from '../utils/resourceKinds';
+import { type SaveableKindInfo } from '../utils/resourceKinds';
 
 /** Shape forwarded by {@link SaveProvisionedResourceDrawer}'s `onBranchSuccess` callback. */
 interface BranchSuccessData {
@@ -40,7 +40,7 @@ export interface ProvisionedResourceDrawerHandlers {
  * from the {@link ResourceKindInfo}. The kind's `invalidateListTags` (if any) is dispatched so the
  * committed change shows up on its list page.
  */
-export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): ProvisionedResourceDrawerHandlers {
+export function useProvisionedResourceDrawerHandlers(kind: SaveableKindInfo): ProvisionedResourceDrawerHandlers {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -53,13 +53,18 @@ export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): Pr
 
   const goToList = () => {
     invalidate();
-    navigate(kind.listRoute);
+    if (kind.listRoute) {
+      navigate(kind.listRoute);
+    }
   };
 
   const makeOnBranchSuccess =
     (action: ResourceBranchAction) =>
     ({ ref, urls, repoType, configuredBranch, repoUrl, prTitle }: BranchSuccessData) => {
       invalidate();
+      if (!kind.listRoute) {
+        return;
+      }
       navigate(
         buildResourceBranchRedirectUrl({
           baseUrl: kind.listRoute,
