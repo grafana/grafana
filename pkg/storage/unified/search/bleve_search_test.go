@@ -2293,9 +2293,8 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.False(t, r3.TotalHitsExact, "cursor-page total is approximate, not exact")
 	})
 
-	t.Run("low auth fraction continues past MaxCandidates until first authorized hit", func(t *testing.T) {
-		// Small cap, with the first authorized hit beyond it. The scan should
-		// keep going until it finds that hit, then stop short of the full index.
+	t.Run("sparse short pages exhaust all matches beyond MaxCandidates", func(t *testing.T) {
+		// A short page must prove exhaustion, even with only one authorized hit.
 		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 50}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 2000)
@@ -2312,14 +2311,14 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		q := listQuery(10)
 		names1, res1 := searchNames(t, index, ac, q)
 		require.Equal(t, []string{"doc-0120"}, names1)
-		require.Greater(t, ac.checked, 50, "scan must continue past MaxCandidates while the page is empty")
-		require.Less(t, ac.checked, 2000)
+		require.Equal(t, 2000, ac.checked, "a short page must exhaust all matches")
 
-		// Determinism: the same bounded scan yields the same partial result.
+		// Repeating the query must return the same complete result.
 		ac2 := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
 		names2, _ := searchNames(t, index, ac2, q)
 		require.Equal(t, names1, names2)
-		require.Equal(t, int64(2000), res1.TotalHits, "TotalHits stays the unfiltered match count")
+		require.Equal(t, int64(1), res1.TotalHits)
+		require.True(t, res1.TotalHitsExact)
 	})
 
 	t.Run("tie-breaker keeps duplicate sort keys contiguous across windows", func(t *testing.T) {
@@ -3133,13 +3132,54 @@ func TestSearchAuthzDoesNotReturnAnObjectChangedDuringAuthorization(t *testing.T
 	}
 }
 
-// Past the candidate budget a sparse user's scan goes on until the page has a
-// row. A row validation drops does not count, or the page could come back empty
-// with authorized matches still unseen.
-func TestSearchPostRankAuthzScansPastTheBudgetForARowThatSurvivesValidation(t *testing.T) {
-	index := newTestDashboardsIndexAuthz(t, 3, true, search.PostRankAuthzConfig{OverFetchFactor: 1, MaxCandidates: 1})
-	// By title: "doc" and "e" make the first window of two, "next" the second.
-	indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("e", "denied"), newDoc("next", "allowed")})
+func TestSearchPostRankAuthzPaginationDoesNotSkipResults(t *testing.T) {
+	for _, budget := range []int{100, 3} {
+		for _, cursorBased := range []bool{false, true} {
+			t.Run(fmt.Sprintf("budget=%d/cursor=%t", budget, cursorBased), func(t *testing.T) {
+				index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
+					OverFetchFactor: 1,
+					MaxWindow:       3,
+					MaxCandidates:   budget,
+				})
+				indexDocs(t, index, []*resource.BulkIndexItem{
+					newDoc("a", "allowed"),
+					newDoc("denied-1", "denied"),
+					newDoc("denied-2", "denied"),
+					newDoc("denied-3", "denied"),
+					newDoc("denied-4", "denied"),
+					newDoc("e", "allowed"),
+					newDoc("f", "allowed"),
+					newDoc("g", "allowed"),
+					newDoc("h", "allowed"),
+				})
+				ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+				const limit int64 = 3
+				var got []string
+				var after []string
+				for page := range 4 {
+					q := listQuery(limit)
+					if cursorBased {
+						q.SearchAfter = after
+					} else {
+						q.Page = int64(page + 1)
+						q.Offset = int64(page) * limit
+					}
+					names, res := searchNames(t, index, ac, q)
+					got = append(got, names...)
+					if len(names) == 0 || (cursorBased && len(names) < int(limit)) {
+						break
+					}
+					after = res.Rows[len(res.Rows)-1].SortFields
+				}
+				require.Equal(t, []string{"a", "e", "f", "g", "h"}, got)
+			})
+		}
+	}
+}
+
+func TestSearchPostRankAuthzRefillsPagesAfterValidationPastCandidateBudget(t *testing.T) {
+	index := newTestDashboardsIndexAuthz(t, 4, true, search.PostRankAuthzConfig{OverFetchFactor: 1, MaxWindow: 1, MaxCandidates: 1})
+	indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("e", "denied"), newDoc("next", "allowed"), newDoc("z-next", "allowed")})
 	ac := &changingAccessClient{countingAccessClient: countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}}
 	ac.change = func() {
 		moved := newDoc("doc", "denied")
@@ -3150,7 +3190,7 @@ func TestSearchPostRankAuthzScansPastTheBudgetForARowThatSurvivesValidation(t *t
 	q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_TITLE}}
 
 	names, _ := searchNames(t, index, ac, q)
-	require.Equal(t, []string{"next"}, names)
+	require.Equal(t, []string{"next", "z-next"}, names)
 }
 
 // Post-rank windows read what authorization needs from doc values and load
