@@ -3,6 +3,7 @@ import { connect, type ConnectedProps } from 'react-redux';
 
 import {
   type AbsoluteTimeRange,
+  type GetFieldLinksFn,
   hasLogsContextSupport,
   hasLogsContextUiSupport,
   type LoadingState,
@@ -25,7 +26,6 @@ import { getDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { PanelChrome } from '@grafana/ui';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { type ExploreItemState } from 'app/types/explore';
 import { type StoreState } from 'app/types/store';
 

@@ -12,6 +12,7 @@ import {
   type DataQueryResponse,
   type DataSourceApi,
   dateTimeForTimeZone,
+  type GetFieldLinksFn,
   type GrafanaTheme2,
   hasLogsContextSupport,
   hasLogsContextUiSupport,
@@ -50,7 +51,6 @@ import { dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsM
 
 import type { Options } from './panelcfg.gen';
 import {
-  type GetFieldLinksFn,
   isCoreApp,
   isGrammar,
   isIsFilterLabelActive,

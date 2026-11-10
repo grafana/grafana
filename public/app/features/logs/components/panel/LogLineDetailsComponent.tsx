@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { groupBy } from 'lodash';
 import { memo, useEffect, useMemo, useState } from 'react';
 
@@ -11,7 +12,6 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getDataSourceInstance } from '@grafana/runtime';
-import { useFlagGrafanaOtelLogDetails } from '@grafana/runtime/internal';
 import { Box, InlineField, InlineSwitch, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
@@ -49,7 +49,7 @@ export const LogLineDetailsComponent = ({
   timeRange,
   timeZone,
 }: LogLineDetailsComponentProps) => {
-  const otelLogDetailsEnabled = useFlagGrafanaOtelLogDetails();
+  const otelLogDetailsEnabled = useBooleanFlagValue('grafana.otelLogDetails', false);
 
   return log.otelLanguage && otelLogDetailsEnabled ? (
     <LogLineDetailsOTelComponent

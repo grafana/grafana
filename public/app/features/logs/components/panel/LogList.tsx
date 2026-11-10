@@ -10,6 +10,7 @@ import {
   type DataFrame,
   type EventBus,
   EventBusSrv,
+  type GetFieldLinksFn,
   type GrafanaTheme2,
   type LoadingState,
   type LogLevel,
@@ -23,7 +24,6 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, Icon, type PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
-import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { LogListFieldSelector } from '../fieldSelector/LogListFieldSelector';
 

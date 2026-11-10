@@ -1,3 +1,4 @@
+import { safeStringifyValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   LocalValueVariable,
@@ -8,7 +9,6 @@ import {
   type SceneVariables,
 } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
-import { safeStringifyValue } from 'app/core/utils/explore';
 import { isRecord } from 'app/core/utils/isRecord';
 import type { GraphEdge, GraphNode } from 'app/features/variables/inspect/types';
 import { getPropsWithVariable } from 'app/features/variables/inspect/utils';

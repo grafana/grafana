@@ -12,6 +12,7 @@ import {
   dateTime,
   EventBusSrv,
   formattedValueToString,
+  type GetFieldLinksFn,
   getValueFormat,
   type GrafanaTheme2,
   hasLogsContextSupport,
@@ -30,7 +31,6 @@ import { reportInteraction, getDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
-import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { useDispatch } from 'app/types/store';
 
 import { dataFrameToLogsModel } from '../../logsModel';

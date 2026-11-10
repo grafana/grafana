@@ -15,6 +15,7 @@ import {
   type EventBus,
   type ExploreLogsPanelState,
   type ExplorePanelsState,
+  type GetFieldLinksFn,
   type GrafanaTheme2,
   LoadingState,
   type LogLevel,
@@ -55,7 +56,6 @@ import { LogList, type LogListOptions } from 'app/features/logs/components/panel
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 import { dedupLogRows, LogLevelColor } from 'app/features/logs/logsModel';
 import { getLogLevelFromKey, getLogLevelInfo, isMissingTimeField } from 'app/features/logs/utils';
-import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { type Options } from 'app/plugins/panel/logstable/options/types';
 import { type BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 import { getState } from 'app/store/store';

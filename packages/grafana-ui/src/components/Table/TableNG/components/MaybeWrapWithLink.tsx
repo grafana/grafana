@@ -6,15 +6,12 @@ import { t } from '@grafana/i18n';
 import { renderSingleLink } from '../../DataLinksActionsTooltip';
 import { getCellLinks } from '../cellLinks';
 
-interface MaybeWrapWithLinkProps {
+export interface MaybeWrapWithLinkProps {
   field: Field;
   rowIdx: number;
   children: ReactNode;
 }
 
-/**
- * @internal
- */
 export const MaybeWrapWithLink = memo(({ field, rowIdx, children }: MaybeWrapWithLinkProps): ReactNode => {
   const linksCount = field.config.links?.length ?? 0;
   const actionsCount = field.config.actions?.length ?? 0;

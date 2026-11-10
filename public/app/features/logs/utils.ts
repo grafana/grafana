@@ -32,8 +32,8 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { getConfig } from 'app/core/config';
 
 import { getLogsExtractFields } from '../explore/Logs/LogsTable';
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/utils/download';
@@ -378,7 +378,7 @@ export async function handleOpenLogsContextClick(
     // for this request we don't want to use the cached filters from a context provider, but always want to refetch and clear
     const query = await getRowContextQuery(row, undefined, false);
     if (query && win) {
-      const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${getConfig().appSubUrl}explore`), {
+      const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${config.appSubUrl}explore`), {
         left: JSON.stringify({
           datasource: query.datasource,
           queries: [query],
