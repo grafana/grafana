@@ -1,3 +1,6 @@
+// Loaded only by `packages:pack` via pnpm_config_pnpmfile. As a root .pnpmfile.cjs, pnpm records
+// its checksum in pnpm-lock.yaml, and Renovate (which installs with --ignore-pnpmfile) drops it,
+// breaking frozen installs on every Renovate PR.
 const { execSync } = require('node:child_process');
 
 const SOURCE_CONDITION = '@grafana-app/source';

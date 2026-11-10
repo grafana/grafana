@@ -836,7 +836,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.gitignore @grafana/grafana-frontend-platform
 /.ignore @grafana/grafana-frontend-platform
 /.nvmrc @grafana/grafana-frontend-platform
-/.pnpmfile.cjs @grafana/grafana-frontend-platform
 /mise.toml @grafana/grafana-frontend-platform
 /.prettierignore @grafana/grafana-frontend-platform
 /pnpm-lock.yaml @grafana/grafana-frontend-platform
@@ -1190,6 +1189,7 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
 /scripts/openapi3/ @grafana/grafana-operator-experience-squad
+/scripts/pnpm-pack-hooks.cjs @grafana/grafana-frontend-platform
 /scripts/protobuf-check.sh @grafana/grafana-catalog
 /scripts/stripnulls.sh @grafana/grafana-as-code
 /scripts/tag_release.sh @grafana/grafana-operator-experience-squad

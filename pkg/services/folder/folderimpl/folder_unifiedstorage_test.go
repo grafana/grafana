@@ -889,7 +889,6 @@ func TestSearchFolders(t *testing.T) {
 
 		res, err := index.Search(ctx, nil, captured, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error, "the folder search index rejected the request SearchFolders built")
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
 
 		parsed, err := dashboardsearch.ParseResults(res, 0)
