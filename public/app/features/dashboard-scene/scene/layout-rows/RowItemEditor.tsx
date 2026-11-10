@@ -27,7 +27,7 @@ import {
 import { SuggestedQuestionsInput } from '../../sidebar/SuggestedQuestionsInput';
 import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
-import { useHasDashboardControlsComponents } from '../DashboardControlsExtensionPoint';
+import { useSuggestedQuestionsEnabled } from '../DashboardControlsExtensionPoint';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
@@ -37,7 +37,7 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
   const model = this;
   // The canvas can remount during DnD loading while this editor remains mounted.
   const { layout } = useSceneObjectState(model, { shouldActivateOrKeepAlive: true });
-  const hasQuestionControls = useHasDashboardControlsComponents();
+  const suggestedQuestionsEnabled = useSuggestedQuestionsEnabled();
 
   const rowCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({ title: '', id: 'dash-row-edit' })
@@ -64,7 +64,7 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
         })
       );
 
-    if (hasQuestionControls) {
+    if (suggestedQuestionsEnabled) {
       category.addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.rows-layout.row-options.row.questions', 'Suggested questions'),
@@ -79,7 +79,7 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
     }
 
     return category;
-  }, [hasQuestionControls, isNewElement, model]);
+  }, [suggestedQuestionsEnabled, isNewElement, model]);
 
   const repeatCategory = useMemo(
     () =>

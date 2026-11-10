@@ -8,7 +8,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
-import { useHasDashboardControlsComponents } from '../../scene/DashboardControlsExtensionPoint';
+import { useSuggestedQuestionsEnabled } from '../../scene/DashboardControlsExtensionPoint';
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { useLayoutCategory } from '../../scene/layouts-shared/DashboardLayoutSelector';
@@ -41,7 +41,7 @@ function useDashboardSidebarOptions(dashboard: DashboardScene): OptionsPaneCateg
   const dashboardDescriptionInputId = useId();
   const dashboardQuestionsInputId = useId();
   // Only the v2 schema saves questions; a v1 save would drop them.
-  const showQuestions = useHasDashboardControlsComponents() && dashboard.serializer instanceof V2DashboardSerializer;
+  const showQuestions = useSuggestedQuestionsEnabled() && dashboard.serializer instanceof V2DashboardSerializer;
 
   const dashboardOptions = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })

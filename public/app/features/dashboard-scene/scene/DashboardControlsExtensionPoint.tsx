@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, PluginExtensionPoints, type PluginExtensionDashboardControlsContext } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
+import { useFlagGrafanaDashboardSuggestedQuestions } from '@grafana/runtime/internal';
 import { SceneGridRow, sceneGraph, type SceneObject } from '@grafana/scenes';
 import { type SuggestedQuestion } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { useStyles2 } from '@grafana/ui';
@@ -24,12 +25,14 @@ interface Props {
 /**
  * SPIKE: lets plugins add a control to the dashboard controls bar and to the controls of a row or tab. Each component
  * gets the questions saved on the dashboard, row, or tab, and a source reference the dashboard data API resolves to
- * the panels the control sits over. Renders nothing where no questions are saved.
+ * the panels the control sits over. Renders nothing where no questions are saved, or with
+ * `grafana.dashboardSuggestedQuestions` off.
  */
 export function DashboardControlsExtensionPoint({ owner }: Props) {
+  const enabled = useFlagGrafanaDashboardSuggestedQuestions();
   const { suggestedQuestions } = owner.useState();
 
-  if (!suggestedQuestions?.length) {
+  if (!enabled || !suggestedQuestions?.length) {
     return null;
   }
 
@@ -74,9 +77,14 @@ function useDashboardControlsComponents() {
   });
 }
 
-/** Whether a plugin adds a control that offers the saved questions, so editors ask for questions only when one does. */
-export function useHasDashboardControlsComponents(): boolean {
-  return useDashboardControlsComponents().components.length > 0;
+/**
+ * Whether editors can save suggested questions: `grafana.dashboardSuggestedQuestions` is on and a plugin adds a control
+ * that offers them.
+ */
+export function useSuggestedQuestionsEnabled(): boolean {
+  const enabled = useFlagGrafanaDashboardSuggestedQuestions();
+  const { components } = useDashboardControlsComponents();
+  return enabled && components.length > 0;
 }
 
 function getControlsContext(
