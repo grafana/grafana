@@ -82,21 +82,6 @@ func (f *fakeConfigClient) setSpec(orgID int64, datasourceUID string) {
 	f.objects[obj.GetNamespace()] = obj
 }
 
-// setStatus seeds the status of orgID's existing Config as a sync of
-// datasourceUID with the given applied hash and no recorded root folder, the
-// shape a sync that predates root folder tracking left behind.
-func (f *fakeConfigClient) setStatus(orgID int64, datasourceUID, appliedHash string) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	obj := f.objects[f.nsMapper(orgID)]
-	origin := alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSyncOriginApi
-	obj.Status.ExternalRulerSync = &alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSync{
-		DatasourceUid:   &datasourceUID,
-		Origin:          &origin,
-		LastAppliedHash: &appliedHash,
-	}
-}
-
 // statusFor returns the last-written status for orgID, or nil if none exists.
 func (f *fakeConfigClient) statusFor(orgID int64) *alertingrulesv0alpha1.ConfigStatus {
 	f.mu.Lock()
