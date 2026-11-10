@@ -106,7 +106,7 @@ func (c setRuleGuidMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) er
 	q := `UPDATE alert_rule_version
 		SET rule_guid = alert_rule.guid
 		FROM alert_rule
-		WHERE alert_rule.uid = alert_rule_version.rule_uid 
+		WHERE alert_rule.uid = alert_rule_version.rule_uid
 		  AND alert_rule.org_id = alert_rule_version.rule_org_id;`
 
 	if mg.Dialect.DriverName() == migrator.MySQL {
@@ -119,7 +119,97 @@ func (c setRuleGuidMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) er
 		mg.Logger.Error("Failed to update alert_rule_version table with GUIDs from alert_rule table", "error", err)
 		return err
 	}
+
+	// Some alert_rule_version rows do not correspond to any existing alert_rule row any more
+	// (e.g. historical versions kept after the rule was deleted, or rows left behind by prior
+	// buggy migrations/inserts). The UPDATE above only sets rule_guid for rows whose rule_uid/
+	// rule_org_id still match an alert_rule, so these leftover rows keep the column default of
+	// an empty string. Multiple such rows frequently share the same (empty rule_guid, version)
+	// pair, which violates the unique index created later in this migration
+	// ("add index in alert_rule_version table on rule_guid and version columns").
+	//
+	// To fix this without deleting any historical data, assign a synthetic GUID to every
+	// remaining row with an empty rule_guid so the (rule_guid, version) pair is guaranteed
+	// unique.
+	return c.deduplicateEmptyRuleGuids(sess, mg)
+}
+
+// ruleVersionKey identifies a logical alert rule (by org + uid) that one or more
+// alert_rule_version rows belong to.
+type ruleVersionKey struct {
+	RuleOrgID int64  `xorm:"rule_org_id"`
+	RuleUID   string `xorm:"rule_uid"`
+}
+
+// deduplicateEmptyRuleGuids assigns a GUID to every alert_rule_version row whose rule_guid is
+// still empty after being populated from alert_rule. This prevents the later unique index on
+// (rule_guid, version) from failing because of rows sharing the empty-string default.
+//
+// rule_guid is used elsewhere (e.g. to group all versions of a rule, or to delete a trashed
+// rule's versions - see GetAlertRuleVersions/DeleteRuleFromTrashByGUID in
+// pkg/services/ngalert/store/rules/alert_rule.go) as the stable identifier that ties together
+// every version row belonging to the SAME logical rule. So rather than giving every affected
+// row its own independent GUID - which would incorrectly split one rule's version history into
+// several unrelated "rules" whenever it has more than one leftover version row - this assigns
+// one shared, synthetic GUID per distinct (rule_org_id, rule_uid) group. No rows are ever
+// deleted; every historical version record is preserved.
+func (c setRuleGuidMigration) deduplicateEmptyRuleGuids(sess *xorm.Session, mg *migrator.Migrator) error {
+	var keys []ruleVersionKey
+	if err := sess.Table(`alert_rule_version`).Distinct("rule_org_id", "rule_uid").Where("rule_guid = ''").Find(&keys); err != nil {
+		return err
+	}
+
+	isMySQL := mg.Dialect.DriverName() == migrator.MySQL
+
+	const batchSize = 500
+	for start := 0; start < len(keys); start += batchSize {
+		end := min(start+batchSize, len(keys))
+		batch := keys[start:end]
+
+		bd := strings.Builder{}
+		for idx, k := range batch {
+			u := uuid.NewV4().String()
+			escapedUID := escapeSQLStringLiteral(k.RuleUID, isMySQL)
+			if idx == 0 {
+				bd.WriteString(fmt.Sprintf("SELECT %d as rule_org_id, '%s' as rule_uid, '%s' as guid", k.RuleOrgID, escapedUID, u))
+				continue
+			}
+			bd.WriteString(fmt.Sprintf(" UNION ALL SELECT %d, '%s', '%s' ", k.RuleOrgID, escapedUID, u))
+		}
+		var q string
+		if isMySQL {
+			q = fmt.Sprintf(`UPDATE alert_rule_version AS arv
+			INNER JOIN (%s) AS t ON arv.rule_org_id = t.rule_org_id AND arv.rule_uid = t.rule_uid
+			SET arv.rule_guid = t.guid
+			WHERE arv.rule_guid = '';`, bd.String())
+		} else {
+			q = fmt.Sprintf(`UPDATE alert_rule_version SET rule_guid = t.guid
+			FROM (%s) AS t
+			WHERE alert_rule_version.rule_org_id = t.rule_org_id
+			  AND alert_rule_version.rule_uid = t.rule_uid
+			  AND alert_rule_version.rule_guid = ''`, bd.String())
+		}
+		if _, err := sess.Exec(q); err != nil {
+			mg.Logger.Error("Failed to deduplicate empty rule_guid values in alert_rule_version table", "error", err)
+			return err
+		}
+	}
 	return nil
+}
+
+// escapeSQLStringLiteral escapes a value so it can be safely embedded inside a single-quoted
+// SQL string literal built via fmt.Sprintf. Doubling the quote character is standard ANSI SQL
+// and is correctly understood by SQLite, Postgres, and MySQL alike. MySQL additionally treats
+// backslash as an escape character under its default (non-ANSI) sql_mode, so an unescaped
+// trailing backslash could otherwise swallow the literal's closing quote and desynchronize the
+// rest of the generated statement; that only applies on the MySQL dialect; doubling a backslash
+// on SQLite/Postgres would incorrectly change the value being matched, since they do not treat
+// backslash specially in string literals.
+func escapeSQLStringLiteral(s string, isMySQL bool) string {
+	if isMySQL {
+		s = strings.ReplaceAll(s, `\`, `\\`)
+	}
+	return strings.ReplaceAll(s, "'", "''")
 }
 
 type cleanUpRuleVersionsMigration struct {
