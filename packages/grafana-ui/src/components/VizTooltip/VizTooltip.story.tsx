@@ -15,25 +15,39 @@ const headerItem: VizTooltipItem = {
   value: '2024-01-01 12:00:00',
 };
 
-// Rows covering each combination of short/long name and short/long value. A long name drives the
-// tooltip's natural width (names render on one line), so `auto` grows past the `narrow` cap to fit
-// it. `narrow` caps the box at the `sm` breakpoint and splits each row ~75/25: the name wraps within
-// 75% while the value wraps but keeps at least 25% (right-aligned), so neither pushes the other out.
-const items: VizTooltipItem[] = [
-  // short name, short value
+// A regular set of short name/value rows plus a single long value. A long value would blow an `auto`
+// tooltip out to fit it on one line; toggling to `narrow` caps the width and wraps that value, so
+// the whole tooltip visibly shrinks.
+const basicItems: VizTooltipItem[] = [
   { label: 'cpu', value: '72.4%', color: '#73BF69' },
-  // short name, long value
+  { label: 'memory', value: '63.1%', color: '#8AB8FF' },
+  { label: 'disk', value: '21.8%', color: '#B877D9' },
   {
     label: 'endpoint',
     value: 'https://prometheus-server-0.monitoring.svc.cluster.local:9090/api/v1/query_range',
     color: '#F2CC0C',
   },
+];
+
+// Each row covers one combination of short/long name and short/long value. A long name drives the
+// tooltip's natural width (names render on one line), so `auto` grows past the `narrow` cap to fit
+// it. `narrow` caps the box at the `sm` breakpoint and splits each row ~75/25: the name wraps within
+// 75% while the value wraps but keeps at least 25% (right-aligned), so neither pushes the other out.
+const longLabelItems: VizTooltipItem[] = [
+  // short name, short value
+  { label: 'cpu', value: '72.4%', color: '#73BF69' },
   // long name, short value
   {
     label:
       'node_network_receive_bytes_total{instance="prometheus-server-0",device="eth0",job="node-exporter",mode="rx"}',
     value: '48.2 MB/s',
     color: '#8AB8FF',
+  },
+  // short name, long value
+  {
+    label: 'endpoint',
+    value: 'https://prometheus-server-0.monitoring.svc.cluster.local:9090/api/v1/query_range',
+    color: '#F2CC0C',
   },
   // long name, long value
   {
@@ -43,7 +57,7 @@ const items: VizTooltipItem[] = [
   },
 ];
 
-const Tooltip = ({ size }: { size: VizTooltipSize }) => {
+const Tooltip = ({ size, items }: { size: VizTooltipSize; items: VizTooltipItem[] }) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.surface}>
@@ -69,7 +83,7 @@ const meta: Meta<typeof VizTooltipWrapper> = {
     className: { table: { disable: true } },
   },
   args: {
-    size: 'narrow',
+    size: 'auto',
   },
 };
 
@@ -77,49 +91,16 @@ export default meta;
 
 type Story = StoryObj<typeof VizTooltipWrapper>;
 
-// The default tooltip, rendered with no `size` prop. This is the baseline — how the tooltip renders
-// on `main` today, and identical to the `auto` variant. The `narrow` work is purely additive, so
-// this default is unchanged by it.
-export const Default: Story = {
-  parameters: { controls: { disable: true } },
-  render: function DefaultTooltip() {
-    const styles = useStyles2(getStyles);
-    return (
-      <div className={styles.surface}>
-        <VizTooltipWrapper>
-          <VizTooltipHeader item={headerItem} />
-          <VizTooltipContent items={items} />
-        </VizTooltipWrapper>
-      </div>
-    );
-  },
-};
-
-// Toggle the `size` control to compare how the same content reflows.
+// A regular set of rows with one long value. Toggle the `size` control between `auto` and `narrow`
+// to watch the long value wrap and the whole tooltip shrink.
 export const Basic: Story = {
-  render: ({ size = 'auto' }) => <Tooltip size={size} />,
+  render: ({ size = 'auto' }) => <Tooltip size={size} items={basicItems} />,
 };
 
-// Same content rendered at both sizes so the width/wrapping difference is directly comparable.
-export const AutoVsNarrow: Story = {
-  parameters: { controls: { disable: true } },
-  render: function Comparison() {
-    const styles = useStyles2(getStyles);
-    return (
-      <div className={styles.comparison}>
-        <div className={styles.example}>
-          <div className={styles.caption}>size=&quot;auto&quot; — grows to fit the long series label</div>
-          <Tooltip size="auto" />
-        </div>
-        <div className={styles.example}>
-          <div className={styles.caption}>
-            size=&quot;narrow&quot; — capped at the sm breakpoint; label wraps (≤75%), value keeps ≥25%
-          </div>
-          <Tooltip size="narrow" />
-        </div>
-      </div>
-    );
-  },
+// The four combinations of short/long name and short/long value. Toggle the `size` control to
+// compare how each row reflows between `auto` and `narrow`.
+export const LongLabels: Story = {
+  render: ({ size = 'auto' }) => <Tooltip size={size} items={longLabelItems} />,
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -135,19 +116,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.elevated,
     boxShadow: theme.shadows.z2,
     borderRadius: theme.shape.radius.default,
-  }),
-  // Plain block flow on purpose: a flex parent collapses each tooltip's shrink-to-fit width, which
-  // would hide the difference by boxing both sizes to the same narrow width.
-  comparison: css({
-    display: 'block',
-  }),
-  example: css({
-    marginBottom: theme.spacing(4),
-  }),
-  caption: css({
-    marginBottom: theme.spacing(0.5),
-    color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fontFamilyMonospace,
-    fontSize: theme.typography.bodySmall.fontSize,
   }),
 });
