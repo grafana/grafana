@@ -2,8 +2,10 @@ import {
   type DataFrame,
   type DataFrameDTO,
   type DataTransformContext,
-  type Field,
+  FieldMatcherID,
   FieldType,
+  fieldMatchers,
+  getFieldDisplayName,
   toDataFrame,
   toDataFrameDTO,
 } from '@grafana/data';
@@ -47,7 +49,12 @@ describe('Trendline transformation', () => {
           name: 'Linear regression',
           fields: [
             { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4, 5], config: {} },
-            { name: 'value', type: FieldType.number, values: [0, 1, 2, 3, 4, 5], config: {} },
+            {
+              name: 'value predicted',
+              type: FieldType.number,
+              values: [0, 1, 2, 3, 4, 5],
+              config: { displayNameFromDS: 'Linear regression value' },
+            },
           ],
           length: 6,
         }),
@@ -88,7 +95,12 @@ describe('Trendline transformation', () => {
           name: 'Linear regression',
           fields: [
             { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4, 5], config: {} },
-            { name: 'value', type: FieldType.number, values: [1, 1, 1, 1, 1, 1], config: {} },
+            {
+              name: 'value predicted',
+              type: FieldType.number,
+              values: [1, 1, 1, 1, 1, 1],
+              config: { displayNameFromDS: 'Linear regression value' },
+            },
           ],
           length: 6,
         }),
@@ -185,18 +197,50 @@ describe('Trendline transformation', () => {
     expect(result[1].fields[1].values[4]).toBe(4);
     expect(result[1].name).toBe('Linear regression');
   });
+
+  describe('when the source frame has no name', () => {
+    // Without a frame name, the source series is labelled with its bare field name
+    const transformUnnamedSource = () => {
+      const source = [
+        toDataFrame({
+          refId: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4, 5] },
+            { name: 'value', type: FieldType.number, values: [0, 1, 2, 3, 4, 5] },
+          ],
+        }),
+      ];
+
+      const config: RegressionTransformerOptions = {
+        modelType: ModelType.linear,
+        predictionCount: 6,
+        xFieldName: 'time',
+        yFieldName: 'value',
+      };
+
+      return RegressionTransformer.transformer(config, {} as DataTransformContext)(source);
+    };
+
+    it('matches the source series but not the trendline by the source series name', () => {
+      const result = transformUnnamedSource();
+      const [sourceFrame, trendlineFrame] = result;
+      // The legend hides and isolates series with a names matcher on their display names
+      const matcher = fieldMatchers.get(FieldMatcherID.byNames).get({ names: ['value'] });
+
+      expect(matcher(sourceFrame.fields[1], sourceFrame, result)).toBe(true);
+      expect(matcher(trendlineFrame.fields[1], trendlineFrame, result)).toBe(false);
+    });
+
+    it('labels the trendline with the frame name and the source series name', () => {
+      const result = transformUnnamedSource();
+
+      expect(getFieldDisplayName(result[1].fields[1], result[1], result)).toBe('Linear regression value');
+    });
+  });
 });
 
 function toEquableDataFrame(source: DataFrame): DataFrame {
-  return toDataFrame({
-    ...source,
-    fields: source.fields.map((field: Field) => {
-      return {
-        ...field,
-        config: {},
-      };
-    }),
-  });
+  return toDataFrame(source);
 }
 
 function toEquableDataFrames(data: DataFrame[]): DataFrameDTO[] {

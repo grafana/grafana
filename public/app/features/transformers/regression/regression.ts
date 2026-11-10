@@ -128,16 +128,19 @@ export const getRegressionTransformer: () => SynchronousDataTransformerInfo<Regr
         frameName = `${degreeData?.label()} ${t('transformers.regression-transformer-editor.model-type-options.label.polynomial', 'Polynomial').toLocaleLowerCase()} ${t('transformers.regression-transformer-editor.regression', 'regression')}`;
       }
 
+      const yDisplayName = getFieldDisplayName(yField, predictFromFrame, frames);
+
       const newFrame: DataFrame = {
         name: `${frameName}`,
         length: predictionPoints.length,
         fields: [
           { name: xField.name, type: xField.type, values: predictionPoints, config: {} },
           {
-            name: `${getFieldDisplayName(yField, predictFromFrame, frames)}`,
+            // Name matchers also compare raw names, so reusing the source's display name would match both series
+            name: `${yDisplayName} predicted`,
             type: yField.type,
             values: predictionPoints.map((x) => result.predict(x - normalizationSubtrahend)),
-            config: {},
+            config: { displayNameFromDS: `${frameName} ${yDisplayName}` },
           },
         ],
       };
