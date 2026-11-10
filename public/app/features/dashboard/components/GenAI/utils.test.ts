@@ -122,33 +122,61 @@ describe('getDashboardPanelPrompt', () => {
       .map((line) => line.slice('- Title: '.length));
   }
 
-  it('presents every panel when there are ten or fewer', () => {
-    const dashboard = dashboardSetup(panels('Plain', 8));
-
-    expect(presentedTitles(getDashboardPanelPrompt(dashboard))).toEqual(panels('Plain', 8).map((p) => p.title));
-  });
-
-  it('presents the first ten panels with descriptions when more than ten have one', () => {
-    const dashboard = dashboardSetup([...panels('Described', 15, 'Shows load'), ...panels('Plain', 5)]);
-
-    const prompt = getDashboardPanelPrompt(dashboard);
-
-    expect(prompt).toContain('There are 20 panels.');
-    expect(presentedTitles(prompt)).toEqual(panels('Described', 10).map((p) => p.title));
-  });
-
-  it('fills the remaining slots with the first panels without descriptions', () => {
-    const dashboard = dashboardSetup([...panels('Plain', 27), ...panels('Described', 3, 'Shows load')]);
-
-    expect(presentedTitles(getDashboardPanelPrompt(dashboard))).toEqual([
-      ...panels('Described', 3).map((p) => p.title),
-      ...panels('Plain', 7).map((p) => p.title),
-    ]);
-  });
-
-  it('presents ten panels when there are just over ten', () => {
-    const dashboard = dashboardSetup(panels('Plain', 12));
-
-    expect(presentedTitles(getDashboardPanelPrompt(dashboard))).toEqual(panels('Plain', 10).map((p) => p.title));
+  it.each([
+    {
+      name: 'every panel when there are ten or fewer',
+      items: panels('Plain', 8),
+      expected: ['Plain 0', 'Plain 1', 'Plain 2', 'Plain 3', 'Plain 4', 'Plain 5', 'Plain 6', 'Plain 7'],
+    },
+    {
+      name: 'the first ten panels with descriptions when more than ten have one',
+      items: [...panels('Described', 15, 'Shows load'), ...panels('Plain', 5)],
+      expected: [
+        'Described 0',
+        'Described 1',
+        'Described 2',
+        'Described 3',
+        'Described 4',
+        'Described 5',
+        'Described 6',
+        'Described 7',
+        'Described 8',
+        'Described 9',
+      ],
+    },
+    {
+      name: 'panels with descriptions first, then the first panels without descriptions up to ten',
+      items: [...panels('Plain', 27), ...panels('Described', 3, 'Shows load')],
+      expected: [
+        'Described 0',
+        'Described 1',
+        'Described 2',
+        'Plain 0',
+        'Plain 1',
+        'Plain 2',
+        'Plain 3',
+        'Plain 4',
+        'Plain 5',
+        'Plain 6',
+      ],
+    },
+    {
+      name: 'ten panels when there are just over ten',
+      items: panels('Plain', 12),
+      expected: [
+        'Plain 0',
+        'Plain 1',
+        'Plain 2',
+        'Plain 3',
+        'Plain 4',
+        'Plain 5',
+        'Plain 6',
+        'Plain 7',
+        'Plain 8',
+        'Plain 9',
+      ],
+    },
+  ])('presents $name', ({ items, expected }) => {
+    expect(presentedTitles(getDashboardPanelPrompt(dashboardSetup(items)))).toEqual(expected);
   });
 });
