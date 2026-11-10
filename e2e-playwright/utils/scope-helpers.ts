@@ -1,13 +1,10 @@
 import { expect, type Page, type Response } from '@playwright/test';
 
-import { type ScopeDashboardBindingSpec, type ScopeDashboardBindingStatus } from '@grafana/data';
-
 import {
   type FindScopeNavigationsResults,
   type ScopeNavigation,
   type ScopeNavigationStatus,
 } from '../../public/app/api/clients/scope/v0alpha1/endpoints.gen';
-import { type Resource } from '../../public/app/features/apiserver/types';
 
 import { testScopes } from './scopes';
 
@@ -152,7 +149,7 @@ export async function setupScopeRoutes(page: Page, scopes: TestScope[]): Promise
     }
   });
 
-  // Note: Dashboard bindings and navigations routes are set up dynamically in applyScopes()
+  // Note: The navigations route is set up dynamically in applyScopes()
   // with scope-specific URL patterns to avoid cache issues. They are not set up here.
 }
 
@@ -169,8 +166,6 @@ export type TestScope = {
   addLinks?: boolean;
   redirectPath?: string;
 };
-
-type ScopeDashboardBinding = Resource<ScopeDashboardBindingSpec, ScopeDashboardBindingStatus, 'ScopeDashboardBinding'>;
 
 /**
  * Sets up a route for scope node children requests and waits for the response.
@@ -383,74 +378,16 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     await click();
     // Wait for the apply button to disappear (selector closed)
     await page.waitForSelector('[data-testid="scopes-selector-apply"]', { state: 'hidden', timeout: 5000 });
-    // Wait for any resulting API calls (dashboard bindings, etc.) to complete
+    // Wait for any resulting API calls (scope navigations, etc.) to complete
     await page.waitForLoadState('networkidle');
     return;
   }
-
-  const dashboardBindingsUrl: string =
-    '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings?' +
-    scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
 
   const scopeNavigationsUrl: string =
     '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_navigations?' +
     scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
 
   const groups: string[] = ['Most relevant', 'Dashboards', 'Something else', ''];
-
-  // Mock scope_dashboard_bindings endpoint with scope-specific URL pattern
-  await page.route(dashboardBindingsUrl, async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        apiVersion: 'scope.grafana.app/v0alpha1',
-        items: scopes.flatMap((scope) => {
-          const bindings: ScopeDashboardBinding[] = [];
-
-          for (let i = 0; i < 10; i++) {
-            const selectedGroup = groups[Math.floor(Math.random() * groups.length)];
-            bindings.push({
-              kind: 'ScopeDashboardBinding',
-              apiVersion: 'scope.grafana.app/v0alpha1',
-              metadata: {
-                name: 'scope',
-                resourceVersion: '1',
-                creationTimestamp: 'stamp',
-              },
-              spec: {
-                dashboard: (scope.dashboardUid ?? 'edediimbjhdz4b') + '/' + Math.random().toString(),
-                scope: `scope-${scope.name}`,
-              },
-              status: {
-                dashboardTitle: (scope.dashboardTitle ?? 'A tall dashboard') + (selectedGroup[0] ?? 'U') + i,
-                ...(selectedGroup !== '' && { groups: [selectedGroup] }),
-              },
-            });
-          }
-
-          // make sure there is always a binding with no group
-          bindings.push({
-            kind: 'ScopeDashboardBinding',
-            apiVersion: 'scope.grafana.app/v0alpha1',
-            metadata: {
-              name: 'scope',
-              resourceVersion: '1',
-              creationTimestamp: 'stamp',
-            },
-            spec: {
-              dashboard: (scope.dashboardUid ?? 'edediimbjhdz4b') + '/' + Math.random().toString(),
-              scope: `scope-${scope.name}`,
-            },
-            status: {
-              dashboardTitle: (scope.dashboardTitle ?? 'A tall dashboard') + 'U123',
-            },
-          });
-          return bindings;
-        }),
-      }),
-    });
-  });
 
   const buildNavigation = (
     scope: TestScope,
@@ -516,10 +453,7 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     });
   });
 
-  const responsePromise = page.waitForResponse(
-    (response) =>
-      response.url().includes(`/find/scope_dashboard_bindings`) || response.url().includes(`/find/scope_navigations`)
-  );
+  const responsePromise = page.waitForResponse((response) => response.url().includes(`/find/scope_navigations`));
 
   await click();
 
