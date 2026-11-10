@@ -15,12 +15,17 @@ const headerItem: VizTooltipItem = {
   value: '2024-01-01 12:00:00',
 };
 
-// Normal, representative content (short names and values) for the everyday Baseline/Basic stories.
+// A mostly-normal set with one deliberately long value, so `Basic`'s `narrow` option demonstrates
+// value wrapping.
 const items: VizTooltipItem[] = [
   { label: 'cpu', value: '72.4%', color: '#73BF69' },
   { label: 'memory', value: '3.1 GiB', color: '#F2CC0C' },
   { label: 'requests', value: '1.2k/s', color: '#8AB8FF' },
-  { label: 'p99 latency', value: '48 ms', color: '#FF9830' },
+  {
+    label: 'endpoint',
+    value: 'https://prometheus-server-0.monitoring.svc.cluster.local:9090/api/v1/query_range',
+    color: '#FF9830',
+  },
 ];
 
 // Pathological content: very long names and/or values that stress the layout. `auto` grows wide to
@@ -80,13 +85,8 @@ export default meta;
 
 type Story = StoryObj<typeof VizTooltipWrapper>;
 
-// Normal label lengths — the everyday tooltip, shown at `auto` (the default / old-system layout).
-export const Baseline: Story = {
-  parameters: { controls: { disable: true } },
-  render: () => <Tooltip items={items} />,
-};
-
-// Toggle the `size` control to compare how normal content reflows between `auto` and `narrow`.
+// Toggle the `size` control: `narrow` wraps the long `endpoint` value within the capped width,
+// while `auto` lets the tooltip grow wide to keep it on one line.
 export const Basic: Story = {
   render: ({ size }) => <Tooltip size={size} items={items} />,
 };
