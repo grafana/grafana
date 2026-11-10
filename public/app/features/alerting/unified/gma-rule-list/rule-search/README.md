@@ -11,7 +11,8 @@ files without adding anything.
   `metric:cpu` on the Alert rules page. `rule:cpu` is title text too, as in the old list.
 - **`key:value`** filters: `folder:` takes a folder name and matches folder titles exactly, ignoring
   case, so same-named folders all match. It replaces the old list's `namespace:`, which matched
-  names fuzzily. `datasource:` takes UIDs and matches them exactly.
+  names fuzzily. `datasource:` takes UIDs and matches them exactly. A space after the colon is
+  allowed, so `folder: "Team 01"` is `folder:"Team 01"`, unless the next word is a filter itself.
 - **Quotes** keep spaces in a value and can start anywhere in it: `contactPoint:"on call"`,
   `"cpu high"`, `label:team="a b"`. Quoting text that would read as a filter keeps it title text:
   `"state:firing"`. Empty quotes are no text. There are no escapes, as in the old list: a backslash

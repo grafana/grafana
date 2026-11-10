@@ -1,7 +1,7 @@
 import { type KeyboardEvent, type ReactNode, useEffect, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Box, Divider, FilterInput, Grid, Icon, Label, Stack, Text } from '@grafana/ui';
+import { Box, Divider, FilterInput, Grid, Icon, Label, ScrollContainer, Stack, Text } from '@grafana/ui';
 
 import { PopupCard } from '../../components/HoverCard';
 
@@ -170,28 +170,31 @@ function describeIssues(issues: FilterIssue[], filterHelp: FilterHelp[]): string
 
 function SearchHelp({ filterHelp }: { filterHelp: FilterHelp[] }) {
   return (
-    <Stack direction="column" gap={1}>
-      <Text element="p">
-        <Trans i18nKey="alerting.gma-rule-list.search.help-intro">
-          Search syntax allows you to query rules by the filters below.
-        </Trans>
-      </Text>
-      <Divider spacing={0} />
-      <Grid columns={3} gap={1} alignItems="center">
-        <Text weight="bold">
-          <Trans i18nKey="alerting.gma-rule-list.search.help-filter-type">Filter type</Trans>
+    // The popup has no height limit, so a help taller than the window would be cut off with no way to scroll.
+    <ScrollContainer maxHeight="60vh">
+      <Stack direction="column" gap={1}>
+        <Text element="p">
+          <Trans i18nKey="alerting.gma-rule-list.search.help-intro">
+            Search syntax allows you to query rules by the filters below.
+          </Trans>
         </Text>
-        <Text weight="bold">
-          <Trans i18nKey="alerting.gma-rule-list.search.help-expression">Expression</Trans>
-        </Text>
-        <Text weight="bold">
-          <Trans i18nKey="alerting.gma-rule-list.search.help-availability">Availability</Trans>
-        </Text>
-        {filterHelp.map((definition) => (
-          <HelpRow key={definition.key} definition={definition} />
-        ))}
-      </Grid>
-    </Stack>
+        <Divider spacing={0} />
+        <Grid columns={3} gap={1} alignItems="center">
+          <Text weight="bold">
+            <Trans i18nKey="alerting.gma-rule-list.search.help-filter-type">Filter type</Trans>
+          </Text>
+          <Text weight="bold">
+            <Trans i18nKey="alerting.gma-rule-list.search.help-expression">Expression</Trans>
+          </Text>
+          <Text weight="bold">
+            <Trans i18nKey="alerting.gma-rule-list.search.help-availability">Availability</Trans>
+          </Text>
+          {filterHelp.map((definition) => (
+            <HelpRow key={definition.key} definition={definition} />
+          ))}
+        </Grid>
+      </Stack>
+    </ScrollContainer>
   );
 }
 

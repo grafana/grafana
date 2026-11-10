@@ -45,7 +45,7 @@ function parseFilter<Filter extends SharedRuleFilter>(
   const filter = createEmptyFilter();
   const rejected: RejectedToken[] = [];
 
-  for (const raw of tokenize(query)) {
+  for (const raw of tokenize(query, (key) => byKey.has(key))) {
     const definition = raw.key === null ? undefined : byKey.get(raw.key);
 
     // A key this page has no filter for is part of a title, e.g. a rule named `foo:bar`.

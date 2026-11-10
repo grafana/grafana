@@ -68,12 +68,8 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
 const { useSearchAlertRulesInfiniteQuery } = alertRuleSearchAPI;
 
 export function useAlertRuleSearch(filter: AlertRuleFilter, { inFolderUid }: { inFolderUid?: string } = {}) {
-  const { apiArgs, isLookingUp, lookupError, retryLookup, noMatchingFolder, folderLimitReached } = useRuleSearchApiArgs(
-    filter,
-    {
-      inFolderUid,
-    }
-  );
+  const lookup = useRuleSearchApiArgs(filter, { inFolderUid });
+  const { apiArgs, lookupError } = lookup;
   const query = useSearchAlertRulesInfiniteQuery(apiArgs ?? skipToken);
   const { currentData, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = query;
   // Missing from the result type of a query that has not started.
@@ -89,9 +85,9 @@ export function useAlertRuleSearch(filter: AlertRuleFilter, { inFolderUid }: { i
 
   return {
     items,
-    noMatchingFolder,
-    folderLimitReached,
-    isLoading: isLookingUp || (apiArgs !== undefined && !hasLoaded && !isError),
+    noMatchingFolder: lookup.noMatchingFolder,
+    folderLimitReached: lookup.folderLimitReached,
+    isLoading: lookup.isLookingUp || (apiArgs !== undefined && !hasLoaded && !isError),
     // A failed first page replaces the list; a later failure keeps the loaded rows and shows `failure` below them.
     error: lookupError ?? firstPageError,
     failure,
@@ -103,7 +99,7 @@ export function useAlertRuleSearch(filter: AlertRuleFilter, { inFolderUid }: { i
     // Refetching reloads every loaded page with fresh continuation tokens, so it also recovers from an expired one.
     retry: () => {
       if (lookupError) {
-        retryLookup();
+        lookup.retryLookup();
       } else {
         void refetch();
       }
