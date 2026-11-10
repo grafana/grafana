@@ -13,6 +13,8 @@ export {
   isValidRecordingRulesTarget,
 } from './grafana/dataSources/predicates';
 
+export { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from './grafana/dataSources/types';
+
 export { getDataSourcesManagingAlerts, getDataSourcesWithValidRecordingTarget } from './grafana/dataSources/narrowings';
 export {
   type DataSourcesManagingAlertsByUidResult,
