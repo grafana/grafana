@@ -66,6 +66,16 @@ describe('RuleList - FilterView', () => {
     expect(twoPageResults.length).toBeGreaterThan(onePageResults.length);
   });
 
+  it('should wait for the rules source list before it loads the first page', async () => {
+    render(<FilterView filterState={getFilter({ dataSourceNames: ['Mimir'] })} />);
+
+    expect(screen.getAllByTestId('alert-rule-list-item-loader')).toHaveLength(2);
+    expect(screen.queryByTestId('load-more-helper')).not.toBeInTheDocument();
+
+    await loadMoreResults();
+    expect(await screen.findAllByRole('treeitem')).not.toHaveLength(0);
+  });
+
   it('should filter results by group and rule name ', async () => {
     render(
       <FilterView
@@ -146,7 +156,8 @@ describe('RuleList - FilterView', () => {
 });
 
 async function loadMoreResults() {
-  io.enterNode(screen.getByTestId('load-more-helper'));
+  // The helper renders once the rules source list loads.
+  io.enterNode(await screen.findByTestId('load-more-helper'));
   await waitForElementToBeRemoved(screen.queryAllByTestId('alert-rule-list-item-loader'));
 }
 

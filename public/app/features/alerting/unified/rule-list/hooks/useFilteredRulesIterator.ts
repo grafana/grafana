@@ -15,9 +15,10 @@ import {
   type PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { useExternalRulesSources } from '../../hooks/useExternalRulesSources';
 import { useRouteProxyActive } from '../../plugin-proxy/withRouteProxy';
 import { RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
-import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
+import { getDatasourceAPIUid } from '../../utils/datasource';
 import { type RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
 import { getDatasourceFilter } from './datasourceFilter';
@@ -68,7 +69,14 @@ interface GetIteratorResult {
   abortController: AbortController;
 }
 
-export function useFilteredRulesIteratorProvider() {
+export interface FilteredRulesIteratorProvider {
+  getFilteredRulesIterator: (filterState: RulesFilter, options: FetchGroupsLimitOptions) => GetIteratorResult;
+  /** An iterator built while this is true has no data source-managed rules sources. */
+  isLoading: boolean;
+}
+
+export function useFilteredRulesIteratorProvider(): FilteredRulesIteratorProvider {
+  const { items: allExternalSources, isLoading } = useExternalRulesSources();
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ limitAlerts: 0 });
   // Data source managed rules belong to the Prometheus Alerting plugin once it's there, so we stop
@@ -101,7 +109,7 @@ export function useFilteredRulesIteratorProvider() {
     );
 
     // Determine which data sources to use
-    const externalRulesSourcesToFetchFrom = getRulesSourcesFromFilter(filterState);
+    const externalRulesSourcesToFetchFrom = getRulesSourcesFromFilter(filterState, allExternalSources);
 
     if (filterState.ruleSource === RuleSource.Grafana) {
       return { iterable: grafanaRulesGenerator, abortController };
@@ -145,7 +153,7 @@ export function useFilteredRulesIteratorProvider() {
     return { iterable, abortController };
   };
 
-  return getFilteredRulesIterable;
+  return { getFilteredRulesIterator: getFilteredRulesIterable, isLoading };
 }
 
 function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): AsyncIterableX<RuleWithOrigin> {
@@ -161,9 +169,10 @@ function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): Async
  * Only allows Prometheus and Loki data source types.
  * Returns all external rules sources if no filter is provided.
  */
-function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceIdentifier[] {
-  const allExternalSources = getExternalRulesSources();
-
+function getRulesSourcesFromFilter(
+  filter: RulesFilter,
+  allExternalSources: DataSourceRulesSourceIdentifier[]
+): DataSourceRulesSourceIdentifier[] {
   // If no filter is provided, return all external sources
   if (filter.dataSourceNames.length === 0) {
     return allExternalSources;
