@@ -10,10 +10,6 @@ import { usePendingChangesHistoryState } from '../../../lifecycle/pendingChanges
 import { isFullDashboardEditing } from '../../types/dashboard';
 import { type ToolbarActionProps } from '../types';
 
-/**
- * Undo and redo for dashboard edits, shown next to the time picker in the controls row — the same
- * place notebooks put theirs.
- */
 export function DashboardEditHistoryControls({ dashboard }: ToolbarActionProps) {
   const dashboardState = dashboard.useState();
   const { chrome } = useGrafana();

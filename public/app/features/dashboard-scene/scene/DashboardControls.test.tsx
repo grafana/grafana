@@ -706,16 +706,18 @@ describe('DashboardControls', () => {
       };
     }
 
-    it('renders undo and redo before the time picker while editing', async () => {
-      const controls = buildTestSceneWithEditable({ isEditing: true });
+    it('renders undo and redo directly before the save button while editing', async () => {
+      const controls = buildTestSceneWithEditable({ canSave: true, isEditing: true });
       renderInGrafanaContext(<controls.Component model={controls} />);
 
       const undo = await screen.findByTestId(undoTestId);
       const redo = screen.getByTestId(redoTestId);
+      const save = screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveButton);
       const timePicker = screen.getByTestId(selectors.components.TimePicker.openButton);
 
+      expect(timePicker.compareDocumentPosition(undo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       expect(undo.compareDocumentPosition(redo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      expect(redo.compareDocumentPosition(timePicker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(redo.parentElement?.nextElementSibling).toContainElement(save);
     });
 
     it('disables both buttons when there is nothing to undo or redo', async () => {
