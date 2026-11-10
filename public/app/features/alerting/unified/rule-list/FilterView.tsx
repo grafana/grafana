@@ -7,6 +7,7 @@ import { EmptyState, Stack } from '@grafana/ui';
 
 import { withPerformanceLogging } from '../Analytics';
 import { isLoading, useAsync } from '../hooks/useAsync';
+import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
 import { type RulesFilter } from '../search/rulesSearchParser';
 import { hashRule } from '../utils/rule-id';
 
@@ -20,6 +21,7 @@ import {
   DataSourceManagedRulesBanner,
   SearchDataSourceManagedRulesButton,
 } from './components/DataSourceManagedRulesNotice';
+import { RulesSourcesErrorNotice } from './components/RulesSourcesErrorNotice';
 import {
   type GrafanaRuleWithOrigin,
   type PromRuleWithOrigin,
@@ -58,7 +60,12 @@ function FilterViewResults({ filterState }: FilterViewProps) {
   const [transitionPending, startTransition] = useTransition();
 
   /* this hook returns a function that creates an AsyncIterable<RuleWithOrigin> which we will use to populate the front-end */
-  const { getFilteredRulesIterator, isLoading: isLoadingRulesSources } = useFilteredRulesIteratorProvider();
+  const {
+    getFilteredRulesIterator,
+    isLoading: isLoadingRulesSources,
+    error: rulesSourcesError,
+  } = useFilteredRulesIteratorProvider();
+  const routeProxyActive = useRouteProxyActive();
 
   const iteration = useRef<{
     rulesBatchIterator: AsyncIterator<RuleWithOrigin[]>;
@@ -115,11 +122,12 @@ function FilterViewResults({ filterState }: FilterViewProps) {
     }, 'alerting.rule-list.filter-view.load-result-page')
   );
 
-  // The iterator is built on the first page load, and it keeps its rules sources. LoadMoreHelper only renders
-  // when this is false, so the first page waits for the rules source list.
-  const loading = isLoading(state) || transitionPending || isLoadingRulesSources;
+  const loading = isLoading(state) || transitionPending;
+  // The first page load builds the iterator, and the iterator keeps its rules sources. So the first page waits
+  // for the rules source list. Until then there is no search to report on or to cancel.
+  const waitingForRulesSources = isLoadingRulesSources && state.status === 'not-executed';
   const numberOfRules = rules.length;
-  const noRulesFound = numberOfRules === 0 && !loading;
+  const noRulesFound = numberOfRules === 0 && !loading && !waitingForRulesSources;
   const loadingAborted = iteration.current?.abortController.signal.aborted;
   const cancelSearch = useCallback(() => {
     iteration.current?.abortController.abort();
@@ -157,6 +165,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
   return (
     <Stack direction="column" gap={0}>
       <DataSourceManagedRulesBanner />
+      {!routeProxyActive && <RulesSourcesErrorNotice error={rulesSourcesError} />}
       <ul aria-label={t('alerting.filter-view-results.aria-label-filteredrulelist', 'filtered-rule-list')}>
         {rules.map((ruleWithOrigin) => {
           const { key, rule, groupIdentifier, origin } = ruleWithOrigin;
@@ -184,17 +193,19 @@ function FilterViewResults({ filterState }: FilterViewProps) {
               );
           }
         })}
-        {loading && (
+        {(loading || waitingForRulesSources) && (
           <>
             <AlertRuleListItemSkeleton />
             <AlertRuleListItemSkeleton />
           </>
         )}
       </ul>
-      {!noRulesFound && (
+      {!noRulesFound && !waitingForRulesSources && (
         <FilterStatus state={filterProgressState} numberOfRules={numberOfRules} onCancel={cancelSearch} />
       )}
-      {!doneSearching && !loading && !loadingAborted && <LoadMoreHelper handleLoad={loadResultPage} />}
+      {!doneSearching && !loading && !waitingForRulesSources && !loadingAborted && (
+        <LoadMoreHelper handleLoad={loadResultPage} />
+      )}
     </Stack>
   );
 }

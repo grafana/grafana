@@ -73,10 +73,12 @@ export interface FilteredRulesIteratorProvider {
   getFilteredRulesIterator: (filterState: RulesFilter, options: FetchGroupsLimitOptions) => GetIteratorResult;
   /** An iterator built while this is true has no data source-managed rules sources. */
   isLoading: boolean;
+  /** Set when the rules source list failed. The iterator then has no data source-managed rules sources. */
+  error?: Error;
 }
 
 export function useFilteredRulesIteratorProvider(): FilteredRulesIteratorProvider {
-  const { items: allExternalSources, isLoading } = useExternalRulesSources();
+  const { items: allExternalSources, isLoading, error } = useExternalRulesSources();
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ limitAlerts: 0 });
   // Data source managed rules belong to the Prometheus Alerting plugin once it's there, so we stop
@@ -153,7 +155,7 @@ export function useFilteredRulesIteratorProvider(): FilteredRulesIteratorProvide
     return { iterable, abortController };
   };
 
-  return { getFilteredRulesIterator: getFilteredRulesIterable, isLoading };
+  return { getFilteredRulesIterator: getFilteredRulesIterable, isLoading, error };
 }
 
 function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): AsyncIterableX<RuleWithOrigin> {
