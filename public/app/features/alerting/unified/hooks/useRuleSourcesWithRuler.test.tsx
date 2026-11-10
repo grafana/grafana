@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { HttpResponse, delay, http } from 'msw';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -23,7 +23,7 @@ function getProviderWrapper() {
   return ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 }
 
-// Creates a Prometheus datasource with manageAlerts:true so getRulesDataSources() includes it
+// Creates a Prometheus datasource with manageAlerts:true so useDataSourcesForRules() includes it
 function makeMimirDatasource(uid: string, name: string) {
   return mockDataSource({
     uid,
@@ -38,15 +38,47 @@ beforeEach(() => {
 });
 
 describe('useRulesSourcesWithRuler — baseline (current behaviour)', () => {
-  it('starts with empty list and no loading when there are no datasources', () => {
+  it('returns an empty list when there are no datasources', async () => {
     setupDataSources();
 
     const { result } = renderHook(() => useRulesSourcesWithRuler(), {
       wrapper: getProviderWrapper(),
     });
 
-    expect(result.current.isLoading).toBe(false);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.rulesSourcesWithRuler).toEqual([]);
+  });
+
+  it('is loading while the data source list loads', async () => {
+    setupDataSources(makeMimirDatasource('mimir-1', 'Mimir 1'));
+
+    const { result } = renderHook(() => useRulesSourcesWithRuler(), {
+      wrapper: getProviderWrapper(),
+    });
+
+    expect(result.current).toEqual({ rulesSourcesWithRuler: [], isLoading: true });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+  });
+
+  it('drops the earlier results when the data source cache changes', async () => {
+    setupDataSources(makeMimirDatasource('mimir-1', 'Mimir 1'));
+    server.use(
+      http.get('/api/datasources/proxy/uid/:uid/api/v1/status/buildinfo', () =>
+        HttpResponse.json(buildInfoResponse.mimir)
+      )
+    );
+
+    const { result } = renderHook(() => useRulesSourcesWithRuler(), {
+      wrapper: getProviderWrapper(),
+    });
+    await waitFor(() => expect(result.current.rulesSourcesWithRuler.map((ds) => ds.uid)).toEqual(['mimir-1']));
+
+    act(() => {
+      setupDataSources(makeMimirDatasource('mimir-2', 'Mimir 2'));
+    });
+
+    await waitFor(() => expect(result.current.rulesSourcesWithRuler.map((ds) => ds.uid)).toEqual(['mimir-2']));
+    expect(result.current.isLoading).toBe(false);
   });
 
   it('returns datasources whose buildinfo indicates ruler support (Mimir)', async () => {
@@ -113,7 +145,7 @@ describe('useRulesSourcesWithRuler — bug reproductions (must fail before fix)'
   });
 
   it('BUG: fires all requests simultaneously instead of in batches of 10', async () => {
-    // getRulesDataSources() sorts by name, so all datasources are processed in
+    // useDataSourcesForRules() sorts by name, so all datasources are processed in
     // alphabetical order. We spy on discoverFeaturesByUid (called inside the RTK
     // Query queryFn) to measure true in-process concurrency, which is not subject
     // to test-environment serialization at the network/MSW layer.
@@ -145,7 +177,7 @@ describe('useRulesSourcesWithRuler — bug reproductions (must fail before fix)'
   });
 
   it('BUG: isLoading goes false before all datasources have resolved', async () => {
-    // getRulesDataSources() sorts by name alphabetically. We give the slow datasource
+    // useDataSourcesForRules() sorts by name alphabetically. We give the slow datasource
     // a name that sorts BEFORE the fast one ("AA..." < "ZZ..."), so the forEach loop
     // triggers slow-ds first and fast-ds LAST. The broken isLoading only reflects the
     // last-triggered lazy query (fast-ds). Since fast-ds has no delay, isLoading goes

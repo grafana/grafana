@@ -1,33 +1,37 @@
 import { useEffect, useState } from 'react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type RulesSourceDataSource } from '@grafana/alerting/internal';
 
 import { logWarning } from '../Analytics';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { getRulesDataSources } from '../utils/datasource';
+
+import { useDataSourcesForRules } from './useDataSourcesForRules';
 
 const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
 const CONCURRENCY_LIMIT = 10;
 
 export function useRulesSourcesWithRuler(): {
-  rulesSourcesWithRuler: DataSourceInstanceSettings[];
+  rulesSourcesWithRuler: RulesSourceDataSource[];
   isLoading: boolean;
 } {
-  const [rulesSourcesWithRuler, setRulesSourcesWithRuler] = useState<DataSourceInstanceSettings[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { items: dataSources, isLoading: isLoadingDataSources } = useDataSourcesForRules();
+  const [rulesSourcesWithRuler, setRulesSourcesWithRuler] = useState<RulesSourceDataSource[]>([]);
+  const [isDiscovering, setIsDiscovering] = useState(false);
   const [discoverDsFeatures] = useLazyDiscoverDsFeaturesQuery();
 
   useEffect(() => {
-    const dataSources = getRulesDataSources();
+    // The list changes when the data source cache refreshes. Results from an earlier list must not stay.
+    setRulesSourcesWithRuler((prev) => (prev.length === 0 ? prev : []));
     if (dataSources.length === 0) {
+      setIsDiscovering(false);
       return;
     }
 
     // per-effect-run flag that prevents stale state updates after the component unmounts
     // or the effect re-runs with new dependencies
     let cancelled = false;
-    setIsLoading(true);
+    setIsDiscovering(true);
 
     async function discoverDsFeaturesInBatches() {
       for (let i = 0; i < dataSources.length; i += CONCURRENCY_LIMIT) {
@@ -51,7 +55,7 @@ export function useRulesSourcesWithRuler(): {
       }
 
       if (!cancelled) {
-        setIsLoading(false);
+        setIsDiscovering(false);
       }
     }
 
@@ -60,7 +64,7 @@ export function useRulesSourcesWithRuler(): {
     return () => {
       cancelled = true;
     };
-  }, [discoverDsFeatures]);
+  }, [dataSources, discoverDsFeatures]);
 
-  return { rulesSourcesWithRuler, isLoading };
+  return { rulesSourcesWithRuler, isLoading: isLoadingDataSources || isDiscovering };
 }
