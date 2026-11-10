@@ -249,7 +249,6 @@ func TestDashboardAPIBuilder_ValidateCreateInRootFolder(t *testing.T) {
 			var folders []string
 			dashboardService := dashboards.NewFakeDashboardService(t)
 			dashboardService.On("ValidateBasicDashboardProperties", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			dashboardService.On("ValidateDashboardRefreshInterval", mock.Anything, mock.Anything).Return(nil)
 			b := &DashboardsAPIBuilder{
 				dashboardService: dashboardService,
 				QuotaService:     quotatest.New(false, nil),
