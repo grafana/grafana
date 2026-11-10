@@ -1,4 +1,4 @@
-import { type BaseQueryFn, type RetryOptions, retry } from '@reduxjs/toolkit/query';
+import { type BaseQueryFn } from '@reduxjs/toolkit/query';
 import { lastValueFrom } from 'rxjs';
 
 import { type BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
@@ -10,16 +10,9 @@ export interface RequestOptions extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];
 }
 
-export interface BaseQueryExtraOptions {
-  retryOptions?: RetryOptions;
-  requestScheduler?: <T>(request: () => Promise<T>, signal: AbortSignal, options: RequestOptions) => Promise<T>;
-}
-
 export type CreateBaseQueryOptions = { baseURL: string } | { getBaseURL: () => Promise<string> };
 
-export function createBaseQuery(
-  options: CreateBaseQueryOptions
-): BaseQueryFn<RequestOptions, unknown, unknown, BaseQueryExtraOptions> {
+export function createBaseQuery(options: CreateBaseQueryOptions): BaseQueryFn<RequestOptions> {
   // Get the correct resolver once for all API calls
   const resolveBaseURL = 'getBaseURL' in options ? options.getBaseURL : () => Promise.resolve(options.baseURL);
 
@@ -63,20 +56,5 @@ export function createBaseQuery(
     }
   }
 
-  const baseQuery: BaseQueryFn<RequestOptions, unknown, unknown, BaseQueryExtraOptions> = (
-    requestOptions,
-    api,
-    extraOptions
-  ) => {
-    const request = () => backendSrvBaseQuery(requestOptions);
-    return extraOptions?.requestScheduler
-      ? extraOptions.requestScheduler(request, api.signal, requestOptions)
-      : request();
-  };
-  const retriableBaseQuery = retry(baseQuery);
-
-  return (requestOptions, api, extraOptions) =>
-    extraOptions?.retryOptions
-      ? retriableBaseQuery(requestOptions, api, { ...extraOptions, ...extraOptions.retryOptions })
-      : baseQuery(requestOptions, api, extraOptions);
+  return backendSrvBaseQuery;
 }

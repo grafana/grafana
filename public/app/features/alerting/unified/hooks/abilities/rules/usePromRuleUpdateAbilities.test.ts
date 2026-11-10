@@ -569,3 +569,36 @@ it.each(['constructor', 'toString', '__proto__'])(
     await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: true }));
   }
 );
+
+it.each([false, true])('does not retry ordinary folder permission reads (app platform: %s)', async (appPlatform) => {
+  let requests = 0;
+  server.use(
+    http.get(
+      appPlatform
+        ? '/apis/folder.grafana.app/:version/namespaces/:namespace/folders/payments/access'
+        : '/api/folders/payments',
+      () => {
+        requests++;
+        return HttpResponse.json({ message: 'Unavailable' }, { status: 503 });
+      }
+    )
+  );
+  const pending = appPlatform
+    ? store.dispatch(folderAPIv1beta1.endpoints.getFolderAccess.initiate({ name: 'payments' }))
+    : store.dispatch(
+        browseDashboardsAPI.endpoints.getFolder.initiate({
+          folderUID: 'payments',
+          accesscontrol: true,
+          isLegacyCall: false,
+        })
+      );
+
+  try {
+    await expect(pending.unwrap()).rejects.toMatchObject({ status: 503 });
+    expect(requests).toBe(1);
+  } finally {
+    pending.unsubscribe();
+    store.dispatch(folderAPIv1beta1.util.resetApiState());
+    store.dispatch(browseDashboardsAPI.util.resetApiState());
+  }
+});

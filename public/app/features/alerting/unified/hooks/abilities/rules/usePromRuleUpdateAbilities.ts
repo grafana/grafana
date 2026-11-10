@@ -3,15 +3,17 @@ import { useEffect, useMemo } from 'react';
 import { EMPTY, type Observable, Subject, catchError, defer, mergeAll } from 'rxjs';
 
 import { useFlagFoldersAppPlatformAPI } from '@grafana/runtime/internal';
-import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { PERMISSION_LOOKUP_CONCURRENCY } from 'app/core/utils/permissionLookupQueue';
-import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { type AppDispatch, type RootState } from 'app/store/configureStore';
 import { type FolderDTO } from 'app/types/folders';
 import { useDispatch, useSelector } from 'app/types/store';
 import { type GrafanaPromRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { ruleUpdateDependenciesApi } from '../../../api/ruleUpdateDependenciesApi';
+import {
+  legacyRuleFolderPermissionsApi,
+  ruleFolderPermissionsApi,
+  ruleUpdateDependenciesApi,
+} from '../../../api/ruleUpdateDependenciesApi';
 import { getRulePluginOrigin } from '../../../utils/rules';
 import { type AsyncAbility } from '../types';
 
@@ -51,18 +53,18 @@ function folderState(result: {
 function folderQuery(uid: string, appPlatform: boolean): DependencyQuery {
   const key = `folder:${uid}`;
   if (appPlatform) {
-    const args = { name: uid };
+    const endpoint = ruleFolderPermissionsApi.endpoints.getBulkRuleFolderPermissions;
     return {
       key,
-      select: createSelector(folderAPIv1beta1.endpoints.getFolderAccess.select(args), folderState),
-      subscribe: (dispatch) => dispatch(folderAPIv1beta1.endpoints.getFolderAccess.initiate(args)),
+      select: createSelector(endpoint.select(uid), folderState),
+      subscribe: (dispatch) => dispatch(endpoint.initiate(uid)),
     };
   }
-  const args = { folderUID: uid, accesscontrol: true, isLegacyCall: false };
+  const endpoint = legacyRuleFolderPermissionsApi.endpoints.getBulkRuleFolderPermissions;
   return {
     key,
-    select: createSelector(browseDashboardsAPI.endpoints.getFolder.select(args), folderState),
-    subscribe: (dispatch) => dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(args)),
+    select: createSelector(endpoint.select(uid), folderState),
+    subscribe: (dispatch) => dispatch(endpoint.initiate(uid)),
   };
 }
 
@@ -78,7 +80,7 @@ function pluginQuery(id: string): DependencyQuery {
   };
 }
 
-/** Subscribes to canonical dependency queries independently of rendered rule cards. */
+/** Subscribes to bulk dependency queries independently of rendered rule cards. */
 export function usePromRuleUpdateAbilities(
   rules: GrafanaPromRuleDTO[],
   enabled: boolean
