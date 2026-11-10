@@ -81,6 +81,22 @@ func TestPermittedLocalPaths(t *testing.T) {
 			bootstrap: "conf/provisioning/bootstrap",
 			want:      append(configured, "/usr/share/grafana/conf/provisioning/bootstrap"),
 		},
+		{
+			// The empty prefix a cleaned root produces is a prefix of every path.
+			name:      "the filesystem root is not permitted",
+			bootstrap: "/",
+			want:      configured,
+		},
+		{
+			name:      "a traversal is not permitted",
+			bootstrap: "../../../etc",
+			want:      configured,
+		},
+		{
+			name:      "a hidden directory is not permitted",
+			bootstrap: "/etc/.grafana/bootstrap",
+			want:      configured,
+		},
 	}
 
 	for _, tt := range tests {

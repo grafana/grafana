@@ -211,6 +211,18 @@ func TestBootstrapConfigFromSettings(t *testing.T) {
 			want:            bootstrap.Config{Path: "conf/provisioning/bootstrap", Namespace: "default"},
 		},
 		{
+			// The path is added to the local-repository allowlist, which is matched by prefix,
+			// so the empty prefix a cleaned root produces would permit every path.
+			name:    "rejects the filesystem root",
+			path:    "/",
+			wantErr: true,
+		},
+		{
+			name:    "rejects a path admission would reject",
+			path:    "../../../etc",
+			wantErr: true,
+		},
+		{
 			name:            "rejects a bootstrap path when local repositories are disabled",
 			path:            "conf/provisioning/bootstrap",
 			repositoryTypes: []string{"github"},
