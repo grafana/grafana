@@ -24,6 +24,7 @@ import {
   useGetRepositoryFilesQuery,
   useGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { useAppManifestKinds } from 'app/features/apiserver/appManifests';
 
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
@@ -54,6 +55,7 @@ function getGrafanaLink(item: TreeItem) {
 
 export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const styles = useStyles2(getStyles);
+  const manifestKinds = useAppManifestKinds();
   const name = repo.metadata?.name ?? '';
 
   const filesQuery = useGetRepositoryFilesQuery({ name });
@@ -88,7 +90,8 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
     const statusFiltered = statusFilter.length > 0 ? filterByStatusCategories(built, statusFilter) : built;
 
     return searchQuery ? filterTree(statusFiltered, searchQuery) : statusFiltered;
-  }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery, statusFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery, statusFilter, manifestKinds]);
 
   // A search or a status filter narrows the tree, so ignore the folded state while either is
   // active to keep every matching item visible instead of hidden inside a collapsed folder.
@@ -257,7 +260,8 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         },
       },
     ],
-    [handleToggleExpand, isFiltering, repo.spec, styles]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [handleToggleExpand, isFiltering, repo.spec, styles, manifestKinds]
   );
 
   if (isLoading) {

@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { type AppManifestKind } from 'app/features/apiserver/appManifests';
 import { getIconForKind } from 'app/features/search/service/icons';
 
 import { setupProvisioningMswServer } from '../mocks/server';
@@ -9,6 +10,7 @@ import { setupProvisioningMswServer } from '../mocks/server';
 import {
   resourceKindInfos,
   getAvailableResourceKinds,
+  getKindDisplayByGroupKind,
   getKindInfoByGroupKind,
   getKindInfoByItemType,
   getKindInfoByResource,
@@ -18,9 +20,16 @@ import {
   getReportedGroup,
   getRepositoryRoute,
   coversGroup,
+  isProvisionedStat,
   isResourceKindAvailable,
   readImmediateParent,
 } from './resourceKinds';
+
+const mockAppManifestKinds: AppManifestKind[] = [];
+jest.mock('app/features/apiserver/appManifests', () => ({
+  ...jest.requireActual('app/features/apiserver/appManifests'),
+  getAppManifestKinds: () => mockAppManifestKinds,
+}));
 
 describe('resourceKinds registry', () => {
   it('exposes an info record per kind with consistent identifiers', () => {
@@ -88,12 +97,14 @@ describe('resourceKinds registry', () => {
   it('carries a list-cache invalidation action only for kinds committed through the shared drawer', () => {
     // Playlists commit via SaveProvisionedResourceDrawer and must refresh their list afterwards;
     // dashboards/folders use their own forms, so they don't carry an invalidation action. Looked up
-    // via getKindInfoByResource so the widened ResourceKindInfo type exposes the optional field (the
+    // via getKindInfoByGroupKind so the widened ResourceKindInfo type exposes the optional field (the
     // `as const` registry entries narrow it away on kinds that omit it).
-    expect(getKindInfoByResource('playlists')?.invalidateListTags?.()).toMatchObject({ type: expect.any(String) });
-    expect(getKindInfoByResource('folders')?.invalidateListTags).toBeUndefined();
-    expect(getKindInfoByResource('dashboards')?.invalidateListTags).toBeUndefined();
-    expect(getKindInfoByResource('librarypanels')?.invalidateListTags).toBeUndefined();
+    expect(getKindInfoByGroupKind(undefined, 'Playlist')?.invalidateListTags?.()).toMatchObject({
+      type: expect.any(String),
+    });
+    expect(getKindInfoByGroupKind(undefined, 'Folder')?.invalidateListTags).toBeUndefined();
+    expect(getKindInfoByGroupKind(undefined, 'Dashboard')?.invalidateListTags).toBeUndefined();
+    expect(getKindInfoByGroupKind(undefined, 'LibraryPanel')?.invalidateListTags).toBeUndefined();
   });
 });
 
@@ -482,5 +493,72 @@ describe('listing a collection kind', () => {
     server.use(discovery([{ name: 'dashboard.grafana.app', version: 'v1beta1', resource: 'dashboards' }]));
 
     await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([]);
+  });
+});
+
+describe('kinds from app manifests', () => {
+  const widget: AppManifestKind = {
+    appName: 'example-app',
+    group: 'example.ext.grafana.app',
+    kind: 'Widget',
+    plural: 'Widgets',
+    resource: 'widgets',
+    url: '/a/example-app/widgets/{name}',
+    icon: 'apps',
+  };
+
+  beforeEach(() => mockAppManifestKinds.splice(0, mockAppManifestKinds.length, widget));
+  afterEach(() => mockAppManifestKinds.splice(0, mockAppManifestKinds.length));
+
+  it('resolves a manifest kind by group and resource, with its manifest label and icon', () => {
+    const info = getKindInfoByStat({ group: widget.group, resource: 'widgets' });
+    expect(info?.pluralLabel()).toBe('Widgets');
+    expect(info?.icon).toBe('apps');
+    expect(getKindInfoByResource('widgets')?.kind).toBe('Widget');
+    expect(getKindInfoByItemType('Widget')?.kind).toBe('Widget');
+    expect(getKindDisplayByGroupKind(widget.group, 'Widget')?.getLabel()).toBe('Widget');
+  });
+
+  it('does not match a manifest kind on the resource alone', () => {
+    mockAppManifestKinds.splice(0, mockAppManifestKinds.length, { ...widget, resource: 'dashboards' });
+    expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'dashboards' })).toBe(
+      resourceKindInfos.dashboard
+    );
+    expect(getKindInfoByStat({ group: widget.group, resource: 'dashboards' })?.kind).toBe('Widget');
+  });
+
+  it('keeps the registry entry when a manifest declares a registry kind', () => {
+    mockAppManifestKinds.splice(0, mockAppManifestKinds.length, {
+      appName: 'playlist',
+      group: 'playlist.grafana.app',
+      kind: 'Playlist',
+      plural: 'Playlists',
+      resource: 'playlists',
+    });
+    expect(getKindInfoByStat({ group: 'playlist.grafana.app', resource: 'playlists' })).toBe(
+      resourceKindInfos.playlist
+    );
+  });
+
+  it('routes a manifest kind resource to its manifest url, with no repository route', () => {
+    const info = getKindInfoByStat({ group: widget.group, resource: 'widgets' });
+    const repo: Repository = {
+      spec: { title: 'r', type: 'github', sync: { target: 'folder', enabled: true }, workflows: [] },
+    };
+    expect(info?.getRoute?.('my widget')).toBe('/a/example-app/widgets/my%20widget');
+    expect(info && getRepositoryRoute(info, repo)).toBeUndefined();
+  });
+
+  it('keeps core-only lookups to the registry', () => {
+    expect(getKindInfoByGroupKind(widget.group, 'Widget')).toBeUndefined();
+    expect(getMigratableKinds([{ group: widget.group, kind: 'Widget' }]).map((k) => k.kind)).not.toContain('Widget');
+  });
+
+  it('counts a manifest kind as provisioned only when availableResources enables it', () => {
+    const stat = { group: widget.group, resource: 'widgets' };
+    expect(isProvisionedStat(stat, [{ group: widget.group, kind: 'Widget' }])).toBe(true);
+    expect(isProvisionedStat(stat, [{ group: widget.group, kind: 'Widget', disabled: true }])).toBe(false);
+    expect(isProvisionedStat(stat, undefined)).toBe(false);
+    expect(isProvisionedStat({ group: 'dashboard.grafana.app', resource: 'dashboards' }, [])).toBe(true);
   });
 });
