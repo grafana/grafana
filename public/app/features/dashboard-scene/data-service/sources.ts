@@ -89,6 +89,20 @@ function getSections(panel: VizPanel): SourceSection[] {
   return sections;
 }
 
+/**
+ * The saved titles of a tab or row and the tabs and rows around it, outermost first: the path a section reference
+ * stores. Empty for the dashboard itself.
+ */
+export function getSectionPath(object: SceneObject): string[] {
+  const path: string[] = [];
+  for (let current: SceneObject | undefined = object; current; current = current.parent) {
+    if (current instanceof TabItem || current instanceof RowItem || current instanceof SceneGridRow) {
+      path.unshift(current.state.title ?? '');
+    }
+  }
+  return path;
+}
+
 /** The section's title as the viewer sees it; empty when it has none. */
 export function getSectionLabel(section: SourceSection): string {
   return sceneGraph.interpolate(section.object, section.title).trim();

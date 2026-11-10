@@ -309,9 +309,14 @@ export type PluginExtensionDashboardControlsContext = {
   /** The row or tab title as the viewer sees it. Undefined for the dashboard scope. */
   sectionLabel?: string;
   /** The questions the author saved on the dashboard, row, or tab. Never empty: the control isn't rendered without. */
-  suggestedQuestions: Array<{
+  questions: Array<{
     /** The question as viewers see and ask it. */
     text: string;
+    /**
+     * Dashboard data API source references to the panels to answer it from: the panels the author picked, or
+     * `sourceRef` when they picked none.
+     */
+    sourceRefs: string[];
   }>;
 };
 

@@ -2,12 +2,14 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, PluginExtensionPoints, type PluginExtensionDashboardControlsContext } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
-import { useFlagGrafanaDashboardSuggestedQuestions } from '@grafana/runtime/internal';
-import { SceneGridRow, sceneGraph, type SceneObject } from '@grafana/scenes';
-import { type SuggestedQuestion } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { useFlagGrafanaDashboardQuestions } from '@grafana/runtime/internal';
+import { sceneGraph } from '@grafana/scenes';
+import { type Question } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { useStyles2 } from '@grafana/ui';
 
-import { ALL_PANELS_REF, sectionRef } from '../data-service/sections';
+import { getQuestionSourceRefs } from '../data-service/questionSources';
+import { sectionRef } from '../data-service/sections';
+import { getSectionPath } from '../data-service/sources';
 
 import { type DashboardScene } from './DashboardScene';
 import { RowItem } from './layout-rows/RowItem';
@@ -26,26 +28,21 @@ interface Props {
  * SPIKE: lets plugins add a control to the dashboard controls bar and to the controls of a row or tab. Each component
  * gets the questions saved on the dashboard, row, or tab, and a source reference the dashboard data API resolves to
  * the panels the control sits over. Renders nothing where no questions are saved, or with
- * `grafana.dashboardSuggestedQuestions` off.
+ * `grafana.dashboardQuestions` off. Questions without text, such as one just added in the editor, are left out.
  */
 export function DashboardControlsExtensionPoint({ owner }: Props) {
-  const enabled = useFlagGrafanaDashboardSuggestedQuestions();
-  const { suggestedQuestions } = owner.useState();
+  const enabled = useFlagGrafanaDashboardQuestions();
+  const { questions } = owner.useState();
+  const askable = questions?.filter((question) => question.text.trim()) ?? [];
 
-  if (!enabled || !suggestedQuestions?.length) {
+  if (!enabled || !askable.length) {
     return null;
   }
 
-  return <ControlsComponents owner={owner} suggestedQuestions={suggestedQuestions} />;
+  return <ControlsComponents owner={owner} questions={askable} />;
 }
 
-function ControlsComponents({
-  owner,
-  suggestedQuestions,
-}: {
-  owner: ControlsOwner;
-  suggestedQuestions: SuggestedQuestion[];
-}) {
+function ControlsComponents({ owner, questions }: { owner: ControlsOwner; questions: Question[] }) {
   const styles = useStyles2(getStyles);
   const { components, isLoading } = useDashboardControlsComponents();
 
@@ -53,7 +50,7 @@ function ControlsComponents({
     return null;
   }
 
-  const context = getControlsContext(owner, suggestedQuestions);
+  const context = getControlsContext(owner, questions);
 
   return (
     // Keeps a click on the control from selecting the row (see RowItemRenderer onPointerUp).
@@ -78,39 +75,32 @@ function useDashboardControlsComponents() {
 }
 
 /**
- * Whether editors can save suggested questions: `grafana.dashboardSuggestedQuestions` is on and a plugin adds a control
+ * Whether editors can save questions: `grafana.dashboardQuestions` is on and a plugin adds a control
  * that offers them.
  */
-export function useSuggestedQuestionsEnabled(): boolean {
-  const enabled = useFlagGrafanaDashboardSuggestedQuestions();
+export function useQuestionsEnabled(): boolean {
+  const enabled = useFlagGrafanaDashboardQuestions();
   const { components } = useDashboardControlsComponents();
   return enabled && components.length > 0;
 }
 
-function getControlsContext(
-  owner: ControlsOwner,
-  suggestedQuestions: SuggestedQuestion[]
-): PluginExtensionDashboardControlsContext {
+function getControlsContext(owner: ControlsOwner, saved: Question[]): PluginExtensionDashboardControlsContext {
+  // Every panel on the dashboard, or in the row or tab: what a question without sources is answered from.
+  const sourceRef = sectionRef(getSectionPath(owner));
+  const questions = saved.map((question) => ({
+    text: question.text,
+    sourceRefs: getQuestionSourceRefs(question, sourceRef),
+  }));
+
   if (!(owner instanceof RowItem || owner instanceof TabItem)) {
-    return { scope: 'dashboard', sourceRef: ALL_PANELS_REF, suggestedQuestions };
+    return { scope: 'dashboard', sourceRef, questions };
   }
   return {
     scope: owner instanceof TabItem ? 'tab' : 'row',
-    sourceRef: sectionRef(getSectionPath(owner)),
+    sourceRef,
     sectionLabel: sceneGraph.interpolate(owner, owner.state.title ?? '').trim() || undefined,
-    suggestedQuestions,
+    questions,
   };
-}
-
-/** The saved titles of the section and the tabs and rows around it, outermost first, as the data API builds them. */
-function getSectionPath(section: SceneObject): string[] {
-  const path: string[] = [];
-  for (let current: SceneObject | undefined = section; current; current = current.parent) {
-    if (current instanceof TabItem || current instanceof RowItem || current instanceof SceneGridRow) {
-      path.unshift(current.state.title ?? '');
-    }
-  }
-  return path;
 }
 
 function getStyles(theme: GrafanaTheme2) {

@@ -24,10 +24,10 @@ import {
   SectionVariablesCategoryTitle,
   SectionVariablesList,
 } from '../../sidebar/SectionVariablesList';
-import { SuggestedQuestionsInput } from '../../sidebar/SuggestedQuestionsInput';
+import { useQuestionsCategory } from '../../sidebar/questions/QuestionsList';
 import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
-import { useSuggestedQuestionsEnabled } from '../DashboardControlsExtensionPoint';
+import { useQuestionsEnabled } from '../DashboardControlsExtensionPoint';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
@@ -37,49 +37,36 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
   const model = this;
   // The canvas can remount during DnD loading while this editor remains mounted.
   const { layout } = useSceneObjectState(model, { shouldActivateOrKeepAlive: true });
-  const suggestedQuestionsEnabled = useSuggestedQuestionsEnabled();
+  const questionsEnabled = useQuestionsEnabled();
+  const questionsCategory = useQuestionsCategory(model, 'row', questionsEnabled);
 
-  const rowCategory = useMemo(() => {
-    const category = new OptionsPaneCategoryDescriptor({ title: '', id: 'dash-row-edit' })
-      .addItem(
-        new OptionsPaneItemDescriptor({
-          title: '',
-          id: 'dash-row-title',
-          skipField: true,
-          render: () => <RowTitleInput row={model} isNewElement={isNewElement} />,
-        })
-      )
-      .addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard.rows-layout.row-options.row.fill-screen', 'Fill screen'),
-          id: 'dash-row-fill-screen',
-          render: (descriptor) => <FillScreenSwitch id={descriptor.props.id} row={model} />,
-        })
-      )
-      .addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard.rows-layout.row-options.row.hide-header', 'Hide row header'),
-          id: 'dash-row-hide-header',
-          render: (descriptor) => <RowHeaderSwitch id={descriptor.props.id} row={model} />,
-        })
-      );
-
-    if (suggestedQuestionsEnabled) {
-      category.addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard.rows-layout.row-options.row.questions', 'Suggested questions'),
-          id: 'dash-row-questions',
-          description: t(
-            'dashboard.rows-layout.row-options.row.questions-description',
-            'One per line. Viewers can ask them about the panels in this row.'
-          ),
-          render: (descriptor) => <SuggestedQuestionsInput id={descriptor.props.id} owner={model} element="row" />,
-        })
-      );
-    }
-
-    return category;
-  }, [suggestedQuestionsEnabled, isNewElement, model]);
+  const rowCategory = useMemo(
+    () =>
+      new OptionsPaneCategoryDescriptor({ title: '', id: 'dash-row-edit' })
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: '',
+            id: 'dash-row-title',
+            skipField: true,
+            render: () => <RowTitleInput row={model} isNewElement={isNewElement} />,
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: t('dashboard.rows-layout.row-options.row.fill-screen', 'Fill screen'),
+            id: 'dash-row-fill-screen',
+            render: (descriptor) => <FillScreenSwitch id={descriptor.props.id} row={model} />,
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: t('dashboard.rows-layout.row-options.row.hide-header', 'Hide row header'),
+            id: 'dash-row-hide-header',
+            render: (descriptor) => <RowHeaderSwitch id={descriptor.props.id} row={model} />,
+          })
+        ),
+    [isNewElement, model]
+  );
 
   const repeatCategory = useMemo(
     () =>
@@ -155,6 +142,7 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
     rowCategory,
     sectionFiltersCategory,
     sectionVariablesCategory,
+    ...questionsCategory,
     ...layoutCategory,
     repeatCategory,
   ];

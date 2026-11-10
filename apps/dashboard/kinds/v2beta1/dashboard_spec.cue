@@ -46,13 +46,21 @@ DashboardSpec: {
 	variables: [...VariableKind] | *[]
 
 	// Questions viewers can ask about the dashboard, offered by plugins in the dashboard controls.
-	suggestedQuestions?: [...SuggestedQuestion]
+	questions?: [...Question]
 }
 
 // A question viewers can ask about a dashboard, row, or tab, offered by plugins in its controls.
-SuggestedQuestion: {
+Question: {
 	// The question as viewers see and ask it.
 	text: string
+	// The panels to answer it from. Unset for every panel in the dashboard, row, or tab the question is saved on.
+	sources?: [...QuestionSource]
+}
+
+// A panel that a question is answered from.
+QuestionSource: {
+	// The panel's ID.
+	panelId: number
 }
 
 // Supported dashboard elements
@@ -670,7 +678,7 @@ RowsLayoutRowSpec: {
 	variables?: [...VariableKind]
 	annotations?: [...AnnotationQueryKind]
 	// Questions viewers can ask about the panels in this row, offered by plugins in the row's controls.
-	suggestedQuestions?: [...SuggestedQuestion]
+	questions?: [...Question]
 }
 
 AutoGridLayoutKind: {
@@ -721,7 +729,7 @@ TabsLayoutTabSpec: {
 	variables?: [...VariableKind]
 	annotations?: [...AnnotationQueryKind]
 	// Questions viewers can ask about the panels in this tab, offered by plugins in the tab's controls.
-	suggestedQuestions?: [...SuggestedQuestion]
+	questions?: [...Question]
 }
 
 PanelSpec: {

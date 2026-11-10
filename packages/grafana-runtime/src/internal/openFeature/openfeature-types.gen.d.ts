@@ -203,7 +203,7 @@ declare module "@openfeature/core" {
     | "reporting.removeLogoUrlField"
     | "dashboards.disablePublicDashboards"
     | "grafana.panelActionsPopover"
-    | "grafana.dashboardSuggestedQuestions";
+    | "grafana.dashboardQuestions";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

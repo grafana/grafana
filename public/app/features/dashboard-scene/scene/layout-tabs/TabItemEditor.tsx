@@ -24,10 +24,10 @@ import {
   SectionVariablesCategoryTitle,
   SectionVariablesList,
 } from '../../sidebar/SectionVariablesList';
-import { SuggestedQuestionsInput } from '../../sidebar/SuggestedQuestionsInput';
+import { useQuestionsCategory } from '../../sidebar/questions/QuestionsList';
 import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
-import { useSuggestedQuestionsEnabled } from '../DashboardControlsExtensionPoint';
+import { useQuestionsEnabled } from '../DashboardControlsExtensionPoint';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
@@ -37,33 +37,20 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
   const model = this;
   // The canvas can remount during DnD loading while this editor remains mounted.
   const { layout } = useSceneObjectState(model, { shouldActivateOrKeepAlive: true });
-  const suggestedQuestionsEnabled = useSuggestedQuestionsEnabled();
+  const questionsEnabled = useQuestionsEnabled();
+  const questionsCategory = useQuestionsCategory(model, 'tab', questionsEnabled);
 
-  const tabCategory = useMemo(() => {
-    const category = new OptionsPaneCategoryDescriptor({ title: '', id: 'tab-item-options' }).addItem(
-      new OptionsPaneItemDescriptor({
-        title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
-        id: 'tab-options-title',
-        render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={model} isNewElement={isNewElement} />,
-      })
-    );
-
-    if (suggestedQuestionsEnabled) {
-      category.addItem(
+  const tabCategory = useMemo(
+    () =>
+      new OptionsPaneCategoryDescriptor({ title: '', id: 'tab-item-options' }).addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.tabs-layout.tab-options.questions', 'Suggested questions'),
-          id: 'tab-options-questions',
-          description: t(
-            'dashboard.tabs-layout.tab-options.questions-description',
-            'One per line. Viewers can ask them about the panels in this tab.'
-          ),
-          render: (descriptor) => <SuggestedQuestionsInput id={descriptor.props.id} owner={model} element="tab" />,
+          title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
+          id: 'tab-options-title',
+          render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={model} isNewElement={isNewElement} />,
         })
-      );
-    }
-
-    return category;
-  }, [suggestedQuestionsEnabled, isNewElement, model]);
+      ),
+    [isNewElement, model]
+  );
 
   const repeatCategory = useMemo(
     () =>
@@ -139,6 +126,7 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
     tabCategory,
     sectionFiltersCategory,
     sectionVariablesCategory,
+    ...questionsCategory,
     ...layoutCategory,
     repeatCategory,
   ];

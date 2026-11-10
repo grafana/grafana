@@ -1,7 +1,7 @@
 import { SceneVariableSet } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
-  type SuggestedQuestion,
+  type Question,
   type TabsLayoutSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
@@ -164,14 +164,14 @@ describe('deserialization', () => {
   });
 });
 
-describe('suggested questions', () => {
-  const tabWith = (suggestedQuestions?: SuggestedQuestion[]): DashboardV2Spec['layout'] => ({
+describe('questions', () => {
+  const tabWith = (questions?: Question[]): DashboardV2Spec['layout'] => ({
     kind: 'TabsLayout',
     spec: {
       tabs: [
         {
           kind: 'TabsLayoutTab',
-          spec: { title: 'Tab 1', suggestedQuestions, layout: { kind: 'GridLayout', spec: { items: [] } } },
+          spec: { title: 'Tab 1', questions, layout: { kind: 'GridLayout', spec: { items: [] } } },
         },
       ],
     },
@@ -181,16 +181,16 @@ describe('suggested questions', () => {
     const questions = [{ text: 'Which services keep restarting?' }];
 
     const manager = deserializeTabsLayout(tabWith(questions), {}, false);
-    expect(manager.state.tabs[0].state.suggestedQuestions).toEqual(questions);
+    expect(manager.state.tabs[0].state.questions).toEqual(questions);
 
     const serialized = serializeTabsLayout(manager).spec as TabsLayoutSpec;
-    expect(serialized.tabs[0].spec.suggestedQuestions).toEqual(questions);
+    expect(serialized.tabs[0].spec.questions).toEqual(questions);
   });
 
   it('leaves the key out when a tab has no questions', () => {
     const manager = deserializeTabsLayout(tabWith(undefined), {}, false);
 
     const serialized = serializeTabsLayout(manager).spec as TabsLayoutSpec;
-    expect(serialized.tabs[0].spec).not.toHaveProperty('suggestedQuestions');
+    expect(serialized.tabs[0].spec).not.toHaveProperty('questions');
   });
 });

@@ -5956,7 +5956,6 @@
       "auto-grid-max-height": "Change max height",
       "auto-grid-min-height": "Change min height",
       "auto-grid-row-height": "Change row height",
-      "change-questions": "Change suggested questions",
       "change-settings": "Change dashboard settings",
       "collapse-all-rows": "Collapse all rows",
       "collapse-row": "Collapse row",
@@ -6437,8 +6436,6 @@
         "row": {
           "fill-screen": "Fill screen",
           "hide-header": "Hide row header",
-          "questions": "Suggested questions",
-          "questions-description": "One per line. Viewers can ask them about the panels in this row.",
           "title": "Title"
         },
         "section-filters": {
@@ -6571,8 +6568,6 @@
         "filters": "Filters",
         "links": "Links",
         "open-settings": "View all settings",
-        "questions": "Suggested questions",
-        "questions-description": "One per line. Viewers can ask them about this dashboard.",
         "title": "Options",
         "title-option": "Title",
         "tooltip": "Dashboard options",
@@ -6625,6 +6620,7 @@
         "objects": "Objects",
         "panel": "Panel",
         "panels": "Panels",
+        "question": "Question",
         "row": "Row",
         "rows": "Rows",
         "section-filters-set": "Filters",
@@ -6674,6 +6670,33 @@
           "no-title": "<no title>"
         }
       },
+      "questions": {
+        "add-question": "Add question",
+        "description-dashboard": "Viewers can ask it about this dashboard.",
+        "description-row": "Viewers can ask it about the panels in this row.",
+        "description-tab": "Viewers can ask it about the panels in this tab.",
+        "new-question": "New question",
+        "placeholder": "What changed since the previous period?",
+        "question": "Question",
+        "sources": {
+          "collapse": "Collapse {{name}}",
+          "description-dashboard": "With none picked, the question is answered from every panel on this dashboard.",
+          "description-row": "With none picked, the question is answered from every panel in this row.",
+          "description-tab": "With none picked, the question is answered from every panel in this tab.",
+          "entire-dashboard": "Entire dashboard",
+          "expand": "Expand {{name}}",
+          "label": "Source panels",
+          "no-panels": "This dashboard has no panels with queries to answer from.",
+          "panel-count_one": "{{count}} panel",
+          "panel-count_other": "{{count}} panels",
+          "picked-count_one": "{{count}} panel picked",
+          "picked-count_other": "{{count}} panels picked",
+          "unavailable-panel": "Panel {{panelId}} (unavailable)",
+          "untitled-row": "Untitled row",
+          "untitled-tab": "Untitled tab"
+        },
+        "title": "Questions"
+      },
       "redo": "Redo",
       "row": {
         "header": {
@@ -6690,9 +6713,6 @@
       "snapshot": {
         "title": "Source",
         "tooltip": "Open original dashboard"
-      },
-      "suggested-questions": {
-        "placeholder": "What changed since the previous period?"
       },
       "undo": "Undo",
       "variable": {
@@ -6807,8 +6827,6 @@
         }
       },
       "tab-options": {
-        "questions": "Suggested questions",
-        "questions-description": "One per line. Viewers can ask them about the panels in this tab.",
         "repeat": {
           "title": "Repeat options",
           "variable": {
@@ -7887,6 +7905,17 @@
       },
       "selection-options": "Selection options",
       "static-options-legend": "Static options"
+    },
+    "question-actions": {
+      "add": "Add question",
+      "remove": "Remove question",
+      "reorder": "Reorder questions",
+      "update": "Change question"
+    },
+    "question-edit": {
+      "delete-confirm": "Delete question",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete question"
     },
     "refresh-select": {
       "options": {

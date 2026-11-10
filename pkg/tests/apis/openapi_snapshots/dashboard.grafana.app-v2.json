@@ -3192,6 +3192,42 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQuestion": {
+        "description": "A question viewers can ask about a dashboard, row, or tab, offered by plugins in its controls.",
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "sources": {
+            "description": "The panels to answer it from. Unset for every panel in the dashboard, row, or tab the question is saved on.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQuestionSource"
+            }
+          },
+          "text": {
+            "description": "The question as viewers see and ask it.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQuestionSource": {
+        "description": "A panel that a question is answered from.",
+        "type": "object",
+        "required": [
+          "panelId"
+        ],
+        "properties": {
+          "panelId": {
+            "description": "The panel's ID.",
+            "type": "number",
+            "format": "double",
+            "default": 0
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRangeMap": {
         "description": "Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.",
         "type": "object",
@@ -3348,15 +3384,15 @@
           "layout": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind"
           },
-          "repeat": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowRepeatOptions"
-          },
-          "suggestedQuestions": {
+          "questions": {
             "description": "Questions viewers can ask about the panels in this row, offered by plugins in the row's controls.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardSuggestedQuestion"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQuestion"
             }
+          },
+          "repeat": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowRepeatOptions"
           },
           "title": {
             "type": "string"
@@ -3445,17 +3481,17 @@
             "type": "boolean",
             "default": false
           },
+          "questions": {
+            "description": "Questions viewers can ask about the dashboard, offered by plugins in the dashboard controls.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQuestion"
+            }
+          },
           "revision": {
             "description": "Plugins only. The version of the dashboard installed together with the plugin. This is used to determine if the dashboard should be updated when the plugin is updated.",
             "type": "integer",
             "format": "int32"
-          },
-          "suggestedQuestions": {
-            "description": "Questions viewers can ask about the dashboard, offered by plugins in the dashboard controls.",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardSuggestedQuestion"
-            }
           },
           "tags": {
             "description": "Tags associated with dashboard.",
@@ -3544,20 +3580,6 @@
           },
           "String": {
             "type": "string"
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardSuggestedQuestion": {
-        "description": "A question viewers can ask about a dashboard, row, or tab, offered by plugins in its controls.",
-        "type": "object",
-        "required": [
-          "text"
-        ],
-        "properties": {
-          "text": {
-            "description": "The question as viewers see and ask it.",
-            "type": "string",
-            "default": ""
           }
         }
       },
@@ -3719,15 +3741,15 @@
           "layout": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"
           },
-          "repeat": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardTabRepeatOptions"
-          },
-          "suggestedQuestions": {
+          "questions": {
             "description": "Questions viewers can ask about the panels in this tab, offered by plugins in the tab's controls.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardSuggestedQuestion"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQuestion"
             }
+          },
+          "repeat": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardTabRepeatOptions"
           },
           "title": {
             "type": "string"

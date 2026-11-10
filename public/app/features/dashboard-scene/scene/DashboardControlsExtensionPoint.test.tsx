@@ -4,8 +4,11 @@ import { render, screen } from 'test/test-utils';
 
 import { type PluginExtensionDashboardControlsContext, PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
+import { type Question } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
+
+import { ALL_PANELS_REF } from '../data-service/sections';
 
 import { DashboardControlsExtensionPoint } from './DashboardControlsExtensionPoint';
 import { DashboardScene } from './DashboardScene';
@@ -17,11 +20,17 @@ jest.mock('@grafana/runtime', () => ({
 
 type ControlProps = PluginExtensionDashboardControlsContext & JSX.IntrinsicAttributes;
 
+// The props the plugin control got on its last render.
+const receivedProps = jest.fn<void, [ControlProps]>();
+
 const PluginControl = createComponentWithMeta<ControlProps>(
   {
     pluginId: 'grafana-assistant-app',
     title: 'Ask Assistant',
-    component: ({ suggestedQuestions }) => <div>{suggestedQuestions.map((question) => question.text).join(', ')}</div>,
+    component: (props) => {
+      receivedProps(props);
+      return <div>{props.questions.map((question) => question.text).join(', ')}</div>;
+    },
   },
   PluginExtensionPoints.DashboardControls
 );
@@ -38,21 +47,44 @@ describe('DashboardControlsExtensionPoint', () => {
   });
 
   it('gives plugin controls the questions saved on the dashboard', () => {
-    setTestFlags({ 'grafana.dashboardSuggestedQuestions': true });
+    setTestFlags({ 'grafana.dashboardQuestions': true });
     renderControls();
 
     expect(screen.getByText('What stands out?')).toBeInTheDocument();
   });
 
-  it('renders no plugin controls while grafana.dashboardSuggestedQuestions is off', () => {
-    setTestFlags({ 'grafana.dashboardSuggestedQuestions': false });
+  it('gives each question the panels to answer it from: the ones picked, or every panel on the dashboard', () => {
+    setTestFlags({ 'grafana.dashboardQuestions': true });
+    renderControls([{ text: 'What stands out?' }, { text: 'Why did errors rise?', sources: [{ panelId: 3 }] }]);
+
+    expect(receivedProps.mock.lastCall?.[0].questions).toEqual([
+      { text: 'What stands out?', sourceRefs: [ALL_PANELS_REF] },
+      { text: 'Why did errors rise?', sourceRefs: ['panel-3'] },
+    ]);
+  });
+
+  it('renders no plugin controls while grafana.dashboardQuestions is off', () => {
+    setTestFlags({ 'grafana.dashboardQuestions': false });
     renderControls();
 
     expect(screen.queryByText('What stands out?')).not.toBeInTheDocument();
   });
+
+  it('leaves out questions without text, and renders no controls when none has any', () => {
+    setTestFlags({ 'grafana.dashboardQuestions': true });
+    const { unmount } = renderControls([{ text: 'What stands out?' }, { text: '  ' }]);
+
+    // The control joins the questions it gets, so a blank one would show up as a trailing comma.
+    expect(screen.getByText('What stands out?')).toBeInTheDocument();
+
+    unmount();
+    const { container } = renderControls([{ text: '' }]);
+
+    expect(container).toBeEmptyDOMElement();
+  });
 });
 
-function renderControls() {
-  const dashboard = new DashboardScene({ suggestedQuestions: [{ text: 'What stands out?' }] });
+function renderControls(questions: Question[] = [{ text: 'What stands out?' }]) {
+  const dashboard = new DashboardScene({ questions });
   return render(<DashboardControlsExtensionPoint owner={dashboard} />);
 }

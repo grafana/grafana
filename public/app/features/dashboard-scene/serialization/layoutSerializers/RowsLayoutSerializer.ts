@@ -84,8 +84,8 @@ export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowK
     rowKind.spec.variables = sectionVariables;
   }
 
-  if (row.state.suggestedQuestions?.length) {
-    rowKind.spec.suggestedQuestions = row.state.suggestedQuestions;
+  if (row.state.questions?.length) {
+    rowKind.spec.questions = row.state.questions;
   }
 
   const conditionalRenderingRootGroup = row.state.conditionalRendering?.serialize();
@@ -124,7 +124,7 @@ export function deserializeRow(
     hideHeader: row.spec.hideHeader,
     fillScreen: row.spec.fillScreen,
     repeatByVariable: row.spec.repeat?.value,
-    suggestedQuestions: row.spec.suggestedQuestions,
+    questions: row.spec.questions,
     $variables: deserializeSectionVariables(row.spec.variables),
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     conditionalRendering: getConditionalRendering(row),

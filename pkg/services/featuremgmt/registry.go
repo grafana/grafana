@@ -3445,8 +3445,8 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
-			Name:         "grafana.dashboardSuggestedQuestions",
-			Description:  "Lets editors save suggested questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls",
+			Name:         "grafana.dashboardQuestions",
+			Description:  "Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,

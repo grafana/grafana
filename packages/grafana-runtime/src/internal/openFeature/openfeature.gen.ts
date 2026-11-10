@@ -186,10 +186,10 @@ export const FlagKeys = {
   GrafanaDashboardPreferences: "grafana.dashboardPreferences",
   /** Enables Viewing and Editing modes for dynamic dashboards */
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
+  /** Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls */
+  GrafanaDashboardQuestions: "grafana.dashboardQuestions",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
-  /** Lets editors save suggested questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls */
-  GrafanaDashboardSuggestedQuestions: "grafana.dashboardSuggestedQuestions",
   /** Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables */
   GrafanaDashboardVariablesMigration: "grafana.dashboardVariablesMigration",
   /** Enables the auto-height feature for dashboard panels */
@@ -1353,6 +1353,17 @@ export const useFlagGrafanaDashboardPreviewMode = (options?: ReactFlagEvaluation
 };
 
 /**
+ * Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardQuestions`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardQuestions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardQuestions", false, options).value;
+};
+
+/**
  * Redesigns dashboard settings page into Advanced Settings in a modal window
  *
  * **Details:**
@@ -1361,17 +1372,6 @@ export const useFlagGrafanaDashboardPreviewMode = (options?: ReactFlagEvaluation
  */
 export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardSettingsRedesign", true, options).value;
-};
-
-/**
- * Lets editors save suggested questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls
- *
- * **Details:**
- * - flag key: `grafana.dashboardSuggestedQuestions`
- * - default value: `false`
- */
-export const useFlagGrafanaDashboardSuggestedQuestions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.dashboardSuggestedQuestions", false, options).value;
 };
 
 /**

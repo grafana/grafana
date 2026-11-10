@@ -77,4 +77,8 @@ export enum SidebarCategoryType {
 
   DashboardLinks = 'dashboard-links',
   DashboardAnnotations = 'dashboard-annotations',
+
+  DashboardQuestions = 'dashboard-questions',
+  RowQuestions = 'dash-row-questions',
+  TabQuestions = 'tab-questions',
 }

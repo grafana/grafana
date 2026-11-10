@@ -63,8 +63,8 @@ export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabK
     tabKind.spec.variables = sectionVariables;
   }
 
-  if (tab.state.suggestedQuestions?.length) {
-    tabKind.spec.suggestedQuestions = tab.state.suggestedQuestions;
+  if (tab.state.questions?.length) {
+    tabKind.spec.questions = tab.state.questions;
   }
 
   const conditionalRenderingRootGroup = tab.state.conditionalRendering?.serialize();
@@ -106,7 +106,7 @@ export function deserializeTab(
     $variables: deserializeSectionVariables(tab.spec.variables),
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     repeatByVariable: tab.spec.repeat?.value,
-    suggestedQuestions: tab.spec.suggestedQuestions,
+    questions: tab.spec.questions,
     conditionalRendering: getConditionalRendering(tab),
   });
 }
