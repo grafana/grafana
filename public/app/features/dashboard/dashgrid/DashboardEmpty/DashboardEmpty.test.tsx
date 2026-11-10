@@ -234,7 +234,7 @@ describe('new layouts empty state', () => {
   it('shows a message instead of the layout picker when blocked on mobile', () => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
 
-    const dashboard = setupScene();
+    const dashboard = setupScene({ isEditing: false });
 
     expect(
       screen.getByText(
@@ -243,6 +243,15 @@ describe('new layouts empty state', () => {
     ).toBeInTheDocument();
     expect(screen.queryByText('Select layout')).not.toBeInTheDocument();
     expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
+  });
+
+  it('keeps the layout picker and add pane for an edit session already in progress on mobile', async () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+
+    const dashboard = setupScene();
+
+    expect(screen.getByText('Select layout')).toBeInTheDocument();
+    await waitFor(() => expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('add'));
   });
 
   it('shows a loading indicator and leaves the add pane closed while planning is resolving', () => {

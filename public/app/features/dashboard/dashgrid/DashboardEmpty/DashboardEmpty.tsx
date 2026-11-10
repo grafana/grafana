@@ -13,7 +13,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { canManuallyEditDashboard } from 'app/features/dashboard-scene/scene/dashboardModes';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
-import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
+import { useIsEditEntryBlocked } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -72,14 +72,14 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
   const { uid, isEditing, sidebar } = state;
   const canEdit = canManuallyEditDashboard(state);
   const isEditingNewDashboard = isEditing && !uid && canEdit;
-  const isMobileEditDeprecated = useIsMobileEditDeprecated();
+  const isMobileEditDeprecated = useIsEditEntryBlocked(dashboard);
   const { isAvailable: generationAvailable, isLoading: generationLoading } = useDashboardGenerationAvailable();
 
   // Open the add pane only for the classic layout-picker empty state. Wait until
   // generation availability resolves, and skip when the assistant landing is shown
   // (or when the assistant started the edit session).
   useEffect(() => {
-    if (generationLoading || generationAvailable) {
+    if (generationLoading || generationAvailable || isMobileEditDeprecated) {
       return;
     }
 
@@ -101,7 +101,7 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
     return () => {
       cancelled = true;
     };
-  }, [isEditingNewDashboard, dashboard, sidebar, generationLoading, generationAvailable]);
+  }, [isEditingNewDashboard, dashboard, sidebar, generationLoading, generationAvailable, isMobileEditDeprecated]);
 
   if (!canEdit) {
     return (
@@ -308,7 +308,7 @@ export interface Props {
 // For example, an extension might want to render custom UI for a specific experiment cohort, and the default UI for everyone else.
 const DashboardEmpty = (props: Props) => {
   const { isReadOnlyRepo, isProvisioned } = useRepositoryStatus(props);
-  const isMobileEditDeprecated = useIsMobileEditDeprecated();
+  const isMobileEditDeprecated = useIsEditEntryBlocked(props.dashboard);
   const onAddVisualization = useOnAddVisualization({ ...props, isReadOnlyRepo, isProvisioned, isMobileEditDeprecated });
   const onAddLibraryPanel = useOnAddLibraryPanel({ ...props, isReadOnlyRepo, isProvisioned, isMobileEditDeprecated });
   const onImportDashboard = useOnImportDashboard({ ...props, isReadOnlyRepo, isProvisioned, isMobileEditDeprecated });
