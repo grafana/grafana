@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, type CSSProperties } from 'react';
+import { useEffect, type ComponentType, type CSSProperties } from 'react';
 import {
+  type Cell,
   type Row,
   type HeaderGroup,
   type TablePropGetter,
@@ -158,7 +159,7 @@ export function CallTreeTable({
                       )}
                       style={getColumnStyle(cell.column, functionColumnMinWidth, pinnedRight)}
                     >
-                      {cell.render('Cell')}
+                      {renderCell(cell)}
                     </td>
                   );
                 })}
@@ -341,4 +342,10 @@ function getStyles(theme: GrafanaTheme2) {
       backgroundColor: 'inherit',
     }),
   };
+}
+
+function renderCell(cell: Cell<CallTreeNode>) {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const CellRenderer = cell.column.Cell as ComponentType<{ row: Row<CallTreeNode>; value: unknown }>;
+  return <CellRenderer row={cell.row} value={cell.value} />;
 }
