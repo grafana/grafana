@@ -307,6 +307,10 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesDashboard(ctx context
 		if value == "" || value == "auto" {
 			return nil
 		}
+		// The minimum check parses the value only when a minimum is set.
+		if _, err := gtime.ParseDuration(value); err != nil {
+			return fmt.Errorf("parsing refresh duration %q failed: %w", value, err)
+		}
 		return b.dashboardService.ValidateDashboardRefreshInterval(minRefreshInterval(), value)
 	}
 

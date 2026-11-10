@@ -496,3 +496,36 @@ func TestDashboardsAPIBuilderValidateDashboardPreferencesUsesTheStackMinRefreshI
 		})
 	}
 }
+
+// With no minimum set, the minimum check accepts any value without parsing it.
+func TestDashboardsAPIBuilderValidateDashboardPreferencesParsesRefreshWithoutAMinimum(t *testing.T) {
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	builder := &DashboardsAPIBuilder{
+		dashboardService: &dashsvc.DashboardServiceImpl{},
+		accessClient:     &dashboardPreferencesAccessClient{},
+	}
+	ctx := identity.WithRequester(k8srequest.WithNamespace(context.Background(), "stacks-1"), u1)
+
+	tests := []struct{ name, spec, wantErrMsg string }{
+		{name: "refresh that isn't a duration", spec: `{"dashboard":{"autoRefresh":"soon"}}`, wantErrMsg: `spec.dashboard.autoRefresh: parsing refresh duration "soon" failed`},
+		{name: "refresh interval that isn't a duration", spec: `{"dashboard":{"autoRefreshIntervals":["1m","soon"]}}`, wantErrMsg: `spec.dashboard.autoRefreshIntervals[1]: parsing refresh duration "soon" failed`},
+		{name: "any duration", spec: `{"dashboard":{"autoRefresh":"1s","autoRefreshIntervals":["1s","1d"]}}`},
+		// Dashboards accept the same values.
+		{name: "compound duration", spec: `{"dashboard":{"autoRefresh":"1h30m"}}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obj := newDashboardPreferences("user-u1", "")
+			require.NoError(t, json.Unmarshal([]byte(tt.spec), &obj.Spec))
+
+			err := builder.Validate(ctx, dashboardPreferencesAttributesForOp(admission.Create, obj, nil), nil)
+
+			if tt.wantErrMsg == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.True(t, apierrors.IsBadRequest(err), "unexpected error: %v", err)
+			require.ErrorContains(t, err, tt.wantErrMsg)
+		})
+	}
+}
