@@ -144,7 +144,7 @@ describe('useFoldersQuery', () => {
         });
       })
     );
-    const { result } = renderFoldersQuery({ permission: 'edit', showReadOnly: true });
+    const { result } = renderFoldersQuery({ permission: 'create' });
 
     act(() => result.current.requestNextPage(undefined));
     await waitFor(() => expect(result.current.isLoading).toBe(false));

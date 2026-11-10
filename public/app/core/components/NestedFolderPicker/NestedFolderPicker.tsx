@@ -52,11 +52,9 @@ export interface NestedFolderPickerProps {
   /* Only show folders that match this predicate. Non-folder rows such as loading placeholders are kept. */
   folderFilter?: (folder: DashboardViewItem) => boolean;
 
-  /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
-  permission?: 'view' | 'edit';
-
-  /* For dashboard destinations: while browsing, also show the folders on the way to ones the user can create dashboards in, as read only */
-  showReadOnlyFolders?: boolean;
+  /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit.
+     Use create for dashboard destinations: while browsing, the folders on the way to ones the user can create dashboards in are shown as read only */
+  permission?: 'view' | 'edit' | 'create';
 
   /* Callback for when the user selects a folder */
   onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;
@@ -94,8 +92,7 @@ export function NestedFolderPicker({
   rootFolderUID,
   rootFolderItem,
   folderFilter,
-  permission = 'edit',
-  showReadOnlyFolders = false,
+  permission: permissionProp = 'edit',
   onChange,
   id,
   disabled = false,
@@ -104,10 +101,7 @@ export function NestedFolderPicker({
   const getSelectedFolderResult = useGetCombinedFolderQuery(value);
 
   const isFolderEditAccessEnabled = useFlagGrafanaFolderPickerFolderEditAccess();
-  // Only when browsing: a read only search result has no way into the folders below it
-  const showReadOnly = isFolderEditAccessEnabled && showReadOnlyFolders;
-  // Every selectable folder must be one the user can create dashboards in, not only the browsed ones
-  const selectablePermission = showReadOnly ? 'create' : permission;
+  const permission = permissionProp === 'create' && !isFolderEditAccessEnabled ? 'edit' : permissionProp;
 
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
@@ -135,10 +129,7 @@ export function NestedFolderPicker({
     error: teamFoldersError,
   } = useTeamFolders(foldersOpenState, value, onChange, showRootFolder);
 
-  const { starredFolderTreeItems, error: starredFoldersError } = useStarredFolders(
-    foldersOpenState,
-    selectablePermission
-  );
+  const { starredFolderTreeItems, error: starredFoldersError } = useStarredFolders(foldersOpenState, permission);
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
@@ -153,7 +144,6 @@ export function NestedFolderPicker({
     permission,
     rootFolderUID,
     rootFolderItem,
-    showReadOnly,
   });
 
   useEffect(() => {
@@ -165,7 +155,7 @@ export function NestedFolderPicker({
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
 
-    debouncedSearch(search, selectablePermission).then((queryResponse) => {
+    debouncedSearch(search, permission).then((queryResponse) => {
       // Only keep the results if it's was issued after the most recently resolved search.
       // This prevents results showing out of order if first request is slower than later ones.
       // We don't need to worry about clearing the isFetching state either - if there's a later
@@ -177,7 +167,7 @@ export function NestedFolderPicker({
         lastSearchTimestamp.current = timestamp;
       }
     });
-  }, [search, selectablePermission]);
+  }, [search, permission]);
 
   // the order of middleware is important!
   const middleware = [
@@ -329,7 +319,7 @@ export function NestedFolderPicker({
   const labelComponent = label ? (
     <Stack alignItems={'center'}>
       <Text truncate>{label}</Text>
-      <FolderRepo folder={selectedFolder} canEdit={permission === 'edit'} />
+      <FolderRepo folder={selectedFolder} canEdit={permission !== 'view'} />
     </Stack>
   ) : (
     ''
@@ -424,7 +414,7 @@ export function NestedFolderPicker({
           requestLoadMore={handleLoadMore}
           emptyFolders={emptyFolders}
           teamFolderOwnersByUid={teamFolderOwnersByUid}
-          canEdit={permission === 'edit'}
+          canEdit={permission !== 'view'}
         />
       </fieldset>
     </>

@@ -609,7 +609,7 @@ describe('NestedFolderPicker', () => {
 
     it('shows folders the user cannot pick as read only, and does not select them', async () => {
       setTestFlags(readOnlyFlags);
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} showReadOnlyFolders />);
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} permission="create" />);
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
       const readOnlyRow = await screen.findByRole('treeitem', { name: new RegExp(folderC.item.title) });
@@ -627,7 +627,7 @@ describe('NestedFolderPicker', () => {
 
     it('does not select a read only folder with the keyboard', async () => {
       setTestFlags(readOnlyFlags);
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} showReadOnlyFolders />);
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} permission="create" />);
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
       const readOnlyRow = await screen.findByRole('treeitem', { name: new RegExp(folderC.item.title) });
@@ -656,7 +656,7 @@ describe('NestedFolderPicker', () => {
           return HttpResponse.json({ totalHits: hits.length, hits });
         })
       );
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} showReadOnlyFolders />);
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} permission="create" />);
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
       expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
       expect(screen.queryByLabelText(folderC.item.title)).not.toBeInTheDocument();
@@ -698,7 +698,7 @@ describe('NestedFolderPicker', () => {
           return HttpResponse.json({ totalHits: hits.length, hits });
         })
       );
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} showReadOnlyFolders />);
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} permission="create" />);
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
       const readOnlyRow = await screen.findByRole('treeitem', { name: new RegExp(folderA.item.title) });
@@ -709,16 +709,30 @@ describe('NestedFolderPicker', () => {
       expect(mockOnChange).toHaveBeenCalledWith(folderA_folderA.item.uid, folderA_folderA.item.title);
     });
 
-    it.each<{ name: string; flags: Parameters<typeof setTestFlags>[0]; showReadOnlyFolders: boolean }>([
-      { name: 'the feature flag is off', flags: {}, showReadOnlyFolders: true },
-      { name: 'the picker does not opt in', flags: readOnlyFlags, showReadOnlyFolders: false },
-    ])('does not show read only folders when $name', async ({ flags, showReadOnlyFolders }) => {
+    it.each<{ name: string; flags: Parameters<typeof setTestFlags>[0]; permission: 'edit' | 'create' }>([
+      { name: 'the feature flag is off', flags: {}, permission: 'create' },
+      { name: 'the picker does not opt in', flags: readOnlyFlags, permission: 'edit' },
+    ])('does not show read only folders when $name', async ({ flags, permission }) => {
       setTestFlags(flags);
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} showReadOnlyFolders={showReadOnlyFolders} />);
+      const requests: URLSearchParams[] = [];
+      server.use(
+        http.get(searchRoute, ({ request }) => {
+          requests.push(new URL(request.url).searchParams);
+          const hits = [
+            { resource: 'folders', name: folderA.item.uid, title: folderA.item.title, field: { canCreate: false } },
+          ];
+          return HttpResponse.json({ totalHits: hits.length, hits });
+        })
+      );
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} permission={permission} />);
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
       expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
       expect(screen.queryByRole('img', { name: 'Read only' })).not.toBeInTheDocument();
+      for (const params of requests) {
+        expect(params.get('permission')).toBe('edit');
+        expect(params.has('include')).toBe(false);
+      }
     });
   });
 });

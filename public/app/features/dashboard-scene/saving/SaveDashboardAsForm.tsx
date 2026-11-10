@@ -242,7 +242,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
               onChange={onFolderChange}
               value={formValues.folder?.uid}
               disabled={state.loading}
-              showReadOnlyFolders
+              permission="create"
             />
           </Field>
           <FolderDescription folderUid={formValues.folder?.uid} />

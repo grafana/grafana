@@ -92,7 +92,7 @@ export function ImportForm({
                   }
                 }}
                 value={value.uid}
-                showReadOnlyFolders
+                permission="create"
               />
             )}
             name="folder"

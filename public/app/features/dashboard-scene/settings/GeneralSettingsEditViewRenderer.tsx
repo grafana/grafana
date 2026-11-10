@@ -138,7 +138,7 @@ export function GeneralSettingsEditViewRenderer({ model }: SceneComponentProps<G
                 onChange={dashboard.isManagedRepository() ? model.onProvisionedFolderChange : model.onFolderChange}
                 repositoryName={dashboard.getManagerIdentity()}
                 excludeUIDs={meta?.folderUid ? [meta.folderUid] : undefined}
-                showReadOnlyFolders
+                permission="create"
               />
             </Field>
           )}
