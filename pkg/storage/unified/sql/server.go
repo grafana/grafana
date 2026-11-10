@@ -228,7 +228,8 @@ func withSeededWatches(opts *ServerOptions, resourceOpts *resource.ResourceServe
 }
 
 func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	if opts.Cfg == nil || !opts.Cfg.NATS.Enabled || !opts.Cfg.NATS.Notifier {
+	// Watches fed by polling miss nothing, so expiring them only forces re-lists.
+	if opts.Cfg == nil || !opts.Cfg.NATSNotifierActive() {
 		return nil
 	}
 	resourceOpts.NatsWatchMaxAge = opts.Cfg.NATS.NotifierWatchMaxAge

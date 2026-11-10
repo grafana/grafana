@@ -94,27 +94,6 @@ const assertExpandedOptionsCopyVisible = () => {
   expect(screen.getByText(SCROLL_TOP_LABEL_COPY)).toBeVisible();
 };
 describe('LogListControls', () => {
-  test('Renders without errors', () => {
-    render(
-      <LogListContextProvider {...contextProps}>
-        <LogListControls eventBus={new EventBusSrv()} />
-      </LogListContextProvider>
-    );
-    expect(screen.getByLabelText(SCROLL_BOTTOM_LABEL_COPY)).toBeInTheDocument();
-    expect(screen.getByLabelText(OLDEST_LOGS_LABEL_REGEX)).toBeInTheDocument();
-    expect(screen.getByLabelText(DEDUPE_LABEL_COPY)).toBeInTheDocument();
-    expect(screen.getByLabelText(FILTER_LEVELS_LABEL_COPY)).toBeInTheDocument();
-    expect(screen.getByLabelText(TIMESTAMP_LABEL_COPY)).toBeInTheDocument();
-    expect(screen.getByLabelText('Wrap disabled')).toBeInTheDocument();
-    expect(screen.getByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY)).toBeInTheDocument();
-    expect(screen.getByLabelText(SCROLL_TOP_LABEL_COPY)).toBeInTheDocument();
-    expect(screen.queryByLabelText(SHOW_UNIQUE_LABELS_LABEL_COPY)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(EXPAND_JSON_LOGS_LABEL_COPY)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(ESCAPE_NEWLINES_TOOLTIP_COPY)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(REMOVE_ESCAPE_NEWLINES_LABEL_COPY)).not.toBeInTheDocument();
-    expect(screen.getByLabelText(ENABLE_UNWRAPPED_COLUMNS_COPY)).toBeInTheDocument();
-  });
-
   test('Renders unique labels control in Explore', () => {
     render(
       <LogListContextProvider {...contextProps} app={CoreApp.Explore} showUniqueLabels={false}>
@@ -174,6 +153,7 @@ describe('LogListControls', () => {
     expect(screen.queryByLabelText(EXPAND_JSON_LOGS_LABEL_COPY)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(ESCAPE_NEWLINES_TOOLTIP_COPY)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(REMOVE_ESCAPE_NEWLINES_LABEL_COPY)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(ENABLE_UNWRAPPED_COLUMNS_COPY)).toBeInTheDocument();
   });
 
   test('Allows to scroll', async () => {
@@ -305,19 +285,6 @@ describe('LogListControls', () => {
     expect(onLogOptionsChange).toHaveBeenCalledWith('filterLevels', ['critical']);
   });
 
-  test('Controls timestamp visibility', async () => {
-    const onLogOptionsChange = jest.fn();
-    render(
-      <LogListContextProvider {...contextProps} showTime={false} onLogOptionsChange={onLogOptionsChange}>
-        <LogListControls eventBus={new EventBusSrv()} />
-      </LogListContextProvider>
-    );
-    await userEvent.click(screen.getByLabelText(TIMESTAMP_LABEL_COPY));
-    await userEvent.click(screen.getByText('Show millisecond timestamps'));
-    expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
-    expect(onLogOptionsChange).toHaveBeenCalledWith('showTime', true);
-  });
-
   test('Controls line wrapping', async () => {
     const onLogOptionsChange = jest.fn();
     render(
@@ -401,7 +368,7 @@ describe('LogListControls', () => {
     expect(screen.getByText(COLUMNS_NOT_SUPPORTED_COPY)).toBeInTheDocument();
   });
 
-  test('Controls timestamp resolution', async () => {
+  test('Controls timestamp visibility and resolution', async () => {
     const onLogOptionsChange = jest.fn();
     render(
       <LogListContextProvider {...contextProps} showTime={false} onLogOptionsChange={onLogOptionsChange}>

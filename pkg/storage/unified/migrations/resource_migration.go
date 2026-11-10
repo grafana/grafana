@@ -235,14 +235,17 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 
 	// Execute the migration via legacy migrator
 	response, err := r.unifiedMigrator.Migrate(ctx, migrateOpts)
-	if err := resource.ErrorFromResponse(response.GetError(), err); err != nil {
+	if err != nil {
 		r.log.Error("Migration reported error", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
 		return nil, fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}
 
 	migrationFinishedAt := time.Now()
 
-	err = r.unifiedMigrator.RebuildIndexes(ctx, RebuildIndexOptions{
+	// Rebuilding and validating build search indexes, whose storage reads then get the migration
+	// statement timeout.
+	readCtx := resource.ContextWithMigrationRead(ctx)
+	err = r.unifiedMigrator.RebuildIndexes(readCtx, RebuildIndexOptions{
 		UsingDistributor:    opts.UsingDistributor,
 		NamespaceInfo:       info,
 		Resources:           r.resources,
@@ -260,7 +263,7 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 		validationSess = engine.NewSession()
 		defer validationSess.Close()
 	}
-	if err := r.validateMigration(ctx, validationSess, response, r.validators); err != nil {
+	if err := r.validateMigration(readCtx, validationSess, response, r.validators); err != nil {
 		r.log.Error("Migration validation failed", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
 		return nil, fmt.Errorf("migration validation failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}

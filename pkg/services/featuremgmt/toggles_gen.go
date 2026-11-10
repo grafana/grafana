@@ -930,6 +930,10 @@ const (
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
 
+	// FlagFrontendDisableGrafanaLive
+	// Disable the Grafana Live functionality
+	FlagFrontendDisableGrafanaLive = "frontend.disableGrafanaLive"
+
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"

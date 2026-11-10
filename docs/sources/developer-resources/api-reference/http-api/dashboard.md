@@ -30,13 +30,30 @@ This API complies with the new Grafana API structure. To learn more refer to doc
 
 The Dashboard API (`/apis/dashboard.grafana.app/*`) replaces [`/api/dashboards/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_public/), although there may not be an exact match for all legacy endpoints.
 
+## API versions
+
+The Dashboard API serves the same dashboards in two schemas. Choose the version that matches the dashboard JSON you want to send and receive:
+
+| Version | Dashboard schema                                                                          | Swagger                                                                                   |
+| ------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `v1`    | Classic JSON model, with `panels`, `templating`, and `time` in `spec`                     | [dashboard.grafana.app/v1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1) |
+| `v2`    | Dashboard schema v2, with `elements`, `layout`, `variables`, and `timeSettings` in `spec` | [dashboard.grafana.app/v2](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2) |
+
+Both versions use the same endpoints, query parameters, and permissions. Only the version in the path and the shape of `spec` change. For example, use `/apis/dashboard.grafana.app/v2/namespaces/:namespace/dashboards` to work with dashboards in the v2 schema.
+
+You can read any dashboard with either version, regardless of the schema it was saved in, because Grafana converts it. For details, refer to [Use the v2 schema](#use-the-v2-schema).
+
+Grafana also serves the older `v0alpha1`, `v1beta1`, `v2alpha1`, and `v2beta1` versions. Use `v1` or `v2` instead.
+
+The examples in the following sections use `v1`, except for [Use the v2 schema](#use-the-v2-schema).
+
 ## Requirements
 
 If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Endpoints
 
-This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [dashboard.grafana.app/v2](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2) in Swagger.
+This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [dashboard.grafana.app/v1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1) and [dashboard.grafana.app/v2](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2) in Swagger.
 
 | Method | Summary                                      | URI                                                                      |
 | ------ | -------------------------------------------- | ------------------------------------------------------------------------ |
@@ -860,3 +877,198 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Access denied
 - **404** – Not found
+
+## Use the v2 schema
+
+To create, update, and read dashboards in the dashboard schema v2, use the `v2` version in the path. The endpoints, query parameters, required permissions, and status codes are the same as for `v1`.
+
+In the v2 schema, panels are defined once in `spec.elements` and placed on the dashboard by `spec.layout`. Variables, time settings, and annotations have their own top-level fields.
+
+### Create a dashboard with the v2 schema
+
+`POST /apis/dashboard.grafana.app/v2/namespaces/:namespace/dashboards`
+
+**Example request**:
+
+```http
+POST /apis/dashboard.grafana.app/v2/namespaces/default/dashboards HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "metadata": {
+    "name": "gdxccn",
+    "annotations": {
+      "grafana.app/folder": "fef30w4jaxla8b"
+    }
+  },
+  "spec": {
+    "title": "Example Dashboard",
+    "description": "",
+    "tags": ["example"],
+    "cursorSync": "Off",
+    "preload": false,
+    "editable": true,
+    "links": [],
+    "annotations": [],
+    "variables": [],
+    "timeSettings": {
+      "from": "now-6h",
+      "to": "now",
+      "timezone": "browser",
+      "autoRefresh": "",
+      "autoRefreshIntervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Example panel",
+          "description": "With a description",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "prometheus-uid"
+                      },
+                      "spec": {
+                        "expr": "up"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.0.0",
+            "spec": {
+              "options": {},
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+JSON body schema:
+
+- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you don't want to provide one, set `metadata.generateName` to the prefix you want for the generated UID.
+- **metadata.annotations.grafana.app/folder** – Optional. The unique identifier of the folder to create the dashboard in.
+- **spec.title**, **spec.description**, **spec.tags** – The title, description, and tags of the dashboard.
+- **spec.elements** – The panels and library panels of the dashboard, keyed by a name that's unique within the dashboard.
+  - **data** – The queries of the panel. Each query sets `group` to the data source type, and `datasource.name` to the data source UID.
+  - **vizConfig** – The visualization of the panel. `group` is the visualization plugin ID, for example `timeseries`.
+- **spec.layout** – How to place the elements on the dashboard. Each layout item refers to an element by its name. The layout can be a `GridLayout`, `AutoGridLayout`, `RowsLayout`, or `TabsLayout`.
+- **spec.variables** – The dashboard variables.
+- **spec.timeSettings** – The default time range, time zone, and refresh settings.
+- **spec.annotations** – The annotation queries of the dashboard.
+- **spec.links** – Links to other dashboards or external websites.
+- **spec.cursorSync** – Whether panels share the crosshair or tooltip: `Off`, `Crosshair`, or `Tooltip`.
+
+**Example response**:
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json; charset=UTF-8
+
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2",
+  "metadata": {
+    "name": "gdxccn",
+    "namespace": "default",
+    "uid": "Cc7fA5ffHY94NnHZyMxXvFlpFtOmkK3qkBcVZPKSPXcX",
+    "resourceVersion": "1",
+    "generation": 1,
+    "creationTimestamp": "2026-11-05T06:51:00Z",
+    "annotations": {
+      "grafana.app/createdBy": "service-account:dejwtrofg77y8d",
+      "grafana.app/folder": "fef30w4jaxla8b"
+    }
+  },
+  "spec": {
+    "title": "Example Dashboard",
+    ...
+  },
+  "status": {}
+}
+```
+
+### Read a dashboard saved in a different schema
+
+When you read a dashboard with a version that doesn't match the schema it was saved in, Grafana converts it. For example, you can read a dashboard saved with `v1` through the `v2` endpoint.
+
+If the conversion fails, the response includes a `status.conversion` object:
+
+```json
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2",
+  "metadata": {
+    "name": "gdxccn",
+    ...
+  },
+  "spec": {
+    ...
+  },
+  "status": {
+    "conversion": {
+      "failed": true,
+      "storedVersion": "v1",
+      "error": "<CONVERSION_ERROR>"
+    }
+  }
+}
+```
+
+The `status.conversion` object contains the following fields:
+
+- **failed** – Whether the conversion failed. If `true`, the `spec` in the response isn't valid. Read the dashboard again with the version in `storedVersion`.
+- **storedVersion** – The version the dashboard was saved with. Reading the dashboard with this version always succeeds.
+- **error** – The conversion error message.

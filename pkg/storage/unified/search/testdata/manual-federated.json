@@ -23,7 +23,8 @@
       ],
       "sort_fields": [
         "aaa (dash)",
-        "aaa"
+        "aaa",
+        "ns/dashboard.grafana.app/dashboards/aaa"
       ]
     },
     {
@@ -42,7 +43,8 @@
       ],
       "sort_fields": [
         "bbb (dash)",
-        "bbb"
+        "bbb",
+        "ns/dashboard.grafana.app/dashboards/bbb"
       ]
     },
     {
@@ -61,7 +63,8 @@
       ],
       "sort_fields": [
         "ccc (dash)",
-        "ccc"
+        "ccc",
+        "ns/dashboard.grafana.app/dashboards/ccc"
       ]
     },
     {
@@ -80,7 +83,8 @@
       ],
       "sort_fields": [
         "yyy (folder)",
-        "yyy"
+        "yyy",
+        "ns/folder.grafana.app/folders/yyy"
       ]
     },
     {
@@ -99,7 +103,8 @@
       ],
       "sort_fields": [
         "zzz (folder)",
-        "zzz"
+        "zzz",
+        "ns/folder.grafana.app/folders/zzz"
       ]
     }
   ]

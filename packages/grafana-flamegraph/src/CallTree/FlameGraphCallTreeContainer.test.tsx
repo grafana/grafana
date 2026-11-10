@@ -248,6 +248,41 @@ describe('FlameGraphCallTreeContainer', () => {
     });
   });
 
+  it('should report isSandwich to extra context menu buttons when in callers view', async () => {
+    const observedIsSandwich: boolean[] = [];
+
+    await setup({
+      search: 'runtime.mallocgc',
+      getExtraContextMenuButtons: (_clickedItemData, _data, state) => {
+        observedIsSandwich.push(state.isSandwich);
+        return [{ label: 'Custom Action', icon: 'eye', onClick: jest.fn() }];
+      },
+    });
+
+    // Before entering callers view the regular call tree is shown.
+    expect(observedIsSandwich.length).toBeGreaterThan(0);
+    expect(observedIsSandwich.every((isSandwich) => isSandwich === false)).toBe(true);
+
+    // Enter callers view via the action menu.
+    const mallocgcButton = screen.getByText('runtime.mallocgc');
+    const row = mallocgcButton.closest('tr');
+    const actionButton = within(row!).getByLabelText('Actions');
+    await user.click(actionButton);
+    await user.click(screen.getByText('Show callers'));
+
+    await act(async () => {
+      jest.runAllTimers();
+    });
+
+    // Once in callers view the callback must observe sandwich mode.
+    expect(observedIsSandwich).toContain(true);
+
+    // Run timers to complete menu close animation (react-transition-group)
+    await act(async () => {
+      jest.runAllTimers();
+    });
+  });
+
   it('should navigate through search results with prev/next buttons', async () => {
     // Suppress console.error for floating-ui tooltip positioning warnings in jsdom
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});

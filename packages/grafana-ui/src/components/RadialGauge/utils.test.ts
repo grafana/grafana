@@ -317,6 +317,7 @@ describe('RadialGauge utils', () => {
 
       expect(result.startValueAngle).toBe(180); // Neutral at 50% of 360°
       expect(result.endValueAngle).toBe(0); // No difference
+      expect(result.markerAtStart).toBe(false);
     });
 
     it('should handle neutral values greater than value', () => {
@@ -325,6 +326,14 @@ describe('RadialGauge utils', () => {
 
       expect(result.startValueAngle).toBe(90);
       expect(result.endValueAngle).toBe(270); // remaining angle to 360
+      expect(result.markerAtStart).toBe(true);
+    });
+
+    it('should keep the marker at the arc end when the value is at or right of neutral', () => {
+      const fieldDisplay = createFieldDisplay(75, 0, 100);
+      const result = getValueAngleForValue(fieldDisplay, 0, 360, 50);
+
+      expect(result.markerAtStart).toBe(false);
     });
 
     it('should handle neutral values below range', () => {
