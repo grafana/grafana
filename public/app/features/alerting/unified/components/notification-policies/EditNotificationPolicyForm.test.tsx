@@ -5,7 +5,7 @@ import { byLabelText, byRole } from 'testing-library-selector';
 import { Button } from '@grafana/ui';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';

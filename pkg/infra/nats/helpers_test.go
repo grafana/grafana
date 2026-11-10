@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"math/big"
 	"net"
 	"os"
@@ -19,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-kit/log/level"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	natsserver "github.com/nats-io/nats-server/v2/server"
@@ -316,6 +318,21 @@ func newLogHook() *logHook {
 func (h *logHook) Info(msg string, _ ...any)  { h.send("info: " + msg) }
 func (h *logHook) Warn(msg string, _ ...any)  { h.send("warn: " + msg) }
 func (h *logHook) Error(msg string, _ ...any) { h.send("error: " + msg) }
+
+// Log takes the records the embedded server writes directly.
+func (h *logHook) Log(keyvals ...any) error {
+	var lvl, msg string
+	for i := 0; i+1 < len(keyvals); i += 2 {
+		switch keyvals[i] {
+		case level.Key():
+			lvl = fmt.Sprint(keyvals[i+1])
+		case "msg":
+			msg = fmt.Sprint(keyvals[i+1])
+		}
+	}
+	h.send(lvl + ": " + msg)
+	return nil
+}
 
 func (h *logHook) send(msg string) {
 	select {

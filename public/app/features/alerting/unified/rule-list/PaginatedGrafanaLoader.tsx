@@ -12,7 +12,7 @@ import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupE
 import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 import { makeFolderAlertsLink } from '../utils/misc';
 import { groups } from '../utils/navigation';
 import { getPromGroupReadOnlyStatus, isUngroupedRuleGroup } from '../utils/rules';

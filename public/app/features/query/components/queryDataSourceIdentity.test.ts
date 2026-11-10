@@ -1,4 +1,4 @@
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 
 import { getQueryDataSourceIdentity } from './queryDataSourceIdentity';
 

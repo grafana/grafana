@@ -23,7 +23,7 @@ import {
 import { logError } from '../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 
-import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './constants';
 import {
   getRuleName,
   isCloudRuleIdentifier,

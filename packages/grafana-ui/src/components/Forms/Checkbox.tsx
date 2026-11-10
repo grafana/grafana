@@ -100,6 +100,7 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
   const labelStyles = getLabelStyles(theme);
   const checkboxSize = 2;
   const labelPadding = 1;
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
   const getBorderColor = (color: string) => {
     return invalid ? theme.colors.error.border : color;
@@ -115,95 +116,117 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
       position: 'relative',
       verticalAlign: 'middle',
     }),
-    input: css({
-      position: 'absolute',
-      zIndex: 1,
-      top: 0,
-      left: 0,
-      width: '100% !important', // global styles unset this
-      height: '100%',
-      opacity: 0,
+    input: css(
+      {
+        position: 'absolute',
+        zIndex: 1,
+        top: 0,
+        left: 0,
+        width: '100% !important', // global styles unset this
+        height: '100%',
+        opacity: 0,
 
-      '&:focus + span, &:focus-visible + span': getFocusStyles(theme),
+        '&:focus + span, &:focus-visible + span': getFocusStyles(theme),
 
-      '&:focus:not(:focus-visible) + span': getMouseFocusStyles(theme),
+        '&:focus:not(:focus-visible) + span': getMouseFocusStyles(theme),
 
-      /**
-       * Using adjacent sibling selector to style checked state.
-       * Primarily to limit the classes necessary to use when these classes will be used
-       * for angular components styling
-       * */
-      '&:checked + span': {
-        background: theme.components.checkbox.activeBackground,
-        border: `1px solid ${getBorderColor(theme.components.checkbox.activeBackground)}`,
+        /**
+         * Using adjacent sibling selector to style checked state.
+         * Primarily to limit the classes necessary to use
+         * */
+        '&:checked + span': {
+          background: theme.components.checkbox.activeBackground,
+          border: `1px solid ${getBorderColor(theme.components.checkbox.activeBorder)}`,
 
-        '&:hover': {
-          background: theme.components.checkbox.activeBackgroundHover,
-          border: `1px solid ${getBorderColor(theme.components.checkbox.activeBackgroundHover)}`,
+          '&:hover': {
+            background: theme.components.checkbox.activeBackgroundHover,
+            border: `1px solid ${getBorderColor(theme.components.checkbox.activeBorderHover)}`,
+          },
+
+          '&:after': {
+            content: '""',
+            position: 'absolute',
+            zIndex: 2,
+            left: theme.spacing(0.5),
+            top: 0,
+            width: theme.spacing(0.75),
+            height: theme.spacing(1.5),
+            border: `solid ${theme.components.checkbox.checkmarkColor}`,
+            borderWidth: '0 3px 3px 0',
+            transform: 'rotate(45deg)',
+          },
         },
 
-        '&:after': {
-          content: '""',
-          position: 'absolute',
-          zIndex: 2,
-          left: theme.spacing(0.5),
-          top: 0,
-          width: theme.spacing(0.75),
-          height: theme.spacing(1.5),
-          border: `solid ${theme.colors.accent.contrastText}`,
-          borderWidth: '0 3px 3px 0',
-          transform: 'rotate(45deg)',
-        },
-      },
-
-      '&:disabled + span': {
-        backgroundColor: theme.colors.action.disabledBackground,
-        cursor: 'not-allowed',
-        border: `1px solid ${getBorderColor(theme.colors.action.disabledBackground)}`,
-
-        '&:hover': {
+        '&:disabled + span': {
           backgroundColor: theme.colors.action.disabledBackground,
-        },
+          cursor: 'not-allowed',
+          border: `1px solid ${getBorderColor(theme.colors.action.disabledBackground)}`,
 
-        '&:after': {
-          borderColor: theme.colors.action.disabledText,
-        },
-      },
-    }),
+          '&:hover': {
+            backgroundColor: theme.colors.action.disabledBackground,
+            border: `1px solid ${getBorderColor(theme.colors.action.disabledBackground)}`,
+          },
 
-    inputIndeterminate: css({
-      '&:indeterminate + span': {
-        border: `1px solid ${getBorderColor(theme.components.checkbox.activeBackground)}`,
-        background: theme.components.checkbox.activeBackground,
-
-        '&:hover': {
-          background: theme.components.checkbox.activeBackgroundHover,
-          border: `1px solid ${getBorderColor(theme.components.checkbox.activeBackgroundHover)}`,
-        },
-
-        '&:after': {
-          content: '""',
-          position: 'absolute',
-          zIndex: 2,
-          left: '2px',
-          right: '2px',
-          top: 'calc(50% - 1.5px)',
-          height: '3px',
-          border: `1.5px solid ${theme.colors.accent.contrastText}`,
-          backgroundColor: theme.colors.accent.contrastText,
-          width: 'auto',
-          transform: 'none',
+          '&:after': {
+            borderColor: theme.colors.action.disabledText,
+          },
         },
       },
-      "&:disabled[aria-checked='mixed'] + span": {
-        backgroundColor: theme.colors.action.disabledBackground,
-        border: `1px solid ${getBorderColor(theme.colors.error.transparent)}`,
+      visualRefreshEnabled && {
+        '&:checked + span': {
+          '&:after': {
+            left: theme.spacing(0.625),
+            top: theme.spacing(0.125),
+            width: theme.spacing(0.5),
+            height: theme.spacing(1.25),
+            borderWidth: '0 2px 2px 0',
+            transform: 'rotate(50deg)',
+          },
+        },
+      }
+    ),
 
-        '&:after': {
-          borderColor: theme.colors.action.disabledText,
+    inputIndeterminate: css(
+      {
+        '&:indeterminate + span': {
+          border: `1px solid ${getBorderColor(theme.components.checkbox.activeBorder)}`,
+          background: theme.components.checkbox.activeBackground,
+
+          '&:hover': {
+            background: theme.components.checkbox.activeBackgroundHover,
+            border: `1px solid ${getBorderColor(theme.components.checkbox.activeBorderHover)}`,
+          },
+
+          '&:after': {
+            content: '""',
+            position: 'absolute',
+            zIndex: 2,
+            left: '2px',
+            right: '2px',
+            top: 'calc(50% - 1.5px)',
+            height: '3px',
+            backgroundColor: theme.components.checkbox.checkmarkColor,
+            width: 'auto',
+            transform: 'none',
+          },
+        },
+        '&:disabled:indeterminate + span': {
+          backgroundColor: theme.colors.action.disabledBackground,
+          border: `1px solid ${getBorderColor(theme.colors.action.disabledBackground)}`,
+
+          '&:after': {
+            backgroundColor: theme.colors.action.disabledText,
+          },
         },
       },
-    }),
+      visualRefreshEnabled && {
+        '&:indeterminate + span': {
+          '&:after': {
+            height: '2px',
+          },
+        },
+      }
+    ),
 
     checkboxWrapper: css({
       display: 'flex',

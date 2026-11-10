@@ -2,10 +2,10 @@ import { useCallback } from 'react';
 
 import { type DataQuery } from '@grafana/schema';
 
-import { trackAddQuery, trackAddTransformationInitiated } from '../../tracking';
+import { type AddCardSource, trackAddQuery, trackAddTransformationInitiated } from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
-export function getCardSource(afterId?: string) {
+export function getCardSource(afterId?: string): AddCardSource {
   return afterId ? 'inline' : 'section_header';
 }
 
@@ -25,21 +25,25 @@ export function useAddAndSelectQuery(afterId?: string, onAdd?: () => void) {
   );
 }
 
-export function useAddNewQuery(afterId?: string, onAdd?: () => void) {
+export function useAddNewQuery(afterId?: string, onAdd?: () => void, source: AddCardSource = getCardSource(afterId)) {
   const addAndSelectQuery = useAddAndSelectQuery(afterId, onAdd);
 
   return useCallback(() => {
-    trackAddQuery('new_query', getCardSource(afterId));
+    trackAddQuery('new_query', source);
     addAndSelectQuery();
-  }, [afterId, addAndSelectQuery]);
+  }, [source, addAndSelectQuery]);
 }
 
-export function useAddTransformation(afterId?: string, onAdd?: () => void) {
+export function useAddTransformation(
+  afterId?: string,
+  onAdd?: () => void,
+  source: AddCardSource = getCardSource(afterId)
+) {
   const { setPendingTransformation } = useQueryEditorUIContext();
 
   return useCallback(() => {
-    trackAddTransformationInitiated(getCardSource(afterId));
+    trackAddTransformationInitiated(source);
     setPendingTransformation({ insertAfter: afterId });
     onAdd?.();
-  }, [afterId, setPendingTransformation, onAdd]);
+  }, [afterId, setPendingTransformation, onAdd, source]);
 }

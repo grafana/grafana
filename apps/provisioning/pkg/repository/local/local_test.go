@@ -1831,3 +1831,23 @@ func TestLocalRepository_Move(t *testing.T) {
 		})
 	}
 }
+
+// An unresolved root used to read as an empty tree, which a full sync takes for a mass delete.
+func TestLocalRepositoryUnresolvedRootFailsReadsInsteadOfLookingEmpty(t *testing.T) {
+	repo := NewRepository(
+		&provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type:  provisioning.LocalRepositoryType,
+				Local: &provisioning.LocalRepositoryConfig{Path: "/no/longer/permitted"},
+			},
+		},
+		&LocalFolderResolver{PermittedPrefixes: []string{"/etc/grafana/provisioning"}, HomePath: "/usr/share/grafana"},
+		nil,
+	)
+
+	tree, err := repo.ReadTree(context.Background(), "")
+
+	require.Error(t, err, "an unresolved root must not read as an empty repository")
+	assert.Empty(t, tree)
+	assert.Contains(t, err.Error(), "matches no permitted prefix")
+}

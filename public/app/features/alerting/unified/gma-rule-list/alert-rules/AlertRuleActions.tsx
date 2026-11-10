@@ -8,6 +8,7 @@ import {
 import { useAssistant } from '@grafana/assistant';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useFlagAlertEnrichment, useFlagAlertingEnrichmentPerRule } from '@grafana/runtime/internal';
 import { ConfirmModal, Dropdown, LinkButton, Menu, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
@@ -16,6 +17,8 @@ import { EnrichmentDrawerExtension } from 'app/features/alerting/unified/compone
 import { RedirectToCloneRule } from 'app/features/alerting/unified/components/rules/CloneRule';
 import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/silences/SilenceGrafanaRuleDrawer';
 import { isGranted } from 'app/features/alerting/unified/hooks/abilities/abilityUtils';
+import { useEnrichmentAbility } from 'app/features/alerting/unified/hooks/abilities/otherAbilities';
+import { EnrichmentAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { isK8sEntityProvisioned } from 'app/features/alerting/unified/utils/k8s/utils';
 import { type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
@@ -44,7 +47,6 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
   const { isAvailable: isAssistantAvailable } = useAssistant();
 
   const isPaused = rule.spec?.paused ?? false;
-  const isProvisioned = isK8sEntityProvisioned(rule);
 
   const identifier: GrafanaRuleIdentifier = { ruleSourceName: GRAFANA_RULES_SOURCE_NAME, uid };
 
@@ -71,7 +73,7 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
   };
 
   const handleCopyLink = async () => {
-    const url = window.location.origin + grafanaRulesNav.viewLink(uid);
+    const url = grafanaRulesNav.shareLink(uid);
     try {
       await navigator.clipboard.writeText(url);
       appEvents.emit(AppEvents.alertSuccess, [t('alerting.gma-rule-list.actions.copy-link-success', 'Link copied')]);
@@ -82,7 +84,11 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
     }
   };
 
-  const canManageEnrichments = isGranted(abilities.canManageEnrichments);
+  const enrichmentReadAbility = useEnrichmentAbility(EnrichmentAction.Read);
+  const alertEnrichmentEnabled = useFlagAlertEnrichment();
+  const alertingEnrichmentPerRuleEnabled = useFlagAlertingEnrichmentPerRule();
+  const canManageEnrichments =
+    isGranted(enrichmentReadAbility) && alertEnrichmentEnabled && alertingEnrichmentPerRuleEnabled;
 
   const menu = (
     <Menu>
@@ -91,7 +97,7 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
         icon="eye"
         url={grafanaRulesNav.viewLink(uid)}
       />
-      {isGranted(abilities.canDuplicate) && (
+      {isGranted(abilities.duplicate) && (
         <Menu.Item
           label={t('alerting.gma-rule-list.actions.duplicate', 'Duplicate')}
           icon="copy"
@@ -103,7 +109,7 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
         icon="link"
         onClick={handleCopyLink}
       />
-      {isGranted(abilities.canPause) && (
+      {isGranted(abilities.pause) && (
         <>
           <Menu.Divider />
           <Menu.Item
@@ -118,7 +124,7 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
           />
         </>
       )}
-      {isGranted(abilities.canDelete) && (
+      {isGranted(abilities.delete) && (
         <Menu.Item
           label={t('alerting.gma-rule-list.actions.delete', 'Delete')}
           icon="trash-alt"
@@ -135,7 +141,7 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
           onClick={() => setShowEnrichmentDrawer(!showEnrichmentDrawer)}
         />
       )}
-      {isGranted(abilities.canSilence) && (
+      {isGranted(abilities.silence) && (
         <>
           <Menu.Divider />
           <Menu.Item
@@ -150,7 +156,7 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
 
   return (
     <Stack direction="row" alignItems="center" gap={0.5}>
-      {isGranted(abilities.canEdit) && (
+      {isGranted(abilities.edit) && (
         <LinkButton size="sm" variant="secondary" fill="text" href={grafanaRulesNav.editLink(uid)}>
           <Trans i18nKey="common.edit">Edit</Trans>
         </LinkButton>
@@ -180,7 +186,7 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
       {redirectToClone && (
         <RedirectToCloneRule
           identifier={identifier}
-          isProvisioned={isProvisioned}
+          isProvisioned={isK8sEntityProvisioned(rule)}
           onDismiss={() => setRedirectToClone(false)}
         />
       )}

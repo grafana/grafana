@@ -608,10 +608,10 @@ func TestSearchServicePermissions(t *testing.T) {
 					return
 				}
 				// No index is configured: the failure must precede any index lookup.
-				resp, err := s.Search(ctx, req)
-				require.NoError(t, err)
-				require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
-				require.Contains(t, resp.Error.GetMessage(), tc.wantPermission)
+				_, err := s.Search(ctx, req)
+				rspErr := rpcErrorResult(t, err)
+				require.Equal(t, int32(http.StatusInternalServerError), rspErr.GetCode())
+				require.Contains(t, rspErr.GetMessage(), tc.wantPermission)
 				group, rest, _ := strings.Cut(tc.wantPermission, "/")
 				resource, verb, _ := strings.Cut(rest, ":")
 				requirePermissionFailures(t, s.indexMetrics.SearchServicePermissionFailures, "grafana_index_server_search_service_permission_failures_total",
@@ -740,14 +740,13 @@ func TestSearchServicePermissionsIdentityErrors(t *testing.T) {
 				ctx = authlib.WithAuthInfo(ctx, tc.id)
 			}
 			s := newPermissionTestSearchServer(newLimitedClient(t))
-			resp, err := s.Search(ctx, &resourcepb.ResourceSearchRequest{
+			_, err := s.Search(ctx, &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 					Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
 				}},
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			})
-			require.NoError(t, err)
-			require.Equal(t, tc.wantCode, resp.Error.GetCode())
+			require.Equal(t, tc.wantCode, rpcErrorResult(t, err).GetCode())
 		})
 	}
 }
@@ -910,7 +909,6 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 
 		rsp, err := s.Search(ctx, globalRequest())
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		assert.Empty(t, rsp.SkippedTypes)
 		require.NotNil(t, index.req)
 		assert.Equal(t, []*resourcepb.Requirement{{
@@ -930,7 +928,6 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 
 		rsp, err := s.Search(ctx, globalRequest())
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		assert.Equal(t, map[string]string{
 			dashboards:                "Dashboard",
 			folders:                   "Folder",
@@ -951,7 +948,6 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 
 		rsp, err := s.Search(ctx, globalRequest())
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		assert.Equal(t, "Page", rsp.Kinds["x.ext.grafana.app/pages"])
 	})
 
@@ -969,7 +965,6 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 
 		rsp, err := s.Search(ctx, req)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		assert.Equal(t, map[string]string{dashboards: "Dashboard", folders: "Folder"}, rsp.Kinds)
 	})
 
@@ -981,10 +976,8 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 		index := &recordingIndex{MockResourceIndex: &MockResourceIndex{}}
 		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("stacks-1"): index}}
 
-		rsp, err := s.Search(t.Context(), globalRequest())
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		assert.Contains(t, rsp.Error.Message, "covers no types")
+		_, err := s.Search(t.Context(), globalRequest())
+		assert.Contains(t, rpcErrorResult(t, err).Message, "covers no types")
 		assert.Nil(t, index.req, "the index is not searched")
 	})
 
@@ -998,7 +991,6 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 		req := globalRequest()
 		rsp, err := s.Search(ctx, req)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		assert.Equal(t, []string{folders}, rsp.SkippedTypes)
 		require.NotNil(t, index.req)
 		assert.Equal(t, []*resourcepb.Requirement{{
@@ -1032,14 +1024,13 @@ func TestSearchPermissionFailureMonitoring(t *testing.T) {
 			logger := &permissionTestLogger{}
 			s := newPermissionTestSearchServer(authlib.FixedAccessClient(true))
 			s.log = logger
-			resp, err := s.Search(authlib.WithAuthInfo(t.Context(), id), &resourcepb.ResourceSearchRequest{
+			_, err := s.Search(authlib.WithAuthInfo(t.Context(), id), &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 					Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
 				}},
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			})
-			require.NoError(t, err)
-			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
+			require.Equal(t, int32(http.StatusInternalServerError), rpcErrorResult(t, err).GetCode())
 			require.Equal(t, 1.0, testutil.ToFloat64(s.indexMetrics.SearchServicePermissionFailures.WithLabelValues("dashboard.grafana.app", "dashboards", utils.VerbGet, mode, "false")))
 			require.Zero(t, logger.ErrorLogs.Calls)
 			require.Equal(t, 1, logger.WarnLogs.Calls)
@@ -1071,10 +1062,10 @@ func TestSearchServicePermissionsDoesNotDependOnClient(t *testing.T) {
 				"delegated": tokenWithoutDelegation(),
 			} {
 				t.Run(mode, func(t *testing.T) {
-					resp, err := s.Search(authlib.WithAuthInfo(t.Context(), id), req)
-					require.NoError(t, err)
-					require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
-					require.Contains(t, resp.Error.GetMessage(), "dashboard.grafana.app/dashboards:get")
+					_, err := s.Search(authlib.WithAuthInfo(t.Context(), id), req)
+					rspErr := rpcErrorResult(t, err)
+					require.Equal(t, int32(http.StatusInternalServerError), rspErr.GetCode())
+					require.Contains(t, rspErr.GetMessage(), "dashboard.grafana.app/dashboards:get")
 				})
 			}
 			// Local callers without tokens still use their access client's rules.
