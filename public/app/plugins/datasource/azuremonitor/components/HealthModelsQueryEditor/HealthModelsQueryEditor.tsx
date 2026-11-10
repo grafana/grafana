@@ -40,8 +40,17 @@ const HealthModelsQueryEditor = ({
   const [subscriptions, setSubscriptions] = useState<Array<ComboboxOption<string>>>([]);
   const [healthModels, setHealthModels] = useState<Array<ComboboxOption<string>>>([]);
   const [loadingSubscriptions, setLoadingSubscriptions] = useState(true);
-  const [loadingHealthModels, setLoadingHealthModels] = useState(Boolean(query.subscription || subscriptionId));
   const selectedSubscription = query.subscription || subscriptionId || subscriptions[0]?.value;
+  const [loadingHealthModels, setLoadingHealthModels] = useState(Boolean(selectedSubscription));
+  const [healthModelsSource, setHealthModelsSource] = useState({ datasource, subscriptionId: selectedSubscription });
+
+  // Reset before committing the new source so auto-selection cannot use stale models.
+  if (healthModelsSource.datasource !== datasource || healthModelsSource.subscriptionId !== selectedSubscription) {
+    setHealthModelsSource({ datasource, subscriptionId: selectedSubscription });
+    setHealthModels([]);
+    setLoadingHealthModels(Boolean(selectedSubscription));
+  }
+
   const selectedHealthModelResourceId = query.azureHealthModels?.healthModelResourceId;
   const selectedHealthModelsQueryType = query.azureHealthModels?.queryType;
   const subscriptionOptions = variableOptionGroup
@@ -100,13 +109,13 @@ const HealthModelsQueryEditor = ({
       .getHealthModels(selectedSubscription)
       .then((results) => {
         if (!canceled) {
-          const options = results.map((healthModel) => ({
-            label: healthModel.text,
-            value: healthModel.value,
-            description: healthModel.value,
-          }));
-
-          setHealthModels(options);
+          setHealthModels(
+            results.map((healthModel) => ({
+              label: healthModel.text,
+              value: healthModel.value,
+              description: healthModel.value,
+            }))
+          );
           setError(HEALTH_MODELS_ERROR_SOURCE, undefined);
         }
       })
@@ -162,17 +171,9 @@ const HealthModelsQueryEditor = ({
         queryType: DEFAULT_HEALTH_MODELS_QUERY_TYPE,
       },
     });
-  }, [
-    onChange,
-    query,
-    selectedHealthModelResourceId,
-    selectedHealthModelsQueryType,
-    selectedSubscription,
-  ]);
+  }, [onChange, query, selectedHealthModelResourceId, selectedHealthModelsQueryType, selectedSubscription]);
 
   const onSubscriptionChange = (selection: ComboboxOption<string>) => {
-    setHealthModels([]);
-    setLoadingHealthModels(Boolean(selection.value));
     onChange({
       ...query,
       subscription: selection.value,

@@ -352,6 +352,7 @@ function hasQueryForType(query: AzureMonitorQuery): boolean {
       return !!query.azureTraces;
 
     case AzureQueryType.AzureHealthModels:
+      // TODO: Enable health models queries once backend query support is available.
       return false;
 
     case AzureQueryType.GrafanaTemplateVariableFn:

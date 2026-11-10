@@ -1,4 +1,4 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { type ReactFlagEvaluationOptions, useBooleanFlagValue } from '@openfeature/react-sdk';
 import { MultiProvider, OpenFeature } from '@openfeature/web-sdk';
 
 import { createOpenFeatureLocalStorageProvider, createOpenFeatureOFREPWebProvider } from '@grafana/runtime';
@@ -12,6 +12,15 @@ export const OPEN_FEATURE_DOMAIN = pluginJson.id;
 // Registered in pkg/services/featuremgmt/registry.go.
 export const BATCH_API_FLAG = 'datasources.azureMonitorBatchAPI';
 export const HEALTH_MODELS_FLAG = 'grafana-azure-monitor-datasource.health-models';
+
+// This deployment-managed flag is not part of Grafana's generated flag-key types.
+declare module '@openfeature/react-sdk' {
+  export function useBooleanFlagValue(
+    flagKey: typeof HEALTH_MODELS_FLAG,
+    defaultValue: boolean,
+    options?: ReactFlagEvaluationOptions
+  ): boolean;
+}
 
 /**
  * Registers read-only proxies of Grafana's own providers under the plugin's
