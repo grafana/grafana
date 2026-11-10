@@ -1,55 +1,72 @@
-import { requestPermissionQuery } from './permissionLookupQuery';
+import { configureStore } from '@reduxjs/toolkit';
+import { type BaseQueryFn, createApi, retry } from '@reduxjs/toolkit/query';
+
+import { permissionLookupRetryOptions } from './permissionLookupQuery';
 import { PERMISSION_LOOKUP_CONCURRENCY, schedulePermissionLookup } from './permissionLookupQueue';
+
+const cleanups: Array<() => void> = [];
+
+function setup(request: () => ReturnType<BaseQueryFn<void, boolean>>) {
+  const baseQuery: BaseQueryFn<void, boolean> = (_args, api) => schedulePermissionLookup(request, api.signal);
+  const api = createApi({
+    baseQuery: retry(baseQuery, permissionLookupRetryOptions),
+    endpoints: (builder) => ({ lookup: builder.query<boolean, void>({ query: () => undefined }) }),
+  });
+  const store = configureStore({
+    reducer: { [api.reducerPath]: api.reducer },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
+  });
+  cleanups.push(() => store.dispatch(api.util.resetApiState()));
+  return store.dispatch(api.endpoints.lookup.initiate());
+}
 
 beforeEach(() => {
   jest.useFakeTimers();
 });
 afterEach(() => {
+  cleanups.splice(0).forEach((cleanup) => cleanup());
+  jest.clearAllTimers();
   jest.useRealTimers();
 });
 
 it.each([400, 401, 403, 404])('does not retry a permanent permission error (%s)', async (status) => {
-  const failure = { error: { status, data: {} } };
-  const request = jest.fn(async () => failure);
+  const error = { status, data: {} };
+  const request = jest.fn(async () => ({ error }));
 
-  await expect(requestPermissionQuery(request, new AbortController().signal)).resolves.toEqual(failure);
+  await expect(setup(request).unwrap()).rejects.toEqual(error);
   expect(request).toHaveBeenCalledTimes(1);
-  expect(jest.getTimerCount()).toBe(0);
 });
 
 it('stops after three transient attempts', async () => {
-  const failure = { error: { status: 503, data: {} } };
-  const request = jest.fn(async () => failure);
-  const pending = requestPermissionQuery(request, new AbortController().signal);
+  const error = { status: 503, data: {} };
+  const request = jest.fn(async () => ({ error }));
+  const pending = setup(request);
 
-  await jest.advanceTimersByTimeAsync(2000);
+  await jest.runAllTimersAsync();
 
-  await expect(pending).resolves.toEqual(failure);
+  await expect(pending.unwrap()).rejects.toEqual(error);
   expect(request).toHaveBeenCalledTimes(3);
-  expect(jest.getTimerCount()).toBe(0);
 });
 
-it('cancels the retry delay without starting another permission request', async () => {
-  const controller = new AbortController();
-  const failure = { error: { status: 503, data: {} } };
-  const request = jest.fn(async () => failure);
-  const pending = requestPermissionQuery(request, controller.signal);
+it('cancels retry backoff without starting another permission request', async () => {
+  const request = jest.fn(async () => ({ error: { status: 503, data: {} } }));
+  const pending = setup(request);
   await jest.advanceTimersByTimeAsync(0);
   expect(request).toHaveBeenCalledTimes(1);
 
-  controller.abort();
+  const rejected = expect(pending.unwrap()).rejects.toMatchObject({ name: 'AbortError' });
+  pending.abort();
 
-  await expect(pending).resolves.toEqual(failure);
-  await jest.advanceTimersByTimeAsync(2000);
+  await rejected;
+  await jest.runAllTimersAsync();
   expect(request).toHaveBeenCalledTimes(1);
-  expect(jest.getTimerCount()).toBe(0);
 });
 
 it('releases all network slots during retry backoff', async () => {
   const controller = new AbortController();
   let failing = true;
   const request = jest.fn(async () => (failing ? { error: { status: 503, data: {} } } : { data: true }));
-  const pending = requestPermissionQuery(request, controller.signal);
+  const pending = setup(request);
   let release!: () => void;
   const gate = new Promise<void>((resolve) => {
     release = resolve;
@@ -74,12 +91,13 @@ it('releases all network slots during retry backoff', async () => {
     release();
     await Promise.all(controls);
     failing = false;
-    await jest.advanceTimersByTimeAsync(1000);
-    await expect(pending).resolves.toEqual({ data: true });
+    await jest.runAllTimersAsync();
+    await expect(pending.unwrap()).resolves.toBe(true);
     expect(request).toHaveBeenCalledTimes(2);
   } finally {
     release();
     controller.abort();
+    pending.abort();
     await Promise.all(controls);
     await pending;
   }

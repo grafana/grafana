@@ -5,7 +5,7 @@ import { createBaseQuery } from '@grafana/api-clients/rtkq';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { type BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
@@ -15,7 +15,8 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
-import { requestPermissionQuery } from 'app/core/utils/permissionLookupQuery';
+import { permissionLookupRetryOptions } from 'app/core/utils/permissionLookupQuery';
+import { schedulePermissionLookup } from 'app/core/utils/permissionLookupQueue';
 import { AnnoKeyFolder, type Resource } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
@@ -119,7 +120,11 @@ export const browseDashboardsAPI = createApi({
       providesTags: (_result, _error, { folderUID }) => [folderTag(folderUID)],
       extraOptions: {
         requestScheduler: (request, signal, options) =>
-          options.params?.accesscontrol === true ? requestPermissionQuery(request, signal) : request(),
+          options.params?.accesscontrol === true ? schedulePermissionLookup(request, signal) : request(),
+        retryOptions: {
+          retryCondition: (error, args: BackendSrvRequest, extraArgs) =>
+            args.params?.accesscontrol === true && permissionLookupRetryOptions.retryCondition(error, args, extraArgs),
+        },
       },
       query: ({ folderUID, accesscontrol, isLegacyCall }) => ({
         url: `/folders/${folderUID}`,
