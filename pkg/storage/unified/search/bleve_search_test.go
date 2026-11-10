@@ -3176,6 +3176,68 @@ func TestSearchPostRankAuthzRefillsPagesAfterValidationPastCandidateBudget(t *te
 	require.Equal(t, []string{"next", "z-next"}, names)
 }
 
+func TestSearchPostRankAuthzReturnsExpectedRows(t *testing.T) {
+	docs := make([]*resource.BulkIndexItem, 0, 40)
+	for i := range 40 {
+		doc := newDocWithTags(fmt.Sprintf("doc-%02d", i), fmt.Sprintf("folder-%d", i%4), []string{"prod", fmt.Sprintf("svc-%d", i%3)})
+		doc.Doc.Description = fmt.Sprintf("dashboard number %d", i)
+		doc.Doc.RV = int64(i + 1)
+		docs = append(docs, doc)
+	}
+	index := newTestDashboardsIndexPostRank(t, 2)
+	indexDocs(t, index, docs)
+
+	for _, tc := range []struct {
+		name   string
+		fields []string
+		query  string
+		offset int64
+	}{
+		{name: "all columns"},
+		{name: "requested columns", fields: []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_FOLDER, resource.SEARCH_FIELD_TAGS, resource.SEARCH_FIELD_DESCRIPTION}},
+		{name: "relevance query", query: "doc"},
+		{name: "offset", offset: 7},
+	} {
+		for _, restricted := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/restricted=%t", tc.name, restricted), func(t *testing.T) {
+				q := listQuery(5)
+				q.Fields, q.Query, q.Offset = tc.fields, tc.query, tc.offset
+				ac := &countingAccessClient{
+					allowAll:       !restricted,
+					allowedFolders: map[string]bool{"folder-1": true, "folder-3": true},
+				}
+				res := searchResponse(t, index, ac, q)
+				require.Len(t, res.Rows, 5)
+				if len(tc.fields) > 0 {
+					require.Equal(t, tc.fields, columnNames(res))
+				}
+				for i, row := range res.Rows {
+					docIndex := int(tc.offset) + i
+					if restricted {
+						docIndex = 2*docIndex + 1
+					}
+					want := docs[docIndex].Doc
+					require.Equal(t, want.Key, row.Key)
+					values, err := resource.DecodeSearchValues(res.Fields, row)
+					require.NoError(t, err)
+					require.Equal(t, want.Title, values[resource.SEARCH_FIELD_TITLE])
+					require.Equal(t, want.Folder, values[resource.SEARCH_FIELD_FOLDER])
+					require.Equal(t, want.Tags, values[resource.SEARCH_FIELD_TAGS])
+					if len(tc.fields) > 0 {
+						require.Equal(t, want.Description, values[resource.SEARCH_FIELD_DESCRIPTION])
+					} else {
+						require.Equal(t, want.RV, row.ResourceVersion)
+					}
+					if tc.query != "" {
+						require.NotNil(t, row.Score)
+						require.Positive(t, *row.Score)
+					}
+				}
+			})
+		}
+	}
+}
+
 func TestSearchPostRankAuthzFederated(t *testing.T) {
 	dashKey := &resourcepb.ResourceKey{
 		Namespace: "default",
