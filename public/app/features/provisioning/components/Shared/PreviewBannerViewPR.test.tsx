@@ -206,6 +206,34 @@ describe('PreviewBannerViewPR', () => {
   });
 
   describe('Different repository types', () => {
+    it('should use the repoType and prTitle props when the URL has no params', () => {
+      mockUsePullRequestParam.mockReturnValue({
+        prURL: undefined,
+        newPrURL: undefined,
+        repoURL: undefined,
+        repoType: undefined,
+        resourcePushedTo: undefined,
+        action: undefined,
+        prTitle: undefined,
+      });
+      render(
+        <PreviewBannerViewPR
+          prURL="https://github.com/org/repo/compare/main...feature"
+          isNewPr
+          repoType="github"
+          prTitle="Add widget"
+          branchInfo={{ targetBranch: 'feature', configuredBranch: 'main', repoBaseUrl: 'https://github.com/org/repo' }}
+        />
+      );
+
+      expect(screen.getByText('A new resource has been created in a branch in GitHub.')).toBeInTheDocument();
+      expect(screen.getByText('feature')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /pull request/i })).toHaveAttribute(
+        'href',
+        expect.stringContaining('title=Add')
+      );
+    });
+
     it('should handle GitLab repository type', () => {
       setup({ prURL: 'test-url', isNewPr: false, repoType: 'gitlab' });
 

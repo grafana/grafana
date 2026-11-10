@@ -316,6 +316,11 @@ export { type ComboboxOption } from './components/Combobox/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './components/Layout/Layout';
 export { Badge, type BadgeColor, type BadgeProps } from './components/Badge/Badge';
+export {
+  PullRequestBanner,
+  type PullRequestBannerProps,
+  type PullRequestBannerBranchInfo,
+} from './components/PullRequestBanner/PullRequestBanner';
 export { RadioButtonGroup } from './components/Forms/RadioButtonGroup/RadioButtonGroup';
 export { RadioButtonDot } from './components/Forms/RadioButtonList/RadioButtonDot';
 export { RadioButtonList } from './components/Forms/RadioButtonList/RadioButtonList';
