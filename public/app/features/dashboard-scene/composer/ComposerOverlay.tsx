@@ -121,6 +121,12 @@ export function ComposerOverlay({
   const hintRef = useRef<HTMLDivElement>(null);
   const hintPointerRef = useRef<{ x: number; y: number } | null>(null);
   const hintFrameRef = useRef(0);
+  /**
+   * A Text highlight's rects are fractions of its element's box, measured at the pick. Once the element's
+   * content scrolls or the element resizes, its text has moved under them: the highlight is dropped for good
+   * (the pin stays). Per annotation id: the element's size when first drawn, and whether that has happened.
+   */
+  const textBasisRef = useRef(new Map<string, { width: number; height: number; moved: boolean }>());
 
   const boxFor = useCallback((element: Element): Box | null => {
     const root = rootRef.current?.getBoundingClientRect();
@@ -149,13 +155,27 @@ export function ComposerOverlay({
       height: rootRect.height,
       controlsBottom: controls ? controls.bottom - rootRect.top : -Infinity,
     };
+    const textBasis = textBasisRef.current;
+    for (const id of textBasis.keys()) {
+      if (!items.some((item) => item.id === id && item.textRects)) {
+        textBasis.delete(id);
+      }
+    }
     for (const item of items) {
       const box = session.resolveAnnotationBox(item, rootRect);
       if (box) {
         next.items[item.id] = box;
       }
-      if (item.textRects && !session.isTextAnchored(item)) {
-        next.textHidden[item.id] = true;
+      if (item.textRects) {
+        const basis = textBasis.get(item.id);
+        if (!basis && box && box.width > 0 && box.height > 0) {
+          textBasis.set(item.id, { width: box.width, height: box.height, moved: false });
+        } else if (basis && box && (Math.abs(basis.width - box.width) > 1 || Math.abs(basis.height - box.height) > 1)) {
+          basis.moved = true;
+        }
+        if (basis?.moved || !session.isTextAnchored(item)) {
+          next.textHidden[item.id] = true;
+        }
       }
       const also = (item.alsoRefs ?? []).flatMap((ref) => {
         const alsoBox = session.resolveBox(ref, rootRect);
@@ -197,7 +217,20 @@ export function ComposerOverlay({
   }, [session, scheduleMeasure]);
 
   useEffect(() => {
-    window.addEventListener('scroll', scheduleMeasure, { capture: true, passive: true });
+    const onScroll = (event: Event) => {
+      // A scroll inside a Text pick's element (a Logs or Table panel's rows), not the dashboard around it.
+      const scrolled = event.target;
+      if (scrolled instanceof Node) {
+        for (const item of session.getOverlayState().annotations) {
+          const basis = textBasisRef.current.get(item.id);
+          if (basis && item.textRects && session.findAnnotationRoot(item)?.contains(scrolled)) {
+            basis.moved = true;
+          }
+        }
+      }
+      scheduleMeasure();
+    };
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true });
     window.addEventListener('resize', scheduleMeasure);
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(scheduleMeasure);
     const root = rootRef.current;
@@ -217,11 +250,11 @@ export function ComposerOverlay({
     }
     return () => {
       cancelAnimationFrame(frameRef.current);
-      window.removeEventListener('scroll', scheduleMeasure, { capture: true });
+      window.removeEventListener('scroll', onScroll, { capture: true });
       window.removeEventListener('resize', scheduleMeasure);
       observer?.disconnect();
     };
-  }, [scheduleMeasure]);
+  }, [session, scheduleMeasure]);
 
   /** The closest element matching `selector` under the point, ignoring Composer's own layer. */
   const elementAt = (x: number, y: number, selector: string): HTMLElement | null => {

@@ -2519,6 +2519,37 @@ describe('tools', () => {
     delete Range.prototype.getClientRects;
   });
 
+  it("keeps a Text highlight while the dashboard scrolls, and drops it, keeping the pin, once the panel's content scrolls", async () => {
+    const { annotate } = setup();
+    const body = mountDashboardBody();
+    const rows = panelRoot!.firstElementChild!;
+    annotate([item({ textRects: [{ x: 0.1, y: 0.5, width: 0.5, height: 0.1 }] })]);
+    await nextFrame();
+
+    panelRect = { ...panelRect, top: 100 };
+    fireEvent.scroll(body);
+    await nextFrame();
+    expect(screen.getByTestId('composer-annotation-text-a-0')).toHaveStyle({ top: '250px' });
+
+    fireEvent.scroll(rows);
+    await nextFrame();
+    expect(screen.queryByTestId('composer-annotation-text-a-0')).not.toBeInTheDocument();
+    expect(screen.getByTestId('composer-annotation-pin-a')).toBeInTheDocument();
+  });
+
+  it('drops a Text highlight once its panel resizes, since its text has reflowed', async () => {
+    const { annotate } = setup();
+    annotate([item({ textRects: [{ x: 0.1, y: 0.5, width: 0.5, height: 0.1 }] })]);
+    await nextFrame();
+    expect(screen.getByTestId('composer-annotation-text-a-0')).toBeInTheDocument();
+
+    panelRect = { ...panelRect, width: 300 };
+    fireEvent(window, new Event('resize'));
+    await nextFrame();
+    expect(screen.queryByTestId('composer-annotation-text-a-0')).not.toBeInTheDocument();
+    expect(screen.getByTestId('composer-annotation-pin-a')).toBeInTheDocument();
+  });
+
   it('ignores a Text selection outside every element', async () => {
     const { session, startPick } = setup();
     mountDashboardBody();
