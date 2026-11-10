@@ -100,6 +100,17 @@ describe('browse-dashboards state hooks', () => {
       );
 
       expect(rowsOf(result.current)).toEqual(['0:folder:same-uid', '1:dashboard:same-uid']);
+      expect(result.current[0].isLoading).toBe(false);
+    });
+
+    it('marks an open folder loading until its first page of children is in the store', () => {
+      const folder: DashboardViewItem = { kind: 'folder', uid: 'f1', title: 'Folder' };
+      const { result } = renderBrowseHook(
+        () => useFlatTreeState(undefined),
+        createInitialState({ rootItems: fullyLoadedViewItemCollection([folder]), openFolders: { f1: true } })
+      );
+
+      expect(result.current[0].isLoading).toBe(true);
     });
 
     describe('under the open Starred folders root', () => {
@@ -119,11 +130,12 @@ describe('browse-dashboards state hooks', () => {
       it('lists the starred folders the shared starred search returns, under prefixed uids', async () => {
         const { result } = renderBrowseHook(() => useFlatTreeState(undefined), openStarredRoot());
 
-        // Nothing under the root until the first rows land
+        // Loading, with nothing under the root, until the first rows land
         expect(rowsOf(result.current)).toEqual([
           `0:folder:${STARRED_FOLDERS_UID}`,
           `1:ui:${STARRED_FOLDERS_UID}-divider`,
         ]);
+        expect(result.current[0].isLoading).toBe(true);
 
         await waitFor(() =>
           expect(rowsOf(result.current)).toEqual([
@@ -132,6 +144,8 @@ describe('browse-dashboards state hooks', () => {
             `1:ui:${STARRED_FOLDERS_UID}-divider`,
           ])
         );
+        // The derived collection counts as loaded, or the row would spin forever
+        expect(result.current[0].isLoading).toBe(false);
         expect(result.current[1].item).toMatchObject({
           title: folderA.item.title,
           parentUID: STARRED_FOLDERS_UID,

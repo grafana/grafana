@@ -217,8 +217,8 @@ function createFlatTree(
     const mappedChildren = createFlatTree(item.uid, rootCollection, childrenByUID, openFolders, level + 1);
 
     const isOpen = Boolean(openFolders[item.uid]);
-    const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
-    if (isOpen && emptyFolder) {
+    const collection = childrenByUID[item.uid];
+    if (isOpen && collection?.items.length === 0) {
       mappedChildren.push({
         isOpen: false,
         level: level + 1,
@@ -232,6 +232,9 @@ function createFlatTree(
       parentUID,
       level,
       isOpen,
+      // Decided here, where the lookup includes the derived collections, so a row can't think itself loading
+      // once its children are on screen
+      isLoading: isOpen && !collection,
     };
 
     const items = [thisItem, ...mappedChildren];
