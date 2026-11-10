@@ -15071,7 +15071,6 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Managed by: File provisioning",
-      "file-provisioning": "Managed by: Grafana configuration",
       "kubectl": "Managed by: Kubectl",
       "manage-repository": "Manage repository",
       "plugin": "Managed by: Plugin {{id}}",
@@ -15081,9 +15080,6 @@
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
-    "managed-read-only-badge": {
-      "text": "Read only"
-    },
     "managed-read-only-banner": {
       "body": "Its configuration is managed outside Grafana and is read-only here. Change it where it is defined.",
       "title": "This resource is managed externally"
@@ -15262,8 +15258,6 @@
         }
       }
     },
-    "pull-only-local-tooltip": "Grafana only reads from this directory and never writes to it. Add a workflow in the repository settings to allow saving changes back.",
-    "pull-only-remote-tooltip": "Grafana only reads from this repository and never writes to it. Add a workflow in the repository settings to allow saving changes back.",
     "pull-request-options": {
       "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
       "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
@@ -15295,7 +15289,6 @@
       "upgrade-link": "upgrade your account"
     },
     "read-only-badge": {
-      "pull-only": "Pull only",
       "text": "Read only"
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
@@ -15427,8 +15420,6 @@
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
     "resource-kind": {
-      "connection": "connection",
-      "connections": "Connections",
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
       "datasource": "data source",
@@ -15438,9 +15429,7 @@
       "library-panel": "library panel",
       "library-panels": "Library panels",
       "playlist": "playlist",
-      "playlists": "Playlists",
-      "repositories": "Repositories",
-      "repository": "repository"
+      "playlists": "Playlists"
     },
     "resource-tree": {
       "header-hash": "Hash",
