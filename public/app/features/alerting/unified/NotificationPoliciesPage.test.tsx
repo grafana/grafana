@@ -6,6 +6,7 @@ import { render, screen, testWithFeatureToggles, userEvent, waitFor, within } fr
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafana/alerting';
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from '@grafana/alerting/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
@@ -28,12 +29,7 @@ import {
 import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/utils/alertmanagerPermissions';
-import {
-  type AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-  MatcherOperator,
-  type RouteWithID,
-} from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import NotificationPolicies, { sortPoliciesDefaultFirst } from './NotificationPoliciesPage';
