@@ -34,9 +34,14 @@
     },
     "./debug": {
       "@grafana-app/source": "./src/utils/debug.ts",
-      "types": "./dist/types/utils/debug.d.ts",
-      "import": "./dist/esm/utils/debug.mjs",
-      "require": "./dist/cjs/utils/debug.cjs"
+      "import": {
+        "types": "./dist/esm/utils/debug.d.mts",
+        "default": "./dist/esm/utils/debug.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/utils/debug.d.cts",
+        "default": "./dist/cjs/utils/debug.cjs"
+      }
     },
     "./unstable": {
       "@grafana-app/source": "./src/unstable.ts",
