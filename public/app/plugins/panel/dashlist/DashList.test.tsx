@@ -3,7 +3,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setMockStarredDashboards, setMockStarredFolders } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 
@@ -105,6 +105,24 @@ describe('DashList', () => {
       name: new RegExp(`^unmark "${dashbdE.item.title}" as favorite`, 'i'),
     });
     expect(unmarkButton).toBeInTheDocument();
+  });
+
+  // A dashboard and a folder may share a uid; each is its own row, keyed by kind, or React warns about duplicate
+  // keys and the console guard fails the test
+  it('lists a starred dashboard and folder that share a uid as two rows', async () => {
+    setMockStarredDashboards(['shared']);
+    setMockStarredFolders(['shared']);
+    server.use(
+      getCustomSearchHandler([
+        { name: 'shared', title: 'Shared Dashboard', resource: 'dashboards' },
+        { name: 'shared', title: 'Shared Folder', resource: 'folders' },
+      ])
+    );
+    const props = getPanelProps({ ...defaultOptions, showStarred: true });
+    render(<DashList {...props} />);
+
+    expect(await screen.findByText('Shared Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Shared Folder')).toBeInTheDocument();
   });
 
   it('shows recently viewed dashboards', async () => {

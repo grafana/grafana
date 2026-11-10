@@ -143,7 +143,7 @@ export function DashList(props: PanelProps<Options>) {
 
         const locationInfo = showFolderNames && dash.location ? foldersByUid[dash.location] : undefined;
         return (
-          <li key={`dash-${dash.uid}`}>
+          <li key={`${dash.kind}-${dash.uid}`}>
             <DashListItem
               dashboard={dash}
               url={url}
