@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +26,7 @@ var config = Config{Path: "conf/provisioning/bootstrap", Namespace: namespace}
 func TestReconcileCreatesALocalRepository(t *testing.T) {
 	client := newClientset()
 
-	require.NoError(t, Reconcile(context.Background(), repositories(client), noQueue(t), config))
+	require.NoError(t, Reconcile(context.Background(), repositories(client), config))
 
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, err)
@@ -40,7 +41,7 @@ func TestReconcileCreatesALocalRepository(t *testing.T) {
 func TestReconcileMarksTheRepositoryNotEditable(t *testing.T) {
 	client := newClientset()
 
-	require.NoError(t, Reconcile(context.Background(), repositories(client), noQueue(t), config))
+	require.NoError(t, Reconcile(context.Background(), repositories(client), config))
 
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, err)
@@ -64,7 +65,7 @@ func TestReconcileTakesBackAllowedEdits(t *testing.T) {
 		})
 	}))
 
-	require.NoError(t, Reconcile(context.Background(), repositories(client), noQueue(t), config))
+	require.NoError(t, Reconcile(context.Background(), repositories(client), config))
 
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, err)
@@ -74,10 +75,10 @@ func TestReconcileTakesBackAllowedEdits(t *testing.T) {
 
 func TestReconcileIsIdempotent(t *testing.T) {
 	client := newClientset()
-	require.NoError(t, Reconcile(context.Background(), repositories(client), noQueue(t), config))
+	require.NoError(t, Reconcile(context.Background(), repositories(client), config))
 	client.ClearActions()
 
-	require.NoError(t, Reconcile(context.Background(), repositories(client), noQueue(t), config))
+	require.NoError(t, Reconcile(context.Background(), repositories(client), config))
 
 	for _, action := range client.Actions() {
 		assert.Equal(t, "get", action.GetVerb(), "a matching repository must not be rewritten")
@@ -91,7 +92,7 @@ func TestReconcilePreservesTheClampedSyncInterval(t *testing.T) {
 		repo.Spec.Local.Path = "conf/provisioning/stale"
 	}))
 
-	require.NoError(t, Reconcile(context.Background(), repositories(client), noQueue(t), config))
+	require.NoError(t, Reconcile(context.Background(), repositories(client), config))
 
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, err)
@@ -108,7 +109,7 @@ func TestReconcileRepairsADivertedRepository(t *testing.T) {
 		repo.Spec.Sync.Enabled = false
 	}))
 
-	require.NoError(t, Reconcile(context.Background(), repositories(client), noQueue(t), config))
+	require.NoError(t, Reconcile(context.Background(), repositories(client), config))
 
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, err)
@@ -127,7 +128,7 @@ func TestReconcileToleratesAnotherReplicaWinningTheCreate(t *testing.T) {
 	// that lost the race.
 	client.PrependReactor("get", "repositories", onceNotFound())
 
-	assert.NoError(t, Reconcile(context.Background(), repositories(client), noQueue(t), config))
+	assert.NoError(t, Reconcile(context.Background(), repositories(client), config))
 }
 
 func TestReconcileLeavesAnUnrelatedRepositoryOfTheSameNameAlone(t *testing.T) {
@@ -138,7 +139,7 @@ func TestReconcileLeavesAnUnrelatedRepositoryOfTheSameNameAlone(t *testing.T) {
 	})
 	client := newClientset(unrelated)
 
-	err := Reconcile(context.Background(), repositories(client), noQueue(t), config)
+	err := Reconcile(context.Background(), repositories(client), config)
 
 	require.ErrorContains(t, err, "already exists and is not managed by file-provisioning")
 	repo, getErr := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
@@ -156,7 +157,7 @@ func TestReconcileLeavesARepositoryManagedByAnotherSystemAlone(t *testing.T) {
 		})
 	}))
 
-	assert.ErrorContains(t, Reconcile(context.Background(), repositories(client), noQueue(t), config),
+	assert.ErrorContains(t, Reconcile(context.Background(), repositories(client), config),
 		"already exists and is not managed by file-provisioning")
 }
 
@@ -187,7 +188,7 @@ func TestReconcileRetriesAnUpdateConflict(t *testing.T) {
 		return false, nil, nil
 	})
 
-	require.NoError(t, Reconcile(context.Background(), repositories(client), noQueue(t), config))
+	require.NoError(t, Reconcile(context.Background(), repositories(client), config))
 
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	require.NoError(t, err)
@@ -204,7 +205,7 @@ func TestReconcileGivesUpOnPersistentConflicts(t *testing.T) {
 		return true, nil, apierrors.NewConflict(schema.GroupResource{Resource: "repositories"}, Name, errors.New("stale"))
 	})
 
-	assert.Error(t, Reconcile(context.Background(), repositories(client), noQueue(t), config))
+	assert.Error(t, Reconcile(context.Background(), repositories(client), config))
 }
 
 func TestReconcileReportsAFailedRead(t *testing.T) {
@@ -213,7 +214,7 @@ func TestReconcileReportsAFailedRead(t *testing.T) {
 		return true, nil, errors.New("boom")
 	})
 
-	assert.ErrorContains(t, Reconcile(context.Background(), repositories(client), noQueue(t), config), "read bootstrap repository")
+	assert.ErrorContains(t, Reconcile(context.Background(), repositories(client), config), "read bootstrap repository")
 }
 
 func TestConfigEnabled(t *testing.T) {
@@ -230,54 +231,69 @@ func TestConfigEnabled(t *testing.T) {
 // namespace survives because it comes from the org, not from the setting.
 var cleared = Config{Namespace: namespace}
 
-// The repository persists a cleared path, and its old path can stay permitted on its own, so
-// without this the controllers keep syncing it after a restart.
-func TestReconcileStopsSyncWhenThePathIsCleared(t *testing.T) {
+// Deleting it is what removes the job queue and the resources it provisioned, so nothing is
+// left managed by a source the configuration no longer names.
+func TestReconcileRemovesTheRepositoryWhenThePathIsCleared(t *testing.T) {
 	client := newClientset(repositoryWith(config.apply))
 
-	require.NoError(t, Reconcile(context.Background(), repositories(client), noQueue(t), cleared))
+	require.NoError(t, Reconcile(context.Background(), repositories(client), cleared))
 
-	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.False(t, repo.Spec.Sync.Enabled, "the controllers must stop reading the old path")
-	// Clearing a setting must not delete an instance's dashboards; the repository is left for
-	// an operator to remove deliberately.
-	assert.Equal(t, config.Path, repo.Spec.Local.Path, "the repository itself is kept")
-	assert.NotEmpty(t, repo.Spec.Workflows)
+	_, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
+	assert.True(t, apierrors.IsNotFound(err), "the repository should be gone, got %v", err)
 }
 
-func TestReconcileLeavesAStoppedRepositoryAlone(t *testing.T) {
+func TestReconcileLeavesATerminatingRepositoryAlone(t *testing.T) {
 	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
 		config.apply(repo)
-		repo.Spec.Sync.Enabled = false
+		repo.DeletionTimestamp = &metav1.Time{Time: time.Now()}
 	}))
 	client.ClearActions()
 
-	require.NoError(t, Reconcile(context.Background(), repositories(client), noQueue(t), cleared))
+	require.NoError(t, Reconcile(context.Background(), repositories(client), cleared))
 
 	for _, action := range client.Actions() {
-		assert.Equal(t, "get", action.GetVerb(), "an already stopped repository must not be rewritten")
+		assert.Equal(t, "get", action.GetVerb(), "a repository whose finalizers are running must not be deleted again")
 	}
 }
 
-func TestReconcileDoesNotStopARepositoryItDoesNotOwn(t *testing.T) {
+// Another replica deleting it between our read and our delete is the outcome we wanted.
+func TestReconcileToleratesTheRepositoryBeingGoneBeforeTheDelete(t *testing.T) {
+	client := newClientset(repositoryWith(config.apply))
+	client.PrependReactor("delete", "repositories", func(clienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewNotFound(schema.GroupResource{Resource: "repositories"}, Name)
+	})
+
+	assert.NoError(t, Reconcile(context.Background(), repositories(client), cleared))
+}
+
+func TestReconcileReportsAFailedDelete(t *testing.T) {
+	client := newClientset(repositoryWith(config.apply))
+	client.PrependReactor("delete", "repositories", func(clienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, errors.New("boom")
+	})
+
+	assert.ErrorContains(t, Reconcile(context.Background(), repositories(client), cleared),
+		"delete bootstrap repository")
+}
+
+func TestReconcileDoesNotRemoveARepositoryItDoesNotOwn(t *testing.T) {
 	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
 		repo.Spec.Type = provisioning.LocalRepositoryType
 		repo.Spec.Local = &provisioning.LocalRepositoryConfig{Path: "conf/provisioning/someone-elses"}
 		repo.Spec.Sync = provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeFolderless}
 	}))
 
-	require.NoError(t, Reconcile(context.Background(), repositories(client), noQueue(t), cleared))
+	require.NoError(t, Reconcile(context.Background(), repositories(client), cleared))
 
 	repo, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.True(t, repo.Spec.Sync.Enabled, "an unrelated repository of the same name is not ours to stop")
+	require.NoError(t, err, "an unrelated repository of the same name is not ours to remove")
+	assert.Equal(t, "conf/provisioning/someone-elses", repo.Spec.Local.Path)
 }
 
 func TestReconcileIsANoOpWhenNoRepositoryWasEverRegistered(t *testing.T) {
 	client := newClientset()
 
-	require.NoError(t, Reconcile(context.Background(), repositories(client), noQueue(t), cleared))
+	require.NoError(t, Reconcile(context.Background(), repositories(client), cleared))
 
 	_, err := repositories(client).Get(context.Background(), Name, metav1.GetOptions{})
 	assert.True(t, apierrors.IsNotFound(err), "nothing should be created when no path is configured")
@@ -287,20 +303,6 @@ func newClientset(objects ...runtime.Object) *fakeclientset.Clientset {
 	//nolint:staticcheck // NewClientset requires schema registration not available for this type.
 	return fakeclientset.NewSimpleClientset(objects...)
 }
-
-// noQueue is a drain that must not fail; the queue-specific cases assert on it directly.
-type stubQueue struct {
-	t       *testing.T
-	drained []string
-	err     error
-}
-
-func (q *stubQueue) CleanupQueue(_ context.Context, namespace, repository string) (int, error) {
-	q.drained = append(q.drained, namespace+"/"+repository)
-	return 0, q.err
-}
-
-func noQueue(t *testing.T) *stubQueue { return &stubQueue{t: t} }
 
 func repositories(client *fakeclientset.Clientset) Repositories {
 	return client.ProvisioningV0alpha1().Repositories(namespace)
@@ -319,52 +321,4 @@ func repositoryWith(mutate func(*provisioning.Repository)) *provisioning.Reposit
 	}
 	mutate(repo)
 	return repo
-}
-
-// Only scheduling consults sync.enabled, so a pull queued before the disable still runs -- and
-// reads an empty repository if the directory went away with the setting.
-func TestReconcileDrainsQueuedJobsWhenThePathIsCleared(t *testing.T) {
-	client := newClientset(repositoryWith(config.apply))
-	queue := noQueue(t)
-
-	require.NoError(t, Reconcile(context.Background(), repositories(client), queue, cleared))
-
-	assert.Equal(t, []string{namespace + "/" + Name}, queue.drained,
-		"the queue has to be cleared so no pull outlives the disable")
-}
-
-// The drain still has to run: the repository can already be disabled while a job queued before
-// an earlier, failed attempt is waiting.
-func TestReconcileDrainsQueuedJobsForAnAlreadyStoppedRepository(t *testing.T) {
-	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
-		config.apply(repo)
-		repo.Spec.Sync.Enabled = false
-	}))
-	queue := noQueue(t)
-
-	require.NoError(t, Reconcile(context.Background(), repositories(client), queue, cleared))
-
-	assert.Equal(t, []string{namespace + "/" + Name}, queue.drained)
-}
-
-func TestReconcileDoesNotDrainARepositoryItDoesNotOwn(t *testing.T) {
-	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
-		repo.Spec.Type = provisioning.LocalRepositoryType
-		repo.Spec.Local = &provisioning.LocalRepositoryConfig{Path: "conf/provisioning/someone-elses"}
-		repo.Spec.Sync = provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeFolderless}
-	}))
-	queue := noQueue(t)
-
-	require.NoError(t, Reconcile(context.Background(), repositories(client), queue, cleared))
-
-	assert.Empty(t, queue.drained, "another manager's queue is not ours to clear")
-}
-
-func TestReconcileReportsAFailedDrain(t *testing.T) {
-	client := newClientset(repositoryWith(config.apply))
-	queue := noQueue(t)
-	queue.err = errors.New("boom")
-
-	assert.ErrorContains(t, Reconcile(context.Background(), repositories(client), queue, cleared),
-		"clear bootstrap repository job queue")
 }
