@@ -5,7 +5,7 @@ import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService, useScopes } from '@grafana/runtime';
+import { locationService, useScopes } from '@grafana/runtime';
 import { FlagKeys, useFlagGrafanaScopesDashboardsMegaMenu } from '@grafana/runtime/internal';
 import {
   CustomVariable,
