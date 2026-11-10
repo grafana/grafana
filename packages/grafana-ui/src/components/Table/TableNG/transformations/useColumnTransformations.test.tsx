@@ -18,7 +18,11 @@ function sourceFrame(names: string[], refId = 'A', overrideHidden: string[] = []
   });
 }
 
-function renderColumnState(initialSource: DataFrame[], initialConfigs: DataTransformerConfig[]) {
+function renderColumnState(
+  initialSource: DataFrame[],
+  initialConfigs: DataTransformerConfig[],
+  onInteraction?: (action: 'visibility' | 'reorder') => void
+) {
   let configs: readonly DataTransformerConfig[] = initialConfigs;
   const listeners = new Set<() => void>();
   const api: PanelRuntimeTransformations = {
@@ -33,9 +37,12 @@ function renderColumnState(initialSource: DataFrame[], initialConfigs: DataTrans
       return () => listeners.delete(listener);
     },
   };
-  const view = renderHook(({ source, index }) => useColumnTransformations(index, api, 'table', true, source), {
-    initialProps: { source: initialSource, index: 0 },
-  });
+  const view = renderHook(
+    ({ source, index }) => useColumnTransformations(index, api, 'table', true, source, onInteraction),
+    {
+      initialProps: { source: initialSource, index: 0 },
+    }
+  );
   return { ...view, api, getConfigs: () => configs };
 }
 
@@ -260,4 +267,18 @@ it.each([false, true])('recovers a missing output frame only when enabled=%s', (
   } else {
     expect(api.set).not.toHaveBeenCalled();
   }
+});
+
+it('reports accepted column changes but not hydration or repeated actions', () => {
+  const onInteraction = jest.fn();
+  const { result, api } = renderColumnState([sourceFrame(['A', 'B', 'C'])], [], onInteraction);
+  expect(result.current?.columnCatalog).toEqual(['A', 'B', 'C']);
+  expect(onInteraction).not.toHaveBeenCalled();
+  act(() => result.current?.onHiddenColumnsChange(new Set(['B'])));
+  act(() => result.current?.onHiddenColumnsChange(new Set(['B'])));
+  act(() => result.current?.onHiddenColumnsChange(new Set()));
+  act(() => result.current?.onColumnOrderChange(['C', 'A', 'B']));
+  act(() => result.current?.onColumnOrderChange(['C', 'A', 'B']));
+  expect(onInteraction.mock.calls).toEqual([['visibility'], ['visibility'], ['reorder']]);
+  expect(api.set).toHaveBeenCalledTimes(3);
 });

@@ -39,7 +39,9 @@ type watchCache[T any] struct {
 type raisedFloors struct {
 	mu     sync.Mutex
 	floors map[GroupResource]int64
-	held   bool
+	// all applies to every collection, for backends whose RVs are global.
+	all  int64
+	held bool
 }
 
 func newRaisedFloors() *raisedFloors {
@@ -50,6 +52,13 @@ func (f *raisedFloors) Raise(gr GroupResource, rv int64) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.floors[gr] = max(f.floors[gr], rv)
+}
+
+// raiseAll rejects resumes from before rv in every collection.
+func (f *raisedFloors) raiseAll(rv int64) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.all = max(f.all, rv)
 }
 
 func (f *raisedFloors) Hold() {
@@ -71,7 +80,7 @@ func (f *raisedFloors) get(gr GroupResource) (int64, bool) {
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	return f.floors[gr], f.held
+	return max(f.floors[gr], f.all), f.held
 }
 
 func newWatchCache[T any](size int, identity eventIdentity[T]) watchCache[T] {

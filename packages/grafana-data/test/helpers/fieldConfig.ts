@@ -1,4 +1,5 @@
-import { identityOverrideProcessor, ThresholdsMode } from '../../src';
+import { identityOverrideProcessor } from '../../src/field/overrides/processors';
+import { ThresholdsMode } from '../../src/types/thresholds';
 
 export function mockStandardFieldConfigOptions() {
   const category = ['Standard options'];

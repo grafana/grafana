@@ -2,6 +2,7 @@ import { kebabCase } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { type AlertManagerDataSourceJsonData } from '@grafana/alerting/internal';
 import { isDefaultRoutingTreeName } from '@grafana/alerting/unstable';
 import { generatedAPI as routingTreeApi } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type DataSourceSettings, OrgRole, type SelectableValue } from '@grafana/data';
@@ -29,7 +30,6 @@ import {
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
 import { useStagedConfig } from '../../../settings/import/useStagedConfig';
 import { type PredictedSyncIdentifier } from '../../../utils/autoSync';

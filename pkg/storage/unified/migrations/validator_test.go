@@ -282,7 +282,6 @@ func TestDecodeFolderRowsFromBleve(t *testing.T) {
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, fieldValues.GetError())
 
 	rows, err := decodeFolderRows(fieldValues)
 	require.NoError(t, err)

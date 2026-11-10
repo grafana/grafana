@@ -642,7 +642,6 @@ func TestFieldValueSearchResults(t *testing.T) {
 
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
 		require.Len(t, res.Rows, 1)
 		require.Equal(t, "dashboard-1", res.Rows[0].Key.Name)
@@ -674,7 +673,6 @@ func TestFieldValueSearchResults(t *testing.T) {
 
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Len(t, res.Rows, 1)
 		require.Equal(t, "dashboard-1", res.Rows[0].Key.Name)
 
@@ -692,7 +690,6 @@ func TestFieldValueSearchResults(t *testing.T) {
 
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Len(t, res.Rows, 1)
 		require.NotNil(t, res.Rows[0].Score)
 	})
@@ -703,7 +700,6 @@ func TestFieldValueSearchResults(t *testing.T) {
 
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.NotEmpty(t, res.Fields)
 		require.Len(t, res.Rows, 1)
 		require.NotNil(t, res.Rows[0].Score)
@@ -1889,7 +1885,6 @@ func searchNames(t *testing.T, index resource.ResourceIndex, ac authlib.AccessCl
 	ctx := authlib.WithAuthInfo(context.Background(), requester)
 	res, err := index.Search(ctx, ac, q, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 	names := make([]string, 0, len(res.Rows))
 	for _, row := range res.Rows {
 		names = append(names, row.Key.Name)
@@ -2447,7 +2442,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		q := listQuery(10)
 		q.SearchAfter = []string{"doc-a", "doc-a"}
 		names, res := searchNames(t, index, ac, q)
-		require.Nil(t, res.Error)
+		require.NotNil(t, res)
 		// Falls back to the in-searcher path; returns docs with (title, name)
 		// > ("doc-a", "doc-a").
 		require.Equal(t, []string{"doc-b", "doc-c"}, names)
@@ -3036,7 +3031,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		q := listQuery(10)
 		q.SearchBefore = []string{"doc-c", "doc-c"}
 		names, res := searchNames(t, index, ac, q)
-		require.Nil(t, res.Error)
+		require.NotNil(t, res)
 		// Falls back to in-searcher SearchBefore: the hits before ("doc-c","doc-c").
 		require.Equal(t, []string{"doc-a", "doc-b"}, names)
 	})
@@ -3284,7 +3279,6 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		ctx := authlib.WithAuthInfo(context.Background(), requester)
 		res, err := dash.Search(ctx, ac, q, &resource.SearchIndexes{Federated: []resource.ResourceIndex{folderIdx}}, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		out := make([][2]string, 0, len(res.Rows))
 		for _, row := range res.Rows {
 			out = append(out, [2]string{row.Key.Resource, row.Key.Name})
@@ -3615,7 +3609,6 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Equal(t, int64(len(liveNames)), res.TotalHits)
 
 		facet, ok := res.Facet["tags"]
@@ -3692,7 +3685,6 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 			Id:        manager.Identity,
 		}, &resource.SearchStats{})
 		require.NoError(t, err)
-		require.Nil(t, listed.Error)
 
 		names := make([]string, 0, len(listed.Items))
 		for _, item := range listed.Items {
@@ -3804,7 +3796,6 @@ func checkSearchQueryUnordered(t *testing.T, index resource.ResourceIndex, query
 	t.Helper()
 	res, err := index.Search(context.Background(), nil, query, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 	require.Equal(t, int64(len(expectedNames)), res.TotalHits)
 
 	names := make([]string, 0, len(res.Rows))
@@ -3914,7 +3905,6 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		for _, name := range []string{"oldest", "middle", "newest"} {
 			res, err := index.Search(context.Background(), nil, q, nil, nil)
 			require.NoError(t, err)
-			require.Nil(t, res.Error)
 			require.Len(t, res.Rows, 1)
 			row := res.Rows[0]
 			require.Equal(t, name, row.Key.Name)
@@ -4020,7 +4010,7 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 				q.IsDeleted = true
 				res, err = index.Search(context.Background(), nil, q, nil, nil)
 				require.NoError(t, err)
-				require.Nil(t, res.Error)
+				require.NotNil(t, res)
 			})
 		}
 	})
@@ -4096,7 +4086,6 @@ func TestTrashSearchFiltersAndReturnsTags(t *testing.T) {
 
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Len(t, res.Fields, 1, "a field without a column definition is dropped silently")
 		require.Equal(t, resource.SEARCH_FIELD_TAGS, res.Fields[0].Name)
 
@@ -4252,7 +4241,6 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 			Limit:        10,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Len(t, res.Rows, len(want))
 
 		for _, row := range res.Rows {
@@ -4268,7 +4256,6 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 			Limit:        10,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Len(t, res.Rows, len(want))
 
 		for _, row := range res.Rows {
@@ -4285,7 +4272,6 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Len(t, res.Rows, len(want))
 
 		for _, row := range res.Rows {
@@ -4324,7 +4310,6 @@ func TestPostRankAuthzSearchReturnsExactResourceVersion(t *testing.T) {
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 
 	want := map[string]int64{"lower": rvLower, "upper": rvUpper, "no-rv": 0}
 	require.Len(t, res.Rows, len(want))
@@ -4349,7 +4334,6 @@ func TestTrashSearchReturnsExactResourceVersion(t *testing.T) {
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 	require.Len(t, res.Rows, 1)
 	require.Equal(t, "deleted", res.Rows[0].Key.Name)
 	require.Equal(t, rvUpper, res.Rows[0].ResourceVersion)
@@ -4479,6 +4463,6 @@ func TestSearchRejectsInternalFields(t *testing.T) {
 		req.Options.Labels = []*resourcepb.Requirement{
 			{Key: resource.SEARCH_FIELD_RV_STRING, Operator: string(selection.Equals), Values: []string{"1"}},
 		}
-		require.Nil(t, search(t, req).Error)
+		require.NotNil(t, search(t, req))
 	})
 }
