@@ -1,3 +1,5 @@
+import { chunk } from 'lodash';
+
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
@@ -12,7 +14,14 @@ interface StarredNames {
 }
 
 /** Tag for the starred search rows, invalidated by changes that rewrite rows without changing the star set. */
-export const STARRED_SEARCH_TAG = 'StarredSearch';
+const STARRED_SEARCH_TAG = 'StarredSearch';
+
+// Names per search request. The search is a GET that carries the names in its URL, so a large star set goes in
+// several requests rather than one long one.
+const NAMES_PER_REQUEST = 50;
+
+// Created once, not per sort
+const collator = new Intl.Collator();
 
 const starsAPI = collectionsAPIv1alpha1.enhanceEndpoints({ addTagTypes: [STARRED_SEARCH_TAG] }).injectEndpoints({
   endpoints: (build) => ({
@@ -39,12 +48,19 @@ const starsAPI = collectionsAPIv1alpha1.enhanceEndpoints({ addTagTypes: [STARRED
         // comes back too: leave it room in the limit, drop it after.
         const starredBySearchKind = new Map(byKind.map(({ searchKind, names }) => [searchKind, new Set(names)]));
         try {
-          const response = await getGrafanaSearcher().search({
-            name: uids,
-            kind: kinds,
-            limit: uids.length * kinds.length,
-          });
-          return { data: response.view.toArray().filter((row) => starredBySearchKind.get(row.kind)?.has(row.uid)) };
+          const searcher = getGrafanaSearcher();
+          const responses = await Promise.all(
+            chunk(uids, NAMES_PER_REQUEST).map((names) =>
+              searcher.search({ name: names, kind: kinds, limit: names.length * kinds.length })
+            )
+          );
+          // Each response is in title order; merged, the rows are sorted again so a star set that takes several
+          // requests reads like one that takes one
+          const rows = responses
+            .flatMap((response) => response.view.toArray())
+            .filter((row) => starredBySearchKind.get(row.kind)?.has(row.uid))
+            .sort((a, b) => collator.compare(a.name, b.name));
+          return { data: rows };
         } catch (error) {
           return { error };
         }
@@ -60,5 +76,4 @@ const starsAPI = collectionsAPIv1alpha1.enhanceEndpoints({ addTagTypes: [STARRED
  */
 export const invalidateStarredSearch = () => starsAPI.util.invalidateTags([STARRED_SEARCH_TAG]);
 
-export { starsAPI };
 export const { useSearchStarredQuery } = starsAPI;

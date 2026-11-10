@@ -7,9 +7,9 @@ import { config, setAppEvents, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { folderHandlers, getFolderFixtures } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
-import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { invalidateStarredSearch } from 'app/features/stars/api';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type StoreState } from 'app/types/store';
@@ -377,7 +377,7 @@ describe('app platform folder create/update', () => {
   });
 });
 
-describe('useUpdateFolder app-platform starred nav update', () => {
+describe('useUpdateFolder starred rows', () => {
   const originalAppSubUrl = String(config.appSubUrl);
 
   beforeEach(() => {
@@ -391,13 +391,10 @@ describe('useUpdateFolder app-platform starred nav update', () => {
     folderAPIVersionResolver.set('v1beta1');
   });
 
-  it('updates the starred folder title and URL after rename', async () => {
+  it('re-searches the starred rows after rename', async () => {
     const uid = folderA_folderA.item.uid;
-    const store = configureStore({
-      navBarTree: [
-        { id: 'starred', text: 'Starred', children: [{ id: ID_PREFIX + uid, text: 'Old title', url: '/old' }] },
-      ],
-    });
+    const store = configureStore();
+    const dispatchSpy = jest.spyOn(store, 'dispatch');
     const { user } = await setupUpdateFolder(uid, store);
 
     await user.clear(screen.getByLabelText('Folder Title'));
@@ -405,11 +402,8 @@ describe('useUpdateFolder app-platform starred nav update', () => {
     await user.click(screen.getByText('Update Folder'));
 
     expect(await screen.findByText('Folder updated')).toBeInTheDocument();
-    await waitFor(() =>
-      expect(store.getState().navBarTree.find((item) => item.id === 'starred')?.children).toEqual([
-        { id: ID_PREFIX + uid, text: 'Updated Folder', url: `/dashboards/f/${uid}/` },
-      ])
-    );
+    // The rename changes a starred row's label without changing the star set, so the rows are searched again
+    await waitFor(() => expect(dispatchSpy).toHaveBeenCalledWith(invalidateStarredSearch()));
     await expectChildrenRefetched(store, undefined, folderA.item.uid);
   });
 });

@@ -10,6 +10,7 @@ import {
   shouldRenderInviteUserButton,
   performInviteUserClick,
 } from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
+import { useNavTree } from 'app/core/navtree/useNavTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
@@ -22,7 +23,6 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
 import { notebookNewEditHref } from 'app/features/notebook/urls';
-import { useNavTreeWithStarred } from 'app/features/stars/hooks';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type CommandPaletteAction } from '../types';
@@ -174,7 +174,7 @@ function getGlobalActions(): CommandPaletteAction[] {
 }
 
 export function useStaticActions(): CommandPaletteAction[] {
-  const { navTree: navBarTree } = useNavTreeWithStarred();
+  const navBarTree = useNavTree();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();

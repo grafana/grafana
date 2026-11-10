@@ -16,7 +16,6 @@ import { useGetTeamByUidQuery } from 'app/features/teams/hooks';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { getFolderPermissions } from '../../permissions';
-import { useSyncStarredFolders } from '../../state/hooks';
 import CreateNewButton from '../CreateNewButton';
 import { FolderActionsButton } from '../FolderActionsButton';
 
@@ -28,8 +27,6 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
   const { isReadOnlyRepo, repoType, repository } = useGetResourceRepositoryView({ folderName: folderDTO?.uid });
   const { canCreateDashboards, canCreateFolders } = getFolderPermissions(folderDTO ?? rootFolderDTO);
   const isMobileEditDeprecated = useIsMobileEditDeprecated();
-  // Keeps the browse "Starred folders" collection in step with the star buttons on every folder tab
-  useSyncStarredFolders();
 
   const handleButtonClickToRecentlyDeleted = () => {
     reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted', {

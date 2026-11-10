@@ -11,6 +11,7 @@ import { ErrorBoundaryAlert, ScrollContainer, Text, useStyles2, Button, IconButt
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ScopesDashboardsMegaMenuSection } from 'app/features/scopes/dashboards/ScopesDashboardsMegaMenuSection';
+import { useStarredSearch } from 'app/features/stars/hooks';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
@@ -54,9 +55,9 @@ export const MegaMenu = memo(
       onReorderPinned,
       onReorderSection,
       isSaving,
-      starredLoading,
-      starredError,
     } = useNavCustomization();
+    // Searched again on each open so a rename or delete from another tab shows; the tree reads the same rows
+    const { loading: starredLoading, error: starredError } = useStarredSearch({ refetchOnMountOrArgChange: true });
     const { DragDropContext, Draggable, Droppable } = useDragAndDrop(editMode);
 
     const handleDockedMenu = () => {

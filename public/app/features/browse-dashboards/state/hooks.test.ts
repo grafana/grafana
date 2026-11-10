@@ -1,19 +1,24 @@
+import { getWrapper, renderHook, waitFor } from 'test/test-utils';
+
+import { setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures, setMockStarredFolders } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { STARRED_FOLDERS_UID } from 'app/features/search/constants';
 import { type DashboardViewItem } from 'app/features/search/types';
+import { invalidateStarredSearch } from 'app/features/stars/api';
 import { configureStore } from 'app/store/configureStore';
-import { useSelector } from 'app/types/store';
 
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
-import { type BrowseDashboardsState } from '../types';
+import { type BrowseDashboardsState, type DashboardsTreeItem } from '../types';
 
 import { useBrowseLoadingStatus, useFlatTreeState } from './hooks';
 
-jest.mock('app/types/store', () => {
-  const original = jest.requireActual('app/types/store');
-  return {
-    ...original,
-    useSelector: jest.fn(),
-  };
-});
+setBackendSrv(backendSrv);
+setupMockServer();
+
+const [, { folderA }] = getFolderFixtures();
 
 function createInitialState(partial: Partial<BrowseDashboardsState>): BrowseDashboardsState {
   return {
@@ -31,51 +36,47 @@ function createInitialState(partial: Partial<BrowseDashboardsState>): BrowseDash
   };
 }
 
+function renderBrowseHook<T>(hook: () => T, browseDashboards: BrowseDashboardsState) {
+  const store = configureStore({ browseDashboards });
+  return { ...renderHook(hook, { wrapper: getWrapper({ store }) }), store };
+}
+
+const rowsOf = (tree: DashboardsTreeItem[]) => tree.map(({ item, level }) => `${level}:${item.kind}:${item.uid}`);
+
 describe('browse-dashboards state hooks', () => {
   const folderUID = 'abc-123';
 
-  function mockState(browseState: BrowseDashboardsState) {
-    const wholeState = configureStore().getState();
-    wholeState.browseDashboards = browseState;
-
-    jest.mocked(useSelector).mockImplementationOnce((callback) => {
-      return callback(wholeState);
-    });
-  }
-
   describe('useBrowseLoadingStatus', () => {
     it('returns loading when root view is loading', () => {
-      mockState(createInitialState({ rootItems: undefined }));
-
-      const status = useBrowseLoadingStatus(undefined);
-      expect(status).toEqual('pending');
+      const { result } = renderBrowseHook(
+        () => useBrowseLoadingStatus(undefined),
+        createInitialState({ rootItems: undefined })
+      );
+      expect(result.current).toEqual('pending');
     });
 
     it('returns loading when folder view is loading', () => {
-      mockState(createInitialState({ childrenByParentUID: {} }));
-
-      const status = useBrowseLoadingStatus(folderUID);
-      expect(status).toEqual('pending');
+      const { result } = renderBrowseHook(
+        () => useBrowseLoadingStatus(folderUID),
+        createInitialState({ childrenByParentUID: {} })
+      );
+      expect(result.current).toEqual('pending');
     });
 
     it('returns fulfilled when root view is finished loading', () => {
-      mockState(createInitialState({ rootItems: fullyLoadedViewItemCollection([]) }));
-
-      const status = useBrowseLoadingStatus(undefined);
-      expect(status).toEqual('fulfilled');
+      const { result } = renderBrowseHook(
+        () => useBrowseLoadingStatus(undefined),
+        createInitialState({ rootItems: fullyLoadedViewItemCollection([]) })
+      );
+      expect(result.current).toEqual('fulfilled');
     });
 
     it('returns fulfilled when folder view is finished loading', () => {
-      mockState(
-        createInitialState({
-          childrenByParentUID: {
-            [folderUID]: fullyLoadedViewItemCollection([]),
-          },
-        })
+      const { result } = renderBrowseHook(
+        () => useBrowseLoadingStatus(folderUID),
+        createInitialState({ childrenByParentUID: { [folderUID]: fullyLoadedViewItemCollection([]) } })
       );
-
-      const status = useBrowseLoadingStatus(folderUID);
-      expect(status).toEqual('fulfilled');
+      expect(result.current).toEqual('fulfilled');
     });
   });
 
@@ -89,7 +90,8 @@ describe('browse-dashboards state hooks', () => {
         parentUID: 'same-uid',
       };
 
-      mockState(
+      const { result } = renderBrowseHook(
+        () => useFlatTreeState(undefined),
         createInitialState({
           rootItems: fullyLoadedViewItemCollection([folder]),
           childrenByParentUID: { 'same-uid': fullyLoadedViewItemCollection([dashboard]) },
@@ -97,12 +99,58 @@ describe('browse-dashboards state hooks', () => {
         })
       );
 
-      const tree = useFlatTreeState(undefined);
+      expect(rowsOf(result.current)).toEqual(['0:folder:same-uid', '1:dashboard:same-uid']);
+    });
 
-      expect(tree.map(({ item, level }) => `${level}:${item.kind}:${item.uid}`)).toEqual([
-        '0:folder:same-uid',
-        '1:dashboard:same-uid',
-      ]);
+    describe('under the open Starred folders root', () => {
+      const starredRoot: DashboardViewItem = { kind: 'folder', uid: STARRED_FOLDERS_UID, title: 'Starred folders' };
+      const openStarredRoot = () =>
+        createInitialState({
+          rootItems: fullyLoadedViewItemCollection([starredRoot]),
+          openFolders: { [STARRED_FOLDERS_UID]: true },
+        });
+      const prefixedUid = `${STARRED_FOLDERS_UID}/${folderA.item.uid}`;
+
+      beforeEach(() => {
+        // Beside the dashboards the fixtures star, which the tree must leave out
+        setMockStarredFolders([folderA.item.uid]);
+      });
+
+      it('lists the starred folders the shared starred search returns, under prefixed uids', async () => {
+        const { result } = renderBrowseHook(() => useFlatTreeState(undefined), openStarredRoot());
+
+        // Nothing under the root until the first rows land
+        expect(rowsOf(result.current)).toEqual([
+          `0:folder:${STARRED_FOLDERS_UID}`,
+          `1:ui:${STARRED_FOLDERS_UID}-divider`,
+        ]);
+
+        await waitFor(() =>
+          expect(rowsOf(result.current)).toEqual([
+            `0:folder:${STARRED_FOLDERS_UID}`,
+            `1:folder:${prefixedUid}`,
+            `1:ui:${STARRED_FOLDERS_UID}-divider`,
+          ])
+        );
+        expect(result.current[1].item).toMatchObject({
+          title: folderA.item.title,
+          parentUID: STARRED_FOLDERS_UID,
+          url: expect.stringContaining(`/dashboards/f/${folderA.item.uid}/`),
+        });
+      });
+
+      it('shows a renamed starred folder once the starred search is invalidated', async () => {
+        const { result, store } = renderBrowseHook(() => useFlatTreeState(undefined), openStarredRoot());
+        await waitFor(() => expect(result.current[1]?.item).toMatchObject({ title: folderA.item.title }));
+
+        // A rename changes a row without changing the star set, so the rename mutations invalidate the rows
+        server.use(
+          getCustomSearchHandler([{ resource: 'folders', name: folderA.item.uid, title: 'Renamed folder', field: {} }])
+        );
+        store.dispatch(invalidateStarredSearch());
+
+        await waitFor(() => expect(result.current[1]?.item).toMatchObject({ title: 'Renamed folder' }));
+      });
     });
   });
 });

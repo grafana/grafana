@@ -1,4 +1,4 @@
-import { configureStore, type Middleware, isAnyOf } from '@reduxjs/toolkit';
+import { configureStore, type Middleware, type UnknownAction, isAnyOf } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
 import { waitFor } from 'test/test-utils';
@@ -9,6 +9,7 @@ import { config, setBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -17,7 +18,7 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { deletedDashboardsCache } from 'app/features/search/service/deletedDashboardsCache';
-import { STARRED_SEARCH_TAG, starsAPI } from 'app/features/stars/api';
+import { invalidateStarredSearch } from 'app/features/stars/api';
 import * as variablesManagementCache from 'app/features/variables-management/cache';
 import { setStore } from 'app/store/store';
 import { type FolderDTO } from 'app/types/folders';
@@ -81,10 +82,10 @@ describe('browseDashboardsAPI', () => {
 
   // Records starred-search invalidations so tests can assert on starred row cleanup
   const createStoreWithStarredSearchRecorder = () => {
-    const invalidations: unknown[] = [];
+    const invalidations: UnknownAction[] = [];
     const recorder: Middleware = () => (next) => (action) => {
-      if (starsAPI.util.invalidateTags.match(action)) {
-        invalidations.push(action.payload);
+      if (collectionsAPIv1alpha1.util.invalidateTags.match(action)) {
+        invalidations.push(action);
       }
       return next(action);
     };
@@ -228,7 +229,7 @@ describe('browseDashboardsAPI', () => {
     );
 
     await waitFor(() => {
-      expect(invalidations).toEqual([[STARRED_SEARCH_TAG]]);
+      expect(invalidations).toEqual([invalidateStarredSearch()]);
     });
   });
 
@@ -344,13 +345,13 @@ describe('browseDashboardsAPI', () => {
 
     it('refreshes parents for requested folders even when bulk delete yields no successes', async () => {
       const refetchParents: Array<string | undefined> = [];
-      const starredSearchInvalidations: unknown[] = [];
+      const starredSearchInvalidations: UnknownAction[] = [];
       const recorder: Middleware = () => (next) => (action) => {
         if (isAnyOf(refetchChildren.pending)(action)) {
           refetchParents.push(action.meta.arg.parentUID);
         }
-        if (starsAPI.util.invalidateTags.match(action)) {
-          starredSearchInvalidations.push(action.payload);
+        if (collectionsAPIv1alpha1.util.invalidateTags.match(action)) {
+          starredSearchInvalidations.push(action);
         }
         return next(action);
       };
@@ -493,7 +494,7 @@ describe('browseDashboardsAPI', () => {
       );
 
       await waitFor(() => {
-        expect(invalidations).toEqual([[STARRED_SEARCH_TAG]]);
+        expect(invalidations).toEqual([invalidateStarredSearch()]);
       });
     });
 
@@ -541,7 +542,7 @@ describe('browseDashboardsAPI', () => {
 
       await waitFor(() => {
         expect(deletedUids).toEqual(['folder-2']);
-        expect(invalidations).toEqual([[STARRED_SEARCH_TAG]]);
+        expect(invalidations).toEqual([invalidateStarredSearch()]);
       });
     });
 
@@ -569,7 +570,7 @@ describe('browseDashboardsAPI', () => {
       await waitFor(() => {
         expect(deleteFolder1Spy).toHaveBeenCalledTimes(1);
         expect(deleteFolder2Spy).toHaveBeenCalledTimes(1);
-        expect(invalidations).toEqual([[STARRED_SEARCH_TAG]]);
+        expect(invalidations).toEqual([invalidateStarredSearch()]);
       });
     });
   });

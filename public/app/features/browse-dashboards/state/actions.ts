@@ -5,7 +5,7 @@ import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features
 import { createAsyncThunk } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/constants';
-import { listDashboards, listFolders, listStarredFolders, listTeamFolders } from '../api/services';
+import { listDashboards, listFolders, listTeamFolders } from '../api/services';
 import { type DashboardViewItemWithUIItems, type UIDashboardViewItem } from '../types';
 import { reapplyVirtualFolderPrefix, stripVirtualFolderPrefix } from '../utils/dashboards';
 
@@ -129,11 +129,6 @@ export const refetchChildren = createAsyncThunk(
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true, generation };
     }
 
-    if (parentUID === STARRED_FOLDERS_UID) {
-      const children = await listSafe('starred folders', listStarredFolders);
-      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true, generation };
-    }
-
     const strippedUID = parentUID ? stripVirtualFolderPrefix(parentUID) : parentUID;
     const uid = isRootFolderUID(strippedUID) ? undefined : strippedUID;
 
@@ -194,14 +189,9 @@ export const fetchNextChildrenPage = createAsyncThunk(
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true, generation };
     }
 
+    // The Starred folders children are derived from the starred search by the tree selector; nothing to fetch
     if (parentUID === STARRED_FOLDERS_UID) {
-      const state = thunkAPI.getState().browseDashboards;
-      const collection = state.childrenByParentUID[parentUID];
-      if (collection?.isFullyLoaded) {
-        return undefined;
-      }
-      const children = await listSafe('starred folders', listStarredFolders);
-      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true, generation };
+      return undefined;
     }
 
     // TODO: invert prop to `includeKinds`, but also support not loading folders

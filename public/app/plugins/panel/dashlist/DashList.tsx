@@ -98,8 +98,9 @@ export function DashList(props: PanelProps<Options>) {
     });
   }, [props.options, props.replaceVariables, throttledRenderCount]);
 
-  // Searched in full and cut after sorting, so the panel shows the first `maxItems` alphabetically
-  const { rows: starredRows } = useStarredSearch({ skip: !showStarred });
+  // Searched again on each mount like the other groups, then cut after sorting so the panel shows the first
+  // `maxItems` alphabetically
+  const { rows: starredRows } = useStarredSearch({ skip: !showStarred, refetchOnMountOrArgChange: true });
   const starredDashboards = useMemo(
     () => [...(starredRows ?? [])].sort((a, b) => collator.compare(a.name, b.name)).slice(0, maxItems),
     [starredRows, maxItems]
@@ -111,20 +112,10 @@ export function DashList(props: PanelProps<Options>) {
 
   const [recentDashboards, searchedDashboards] = useMemo(() => {
     const dashboardList = [...dashboards.values()];
-    const dashboardsGroupsMap: Record<string, Dashboard[]> = {
-      recent: [],
-      searched: [],
-    };
-
-    for (const dash of dashboardList) {
-      if (dash.isRecent) {
-        dashboardsGroupsMap.recent.push(dash);
-      }
-      if (dash.isSearchResult) {
-        dashboardsGroupsMap.searched.push(dash);
-      }
-    }
-    return [dashboardsGroupsMap.recent, dashboardsGroupsMap.searched.sort((a, b) => collator.compare(a.name, b.name))];
+    return [
+      dashboardList.filter((dash) => dash.isRecent),
+      dashboardList.filter((dash) => dash.isSearchResult).sort((a, b) => collator.compare(a.name, b.name)),
+    ];
   }, [dashboards]);
 
   const dashboardGroups: DashboardGroup[] = [

@@ -19,9 +19,6 @@ function translateNav(navTree: NavModelItem[]): NavModelItem[] {
   });
 }
 
-// Prefix of the Starred section's children, which the nav tree derives from the stars query
-export const ID_PREFIX = 'starred/';
-
 const navTreeSlice = createSlice({
   name: 'navBarTree',
   initialState: () => translateNav(getInitialNavTree()),

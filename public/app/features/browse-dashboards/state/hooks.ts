@@ -1,12 +1,10 @@
-import { isEqual } from 'lodash';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useStore } from 'react-redux';
 import { createSelector } from 'reselect';
 
-import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { STARRED_FOLDERS_UID } from 'app/features/search/constants';
 import { type DashboardViewItem } from 'app/features/search/types';
-import { useStarredItems } from 'app/features/stars/hooks';
+import { useStarredSearch } from 'app/features/stars/hooks';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/constants';
@@ -14,12 +12,13 @@ import {
   type BrowseDashboardsState,
   type DashboardsTreeItem,
   type DashboardTreeSelection,
+  type DashboardViewItemCollection,
   type DashboardViewItemWithUIItems,
   type UIDashboardViewItem,
 } from '../types';
-import { isVirtualStarredFolder } from '../utils/dashboards';
+import { addStarredFolderPrefix, getFolderURL, isVirtualStarredFolder } from '../utils/dashboards';
 
-import { fetchNextChildrenPage, refetchChildren } from './actions';
+import { fetchNextChildrenPage } from './actions';
 import { collectionGeneration, collectionKeyOf, getPaginationPlaceholders } from './utils';
 
 export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
@@ -32,10 +31,52 @@ const flatTreeSelector = createSelector(
   childrenByParentUIDSelector,
   openFoldersSelector,
   (wholeState: StoreState, rootFolderUID: string | undefined) => rootFolderUID,
-  (rootItems, childrenByParentUID, openFolders, folderUID) => {
-    return createFlatTree(folderUID, rootItems, childrenByParentUID, openFolders);
+  (
+    wholeState: StoreState,
+    rootFolderUID: string | undefined,
+    starredFolders: DashboardViewItemCollection | undefined
+  ) => starredFolders,
+  (rootItems, childrenByParentUID, openFolders, folderUID, starredFolders) => {
+    // The slice never holds the Starred folders children; they join the lookup here, so the tree reads them like
+    // any other collection
+    const childrenByUID = starredFolders
+      ? { ...childrenByParentUID, [STARRED_FOLDERS_UID]: starredFolders }
+      : childrenByParentUID;
+    return createFlatTree(folderUID, rootItems, childrenByUID, openFolders);
   }
 );
+
+/**
+ * The virtual "Starred folders" root's children, derived from the starred search every starred view reads. Nothing
+ * is fetched or stored for them: a star toggle, rename or delete changes the shared rows and the tree follows. Open
+ * state and selection stay in the slice under the prefixed uid, as for any folder. Undefined until the first rows
+ * land, which the tree shows like any folder whose first page is in flight.
+ */
+function useStarredFoldersCollection(): DashboardViewItemCollection | undefined {
+  const { rows } = useStarredSearch();
+  return useMemo(() => {
+    if (!rows) {
+      return undefined;
+    }
+    const items = rows
+      .filter((row) => row.kind === 'folder')
+      .map<DashboardViewItem>((row) => ({
+        kind: 'folder',
+        // Prefixed uid for independent tree state; the real uid drives the folder URL
+        uid: addStarredFolderPrefix(row.uid),
+        title: row.name,
+        parentUID: STARRED_FOLDERS_UID,
+        url: getFolderURL(row.uid),
+      }));
+    return {
+      items,
+      lastFetchedKind: 'dashboard',
+      lastFetchedPage: 1,
+      lastKindHasMoreItems: false,
+      isFullyLoaded: true,
+    };
+  }, [rows]);
+}
 
 const hasSelectionSelector = createSelector(selectedItemsSelector, (selectedItems) => {
   return Object.values(selectedItems).some((selectedItem) =>
@@ -91,7 +132,8 @@ export function useBrowseLoadingStatus(folderUID: string | undefined): 'pending'
 }
 
 export function useFlatTreeState(folderUID: string | undefined) {
-  return useSelector((state) => flatTreeSelector(state, folderUID));
+  const starredFolders = useStarredFoldersCollection();
+  return useSelector((state) => flatTreeSelector(state, folderUID, starredFolders));
 }
 
 export function useHasSelection() {
@@ -108,27 +150,6 @@ export function useChildrenByParentUIDState() {
 
 export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
-}
-
-/**
- * Refetches the virtual "Starred folders" collection when the user's folder star set changes. The browse tree keeps
- * its own normalized copy of children, so it follows the Stars cache by refetching rather than by selecting it.
- */
-export function useSyncStarredFolders(): void {
-  const dispatch = useDispatch();
-  const { data: starredFolderUids } = useStarredItems(FOLDER_API_GROUP, 'Folder');
-  const previous = useRef<string[] | undefined>(undefined);
-
-  useEffect(() => {
-    if (starredFolderUids === undefined) {
-      return;
-    }
-    // The value on mount is the set the collection was loaded with, so only a later change needs a refetch
-    if (previous.current !== undefined && !isEqual(previous.current, starredFolderUids)) {
-      dispatch(refetchChildren({ parentUID: STARRED_FOLDERS_UID, pageSize: PAGE_SIZE }));
-    }
-    previous.current = starredFolderUids;
-  }, [starredFolderUids, dispatch]);
 }
 
 export function useLoadNextChildrenPage(

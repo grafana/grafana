@@ -30,8 +30,9 @@ function isCreateForm(pathname: string): boolean {
  * A nav menu destination opened the way the menu opens it is one click away; a create form reopens blank. Neither
  * is worth a row of its own. Both are judged by the URL as a whole: a menu link that carries a tab counts as the
  * menu opens it, the same page with another tab (a filter, prefilled values, ...) is state to come back to. Pages
- * the menu does not link to (a rule, an incident) always are. Starred dashboards are nav items too, so dashboards
- * are exempt. The tree is the menu as it is now: the boot copy is empty when the client builds the menu.
+ * the menu does not link to (a rule, an incident) always are. Dashboards are exempt outright: the menu links the
+ * starred ones, and a visit to one is still worth a row. The tree is the static menu as the client built it (the
+ * boot copy is empty); it does not carry the Starred children, which are dashboards and folders only.
  */
 export function hasNothingToResume(page: PageIdentity, search: string, navTree: NavModelItem[]): boolean {
   if (page.kind === 'dashboard') {
