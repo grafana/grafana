@@ -1,6 +1,7 @@
 import { type Observable } from 'rxjs';
 
 import {
+  createTheme,
   arrayToDataFrame,
   createDataFrame,
   type DataFrame,
@@ -27,6 +28,8 @@ import { LokiQueryDirection } from 'app/features/loki-helpers/types';
 
 import { MockObservableDataSourceApi } from '../../../test/mocks/datasource_srv';
 
+const theme = createTheme();
+
 const mockGetBooleanValue = jest.fn((key: string, defaultValue: boolean) => defaultValue);
 
 jest.mock('@grafana/runtime/internal', () => {
@@ -39,11 +42,14 @@ jest.mock('@grafana/runtime/internal', () => {
   };
 });
 
+import { createLogRow } from './components/mocks/logRow';
 import {
   COMMON_LABELS,
   dataFrameToLogsModel,
   dedupLogRows,
   getSeriesProperties,
+  getLogLevelColors,
+  makeDataFramesForLogs,
   LIMIT_LABEL,
   TOTAL_LABEL,
   logRowToSingleRowDataFrame,
@@ -189,7 +195,7 @@ const emptyLogsModel = {
 
 describe('dataFrameToLogsModel', () => {
   it('given empty series should return empty logs model', () => {
-    expect(dataFrameToLogsModel([], 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel([], theme, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without correct series name should return empty logs model', () => {
@@ -198,7 +204,7 @@ describe('dataFrameToLogsModel', () => {
         fields: [],
       }),
     ];
-    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, theme, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without a time field should return empty logs model', () => {
@@ -213,7 +219,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, theme, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without a string field should return empty logs model', () => {
@@ -228,7 +234,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, theme, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given one series should return expected logs model', () => {
@@ -276,7 +282,7 @@ describe('dataFrameToLogsModel', () => {
         refId: 'A',
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
@@ -358,7 +364,7 @@ describe('dataFrameToLogsModel', () => {
         refId: 'A',
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.hasUniqueLabels).toBeFalsy();
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
@@ -448,7 +454,7 @@ describe('dataFrameToLogsModel', () => {
         refId: 'A',
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
       {
@@ -506,7 +512,7 @@ describe('dataFrameToLogsModel', () => {
         refId: 'A',
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
       {
@@ -553,7 +559,7 @@ describe('dataFrameToLogsModel', () => {
         refId: 'A',
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
       value: `1 line displayed`,
@@ -563,7 +569,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series with limit as custom meta property should return correct limit', () => {
     const series: DataFrame[] = getTestDataFrame();
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
       value: `2 lines displayed`,
@@ -582,7 +588,7 @@ describe('dataFrameToLogsModel', () => {
         },
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.meta![0]).toMatchObject({
       label: TOTAL_LABEL,
       value: 9999,
@@ -609,7 +615,7 @@ describe('dataFrameToLogsModel', () => {
         },
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.meta![0]).toMatchObject({
       label: TOTAL_LABEL,
       value: 9,
@@ -636,6 +642,7 @@ describe('dataFrameToLogsModel', () => {
     ];
     const logsModel = dataFrameToLogsModel(
       series,
+      theme,
       1,
       { from: timeRange.from.valueOf(), to: timeRange.to.valueOf() },
       queries
@@ -674,6 +681,7 @@ describe('dataFrameToLogsModel', () => {
     ];
     const logsModel = dataFrameToLogsModel(
       series,
+      theme,
       1,
       { from: timeRange.from.valueOf(), to: timeRange.to.valueOf() },
       queries
@@ -737,7 +745,7 @@ describe('dataFrameToLogsModel', () => {
         refId: 'A',
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
@@ -822,15 +830,15 @@ describe('dataFrameToLogsModel', () => {
       fields: [time, line, labels],
     });
 
-    const logsModel1 = dataFrameToLogsModel([frame1], 1);
+    const logsModel1 = dataFrameToLogsModel([frame1], theme, 1);
     expect(logsModel1.rows).toHaveLength(1);
     expect(logsModel1.rows[0].labels).toStrictEqual({ mode: 'slow', node: 'first' });
 
-    const logsModel2 = dataFrameToLogsModel([frame2], 1);
+    const logsModel2 = dataFrameToLogsModel([frame2], theme, 1);
     expect(logsModel2.rows).toHaveLength(1);
     expect(logsModel2.rows[0].labels).toStrictEqual({ mode: 'slow', node: 'first' });
 
-    const logsModel3 = dataFrameToLogsModel([frame3], 1);
+    const logsModel3 = dataFrameToLogsModel([frame3], theme, 1);
     expect(logsModel3.rows).toHaveLength(1);
     expect(logsModel3.rows[0].labels).toStrictEqual({ mode: 'slow', node: 'first' });
   });
@@ -872,7 +880,7 @@ describe('dataFrameToLogsModel', () => {
         refId: 'A',
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.hasUniqueLabels).toBeFalsy();
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
@@ -933,7 +941,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.rows).toHaveLength(1);
     expect(logsModel.rows).toMatchObject([
       {
@@ -988,7 +996,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     const uids = logsModel.rows.map((row) => row.uid);
     expect(uids).toEqual(['A_duplicate_uid', 'B_duplicate_uid']);
   });
@@ -1045,7 +1053,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([
@@ -1171,7 +1179,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(4);
     expect(logsModel.rows).toMatchObject([
@@ -1234,7 +1242,7 @@ describe('dataFrameToLogsModel', () => {
         },
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1, { from: 1556270591353, to: 1556289770991 });
+    const logsModel = dataFrameToLogsModel(series, theme, 1, { from: 1556270591353, to: 1556289770991 });
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
@@ -1267,7 +1275,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1);
+    const logsModel = dataFrameToLogsModel(series, theme, 1);
     expect(logsModel.rows[0].uid).toBe('A_0');
   });
 
@@ -1292,6 +1300,7 @@ describe('dataFrameToLogsModel', () => {
     it('deduplicates repeated log frames when called with deduplicate', () => {
       const logsModel = dataFrameToLogsModel(
         [frameA, frameB],
+        theme,
         1,
         { from: 1556270591353, to: 1556289770991 },
         [{ refId: `A` }, { refId: `B` }],
@@ -1306,7 +1315,7 @@ describe('dataFrameToLogsModel', () => {
     it('does not remove repeated log frames when invoked without deduplicate', () => {
       frameA.refId = 'A';
       frameB.refId = 'B';
-      const logsModel = dataFrameToLogsModel([frameA, frameB], 1, { from: 1556270591353, to: 1556289770991 }, [
+      const logsModel = dataFrameToLogsModel([frameA, frameB], theme, 1, { from: 1556270591353, to: 1556289770991 }, [
         { refId: 'A' },
         { refId: 'B' },
       ]);
@@ -1396,7 +1405,7 @@ describe('logSeriesToLogsModel', () => {
       }),
     ];
 
-    const logsModel = dataFrameToLogsModel(logSeries, 0);
+    const logsModel = dataFrameToLogsModel(logSeries, theme, 0);
     expect(logsModel.meta).toMatchObject([
       { kind: 0, label: LIMIT_LABEL, value: 2000 },
       { kind: 1, label: 'Total bytes processed', value: '194  kB' },
@@ -1496,7 +1505,7 @@ describe('logSeriesToLogsModel', () => {
       }),
     ];
 
-    const logsModel = dataFrameToLogsModel(logSeries, 0);
+    const logsModel = dataFrameToLogsModel(logSeries, theme, 0);
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([
       {
@@ -1552,7 +1561,7 @@ describe('logSeriesToLogsModel', () => {
           }),
         ];
 
-        const logsModel = dataFrameToLogsModel(logSeries, 0);
+        const logsModel = dataFrameToLogsModel(logSeries, theme, 0);
         expect(logsModel.rows).toHaveLength(1);
         expect(logsModel.rows[0].logLevel).toEqual(LogLevel.warn);
       });
@@ -1646,6 +1655,7 @@ describe('logs volume', () => {
     };
     volumeProvider = queryLogsVolume(datasource, request, {
       targets: request.targets,
+      theme,
     });
   }
 
@@ -1982,7 +1992,7 @@ describe('logs volume', () => {
       range: getDefaultTimeRange(),
       scopedVars: {},
     } as unknown as DataQueryRequest<TestDataQuery>;
-    logsVolumeProvider = queryLogsVolume(datasource, request, { targets: request.targets });
+    logsVolumeProvider = queryLogsVolume(datasource, request, { targets: request.targets, theme });
   }
   const dataFrame = createFrame();
 
@@ -2146,3 +2156,19 @@ function getTestDataFrame() {
     }),
   ];
 }
+
+describe('log level colors', () => {
+  it.each([
+    { mode: 'dark' as const, debug: '#9e9e9e', unknown: '#8e8e8e' },
+    { mode: 'light' as const, debug: '#696969', unknown: '#bdc4cd' },
+  ])('uses the supplied $mode theme for level colors and volume frames', ({ mode, debug, unknown }) => {
+    const theme = createTheme({ colors: { mode } });
+    const levelColors = getLogLevelColors(theme);
+    expect(levelColors[LogLevel.debug]).toBe(debug);
+    expect(levelColors[LogLevel.unknown]).toBe(unknown);
+    expect(levelColors[LogLevel.unspecified]).toBe(unknown);
+
+    const frames = makeDataFramesForLogs([createLogRow({ logLevel: LogLevel.debug })], 1000, theme);
+    expect(frames[0].fields.find((field) => field.type === FieldType.number)?.config.color?.fixedColor).toBe(debug);
+  });
+});

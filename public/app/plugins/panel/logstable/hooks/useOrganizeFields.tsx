@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
 
-import { type DataFrame, type FieldConfigSource, transformDataFrame } from '@grafana/data';
-import { type CustomCellRendererProps, TableCellDisplayMode } from '@grafana/ui';
+import { type GrafanaTheme2, type DataFrame, type FieldConfigSource, transformDataFrame } from '@grafana/data';
+import { type CustomCellRendererProps, TableCellDisplayMode, useTheme2 } from '@grafana/ui';
 import { type LogsFrame } from 'app/features/logs/logsFrame';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../../../../features/logs/components/fieldSelector/logFields';
@@ -42,6 +42,7 @@ export function useOrganizeFields({
   fieldConfig,
   timeColumnHeaderTooltip,
 }: Props) {
+  const theme = useTheme2();
   const [organizedFrame, setOrganizedFrame] = useState<DataFrame | null>(null);
   const isMounted = useMountedState();
 
@@ -63,6 +64,7 @@ export function useOrganizeFields({
       supportsPermalink,
       onPermalinkClick,
       fieldConfig,
+      theme,
       timeColumnHeaderTooltip
     )
       .then((frame) => {
@@ -85,6 +87,7 @@ export function useOrganizeFields({
     isMounted,
     fieldConfig,
     timeColumnHeaderTooltip,
+    theme,
   ]);
 
   return { organizedFrame };
@@ -100,6 +103,7 @@ const organizeFields = async (
   supportsPermalink: boolean,
   onPermalinkClick: BuildLinkToLogLine,
   fieldConfig: FieldConfigSource,
+  theme: GrafanaTheme2,
   timeColumnHeaderTooltip?: string
 ) => {
   if (!extractedFrame) {
@@ -119,9 +123,10 @@ const organizeFields = async (
     includeByName[field] = true;
   }
 
-  const organizedFrame = await lastValueFrom(
-    transformDataFrame(organizeLogsFieldsTransform(indexByName, includeByName), [extractedFrame])
-  );
+  // Keep generated, theme-specific display configuration out of the source fields.
+  const organizedFrame = (
+    await lastValueFrom(transformDataFrame(organizeLogsFieldsTransform(indexByName, includeByName), [extractedFrame]))
+  ).map((frame) => ({ ...frame, fields: frame.fields.map((field) => ({ ...field })) }));
 
   for (let frameIndex = 0; frameIndex < organizedFrame.length; frameIndex++) {
     const frame = organizedFrame[frameIndex];
@@ -137,7 +142,7 @@ const organizeFields = async (
       // Deep-merge so panel defaults (e.g. custom.filterable) survive when the field already has custom.* from applyFieldOverrides.
       const baseConfig = merge({}, fieldConfig.defaults, field.config);
 
-      const levelEnhancements = getLogLevelColumnEnhancements(field, levelFieldName, baseConfig);
+      const levelEnhancements = getLogLevelColumnEnhancements(field, levelFieldName, baseConfig, theme);
 
       const configAfterLevel = {
         ...baseConfig,
@@ -149,7 +154,6 @@ const organizeFields = async (
         },
       };
 
-      // We are mutating fields. Would it be possible to avoid it?
       if (configAfterLevel.custom?.cellOptions?.cellComponent) {
         configAfterLevel.custom.cellOptions = undefined;
       }

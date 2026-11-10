@@ -42,6 +42,20 @@ describe('copyTextToClipboard', () => {
     expect(execCommand).toHaveBeenCalledWith('copy');
   });
 
+  it('copies a ready string before the caller can unmount its focus-managed container', async () => {
+    const container = document.createElement('div');
+    const execCommand = jest.fn(() => {
+      expect(container.querySelector('textarea')).toHaveValue('copy me');
+      return true;
+    });
+    setupTests({ isSecureContext: false, execCommand });
+
+    const copied = copyTextToClipboard('copy me', { current: container });
+
+    expect(execCommand).toHaveBeenCalledWith('copy');
+    await copied;
+  });
+
   it('should append to ref when ref is set and the Clipboard API is unavailable', async () => {
     const execCommand = jest.fn().mockReturnValue(true);
     const appendChild = jest.fn();

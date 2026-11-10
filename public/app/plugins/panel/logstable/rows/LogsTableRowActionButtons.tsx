@@ -7,7 +7,7 @@ import { ClipboardButton, type CustomCellRendererProps, Icon, IconButton, Toolti
 import { classifyErrorAttributes } from 'app/features/logs/components/otel/details';
 import { getIconButtonStyles } from 'app/features/logs/components/panel/activeIconButtonStyles';
 import { type LogFrameLabels, type LogsFrame } from 'app/features/logs/logsFrame';
-import { LogLevelColor } from 'app/features/logs/logsModel';
+import { getLogLevelColors } from 'app/features/logs/logsModel';
 
 import { useLogDetailsContext } from '../LogDetailsContext';
 import { type BuildLinkToLogLine } from '../types';
@@ -217,7 +217,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   errorIcon: css({
     alignItems: 'center',
-    color: LogLevelColor[LogLevel.error],
+    color: getLogLevelColors(theme)[LogLevel.error],
     display: 'flex',
     flexShrink: 0,
     height: '100%',

@@ -1,6 +1,7 @@
 import { render, screen, waitFor, userEvent } from 'test/test-utils';
 
 import {
+  createTheme,
   createDataFrame,
   FieldType,
   LoadingState,
@@ -20,6 +21,8 @@ import {
 } from '../otel/formats';
 
 import { combineLoadingStates, DEFAULT_TIME_WINDOW, LogLineContext, PAGE_SIZE } from './LogLineContext';
+
+const theme = createTheme();
 
 const setBooleanFlags = (flags: Record<string, boolean>) => {
   setTestFlags(flags);
@@ -97,7 +100,7 @@ jest.mock('app/features/explore/state/main', () => ({
 jest.mocked(getDisplayedFieldsForLogs).mockReturnValue([]);
 jest.mocked(identifyOTelLanguages).mockReturnValue([]);
 
-const logs = dataFrameToLogsModel([dfNow]);
+const logs = dataFrameToLogsModel([dfNow], theme);
 const row = logs.rows[0];
 
 const timeZone = 'UTC';
@@ -270,7 +273,7 @@ describe('LogLineContext', () => {
     });
 
     let uniqueRefIdCounter = 1;
-    const logs = dataFrameToLogsModel([dfNowNs]);
+    const logs = dataFrameToLogsModel([dfNowNs], theme);
     const row = logs.rows[0];
     const getRowContext = jest.fn().mockImplementation(async (_, options) => {
       uniqueRefIdCounter += 1;
@@ -374,7 +377,7 @@ describe('LogLineContext', () => {
     });
 
     let uniqueRefIdCounter = 1;
-    const logs = dataFrameToLogsModel([dfNowNs]);
+    const logs = dataFrameToLogsModel([dfNowNs], theme);
     const row = logs.rows[0];
     row.searchWords = ['foo123'];
     const getRowContext = jest.fn().mockImplementation(async (_, options) => {

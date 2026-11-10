@@ -49,13 +49,18 @@ import {
   type Themeable2,
   withTheme2,
 } from '@grafana/ui';
-import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
+import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList, type LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
-import { dedupLogRows, LogLevelColor } from 'app/features/logs/logsModel';
-import { getLogLevelFromKey, getLogLevelInfo, isMissingTimeField } from 'app/features/logs/utils';
+import { dedupLogRows, getLogLevelColors } from 'app/features/logs/logsModel';
+import {
+  getLogLevelFromKey,
+  getLogLevelInfo,
+  getLogsPermalinkRange,
+  isMissingTimeField,
+} from 'app/features/logs/utils';
 import { type Options } from 'app/plugins/panel/logstable/options/types';
 import { type BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 import { getState } from 'app/store/store';
@@ -624,7 +629,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           panelId: PINNED_LOGS_PANELID,
           level: 'child',
           ref: null,
-          color: LogLevelColor[row.logLevel],
+          color: getLogLevelColors(theme)[row.logLevel],
           childOnTop: true,
           onClick: () => {
             onOpenContext(row, () => {});
@@ -640,7 +645,17 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
       onPinLineCallback?.();
     },
-    [getPinnedLogsCount, onOpenContext, onPinLineCallback, outlineItems, pinnedLogs, register, unregister, updateItem]
+    [
+      getPinnedLogsCount,
+      onOpenContext,
+      onPinLineCallback,
+      outlineItems,
+      pinnedLogs,
+      register,
+      unregister,
+      updateItem,
+      theme,
+    ]
   );
 
   const { dedupedRows, dedupCount } = useMemo(() => dedupRows(logRows, dedupStrategy), [dedupStrategy, logRows]);

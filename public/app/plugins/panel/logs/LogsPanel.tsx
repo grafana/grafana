@@ -31,7 +31,7 @@ import {
   store,
 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { usePanelContext, useStyles2 } from '@grafana/ui';
+import { usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import {
@@ -41,12 +41,12 @@ import {
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
-import { isMissingStringField, isMissingTimeField } from 'app/features/logs/utils';
+import { getLogsPermalinkRange, isMissingStringField, isMissingTimeField } from 'app/features/logs/utils';
 import { combineResponses } from 'app/features/loki-helpers/mergeResponses';
 import { SupportingQueryType } from 'app/features/loki-helpers/types';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
-import { createAndCopyShortLink, getLogsPermalinkRange } from '../../../core/utils/shortLinks';
+import { createAndCopyShortLink } from '../../../core/utils/shortLinks';
 import { dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 
 import type { Options } from './panelcfg.gen';
@@ -173,6 +173,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     unwrappedColumns,
     grammar,
   } = options;
+  const theme = useTheme2();
   const style = useStyles2(getStyles);
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
@@ -305,6 +306,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     const logs = panelData
       ? dataFrameToLogsModel(
           panelData.series,
+          theme,
           panelData.request?.intervalMs,
           undefined,
           panelData.request?.targets,
@@ -314,7 +316,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     const logRows = logs?.rows || [];
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows];
-  }, [dedupStrategy, enableInfiniteScrolling, panelData]);
+  }, [dedupStrategy, enableInfiniteScrolling, panelData, theme]);
 
   const onPermalinkClick = useCallback(
     async (row: LogRowModel) => {

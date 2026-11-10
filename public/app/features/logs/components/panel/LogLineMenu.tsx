@@ -5,9 +5,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { Dropdown, IconButton, Menu } from '@grafana/ui';
+import { copyTextToClipboard, Dropdown, IconButton, Menu } from '@grafana/ui';
 
-import { copyText, handleOpenLogsContextClick } from '../../utils';
+import { handleOpenLogsContextClick } from '../../utils';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { type LogLineStyles } from './LogLine';
@@ -55,12 +55,12 @@ export const LogLineMenu = ({ active, log, styles }: Props) => {
   const menuRef = useRef(null);
 
   const copyLogLine = useCallback(() => {
-    copyText(log.entry, menuRef);
+    copyTextToClipboard(log.entry, menuRef);
     reportInteraction('logs_log_line_menu_header_copy_clicked');
   }, [log.entry]);
 
   const copyLogLineAsJson = useCallback(async () => {
-    copyText(await getLogAsJSON(log), menuRef);
+    copyTextToClipboard(await getLogAsJSON(log), menuRef);
     reportInteraction('logs_log_line_menu_header_copy_json_clicked');
   }, [log]);
 

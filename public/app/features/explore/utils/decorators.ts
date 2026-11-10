@@ -287,6 +287,7 @@ export const decorateWithLogsResult =
     const intervalMs = data.request?.intervalMs;
     const newResults = dataFrameToLogsModel(
       data.logsFrames,
+      config.theme2,
       intervalMs,
       options.absoluteRange,
       options.queries,

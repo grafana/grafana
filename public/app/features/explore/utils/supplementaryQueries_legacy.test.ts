@@ -6,6 +6,7 @@ import { flatten } from 'lodash';
 import { from, type Observable } from 'rxjs';
 
 import {
+  createTheme,
   type DataFrame,
   type DataQueryRequest,
   type DataQueryResponse,
@@ -165,7 +166,7 @@ const setup = async (targetSources: string[], type: SupplementaryQueryType) => {
     })
   );
 
-  return getSupplementaryQueryProvider(datasources, type, requestMock, explorePanelDataMock);
+  return getSupplementaryQueryProvider(datasources, type, requestMock, explorePanelDataMock, createTheme());
 };
 
 const assertDataFrom = (type: SupplementaryQueryType, ...datasources: string[]) => {

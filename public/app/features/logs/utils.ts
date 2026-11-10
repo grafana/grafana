@@ -4,6 +4,7 @@ import { type MouseEvent } from 'react';
 import { lastValueFrom, map, type Observable } from 'rxjs';
 
 import {
+  type AbsoluteTimeRange,
   LogLevel,
   type LogRowModel,
   type LogLabelStatsModel,
@@ -346,26 +347,6 @@ export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
   return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
 };
 
-export const copyText = async (text: string, buttonRef: React.MutableRefObject<Element | null>) => {
-  if (navigator.clipboard && window.isSecureContext) {
-    return navigator.clipboard.writeText(text);
-  } else {
-    // Use a fallback method for browsers/contexts that don't support the Clipboard API.
-    // See https://web.dev/async-clipboard/#feature-detection.
-    // Use textarea so the user can copy multi-line content.
-    const textarea = document.createElement('textarea');
-    // Normally we'd append this to the body. However if we're inside a focus manager
-    // from react-aria, we can't focus anything outside of the managed area.
-    // Instead, let's append it to the button. Then we're guaranteed to be able to focus + copy.
-    buttonRef.current?.appendChild(textarea);
-    textarea.value = text;
-    textarea.focus();
-    textarea.select();
-    document.execCommand('copy');
-    textarea.remove();
-  }
-};
-
 export async function handleOpenLogsContextClick(
   event: MouseEvent<HTMLElement>,
   row: LogRowModel,
@@ -613,4 +594,36 @@ export function getLogsVisibleRange(logs: LogRowModel[]) {
     end = values[values.length - 1];
   }
   return { end, start };
+}
+
+function getPreviousLog(row: LogRowModel, allLogs: LogRowModel[]): LogRowModel | null {
+  for (let i = allLogs.indexOf(row) - 1; i >= 0; i--) {
+    if (allLogs[i].timeEpochMs > row.timeEpochMs) {
+      return allLogs[i];
+    }
+  }
+
+  return null;
+}
+
+export function getLogsPermalinkRange(row: LogRowModel, rows: LogRowModel[], absoluteRange: AbsoluteTimeRange) {
+  // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
+  // Look for the previous sibling log, and use its timestamp
+  const allLogs = rows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);
+  const prevLog = getPreviousLog(row, allLogs);
+
+  if (row.timeEpochMs > absoluteRange.to && !prevLog) {
+    // Because there's no sibling and the current `to` is oldest than the log, we have no reference we can use for the interval
+    // This only happens when you scroll into the future and you want to share the first log of the list
+    return {
+      from: new Date(absoluteRange.from).toISOString(),
+      // Slide 1ms otherwise it's very likely to be omitted in the results
+      to: new Date(row.timeEpochMs + 1).toISOString(),
+    };
+  }
+
+  return {
+    from: new Date(absoluteRange.from).toISOString(),
+    to: new Date(prevLog ? prevLog.timeEpochMs : absoluteRange.to).toISOString(),
+  };
 }

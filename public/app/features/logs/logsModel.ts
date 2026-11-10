@@ -16,6 +16,7 @@ import {
   dateTimeFormatTimeAgo,
   type DateTimeInput,
   type Field,
+  type GrafanaTheme2,
   FieldCache,
   FieldColorModeId,
   FieldType,
@@ -43,7 +44,6 @@ import {
 import { t } from '@grafana/i18n';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { colors } from '@grafana/ui';
-import { getThemeColor } from 'app/core/utils/colors';
 import { LokiQueryDirection } from 'app/features/loki-helpers/types';
 
 import { type LogsFrame, parseLogsFrame } from './logsFrame';
@@ -53,16 +53,18 @@ export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
 export const TOTAL_LABEL = 'Total lines';
 
-export const LogLevelColor = {
-  [LogLevel.critical]: colors[7],
-  [LogLevel.error]: colors[4],
-  [LogLevel.warning]: colors[1],
-  [LogLevel.info]: colors[5],
-  [LogLevel.debug]: getThemeColor('#9e9e9e', '#696969'),
-  [LogLevel.trace]: colors[2],
-  [LogLevel.unknown]: getThemeColor('#8e8e8e', '#bdc4cd'),
-  [LogLevel.unspecified]: getThemeColor('#8e8e8e', '#bdc4cd'),
-};
+export function getLogLevelColors(theme: GrafanaTheme2) {
+  return {
+    [LogLevel.critical]: colors[7],
+    [LogLevel.error]: colors[4],
+    [LogLevel.warning]: colors[1],
+    [LogLevel.info]: colors[5],
+    [LogLevel.debug]: theme.isLight ? '#696969' : '#9e9e9e',
+    [LogLevel.trace]: colors[2],
+    [LogLevel.unknown]: theme.isLight ? '#bdc4cd' : '#8e8e8e',
+    [LogLevel.unspecified]: theme.isLight ? '#bdc4cd' : '#8e8e8e',
+  };
+}
 
 const MILLISECOND = 1;
 const SECOND = 1000 * MILLISECOND;
@@ -111,11 +113,16 @@ interface Series {
   color: string;
 }
 
-export function makeDataFramesForLogs(sortedRows: LogRowModel[], bucketSize: number): DataFrame[] {
+export function makeDataFramesForLogs(
+  sortedRows: LogRowModel[],
+  bucketSize: number,
+  theme: GrafanaTheme2
+): DataFrame[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
   // Should be solved higher up the chain when executing queries & interval calculated and not here but this is a temporary fix.
 
   // Graph time series by log level
+  const levelColors = getLogLevelColors(theme);
   const seriesByLevel: Record<string, Series> = {};
   const seriesList: Series[] = [];
 
@@ -127,7 +134,7 @@ export function makeDataFramesForLogs(sortedRows: LogRowModel[], bucketSize: num
         lastTs: null,
         datapoints: [],
         target: row.logLevel,
-        color: LogLevelColor[row.logLevel],
+        color: levelColors[row.logLevel],
       };
 
       seriesList.push(series);
@@ -203,6 +210,7 @@ function isLogsData(series: DataFrame) {
  */
 export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
+  theme: GrafanaTheme2,
   intervalMs?: number,
   absoluteRange?: AbsoluteTimeRange,
   queries?: DataQuery[],
@@ -224,7 +232,7 @@ export function dataFrameToLogsModel(
       );
       logsModel.visibleRange = visibleRange;
       logsModel.bucketSize = bucketSize;
-      logsModel.series = makeDataFramesForLogs(sortedRows, bucketSize);
+      logsModel.series = makeDataFramesForLogs(sortedRows, bucketSize, theme);
 
       if (logsModel.meta) {
         logsModel.meta = adjustMetaInfo(logsModel, visibleRangeMs, requestedRangeMs);
@@ -592,10 +600,10 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
 /**
  * Returns field configuration used to render logs volume bars
  */
-function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean) {
+function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean, theme: GrafanaTheme2) {
   // When the level is unspecified, or empty, we want to display "unspecified"
   const name = oneLevelDetected && level === LogLevel.unspecified ? 'logs' : level || 'unspecified';
-  const color = LogLevelColor[level];
+  const color = getLogLevelColors(theme)[level];
   return {
     displayNameFromDS: name,
     color: {
@@ -621,13 +629,14 @@ function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean) {
 const updateLogsVolumeConfig = (
   dataFrame: DataFrame,
   extractLevel: (dataFrame: DataFrame) => LogLevel,
-  oneLevelDetected: boolean
+  oneLevelDetected: boolean,
+  theme: GrafanaTheme2
 ): DataFrame => {
   dataFrame.fields = dataFrame.fields.map((field) => {
     if (field.type === FieldType.number) {
       field.config = {
         ...field.config,
-        ...getLogVolumeFieldConfig(extractLevel(dataFrame), oneLevelDetected),
+        ...getLogVolumeFieldConfig(extractLevel(dataFrame), oneLevelDetected, theme),
       };
     }
     return field;
@@ -637,6 +646,7 @@ const updateLogsVolumeConfig = (
 
 type LogsVolumeQueryOptions<T extends DataQuery> = {
   targets: T[];
+  theme: GrafanaTheme2;
 };
 
 function defaultExtractLevel(dataFrame: DataFrame): LogLevel {
@@ -726,7 +736,12 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
                 ...logsVolumeCustomMetaData,
               },
             };
-            return updateLogsVolumeConfig(dataFrame, extractLevel, framesByRefId[dataFrame.refId].length === 1);
+            return updateLogsVolumeConfig(
+              dataFrame,
+              extractLevel,
+              framesByRefId[dataFrame.refId].length === 1,
+              options.theme
+            );
           });
 
           observer.next({

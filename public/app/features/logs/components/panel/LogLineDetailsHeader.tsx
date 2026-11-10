@@ -4,9 +4,9 @@ import { useCallback, useMemo, useRef, type ChangeEvent, type MouseEvent } from 
 import { colorManipulator, type GrafanaTheme2, type LogRowModel, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Dropdown, IconButton, Input, Menu, useStyles2 } from '@grafana/ui';
+import { copyTextToClipboard, Dropdown, IconButton, Input, Menu, useStyles2 } from '@grafana/ui';
 
-import { copyText, handleOpenLogsContextClick } from '../../utils';
+import { handleOpenLogsContextClick } from '../../utils';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { type LogLineDetailsMode } from './LogLineDetails';
@@ -73,12 +73,12 @@ export const LogLineDetailsHeader = ({
   }, [focusLogLine, log, reportInteractionWrapper]);
 
   const copyLogLine = useCallback(() => {
-    copyText(log.entry, containerRef);
+    copyTextToClipboard(log.entry, containerRef);
     reportInteractionWrapper('logs_log_line_details_header_copy_clicked');
   }, [log.entry, reportInteractionWrapper]);
 
   const copyLogLineAsJson = useCallback(async () => {
-    copyText(await getLogAsJSON(log), containerRef);
+    copyTextToClipboard(await getLogAsJSON(log), containerRef);
     reportInteractionWrapper('logs_log_line_details_header_copy_json_clicked');
   }, [log, reportInteractionWrapper]);
 

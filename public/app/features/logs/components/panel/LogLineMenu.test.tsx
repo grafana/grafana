@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 
 import { type DataSourceApi, CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { type DataSourceSrv, getDataSourceSrv, getDataSourceInstance } from '@grafana/runtime';
+import { copyTextToClipboard } from '@grafana/ui';
 
-import * as logsUtils from '../../utils';
 import { createLogLine } from '../mocks/logRow';
 
 import { LogDetailsContextProvider } from './LogDetailsContext';
@@ -13,6 +13,11 @@ import { LogLineMenu, type LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider } from './LogListContext';
 import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { type LogListModel } from './processing';
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  copyTextToClipboard: jest.fn(),
+}));
 
 jest.mock('./LogListContext');
 
@@ -77,7 +82,7 @@ describe('LogLineMenu', () => {
     });
 
     test('Copy log line as JSON copies structured JSON from the log', async () => {
-      const copyTextSpy = jest.spyOn(logsUtils, 'copyText').mockResolvedValue(undefined);
+      const copyTextSpy = jest.mocked(copyTextToClipboard).mockResolvedValue(undefined);
 
       render(
         <LogListContextProvider {...contextProps}>

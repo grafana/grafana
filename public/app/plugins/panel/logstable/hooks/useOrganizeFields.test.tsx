@@ -1,10 +1,13 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
 import {
+  createTheme,
+  ThemeContext,
   type DataFrame,
   DataFrameType,
   FieldType,
   LoadingState,
+  MappingType,
   standardEditorsRegistry,
   toDataFrame,
 } from '@grafana/data';
@@ -273,6 +276,44 @@ describe('useOrganizeFields', () => {
   });
 
   describe('log level column enhancements', () => {
+    test('updates default level colors when the theme context changes', async () => {
+      let theme = createTheme({ colors: { mode: 'dark' } });
+      const { result, rerender } = renderHook(
+        () =>
+          useOrganizeFields({
+            extractedFrame,
+            bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+            levelFieldName: 'level',
+            logsFrame: testLogsFrame,
+            onPermalinkClick: () => null,
+            options: {},
+            supportsPermalink: false,
+            timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+            fieldConfig: { defaults: {}, overrides: [] },
+          }),
+        { wrapper: ({ children }) => <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider> }
+      );
+
+      await waitFor(() => {
+        const mapping = result.current.organizedFrame?.fields.find((field) => field.name === 'level')?.config
+          .mappings?.[0];
+        expect(mapping?.type === MappingType.ValueToText ? mapping.options.debug : undefined).toEqual({
+          color: '#9e9e9e',
+        });
+      });
+
+      theme = createTheme({ colors: { mode: 'light' } });
+      rerender();
+
+      await waitFor(() => {
+        const mapping = result.current.organizedFrame?.fields.find((field) => field.name === 'level')?.config
+          .mappings?.[0];
+        expect(mapping?.type === MappingType.ValueToText ? mapping.options.debug : undefined).toEqual({
+          color: '#696969',
+        });
+      });
+    });
+
     test('applies default level mapping and pill cell mode for level field', async () => {
       const { result: organizedFields } = renderHook(() =>
         useOrganizeFields({
