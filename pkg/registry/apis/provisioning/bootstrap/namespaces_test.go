@@ -3,10 +3,9 @@ package bootstrap
 import (
 	"context"
 	"errors"
-	"os"
-	"path/filepath"
-	"sort"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,61 +20,30 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestDeclaredNamespaces(t *testing.T) {
-	root := t.TempDir()
-	write := func(path, content string) {
-		t.Helper()
-		full := filepath.Join(root, path)
-		require.NoError(t, os.MkdirAll(filepath.Dir(full), 0o750))
-		require.NoError(t, os.WriteFile(full, []byte(content), 0o600))
-	}
-
-	write("repo.yaml", "apiVersion: provisioning.grafana.app/v0alpha1\nkind: Repository\nmetadata:\n  name: a\n  namespace: org-2\n")
-	write("nested/dashboard.json", `{"apiVersion":"dashboard.grafana.app/v1beta1","kind":"Dashboard","metadata":{"name":"b","namespace":"org-3"},"spec":{}}`)
-	write("default.yaml", "apiVersion: provisioning.grafana.app/v0alpha1\nkind: Repository\nmetadata:\n  name: c\n")
-	write("classic.json", `{"title":"classic","schemaVersion":41,"panels":[]}`)
-	write("README.md", "# not a resource")
-	write("notes.txt", "metadata:\n  namespace: org-9\n")
-	write(".hidden/secret.yaml", "metadata:\n  namespace: org-8\n")
-	write("broken.yaml", "apiVersion: [")
-
-	got, err := DeclaredNamespaces(context.Background(), root)
-	require.NoError(t, err)
-	assert.Equal(t, []string{"org-2", "org-3"}, sorted(got),
-		"only decodable resource files that name a namespace declare one")
-}
-
-func TestDeclaredNamespacesMissingDirectory(t *testing.T) {
-	_, err := DeclaredNamespaces(context.Background(), filepath.Join(t.TempDir(), "absent"))
-	assert.Error(t, err)
-}
-
-func TestRegistrarRegistersEveryDeclaredNamespace(t *testing.T) {
-	root := t.TempDir()
-	writeManifest(t, root, "repo.yaml", "org-2")
+func TestRegistrarRegistersEveryOrg(t *testing.T) {
 	client := newClientset()
 
-	require.NoError(t, registrar(root, "org-2", "org-3").Reconcile(context.Background(), clientRepos(client)))
+	require.NoError(t, registrar("org-2", "org-3").Reconcile(context.Background(), clientRepos(client)))
 
-	assert.Equal(t, config.Path, pathIn(t, client, "default"),
-		"the default org owns the manifests that name no namespace")
-	assert.Equal(t, config.Path, pathIn(t, client, "org-2"))
-	assertAbsent(t, client, "org-3")
+	for _, ns := range []string{"default", "org-2", "org-3"} {
+		assert.Equal(t, config.Path, pathIn(t, client, ns))
+	}
 }
 
-func TestRegistrarRemovesARepositoryNoManifestNames(t *testing.T) {
-	root := t.TempDir()
-	client := newClientset(ownedRepository(t, "org-2"))
+func TestRegistrarRegistersTheDefaultOrgWithoutARecord(t *testing.T) {
+	client := newClientset()
+	reg := registrar()
+	reg.Orgs = func(context.Context) ([]string, error) { return nil, nil }
 
-	require.NoError(t, registrar(root, "org-2").Reconcile(context.Background(), clientRepos(client)))
+	// auto_assign_org_id can name an org with no record, and bootstrap_path provisions it.
+	require.NoError(t, reg.Reconcile(context.Background(), clientRepos(client)))
 
-	assertAbsent(t, client, "org-2")
 	assert.Equal(t, config.Path, pathIn(t, client, "default"))
 }
 
 func TestRegistrarRemovesEveryRepositoryWhenThePathIsCleared(t *testing.T) {
 	client := newClientset(ownedRepository(t, "default"), ownedRepository(t, "org-2"))
-	reg := registrar("", "org-2")
+	reg := registrar("org-2")
 	reg.Path = ""
 
 	require.NoError(t, reg.Reconcile(context.Background(), clientRepos(client)))
@@ -84,31 +52,16 @@ func TestRegistrarRemovesEveryRepositoryWhenThePathIsCleared(t *testing.T) {
 	assertAbsent(t, client, "org-2")
 }
 
-func TestRegistrarReportsAnUnknownNamespace(t *testing.T) {
-	root := t.TempDir()
-	writeManifest(t, root, "repo.yaml", "org-7")
+func TestRegistrarKeepsReconcilingAfterOneOrgFails(t *testing.T) {
 	client := newClientset()
-
-	// The manifest names an org this instance does not have, so nothing provisions it. The
-	// error is logged; the orgs that do exist are still reconciled.
-	require.NoError(t, registrar(root, "org-2").Reconcile(context.Background(), clientRepos(client)))
-
-	assertAbsent(t, client, "org-7")
-	assert.Equal(t, config.Path, pathIn(t, client, "default"))
-}
-
-func TestRegistrarKeepsReconcilingAfterOneNamespaceFails(t *testing.T) {
-	root := t.TempDir()
-	writeManifest(t, root, "repo.yaml", "org-2")
-	client := newClientset()
-
 	repos := func(namespace string) Repositories {
 		if namespace == "default" {
 			return failingRepositories{}
 		}
 		return client.ProvisioningV0alpha1().Repositories(namespace)
 	}
-	err := registrar(root, "org-2").Reconcile(context.Background(), repos)
+
+	err := registrar("org-2").Reconcile(context.Background(), repos)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "namespace default")
@@ -116,11 +69,36 @@ func TestRegistrarKeepsReconcilingAfterOneNamespaceFails(t *testing.T) {
 }
 
 func TestRegistrarFailsWhenTheOrgsCannotBeListed(t *testing.T) {
-	reg := registrar(t.TempDir())
+	reg := registrar()
 	reg.Orgs = func(context.Context) ([]string, error) { return nil, errors.New("boom") }
 
-	err := reg.Reconcile(context.Background(), clientRepos(newClientset()))
-	assert.Error(t, err)
+	assert.Error(t, reg.Reconcile(context.Background(), clientRepos(newClientset())))
+}
+
+func TestRegistrarRunRegistersAnOrgCreatedAfterStartup(t *testing.T) {
+	client := newClientset()
+	var mu sync.Mutex
+	namespaces := make([]string, 0, 2)
+	namespaces = append(namespaces, "default")
+	reg := registrar()
+	reg.Orgs = func(context.Context) ([]string, error) {
+		mu.Lock()
+		defer mu.Unlock()
+		return append([]string(nil), namespaces...), nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go reg.Run(ctx, clientRepos(client), time.Millisecond)
+
+	mu.Lock()
+	namespaces = append(namespaces, "org-4")
+	mu.Unlock()
+
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		_, err := client.ProvisioningV0alpha1().Repositories("org-4").Get(ctx, Name, metav1.GetOptions{})
+		assert.NoError(c, err)
+	}, 5*time.Second, time.Millisecond)
 }
 
 func TestOrgNamespaceListerDeduplicates(t *testing.T) {
@@ -134,16 +112,16 @@ func TestOrgNamespaceListerDeduplicates(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, got, 1)
 
+	// On-prem the first org is the default namespace.
 	lister = OrgNamespaceLister(request.GetNamespaceMapper(&setting.Cfg{}), orgSvc)
 	got, err = lister(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, []string{"default", "org-2", "org-3"}, got)
 }
 
-func registrar(root string, orgNamespaces ...string) Registrar {
+func registrar(orgNamespaces ...string) Registrar {
 	return Registrar{
 		Path:             config.Path,
-		Root:             root,
 		DefaultNamespace: "default",
 		Orgs: func(context.Context) ([]string, error) {
 			return append([]string{"default"}, orgNamespaces...), nil
@@ -155,12 +133,6 @@ func clientRepos(client *fakeclientset.Clientset) func(string) Repositories {
 	return func(namespace string) Repositories {
 		return client.ProvisioningV0alpha1().Repositories(namespace)
 	}
-}
-
-func writeManifest(t *testing.T, root, path, namespace string) {
-	t.Helper()
-	content := "apiVersion: provisioning.grafana.app/v0alpha1\nkind: Repository\nmetadata:\n  name: declared\n  namespace: " + namespace + "\n"
-	require.NoError(t, os.WriteFile(filepath.Join(root, path), []byte(content), 0o600))
 }
 
 func ownedRepository(t *testing.T, namespace string) *provisioning.Repository {
@@ -184,15 +156,6 @@ func assertAbsent(t *testing.T, client *fakeclientset.Clientset, namespace strin
 	t.Helper()
 	_, err := client.ProvisioningV0alpha1().Repositories(namespace).Get(context.Background(), Name, metav1.GetOptions{})
 	assert.True(t, apierrors.IsNotFound(err), "expected no bootstrap repository in %s, got %v", namespace, err)
-}
-
-func sorted(set map[string]struct{}) []string {
-	out := make([]string, 0, len(set))
-	for ns := range set {
-		out = append(out, ns)
-	}
-	sort.Strings(out)
-	return out
 }
 
 type failingRepositories struct{}

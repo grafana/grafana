@@ -284,12 +284,13 @@ func applyIncrementalChanges(
 				if createdNothing(err) {
 					quotaTracker.Release()
 				}
-				writeSpan.RecordError(err)
-				resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
 				if errors.Is(err, resources.ErrForeignNamespace) {
-					// Reported, not failed: the org this file names provisions it from its
-					// own bootstrap repository over the same directory.
+					// Not this org's file. Every org reads the same bootstrap directory, so
+					// most files belong to some other org: normal, not a warning.
 					resultBuilder.AsSkipped()
+				} else {
+					writeSpan.RecordError(err)
+					resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
 				}
 			}
 			resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)

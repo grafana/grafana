@@ -35,7 +35,7 @@ func testManagerKindConflictQuota(t *testing.T, syncType string) {
 		usage        int64
 		writeErr     error
 		allowsCreate bool
-		wantIgnored  bool
+		wantSkipped  bool
 	}{
 		{
 			name: "rejected create releases quota", action: repository.FileActionCreated, usage: 9,
@@ -59,7 +59,7 @@ func testManagerKindConflictQuota(t *testing.T, syncType string) {
 			name: "a file another org owns releases quota", action: repository.FileActionCreated, usage: 9,
 			writeErr: resources.NewResourceValidationError(
 				fmt.Errorf("%w: org-2", resources.ErrForeignNamespace)),
-			allowsCreate: true, wantIgnored: true,
+			allowsCreate: true, wantSkipped: true,
 		},
 		{
 			name: "rejected update does not release quota", action: repository.FileActionUpdated, usage: 10,
@@ -143,11 +143,16 @@ func testManagerKindConflictQuota(t *testing.T, syncType string) {
 			firstResult, validResult := results["first.json"], results["valid.json"]
 			require.Equal(t, "first.json", firstResult.Path())
 			wantAction := tt.action
-			if tt.wantIgnored {
+			if tt.wantSkipped {
 				wantAction = repository.FileActionIgnored
 			}
 			require.Equal(t, wantAction, firstResult.Action())
-			if createdNothing(tt.writeErr) {
+			if tt.wantSkipped {
+				// Every org reads the same bootstrap directory, so a file for another org is
+				// the normal case: skipped without a warning, and the sync stays clean.
+				require.NoError(t, firstResult.Error())
+				require.NoError(t, firstResult.Warning())
+			} else if createdNothing(tt.writeErr) {
 				require.NoError(t, firstResult.Error())
 				require.ErrorIs(t, firstResult.Warning(), tt.writeErr)
 				require.Equal(t, provisioning.ReasonResourceInvalid, firstResult.WarningReason())

@@ -117,8 +117,8 @@ type parser struct {
 
 	folderMetadataEnabled bool
 
-	// fileProvisioned marks the bootstrap repository, which is registered per org over one
-	// mounted directory: there a file's own namespace picks the org that provisions it.
+	// fileProvisioned marks the bootstrap repository, which is registered in every org over
+	// one mounted directory: there a file's own namespace picks the org that provisions it.
 	fileProvisioned bool
 }
 

@@ -188,11 +188,9 @@ func TestBootstrapRegistrarFromSettings(t *testing.T) {
 	tests := []struct {
 		name            string
 		path            string
-		homePath        string
 		repositoryTypes []string
 		allowedTargets  []string
 		wantPath        string
-		wantRoot        string
 		wantErr         bool
 	}{
 		{
@@ -201,18 +199,15 @@ func TestBootstrapRegistrarFromSettings(t *testing.T) {
 			name: "disabled but still reconcilable when no path is configured",
 		},
 		{
-			name:     "resolves a relative path against the home path",
+			name:     "keeps the configured path",
 			path:     "conf/provisioning/bootstrap",
-			homePath: "/usr/share/grafana",
 			wantPath: "conf/provisioning/bootstrap",
-			wantRoot: "/usr/share/grafana/conf/provisioning/bootstrap",
 		},
 		{
 			name:            "accepts an explicit type list that enables local repositories",
 			path:            "conf/provisioning/bootstrap",
 			repositoryTypes: []string{"github", "local"},
 			wantPath:        "conf/provisioning/bootstrap",
-			wantRoot:        "conf/provisioning/bootstrap",
 		},
 		{
 			// The path is added to the local-repository allowlist, which is matched by prefix,
@@ -249,7 +244,6 @@ func TestBootstrapRegistrarFromSettings(t *testing.T) {
 				allowedTargets = []string{"folder", "folderless"}
 			}
 			got, err := bootstrapRegistrarFromSettings(&setting.Cfg{
-				HomePath:                    tt.homePath,
 				ProvisioningBootstrapPath:   tt.path,
 				ProvisioningRepositoryTypes: tt.repositoryTypes,
 				ProvisioningAllowedTargets:  allowedTargets,
@@ -260,7 +254,6 @@ func TestBootstrapRegistrarFromSettings(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantPath, got.Path)
-			assert.Equal(t, tt.wantRoot, got.Root)
 			assert.Equal(t, "default", got.DefaultNamespace)
 			assert.True(t, got.Reconcilable())
 		})

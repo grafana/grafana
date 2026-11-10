@@ -41,7 +41,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	repogithub "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
@@ -177,8 +176,8 @@ type APIBuilder struct {
 	// reconcile. Otherwise the controllers use the apiserver informer.
 	natsSubscriber nats.Subscriber
 
-	// bootstrapRegistrar registers the read-only local repository from
-	// [provisioning] bootstrap_path in each org namespace the manifests name.
+	// bootstrapRegistrar keeps the read-only local repository from
+	// [provisioning] bootstrap_path registered in every org.
 	bootstrapRegistrar bootstrap.Registrar
 
 	// keysOnlyReList makes the connection informer's periodic re-list ask storage
@@ -494,6 +493,14 @@ func RegisterAPIService(
 	return builder, nil
 }
 
+// resyncInterval falls back to the default when [provisioning] resync_interval is unset.
+func resyncInterval(configured time.Duration) time.Duration {
+	if configured <= 0 {
+		return setting.ProvisioningControllerResyncIntervalDefault
+	}
+	return configured
+}
+
 // allowedSyncTargets drops the instance target when a bootstrap repository exists, since that
 // target needs an instance with no other repository. Saying so at admission beats a conflict.
 func allowedSyncTargets(configured []string, bootstrapEnabled bool) []provisioning.SyncTargetType {
@@ -536,7 +543,6 @@ func bootstrapRegistrarFromSettings(cfg *setting.Cfg, orgSvc org.Service) (boots
 	}
 
 	registrar.Path = cfg.ProvisioningBootstrapPath
-	registrar.Root = local.ResolvePath(cfg.HomePath, cfg.ProvisioningBootstrapPath)
 	return registrar, nil
 }
 
@@ -1098,6 +1104,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 					logging.FromContext(postStartHookCtx.Context).Error("failed to reconcile bootstrap repositories",
 						"path", b.bootstrapRegistrar.Path, "error", err)
 				}
+				// An org created after startup needs its own repository, and nothing publishes
+				// an org-created event, so the registrar re-runs on the controllers' cadence.
+				go b.bootstrapRegistrar.Run(postStartHookCtx.Context, repos, resyncInterval(b.controllerResyncInterval))
 			}
 
 			// if running solely CRUD or not the preferred version, skip controllers/workers setup
@@ -1109,10 +1118,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// the repository and connection controllers (the jobs informer uses
 			// job_poll_interval, below). Configurable via [provisioning]
 			// resync_interval; <=0 falls back to the default.
-			informerFactoryResyncInterval := b.controllerResyncInterval
-			if informerFactoryResyncInterval <= 0 {
-				informerFactoryResyncInterval = setting.ProvisioningControllerResyncIntervalDefault
-			}
+			informerFactoryResyncInterval := resyncInterval(b.controllerResyncInterval)
 			if nats.Enabled(b.natsSubscriber) {
 				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
 			}
