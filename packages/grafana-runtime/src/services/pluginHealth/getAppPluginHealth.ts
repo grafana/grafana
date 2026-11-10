@@ -69,7 +69,7 @@ function getAppHealth(pluginId: string, apiVersion: string, showErrorAlert?: boo
 /**
  * Get the health for a plugin.
  * @param pluginId - The id of the plugin.
- * @param showErrorAlert - Whether to show a UI error alert if the request fails.
+ * @param showErrorAlert - Whether to show a UI error alert if the request fails. Defaults to `false`.
  * @param apiVersion - Which api version to use for the request. Defaults to the current api version.
  * @returns The plugin's `HealthCheckResult`, or `undefined` for non-app plugins
  * when k8s metadata is available.

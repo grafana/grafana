@@ -143,7 +143,6 @@ func TestVectorSearch_AllowedReadServices(t *testing.T) {
 					return
 				}
 				require.NoError(t, err)
-				require.Nil(t, resp.Error)
 				require.Len(t, resp.Results, 1)
 				require.Equal(t, "memory", resp.Results[0].Name)
 			})

@@ -290,6 +290,82 @@ func TestSQLKVInsertDataImportBatchRollsBackOnExecError(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestSQLKVWithStatementTimeout(t *testing.T) {
+	setTimeout := regexp.QuoteMeta("SET LOCAL statement_timeout = 60000")
+	setErr := errors.New("set failed")
+	fnErr := errors.New("fn failed")
+
+	t.Run("runs fn in a committed transaction with the timeout", func(t *testing.T) {
+		sqlKV, _, mock := setupSQLKVMock(t, "postgres")
+		mock.ExpectBegin()
+		mock.ExpectExec(setTimeout).WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectCommit()
+
+		err := sqlKV.WithStatementTimeout(context.Background(), time.Minute, func(ctx context.Context) error {
+			_, ok := dbtxFromCtx(ctx)
+			require.True(t, ok, "fn gets the transaction")
+			return nil
+		})
+		require.NoError(t, err)
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("rolls back when setting the timeout fails", func(t *testing.T) {
+		sqlKV, _, mock := setupSQLKVMock(t, "postgres")
+		mock.ExpectBegin()
+		mock.ExpectExec(setTimeout).WillReturnError(setErr)
+		mock.ExpectRollback()
+
+		err := sqlKV.WithStatementTimeout(context.Background(), time.Minute, func(context.Context) error {
+			t.Fatal("fn must not run")
+			return nil
+		})
+		require.ErrorIs(t, err, setErr)
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("rolls back and returns the fn error", func(t *testing.T) {
+		sqlKV, _, mock := setupSQLKVMock(t, "postgres")
+		mock.ExpectBegin()
+		mock.ExpectExec(setTimeout).WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectRollback()
+
+		err := sqlKV.WithStatementTimeout(context.Background(), time.Minute, func(context.Context) error { return fnErr })
+		require.ErrorIs(t, err, fnErr)
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	for _, tc := range []struct {
+		name       string
+		driverName string
+		timeout    time.Duration
+		externalTx bool
+	}{
+		{name: "zero timeout", driverName: "postgres"},
+		{name: "mysql", driverName: "mysql", timeout: time.Minute},
+		{name: "sqlite", driverName: "sqlite", timeout: time.Minute},
+		{name: "context transaction", driverName: "postgres", timeout: time.Minute, externalTx: true},
+	} {
+		t.Run("runs fn as is with "+tc.name, func(t *testing.T) {
+			sqlKV, db, mock := setupSQLKVMock(t, tc.driverName)
+			ctx := context.Background()
+			if tc.externalTx {
+				mock.ExpectBegin()
+				tx, err := db.Begin()
+				require.NoError(t, err)
+				ctx = ContextWithDBTX(ctx, tx)
+			}
+
+			err := sqlKV.WithStatementTimeout(ctx, tc.timeout, func(got context.Context) error {
+				require.Equal(t, ctx, got, "fn gets the caller's context")
+				return fnErr
+			})
+			require.ErrorIs(t, err, fnErr)
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
 func TestSQLKVInsertDataImportBatchUsesPlaceholderFields(t *testing.T) {
 	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
 	rows := buildDataImportRows(1)

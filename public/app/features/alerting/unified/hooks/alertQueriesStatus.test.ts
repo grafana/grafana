@@ -4,7 +4,7 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { mockDataSource } from '../mocks';
+import { mockDataSource } from '../testSetup/mockDataSource';
 
 import { type AlertQueryDataSources, getAlertQueriesStatus, useAlertQueryDataSources } from './alertQueriesStatus';
 

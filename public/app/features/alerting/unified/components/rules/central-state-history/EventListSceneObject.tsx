@@ -31,7 +31,7 @@ import { AITriageButtonComponent } from '../../../enterprise-components/AI/AIGen
 import { usePagination } from '../../../hooks/usePagination';
 import { useSlowQuery } from '../../../hooks/useSlowQuery';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/constants';
 import { createRelativeUrl } from '../../../utils/url';
 import { CollapseToggle } from '../../CollapseToggle';
 import { type LogRecord } from '../state-history/common';

@@ -1,7 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
-import { mockDataSource } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
+import { mockDataSource } from '../../testSetup/mockDataSource';
 import { mockK8sAlertRule } from '../mocks/handlers';
 
 import { AlertRuleRow } from './AlertRuleRow';
@@ -119,6 +119,11 @@ describe('AlertRuleRow', () => {
     renderRow({ searchHit: baseHit() });
 
     expect(screen.queryByText(/label/)).not.toBeInTheDocument();
+  });
+
+  it('renders actions in the right column when provided', () => {
+    renderRow({ searchHit: baseHit(), actions: <button>More</button> });
+    expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
   });
 
   describe('instance counts', () => {
