@@ -473,6 +473,38 @@ func TestCallerIdentity(t *testing.T) {
 	})
 }
 
+// extraOnlyAuthInfo mimics identity types that expose a service identity but never set the innermost key.
+type extraOnlyAuthInfo struct {
+	authtypes.AuthInfo
+	extra map[string][]string
+}
+
+func (a extraOnlyAuthInfo) GetExtra() map[string][]string { return a.extra }
+
+func TestOriginCallerIdentity(t *testing.T) {
+	t.Run("returns unknown when context has no auth info", func(t *testing.T) {
+		assert.Equal(t, "unknown", originCallerIdentity(context.Background()))
+	})
+
+	t.Run("returns the innermost service identity when present", func(t *testing.T) {
+		ctx := authtypes.WithAuthInfo(context.Background(), extraOnlyAuthInfo{extra: map[string][]string{
+			authn.ServiceIdentityKey:          {"hosted-grafana-api"},
+			authn.InnermostServiceIdentityKey: {"stack-state-service"},
+		}})
+
+		assert.Equal(t, "stack-state-service", originCallerIdentity(ctx))
+		assert.Equal(t, "hosted-grafana-api", callerIdentity(ctx))
+	})
+
+	t.Run("falls back to the caller when the innermost key is not set", func(t *testing.T) {
+		ctx := authtypes.WithAuthInfo(context.Background(), extraOnlyAuthInfo{extra: map[string][]string{
+			authn.ServiceIdentityKey: {"stack-state-service"},
+		}})
+
+		assert.Equal(t, "stack-state-service", originCallerIdentity(ctx))
+	})
+}
+
 func TestProviderManager_GetMeta_RecordsFetchErrors(t *testing.T) {
 	counter := func(reason string) float64 {
 		return testutil.ToFloat64(metrics.MetaFetchErrorsTotal.WithLabelValues("mock", reason))

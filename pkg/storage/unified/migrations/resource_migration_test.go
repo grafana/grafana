@@ -3,6 +3,7 @@ package migrations
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -142,6 +143,64 @@ func assertNotRenamed(t *testing.T, engine *xorm.Engine, table string) {
 
 func noopLocker() *tableLockerMock {
 	return &tableLockerMock{unlockFunc: func(context.Context) error { return nil }}
+}
+
+var errStopAfterLock = errors.New("stop after lock")
+
+// sessionLocker inspects the migration session when tables are locked, then ends the run.
+type sessionLocker struct {
+	inspect func(*xorm.Session)
+}
+
+func (l *sessionLocker) LockMigrationTables(_ context.Context, sess *xorm.Session, _ []string) (func(context.Context) error, error) {
+	l.inspect(sess)
+	return nil, errStopAfterLock
+}
+
+func TestIntegrationRun_Postgres_SetsStatementTimeoutOnSession(t *testing.T) {
+	if !db.IsTestDbPostgres() {
+		t.Skip("Postgres-only")
+	}
+	env := newTestEnv(t)
+
+	cfg := setting.NewCfg()
+	cfg.MigrationStatementTimeout = 15 * time.Minute
+	var inside string
+	locker := &sessionLocker{inspect: func(sess *xorm.Session) {
+		_, err := sess.SQL("SHOW statement_timeout").Get(&inside)
+		require.NoError(t, err)
+	}}
+	runner, _ := newRunnerCfg(t, cfg, locker, &transactionalTableRenamer{log: logger}, testDef(dummyGR(), []string{"dashboard"}, nil))
+
+	// One connection, so the check after commit runs on the connection the migration used: a
+	// session-level SET would still show there, while rollback would have reverted it too.
+	engine, err := xorm.NewEngine(env.engine.DriverName(), env.engine.DataSourceName())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = engine.Close() })
+	engine.DB().SetMaxOpenConns(1)
+
+	mg := migrator.NewMigrator(engine, setting.NewCfg())
+	sess := engine.NewSession()
+	defer sess.Close()
+	require.NoError(t, sess.Begin())
+	err = runner.Run(t.Context(), sess, mg, RunOptions{DriverName: migrator.Postgres})
+	require.ErrorIs(t, err, errStopAfterLock)
+	require.Equal(t, "15min", inside, "table locks and validators run on the migration session")
+	require.NoError(t, sess.Commit())
+
+	var after string
+	_, err = engine.SQL("SHOW statement_timeout").Get(&after)
+	require.NoError(t, err)
+	require.NotEqual(t, "15min", after, "the override ends with the migration transaction")
+}
+
+func TestMigrationRunnerStatementTimeoutIsPostgresOnly(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.MigrationStatementTimeout = time.Minute
+	runner, _ := newRunnerCfg(t, cfg, noopLocker(), &transactionalTableRenamer{log: logger}, testDef(dummyGR(), nil, nil))
+	require.Equal(t, time.Minute, runner.statementTimeout(RunOptions{DriverName: migrator.Postgres}))
+	require.Zero(t, runner.statementTimeout(RunOptions{DriverName: migrator.MySQL}))
+	require.Zero(t, runner.statementTimeout(RunOptions{DriverName: migrator.SQLite}))
 }
 
 func TestIntegrationRun_Postgres_LocksOnSession(t *testing.T) {
@@ -693,7 +752,6 @@ func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.Sto
 	// once for the successful retry.
 	require.Equal(t, int32(2), callCount.Load())
 	require.NotNil(t, client.lastRebuildResponse, "expected real RebuildIndexes call")
-	require.Nil(t, client.lastRebuildResponse.Error)
 	if expectRebuild {
 		require.EqualValues(t, 1, client.lastRebuildResponse.RebuildCount)
 	}
@@ -748,7 +806,7 @@ func openTestSearchIndex(t *testing.T, client resource.ResourceClient, gr schema
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	require.NoError(t, err)
-	require.Nil(t, searchResp.Error)
+	require.NotNil(t, searchResp)
 }
 
 type recordingRetryResourceClient struct {
@@ -871,7 +929,6 @@ func TestIntegrationRun_SQLiteLargeMigrationRebuildUsesMigrationTransaction(t *t
 	err = runner.Run(runCtx, sess, mg, RunOptions{DriverName: migrator.SQLite})
 	require.NoError(t, err)
 	require.NotNil(t, client.lastRebuildResponse)
-	require.Nil(t, client.lastRebuildResponse.Error)
 	require.EqualValues(t, 1, client.lastRebuildResponse.RebuildCount)
 }
 

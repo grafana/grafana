@@ -14,7 +14,7 @@ import {
   TestVariable,
   VizPanel,
 } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { groupSelectionInto } from '../actions/layout/groupSelectionInto';
