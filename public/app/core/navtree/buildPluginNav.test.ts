@@ -351,6 +351,26 @@ describe('applyPluginNav', () => {
       config.namespace = namespace;
     });
 
+    it('leaves the assistant create action off a pages include that stays out of the nav', () => {
+      const namespace = config.namespace;
+      config.namespace = 'stacks-123';
+      setup({ permissions: ['plugins.app:access', 'assistant.ext.grafana.app/pages:create'] });
+
+      const merged = merge(
+        app('grafana-assistant-app', 'Assistant', [
+          page('Home', '/a/grafana-assistant-app'),
+          page('Pages', '/a/grafana-assistant-app/pages', { addToNav: false }),
+        ])
+      );
+
+      // the page is still lifted into place, it just has no create action under it
+      const pagesEntry = findById(merged, 'standalone-plugin-page-/a/grafana-assistant-app/pages');
+      expect(pagesEntry).toBeDefined();
+      expect(pagesEntry?.children ?? []).toEqual([]);
+
+      config.namespace = namespace;
+    });
+
     it('drops that app when its page fails the include access check', () => {
       setup({ orgRole: 'Viewer' });
       const merged = merge(

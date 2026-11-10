@@ -5,11 +5,18 @@ import {
   type PluginInclude,
   PluginIncludeType,
 } from '@grafana/data';
+import { ASSISTANT_APP_ID } from 'app/core/appPluginIds';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor, isOperatorPlacedSection } from './appNavConfig';
+import {
+  type AppNavConfig,
+  appNavConfigFor,
+  appNavPathConfigFor,
+  ASSISTANT_PAGES_PATH,
+  isOperatorPlacedSection,
+} from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
 import {
@@ -28,6 +35,17 @@ import {
 // permissions map flattens scopes away, so the per-plugin scope the server
 // applies (plugins:id:*) cannot be checked here.
 const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, Admin: 3 };
+
+// No pluginId: routes.tsx registers a catch-all app route for every plugin nav
+// item, which would make the pages section own every Assistant url.
+const ASSISTANT_CREATE_PAGE_ACTION: NavModelItem = {
+  text: 'New Grafana Page',
+  id: 'assistant/pages/new',
+  icon: 'plus',
+  url: `${ASSISTANT_PAGES_PATH}/new`,
+  hideFromTabs: true,
+  isCreateAction: true,
+};
 
 // Apps with no nav config all carry the same sort weight, so sortNavTree leaves
 // them in whatever order they were placed. Order them here, by the title
@@ -151,6 +169,8 @@ function buildAppLink(app: AppPluginConfig): {
       icon: toIconName(include.icon),
       pluginId: app.id,
       url: include.path,
+      // Attached before placement, so the action follows the page wherever it lands
+      ...(canCreateAssistantPage(app, include) && { children: [ASSISTANT_CREATE_PAGE_ACTION] }),
     };
 
     // A page with its own placement leaves the app entirely, so it is not one of
@@ -305,6 +325,20 @@ function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: 
       ...(imgFromAppLogo && app.info?.logos && { img: withAppSubUrl(app.info.logos.large) }),
     },
   ];
+}
+
+/**
+ * Whether this include is the Assistant's pages section, asking for the nav,
+ * with the permission to create a page. Built here rather than as an override
+ * because only the include says whether the page wanted the nav at all.
+ */
+function canCreateAssistantPage(app: AppPluginConfig, include: PluginInclude): boolean {
+  return (
+    app.id === ASSISTANT_APP_ID &&
+    include.path === ASSISTANT_PAGES_PATH &&
+    Boolean(include.addToNav) &&
+    contextSrv.hasPermission('assistant.ext.grafana.app/pages:create')
+  );
 }
 
 function hasAccessToInclude(include: PluginInclude): boolean {
