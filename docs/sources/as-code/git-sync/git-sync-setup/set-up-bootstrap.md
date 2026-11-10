@@ -1,24 +1,25 @@
 ---
-description: Instructions for bootstrapping Git Sync from a directory on disk, so a Grafana instance provisions its own repositories and connections at startup.
+description: Instructions for bootstrapping the provisioning configuration from a directory on disk, so a Grafana instance provisions its own repositories and connections at startup.
 keywords:
   - set up
   - git sync
   - bootstrap
   - as code
   - provisioning
+  - file provisioning
   - configuration
 labels:
   products:
     - enterprise
     - oss
-title: Bootstrap Git Sync from a directory
+title: Bootstrap provisioning configuration from a directory
 weight: 220
 canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/git-sync-setup/set-up-bootstrap/
 ---
 
-# Bootstrap Git Sync from a directory
+# Bootstrap provisioning configuration from a directory
 
-Starting in Grafana 13.4.0, you can point Grafana at a directory on disk that declares the instance's own Git Sync configuration. Grafana registers a repository over that directory at startup and syncs it, so the repositories and connections the directory declares exist before anyone signs in.
+Starting in Grafana 13.4.0, you can point Grafana at a directory on disk that declares the instance's own provisioning configuration. Grafana registers a repository over that directory at startup and syncs it, so the repositories and connections the directory declares exist before anyone signs in. This works for [Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/) repositories and for [file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/provision-resources/) repositories alike.
 
 Use this when the instance has to come up already configured and you can't make an API call after it starts, for example when you run Grafana on ephemeral storage, in a container image, or behind an immutable deployment pipeline. The configuration is a file you keep in version control alongside the rest of your deployment, instead of a one-off setup step.
 
@@ -42,7 +43,7 @@ When `[provisioning] bootstrap_path` is set, Grafana creates a repository named 
 - It uses [folderless sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts/#sync-targets), because the directory holds instance configuration rather than a folder of dashboards.
 - Grafana owns its configuration, so you can't edit it in the UI. To change it, change `bootstrap_path` and restart.
 
-From there it's an ordinary Git Sync repository. Every file in the directory is synced, including `Repository` and `Connection` manifests, so the bootstrap repository provisions the rest of your Git Sync setup. Each repository it declares then syncs its own content, which is where the instance's dashboards and folders usually come from.
+From there it's an ordinary repository. Every file in the directory is synced, including `Repository` and `Connection` manifests, so the bootstrap repository provisions the rest of your setup. Each repository it declares then syncs its own content, which is where the instance's dashboards and folders usually come from.
 
 Grafana reconciles the repository on each start, so a changed `bootstrap_path` takes effect on restart and doesn't leave a second repository behind.
 
@@ -136,9 +137,29 @@ Set a credential under `secure`, with the plaintext value in a `create` field, a
 
 The file itself still holds the plaintext, so treat the bootstrap directory as a secret: mount it from a Kubernetes Secret or an equivalent, and keep it out of the repository that holds your dashboards.
 
-### Reference another local directory
+### Declare a local repository
 
-A `local` repository declared in the bootstrap directory must read a directory _outside_ the bootstrap path, and that directory must be listed in `permitted_provisioning_paths`. Two repositories can't sync the same files: a directory inside the bootstrap path is already synced by the bootstrap repository, and both would claim the resources it holds.
+The bootstrap directory can also declare `local` repositories, so a single setting brings up your [file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/provision-resources/) setup too:
+
+```yaml
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: team-dashboards
+spec:
+  title: Team dashboards
+  type: local
+  local:
+    path: '<LOCAL_PATH>'
+  workflows:
+    - write
+  sync:
+    enabled: true
+    intervalSeconds: 60
+    target: folder
+```
+
+Replace _`<LOCAL_PATH>`_ with the directory that holds the dashboards. It must read a directory _outside_ the bootstrap path, and that directory must be listed in `permitted_provisioning_paths`. Two repositories can't sync the same files: a directory inside the bootstrap path is already synced by the bootstrap repository, and both would claim the resources it holds.
 
 ## Change provisioned resources in Grafana
 

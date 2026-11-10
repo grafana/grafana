@@ -3038,7 +3038,7 @@ The repository's own configuration isn't editable, because it comes from this se
 
 Requires the `local` repository type to be enabled and the `folderless` sync target to be allowed. While it's set, the `instance` sync target isn't available to any repository. Clearing it stops the repository an earlier run registered, and keeps that repository and everything it provisioned for you to remove.
 
-For more information, refer to [Bootstrap Git Sync from a directory](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-bootstrap/).
+For more information, refer to [Bootstrap provisioning configuration from a directory](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-bootstrap/).
 
 #### `allow_image_rendering`
 
