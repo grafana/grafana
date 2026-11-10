@@ -19,12 +19,12 @@ describe('JobSummary', () => {
       { group: 'folder.grafana.app', kind: 'Folder', delete: 1 },
     ]);
 
-    const dashboardRow = await rowFor('Dashboard');
-    expect(within(dashboardRow).getByText('Dashboard')).toBeInTheDocument();
+    const dashboardRow = await rowFor('Dashboards');
+    expect(within(dashboardRow).getByText('Dashboards')).toBeInTheDocument();
     // The kind icon is rendered alongside the name.
     expect(dashboardRow.querySelector('svg')).toBeInTheDocument();
 
-    expect(await rowFor('Folder')).toBeInTheDocument();
+    expect(await rowFor('Folders')).toBeInTheDocument();
   });
 
   it('merges the rows of a collection kind its plugins each serve a group for', async () => {
@@ -34,8 +34,8 @@ describe('JobSummary', () => {
       { group: 'dashboard.grafana.app', kind: 'Dashboard', create: 2 },
     ]);
 
-    expect(await screen.findAllByText('DataSource')).toHaveLength(1);
-    const row = await rowFor('DataSource');
+    expect(await screen.findAllByText('Data sources')).toHaveLength(1);
+    const row = await rowFor('Data sources');
     const cells = within(row).getAllByRole('cell');
     // Created 3 + 1, updated 2, deleted none, errors 1, total 4 + 2 + 1.
     expect(cells[1]).toHaveTextContent('4');

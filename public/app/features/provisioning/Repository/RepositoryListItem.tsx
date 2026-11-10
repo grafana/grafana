@@ -7,6 +7,7 @@ import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { useAppManifestKinds } from 'app/features/apiserver/appManifests';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
@@ -33,6 +34,7 @@ export function RepositoryListItem({ repository }: Props) {
   const styles = useStyles2(getStyles);
   // Externally managed repositories (terraform, kubectl, ...) are read-only in the UI.
   const isReadOnly = isManagedResourceReadOnly(repository);
+  useAppManifestKinds();
 
   const getRepositoryMeta = (): ReactNode[] => {
     const meta: ReactNode[] = [];
@@ -91,7 +93,7 @@ export function RepositoryListItem({ repository }: Props) {
               {status.stats.map((stat, index) => {
                 const info = getKindInfoByStat(stat);
                 const icon = info?.icon ?? 'file-alt';
-                const label = `${stat.count} ${stat.resource}`;
+                const label = `${stat.count} ${info?.pluralLabel() ?? stat.resource}`;
                 // Known kinds link to where the repository's resources live; unknown
                 // kinds have no destination, so render a non-interactive badge.
                 const href = info ? getRepositoryRoute(info, repository) : undefined;

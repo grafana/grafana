@@ -10,6 +10,7 @@ import {
 import { useResourceStats } from './useResourceStats';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
+  useGetFrontendSettingsQuery: jest.fn(() => ({ data: undefined, isFetching: false })),
   useGetRepositoryFilesQuery: jest.fn(),
   useGetResourceStatsQuery: jest.fn(),
 }));
