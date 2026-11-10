@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -141,6 +142,7 @@ func TestIntegrationDiscoverySQL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.NewTestStore(t)
+	deleteRouteCredential(t, sqlStore)
 	now := time.Unix(1_000, 0)
 	a := startSteppedSQLServer(t, sqlStore, &now)
 	b := startSteppedSQLServer(t, sqlStore, &now)
@@ -193,7 +195,8 @@ func TestIntegrationServerAutoListenAddress(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.NewTestStore(t)
-	s, err := ProvideServer(newEmbeddedTestCfg("", ""), sqlStore, prometheus.NewRegistry())
+	deleteRouteCredential(t, sqlStore)
+	s, err := ProvideServer(newEmbeddedTestCfg("", ""), sqlStore, testCipher(t).encryption, &contracts.SecretDBMigrated{}, prometheus.NewRegistry())
 	require.NoError(t, err)
 	require.NoError(t, s.starting(t.Context()))
 	t.Cleanup(func() { _ = s.stopping(nil) })
@@ -211,7 +214,10 @@ func TestIntegrationServerAutoListenAddress(t *testing.T) {
 		t.Fatalf("unexpected database %q", driver)
 	}
 	require.Equal(t, routeAuthUser, s.opts.Cluster.Username)
-	require.Equal(t, storedRouteCredential(t, s.kv), s.opts.Cluster.Password)
+	stored, err := readRouteCredential(t.Context(), s.kv, s.cipher, routeCredentialKey(discoveryClusterName))
+	require.NoError(t, err)
+	require.Equal(t, stored, s.opts.Cluster.Password)
+	requireNotStored(t, s.kv, stored)
 
 	require.NotNil(t, s.discovery, "ProvideServer did not wire the SQL registry")
 	s.discovery.tick(t.Context())
@@ -228,9 +234,8 @@ func TestIntegrationRouteCredentialConcurrentCreate(t *testing.T) {
 	sqlStore := db.NewTestStore(t)
 	store, err := kv.NewSQLKV(sqlStore.GetEngine().DB().DB, sqlStore.GetDialect().DriverName())
 	require.NoError(t, err)
-	key := routeCredentialKey(discoveryClusterName)
-	require.NoError(t, store.Delete(t.Context(), kv.NATSPeersSection, key))
-	t.Cleanup(func() { _ = store.Delete(context.Background(), kv.NATSPeersSection, key) })
+	deleteRouteCredential(t, sqlStore)
+	enc := testCipher(t)
 
 	const loaders = 8
 	start := make(chan struct{})
@@ -240,7 +245,7 @@ func TestIntegrationRouteCredentialConcurrentCreate(t *testing.T) {
 	for i := range loaders {
 		wg.Go(func() {
 			<-start
-			creds, err := loadRouteCredentials(t.Context(), store, discoveryClusterName)
+			creds, err := loadRouteCredentials(t.Context(), store, enc, discoveryClusterName)
 			errs[i] = err
 			if err == nil {
 				got[i], _ = creds.Password()
@@ -251,10 +256,23 @@ func TestIntegrationRouteCredentialConcurrentCreate(t *testing.T) {
 	wg.Wait()
 
 	require.NoError(t, errors.Join(errs...))
-	want := storedRouteCredential(t, store)
+	want, err := readRouteCredential(t.Context(), store, enc, routeCredentialKey(discoveryClusterName))
+	require.NoError(t, err)
 	for _, pass := range got {
 		require.Equal(t, want, pass)
 	}
+}
+
+// deleteRouteCredential removes the route credential from sqlStore before and
+// after the test: test databases can outlive a test, and the data key that
+// encrypted a leftover credential may not.
+func deleteRouteCredential(t *testing.T, sqlStore db.DB) {
+	t.Helper()
+	store, err := kv.NewSQLKV(sqlStore.GetEngine().DB().DB, sqlStore.GetDialect().DriverName())
+	require.NoError(t, err)
+	key := routeCredentialKey(discoveryClusterName)
+	require.NoError(t, store.Delete(t.Context(), kv.NATSPeersSection, key))
+	t.Cleanup(func() { _ = store.Delete(context.Background(), kv.NATSPeersSection, key) })
 }
 
 // nodeCfg bundles a node's full Cfg with the Server it drives, so callers can
@@ -299,7 +317,7 @@ func newTestDiscoveryServer(t *testing.T, store kv.KV, discoveryEnabled bool) (*
 		DiscoveryTTL:      time.Minute,
 	}
 	// Both servers discover each other through the shared registry.
-	s, err := newServer(cfg.NATS, store, "", log.New("infra.nats.server"), prometheus.NewRegistry())
+	s, err := newServer(cfg.NATS, store, testCipher(t), "", log.New("infra.nats.server"), prometheus.NewRegistry())
 	require.NoError(t, err)
 	return s, cfg
 }
@@ -319,7 +337,7 @@ func newSharedTestKV(t *testing.T) kv.KV {
 // points the registry clock at now so the test steps discovery itself.
 func startSteppedSQLServer(t *testing.T, sqlStore db.DB, now *time.Time) *Server {
 	t.Helper()
-	s, err := ProvideServer(newEmbeddedTestCfg("127.0.0.1", ""), sqlStore, prometheus.NewRegistry())
+	s, err := ProvideServer(newEmbeddedTestCfg("127.0.0.1", ""), sqlStore, testCipher(t).encryption, &contracts.SecretDBMigrated{}, prometheus.NewRegistry())
 	require.NoError(t, err)
 	require.NoError(t, s.starting(t.Context()))
 	t.Cleanup(func() { _ = s.stopping(nil) })

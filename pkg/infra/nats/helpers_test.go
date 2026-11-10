@@ -105,7 +105,7 @@ func newTestServer(t *testing.T, nats setting.NATSSettings) (*Server, *Config) {
 	cfg := setting.NewCfg()
 	cfg.NATS = nats
 	// sqlStore is not touched here, so nil is acceptable.
-	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+	s, err := ProvideServer(cfg, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	ep := ProvideNATSConfig(cfg, s)
 	return s, ep

@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +13,8 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -30,17 +33,67 @@ const (
 	wildcardListenAddress = "0.0.0.0"
 )
 
+// errRouteCredentialUndecryptable marks a stored route credential that does
+// not decrypt: it was written by another build, is corrupt, or was encrypted
+// with keys or in a namespace this instance does not have.
+var errRouteCredentialUndecryptable = errors.New("the stored nats route credential cannot be decrypted")
+
 func routeCredentialKey(clusterName string) string {
 	return clusterName + routeCredentialKeySuffix
+}
+
+// routeCipher encrypts the route credential with Secrets Manager, so the
+// registry never holds it in plain text.
+type routeCipher struct {
+	encryption contracts.EncryptionManager
+	// namespace owns the data keys. Secrets Manager has no cluster-wide
+	// namespace, so the credential uses the namespace of the main org.
+	namespace xkube.Namespace
+}
+
+// sealedRouteCredential is the stored form of the route credential.
+type sealedRouteCredential struct {
+	DataKeyID     string `json:"data_key_id"`
+	EncryptedData []byte `json:"encrypted_data"`
+}
+
+func (c routeCipher) seal(ctx context.Context, password string) ([]byte, error) {
+	payload, err := c.encryption.Encrypt(ctx, c.namespace, []byte(password), contracts.EncryptionOption{})
+	if err != nil {
+		return nil, fmt.Errorf("encrypt nats route credential: %w", err)
+	}
+	return json.Marshal(sealedRouteCredential{DataKeyID: payload.DataKeyID, EncryptedData: payload.EncryptedData})
+}
+
+// open decrypts a stored credential. Every failure, including a decryption
+// error, is reported as undecryptable: Secrets Manager does not tell a missing
+// or foreign key apart from a transient database error, and the caller keeps
+// retrying either way.
+func (c routeCipher) open(ctx context.Context, sealed []byte) (string, error) {
+	var stored sealedRouteCredential
+	if err := json.Unmarshal(sealed, &stored); err != nil || stored.DataKeyID == "" || len(stored.EncryptedData) == 0 {
+		return "", errRouteCredentialUndecryptable
+	}
+	password, err := c.encryption.Decrypt(ctx, c.namespace, contracts.EncryptedPayload{
+		DataKeyID:     stored.DataKeyID,
+		EncryptedData: stored.EncryptedData,
+	}, contracts.EncryptionOption{})
+	if err != nil {
+		return "", fmt.Errorf("%w: %w", errRouteCredentialUndecryptable, err)
+	}
+	if len(password) == 0 {
+		return "", errRouteCredentialUndecryptable
+	}
+	return string(password), nil
 }
 
 // loadRouteCredentials returns the cluster route credential shared through
 // the discovery registry, creating it on first use. A random value reveals
 // nothing about any other secret even when it crosses the network in clear
 // text.
-func loadRouteCredentials(ctx context.Context, store kv.KV, clusterName string) (*url.Userinfo, error) {
+func loadRouteCredentials(ctx context.Context, store kv.KV, cipher routeCipher, clusterName string) (*url.Userinfo, error) {
 	key := routeCredentialKey(clusterName)
-	password, err := readRouteCredential(ctx, store, key)
+	password, err := readRouteCredential(ctx, store, cipher, key)
 	if err == nil {
 		return url.UserPassword(routeAuthUser, password), nil
 	}
@@ -51,17 +104,21 @@ func loadRouteCredentials(ctx context.Context, store kv.KV, clusterName string) 
 	// Deleting the row and restarting every instance rotates the credential:
 	// the first instance to start creates a new one.
 	created := randomRoutePassword()
+	sealed, err := cipher.seal(ctx, created)
+	if err != nil {
+		return nil, err
+	}
 	// Create only commits when the key is absent (a primary key in SQL, a
 	// conflict-checked transaction in Badger), so concurrent first startups
 	// commit exactly one value. A losing create fails, for whatever reason the
 	// store reports, after the winner committed, so the read-back adopts it.
 	createErr := store.Batch(ctx, kv.NATSPeersSection, []kv.BatchOp{
-		{Mode: kv.BatchOpCreate, Key: key, Value: []byte(created)},
+		{Mode: kv.BatchOpCreate, Key: key, Value: sealed},
 	})
 	if createErr == nil {
 		return url.UserPassword(routeAuthUser, created), nil
 	}
-	password, err = readRouteCredential(ctx, store, key)
+	password, err = readRouteCredential(ctx, store, cipher, key)
 	if err != nil {
 		return nil, fmt.Errorf("create nats route credential: %w", errors.Join(createErr, err))
 	}
@@ -76,7 +133,7 @@ func randomRoutePassword() string {
 	return hex.EncodeToString(b[:])
 }
 
-func readRouteCredential(ctx context.Context, store kv.KV, key string) (string, error) {
+func readRouteCredential(ctx context.Context, store kv.KV, cipher routeCipher, key string) (string, error) {
 	r, err := store.Get(ctx, kv.NATSPeersSection, key)
 	if err != nil {
 		return "", err
@@ -86,11 +143,7 @@ func readRouteCredential(ctx context.Context, store kv.KV, key string) (string, 
 	if err != nil {
 		return "", err
 	}
-	value = bytes.TrimSpace(value)
-	if len(value) == 0 {
-		return "", fmt.Errorf("nats route credential %q is empty", key)
-	}
-	return string(value), nil
+	return cipher.open(ctx, bytes.TrimSpace(value))
 }
 
 // autoListenAddress picks the cluster listen address when listen_address is

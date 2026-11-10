@@ -15,8 +15,7 @@ type DependencyRegisterer struct{}
 
 func RegisterDependencies(
 	features featuremgmt.FeatureToggles,
-	cfg *setting.Cfg,
-	secretDBMigrator contracts.SecretDBMigrator,
+	_ *contracts.SecretDBMigrated,
 	accessControlService accesscontrol.Service,
 ) (*DependencyRegisterer, error) {
 	// Permissions for requests in multi-tenant mode will come from HG.
@@ -24,6 +23,14 @@ func RegisterDependencies(
 		return nil, fmt.Errorf("registering access control roles: %w", err)
 	}
 
+	return &DependencyRegisterer{}, nil
+}
+
+// ProvideDatabaseMigrated runs the Secrets Manager migrations. It is separate
+// from RegisterDependencies, whose access control dependency would create a
+// cycle for services that encrypt while the graph is built, such as the
+// embedded NATS server.
+func ProvideDatabaseMigrated(cfg *setting.Cfg, secretDBMigrator contracts.SecretDBMigrator) (*contracts.SecretDBMigrated, error) {
 	// We shouldn't need to create the DB in HG, as that will use the MT api server.
 	if cfg.SecretsManagement.RunSecretsDBMigrations {
 		// Some DBs that claim to be MySQL/Postgres-compatible might not support table locking.
@@ -37,5 +44,5 @@ func RegisterDependencies(
 		}
 	}
 
-	return &DependencyRegisterer{}, nil
+	return &contracts.SecretDBMigrated{}, nil
 }

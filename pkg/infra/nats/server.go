@@ -20,6 +20,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
@@ -51,6 +54,7 @@ type Server struct {
 	log     log.Logger
 	metrics *serverMetrics
 	kv      kv.KV
+	cipher  routeCipher
 
 	mu        sync.RWMutex
 	server    *natsserver.Server
@@ -69,11 +73,16 @@ type Server struct {
 	// loading: a random per-process password no peer knows, so the cluster port
 	// rejects every route without leaving the address it will serve on.
 	routePlaceholder *url.Userinfo
+	// routeAuthUndecryptable is set while the last attempt to load the route
+	// credential found one that cannot be decrypted, which has been warned about.
+	routeAuthUndecryptable bool
 	// routeSecrets are masked in embedded server logs.
 	routeSecrets *routeSecrets
 }
 
-func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) (*Server, error) {
+// ProvideServer takes secretsMigrated so the route credential is only read or
+// created once the Secrets Manager tables exist.
+func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, encryption contracts.EncryptionManager, secretsMigrated *contracts.SecretDBMigrated, reg prometheus.Registerer) (*Server, error) {
 	// A sqlStore is required to wire DB-backed peer discovery. When present (the
 	// monolith always injects it) the embedded server clusters through discovery;
 	// when absent it runs as a single standalone node. Module mode passes nil but
@@ -86,17 +95,23 @@ func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) 
 			return nil, fmt.Errorf("create nats discovery kv: %w", err)
 		}
 		store = sqlKV
+		if encryption == nil || secretsMigrated == nil {
+			return nil, errors.New("nats peer discovery needs Secrets Manager to store the route credential")
+		}
 	}
-	return newServer(cfg.NATS, store, dbDriver(sqlStore), log.New("infra.nats.server"), reg)
+	cipher := routeCipher{encryption: encryption, namespace: xkube.Namespace(request.GetNamespaceMapper(cfg)(1))}
+	return newServer(cfg.NATS, store, cipher, dbDriver(sqlStore), log.New("infra.nats.server"), reg)
 }
 
 // newServer builds the server around store, the shared peer registry, which
-// is nil for a standalone node. dbDriver names the database behind store.
-func newServer(cfg setting.NATSSettings, store kv.KV, dbDriver string, logger log.Logger, reg prometheus.Registerer) (*Server, error) {
+// is nil for a standalone node. cipher encrypts the route credential in
+// store. dbDriver names the database behind store.
+func newServer(cfg setting.NATSSettings, store kv.KV, cipher routeCipher, dbDriver string, logger log.Logger, reg prometheus.Registerer) (*Server, error) {
 	s := &Server{
-		cfg: cfg,
-		log: logger,
-		kv:  store,
+		cfg:    cfg,
+		log:    logger,
+		kv:     store,
+		cipher: cipher,
 	}
 
 	// Only register the embedded-server metrics when this instance actually runs
@@ -111,7 +126,8 @@ func newServer(cfg setting.NATSSettings, store kv.KV, dbDriver string, logger lo
 		if routeAuthRequired {
 			creds, err := s.loadRouteAuth(context.Background())
 			if err != nil {
-				s.log.Warn("nats cluster routes wait for the route credential; clustering starts once it can be read or created", "err", err)
+				s.warnRouteAuthWait(err)
+				s.routeAuthUndecryptable = errors.Is(err, errRouteCredentialUndecryptable)
 				s.routePlaceholder = url.UserPassword(routeAuthUser, randomRoutePassword())
 				s.routeSecrets.add(s.routePlaceholder)
 			} else {
@@ -243,9 +259,29 @@ func (s *Server) awaitRouteAuth(ctx context.Context) *url.Userinfo {
 		if err == nil {
 			return creds
 		}
-		s.log.Debug("failed to read or create the nats route credential; retrying", "err", err, "attempt", b.NumRetries())
+		undecryptable := errors.Is(err, errRouteCredentialUndecryptable)
+		if undecryptable && !s.routeAuthUndecryptable {
+			// It usually takes an operator to fix, so it is worth a warning, once.
+			s.warnRouteAuthWait(err)
+		} else {
+			s.log.Debug("failed to read or create the nats route credential; retrying", "err", err, "attempt", b.NumRetries())
+		}
+		s.routeAuthUndecryptable = undecryptable
 	}
 	return nil
+}
+
+// warnRouteAuthWait explains why clustering waits for the route credential.
+func (s *Server) warnRouteAuthWait(err error) {
+	if errors.Is(err, errRouteCredentialUndecryptable) {
+		s.log.Warn("nats cluster routes wait for the route credential, but the stored credential cannot be decrypted. "+
+			"If this persists, check that every instance uses the same [secrets_manager] encryption provider and keys; "+
+			"if they do, delete the row and restart every instance, and the first to start creates a new credential",
+			"table", "nats_discovery_peers", "key_path", kv.NATSPeersSection+"/"+routeCredentialKey(discoveryClusterName),
+			"namespace", s.cipher.namespace, "err", err)
+		return
+	}
+	s.log.Warn("nats cluster routes wait for the route credential; clustering starts once it can be read or created", "err", err)
 }
 
 // enableClustering replaces the placeholder with the route credential and
@@ -427,7 +463,7 @@ func (s *Server) serverOptions() *natsserver.Options {
 func (s *Server) loadRouteAuth(ctx context.Context) (*url.Userinfo, error) {
 	ctx, cancel := context.WithTimeout(ctx, routeCredentialAttemptTimeout)
 	defer cancel()
-	return loadRouteCredentials(ctx, s.kv, discoveryClusterName)
+	return loadRouteCredentials(ctx, s.kv, s.cipher, discoveryClusterName)
 }
 
 func dbDriver(sqlStore db.DB) string {

@@ -175,7 +175,7 @@ func newEmbeddedTestCfg(listen, advertise string) *setting.Cfg {
 // newKVTestServer builds a server whose discovery registry is store.
 func newKVTestServer(t *testing.T, cfg *setting.Cfg, store kv.KV) *Server {
 	t.Helper()
-	s, err := newServer(cfg.NATS, store, "", log.New("infra.nats.server"), prometheus.NewRegistry())
+	s, err := newServer(cfg.NATS, store, testCipher(t), "", log.New("infra.nats.server"), prometheus.NewRegistry())
 	require.NoError(t, err)
 	return s
 }
