@@ -68,6 +68,15 @@ export const LAZY_DASHBOARD_COMMANDS: LazyMutationCommand[] = [
   },
   { name: 'GET_SPEC', readOnly: true, load: () => import('./getSpec').then((module) => module.getSpecCommand) },
   { name: 'APPLY_SPEC', load: () => import('./applySpec').then((module) => module.applySpecCommand) },
+  { name: 'START_BATCH', load: () => import('./history').then((module) => module.startBatchCommand) },
+  { name: 'END_BATCH', load: () => import('./history').then((module) => module.endBatchCommand) },
+  {
+    name: 'GET_LAST_ACTION',
+    readOnly: true,
+    load: () => import('./history').then((module) => module.getLastActionCommand),
+  },
+  { name: 'UNDO', load: () => import('./history').then((module) => module.undoCommand) },
+  { name: 'REDO', load: () => import('./history').then((module) => module.redoCommand) },
   { name: 'RENDER_PLAN', load: () => import('./renderPlan').then((module) => module.renderPlanCommand) },
   { name: 'END_PLANNING', load: () => import('./endPlanning').then((module) => module.endPlanningCommand) },
   {

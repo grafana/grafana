@@ -3143,6 +3143,22 @@ func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t
 	}
 }
 
+func TestRepositoryController_shouldGenerateTokenFromConnection_RemovedToken(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		rc := &RepositoryController{
+			tokenMetrics:   registerRepositoryTokenMetrics(prometheus.NewPedanticRegistry()),
+			resyncInterval: 5 * time.Minute,
+		}
+		repo := &provisioning.Repository{
+			Status: provisioning.RepositoryStatus{Token: provisioning.TokenStatus{
+				LastUpdated: time.Now().UnixMilli(),
+				Expiration:  time.Now().Add(time.Hour).UnixMilli(),
+			}},
+		}
+		assert.True(t, rc.shouldGenerateTokenFromConnection(repo), "a removed token must refresh even if its previous expiration is far away")
+	})
+}
+
 // TestRepositoryController_process_NotFoundIsNoOp verifies that a key whose
 // repository no longer exists reconciles as a no-op rather than a failure.
 // There is nothing left to reconcile, and the error this used to return was
@@ -4474,13 +4490,12 @@ func TestRepositoryController_process_UnauthorizedTestResultSuppressesHooks(t *t
 	stub := &hookRepoStub{
 		cfg:        repo,
 		hookErrSet: true, hookErr: nil,
-		// Mirrors gitRepository.Test's IsAuthorized(false, nil) path exactly:
-		// apps/provisioning/pkg/repository/git/repository.go's "not authorized" branch.
+		// Mirrors what gitRepository.Test returns when the Git server answers 401.
 		testResults: &provisioning.TestResults{
 			Success: false,
 			Code:    http.StatusUnauthorized,
 			Errors: []provisioning.ErrorDetails{
-				{Detail: "not authorized"},
+				{Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized"},
 			},
 		},
 	}
@@ -5004,7 +5019,7 @@ func TestRepositoryController_process_UnreachableRepoDoesNotRewriteUnchangedStat
 		testResults: &provisioning.TestResults{
 			Success: false,
 			Code:    http.StatusUnauthorized,
-			Errors:  []provisioning.ErrorDetails{{Detail: "not authorized"}},
+			Errors:  []provisioning.ErrorDetails{{Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized"}},
 		},
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)

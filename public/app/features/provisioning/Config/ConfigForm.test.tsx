@@ -10,6 +10,12 @@ import {
   type RepositorySpec,
   type SecureValues,
 } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  AnnoKeyManagerAllowsEdits,
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerKind,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -190,5 +196,68 @@ describe('ConfigForm', () => {
     await user.click(saveButton);
 
     await waitFor(() => expect(bodies.put).toBeDefined());
+  });
+  describe('externally managed repositories (read-only)', () => {
+    const managedRepository = (annotations: Record<string, string>): Repository => ({
+      ...buildRepository(false),
+      metadata: { name: 'repo-1', annotations },
+    });
+
+    const terraformRepository = () =>
+      managedRepository({ [AnnoKeyManagerKind]: ManagerKind.Terraform, [AnnoKeyManagerIdentity]: 'terraform' });
+
+    it('shows a read-only banner', async () => {
+      setup(terraformRepository());
+
+      expect(await screen.findByText(/managed externally/i)).toBeInTheDocument();
+    });
+
+    // Save is also disabled while the connection list is in flight, so settle first to prove it is
+    // the read-only gate holding it rather than a transient loading state.
+    it('keeps Save disabled after the form has settled', async () => {
+      setup(terraformRepository());
+      await screen.findByText(/managed externally/i);
+
+      const saveButton = await screen.findByRole('button', { name: /Save/ });
+      await waitFor(() => expect(saveButton).toBeDisabled());
+    });
+
+    it('does not render the Delete button', async () => {
+      setup(terraformRepository());
+      await screen.findByText(/managed externally/i);
+
+      expect(screen.queryByRole('button', { name: /Delete/ })).not.toBeInTheDocument();
+    });
+
+    it('stays editable for an unmanaged repository', async () => {
+      setup(buildRepository(false));
+
+      const saveButton = await screen.findByRole('button', { name: /Save/ });
+      await waitFor(() => expect(saveButton).toBeEnabled());
+      expect(screen.queryByText(/managed externally/i)).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Delete/ })).toBeInTheDocument();
+    });
+
+    it('stays editable when the manager allows edits', async () => {
+      setup(
+        managedRepository({
+          [AnnoKeyManagerKind]: ManagerKind.Terraform,
+          [AnnoKeyManagerIdentity]: 'terraform',
+          [AnnoKeyManagerAllowsEdits]: 'true',
+        })
+      );
+
+      const saveButton = await screen.findByRole('button', { name: /Save/ });
+      await waitFor(() => expect(saveButton).toBeEnabled());
+      expect(screen.queryByText(/managed externally/i)).not.toBeInTheDocument();
+    });
+
+    it('stays editable for git-provisioned repositories, which have their own edit flow', async () => {
+      setup(managedRepository({ [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: 'some-repo' }));
+
+      const saveButton = await screen.findByRole('button', { name: /Save/ });
+      await waitFor(() => expect(saveButton).toBeEnabled());
+      expect(screen.queryByText(/managed externally/i)).not.toBeInTheDocument();
+    });
   });
 });

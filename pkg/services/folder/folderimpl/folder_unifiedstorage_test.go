@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -330,7 +331,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		publicDashboardService: publicDashboardService,
 	}
 
-	require.NoError(t, folderService.RegisterService(alertingStore))
+	_, err := ngrulesvc.ProvideService(&alertingStore, folderService)
+	require.NoError(t, err)
 	require.NoError(t, folderService.RegisterService(lps))
 
 	t.Run("Folder service tests", func(t *testing.T) {
@@ -912,7 +914,7 @@ func TestFolderLookupSearchErrors(t *testing.T) {
 			t.Run(name+"/"+tc.name, func(t *testing.T) {
 				cli := new(client.MockK8sHandler)
 				cli.On("GetNamespace", int64(1)).Return("default").Once()
-				cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(tc.searchResponse(), tc.err).Once()
+				cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(nil, tc.err).Once()
 				svc := &Service{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
 				query := lookup
 				query.OrgID = 1
@@ -921,7 +923,7 @@ func TestFolderLookupSearchErrors(t *testing.T) {
 				got, err := svc.Get(t.Context(), &query)
 
 				require.Nil(t, got)
-				requireFolderStorageError(t, tc.want, err)
+				requireFolderStorageError(t, tc.err, err)
 				cli.AssertExpectations(t)
 			})
 		}
@@ -1212,13 +1214,11 @@ func TestDeleteVariablesInFoldersSearchErrors(t *testing.T) {
 			cli := new(client.MockK8sHandler)
 			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 				return slices.Equal(req.Fields, []string{resource.SEARCH_FIELD_NAME})
-			})).Return(tc.searchResponse(), tc.err).Once()
+			})).Return(nil, tc.err).Once()
 			service := &Service{variableK8sClient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
 			err := service.deleteVariablesInFolders(t.Context(), 1, []string{"allowed"})
-			require.ErrorContains(t, err, tc.want.Error())
-			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
-			}
+			require.ErrorContains(t, err, tc.err.Error())
+			require.ErrorIs(t, err, tc.err)
 			cli.AssertExpectations(t)
 		})
 	}
@@ -1300,7 +1300,8 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 		Logger:        log.New("test-alerting-store"),
 		AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
-	require.NoError(t, service.RegisterService(alertingStore))
+	_, err := ngrulesvc.ProvideService(&alertingStore, &service)
+	require.NoError(t, err)
 
 	mockDashboardService := dashboards.NewFakeDashboardService(t)
 	mockFolderService := foldertest.NewFakeService()
@@ -1320,12 +1321,10 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 
 	for _, tc := range folderStorageFailures(t) {
 		t.Run("dashboard search error/"+tc.name, func(t *testing.T) {
-			dashboardK8sclient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(tc.searchResponse(), tc.err).Once()
+			dashboardK8sclient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(nil, tc.err).Once()
 			err := service.Delete(ctx, &folder.DeleteFolderCommand{UID: "uid", OrgID: 1, SignedInUser: user})
-			require.ErrorContains(t, err, tc.want.Error())
-			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
-			}
+			require.ErrorContains(t, err, tc.err.Error())
+			require.ErrorIs(t, err, tc.err)
 			dashboardK8sclient.AssertExpectations(t)
 		})
 	}
@@ -1503,17 +1502,20 @@ func (*emptyFolderRegistry) DeleteInFolders(context.Context, int64, []string, id
 	return nil
 }
 
-func newDashboardDeleteService(t *testing.T, enabled bool, concurrency, count int) (*Service, *dashboardDeleteClient, *folder.DeleteFolderCommand, context.Context) {
+// withParallelDashboardDelete serves the parallel delete flag for the duration of the test. Call it outside a
+// synctest bubble: the OpenFeature provider is process-global.
+func withParallelDashboardDelete(t *testing.T, concurrency int) {
+	featuremgmt.WithFlagValues(t, map[string]any{featuremgmt.FlagFoldersParallelDashboardDeleteConcurrency: concurrency})
+}
+
+func newDashboardDeleteService(t *testing.T, count int) (*Service, *dashboardDeleteClient, *folder.DeleteFolderCommand, context.Context) {
 	requester := &user.SignedInUser{UserID: 42, OrgID: 1}
 	cli := &dashboardDeleteClient{requester: requester}
 	for i := range count {
 		cli.uids = append(cli.uids, fmt.Sprintf("dashboard-%d", i))
 	}
-	cfg := setting.NewCfg()
-	cfg.FolderParallelDashboardDeleteEnabled = enabled
-	cfg.FolderParallelDashboardDeleteConcurrency = concurrency
 	svc := &Service{
-		cfg: cfg, dashboardK8sClient: cli, variableK8sClient: &dashboardDeleteClient{}, unifiedStore: &dashboardDeleteStore{},
+		cfg: setting.NewCfg(), dashboardK8sClient: cli, variableK8sClient: &dashboardDeleteClient{}, unifiedStore: &dashboardDeleteStore{},
 		publicDashboardService: &dashboardDeletePublicService{client: cli},
 		tracer:                 noop.NewTracerProvider().Tracer("test"), log: slog.New(logtest.NewNopHandler(t)),
 		registry: map[string]folder.RegistryService{entity.StandardKindAlertRule: &emptyFolderRegistry{}, entity.StandardKindLibraryPanel: &emptyFolderRegistry{}},
@@ -1569,18 +1571,18 @@ func waitForResult(t *testing.T, done <-chan error) error {
 func TestDeleteFolderDashboardConcurrency(t *testing.T) {
 	for _, tc := range []struct {
 		name                 string
-		enabled              bool
 		workers, count, want int
 	}{
-		{"disabled deletes one at a time", false, 8, 12, 1},
-		{"enabled is bounded by the worker count", true, 4, 12, 4},
-		{"enabled with more workers than dashboards", true, 8, 2, 2},
-		{"non-positive worker count uses one worker", true, 0, 12, 1},
-		{"empty folder", true, 4, 0, 0},
+		{"one worker deletes in order", 1, 12, 1},
+		{"bounded by the worker count", 4, 12, 4},
+		{"more workers than dashboards", 8, 2, 2},
+		{"non-positive worker count deletes in order", 0, 12, 1},
+		{"empty folder", 4, 0, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			withParallelDashboardDelete(t, tc.workers)
 			synctest.Test(t, func(t *testing.T) {
-				svc, cli, cmd, ctx := newDashboardDeleteService(t, tc.enabled, tc.workers, tc.count)
+				svc, cli, cmd, ctx := newDashboardDeleteService(t, tc.count)
 				gate := newDeleteGate(t)
 				cli.deleteFn = gate.hold
 				done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
@@ -1590,7 +1592,7 @@ func TestDeleteFolderDashboardConcurrency(t *testing.T) {
 				require.NoError(t, waitForResult(t, done))
 
 				require.Equal(t, tc.want, cli.maximum)
-				if tc.enabled {
+				if tc.workers > 1 {
 					require.ElementsMatch(t, cli.uids, cli.calls)
 				} else {
 					require.Equal(t, cli.uids, cli.calls)
@@ -1607,8 +1609,9 @@ func TestDeleteFolderDashboardConcurrency(t *testing.T) {
 }
 
 func TestDeleteFolderDashboardRequestCancellation(t *testing.T) {
+	withParallelDashboardDelete(t, 4)
 	synctest.Test(t, func(t *testing.T) {
-		svc, cli, cmd, ctx := newDashboardDeleteService(t, true, 4, 20)
+		svc, cli, cmd, ctx := newDashboardDeleteService(t, 20)
 		ctx, cancel := context.WithCancel(ctx)
 		gate := newDeleteGate(t)
 		cli.deleteFn = func(ctx context.Context, uid string) error {
@@ -1636,8 +1639,9 @@ func TestDeleteFolderDashboardRequestCancellation(t *testing.T) {
 }
 
 func TestDeleteFolderDashboardFailureLetsInFlightDeletesFinish(t *testing.T) {
+	withParallelDashboardDelete(t, 4)
 	synctest.Test(t, func(t *testing.T) {
-		svc, cli, cmd, ctx := newDashboardDeleteService(t, true, 4, 20)
+		svc, cli, cmd, ctx := newDashboardDeleteService(t, 20)
 		gate := newDeleteGate(t)
 		releaseFailure := make(chan struct{})
 		canceled := make(chan string, 20)

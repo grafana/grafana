@@ -269,6 +269,17 @@ export function buildCallersTree(levels: LevelItem[][], data: FlameGraphDataCont
   return targetLevel.map((targetItem, index) => buildNode(targetItem, `${index}`, 0, undefined));
 }
 
+type Span = { left: number; right: number };
+
+export function getScrollLeftToReveal(scrollLeft: number, target: Span, view: Span, context: number): number {
+  if (target.left >= view.left && target.right <= view.right) {
+    return scrollLeft;
+  }
+  const fitsWithContext = target.right - target.left + context <= view.right - view.left;
+  const delta = fitsWithContext ? target.left - view.left - context : target.right - view.right;
+  return Math.max(0, scrollLeft + delta);
+}
+
 export function getRowBarColor(
   node: CallTreeNode,
   data: FlameGraphDataContainer,

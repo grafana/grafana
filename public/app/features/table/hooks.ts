@@ -21,12 +21,12 @@ import { usePanelContext } from '@grafana/ui';
 import { getSourceFrameIndex, useColumnTransformations } from '@grafana/ui/internal';
 import { getConfig } from 'app/core/config';
 
+import { reportTableColumnInteraction } from './analytics';
+import { TABLE_TRANSFORMATIONS_OWNER } from './constants';
 import { supportsColumnManagement } from './tableCapabilities';
 import { getCellActions } from './utils';
 
 type GetActions = (frame: DataFrame, field: Field, rowIndex: number) => Array<ActionModel<Field>>;
-
-export const TABLE_TRANSFORMATIONS_OWNER = 'grafana:table-view';
 
 /**
  * Caches per-field display names on the data frames. TableNG's `getDisplayName` relies on the cached
@@ -108,6 +108,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       contentAwareWidthsEnabled,
       tableRefreshEnabled,
       jsonSyntaxHighlightingEnabled: refreshNewFeaturesEnabled,
+      rangeFiltersEnabled: refreshNewFeaturesEnabled,
     }),
     [
       options.showHeader,
@@ -149,7 +150,14 @@ export function useAdHocColumnState(
   const sourceSeries = configuredSourceSeries ?? api?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER);
   const sourceIndex = getEligibleColumnSourceIndex(frames, frameIndex, sourceSeries, enabled);
 
-  return useColumnTransformations(sourceIndex, api, TABLE_TRANSFORMATIONS_OWNER, enabled, sourceSeries);
+  return useColumnTransformations(
+    sourceIndex,
+    api,
+    TABLE_TRANSFORMATIONS_OWNER,
+    enabled,
+    sourceSeries,
+    reportTableColumnInteraction
+  );
 }
 
 function getEligibleColumnSourceIndex(

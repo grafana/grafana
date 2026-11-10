@@ -5,7 +5,7 @@
  * Through the exports declared in package.json we can import this code in core Grafana and the grafana/ui
  * package will continue to be able to access all code when it's published to npm as it's private to the package.
  *
- * During the yarn pack lifecycle the exports[./internal] property is deleted from the package.json
+ * During the pnpm pack lifecycle the exports[./internal] property is deleted from the package.json
  * preventing the code from being importable by plugins or other npm packages making it truly "internal".
  *
  */
@@ -116,6 +116,7 @@ export { flattenTokens } from '../slate-plugins/slate-prism';
 export { RadialGauge } from '../components/RadialGauge/RadialGauge';
 
 export { MaybeWrapWithLink } from '../components/Table/TableNG/components/MaybeWrapWithLink';
+export type { AdHocFilterItem, TableFilterInteraction } from '../components/Table/TableNG/types';
 export { useColumnTransformations } from '../components/Table/TableNG/transformations/useColumnTransformations';
 export { getSourceFrameIndex } from '../components/Table/TableNG/transformations/columnContext';
 

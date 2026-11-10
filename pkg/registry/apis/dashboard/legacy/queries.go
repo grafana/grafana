@@ -26,8 +26,9 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlQueryDashboards = mustTemplate("query_dashboards.sql")
-	sqlQueryPanels     = mustTemplate("query_panels.sql")
+	sqlQueryDashboards   = mustTemplate("query_dashboards.sql")
+	sqlQueryDashboardIDs = mustTemplate("query_dashboard_ids.sql")
+	sqlQueryPanels       = mustTemplate("query_panels.sql")
 )
 
 type sqlQuery struct {
@@ -59,6 +60,28 @@ func newQueryReq(sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery) sql
 		VersionTable:      sql.Table("dashboard_version"),
 		ProvisioningTable: sql.Table("dashboard_provisioning"),
 		UserTable:         sql.Table("user"),
+	}
+}
+
+// sqlDashboardIDsQuery lists the next dashboard ids from the migration keyset, to bound a page.
+type sqlDashboardIDsQuery struct {
+	sqltemplate.SQLTemplate
+	Query *DashboardQuery
+	Limit int
+
+	DashboardTable string
+}
+
+func (r sqlDashboardIDsQuery) Validate() error {
+	return nil
+}
+
+func newDashboardIDsQueryReq(sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery, limit int) sqlDashboardIDsQuery {
+	return sqlDashboardIDsQuery{
+		SQLTemplate:    sqltemplate.New(sql.DialectForDriver()),
+		Query:          query,
+		Limit:          limit,
+		DashboardTable: sql.Table("dashboard"),
 	}
 }
 

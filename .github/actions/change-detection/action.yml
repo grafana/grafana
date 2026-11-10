@@ -23,6 +23,9 @@ outputs:
   frontend-dependencies:
     description: Whether the frontend dependencies or self have changed in any way
     value: ${{ steps.changed-files.outputs.frontend_dependencies_any_modified || 'true' }}
+  openapi:
+    description: Whether the OpenAPI snapshots, the generated OpenAPI package or self have changed
+    value: ${{ steps.changed-files.outputs.openapi_any_modified || 'true' }}
   frontend-packages:
     description: Whether any frontend packages have changed
     value: ${{ steps.changed-files.outputs.frontend_packages_any_modified || 'true' }}
@@ -31,9 +34,6 @@ outputs:
     value: ${{ steps.changed-files.outputs.e2e_any_modified == 'true' ||
       steps.changed-files.outputs.backend_any_modified == 'true' ||
       steps.changed-files.outputs.frontend_any_modified == 'true' }}
-  e2e-cloud-plugins:
-    description: Whether the cloud plugins code or tests have changed in any way
-    value: ${{ steps.changed-files.outputs.e2e_cloud_plugins_any_modified || 'true' }}
   dev-tooling:
     description: Whether the dev tooling or self have changed in any way
     value: ${{ steps.changed-files.outputs.dev_tooling_any_modified || 'true' }}
@@ -84,9 +84,8 @@ runs:
           golangci_config:
             - '.golangci.yml'
           docker_build:
-            # Mirrors the on.paths trigger of pr-test-docker.yml: files that can
-            # affect the built Docker image. Test-only changes are excluded below
-            # because they never end up in the image.
+            # Files that can affect the built Docker image. Test-only changes
+            # are excluded below because they never end up in the image.
             - 'Makefile'
             - 'Dockerfile'
             - 'public/**'
@@ -201,6 +200,7 @@ runs:
             - '**.tsx'
             - '**.css'
             - '**.mjs'
+            - 'scripts/build-frontend.sh'
             - 'package.json'
             - '!**.md'
             - '.github/actions/change-detection/**'
@@ -230,6 +230,7 @@ runs:
             - '**.tsx'
             - '**.css'
             - '**.mjs'
+            - 'scripts/build-frontend.sh'
             - 'package.json'
             - '!**.md'
             - '.github/actions/change-detection/**'
@@ -268,10 +269,16 @@ runs:
             - 'packages/**'
             - './scripts/validate-npm-packages.sh'
             - '${{ inputs.self }}'
+          openapi:
+            - 'pkg/tests/apis/openapi_snapshots/**'
+            - 'packages/grafana-openapi/**'
+            - '.github/actions/change-detection/**'
+            - '${{ inputs.self }}'
           e2e:
             - 'e2e/**'
             - 'e2e-playwright/**'
             - '.github/actions/setup-enterprise/**'
+            - '.github/actions/setup-grafana-e2e/**'
             - '.github/actions/checkout/**'
             - 'emails/**'
             - 'pkg/**'
@@ -283,11 +290,6 @@ runs:
             - '**.cue'
             - 'conf/**'
             - 'cypress.config.js'
-            - '${{ inputs.self }}'
-          e2e_cloud_plugins:
-            - 'pkg/tsdb/azuremonitor/**'
-            - 'public/app/plugins/datasource/azuremonitor/**'
-            - 'e2e-playwright/cloud-plugins-suite/azure-monitor.spec.ts'
             - '${{ inputs.self }}'
           dev_tooling:
             - '.github/actions/setup-enterprise/**'
@@ -338,6 +340,8 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.frontend_src_all_modified_files }}"
         echo "Frontend packages: ${{ steps.changed-files.outputs.frontend_packages_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.frontend_packages_all_modified_files }}"
+        echo "OpenAPI: ${{ steps.changed-files.outputs.openapi_any_modified || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.openapi_all_modified_files }}"
         echo "E2E: ${{ steps.changed-files.outputs.e2e_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.e2e_all_modified_files }}"
         echo " --> ${{ steps.changed-files.outputs.backend_all_modified_files }}"

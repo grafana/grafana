@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -73,7 +74,7 @@ func TestIntegrationKVBlobSupportOnResourceBlob(t *testing.T) {
 
 			require.NoError(t, env.kv.Delete(env.ctx, kv.BlobDataSection, blobKeyWithUID(key, put.Uid).String()))
 			for _, s := range env.stores() {
-				requireErrorCode(t, http.StatusNotFound, env.get(t, s.store, key, put.Uid).Error)
+				requireErrorCode(t, http.StatusNotFound, env.getError(t, s.store, key, put.Uid))
 			}
 		})
 	})
@@ -115,13 +116,13 @@ func TestIntegrationKVBlobSupportOnResourceBlob(t *testing.T) {
 
 		t.Run("kv does not read a blob under another resource name", func(t *testing.T) {
 			put := env.put(t, env.kvBlobs, env.newResource(t, "default"), "application/json", "kv")
-			rsp := env.get(t, env.kvBlobs, env.newResource(t, "default"), put.Uid)
-			requireErrorCode(t, http.StatusNotFound, rsp.Error)
+			requireErrorCode(t, http.StatusNotFound, env.getError(t, env.kvBlobs, env.newResource(t, "default"), put.Uid))
 		})
 	})
 }
 
 type kvBlobTestEnv struct {
+	dialect  kv.Dialect
 	db       *stdsql.DB
 	ctx      context.Context
 	kv       kv.KV
@@ -139,6 +140,8 @@ func newKVBlobTestEnv(t *testing.T) *kvBlobTestEnv {
 	require.NoError(t, err)
 	sqlKV, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	require.NoError(t, err)
+	dialect, err := kv.DialectFromDriver(dbConn.DriverName())
+	require.NoError(t, err)
 
 	sqlBackend, err := sql.NewBackend(sql.BackendOptions{DBProvider: eDB})
 	require.NoError(t, err)
@@ -149,7 +152,7 @@ func newKVBlobTestEnv(t *testing.T) *kvBlobTestEnv {
 	sqlBlobs, ok := sqlBackend.(resource.BlobSupport)
 	require.True(t, ok)
 
-	return &kvBlobTestEnv{db: dbConn.SqlDB(), ctx: ctx, kv: sqlKV, kvBlobs: resource.NewKVBlobSupport(sqlKV), sqlBlobs: sqlBlobs}
+	return &kvBlobTestEnv{dialect: dialect, db: dbConn.SqlDB(), ctx: ctx, kv: sqlKV, kvBlobs: resource.NewKVBlobSupport(sqlKV), sqlBlobs: sqlBlobs}
 }
 
 type namedBlobStore struct {
@@ -190,6 +193,17 @@ func (e *kvBlobTestEnv) get(t *testing.T, store resource.BlobSupport, key *resou
 	rsp, err := store.GetResourceBlob(e.ctx, key, &utils.BlobInfo{UID: uid}, true)
 	require.NoError(t, err)
 	return rsp
+}
+
+// getError reads a blob that must not be found and returns the ErrorResult
+// attached to the returned status error.
+func (e *kvBlobTestEnv) getError(t *testing.T, store resource.BlobSupport, key *resourcepb.ResourceKey, uid string) *resourcepb.ErrorResult {
+	t.Helper()
+	rsp, err := store.GetResourceBlob(e.ctx, key, &utils.BlobInfo{UID: uid}, true)
+	require.Nil(t, rsp)
+	res := resourceutil.ErrorResultFromGRPCDetails(err)
+	require.NotNil(t, res, "expected an ErrorResult detail on %v", err)
+	return res
 }
 
 func (e *kvBlobTestEnv) save(t *testing.T, k kv.BlobKey, contentType, value string) {

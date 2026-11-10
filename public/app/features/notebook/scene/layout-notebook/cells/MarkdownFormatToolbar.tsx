@@ -8,7 +8,7 @@ import { useEffect, useState, type ReactNode, type RefObject } from 'react';
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { floatingUtils, Portal, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { toggleLinePrefix, toggleOrderedList, toggleSurround } from 'app/plugins/panel/text/v2/editor/editorCommands';
+import { toggleOrderedList, toggleSurround } from 'app/plugins/panel/text/v2/editor/editorCommands';
 
 import {
   BOLD_NODE,
@@ -18,6 +18,8 @@ import {
   ITALIC_NODE,
   LINK_NODE,
   STRIKETHROUGH_NODE,
+  toggleChecklist,
+  toggleBulletedList,
 } from './markdownLivePreview';
 
 export const MARKDOWN_FORMAT_TOOLBAR_TEST_ID = 'notebook-markdown-format-toolbar';
@@ -77,7 +79,14 @@ function actions(): FormatAction[] {
       tooltip: t('notebook.cell.markdown.tooltip-bulleted-list', 'Bulleted list'),
       icon: 'list-ul',
       isActive: (tree, pos) => enclosingListKind(tree, pos) === 'bullet',
-      run: (view) => toggleLinePrefix(view, '- '),
+      run: toggleBulletedList,
+    },
+    {
+      key: 'checklist',
+      tooltip: t('notebook.cell.markdown.tooltip-checklist', 'Checklist'),
+      icon: 'check-square',
+      isActive: (tree, pos) => enclosingListKind(tree, pos) === 'checklist',
+      run: toggleChecklist,
     },
     {
       key: 'numbered-list',
