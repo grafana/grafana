@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"net/url"
+	"slices"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"google.golang.org/protobuf/proto"
@@ -16,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+const includePathToCreatable = "pathToCreatable"
 
 func (s *SearchHandler) WithCreatableTree(perms userPermissionsGetter, folders folder.Service) *SearchHandler {
 	s.creatable = NewCreatableTreeCache(perms, folders)
@@ -33,8 +36,9 @@ type creatableNarrowing struct {
 // a create grant. On error the request is left untouched.
 func (s *SearchHandler) narrowCreatable(ctx context.Context, user identity.Requester, queryParams url.Values, req *resourcepb.ResourceSearchRequest) (n *creatableNarrowing, empty bool, err error) {
 	parent := queryParams.Get("folder")
+	types := queryParams["type"]
 	if s.creatable == nil || parent == "" || parent == folder.SharedWithMeFolderUID || len(queryParams["name"]) > 0 ||
-		permissionFromQueryParams(queryParams) != dashboardaccess.PERMISSION_CREATE ||
+		!slices.Contains(queryParams["include"], includePathToCreatable) || len(types) != 1 || types[0] != "folder" ||
 		effectivePermission(ctx, dashboardaccess.PERMISSION_CREATE) != dashboardaccess.PERMISSION_CREATE ||
 		!openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagFolderPickerCreatableFolderTree, false, openfeature.TransactionContext(ctx)) {
 		return nil, false, nil
@@ -49,8 +53,9 @@ func (s *SearchHandler) narrowCreatable(ctx context.Context, user identity.Reque
 		return nil, false, err
 	}
 
-	// The index already create-checks every child.
+	// Have the index create-check every child.
 	if tree.Inherited(path) {
+		req.Permission = int64(dashboardaccess.PERMISSION_CREATE)
 		return &creatableNarrowing{tree: tree, inherited: true}, false, nil
 	}
 
@@ -114,10 +119,9 @@ func (s *SearchHandler) addCreateOnly(ctx context.Context, n *creatableNarrowing
 	return nil
 }
 
-// flag sets canCreate on the hits.
+// flag sets field.canCreate on the hits.
 func (n *creatableNarrowing) flag(hits []dashboardv0alpha1.DashboardHit) {
 	for i := range hits {
-		v := n.inherited || n.tree.IsGrant(hits[i].Name)
-		hits[i].CanCreate = &v
+		hits[i].Field.Set("canCreate", n.inherited || n.tree.IsGrant(hits[i].Name))
 	}
 }

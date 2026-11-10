@@ -203,7 +203,13 @@ func nameFilter(req *resourcepb.ResourceSearchRequest) []string {
 func canCreateByName(res dashboardv0alpha1.SearchResults) map[string]*bool {
 	out := map[string]*bool{}
 	for _, h := range res.Hits {
-		out[h.Name] = h.CanCreate
+		out[h.Name] = nil
+		if h.Field == nil {
+			continue
+		}
+		if v, ok := h.Field.UnstructuredContent()["canCreate"].(bool); ok {
+			out[h.Name] = &v
+		}
 	}
 	return out
 }
@@ -211,11 +217,11 @@ func canCreateByName(res dashboardv0alpha1.SearchResults) map[string]*bool {
 func TestSearchHandlerCreatableFolderTree(t *testing.T) {
 	grantsCD := createGrantPerms("folders:uid:C", "folders:uid:D")
 
-	run := func(t *testing.T, perms accesscontrol.Service, parent string, responses ...*resourcepb.ResourceSearchResponse) (*MockClient, dashboardv0alpha1.SearchResults) {
+	runQuery := func(t *testing.T, perms accesscontrol.Service, rawQuery string, responses ...*resourcepb.ResourceSearchResponse) (*MockClient, dashboardv0alpha1.SearchResults) {
 		t.Helper()
 		client := &MockClient{MockResponses: responses}
 		handler := NewSearchHandler(tracing.NewNoopTracerService(), client, nil).WithCreatableTree(perms, testFolders())
-		req := httptest.NewRequest("GET", "/search?type=folder&permission=create&folder="+parent, nil)
+		req := httptest.NewRequest("GET", "/search?"+rawQuery, nil)
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, UserUID: "u1"}))
 		rr := httptest.NewRecorder()
 
@@ -224,6 +230,10 @@ func TestSearchHandlerCreatableFolderTree(t *testing.T) {
 		var res dashboardv0alpha1.SearchResults
 		require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &res))
 		return client, res
+	}
+	run := func(t *testing.T, perms accesscontrol.Service, parent string, responses ...*resourcepb.ResourceSearchResponse) (*MockClient, dashboardv0alpha1.SearchResults) {
+		t.Helper()
+		return runQuery(t, perms, "type=folder&permission=create&include=pathToCreatable&folder="+parent, responses...)
 	}
 
 	t.Run("inherited grant keeps the create search and flags every hit", func(t *testing.T) {
@@ -314,16 +324,29 @@ func TestSearchHandlerCreatableFolderTree(t *testing.T) {
 		})
 	}
 
-	t.Run("leaves shared-with-me and name-filtered searches alone", func(t *testing.T) {
-		setPickerToggles(t, true, true)
-		client := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{folderRows("B")}}
-		handler := NewSearchHandler(tracing.NewNoopTracerService(), client, nil).WithCreatableTree(grantsCD, testFolders())
-		req := httptest.NewRequest("GET", "/search?type=folder&permission=create&folder=A&name=B", nil)
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1}))
+	for name, rawQuery := range map[string]string{
+		"without include": "type=folder&permission=create&folder=A",
+		"name filter":     "type=folder&permission=create&include=pathToCreatable&folder=A&name=B",
+	} {
+		t.Run(name+" is left alone", func(t *testing.T) {
+			setPickerToggles(t, true, true)
 
-		handler.DoSearch(httptest.NewRecorder(), req)
+			client, res := runQuery(t, grantsCD, rawQuery, folderRows("B"))
+
+			require.Equal(t, 1, client.CallCount)
+			assert.NotContains(t, nameFilter(client.MockCalls[0]), "D")
+			assert.Nil(t, canCreateByName(res)["B"])
+		})
+	}
+
+	t.Run("include alone asks the index for create-checked children under a grant", func(t *testing.T) {
+		setPickerToggles(t, true, true)
+
+		client, res := runQuery(t, grantsCD, "type=folder&include=pathToCreatable&folder=C", folderRows("X"))
 
 		require.Equal(t, 1, client.CallCount)
-		assert.Equal(t, []string{"B"}, nameFilter(client.MockCalls[0]))
+		assert.Equal(t, int64(dashboardaccess.PERMISSION_CREATE), client.MockCalls[0].Permission)
+		require.NotNil(t, canCreateByName(res)["X"])
+		assert.True(t, *canCreateByName(res)["X"])
 	})
 }
