@@ -92,8 +92,8 @@ func (s *dashboardPreferencesStorage) Update(ctx context.Context, name string, o
 	return s.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 }
 
-// The placeholder carries the scope the name gives because a spec-only patch can't supply it, and a
-// UID because the patchers refuse an old object without one.
+// The placeholder carries the folder annotation the name gives because a spec-only patch can't supply
+// it, and a UID because the patchers refuse an old object without one.
 func (s *dashboardPreferencesStorage) newEmptyDashboardPreferences(ctx context.Context, name string) (*dashv2beta1.DashboardPreferences, error) {
 	scope, ok := dashboardPreferencesScopeFromName(name)
 	if !ok {
@@ -104,17 +104,12 @@ func (s *dashboardPreferencesStorage) newEmptyDashboardPreferences(ctx context.C
 	obj.GetObjectKind().SetGroupVersionKind(s.gvk)
 	obj.SetName(name)
 	obj.SetNamespace(k8srequest.NamespaceValue(ctx))
-	switch scope.Tier {
-	case dashboardPreferencesTierFolder:
+	if scope.Tier == dashboardPreferencesTierFolder {
 		accessor, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return nil, err
 		}
 		accessor.SetFolder(scope.FolderUID)
-	case dashboardPreferencesTierUser:
-		obj.Spec.UserUID = new(scope.UserUID)
-	case dashboardPreferencesTierOrg:
-		// The org tier has neither a folder nor an owner.
 	}
 	obj.SetUID(gapiutil.CalculateClusterWideUID(obj))
 	return obj, nil

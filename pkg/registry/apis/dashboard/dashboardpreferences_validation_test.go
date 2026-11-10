@@ -47,7 +47,6 @@ func TestValidateDashboardPreferencesSpec(t *testing.T) {
 	}{
 		{"empty spec", `{}`, nil},
 		{"every field valid", `{
-			"userUID": "u1",
 			"dashboard": {
 				"preload": true,
 				"autoRefresh": "1m",
@@ -71,9 +70,8 @@ func TestValidateDashboardPreferencesSpec(t *testing.T) {
 		}`, nil},
 		// The schema bounds these at 0; the editor's higher minimums are admission's to enforce.
 		{"zeros valid", `{"dashboard":{"fiscalYearStartMonth":0,"autoGrid":{"maxColumnCount":0,"columnWidth":0,"rowHeight":0}},"panels":{"graph":{"lineWidth":0,"fillOpacity":0,"pointSize":0},"field":{"decimals":0}}}`, nil},
-		{"every size at its limit", `{"userUID":` + text(40) + `,"dashboard":{"autoRefresh":` + text(32) + `,"autoRefreshIntervals":` + list(30, text(32)) + `,"timeRange":{"from":` + text(64) + `,"to":` + text(64) + `},"nowDelay":` + text(32) + `}}`, nil},
+		{"every size at its limit", `{"dashboard":{"autoRefresh":` + text(32) + `,"autoRefreshIntervals":` + list(30, text(32)) + `,"timeRange":{"from":` + text(64) + `,"to":` + text(64) + `},"nowDelay":` + text(32) + `}}`, nil},
 
-		{"userUID too long", `{"userUID":` + text(41) + `}`, []string{"spec.userUID"}},
 		{"autoRefresh too long", `{"dashboard":{"autoRefresh":` + text(33) + `}}`, []string{"spec.dashboard.autoRefresh"}},
 		{"time range start too long", `{"dashboard":{"timeRange":{"from":` + text(65) + `,"to":"now"}}}`, []string{"spec.dashboard.timeRange.from"}},
 		{"too many refresh intervals", `{"dashboard":{"autoRefreshIntervals":` + list(31, `"1m"`) + `}}`, []string{"spec.dashboard.autoRefreshIntervals"}},

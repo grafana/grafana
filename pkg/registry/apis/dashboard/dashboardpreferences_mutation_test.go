@@ -16,8 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func newDashboardPreferences(name, folderUID string, userUID *string) *dashv2beta1.DashboardPreferences {
-	obj := &dashv2beta1.DashboardPreferences{Spec: dashv2beta1.DashboardPreferencesSpec{UserUID: userUID}}
+func newDashboardPreferences(name, folderUID string) *dashv2beta1.DashboardPreferences {
+	obj := &dashv2beta1.DashboardPreferences{}
 	obj.SetName(name)
 	if folderUID != "" {
 		obj.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
@@ -106,23 +106,23 @@ func TestDashboardsAPIBuilderMutateDashboardPreferences(t *testing.T) {
 			wantName   string
 			wantLabels map[string]string
 		}{
-			{name: "folder create without name", op: admission.Create, obj: newDashboardPreferences("", "f1", nil), wantName: "folder-f1", wantLabels: folderLabels},
+			{name: "folder create without name", op: admission.Create, obj: newDashboardPreferences("", "f1"), wantName: "folder-f1", wantLabels: folderLabels},
 			// A label value must start and end with an alphanumeric character and a folder UID need not, so
 			// the UID cannot be copied into a label.
-			{name: "folder create with a UID that starts with an underscore", op: admission.Create, obj: newDashboardPreferences("", "_lead", nil), wantName: "folder-_lead", wantLabels: folderLabels},
-			{name: "folder create with a UID that ends with a dash", op: admission.Create, obj: newDashboardPreferences("", "trail-", nil), wantName: "folder-trail-", wantLabels: folderLabels},
-			{name: "org create without name", op: admission.Create, obj: newDashboardPreferences("", "", nil), wantName: "namespace", wantLabels: orgLabels},
-			{name: "general folder create", op: admission.Create, obj: newDashboardPreferences("", "general", nil), wantName: "namespace", wantLabels: orgLabels},
-			{name: "user create", op: admission.Create, obj: newDashboardPreferences("", "", new("u1")), wantName: "user-u1", wantLabels: userLabels},
-			{name: "user create in the general folder", op: admission.Create, obj: newDashboardPreferences("", "general", new("u1")), wantName: "user-u1", wantLabels: userLabels},
-			{name: "provided name kept", op: admission.Create, obj: newDashboardPreferences("folder-f1", "f1", nil), wantName: "folder-f1", wantLabels: folderLabels},
+			{name: "folder create with a UID that starts with an underscore", op: admission.Create, obj: newDashboardPreferences("", "_lead"), wantName: "folder-_lead", wantLabels: folderLabels},
+			{name: "folder create with a UID that ends with a dash", op: admission.Create, obj: newDashboardPreferences("", "trail-"), wantName: "folder-trail-", wantLabels: folderLabels},
+			{name: "org create without name", op: admission.Create, obj: newDashboardPreferences("", ""), wantName: "namespace", wantLabels: orgLabels},
+			{name: "general folder create", op: admission.Create, obj: newDashboardPreferences("", "general"), wantName: "namespace", wantLabels: orgLabels},
+			{name: "user create", op: admission.Create, obj: newDashboardPreferences("user-u1", ""), wantName: "user-u1", wantLabels: userLabels},
+			{name: "user create in the general folder", op: admission.Create, obj: newDashboardPreferences("user-u1", "general"), wantName: "user-u1", wantLabels: userLabels},
+			{name: "provided name kept", op: admission.Create, obj: newDashboardPreferences("folder-f1", "f1"), wantName: "folder-f1", wantLabels: folderLabels},
 			// Validate owns the name check, so a name that does not fit the scope has to reach it unchanged.
-			{name: "provided name that does not fit the scope kept", op: admission.Create, obj: newDashboardPreferences("folder-f2", "f1", nil), wantName: "folder-f2", wantLabels: folderLabels},
-			{name: "name not derived on update", op: admission.Update, obj: newDashboardPreferences("", "f1", nil), wantName: "", wantLabels: folderLabels},
+			{name: "provided name that does not fit the scope kept", op: admission.Create, obj: newDashboardPreferences("folder-f2", "f1"), wantName: "folder-f2", wantLabels: folderLabels},
+			{name: "name not derived on update", op: admission.Update, obj: newDashboardPreferences("", "f1"), wantName: "", wantLabels: folderLabels},
 			{
 				name:       "annotation removed on update",
 				op:         admission.Update,
-				obj:        withLabels(newDashboardPreferences("namespace", "", nil), map[string]string{dashboardPreferencesFolderLabelKey: "f1"}),
+				obj:        withLabels(newDashboardPreferences("namespace", ""), map[string]string{dashboardPreferencesFolderLabelKey: "f1"}),
 				wantName:   "namespace",
 				wantLabels: orgLabels,
 			},
@@ -130,7 +130,7 @@ func TestDashboardsAPIBuilderMutateDashboardPreferences(t *testing.T) {
 			{
 				name:       "general annotation on update",
 				op:         admission.Update,
-				obj:        withLabels(newDashboardPreferences("namespace", "general", nil), map[string]string{dashboardPreferencesFolderLabelKey: "f1"}),
+				obj:        withLabels(newDashboardPreferences("namespace", "general"), map[string]string{dashboardPreferencesFolderLabelKey: "f1"}),
 				wantName:   "namespace",
 				wantLabels: orgLabels,
 			},
@@ -138,7 +138,7 @@ func TestDashboardsAPIBuilderMutateDashboardPreferences(t *testing.T) {
 			{
 				name: "labels the server owns are rewritten and the rest kept",
 				op:   admission.Create,
-				obj: withLabels(newDashboardPreferences("", "", new("u1")), map[string]string{
+				obj: withLabels(newDashboardPreferences("user-u1", ""), map[string]string{
 					dashboardPreferencesTierLabelKey:   "folder",
 					dashboardPreferencesFolderLabelKey: "f1",
 					"team":                             "a",
@@ -150,7 +150,7 @@ func TestDashboardsAPIBuilderMutateDashboardPreferences(t *testing.T) {
 			{
 				name:       "folder label sent by the client removed on the folder tier",
 				op:         admission.Create,
-				obj:        withLabels(newDashboardPreferences("", "f1", nil), map[string]string{dashboardPreferencesFolderLabelKey: "f2"}),
+				obj:        withLabels(newDashboardPreferences("", "f1"), map[string]string{dashboardPreferencesFolderLabelKey: "f2"}),
 				wantName:   "folder-f1",
 				wantLabels: folderLabels,
 			},
@@ -170,21 +170,13 @@ func TestDashboardsAPIBuilderMutateDashboardPreferences(t *testing.T) {
 		}
 	})
 
-	t.Run("a spec naming both scopes is a bad request", func(t *testing.T) {
-		tests := []struct {
-			name string
-			op   admission.Operation
-			obj  *dashv2beta1.DashboardPreferences
-		}{
-			{name: "create without name", op: admission.Create, obj: newDashboardPreferences("", "f1", new("u1"))},
-			{name: "update", op: admission.Update, obj: newDashboardPreferences("folder-f1", "f1", new("u1"))},
-		}
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				err := mutate(tt.op, tt.obj)
+	t.Run("a folder annotation on a user tier name is a bad request", func(t *testing.T) {
+		for _, o := range ops {
+			t.Run(o.name, func(t *testing.T) {
+				err := mutate(o.op, newDashboardPreferences("user-u1", "f1"))
 
 				require.True(t, apierrors.IsBadRequest(err), "expected a BadRequest, got %v", err)
-				require.ErrorContains(t, err, "not both")
+				require.ErrorContains(t, err, "a user tier object can't have the grafana.app/folder annotation")
 			})
 		}
 	})
@@ -224,7 +216,7 @@ func TestDashboardsAPIBuilderMutateDashboardPreferences(t *testing.T) {
 		for _, tt := range tests {
 			for _, o := range ops {
 				t.Run(tt.name+" on "+o.name, func(t *testing.T) {
-					obj := newDashboardPreferences("namespace", "", nil)
+					obj := newDashboardPreferences("namespace", "")
 					require.NoError(t, json.Unmarshal([]byte(tt.spec), &obj.Spec))
 
 					require.NoError(t, mutate(o.op, obj))
@@ -241,7 +233,7 @@ func TestDashboardsAPIBuilderMutateDashboardPreferences(t *testing.T) {
 	t.Run("an empty refresh interval list is kept", func(t *testing.T) {
 		for _, o := range ops {
 			t.Run(o.name, func(t *testing.T) {
-				obj := newDashboardPreferences("namespace", "", nil)
+				obj := newDashboardPreferences("namespace", "")
 				require.NoError(t, json.Unmarshal([]byte(`{"dashboard":{"autoRefreshIntervals":[]}}`), &obj.Spec))
 
 				require.NoError(t, mutate(o.op, obj))
@@ -255,7 +247,7 @@ func TestDashboardsAPIBuilderMutateDashboardPreferences(t *testing.T) {
 	t.Run("finalizers and owner references are cleared", func(t *testing.T) {
 		for _, o := range ops {
 			t.Run(o.name, func(t *testing.T) {
-				obj := newDashboardPreferences("user-u1", "", new("u1"))
+				obj := newDashboardPreferences("user-u1", "")
 				obj.SetFinalizers([]string{"keep"})
 				obj.SetOwnerReferences([]metav1.OwnerReference{{APIVersion: "v1", Kind: "ConfigMap", Name: "owner", UID: "owner-uid"}})
 
@@ -270,7 +262,7 @@ func TestDashboardsAPIBuilderMutateDashboardPreferences(t *testing.T) {
 	// Mutate returns early for anything that is not a create or an update, so the old object a delete
 	// carries is never touched.
 	t.Run("leaves a delete alone", func(t *testing.T) {
-		old := newDashboardPreferences("user-u1", "", new("u1"))
+		old := newDashboardPreferences("user-u1", "")
 		old.SetFinalizers([]string{"keep"})
 
 		require.NoError(t, builder.Mutate(ctx, dashboardPreferencesAttributesForOp(admission.Delete, nil, old), nil))

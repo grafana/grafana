@@ -49,16 +49,17 @@ type dashboardPreferencesScope struct {
 	UserUID   string
 }
 
-// A root folder annotation ("" or "general") is not a folder scope, so a root-level object that carries
-// "general" stays in the org or user tier instead of becoming "folder-general".
+// userUID is the owner a user- name gives, and nil for any other name. A root folder annotation ("" or
+// "general") is not a folder scope, so a root-level object that carries "general" stays in the org or
+// user tier instead of becoming "folder-general".
 func getDashboardPreferencesScope(folderUID string, userUID *string) (dashboardPreferencesScope, error) {
 	if userUID != nil && *userUID == "" {
-		return dashboardPreferencesScope{}, fmt.Errorf("spec.userUID must not be empty")
+		return dashboardPreferencesScope{}, fmt.Errorf("a user tier name must be %s<userUID>", dashboardPreferencesUserNamePrefix)
 	}
 
 	hasFolder := !folder.IsRootFolderUID(folderUID)
 	if hasFolder && userUID != nil {
-		return dashboardPreferencesScope{}, fmt.Errorf("set either the grafana.app/folder annotation or spec.userUID, not both")
+		return dashboardPreferencesScope{}, fmt.Errorf("a user tier object can't have the grafana.app/folder annotation")
 	}
 	if folderUID == folder.SharedWithMeFolderUID {
 		return dashboardPreferencesScope{}, fmt.Errorf("the grafana.app/folder annotation must not be %q: it is not a real folder", folderUID)
@@ -74,6 +75,8 @@ func getDashboardPreferencesScope(folderUID string, userUID *string) (dashboardP
 	}
 }
 
+// The name is the only place the user tier's owner is kept, so an object without a name, such as a POST
+// before Mutate names it, is in the org or folder tier.
 func dashboardPreferencesScopeOf(obj *dashv2beta1.DashboardPreferences) (dashboardPreferencesScope, error) {
 	if obj == nil {
 		return dashboardPreferencesScope{}, fmt.Errorf("dashboard preferences payload is required")
@@ -84,7 +87,11 @@ func dashboardPreferencesScopeOf(obj *dashv2beta1.DashboardPreferences) (dashboa
 		return dashboardPreferencesScope{}, fmt.Errorf("error getting dashboard preferences meta accessor: %w", err)
 	}
 
-	return getDashboardPreferencesScope(accessor.GetFolder(), obj.Spec.UserUID)
+	var userUID *string
+	if uid, ok := strings.CutPrefix(obj.GetName(), dashboardPreferencesUserNamePrefix); ok {
+		userUID = &uid
+	}
+	return getDashboardPreferencesScope(accessor.GetFolder(), userUID)
 }
 
 func dashboardPreferencesScopeFromName(name string) (dashboardPreferencesScope, bool) {
@@ -237,7 +244,7 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesUpdate(ctx context.Co
 		return fmt.Errorf("error getting the scope of the stored dashboard preferences: %w", err)
 	}
 	if scope != oldScope {
-		return apierrors.NewBadRequest("dashboard preferences scope (grafana.app/folder annotation and spec.userUID) cannot be changed; delete it and create a new one")
+		return apierrors.NewBadRequest("the grafana.app/folder annotation of dashboard preferences cannot be changed; delete it and create a new one")
 	}
 
 	name := obj.GetName()

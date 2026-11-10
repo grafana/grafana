@@ -63,9 +63,6 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 
 		got, err := editor.Resource.Get(ctx, editorTier, metav1.GetOptions{})
 		require.NoError(t, err)
-		userUID, _, err := unstructured.NestedString(got.Object, "spec", "userUID")
-		require.NoError(t, err)
-		require.Equal(t, editorUID, userUID)
 		cursorSync, _, err := unstructured.NestedString(got.Object, "spec", "dashboard", "cursorSync")
 		require.NoError(t, err)
 		require.Equal(t, "Crosshair", cursorSync)
@@ -98,13 +95,15 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 	})
 
 	// Every tier exists until the DELETE below, so these PATCHes are admitted as updates.
-	t.Run("PATCH can't change the scope of an existing user tier", func(t *testing.T) {
-		// spec.userUID still names the owner, so the annotation alone gives the object both scopes.
-		_, err := editor.Resource.Patch(ctx, editorTier, types.MergePatchType, dashboardPreferencesPatch(t, `{"metadata":{"annotations":{"grafana.app/folder":"`+f1+`"}}}`), metav1.PatchOptions{})
-		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
-		require.ErrorContains(t, err, "not both")
+	t.Run("PATCH can't change the scope of an existing tier", func(t *testing.T) {
+		addFolder := dashboardPreferencesPatch(t, `{"metadata":{"annotations":{"grafana.app/folder":"`+f1+`"}}}`)
 
-		_, err = editor.Resource.Patch(ctx, editorTier, types.MergePatchType, dashboardPreferencesPatch(t, `{"metadata":{"annotations":{"grafana.app/folder":"`+f1+`"}},"spec":{"userUID":null}}`), metav1.PatchOptions{})
+		// The name keeps the object in the user tier, so the annotation would give it two scopes.
+		_, err := editor.Resource.Patch(ctx, editorTier, types.MergePatchType, addFolder, metav1.PatchOptions{})
+		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+		require.ErrorContains(t, err, "a user tier object can't have the grafana.app/folder annotation")
+
+		_, err = admin.Resource.Patch(ctx, "namespace", types.MergePatchType, addFolder, metav1.PatchOptions{})
 		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
 		require.ErrorContains(t, err, "cannot be changed")
 	})
@@ -130,20 +129,17 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 		require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
 	})
 
+	// The folder tier is the annotation, so without one the name has to be the org tier's.
 	t.Run("name must match the tier", func(t *testing.T) {
-		_, err := admin.Resource.Create(ctx, buildDashboardPreferencesObject(t, "folder-"+f1, "", map[string]any{
-			"userUID":   adminUID,
-			"dashboard": map[string]any{"preload": true},
-		}), metav1.CreateOptions{})
+		_, err := admin.Resource.Create(ctx, buildDashboardPreferencesObject(t, "folder-"+f1, "", preloadDashboardPreferencesSpec()), metav1.CreateOptions{})
 		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+		require.ErrorContains(t, err, `expected "namespace"`)
 	})
 
-	t.Run("both scopes rejected", func(t *testing.T) {
-		_, err := admin.Resource.Create(ctx, buildDashboardPreferencesObject(t, "", f1, map[string]any{
-			"userUID":   adminUID,
-			"dashboard": map[string]any{"preload": true},
-		}), metav1.CreateOptions{})
+	t.Run("folder annotation on a user tier rejected", func(t *testing.T) {
+		_, err := admin.Resource.Create(ctx, buildDashboardPreferencesObject(t, "user-"+adminUID, f1, preloadDashboardPreferencesSpec()), metav1.CreateOptions{})
 		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+		require.ErrorContains(t, err, "a user tier object can't have the grafana.app/folder annotation")
 	})
 
 	t.Run("missing folder", func(t *testing.T) {
@@ -268,10 +264,7 @@ func TestIntegrationDashboardPreferencesV2Beta1Authz(t *testing.T) {
 		editorUID := helper.Org1.Editor.Identity.GetIdentifier()
 		editorTier := "user-" + editorUID
 
-		_, err := editor.Resource.Update(ctx, buildDashboardPreferencesObject(t, editorTier, "", map[string]any{
-			"userUID":   editorUID,
-			"dashboard": map[string]any{"preload": true},
-		}), metav1.UpdateOptions{})
+		_, err := editor.Resource.Update(ctx, buildDashboardPreferencesObject(t, editorTier, "", preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
 		require.NoError(t, err, "owner PUT")
 
 		_, err = editor.Resource.Patch(ctx, editorTier, types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"hideTimepicker":true}}}`), metav1.PatchOptions{})
