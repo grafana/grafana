@@ -16,6 +16,7 @@ import {
   appendIntoSection,
   findNavById,
   hoistAppPages,
+  isPluginPathNestingEnabled,
   pluginPageId,
   standalonePluginPageId,
   updateNavById,
@@ -59,7 +60,7 @@ export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): N
 
   for (const app of byTitle(apps)) {
     try {
-      const { appLink, navChildren, standalonePages } = buildAppLink(app);
+      const { appLink, navChildren, standalonePages } = buildAppLink(app, next);
       // Built up locally and committed in one go, so a throw part-way through
       // leaves none of this app behind — not even its standalone pages
       let withApp = next;
@@ -110,13 +111,20 @@ function byTitle(apps: AppPluginConfig[]): AppPluginConfig[] {
  * accessible includes as navChildren too, unfiltered, so the caller can tell an
  * app with no nav items from one whose only item folded into the app link.
  */
-function buildAppLink(app: AppPluginConfig): {
+function buildAppLink(
+  app: AppPluginConfig,
+  tree: NavModelItem[]
+): {
   appLink: NavModelItem;
   navChildren: NavModelItem[];
   standalonePages: StandalonePage[];
 } {
   let appUrl = `/a/${app.id}`;
-  const children: NavModelItem[] = [];
+  const nestByPath = isPluginPathNestingEnabled();
+  // Attachment waits for a second pass, so nesting does not depend on the order
+  // the includes happen to appear in plugin.json
+  const pending: PendingInclude[] = [];
+  const pageLinks: NavModelItem[] = [];
   const standalonePages: StandalonePage[] = [];
   const navConfig = appNavConfigFor(app.id);
   const { filterInclude } = navConfig ?? {};
@@ -128,10 +136,10 @@ function buildAppLink(app: AppPluginConfig): {
 
     if (include.type === PluginIncludeType.dashboard) {
       if (include.addToNav && include.uid) {
-        children.push({
-          url: `/d/${include.uid}`,
-          text: include.name,
-          pluginId: app.id,
+        // Dashboards never nest
+        pending.push({
+          link: { url: `/d/${include.uid}`, text: include.name, pluginId: app.id },
+          isPage: false,
         });
       }
       continue;
@@ -163,11 +171,15 @@ function buildAppLink(app: AppPluginConfig): {
       continue;
     }
     if (pathConfig) {
-      standalonePages.push({
-        // A page entry always names a section — only a hidden one may leave it out
-        sectionId: pathConfig.sectionId ?? NavID.apps,
-        link: { ...withNavConfig(link, pathConfig), id: standalonePluginPageId(include.path) },
-      });
+      // A page entry always names a section — only a hidden one may leave it out
+      const sectionId = pathConfig.sectionId ?? NavID.apps;
+      const standaloneLink = { ...withNavConfig(link, pathConfig), id: standalonePluginPageId(include.path) };
+      standalonePages.push({ sectionId, link: standaloneLink });
+      // A relocated page parents its descendants only where it can be reached: a
+      // page nested under one that never lands would go with it
+      if (isSectionReachable(tree, sectionId)) {
+        pageLinks.push(standaloneLink);
+      }
       continue;
     }
 
@@ -175,8 +187,16 @@ function buildAppLink(app: AppPluginConfig): {
       continue;
     }
 
-    children.push(link);
+    pending.push({ link, isPage: true });
+    // A page sitting at the app root is not a distinct parent: nesting under it
+    // and nesting under the app section are the same place, and it is folded out
+    // of the children below
+    if (cleanNavUrl(link.url) !== cleanNavUrl(appUrl)) {
+      pageLinks.push(link);
+    }
   }
+
+  const children = attachPendingIncludes(pending, pageLinks, nestByPath);
 
   return {
     appLink: {
@@ -193,9 +213,78 @@ function buildAppLink(app: AppPluginConfig): {
       // Children matching the app default nav are folded into the app link itself
       children: children.filter((child) => child.url !== appUrl),
     },
-    navChildren: children,
+    // Every accessible include, nested or not: an app drops out of the tree only
+    // when it has no nav items at all
+    navChildren: pending.map(({ link }) => link),
     standalonePages,
   };
+}
+
+/** An include waiting for the second pass. Only pages are candidates for nesting. */
+interface PendingInclude {
+  link: NavModelItem;
+  isPage: boolean;
+}
+
+/**
+ * Attaches each pending include, nesting pages under their nearest path ancestor
+ * and returning what is left for the app section. The Go equivalent is
+ * attachPendingIncludes in pkg/services/navtree/navtreeimpl/applinks.go.
+ */
+function attachPendingIncludes(
+  pending: PendingInclude[],
+  pageLinks: NavModelItem[],
+  nestByPath: boolean
+): NavModelItem[] {
+  const children: NavModelItem[] = [];
+  for (const { link, isPage } of pending) {
+    const parent = nestByPath && isPage ? nearestAncestorByPath(link, pageLinks) : undefined;
+    if (parent) {
+      // Safe to mutate: every link here was built by this call and is not shared
+      parent.children = [...(parent.children ?? []), link];
+      continue;
+    }
+    children.push(link);
+  }
+  return children;
+}
+
+/**
+ * The candidate whose url is the deepest segment prefix of this link's, or
+ * undefined when none is — the caller then leaves the link under the app.
+ */
+function nearestAncestorByPath(link: NavModelItem, candidates: NavModelItem[]): NavModelItem | undefined {
+  const child = cleanNavUrl(link.url);
+  let best: NavModelItem | undefined;
+  for (const candidate of candidates) {
+    if (candidate === link) {
+      continue;
+    }
+    const parent = cleanNavUrl(candidate.url);
+    // Segment boundaries only, so /settings does not capture /settings-advanced
+    if (parent === child || !child.startsWith(`${parent}/`)) {
+      continue;
+    }
+    if (!best || parent.length > cleanNavUrl(best.url).length) {
+      best = candidate;
+    }
+  }
+  return best;
+}
+
+/** Strips query, fragment and trailing slash so urls compare on segment boundaries */
+function cleanNavUrl(url: string | undefined): string {
+  const path = url ?? '';
+  const end = path.search(/[?#]/);
+  return (end >= 0 ? path.slice(0, end) : path).replace(/\/+$/, '');
+}
+
+/**
+ * Whether a relocated page's section will be there to receive it: either it is
+ * already in the tree, or an app is about to build it from its shell.
+ */
+function isSectionReachable(tree: NavModelItem[], sectionId: string): boolean {
+  return sectionId === NavID.root || Boolean(findNavById(tree, sectionId)) || sectionId in PLUGIN_SECTION_SHELLS;
 }
 
 /** A page lifted out of its app, with the section it belongs in */

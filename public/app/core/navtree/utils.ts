@@ -10,6 +10,11 @@ export function isClientNavTreeEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false);
 }
 
+/** Whether app plugin nav items nest under their path ancestor instead of sitting flat. */
+export function isPluginPathNestingEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPluginPathNesting, false);
+}
+
 /** Whether app plugin nav items are fetched and folded in, on top of the client build. */
 function arePluginNavItemsEnabled(): boolean {
   return isClientNavTreeEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false);
