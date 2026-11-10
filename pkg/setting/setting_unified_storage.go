@@ -3,6 +3,7 @@ package setting
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"slices"
 	"strings"
@@ -232,6 +233,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
 	cfg.MigrationChunkedWrites = section.Key("migration_chunked_writes").MustBool(false)
 	cfg.MigrationChunkMaxBytes = section.Key("migration_chunk_max_bytes").MustInt64(256 * 1024 * 1024)
+	cfg.MigrationStatementTimeout = postgresStatementTimeout(section.Key("migration_statement_timeout").MustDuration(0))
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
 	cfg.UnifiedStorageAuthzExemptionEnabled = section.Key("authz_exemption_enabled").MustBool(false)
@@ -446,6 +448,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.RerankVertexModel = rerankSection.Key("vertex_model").MustString("semantic-ranker-fast-004")
 	cfg.RerankBedrockRegion = rerankSection.Key("bedrock_region").MustString("us-east-1")
 	cfg.RerankBedrockModel = rerankSection.Key("bedrock_model").MustString("cohere.rerank-v3-5:0")
+	cfg.RerankHedgeDelay = rerankSection.Key("hedge_delay").MustDuration(500 * time.Millisecond)
 }
 
 func (cfg *Cfg) ValidateSharedVectorConfig() error {
@@ -584,4 +587,14 @@ func (cfg *Cfg) EnableMode5(resource string) {
 	config.DualWriterMode = rest.Mode5
 	config.EnableMigration = true
 	cfg.UnifiedStorage[resource] = config
+}
+
+// postgresStatementTimeout keeps a positive timeout within what Postgres accepts: whole milliseconds up
+// to 2147483647. A larger value fails the SET at migration startup, and a sub-millisecond one would
+// become 0, which disables the timeout.
+func postgresStatementTimeout(d time.Duration) time.Duration {
+	if d <= 0 {
+		return 0
+	}
+	return min(max(d, time.Millisecond), math.MaxInt32*time.Millisecond)
 }
