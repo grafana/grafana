@@ -166,6 +166,8 @@ const scopeNavigationsGenerator = (
 
         return [
           ...acc,
+          // `satisfies` restores the excess property check that a literal returned through the generic reduce
+          // skips, so a field removed from ScopeNavigation can't linger here unnoticed.
           {
             // The drawer keys items by URL, so a dashboard shared by several scopes renders once. The name
             // is the item id that tests select by, so it stays the dashboard key without a scope prefix.
@@ -178,7 +180,7 @@ const scopeNavigationsGenerator = (
               title: dashboardTitle,
               groups,
             },
-          },
+          } satisfies ScopeNavigation,
         ];
       }, []),
     ];
