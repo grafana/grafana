@@ -32,7 +32,7 @@ func TestIntegration_BackfillFolderFullpaths(t *testing.T) {
 
 	t.Run("no organizations needs no rule store", func(t *testing.T) {
 		ng, _, _ := newBackfillTestService(t, 0)
-		ng.ruleService = nil
+		ng.ruleStore = nil
 
 		require.NoError(t, ng.BackfillFolderFullpaths(context.Background()))
 	})
@@ -249,6 +249,7 @@ func newBackfillTestService(t *testing.T, orgCount int) (*AlertNG, *backfillFold
 		Log:         logger,
 		store:       &store.DBstore{SQLStore: sqlStore, Logger: logger},
 		ruleService: ruleService,
+		ruleStore:   sqlRules,
 	}, folders, sqlRules
 }
 
