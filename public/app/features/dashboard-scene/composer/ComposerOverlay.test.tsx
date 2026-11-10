@@ -2287,7 +2287,7 @@ describe('tools', () => {
     expect(listener).toHaveBeenCalledWith('remove');
   });
 
-  it('marks a click with Remove for removal, and draws nothing on a drag', async () => {
+  it('marks a click with Remove for removal, and neither draws nor marks anything on a drag', async () => {
     const { session, startPick } = setup();
     act(() => session.setTool('remove'));
     const pick = startPick();
@@ -2298,9 +2298,13 @@ describe('tools', () => {
     fireEvent.pointerMove(overlay, { clientX: 350, clientY: 450 });
     expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
     fireEvent.pointerUp(overlay, { clientX: 350, clientY: 450 });
+    // The click the browser fires after the drag, over the panel: swallowed, not a removal.
+    fireEvent.click(overlay, { clientX: 350, clientY: 450 });
     await act(async () => {});
     expect(settled).not.toHaveBeenCalled();
 
+    fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.pointerUp(overlay, { clientX: 200, clientY: 350 });
     fireEvent.click(overlay, { clientX: 200, clientY: 350 });
     await expect(pick).resolves.toEqual({
       ref: { kind: 'panel', panelId: 3 },

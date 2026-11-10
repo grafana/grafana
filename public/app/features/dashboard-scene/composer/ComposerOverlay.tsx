@@ -94,10 +94,10 @@ export function ComposerOverlay({
   const hoverFrameRef = useRef(0);
   const [layout, setLayout] = useState<Layout>(EMPTY_LAYOUT);
   /**
-   * Where a press started, in viewport coordinates, and whether it has since moved far enough to be a drag;
-   * null when no press is in progress.
+   * Where a press started, in viewport coordinates, whether it has since moved far enough to be a drag, and
+   * whether a drag draws a region (only Select's does); null when no press is in progress.
    */
-  const dragStartRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const dragStartRef = useRef<{ x: number; y: number; moved: boolean; region: boolean } | null>(null);
   /** A finished or ignored drag swallows the click that follows its pointer-up. */
   const swallowClickRef = useRef(false);
   const [draft, setDraft] = useState<Box | null>(null);
@@ -378,7 +378,7 @@ export function ComposerOverlay({
           return;
         }
         press.dragged = true;
-        dragStartRef.current = { x: press.x, y: press.y, moved: true };
+        dragStartRef.current = { x: press.x, y: press.y, moved: true, region: true };
         // Undo what the press began on the control it started on, such as focus or an open menu.
         const focused = document.activeElement;
         if (focused instanceof HTMLElement && rootRef.current?.parentElement?.contains(focused)) {
@@ -584,11 +584,8 @@ export function ComposerOverlay({
       // selection, no menu.
       event.preventDefault();
       event.stopPropagation();
-      // Only Select draws regions: Remove picks on click, and Text outside an element does nothing.
-      if (tool !== 'select') {
-        return;
-      }
-      // Any primary-button press may become a region: a click picks an element, a drag draws a region. Inside
+      // Any primary-button press may become a drag. With Select a click picks an element and a drag draws a
+      // region; with Remove a click marks an element and a drag does nothing, not even pick on release. Inside
       // the extension sidebar nothing starts, should a host stack the sidebar under the document.
       if (
         event.button !== 0 ||
@@ -599,7 +596,7 @@ export function ComposerOverlay({
       ) {
         return;
       }
-      dragStartRef.current = { x: event.clientX, y: event.clientY, moved: false };
+      dragStartRef.current = { x: event.clientX, y: event.clientY, moved: false, region: tool === 'select' };
     };
 
     const onPointerMove = (event: PointerEvent) => {
@@ -612,7 +609,9 @@ export function ComposerOverlay({
         }
         if (start.moved) {
           window.getSelection()?.removeAllRanges();
-          showDraft(rect);
+          if (start.region) {
+            showDraft(rect);
+          }
           setHovered(null);
           hideHint();
           return;
@@ -710,9 +709,10 @@ export function ComposerOverlay({
         swallowClickRef.current = pickMode === 'region';
         return;
       }
-      // A drag never turns back into a click; one too thin for a region is dropped and the pick stays pending.
+      // A drag never turns back into a click; one too thin for a region, or with a tool that draws none, is
+      // dropped and the pick stays pending.
       swallowClickRef.current = true;
-      if (rect.width < MIN_REGION_SIZE || rect.height < MIN_REGION_SIZE) {
+      if (!start.region || rect.width < MIN_REGION_SIZE || rect.height < MIN_REGION_SIZE) {
         return;
       }
       const region = session.createRegionPick(rect);
