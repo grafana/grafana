@@ -3,6 +3,8 @@ package legacyclient
 import (
 	"context"
 
+	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -11,6 +13,16 @@ import (
 // identifies the identity being checked, which may differ from that caller.
 type LegacyAccessClient interface {
 	LegacyCheck(ctx context.Context, req LegacyCheckRequest) (bool, error)
+}
+
+// LegacyCheckClientSetter attaches the client after the evaluator is constructed.
+// acimpl.ProvideScopeResolverRegistry obtains the registry from AccessControl,
+// and rbac.Service.WithLegacyScopeResolvers needs it to construct the server.
+// Constructor injection into acimpl.ProvideAccessControl would create a cycle.
+// In contrast, legacypermissions.ProvideClient only needs the loader and config,
+// allowing constructor injection for LegacyGetUserPermissions.
+type LegacyCheckClientSetter interface {
+	SetLegacyCheckClient(client *LegacyClient, useExternalGroups bool, namespace types.NamespaceFormatter)
 }
 
 type LegacyCheckRequest struct {
