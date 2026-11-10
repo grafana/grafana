@@ -17,7 +17,7 @@ import {
   TextBoxVariable,
   VizPanel,
 } from '@grafana/scenes';
-import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -31,7 +31,9 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardControls, type DashboardControlsState } from './DashboardControls';
+import { DashboardDataLayerSet } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -312,6 +314,18 @@ describe('DashboardControls', () => {
         expectedHidden: ['otherSectionVar'],
       },
       {
+        title: 'should include edited panel ancestor section annotations in panel edit mode',
+        sceneBuilder: () => buildPanelModeAnnotationsScene('edit'),
+        expectedVisible: ['ancestorAnnotation'],
+        expectedHidden: ['hiddenAnnotation', 'otherSectionAnnotation'],
+      },
+      {
+        title: 'should include viewed panel ancestor section annotations in panel view mode',
+        sceneBuilder: () => buildPanelModeAnnotationsScene('view'),
+        expectedVisible: ['ancestorAnnotation'],
+        expectedHidden: ['hiddenAnnotation', 'otherSectionAnnotation'],
+      },
+      {
         title: 'should hide repeat local section variables in panel edit mode',
         sceneBuilder: buildPanelEditSceneWithRepeatVariable,
         expectedVisible: ['repeatSource'],
@@ -324,6 +338,17 @@ describe('DashboardControls', () => {
         expectedHidden,
         expectedUnique,
       });
+    });
+
+    it('updates the viewed panel section annotation controls when the section annotations change', async () => {
+      const { controls, ancestorSet } = buildPanelModeAnnotationsScene('view');
+      renderInGrafanaContext(<controls.Component model={controls} />);
+      expect(await screen.findByText('ancestorAnnotation')).toBeInTheDocument();
+
+      act(() => ancestorSet.setState({ annotationLayers: [sectionAnnotation('addedAnnotation')] }));
+
+      expect(await screen.findByText('addedAnnotation')).toBeInTheDocument();
+      expect(screen.queryByText('ancestorAnnotation')).not.toBeInTheDocument();
     });
 
     it('still mounts ScopesVariable.Component when panel edit variables override is active', async () => {
@@ -707,25 +732,6 @@ describe('DashboardControls', () => {
       );
     });
 
-    it('renders library panel actions instead of Discard/Back when editing a library panel', () => {
-      const { controls } = buildLibraryPanelEditControlsScene();
-
-      renderInGrafanaContext(<controls.Component model={controls} />);
-
-      expect(
-        screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByTestId(selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton)
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-      ).not.toBeInTheDocument();
-    });
-
     it('discards the panel changes via PanelEditor.onDiscard when Discard is clicked', async () => {
       const { controls, editPanel } = buildPanelEditControlsScene({
         uid: 'panel-edit-discard',
@@ -799,11 +805,24 @@ describe('DashboardControls', () => {
       expect(saveSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('shortens the library panel action labels and keeps the full text in tooltips', async () => {
+    it('renders library panel actions with short labels and full tooltips instead of Back', async () => {
       const user = userEvent.setup();
       const { controls } = buildLibraryPanelEditControlsScene();
 
       renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton)
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+      ).not.toBeInTheDocument();
 
       const discardButton = screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton);
       const unlinkButton = screen.getByTestId(selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton);
@@ -1139,6 +1158,39 @@ function buildPanelViewVariablesScene() {
   dashboard.setState({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
 
   return { controls };
+}
+
+function sectionAnnotation(name: string, isHidden = false) {
+  return new DashboardAnnotationsDataLayer({
+    name,
+    isHidden,
+    isEnabled: false,
+    query: { name, enable: false, iconColor: 'red' },
+  });
+}
+
+function buildPanelModeAnnotationsScene(mode: 'edit' | 'view') {
+  const ancestorSet = new DashboardDataLayerSet({
+    annotationLayers: [sectionAnnotation('ancestorAnnotation'), sectionAnnotation('hiddenAnnotation', true)],
+  });
+  const { dashboard, controls, editedPanel } = buildPanelEditControlsScene({
+    uid: `panel-${mode}-annotations`,
+    editedPanelKey: 'edited-panel',
+    rows: [
+      new RowItem({ title: 'Ancestor row', $data: ancestorSet }),
+      new RowItem({
+        title: 'Other row',
+        $data: new DashboardDataLayerSet({ annotationLayers: [sectionAnnotation('otherSectionAnnotation')] }),
+      }),
+    ],
+    dashboardVariables: [],
+  });
+
+  if (mode === 'view') {
+    dashboard.setState({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
+  }
+
+  return { controls, ancestorSet };
 }
 
 function buildPanelEditSceneWithRepeatVariable() {

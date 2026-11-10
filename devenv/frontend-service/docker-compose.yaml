@@ -76,7 +76,7 @@ services:
       GF_LOG_FRONTEND_ENABLED: true
 
   goff:
-    image: gofeatureflag/go-feature-flag:latest
+    image: gofeatureflag/go-feature-flag:latest@sha256:75df054abc2f03d51ad542a1eebe557a350c4fa45a09d79314647fcc9f690529
     command: /go-feature-flag --config /config/config.yaml
     # ports are set dynamically in the Tiltfile (derived from PORT)
     configs:
@@ -126,7 +126,7 @@ services:
       - 'alloy.logs=true'
 
   loki:
-    image: grafana/loki:3.7.8@sha256:1107dd5274e0ada47e42472b7a7e71f3b2a2fe878878108f3e2f9e51528f0193
+    image: grafana/loki:3.7.9@sha256:0db216b630ae1f348a1584c67f3cead8b4c1fc839169a39501db664744158e28
     volumes:
       - loki-data:/loki
     command: -config.file=/etc/loki/local-config.yaml

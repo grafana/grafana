@@ -16,8 +16,8 @@ import {
   mockCombinedRuleNamespace,
   mockFolder,
   mockGrafanaRulerRule,
-  mockUnifiedAlertingStore,
 } from '../../mocks';
+import { mockUnifiedAlertingStore } from '../../testSetup/mockUnifiedAlertingStore';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { NO_GROUP_PREFIX } from '../../utils/rules';
 

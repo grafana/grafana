@@ -1477,6 +1477,15 @@
             },
             "activeBackgroundHover": {
               "type": "string"
+            },
+            "activeBorder": {
+              "type": "string"
+            },
+            "activeBorderHover": {
+              "type": "string"
+            },
+            "checkmarkColor": {
+              "type": "string"
             }
           },
           "additionalProperties": false

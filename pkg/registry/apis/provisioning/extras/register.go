@@ -1,6 +1,9 @@
 package extras
 
 import (
+	"path/filepath"
+	"slices"
+
 	"github.com/prometheus/client_golang/prometheus"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -13,6 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
@@ -44,13 +48,14 @@ func ProvideProvisioningOSSRepositoryExtras(
 	// http:// URLs with a token are only allowed in development or when explicitly opted in,
 	// since the token would otherwise travel in cleartext.
 	allowInsecure := cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure
+	userAgent := git.UserAgent(cfg.BuildVersion)
 	return []repository.Extra{
 		local.Extra(
 			cfg.HomePath,
-			cfg.PermittedProvisioningPaths,
+			PermittedLocalPaths(cfg),
 			operationMetrics,
 		),
-		git.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics),
+		git.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics, userAgent),
 		github.Extra(
 			decrypter,
 			ghFactory,
@@ -58,8 +63,26 @@ func ProvideProvisioningOSSRepositoryExtras(
 			allowInsecure,
 			operationMetrics,
 			clientMetrics,
+			userAgent,
 		),
 	}
+}
+
+// PermittedLocalPaths returns the prefixes a local repository may read. Being configured is
+// what permits the bootstrap path, since Grafana registers that repository itself.
+func PermittedLocalPaths(cfg *setting.Cfg) []string {
+	if cfg.ProvisioningBootstrapPath == "" {
+		return cfg.PermittedProvisioningPaths
+	}
+	// Resolved exactly as the resolver resolves a repository's own path, so the prefix and
+	// the candidate it is matched against are the same string.
+	path := cfg.ProvisioningBootstrapPath
+	if filepath.IsAbs(path) {
+		path = safepath.Clean(path)
+	} else {
+		path = safepath.Join(safepath.Clean(cfg.HomePath), path)
+	}
+	return append(slices.Clone(cfg.PermittedProvisioningPaths), path)
 }
 
 func ProvideProvisioningOSSConnectionExtras(

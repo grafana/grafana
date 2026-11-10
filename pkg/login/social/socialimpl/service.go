@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/propagation"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -147,7 +149,7 @@ func (ss *SocialService) GetOAuthHttpClient(ctx context.Context, name string) (*
 	}
 
 	oauthClient := &http.Client{
-		Transport: tr,
+		Transport: newOAuthTransport(name, tr),
 		Timeout:   timeout,
 	}
 
@@ -172,6 +174,17 @@ func (ss *SocialService) GetOAuthHttpClient(ctx context.Context, name string) (*
 		tr.TLSClientConfig.RootCAs = caCertPool
 	}
 	return oauthClient, nil
+}
+
+// newOAuthTransport traces calls to the identity provider. It doesn't propagate trace
+// context, so internal trace IDs aren't sent to third-party providers.
+func newOAuthTransport(provider string, base http.RoundTripper, opts ...otelhttp.Option) http.RoundTripper {
+	return otelhttp.NewTransport(base, append([]otelhttp.Option{
+		otelhttp.WithPropagators(propagation.NewCompositeTextMapPropagator()),
+		otelhttp.WithSpanNameFormatter(func(_ string, r *http.Request) string {
+			return "oauth." + provider + " " + r.Method
+		}),
+	}, opts...)...)
 }
 
 func (ss *SocialService) GetConnector(ctx context.Context, name string) (social.SocialConnector, error) {

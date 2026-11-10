@@ -9,15 +9,105 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/fullstorydev/grpchan"
+	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// These SQLite migration transaction regressions belong in the normal suite, not
+// the TestIntegration SQL database matrix.
+func TestKVBlobStreamCallerTransaction(t *testing.T) {
+	for _, commit := range []bool{false, true} {
+		name := "rollback"
+		if commit {
+			name = "commit"
+		}
+		t.Run(name, func(t *testing.T) {
+			backend, db := setupSqlKVWithDB(t)
+			store := NewKVBlobSupport(backend).(*kvBlobSupport)
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+			tx, err := db.BeginTx(ctx, nil)
+			require.NoError(t, err)
+			defer func() { _ = tx.Rollback() }()
+			// Establish the caller's SQLite read snapshot before any upload writes.
+			var count int
+			require.NoError(t, tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM resource_blob").Scan(&count))
+			body := bytes.Repeat([]byte("snapshot"), 16<<10)
+			rsp, err := store.PutResourceBlobStream(ContextWithTransaction(ctx, tx), &resourcepb.PutBlobRequest{
+				Resource: testBlobResourceKey, ContentType: "application/json",
+			}, bytes.NewReader(body))
+			require.NoError(t, err)
+			require.NotEmpty(t, rsp.Uid)
+			if commit {
+				require.NoError(t, tx.Commit())
+			} else {
+				require.NoError(t, tx.Rollback())
+			}
+			var got bytes.Buffer
+			err = store.GetResourceBlobStream(ctx, testBlobResourceKey, &utils.BlobInfo{UID: rsp.Uid}, func(string) (io.Writer, error) { return &got, nil })
+			if commit {
+				require.NoError(t, err)
+				require.Equal(t, body, got.Bytes())
+			} else {
+				require.Equal(t, codes.NotFound, status.Code(err))
+			}
+		})
+	}
+}
+
+func TestBulkBlobCallerTransactionInProcess(t *testing.T) {
+	backend, db := setupSqlKVWithDB(t)
+	blobs := NewKVBlobSupport(backend).(*kvBlobSupport)
+	bulk := &bulkBlobValidationBackend{}
+	srv := &server{backend: bulk, blob: blobs, blobTransfers: newBlobTransfers(), access: authlib.FixedAccessClient(true), bulkBatchOptions: DefaultBulkBatchOptions()}
+	channel := &inprocgrpc.Channel{}
+	channel.RegisterService(grpchan.InterceptServer(&resourcepb.BulkStore_ServiceDesc, nil,
+		func(_ any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, next grpc.StreamHandler) error {
+			ctx := authlib.WithAuthInfo(stream.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", OrgRole: identity.RoleAdmin})
+			return next(srv, contextStream{ServerStream: stream, ctx: ctx})
+		}), srv)
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	tx, err := db.BeginTx(ctx, nil)
+	require.NoError(t, err)
+	defer func() { _ = tx.Rollback() }()
+	var count int
+	require.NoError(t, tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM resource_blob").Scan(&count))
+	req := newBulkBlobNormalizationRequest()
+	md := (&BulkSettings{Collection: []*resourcepb.ResourceKey{req.Key}}).ToMD()
+	md.Set(resourcepb.InlineBlobMetadataKey, "1")
+	ctx = metadata.NewOutgoingContext(ContextWithTransaction(ctx, tx), md)
+	stream, err := resourcepb.NewBulkStoreClient(channel).BulkProcess(ctx)
+	require.NoError(t, err)
+	header, err := stream.Header()
+	require.NoError(t, err)
+	require.NoError(t, resourcepb.ValidateInlineBlobAcknowledgement(header))
+	require.NoError(t, stream.Send(req))
+	require.NoError(t, stream.Send(bulkTestChunk("dashboard", []byte("abc"), false)))
+	require.NoError(t, stream.Send(bulkTestChunk("dashboard", nil, true)))
+	rsp, err := stream.CloseAndRecv()
+	require.NoError(t, err)
+	require.NotNil(t, rsp)
+	require.Len(t, bulk.forwarded, 1)
+	require.NoError(t, tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM resource_blob").Scan(&count))
+	require.Equal(t, 1, count)
+	require.NoError(t, tx.Rollback())
+	require.NoError(t, db.QueryRowContext(ctx, "SELECT COUNT(*) FROM resource_blob").Scan(&count))
+	require.Zero(t, count)
+}
 
 func TestKVBlobSupportGenericStreamRoundTrip(t *testing.T) {
 	store := NewKVBlobSupport(setupBadgerKV(t)).(*kvBlobSupport)

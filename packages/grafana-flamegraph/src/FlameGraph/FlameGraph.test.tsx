@@ -103,6 +103,7 @@ describe('FlameGraph', () => {
           viewMode: ViewMode.Single,
           paneView: PaneView.FlameGraph,
           isDiff: false,
+          isSandwich: false,
           search: '',
           collapseConfig: undefined,
         });
@@ -116,5 +117,30 @@ describe('FlameGraph', () => {
     fireEvent(canvas, event);
     expect(screen.getByTestId('contextMenu')).toBeInTheDocument();
     expect(screen.getByText('test extra item')).toBeInTheDocument();
+  });
+
+  it('should report isSandwich as true to extra context menu items in sandwich view', async () => {
+    const event = new MouseEvent('click', { bubbles: true });
+    Object.defineProperty(event, 'offsetX', { get: () => 10 });
+    Object.defineProperty(event, 'offsetY', { get: () => 10 });
+    Object.defineProperty(HTMLCanvasElement.prototype, 'clientWidth', { configurable: true, value: 500 });
+
+    let observedIsSandwich: boolean | undefined;
+    setup({
+      sandwichItem: 'runtime.mallocgc',
+      getExtraContextMenuButtons: (_clickedItemData, _data, state) => {
+        observedIsSandwich = state.isSandwich;
+        return [{ label: 'test extra item', icon: 'eye', onClick: () => {} }];
+      },
+    });
+
+    // Sandwich view renders separate callers and callees canvases; click the callees
+    // canvas whose root is the sandwiched function.
+    const canvases = screen.getAllByTestId('flameGraph');
+    fireEvent(canvases[canvases.length - 1], event);
+
+    expect(screen.getByTestId('contextMenu')).toBeInTheDocument();
+    expect(screen.getByText('test extra item')).toBeInTheDocument();
+    expect(observedIsSandwich).toBe(true);
   });
 });
