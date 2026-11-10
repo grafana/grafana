@@ -9,6 +9,7 @@ import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibr
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
 import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
+import { LazyManagedBadge } from 'app/features/provisioning/components/LazyManagedBadge';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -48,6 +49,12 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Add to dashboard form',
         description: 'Add to dashboard form',
         component: AddToDashboardFormExposedComponent,
+      },
+      {
+        id: PluginExtensionExposedComponents.ManagedBadgeV1,
+        title: 'Managed badge',
+        description: 'Shows which system manages a resource, with Git Sync repository links',
+        component: LazyManagedBadge,
       },
       {
         id: PluginExtensionExposedComponents.PrometheusQueryResultsV1,
