@@ -47,6 +47,8 @@ interface Layout {
   items: Record<string, Box>;
   /** The bounds of each annotation's `alsoRefs` that resolve, with their refs, per annotation id. */
   also: Record<string, Array<{ ref: ElementRef; box: Box }>>;
+  /** Annotation ids whose text highlight is not drawn, though their pin is. */
+  textHidden: Record<string, true>;
   /** The overlay's own size, which pins are kept inside. */
   width: number;
   height: number;
@@ -57,7 +59,15 @@ interface Layout {
   controlsBottom: number;
 }
 
-const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, also: {}, width: 0, height: 0, controlsBottom: -Infinity };
+const EMPTY_LAYOUT: Layout = {
+  highlight: null,
+  items: {},
+  also: {},
+  textHidden: {},
+  width: 0,
+  height: 0,
+  controlsBottom: -Infinity,
+};
 
 /**
  * A layer over the dashboard controls and body while Composer is active.
@@ -134,14 +144,18 @@ export function ComposerOverlay({
       highlight: highlight ? session.resolveBox(highlight, rootRect) : null,
       items: {},
       also: {},
+      textHidden: {},
       width: rootRect.width,
       height: rootRect.height,
       controlsBottom: controls ? controls.bottom - rootRect.top : -Infinity,
     };
     for (const item of items) {
-      const box = session.resolveBox(item.ref, rootRect);
+      const box = session.resolveAnnotationBox(item, rootRect);
       if (box) {
         next.items[item.id] = box;
+      }
+      if (item.textRects && !session.isTextAnchored(item)) {
+        next.textHidden[item.id] = true;
       }
       const also = (item.alsoRefs ?? []).flatMap((ref) => {
         const alsoBox = session.resolveBox(ref, rootRect);
@@ -689,9 +703,9 @@ export function ComposerOverlay({
         if (!picked) {
           return;
         }
-        const pick = session.resolveElementPick(picked.key, picked.point);
+        const pick = session.resolveTextPick(picked.key, picked.point, picked.text);
         if (pick) {
-          session.completePick({ ...pick, tool: 'text', text: picked.text });
+          session.completePick(pick);
         }
         return;
       }
@@ -886,7 +900,7 @@ export function ComposerOverlay({
             );
           });
           // A Text pick's selection, on its element: one box per line, relative to the element as measured now.
-          const element = layout.items[id];
+          const element = layout.textHidden[id] ? undefined : layout.items[id];
           const highlights = element
             ? (textRects ?? []).flatMap((rect, index) => {
                 const box = belowControls(ref, rectIn(element, rect), layout.controlsBottom);

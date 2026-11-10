@@ -3,13 +3,15 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { CustomVariable, SceneVariableSet, dataLayers, sceneGraph } from '@grafana/scenes';
+import { CustomVariable, SceneVariableSet, VizPanel, dataLayers, sceneGraph } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { getCloneKey } from '../utils/clone';
 
 import { ComposerOverlay } from './ComposerOverlay';
 import { ComposerSession } from './ComposerSession';
@@ -2466,6 +2468,53 @@ describe('tools', () => {
     expect(text.rects[19]).toEqual({ x: 10 / 400, y: 380 / 600, width: 78 / 400, height: 20 / 600 });
     // The last kept line, row 18, ends 188px across and 600px down the viewport, not row 23's.
     expect(point).toEqual({ x: 88 / 400, y: 400 / 600 });
+    // @ts-expect-error -- jsdom has no getClientRects on Range; remove the stand-in.
+    delete Range.prototype.getClientRects;
+  });
+
+  it('draws a Text pick made in a repeat on that repeat, not on the source panel', async () => {
+    const { session, startPick, annotate } = setup((scene) => {
+      const source = sceneGraph.findByKey(scene, 'panel-3');
+      if (!(source instanceof VizPanel) || !(source.parent instanceof DashboardGridItem)) {
+        throw new Error('expected the panel in a grid item');
+      }
+      const clone = source.clone({ key: getCloneKey('panel-3', 1), repeatSourceKey: 'panel-3' });
+      source.parent.setState({ repeatedPanels: [clone] });
+    });
+    const body = mountDashboardBody();
+    const cloneRoot = document.createElement('div');
+    cloneRoot.setAttribute('data-viz-panel-key', 'panel-3-clone-1');
+    cloneRoot.textContent = 'checkout-api 500';
+    cloneRoot.getBoundingClientRect = () =>
+      ({ left: 600, top: 200, width: 400, height: 300, right: 1000, bottom: 500 }) as DOMRect;
+    body.appendChild(cloneRoot);
+    const line = { left: 610, top: 200, width: 100, height: 20, right: 710, bottom: 220 };
+    Object.defineProperty(Range.prototype, 'getClientRects', { configurable: true, value: () => [line] });
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 620, clientY: 210, button: 0 });
+    window.getSelection()!.selectAllChildren(cloneRoot);
+    fireEvent.pointerUp(overlay, { clientX: 700, clientY: 210 });
+    const picked = (await pick) as {
+      point: { x: number; y: number };
+      text: { rects: ComposerAnnotation['textRects'] };
+    };
+    expect(picked).toMatchObject({ ref: { kind: 'panel', panelId: 3 }, text: { quote: 'checkout-api 500' } });
+
+    // What the plugin draws from the pick: the source panel's ref, the pick's point and rects.
+    annotate([item({ point: picked.point, textRects: picked.text.rects })]);
+    await nextFrame();
+    expect(screen.getByTestId('composer-annotation-text-a-0')).toHaveStyle({ left: '610px', top: '200px' });
+    expect(screen.getByTestId('composer-annotation-pin-a')).toHaveStyle({ left: '710px', top: '220px' });
+
+    // Once the repeat is gone, the pin falls back to the source panel and the highlight is dropped.
+    cloneRoot.remove();
+    annotate([item({ point: picked.point, textRects: picked.text.rects, state: 'staged' })]);
+    await nextFrame();
+    expect(screen.queryByTestId('composer-annotation-text-a-0')).not.toBeInTheDocument();
+    expect(screen.getByTestId('composer-annotation-pin-a')).toHaveStyle({ left: '210px' });
     // @ts-expect-error -- jsdom has no getClientRects on Range; remove the stand-in.
     delete Range.prototype.getClientRects;
   });
