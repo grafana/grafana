@@ -6,13 +6,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 
 import { type CatalogPlugin, PluginIconName } from '../types';
 
 import { PluginListItemBadges } from './PluginListItemBadges';
 import { PluginLogo } from './PluginLogo';
-import { getFocusStyles } from '@grafana/ui/internal';
 
 const LOGO_SIZE = '48px';
 
