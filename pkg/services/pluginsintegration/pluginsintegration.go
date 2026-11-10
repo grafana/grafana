@@ -210,6 +210,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		// always carries one and the derive fallback is never needed here.
 		clientmiddleware.NewForwardIDMiddleware(nil),
 		clientmiddleware.NewUseAlertHeadersMiddleware(),
+		clientmiddleware.NewQueryDataFormatMiddleware(cfg.ArrowQueryDataPlugins),
 	)
 
 	if cfg.SendUserHeader {

@@ -308,6 +308,7 @@ type Cfg struct {
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
 	ForwardHostEnvVars               []string
+	ArrowQueryDataPlugins            []string
 	PreinstallPluginsAsync           []InstallPlugin
 	PreinstallPluginsSync            []InstallPlugin
 	PreinstallAutoUpdate             bool
