@@ -2349,6 +2349,56 @@ describe('tools', () => {
     expect(window.getSelection()!.isCollapsed).toBe(true);
   });
 
+  it('quotes text as drawn: table cells apart, hidden text left out', async () => {
+    const { session, startPick } = setup();
+    mountDashboardBody();
+    const content = panelRoot!.firstElementChild!;
+    content.innerHTML =
+      '<table><tbody>' +
+      '<tr><td>service</td><td>errors</td></tr>' +
+      '<tr><td>checkout-api</td><td>500<span style="display: none">hidden total</span></td></tr>' +
+      '<tr><td>cart</td><td><span style="visibility: hidden">secret</span>12</td></tr>' +
+      '</tbody></table>';
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    const cells = content.querySelectorAll('td');
+
+    fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    const range = document.createRange();
+    range.setStart(cells[2].firstChild!, 0);
+    range.setEnd(cells[3], cells[3].childNodes.length);
+    window.getSelection()!.removeAllRanges();
+    window.getSelection()!.addRange(range);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 350 });
+
+    await expect(pick).resolves.toMatchObject({
+      tool: 'text',
+      text: { quote: 'checkout-api 500', prefix: 'service errors', suffix: 'cart 12' },
+    });
+  });
+
+  it("starts a cut quote's suffix where the quote stops", async () => {
+    const { session, startPick } = setup();
+    mountDashboardBody();
+    const content = panelRoot!.firstElementChild!;
+    const words = Array.from({ length: 120 }, (_, index) => `w${String(index).padStart(3, '0')}`);
+    content.textContent = words.join(' ');
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    window.getSelection()!.selectAllChildren(content);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 350 });
+
+    const all = words.join(' ');
+    const { text } = (await pick) as { text: { quote: string; suffix?: string } };
+    expect(text.quote).toBe(all.slice(0, 500).trim());
+    expect(text.suffix).toBe(all.slice(500, 540).trim());
+    expect(`${text.quote} ${text.suffix}`).toBe(all.slice(0, 540).trim());
+  });
+
   it("pins a Text pick at its last line's bottom-right, so a title's pin stays inside the panel", async () => {
     const { session, startPick } = setup();
     mountDashboardBody();

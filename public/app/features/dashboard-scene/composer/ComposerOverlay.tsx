@@ -1156,6 +1156,101 @@ function oneLine(text: string): string {
   return text.replace(/\s+/g, ' ').trim();
 }
 
+/** The part of a text node a range covers. */
+interface TextSlice {
+  node: Text;
+  start: number;
+  end: number;
+}
+
+/** The text nodes under `root` that `range` covers, each with the part it covers, in document order. */
+function textSlices(root: HTMLElement, range: Range): TextSlice[] {
+  const slices: TextSlice[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!(node instanceof Text) || !range.intersectsNode(node)) {
+      continue;
+    }
+    const start = node === range.startContainer ? range.startOffset : 0;
+    const end = node === range.endContainer ? range.endOffset : node.length;
+    if (end > start) {
+      slices.push({ node, start, end });
+    }
+  }
+  return slices;
+}
+
+/**
+ * Reads text as it is drawn inside `root`, not as `Range.toString()` gives it: text under `display: none` or
+ * `visibility: hidden` is left out, and text in different blocks or table cells is kept apart by a space, so
+ * `checkout-api` and `500` in two cells read `checkout-api 500`. Whitespace is collapsed. Reading stops once
+ * `limit` characters are read, from the start or, `backward`, from the end.
+ */
+function renderedTextReader(root: HTMLElement) {
+  const styles = new Map<Element, CSSStyleDeclaration>();
+  const styleOf = (element: Element) => {
+    let style = styles.get(element);
+    if (!style) {
+      style = getComputedStyle(element);
+      styles.set(element, style);
+    }
+    return style;
+  };
+  const displayed = new Map<Element, boolean>();
+  const isDisplayed = (element: Element): boolean => {
+    let result = displayed.get(element);
+    if (result === undefined) {
+      const parent = element.parentElement;
+      result = styleOf(element).display !== 'none' && (element === root || !parent || isDisplayed(parent));
+      displayed.set(element, result);
+    }
+    return result;
+  };
+  const isShown = (node: Text) => {
+    const parent = node.parentElement;
+    if (!parent || !isDisplayed(parent)) {
+      return false;
+    }
+    // Inherited, so the parent's computed value is the text's.
+    const { visibility } = styleOf(parent);
+    return visibility !== 'hidden' && visibility !== 'collapse';
+  };
+  /** The closest block or cell the node is laid out in, up to `root`. */
+  const blockOf = (node: Text): Element => {
+    for (let element = node.parentElement; element && element !== root; element = element.parentElement) {
+      const display = styleOf(element).display;
+      if (display !== 'contents' && !display.startsWith('inline')) {
+        return element;
+      }
+    }
+    return root;
+  };
+
+  return {
+    read(slices: TextSlice[], limit: number, direction: 'forward' | 'backward' = 'forward'): string {
+      const backward = direction === 'backward';
+      let text = '';
+      let block: Element | undefined;
+      for (const { node, start, end } of backward ? [...slices].reverse() : slices) {
+        if (!isShown(node)) {
+          continue;
+        }
+        const nextBlock = blockOf(node);
+        let piece = node.data.slice(start, end).replace(/\s+/g, ' ');
+        if (block !== undefined && nextBlock !== block) {
+          piece = backward ? `${piece} ` : ` ${piece}`;
+        }
+        block = nextBlock;
+        text = backward ? `${piece}${text}` : `${text}${piece}`;
+        if (text.replace(/\s+/g, ' ').trim().length >= limit) {
+          break;
+        }
+      }
+      return oneLine(text);
+    },
+  };
+}
+
 /**
  * The text the user selected with the Text tool, inside the element the selection started in: its words,
  * the words around it, where it was drawn, and the pin's point (the bottom-right of its last line). A selection
@@ -1185,7 +1280,10 @@ function readTextSelection(
   if (!root.contains(range.endContainer)) {
     range.setEnd(root, root.childNodes.length);
   }
-  const quote = oneLine(range.toString()).slice(0, MAX_QUOTE_LENGTH);
+  const text = renderedTextReader(root);
+  // A little past the quote's limit, so a cut quote's suffix starts where the quote stops.
+  const selected = text.read(textSlices(root, range), MAX_QUOTE_LENGTH + MAX_AROUND_LENGTH);
+  const quote = selected.slice(0, MAX_QUOTE_LENGTH).trim();
   if (!quote) {
     return null;
   }
@@ -1195,8 +1293,13 @@ function readTextSelection(
   const after = document.createRange();
   after.selectNodeContents(root);
   after.setStart(range.endContainer, range.endOffset);
-  const prefix = oneLine(before.toString()).slice(-MAX_AROUND_LENGTH);
-  const suffix = oneLine(after.toString()).slice(0, MAX_AROUND_LENGTH);
+  const prefix = text.read(textSlices(root, before), MAX_AROUND_LENGTH, 'backward').slice(-MAX_AROUND_LENGTH).trim();
+  const following = text.read(textSlices(root, after), MAX_AROUND_LENGTH);
+  const suffix = oneLine(
+    selected.length > MAX_QUOTE_LENGTH ? `${selected.slice(MAX_QUOTE_LENGTH)} ${following}` : following
+  )
+    .slice(0, MAX_AROUND_LENGTH)
+    .trim();
 
   const bounds = root.getBoundingClientRect();
   const lines =
