@@ -481,6 +481,8 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     /******************/
     /* infiniteViewer */
     /******************/
+    // Scene reloads reuse the container, so remove the previous viewer's listeners
+    scene.infiniteViewer?.destroy();
     scene.infiniteViewer = new InfiniteViewer(scene.viewerDiv!, scene.viewportDiv!, {
       preventWheelClick: false,
       useAutoZoom: true,
