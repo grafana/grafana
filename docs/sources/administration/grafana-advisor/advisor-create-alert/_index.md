@@ -89,9 +89,9 @@ Configure the query to retrieve the Advisor checks:
 Replace the following placeholders in the URL:
 
 - _`<GRAFANA_HOST>`_: The host of your Grafana instance.
-- _`<NAMESPACE>`_: The namespace of your Grafana instance. Use `default` for organization 1 in Grafana OSS and Enterprise, or `stacks-<STACK_ID>` in Grafana Cloud.
+- _`<NAMESPACE>`_: The namespace of your Grafana instance. Check how to get the namespace of your instance in the [namespace API reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#namespace-namespace).
 
-To find the full URL, open Advisor in your Grafana instance, open the **Network** tab of your browser developer tools, and look for a request ending in `/checks`. For more information about this endpoint, refer to the [Advisor HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/advisor/).
+For more information about this endpoint, refer to the [Advisor HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/advisor/).
 
 ### Configure parsing options
 
