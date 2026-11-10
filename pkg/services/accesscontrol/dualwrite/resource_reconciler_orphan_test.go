@@ -115,3 +115,20 @@ func TestResourceReconciler_OrphanedManagedDashboardTuplesAreDeleted(t *testing.
 	require.Equal(t, relAllowed, del.Relation)
 	require.Equal(t, objAllowed, del.Object)
 }
+
+func TestResourceReconciler_VirtualRootGrantsAreNotOrphaned(t *testing.T) {
+	r := newResourceReconciler("managed folder permissions", nil, nil, nil)
+	for _, subject := range []string{"role:basic_editor#assignee", "role:fixed_dashboard_creator#assignee"} {
+		t.Run(subject, func(t *testing.T) {
+			tuples := []*authzextv1.Tuple{
+				{Key: &authzextv1.TupleKey{User: subject, Relation: "resource_create", Object: "folder:general"}},
+				{Key: &authzextv1.TupleKey{User: "user:1", Relation: "get", Object: "folder:deleted-folder"}},
+			}
+			deletes, err := r.collectOrphanDeletes(context.Background(), "default", tuples, nil)
+			require.NoError(t, err)
+			require.Equal(t, []*openfgav1.TupleKeyWithoutCondition{
+				{User: "user:1", Relation: "get", Object: "folder:deleted-folder"},
+			}, deletes)
+		})
+	}
+}

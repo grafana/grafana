@@ -2092,26 +2092,6 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 							}
 						}`, metadata, dashboardTitle)
 
-				var authorizationSnapshot []struct {
-					Namespace        string
-					ObjectType       string
-					ObjectID         string `xorm:"object_id"`
-					Relation         string
-					Subject          string
-					ConditionName    string
-					ConditionContext string
-				}
-				var authorizationSnapshotErr error
-				if userTC.canCreate && userTC.name == "Editor" && locTC.folderUID == "" {
-					authorizationSnapshotErr = ctx.Helper.GetEnv().SQLStore.GetEngine().SQL(`
-						SELECT s.name AS namespace, t.object_type, t.object_id, t.relation, t._user AS subject,
-							t.condition_name, HEX(t.condition_context) AS condition_context
-						FROM tuple t INNER JOIN store s ON s.id = t.store
-						WHERE (t.object_type = 'folder' AND t.object_id = 'general')
-							OR t.object_type = 'role'
-						ORDER BY s.name, t.object_type, t.object_id, t.relation, t._user`).Find(&authorizationSnapshot)
-				}
-
 				// Make the request to create the dashboard
 				createResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
 					User:        userTC.user,
@@ -2127,29 +2107,6 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 				adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
 
 				if userTC.canCreate {
-					if createResp.Response.StatusCode != http.StatusCreated {
-						permissions := apis.DoRequest(ctx.Helper, apis.RequestParams{
-							User: userTC.user,
-							Path: "/api/access-control/user/permissions",
-						}, &map[string][]string{})
-						t.Logf("Dashboard creator identity: user=%s org=%d role=%s; permissions (%d): %s",
-							userTC.user.Identity.GetLogin(), userTC.user.Identity.GetOrgID(), userTC.user.Identity.GetOrgRole(),
-							permissions.Response.StatusCode, permissions.Body)
-
-						var createGrants []struct {
-							RoleName   string
-							RoleUID    string `xorm:"role_uid"`
-							Scope      string
-							Kind       string
-							Identifier string
-						}
-						err := ctx.Helper.GetEnv().SQLStore.GetEngine().SQL(`
-							SELECT r.name AS role_name, r.uid AS role_uid, p.scope, p.kind, p.identifier
-							FROM role r INNER JOIN permission p ON p.role_id = r.id
-							WHERE r.org_id = 0 AND p.action = ?`, "dashboards:create").Find(&createGrants)
-						t.Logf("Stored dashboard create grants: %+v; query error: %v", createGrants, err)
-						t.Logf("Authorization tuples before create: %+v; query error: %v", authorizationSnapshot, authorizationSnapshotErr)
-					}
 					require.Equal(t, http.StatusCreated, createResp.Response.StatusCode,
 						"Failed to %s dashboard as %s: %s; body=%s", "POST", userTC.user.Identity.GetLogin(), createResp.Response.Status, createResp.Body)
 
