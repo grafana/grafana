@@ -59,8 +59,8 @@ func watchSendError(err error) error {
 	return err
 }
 
-// queueRPCError is the error-only equivalent of HandleQueueError: a full
-// tenant queue is reported as 429/ResourceExhausted.
+// queueRPCError reports a full tenant queue as 429/ResourceExhausted;
+// other failures retain rpcErrorFrom's status and cancellation semantics.
 func queueRPCError(err error) error {
 	if errors.Is(err, scheduler.ErrTenantQueueFull) {
 		return GRPCStatusError(NewTooManyRequestsError("tenant queue is full, please try again later"))
