@@ -100,6 +100,7 @@ func (api *ImportDashboardAPI) InterpolateDashboard(c *contextmodel.ReqContext) 
 // 200: importDashboardResponse
 // 400: badRequestError
 // 401: unauthorisedError
+// 404: notFoundError
 // 412: preconditionFailedError
 // 422: unprocessableEntityError
 // 500: internalServerError
