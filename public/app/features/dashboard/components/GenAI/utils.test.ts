@@ -5,7 +5,7 @@ import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
 import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 
-import { getPanelStrings, isLLMPluginEnabled, sanitizeReply } from './utils';
+import { getDashboardPanelPrompt, getPanelStrings, isLLMPluginEnabled, sanitizeReply } from './utils';
 
 // Mock the llm module
 jest.mock('@grafana/llm', () => ({
@@ -101,5 +101,54 @@ describe('getPanelStrings', () => {
       '- Panel 0\n- Title: Graph panel\n- Description: Logs',
       '- Panel 1\n- Title: Table panel\n- Description: Metrics',
     ]);
+  });
+});
+
+describe('getDashboardPanelPrompt', () => {
+  function dashboardSetup(items: Array<{ title: string; description?: string }>) {
+    return createDashboardModelFixture({
+      panels: items.map((item) => createPanelSaveModel(item)),
+    });
+  }
+
+  function panels(prefix: string, count: number, description?: string) {
+    return Array.from({ length: count }, (_, i) => ({ title: `${prefix} ${i}`, description }));
+  }
+
+  function presentedTitles(prompt: string) {
+    return prompt
+      .split('\n')
+      .filter((line) => line.startsWith('- Title: '))
+      .map((line) => line.slice('- Title: '.length));
+  }
+
+  it('presents every panel when there are ten or fewer', () => {
+    const dashboard = dashboardSetup(panels('Plain', 8));
+
+    expect(presentedTitles(getDashboardPanelPrompt(dashboard))).toEqual(panels('Plain', 8).map((p) => p.title));
+  });
+
+  it('presents the first ten panels with descriptions when more than ten have one', () => {
+    const dashboard = dashboardSetup([...panels('Described', 15, 'Shows load'), ...panels('Plain', 5)]);
+
+    const prompt = getDashboardPanelPrompt(dashboard);
+
+    expect(prompt).toContain('There are 20 panels.');
+    expect(presentedTitles(prompt)).toEqual(panels('Described', 10).map((p) => p.title));
+  });
+
+  it('fills the remaining slots with the first panels without descriptions', () => {
+    const dashboard = dashboardSetup([...panels('Plain', 27), ...panels('Described', 3, 'Shows load')]);
+
+    expect(presentedTitles(getDashboardPanelPrompt(dashboard))).toEqual([
+      ...panels('Described', 3).map((p) => p.title),
+      ...panels('Plain', 7).map((p) => p.title),
+    ]);
+  });
+
+  it('presents ten panels when there are just over ten', () => {
+    const dashboard = dashboardSetup(panels('Plain', 12));
+
+    expect(presentedTitles(getDashboardPanelPrompt(dashboard))).toEqual(panels('Plain', 10).map((p) => p.title));
   });
 });
