@@ -42,9 +42,9 @@ type GetPreferenceQuery struct {
 }
 
 type SavePreferenceCommand struct {
-	UserID int64
-	OrgID  int64
-	TeamID int64
+	UserID int64 `json:"-"`
+	OrgID  int64 `json:"-"`
+	TeamID int64 `json:"-"`
 
 	// Deprecated: Use HomeDashboardUID instead
 	HomeDashboardID  int64                   `json:"homeDashboardId,omitempty"`

@@ -112,7 +112,7 @@ require (
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/data-sources-plugins
 	github.com/grafana/pyroscope/api v1.2.1-0.20251202111406-6c67b876b686 // @grafana/data-sources-plugins
 	github.com/grafana/saml v0.4.15-0.20260724082031-0c3051b8b3c6 // @grafana/identity-access-team
-	github.com/grafana/schemads v0.0.6 // @grafana/data-sources
+	github.com/grafana/schemads v0.0.11 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20251027222923-cbe5f845dc7b // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend
@@ -236,7 +236,7 @@ require (
 
 // Internal module references (every entry should also have a replace in the section below)
 require (
-	github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.10 // @grafana/oss-big-tent
+	github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.11-0.20261110202349-963064acdb53 // @grafana/oss-big-tent
 	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/plugins-platform-backend
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files

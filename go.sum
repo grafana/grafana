@@ -4066,8 +4066,8 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.291.0 h1:VlA6wYdjMxx7xpthEd0qZgbtfqlRWRZJ3CqnMNks0+U=
 github.com/grafana/grafana-plugin-sdk-go v0.291.0/go.mod h1:cLkz5/DpTRGiX65qF1k4RoIydzWtYbwTD/asDOY7aMk=
-github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.10 h1:c7EwYiYYQsw2ds9Yx7QBMf3q8pFUr8Zey1hrXsRbOtg=
-github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.10/go.mod h1:S6d7Ck6J8UDOkQj9xfTp8pM9uAmslU5PXr+/h7ixYfY=
+github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.11-0.20261110202349-963064acdb53 h1:OHp0NOFOatrc5EIhMcwBrSy1Rr52GZdSzlk1SRqtHwI=
+github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.11-0.20261110202349-963064acdb53/go.mod h1:lmz/M+JLvJ36XqQjjx6WXiMbubyTyGn2xVVehidnbTc=
 github.com/grafana/jsonparser v0.0.0-20241004153430-023329977675 h1:U94jQ2TQr1m3HNyE8efSdyaBbDrdPaWImXyenuKZ/nw=
 github.com/grafana/jsonparser v0.0.0-20241004153430-023329977675/go.mod h1:796sq+UcONnSlzA3RtlBZ+b/hrerkZXiEmO8oMjyRwY=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLmAhwA4m6iGUD4w1YkydEWWjazn9qxCFT8W0=
@@ -4092,8 +4092,8 @@ github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc h1:GN2Lv3MGO7AS6PrR
 github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
 github.com/grafana/saml v0.4.15-0.20260724082031-0c3051b8b3c6 h1:0vKwR5tCpriVVMy1BCqYXISlJZLWhwTV55m7TkpjjZQ=
 github.com/grafana/saml v0.4.15-0.20260724082031-0c3051b8b3c6/go.mod h1:khX5Ekq41SxfbF2s7wniq/id0SP90GQl2QLnTDV9B/0=
-github.com/grafana/schemads v0.0.6 h1:Pz0fClDO0wfzb0THzgM8pyxVycbEa7b0ARS7YxfZ4RU=
-github.com/grafana/schemads v0.0.6/go.mod h1:4BnVcbwJT6xqyge9nB0GFbfzc6Aw3RzXD5TaZIOnPqY=
+github.com/grafana/schemads v0.0.11 h1:cxMEs+3GqkvyVGxkg/Fo5jj1dZaQNay5dOFOUR/XhuU=
+github.com/grafana/schemads v0.0.11/go.mod h1:5mjuxhSmbQZLjUSjzv+vTmNp+R2fYhSdiZLSPxeM3LA=
 github.com/grafana/sqlds/v5 v5.0.4 h1:Q4T4wXI5tolN1EUQtN81I4SGBFlBF4tD8XYh34/kk24=
 github.com/grafana/sqlds/v5 v5.0.4/go.mod h1:BvFzzPgc2bmr3R78s1TuZr2gOELpBM9tt6m1DKI8Ts4=
 github.com/grafana/tempo v1.5.1-0.20251027222923-cbe5f845dc7b h1:y7osjPrSX+RYsa6BbNUYKgoKXE16Qmn+YDWOjjB55ZM=

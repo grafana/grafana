@@ -29,12 +29,13 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 
 	cmd.UserID = userID
 	cmd.OrgID = c.GetOrgID()
+	cmd.TeamID = 0 // clear the team ID as this is a user preference
 
 	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
 	// nolint:staticcheck
 	dashboardID := cmd.HomeDashboardID
 	if cmd.HomeDashboardUID != nil {
-		query := dashboards.GetDashboardQuery{UID: *cmd.HomeDashboardUID}
+		query := dashboards.GetDashboardQuery{UID: *cmd.HomeDashboardUID, OrgID: cmd.OrgID}
 		if query.UID == "" {
 			dashboardID = 0 // clear the value
 		} else {

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -122,13 +123,126 @@ func Test_setRequestVariables(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
-	_, _, err = s.setRequestVariables(req, cloudMonitor)
+	_, _, err = s.setRequestVariables(req, cloudMonitor, metricDescriptorsTargetExp)
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
 	expectedURL := "https://monitoring.googleapis.com/v3/projects/bar/metricDescriptors"
 	if req.URL.String() != expectedURL {
 		t.Errorf("Unexpected result URL. Got %s, expecting %s", req.URL.String(), expectedURL)
+	}
+}
+
+func newResourceTestService() Service {
+	return Service{
+		im: &fakeInstance{
+			services: map[string]datasourceService{
+				cloudMonitor: {
+					url:    buildURL(cloudMonitor, "googleapis.com"),
+					client: &http.Client{},
+				},
+			},
+		},
+		logger: log.DefaultLogger,
+	}
+}
+
+func Test_setRequestVariables_acceptsExpectedTargetPaths(t *testing.T) {
+	s := newResourceTestService()
+	tests := []struct {
+		name        string
+		path        string
+		targetExp   *regexp.Regexp
+		expectedURL string
+	}{
+		{
+			"metric descriptors",
+			"/metricDescriptors/v3/projects/bar/metricDescriptors",
+			metricDescriptorsTargetExp,
+			"https://monitoring.googleapis.com/v3/projects/bar/metricDescriptors",
+		},
+		{
+			"services",
+			"/services/v3/projects/bar/services?pageSize=1000",
+			servicesTargetExp,
+			"https://monitoring.googleapis.com/v3/projects/bar/services?pageSize=1000",
+		},
+		{
+			"service level objectives",
+			"/slo-services/v3/projects/bar/services/baz/serviceLevelObjectives",
+			sloTargetExp,
+			"https://monitoring.googleapis.com/v3/projects/bar/services/baz/serviceLevelObjectives",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, "http://foo"+tt.path, nil)
+			if err != nil {
+				t.Fatalf("Unexpected error %v", err)
+			}
+			_, _, err = s.setRequestVariables(req, cloudMonitor, tt.targetExp)
+			if err != nil {
+				t.Fatalf("Unexpected error %v", err)
+			}
+			if req.URL.String() != tt.expectedURL {
+				t.Errorf("Unexpected result URL. Got %s, expecting %s", req.URL.String(), tt.expectedURL)
+			}
+		})
+	}
+}
+
+func Test_setRequestVariables_rejectsUnexpectedTargetPath(t *testing.T) {
+	s := newResourceTestService()
+	tests := []struct {
+		name string
+		path string
+	}{
+		{
+			"extra path segment appended via project name",
+			"/cloudmonitoring/v3/projects/bar/metricDescriptors/../alertPolicies",
+		},
+		{
+			"different endpoint entirely",
+			"/cloudmonitoring/v3/projects/bar/alertPolicies",
+		},
+		{
+			"project name smuggling an extra segment",
+			"/cloudmonitoring/v3/projects/bar/services/baz/metricDescriptors",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, "http://foo"+tt.path, nil)
+			if err != nil {
+				t.Fatalf("Unexpected error %v", err)
+			}
+			_, code, err := s.setRequestVariables(req, cloudMonitor, metricDescriptorsTargetExp)
+			if err == nil {
+				t.Errorf("expected an error for path %q, got none", tt.path)
+			}
+			if code != http.StatusBadRequest {
+				t.Errorf("expected %d, got %d", http.StatusBadRequest, code)
+			}
+		})
+	}
+}
+
+func Test_setRequestVariables_rejectsNonGetMethods(t *testing.T) {
+	s := newResourceTestService()
+	for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete} {
+		t.Run(method, func(t *testing.T) {
+			req, err := http.NewRequest(method, "http://foo/metricDescriptors/v3/projects/bar/metricDescriptors", nil)
+			if err != nil {
+				t.Fatalf("Unexpected error %v", err)
+			}
+			_, code, err := s.setRequestVariables(req, cloudMonitor, metricDescriptorsTargetExp)
+			if err == nil {
+				t.Errorf("expected an error for method %s, got none", method)
+			}
+			if code != http.StatusMethodNotAllowed {
+				t.Errorf("expected %d, got %d", http.StatusMethodNotAllowed, code)
+			}
+		})
 	}
 }
 
