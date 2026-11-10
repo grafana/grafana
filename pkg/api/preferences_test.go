@@ -202,3 +202,36 @@ func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
 		require.NoError(t, response.Body.Close())
 	})
 }
+
+func TestAPIEndpoint_SetHomeDashboard(t *testing.T) {
+	prefSvc := preftest.NewPreferenceServiceFake()
+
+	dashSvc := dashboards.NewFakeDashboardService(t)
+	dashSvc.On("GetDashboard", mock.Anything, mock.MatchedBy(func(q *dashboards.GetDashboardQuery) bool {
+		return q.UID == "home" && q.OrgID == 1
+	})).Return(&dashboards.Dashboard{UID: "home", ID: 1}, nil)
+
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = setting.NewCfg()
+		hs.preferenceService = prefSvc
+		hs.DashboardService = dashSvc
+	})
+
+	t.Run("Ignores user, org and team from request body", func(t *testing.T) {
+		body := strings.NewReader(`{"userId": 99, "orgId": 99, "teamId": 42, "TeamID": 42, "homeDashboardUID": "home"}`)
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPost, "/api/preferences/set-home-dash", body), &user.SignedInUser{
+			UserID:  1,
+			OrgID:   1,
+			OrgRole: org.RoleViewer,
+		})
+		resp, err := server.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		require.NotNil(t, prefSvc.SaveCommand)
+		assert.Equal(t, int64(1), prefSvc.SaveCommand.UserID)
+		assert.Equal(t, int64(1), prefSvc.SaveCommand.OrgID)
+		assert.Zero(t, prefSvc.SaveCommand.TeamID)
+	})
+}

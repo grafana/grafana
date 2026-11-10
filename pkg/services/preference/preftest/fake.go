@@ -9,6 +9,7 @@ import (
 type FakePreferenceService struct {
 	ExpectedPreference *pref.Preference
 	ExpectedError      error
+	SaveCommand        *pref.SavePreferenceCommand
 }
 
 func NewPreferenceServiceFake() *FakePreferenceService {
@@ -24,6 +25,7 @@ func (f *FakePreferenceService) Get(ctx context.Context, query *pref.GetPreferen
 }
 
 func (f *FakePreferenceService) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
+	f.SaveCommand = cmd
 	return f.ExpectedError
 }
 
