@@ -196,7 +196,7 @@ Global keys in `[unified_storage]`:
 | `migration_parquet_buffer` | `false` | Buffer bulk writes through parquet |
 | `migration_chunked_writes` | `false` | Commit bulk writes in multiple transactions. Needs `migration_locking` for HA read isolation. |
 | `migration_chunk_max_bytes` | `256MiB` | Soft byte budget per chunk |
-| `migration_statement_timeout` | unset | Postgres only. Overrides `statement_timeout` for the migration's own transactions (for example `15m`), leaving the database or role setting in place for all other queries. |
+| `migration_statement_timeout` | unset | Postgres only. Overrides `statement_timeout` for the migration's own transactions (for example `15m`), with both the SQL and the KV storage backends, leaving the database or role setting in place for all other queries. |
 
 ## Adding a new resource
 
