@@ -64,6 +64,7 @@ export function getPanelPlugin(options: Partial<PanelPluginMeta>, reactPanel?: C
     module: options.module ?? '',
     baseUrl: '',
     skipDataQuery: options.skipDataQuery,
+    skipDefaultQuery: options.skipDefaultQuery,
   };
   return plugin;
 }
