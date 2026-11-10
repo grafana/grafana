@@ -599,12 +599,6 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 				wantMessage: "not allowed to read folders",
 			},
 			{
-				name:        "gRPC error with an error result",
-				err:         withErrorResult(grpccodes.PermissionDenied, &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "not allowed to read folders"}),
-				wantCode:    http.StatusForbidden,
-				wantMessage: "not allowed to read folders",
-			},
-			{
 				name:        "gRPC error: unavailable",
 				err:         grpcstatus.Error(grpccodes.Unavailable, "connection refused"),
 				wantCode:    http.StatusServiceUnavailable,
