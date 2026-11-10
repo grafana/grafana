@@ -49,7 +49,7 @@ const DASHBOARD_CHILDREN: NavEntryBuilder[] = [
     build: () => ({
       text: 'Library panels',
       subTitle: 'Reusable panels that can be added to multiple dashboards',
-      id: 'dashboards/library-panels',
+      id: NavID.dashboardsLibraryPanels,
       url: '/library-panels',
       icon: 'library-panel',
     }),
@@ -62,7 +62,7 @@ const DASHBOARD_CHILDREN: NavEntryBuilder[] = [
     build: () => ({
       text: 'Variables',
       subTitle: 'Template variables shared across dashboards, globally or per folder',
-      id: 'dashboards/variables',
+      id: NavID.dashboardsVariables,
       url: '/dashboards/variables',
       icon: 'gf-variable',
     }),
@@ -81,8 +81,9 @@ const DASHBOARD_CHILDREN: NavEntryBuilder[] = [
     build: () => ({
       text: 'Recently deleted',
       subTitle: 'Any items listed here for more than 30 days will be automatically deleted.',
-      id: 'dashboards/recently-deleted',
+      id: NavID.dashboardsRecentlyDeleted,
       url: '/dashboard/recently-deleted',
+      icon: 'trash-alt',
     }),
   },
   {

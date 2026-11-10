@@ -73,9 +73,6 @@ func normalizeBulkBlobUploads(ctx context.Context, req *resourcepb.BulkRequest, 
 		if rsp == nil {
 			return nil, status.Error(codes.Internal, "blob backend returned no upload response")
 		}
-		if err := ErrorFromResponse(rsp.Error, nil); err != nil {
-			return nil, err
-		}
 		if err := ctx.Err(); err != nil {
 			return nil, status.FromContextError(err).Err()
 		}

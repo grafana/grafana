@@ -1,17 +1,10 @@
 import { isEmpty, pick } from 'lodash';
 
-import {
-  type DataSourceInstanceSettings,
-  type DataSourceJsonData,
-  type DataSourcePluginMeta,
-  type PluginExtensionLink,
-  PluginExtensionTypes,
-  ReducerID,
-} from '@grafana/data';
+import { type PluginExtensionLink, PluginExtensionTypes, ReducerID } from '@grafana/data';
 import { type DataQuery, defaultDashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { contextSrv } from 'app/core/services/context_srv';
-import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
+import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/constants';
 import { type NotifiersState, type ReceiversState } from 'app/features/alerting/unified/types/alerting';
 import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -25,11 +18,9 @@ import {
   type Silence,
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
-import { configureStore } from 'app/store/configureStore';
 import { type AccessControlAction } from 'app/types/accessControl';
 import { type DashboardDTO } from 'app/types/dashboard';
 import { type FolderDTO } from 'app/types/folders';
-import { type StoreState } from 'app/types/store';
 import {
   type Alert,
   type AlertingRule,
@@ -61,40 +52,11 @@ import {
 
 import { type DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
-import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { mockDataSource } from './testSetup/mockDataSource';
+import { GRAFANA_RULES_SOURCE_NAME } from './utils/constants';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 
-let nextDataSourceId = 1;
-
-export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData>(
-  partial: Partial<DataSourceInstanceSettings<T>> = {},
-  meta: Partial<DataSourcePluginMeta> = {}
-): DataSourceInstanceSettings<T> {
-  const id = partial.id ?? nextDataSourceId++;
-
-  const uid = partial.uid ?? `mock-ds-${nextDataSourceId}`;
-
-  return {
-    id,
-    uid,
-    type: 'prometheus',
-    name: `Prometheus-${id}`,
-    access: 'proxy',
-    url: `/api/datasources/proxy/uid/${uid}`,
-    jsonData: {} as T,
-    meta: {
-      info: {
-        logos: {
-          small: 'https://prometheus.io/assets/prometheus_logo_grey.svg',
-          large: 'https://prometheus.io/assets/prometheus_logo_grey.svg',
-        },
-      },
-      ...meta,
-    } as unknown as DataSourcePluginMeta,
-    readOnly: false,
-    ...partial,
-  };
-}
+export { mockDataSource } from './testSetup/mockDataSource';
 
 export const mockPromAlert = (partial: Partial<Alert> = {}): Alert => ({
   activeAt: '2021-03-18T13:47:05.04938691Z',
@@ -628,18 +590,6 @@ export const grantUserRole = (role: string) => {
   jest.spyOn(contextSrv, 'hasRole').mockImplementation((checkRole) => checkRole === role);
 };
 
-export function mockUnifiedAlertingStore(unifiedAlerting?: Partial<StoreState['unifiedAlerting']>) {
-  const defaultState = configureStore().getState();
-
-  return configureStore({
-    ...defaultState,
-    unifiedAlerting: {
-      ...defaultState.unifiedAlerting,
-      ...unifiedAlerting,
-    },
-  });
-}
-
 export function mockAlertQuery(query: Partial<AlertQuery> = {}): AlertQuery {
   return {
     datasourceUid: '--uid--',
@@ -858,35 +808,3 @@ export const mockResampleExpression = (partial: Partial<ExpressionQuery> = {}): 
     ...partial,
   },
 });
-
-class LocalStorageMock implements Storage {
-  [key: string]: any;
-
-  getItem(key: string) {
-    return this[key] ?? null;
-  }
-
-  setItem(key: string, value: string) {
-    this[key] = value;
-  }
-
-  clear() {
-    Object.keys(this).forEach((key) => delete this[key]);
-  }
-
-  removeItem(key: string) {
-    delete this[key];
-  }
-
-  key(index: number) {
-    return Object.keys(this)[index] ?? null;
-  }
-
-  get length() {
-    return Object.keys(this).length;
-  }
-}
-
-export function mockLocalStorage(): Storage {
-  return new LocalStorageMock();
-}

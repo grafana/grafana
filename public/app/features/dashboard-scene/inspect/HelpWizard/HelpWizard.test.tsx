@@ -23,10 +23,14 @@ import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGrid
 
 import { HelpWizard } from './HelpWizard';
 
-jest.mock('./utils.ts', () => ({
-  ...jest.requireActual('./utils.ts'),
-  getGithubMarkdown: () => new Uint8Array(1024 * 1024).toString(),
-}));
+jest.mock('./utils.ts', () => {
+  const markdown = '0,'.repeat(1024 * 1024 - 1) + '0';
+
+  return {
+    ...jest.requireActual('./utils.ts'),
+    getGithubMarkdown: () => markdown,
+  };
+});
 
 const grafanaDsInstanceSettings = {
   name: 'Grafana',

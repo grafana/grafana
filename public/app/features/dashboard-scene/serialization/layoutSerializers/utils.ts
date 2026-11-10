@@ -43,6 +43,8 @@ import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { pluginTransformationsEnabled } from '../../scene/systemTransformations';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { findPanelPluginMeta } from '../../utils/panelPluginMeta';
+import { getEmptyQueryRunnerState } from '../../utils/queryRunnerState';
 import { isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
@@ -237,19 +239,23 @@ function createPanelDataProvider(
   panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
 ): SceneDataProvider | undefined {
   const panel = panelKind.spec;
+  const pluginMeta = findPanelPluginMeta(panelMetas, panel.vizConfig?.group);
+  const skipDefaultQuery = pluginMeta?.skipDefaultQuery ?? false;
 
   const targets =
     // Default to an array with an empty data query with a `refId` already assigned
     Array.isArray(panel.data?.spec.queries) && panel.data?.spec.queries.length > 0
       ? panel.data?.spec.queries
-      : [defaultPanelQueryKind()];
+      : skipDefaultQuery
+        ? []
+        : [defaultPanelQueryKind()];
   // Skip setting query runner for panels without queries
-  if (!targets?.length) {
+  if (!targets?.length && !skipDefaultQuery) {
     return undefined;
   }
 
   // Skip setting query runner for panel plugins with skipDataQuery
-  if (panelMetas[panel.vizConfig?.group]?.skipDataQuery) {
+  if (pluginMeta?.skipDataQuery) {
     return undefined;
   }
 
@@ -261,7 +267,9 @@ function createPanelDataProvider(
 
   dataProvider = new SceneQueryRunner({
     datasource,
-    queries: queriesWithUniqueRefIds.map(panelQueryKindToSceneQuery),
+    ...(targets.length
+      ? { queries: queriesWithUniqueRefIds.map(panelQueryKindToSceneQuery) }
+      : getEmptyQueryRunnerState()),
     maxDataPoints: panel.data.spec.queryOptions.maxDataPoints ?? undefined,
     maxDataPointsFromWidth: true,
     cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,

@@ -1,9 +1,9 @@
 import { isEqual } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import { type Field, type MatcherConfig } from '@grafana/data';
+import { FieldType, type Field, type MatcherConfig } from '@grafana/data';
 
-import { type TableNGProps } from '../types';
+import { type TableFilterInteraction, type TableNGProps } from '../types';
 
 import {
   activeFilters,
@@ -19,6 +19,8 @@ import { editableValueFilter } from './valueFilter';
 export function useRowTransformations(props: TableNGProps) {
   const { api, owner = '' } = props.rowTransformations ?? {};
   const source = props.data;
+  const onInteraction = props.onFilterInteraction;
+  const filterType = api ? 'transformation' : 'local';
   const frameIndex = props.rowTransformations?.frameIndex ?? 0;
   const configuredFrameKey = props.rowTransformations?.frameKey ?? props.localFilterScope;
   const frameKey = useMemo(
@@ -41,23 +43,26 @@ export function useRowTransformations(props: TableNGProps) {
   );
   const applyFilter = useCallback(
     (field: Field, predicate: MatcherConfig, parentIndex?: number) => {
-      update((current) => {
-        const context = { source, frameKey, frameIndex, field, parentIndex };
-        const selected = activeFilters(current, frameKey, source).filter((config) =>
-          matchesTableFilter(config, field, parentIndex)
-        );
-        // Compound or unfamiliar predicates must survive edits from a simpler editor unchanged.
-        if (
-          selected.length > 1 ||
-          selected.some((config) => !editableValueFilter(config) && !editableRangeFilter(config))
-        ) {
-          return current;
-        }
-        const next = writeTableFilter(current, predicate, context);
-        return isEqual(current, next) ? current : next;
-      });
+      update(
+        (current) => {
+          const context = { source, frameKey, frameIndex, field, parentIndex };
+          const selected = activeFilters(current, frameKey, source).filter((config) =>
+            matchesTableFilter(config, field, parentIndex)
+          );
+          // Compound or unfamiliar predicates must survive edits from a simpler editor unchanged.
+          if (
+            selected.length > 1 ||
+            selected.some((config) => !editableValueFilter(config) && !editableRangeFilter(config))
+          ) {
+            return current;
+          }
+          const next = writeTableFilter(current, predicate, context);
+          return isEqual(current, next) ? current : next;
+        },
+        () => onInteraction?.({ filter_type: filterType, filter_kind: filterKind(field, predicate) })
+      );
     },
-    [update, source, frameKey, frameIndex]
+    [update, source, frameKey, frameIndex, onInteraction, filterType]
   );
   const clearFilter = useCallback(
     (field: Field, parentIndex?: number) =>
@@ -77,4 +82,11 @@ export function useRowTransformations(props: TableNGProps) {
     [filters, getFilters, applyFilter, clearFilter, clearFilters, props.rangeFiltersEnabled]
   );
   return { configs, value };
+}
+
+function filterKind(field: Field, predicate: MatcherConfig): TableFilterInteraction['filter_kind'] {
+  if (predicate.id === 'between') {
+    return field.type === FieldType.time ? 'date_range' : 'numeric_range';
+  }
+  return predicate.id === 'inSet' ? 'values' : 'other';
 }
