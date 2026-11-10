@@ -22,8 +22,8 @@ type AlertRuleFolderConsumer struct {
 	store alertRuleStore
 }
 
-func ProvideAlertRuleFolderConsumer(store rules.RuleService) *AlertRuleFolderConsumer {
-	return &AlertRuleFolderConsumer{store: store}
+func ProvideAlertRuleFolderConsumer(ruleService rules.RuleService) *AlertRuleFolderConsumer {
+	return &AlertRuleFolderConsumer{store: ruleService}
 }
 
 func (c *AlertRuleFolderConsumer) Name() string { return "alert-rules" }

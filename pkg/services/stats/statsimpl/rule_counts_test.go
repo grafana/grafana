@@ -143,10 +143,10 @@ func newRuleCountStatsService(sqlStore db.DB, ruleStore rules.Store) *sqlStatsSe
 	cfg.UnifiedAlerting.Enabled = new(bool)
 
 	return &sqlStatsService{
-		cfg:       cfg,
-		db:        sqlStore,
-		orgSvc:    &orgtest.FakeOrgService{},
-		ruleStore: ngrulesvc.NewService(ruleStore),
+		cfg:         cfg,
+		db:          sqlStore,
+		orgSvc:      &orgtest.FakeOrgService{},
+		ruleService: ngrulesvc.NewService(ruleStore),
 	}
 }
 

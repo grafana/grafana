@@ -41,14 +41,14 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	tagService tag.Service,
 	tracer tracing.Tracer,
-	ruleStore alertingrules.RuleService,
+	ruleService alertingrules.RuleService,
 	dashSvc dashboards.DashboardService,
 	reg prometheus.Registerer,
 ) *RepositoryImpl {
 	l := log.New("annotations")
 	l.Debug("Initializing annotations service")
 
-	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService, ruleStore, reg)
+	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService, ruleService, reg)
 	write := xormStore
 
 	var read ReadStore

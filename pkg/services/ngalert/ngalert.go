@@ -103,8 +103,8 @@ func ProvideService(
 	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
 	alertingStore *store.DBstore,
-	ruleStore rules.RuleService,
-	sqlRuleStore *rulesstore.RuleStore,
+	ruleService rules.RuleService,
+	ruleStore *rulesstore.RuleStore,
 	provenanceStore *provenance.ProvenanceStore,
 	httpClientProvider httpclient.Provider,
 	pluginContextProvider *plugincontext.Provider,
@@ -142,8 +142,8 @@ func ProvideService(
 		pluginsStore:              pluginsStore,
 		tracer:                    tracer,
 		store:                     alertingStore,
+		ruleService:               ruleService,
 		ruleStore:                 ruleStore,
-		sqlRuleStore:              sqlRuleStore,
 		provenanceStore:           provenanceStore,
 		httpClientProvider:        httpClientProvider,
 		pluginContextProvider:     pluginContextProvider,
@@ -209,11 +209,11 @@ type AlertNG struct {
 	FolderResourcePermissions accesscontrol.FolderPermissionsService
 	annotationsRepo           annotations.Repository
 	store                     *store.DBstore
-	ruleStore                 rules.RuleService
-	// sqlRuleStore bypasses the rules service wrapper. The legacy rule service backs the
+	ruleService               rules.RuleService
+	// ruleStore bypasses the rules service wrapper. The legacy rule service backs the
 	// app-platform legacy storage, so routing it through the wrapper (which may delegate to
 	// that storage) would recurse. Legacy-only fullpath maintenance uses it too.
-	sqlRuleStore    *rulesstore.RuleStore
+	ruleStore       *rulesstore.RuleStore
 	provenanceStore *provenance.ProvenanceStore
 	userService     user.Service
 	orgService      org.Service
@@ -248,7 +248,7 @@ func (ng *AlertNG) alertmanagerStore() notifier.AlertingStore {
 	return notifier.CompositeAlertingStore{
 		AlertingStore:             ng.store,
 		ImageStore:                ng.store,
-		ContactPointRoutingReader: ng.ruleStore,
+		ContactPointRoutingReader: ng.ruleService,
 	}
 }
 
@@ -404,7 +404,7 @@ func (ng *AlertNG) init() error {
 		JitterEvaluations:    schedule.JitterStrategyFrom(ng.Cfg.UnifiedAlerting, ng.FeatureToggles),
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
-		RuleStore:            ng.ruleStore,
+		RuleStore:            ng.ruleService,
 		RuleSequenceStore:    ng.newRuleSequenceStore(),
 		RecordingRulesCfg:    ng.Cfg.UnifiedAlerting.RecordingRules,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
@@ -421,7 +421,7 @@ func (ng *AlertNG) init() error {
 		ng.Cfg.AnnotationMaximumTagsLength,
 		ng.annotationsRepo,
 		ng.dashboardService,
-		ng.ruleStore,
+		ng.ruleService,
 		ng.Metrics.GetHistorianMetrics(),
 		ng.Log,
 		ng.tracer,
@@ -513,7 +513,7 @@ func (ng *AlertNG) init() error {
 		receiverAccess,
 		configStore,
 		ng.provenanceStore,
-		ng.ruleStore,
+		ng.ruleService,
 		routeService,
 		ng.SecretsService,
 		ng.store,
@@ -541,7 +541,7 @@ func (ng *AlertNG) init() error {
 		provisioningReceiverAuthz,
 		configStore,
 		ng.provenanceStore,
-		ng.ruleStore,
+		ng.ruleService,
 		routeService,
 		ng.SecretsService,
 		ng.store,
@@ -589,18 +589,18 @@ func (ng *AlertNG) init() error {
 
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(configStore, ng.provenanceStore, ng.store, provisionRouteService, ng.Cfg.UnifiedAlerting, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol))
-	contactPointService := provisioning.NewContactPointService(provisioningReceiverAuthz, configStore, ng.SecretsService, ng.provenanceStore, ng.store, provisioningReceiverService, ng.Log, ng.ruleStore, ng.ResourcePermissions, ng.Cfg.UnifiedAlerting.AllowedIntegrations, emailValidator)
+	contactPointService := provisioning.NewContactPointService(provisioningReceiverAuthz, configStore, ng.SecretsService, ng.provenanceStore, ng.store, provisioningReceiverService, ng.Log, ng.ruleService, ng.ResourcePermissions, ng.Cfg.UnifiedAlerting.AllowedIntegrations, emailValidator)
 	templateService := provisioning.NewTemplateService(configStore, ng.provenanceStore, ng.store, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol))
 	templateServiceWithLimits := templateService.WithLimitsProvider(limitsProvider)
-	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.provenanceStore, ng.store, ng.Log, ng.ruleStore, provisionRouteService, validation.NewPermissionAwareValidator(ng.accesscontrol))
+	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.provenanceStore, ng.store, ng.Log, ng.ruleService, provisionRouteService, validation.NewPermissionAwareValidator(ng.accesscontrol))
 	inhibitionRuleService := inhibition_rules.NewService(configStore, ng.Log, ng.FeatureToggles, validation.NewPermissionAwareValidator(ng.accesscontrol))
-	alertRuleService := provisioning.NewAlertRuleService(ng.ruleStore, ng.provenanceStore, ng.folderService, ng.QuotaService, ng.store,
+	alertRuleService := provisioning.NewAlertRuleService(ng.ruleService, ng.provenanceStore, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
 		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
 		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator)
 
-	legacyRuleService := legacy.NewLegacyRuleService(ng.sqlRuleStore, ng.provenanceStore, ng.folderService, ng.QuotaService, ng.store,
+	legacyRuleService := legacy.NewLegacyRuleService(ng.ruleStore, ng.provenanceStore, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()), ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
 		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator)
 
@@ -617,7 +617,7 @@ func (ng *AlertNG) init() error {
 		ng.DataSourceService,
 		ng.DataProxy,
 		alertRuleService,
-		ng.ruleStore,
+		ng.ruleService,
 		ng.store,
 		ng.FolderResourcePermissions,
 		ng.clientGenerator,
@@ -632,7 +632,7 @@ func (ng *AlertNG) init() error {
 		DataProxy:             ng.DataProxy,
 		QuotaService:          ng.QuotaService,
 		TransactionManager:    ng.store,
-		RuleStore:             ng.ruleStore,
+		RuleStore:             ng.ruleService,
 		AlertingStore:         ng.store,
 		AdminConfigStore:      ng.store,
 		ProvenanceStore:       ng.provenanceStore,
@@ -664,7 +664,7 @@ func (ng *AlertNG) init() error {
 	}
 	ng.Api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	if err := RegisterQuotas(ng.Cfg, ng.QuotaService, ng.ruleStore); err != nil {
+	if err := RegisterQuotas(ng.Cfg, ng.QuotaService, ng.ruleService); err != nil {
 		return err
 	}
 
@@ -678,7 +678,7 @@ func (ng *AlertNG) init() error {
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
-		ng.folderLabelSyncer = folderlabelsyncer.NewService(ng.Cfg, ng.bus, ng.ruleStore, ng.store, ng.clientGenerator,
+		ng.folderLabelSyncer = folderlabelsyncer.NewService(ng.Cfg, ng.bus, ng.ruleService, ng.store, ng.clientGenerator,
 			ng.Metrics.GetFolderLabelSyncerMetrics())
 	}
 
@@ -727,7 +727,7 @@ func (ng *AlertNG) BackfillFolderFullpaths(ctx context.Context) error {
 
 		// A routed legacy database provider needs the org identity during startup too.
 		orgCtx, _ := identity.WithServiceIdentity(ctx, orgID)
-		folderUIDs, err := ng.sqlRuleStore.GetFolderUIDsWithMissingFullpath(orgCtx, orgID)
+		folderUIDs, err := ng.ruleStore.GetFolderUIDsWithMissingFullpath(orgCtx, orgID)
 		if err != nil {
 			ng.Log.Error("Failed to fetch folder UIDs for backfill", "org_id", orgID, "error", err)
 			continue
@@ -745,7 +745,7 @@ func (ng *AlertNG) BackfillFolderFullpaths(ctx context.Context) error {
 		ng.Log.Info("Backfilling folder fullpaths", "org_id", orgID, "folder_count", len(folderUIDs))
 
 		// Use the existing sync method to populate fullpaths
-		if err := ng.sqlRuleStore.UpdateFolderFullpathsForFolders(ctx, orgID, folderUIDs); err != nil {
+		if err := ng.ruleStore.UpdateFolderFullpathsForFolders(ctx, orgID, folderUIDs); err != nil {
 			ng.Log.Error("Failed to backfill folder fullpaths", "org_id", orgID, "error", err)
 			// Continue with next org instead of failing completely
 		}
@@ -777,7 +777,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 			ng.Log.Warn("Failed to backfill alert UIDs on annotations", "error", err)
 			return nil
 		}
-		annotationsimpl.BackfillAlertUIDs(subCtx, ng.SQLStore, ng.ruleStore, orgIDs, ng.Log.New("component", "annotation-alert-uid-backfill"))
+		annotationsimpl.BackfillAlertUIDs(subCtx, ng.SQLStore, ng.ruleService, orgIDs, ng.Log.New("component", "annotation-alert-uid-backfill"))
 		return nil
 	})
 

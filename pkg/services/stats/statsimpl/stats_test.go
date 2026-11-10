@@ -77,7 +77,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		features:       featuremgmt.WithFeatures(),
 		namespacer:     request.GetNamespaceMapper(cfg),
 		unifiedStorage: unifiedStorage,
-		ruleStore:      ngrulesvc.NewService(&rules.RuleStore{SQLStore: db}),
+		ruleService:    ngrulesvc.NewService(&rules.RuleStore{SQLStore: db}),
 	}
 
 	for _, tc := range []struct {
