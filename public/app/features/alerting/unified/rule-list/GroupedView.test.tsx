@@ -66,6 +66,15 @@ describe('RuleList - GroupedView', () => {
     expect(within(mimirSection).getByRole('treeitem', { name: 'test-group-1 10s' })).toBeInTheDocument();
   });
 
+  it('should show a loading row until the data source list loads', async () => {
+    render(<GroupedView />);
+
+    expect(screen.getByTestId('alert-rule-list-item-loader')).toBeInTheDocument();
+    expect(screen.queryByRole('listitem', { name: /Mimir/ })).not.toBeInTheDocument();
+
+    expect(await screen.findByRole('listitem', { name: /Mimir/ })).toBeInTheDocument();
+  });
+
   it('should paginate through groups', async () => {
     const { user } = render(<GroupedView />);
 

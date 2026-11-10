@@ -1,14 +1,12 @@
-import { useMemo } from 'react';
-
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Icon, LinkButton, Stack, Text } from '@grafana/ui';
 
 import { createBridgeURL } from '../../components/PluginBridge';
 import { WithReturnButton } from '../../components/WithReturnButton';
+import { useExternalRulesSources } from '../../hooks/useExternalRulesSources';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { useRouteProxyActive } from '../../plugin-proxy/withRouteProxy';
 import { SupportedPlugin } from '../../types/pluginBridges';
-import { getExternalRulesSources } from '../../utils/datasource';
 
 /**
  * All of these explain the same thing: some data sources' rules aren't in this list any more
@@ -32,7 +30,8 @@ function useHandedOverRules(): { count: number; pluginRulesLink: string } {
   const routeProxyActive = useRouteProxyActive();
   const { searchQuery } = useRulesFilter();
 
-  const count = useMemo(() => (routeProxyActive ? getExternalRulesSources().length : 0), [routeProxyActive]);
+  const externalRulesSources = useExternalRulesSources().items;
+  const count = routeProxyActive ? externalRulesSources.length : 0;
   const pluginRulesLink = createBridgeURL(
     SupportedPlugin.PrometheusAlerting,
     '/rules',
