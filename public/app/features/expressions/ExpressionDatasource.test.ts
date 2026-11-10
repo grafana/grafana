@@ -438,6 +438,15 @@ describe('ExpressionDatasourceApi', () => {
         expect(await runAndGetRefIds(targets)).toEqual(['A', 'cpu', 'S']);
       });
 
+      it('keeps a hidden SQL expression input whose refId has a backtick escaped in the SQL', async () => {
+        const targets = [
+          { refId: 'A`B', datasource: mysql, hide: true },
+          { refId: 'S', datasource: expr, type: ExpressionQueryType.sql, expression: 'SELECT * FROM `A``B`' },
+        ] as ExpressionQuery[];
+
+        expect(await runAndGetRefIds(targets)).toEqual(['A`B', 'S']);
+      });
+
       it('keeps a query that an expression uses only after template variables are replaced', async () => {
         const targets = [
           { refId: 'A', datasource: mysql, hide: true },

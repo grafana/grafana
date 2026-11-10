@@ -93,6 +93,7 @@ function restoreSQLDisplayNames(response: DataQueryResponse, queries: Expression
 // A refId counts as used when it appears as a whole word, ignoring case, in an expression or a
 // classic condition. So `A` matches `$A`, `${A}` and `FROM a`, but not `SELECT`. The check errs
 // toward keeping a query: a false match only sends a query that the backend gets today anyway.
+// SQL doubles a backtick inside a quoted identifier, so A`B is also matched as A``B.
 function getUsedRefIdMatcher(request: DataQueryRequest<ExpressionQuery>): (refId: string) => boolean {
   const templateSrv = getTemplateSrv();
   const texts = request.targets
@@ -103,7 +104,8 @@ function getUsedRefIdMatcher(request: DataQueryRequest<ExpressionQuery>): (refId
       ...(query.conditions ?? []).flatMap((condition) => condition.query?.params ?? []),
     ]);
   return (refId) => {
-    const pattern = new RegExp(`(?<!\\w)${escapeRegExp(refId)}(?!\\w)`, 'i');
+    const names = [refId, refId.replaceAll('`', '``')].map(escapeRegExp).join('|');
+    const pattern = new RegExp(`(?<!\\w)(?:${names})(?!\\w)`, 'i');
     return texts.some((text) => pattern.test(text));
   };
 }
