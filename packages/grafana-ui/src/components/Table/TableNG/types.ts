@@ -10,7 +10,6 @@ import {
   type ActionModel,
   type FieldType,
   type DataFrameWithValue,
-  type FieldState,
 } from '@grafana/data';
 import { type CellRendererProps, type Column } from '@grafana/react-data-grid';
 import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
@@ -98,7 +97,13 @@ export interface TableSortByFieldState {
  */
 export type SortByBehavior = 'initial' | 'managed';
 
+export interface TableFilterInteraction {
+  filter_type: 'local' | 'transformation' | 'adhoc';
+  filter_kind: 'values' | 'numeric_range' | 'date_range' | 'other';
+}
+
 interface BaseTableProps {
+  onFilterInteraction?: (interaction: TableFilterInteraction) => void;
   /** Experimental transformation-backed table view, explicitly owned by its host. */
   rowTransformationsEnabled?: boolean;
   rowTransformations?: TableRowTransformations;
@@ -402,8 +407,4 @@ export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRo
 export interface FromFieldsResult {
   columns: TableColumn[];
   cellRootRenderers: Record<string, CellRootRenderer>;
-}
-
-export interface FooterFieldState extends FieldState {
-  lastProcessedRowCount: number;
 }

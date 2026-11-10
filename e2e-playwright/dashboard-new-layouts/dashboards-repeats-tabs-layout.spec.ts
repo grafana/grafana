@@ -110,7 +110,7 @@ test.describe(
       selectors,
       page,
       controls,
-      sidebar,
+      panelEditor,
       panels,
       tabs,
       canvas,
@@ -127,7 +127,7 @@ test.describe(
 
       await expect(canvas.getContainer()).toBeHidden(); // verifying that panel editor loaded
 
-      await sidebar.panelOptions.setTitle('New edited panel');
+      await panelEditor.options.setTitle('New edited panel');
 
       // playwright too fast, verifying JSON diff that changes landed
       await expectDashboardChangesToContain(dashboardPage, page, selectors, 'New edited panel');

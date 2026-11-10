@@ -136,7 +136,7 @@ test.describe(
       selectors,
       page,
       controls,
-      sidebar,
+      panelEditor,
       panels,
       rows,
       canvas,
@@ -153,9 +153,9 @@ test.describe(
       await panels.getHeader('single panel row 1').hover();
       await page.keyboard.press('e');
 
-      await expect(canvas.getContainer()).toBeHidden(); // verifying that panel editor loaded
+      await expect(panelEditor.getContainer()).toBeVisible();
 
-      await sidebar.panelOptions.setTitle(editedSinglePanelName('$c4'));
+      await panelEditor.options.setTitle(editedSinglePanelName('$c4'));
 
       // playwright too fast, verifying JSON diff that changes landed
       await expectDashboardChangesToContain(dashboardPage, page, selectors, editedSinglePanelName('$c4'));

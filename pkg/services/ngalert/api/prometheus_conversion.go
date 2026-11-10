@@ -2,8 +2,11 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"mime"
+	"net/http"
 
 	"go.yaml.in/yaml/v3"
 
@@ -15,12 +18,21 @@ import (
 
 var errorUnsupportedMediaType = errutil.UnsupportedMediaType("alerting.unsupportedMediaType")
 
-// parseJSONOrYAML unmarshals body into target based on content-type, defaulting to YAML
-func parseJSONOrYAML(ctx *contextmodel.ReqContext, target interface{}) error {
+// parseJSONOrYAML unmarshals body into target based on content-type, defaulting to YAML.
+// If maxBodyBytes is greater than 0, the request body is limited to that size using http.MaxBytesReader.
+func parseJSONOrYAML(ctx *contextmodel.ReqContext, target interface{}, maxBodyBytes int64) error {
 	var m string
+
+	if maxBodyBytes > 0 {
+		ctx.Req.Body = http.MaxBytesReader(ctx.Resp, ctx.Req.Body, maxBodyBytes)
+	}
 
 	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			return fmt.Errorf("request body too large: max size %d bytes: %w", maxBodyBytes, err)
+		}
 		return err
 	}
 	defer func() { _ = ctx.Req.Body.Close() }()
@@ -80,7 +92,7 @@ func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusGetRuleGroup(c
 
 func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostRuleGroup(ctx *contextmodel.ReqContext, namespaceTitle string) response.Response {
 	var promGroup apimodels.PrometheusRuleGroup
-	if err := parseJSONOrYAML(ctx, &promGroup); err != nil {
+	if err := parseJSONOrYAML(ctx, &promGroup, f.svc.cfg.PrometheusConversion.MaxRequestBodyBytes); err != nil {
 		return errorToResponse(err)
 	}
 
@@ -89,7 +101,7 @@ func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostRuleGroup(
 
 func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostRuleGroups(ctx *contextmodel.ReqContext) response.Response {
 	var promNamespaces map[string][]apimodels.PrometheusRuleGroup
-	if err := parseJSONOrYAML(ctx, &promNamespaces); err != nil {
+	if err := parseJSONOrYAML(ctx, &promNamespaces, f.svc.cfg.PrometheusConversion.MaxRequestBodyBytes); err != nil {
 		return errorToResponse(err)
 	}
 
@@ -128,7 +140,7 @@ func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexPostRule
 // alertmanager
 func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostAlertmanagerConfig(ctx *contextmodel.ReqContext) response.Response {
 	var config apimodels.AlertmanagerUserConfig
-	if err := parseJSONOrYAML(ctx, &config); err != nil {
+	if err := parseJSONOrYAML(ctx, &config, f.svc.cfg.PrometheusConversion.MaxRequestBodyBytes); err != nil {
 		return errorToResponse(err)
 	}
 

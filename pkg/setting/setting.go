@@ -733,6 +733,9 @@ type Cfg struct {
 	// MigrationChunkMaxBytes is the soft maximum byte budget per migration chunk
 	// when MigrationChunkedWrites is enabled. Default: 256 MiB.
 	MigrationChunkMaxBytes int64
+	// MigrationStatementTimeout overrides the Postgres statement_timeout for the migration's
+	// own transactions only. Zero keeps the database or role setting. Default: 0.
+	MigrationStatementTimeout time.Duration
 	// RenameWaitDeadline is the maximum time to wait for MySQL RENAME TABLE
 	// statements to appear in the processlist. Default: 1 minute.
 	RenameWaitDeadline          time.Duration
@@ -863,6 +866,7 @@ type Cfg struct {
 	RerankVertexModel     string
 	RerankBedrockRegion   string
 	RerankBedrockModel    string
+	RerankHedgeDelay      time.Duration
 
 	// Overrides/Quotas
 	OverridesFilePath             string
@@ -1406,7 +1410,6 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 		os.Exit(1)
 		return nil, err
 	}
-
 	// command line props
 	cfg.commandLineProps = cfg.getCommandLineProperties(args.Args)
 	// load default overrides
