@@ -863,6 +863,7 @@ type Cfg struct {
 	RerankVertexModel     string
 	RerankBedrockRegion   string
 	RerankBedrockModel    string
+	RerankHedgeDelay      time.Duration
 
 	// Overrides/Quotas
 	OverridesFilePath             string
@@ -893,6 +894,9 @@ type Cfg struct {
 	SearchLookback       time.Duration
 	NotifierSettleDelay  time.Duration
 	SeededWatchesEnabled bool
+	// explicitWatchSettings records which watch settings had a value before
+	// their defaults were read, because reading a default writes it into Raw.
+	explicitWatchSettings explicitWatchSettings
 	// FastLatestKeyLookupEnabled makes the KV backend resolve latest-version reads with a
 	// single-row descending lookup instead of scanning the resource's history.
 	FastLatestKeyLookupEnabled bool
@@ -1406,7 +1410,6 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 		os.Exit(1)
 		return nil, err
 	}
-
 	// command line props
 	cfg.commandLineProps = cfg.getCommandLineProperties(args.Args)
 	// load default overrides

@@ -11,9 +11,10 @@ import { type Repository, type SupportedResource } from 'app/api/clients/provisi
 import { getAPIBaseURL } from 'app/api/utils';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { getIconForKind } from 'app/features/search/service/icons';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
-import { getIconForKind, queryResultToViewItem } from 'app/features/search/service/utils';
+import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { type AppDispatch } from 'app/store/configureStore';
 
 import { isManaged } from './managedResource';

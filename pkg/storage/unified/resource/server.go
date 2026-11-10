@@ -2216,12 +2216,11 @@ const producerChanSize = 100
 // Start the server.broadcaster (requires that the backend storage services are enabled)
 func (s *server) initWatcher() error {
 	if backend, ok := s.backend.(seededWatchBackend); ok && s.seededWatchesEnabled {
-		s.initSeededWatcher(backend, nil)
+		s.initSeededWatcher(backend)
 		return nil
 	}
 	if backend, ok := s.backend.(ResumeFloorWatchBackend); ok && backend.WatchResumeFloorsEnabled() {
-		raised := newRaisedFloors()
-		s.initSeededWatcher(resumeFloorWatchBackend{backend: backend, raised: raised}, raised)
+		s.initSeededWatcher(resumeFloorWatchBackend{backend: backend})
 		return nil
 	}
 	events, err := s.backend.WatchWriteEvents(s.ctx)
@@ -2725,11 +2724,14 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	if err != nil {
 		return nil, rpcErrorFrom(err)
 	}
-	// Blob backends may still report failure in the body.
-	if rsp.GetError() != nil {
-		return nil, GRPCStatusError(rsp.GetError())
+	if rsp == nil {
+		return nil, errBlobBackendNoResponse()
 	}
 	return rsp, nil
+}
+
+func errBlobBackendNoResponse() error {
+	return GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "blob backend returned no response"})
 }
 
 func (s *server) authorizeBlobPut(ctx context.Context, req *resourcepb.PutBlobRequest) *resourcepb.ErrorResult {
@@ -2849,9 +2851,8 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 	if err != nil {
 		return nil, rpcErrorFrom(err)
 	}
-	// Blob backends may still report failure in the body.
-	if rsp.GetError() != nil {
-		return nil, GRPCStatusError(rsp.GetError())
+	if rsp == nil {
+		return nil, errBlobBackendNoResponse()
 	}
 	return rsp, nil
 }

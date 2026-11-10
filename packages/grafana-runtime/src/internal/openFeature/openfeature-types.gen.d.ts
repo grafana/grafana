@@ -159,7 +159,6 @@ declare module "@openfeature/core" {
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
     | "dashboard.vectorSearch"
-    | "grafana.vectorSearchCmdk"
     | "grafana.cmdkHybridSearch"
     | "grafana.cmdkDashboardTags"
     | "assistant.fullscreenWorkspace"

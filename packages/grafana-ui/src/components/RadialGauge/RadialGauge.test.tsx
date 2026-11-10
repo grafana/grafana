@@ -27,6 +27,28 @@ describe('RadialGauge', () => {
     }
   );
 
+  it('places the single point at the value below neutral through the full gauge tree', () => {
+    render(
+      <RadialGaugeExample
+        width={200}
+        height={200}
+        shape="circle"
+        barWidthFactor={0.6}
+        min={0}
+        max={100}
+        value={25}
+        neutral={26}
+        roundedBars
+        endpointMarker="point"
+      />
+    );
+
+    const markers = screen.getByRole('img').querySelectorAll('circle[opacity="0.5"]');
+    expect(markers).toHaveLength(1);
+    expect(Number(markers[0].getAttribute('cx'))).toBeCloseTo(190, 5);
+    expect(Number(markers[0].getAttribute('cy'))).toBeCloseTo(100, 5);
+  });
+
   // RadialGaugeExample sets min/max in the data frame's field config, where a data source can send strings
   describe('when the data frame min/max are strings', () => {
     const min = '50' as unknown as number;

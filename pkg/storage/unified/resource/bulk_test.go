@@ -14,8 +14,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -61,11 +66,11 @@ func TestProcessBulkWithPreflightRejectsBeforeBackend(t *testing.T) {
 	iter := &failingPreflightIterator{err: want}
 	backend := &preflightTestBackend{}
 
-	rsp := processBulkWithPreflight(t.Context(), backend, BulkSettings{}, iter)
+	rsp, err := processBulkWithPreflight(t.Context(), backend, BulkSettings{}, iter)
 
 	require.False(t, backend.called)
-	require.NotNil(t, rsp.Error)
-	require.Contains(t, rsp.Error.Message, want.Error())
+	require.Nil(t, rsp)
+	require.ErrorIs(t, err, want)
 }
 
 func TestSpooledBulkRequestsPreflightRejectsCorruptRecords(t *testing.T) {
@@ -325,23 +330,132 @@ func TestBulkProcessStopsRunnerOnPanic(t *testing.T) {
 	}
 }
 
-// Early rejections are covered by the blob validation tests; this covers a
+// Early rejections are covered by the blob validation tests; these cover a
 // backend's call-level failure, which must become the stream status instead of
 // a response carrying partial results.
 func TestBulkProcessReturnsBackendFailureAsStatus(t *testing.T) {
 	failure := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "bulk import failed"}
-	srv := &server{
-		backend:          &failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1, Error: failure}},
+	conflict := apierrors.NewConflict(schema.GroupResource{Group: "g", Resource: "r"}, "n", errors.New("changed"))
+	partial := &resourcepb.BulkResponse{Processed: 1}
+
+	for _, tc := range []struct {
+		name  string
+		err   error
+		check func(t *testing.T, err error)
+	}{
+		{
+			name: "status with details passes through",
+			err:  GRPCStatusError(failure),
+			check: func(t *testing.T, err error) {
+				requireRPCError(t, err, failure)
+			},
+		},
+		{
+			name: "API status keeps code and details",
+			err:  fmt.Errorf("import: %w", conflict),
+			check: func(t *testing.T, err error) {
+				res := rpcErrorResult(t, err)
+				require.Equal(t, codes.Aborted, status.Code(err))
+				require.EqualValues(t, http.StatusConflict, res.Code)
+				require.Equal(t, "n", res.Details.GetName())
+			},
+		},
+		{
+			name: "plain error becomes internal",
+			err:  errors.New("storage failed"),
+			check: func(t *testing.T, err error) {
+				requireRPCError(t, err, &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "storage failed"})
+			},
+		},
+		{
+			name: "cancellation stays canceled",
+			err:  context.Canceled,
+			check: func(t *testing.T, err error) {
+				require.Equal(t, codes.Canceled, status.Code(err))
+			},
+		},
+		{
+			name: "storage failure joined with cancellation stays internal",
+			err:  errors.Join(errors.New("storage failed"), status.Error(codes.Canceled, "canceled")),
+			check: func(t *testing.T, err error) {
+				require.Equal(t, codes.Internal, status.Code(err))
+				require.Contains(t, rpcErrorResult(t, err).Message, "storage failed")
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			stream := newBulkProcessTestStream(t, nil)
+			err := newBulkProcessTestServer(&failingBulkBackend{rsp: partial, err: tc.err}).BulkProcess(stream)
+			tc.check(t, err)
+			require.Nil(t, stream.response)
+		})
+	}
+}
+
+func TestBulkProcessNilBackendResponse(t *testing.T) {
+	stream := newBulkProcessTestStream(t, nil)
+	err := newBulkProcessTestServer(&failingBulkBackend{}).BulkProcess(stream)
+	requireRPCError(t, err, &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "Nothing returned from process batch"})
+	require.Nil(t, stream.response)
+}
+
+func TestBulkProcessSendsRejectedItems(t *testing.T) {
+	rejected := []*resourcepb.BulkResponse_Rejected{{
+		Key:    newTestBulkRequest("item").Key,
+		Action: resourcepb.BulkRequest_ADDED,
+		Error:  "unable to unmarshal json",
+	}}
+	stream := newBulkProcessTestStream(t, nil)
+	err := newBulkProcessTestServer(&failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1, Rejected: rejected}}).BulkProcess(stream)
+	require.NoError(t, err)
+	require.Len(t, stream.response.Rejected, 1)
+	require.True(t, proto.Equal(rejected[0], stream.response.Rejected[0]))
+}
+
+// The stream error explains why the backend stopped early, so it is reported
+// instead of the backend's own failure.
+func TestBulkProcessStreamErrorTakesPrecedence(t *testing.T) {
+	streamErr := status.Error(codes.Unavailable, "client went away")
+	stream := newBulkProcessTestStream(t, []*resourcepb.BulkRequest{newTestBulkRequest("item")})
+	stream.terminalErr = streamErr
+	backend := &failingBulkBackend{err: errors.New("backend failed"), consume: true}
+
+	err := newBulkProcessTestServer(backend).BulkProcess(stream)
+	require.Same(t, streamErr, err)
+	require.Nil(t, stream.response)
+}
+
+func TestBulkProcessCloseAndRecvReturnsBackendStatus(t *testing.T) {
+	failure := &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "import conflict", Reason: "Conflict"}
+	srv := newBulkProcessTestServer(&failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1}, err: GRPCStatusError(failure), consume: true})
+	key := newTestBulkRequest("item").Key
+	settings := BulkSettings{Collection: []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}}}
+	ctx := identity.WithServiceIdentityForSingleNamespaceContext(t.Context(), key.Namespace)
+
+	stream, err := NewLocalResourceClient(srv).BulkProcess(metadata.NewOutgoingContext(ctx, settings.ToMD()))
+	require.NoError(t, err)
+	require.NoError(t, stream.Send(newTestBulkRequest("item")))
+	rsp, err := stream.CloseAndRecv()
+	require.Nil(t, rsp)
+	requireRPCError(t, err, failure)
+}
+
+func newBulkProcessTestServer(backend StorageBackend) *server {
+	return &server{
+		backend:          backend,
 		access:           authlib.FixedAccessClient(true),
 		bulkBatchOptions: DefaultBulkBatchOptions(),
 	}
+}
+
+func newBulkProcessTestStream(t *testing.T, requests []*resourcepb.BulkRequest) *bulkBlobValidationStream {
 	key := newTestBulkRequest("item").Key
 	settings := BulkSettings{Collection: []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}}}
 	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1"})
-	stream := &bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: metadata.NewIncomingContext(ctx, settings.ToMD())}}
-
-	requireRPCError(t, srv.BulkProcess(stream), failure)
-	require.Nil(t, stream.response)
+	return &bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{
+		ctx:      metadata.NewIncomingContext(ctx, settings.ToMD()),
+		requests: requests,
+	}}
 }
 
 func newTestBatchRunner(stream resourcepb.BulkStore_BulkProcessServer, key *resourcepb.ResourceKey, opts BulkBatchOptions) *batchRunner {
@@ -392,18 +506,27 @@ type preflightTestBackend struct {
 
 func (*preflightTestBackend) RequiresBulkPreflight() {}
 
-func (b *preflightTestBackend) ProcessBulk(context.Context, BulkSettings, BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *preflightTestBackend) ProcessBulk(context.Context, BulkSettings, BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	b.called = true
-	return &resourcepb.BulkResponse{}
+	return &resourcepb.BulkResponse{}, nil
 }
 
 type failingBulkBackend struct {
 	UnimplementedStorageBackend
 	rsp *resourcepb.BulkResponse
+	err error
+	// consume drains the iterator before failing, as a backend does when the
+	// stream breaks mid-import.
+	consume bool
 }
 
-func (b *failingBulkBackend) ProcessBulk(context.Context, BulkSettings, BulkRequestIterator) *resourcepb.BulkResponse {
-	return b.rsp
+func (b *failingBulkBackend) ProcessBulk(_ context.Context, _ BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error) {
+	for b.consume && iter.Next() {
+		if iter.RollbackRequested() {
+			break
+		}
+	}
+	return b.rsp, b.err
 }
 
 type testBulkProcessServer struct {
@@ -467,7 +590,7 @@ type panicBulkBackend struct {
 	sendDone chan bool
 }
 
-func (b *panicBulkBackend) ProcessBulk(_ context.Context, _ BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *panicBulkBackend) ProcessBulk(_ context.Context, _ BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	runner, ok := iter.(*batchRunner)
 	if !ok {
 		panic("expected batchRunner")

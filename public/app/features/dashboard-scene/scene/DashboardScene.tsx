@@ -711,7 +711,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         annotations[key] = value;
       }
     }
-    const resolutionInput = { annotations };
+    const localVariableNames = sceneGraph
+      .getVariables(this)
+      .state.variables.filter((v) => !isPredefinedOrigin(v.state.origin))
+      .map((v) => v.state.name);
+    const resolutionInput = { annotations, localVariableNames };
 
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
       if (refreshId !== this._predefinedVariablesRefreshId) {
