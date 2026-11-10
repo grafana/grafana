@@ -1,3 +1,23 @@
+<!-- 12.4.15 START -->
+
+# 12.4.15 (2026-11-10)
+
+### Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-106472
+- Security: Fix CVE-2026-106475
+- Security: Fix CVE-2026-107365
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-111000
+- Security: Fix CVE-2026-81843
+- Security: Fix CVE-2026-82014
+
+### Features and enhancements
+
+- **DateTime:** Bump moment-timezone to 0.6.6 for 2026 time zone changes [#136947](https://github.com/grafana/grafana/pull/136947), [@joshhunt](https://github.com/joshhunt)
+
+<!-- 12.4.15 END -->
 <!-- 12.4.14 START -->
 
 # 12.4.14 (2026-10-27)

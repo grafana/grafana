@@ -49,6 +49,11 @@ func New(
 }
 
 func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
+	logger := r.log.FromContext(ctx)
+	if !isAllowedResourcePath(req.Path) {
+		return r.statusResponse(logger, req.Path, http.StatusForbidden, "the requested resource path is not supported by this datasource"), nil
+	}
+
 	r.log.FromContext(ctx).Debug("Sending resource query", "URL", req.URL)
 	resp, err := r.promClient.QueryResource(ctx, req)
 	if err != nil {
@@ -82,6 +87,20 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 	}
 
 	return callResponse, err
+}
+
+// statusResponse logs message (with the request path) as an error, then
+// builds a CallResourceResponse carrying the given HTTP status and a
+// JSON {"message": message} body — for callers that need to return a
+// specific status code rather than a generic Go error and 500 HTTP status.
+func (r *Resource) statusResponse(logger log.Logger, path string, status int, message string) *backend.CallResourceResponse {
+	logger.Error(message, "path", path)
+	body, _ := json.Marshal(map[string]string{"message": message})
+	return &backend.CallResourceResponse{
+		Status:  status,
+		Headers: map[string][]string{"Content-Type": {"application/json"}},
+		Body:    body,
+	}
 }
 
 func getSelectors(expr string) ([]string, error) {

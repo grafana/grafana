@@ -57,18 +57,18 @@ func (mr *MockServiceMockRecorder) CreateRenderingSession(ctx, authOpts, session
 }
 
 // GetRenderUser mocks base method.
-func (m *MockService) GetRenderUser(ctx context.Context, key string) (*RenderUser, bool) {
+func (m *MockService) GetRenderUser(ctx context.Context, key string, orgID int64) (*RenderUser, bool) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRenderUser", ctx, key)
+	ret := m.ctrl.Call(m, "GetRenderUser", ctx, key, orgID)
 	ret0, _ := ret[0].(*RenderUser)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
 
 // GetRenderUser indicates an expected call of GetRenderUser.
-func (mr *MockServiceMockRecorder) GetRenderUser(ctx, key any) *gomock.Call {
+func (mr *MockServiceMockRecorder) GetRenderUser(ctx, key, orgID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRenderUser", reflect.TypeOf((*MockService)(nil).GetRenderUser), ctx, key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRenderUser", reflect.TypeOf((*MockService)(nil).GetRenderUser), ctx, key, orgID)
 }
 
 // HasCapability mocks base method.

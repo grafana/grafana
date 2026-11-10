@@ -118,8 +118,11 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.ComparisonExpr:
 		return
 
-	case *sqlparser.ConvertExpr, *sqlparser.ConvertType:
+	case *sqlparser.ConvertExpr:
 		return
+
+	case *sqlparser.ConvertType:
+		return !strings.EqualFold(v.Type, "binary")
 
 	case *sqlparser.CollateExpr:
 		return

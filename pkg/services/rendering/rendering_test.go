@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"path/filepath"
 	"testing"
 	"time"
@@ -75,6 +76,49 @@ func TestGetUrl(t *testing.T) {
 			require.Equal(t, "https://localhost:3000/"+path+"&render=1", url)
 		})
 	})
+}
+
+func TestRendererCallbackOrg(t *testing.T) {
+	for _, renderType := range []RenderType{RenderPNG, RenderPDF, RenderCSV} {
+		for _, path := range []string{"d/dashboard", "d/dashboard?kiosk", "d/dashboard?orgId=1&orgId=2&targetOrgId=4&kiosk"} {
+			t.Run(string(renderType)+"/"+path, func(t *testing.T) {
+				rs := &RenderingService{Cfg: &setting.Cfg{RendererServerUrl: "http://renderer.example/render"}, rendererCallbackURL: "http://grafana.example/"}
+				opts := Opts{CommonOpts: CommonOpts{AuthOpts: AuthOpts{OrgID: 3}, Path: path}}
+				rendererURL, err := rs.generateImageRendererURL(renderType, opts, "render-key")
+				require.NoError(t, err)
+				callback, err := url.Parse(rendererURL.Query().Get("url"))
+				require.NoError(t, err)
+				require.Equal(t, "/d/dashboard", callback.Path)
+				require.Equal(t, []string{"3"}, callback.Query()["orgId"])
+				require.Equal(t, []string{"3"}, callback.Query()["targetOrgId"])
+				require.Equal(t, "1", callback.Query().Get("render"))
+				if path != "d/dashboard" {
+					require.True(t, callback.Query().Has("kiosk"))
+				}
+			})
+		}
+	}
+}
+
+func TestRemoteRendererAuthToken(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get(authTokenHeader) != renderAuthTestSecret {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+	cfg := newRenderAuthTestConfig(t, "100")
+	cfg.RendererServerUrl = server.URL
+	rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
+	require.NoError(t, err)
+	u, err := url.Parse(server.URL)
+	require.NoError(t, err)
+	resp, err := rs.doRequest(t.Context(), u, nil)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
 func TestRenderErrorImage(t *testing.T) {

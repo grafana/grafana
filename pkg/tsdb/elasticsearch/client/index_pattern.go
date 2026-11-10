@@ -18,6 +18,11 @@ const (
 	intervalYearly  = "yearly"
 )
 
+// maxIndices caps how many indices a dynamic index pattern may expand to for a single query.
+// A larger list is not a workable Elasticsearch request, and generating it is unbounded in
+// memory and CPU for a user-controlled time range.
+const maxIndices = 10000
+
 var datePatternRegex = regexp.MustCompile("(LT|LL?L?L?|l{1,4}|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|YYYYY|YYYY|YY|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|mm?|ss?|SS?S?|X|zz?|ZZ?|Q)")
 
 var datePatternReplacements = map[string]string{
@@ -96,6 +101,8 @@ func (ip *staticIndexPattern) GetIndices(timeRange backend.TimeRange) ([]string,
 
 type intervalGenerator interface {
 	Generate(from, to time.Time) []time.Time
+	// minStep is a lower bound on the time between two generated intervals.
+	minStep() time.Duration
 }
 
 type dynamicIndexPattern struct {
@@ -132,6 +139,12 @@ func newDynamicIndexPattern(interval, pattern string) (*dynamicIndexPattern, err
 func (ip *dynamicIndexPattern) GetIndices(timeRange backend.TimeRange) ([]string, error) {
 	from := timeRange.From.UTC()
 	to := timeRange.To.UTC()
+
+	// Compare in seconds: time.Time.Sub saturates at ~292 years, which would let huge ranges through.
+	if spanSeconds := to.Unix() - from.Unix(); spanSeconds/int64(ip.intervalGenerator.minStep()/time.Second) >= maxIndices {
+		return []string{}, fmt.Errorf("time range is too large for the %s index pattern: it would match more than %d indices", strings.ToLower(ip.interval), maxIndices)
+	}
+
 	intervals := ip.intervalGenerator.Generate(from, to)
 	indices := make([]string, 0)
 
@@ -148,6 +161,8 @@ func (ip *dynamicIndexPattern) GetIndices(timeRange backend.TimeRange) ([]string
 }
 
 type hourlyInterval struct{}
+
+func (i *hourlyInterval) minStep() time.Duration { return time.Hour }
 
 func (i *hourlyInterval) Generate(from, to time.Time) []time.Time {
 	intervals := []time.Time{}
@@ -166,6 +181,8 @@ func (i *hourlyInterval) Generate(from, to time.Time) []time.Time {
 
 type dailyInterval struct{}
 
+func (i *dailyInterval) minStep() time.Duration { return 24 * time.Hour }
+
 func (i *dailyInterval) Generate(from, to time.Time) []time.Time {
 	intervals := []time.Time{}
 	start := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, time.UTC)
@@ -182,6 +199,8 @@ func (i *dailyInterval) Generate(from, to time.Time) []time.Time {
 }
 
 type weeklyInterval struct{}
+
+func (i *weeklyInterval) minStep() time.Duration { return 7 * 24 * time.Hour }
 
 func (i *weeklyInterval) Generate(from, to time.Time) []time.Time {
 	intervals := []time.Time{}
@@ -214,6 +233,8 @@ func (i *weeklyInterval) Generate(from, to time.Time) []time.Time {
 
 type monthlyInterval struct{}
 
+func (i *monthlyInterval) minStep() time.Duration { return 28 * 24 * time.Hour }
+
 func (i *monthlyInterval) Generate(from, to time.Time) []time.Time {
 	intervals := []time.Time{}
 	start := time.Date(from.Year(), from.Month(), 1, 0, 0, 0, 0, time.UTC)
@@ -235,6 +256,8 @@ func (i *monthlyInterval) Generate(from, to time.Time) []time.Time {
 }
 
 type yearlyInterval struct{}
+
+func (i *yearlyInterval) minStep() time.Duration { return 365 * 24 * time.Hour }
 
 func (i *yearlyInterval) Generate(from, to time.Time) []time.Time {
 	intervals := []time.Time{}
@@ -298,7 +321,7 @@ func formatDate(t time.Time, pattern string) (string, error) {
 	}
 
 	isoYear, isoWeek := t.ISOWeek()
-	isoYearShort := fmt.Sprintf("%d", isoYear)[2:4]
+	isoYearShort := fmt.Sprintf("%02d", (isoYear%100+100)%100)
 	day := t.Weekday()
 	dayOfWeekIso := int(day)
 	if day == time.Sunday {
