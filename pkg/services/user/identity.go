@@ -55,6 +55,10 @@ type SignedInUser struct {
 	IDToken       string                                   `json:"-" xorm:"-"`
 	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims] `json:"-" xorm:"-"`
 
+	// ServiceAccountTokenID and ServiceAccountTokenName identify the service account token used to authenticate, if any.
+	ServiceAccountTokenID   int64  `json:"-" xorm:"-"`
+	ServiceAccountTokenName string `json:"-" xorm:"-"`
+
 	// When other settings are not deterministic, this value is used
 	FallbackType claims.IdentityType
 }

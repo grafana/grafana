@@ -164,6 +164,13 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 		attribute.String("identity.AuthenticatedBy", identity.GetAuthenticatedBy()),
 	)
 
+	if identity.ServiceAccountTokenID != 0 {
+		span.SetAttributes(
+			attribute.Int64("identity.ServiceAccountTokenID", identity.ServiceAccountTokenID),
+			attribute.String("identity.ServiceAccountTokenName", identity.ServiceAccountTokenName),
+		)
+	}
+
 	if len(identity.ClientParams.FetchPermissionsParams.RestrictedActions) > 0 {
 		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.RestrictedActions", identity.ClientParams.FetchPermissionsParams.RestrictedActions))
 	}
