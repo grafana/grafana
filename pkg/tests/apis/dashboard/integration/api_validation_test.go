@@ -2107,6 +2107,26 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 				adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
 
 				if userTC.canCreate {
+					if createResp.Response.StatusCode != http.StatusCreated {
+						permissions := apis.DoRequest(ctx.Helper, apis.RequestParams{
+							User: userTC.user,
+							Path: "/api/access-control/user/permissions",
+						}, &map[string][]string{})
+						t.Logf("Dashboard creator identity: user=%s org=%d role=%s; permissions (%d): %s",
+							userTC.user.Identity.GetLogin(), userTC.user.Identity.GetOrgID(), userTC.user.Identity.GetOrgRole(),
+							permissions.Response.StatusCode, permissions.Body)
+
+						var createGrants []struct {
+							RoleName string
+							RoleUID  string
+							Scope    string
+						}
+						err := ctx.Helper.GetEnv().SQLStore.GetEngine().SQL(`
+							SELECT r.name AS role_name, r.uid AS role_uid, p.scope
+							FROM role r INNER JOIN permission p ON p.role_id = r.id
+							WHERE r.org_id = 0 AND p.action = ?`, "dashboards:create").Find(&createGrants)
+						t.Logf("Stored dashboard create grants: %+v; query error: %v", createGrants, err)
+					}
 					require.Equal(t, http.StatusCreated, createResp.Response.StatusCode,
 						"Failed to %s dashboard as %s: %s; body=%s", "POST", userTC.user.Identity.GetLogin(), createResp.Response.Status, createResp.Body)
 
