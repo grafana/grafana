@@ -54,8 +54,8 @@ import {
   type SimplifiedEditor,
 } from '../types/rule-form';
 
-import { Annotation } from './constants';
-import { GRAFANA_RULES_SOURCE_NAME, getDefaultOrFirstCompatibleDataSource, isGrafanaRulesSource } from './datasource';
+import { Annotation, GRAFANA_RULES_SOURCE_NAME } from './constants';
+import { getDefaultOrFirstCompatibleDataSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import {
   isGrafanaAlertingRuleByType,
@@ -63,6 +63,7 @@ import {
   isUngroupedRuleGroup,
   rulerRuleType,
 } from './rules';
+import { isGrafanaRulesSource } from './rulesSource';
 import { parseInterval } from './time';
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files -- Keep existing callers compatible with the narrower query utility.

@@ -12,8 +12,8 @@ import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting
 
 import { type LokiQuery } from '../../../loki-helpers/types';
 
-import { isCloudRulesSource } from './datasource';
 import { rulerRuleType } from './rules';
+import { isCloudRulesSource } from './rulesSource';
 
 export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): boolean | undefined {
   const dataSourceUID = query.datasourceUid ?? query.model.datasource?.uid;
