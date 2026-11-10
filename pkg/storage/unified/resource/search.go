@@ -249,7 +249,7 @@ var knownIndexFeatures = []IndexFeature{
 // index built before deleted documents were kept maps the trash fields but holds nothing
 // in them, and a file-based index is reused across an upgrade, so trash would stay
 // unavailable until some unrelated change triggered a rebuild.
-var requiredIndexFeatures = slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})
+var requiredIndexFeatures = slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments, IndexFeatureStoredFacets})
 
 // CurrentIndexFeatures returns the features sorted, so declaration order cannot
 // change what an index records.
@@ -258,14 +258,8 @@ func CurrentIndexFeatures() []IndexFeature {
 }
 
 // RequiredIndexFeatures returns the features an index must have to be used.
-// postRankAuthz adds the features only that path depends on, so deployments
-// serving facets from bleve itself are not rebuilt for it.
-func RequiredIndexFeatures(postRankAuthz bool) []IndexFeature {
-	features := requiredIndexFeatures
-	if postRankAuthz {
-		features = append(slices.Clone(features), IndexFeatureStoredFacets)
-	}
-	return slices.Sorted(slices.Values(features))
+func RequiredIndexFeatures() []IndexFeature {
+	return slices.Sorted(slices.Values(requiredIndexFeatures))
 }
 
 // MissingIndexFeatures returns the required features the index does not have.
@@ -682,7 +676,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		searchFields:              searchFields,
 		hybridSearchConfig:        opts.HybridSearchConfig,
 		globalCoverage:            opts.GlobalSearchCoverage,
-		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
+		requiredFeatures:          RequiredIndexFeatures(),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		globalIndexEnabled:        opts.GlobalIndexEnabled,
 		globalIndexStartupBuild:   opts.GlobalIndexStartupBuild,
@@ -747,6 +741,9 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 		}
 	}
 	ret.reconcile = a.reconcile || b.reconcile
+	// One rebuild serves every merged request, so it reads as a migration if any
+	// of them waits for it as one.
+	ret.migrationRead = a.migrationRead || b.migrationRead
 
 	// Using higher "last import time" is stricter condition, and causes more indexes to be rebuilt.
 	if a.lastImportTime.IsZero() || (!b.lastImportTime.IsZero() && b.lastImportTime.After(a.lastImportTime)) {
@@ -1614,7 +1611,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		return nil, rpcErrorFrom(err)
 	}
 
-	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false)
+	completeChs := s.findIndexesToRebuild(ctx, importTimes, filterKeys, time.Now(), false)
 	// A global index is never imported itself; its covered types are, and only
 	// those are rebuilt.
 	syncChs, err := s.queueTypeSyncs(ctx, filterKeys, nil)
@@ -1970,7 +1967,7 @@ func (s *searchServer) scanForIndexesToRebuild(ctx context.Context, checkFullReb
 		importTimes = make(map[NamespacedResource]time.Time)
 	}
 	if checkFullRebuilds {
-		s.findIndexesToRebuild(importTimes, keys, time.Now(), true)
+		s.findIndexesToRebuild(ctx, importTimes, keys, time.Now(), true)
 	}
 	if _, err := s.queueTypeSyncs(ctx, keys, importTimes); err != nil {
 		s.log.Warn("failed to check which resource types of global search indexes are out of date", "error", err)
@@ -2044,9 +2041,12 @@ func jitterForKey(key NamespacedResource, maxAge time.Duration) time.Duration {
 	return time.Duration(h.Sum64() % jitterRange)
 }
 
-func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, applyJitter bool) []chan struct{} {
+// findIndexesToRebuild queues a rebuild of each index that needs one. The rebuilds run as
+// migration reads when ctx is a migration read.
+func (s *searchServer) findIndexesToRebuild(ctx context.Context, lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, applyJitter bool) []chan struct{} {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
+	migrationRead := MigrationReadFromContext(ctx)
 
 	var keys []NamespacedResource
 	if filterKeys != nil {
@@ -2088,6 +2088,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			completeCh := make(chan struct{})
 			completeChs = append(completeChs, completeCh)
 			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, expectedSearchFieldsHash, completeCh)
+			rebuildReq.migrationRead = migrationRead
 			s.rebuildQueue.Add(rebuildReq)
 
 			s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
@@ -2129,6 +2130,12 @@ func (s *searchServer) runIndexRebuilder(ctx context.Context) {
 func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.rebuildIndex")
 	defer span.End()
+
+	// The worker's context is the server's, so a migration waiting for this rebuild only reaches
+	// storage through the request.
+	if req.migrationRead {
+		ctx = ContextWithMigrationRead(ctx)
+	}
 
 	l := s.log.New("namespace", req.Namespace, "group", req.Group, "resource", req.Resource)
 
@@ -2346,6 +2353,10 @@ type rebuildRequest struct {
 	// reconcile, for a global index, compares it with storage and repairs what
 	// differs, unless a full rebuild is due anyway.
 	reconcile bool
+
+	// migrationRead runs the rebuild's storage reads as a migration read, for a
+	// migration that waits for it.
+	migrationRead bool
 
 	completeChannels []chan<- struct{} // signal rebuild index is complete
 }

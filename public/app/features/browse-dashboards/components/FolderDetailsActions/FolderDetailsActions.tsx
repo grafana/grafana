@@ -23,7 +23,12 @@ import { refetchChildren } from '../../state/actions';
 import CreateNewButton from '../CreateNewButton';
 import { FolderActionsButton } from '../FolderActionsButton';
 
-export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder }) => {
+interface Props {
+  folderDTO?: CombinedFolder;
+  showRecentlyDeleted?: boolean;
+}
+
+export const FolderDetailsActions = ({ folderDTO, showRecentlyDeleted = true }: Props) => {
   // Fetch the root (aka general) folder if we're not in a specific folder
   const { data: rootFolderDTO } = useGetCombinedFolderQuery(folderDTO ? undefined : 'general');
   // At the root this resolves no repository on purpose. Creating a folder in the database is always
@@ -61,13 +66,15 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
       {canReadTeams && folderDTO && 'ownerReferences' in folderDTO && (
         <FolderOwners ownerReferences={folderDTO.ownerReferences} />
       )}
-      <LinkButton
-        variant="secondary"
-        href={config.appSubUrl + '/dashboard/recently-deleted'}
-        onClick={handleButtonClickToRecentlyDeleted}
-      >
-        <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
-      </LinkButton>
+      {showRecentlyDeleted && (
+        <LinkButton
+          variant="secondary"
+          href={config.appSubUrl + '/dashboard/recently-deleted'}
+          onClick={handleButtonClickToRecentlyDeleted}
+        >
+          <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
+        </LinkButton>
+      )}
       {folderDTO && (
         <FolderActionsButton
           folder={folderDTO}

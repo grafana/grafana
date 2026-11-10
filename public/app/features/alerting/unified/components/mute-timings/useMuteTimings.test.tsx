@@ -9,7 +9,7 @@ import {
   TIME_INTERVAL_NAME_HAPPY_PATH,
   TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { useGetMuteTiming, useMuteTimings, useSearchMuteTiming } from './useMuteTimings';

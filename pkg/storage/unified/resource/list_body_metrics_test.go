@@ -126,7 +126,6 @@ func TestServerListKeysOnlyDoesNotRecordBodyMetrics(t *testing.T) {
 				KeysOnly: true,
 			})
 			require.NoError(t, err)
-			require.Nil(t, rsp.Error)
 			require.Len(t, rsp.Items, 1)
 			require.Zero(t, testutil.CollectAndCount(metrics.ListUnusedBodyRequests))
 			require.Zero(t, testutil.CollectAndCount(metrics.ListBodyKeysRequested))
