@@ -78,6 +78,16 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
             { value: PieChartLabels.Value, label: t('piechart.labels-options.label-value', 'Value') },
           ],
         },
+      })
+      .addBooleanSwitch({
+        name: t('piechart.name-solid-colors', 'Solid slice colors'),
+        description: t(
+          'piechart.description-solid-colors',
+          'Use the exact field color for each slice instead of a radial gradient'
+        ),
+        path: 'solidColors',
+        category,
+        defaultValue: false,
       });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);

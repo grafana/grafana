@@ -49,6 +49,9 @@ composableKinds: PanelCfg: {
 					sort:    common.SortOrder
 					displayLabels: [...PieChartLabels]
 					legend: PieChartLegendOptions
+					// Render slices with the exact field color instead of the
+					// per-slice radial gradient.
+					solidColors?: bool | *false
 				} @cuetsy(kind="interface")
 				FieldConfig: common.HideableFieldConfig @cuetsy(kind="interface")
 			}

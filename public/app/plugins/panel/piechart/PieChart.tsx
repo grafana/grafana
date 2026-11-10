@@ -44,7 +44,8 @@ interface PieChartProps {
   sort: SortOrder;
   highlightedTitle?: string;
   displayLabels?: PieChartLabels[];
-  useGradients?: boolean; // not used?
+  /** Render slices with the exact field color instead of the per-slice radial gradient. */
+  solidColors?: boolean;
   tooltipOptions: VizTooltipOptions;
   /**
    * Pre-computed gradient fills keyed by FieldDisplay object reference.
@@ -63,6 +64,7 @@ export const PieChart = ({
   height,
   highlightedTitle,
   displayLabels = [],
+  solidColors = false,
   tooltipOptions,
   gradientFills,
 }: PieChartProps) => {
@@ -100,22 +102,24 @@ export const PieChart = ({
     <div className={styles.container}>
       <svg width={layout.size} height={layout.size} ref={containerRef} style={{ overflow: 'visible' }}>
         <Group top={layout.position} left={layout.position}>
-          {colors.map((color) => {
-            return (
-              <RadialGradient
-                key={color}
-                id={getGradientId(color)}
-                from={getGradientColorFrom(color, theme)}
-                to={getGradientColorTo(color, theme)}
-                fromOffset={layout.gradientFromOffset}
-                toOffset="1"
-                gradientUnits="userSpaceOnUse"
-                cx={0}
-                cy={0}
-                radius={layout.outerRadius}
-              />
-            );
-          })}
+          {solidColors
+            ? null
+            : colors.map((color) => {
+                return (
+                  <RadialGradient
+                    key={color}
+                    id={getGradientId(color)}
+                    from={getGradientColorFrom(color, theme)}
+                    to={getGradientColorTo(color, theme)}
+                    fromOffset={layout.gradientFromOffset}
+                    toOffset="1"
+                    gradientUnits="userSpaceOnUse"
+                    cx={0}
+                    cy={0}
+                    radius={layout.outerRadius}
+                  />
+                );
+              })}
           <Pie
             data={filteredFieldDisplayValues}
             pieValue={getValue}
@@ -134,9 +138,12 @@ export const PieChart = ({
                   // fall back to the per-series radial gradient (existing behaviour).
                   // Items with a field-level color override are not in gradientFills —
                   // fall back to display.color (the override value) rather than FALLBACK_COLOR.
+                  // With solidColors enabled, always use the exact field color.
                   const fill = gradientFills
                     ? (gradientFills.get(arc.data) ?? arc.data.display.color ?? FALLBACK_COLOR)
-                    : getGradientColor(color);
+                    : solidColors
+                      ? color
+                      : getGradientColor(color);
 
                   // Slice with no data links — render plain, no keyboard interaction.
                   if (!arc.data.hasLinks || !arc.data.getLinks) {
