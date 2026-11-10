@@ -1,67 +1,63 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
-import { Observable } from 'rxjs';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useObservable } from '@grafana/data/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
 import { Button, Drawer, ErrorBoundary, ErrorWithStack, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { getModKey } from 'app/core/utils/browser';
 
-import { useScopesServices } from '../ScopesContextProvider';
-
 import { ScopesInput } from './ScopesInput';
-import { type ScopesSelectorServiceState } from './ScopesSelectorService';
 import { ScopesTree } from './ScopesTree';
 import { useRecentScopes } from './useRecentScopes';
+import { useScopeActions } from './useScopeActions';
+import {
+  useAppliedScopeIds,
+  useAppliedScopes,
+  useLoadingNodeName,
+  useScopeNodesMap,
+  useScopesMap,
+  useScopesSelectorOpened,
+  useScopesTree,
+  useStagedScopes,
+} from './useScopesSelectorState';
 
 export const ScopesSelector = () => {
   const styles = useStyles2(getStyles);
   const scopes = useScopes();
 
-  const services = useScopesServices();
-
-  const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
-    services?.scopesSelectorService.stateObservable ?? new Observable(),
-    services?.scopesSelectorService.state
-  );
-
-  // Must be called before any conditional returns (rules of hooks)
-  const appliedScopeIds = selectorServiceState?.appliedScopes.map((s) => s.scopeId) ?? [];
+  // These must be called before any conditional returns (rules of hooks)
+  const nodes = useScopeNodesMap();
+  const scopesMap = useScopesMap();
+  const appliedScopes = useAppliedScopes();
+  const appliedScopeIds = useAppliedScopeIds();
+  const selectedScopes = useStagedScopes();
+  const tree = useScopesTree();
+  const opened = useScopesSelectorOpened();
+  const loadingNodeName = useLoadingNodeName();
+  const { isAvailable, open, removeAllScopes, closeAndApply, closeAndReset, changeScopes } = useScopeActions();
   const recentScopes = useRecentScopes(appliedScopeIds);
 
   // Keyboard shortcut for closing and applying
   useEffect(() => {
-    if (!services?.scopesSelectorService) {
+    if (!isAvailable) {
       return;
     }
     const handleKeyDown = (event: KeyboardEvent) => {
       // ctrl/cmd + enter. Do a check up here to prevent conditional useEffect
       if (event.key === 'Enter' && event.metaKey) {
-        services.scopesSelectorService.closeAndApply();
+        closeAndApply();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [services?.scopesSelectorService]);
+  }, [isAvailable, closeAndApply]);
 
-  if (!services || !scopes || !scopes.state.enabled || !selectorServiceState) {
+  if (!isAvailable || !scopes || !scopes.state.enabled) {
     return null;
   }
 
-  const {
-    nodes,
-    loadingNodeName,
-    opened,
-    selectedScopes,
-    appliedScopes,
-    tree,
-    scopes: scopesMap,
-  } = selectorServiceState;
-  const { scopesSelectorService } = services;
   const { loading } = scopes.state;
-  const { open, removeAllScopes, closeAndApply, closeAndReset } = scopesSelectorService;
 
   return (
     <>
@@ -102,8 +98,8 @@ export const ScopesSelector = () => {
                           selectedScopes={selectedScopes}
                           scopeNodes={nodes}
                           onRecentScopesSelect={(scopeIds: string[], scopeNodeId?: string) => {
-                            scopesSelectorService.changeScopes(scopeIds, undefined, scopeNodeId);
-                            scopesSelectorService.closeAndReset();
+                            changeScopes(scopeIds, { scopeNodeId });
+                            closeAndReset();
                           }}
                         />
                       </>

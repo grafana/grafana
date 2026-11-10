@@ -2,23 +2,23 @@ import { useEffect, useState } from 'react';
 
 import { type ScopeNode } from '@grafana/data';
 
-import { useScopesServices } from '../ScopesContextProvider';
+import { useScopeActions } from './useScopeActions';
 
 // Light wrapper around the scopesSelectorService.getScopeNode to make it easier to use in the UI.
 export function useScopeNode(scopeNodeId?: string) {
   const [node, setNode] = useState<ScopeNode | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
-  const scopesSelectorService = useScopesServices()?.scopesSelectorService;
+  const { isAvailable, getScopeNode } = useScopeActions();
 
   useEffect(() => {
     const loadNode = async () => {
-      if (!scopeNodeId || !scopesSelectorService) {
+      if (!scopeNodeId || !isAvailable) {
         setNode(undefined);
         return;
       }
       setIsLoading(true);
       try {
-        const node = await scopesSelectorService.getScopeNode(scopeNodeId);
+        const node = await getScopeNode(scopeNodeId);
         setNode(node);
       } catch (error) {
         console.error('Failed to load node', error);
@@ -27,7 +27,7 @@ export function useScopeNode(scopeNodeId?: string) {
       }
     };
     loadNode();
-  }, [scopeNodeId, scopesSelectorService]);
+  }, [scopeNodeId, isAvailable, getScopeNode]);
 
   return { node, isLoading };
 }

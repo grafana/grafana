@@ -1,40 +1,29 @@
-import { Observable } from 'rxjs';
-
 import { type ScopeNode } from '@grafana/data';
-import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 
-import { useScopesServices } from '../../scopes/ScopesContextProvider';
-import { type ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
 import { type NodesMap, type SelectedScope, type TreeNode } from '../../scopes/selector/types';
+import { useScopeActions } from '../../scopes/selector/useScopeActions';
+import {
+  useAppliedScopes,
+  useScopeNodesMap,
+  useScopesMap,
+  useScopesTree,
+  useStagedScopes,
+} from '../../scopes/selector/useScopesSelectorState';
 import { type CommandPaletteAction } from '../types';
 import { SECTION_SCOPES, SCOPES_PRIORITY } from '../values';
 
-const defaultState: ScopesSelectorServiceState = {
-  loading: false,
-  loadingNodeName: undefined,
-  opened: false,
-  nodes: {},
-  scopes: {},
-  selectedScopes: [],
-  appliedScopes: [],
-  tree: {
-    scopeNodeId: '',
-    expanded: false,
-    query: '',
-  },
-};
-
 export function useScopeServicesState() {
-  const services = useScopesServices();
-  // Call hook unconditionally to follow React Hooks rules
-  const selectorServiceState: ScopesSelectorServiceState =
-    useObservable(
-      services?.scopesSelectorService.stateObservable ?? new Observable(),
-      services?.scopesSelectorService.state ?? defaultState
-    ) ?? defaultState;
+  // Call hooks unconditionally to follow React Hooks rules
+  const nodes = useScopeNodesMap();
+  const scopes = useScopesMap();
+  const selectedScopes = useStagedScopes();
+  const appliedScopes = useAppliedScopes();
+  const tree = useScopesTree();
+  const { isAvailable, filterNode, selectScope, resetSelection, searchAllNodes, deselectScope, apply, getScopeNodes } =
+    useScopeActions();
 
-  if (!services) {
+  if (!isAvailable) {
     return {
       filterNode: () => Promise.resolve(),
       selectScope: () => {},
@@ -43,15 +32,13 @@ export function useScopeServicesState() {
       getScopeNodes: (_: string[]) => Promise.resolve([]),
       apply: () => {},
       deselectScope: () => {},
-      nodes: defaultState.nodes,
-      scopes: defaultState.scopes,
-      selectedScopes: defaultState.selectedScopes,
-      appliedScopes: defaultState.appliedScopes,
-      tree: defaultState.tree,
+      nodes,
+      scopes,
+      selectedScopes,
+      appliedScopes,
+      tree,
     };
   }
-  const { filterNode, selectScope, resetSelection, searchAllNodes, deselectScope, apply, getScopeNodes } =
-    services.scopesSelectorService;
 
   return {
     getScopeNodes,
@@ -61,11 +48,11 @@ export function useScopeServicesState() {
     searchAllNodes,
     apply,
     deselectScope,
-    nodes: selectorServiceState.nodes,
-    scopes: selectorServiceState.scopes,
-    selectedScopes: selectorServiceState.selectedScopes,
-    appliedScopes: selectorServiceState.appliedScopes,
-    tree: selectorServiceState.tree,
+    nodes,
+    scopes,
+    selectedScopes,
+    appliedScopes,
+    tree,
   };
 }
 
