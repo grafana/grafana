@@ -277,8 +277,6 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   contentWrapper: css({
     display: 'flex',
     maxWidth: '100%',
-    // A narrow tooltip centers the name, value and color swatch against each other so a wrapped,
-    // multi-line value stays aligned with its single-line name; `auto` keeps the default top edge.
     alignItems: size === 'narrow' ? 'center' : 'start',
     justifyContent: justify,
     columnGap: theme.spacing(0.75),
@@ -289,8 +287,6 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     fontVariantNumeric: theme.flags.tabularNums ? 'tabular-nums' : undefined,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
-    // Keep wrapped value lines right-aligned in a narrow tooltip so the value column reads as a
-    // single right-aligned block against the left-aligned name.
     ...(size === 'narrow' && { textAlign: 'right' }),
   }),
   colorWrapper: css({
@@ -304,11 +300,6 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     textOverflow: 'ellipsis',
     color: theme.colors.text.secondary,
     fontWeight: 400,
-    // In a narrow tooltip the label name wraps within at most 75% of the width rather than holding
-    // its width and pushing the value off the edge; `auto` keeps growing to fit it on one line.
-    // `overflow: visible` + `break-word` keep the flex min-size at the longest word (overflow
-    // hidden would collapse a flex item's auto min-size to 0), so a short name is never broken
-    // mid-word when a long value competes for the row's space.
     ...(size === 'narrow' && {
       maxWidth: '75%',
       overflow: 'visible',
@@ -324,9 +315,6 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     display: 'flex',
     alignItems: 'center',
     flexShrink: size === 'narrow' ? 1 : 0,
-    // In a narrow tooltip the value wraps but never shrinks below 25% of the width so it stays
-    // readable, and stays right-aligned within that 25% cell to match the `auto` layout; `auto`
-    // holds the value on one line and lets the tooltip grow instead.
     minWidth: size === 'narrow' ? '25%' : undefined,
     justifyContent: size === 'narrow' ? 'flex-end' : undefined,
     alignSelf: 'center',
