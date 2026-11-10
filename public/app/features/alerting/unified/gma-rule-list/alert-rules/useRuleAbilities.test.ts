@@ -1,187 +1,148 @@
-import { renderHook } from '@testing-library/react';
+import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { useCanSilenceInFolder, useGrafanaRulesSilenceSupport } from '../../hooks/abilities/rules/ruleAbilities.utils';
-import { Granted, InsufficientPermissions, IsPluginManaged, Loading, Provisioned } from '../../hooks/abilities/types';
-import { useAlertingAbility } from '../../hooks/useAbilities';
+import { isLoading } from '../../hooks/abilities/abilityUtils';
+import {
+  Granted,
+  InsufficientPermissions,
+  IsPluginManaged,
+  NotSupported,
+  Provisioned,
+} from '../../hooks/abilities/types';
+import { setupMswServer } from '../../mockApi';
+import { grantUserPermissions } from '../../mocks';
+import { setAlertmanagerChoices, setFolderResponse } from '../../mocks/server/configure';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 import { mockK8sAlertRule } from '../mocks/handlers';
 
 import { useRuleAbilities } from './useRuleAbilities';
 
-jest.mock('../../hooks/useAbilities', () => ({
-  ...jest.requireActual('../../hooks/useAbilities'),
-  useAlertingAbility: jest.fn(),
-}));
-jest.mock('../../hooks/abilities/rules/ruleAbilities.utils', () => ({
-  ...jest.requireActual('../../hooks/abilities/rules/ruleAbilities.utils'),
-  useGrafanaRulesSilenceSupport: jest.fn(),
-  useCanSilenceInFolder: jest.fn(),
-}));
+setupMswServer();
 
-const mockUseAlertingAbility = jest.mocked(useAlertingAbility);
-const mockUseSilenceSupport = jest.mocked(useGrafanaRulesSilenceSupport);
-const mockUseCanSilenceInFolder = jest.mocked(useCanSilenceInFolder);
+const canWriteAndDelete = { [K8sAnnotations.AccessWrite]: 'true', [K8sAnnotations.AccessDelete]: 'true' };
 
-function rule(annotationOverrides: Record<string, string> = {}): AlertRule {
-  return {
-    ...mockK8sAlertRule({ uid: 'rule-1', title: 'CPU high' }),
-    metadata: {
-      name: 'rule-1',
-      annotations: {
-        [K8sAnnotations.AccessWrite]: 'true',
-        [K8sAnnotations.AccessDelete]: 'true',
-        ...annotationOverrides,
-      },
-    },
-  };
+function rule({
+  annotations = canWriteAndDelete,
+  labels,
+}: { annotations?: Record<string, string>; labels?: Record<string, string> } = {}): AlertRule {
+  const base = mockK8sAlertRule({ uid: 'rule-1', title: 'CPU high' });
+  return { ...base, metadata: { ...base.metadata, annotations }, spec: { ...base.spec, labels } };
 }
 
-function getAbilities(alertRule: AlertRule) {
-  return renderHook(() => useRuleAbilities(alertRule)).result.current;
+function hookAbilities(alertRule: AlertRule) {
+  return renderHook(() => useRuleAbilities(alertRule), { wrapper: getWrapper({}) }).result;
+}
+
+async function getAbilities(alertRule: AlertRule) {
+  const result = hookAbilities(alertRule);
+  await waitFor(() => expect(isLoading(result.current.silence)).toBe(false));
+  return result.current;
 }
 
 describe('useRuleAbilities', () => {
   beforeEach(() => {
-    mockUseAlertingAbility.mockReturnValue([true, true]);
-    mockUseSilenceSupport.mockReturnValue({ silenceSupported: true, silenceLoading: false });
-    mockUseCanSilenceInFolder.mockReturnValue(true);
+    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
   });
 
-  describe('provisioned rules', () => {
-    it('locks edit, pause and delete with Provisioned', () => {
-      const provisioned = rule({ [K8sAnnotations.Provenance]: 'terraform' });
-      const abilities = getAbilities(provisioned);
+  it('grants edit, pause, delete and duplicate when the access annotations allow it', async () => {
+    const abilities = await getAbilities(rule());
 
-      expect(abilities.edit).toEqual(Provisioned);
-      expect(abilities.pause).toEqual(Provisioned);
-      expect(abilities.delete).toEqual(Provisioned);
-    });
-
-    it('still allows duplicate for provisioned rules', () => {
-      const provisioned = rule({ [K8sAnnotations.Provenance]: 'terraform' });
-      const abilities = getAbilities(provisioned);
-
-      expect(abilities.duplicate).toEqual(Granted);
-    });
+    expect(abilities.edit).toEqual(Granted);
+    expect(abilities.pause).toEqual(Granted);
+    expect(abilities.delete).toEqual(Granted);
+    expect(abilities.duplicate).toEqual(Granted);
   });
 
-  describe('plugin-managed rules', () => {
-    it('locks edit, pause, delete and duplicate with IsPluginManaged', () => {
-      const pluginRule = {
-        ...mockK8sAlertRule({ uid: 'rule-1', title: 'CPU high' }),
-        metadata: {
-          name: 'rule-1',
-          annotations: { [K8sAnnotations.AccessWrite]: 'true', [K8sAnnotations.AccessDelete]: 'true' },
-        },
-        spec: {
-          ...mockK8sAlertRule({ uid: 'rule-1', title: 'CPU high' }).spec,
-          labels: { __grafana_origin: 'plugin/my-plugin' },
-        },
-      };
-      const abilities = getAbilities(pluginRule);
+  it('locks edit, pause and delete for provisioned rules but still allows duplicate', async () => {
+    const abilities = await getAbilities(
+      rule({ annotations: { ...canWriteAndDelete, [K8sAnnotations.Provenance]: 'terraform' } })
+    );
 
-      expect(abilities.edit).toEqual(IsPluginManaged);
-      expect(abilities.pause).toEqual(IsPluginManaged);
-      expect(abilities.delete).toEqual(IsPluginManaged);
-      expect(abilities.duplicate).toEqual(IsPluginManaged);
-    });
+    expect(abilities.edit).toEqual(Provisioned);
+    expect(abilities.pause).toEqual(Provisioned);
+    expect(abilities.delete).toEqual(Provisioned);
+    expect(abilities.duplicate).toEqual(Granted);
   });
 
-  describe('externally managed rules', () => {
-    it('locks edit, pause and delete with Provisioned when grafana.app/managedBy is set', () => {
-      const managed = rule({ 'grafana.app/managedBy': 'terraform' });
-      const abilities = getAbilities(managed);
+  it('locks everything, duplicate included, for plugin-managed rules', async () => {
+    const abilities = await getAbilities(rule({ labels: { __grafana_origin: 'plugin/my-plugin' } }));
 
-      expect(abilities.edit).toEqual(Provisioned);
-      expect(abilities.pause).toEqual(Provisioned);
-      expect(abilities.delete).toEqual(Provisioned);
-    });
-
-    it('still allows duplicate for managed rules', () => {
-      const managed = rule({ 'grafana.app/managedBy': 'terraform' });
-      const abilities = getAbilities(managed);
-
-      expect(abilities.duplicate).toEqual(Granted);
-    });
+    expect(abilities.edit).toEqual(IsPluginManaged);
+    expect(abilities.pause).toEqual(IsPluginManaged);
+    expect(abilities.delete).toEqual(IsPluginManaged);
+    expect(abilities.duplicate).toEqual(IsPluginManaged);
   });
 
-  describe('missing access annotations', () => {
-    it('gives INSUFFICIENT_PERMISSIONS for edit when canWrite annotation is absent', () => {
-      const noWrite = {
-        ...mockK8sAlertRule({ uid: 'rule-1', title: 'CPU high' }),
-        metadata: { name: 'rule-1', annotations: { [K8sAnnotations.AccessDelete]: 'true' } },
-      };
-      const abilities = getAbilities(noWrite);
+  it('treats rules managed by an external system as provisioned', async () => {
+    const abilities = await getAbilities(
+      rule({ annotations: { ...canWriteAndDelete, 'grafana.app/managedBy': 'terraform' } })
+    );
 
-      expect(abilities.edit).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleUpdate]));
-      expect(abilities.pause).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleUpdate]));
-    });
-
-    it('gives INSUFFICIENT_PERMISSIONS for delete when canDelete annotation is absent', () => {
-      const noDelete = {
-        ...mockK8sAlertRule({ uid: 'rule-1', title: 'CPU high' }),
-        metadata: { name: 'rule-1', annotations: { [K8sAnnotations.AccessWrite]: 'true' } },
-      };
-      const abilities = getAbilities(noDelete);
-
-      expect(abilities.delete).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleDelete]));
-    });
+    expect(abilities.edit).toEqual(Provisioned);
+    expect(abilities.delete).toEqual(Provisioned);
+    expect(abilities.duplicate).toEqual(Granted);
   });
 
-  describe('duplicate', () => {
-    it('gives INSUFFICIENT_PERMISSIONS when user lacks create permission', () => {
-      mockUseAlertingAbility.mockReturnValue([true, false]);
-      const abilities = getAbilities(rule());
+  it('denies edit and pause without the write annotation', async () => {
+    const abilities = await getAbilities(rule({ annotations: { [K8sAnnotations.AccessDelete]: 'true' } }));
 
-      expect(abilities.duplicate).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleCreate]));
-    });
+    expect(abilities.edit).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleUpdate]));
+    expect(abilities.pause).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleUpdate]));
+    expect(abilities.delete).toEqual(Granted);
+  });
 
-    it('grants duplicate when user has create permission', () => {
-      const abilities = getAbilities(rule());
+  it('denies delete without the delete annotation', async () => {
+    const abilities = await getAbilities(rule({ annotations: { [K8sAnnotations.AccessWrite]: 'true' } }));
 
-      expect(abilities.duplicate).toEqual(Granted);
-    });
+    expect(abilities.delete).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleDelete]));
+  });
+
+  it('denies duplicate without the create permission', async () => {
+    grantUserPermissions([]);
+    const abilities = await getAbilities(rule());
+
+    expect(abilities.duplicate).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleCreate]));
   });
 
   describe('silence', () => {
-    it('grants silence when AM supports it and user can silence in folder', () => {
-      const abilities = getAbilities(rule());
+    it('grants silence with the global instance create permission', async () => {
+      grantUserPermissions([AccessControlAction.AlertingInstanceCreate]);
+      const result = hookAbilities(rule());
 
-      expect(abilities.silence).toEqual(Granted);
+      await waitFor(() => expect(result.current.silence).toEqual(Granted));
     });
 
-    it('returns Loading while AM config is loading', () => {
-      mockUseSilenceSupport.mockReturnValue({ silenceSupported: false, silenceLoading: true });
-      const abilities = getAbilities(rule());
+    it('grants silence from the silence permission on the rule folder', async () => {
+      grantUserPermissions([]);
+      setFolderResponse({
+        uid: 'folder-a',
+        title: 'Folder A',
+        accessControl: { [AccessControlAction.AlertingSilenceCreate]: true },
+      });
+      const result = hookAbilities(rule({ annotations: { ...canWriteAndDelete, [AnnoKeyFolder]: 'folder-a' } }));
 
-      expect(abilities.silence).toEqual(Loading);
+      await waitFor(() => expect(result.current.silence).toEqual(Granted));
     });
 
-    it('passes the folder annotation UID to useCanSilenceInFolder', () => {
-      const ruleWithFolder = {
-        ...mockK8sAlertRule({ uid: 'rule-1', title: 'CPU high' }),
-        metadata: {
-          name: 'rule-1',
-          annotations: {
-            [K8sAnnotations.AccessWrite]: 'true',
-            [K8sAnnotations.AccessDelete]: 'true',
-            'grafana.app/folder': 'my-folder-uid',
-          },
-        },
-      };
-      getAbilities(ruleWithFolder);
+    it('denies silence without any silence permission', async () => {
+      grantUserPermissions([]);
+      const abilities = await getAbilities(rule());
 
-      expect(mockUseCanSilenceInFolder).toHaveBeenCalledWith('my-folder-uid');
+      expect(abilities.silence).toEqual(
+        InsufficientPermissions([AccessControlAction.AlertingSilenceCreate, AccessControlAction.AlertingInstanceCreate])
+      );
     });
 
-    it('denies silence when user cannot silence in folder', () => {
-      mockUseCanSilenceInFolder.mockReturnValue(false);
-      const abilities = getAbilities(rule());
+    it('is not supported when Grafana only sends alerts to external alertmanagers', async () => {
+      grantUserPermissions([AccessControlAction.AlertingInstanceCreate]);
+      setAlertmanagerChoices(AlertmanagerChoice.External, 1);
+      const abilities = await getAbilities(rule());
 
-      expect(abilities.silence.granted).toBe(false);
+      expect(abilities.silence).toEqual(NotSupported);
     });
   });
 });

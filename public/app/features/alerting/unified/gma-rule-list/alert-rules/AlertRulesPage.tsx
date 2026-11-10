@@ -8,6 +8,7 @@ import { Box, Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import MoreButton from '../../components/MoreButton';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { grafanaRulesNav } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
@@ -62,7 +63,7 @@ function AlertRulesPageHeader() {
       <Menu.Item
         label={t('alerting.gma-rule-list.header.design-for-provisioning', 'Design rule for provisioning')}
         icon="download-alt"
-        url="/alerting/export-new-rule"
+        url={grafanaRulesNav.designForProvisioningLink()}
       />
     </Menu>
   );
@@ -70,7 +71,7 @@ function AlertRulesPageHeader() {
   return (
     <Stack direction="row" gap={1} alignItems="center">
       {canCreate && (
-        <LinkButton href="/alerting/new/alerting" icon="plus" variant="primary">
+        <LinkButton href={grafanaRulesNav.newAlertRuleLink()} icon="plus" variant="primary">
           <Trans i18nKey="alerting.gma-rule-list.header.new-alert-rule">New alert rule</Trans>
         </LinkButton>
       )}

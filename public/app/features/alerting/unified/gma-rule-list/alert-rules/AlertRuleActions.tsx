@@ -5,12 +5,14 @@ import {
   useDeleteAlertRuleMutation,
   useUpdateAlertRuleMutation,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { useAssistant } from '@grafana/assistant';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useFlagAlertEnrichment, useFlagAlertingEnrichmentPerRule } from '@grafana/runtime/internal';
 import { ConfirmModal, Dropdown, LinkButton, Menu, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
+import { AnalyzeRuleButton } from 'app/features/alerting/unified/components/assistant/AnalizeRuleButton';
 import { EnrichmentDrawerExtension } from 'app/features/alerting/unified/components/rule-list/extensions/EnrichmentDrawerExtension';
 import { RedirectToCloneRule } from 'app/features/alerting/unified/components/rules/CloneRule';
 import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/silences/SilenceGrafanaRuleDrawer';
@@ -41,6 +43,8 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
 
   const [deleteAlertRule] = useDeleteAlertRuleMutation();
   const [updateAlertRule, { isLoading: isPausing }] = useUpdateAlertRuleMutation();
+
+  const { isAvailable: isAssistantAvailable } = useAssistant();
 
   const isPaused = rule.spec?.paused ?? false;
 
@@ -128,15 +132,14 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
           onClick={() => setShowDeleteConfirm(true)}
         />
       )}
+      {(isAssistantAvailable || canManageEnrichments) && <Menu.Divider />}
+      {isAssistantAvailable && <AnalyzeRuleButton alertRule={rule} />}
       {canManageEnrichments && (
-        <>
-          <Menu.Divider />
-          <Menu.Item
-            label={t('alerting.gma-rule-list.actions.manage-enrichments', 'Manage enrichments')}
-            icon="info-circle"
-            onClick={() => setShowEnrichmentDrawer(!showEnrichmentDrawer)}
-          />
-        </>
+        <Menu.Item
+          label={t('alerting.gma-rule-list.actions.manage-enrichments', 'Manage enrichments')}
+          icon="info-circle"
+          onClick={() => setShowEnrichmentDrawer(!showEnrichmentDrawer)}
+        />
       )}
       {isGranted(abilities.silence) && (
         <>
