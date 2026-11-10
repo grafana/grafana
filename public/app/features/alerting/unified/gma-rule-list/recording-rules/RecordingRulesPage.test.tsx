@@ -376,6 +376,11 @@ describe('RecordingRulesPage folder names', () => {
 
     expect(await screen.findByText('db:queries:rate5m')).toBeInTheDocument();
     expect(screen.getByText('pod:restarts:rate5m')).toBeInTheDocument();
+    expect(backend.folderSearches).toEqual([
+      expect.objectContaining({
+        labelSelector: { matchLabels: { 'alerting.grafana.app/has-recording-rules': 'true' } },
+      }),
+    ]);
     expect(backend.ruleSearches.map((body) => body.where)).toEqual([
       { filter: { field: 'folder', operator: 'In', values: ['db-metrics', 'k8s-metrics'] } },
     ]);

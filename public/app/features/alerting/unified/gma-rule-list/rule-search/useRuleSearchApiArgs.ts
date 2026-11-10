@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useListFolderSearchV1Beta1Query } from '@grafana/api-clients/rtkq/folder/v1beta1';
 
 import { buildFolderListSearchQuery } from '../folder-browsing/folderSearchQuery';
+import { type RuleKind } from '../shared/ruleKind';
 
 import { type RuleSearchApiArgs, type SharedRuleFilter } from './sharedRuleFilter';
 
@@ -14,13 +15,19 @@ import { type RuleSearchApiArgs, type SharedRuleFilter } from './sharedRuleFilte
  * folders.
  */
 export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
+  kind: RuleKind,
   filter: Filter,
   { skip = false, inFolderUid }: { skip?: boolean; inFolderUid?: string } = {}
 ) {
   const lookUp = !skip && !inFolderUid && filter.folders.length > 0;
   const folderLookup = useListFolderSearchV1Beta1Query(
     lookUp
-      ? { searchQuery: { ...buildFolderListSearchQuery(undefined, filter.folders), limit: FOLDER_NAME_LOOKUP_LIMIT } }
+      ? {
+          searchQuery: {
+            ...buildFolderListSearchQuery(kind, undefined, filter.folders),
+            limit: FOLDER_NAME_LOOKUP_LIMIT,
+          },
+        }
       : skipToken
   );
   const lookupResult = folderLookup.currentData;

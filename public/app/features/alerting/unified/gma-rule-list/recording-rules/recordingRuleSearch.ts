@@ -72,7 +72,7 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
 const { useSearchRecordingRulesInfiniteQuery } = recordingRuleSearchAPI;
 
 export function useRecordingRuleSearch(filter: RecordingRuleFilter, { inFolderUid }: { inFolderUid?: string } = {}) {
-  const lookup = useRuleSearchApiArgs(filter, { inFolderUid });
+  const lookup = useRuleSearchApiArgs('recording', filter, { inFolderUid });
   const { apiArgs, lookupError } = lookup;
   const query = useSearchRecordingRulesInfiniteQuery(apiArgs ?? skipToken);
   const { currentData, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = query;
@@ -123,7 +123,7 @@ export function useRecordingRuleSearchRejection(
 ): FilterIssue[] {
   // There is no List search in Folders mode or for a query that doesn't parse, so skip rather than send one.
   const skip = parseIssues.length > 0 || mode === 'folders';
-  const { apiArgs } = useRuleSearchApiArgs(filter, { skip });
+  const { apiArgs } = useRuleSearchApiArgs('recording', filter, { skip });
   const { error } = useSearchRecordingRulesInfiniteQuery(apiArgs ?? skipToken);
   return useMemo(
     () => (apiArgs ? (getRejectionIssues(error, buildRecordingRuleLeaves(apiArgs)) ?? []) : []),

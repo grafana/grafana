@@ -238,7 +238,7 @@ describe('AlertRulesPage folder names', () => {
     alertRuleFactory.inFolder('k8s-alerts').build({ spec: { title: 'Pod crash looping' } }),
     alertRuleFactory.inFolder('team-01').build({ spec: { title: 'Team 01 latency' } }),
   ];
-  const HAS_RULES = { matchLabels: { 'alerting.grafana.app/has-rules': 'true' } };
+  const HAS_ALERT_RULES = { matchLabels: { 'alerting.grafana.app/has-alert-rules': 'true' } };
 
   let backend: RuleListBackend;
 
@@ -261,7 +261,7 @@ describe('AlertRulesPage folder names', () => {
     expect(screen.queryByRole('link', { name: 'Team 01' })).not.toBeInTheDocument();
     expect(backend.folderSearches).toEqual([
       expect.objectContaining({
-        labelSelector: HAS_RULES,
+        labelSelector: HAS_ALERT_RULES,
         where: { filter: { field: 'title', operator: 'In', values: ['Alerts'] } },
       }),
     ]);
@@ -276,7 +276,7 @@ describe('AlertRulesPage folder names', () => {
     expect(screen.queryByText('Team 01 latency')).not.toBeInTheDocument();
     expect(backend.folderSearches).toEqual([
       expect.objectContaining({
-        labelSelector: HAS_RULES,
+        labelSelector: HAS_ALERT_RULES,
         where: { filter: { field: 'title', operator: 'In', values: ['Alerts'] } },
         limit: 500,
       }),

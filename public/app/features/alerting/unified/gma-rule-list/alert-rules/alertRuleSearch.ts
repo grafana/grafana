@@ -68,7 +68,7 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
 const { useSearchAlertRulesInfiniteQuery } = alertRuleSearchAPI;
 
 export function useAlertRuleSearch(filter: AlertRuleFilter, { inFolderUid }: { inFolderUid?: string } = {}) {
-  const lookup = useRuleSearchApiArgs(filter, { inFolderUid });
+  const lookup = useRuleSearchApiArgs('alert', filter, { inFolderUid });
   const { apiArgs, lookupError } = lookup;
   const query = useSearchAlertRulesInfiniteQuery(apiArgs ?? skipToken);
   const { currentData, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = query;
@@ -119,7 +119,7 @@ export function useAlertRuleSearchRejection(
 ): FilterIssue[] {
   // There is no List search in Folders mode or for a query that doesn't parse, so skip rather than send one.
   const skip = parseIssues.length > 0 || mode === 'folders';
-  const { apiArgs } = useRuleSearchApiArgs(filter, { skip });
+  const { apiArgs } = useRuleSearchApiArgs('alert', filter, { skip });
   const { error } = useSearchAlertRulesInfiniteQuery(apiArgs ?? skipToken);
   return useMemo(
     () => (apiArgs ? (getRejectionIssues(error, buildAlertRuleLeaves(apiArgs)) ?? []) : []),
