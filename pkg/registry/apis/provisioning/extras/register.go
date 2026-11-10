@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
@@ -72,6 +73,10 @@ func ProvideProvisioningOSSRepositoryExtras(
 // what permits the bootstrap path, since Grafana registers that repository itself.
 func PermittedLocalPaths(cfg *setting.Cfg) []string {
 	if cfg.ProvisioningBootstrapPath == "" {
+		return cfg.PermittedProvisioningPaths
+	}
+	// A value admission would reject is not granted either.
+	if bootstrap.ValidatePath(cfg.ProvisioningBootstrapPath) != nil {
 		return cfg.PermittedProvisioningPaths
 	}
 	// Resolved exactly as the resolver resolves a repository's own path, so the prefix and

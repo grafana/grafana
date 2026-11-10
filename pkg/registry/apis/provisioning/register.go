@@ -515,6 +515,11 @@ func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
 		// Still reconcilable, so a repository a previous run registered can be stopped.
 		return bootstrap.Config{Namespace: namespace}, nil
 	}
+	// The path is granted to every local repository before the bootstrap repository exists,
+	// so a value admission would reject must not reach the permitted prefixes.
+	if err := bootstrap.ValidatePath(cfg.ProvisioningBootstrapPath); err != nil {
+		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path %q is not a valid local repository path: %w", cfg.ProvisioningBootstrapPath, err)
+	}
 	if len(cfg.ProvisioningRepositoryTypes) > 0 &&
 		!slices.Contains(cfg.ProvisioningRepositoryTypes, string(provisioning.LocalRepositoryType)) {
 		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q repository type to be enabled", provisioning.LocalRepositoryType)
