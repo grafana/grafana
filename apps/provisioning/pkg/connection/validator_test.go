@@ -3,6 +3,7 @@ package connection
 import (
 	"context"
 	"fmt"
+	"net"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -48,7 +50,7 @@ func newValidatorTestAttributesWithDryRun(obj, old runtime.Object, op admission.
 
 func TestNewAdmissionValidator(t *testing.T) {
 	factory := NewMockFactory(t)
-	v := NewAdmissionValidator(factory)
+	v := NewAdmissionValidator(factory, nil)
 	require.NotNil(t, v)
 	assert.Equal(t, factory, v.factory)
 }
@@ -282,7 +284,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				}
 			}
 
-			v := NewAdmissionValidator(factory)
+			v := NewAdmissionValidator(factory, nil)
 			attr := newValidatorTestAttributes(tt.obj, tt.old, tt.operation)
 
 			err := v.Validate(context.Background(), attr, nil)
@@ -311,11 +313,95 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 	}
 }
 
+func TestAdmissionValidator_Validate_PrivateEndpoints(t *testing.T) {
+	allowlist, err := repository.NewAllowlist([]string{"ghes.allowed.example.com"})
+	require.NoError(t, err)
+	urlValidator := repository.NewURLValidator(allowlist, func(_ context.Context, host string) ([]net.IPAddr, error) {
+		if host == "ghes.internal.example.com" || host == "ghes.allowed.example.com" {
+			return []net.IPAddr{{IP: net.ParseIP("10.0.0.1")}}, nil
+		}
+		return []net.IPAddr{{IP: net.ParseIP("140.82.112.3")}}, nil
+	})
+
+	tests := []struct {
+		name      string
+		spec      provisioning.ConnectionSpec
+		wantField string
+	}{
+		{
+			name: "public github enterprise server",
+			spec: provisioning.ConnectionSpec{
+				Type:             provisioning.GithubEnterpriseConnectionType,
+				URL:              "https://ghes.example.com/settings/installations/1",
+				GitHubEnterprise: &provisioning.GitHubEnterpriseConnectionConfig{ServerURL: "https://ghes.example.com"},
+			},
+		},
+		{
+			name: "allowlisted private github enterprise server",
+			spec: provisioning.ConnectionSpec{
+				Type:             provisioning.GithubEnterpriseConnectionType,
+				GitHubEnterprise: &provisioning.GitHubEnterpriseConnectionConfig{ServerURL: "https://ghes.allowed.example.com"},
+			},
+		},
+		{
+			name: "loopback github enterprise server",
+			spec: provisioning.ConnectionSpec{
+				Type:             provisioning.GithubEnterpriseConnectionType,
+				GitHubEnterprise: &provisioning.GitHubEnterpriseConnectionConfig{ServerURL: "http://127.0.0.1:3000"},
+			},
+			wantField: "spec.githubEnterprise.serverUrl",
+		},
+		{
+			name: "spec url resolving to a private address",
+			spec: provisioning.ConnectionSpec{
+				Type: provisioning.GitlabConnectionType,
+				URL:  "https://ghes.internal.example.com",
+			},
+			wantField: "spec.url",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			factory := NewMockFactory(t)
+			factory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil)
+
+			conn := &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec:       tt.spec,
+			}
+			err := NewAdmissionValidator(factory, urlValidator).Validate(context.Background(), newValidatorTestAttributes(conn, nil, admission.Create), nil)
+
+			if tt.wantField == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.wantField)
+		})
+	}
+
+	t.Run("no url validator configured", func(t *testing.T) {
+		factory := NewMockFactory(t)
+		factory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil)
+
+		conn := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: "test"},
+			Spec: provisioning.ConnectionSpec{
+				Type:             provisioning.GithubEnterpriseConnectionType,
+				GitHubEnterprise: &provisioning.GitHubEnterpriseConnectionConfig{ServerURL: "http://127.0.0.1:3000"},
+			},
+		}
+		err := NewAdmissionValidator(factory, nil).Validate(context.Background(), newValidatorTestAttributes(conn, nil, admission.Create), nil)
+		require.NoError(t, err)
+	})
+}
+
 func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	factory := NewMockFactory(t)
 	factory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	v := NewAdmissionValidator(factory)
+	v := NewAdmissionValidator(factory, nil)
 
 	oldConn := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
@@ -580,7 +666,7 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 				}
 			}
 
-			v := NewAdmissionValidator(factory)
+			v := NewAdmissionValidator(factory, nil)
 			attr := newValidatorTestAttributesWithDryRun(tt.obj, nil, tt.operation, tt.dryRun)
 
 			err := v.Validate(context.Background(), attr, nil)

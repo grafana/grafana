@@ -2,6 +2,16 @@
 
 # 13.1.10 (2026-11-10)
 
+### Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-107365
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-110992
+- Security: Fix CVE-2026-111024
+- Security: Fix CVE-2026-13721
+- Security: Fix CVE-2026-14242
+
 ### Features and enhancements
 
 - **Provisioning:** allow same-host URL change on connection-backed repositories [#137090](https://github.com/grafana/grafana/pull/137090), [@MissingRoberto](https://github.com/MissingRoberto)

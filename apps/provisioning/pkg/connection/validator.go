@@ -3,6 +3,7 @@ package connection
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -11,8 +12,14 @@ import (
 
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
+
+// URLValidator rejects URLs whose host resolves to a blocked address.
+type URLValidator interface {
+	ValidateURL(ctx context.Context, rawURL string) error
+}
 
 // AdmissionValidator handles validation for Connection resources during admission.
 //
@@ -23,13 +30,15 @@ import (
 // For runtime validation that requires secrets or external service checks, use the
 // Test() method on the Connection interface instead.
 type AdmissionValidator struct {
-	factory Factory
+	factory      Factory
+	urlValidator URLValidator
 }
 
 // NewAdmissionValidator creates a new connection admission validator
-func NewAdmissionValidator(factory Factory) *AdmissionValidator {
+func NewAdmissionValidator(factory Factory, urlValidator URLValidator) *AdmissionValidator {
 	return &AdmissionValidator{
-		factory: factory,
+		factory:      factory,
+		urlValidator: urlValidator,
 	}
 }
 
@@ -70,7 +79,9 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	}
 
 	// Structural validation without decryption
-	if list := v.factory.Validate(ctx, c); len(list) > 0 {
+	list := v.factory.Validate(ctx, c)
+	list = append(list, v.validatePrivateEndpoints(ctx, c)...)
+	if len(list) > 0 {
 		return apierrors.NewInvalid(
 			provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(),
 			c.GetName(), list)
@@ -83,6 +94,32 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	}
 
 	return nil
+}
+
+func (v *AdmissionValidator) validatePrivateEndpoints(ctx context.Context, c *provisioning.Connection) field.ErrorList {
+	if util.IsInterfaceNil(v.urlValidator) {
+		return nil
+	}
+
+	type endpoint struct {
+		path *field.Path
+		url  string
+	}
+	endpoints := []endpoint{{field.NewPath("spec", "url"), c.Spec.URL}}
+	if c.Spec.GitHubEnterprise != nil {
+		endpoints = append(endpoints, endpoint{field.NewPath("spec", "githubEnterprise", "serverUrl"), c.Spec.GitHubEnterprise.ServerURL})
+	}
+
+	var list field.ErrorList
+	for _, e := range endpoints {
+		if u, err := url.Parse(e.url); err != nil || u.Hostname() == "" {
+			continue
+		}
+		if err := v.urlValidator.ValidateURL(ctx, e.url); err != nil {
+			list = append(list, field.Invalid(e.path, e.url, "URL host must resolve to a public or allowed address"))
+		}
+	}
+	return list
 }
 
 // validateRuntime performs runtime validation by building the connection and testing it
