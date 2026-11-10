@@ -1,8 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type ReactElement } from 'react';
 
 import { TimeCompareColorMode } from '@grafana/schema';
 
+import { VizTooltipContext } from './VizTooltipContext';
 import { VizTooltipRow } from './VizTooltipRow';
 import { VizTooltipColorIndicator, VizTooltipColorPlacement, type VizTooltipDelta } from './types';
 
@@ -244,6 +246,40 @@ describe('VizTooltipRow', () => {
     it('copies just the value when pinned and there is no delta', async () => {
       await copyPinnedValue({ value: '25' });
       expect(writeTextMock).toHaveBeenCalledWith('25');
+    });
+  });
+
+  describe('narrow layout', () => {
+    const renderNarrow = (ui: ReactElement) =>
+      render(<VizTooltipContext.Provider value="narrow">{ui}</VizTooltipContext.Provider>);
+
+    it('vertically centers the name, value and color swatch so a wrapped value stays aligned', () => {
+      const { container } = renderNarrow(<VizTooltipRow {...defaultProps} color="#ff0000" />);
+      expect(container.firstChild).toHaveStyle({ alignItems: 'center' });
+    });
+
+    it('right-aligns the value so wrapped value lines read as one right-aligned block', () => {
+      renderNarrow(<VizTooltipRow {...defaultProps} />);
+      expect(screen.getByText('My Value')).toHaveStyle({ textAlign: 'right' });
+    });
+
+    it('wraps the value to full height instead of a fixed-height scroll box', () => {
+      renderNarrow(<VizTooltipRow {...defaultProps} showValueScroll />);
+      const value = screen.getByText('My Value');
+      expect(value).not.toHaveStyle({ maxHeight: '55px' });
+      expect(value).not.toHaveStyle({ overflowY: 'auto' });
+    });
+  });
+
+  describe('auto layout (default)', () => {
+    it('keeps rows top-aligned', () => {
+      const { container } = render(<VizTooltipRow {...defaultProps} color="#ff0000" />);
+      expect(container.firstChild).toHaveStyle({ alignItems: 'start' });
+    });
+
+    it('uses the fixed-height scroll box when showValueScroll is set', () => {
+      render(<VizTooltipRow {...defaultProps} showValueScroll />);
+      expect(screen.getByText('My Value')).toHaveStyle({ maxHeight: '55px', overflowY: 'auto' });
     });
   });
 

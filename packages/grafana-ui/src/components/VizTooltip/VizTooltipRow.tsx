@@ -81,18 +81,21 @@ export const VizTooltipRow = ({
   // the delta is a separate node for coloring, but copying the value should keep both values
   const copyText = deltaDisplay == null ? value : `${value} ${deltaDisplay}`;
 
-  const innerValueScrollStyle: CSSProperties = showValueScroll
-    ? {
-        maxHeight: 55,
-        whiteSpace: 'wrap',
-        wordBreak: 'break-word',
-        overflowY: 'auto',
-      }
-    : {
-        whiteSpace: 'pre-line',
-        wordBreak: 'break-word',
-        lineHeight: 1.2,
-      };
+  // A narrow tooltip wraps the value to its full height rather than boxing it into a fixed-height
+  // scroll area, so the fixed-height scroll is only used in the default (`auto`) layout.
+  const innerValueScrollStyle: CSSProperties =
+    showValueScroll && size !== 'narrow'
+      ? {
+          maxHeight: 55,
+          whiteSpace: 'wrap',
+          wordBreak: 'break-word',
+          overflowY: 'auto',
+        }
+      : {
+          whiteSpace: 'pre-line',
+          wordBreak: 'break-word',
+          lineHeight: 1.2,
+        };
 
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);
 
@@ -274,7 +277,9 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   contentWrapper: css({
     display: 'flex',
     maxWidth: '100%',
-    alignItems: 'start',
+    // A narrow tooltip centers the name, value and color swatch against each other so a wrapped,
+    // multi-line value stays aligned with its single-line name; `auto` keeps the default top edge.
+    alignItems: size === 'narrow' ? 'center' : 'start',
     justifyContent: justify,
     columnGap: theme.spacing(0.75),
   }),
@@ -284,6 +289,9 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     fontVariantNumeric: theme.flags.tabularNums ? 'tabular-nums' : undefined,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
+    // Keep wrapped value lines right-aligned in a narrow tooltip so the value column reads as a
+    // single right-aligned block against the left-aligned name.
+    ...(size === 'narrow' && { textAlign: 'right' }),
   }),
   colorWrapper: css({
     alignSelf: 'center',
