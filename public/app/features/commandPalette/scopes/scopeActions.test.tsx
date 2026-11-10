@@ -1,12 +1,12 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, waitFor, renderHook as renderHookBase, type RenderHookOptions } from '@testing-library/react';
 import { setIn } from 'immutable';
 import { useRegisterActions } from 'kbar';
+import { getWrapper } from 'test/test-utils';
 
 import { type ScopeNode } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type NodesMap, type TreeNode } from '../../scopes/selector/types';
 
@@ -15,12 +15,7 @@ import { useScopeServicesState } from './scopesUtils';
 
 // The scopeFilters flag is read with an OpenFeature hook, which needs a provider around the hook under test.
 const renderHook = <Result, Props>(callback: (props: Props) => Result, options?: RenderHookOptions<Props>) =>
-  renderHookBase(callback, {
-    wrapper: ({ children }) => (
-      <OpenFeatureProvider client={getTestFeatureFlagClient()}>{children}</OpenFeatureProvider>
-    ),
-    ...options,
-  });
+  renderHookBase(callback, { wrapper: getWrapper({ renderWithRouter: false }), ...options });
 
 // Mock dependencies
 jest.mock('kbar', () => ({

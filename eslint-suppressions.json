@@ -2513,11 +2513,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/serialization/transformSceneToSaveModel.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -2691,11 +2686,6 @@
   },
   "public/app/features/dashboard-scene/utils/utils.ts": {
     "react-hooks/immutability": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/variables.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },

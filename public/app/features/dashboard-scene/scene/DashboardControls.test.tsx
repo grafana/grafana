@@ -6,7 +6,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, useScopes } from '@grafana/runtime';
-import { useFlagGrafanaScopesDashboardsMegaMenu } from '@grafana/runtime/internal';
+import { FlagKeys, useFlagGrafanaScopesDashboardsMegaMenu } from '@grafana/runtime/internal';
 import {
   CustomVariable,
   LocalValueVariable,
@@ -949,37 +949,33 @@ describe('DashboardControls', () => {
     });
 
     afterEach(() => {
+      // Unmount before the global flag reset, which would otherwise update the mounted OpenFeature hook outside act().
+      cleanup();
       mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
     });
 
-    it('hides the toggle when the mega-menu flag is on, even with scopeFilters enabled', () => {
-      const originalFeatureToggles = { ...config.featureToggles };
-      try {
-        config.featureToggles.scopeFilters = true;
-        mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(true);
+    it('hides the toggle when the mega-menu flag is on, even with scopeFilters enabled', async () => {
+      await act(async () => {
+        setTestFlags({ [FlagKeys.ScopeFilters]: true });
+      });
+      mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(true);
 
-        const scene = buildTestScene();
-        const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
+      const scene = buildTestScene();
+      const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
 
-        expect(renderer.queryByTestId('scopes-dashboards-expand')).not.toBeInTheDocument();
-      } finally {
-        config.featureToggles = originalFeatureToggles;
-      }
+      expect(renderer.queryByTestId('scopes-dashboards-expand')).not.toBeInTheDocument();
     });
 
-    it('shows the toggle when the mega-menu flag is off and scopeFilters is enabled', () => {
-      const originalFeatureToggles = { ...config.featureToggles };
-      try {
-        config.featureToggles.scopeFilters = true;
-        mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
+    it('shows the toggle when the mega-menu flag is off and scopeFilters is enabled', async () => {
+      await act(async () => {
+        setTestFlags({ [FlagKeys.ScopeFilters]: true });
+      });
+      mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
 
-        const scene = buildTestScene();
-        const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
+      const scene = buildTestScene();
+      const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
 
-        expect(renderer.queryByTestId('scopes-dashboards-expand')).toBeInTheDocument();
-      } finally {
-        config.featureToggles = originalFeatureToggles;
-      }
+      expect(renderer.queryByTestId('scopes-dashboards-expand')).toBeInTheDocument();
     });
   });
 });
