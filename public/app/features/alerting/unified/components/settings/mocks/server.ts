@@ -1,10 +1,9 @@
 import { HttpResponse, delay, http } from 'msw';
 import { type SetupServerApi } from 'msw/node';
 
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from '@grafana/alerting/internal';
 import {
   type AlertManagerCortexConfig,
-  type AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
   type AlertmanagerReceiver,
   type Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
