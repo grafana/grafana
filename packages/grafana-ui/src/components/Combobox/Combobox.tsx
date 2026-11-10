@@ -1,4 +1,5 @@
 import { cx } from '@emotion/css';
+import { useMergeRefs } from '@floating-ui/react';
 import { useCombobox } from 'downshift';
 import React, { type ComponentProps, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
@@ -61,6 +62,8 @@ interface ComboboxStaticProps<T extends string | number>
    * Defaults to full width of container. Number is a multiple of the spacing unit. 'auto' will size the input to the content.
    * */
   width?: number | 'auto';
+
+  inputRef?: React.Ref<HTMLInputElement>;
 
   ['data-testid']?: string;
 
@@ -166,6 +169,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     'aria-label': ariaLabel,
     'data-testid': dataTestId,
     autoFocus,
+    inputRef: externalInputRef,
     onBlur,
     disabled: disabledProp,
     invalid: invalidProp,
@@ -362,6 +366,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   });
 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(filteredOptions, isOpen);
+  const mergedInputRef = useMergeRefs([inputRef, externalInputRef]);
 
   const isAutoSize = width === 'auto';
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
@@ -414,7 +419,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         className={styles.input}
         suffix={inputSuffix}
         {...getInputProps({
-          ref: inputRef,
+          ref: mergedInputRef,
           onChange: noop, // Empty onCall to avoid TS error https://github.com/downshift-js/downshift/issues/718
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
           'aria-label': ariaLabel,

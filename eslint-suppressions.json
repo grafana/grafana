@@ -1200,7 +1200,7 @@
   },
   "public/app/core/components/NestedFolderPicker/NestedFolderPicker.tsx": {
     "react-hooks/refs": {
-      "count": 2
+      "count": 1
     },
     "react-hooks/set-state-in-effect": {
       "count": 2

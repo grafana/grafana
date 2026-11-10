@@ -28,7 +28,7 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
   // validate reads the resolved status, so it has to re-run once the list answers
   useEffect(() => {
     if (hasResolved) {
-      trigger(selectedContactPointField, { shouldFocus: true });
+      trigger(selectedContactPointField);
     }
   }, [contactPointInForm, hasResolved, selectedContactPointField, trigger]);
 
@@ -41,10 +41,11 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
       >
         <Controller
           name={selectedContactPointField}
-          render={({ field: { onChange }, fieldState: { error } }) => (
+          render={({ field: { onChange, ref }, fieldState: { error } }) => (
             <>
               <Stack>
                 <GrafanaManagedContactPointSelector
+                  inputRef={ref}
                   isClearable={false}
                   onChange={(contactPoint) => onChange(contactPoint.spec.title)}
                   width={50}

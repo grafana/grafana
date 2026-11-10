@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { autoUpdate, flip, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { autoUpdate, flip, useClick, useDismiss, useFloating, useInteractions, useMergeRefs } from '@floating-ui/react';
 import debounce from 'debounce-promise';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
@@ -64,6 +64,8 @@ export interface NestedFolderPickerProps {
   /* HTML ID for the button element for form labels */
   id?: string;
 
+  triggerRef?: React.Ref<HTMLButtonElement>;
+
   /* Disable opening the picker (still shows the selected folder label) */
   disabled?: boolean;
 }
@@ -94,6 +96,7 @@ export function NestedFolderPicker({
   permission = 'edit',
   onChange,
   id,
+  triggerRef,
   disabled = false,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
@@ -188,6 +191,8 @@ export function NestedFolderPicker({
     middleware,
     whileElementsMounted: autoUpdate,
   });
+
+  const mergedTriggerRef = useMergeRefs([refs.setReference, triggerRef]);
 
   const click = useClick(context);
   const dismiss = useDismiss(context);
@@ -331,7 +336,7 @@ export function NestedFolderPicker({
         invalid={invalid}
         isLoading={getSelectedFolderResult.isLoading}
         autoFocus={autoFocusButton}
-        ref={refs.setReference}
+        ref={mergedTriggerRef}
         aria-label={
           label
             ? t('browse-dashboards.folder-picker.accessible-label', 'Select folder: {{ label }} currently selected', {
