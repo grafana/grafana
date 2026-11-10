@@ -20,11 +20,14 @@ weight: 100
 # Queries HTTP API
 
 {{< admonition type="note" >}}
+Available in Grafana 12.2 and later.
+
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
-This API is related to the legacy [Query history API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/query_history/), but it isn't a full replacement. Refer to [Differences from the legacy Query history API](#differences-from-the-legacy-query-history-api) to learn more.
+The legacy [Query history API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/query_history/) is still available. This API is related to it, but it isn't a full replacement. Refer to [Differences from the legacy Query history API](#differences-from-the-legacy-query-history-api) to learn more about how both APIs match.
 
 **This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [queries.grafana.app/v1](https://play.grafana.org/swagger?api=queries.grafana.app-v1) in Swagger.**
+
 {{< /admonition >}}
 
 Use this API to manage [saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries), also known as the query library. A saved query stores one or more data source queries with a title, description, and tags, so you and your team can reuse them in Explore and dashboards.

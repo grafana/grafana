@@ -19,17 +19,21 @@ weight: 100
 # Stars HTTP API
 
 {{< admonition type="note" >}}
-Available in Grafana 13 and later.
+Available in Grafana 13.0 and later.
 
-This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+This API replaces the legacy `POST` and `DELETE` `/api/user/stars/dashboard/uid/{dashboard_uid}` endpoints of the [User API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/user/#star-a-dashboard). They're deprecated but still available, and removal will be announced well in advance to avoid disruptions. Refer to [Migration steps](#migration-steps) to learn more about how both APIs match, and how to migrate.
 
 **This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [collections.grafana.app/v1alpha1](https://play.grafana.org/swagger?api=collections.grafana.app-v1alpha1) in Swagger.**
+
+This API is in `alpha`, so it might change in future releases.
 
 {{< /admonition >}}
 
 Also known as the `collections` API, `/apis/collections.grafana.app/*` allows you to star and unstar your resources in Grafana, and to manage the list of resources that a user has starred.
 
-This API replaces `POST` and `DELETE` `/api/user/stars/dashboard/uid/{dashboard_uid}`, which are now are deprecated, although they keep working with no functional change. **Use the generic Collections Stars API for any new integrations**.
+**Use the generic Collections Stars API for any new integrations**.
 
 ## Endpoints
 

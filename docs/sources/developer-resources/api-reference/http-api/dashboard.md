@@ -22,13 +22,15 @@ weight: 100
 # Dashboard API
 
 {{< admonition type="note" >}}
-Available in Grafana 12 and later.
+Available in Grafana 12.0 and later.
 
-This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+This API replaces the legacy `/api/dashboards/*` endpoints, although there may not be an exact match for all legacy endpoints.
+
+**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [dashboard.grafana.app/v1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1) and [dashboard.grafana.app/v2](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2) in Swagger.**
 
 {{< /admonition >}}
-
-The Dashboard API (`/apis/dashboard.grafana.app/*`) replaces [`/api/dashboards/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_public/), although there may not be an exact match for all legacy endpoints.
 
 ## API versions
 
@@ -53,7 +55,7 @@ If you're running Grafana Enterprise, you'll need to have specific permissions f
 
 ## Endpoints
 
-This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [dashboard.grafana.app/v1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1) and [dashboard.grafana.app/v2](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2) in Swagger.
+These are the available endpoints:
 
 | Method | Summary                                                               | URI                                                                          |
 | ------ | --------------------------------------------------------------------- | ---------------------------------------------------------------------------- |

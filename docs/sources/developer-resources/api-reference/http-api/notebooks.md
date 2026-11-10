@@ -20,9 +20,14 @@ weight: 100
 # Notebooks HTTP API
 
 {{< admonition type="note" >}}
+Available in Grafana 13.2 and later.
+
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [dashboard.grafana.app/v2beta1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1) in Swagger.**
+
+This API is in `beta`, so it might change in future releases.
+
 {{< /admonition >}}
 
 Use this API to manage [notebooks](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/notebooks/). A notebook combines text, code, and visualization panels in a single document, so you can investigate a problem, explain what you found, and share the supporting data with your team.

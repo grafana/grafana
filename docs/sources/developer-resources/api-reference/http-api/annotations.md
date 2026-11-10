@@ -20,9 +20,16 @@ weight: 100
 # Annotations API
 
 {{< admonition type="note" >}}
-This API complies with the new Grafana API structure. To learn more refer to the [New API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis) documentation.
+Available in Grafana 12.4 and later.
+
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 The legacy [Annotations API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/annotations/) is still available, and removal will be announced well in advance to avoid disruptions. Refer to [Migrate from the legacy Annotations API](#migrate-from-the-legacy-annotations-api) to learn more about how both APIs match, and how to migrate.
+
+**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [annotation.grafana.app/v0alpha1](https://play.grafana.org/swagger?api=annotation.grafana.app-v0alpha1) in Swagger.**
+
+This API is in `alpha`, so it might change in future releases.
+
 {{< /admonition >}}
 
 Annotations mark points or regions in time with text and tags. An annotation that has a `dashboardUID` belongs to that dashboard, and can also belong to a single panel. An annotation without a `dashboardUID` is an organization annotation, which you can show on any dashboard that uses the Grafana annotations data source.

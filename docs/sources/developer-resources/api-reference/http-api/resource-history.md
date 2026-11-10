@@ -21,9 +21,11 @@ weight: 100
 # Resource History HTTP API
 
 {{< admonition type="note" >}}
-Available in Grafana 12 and later.
+Available in Grafana 12.0 and later.
 
-This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to the specification of each API in [Swagger](https://play.grafana.org/swagger).**
 
 {{< /admonition >}}
 

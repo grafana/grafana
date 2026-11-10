@@ -19,11 +19,14 @@ weight: 100
 # Preferences HTTP API
 
 {{< admonition type="note" >}}
+Available in Grafana 13.2 and later.
+
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
-The Preferences API replaces the legacy [Preferences API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/preferences/). Refer to [Migrate from the legacy Preferences API](#migrate-from-the-legacy-preferences-api) to learn how both APIs match.
+The legacy [Preferences API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/preferences/) is still available, and removal will be announced well in advance to avoid disruptions. Refer to [Migrate from the legacy Preferences API](#migrate-from-the-legacy-preferences-api) to learn more about how both APIs match, and how to migrate.
 
 **This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [preferences.grafana.app/v1](https://play.grafana.org/swagger?api=preferences.grafana.app-v1) in Swagger.**
+
 {{< /admonition >}}
 
 Use this API to read and change user, team, and organization preferences, such as the theme, timezone, home dashboard, and language.
