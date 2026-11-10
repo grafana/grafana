@@ -117,9 +117,10 @@ func TestDashboardPreferencesScopeFromName(t *testing.T) {
 		})
 	}
 
+	// 253 is the longest name validation.IsValidGrafanaName accepts.
 	for _, prefix := range []string{dashboardPreferencesFolderNamePrefix, dashboardPreferencesUserNamePrefix} {
 		t.Run("name length limit for "+prefix, func(t *testing.T) {
-			atLimit := prefix + strings.Repeat("x", dashboardPreferencesMetadataNameMaxLength-len(prefix))
+			atLimit := prefix + strings.Repeat("x", 253-len(prefix))
 			got, ok := dashboardPreferencesScopeFromName(atLimit)
 			require.True(t, ok)
 			require.NoError(t, validateDashboardPreferencesMetadataName(atLimit, got))
@@ -162,7 +163,7 @@ func TestValidateDashboardPreferencesMetadataName(t *testing.T) {
 	userScope := dashboardPreferencesScope{Tier: dashboardPreferencesTierUser, UserUID: "u1"}
 	userScopeAtLimit := dashboardPreferencesScope{
 		Tier:    dashboardPreferencesTierUser,
-		UserUID: strings.Repeat("u", dashboardPreferencesMetadataNameMaxLength-len(dashboardPreferencesUserNamePrefix)),
+		UserUID: strings.Repeat("u", 253-len(dashboardPreferencesUserNamePrefix)),
 	}
 
 	tests := []struct {
@@ -198,7 +199,7 @@ func TestValidateDashboardPreferencesMetadataName(t *testing.T) {
 			name:    "name over the length limit",
 			gotName: "",
 			scope:   dashboardPreferencesScope{Tier: dashboardPreferencesTierUser, UserUID: strings.Repeat("u", 250)}, // "user-" + 250 > 253
-			wantErr: "exceeds maximum length",
+			wantErr: "is invalid: name is too long",
 		},
 		{
 			name:    "uid with characters a name can't hold",

@@ -34,11 +34,10 @@ const (
 )
 
 const (
-	dashboardPreferencesFolderNamePrefix      = "folder-"
-	dashboardPreferencesUserNamePrefix        = "user-"
-	dashboardPreferencesMergedName            = "merged"
-	dashboardPreferencesMetadataNameMaxLength = 253
-	dashboardPreferencesFolderLabelKey        = utils.AnnoKeyFolder
+	dashboardPreferencesFolderNamePrefix = "folder-"
+	dashboardPreferencesUserNamePrefix   = "user-"
+	dashboardPreferencesMergedName       = "merged"
+	dashboardPreferencesFolderLabelKey   = utils.AnnoKeyFolder
 	// Lets List read folder-tier objects with an indexable label selector instead of scanning user objects.
 	dashboardPreferencesTierLabelKey = "dashboard.grafana.app/preferences-tier"
 )
@@ -142,9 +141,6 @@ func deriveDashboardPreferencesMetadataName(scope dashboardPreferencesScope) str
 
 func validateDashboardPreferencesMetadataName(gotName string, scope dashboardPreferencesScope) error {
 	expectedName := deriveDashboardPreferencesMetadataName(scope)
-	if len(expectedName) > dashboardPreferencesMetadataNameMaxLength {
-		return fmt.Errorf("derived metadata.name exceeds maximum length (%d)", dashboardPreferencesMetadataNameMaxLength)
-	}
 	if errs := validation.IsValidGrafanaName(expectedName); len(errs) > 0 {
 		return fmt.Errorf("derived metadata.name %q is invalid: %s", expectedName, strings.Join(errs, "; "))
 	}
