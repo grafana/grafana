@@ -101,7 +101,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example create request**:
+### Example request
 
 ```http
 POST /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues HTTP/1.1
@@ -121,7 +121,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 201 Created
@@ -145,7 +145,7 @@ Content-Length: 343
 }
 ```
 
-Status Codes:
+### Status codes
 
 - **201** – Created
 - **400** – Errors (invalid JSON, missing or invalid fields, etc)
@@ -182,7 +182,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example list request**:
+### Example request
 
 ```http
 GET /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues HTTP/1.1
@@ -191,7 +191,7 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -223,7 +223,7 @@ Content-Length: 383
 }
 ```
 
-Status Codes:
+### Status codes
 
 - **200** – OK
 - **401** – Unauthorized
@@ -251,7 +251,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example get request**:
+### Example request
 
 ```http
 GET /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
@@ -260,7 +260,7 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -284,7 +284,7 @@ Content-Length: 294
 }
 ```
 
-Status Codes:
+### Status codes
 
 - **200** – OK
 - **401** – Unauthorized
@@ -319,7 +319,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example update request**:
+### Example request
 
 ```http
 PUT /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
@@ -339,7 +339,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -362,7 +362,7 @@ Content-Length: 282
 }
 ```
 
-Status Codes:
+### Status codes
 
 - **200** – OK
 - **400** – Errors (invalid JSON, missing or invalid fields, etc)
@@ -392,7 +392,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example delete request**:
+### Example request
 
 ```http
 DELETE /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
@@ -401,7 +401,7 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -416,7 +416,7 @@ Content-Length: 65
 }
 ```
 
-Status Codes:
+### Status codes
 
 - **200** – OK
 - **401** – Unauthorized

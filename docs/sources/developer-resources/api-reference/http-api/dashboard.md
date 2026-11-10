@@ -86,7 +86,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example Create Request**:
+### Example request
 
 ```http
 POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards HTTP/1.1
@@ -277,7 +277,7 @@ JSON Body schema:
 Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
 {{< /admonition >}}
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -508,7 +508,7 @@ Content-Length: 485
   "status": {}
 ```
 
-Status Codes:
+### Status codes
 
 - **201** – Created
 - **400** – Errors (invalid json, missing or invalid fields, etc)
@@ -538,7 +538,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example Update Request**:
+### Example request
 
 ```http
 POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
@@ -573,7 +573,7 @@ JSON Body schema:
 Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
 {{< /admonition >}}
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -605,7 +605,7 @@ Content-Length: 485
 }
 ```
 
-Status Codes:
+### Status codes
 
 - **200** – OK
 - **400** – Errors (invalid json, missing or invalid fields, etc)
@@ -635,7 +635,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example Get Request**:
+### Example request
 
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
@@ -644,7 +644,7 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -675,7 +675,7 @@ Content-Length: 485
 }
 ```
 
-Status Codes:
+### Status codes
 
 - **200** – OK
 - **401** – Unauthorized
@@ -693,7 +693,25 @@ Retrieves a dashboard with additional access information.
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{uid}`: The unique identifier of the dashboard. This is the `metadata.name` field in the dashboard response and _not_ the `metadata.uid` field.
 
-The `GET` response includes an additional `access` section with data such as if it's a public dashboard, or the dashboard permissions (admin, editor) of the user who made the request.
+#### Example request
+
+```http
+GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn/dto HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+#### Example response
+
+The `GET` response includes an additional `access` section with data such as if it's a public dashboard, or the dashboard permissions (admin, editor) of the user who made the request. For the rest of the response, refer to the response in [Get Dashboard](#get-dashboard).
+
+#### Status codes
+
+- **200** – Found
+- **401** – Unauthorized
+- **403** – Access denied
+- **404** – Not Found
 
 ## List Dashboards
 
@@ -721,7 +739,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example Get Request**:
+### Example request
 
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?limit=1 HTTP/1.1
@@ -730,7 +748,7 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -775,7 +793,7 @@ Content-Length: 644
 
 The `metadata.continue` field contains a token to fetch the next page.
 
-**Example subsequent request using continue token**:
+### Example subsequent request using continue token
 
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
@@ -784,7 +802,7 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example subsequent response**:
+### Example subsequent response
 
 ```http
 HTTP/1.1 200 OK
@@ -824,7 +842,7 @@ Content-Type: application/json; charset=UTF-8
 
 Continue making requests with the updated `continue` token until you receive a response without a `continue` field in the metadata, indicating you've reached the last page.
 
-Status Codes:
+### Status codes
 
 - **200** – OK
 - **401** – Unauthorized
@@ -847,7 +865,7 @@ Deletes a dashboard via the dashboard uid.
 
 **Required permissions**:
 
-See note in the [introduction](#new-dashboard-apis) for an explanation.
+See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
@@ -856,7 +874,7 @@ See note in the [introduction](#new-dashboard-apis) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example Delete Request**:
+### Example request
 
 ```http
 DELETE /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
@@ -865,7 +883,7 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -886,7 +904,7 @@ Content-Length: 78
 }
 ```
 
-Status Codes:
+### Status codes
 
 - **200** – OK
 - **401** – Unauthorized
@@ -907,7 +925,7 @@ In the v2 schema, panels are defined once in `spec.elements` and placed on the d
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
-**Example request**:
+#### Example request
 
 ```http
 POST /apis/dashboard.grafana.app/v2/namespaces/default/dashboards HTTP/1.1
@@ -1030,7 +1048,7 @@ JSON body schema:
 - **spec.links** – Links to other dashboards or external websites.
 - **spec.cursorSync** – Whether panels share the crosshair or tooltip: `Off`, `Crosshair`, or `Tooltip`.
 
-**Example response**:
+#### Example response
 
 ```http
 HTTP/1.1 201 Created
@@ -1058,6 +1076,14 @@ Content-Type: application/json; charset=UTF-8
   "status": {}
 }
 ```
+
+#### Status codes
+
+- **201** – Created
+- **400** – Errors (invalid json, missing or invalid fields, etc)
+- **401** – Unauthorized
+- **403** – Access denied
+- **409** – Conflict (dashboard with the same uid already exists)
 
 ### Read a dashboard saved in a different schema
 

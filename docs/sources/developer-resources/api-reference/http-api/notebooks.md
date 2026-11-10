@@ -96,7 +96,7 @@ Returns the notebooks in the organization. Use the `limit` query parameter to co
 
 **Required permissions**: `notebooks:read`
 
-**Example request**:
+### Example request
 
 ```http
 GET /apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks?limit=1 HTTP/1.1
@@ -104,7 +104,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -137,7 +137,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **200** – OK
 - **401** – Unauthorized
@@ -156,7 +156,7 @@ Returns the notebook with the given name.
 
 **Required permissions**: `notebooks:read`
 
-**Example request**:
+### Example request
 
 ```http
 GET /apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/high-latency-investigation HTTP/1.1
@@ -164,9 +164,11 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
+### Example response
+
 The response contains the full notebook. For an example, refer to the response in [Create a notebook](#create-a-notebook).
 
-Status codes:
+### Status codes
 
 - **200** – Found
 - **401** – Unauthorized
@@ -185,7 +187,7 @@ Creates a notebook.
 
 **Required permissions**: `notebooks:create`
 
-**Example request**:
+### Example request
 
 The following notebook has a Markdown cell followed by a time series panel:
 
@@ -307,7 +309,7 @@ JSON body schema:
 - **metadata.name** – Optional. The unique identifier of the notebook. To let Grafana generate one, use `metadata.generateName` instead.
 - **spec** – The notebook content. For details, refer to [Notebook structure](#notebook-structure).
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 201
@@ -335,7 +337,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **201** – Created
 - **400** – Errors (invalid JSON)
@@ -357,7 +359,7 @@ Replaces the notebook with the given name. Send the full notebook, including `me
 
 **Required permissions**: `notebooks:write`
 
-**Example request**:
+### Example request
 
 ```http
 PUT /apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/high-latency-investigation HTTP/1.1
@@ -386,7 +388,11 @@ JSON body schema:
 
 The response contains the updated notebook.
 
-Status codes:
+### Example response
+
+The response contains the updated notebook. For an example, refer to the response in [Create a notebook](#create-a-notebook).
+
+### Status codes
 
 - **200** – Updated
 - **400** – Errors (invalid JSON)
@@ -409,7 +415,7 @@ Deletes the notebook with the given name.
 
 **Required permissions**: `notebooks:delete`
 
-**Example request**:
+### Example request
 
 ```http
 DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/high-latency-investigation HTTP/1.1
@@ -417,7 +423,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -437,7 +443,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **200** – Deleted
 - **401** – Unauthorized

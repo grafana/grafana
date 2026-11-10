@@ -62,11 +62,9 @@ Lists the version history of a specific resource. This uses the standard List en
 
 History entries are returned in reverse chronological order (newest first).
 
-### Dashboard example
-
 The following request retrieves the version history for a dashboard with `metadata.name` of `production-overview` in the `default` namespace:
 
-**Example request**:
+### Example request
 
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=production-overview HTTP/1.1
@@ -75,7 +73,7 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -144,11 +142,18 @@ Each item in the `items` array represents a historical version of the resource. 
 - **`metadata.annotations.grafana.app/message`**: An optional commit message set during the update. You can set this annotation when [updating a resource](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/dashboard/#update-dashboard).
 - **`spec`**: The full resource spec as it existed at that version.
 
+### Status codes
+
+- **200** – OK
+- **400** – Bad request (missing `fieldSelector`, invalid `labelSelector`, etc.)
+- **401** – Unauthorized
+- **403** – Access denied
+
 ## Pagination
 
 You can paginate through history using `limit` and `continue`, the same way you paginate a standard List request.
 
-**Example request with pagination**:
+### Example request with pagination
 
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=production-overview&limit=2 HTTP/1.1
@@ -159,7 +164,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 If the response includes a `metadata.continue` field, pass it as the `continue` query parameter in the next request to fetch the next page. When the response doesn't include a `continue` field, you've reached the last page.
 
-**Example request for the next page**:
+### Example request for the next page
 
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=production-overview&limit=2&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
@@ -172,7 +177,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 To retrieve the full resource at a specific historical version, use the standard Get endpoint with the `resourceVersion` query parameter set to the `metadata.resourceVersion` from the history list.
 
-**Example request**:
+### Example request
 
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/production-overview?resourceVersion=1758777451428100 HTTP/1.1
@@ -181,11 +186,13 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-This returns the complete resource as it existed at that version.
+### Example response
 
-## Status codes
+This returns the complete resource as it existed at that version. For an example of a dashboard response, refer to [Get Dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/#get-dashboard).
 
-- **200**: OK
-- **400**: Bad request (missing `fieldSelector`, invalid `labelSelector`, etc.)
-- **401**: Unauthorized
-- **403**: Access denied
+### Status codes
+
+- **200** – OK
+- **401** – Unauthorized
+- **403** – Access denied
+- **404** – Resource or version not found

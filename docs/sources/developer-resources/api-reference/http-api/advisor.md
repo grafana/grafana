@@ -89,7 +89,7 @@ Lists the checks that Advisor has run in the specified namespace, including thei
 - **`limit`** (optional): Sets the maximum number of checks to return per page.
 - **`continue`** (optional): Sets the token from the `metadata.continue` field of a previous response to fetch the next page.
 
-**Example request**:
+### Example request
 
 ```http
 GET /apis/advisor.grafana.app/v0alpha1/namespaces/default/checks HTTP/1.1
@@ -99,7 +99,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 Replace _`<SERVICE_ACCOUNT_TOKEN>`_ with your service account token.
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200 OK

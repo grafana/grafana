@@ -102,7 +102,7 @@ Returns the preferences that apply to you, after combining your user, team, and 
 
 **Required permissions**: None. The response only includes the preferences that apply to you.
 
-**Example request**:
+### Example request
 
 ```http
 GET /apis/preferences.grafana.app/v1/namespaces/default/preferences/merged HTTP/1.1
@@ -110,7 +110,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -138,7 +138,7 @@ Content-Type: application/json
 
 The `preferences.grafana.app/source` annotation lists the preferences objects that were combined, from highest to lowest precedence. The `resourceVersion` changes when any of them changes.
 
-Status codes:
+### Status codes
 
 - **200** – OK
 - **401** – Unauthorized
@@ -161,7 +161,7 @@ The API doesn't support pagination with `continue`, or filtering with `labelSele
 
 **Required permissions**: None. The response only includes the preferences you can read.
 
-**Example request**:
+### Example request
 
 ```http
 GET /apis/preferences.grafana.app/v1/namespaces/default/preferences HTTP/1.1
@@ -169,7 +169,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -212,7 +212,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **200** – OK
 - **401** – Unauthorized
@@ -230,7 +230,7 @@ Returns the preferences object with the given name.
 
 **Required permissions**: Read access for the owner. Refer to [Requirements](#requirements).
 
-**Example request**:
+### Example request
 
 ```http
 GET /apis/preferences.grafana.app/v1/namespaces/default/preferences/user-a1b2c3d4 HTTP/1.1
@@ -238,7 +238,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -260,7 +260,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **200** – Found
 - **401** – Unauthorized
@@ -279,7 +279,7 @@ Creates the preferences for a user, a team, or the organization. You can also us
 
 **Required permissions**: Write access for the owner. Refer to [Requirements](#requirements).
 
-**Example request**:
+### Example request
 
 ```http
 POST /apis/preferences.grafana.app/v1/namespaces/default/preferences HTTP/1.1
@@ -303,7 +303,7 @@ JSON body schema:
 - **metadata.name** – Required. `user-{user_uid}`, `team-{team_uid}`, or `namespace`.
 - **spec** – The preferences. For details, refer to [Preferences fields](#preferences-fields).
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 201
@@ -325,7 +325,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **201** – Created
 - **400** – Errors (invalid JSON)
@@ -347,7 +347,7 @@ Replaces the preferences with the given name. If no preferences exist for the ow
 
 **Required permissions**: Write access for the owner. Refer to [Requirements](#requirements).
 
-**Example request**:
+### Example request
 
 ```http
 PUT /apis/preferences.grafana.app/v1/namespaces/default/preferences/namespace HTTP/1.1
@@ -376,7 +376,11 @@ JSON body schema:
 
 The response contains the updated preferences.
 
-Status codes:
+### Example response
+
+The response contains the updated preferences. For an example, refer to the response in [Get preferences](#get-preferences).
+
+### Status codes
 
 - **200** – Updated
 - **201** – Created
@@ -399,7 +403,7 @@ Updates one or more preferences without changing the others. If no preferences e
 
 **Required permissions**: Write access for the owner. Refer to [Requirements](#requirements).
 
-**Example request**:
+### Example request
 
 ```http
 PATCH /apis/preferences.grafana.app/v1/namespaces/default/preferences/user-a1b2c3d4 HTTP/1.1
@@ -414,9 +418,11 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-The response contains the updated preferences.
+### Example response
 
-Status codes:
+The response contains the updated preferences. For an example, refer to the response in [Get preferences](#get-preferences).
+
+### Status codes
 
 - **200** – Updated
 - **201** – Created
@@ -437,7 +443,7 @@ Deletes the preferences with the given name. After that, every field falls back 
 
 **Required permissions**: Write access for the owner. Refer to [Requirements](#requirements).
 
-**Example request**:
+### Example request
 
 ```http
 DELETE /apis/preferences.grafana.app/v1/namespaces/default/preferences/user-a1b2c3d4 HTTP/1.1
@@ -445,7 +451,11 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-Status codes:
+### Example response
+
+The response contains a `Status` object that confirms the deletion.
+
+### Status codes
 
 - **200** – Deleted
 - **401** – Unauthorized

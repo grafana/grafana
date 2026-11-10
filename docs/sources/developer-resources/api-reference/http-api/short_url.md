@@ -74,7 +74,7 @@ Returns all short URLs in the organization. Use the `limit` query parameter to c
 
 **Required permissions**: Admin role.
 
-**Example request**:
+### Example request
 
 ```http
 GET /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls HTTP/1.1
@@ -82,7 +82,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -113,7 +113,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **200** – OK
 - **401** – Unauthorized
@@ -132,7 +132,7 @@ Returns the short URL with the given name.
 
 **Required permissions**: Any authenticated user.
 
-**Example request**:
+### Example request
 
 ```http
 GET /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls/AT76wBvGk HTTP/1.1
@@ -140,7 +140,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -170,7 +170,7 @@ The response contains the following fields:
 - **spec.path** – The path the short URL links to, relative to the Grafana [`root_url`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#root_url).
 - **status.lastSeenAt** – The last time someone used the short URL, in milliseconds since the Unix epoch. The initial value is `0`.
 
-Status codes:
+### Status codes
 
 - **200** – Found
 - **401** – Unauthorized
@@ -194,21 +194,21 @@ Redirects to the full URL that the short URL links to. Grafana builds the full U
 
 **Required permissions**: Any authenticated user.
 
-**Example request**:
+### Example request
 
 ```http
 GET /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls/AT76wBvGk/goto HTTP/1.1
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 302 Found
 Location: https://grafana.example.com/d/TxKARsmGz/new-dashboard?orgId=1&from=1599389322894&to=1599410922894
 ```
 
-**Example request with `redirect=false`**:
+### Example request with `redirect=false`
 
 ```http
 GET /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls/AT76wBvGk/goto?redirect=false HTTP/1.1
@@ -216,7 +216,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -227,7 +227,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **200** – OK, when `redirect=false`
 - **302** – Found, redirects to the full URL
@@ -246,7 +246,7 @@ Creates a short URL.
 
 **Required permissions**: Any authenticated user.
 
-**Example request**:
+### Example request
 
 ```http
 POST /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls HTTP/1.1
@@ -276,7 +276,7 @@ The path must be relative. Grafana rejects the following paths:
 - Paths that start with `//` or `\`
 - Paths that contain a URL scheme, such as `https://` or `javascript:`
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 201
@@ -302,7 +302,7 @@ Content-Type: application/json
 
 To share the short URL, use `<GRAFANA_URL>/goto/<NAME>?orgId=<ORG_ID>`, where `<NAME>` is the `metadata.name` from the response.
 
-Status codes:
+### Status codes
 
 - **201** – Created
 - **400** – Errors (invalid JSON, missing or invalid fields)
@@ -323,7 +323,7 @@ Replaces an existing short URL identified by name. Provide the full object, incl
 
 **Required permissions**: Admin role.
 
-**Example request**:
+### Example request
 
 ```http
 PUT /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls/AT76wBvGk HTTP/1.1
@@ -344,7 +344,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -368,7 +368,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **200** – Updated
 - **400** – Errors (invalid JSON, missing or invalid fields)
@@ -390,7 +390,7 @@ Deletes an existing short URL identified by name. This operation can't be revert
 
 **Required permissions**: Admin role.
 
-**Example request**:
+### Example request
 
 ```http
 DELETE /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls/AT76wBvGk HTTP/1.1
@@ -398,7 +398,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -422,7 +422,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **200** – Deleted
 - **401** – Unauthorized

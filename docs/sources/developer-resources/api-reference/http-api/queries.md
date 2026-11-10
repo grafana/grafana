@@ -76,7 +76,7 @@ Returns the saved queries in the organization. Use the `limit` query parameter t
 
 **Required permissions**: `queries:read`
 
-**Example request**:
+### Example request
 
 ```http
 GET /apis/queries.grafana.app/v1/namespaces/default/queries?limit=1 HTTP/1.1
@@ -84,7 +84,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -137,7 +137,7 @@ Content-Type: application/json
 
 Continue making requests with the updated `continue` token until you receive a response without a `continue` field in the metadata, which means you've reached the last page.
 
-Status codes:
+### Status codes
 
 - **200** – OK
 - **401** – Unauthorized
@@ -156,7 +156,7 @@ Returns the saved query with the given name.
 
 **Required permissions**: `queries:read`
 
-**Example request**:
+### Example request
 
 ```http
 GET /apis/queries.grafana.app/v1/namespaces/default/queries/cpu-usage-by-instance HTTP/1.1
@@ -164,7 +164,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -206,7 +206,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **200** – Found
 - **401** – Unauthorized
@@ -225,7 +225,7 @@ Creates a saved query.
 
 **Required permissions**: `queries:write`
 
-**Example request**:
+### Example request
 
 ```http
 POST /apis/queries.grafana.app/v1/namespaces/default/queries HTTP/1.1
@@ -273,7 +273,7 @@ JSON body schema:
   - **variables** – Where to replace template variables in the query. Use an empty object if the query doesn't use template variables.
 - **spec.vars** – Optional. The template variables the saved query uses, each with a `key` and optional `defaultValues`.
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 201
@@ -315,7 +315,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **201** – Created
 - **400** – Errors (invalid JSON, missing or invalid fields)
@@ -336,7 +336,7 @@ Replaces an existing saved query identified by name. Provide the full object, in
 
 **Required permissions**: `queries:write`
 
-**Example request**:
+### Example request
 
 ```http
 PUT /apis/queries.grafana.app/v1/namespaces/default/queries/cpu-usage-by-instance HTTP/1.1
@@ -374,7 +374,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -418,7 +418,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **200** – Updated
 - **400** – Errors (invalid JSON, missing or invalid fields)
@@ -440,7 +440,7 @@ Deletes an existing saved query identified by name. This operation can't be reve
 
 **Required permissions**: `queries:write`
 
-**Example request**:
+### Example request
 
 ```http
 DELETE /apis/queries.grafana.app/v1/namespaces/default/queries/cpu-usage-by-instance HTTP/1.1
@@ -448,7 +448,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -463,7 +463,7 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
+### Status codes
 
 - **200** – Deleted
 - **401** – Unauthorized

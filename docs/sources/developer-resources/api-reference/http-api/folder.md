@@ -78,7 +78,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 | -------------- | ----------- |
 | `folders:read` | `folders:*` |
 
-**Example Request**:
+### Example request
 
 ```http
 GET /apis/folder.grafana.app/v1/namespaces/default/folders?limit=1 HTTP/1.1
@@ -87,7 +87,7 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -124,7 +124,7 @@ Content-Type: application/json
 
 The `metadata.continue` field contains a token to fetch the next page.
 
-**Example subsequent request using continue token**:
+### Example subsequent request using continue token
 
 ```http
 GET /apis/folder.grafana.app/v1/namespaces/default/folders?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
@@ -133,7 +133,7 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example subsequent response**:
+### Example subsequent response
 
 ```http
 HTTP/1.1 200
@@ -167,7 +167,7 @@ Content-Type: application/json
 
 Continue making requests with the updated `continue` token until you receive a response without a `continue` field in the metadata, indicating you've reached the last page.
 
-Status Codes:
+### Status codes
 
 - **200** – OK
 - **401** – Unauthorized
@@ -192,7 +192,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 | -------------- | ----------- |
 | `folders:read` | `folders:*` |
 
-**Example Request**:
+### Example request
 
 ```http
 GET /apis/folder.grafana.app/v1/namespaces/default/folders/aef30vrzxs3y8d HTTP/1.1
@@ -201,7 +201,7 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -230,7 +230,7 @@ Content-Type: application/json
 
 Note the annotation `grafana.app/folder` which contains the uid of the parent folder.
 
-Status Codes:
+### Status codes
 
 - **200** – Found
 - **401** – Unauthorized
@@ -258,7 +258,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 | `folders:create` | `folders:*` |
 | `folders:write`  | `folders:*` |
 
-**Example Request**:
+### Example request
 
 ```http
 POST /apis/folder.grafana.app/v1/namespaces/default/folders HTTP/1.1
@@ -289,7 +289,7 @@ JSON Body schema:
 Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
 {{< /admonition >}}
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -317,7 +317,7 @@ Content-Type: application/json
 }
 ```
 
-Status Codes:
+### Status codes
 
 - **201** – Created
 - **400** – Errors (invalid json, missing or invalid fields, etc)
@@ -344,7 +344,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 | --------------- | ----------- |
 | `folders:write` | `folders:*` |
 
-**Example Request**:
+### Example request
 
 ```http
 PUT /apis/folder.grafana.app/v1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
@@ -375,7 +375,7 @@ JSON Body schema:
 Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
 {{< /admonition >}}
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -403,7 +403,7 @@ Content-Type: application/json
 }
 ```
 
-Status Codes:
+### Status codes
 
 - **200** – Updated
 - **400** – Errors (invalid json, missing or invalid fields, etc)
@@ -444,7 +444,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 | ---------------- | ----------- |
 | `folders:delete` | `folders:*` |
 
-**Example Request**:
+### Example request
 
 ```http
 DELETE /apis/folder.grafana.app/v1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
@@ -454,7 +454,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 ```
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -482,7 +482,7 @@ Content-Type: application/json
 }
 ```
 
-Status Codes:
+### Status codes
 
 - **200** – Deleted
 - **401** – Unauthorized

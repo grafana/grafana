@@ -52,7 +52,7 @@ Lists all playlists in the specified namespace.
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
-**Example Request**:
+### Example request
 
 ```http
 GET /apis/playlist.grafana.app/v1/namespaces/default/playlists HTTP/1.1
@@ -60,7 +60,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -99,6 +99,12 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **200** – OK
+- **401** – Unauthorized
+- **403** – Access denied
+
 ## Get a Playlist
 
 `GET /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
@@ -110,7 +116,7 @@ Retrieves a specific playlist by name.
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The UID of the playlist.
 
-**Example Request**:
+### Example request
 
 ```http
 GET /apis/playlist.grafana.app/v1/namespaces/default/playlists/my-playlist-uid HTTP/1.1
@@ -118,7 +124,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200
@@ -150,6 +156,13 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **200** – Found
+- **401** – Unauthorized
+- **403** – Access denied
+- **404** – Playlist not found
+
 ## Create a Playlist
 
 `POST /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists`
@@ -160,7 +173,7 @@ Creates a new playlist.
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
-**Example Request**:
+### Example request
 
 ```http
 POST /apis/playlist.grafana.app/v1/namespaces/default/playlists HTTP/1.1
@@ -191,7 +204,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 201 Created
@@ -223,6 +236,14 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **201** – Created
+- **400** – Errors (invalid JSON, missing or invalid fields)
+- **401** – Unauthorized
+- **403** – Access denied
+- **409** – Conflict, a playlist with the same name already exists
+
 ## Update a Playlist
 
 `PUT /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
@@ -234,7 +255,7 @@ Updates an existing playlist. The entire playlist spec must be provided.
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The UID of the playlist.
 
-**Example Request**:
+### Example request
 
 ```http
 PUT /apis/playlist.grafana.app/v1/namespaces/default/playlists/my-playlist-uid HTTP/1.1
@@ -271,7 +292,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -307,6 +328,15 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **200** – Updated
+- **400** – Errors (invalid JSON, missing or invalid fields)
+- **401** – Unauthorized
+- **403** – Access denied
+- **404** – Playlist not found
+- **409** – Conflict, the playlist changed since you read it
+
 ## Delete a Playlist
 
 `DELETE /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
@@ -318,7 +348,7 @@ Deletes a playlist.
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The UID of the playlist.
 
-**Example Request**:
+### Example request
 
 ```http
 DELETE /apis/playlist.grafana.app/v1/namespaces/default/playlists/my-playlist-uid HTTP/1.1
@@ -326,7 +356,7 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -340,6 +370,13 @@ Content-Type: application/json
   "code": 200
 }
 ```
+
+### Status codes
+
+- **200** – Deleted
+- **401** – Unauthorized
+- **403** – Access denied
+- **404** – Playlist not found
 
 ## Playlist Item Types
 

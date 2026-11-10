@@ -55,13 +55,15 @@ Stars a resource for the signed-in user. One endpoint shape covers every starrab
 - `{kind}`: The kind of the resource. For example, `Dashboard` or `Folder`.
 - `{id}`: The resource UID, which has the same value used in the legacy path.
 
-**Example request**:
+### Example request
 
 None. The star target is fully encoded in the URL path; no JSON body is required or read.
 
-**Example response**:
+### Example response
 
-Status Codes:
+The response contains the `Stars` resource of the signed-in user.
+
+### Status codes
 
 - **200** - OK on a successful star (or unstar)
 - **204** - No Content when unstarring a resource that has no stars recorded and therefore there's nothing to remove. It's not treated as an error
@@ -81,6 +83,20 @@ Unstars a resource for the signed-in user. `{group}`, `{kind}`, and `{id}` ident
 - `{group}`: The API group of the resource, in the format `<RESOURCE>.grafana.app`. For example, `dashboard.grafana.app` or `folder.grafana.app`.
 - `{kind}`: The kind of the resource. For example, `Dashboard` or `Folder`.
 - `{id}`: The resource UID, which has the same value used in the legacy path.
+
+### Example request
+
+None. The unstar target is fully encoded in the URL path; no JSON body is required or read.
+
+### Example response
+
+The response contains the `Stars` resource of the signed-in user.
+
+### Status codes
+
+- **200** – OK on a successful unstar
+- **204** – No Content when unstarring a resource that has no stars recorded and therefore there's nothing to remove. It's not treated as an error
+- **Standard 4xx errors** apply for auth/authorization failures, since you can only manage your own stars
 
 Refer to [Star a resource](#star-a-resource) for more details.
 
