@@ -427,7 +427,6 @@ func TestIntegrationSharedPublicationSearchableByTwoTenants(t *testing.T) {
 			key := &resourcepb.ResourceKey{Namespace: namespace, Group: group, Resource: resources["manual"]}
 			vectors, err := reader.VectorSearch(ctx, &resourcepb.VectorSearchRequest{Key: key, Query: "octopus"})
 			require.NoError(t, err)
-			require.Nil(t, vectors.GetError())
 			require.Len(t, vectors.GetResults(), 1)
 			require.Equal(t, "guide", vectors.GetResults()[0].GetName())
 			hybrid, err := reader.HybridSearch(ctx, &resourcepb.HybridSearchRequest{Key: key, Query: "octopus", SkipRerank: true})

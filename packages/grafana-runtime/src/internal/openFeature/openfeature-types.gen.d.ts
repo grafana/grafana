@@ -130,6 +130,7 @@ declare module "@openfeature/core" {
     | "grafana.dashboardGlobalVariables"
     | "grafana.dashboardVariablesMigration"
     | "grafana.dashboardPreferences"
+    | "grafana.draftDashboards"
     | "smoothingTransformation"
     | "queryWithAssistant"
     | "queryEditorNext"
@@ -159,7 +160,6 @@ declare module "@openfeature/core" {
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
     | "dashboard.vectorSearch"
-    | "grafana.vectorSearchCmdk"
     | "grafana.cmdkHybridSearch"
     | "grafana.cmdkDashboardTags"
     | "assistant.fullscreenWorkspace"
@@ -205,6 +205,7 @@ declare module "@openfeature/core" {
     | "reporting.removeLogoUrlField"
     | "dashboards.disablePublicDashboards"
     | "grafana.panelActionsPopover"
+    | "grafana.dashboardSidebarExplicitOpen"
     | "grafana.folderPickerFolderEditAccess";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;

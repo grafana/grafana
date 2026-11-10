@@ -5,7 +5,9 @@ import userEvent from '@testing-library/user-event';
 import {
   applyFieldOverrides,
   createTheme,
+  type DataFrame,
   EventBusSrv,
+  type FieldConfigSource,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
@@ -244,3 +246,238 @@ it.each(['hide-first', 'filter-first'])(
     }
   }
 );
+
+describe('fit-content max height', () => {
+  const pagedOptions: TableOptions = { ...options, enablePagination: true };
+
+  function makeRowsFrame(rowCount: number, name: string): DataFrame {
+    return toDataFrame({
+      name,
+      fields: [
+        {
+          name: 'Index',
+          type: FieldType.number,
+          values: Array.from({ length: rowCount }, (_, i) => i + 1),
+        },
+        { name: 'Label', type: FieldType.string, values: Array.from({ length: rowCount }, (_, i) => `row-${i + 1}`) },
+      ],
+    });
+  }
+
+  function renderFitContentTable({
+    series,
+    fitMaxHeight,
+    tableOptions = pagedOptions,
+    tableFieldConfig = fieldConfig,
+    fitContent = true,
+  }: {
+    series: DataFrame[];
+    fitMaxHeight?: number;
+    tableOptions?: TableOptions;
+    tableFieldConfig?: FieldConfigSource;
+    fitContent?: boolean;
+  }) {
+    const withOverrides = applyFieldOverrides({
+      data: series,
+      fieldConfig: tableFieldConfig,
+      theme: createTheme(),
+      timeZone: 'utc',
+      replaceVariables: (s: string) => s,
+    });
+    const props = getPanelProps(tableOptions, {
+      fieldConfig: tableFieldConfig,
+      width: 800,
+      data: { series: withOverrides, state: LoadingState.Done, timeRange: getDefaultTimeRange() },
+      fitContent,
+      fitMaxHeight,
+    });
+    return render(
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <TablePanel {...props} />
+      </OpenFeatureProvider>
+    );
+  }
+
+  const dataRowCount = (container: HTMLElement) => container.querySelectorAll('.rdg-row:not(.rdg-header-row)').length;
+
+  it('fits auto-sized pages inside fitMaxHeight', () => {
+    // 50 small rows: natural height 1836px, capped at 320px -> 6 rows per page across 9 pages.
+    const { container } = renderFitContentTable({ series: [makeRowsFrame(50, 'frame')], fitMaxHeight: 320 });
+    expect(dataRowCount(container)).toBe(6);
+    expect(screen.getByRole('button', { name: '9' })).toBeInTheDocument();
+  });
+
+  it('renders rows with no pagination chrome when uncapped', () => {
+    const { container } = renderFitContentTable({ series: [makeRowsFrame(50, 'frame')] });
+    // no derived page size without a height bound: no page buttons, no summary,
+    // and more rows rendered than the capped 6-per-page (virtualized to the mock viewport)
+    expect(dataRowCount(container)).toBeGreaterThan(6);
+    expect(screen.queryByRole('button', { name: '2' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/of 50 rows/)).not.toBeInTheDocument();
+  });
+
+  it('keeps an explicit page size when uncapped', () => {
+    setTestFlags({ [FlagKeys.TablePaginationPageSize]: true });
+    const { container } = renderFitContentTable({
+      series: [makeRowsFrame(50, 'frame')],
+      tableOptions: { ...pagedOptions, pageSize: 5 },
+    });
+    expect(dataRowCount(container)).toBe(5);
+    expect(screen.getByRole('button', { name: '10' })).toBeInTheDocument();
+  });
+
+  it('stacks the frame picker below unpaginated content for uncapped multi-frame tables', () => {
+    const { container } = renderFitContentTable({
+      series: [makeRowsFrame(50, 'a'), makeRowsFrame(50, 'b')],
+    });
+    const picker = screen.getByRole('combobox', { name: 'Query' });
+    expect(picker).toBeInTheDocument();
+    // the picker stacks below the grid: the first data row precedes it in DOM order
+    const firstRow = container.querySelector('.rdg-row:not(.rdg-header-row)');
+    expect(firstRow).not.toBeNull();
+    expect(firstRow!.compareDocumentPosition(picker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(dataRowCount(container)).toBeGreaterThan(6);
+    expect(screen.queryByRole('button', { name: '2' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/of 50 rows/)).not.toBeInTheDocument();
+  });
+
+  it('reserves frame picker space within the cap', () => {
+    const { container } = renderFitContentTable({
+      series: [makeRowsFrame(50, 'a'), makeRowsFrame(50, 'b')],
+      fitMaxHeight: 320,
+    });
+    expect(screen.getByRole('combobox', { name: 'Query' })).toBeInTheDocument();
+    // The picker reserve leaves room for 5 rows per page instead of 6: 10 pages, not 9.
+    expect(dataRowCount(container)).toBe(5);
+    expect(screen.getByRole('button', { name: '10' })).toBeInTheDocument();
+  });
+
+  it('renders multi-frame tables at fixed height with a picker', () => {
+    const { container } = renderFitContentTable({
+      series: [makeRowsFrame(50, 'a'), makeRowsFrame(50, 'b')],
+      fitContent: false,
+    });
+    expect(screen.getByRole('combobox', { name: 'Query' })).toBeInTheDocument();
+    expect(dataRowCount(container)).toBeGreaterThan(0);
+  });
+
+  it('renders the picker without panel padding under table refresh', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true });
+    const capped = renderFitContentTable({
+      series: [makeRowsFrame(50, 'a'), makeRowsFrame(50, 'b')],
+      fitMaxHeight: 320,
+    });
+    expect(screen.getByRole('combobox', { name: 'Query' })).toBeInTheDocument();
+    capped.unmount();
+    renderFitContentTable({
+      series: [makeRowsFrame(50, 'a'), makeRowsFrame(50, 'b')],
+    });
+    expect(screen.getByRole('combobox', { name: 'Query' })).toBeInTheDocument();
+  });
+
+  it('honours a configured page size under a cap', () => {
+    setTestFlags({ [FlagKeys.TablePaginationPageSize]: true });
+    const { container } = renderFitContentTable({
+      series: [makeRowsFrame(50, 'frame')],
+      fitMaxHeight: 320,
+      tableOptions: { ...pagedOptions, pageSize: 5 },
+    });
+    expect(dataRowCount(container)).toBe(5);
+    expect(screen.getByRole('button', { name: '10' })).toBeInTheDocument();
+  });
+
+  it('renders full wrapped text and paginates against the cap', () => {
+    const series = [
+      toDataFrame({
+        name: 'frame',
+        fields: [
+          {
+            name: 'Note',
+            type: FieldType.string,
+            values: Array.from({ length: 50 }, (_, i) => `a much longer wrapped value for row number ${i + 1}`),
+          },
+        ],
+      }),
+    ];
+    const wrappedFieldConfig: FieldConfigSource = {
+      defaults: {},
+      overrides: [
+        {
+          matcher: { id: 'byName', options: 'Note' },
+          properties: [{ id: 'custom.wrapText', value: true }],
+        },
+      ],
+    };
+    const { container } = renderFitContentTable({ series, fitMaxHeight: 320, tableFieldConfig: wrappedFieldConfig });
+    // wrapText applies (full text rendered) and capped pagination still works.
+    // Counts stay estimate-driven here by construction, so wrap cannot change
+    // them in jsdom; the taller-rows-fewer-per-page effect is proven instead by
+    // the browser-level fit-content suite, which measures real layout.
+    expect(screen.getByText('a much longer wrapped value for row number 1')).toBeInTheDocument();
+    expect(dataRowCount(container)).toBe(6);
+    expect(screen.getByRole('button', { name: '9' })).toBeInTheDocument();
+  });
+
+  it('derives fewer rows per page from taller row-height input', () => {
+    // sm (36px) fits 6 rows per page under the 320px cap; lg (60px) must fit
+    // fewer. Proves page-size derivation honors row-height differences through
+    // a real option; that wrapped text produces taller rows is proven by the
+    // browser-level suite's real layout.
+    const { container } = renderFitContentTable({
+      series: [makeRowsFrame(50, 'frame')],
+      fitMaxHeight: 320,
+      tableOptions: { ...pagedOptions, cellHeight: TableCellHeight.Lg },
+    });
+    expect(dataRowCount(container)).toBe(5);
+    expect(screen.getByRole('button', { name: '10' })).toBeInTheDocument();
+  });
+
+  it('paginates expanded nested rows under a cap', async () => {
+    const nested = applyFieldOverrides({
+      data: [
+        toDataFrame({
+          name: 'NestedData',
+          fields: [
+            { name: 'Nested A', type: FieldType.string, values: ['N1', 'N2'] },
+            { name: 'Nested B', type: FieldType.number, values: [10, 20] },
+          ],
+        }),
+      ],
+      fieldConfig: { defaults: {}, overrides: [] },
+      theme: createTheme(),
+      timeZone: 'utc',
+      replaceVariables: (s: string) => s,
+    })[0];
+    const parent = toDataFrame({
+      name: 'frame',
+      fields: [
+        { name: 'Column A', type: FieldType.string, values: Array.from({ length: 8 }, (_, i) => `A${i + 1}`) },
+        { name: 'Column B', type: FieldType.number, values: Array.from({ length: 8 }, (_, i) => i + 1) },
+        {
+          name: '__depth',
+          type: FieldType.number,
+          values: Array(8).fill(0),
+          config: { custom: { hideFrom: { viz: true } } },
+        },
+        {
+          name: '__index',
+          type: FieldType.number,
+          values: Array.from({ length: 8 }, (_, i) => i),
+          config: { custom: { hideFrom: { viz: true } } },
+        },
+        { name: '__nestedFrames', type: FieldType.nestedFrames, values: Array(8).fill([nested]) },
+      ],
+    });
+    renderFitContentTable({ series: [parent], fitMaxHeight: 320 });
+    // 8 parents at 6 rows per page: a second page, with the nested rows expandable inside the cap.
+    expect(screen.getByRole('button', { name: '2' })).toBeInTheDocument();
+    await userEvent.click(screen.getAllByRole('button', { name: 'Expand row' })[0]);
+    expect(await screen.findByText('N1')).toBeInTheDocument();
+    // the footer stays usable after expansion: summary visible, page 2 reachable
+    expect(screen.getByText('1 - 6 of 8 rows')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: '2' }));
+    expect(await screen.findByText('A7')).toBeInTheDocument();
+    expect(screen.getByText('7 - 8 of 8 rows')).toBeInTheDocument();
+    expect(screen.queryByText('N1')).not.toBeInTheDocument();
+  });
+});

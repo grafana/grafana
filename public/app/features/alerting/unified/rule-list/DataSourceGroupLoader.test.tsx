@@ -52,7 +52,7 @@ describe('DataSourceGroupLoader', () => {
     });
     const groupIdentifier = getPromGroupIdentifier(promRuleSource, promGroup);
 
-    it('should render a list of rules for data sources without ruler', async () => {
+    it('should render rule links without action buttons for data sources without ruler', async () => {
       setPrometheusRules(vanillaPromDs, [promGroup]);
       render(<DataSourceGroupLoader groupIdentifier={groupIdentifier} />);
 
@@ -63,14 +63,6 @@ describe('DataSourceGroupLoader', () => {
         const ruleLink = within(ruleListItems[index]).getByRole('link', { name: `prom-only-rule-${index + 1}` });
         expect(ruleLink).toHaveAttribute('href', expect.stringContaining(createViewLinkV2(groupIdentifier, rule)));
       });
-    });
-
-    it('should not render rule action buttons', async () => {
-      setPrometheusRules(vanillaPromDs, [promGroup]);
-      render(<DataSourceGroupLoader groupIdentifier={groupIdentifier} />);
-
-      const ruleListItems = await ui.ruleItem(/prom-only-rule/).findAll();
-      expect(ruleListItems).toHaveLength(3);
 
       ruleListItems.forEach((ruleListItem) => {
         expect(ui.editButton.query(ruleListItem)).not.toBeInTheDocument();
@@ -100,7 +92,7 @@ describe('DataSourceGroupLoader', () => {
       setPrometheusRules(mimirDs, [promGroup]);
     });
 
-    it('should render a list of rules for data sources with ruler', async () => {
+    it('should render matched rule links and actions alongside creating and deleting states', async () => {
       render(<DataSourceGroupLoader groupIdentifier={groupIdentifier} />);
 
       const ruleListItems = await ui.ruleItem(/mimir-rule/).findAll();
@@ -108,26 +100,14 @@ describe('DataSourceGroupLoader', () => {
 
       const ruleLink = within(ruleListItems[0]).getByRole('link', { name: 'mimir-rule-1' });
       expect(ruleLink).toHaveAttribute('href', expect.stringContaining(getRuleLink(groupIdentifier, rulerRule)));
-    });
-
-    it('should render Edit and More buttons for rules that are present in ruler and prometheus', async () => {
-      render(<DataSourceGroupLoader groupIdentifier={groupIdentifier} />);
 
       const mimirRule1 = await ui.ruleItem(/mimir-rule/).find();
 
       expect(await ui.editButton.find(mimirRule1)).toBeInTheDocument();
       expect(await ui.moreButton.find(mimirRule1)).toBeInTheDocument();
-    });
-
-    it('should render creating state if a rules is only present in ruler', async () => {
-      render(<DataSourceGroupLoader groupIdentifier={groupIdentifier} />);
 
       const mimirOnlyItem = await ui.ruleItem(/mimir-only-rule/).find();
       expect(within(mimirOnlyItem).getByLabelText('Creating')).toBeInTheDocument();
-    });
-
-    it('should render deleting state if a rule is only present in prometheus', async () => {
-      render(<DataSourceGroupLoader groupIdentifier={groupIdentifier} />);
 
       const promOnlyItem = await ui.ruleItem(/prom-only-rule/).find();
       expect(within(promOnlyItem).getByLabelText('Deleting')).toBeInTheDocument();

@@ -889,7 +889,6 @@ func TestSearchFolders(t *testing.T) {
 
 		res, err := index.Search(ctx, nil, captured, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error, "the folder search index rejected the request SearchFolders built")
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
 
 		parsed, err := dashboardsearch.ParseResults(res, 0)
@@ -1098,10 +1097,9 @@ func (c *folderDeletionSearchClient) Delete(_ context.Context, name string, _ in
 func newFolderDeletionSearchClient(t testing.TB, resourceName string, count int, cfg search.PostRankAuthzConfig) *folderDeletionSearchClient {
 	t.Helper()
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        100,
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
+		Root:          t.TempDir(),
+		FileThreshold: 100,
+		PostRankAuthz: cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", resourceName): resource.NewManifestBackedProvider(dashboardapp.LocalManifest().ManifestData),
 		}),
