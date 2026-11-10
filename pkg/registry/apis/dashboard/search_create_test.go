@@ -28,7 +28,7 @@ import (
 )
 
 func createGrantPerms(scopes ...string) actest.FakeService {
-	var perms []accesscontrol.Permission
+	perms := make([]accesscontrol.Permission, 0, len(scopes))
 	for _, s := range scopes {
 		perms = append(perms, accesscontrol.Permission{Action: dashboards.ActionDashboardsCreate, Scope: s})
 	}
