@@ -37,11 +37,15 @@ import {
 } from './alertmanagerPermissions';
 import { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from './constants';
 import { isGrafanaRuleIdentifier } from './rules';
+import { isCloudRulesSource, isGrafanaRulesSource } from './rulesSource';
 
 // Re-exported for backward compatibility. Moved to constants.ts to break a circular dependency
 // via k8s/utils.ts → datasource.ts → ability hooks → access-control.ts.
 // eslint-disable-next-line no-barrel-files/no-barrel-files
 export { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME };
+
+// eslint-disable-next-line no-barrel-files/no-barrel-files -- Keep existing callers on the same helpers as narrow imports.
+export { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from './rulesSource';
 
 const collator = new Intl.Collator();
 
@@ -254,16 +258,8 @@ export function getAllRulesSources(): RulesSource[] {
   return availableRulesSources;
 }
 
-export function getRulesSourceName(rulesSource: RulesSource): string {
-  return isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
-}
-
 export function getRulesSourceUid(rulesSource: RulesSource): string {
   return isCloudRulesSource(rulesSource) ? rulesSource.uid : GRAFANA_RULES_SOURCE_NAME;
-}
-
-export function isCloudRulesSource(rulesSource: RulesSource | string): rulesSource is DataSourceInstanceSettings {
-  return rulesSource !== GRAFANA_RULES_SOURCE_NAME;
 }
 
 export function isVanillaPrometheusAlertManagerDataSource(name: string): boolean {
@@ -275,12 +271,6 @@ export function isVanillaPrometheusAlertManagerDataSource(name: string): boolean
 
 export function isProvisionedDataSource(dataSource: DataSourceSettings): boolean {
   return dataSource.readOnly === true;
-}
-
-export function isGrafanaRulesSource(
-  rulesSource: RulesSource | string
-): rulesSource is typeof GRAFANA_RULES_SOURCE_NAME {
-  return rulesSource === GRAFANA_RULES_SOURCE_NAME;
 }
 
 export function getDataSourceByName(name: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
