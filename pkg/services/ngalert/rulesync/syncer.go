@@ -229,6 +229,13 @@ func (s *ExternalRulerSyncer) recordSyncResult(ctx context.Context, orgID int64,
 	})
 }
 
+func (s *ExternalRulerSyncer) recordUnchanged(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, appliedHash string) {
+	now := time.Now()
+	s.writeStatus(ctx, orgID, func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {
+		return computeUnchangedStatus(prev, uid, origin, now, appliedHash)
+	})
+}
+
 // recordNotConfigured records Synced=Unknown/NotConfigured for the org, seeding
 // the singleton if absent (writeStatus creates on missing). Best-effort. Called
 // only when the API path is reachable (flag on) but no datasourceUid is set —
@@ -466,6 +473,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	hashStr := strconv.FormatUint(hash, 10)
 	if rc.persistedHash != "" && rc.persistedHash == hashStr {
 		s.logger.Debug("External ruler config unchanged since last sync (persisted)", "org_id", orgID)
+		s.recordUnchanged(ctx, orgID, rc.uid, rc.origin, hashStr)
 		return
 	}
 	s.stateMu.RLock()
@@ -474,6 +482,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	s.stateMu.RUnlock()
 	if unchanged {
 		s.logger.Debug("External ruler config unchanged since last sync", "org_id", orgID)
+		s.recordUnchanged(ctx, orgID, rc.uid, rc.origin, hashStr)
 		return
 	}
 
@@ -618,5 +627,10 @@ func (s *ExternalRulerSyncer) prune(ctx context.Context, user identity.Requester
 func (s *ExternalRulerSyncer) recordFailure(ctx context.Context, orgID int64, orgIDStr string, uid string, origin externalSyncOrigin, syncErr *SyncError) {
 	s.logger.Warn("External ruler sync failed", "org_id", orgID, "reason", syncErr.Reason.Label(), "error", syncErr)
 	s.metrics.SyncFailures.WithLabelValues(orgIDStr, syncErr.Reason.Label()).Inc()
+	if syncErr.Reason.InvalidatesDedup() {
+		s.stateMu.Lock()
+		s.orgState(orgID).hashSet = false
+		s.stateMu.Unlock()
+	}
 	s.recordSyncResult(ctx, orgID, uid, origin, syncErr, "")
 }

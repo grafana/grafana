@@ -39,12 +39,6 @@
       "import": "./dist/esm/raw/composable/annotationslist/panelcfg/x/types.gen.mjs",
       "require": "./dist/cjs/raw/composable/annotationslist/panelcfg/x/types.gen.cjs"
     },
-    "./dist/esm/raw/composable/azuremonitor/dataquery/x/AzureMonitorDataQuery_types.gen": {
-      "@grafana-app/source": "./src/raw/composable/azuremonitor/dataquery/x/types.gen.ts",
-      "types": "./dist/types/raw/composable/azuremonitor/dataquery/x/types.gen.d.ts",
-      "import": "./dist/esm/raw/composable/azuremonitor/dataquery/x/types.gen.mjs",
-      "require": "./dist/cjs/raw/composable/azuremonitor/dataquery/x/types.gen.cjs"
-    },
     "./dist/esm/raw/composable/barchart/panelcfg/x/BarChartPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/barchart/panelcfg/x/types.gen.ts",
       "types": "./dist/types/raw/composable/barchart/panelcfg/x/types.gen.d.ts",
