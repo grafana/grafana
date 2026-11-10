@@ -8,10 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 )
@@ -22,33 +24,40 @@ type configReader struct {
 }
 
 func (cr *configReader) readConfig(ctx context.Context, path string) ([]*configs, error) {
-	var datasources []*configs
+	var datasourceFiles []*configs
 
 	files, err := os.ReadDir(path)
 	if err != nil {
 		cr.log.Error("can't read datasource provisioning files from directory", "path", path, "error", err)
-		return datasources, nil
+		return datasourceFiles, nil
 	}
 
+	rejectLBACRules := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagDatasourcesRejectProvisionedLBACRules, true, openfeature.TransactionContext(ctx))
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml") {
-			datasource, err := cr.parseDatasourceConfig(path, file)
+			fileConfig, err := cr.parseDatasourceConfig(path, file)
 			if err != nil {
 				return nil, err
 			}
 
-			if datasource != nil {
-				datasources = append(datasources, datasource)
+			if fileConfig != nil {
+				// Reject before applyChanges can write or prune datasources from any file.
+				if rejectLBACRules {
+					if err := validateNoLBACRules(fileConfig); err != nil {
+						return nil, fmt.Errorf("%s: %w", file.Name(), err)
+					}
+				}
+				datasourceFiles = append(datasourceFiles, fileConfig)
 			}
 		}
 	}
 
-	err = cr.validateDefaultUniqueness(ctx, datasources)
+	err = cr.validateDefaultUniqueness(ctx, datasourceFiles)
 	if err != nil {
 		return nil, err
 	}
 
-	return datasources, nil
+	return datasourceFiles, nil
 }
 
 func (cr *configReader) parseDatasourceConfig(path string, file fs.DirEntry) (*configs, error) {
