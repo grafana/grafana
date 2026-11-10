@@ -620,7 +620,8 @@ describe('empty panel query defaults', () => {
     const panel: PanelKind = { kind: 'Panel', spec: defaultPanelSpec() };
     panel.spec.vizConfig.group = 'custom';
     panel.spec.data.spec.queries = [defaultPanelQueryKind()];
-    expect(getQueryRunnerFor(buildVizPanel(panel))?.state.queries).toEqual([{ refId: 'A', hide: false }]);
+    panel.spec.data.spec.queries[0].spec.query.spec = { expr: 'up' };
+    expect(getQueryRunnerFor(buildVizPanel(panel))?.state.queries).toEqual([{ refId: 'A', hide: false, expr: 'up' }]);
   });
 
   it('honors skipDefaultQuery through a panel plugin alias', () => {
@@ -661,10 +662,9 @@ describe('legacy panel query defaults', () => {
   });
 });
 
-describe('Text query migration on load', () => {
+describe('Default query migration on load', () => {
   beforeEach(() => {
-    setTestFlags({ 'grafana.newTextPanel': true });
-    setPanelPluginMetas({ text: { skipDataQuery: true } as PanelPluginMeta });
+    setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
   });
   afterEach(() => {
     setTestFlags({});
@@ -672,40 +672,41 @@ describe('Text query migration on load', () => {
   });
 
   it.each([
-    ['13.1.9', '${__data.fields.cpu}', 0],
-    ['13.2.0-pre', '${__data.fields.cpu}', 1],
-    ['13.2.9', '${__data.fields.cpu}', 1],
-    ['13.2.0', 'Static', 0],
-    ['13.3.0', 'Static', 0],
-    ['13.3.1', '{{data.0.cpu}}', 1],
-    ['13.4.0', 'Static', 1],
-    ['', 'Static', 0],
-    ['', '${__value.text}', 1],
-  ])('migrates %s with content %s in both schemas', (version, content, count) => {
+    { queries: [{ refId: 'A' }], count: 0 },
+    { queries: [{ refId: 'A', expr: 'up' }], count: 1 },
+    { queries: [{ refId: 'A' }, { refId: 'B' }], count: 2 },
+  ])('clears only a single default query in both schemas ($queries)', ({ queries, count }) => {
+    const version = '13.2.0-pre';
+    const content = 'Static';
     const v1 = new PanelModel({
-      type: 'text',
+      type: 'custom',
       pluginVersion: version,
-      targets: [{ refId: 'A' }],
+      targets: queries,
       options: { content },
     });
     const v1Viz = new VizPanel({
       key: 'panel-1',
-      pluginId: 'text',
+      pluginId: 'custom',
       options: { content },
       $data: createPanelDataProvider(v1),
     });
     const v1Saved = vizPanelToPanel(v1Viz);
-    expect(v1Saved.targets).toEqual(count ? [{ refId: 'A' }] : []);
+    expect(v1Saved.targets).toEqual(count ? queries : []);
     expect(v1Saved.options?.content).toBe(content);
 
     const v2: PanelKind = { kind: 'Panel', spec: defaultPanelSpec() };
     v2.spec.vizConfig = {
       ...v2.spec.vizConfig,
-      group: 'text',
+      group: 'custom',
       version,
       spec: { ...v2.spec.vizConfig.spec, options: { content } },
     };
-    v2.spec.data.spec.queries = [defaultPanelQueryKind()];
+    v2.spec.data.spec.queries = queries.map(({ refId, ...spec }) => {
+      const query = defaultPanelQueryKind();
+      query.spec.refId = refId;
+      query.spec.query.spec = spec;
+      return query;
+    });
     v2.spec.data.spec.transformations = [{ kind: 'Transformation', group: 'reduce', spec: { options: {} } }];
     const loaded = buildVizPanel(v2);
     const saved = vizPanelToSchemaV2(loaded, undefined, false) as PanelKind;

@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
@@ -26,7 +28,6 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { shouldClearTextQueries } from 'app/plugins/panel/text/queryMigration';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
@@ -250,11 +251,7 @@ function createPanelDataProvider(
       : skipDefaultQuery
         ? []
         : [defaultPanelQueryKind()];
-  if (
-    panel.vizConfig.group === 'text' &&
-    panelMetas.text?.skipDefaultQuery &&
-    shouldClearTextQueries(panel.vizConfig.version, panel.vizConfig.spec.options ?? {})
-  ) {
+  if (skipDefaultQuery && targets.length === 1 && isEqual(targets[0], defaultPanelQueryKind())) {
     targets = [];
   }
 

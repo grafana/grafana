@@ -2,12 +2,11 @@ import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runt
 import { type SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { shouldClearTextQueries } from 'app/plugins/panel/text/queryMigration';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 
 import { findPanelPluginMeta } from './panelPluginMeta';
-import { getEmptyQueryRunnerState } from './queryRunnerState';
+import { getEmptyQueryRunnerState, isDefaultQuery } from './queryRunnerState';
 
 export function createPanelDataProvider(
   panel: PanelModel,
@@ -15,11 +14,7 @@ export function createPanelDataProvider(
 ): SceneDataProvider | undefined {
   const pluginMeta = findPanelPluginMeta(panelMetas, panel.type);
 
-  if (
-    panel.type === 'text' &&
-    pluginMeta?.skipDefaultQuery &&
-    shouldClearTextQueries(panel.pluginVersion, panel.options ?? {})
-  ) {
+  if (pluginMeta?.skipDefaultQuery && panel.targets?.length === 1 && isDefaultQuery(panel.targets[0])) {
     panel.targets = [];
   }
 

@@ -29,7 +29,7 @@ test.describe('Text query lifecycle', { tag: ['@panels'] }, () => {
                 title: 'Static text',
                 pluginVersion,
                 datasource,
-                targets: pluginVersion === '13.4.0' ? [] : [query],
+                targets: pluginVersion === '13.4.0' ? [] : [{ refId: 'A' }],
                 options: { mode: 'markdown', content: 'Static text content' },
                 gridPos: { x: 0, y: 0, w: 12, h: 8 },
               },
