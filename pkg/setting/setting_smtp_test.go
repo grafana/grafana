@@ -170,6 +170,9 @@ func TestReadSmtpHostLists(t *testing.T) {
 			`http://metadata`,
 			`fe80::1%eth0`,
 			`a..b`,
+			`relay.example.com]`,
+			`[relay.example.com`,
+			`]relay.example.com[`,
 			`-bad.example`,
 			`bad-.example`,
 			`::ffff:0.0.0.0/80`,
@@ -241,6 +244,7 @@ func TestSmtpHostListMatching(t *testing.T) {
 	assert.False(t, list.IsEmpty())
 	assert.True(t, list.MatchesHost("bad.example"))
 	assert.True(t, list.MatchesHost("BAD.example."))
+	assert.True(t, list.MatchesHost("[bad.example]"))
 	assert.False(t, list.MatchesHost("sub.bad.example"))
 	assert.True(t, list.MatchesAddr(netip.MustParseAddr("10.1.2.3")))
 	assert.True(t, list.MatchesAddr(netip.MustParseAddr("::ffff:10.1.2.3")))

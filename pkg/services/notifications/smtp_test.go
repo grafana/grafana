@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/netip"
+	"net/smtp"
 	"net/textproto"
 	"sort"
 	"strconv"
@@ -566,6 +567,80 @@ func TestIsConnectError(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.want, isConnectError(tc.err))
+		})
+	}
+}
+
+func startSmtpMock(t *testing.T, config smtpmock.ConfigurationAttr) *smtpmock.Server {
+	t.Helper()
+	config.HostAddress = "127.0.0.1"
+	srv := smtpmock.New(config)
+	require.NoError(t, srv.Start())
+	t.Cleanup(func() { _ = srv.Stop() })
+	return srv
+}
+
+func TestDialAndSendDoesNotFallBackAfterConnect(t *testing.T) {
+	const from = "from@example.com"
+
+	cases := []struct {
+		name string
+		// newFirstDialer returns the dialer that connects but then fails.
+		newFirstDialer func(t *testing.T) *gomail.Dialer
+		wantErr        string
+	}{
+		{
+			name:    "send error",
+			wantErr: "could not send email 1: 550",
+			newFirstDialer: func(t *testing.T) *gomail.Dialer {
+				srv := startSmtpMock(t, smtpmock.ConfigurationAttr{
+					BlacklistedMailfromEmails:   []string{from},
+					MsgMailfromBlacklistedEmail: "550 sender rejected",
+				})
+				dialer := gomail.NewDialer("127.0.0.1", srv.PortNumber(), "", "")
+				dialer.StartTLSPolicy = gomail.NoStartTLS
+				return dialer
+			},
+		},
+		{
+			name:    "TLS error",
+			wantErr: "first record does not look like a TLS handshake",
+			newFirstDialer: func(t *testing.T) *gomail.Dialer {
+				srv := startSmtpMock(t, smtpmock.ConfigurationAttr{})
+				dialer := gomail.NewDialer("127.0.0.1", srv.PortNumber(), "", "")
+				dialer.SSL = true
+				return dialer
+			},
+		},
+		{
+			name:    "auth error",
+			wantErr: "502 \"Command unrecognized",
+			newFirstDialer: func(t *testing.T) *gomail.Dialer {
+				srv := startSmtpMock(t, smtpmock.ConfigurationAttr{})
+				dialer := gomail.NewDialer("127.0.0.1", srv.PortNumber(), "", "")
+				dialer.StartTLSPolicy = gomail.NoStartTLS
+				// The mock does not advertise AUTH, so gomail would skip authentication on its own.
+				dialer.Auth = smtp.PlainAuth("", "user", "password", "127.0.0.1")
+				return dialer
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			healthy := startSmtpMock(t, smtpmock.ConfigurationAttr{})
+			healthyDialer := gomail.NewDialer("127.0.0.1", healthy.PortNumber(), "", "")
+			healthyDialer.StartTLSPolicy = gomail.NoStartTLS
+			msg := gomail.NewMessage()
+			msg.SetHeader("From", from)
+			msg.SetHeader("To", "rcpt@example.com")
+			msg.SetBody("text/plain", "hello world")
+			client := newTestSmtpClient(t, setting.NewCfg())
+
+			err := client.dialAndSend([]*gomail.Dialer{tc.newFirstDialer(t), healthyDialer}, msg)
+
+			require.ErrorContains(t, err, tc.wantErr)
+			assert.False(t, isConnectError(err))
+			assert.Empty(t, healthy.MessagesAndPurge())
 		})
 	}
 }

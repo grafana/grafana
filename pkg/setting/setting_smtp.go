@@ -128,49 +128,19 @@ func parseSmtpHostEntry(entry string) (netip.Prefix, string, error) {
 		return netip.Prefix{}, "", errors.New("entry is empty")
 	}
 
-	ipText := entry
-	if len(entry) > 1 && strings.HasPrefix(entry, "[") && strings.HasSuffix(entry, "]") {
-		ipText = entry[1 : len(entry)-1]
+	prefix, ipErr := util.ParseIPOrCIDR(entry)
+	if ipErr == nil {
+		return prefix, "", nil
 	}
-
-	if strings.Contains(ipText, "/") {
-		prefix, err := netip.ParsePrefix(ipText)
-		if err != nil {
-			return netip.Prefix{}, "", err
-		}
-		if prefix.Addr().Is4In6() {
-			if prefix.Bits() < 96 {
-				return netip.Prefix{}, "", errors.New("IPv4-mapped prefix must be at least /96")
-			}
-			prefix = netip.PrefixFrom(prefix.Addr().Unmap(), prefix.Bits()-96)
-		}
-		return prefix.Masked(), "", nil
-	}
-	if addr, err := netip.ParseAddr(ipText); err == nil {
-		if addr.Zone() != "" {
-			return netip.Prefix{}, "", errors.New("zoned addresses are not supported")
-		}
-		addr = addr.Unmap()
-		return netip.PrefixFrom(addr, addr.BitLen()), "", nil
+	if strings.Contains(entry, "/") || errors.Is(ipErr, util.ErrZonedAddress) {
+		return netip.Prefix{}, "", ipErr
 	}
 
 	hostname := NormalizeSmtpHostname(entry)
-	if !validSmtpHostname(hostname) {
+	if !util.ValidHostname(hostname) {
 		return netip.Prefix{}, "", errors.New("not a valid IP address, CIDR or hostname")
 	}
 	return netip.Prefix{}, hostname, nil
-}
-
-// Dot-separated labels of 1-63 characters that don't start or end with '-'.
-var smtpHostnameRegex = regexp.MustCompile(`^([a-z0-9_]([a-z0-9_-]{0,61}[a-z0-9_])?\.)*[a-z0-9_]([a-z0-9_-]{0,61}[a-z0-9_])?$`)
-
-// A numeric last label is a malformed IPv4 address such as 010.0.0.1, which
-// would otherwise never match anything.
-var numericLastLabelRegex = regexp.MustCompile(`(^|\.)[0-9]+$`)
-
-// validSmtpHostname reports whether a normalized hostname is a plausible DNS name.
-func validSmtpHostname(hostname string) bool {
-	return len(hostname) <= 253 && smtpHostnameRegex.MatchString(hostname) && !numericLastLabelRegex.MatchString(hostname)
 }
 
 func validHeader(header string) bool {
@@ -215,8 +185,12 @@ func (list SmtpHostList) MatchesAddr(addr netip.Addr) bool {
 	})
 }
 
-// NormalizeSmtpHostname lowercases the host and removes brackets and a trailing dot.
+// NormalizeSmtpHostname lowercases the host and removes one pair of enclosing
+// brackets and a trailing dot.
 func NormalizeSmtpHostname(host string) string {
-	host = strings.TrimSuffix(strings.Trim(strings.TrimSpace(host), "[]"), ".")
-	return strings.ToLower(host)
+	host = strings.TrimSpace(host)
+	if len(host) > 1 && strings.HasPrefix(host, "[") && strings.HasSuffix(host, "]") {
+		host = host[1 : len(host)-1]
+	}
+	return strings.ToLower(strings.TrimSuffix(host, "."))
 }
