@@ -4,11 +4,13 @@ import { AuthTypeStep } from '../AuthTypeStep';
 import { BootstrapStep } from '../BootstrapStep';
 import { ConnectStep } from '../ConnectStep';
 import { FinishStep } from '../FinishStep';
+import { SourceConnectStep } from '../SourceConnectStep';
 import { SynchronizeStep } from '../SynchronizeStep';
-import { type ConnectionCreationResult, type WizardStep } from '../types';
+import { type ConnectionCreationResult, type RepoType, type WizardStep } from '../types';
 
 export interface WizardStepContentProps {
   activeStep: WizardStep;
+  repoType: RepoType;
   settingsData?: RepositoryViewList;
   repoName: string;
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
@@ -19,6 +21,7 @@ export interface WizardStepContentProps {
 
 export function WizardStepContent({
   activeStep,
+  repoType,
   settingsData,
   repoName,
   onGitHubAppSubmit,
@@ -28,7 +31,7 @@ export function WizardStepContent({
 }: WizardStepContentProps) {
   switch (activeStep) {
     case 'authType':
-      return <AuthTypeStep onGitHubAppSubmit={onGitHubAppSubmit} />;
+      return repoType === 'source' ? <SourceConnectStep /> : <AuthTypeStep onGitHubAppSubmit={onGitHubAppSubmit} />;
     case 'connection':
       return <ConnectStep />;
     case 'bootstrap':

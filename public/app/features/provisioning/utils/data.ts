@@ -1,4 +1,9 @@
-import { type CommitOptions, type InlineSecureValue, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type CommitOptions,
+  type InlineSecureValue,
+  type RepositorySpec,
+  type SourceRepositoryConfig,
+} from 'app/api/clients/provisioning/v0alpha1';
 
 import { type RepositoryFormData } from '../types';
 
@@ -92,7 +97,46 @@ export const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflow
   return [...workflows, 'branch'];
 };
 
+const buildSourceConfig = (source: RepositoryFormData['source']): SourceRepositoryConfig => {
+  const config: SourceRepositoryConfig = {
+    url: source?.url?.trim() ?? '',
+    auth: { type: source?.auth?.type ?? 'bearer' },
+    emptyTreePolicy: source?.emptyTreePolicy ?? 'refuse',
+  };
+
+  const allow = (source?.allow ?? [])
+    .map(({ group, kind }) => ({ group: group.trim(), kind: kind.trim() }))
+    .filter(({ group, kind }) => group && kind);
+  if (allow.length) {
+    config.allow = allow;
+  }
+
+  const caBundle = source?.tls?.caBundle?.trim();
+  const serverName = source?.tls?.serverName?.trim();
+  if (caBundle || serverName) {
+    config.tls = { ...(caBundle ? { caBundle } : {}), ...(serverName ? { serverName } : {}) };
+  }
+
+  return config;
+};
+
 export const dataToSpec = (data: RepositoryFormData, connectionName?: string): RepositorySpec => {
+  if (data.type === 'source') {
+    // Source repositories are always read-only and have no git conventions or webhooks.
+    const source = buildSourceConfig(data.source);
+    const sourceSpec: RepositorySpec = {
+      type: 'source',
+      sync: data.sync,
+      title: data.title || '',
+      workflows: [],
+      source,
+    };
+    if (source.auth?.type === 'clientCredentials' && data.connectionName) {
+      sourceSpec.connection = { name: data.connectionName };
+    }
+    return structuredClone(sourceSpec);
+  }
+
   const spec: RepositorySpec = {
     type: data.type,
     sync: data.sync,
@@ -226,6 +270,13 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     generateDashboardPreviews: spec.github
       ? (spec.github?.generateDashboardPreviews ?? false)
       : (spec.pullRequest?.generateDashboardPreviews ?? false),
+    source: spec.source && {
+      ...spec.source,
+      auth: { type: spec.source.auth?.type ?? 'bearer' },
+      allow: spec.source.allow ?? [],
+      emptyTreePolicy: spec.source.emptyTreePolicy ?? 'refuse',
+      tls: { caBundle: spec.source.tls?.caBundle ?? '', serverName: spec.source.tls?.serverName ?? '' },
+    },
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
@@ -244,7 +295,9 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
   });
 };
 
-export const generateRepositoryTitle = (repository: Pick<RepositoryFormData, 'type' | 'url' | 'path'>): string => {
+export const generateRepositoryTitle = (
+  repository: Pick<RepositoryFormData, 'type' | 'url' | 'path' | 'source'>
+): string => {
   switch (repository.type) {
     case 'github':
     case 'githubEnterprise':
@@ -256,6 +309,8 @@ export const generateRepositoryTitle = (repository: Pick<RepositoryFormData, 'ty
     }
     case 'local':
       return repository.path ?? 'local';
+    case 'source':
+      return repository.source?.url?.replace(/\/+$/, '').split('/').pop() || 'source';
     default:
       return '';
   }

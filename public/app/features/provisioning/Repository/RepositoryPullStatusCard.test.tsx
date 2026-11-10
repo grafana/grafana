@@ -240,4 +240,23 @@ describe('RepositoryPullStatusCard', () => {
       expect(screen.getByText('Path:')).toBeInTheDocument();
     });
   });
+
+  describe('source repositories', () => {
+    it('shows the complete source URL and no branch or path', () => {
+      const repo = createMockRepository({
+        spec: {
+          title: 'Source Repo',
+          type: 'source',
+          source: { url: 'https://sources.example.com/v1/sources/stacks-123', auth: { type: 'bearer' } },
+          sync: { target: 'instance', enabled: true },
+          workflows: [],
+        },
+      });
+      render(<RepositoryPullStatusCard repo={repo} />);
+
+      expect(screen.getByText('https://sources.example.com/v1/sources/stacks-123')).toBeInTheDocument();
+      expect(screen.queryByText('Branch:')).not.toBeInTheDocument();
+      expect(screen.queryByText('Path:')).not.toBeInTheDocument();
+    });
+  });
 });

@@ -18,6 +18,7 @@ import { AppInstruction } from '../components/Shared/AppInstruction';
 import { ConnectionBaseFields } from '../components/Shared/ConnectionBaseFields';
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
 import { OAuthConnectionFields } from '../components/Shared/OAuthConnectionFields';
+import { SourceConnectionFields } from '../components/Shared/SourceConnectionFields';
 import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { useSaveConnection } from '../hooks/useSaveConnection';
@@ -45,6 +46,7 @@ const PROVIDER_OPTIONS: Array<{
   { value: 'gitlab', label: 'GitLab', types: ['gitlabOAuth'] },
   { value: 'bitbucket', label: 'Bitbucket', types: ['bitbucketOAuth'] },
   { value: 'git', label: 'Git', types: ['gitOAuth'] },
+  { value: 'source', label: 'Source API', types: ['source'] },
 ];
 /* eslint-enable @grafana/i18n/no-untranslated-strings */
 
@@ -322,6 +324,10 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
 
             {(selectedType === 'github' || selectedType === 'githubEnterprise') && (
               <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
+            )}
+
+            {selectedType === 'source' && (
+              <SourceConnectionFields required={!isEdit} clientSecretConfigured={Boolean(data?.secure?.clientSecret)} />
             )}
 
             {isOAuthConnectionType(selectedType) && (

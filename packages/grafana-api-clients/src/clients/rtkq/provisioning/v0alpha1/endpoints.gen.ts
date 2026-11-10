@@ -1506,6 +1506,14 @@ export type ConnectionOAuthConfig = {
   /** The OAuth app client ID */
   clientID: string;
 };
+export type SourceConnectionConfig = {
+  /** The audience to request, when the token endpoint needs one. */
+  audience?: string;
+  /** The OAuth scopes to request. */
+  scopes?: string[];
+  /** The OAuth token endpoint (e.g. `https://idp.example.com/oauth/token`). It is set here and never taken from the source's descriptor, so a rogue source cannot redirect the client secret. */
+  tokenURL: string;
+};
 export type ConnectionWebhookConfig = {
   /** Disabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet. */
   disabled?: boolean;
@@ -1525,6 +1533,8 @@ export type ConnectionSpec = {
   githubEnterpriseOAuth?: GitHubEnterpriseOAuthConnectionConfig;
   /** OAuth app configuration shared by all OAuth app providers */
   oauth?: ConnectionOAuthConfig;
+  /** Source API client-credentials configuration Only applicable when provider is "source" */
+  source?: SourceConnectionConfig;
   /** The connection display name (shown in the UI) */
   title: string;
   /** The connection provider type
@@ -1536,7 +1546,8 @@ export type ConnectionSpec = {
      - `"githubEnterprise"`
      - `"githubEnterpriseOAuth"`
      - `"githubOAuth"`
-     - `"gitlabOAuth"` */
+     - `"gitlabOAuth"`
+     - `"source"` */
   type:
     | 'bitbucketOAuth'
     | 'gitOAuth'
@@ -1544,7 +1555,8 @@ export type ConnectionSpec = {
     | 'githubEnterprise'
     | 'githubEnterpriseOAuth'
     | 'githubOAuth'
-    | 'gitlabOAuth';
+    | 'gitlabOAuth'
+    | 'source';
   /** The connection URL */
   url?: string;
   /** Webhook configuration for this connection */
@@ -2005,6 +2017,41 @@ export type PullRequestOptions = {
   /** Template for pull request titles. Supports the same variables as BranchOptions.NameTemplate ({{random}} is available but rarely useful here). When empty, the first line of the commit message is used. */
   titleTemplate?: string;
 };
+export type SourceAllowedKind = {
+  /** The API group, e.g. `dashboard.grafana.app`. A leading `*.` matches any subdomain. */
+  group: string;
+  /** The kind, e.g. `Dashboard`. `*` matches every kind of the group. */
+  kind: string;
+};
+export type SourceAuth = {
+  /** Possible enum values:
+     - `"bearer"` sends the long-lived secure.token as a bearer token.
+     - `"clientCredentials"` uses an OAuth client-credentials token kept fresh by a source Connection.
+     - `"tokenExchange"` exchanges a short-lived token per request. Only available where a token exchange service is configured. */
+  type: 'bearer' | 'clientCredentials' | 'tokenExchange';
+};
+export type SourceTls = {
+  /** PEM-encoded CA certificates that sign the source's server certificate, in addition to the system roots. */
+  caBundle?: string;
+  /** Overrides the server name used to verify the certificate. */
+  serverName?: string;
+};
+export type SourceRepositoryConfig = {
+  /** The kinds this source may write. Enforced by Provisioning; the source's own descriptor never grants authority. Folders are always allowed, since directories become folders. When empty, only dashboards are allowed. */
+  allow?: SourceAllowedKind[];
+  /** How requests to the source are authenticated. Defaults to bearer. */
+  auth?: SourceAuth;
+  /** What to do when the source returns an empty tree for a repository that manages resources. Defaults to refuse, so a faulty source cannot prune everything.
+    
+    Possible enum values:
+     - `"allow"` treats an empty tree as a request to delete everything.
+     - `"refuse"` fails the sync instead of pruning everything the repository manages. */
+  emptyTreePolicy?: 'allow' | 'refuse';
+  /** TLS settings for reaching the source. */
+  tls?: SourceTls;
+  /** The Source API base URL, including the source id (e.g. `https://source.example.com/v1/sources/my-source`). */
+  url?: string;
+};
 export type SyncOptions = {
   /** Enabled must be saved as true before any sync job will run */
   enabled: boolean;
@@ -2047,6 +2094,8 @@ export type RepositorySpec = {
   local?: LocalRepositoryConfig;
   /** Pull request options. Only meaningful when Workflows includes "branch". */
   pullRequest?: PullRequestOptions;
+  /** The repository served by a Source API endpoint. Mutually exclusive with local | github | git. */
+  source?: SourceRepositoryConfig;
   /** Sync settings -- how values are pulled from the repository into grafana */
   sync: SyncOptions;
   /** The repository display name (shown in the UI) */
@@ -2059,8 +2108,9 @@ export type RepositorySpec = {
      - `"github"`
      - `"githubEnterprise"`
      - `"gitlab"`
-     - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local';
+     - `"local"`
+     - `"source"` */
+  type: 'bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local' | 'source';
   /** Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider. */
   webhook?: WebhookConfig;
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
@@ -2188,8 +2238,9 @@ export type ResourceRepositoryInfo = {
      - `"github"`
      - `"githubEnterprise"`
      - `"gitlab"`
-     - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local';
+     - `"local"`
+     - `"source"` */
+  type: 'bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local' | 'source';
 };
 export type Unstructured = {
   [key: string]: any;
@@ -2331,8 +2382,9 @@ export type RepositoryView = {
      - `"github"`
      - `"githubEnterprise"`
      - `"gitlab"`
-     - `"local"` */
-  type: 'bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local';
+     - `"local"`
+     - `"source"` */
+  type: 'bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local' | 'source';
   /** For git, this is the target URL */
   url?: string;
   /** The supported workflows */
@@ -2354,9 +2406,10 @@ export type RepositoryViewList = {
     | 'githubEnterpriseOAuth'
     | 'githubOAuth'
     | 'gitlabOAuth'
+    | 'source'
   )[];
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
-  availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local')[];
+  availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local' | 'source')[];
   /** AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled). */
   availableResources?: SupportedResource[];
   items: RepositoryView[];

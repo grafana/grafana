@@ -7,6 +7,9 @@ import { type ConnectionFormData, type OAuthConnectionType } from '../../types';
 import { getOAuthCallbackUri, isOAuthConnectionType } from '../../utils/connectionOAuth';
 
 export function AppInstruction({ type }: { type: ConnectionFormData['type'] }) {
+  if (type === 'source') {
+    return null;
+  }
   return isOAuthConnectionType(type) ? <OAuthAppInstruction type={type} /> : <GithubAppInstruction />;
 }
 

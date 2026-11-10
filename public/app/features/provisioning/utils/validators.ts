@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { type SourceAllowedKind } from 'app/api/clients/provisioning/v0alpha1';
 
 // Invisible Unicode characters commonly introduced by copy-paste from
 // rich text sources (web pages, PDFs, chat apps).
@@ -108,4 +109,15 @@ export function validateSmimeCertificate(signingMethod: string | undefined) {
     signingMethod !== 'smime' ||
     notEmpty(value) ||
     t('provisioning.commit-options.smime-certificate-required', 'Certificate is required');
+}
+
+/**
+ * react-hook-form `validate` function for the source allowed kinds list.
+ * Every row needs both a group and a kind.
+ */
+export function validateAllowedKinds(value: unknown): string | true {
+  if (!Array.isArray(value) || value.every((row: SourceAllowedKind) => row.group.trim() && row.kind.trim())) {
+    return true;
+  }
+  return t('provisioning.validation.allowed-kind-incomplete', 'Every allowed kind needs a group and a kind.');
 }

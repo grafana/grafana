@@ -22,7 +22,12 @@ export default function ConnectPage() {
     <Page
       navId="provisioning"
       pageNav={{
-        text: isGitProvider(type) ? 'Configure Git Sync' : 'Configure local file path',
+        text:
+          type === 'source'
+            ? t('provisioning.connect-page.title-source', 'Configure Source API')
+            : isGitProvider(type)
+              ? 'Configure Git Sync'
+              : 'Configure local file path',
         subTitle: t(
           'provisioning.connect-page.subTitle.connect-external-storage-manage-resources',
           'Connect to an external storage to manage your resources'

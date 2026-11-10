@@ -931,6 +931,49 @@ describe('ProvisioningWizard', () => {
       expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     });
 
+    it('should connect a Source API with a bearer token and skip the branch and path step', async () => {
+      const mockSubmitData = setupMockSubmitData();
+      const { user } = setup(<ProvisioningWizard type="source" />);
+
+      expect(await screen.findByRole('heading', { name: /1\. Connect/i })).toBeInTheDocument();
+      expect(screen.queryByText('Configure repository')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /Repository URL/i })).not.toBeInTheDocument();
+
+      await pasteIntoInput(
+        user,
+        screen.getByRole('textbox', { name: /Source URL/i }),
+        'https://sources.example.com/v1/sources/stacks-123'
+      );
+      await pasteIntoInput(user, screen.getByLabelText(/^Bearer token/), 'test-token');
+      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+
+      expect(await screen.findByRole('heading', { name: /2\. Choose what to synchronize/i })).toBeInTheDocument();
+      expect(mockSubmitData).toHaveBeenCalledTimes(1);
+      expect(mockSubmitData).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'source',
+          workflows: [],
+          source: {
+            url: 'https://sources.example.com/v1/sources/stacks-123',
+            auth: { type: 'bearer' },
+            emptyTreePolicy: 'refuse',
+          },
+        }),
+        { token: { create: 'test-token' }, commitSigningKey: undefined }
+      );
+    });
+
+    it('should not submit a Source API without a URL and token', async () => {
+      const mockSubmitData = setupMockSubmitData();
+      const { user } = setup(<ProvisioningWizard type="source" />);
+
+      await user.click(await screen.findByRole('button', { name: /Choose what to synchronize/i }));
+
+      expect(await screen.findByText('Source URL is required')).toBeInTheDocument();
+      expect(screen.getByText('Bearer token is required')).toBeInTheDocument();
+      expect(mockSubmitData).not.toHaveBeenCalled();
+    });
+
     it('should accept tokenUser input for Bitbucket provider', async () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
 

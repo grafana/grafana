@@ -43,6 +43,12 @@ export function RepositoryListItem({ repository }: Props) {
           {spec.local?.path ?? ''}
         </Text>
       );
+    } else if (spec?.type === 'source') {
+      meta.push(
+        <Text variant="bodySmall" key="url">
+          {spec.source?.url ?? ''}
+        </Text>
+      );
     } else {
       const href = getRepoHrefForProvider(spec);
       if (href) {

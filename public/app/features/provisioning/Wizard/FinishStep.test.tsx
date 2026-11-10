@@ -92,6 +92,18 @@ describe('FinishStep', () => {
       expect(screen.queryByText(PR_LABEL)).not.toBeInTheDocument();
     });
 
+    it('offers the sync interval but no read-only toggle or git sections for a source repository', async () => {
+      setup('source');
+
+      expect(await screen.findByRole('spinbutton', { name: /Sync Interval/ })).toBeInTheDocument();
+      expect(screen.getByText(/Source repositories are read-only/)).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: /Read only/ })).not.toBeInTheDocument();
+      expect(screen.queryByText(BRANCH_LABEL)).not.toBeInTheDocument();
+      expect(screen.queryByText(COMMIT_LABEL)).not.toBeInTheDocument();
+      expect(screen.queryByText(PR_LABEL)).not.toBeInTheDocument();
+      expect(screen.queryByText('Webhook options')).not.toBeInTheDocument();
+    });
+
     it('shows the webhook section for a GitHub repository', async () => {
       setup('github');
 

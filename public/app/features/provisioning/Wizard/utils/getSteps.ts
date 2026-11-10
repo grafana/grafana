@@ -5,18 +5,27 @@ import { getFormErrors } from '../../utils/getFormErrors';
 import { type Step } from '../Stepper';
 import { type RepoType, type StepStatusInfo, type WizardStep } from '../types';
 
+const SOURCE_FIELDS = [
+  'repository.source.url',
+  'repository.source.auth.type',
+  'repository.source.allow',
+  'repository.source.tls.caBundle',
+  'repository.source.tls.serverName',
+  'repository.connectionName',
+];
+
 export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
   const isLocal = type === 'local';
   const authStepText = isLocal
     ? t('provisioning.wizard.connect-step-local', 'File provisioning')
     : t('provisioning.wizard.connect-step', 'Connect');
-  return [
+  const steps: Array<Step<WizardStep>> = [
     {
       id: 'authType',
       name: authStepText,
       title: authStepText,
       submitOnNext: true,
-      formFields: ['repository.url', 'repository.token', 'repository.tokenUser', 'repository.email'],
+      formFields: ['repository.url', 'repository.token', 'repository.tokenUser', 'repository.email', ...SOURCE_FIELDS],
     },
     {
       id: 'connection',
@@ -48,6 +57,9 @@ export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
       submitOnNext: true,
     },
   ];
+
+  // Source repositories have no branch or path to configure.
+  return type === 'source' ? steps.filter((step) => step.id !== 'connection') : steps;
 };
 
 interface SyncStepState {
@@ -125,7 +137,13 @@ export function getSyncStepStatus(state: SyncStepState): StepStatusInfo {
   return { status: 'idle' };
 }
 
-const AUTH_TYPE_FIELDS = new Set(['repository.token', 'repository.tokenUser', 'repository.url', 'repository.email']);
+const AUTH_TYPE_FIELDS = new Set([
+  'repository.token',
+  'repository.tokenUser',
+  'repository.url',
+  'repository.email',
+  ...SOURCE_FIELDS,
+]);
 
 function getEarliestErrorStep(fieldErrors: ErrorDetails[]): WizardStep {
   const formErrors = getFormErrors(fieldErrors);

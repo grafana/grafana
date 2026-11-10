@@ -1,6 +1,7 @@
 import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
@@ -258,6 +259,228 @@ describe('ConfigForm', () => {
       const saveButton = await screen.findByRole('button', { name: /Save/ });
       await waitFor(() => expect(saveButton).toBeEnabled());
       expect(screen.queryByText(/managed externally/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('source repositories', () => {
+    const sourceUrl = 'https://sources.example.com/v1/sources/stacks-1';
+    const sourceConnection: Connection = {
+      ...gitlabConnection,
+      metadata: { name: 'source-conn' },
+      spec: {
+        type: 'source',
+        title: 'Source client credentials',
+        source: { tokenURL: 'https://idp.example.com/token' },
+      },
+    };
+
+    function buildSourceRepository(source: RepositorySpec['source'] = {}, secure?: SecureValues): Repository {
+      return {
+        metadata: { name: 'source-1' },
+        spec: {
+          type: 'source',
+          title: 'Source',
+          sync: { enabled: true, target: 'instance', intervalSeconds: 60 },
+          workflows: [],
+          source: { url: sourceUrl, auth: { type: 'bearer' }, ...source },
+        },
+        secure,
+      };
+    }
+
+    async function saveForm(user: ReturnType<typeof setup>['user']) {
+      const saveButton = await screen.findByRole('button', { name: /Save/ });
+      await waitFor(() => expect(saveButton).toBeEnabled());
+      await user.click(saveButton);
+    }
+
+    it('shows the source fields and none of the git-only sections', async () => {
+      setup(buildSourceRepository(), [sourceConnection]);
+
+      expect(await screen.findByRole('textbox', { name: /Source URL/ })).toHaveValue(sourceUrl);
+      expect(screen.getByRole('textbox', { name: /Repository type/ })).toHaveValue('Source API');
+      expect(
+        screen.getByText(/the kinds the source may write. when empty, only dashboards are allowed/i)
+      ).toBeInTheDocument();
+      expect(screen.getByText('TLS options')).toBeInTheDocument();
+      expect(screen.getByText('Automatic pulling')).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: /Read only/ })).not.toBeInTheDocument();
+      expect(screen.queryByText('Branch')).not.toBeInTheDocument();
+      expect(screen.queryByText('Path')).not.toBeInTheDocument();
+      expect(screen.queryByText('Commit options')).not.toBeInTheDocument();
+      expect(screen.queryByText('Branch options')).not.toBeInTheDocument();
+      expect(screen.queryByText('Pull request options')).not.toBeInTheDocument();
+      expect(screen.queryByText('Webhook options')).not.toBeInTheDocument();
+    });
+
+    it('saves a bearer source as a read-only spec with the new token', async () => {
+      const bodies = captureRepositoryWrites();
+      const { user } = setup(buildSourceRepository(), [sourceConnection]);
+
+      await user.type(await screen.findByLabelText(/^Bearer token/), 'new-token');
+      await saveForm(user);
+
+      await waitFor(() => expect(bodies.put).toBeDefined());
+      expect(bodies.put?.spec).toMatchObject({
+        type: 'source',
+        workflows: [],
+        source: { url: sourceUrl, auth: { type: 'bearer' }, emptyTreePolicy: 'refuse' },
+      });
+      expect(bodies.put?.spec?.connection).toBeUndefined();
+      expect(bodies.put?.secure).toEqual({ token: { create: 'new-token' } });
+      expect(bodies.test?.secure).toEqual({ token: { create: 'new-token' } });
+    });
+
+    it('keeps the stored token when saving a bearer source without touching it', async () => {
+      const bodies = captureRepositoryWrites();
+      const { user } = setup(buildSourceRepository({}, { token: { name: 'stored-token' } }), [sourceConnection]);
+
+      expect(await screen.findByRole('button', { name: /Reset/ })).toBeInTheDocument();
+      await saveForm(user);
+
+      await waitFor(() => expect(bodies.put).toBeDefined());
+      expect(bodies.put).not.toHaveProperty('secure');
+    });
+
+    it('requires a bearer token when none is stored', async () => {
+      const bodies = captureRepositoryWrites();
+      const { user } = setup(buildSourceRepository(), [sourceConnection]);
+
+      await saveForm(user);
+
+      expect(await screen.findByText('Bearer token is required')).toBeInTheDocument();
+      expect(bodies.put).toBeUndefined();
+    });
+
+    it('switches to client credentials by referencing a source connection and removing the stored token', async () => {
+      mockComboboxRect();
+      const bodies = captureRepositoryWrites();
+      const { user } = setup(buildSourceRepository({}, { token: { name: 'stored-token' } }), [
+        gitlabConnection,
+        sourceConnection,
+      ]);
+
+      await user.click(await screen.findByRole('combobox', { name: /Authentication/ }));
+      await user.click(await screen.findByRole('option', { name: /Client credentials/ }));
+
+      expect(screen.queryByLabelText(/^Bearer token/)).not.toBeInTheDocument();
+      await user.click(await screen.findByRole('combobox', { name: /Connection/ }));
+      // Only connections of the source type are offered.
+      expect(await screen.findByRole('option', { name: /Source client credentials/ })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: /GitLab OAuth/ })).not.toBeInTheDocument();
+      await user.click(screen.getByRole('option', { name: /Source client credentials/ }));
+      await saveForm(user);
+
+      await waitFor(() => expect(bodies.put).toBeDefined());
+      expect(bodies.put?.spec?.source?.auth).toEqual({ type: 'clientCredentials' });
+      expect(bodies.put?.spec?.connection).toEqual({ name: 'source-conn' });
+      expect(bodies.put?.secure).toEqual({ token: { remove: true } });
+    });
+
+    it('requires a connection for client credentials', async () => {
+      const bodies = captureRepositoryWrites();
+      const { user } = setup(buildSourceRepository({ auth: { type: 'clientCredentials' } }), [sourceConnection]);
+
+      await saveForm(user);
+
+      expect(await screen.findByText('A source connection is required')).toBeInTheDocument();
+      expect(bodies.put).toBeUndefined();
+    });
+
+    it('saves edited allowed kinds, the empty tree policy and TLS settings', async () => {
+      mockComboboxRect();
+      const bodies = captureRepositoryWrites();
+      const { user } = setup(
+        buildSourceRepository(
+          { allow: [{ group: 'dashboard.grafana.app', kind: 'Dashboard' }] },
+          { token: { name: 'stored-token' } }
+        ),
+        [sourceConnection]
+      );
+
+      await user.click(await screen.findByRole('button', { name: /Add kind/ }));
+      await user.type(screen.getByRole('textbox', { name: 'Group of allowed kind 2' }), 'playlist.grafana.app');
+      await user.type(screen.getByRole('textbox', { name: 'Kind of allowed kind 2' }), 'Playlist');
+      await user.click(screen.getByRole('button', { name: 'Remove allowed kind 1' }));
+
+      await user.click(screen.getByRole('combobox', { name: /When the source is empty/ }));
+      await user.click(await screen.findByRole('option', { name: /Allow/ }));
+
+      await user.click(screen.getByText('TLS options'));
+      await user.type(screen.getByRole('textbox', { name: /Server name/ }), 'sources.internal');
+      await saveForm(user);
+
+      await waitFor(() => expect(bodies.put).toBeDefined());
+      expect(bodies.put?.spec?.source).toEqual({
+        url: sourceUrl,
+        auth: { type: 'bearer' },
+        allow: [{ group: 'playlist.grafana.app', kind: 'Playlist' }],
+        emptyTreePolicy: 'allow',
+        tls: { serverName: 'sources.internal' },
+      });
+    });
+
+    it('blocks saving an allowed kind that has no kind', async () => {
+      const bodies = captureRepositoryWrites();
+      const { user } = setup(buildSourceRepository({}, { token: { name: 'stored-token' } }), [sourceConnection]);
+
+      await user.click(await screen.findByRole('button', { name: /Add kind/ }));
+      await user.type(screen.getByRole('textbox', { name: 'Group of allowed kind 1' }), 'dashboard.grafana.app');
+      await saveForm(user);
+
+      expect(await screen.findByText('Every allowed kind needs a group and a kind.')).toBeInTheDocument();
+      expect(bodies.put).toBeUndefined();
+    });
+
+    it('shows backend field errors on the source URL', async () => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/test`, () =>
+          HttpResponse.json(
+            { errors: [{ field: 'spec.source.url', detail: 'source URL must use https://' }] },
+            { status: 400 }
+          )
+        )
+      );
+      const { user } = setup(buildSourceRepository({}, { token: { name: 'stored-token' } }), [sourceConnection]);
+
+      await saveForm(user);
+
+      expect(await screen.findByText('source URL must use https://')).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /Source URL/ })).toBeInvalid();
+    });
+
+    describe('token exchange option', () => {
+      const originalNamespace = config.namespace;
+      afterEach(() => {
+        config.namespace = originalNamespace;
+      });
+
+      it.each([
+        { name: 'on-prem instances', namespace: 'default', offered: false },
+        { name: 'hosted instances', namespace: 'stacks-123', offered: true },
+      ])('is offered only where token exchange exists: $name', async ({ namespace, offered }) => {
+        mockComboboxRect();
+        config.namespace = namespace;
+        const { user } = setup(buildSourceRepository(), [sourceConnection]);
+
+        await user.click(await screen.findByRole('combobox', { name: /Authentication/ }));
+
+        expect(await screen.findByRole('option', { name: /Bearer token/ })).toBeInTheDocument();
+        expect(Boolean(screen.queryByRole('option', { name: /Token exchange/ }))).toBe(offered);
+      });
+
+      it('stays selectable for a repository that already uses it, without asking for a token', async () => {
+        const bodies = captureRepositoryWrites();
+        const { user } = setup(buildSourceRepository({ auth: { type: 'tokenExchange' } }), [sourceConnection]);
+
+        expect(await screen.findByRole('combobox', { name: /Authentication/ })).toHaveDisplayValue('Token exchange');
+        expect(screen.queryByLabelText(/^Bearer token/)).not.toBeInTheDocument();
+        await saveForm(user);
+
+        await waitFor(() => expect(bodies.put).toBeDefined());
+        expect(bodies.put?.spec?.source?.auth).toEqual({ type: 'tokenExchange' });
+        expect(bodies.put).not.toHaveProperty('secure');
+      });
     });
   });
 });

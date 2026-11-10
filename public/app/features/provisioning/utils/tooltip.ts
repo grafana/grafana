@@ -14,8 +14,14 @@ export function getManagedByRepositoryTooltip(title?: string): string {
   });
 }
 
-// Right now we only support local file provisioning message and git provisioned. This can be extended in the future as needed.
-export const getReadOnlyTooltipText = ({ isLocal = false }) => {
+// Right now we only support local file provisioning, Source API and git provisioned messages. This can be extended in the future as needed.
+export const getReadOnlyTooltipText = ({ isLocal = false, isSource = false }) => {
+  if (isSource) {
+    return t(
+      'provisioning.read-only-source-tooltip',
+      'This resource is read-only and provisioned from a Source API. To make any changes, update the source. To modify the settings go to Administration > Provisioning > Repositories.'
+    );
+  }
   return isLocal
     ? t(
         'provisioning.read-only-local-tooltip',

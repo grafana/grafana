@@ -23,7 +23,7 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
 
   const spec = repo.spec;
   const remoteConfig = getRemoteConfig(spec);
-  const repoUrl = remoteConfig?.url;
+  const repoUrl = remoteConfig?.url ?? spec?.source?.url;
   const branch = remoteConfig?.branch;
   const path = remoteConfig?.path ?? spec?.local?.path;
   const repoHref = getRepoHrefForProvider(repo.spec);
@@ -119,7 +119,7 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
                     {formatRepoUrl(repoUrl)}
                   </TextLink>
                 ) : (
-                  <Text variant="body">{formatRepoUrl(repoUrl)}</Text>
+                  <Text variant="body">{spec?.type === 'source' ? repoUrl : formatRepoUrl(repoUrl)}</Text>
                 )}
               </div>
             </>

@@ -17,7 +17,8 @@ export function getIsReadOnlyRepo(repository: RepositoryView | undefined): boole
     return false;
   }
 
-  return getIsReadOnlyWorkflows(repository.workflows);
+  // Source repositories never accept writes, even if the view omits the workflows.
+  return repository.type === 'source' || getIsReadOnlyWorkflows(repository.workflows);
 }
 
 /**

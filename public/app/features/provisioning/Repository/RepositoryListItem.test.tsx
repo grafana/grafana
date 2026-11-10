@@ -111,6 +111,23 @@ describe('RepositoryListItem', () => {
 
       expect(screen.getByText('/var/lib/grafana/repos/test')).toBeInTheDocument();
     });
+
+    it('should display the full source URL for Source API repos instead of a link', () => {
+      const repo = createMockRepository({
+        spec: {
+          title: 'Source Repo',
+          type: 'source',
+          source: { url: 'https://sources.example.com/v1/sources/stacks-123', auth: { type: 'bearer' } },
+          sync: { target: 'instance', enabled: true },
+          workflows: [],
+        },
+      });
+      render(<RepositoryListItem repository={repo} />);
+
+      expect(screen.getByText('https://sources.example.com/v1/sources/stacks-123')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /sources\.example\.com/ })).not.toBeInTheDocument();
+      expect(screen.getByText('Read only')).toBeInTheDocument();
+    });
   });
 
   describe('resource stats', () => {
