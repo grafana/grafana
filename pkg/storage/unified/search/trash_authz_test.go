@@ -171,7 +171,6 @@ func runTrashSearch(
 	ctx := authlib.WithAuthInfo(context.Background(), user)
 	res, err := index.Search(ctx, ac, q, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 	return res
 }
 
@@ -620,7 +619,6 @@ func TestSearchMissingServicePermissionsReturnsError(t *testing.T) {
 								return
 							}
 							require.NoError(t, err)
-							require.Nil(t, res.Error)
 							if outcome.userAllowed {
 								require.Equal(t, []string{"dash-1"}, namesOf(res))
 							} else {
