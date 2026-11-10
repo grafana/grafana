@@ -512,7 +512,7 @@ func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
 	// Single namespace: the parser rejects a manifest whose namespace is not the repository's.
 	namespace := request.GetNamespaceMapper(cfg)(cfg.DefaultOrgID())
 	if cfg.ProvisioningBootstrapPath == "" {
-		// Still reconcilable, so a repository a previous run registered can be stopped.
+		// Still reconcilable, so a repository a previous run registered can be removed.
 		return bootstrap.Config{Namespace: namespace}, nil
 	}
 	// The path is granted to every local repository before the bootstrap repository exists,
@@ -1082,10 +1082,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
-			// Runs with no path configured too, to stop a repository a previous run registered.
+			// Runs with no path configured too, to remove a repository a previous run registered.
 			// Never fatal: a rejected bootstrap repository must not keep the instance down.
 			if b.bootstrapConfig.Reconcilable() {
-				if err := bootstrap.Reconcile(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.jobs, b.bootstrapConfig); err != nil {
+				if err := bootstrap.Reconcile(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.bootstrapConfig); err != nil {
 					logging.FromContext(postStartHookCtx.Context).Error("failed to reconcile bootstrap repository",
 						"path", b.bootstrapConfig.Path, "namespace", b.bootstrapConfig.Namespace, "error", err)
 				}
