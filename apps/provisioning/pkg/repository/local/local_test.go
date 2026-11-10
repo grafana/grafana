@@ -1925,8 +1925,8 @@ func TestLocalPathRejectsSiblingOfPermittedPrefix(t *testing.T) {
 func TestLocalPathDoesNotDependOnARepositoryHavingBeenBuilt(t *testing.T) {
 	// The prefixes were once cleaned in NewRepository, which mutated the shared resolver and
 	// made admission's answer depend on whether a repository had been built first.
-	prefixes := []string{"/srv/grafana/repo/"}
-	resolver := &LocalFolderResolver{PermittedPrefixes: prefixes, HomePath: "/srv/grafana"}
+	const configured = "/srv/grafana/repo/"
+	resolver := &LocalFolderResolver{PermittedPrefixes: []string{configured}, HomePath: "/srv/grafana"}
 
 	before, err := resolver.LocalPath("repo/")
 	require.NoError(t, err)
@@ -1941,5 +1941,7 @@ func TestLocalPathDoesNotDependOnARepositoryHavingBeenBuilt(t *testing.T) {
 	after, err := resolver.LocalPath("repo/")
 	require.NoError(t, err)
 	assert.Equal(t, before, after)
-	assert.Equal(t, prefixes, resolver.PermittedPrefixes, "the resolver's prefixes must not be mutated")
+	// Built fresh from the literal: comparing against the slice the resolver was handed would
+	// compare an in-place mutation against itself.
+	assert.Equal(t, []string{configured}, resolver.PermittedPrefixes, "the resolver's prefixes must not be mutated")
 }
