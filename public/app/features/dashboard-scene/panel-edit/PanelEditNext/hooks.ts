@@ -103,7 +103,8 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
   );
   // No initial value: `useLocalStorage` would write it on first read, pinning the default to the
   // window size at that moment. Only a drag persists a width, so until then it follows the window.
-  const [storedSidebarWidth, setSidebarWidth] = useLocalStorage<number>(QUERY_EDITOR_SIDEBAR_WIDTH_KEY);
+  const [storedSidebarWidth, setSidebarWidth, removeSidebarWidth] =
+    useLocalStorage<number>(QUERY_EDITOR_SIDEBAR_WIDTH_KEY);
   const { width: windowWidth } = useWindowSize();
   const defaultSidebarWidth = getDefaultSidebarWidth(windowWidth);
   // Anything other than a positive number yields an invalid flex-basis, which drops out and leaves
@@ -161,6 +162,14 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
     onPaneSizeChanged: setSidebarWidth,
   });
 
+  // A double-click reset reports its size like any resize, which would save it — possibly narrower than
+  // the default if the data pane reserve caps it. Clearing afterwards makes the sidebar follow the window again.
+  const resetSidebarSplitter = sidebarSplitter.splitterProps.onDoubleClick;
+  const onSidebarReset = useCallback(() => {
+    resetSidebarSplitter?.();
+    removeSidebarWidth();
+  }, [resetSidebarSplitter, removeSidebarWidth]);
+
   // `collapsed` only seeds the splitter's initial state, so the current value has to be written back
   // for a reload to pick it up. Matches how the options pane persists its own collapse.
   useEffect(() => {
@@ -178,6 +187,9 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
     setSidebarSize,
     isScrollingLayout,
     vizDataSplitter,
-    sidebarSplitter,
+    sidebarSplitter: {
+      ...sidebarSplitter,
+      splitterProps: { ...sidebarSplitter.splitterProps, onDoubleClick: onSidebarReset },
+    },
   };
 }
