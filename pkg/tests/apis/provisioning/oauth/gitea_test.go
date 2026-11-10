@@ -132,7 +132,7 @@ func (p *giteaProvider) CreateRepository(t *testing.T, helper *common.Provisioni
 }
 
 func TestIntegrationProvisioning_GitOAuthConnectionRejectsPrivateEndpoints(t *testing.T) {
-	helper := sharedGitHelper(t)
+	helper := giteaHelper(t)
 
 	_, err := helper.Connections.Resource.Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": provisioning.APIVERSION,
