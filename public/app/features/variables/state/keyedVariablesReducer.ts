@@ -3,15 +3,11 @@ import { type AnyAction } from 'redux';
 
 import { toStateKey } from '../toStateKey';
 
-import { getTemplatingReducers, type TemplatingState } from './reducers';
+import { initialKeyedVariablesState, type KeyedVariablesState } from './initialKeyedVariablesState';
+import { getTemplatingReducers } from './reducers';
 import { variablesInitTransaction } from './transactionReducer';
 
-export interface KeyedVariablesState {
-  lastKey?: string;
-  keys: Record<string, TemplatingState>;
-}
-
-export const initialKeyedVariablesState: KeyedVariablesState = { keys: {} };
+export { initialKeyedVariablesState, type KeyedVariablesState } from './initialKeyedVariablesState';
 
 export interface KeyedAction {
   key: string;

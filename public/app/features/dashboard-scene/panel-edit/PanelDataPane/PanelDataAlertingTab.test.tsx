@@ -39,8 +39,21 @@ import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataA
  * These tests has been copied from public/app/features/alerting/unified/PanelAlertTabContent.test.tsx and been slightly modified to make sure the scenes alert edit tab is as close to the old alert edit tab as possible
  */
 
-jest.mock('app/features/alerting/unified/api/prometheus');
-jest.mock('app/features/alerting/unified/api/ruler');
+jest.mock('app/features/alerting/unified/api/prometheus', () => ({
+  getRulesFilterSearchParams: jest.fn(),
+  paramsWithMatcherAndState: jest.fn(),
+  normalizeRuleGroup: jest.fn(),
+  groupRulesByFileName: jest.fn(),
+  fetchRules: jest.fn(),
+}));
+jest.mock('app/features/alerting/unified/api/ruler', () => ({
+  RULER_CONFIG_API_PROBE_NAMESPACE: '__grafana_alerting_ruler_probe__',
+  RULER_CONFIG_API_PROBE_GROUP: '__grafana_alerting_ruler_probe__',
+  rulerUrlBuilder: jest.fn(),
+  fetchRulerRules: jest.fn(),
+  fetchTestRulerRulesGroup: jest.fn(),
+  fetchRulerRulesGroup: jest.fn(),
+}));
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),

@@ -20,7 +20,11 @@ jest.mock('@grafana/runtime/internal', () => ({
 }));
 const mockUseWatchersBannerFlag = jest.mocked(useFlagAlertingWatchersBanner);
 
-jest.mock('../hooks/usePluginBridge');
+jest.mock('../hooks/usePluginBridge', () => ({
+  usePluginBridge: jest.fn(),
+  canAccessPluginPage: jest.fn(),
+  useIrmPlugin: jest.fn(),
+}));
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
 
 const dismissedKey = getWatchersBannerDismissedKey(config.bootData.user.orgId);

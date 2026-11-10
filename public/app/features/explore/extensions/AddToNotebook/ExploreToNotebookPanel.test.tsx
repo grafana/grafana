@@ -28,7 +28,9 @@ jest.mock('app/features/notebook/addPanel/AddPanelToNotebookModalBody', () => ({
   },
 }));
 
-jest.mock('app/features/notebook/addPanel/buildPanelElementFromExplore');
+jest.mock('app/features/notebook/addPanel/buildPanelElementFromExplore', () => ({
+  buildPanelElementFromExplore: jest.fn(),
+}));
 
 const DATASOURCE_REF: DataSourceRef = { type: 'prometheus', uid: 'prom' };
 
