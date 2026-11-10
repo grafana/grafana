@@ -1,3 +1,27 @@
+<!-- 13.2.6 START -->
+
+# 13.2.6 (2026-11-10)
+
+### Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-110992
+- Security: Fix CVE-2026-111024
+- Security: Fix CVE-2026-13721
+- Security: Fix CVE-2026-14242
+
+### Features and enhancements
+
+- **DateTime:** Update moment-timezone and easy-tz for 2026 time zone changes [#136950](https://github.com/grafana/grafana/pull/136950), [@joshhunt](https://github.com/joshhunt)
+- **Provisioning:** Handle repository build timeouts and branch outages [#135723](https://github.com/grafana/grafana/pull/135723), [@ferruvich](https://github.com/ferruvich)
+- **Provisioning:** allow same-host URL change on connection-backed repositories [#137091](https://github.com/grafana/grafana/pull/137091), [@MissingRoberto](https://github.com/MissingRoberto)
+
+### Bug fixes
+
+- **Unified search:** Fix empty results when all query words are under 3 chars [#137309](https://github.com/grafana/grafana/pull/137309), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.2.6 END -->
 <!-- 13.2.5 START -->
 
 # 13.2.5 (2026-10-27)
