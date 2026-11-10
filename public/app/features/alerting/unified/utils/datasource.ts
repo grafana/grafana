@@ -44,9 +44,6 @@ import { isCloudRulesSource, isGrafanaRulesSource } from './rulesSource';
 // eslint-disable-next-line no-barrel-files/no-barrel-files
 export { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME };
 
-// eslint-disable-next-line no-barrel-files/no-barrel-files -- Keep existing callers on the same helpers as narrow imports.
-export { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from './rulesSource';
-
 const collator = new Intl.Collator();
 
 function getAllDataSources(): Array<DataSourceInstanceSettings<DataSourceJsonData>> {
