@@ -5129,11 +5129,13 @@
     "pan-zoom-help": {
       "aria-label-open-documentation": "Open Canvas documentation",
       "ctrl-right-mouse": "CTRL + right mouse",
+      "ctrl-scroll-wheel": "CTRL + scroll wheel",
       "middle-mouse": "Middle mouse",
       "pan-title": "Pan:",
       "reset-double-click": "Reset: Double click",
       "title-pan-and-zoom-controls": "Pan and zoom controls",
-      "zoom-scroll-wheel": "Zoom: Scroll wheel"
+      "trackpad-pinch": "Trackpad pinch",
+      "zoom-title": "Zoom:"
     },
     "parallelogram-item": {
       "category-parallelogram": "Parallelogram",

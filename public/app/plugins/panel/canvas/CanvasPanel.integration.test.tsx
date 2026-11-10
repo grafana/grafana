@@ -818,6 +818,32 @@ describe('Canvas', () => {
       expect(getCanvasPanZoomContainer()).toHaveStyle('transform-origin: 0 0;');
       expect(getCanvasPanZoomContainer()).toHaveStyle('transform: translate3d(300px, 300px, 0px) scale(2, 2)');
     });
+
+    it('lets wheel events scroll the dashboard when the pan and zoom option is off', async () => {
+      setUp({ options: getOptions({ panZoom: false }) });
+      const viewport = getCanvasPanZoomContainer();
+      const container = screen.getByTestId('canvas-scene-wrapper');
+      // InfiniteViewer moves the viewport into its own scroll wrapper once initialized
+      await waitFor(() => expect(viewport.parentElement).not.toBe(container));
+
+      // fireEvent returns false when a listener called preventDefault
+      expect(fireEvent.wheel(viewport, { deltaY: 100 })).toBe(true);
+      expect(fireEvent.wheel(viewport, { deltaY: 100, ctrlKey: true })).toBe(true);
+      expect(viewport.parentElement!.style.overflow).toBe('hidden');
+      expect(container.style.overscrollBehavior).toBe('auto');
+    });
+
+    it('keeps wheel scrolling and ctrl+wheel zoom inside the canvas when the pan and zoom option is on', async () => {
+      setUp({ options: getOptions({ panZoom: true }) });
+      const viewport = getCanvasPanZoomContainer();
+      const container = screen.getByTestId('canvas-scene-wrapper');
+      await waitFor(() => expect(viewport.parentElement).not.toBe(container));
+
+      expect(fireEvent.wheel(viewport, { deltaY: 100 })).toBe(false);
+      expect(fireEvent.wheel(viewport, { deltaY: 100, ctrlKey: true })).toBe(false);
+      expect(viewport.parentElement!.style.overflow).not.toBe('hidden');
+      expect(container.style.overscrollBehavior).not.toBe('auto');
+    });
   });
 
   describe('canvasPanelPanZoom disabled', () => {

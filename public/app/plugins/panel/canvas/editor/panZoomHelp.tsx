@@ -42,7 +42,15 @@ export const PanZoomHelp = ({}: StandardEditorProps<string, unknown, unknown, un
                 </ul>
               </li>
               <li>
-                <Trans i18nKey="canvas.pan-zoom-help.zoom-scroll-wheel">Zoom: Scroll wheel</Trans>
+                <Trans i18nKey="canvas.pan-zoom-help.zoom-title">Zoom:</Trans>
+                <ul>
+                  <li>
+                    <Trans i18nKey="canvas.pan-zoom-help.ctrl-scroll-wheel">CTRL + scroll wheel</Trans>
+                  </li>
+                  <li>
+                    <Trans i18nKey="canvas.pan-zoom-help.trackpad-pinch">Trackpad pinch</Trans>
+                  </li>
+                </ul>
               </li>
               <li>
                 <Trans i18nKey="canvas.pan-zoom-help.reset-double-click">Reset: Double click</Trans>

@@ -486,10 +486,13 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       useAutoZoom: true,
       useMouseDrag: false, // `true` blocks metricValue dropdown
       useWheelScroll: scene.shouldPanZoom,
+      useWheelPinch: scene.shouldPanZoom,
+      useGesture: scene.shouldPanZoom,
       displayHorizontalScroll: false,
       displayVerticalScroll: false,
       zoomRange: ZOOM_RANGE,
     });
+    applyNativeScrollBehavior(scene.infiniteViewer, scene.shouldPanZoom);
     scene.infiniteViewer.setZoom(scene.scale);
     scene.infiniteViewer.scrollTo(scene.scrollLeft, scene.scrollTop);
 
@@ -554,18 +557,6 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       }
     });
 
-    // Prevent wheel scrolling when pan/zoom is disabled
-    scene.viewportDiv!.addEventListener(
-      'wheel',
-      (e) => {
-        if (!scene.shouldPanZoom) {
-          e.stopImmediatePropagation();
-          e.preventDefault();
-        }
-      },
-      { passive: false }
-    );
-
     // Reset zoom and scroll position on double click
     scene.viewerDiv!.addEventListener('dblclick', (e: MouseEvent) => {
       // Only reset if not in edit mode and pan/zoom is enabled
@@ -599,6 +590,17 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     });
   }
 };
+
+// InfiniteViewer makes the wrapper natively scrollable (so wheel events pan the canvas) and sets
+// overscroll-behavior: none on the container (so wheel scrolling never chains to the dashboard).
+// Undo both when pan/zoom is disabled; programmatic scrollTo still works with overflow hidden.
+export function applyNativeScrollBehavior(
+  infiniteViewer: Pick<InfiniteViewer, 'getWrapper' | 'getContainer'>,
+  shouldPanZoom = false
+) {
+  infiniteViewer.getWrapper().style.overflow = shouldPanZoom ? '' : 'hidden';
+  infiniteViewer.getContainer().style.overscrollBehavior = shouldPanZoom ? '' : 'auto';
+}
 
 // Zoom to content helper functions
 export function calculateZoomToFitScale(elements: Element[], container: HTMLDivElement, paddingRatio = 0.05) {
