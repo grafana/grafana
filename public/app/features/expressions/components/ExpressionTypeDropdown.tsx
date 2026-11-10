@@ -39,7 +39,7 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disa
   return (
     <Menu.Item
       component={() => (
-        <div className={styles.expressionTypeItem} role="menuitem" aria-disabled={!!disabled}>
+        <div className={styles.expressionTypeItem}>
           <div
             className={cx(styles.expressionTypeItemContent, { [styles.expressionTypeItemDisabled]: !!disabled })}
             data-testid={`expression-type-${value}`}

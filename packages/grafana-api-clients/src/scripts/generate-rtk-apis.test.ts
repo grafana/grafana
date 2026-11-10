@@ -17,6 +17,11 @@ describe('withoutPerResourceSearch', () => {
     expect(include('/folders/search/hybrid')).toBe(false);
   });
 
+  it('keeps the allowlisted rule sequence search, but not its hybrid variant', () => {
+    expect(include('/rulesequences/search')).toBe(true);
+    expect(include('/rulesequences/search/hybrid')).toBe(false);
+  });
+
   // The dashboard search at the group root is a different, older endpoint that the
   // frontend does call.
   it('keeps the group-root search', () => {
@@ -85,16 +90,20 @@ describe('dashboard search configuration', () => {
   });
 });
 
-describe('folder search configuration', () => {
+describe.each([
+  ['folder', 'folder/v1beta1', '/folders'],
+  ['rule sequence', 'rules.alerting/v0alpha1', '/rulesequences'],
+  ['rule sequence', 'rules.alerting/v1beta1', '/rulesequences'],
+])('%s search configuration in %s', (_label, client, base) => {
   if (!('outputFiles' in config)) {
     throw new Error('expected output files');
   }
-  const apiConfig = config.outputFiles['../clients/rtkq/folder/v1beta1/endpoints.gen.ts'];
+  const apiConfig = config.outputFiles[`../clients/rtkq/${client}/endpoints.gen.ts`];
 
   it.each([
-    ['/folders/search', 'post', true],
-    ['/folders', 'post', false],
-    ['/folders/search', 'get', false],
+    [`${base}/search`, 'post', true],
+    [base, 'post', false],
+    [`${base}/search`, 'get', false],
   ] as const)('overrides %s %s as a query: %s', (path, verb, overridden) => {
     const override = apiConfig.endpointOverrides?.[0];
     expect(override?.type).toBe('query');

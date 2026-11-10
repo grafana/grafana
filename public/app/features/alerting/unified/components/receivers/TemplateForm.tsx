@@ -35,7 +35,7 @@ import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
 import { NotificationTemplateAction } from '../../hooks/abilities/types';
 import { KnownProvenance } from '../../types/knownProvenance';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { DOCS_URL_TEMPLATE_EXAMPLES, DOCS_URL_TEMPLATE_NOTIFICATIONS } from '../../utils/docs';
 import { isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';

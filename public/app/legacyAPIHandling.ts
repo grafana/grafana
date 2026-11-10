@@ -1,5 +1,3 @@
-const LEGACY_API_ALLOWLIST = ['/api/health'];
-
 // Controlled by the `grafana.frontendLegacyAPIHandling` feature flag, monkey-patches
 // fetch to log or block calls to legacy /api/ endpoints
 export function patchFetchForLegacyAPIMode() {
@@ -19,7 +17,7 @@ export function patchFetchForLegacyAPIMode() {
       return originalFetch(input, init);
     }
 
-    if (mode === 'block' && !LEGACY_API_ALLOWLIST.includes(url.pathname)) {
+    if (mode === 'block') {
       return Promise.reject(new Error(`Request to legacy api ${url.pathname} blocked`));
     }
 

@@ -41,11 +41,6 @@ type RuleGroupReader interface {
 	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error)
 }
 
-// RuleByIDReader looks a rule up by its numeric ID.
-type RuleByIDReader interface {
-	GetRuleByID(ctx context.Context, query ngmodels.GetAlertRuleByIDQuery) (*ngmodels.AlertRule, error)
-}
-
 // RuleCounter counts rules for quota reporting.
 type RuleCounter interface {
 	Count(ctx context.Context, orgID int64) (int64, error)
@@ -127,10 +122,13 @@ type StatusWriter interface {
 	SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error
 }
 
-// FolderRuleCounter reports whether folders still hold rules.
+// FolderRuleCounter reports whether folders still hold rules. The unsuffixed methods count rules of
+// every type; the ByType variants restrict to one.
 type FolderRuleCounter interface {
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
+	CountInFoldersByType(ctx context.Context, orgID int64, folderUIDs []string, ruleType ngmodels.RuleTypeFilter, user identity.Requester) (int64, error)
 	GetAllFoldersWithRules(ctx context.Context, orgID int64) (map[string]struct{}, error)
+	GetAllFoldersWithRulesByType(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter) (map[string]struct{}, error)
 }
 
 // MaintenanceStore cleans up soft-deleted rules.
@@ -146,7 +144,6 @@ type Store interface {
 	NamespaceStore
 	RuleReader
 	RulePageReader
-	RuleByIDReader
 	RuleGroupReader
 	RuleCounter
 	RuleGroupCounter
