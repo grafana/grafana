@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/grafana/dskit/backoff"
@@ -93,16 +92,12 @@ func (f invalidateFunc) Invalidate() { f() }
 // above what it lost, then expire the watches, so resumes from before a lost
 // write expire too.
 func (n *natsNotifier) watchWithFloors(ctx context.Context, floors resource.ResumeFloors, captured func()) (map[resource.GroupResource]int64, <-chan *resource.WrittenEvent, error) {
-	if captured == nil {
-		// The floors are only safe once the bus captures every later write.
-		captured = func() {}
-	}
-	gaps := &unknownGaps{floors: floors, signal: make(chan struct{}, 1)}
+	gaps := resource.NewUnknownGaps(floors, n.raiseFloorsToLatest(floors), n.log)
 	since, events, err := n.subscribe(ctx, func(e missingEvent, _ func()) {
 		if len(e.lost) == 0 {
 			// The lost writes are not known yet, so every resume is held before
 			// the watches expire, until the floors are raised above them.
-			gaps.report()
+			gaps.Report()
 			n.expireWatches(e, nil)
 			return
 		}
@@ -113,16 +108,17 @@ func (n *natsNotifier) watchWithFloors(ctx context.Context, floors resource.Resu
 		}
 		n.expireWatches(e, nil)
 	}, func() {
-		gaps.capture()
-		captured()
+		// Always set, so subscribe reads the floors only once the bus captures
+		// every later write.
+		gaps.Capture(captured)
 	})
 	if err != nil {
 		// The bus can report a gap before the start fails, for example a
 		// reconnect after capture; its hold must not outlive this start.
-		gaps.abandon()
+		gaps.Abandon()
 		return nil, nil, err
 	}
-	go n.raiseFloorsAfterUnknownGaps(ctx, gaps)
+	go gaps.RaiseFloors(ctx, n.done)
 
 	initial := make(map[resource.GroupResource]int64)
 	for group, resources := range since {
@@ -133,113 +129,20 @@ func (n *natsNotifier) watchWithFloors(ctx context.Context, floors resource.Resu
 	return initial, events, nil
 }
 
-// unknownGaps holds every resume after a bus drop or reconnect until the floors
-// are raised above the writes it may have lost.
-type unknownGaps struct {
-	floors resource.ResumeFloors
-	signal chan struct{}
-
-	mu        sync.Mutex
-	captured  bool
-	reported  int64
-	abandoned bool
-}
-
-// capture starts counting gaps. Earlier ones, such as the one a retried first
-// subscription reports, are covered by the floors read after capture.
-func (g *unknownGaps) capture() {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	g.captured = true
-}
-
-func (g *unknownGaps) report() {
-	g.mu.Lock()
-	if !g.captured || g.abandoned {
-		g.mu.Unlock()
-		return
-	}
-	g.reported++
-	g.floors.Hold()
-	g.mu.Unlock()
-	select {
-	case g.signal <- struct{}{}:
-	default:
-	}
-}
-
-func (g *unknownGaps) count() int64 {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	return g.reported
-}
-
-// abandon releases the hold of a stream that failed to start, which serves no
-// watch: the next start reads new floors once the bus captures every write.
-// Later reports are ignored, so a late gap cannot hold the floors again.
-func (g *unknownGaps) abandon() {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	g.abandoned = true
-	if g.reported > 0 {
-		g.floors.Release()
-	}
-}
-
-// release lets resumes through again unless a gap was reported after the
-// first covered ones.
-func (g *unknownGaps) release(covered int64) {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	if g.reported == covered {
-		g.floors.Release()
-	}
-}
-
-// raiseFloorsAfterUnknownGaps raises every collection's floor to its latest
-// RV, which is above any write lost before a bus drop or reconnect was
-// reported, and only then releases the held resumes. It retries until the
-// RVs can be read: until then a resume could miss the lost writes.
-func (n *natsNotifier) raiseFloorsAfterUnknownGaps(ctx context.Context, gaps *unknownGaps) {
-	// ctx is the caller's, which can outlive the backend: the retries below
-	// must end with it too.
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	go func() {
-		select {
-		case <-n.done:
-			cancel()
-		case <-ctx.Done():
-		}
-	}()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-gaps.signal:
-		}
-		covered := gaps.count()
-		bo := backoff.New(ctx, backoff.Config{MinBackoff: 100 * time.Millisecond, MaxBackoff: 10 * time.Second})
-		var latest groupResourceRV
-		for bo.Ongoing() {
-			var err error
-			if latest, err = n.listLatestRVs(ctx); err == nil {
-				break
-			}
-			if ctx.Err() == nil {
-				n.log.Warn("failed to raise watch resume floors after a bus drop or reconnect, resumes stay held", "error", err)
-			}
-			bo.Wait()
-		}
-		if ctx.Err() != nil {
-			return
+// raiseFloorsToLatest raises every collection's floor to its latest RV, which
+// is above any write lost before a bus drop or reconnect was reported.
+func (n *natsNotifier) raiseFloorsToLatest(floors resource.ResumeFloors) func(context.Context) error {
+	return func(ctx context.Context) error {
+		latest, err := n.listLatestRVs(ctx)
+		if err != nil {
+			return err
 		}
 		for group, resources := range latest {
 			for res, rv := range resources {
-				gaps.floors.Raise(resource.GroupResource{Group: group, Resource: res}, rv)
+				floors.Raise(resource.GroupResource{Group: group, Resource: res}, rv)
 			}
 		}
-		gaps.release(covered)
+		return nil
 	}
 }
 

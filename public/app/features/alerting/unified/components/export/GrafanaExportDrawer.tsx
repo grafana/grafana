@@ -3,7 +3,7 @@ import * as React from 'react';
 import { t } from '@grafana/i18n';
 import { Drawer } from '@grafana/ui';
 
-import { RuleInspectorTabs } from '../rule-editor/RuleInspector';
+import { RuleInspectorTabs } from '../rule-editor/RuleInspectorTabs';
 
 import { type ExportFormats, type ExportProvider } from './providers';
 

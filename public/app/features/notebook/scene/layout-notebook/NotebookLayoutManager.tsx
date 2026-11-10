@@ -247,6 +247,8 @@ export class NotebookLayoutManager
       kind: 'NotebookLayoutItem',
       spec: {
         element: { kind: 'ElementReference', name: cell.state.elementName },
+        // Only sent once the server has given the cell one: an empty id would read as a new cell.
+        ...(cell.state.id ? { id: cell.state.id } : {}),
         source: cell.state.source,
         // Only write `collapsed` when it has a value, so a notebook that never had it does not gain it.
         ...(cell.state.collapsed !== undefined ? { collapsed: cell.state.collapsed } : {}),
@@ -1046,6 +1048,8 @@ export class NotebookLayoutManager
     const nextId = dashboardSceneGraph.getPanelIdGenerator(this);
     const copy = cell.clone({
       key: undefined,
+      // A copy is a new cell, so it must not share the original's identity.
+      id: undefined,
       elementName: this.nextElementName(`${cell.state.elementName}-copy`),
       body: cell.state.body?.clone({
         key: getVizPanelKeyForPanelId(nextId()),
@@ -1220,6 +1224,8 @@ export class NotebookLayoutManager
     const cells = this.state.cells.map((cell) =>
       cell.clone({
         key: undefined,
+        // A copy of the layout is a copy of its cells, which are new cells with ids of their own.
+        id: undefined,
         body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
         ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
         ...(cell.state.$timeRange ? { $timeRange: cell.state.$timeRange.clone({ key: undefined }) } : {}),

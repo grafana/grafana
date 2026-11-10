@@ -16,7 +16,7 @@ import {
   TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH,
 } from '../../mocks/server/handlers/k8s/timeIntervals.k8s';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 
 import { TimeIntervalsTable } from './MuteTimingsTable';
 import { defaultConfig } from './mocks';

@@ -13,11 +13,12 @@ import { type CombinedRule, type RuleIdentifier, type RulesSource } from 'app/ty
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { groupIdentifier } from '../../utils/groupIdentifier';
 import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { getRuleUID, prometheusRuleType, rulerRuleType } from '../../utils/rules';
+import { getRulesSourceName } from '../../utils/rulesSource';
 import { createRelativeUrl } from '../../utils/url';
 import { EnrichmentDrawerExtension } from '../rule-list/extensions/EnrichmentDrawerExtension';
 
