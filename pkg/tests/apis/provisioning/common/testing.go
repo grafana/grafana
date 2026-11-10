@@ -1569,6 +1569,14 @@ func WithProvisioningBootstrapPath(path string) GrafanaOption {
 	}
 }
 
+// WithProvisioningBootstrapOrgsPath sets [provisioning] bootstrap_orgs_path. The root, its
+// per-org subdirectories and their files must exist before the server starts.
+func WithProvisioningBootstrapOrgsPath(path string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningBootstrapOrgsPath = path
+	}
+}
+
 func WithProvisioningPublicRootURL(url string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningPublicRootURL = url
@@ -1806,7 +1814,7 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 
 	// A bootstrap repository is registered at startup and never re-registered, so
 	// wiping it here would leave the test nothing to assert on.
-	if opts.ProvisioningBootstrapPath == "" {
+	if opts.ProvisioningBootstrapPath == "" && opts.ProvisioningBootstrapOrgsPath == "" {
 		h.CleanupAllResources(t)
 	}
 

@@ -1,7 +1,6 @@
 package extras
 
 import (
-	"path/filepath"
 	"slices"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -16,10 +15,10 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
-	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
@@ -69,20 +68,14 @@ func ProvideProvisioningOSSRepositoryExtras(
 }
 
 // PermittedLocalPaths returns the prefixes a local repository may read. Being configured is
-// what permits the bootstrap path, since Grafana registers that repository itself.
+// what permits the bootstrap paths, since Grafana registers those repositories itself.
 func PermittedLocalPaths(cfg *setting.Cfg) []string {
-	if cfg.ProvisioningBootstrapPath == "" {
-		return cfg.PermittedProvisioningPaths
+	layout := bootstrap.Layout{
+		Path:     cfg.ProvisioningBootstrapPath,
+		OrgsRoot: cfg.ProvisioningBootstrapOrgsPath,
+		HomePath: cfg.HomePath,
 	}
-	// Resolved exactly as the resolver resolves a repository's own path, so the prefix and
-	// the candidate it is matched against are the same string.
-	path := cfg.ProvisioningBootstrapPath
-	if filepath.IsAbs(path) {
-		path = safepath.Clean(path)
-	} else {
-		path = safepath.Join(safepath.Clean(cfg.HomePath), path)
-	}
-	return append(slices.Clone(cfg.PermittedProvisioningPaths), path)
+	return append(slices.Clone(cfg.PermittedProvisioningPaths), layout.PermittedPaths()...)
 }
 
 func ProvideProvisioningOSSConnectionExtras(

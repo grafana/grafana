@@ -184,35 +184,54 @@ func TestAuthorizeConnectionSubresource(t *testing.T) {
 	})
 }
 
-func TestBootstrapConfigFromSettings(t *testing.T) {
+func TestBootstrapLayoutFromSettings(t *testing.T) {
+	base := bootstrap.Layout{DefaultOrgID: 1, HomePath: "/usr/share/grafana"}
+
 	tests := []struct {
 		name            string
 		path            string
+		orgsPath        string
 		repositoryTypes []string
 		allowedTargets  []string
-		want            bootstrap.Config
+		want            bootstrap.Layout
 		wantErr         bool
 	}{
 		{
-			// Still carries the namespace: the post-start hook needs one to find and stop a
-			// repository an earlier run registered.
-			name: "disabled but still reconcilable when no path is configured",
-			want: bootstrap.Config{Namespace: "default"},
+			name: "disabled when no path is configured",
+			want: base,
 		},
 		{
-			name: "targets the default org namespace",
+			name: "takes the configured path",
 			path: "conf/provisioning/bootstrap",
-			want: bootstrap.Config{Path: "conf/provisioning/bootstrap", Namespace: "default"},
+			want: bootstrap.Layout{Path: "conf/provisioning/bootstrap", DefaultOrgID: 1, HomePath: "/usr/share/grafana"},
+		},
+		{
+			name:     "takes the configured orgs root",
+			orgsPath: "conf/provisioning/bootstrap-orgs",
+			want:     bootstrap.Layout{OrgsRoot: "conf/provisioning/bootstrap-orgs", DefaultOrgID: 1, HomePath: "/usr/share/grafana"},
+		},
+		{
+			// Both would provision the default org, from two directories.
+			name:     "rejects both paths at once",
+			path:     "conf/provisioning/bootstrap",
+			orgsPath: "conf/provisioning/bootstrap-orgs",
+			wantErr:  true,
 		},
 		{
 			name:            "accepts an explicit type list that enables local repositories",
 			path:            "conf/provisioning/bootstrap",
 			repositoryTypes: []string{"github", "local"},
-			want:            bootstrap.Config{Path: "conf/provisioning/bootstrap", Namespace: "default"},
+			want:            bootstrap.Layout{Path: "conf/provisioning/bootstrap", DefaultOrgID: 1, HomePath: "/usr/share/grafana"},
 		},
 		{
 			name:            "rejects a bootstrap path when local repositories are disabled",
 			path:            "conf/provisioning/bootstrap",
+			repositoryTypes: []string{"github"},
+			wantErr:         true,
+		},
+		{
+			name:            "rejects an orgs root when local repositories are disabled",
+			orgsPath:        "conf/provisioning/bootstrap-orgs",
 			repositoryTypes: []string{"github"},
 			wantErr:         true,
 		},
@@ -232,10 +251,12 @@ func TestBootstrapConfigFromSettings(t *testing.T) {
 			if allowedTargets == nil {
 				allowedTargets = []string{"folder", "folderless"}
 			}
-			got, err := bootstrapConfigFromSettings(&setting.Cfg{
-				ProvisioningBootstrapPath:   tt.path,
-				ProvisioningRepositoryTypes: tt.repositoryTypes,
-				ProvisioningAllowedTargets:  allowedTargets,
+			got, err := bootstrapLayoutFromSettings(&setting.Cfg{
+				HomePath:                      "/usr/share/grafana",
+				ProvisioningBootstrapPath:     tt.path,
+				ProvisioningBootstrapOrgsPath: tt.orgsPath,
+				ProvisioningRepositoryTypes:   tt.repositoryTypes,
+				ProvisioningAllowedTargets:    allowedTargets,
 			})
 			if tt.wantErr {
 				assert.Error(t, err)

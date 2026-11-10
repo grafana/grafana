@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -176,9 +177,15 @@ type APIBuilder struct {
 	// reconcile. Otherwise the controllers use the apiserver informer.
 	natsSubscriber nats.Subscriber
 
-	// bootstrapConfig is the read-only local repository registered from
-	// [provisioning] bootstrap_path, empty when none is configured.
-	bootstrapConfig bootstrap.Config
+	// bootstrapLayout is where the bootstrap repositories read from, configured in
+	// [provisioning] bootstrap_path or bootstrap_orgs_path. Empty when neither is set.
+	bootstrapLayout bootstrap.Layout
+
+	// bootstrapOrgs lists the orgs to reconcile a bootstrap repository for, and bootstrapNamespacer
+	// maps each to its namespace. Resolved in the post-start hook, since the orgs are read from
+	// the database and can change between boots.
+	bootstrapOrgs       func(ctx context.Context) ([]int64, error)
+	bootstrapNamespacer func(orgID int64) string
 
 	// keysOnlyReList makes the connection informer's periodic re-list ask storage
 	// for keys instead of whole objects. Off by default: it changes what the
@@ -361,11 +368,11 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	bootstrapConfig, err := bootstrapConfigFromSettings(cfg)
+	bootstrapLayout, err := bootstrapLayoutFromSettings(cfg)
 	if err != nil {
 		return nil, err
 	}
-	allowedTargets := allowedSyncTargets(cfg.ProvisioningAllowedTargets, bootstrapConfig.Enabled())
+	allowedTargets := allowedSyncTargets(cfg.ProvisioningAllowedTargets, bootstrapLayout.Enabled())
 
 	supportedResources, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
 	if err != nil {
@@ -438,7 +445,9 @@ func RegisterAPIService(
 	builder.keysOnlyReList = keysOnlyReList
 	// Only the preferred version registers the bootstrap repository: it is the one that runs
 	// the post-start hook's controllers, and two of them would race on the same object.
-	builder.bootstrapConfig = bootstrapConfig
+	builder.bootstrapLayout = bootstrapLayout
+	builder.bootstrapOrgs = orgIDLister(orgSvc)
+	builder.bootstrapNamespacer = request.GetNamespaceMapper(cfg)
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -506,27 +515,89 @@ func allowedSyncTargets(configured []string, bootstrapEnabled bool) []provisioni
 	return targets
 }
 
-// bootstrapConfigFromSettings reads [provisioning] bootstrap_path. A path set without the local
-// repository type is an error: enabling it here would widen what the instance accepts.
-func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
-	// Single namespace: the parser rejects a manifest whose namespace is not the repository's.
-	namespace := request.GetNamespaceMapper(cfg)(cfg.DefaultOrgID())
-	if cfg.ProvisioningBootstrapPath == "" {
-		// Still reconcilable, so a repository a previous run registered can be stopped.
-		return bootstrap.Config{Namespace: namespace}, nil
+// bootstrapLayoutFromSettings reads [provisioning] bootstrap_path and bootstrap_orgs_path. A
+// path set without the local repository type is an error: enabling it here would widen what the
+// instance accepts.
+func bootstrapLayoutFromSettings(cfg *setting.Cfg) (bootstrap.Layout, error) {
+	layout := bootstrap.Layout{
+		Path:         cfg.ProvisioningBootstrapPath,
+		OrgsRoot:     cfg.ProvisioningBootstrapOrgsPath,
+		DefaultOrgID: cfg.DefaultOrgID(),
+		HomePath:     cfg.HomePath,
+	}
+	if !layout.Enabled() {
+		// Still returned, so a repository a previous run registered can be stopped.
+		return layout, nil
+	}
+	// Both would provision the default org, from two directories, and whichever reconciled last
+	// would win.
+	if layout.Path != "" && layout.OrgsRoot != "" {
+		return bootstrap.Layout{}, errors.New("[provisioning] bootstrap_path and bootstrap_orgs_path are mutually exclusive")
 	}
 	if len(cfg.ProvisioningRepositoryTypes) > 0 &&
 		!slices.Contains(cfg.ProvisioningRepositoryTypes, string(provisioning.LocalRepositoryType)) {
-		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q repository type to be enabled", provisioning.LocalRepositoryType)
+		return bootstrap.Layout{}, fmt.Errorf("[provisioning] a bootstrap path requires the %q repository type to be enabled", provisioning.LocalRepositoryType)
 	}
-	// Admission rejects a sync target that is not allowed, and the bootstrap repository always
-	// uses the same one, so a target it cannot use leaves the instance unprovisioned with
+	// Admission rejects a sync target that is not allowed, and the bootstrap repositories always
+	// use the same one, so a target they cannot use leaves the instance unprovisioned with
 	// nothing in the configuration to say why.
 	if !slices.Contains(cfg.ProvisioningAllowedTargets, string(bootstrap.SyncTarget)) {
-		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q sync target to be allowed", bootstrap.SyncTarget)
+		return bootstrap.Layout{}, fmt.Errorf("[provisioning] a bootstrap path requires the %q sync target to be allowed", bootstrap.SyncTarget)
 	}
 
-	return bootstrap.Config{Path: cfg.ProvisioningBootstrapPath, Namespace: namespace}, nil
+	return layout, nil
+}
+
+// reconcileBootstrap registers a bootstrap repository for every org the configuration provides a
+// directory for, and stops the one an earlier run registered for an org it no longer does. It is
+// never fatal: an org whose repository is rejected must not keep the instance, or the other
+// orgs, down.
+func (b *APIBuilder) reconcileBootstrap(ctx context.Context) {
+	logger := logging.FromContext(ctx)
+	if b.bootstrapOrgs == nil || b.bootstrapNamespacer == nil {
+		return
+	}
+
+	orgIDs, err := b.bootstrapOrgs(ctx)
+	if err != nil {
+		logger.Error("failed to list orgs to bootstrap", "error", err)
+		return
+	}
+
+	configs, unknown, err := b.bootstrapLayout.Resolve(orgIDs, b.bootstrapNamespacer)
+	if err != nil {
+		logger.Error("failed to resolve the bootstrap directories", "error", err)
+		return
+	}
+	if len(unknown) > 0 {
+		// Most likely manifests left at the root, or a directory named after something other
+		// than the org's numeric ID. Either way nothing provisions them.
+		logger.Warn("ignoring bootstrap_orgs_path entries that name no org",
+			"root", b.bootstrapLayout.OrgsRoot, "entries", unknown)
+	}
+
+	for _, cfg := range configs {
+		if err := bootstrap.Reconcile(ctx, b.client.Repositories(cfg.Namespace), b.jobs, cfg); err != nil {
+			logger.Error("failed to reconcile bootstrap repository",
+				"path", cfg.Path, "namespace", cfg.Namespace, "error", err)
+		}
+	}
+}
+
+// orgIDLister lists every org in the instance. The bootstrap directory names its subdirectories
+// after these IDs.
+func orgIDLister(orgSvc org.Service) func(context.Context) ([]int64, error) {
+	return func(ctx context.Context) ([]int64, error) {
+		orgs, err := orgSvc.Search(ctx, &org.SearchOrgsQuery{})
+		if err != nil {
+			return nil, err
+		}
+		ids := make([]int64, 0, len(orgs))
+		for _, o := range orgs {
+			ids = append(ids, o.ID)
+		}
+		return ids, nil
+	}
 }
 
 // TODO: Move specific endpoint authorization together with the rest of the logic.
@@ -1077,14 +1148,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
-			// Runs with no path configured too, to stop a repository a previous run registered.
-			// Never fatal: a rejected bootstrap repository must not keep the instance down.
-			if b.bootstrapConfig.Reconcilable() {
-				if err := bootstrap.Reconcile(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.jobs, b.bootstrapConfig); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("failed to reconcile bootstrap repository",
-						"path", b.bootstrapConfig.Path, "namespace", b.bootstrapConfig.Namespace, "error", err)
-				}
-			}
+			b.reconcileBootstrap(postStartHookCtx.Context)
 
 			// if running solely CRUD or not the preferred version, skip controllers/workers setup
 			if b.onlyApiServer || !b.isPreferredVersion {

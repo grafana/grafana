@@ -339,6 +339,47 @@ func dashboard(name string) map[string]any {
 	}
 }
 
+// TestIntegrationProvisioning_BootstrapOrgs covers bootstrap_orgs_path: the root is a container
+// of per-org directories, not a repository, so each org is provisioned from its own directory
+// and nothing reads the root itself.
+func TestIntegrationProvisioning_BootstrapOrgs(t *testing.T) {
+	orgsRoot := t.TempDir()
+	orgPath := filepath.Join(orgsRoot, "1")
+	require.NoError(t, os.MkdirAll(orgPath, 0o750))
+
+	writeManifest(t, orgPath, "dashboard.json", dashboard("org-dashboard"))
+	// Neither a per-org directory nor a repository root, so nothing provisions these.
+	writeManifest(t, orgsRoot, "stray-dashboard.json", dashboard("stray-dashboard"))
+	require.NoError(t, os.MkdirAll(filepath.Join(orgsRoot, "org-2"), 0o750))
+	writeManifest(t, filepath.Join(orgsRoot, "org-2"), "misnamed.json", dashboard("misnamed-dashboard"))
+
+	helper := common.RunGrafana(t, common.WithProvisioningBootstrapOrgsPath(orgsRoot))
+
+	t.Run("registers a local repository over the org's subdirectory", func(t *testing.T) {
+		repo, err := helper.Repositories.Resource.Get(t.Context(), "bootstrap", metav1.GetOptions{})
+		require.NoError(t, err, "the bootstrap repository should exist at startup")
+
+		spec := repo.Object["spec"].(map[string]any)
+		assert.Equal(t, "local", spec["type"])
+		assert.Equal(t, orgPath, spec["local"].(map[string]any)["path"])
+	})
+
+	helper.AwaitJobs(t, "bootstrap")
+
+	t.Run("provisions the org's directory", func(t *testing.T) {
+		helper.RequireDashboards(t, "org-dashboard")
+	})
+
+	// A directory named after the namespace rather than the org ID is the likely mistake, and
+	// it has to stay inert rather than being read by the org that does have one.
+	t.Run("ignores entries that name no org", func(t *testing.T) {
+		for _, name := range []string{"stray-dashboard", "misnamed-dashboard"} {
+			_, err := helper.DashboardsV1.Resource.Get(t.Context(), name, metav1.GetOptions{})
+			assert.True(t, apierrors.IsNotFound(err), "expected %s to be ignored, got %v", name, err)
+		}
+	})
+}
+
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }

@@ -220,10 +220,6 @@ func TestConfigEnabled(t *testing.T) {
 	assert.True(t, config.Enabled())
 	assert.False(t, Config{Namespace: namespace}.Enabled())
 	assert.False(t, Config{Path: config.Path}.Enabled())
-
-	// A cleared path is still reconcilable: that is how an earlier run's repository is stopped.
-	assert.True(t, Config{Namespace: namespace}.Reconcilable())
-	assert.False(t, Config{Path: config.Path}.Reconcilable())
 }
 
 // cleared is the configuration of an instance whose bootstrap_path has been removed. The

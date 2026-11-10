@@ -58,6 +58,7 @@ func TestPermittedLocalPaths(t *testing.T) {
 	tests := []struct {
 		name      string
 		bootstrap string
+		orgsRoot  string
 		want      []string
 	}{
 		{
@@ -81,14 +82,22 @@ func TestPermittedLocalPaths(t *testing.T) {
 			bootstrap: "conf/provisioning/bootstrap",
 			want:      append(configured, "/usr/share/grafana/conf/provisioning/bootstrap"),
 		},
+		{
+			// The per-org directories are below the root, and the resolver matches prefixes
+			// by containment, so permitting the root permits each of them.
+			name:     "the orgs root is permitted",
+			orgsRoot: "/etc/grafana/bootstrap-orgs",
+			want:     append(configured, "/etc/grafana/bootstrap-orgs"),
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := PermittedLocalPaths(&setting.Cfg{
-				HomePath:                   "/usr/share/grafana",
-				PermittedProvisioningPaths: configured,
-				ProvisioningBootstrapPath:  tt.bootstrap,
+				HomePath:                      "/usr/share/grafana",
+				PermittedProvisioningPaths:    configured,
+				ProvisioningBootstrapPath:     tt.bootstrap,
+				ProvisioningBootstrapOrgsPath: tt.orgsRoot,
 			})
 			assert.Equal(t, tt.want, got)
 		})
