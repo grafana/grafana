@@ -6,8 +6,7 @@ export interface RawToken {
   closed: boolean;
 }
 
-/** `isFilterKey` marks the page's filters, the only keys whose value may follow a space. */
-export function tokenize(input: string, isFilterKey: (key: string) => boolean): RawToken[] {
+export function tokenize(input: string): RawToken[] {
   const tokens: RawToken[] = [];
   let i = 0;
 
@@ -21,9 +20,6 @@ export function tokenize(input: string, isFilterKey: (key: string) => boolean): 
     const key = readKey(input.slice(i));
     if (key !== null) {
       i += key.length + 1;
-      if (isFilterKey(key)) {
-        i = skipSpaceBeforeValue(input, i);
-      }
     }
 
     const { value, closed, next } = readValue(input, i);
@@ -32,15 +28,6 @@ export function tokenize(input: string, isFilterKey: (key: string) => boolean): 
   }
 
   return tokens;
-}
-
-/** `folder: "Team 01"` reads as `folder:"Team 01"`, but in `folder: state:firing` the folder value stays empty. */
-function skipSpaceBeforeValue(input: string, from: number): number {
-  let i = from;
-  while (i < input.length && isWhitespace(input[i])) {
-    i++;
-  }
-  return i < input.length && readKey(input.slice(i)) === null ? i : from;
 }
 
 function readKey(text: string): string | null {

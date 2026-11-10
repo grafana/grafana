@@ -37,7 +37,7 @@ export const sharedFilters = {
       ),
     example: 'folder:Alerts',
     apply: (filter, value) => {
-      filter.folders = [value];
+      filter.folder = value;
       return true;
     },
   },

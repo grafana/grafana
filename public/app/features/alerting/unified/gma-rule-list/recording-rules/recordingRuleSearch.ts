@@ -73,8 +73,7 @@ const { useSearchRecordingRulesInfiniteQuery } = recordingRuleSearchAPI;
 
 export function useRecordingRuleSearch(filter: RecordingRuleFilter, { inFolderUid }: { inFolderUid?: string } = {}) {
   const lookup = useRuleSearchApiArgs('recording', filter, { inFolderUid });
-  const { apiArgs, lookupError } = lookup;
-  const query = useSearchRecordingRulesInfiniteQuery(apiArgs ?? skipToken);
+  const query = useSearchRecordingRulesInfiniteQuery(lookup.apiArgs ?? skipToken);
   const { currentData, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = query;
   // Missing from the result type of a query that has not started.
   const isFetchNextPageError = 'isFetchNextPageError' in query && query.isFetchNextPageError;
@@ -91,9 +90,9 @@ export function useRecordingRuleSearch(filter: RecordingRuleFilter, { inFolderUi
     items,
     noMatchingFolder: lookup.noMatchingFolder,
     folderLimitReached: lookup.folderLimitReached,
-    isLoading: lookup.isLookingUp || (apiArgs !== undefined && !hasLoaded && !isError),
+    isLoading: lookup.isLookingUp || (lookup.apiArgs !== undefined && !hasLoaded && !isError),
     // A failed first page replaces the list; a later failure keeps the loaded rows and shows `failure` below them.
-    error: lookupError ?? firstPageError,
+    error: lookup.lookupError ?? firstPageError,
     failure,
     hasMore: hasNextPage,
     isLoadingMore: isFetchingNextPage,
@@ -102,7 +101,7 @@ export function useRecordingRuleSearch(filter: RecordingRuleFilter, { inFolderUi
     },
     // Refetching reloads every loaded page with fresh continuation tokens, so it also recovers from an expired one.
     retry: () => {
-      if (lookupError) {
+      if (lookup.lookupError) {
         lookup.retryLookup();
       } else {
         void refetch();

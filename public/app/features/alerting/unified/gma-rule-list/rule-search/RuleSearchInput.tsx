@@ -97,7 +97,7 @@ export function RuleSearchInput({ query, onApply, filterHelp, issues = [], trail
 }
 
 function describeIssues(issues: FilterIssue[], filterHelp: FilterHelp[]): string[] {
-  const keysWith = (reason: 'invalid' | 'unavailable') => [
+  const keysWith = (reason: 'invalid' | 'unavailable' | 'missingValue') => [
     ...new Set(issues.flatMap((issue) => (issue.key !== null && issue.reason === reason ? [issue.key] : []))),
   ];
   const has = (reason: FilterIssue['reason']) => issues.some((issue) => issue.reason === reason);
@@ -125,6 +125,15 @@ function describeIssues(issues: FilterIssue[], filterHelp: FilterHelp[]): string
         })
       );
     }
+  }
+  const keysWithoutValue = keysWith('missingValue');
+  if (keysWithoutValue.length > 0) {
+    messages.push(
+      t('alerting.gma-rule-list.search.missing-value', 'Put a value right after the colon, with no space: {{tokens}}', {
+        interpolation: { escapeValue: false },
+        tokens: keysWithoutValue.map((key) => `${key}:`).join(', '),
+      })
+    );
   }
   for (const issue of issues) {
     if (issue.reason === 'rejected') {

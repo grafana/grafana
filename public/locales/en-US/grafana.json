@@ -1553,6 +1553,7 @@
         "invalid-tokens": "Some filters could not be applied: {{tokens}}",
         "invalid-value": "Use one of these values for {{key}}: {{values}}",
         "label": "Search",
+        "missing-value": "Put a value right after the colon, with no space: {{tokens}}",
         "not-paused-unavailable": "Filtering by not paused isn't available yet.",
         "placeholder": "Search by name or enter filter query...",
         "property": {

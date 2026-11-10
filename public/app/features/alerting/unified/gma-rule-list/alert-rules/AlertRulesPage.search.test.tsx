@@ -99,12 +99,13 @@ describe('AlertRulesPage search', () => {
   });
 
   it.each([
-    ['cpu label:', 'Some filters could not be applied: label'],
+    ['cpu label:', 'Put a value right after the colon, with no space: label:'],
+    ['folder: "perf folder 1"', 'Put a value right after the colon, with no space: folder:'],
     ['state:inactive', 'Use state:normal instead of state:inactive.'],
     ['state:foo', 'Use one of these values for state: firing, pending, recovering, normal'],
     [
       'health:bad label:',
-      'Some filters could not be applied: label Use one of these values for health: ok, nodata, error, unknown',
+      'Use one of these values for health: ok, nodata, error, unknown Put a value right after the colon, with no space: label:',
     ],
     ['contactPoint:on-call policy:escalation', 'Some filters could not be applied: contactPoint'],
     ['policy:default paused:false', 'Some filters are not available yet: policy, paused'],

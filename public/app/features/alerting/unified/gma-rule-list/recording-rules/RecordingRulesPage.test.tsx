@@ -309,7 +309,7 @@ describe('RecordingRulesPage search', () => {
   });
 
   it.each([
-    ['cpu metric:', 'Some filters could not be applied: metric'],
+    ['cpu metric:', 'Put a value right after the colon, with no space: metric:'],
     ['health:bad', 'Use one of these values for health: ok, nodata, error, unknown'],
   ])('shows why %j cannot be searched, keeps it as typed and sends no request', async (search, message) => {
     render(<RecordingRulesPage />, { historyOptions: { initialEntries: [`/?${new URLSearchParams({ search })}`] } });

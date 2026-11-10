@@ -9,8 +9,8 @@ import { type RuleKind } from '../shared/ruleKind';
 import { type RuleSearchApiArgs, type SharedRuleFilter } from './sharedRuleFilter';
 
 /**
- * `apiArgs` stays undefined until there is a rule search to send: when skipped, while the names are looked up, when
- * the lookup fails, and when no folder has those names, since an empty UID list would search every folder.
+ * `apiArgs` stays undefined until there is a rule search to send: when skipped, while the name is looked up, when
+ * the lookup fails, and when no folder matches it, since an empty UID list would search every folder.
  * `inFolderUid` skips the lookup: a Folders mode row knows its folder's UID, and its name could match other folders.
  */
 export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
@@ -18,12 +18,12 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
   filter: Filter,
   { skip = false, inFolderUid }: { skip?: boolean; inFolderUid?: string } = {}
 ) {
-  const lookUp = !skip && !inFolderUid && filter.folders.length > 0;
+  const lookUp = !skip && !inFolderUid && filter.folder !== undefined;
   const folderLookup = useListFolderSearchV1Beta1Query(
     lookUp
       ? {
           searchQuery: {
-            ...buildFolderListSearchQuery(kind, undefined, filter.folders[0]),
+            ...buildFolderListSearchQuery(kind, undefined, filter.folder),
             limit: FOLDER_NAME_LOOKUP_LIMIT,
           },
         }
@@ -39,7 +39,7 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
     if (inFolderUid) {
       return { filter, folderUids: [inFolderUid] };
     }
-    if (filter.folders.length === 0) {
+    if (filter.folder === undefined) {
       return { filter, folderUids: [] };
     }
     return lookedUpUids?.length ? { filter, folderUids: lookedUpUids } : undefined;
