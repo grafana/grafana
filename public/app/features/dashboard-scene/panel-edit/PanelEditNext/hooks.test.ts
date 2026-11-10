@@ -1,5 +1,4 @@
 import { act, renderHook } from '@testing-library/react';
-import type React from 'react';
 
 import { useTheme2 } from '@grafana/ui';
 
@@ -9,22 +8,14 @@ import type { PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
-import { buildVizAndDataPaneGrid, getDefaultSidebarRatio, usePanelEditorShell, useRatioResize } from './hooks';
+import { usePanelEditorShell, useVizAndDataPaneLayout } from './hooks';
 
 jest.mock('@grafana/ui', () => ({
-  useStyles2: jest.fn(() => ({ dragHandleVertical: 'drag-v', dragHandleHorizontal: 'drag-h' })),
-  getDragStyles: jest.fn(),
   useTheme2: jest.fn(),
 }));
 
 jest.mock('@grafana/runtime', () => ({ config: { featureToggles: {} } }));
 
-// Prevent heavy transitive imports (@grafana/scenes, @grafana/runtime) from loading.
-jest.mock('./constants', () => ({
-  SidebarSize: { Mini: 'mini', Full: 'full' },
-  QUERY_EDITOR_SIDEBAR_SIZE_KEY: 'grafana.dashboard.query-editor-next.sidebar-size',
-  QUERY_EDITOR_BANNER_DISMISSED_KEY: 'grafana.dashboard.query-editor-next.banner-dismissed',
-}));
 jest.mock('../../sidebar/shared', () => ({ useSidebarCollapsed: jest.fn() }));
 jest.mock('../../utils/utils', () => ({ getDashboardSceneFor: jest.fn() }));
 jest.mock('../PanelEditor', () => ({}));
@@ -67,229 +58,128 @@ describe('usePanelEditorShell', () => {
   });
 });
 
-describe('buildVizAndDataPaneGrid', () => {
-  const base = {
-    hasDataPane: true,
-    isSidebarFullWidth: false,
-    showBanner: true,
-    vizRatio: 0.5,
-    sidebarRatio: 0.25,
-  };
+describe('useVizAndDataPaneLayout', () => {
+  const WIDTH_KEY = 'grafana.dashboard.query-editor-next.sidebar-width';
+  const COLLAPSED_KEY = 'grafana.dashboard.query-editor-next.sidebar-collapsed';
 
-  it('produces only a viz row when there is no data pane', () => {
-    const { gridTemplateAreas } = buildVizAndDataPaneGrid({ ...base, hasDataPane: false });
-
-    expect(gridTemplateAreas).toBe('"viz viz"');
+  beforeEach(() => {
+    localStorage.clear();
+    // Recorded calls are inspected below, so they must not carry over between cases.
+    jest.clearAllMocks();
+    jest.mocked(getDashboardSceneFor).mockReturnValue({ useState: jest.fn(() => ({})) } as never);
+    jest.mocked(useScrollReflowLimit).mockReturnValue(false);
+    jest.mocked(useSnappingSplitter).mockReturnValue({ splitterState: { collapsed: false } } as never);
   });
 
-  it('makes sidebar span every row when isSidebarFullWidth is true', () => {
-    const { gridTemplateAreas } = buildVizAndDataPaneGrid({ ...base, isSidebarFullWidth: true });
+  function renderLayout() {
+    const model = {
+      useState: jest.fn(() => ({ dataPane: undefined, tableView: undefined })),
+      getPanel: jest.fn(),
+    } as unknown as PanelEditor;
 
-    expect(gridTemplateAreas).toBe('"sidebar viz"\n"sidebar version-toggle"\n"sidebar data-pane"');
+    renderHook(() => useVizAndDataPaneLayout(model));
+
+    // The sidebar splitter is the pixel-pinned one; the viz/data splitter uses a flex ratio.
+    return jest.mocked(useSnappingSplitter).mock.calls.find(([options]) => options.pixelPane === 'primary')?.[0];
+  }
+
+  it('uses the persisted sidebar width when it is a usable number', () => {
+    localStorage.setItem(WIDTH_KEY, '480');
+
+    expect(renderLayout()?.initialSize).toBe(480);
   });
 
-  it('omits version-toggle row when showBanner is false', () => {
-    const { gridTemplateAreas, gridTemplateRows } = buildVizAndDataPaneGrid({ ...base, showBanner: false });
+  // The Mini/Full toggle remounts the viz/data splitter, and useSplitter keeps a flex ratio only on
+  // the DOM node. The hook has to hold it so the toggle doesn't reset the split to its default.
+  it('feeds the settled viz/data ratio back as the splitter initial size', () => {
+    const model = {
+      useState: jest.fn(() => ({ dataPane: undefined, tableView: undefined })),
+      getPanel: jest.fn(),
+    } as unknown as PanelEditor;
 
-    expect(gridTemplateAreas).toBe('"viz viz"\n"sidebar data-pane"');
-    expect(gridTemplateRows).toBe('1fr 1fr');
+    const { rerender } = renderHook(() => useVizAndDataPaneLayout(model));
+
+    const flexCalls = () =>
+      jest.mocked(useSnappingSplitter).mock.calls.filter(([options]) => options.pixelPane === undefined);
+
+    expect(flexCalls().at(-1)?.[0].initialSize).toBe(0.45);
+
+    // Settle a drag that leaves the viz taking 80% of the height.
+    act(() => {
+      flexCalls().at(-1)?.[0].onPaneSizeChanged?.(200, 0.8);
+    });
+    rerender();
+
+    expect(flexCalls().at(-1)?.[0].initialSize).toBe(0.8);
   });
 
-  it('converts vizRatio to fractional row height — ratio / (1 - ratio)', () => {
-    // 0.5 → 1fr (equal split), 0.75 → 3fr (3x taller than data pane)
-    expect(buildVizAndDataPaneGrid({ ...base, vizRatio: 0.5 }).gridTemplateRows).toBe('1fr auto 1fr');
-    expect(buildVizAndDataPaneGrid({ ...base, vizRatio: 0.75 }).gridTemplateRows).toBe('3fr auto 1fr');
-  });
-
-  it('converts sidebarRatio 0.5 to equal columns (minmax(200px, 1fr) 1fr)', () => {
-    expect(buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.5 }).gridTemplateColumns).toBe('minmax(200px, 1fr) 1fr');
-  });
-
-  it('converts sidebarRatio 0.25 to approximately one-third of the available width', () => {
-    // 0.25 / (1 - 0.25) = 0.333...fr — wrapped in minmax(200px, Xfr)
-    const columns = buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.25 }).gridTemplateColumns;
-    const match = columns.match(/minmax\(\d+px,\s*([\d.]+)fr\)/);
-    expect(match).not.toBeNull();
-    expect(parseFloat(match![1])).toBeCloseTo(1 / 3, 5);
-  });
-});
-
-describe('getDefaultSidebarRatio', () => {
+  // A value of the wrong shape would render as an invalid flex-basis and collapse the sidebar to
+  // the width of its drag handle, so it has to fall back to the default instead.
   it.each([
-    [300, 150, 'the 50% drag maximum when the 200px floor would exceed it'],
-    [1000, 200, 'the 200px floor when 18% would be narrower'],
-    [1399, 251.82, '18% just below the 1400px breakpoint'],
-    [1400, 280, '20% at the 1400px breakpoint'],
-    [1650, 330, '20% reaching the 330px cap'],
-    [3000, 330, 'the 330px cap on large screens'],
-    [4000, 400, 'the 10% drag minimum once the cap would go below it'],
-  ])('gives a %spx container a %spx sidebar (%s)', (width, expectedPixels) => {
-    expect(getDefaultSidebarRatio(width) * width).toBeCloseTo(expectedPixels, 2);
+    ['null', 'null'],
+    ['a boolean', 'true'],
+    ['an object', '{}'],
+    ['a negative number', '-5'],
+    ['zero', '0'],
+    ['a value that overflows to Infinity', '1e999'],
+    ['a string', '"480"'],
+    ['unparseable text', 'not-json'],
+  ])('falls back to the default width when the persisted value is %s', (_label, stored) => {
+    localStorage.setItem(WIDTH_KEY, stored);
+
+    expect(renderLayout()?.initialSize).toBe(350);
   });
 
-  it('never shrinks the sidebar as the container grows', () => {
-    let previousPixels = 0;
-    for (let width = 800; width <= 4000; width++) {
-      const pixels = getDefaultSidebarRatio(width) * width;
-      expect(pixels).toBeGreaterThan(previousPixels - 1e-9);
-      previousPixels = pixels;
-    }
-  });
-});
+  // None of the splitter's own state survives a reload, so collapse has to round-trip through local
+  // storage the way the width and the Mini/Full mode already do.
+  describe('sidebar collapse persistence', () => {
+    it('starts the sidebar collapsed when that is what was persisted', () => {
+      localStorage.setItem(COLLAPSED_KEY, 'true');
 
-describe('useRatioResize', () => {
-  function setContainerSize(el: HTMLElement, width: number, height: number) {
-    el.getBoundingClientRect = () => ({
-      width,
-      height,
-      top: 0,
-      left: 0,
-      bottom: height,
-      right: width,
-      x: 0,
-      y: 0,
-      toJSON: () => {},
+      expect(renderLayout()?.collapsed).toBe(true);
     });
-  }
 
-  function makeContainerRef(width: number, height: number): React.RefObject<HTMLElement> {
-    const el = document.createElement('div');
-    setContainerSize(el, width, height);
-    return { current: el };
-  }
+    it('starts the sidebar open when nothing was persisted', () => {
+      expect(renderLayout()?.collapsed).toBe(false);
+    });
 
-  it('applies getDefaultRatio using the measured container width', () => {
-    const getDefaultRatio = jest.fn(() => 0.2);
-    const containerRef = makeContainerRef(1200, 600);
+    it('writes the collapse back so the next load picks it up', () => {
+      jest.mocked(useSnappingSplitter).mockReturnValue({ splitterState: { collapsed: true } } as never);
 
-    const { result } = renderHook(() =>
-      useRatioResize({ direction: 'horizontal', initialRatio: 0.5, containerRef, getDefaultRatio })
-    );
+      renderLayout();
 
-    expect(getDefaultRatio).toHaveBeenCalledWith(1200);
-    expect(result.current.ratio).toBe(0.2);
+      expect(localStorage.getItem(COLLAPSED_KEY)).toBe('true');
+    });
+
+    // Mirrors the width hardening: valid JSON of the wrong shape must not hide the sidebar.
+    it.each([
+      ['an object', '{}'],
+      ['a string', '"yes"'],
+      ['a number', '1'],
+      ['unparseable text', 'not-json'],
+    ])('stays open when the persisted value is %s', (_label, stored) => {
+      localStorage.setItem(COLLAPSED_KEY, stored);
+
+      expect(renderLayout()?.collapsed).toBe(false);
+    });
   });
 
-  it('applies getDefaultRatio using the measured container height when direction is vertical', () => {
-    const getDefaultRatio = jest.fn(() => 0.3);
-    const containerRef = makeContainerRef(1200, 600);
-
-    const { result } = renderHook(() =>
-      useRatioResize({ direction: 'vertical', initialRatio: 0.5, containerRef, getDefaultRatio })
-    );
-
-    expect(getDefaultRatio).toHaveBeenCalledWith(600);
-    expect(result.current.ratio).toBe(0.3);
-  });
-
-  it('does not apply getDefaultRatio when the container has no size — avoids incorrect ratio before layout', () => {
-    const getDefaultRatio = jest.fn(() => 0.2);
-    const containerRef = makeContainerRef(0, 0);
-
-    const { result } = renderHook(() =>
-      useRatioResize({ direction: 'horizontal', initialRatio: 0.5, containerRef, getDefaultRatio })
-    );
-
-    expect(getDefaultRatio).not.toHaveBeenCalled();
-    expect(result.current.ratio).toBe(0.5);
-  });
-
-  describe('on container resize', () => {
-    let notifyResize: VoidFunction;
-    let disconnect: jest.Mock;
-    let resizeObserverSpy: jest.SpyInstance;
-
+  // Disabling a splitter strips its flex container, and only the viz/data stack has a layout to fall
+  // back on. Disabling the sidebar too would drop it above the data pane instead of beside it.
+  describe('on a screen short enough to reflow', () => {
     beforeEach(() => {
-      disconnect = jest.fn();
-      resizeObserverSpy = jest
-        .spyOn(globalThis, 'ResizeObserver')
-        .mockImplementation((callback: ResizeObserverCallback) => {
-          const observer: ResizeObserver = { observe: jest.fn(), unobserve: jest.fn(), disconnect };
-          notifyResize = () => callback([], observer);
-          return observer;
-        });
+      jest.mocked(useScrollReflowLimit).mockReturnValue(true);
     });
 
-    afterEach(() => {
-      resizeObserverSpy.mockRestore();
+    it('disables the viz/data splitter', () => {
+      renderLayout();
+
+      const flexOptions = jest.mocked(useSnappingSplitter).mock.calls.find(([options]) => !options.usePixels)?.[0];
+      expect(flexOptions?.disabled).toBe(true);
     });
 
-    const getDefaultRatio = (width: number) => (width >= 2000 ? 0.15 : 0.25);
-
-    function resizeContainer(containerRef: React.RefObject<HTMLElement>, width: number) {
-      setContainerSize(containerRef.current!, width, 600);
-      act(() => notifyResize());
-    }
-
-    // jsdom has no PointerEvent, and fireEvent drops clientX on the generic Event it falls back to.
-    function firePointer(handle: HTMLElement, type: string, clientX: number) {
-      act(() => {
-        handle.dispatchEvent(new MouseEvent(type, { clientX, cancelable: true }));
-      });
-    }
-
-    function renderWithHandle(containerRef: React.RefObject<HTMLElement>) {
-      const handle = document.createElement('div');
-      handle.setPointerCapture = jest.fn();
-      handle.releasePointerCapture = jest.fn();
-      handle.hasPointerCapture = jest.fn(() => true);
-      const rendered = renderHook(() =>
-        useRatioResize({ direction: 'horizontal', initialRatio: 0.5, containerRef, getDefaultRatio })
-      );
-      act(() => rendered.result.current.handleRef(handle));
-      return { ...rendered, handle };
-    }
-
-    it('re-applies getDefaultRatio with the new container width', () => {
-      const containerRef = makeContainerRef(2400, 600);
-      const { result } = renderWithHandle(containerRef);
-      expect(result.current.ratio).toBe(0.15);
-
-      resizeContainer(containerRef, 1200);
-
-      expect(result.current.ratio).toBe(0.25);
-    });
-
-    it('keeps the dragged ratio when the container resizes afterwards', () => {
-      const containerRef = makeContainerRef(2400, 600);
-      const { result, handle } = renderWithHandle(containerRef);
-
-      firePointer(handle, 'pointerdown', 0);
-      firePointer(handle, 'pointermove', 120);
-      firePointer(handle, 'pointerup', 120);
-      resizeContainer(containerRef, 1200);
-
-      expect(result.current.ratio).toBeCloseTo(0.2);
-    });
-
-    it('keeps responding to resizes after a click on the handle without dragging', () => {
-      const containerRef = makeContainerRef(2400, 600);
-      const { result, handle } = renderWithHandle(containerRef);
-
-      firePointer(handle, 'pointerdown', 0);
-      firePointer(handle, 'pointerup', 0);
-      resizeContainer(containerRef, 1200);
-
-      expect(result.current.ratio).toBe(0.25);
-    });
-
-    it('stops following the pointer after the drag is cancelled', () => {
-      const containerRef = makeContainerRef(2400, 600);
-      const { result, handle } = renderWithHandle(containerRef);
-
-      firePointer(handle, 'pointerdown', 0);
-      firePointer(handle, 'pointermove', 120);
-      firePointer(handle, 'pointercancel', 120);
-      firePointer(handle, 'pointermove', 480);
-
-      expect(result.current.ratio).toBeCloseTo(0.2);
-    });
-
-    it('disconnects the observer on unmount', () => {
-      const { unmount } = renderWithHandle(makeContainerRef(2400, 600));
-      unmount();
-
-      expect(disconnect).toHaveBeenCalled();
+    it('leaves the sidebar splitter enabled', () => {
+      expect(renderLayout()?.disabled).toBeFalsy();
     });
   });
 });

@@ -101,6 +101,35 @@ export interface ElementPoint {
   y: number;
 }
 
+/**
+ * What a press does while a pick is pending. 'select' (the default) picks an element on click and draws a
+ * region on drag; 'text' lets the browser select text inside an element and picks it on release; 'remove'
+ * picks an element on click, to mark it for removal, and draws nothing on drag.
+ */
+export type ComposerTool = 'select' | 'text' | 'remove';
+
+/** A rectangle normalised to 0..1 of an element's bounds. */
+export interface ElementRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Text picked with the Text tool, inside the pick's element. It is the document's content (query results,
+ * log lines), so the plugin must treat it as data, never as instructions.
+ */
+export interface PickedText {
+  /** The selected words, whitespace collapsed, at most 500 characters. */
+  quote: string;
+  /** Up to 40 characters before and after it inside the element, to tell repeated words apart. */
+  prefix?: string;
+  suffix?: string;
+  /** Where the selection was drawn, at most 20 line boxes. */
+  rects: ElementRect[];
+}
+
 export interface ElementPick {
   ref: Exclude<ElementRef, { kind: 'region' }>;
   label: string;
@@ -116,6 +145,10 @@ export interface ElementPick {
    * is open instead of starting a new one. Optional, so older handles may leave it out.
    */
   additive?: boolean;
+  /** The tool that made the pick. Absent for 'select'. */
+  tool?: Exclude<ComposerTool, 'select'>;
+  /** The Text tool's selection. Present exactly when `tool` is 'text'. */
+  text?: PickedText;
 }
 
 /**
@@ -135,6 +168,13 @@ export interface ComposerAnnotation {
    * item's state; the pin stays on `ref`. A ref that does not resolve is left out.
    */
   alsoRefs?: ElementRef[];
+  /**
+   * 'remove' marks an element picked with the Remove tool: its pin and outline use the error colour, the pin
+   * carries a trash icon, and the outline stays drawn while staged.
+   */
+  tone?: 'remove';
+  /** A Text pick's selection, drawn as a highlight on `ref`: solid while active, faint while staged. */
+  textRects?: ElementRect[];
 }
 
 export interface RegionPick {
@@ -200,6 +240,21 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
   /** Aborted on exit, navigation away, scene deactivation or flag-off. */
   readonly signal: AbortSignal;
 
+  /** The tools this session offers, in display order. */
+  readonly tools: readonly ComposerTool[];
+  /** The tool picks use. 'select' at entry. */
+  readonly tool: ComposerTool;
+  /** Changes the tool. A pending pick stays pending and continues with the new tool. */
+  setTool(tool: ComposerTool): void;
+  /** Fires when the tool changes. Returns an unsubscribe. */
+  onToolChange(listener: (tool: ComposerTool) => void): () => void;
+  /**
+   * A container over the visible part of the dashboard body, for the plugin to portal its tools bar into. It
+   * takes no pointer events itself and is left out of hit-testing and region captures, so whatever the
+   * plugin renders in it stays usable. Null once the session has ended.
+   */
+  getToolsHost(): HTMLElement | null;
+
   /**
    * Resolves with the clicked element, or with a region when the user drags at least 8x8 CSS px while it
    * is pending (a smaller drag stays a click; a press on a tab header switches tabs).
@@ -230,6 +285,12 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * either stops that turn.
    */
   setPaused(paused: boolean): void;
+  /**
+   * The Assistant runs a turn while picking and pins stay available, so comments made meanwhile wait for
+   * the next message. Turning Composer off or switching to Viewing asks for confirmation, as when paused.
+   * Picks and pins follow the elements the turn moves; a pin whose element the turn removes is not drawn.
+   */
+  setWorking(working: boolean): void;
 
   /**
    * Replaces the drawn annotations. Each is a comment-bubble pin whose tail (its square bottom-left corner)

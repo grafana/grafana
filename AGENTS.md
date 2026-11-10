@@ -139,7 +139,7 @@ Standalone Go apps using Grafana App SDK: `apps/dashboard/`, `apps/folder/`, `ap
 
 ### Plugin Workspaces
 
-These built-in plugins require separate build steps: `azuremonitor`, `loki`, `grafana-testdata-datasource`.
+These built-in plugins require separate build steps: `graphite` and `grafana-testdata-datasource`.
 
 Build a specific plugin: `pnpm --filter @grafana-plugins/<name> dev`
 

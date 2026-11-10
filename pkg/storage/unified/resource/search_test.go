@@ -387,6 +387,9 @@ type mockSearchBackend struct {
 	// Skips the build function, as for an index reused from disk.
 	reusesFromDisk bool
 
+	// Recorded as the build time of every index this backend builds.
+	buildTime time.Time
+
 	mu                sync.Mutex
 	buildIndexCalls   []buildIndexCall
 	cache             map[NamespacedResource]ResourceIndex
@@ -493,7 +496,7 @@ func (m *mockSearchBackend) PeekIndex(key NamespacedResource) ResourceIndex {
 }
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration, _ BuildIndexOptions) (ResourceIndex, error) {
-	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: featuresForTestIndex(m.keepsDeletedDocuments)}}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: m.buildTime, Features: featuresForTestIndex(m.keepsDeletedDocuments)}}
 	m.mu.Lock()
 	m.lastUpdater = updater
 	m.mu.Unlock()
@@ -872,9 +875,8 @@ func TestBackgroundGlobalBuildsStartAfterBlockingIndexes(t *testing.T) {
 			Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: namespace, Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		require.NoError(t, err)
-		require.Equal(t, NewServiceUnavailableError("the global search index for this namespace is still being built"), rsp.Error,
-			"both queued and active global builds must return 503 without waiting")
+		require.Nil(t, rsp)
+		requireRPCError(t, err, NewServiceUnavailableError("the global search index for this namespace is still being built"))
 	}
 	close(releaseGlobals)
 	require.Eventually(t, func() bool {
@@ -2485,7 +2487,6 @@ func TestRebuildIndexesIgnoresUnrelatedInvalidImportTime(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, response.Error)
 	require.Zero(t, response.RebuildCount, "both requested indexes have caught up with their imports")
 	require.Len(t, response.BuildTimes, len(keys))
 	require.Zero(t, storage.listCalls, "explicit rebuilds must not read unrelated records")
@@ -2652,7 +2653,6 @@ func TestRebuildIndexes(t *testing.T) {
 
 		rsp, err := support.RebuildIndexes(context.Background(), rebuildReq)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		require.Equal(t, int64(0), rsp.RebuildCount, "no rebuilds should be triggered")
 
 		// Verify BuildTimes contains entries for key1 and key2, but not key3 (zero time)
@@ -2734,12 +2734,12 @@ func TestRebuildIndexesRejectsStaleIndexAfterFailedRebuild(t *testing.T) {
 		Namespace: key.Namespace,
 		Keys:      []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
 	}
+	// The rebuild was attempted, but the partial count is not returned with the error.
 	rsp, err := support.RebuildIndexes(t.Context(), request)
-	require.NoError(t, err)
-	require.Equal(t, int64(1), rsp.RebuildCount)
+	require.Nil(t, rsp)
 	require.Equal(t, int32(1), search.buildCalls.Load())
-	require.Empty(t, rsp.BuildTimes)
-	require.ErrorContains(t, ErrorFromResponse(rsp.GetError(), nil), "not built after last import")
+	require.Equal(t, codes.Internal, status.Code(err))
+	require.Contains(t, rpcErrorResult(t, err).Message, "not built after last import")
 }
 
 func TestRebuildIndexesForResource(t *testing.T) {
@@ -2786,8 +2786,8 @@ func TestRebuildIndexesForResource(t *testing.T) {
 			Resource:  key.Resource,
 		}}}
 	rsp, err := support.RebuildIndexes(t.Context(), rebuildReq)
-	require.NoError(t, err)
-	require.Equal(t, "key namespace does not match request namespace", rsp.Error.Message)
+	require.Nil(t, rsp)
+	requireRPCError(t, err, NewBadRequestError("key namespace does not match request namespace"))
 
 	rebuildReq.Namespace = key.Namespace
 
@@ -2812,9 +2812,11 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		LastImportTime:     time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
 	}}
 
+	search.buildTime = time.Date(2026, 1, 2, 12, 0, 0, 0, time.UTC)
 	rsp, err = support.RebuildIndexes(t.Context(), rebuildReq)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rsp.RebuildCount)
+	require.Len(t, rsp.BuildTimes, 1)
 
 	// rebuild waited for rebuild queue to process
 	require.Equal(t, 0, support.rebuildQueue.Len())
@@ -2895,14 +2897,13 @@ func TestSearchUsesRequestScopedFolderIndex(t *testing.T) {
 				req.Federated = []*resourcepb.ResourceKey{{Namespace: folderKey.Namespace, Group: folderKey.Group, Resource: folderKey.Resource}}
 			}
 			rsp, err := s.searchIndex(t.Context(), NewSearchStats("test"), req, tc.primary, nil)
-			require.NoError(t, err)
 			if tc.refreshError {
-				require.NotNil(t, rsp.Error)
-				require.Contains(t, rsp.Error.Message, "folder refresh failed")
+				require.Nil(t, rsp)
+				require.Contains(t, rpcErrorResult(t, err).Message, "folder refresh failed")
 				require.Nil(t, primary.req, "a failed folder refresh must prevent searching")
 				return
 			}
-			require.Nil(t, rsp.Error)
+			require.NoError(t, err)
 			require.Same(t, req, primary.req)
 			if tc.wantFolder {
 				require.Same(t, folderIndex, primary.indexes.Folders)
@@ -2945,7 +2946,7 @@ func TestSearchResolvesReplacementFolderIndex(t *testing.T) {
 		backend.cache[folderKey] = folders
 		rsp, err := s.searchIndex(t.Context(), NewSearchStats("test"), req, dashKey, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 		require.Same(t, folders, primary.indexes.Folders)
 	}
 	require.Equal(t, 1, oldFolders.updateIndexCalls)
@@ -2974,9 +2975,8 @@ func TestSearchRejectsInvalidFolderTreeBeforeResolvingIndexes(t *testing.T) {
 				IsDeleted:    tc.deleted,
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			})
-			require.NoError(t, err)
-			require.NotNil(t, rsp.Error)
-			require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+			require.Nil(t, rsp)
+			require.Equal(t, int32(http.StatusBadRequest), rpcErrorResult(t, err).Code)
 			require.Zero(t, backend.getIndexCalls)
 			require.Empty(t, backend.buildIndexCalls)
 		})
@@ -3037,11 +3037,10 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 			Limit:        -100,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
-		rsp, err := support.Search(context.Background(), req)
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
-		require.Equal(t, "limit cannot be negative", rsp.Error.Message)
+		_, err := support.Search(context.Background(), req)
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, http.StatusBadRequest, int(rspErr.Code))
+		require.Equal(t, "limit cannot be negative", rspErr.Message)
 	})
 
 	t.Run("negative offset returns error", func(t *testing.T) {
@@ -3057,11 +3056,10 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 			Offset:       -50,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
-		rsp, err := support.Search(context.Background(), req)
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
-		require.Equal(t, "offset cannot be negative", rsp.Error.Message)
+		_, err := support.Search(context.Background(), req)
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, http.StatusBadRequest, int(rspErr.Code))
+		require.Equal(t, "offset cannot be negative", rspErr.Message)
 	})
 }
 
@@ -3103,11 +3101,10 @@ func TestSearchRejectsFederatedTrashQueries(t *testing.T) {
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
-	rsp, err := support.Search(context.Background(), req)
-	require.NoError(t, err)
-	require.NotNil(t, rsp.Error)
-	require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
-	require.Equal(t, "searching deleted resources does not support federated queries", rsp.Error.Message)
+	_, err = support.Search(context.Background(), req)
+	rspErr := rpcErrorResult(t, err)
+	require.Equal(t, http.StatusBadRequest, int(rspErr.Code))
+	require.Equal(t, "searching deleted resources does not support federated queries", rspErr.Message)
 
 	backend.mu.Lock()
 	defer backend.mu.Unlock()

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"sync"
 	"testing"
 	"testing/synctest"
@@ -83,7 +84,10 @@ func TestChannelNotifier(t *testing.T) {
 type fakeBus struct {
 	mu            sync.Mutex
 	handlers      []func(subject string, data []byte)
+	reconnects    []func()
 	subscriptions int
+	// failSubscribe fails this many subscriptions before the next succeeds.
+	failSubscribe int
 }
 
 type fakeBusSubscription struct{}
@@ -93,12 +97,26 @@ func (fakeBusSubscription) Unsubscribe() error                  { return nil }
 
 func (b *fakeBus) Enabled() bool { return true }
 
-func (b *fakeBus) Subscribe(_ context.Context, _ string, handler func(string, []byte), _ func()) (resource.Subscription, error) {
+func (b *fakeBus) Subscribe(_ context.Context, _ string, handler func(string, []byte), onReconnect func()) (resource.Subscription, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	if b.failSubscribe > 0 {
+		b.failSubscribe--
+		return nil, errors.New("bus unavailable")
+	}
 	b.handlers = append(b.handlers, handler)
+	b.reconnects = append(b.reconnects, onReconnect)
 	b.subscriptions++
 	return fakeBusSubscription{}, nil
+}
+
+func (b *fakeBus) reconnect() {
+	b.mu.Lock()
+	reconnects := append([]func(){}, b.reconnects...)
+	b.mu.Unlock()
+	for _, r := range reconnects {
+		r()
+	}
 }
 
 func (b *fakeBus) publish(t *testing.T, n *resourcepb.WatchNotification) {
@@ -117,7 +135,7 @@ func (b *fakeBus) publish(t *testing.T, n *resourcepb.WatchNotification) {
 type countingInvalidator struct {
 	mu    sync.Mutex
 	count int
-	// onInvalidate, when set, runs on each invalidation.
+	// onInvalidate runs with the lock held, as a resume admitted right after.
 	onInvalidate func()
 }
 
@@ -144,6 +162,10 @@ type fakeHistory struct {
 	everything bool
 	// readErr, when set, fails every history read.
 	readErr error
+	// latestErr, when set, fails every latest RV read.
+	latestErr error
+	// latestReads counts the latest RV reads.
+	latestReads int
 }
 
 func (h *fakeHistory) add(name string, rv int64, action resourcepb.WatchEvent_Type) {
@@ -186,6 +208,10 @@ func (h *fakeHistory) read(_ context.Context, versions []historyVersion) (map[hi
 func (h *fakeHistory) latest(context.Context) (groupResourceRV, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	h.latestReads++
+	if h.latestErr != nil {
+		return nil, h.latestErr
+	}
 	latest := groupResourceRV{}
 	for v := range h.rows {
 		if latest[v.Group] == nil {
@@ -202,6 +228,8 @@ type natsNotifierTest struct {
 	invalidator *countingInvalidator
 	reg         *prometheus.Registry
 	notifier    *natsNotifier
+	// stop stops the backend, as backend.Stop does.
+	stop func()
 }
 
 func newNatsNotifierTest(t *testing.T) *natsNotifierTest {
@@ -210,8 +238,10 @@ func newNatsNotifierTest(t *testing.T) *natsNotifierTest {
 
 func newNatsNotifierTestWithBuffer(t *testing.T, bufferSize int) *natsNotifierTest {
 	done := make(chan struct{})
-	t.Cleanup(func() { close(done) })
+	stop := sync.OnceFunc(func() { close(done) })
+	t.Cleanup(stop)
 	nt := &natsNotifierTest{
+		stop:        stop,
 		bus:         &fakeBus{},
 		history:     &fakeHistory{rows: make(map[historyVersion]*historyPollResponse)},
 		invalidator: &countingInvalidator{},
@@ -235,6 +265,55 @@ func (nt *natsNotifierTest) publish(t *testing.T, name string, rv int64) {
 		Type: resourcepb.WatchNotification_MODIFIED, Namespace: "ns", Group: "g", Resource: "r", Name: name,
 		ResourceVersion: rv, PreviousResourceVersion: rv - 1,
 	})
+}
+
+// watch starts the watch server's stream.
+func (nt *natsNotifierTest) watch(t *testing.T) (<-chan *resource.WrittenEvent, *floorRecorder) {
+	t.Helper()
+	floors := &floorRecorder{}
+	_, events, err := nt.notifier.watchWithFloors(t.Context(), floors, func() {})
+	require.NoError(t, err)
+	return events, floors
+}
+
+// floorRecorder records raised and held resume floors.
+type floorRecorder struct {
+	mu     sync.Mutex
+	floors map[resource.GroupResource]int64
+	held   bool
+}
+
+func (f *floorRecorder) Hold() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.held = true
+}
+
+func (f *floorRecorder) Release() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.held = false
+}
+
+func (f *floorRecorder) isHeld() bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.held
+}
+
+func (f *floorRecorder) Raise(gr resource.GroupResource, rv int64) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.floors == nil {
+		f.floors = map[resource.GroupResource]int64{}
+	}
+	f.floors[gr] = max(f.floors[gr], rv)
+}
+
+func (f *floorRecorder) get() map[resource.GroupResource]int64 {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return maps.Clone(f.floors)
 }
 
 func (nt *natsNotifierTest) missingEvents(reason string) float64 {
@@ -297,8 +376,7 @@ func TestNatsNotifierHydratesEachConsumer(t *testing.T) {
 func TestNatsNotifierExpiresWatchesWhenHistoryIsGone(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		nt := newNatsNotifierTest(t)
-		events, err := nt.notifier.notify(t.Context())
-		require.NoError(t, err)
+		events, _ := nt.watch(t)
 		synctest.Wait()
 
 		rv := time.Now().UnixMicro()
@@ -326,14 +404,18 @@ func TestNatsNotifierDeliverReportsMissingWritesFirst(t *testing.T) {
 		}
 
 		out := make(chan *resource.WrittenEvent, len(batch))
-		deliveredWhenExpired := -1
-		nt.invalidator.onInvalidate = func() { deliveredWhenExpired = len(out) }
-		require.True(t, nt.notifier.deliver(t.Context(), batch, groupResourceRV{}, out))
+		var reported []missingEvent
+		deliveredWhenReported := -1
+		require.True(t, nt.notifier.deliver(t.Context(), batch, groupResourceRV{}, out, func(e missingEvent) {
+			reported = append(reported, e)
+			deliveredWhenReported = len(out)
+		}))
 
 		// The gap is reported before a later write reaches the stream, so no
 		// watch moves past the missing writes before it expires.
-		require.Equal(t, 1, nt.invalidator.invalidations())
-		require.Zero(t, deliveredWhenExpired)
+		require.Len(t, reported, 1)
+		require.Zero(t, deliveredWhenReported)
+		require.Len(t, reported[0].lost, 2)
 		require.Equal(t, "kept", receive(t, out).Key.Name)
 		// The metric counts lost writes, not batches.
 		require.Equal(t, float64(2), nt.missingEvents(missingReasonHistoryMissing))
@@ -341,8 +423,9 @@ func TestNatsNotifierDeliverReportsMissingWritesFirst(t *testing.T) {
 		nt.history.mu.Lock()
 		nt.history.readErr = errors.New("database unavailable")
 		nt.history.mu.Unlock()
-		require.True(t, nt.notifier.deliver(t.Context(), batch, groupResourceRV{}, out))
-		require.Equal(t, 2, nt.invalidator.invalidations())
+		reported = nil
+		require.True(t, nt.notifier.deliver(t.Context(), batch, groupResourceRV{}, out, func(e missingEvent) { reported = append(reported, e) }))
+		require.Len(t, reported, 1)
 		require.Empty(t, out)
 		require.Equal(t, float64(len(batch)), nt.missingEvents(missingReasonHistoryReadFailed))
 	})
@@ -380,14 +463,13 @@ func TestNatsNotifierStalledConsumerDoesNotDelayOthers(t *testing.T) {
 	})
 }
 
-// A consumer far behind makes the bus side drop notifications, as on KV: the
-// watches expire, and the stream keeps delivering once the consumer catches up.
+// A watch server far behind makes the bus side drop notifications, as on KV:
+// the watches expire, and the stream keeps delivering once it catches up.
 func TestNatsNotifierBusOverflowExpiresWatchesAndRecovers(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		nt := newNatsNotifierTestWithBuffer(t, 2)
 		nt.history.everything = true
-		events, err := nt.notifier.notify(t.Context())
-		require.NoError(t, err)
+		events, _ := nt.watch(t)
 		synctest.Wait()
 
 		rv := time.Now().UnixMicro()
@@ -422,6 +504,231 @@ func TestNatsNotifierBusOverflowExpiresWatchesAndRecovers(t *testing.T) {
 			require.True(t, open, "the stream is not closed")
 		default:
 		}
+	})
+}
+
+// Other consumers recover from their own missing events by reopening their
+// stream, so client watches go on.
+func TestNatsNotifierClosesANonWatchConsumerOnOverflow(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		nt := newNatsNotifierTestWithBuffer(t, 2)
+		nt.history.everything = true
+		events, err := nt.notifier.notify(t.Context())
+		require.NoError(t, err)
+		synctest.Wait()
+
+		rv := time.Now().UnixMicro()
+		for i := range int64(10100) {
+			nt.publish(t, "item", rv+i)
+		}
+		settle()
+		for i := range int64(10100) {
+			nt.publish(t, "item", rv+20000+i)
+		}
+		synctest.Wait()
+
+		requireClosed(t, events)
+		require.Zero(t, nt.invalidator.invalidations())
+	})
+}
+
+// requireClosed drains what the consumer was given and checks the stream ended.
+func requireClosed(t *testing.T, events <-chan *resource.WrittenEvent) {
+	t.Helper()
+	for {
+		select {
+		case _, open := <-events:
+			if !open {
+				return
+			}
+			synctest.Wait()
+		default:
+			t.Fatal("the stream is still open")
+		}
+	}
+}
+
+func TestNatsNotifierRaisesFloorsForLostWrites(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		nt := newNatsNotifierTest(t)
+		_, floors := nt.watch(t)
+		synctest.Wait()
+
+		rv := time.Now().UnixMicro()
+		nt.publish(t, "pruned", rv)
+		settle()
+
+		require.Equal(t, map[resource.GroupResource]int64{{Group: "g", Resource: "r"}: rv}, floors.get())
+	})
+}
+
+func TestNatsNotifierRaisesAllFloorsAfterABusReconnect(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		nt := newNatsNotifierTest(t)
+		_, floors := nt.watch(t)
+		other, err := nt.notifier.notify(t.Context())
+		require.NoError(t, err)
+		synctest.Wait()
+
+		rv := time.Now().UnixMicro()
+		nt.history.add("written", rv, resourcepb.WatchEvent_ADDED)
+		// A reconnect may have lost any write, so every collection's floor
+		// moves to its latest RV.
+		nt.bus.reconnect()
+		synctest.Wait()
+
+		require.Equal(t, map[resource.GroupResource]int64{{Group: "g", Resource: "r"}: rv + 1}, floors.get())
+		require.Equal(t, 1, nt.invalidator.invalidations(), "only the watch server's missing events expire watches")
+		requireClosed(t, other)
+	})
+}
+
+// A resume admitted right after the watches expire takes the new expiry
+// generation, so only a floor raised, or a hold placed, before the expiry can
+// reject it.
+func TestNatsNotifierRaisesFloorsBeforeExpiringWatches(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		nt := newNatsNotifierTest(t)
+		_, floors := nt.watch(t)
+		gr := resource.GroupResource{Group: "g", Resource: "r"}
+		type floorState struct {
+			floor int64
+			held  bool
+		}
+		var seen []floorState
+		nt.invalidator.mu.Lock()
+		nt.invalidator.onInvalidate = func() { seen = append(seen, floorState{floors.get()[gr], floors.isHeld()}) }
+		nt.invalidator.mu.Unlock()
+		synctest.Wait()
+
+		rv := time.Now().UnixMicro()
+		nt.publish(t, "pruned", rv)
+		settle()
+		nt.history.add("written", rv+10, resourcepb.WatchEvent_ADDED)
+		// Keeps the floors from being raised and released before the
+		// reconnect's expiry is seen.
+		nt.history.mu.Lock()
+		nt.history.latestErr = errors.New("database unavailable")
+		nt.history.mu.Unlock()
+		nt.bus.reconnect()
+		synctest.Wait()
+
+		require.Equal(t, 2, nt.invalidator.invalidations())
+		// A missing row raises its floor; a bus reconnect holds every resume
+		// until the latest RVs are read.
+		require.Equal(t, []floorState{{rv, false}, {rv, true}}, seen)
+
+		nt.history.mu.Lock()
+		nt.history.latestErr = nil
+		nt.history.mu.Unlock()
+		time.Sleep(10 * time.Second)
+		synctest.Wait()
+		require.Equal(t, rv+11, floors.get()[gr])
+		require.False(t, floors.isHeld())
+	})
+}
+
+// A first subscription that succeeds only on a retry reports a gap before
+// capture. The floors read after capture already cover it, so no resume is
+// held.
+func TestNatsNotifierRetriedStartHoldsNoResumes(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		nt := newNatsNotifierTest(t)
+		nt.bus.failSubscribe = 1
+
+		floors := &floorRecorder{}
+		var heldAtCapture bool
+		_, _, err := nt.notifier.watchWithFloors(t.Context(), floors, func() { heldAtCapture = floors.isHeld() })
+		require.NoError(t, err)
+		synctest.Wait()
+		require.Equal(t, 1, nt.invalidator.invalidations(), "the retried subscription reported a gap")
+		require.False(t, heldAtCapture)
+		require.False(t, floors.isHeld())
+	})
+}
+
+// A start that fails after the bus reported a gap, here a reconnect right
+// after capture, must not leave every resume held.
+func TestNatsNotifierFailedStartReleasesItsHold(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		nt := newNatsNotifierTest(t)
+		nt.history.mu.Lock()
+		nt.history.latestErr = errors.New("database unavailable")
+		nt.history.mu.Unlock()
+
+		floors := &floorRecorder{}
+		var heldBeforeFailure bool
+		_, _, err := nt.notifier.watchWithFloors(t.Context(), floors, func() {
+			nt.bus.reconnect()
+			synctest.Wait()
+			heldBeforeFailure = floors.isHeld()
+		})
+		require.Error(t, err)
+		require.True(t, heldBeforeFailure, "the reconnect held every resume")
+		synctest.Wait()
+		require.Equal(t, 1, nt.invalidator.invalidations())
+		require.False(t, floors.isHeld())
+	})
+}
+
+func TestNatsNotifierHoldsResumesUntilFloorsCanBeRaised(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		nt := newNatsNotifierTest(t)
+		_, floors := nt.watch(t)
+		gr := resource.GroupResource{Group: "g", Resource: "r"}
+		synctest.Wait()
+
+		rv := time.Now().UnixMicro()
+		nt.history.add("written", rv, resourcepb.WatchEvent_ADDED)
+		nt.history.mu.Lock()
+		nt.history.latestErr = errors.New("database unavailable")
+		nt.history.mu.Unlock()
+		nt.bus.reconnect()
+		synctest.Wait()
+
+		// The watches expire at once, and resumes stay held while the floors
+		// cannot be raised.
+		require.Equal(t, 1, nt.invalidator.invalidations())
+		time.Sleep(time.Minute)
+		synctest.Wait()
+		require.True(t, floors.isHeld())
+		require.Zero(t, floors.get()[gr])
+
+		nt.history.mu.Lock()
+		nt.history.latestErr = nil
+		nt.history.mu.Unlock()
+		time.Sleep(10 * time.Second)
+		synctest.Wait()
+		require.False(t, floors.isHeld())
+		require.Equal(t, rv+1, floors.get()[gr])
+	})
+}
+
+// The worker that raises the floors after a reconnect ends with the backend,
+// even while the latest RVs cannot be read and the watch context lives on.
+func TestNatsNotifierStopsRaisingFloorsWithTheBackend(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		nt := newNatsNotifierTest(t)
+		_, floors := nt.watch(t)
+		synctest.Wait()
+
+		nt.history.mu.Lock()
+		nt.history.latestErr = errors.New("database unavailable")
+		nt.history.mu.Unlock()
+		nt.bus.reconnect()
+		synctest.Wait()
+		require.True(t, floors.isHeld())
+
+		nt.stop()
+		synctest.Wait()
+		nt.history.mu.Lock()
+		reads := nt.history.latestReads
+		nt.history.mu.Unlock()
+		time.Sleep(time.Minute)
+		synctest.Wait()
+		nt.history.mu.Lock()
+		defer nt.history.mu.Unlock()
+		require.Equal(t, reads, nt.history.latestReads, "latest RVs read after the backend stopped")
 	})
 }
 

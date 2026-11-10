@@ -14,9 +14,11 @@ import { Button } from '../Button/Button';
 import { Combobox } from '../Combobox/Combobox';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Icon } from '../Icon/Icon';
+import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 import { TextLink } from '../Link/TextLink';
 import { Menu } from '../Menu/Menu';
+import { Popover } from '../Tooltip/Popover';
 
 import { type PanelChromeProps } from './PanelChrome';
 import mdx from './PanelChrome.mdx';
@@ -366,6 +368,63 @@ export const Examples = () => {
           })}
         </Stack>
       </div>
+    </DashboardStoryCanvas>
+  );
+};
+
+function GroupByHeaderAction() {
+  const [reference, setReference] = useState<HTMLButtonElement | null>(null);
+
+  return (
+    <div className="show-on-hover">
+      <Button
+        variant="secondary"
+        size="sm"
+        fill="text"
+        aria-expanded={reference !== null}
+        onClick={(event) => setReference(event.currentTarget)}
+      >
+        Group by
+        <Icon name="angle-down" />
+      </Button>
+      {reference && (
+        <Popover
+          show
+          placement="bottom-start"
+          referenceElement={reference}
+          content={
+            <Stack direction="column">
+              <Input aria-label="Search group keys" />
+              <Button onClick={() => setReference(null)}>Close</Button>
+            </Stack>
+          }
+        />
+      )}
+    </div>
+  );
+}
+
+export const GroupByHeader = () => {
+  const [grouping, setGrouping] = useState(true);
+
+  return (
+    <DashboardStoryCanvas>
+      <Button onClick={() => setGrouping(!grouping)}>Toggle grouping</Button>
+      <Stack gap={2}>
+        {[110, 210, 420].map((width) => (
+          <PanelChrome
+            key={width}
+            width={width}
+            height={150}
+            title={`Panel title ${width}`}
+            description="Panel description"
+            menu={menu}
+            actions={grouping ? <GroupByHeaderAction /> : undefined}
+          >
+            {() => '192 Mil'}
+          </PanelChrome>
+        ))}
+      </Stack>
     </DashboardStoryCanvas>
   );
 };

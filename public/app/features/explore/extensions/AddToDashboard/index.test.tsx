@@ -6,7 +6,7 @@ import { Provider } from 'react-redux';
 
 import { setEchoSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { configureStore } from 'app/store/configureStore';

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
   applyFieldOverrides,
@@ -16,8 +16,9 @@ import { t } from '@grafana/i18n';
 import { getPluginImportUtils, PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
-import { getSourceFrameIndex } from '@grafana/ui/internal';
+import { type AdHocFilterItem, getSourceFrameIndex } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
+import { reportTableFilterInteraction } from 'app/features/table/analytics';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import {
   useAdHocColumnState,
@@ -28,6 +29,7 @@ import {
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
 import { supportsColumnManagement, withAdHocTransformCapabilities } from 'app/features/table/tableCapabilities';
+import { useTableAdoption } from 'app/features/table/useTableAdoption';
 import { getCurrentFrameIndex, notifyTableFilterError, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
@@ -61,6 +63,14 @@ export function TablePanel(props: Props) {
   const { dataLinkPostProcessor } = useDataLinksContext();
   const getActions = useCellActions(replaceVariables);
   const commonTableProps = useCommonTableProps(options, fieldConfig);
+  const addAdHocFilter = panelContext.onAddAdHocFilter;
+  const onCellFilterAdded = useCallback(
+    (filter: AdHocFilterItem) => {
+      addAdHocFilter?.(filter);
+      reportTableFilterInteraction({ filter_type: 'adhoc', filter_kind: 'values' });
+    },
+    [addAdHocFilter]
+  );
   const noPanelPadding = commonTableProps.tableRefreshEnabled;
   const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
   const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled && panelContext.app !== CoreApp.PanelEditor;
@@ -152,6 +162,15 @@ export function TablePanel(props: Props) {
     [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns]
   );
 
+  useTableAdoption(Boolean(main?.length && hasFields), {
+    column_management_available: Boolean(adHocColumns),
+    filtering_available: Boolean(main?.fields.some((field) => field.config.custom?.filterable)),
+    range_filters_available: Boolean(commonTableProps.rangeFiltersEnabled),
+    pagination_available: Boolean(commonTableProps.enablePagination),
+    zebra_striping_available: tableRefreshNewFeaturesEnabled,
+    zebra_striping_enabled: Boolean(commonTableProps.zebraStriping),
+  });
+
   // Fit-content: the panel has no fixed height, so self-size from the row count.
   // The cell's CSS min/max bounds (and scrolls) the result.
   let tableHeight = fitContent ? getNaturalTableHeight(main, options) : height;
@@ -179,6 +198,7 @@ export function TablePanel(props: Props) {
       rowTransformationsEnabled={adHocTransformationsEnabled}
       localFilterScope={JSON.stringify([currentIndex, outputMain?.refId])}
       onFilterError={notifyTableFilterError}
+      onFilterInteraction={reportTableFilterInteraction}
       rowTransformations={
         adHocTransformationsEnabled && panelContext.adHocTransformations && filterSourceFrameIndex >= 0
           ? {
@@ -198,7 +218,7 @@ export function TablePanel(props: Props) {
       onColumnResize={(displayName, resizedWidth, fieldScope) =>
         onColumnResize(displayName, resizedWidth, fieldScope, props)
       }
-      onCellFilterAdded={panelContext.onAddAdHocFilter}
+      onCellFilterAdded={addAdHocFilter ? onCellFilterAdded : undefined}
       onFieldAddToAssistant={onFieldAddToAssistant}
       onCellAddToAssistant={onCellAddToAssistant}
       timeRange={timeRange}

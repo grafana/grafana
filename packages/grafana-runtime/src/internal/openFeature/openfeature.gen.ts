@@ -32,6 +32,8 @@ export const FlagKeys = {
   AlertingRuleReviews: "alerting.ruleReviews",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
+  /** Show the Assistant Watchers banner on the alert rule list. Watchers are only available in Grafana Cloud. */
+  AlertingWatchersBanner: "alerting.watchersBanner",
   /** Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking */
   AlertingAlertListPanelEnhancements: "alertingAlertListPanelEnhancements",
   /** Rule backtesting API for alerting */
@@ -164,8 +166,6 @@ export const FlagKeys = {
   FeedbackButton: "feedbackButton",
   /** Renders the flame graph's top table using TableNG instead of the legacy Table */
   FlameGraphTableNg: "flameGraph.tableNg",
-  /** Enables use of app platform API for folders */
-  FoldersAppPlatformAPI: "foldersAppPlatformAPI",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Allow admins to make announcement banners dismissible by users */
@@ -192,6 +192,8 @@ export const FlagKeys = {
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened */
+  GrafanaDashboardSidebarExplicitOpen: "grafana.dashboardSidebarExplicitOpen",
   /** Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables */
   GrafanaDashboardVariablesMigration: "grafana.dashboardVariablesMigration",
   /** Enables the auto-height feature for dashboard panels */
@@ -206,6 +208,8 @@ export const FlagKeys = {
   GrafanaExtensionSidebarFloating: "grafana.extensionSidebarFloating",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
+  /** Shows folders the user cannot edit as read only in the folder picker, instead of hiding them */
+  GrafanaFolderPickerFolderEditAccess: "grafana.folderPickerFolderEditAccess",
   /** Adds an experimental Protomaps vector basemap to the geomap panel */
   GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
   /** Enables usage of the new annotations API client */
@@ -266,8 +270,6 @@ export const FlagKeys = {
   GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
-  /** Enables semantic (vector) dashboard search in the command palette */
-  GrafanaVectorSearchCmdk: "grafana.vectorSearchCmdk",
   /** Enables the sidebar pane with new toggles and options in panel view mode */
   GrafanaViewPanelPane: "grafana.viewPanelPane",
   /** Enables the new visual design refresh for the Grafana UI */
@@ -505,6 +507,17 @@ export const useFlagAlertingRuleReviews = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.syncExternalAlertmanager", false, options).value;
+};
+
+/**
+ * Show the Assistant Watchers banner on the alert rule list. Watchers are only available in Grafana Cloud.
+ *
+ * **Details:**
+ * - flag key: `alerting.watchersBanner`
+ * - default value: `false`
+ */
+export const useFlagAlertingWatchersBanner = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.watchersBanner", false, options).value;
 };
 
 /**
@@ -1234,17 +1247,6 @@ export const useFlagFlameGraphTableNg = (options?: ReactFlagEvaluationOptions): 
 };
 
 /**
- * Enables use of app platform API for folders
- *
- * **Details:**
- * - flag key: `foldersAppPlatformAPI`
- * - default value: `true`
- */
-export const useFlagFoldersAppPlatformAPI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("foldersAppPlatformAPI", true, options).value;
-};
-
-/**
  * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
  *
  * **Details:**
@@ -1388,6 +1390,17 @@ export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvalu
 };
 
 /**
+ * In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardSidebarExplicitOpen`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardSidebarExplicitOpen = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardSidebarExplicitOpen", false, options).value;
+};
+
+/**
  * Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables
  *
  * **Details:**
@@ -1462,6 +1475,17 @@ export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.filterablePanels", true, options).value;
+};
+
+/**
+ * Shows folders the user cannot edit as read only in the folder picker, instead of hiding them
+ *
+ * **Details:**
+ * - flag key: `grafana.folderPickerFolderEditAccess`
+ * - default value: `false`
+ */
+export const useFlagGrafanaFolderPickerFolderEditAccess = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.folderPickerFolderEditAccess", false, options).value;
 };
 
 /**
@@ -1792,17 +1816,6 @@ export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluat
  */
 export const useFlagGrafanaUseDefaultScopesEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.useDefaultScopesEndpoint", false, options).value;
-};
-
-/**
- * Enables semantic (vector) dashboard search in the command palette
- *
- * **Details:**
- * - flag key: `grafana.vectorSearchCmdk`
- * - default value: `false`
- */
-export const useFlagGrafanaVectorSearchCmdk = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.vectorSearchCmdk", false, options).value;
 };
 
 /**

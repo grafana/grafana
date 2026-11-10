@@ -619,7 +619,7 @@ func (s *service) registerSearchServer(provider grpcserver.Provider, server reso
 		&resourcepb.ManagedObjectIndex_ServiceDesc,
 		&resourcepb.Diagnostics_ServiceDesc,
 	} {
-		srv.RegisterService(s.withErrorResultConversion(desc), handler)
+		srv.RegisterService(desc, handler)
 	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 	return nil
@@ -653,7 +653,6 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
 	for _, desc := range []*grpc.ServiceDesc{
 		&resourcepb.ResourceStore_ServiceDesc,
-		&resourcepb.ResourceStats_ServiceDesc,
 		&resourcepb.BulkStore_ServiceDesc,
 		&resourcepb.BlobStore_ServiceDesc,
 		&resourcepb.BlobStoreStreaming_ServiceDesc,
@@ -662,14 +661,13 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		&resourcepb.ResourceIndex_ServiceDesc,
 		&resourcepb.ManagedObjectIndex_ServiceDesc,
 	} {
-		wrapped := s.withErrorResultConversion(desc)
 		if desc == &resourcepb.ResourceStore_ServiceDesc {
-			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
+			desc = grpchan.InterceptServer(desc, metricsInt, nil)
 		}
 		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
-			wrapped = grpchan.InterceptServer(wrapped, nil, resource.BlobStreamServerInterceptor(server))
+			desc = grpchan.InterceptServer(desc, nil, resource.BlobStreamServerInterceptor(server))
 		}
-		srv.RegisterService(wrapped, handler)
+		srv.RegisterService(desc, handler)
 	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 
@@ -682,14 +680,6 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		}
 		resourcepb.RegisterVectorStoreServer(srv, vsHandler)
 	}
-}
-
-func (s *service) withErrorResultConversion(desc *grpc.ServiceDesc) *grpc.ServiceDesc {
-	var streamInterceptor grpc.StreamServerInterceptor
-	if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
-		streamInterceptor = resource.BlobStreamErrorResultInterceptor()
-	}
-	return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), streamInterceptor)
 }
 
 // BuildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV

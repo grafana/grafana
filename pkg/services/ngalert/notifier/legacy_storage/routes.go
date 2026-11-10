@@ -127,8 +127,15 @@ func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *v1.AMConfigV1) (*v1
 	// Ensure the new default receiver exists and if not, create it.
 	if err := rev.validateReceiverReferences(*defaultCfg.AlertmanagerConfig.Route); err != nil {
 		// Default receiver doesn't exist, create it.
-		defaultRcvUID := v1.ReceiverUID(defaultCfg.AlertmanagerConfig.Route.Receiver) // TODO: This could work with static UIDs but a predetermined UID might make more sense.
-		defaultRcv, ok := defaultCfg.Receivers[defaultRcvUID]
+		var defaultRcvUID v1.ResourceUID
+		var defaultRcv v1.PostableApiReceiver
+		var ok bool
+		for uid, r := range defaultCfg.Receivers {
+			if r.Name == defaultCfg.AlertmanagerConfig.Route.Receiver {
+				defaultRcvUID, defaultRcv, ok = uid, r, true
+				break
+			}
+		}
 		if !ok {
 			return nil, fmt.Errorf("inconsistent default configuration: default receiver %q not found", defaultCfg.AlertmanagerConfig.Route.Receiver)
 		}

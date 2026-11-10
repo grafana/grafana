@@ -1,7 +1,7 @@
-import { insertNewlineContinueMarkup } from '@codemirror/lang-markdown';
+import { insertNewlineContinueMarkup, insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown';
 import { syntaxTree } from '@codemirror/language';
 import { Prec, type Extension } from '@codemirror/state';
-import { keymap, placeholder as placeholderExtension, type KeyBinding } from '@codemirror/view';
+import { keymap, placeholder as placeholderExtension, type KeyBinding, type EditorView } from '@codemirror/view';
 import { useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
@@ -17,6 +17,20 @@ import {
   newlineInsertionPoint,
   nextListContinuation,
 } from './markdownLivePreview';
+
+const continueChecklistMarkup = insertNewlineContinueMarkupCommand({ nonTightLists: false });
+
+function continueChecklist(view: EditorView) {
+  const { state } = view;
+  if (state.selection.main.empty) {
+    const pos = state.selection.main.head;
+    const insertAt = newlineInsertionPoint(syntaxTree(state), pos);
+    if (insertAt !== pos) {
+      view.dispatch({ selection: { anchor: insertAt } });
+    }
+  }
+  return continueChecklistMarkup(view);
+}
 
 const EDIT_SETUP = {
   lineNumbers: false,
@@ -70,6 +84,10 @@ export function MarkdownCellEditor({
           const tree = syntaxTree(view.state);
           const insertAt = newlineInsertionPoint(tree, pos);
 
+          if (enclosingListKind(tree, pos) === 'checklist') {
+            return continueChecklist(view);
+          }
+
           if (enclosingListKind(tree, pos)) {
             const marker = nextListContinuation(view.state, pos);
             if (marker === undefined) {
@@ -103,6 +121,10 @@ export function MarkdownCellEditor({
           const { state } = view;
           const pos = state.selection.main.head;
           const tree = syntaxTree(state);
+
+          if (enclosingListKind(tree, pos) === 'checklist') {
+            return continueChecklist(view);
+          }
 
           let marker: string | undefined;
           if (enclosingListKind(tree, pos)) {
