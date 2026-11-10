@@ -1227,6 +1227,7 @@ function renderedTextReader(root: HTMLElement) {
   };
 
   return {
+    isShown,
     read(slices: TextSlice[], limit: number, direction: 'forward' | 'backward' = 'forward'): string {
       const backward = direction === 'backward';
       let text = '';
@@ -1249,6 +1250,52 @@ function renderedTextReader(root: HTMLElement) {
       return oneLine(text);
     },
   };
+}
+
+/**
+ * The line boxes of the selected text, in viewport coordinates, at most `MAX_TEXT_RECTS`. Measured per text
+ * node, since a range's own rects include the whole box of every element it fully covers (a table cell, a
+ * block), and pieces of one line side by side (a highlighted word) are merged into one box.
+ */
+function textLines(
+  slices: TextSlice[],
+  isShown: (node: Text) => boolean
+): Array<{ left: number; top: number; right: number; bottom: number }> {
+  const lines: Array<{ left: number; top: number; right: number; bottom: number }> = [];
+  for (const { node, start, end } of slices) {
+    if (!isShown(node)) {
+      continue;
+    }
+    const range = document.createRange();
+    range.setStart(node, start);
+    range.setEnd(node, end);
+    // jsdom lays nothing out.
+    if (typeof range.getClientRects !== 'function') {
+      return lines;
+    }
+    for (const rect of Array.from(range.getClientRects())) {
+      if (rect.width <= 0 || rect.height <= 0) {
+        continue;
+      }
+      const previous = lines.at(-1);
+      const sameLine =
+        previous &&
+        Math.abs(previous.top - rect.top) < 1 &&
+        Math.abs(previous.bottom - rect.bottom) < 1 &&
+        rect.left <= previous.right + 1 &&
+        rect.right >= previous.left - 1;
+      if (previous && sameLine) {
+        previous.left = Math.min(previous.left, rect.left);
+        previous.right = Math.max(previous.right, rect.right);
+        continue;
+      }
+      if (lines.length === MAX_TEXT_RECTS) {
+        return lines;
+      }
+      lines.push({ left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom });
+    }
+  }
+  return lines;
 }
 
 /**
@@ -1282,7 +1329,8 @@ function readTextSelection(
   }
   const text = renderedTextReader(root);
   // A little past the quote's limit, so a cut quote's suffix starts where the quote stops.
-  const selected = text.read(textSlices(root, range), MAX_QUOTE_LENGTH + MAX_AROUND_LENGTH);
+  const slices = textSlices(root, range);
+  const selected = text.read(slices, MAX_QUOTE_LENGTH + MAX_AROUND_LENGTH);
   const quote = selected.slice(0, MAX_QUOTE_LENGTH).trim();
   if (!quote) {
     return null;
@@ -1302,16 +1350,13 @@ function readTextSelection(
     .trim();
 
   const bounds = root.getBoundingClientRect();
-  const lines =
-    typeof range.getClientRects === 'function'
-      ? Array.from(range.getClientRects()).filter((rect) => rect.width > 0 && rect.height > 0)
-      : [];
+  const lines = textLines(slices, text.isShown);
   const norm = (value: number, size: number) => (size > 0 ? clamp(value / size, 0, 1) : 0);
-  const rects = lines.slice(0, MAX_TEXT_RECTS).map((rect) => ({
+  const rects = lines.map((rect) => ({
     x: norm(rect.left - bounds.left, bounds.width),
     y: norm(rect.top - bounds.top, bounds.height),
-    width: norm(rect.width, bounds.width),
-    height: norm(rect.height, bounds.height),
+    width: norm(rect.right - rect.left, bounds.width),
+    height: norm(rect.bottom - rect.top, bounds.height),
   }));
   const last = lines.at(-1);
   // The pin rises from its point, so its point is the last line's bottom-right: on a line at the top of its

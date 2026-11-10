@@ -2425,6 +2425,51 @@ describe('tools', () => {
     delete Range.prototype.getClientRects;
   });
 
+  it('highlights only the lines of selected text, at most 20, and pins the last one kept', async () => {
+    const { session, startPick } = setup();
+    mountDashboardBody();
+    panelRect = { left: 100, top: 200, width: 400, height: 600 };
+    const content = panelRoot!.firstElementChild!;
+    // 25 cells, one text line each 20px apart; the first two words share a line and are merged.
+    content.innerHTML =
+      '<div><b>GET</b> <i>/api</i></div>' +
+      Array.from({ length: 24 }, (_, index) => `<div class="cell">row ${index}</div>`).join('');
+    const lineOf = new Map<Node, { left: number; top: number; width: number; height: number }>();
+    const [get, space, api] = Array.from(content.firstElementChild!.childNodes).map((node) => node.firstChild ?? node);
+    lineOf.set(get, { left: 110, top: 200, width: 30, height: 20 });
+    lineOf.set(space, { left: 140, top: 200, width: 5, height: 20 });
+    lineOf.set(api, { left: 145, top: 200, width: 40, height: 20 });
+    content.querySelectorAll('.cell').forEach((cell, index) => {
+      lineOf.set(cell.firstChild!, { left: 110, top: 220 + index * 20, width: 60 + index, height: 20 });
+    });
+    const toRect = ({ left, top, width, height }: { left: number; top: number; width: number; height: number }) =>
+      ({ left, top, width, height, right: left + width, bottom: top + height }) as DOMRect;
+    Object.defineProperty(Range.prototype, 'getClientRects', {
+      configurable: true,
+      value(this: Range) {
+        // A range over elements also reports each cell's whole box, as browsers do.
+        const line = lineOf.get(this.startContainer);
+        return line ? [toRect(line)] : [toRect({ left: 100, top: 200, width: 400, height: 600 })];
+      },
+    });
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 120, clientY: 210, button: 0 });
+    window.getSelection()!.selectAllChildren(content);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 700 });
+
+    const { text, point } = (await pick) as { text: { rects: unknown[] }; point: { x: number; y: number } };
+    expect(text.rects).toHaveLength(20);
+    expect(text.rects[0]).toEqual({ x: 10 / 400, y: 0, width: 75 / 400, height: 20 / 600 });
+    expect(text.rects[19]).toEqual({ x: 10 / 400, y: 380 / 600, width: 78 / 400, height: 20 / 600 });
+    // The last kept line, row 18, ends 188px across and 600px down the viewport, not row 23's.
+    expect(point).toEqual({ x: 88 / 400, y: 400 / 600 });
+    // @ts-expect-error -- jsdom has no getClientRects on Range; remove the stand-in.
+    delete Range.prototype.getClientRects;
+  });
+
   it('ignores a Text selection outside every element', async () => {
     const { session, startPick } = setup();
     mountDashboardBody();
