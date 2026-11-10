@@ -28,7 +28,9 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
   const providerType: RepoType = connectionProviderType(spec?.type) ?? 'github';
   const kindLabel = isOAuthConnectionType(spec?.type)
     ? t('provisioning.connections.kind-oauth-app', 'OAuth App')
-    : t('provisioning.connections.kind-github-app', 'GitHub App');
+    : spec?.type === 'source'
+      ? t('provisioning.connections.kind-source', 'Source API client credentials')
+      : t('provisioning.connections.kind-github-app', 'GitHub App');
   // Externally managed connections (terraform, kubectl, ...) are read-only in the UI.
   const isReadOnly = isManagedResourceReadOnly(connection);
   return (

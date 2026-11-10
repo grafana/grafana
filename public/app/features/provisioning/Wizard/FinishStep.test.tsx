@@ -27,10 +27,12 @@ function FormWrapper({
   children,
   type,
   defaultValues,
+  repositoryValues,
 }: {
   children: ReactNode;
   type: RepoType;
   defaultValues?: Partial<WizardFormData>;
+  repositoryValues?: Partial<WizardFormData['repository']>;
 }) {
   const methods = useForm<WizardFormData>({
     defaultValues: {
@@ -43,6 +45,7 @@ function FormWrapper({
         path: '',
         readOnly: false,
         prWorkflow: false,
+        ...repositoryValues,
       },
       ...defaultValues,
     },
@@ -55,9 +58,13 @@ function FormWrapper({
   );
 }
 
-function setup(type: RepoType, defaultValues?: Partial<WizardFormData>) {
+function setup(
+  type: RepoType,
+  defaultValues?: Partial<WizardFormData>,
+  repositoryValues?: Partial<WizardFormData['repository']>
+) {
   return render(
-    <FormWrapper type={type} defaultValues={defaultValues}>
+    <FormWrapper type={type} defaultValues={defaultValues} repositoryValues={repositoryValues}>
       <FinishStep />
     </FormWrapper>
   );
@@ -90,6 +97,30 @@ describe('FinishStep', () => {
       expect(screen.queryByText(BRANCH_LABEL)).not.toBeInTheDocument();
       expect(screen.queryByText(COMMIT_LABEL)).not.toBeInTheDocument();
       expect(screen.queryByText(PR_LABEL)).not.toBeInTheDocument();
+    });
+
+    it('offers the sync interval and a read-only toggle but no git sections for a source repository', async () => {
+      setup('source', undefined, { readOnly: true });
+
+      expect(await screen.findByRole('spinbutton', { name: /Sync Interval/ })).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: /Read only/ })).toBeChecked();
+      expect(screen.queryByRole('checkbox', { name: /pull request/i })).not.toBeInTheDocument();
+      expect(screen.queryByText(BRANCH_LABEL)).not.toBeInTheDocument();
+      expect(screen.queryByText(COMMIT_LABEL)).not.toBeInTheDocument();
+      expect(screen.queryByText(PR_LABEL)).not.toBeInTheDocument();
+      expect(screen.queryByText('Webhook options')).not.toBeInTheDocument();
+    });
+
+    it('explains write-back and shows the read-only note only while a source is read only', async () => {
+      const { user } = setup('source', undefined, { readOnly: true });
+
+      expect(await screen.findByText(/written back to the source, which must support edits/)).toBeInTheDocument();
+      expect(screen.getByText(/Resources can only be changed at the source/)).toBeInTheDocument();
+
+      await user.click(screen.getByRole('checkbox', { name: /Read only/ }));
+
+      expect(screen.getByRole('checkbox', { name: /Read only/ })).not.toBeChecked();
+      expect(screen.queryByText(/Resources can only be changed at the source/)).not.toBeInTheDocument();
     });
 
     it('shows the webhook section for a GitHub repository', async () => {

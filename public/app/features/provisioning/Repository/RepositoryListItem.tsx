@@ -27,7 +27,7 @@ interface Props {
 }
 
 export function RepositoryListItem({ repository }: Props) {
-  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
+  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows, repository.spec?.type);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
   const styles = useStyles2(getStyles);
@@ -41,6 +41,12 @@ export function RepositoryListItem({ repository }: Props) {
       meta.push(
         <Text variant="bodySmall" key="path">
           {spec.local?.path ?? ''}
+        </Text>
+      );
+    } else if (spec?.type === 'source') {
+      meta.push(
+        <Text variant="bodySmall" key="url">
+          {spec.source?.url ?? ''}
         </Text>
       );
     } else {

@@ -225,6 +225,14 @@ type WebhookRepository interface {
 	SubscribedEvents() []string
 }
 
+// UnregisteredWebhookRepository is a WebhookRepository whose deliveries come from a
+// provider that pushes to Grafana without Grafana registering a webhook with it, so
+// there is no webhook status to find and no public URL to require.
+type UnregisteredWebhookRepository interface {
+	WebhookRepository
+	ReceivesUnregisteredWebhooks()
+}
+
 type FileAction string
 
 const (

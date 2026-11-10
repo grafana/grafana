@@ -4,7 +4,7 @@ import { type ConnectionFormData } from '../types';
 
 import { isOAuthConnectionType } from './connectionOAuth';
 
-export type ConnectionProvider = 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'git';
+export type ConnectionProvider = 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'git' | 'source';
 
 export function toConnectionType(provider: ConnectionProvider, kind: 'app' | 'oauth'): ConnectionFormData['type'] {
   if (provider === 'github') {
@@ -15,6 +15,9 @@ export function toConnectionType(provider: ConnectionProvider, kind: 'app' | 'oa
   }
   if (provider === 'git') {
     return 'gitOAuth';
+  }
+  if (provider === 'source') {
+    return 'source';
   }
   return provider === 'gitlab' ? 'gitlabOAuth' : 'bitbucketOAuth';
 }
@@ -45,6 +48,18 @@ export function getConnectionFormDefaults(type: string | undefined, data?: Conne
       authURL: data?.spec?.gitOAuth?.authURL || '',
       tokenURL: data?.spec?.gitOAuth?.tokenURL || '',
       scopes: data?.spec?.gitOAuth?.scopes ?? [],
+    };
+  }
+
+  if (type === 'source') {
+    return {
+      ...base,
+      type: 'source',
+      clientID: data?.spec?.oauth?.clientID || '',
+      clientSecret: '',
+      tokenURL: data?.spec?.source?.tokenURL || '',
+      audience: data?.spec?.source?.audience || '',
+      scopes: data?.spec?.source?.scopes ?? [],
     };
   }
 
@@ -93,6 +108,18 @@ export function connectionSpecFromForm(form: ConnectionFormData): ConnectionSpec
           appID: form.appID ?? '',
           installationID: form.installationID ?? '',
           serverUrl: form.serverUrl,
+        },
+      };
+    case 'source':
+      return {
+        title: form.title,
+        ...(form.description && { description: form.description }),
+        type: 'source',
+        oauth: { clientID: form.clientID ?? '' },
+        source: {
+          tokenURL: form.tokenURL ?? '',
+          ...(form.audience && { audience: form.audience }),
+          ...(form.scopes?.length && { scopes: form.scopes }),
         },
       };
     default:

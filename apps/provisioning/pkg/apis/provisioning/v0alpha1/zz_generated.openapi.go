@@ -84,6 +84,11 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ResourceType{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
 		ResourceWrapper{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
 		SecureValues{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref),
+		SourceAllowedKind{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_SourceAllowedKind(ref),
+		SourceAuth{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_SourceAuth(ref),
+		SourceConnectionConfig{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_SourceConnectionConfig(ref),
+		SourceRepositoryConfig{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_SourceRepositoryConfig(ref),
+		SourceTLS{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v0alpha1_SourceTLS(ref),
 		SupportedResource{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref),
 		SyncJobOptions{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
 		SyncOptions{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
@@ -603,11 +608,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"gitOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
+							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"gitOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`\n - `\"source\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucketOAuth", "gitOAuth", "github", "githubEnterprise", "githubEnterpriseOAuth", "githubOAuth", "gitlabOAuth"},
+							Enum:        []interface{}{"bitbucketOAuth", "gitOAuth", "github", "githubEnterprise", "githubEnterpriseOAuth", "githubOAuth", "gitlabOAuth", "source"},
 						},
 					},
 					"url": {
@@ -647,6 +652,12 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 							Ref:         ref(GitOAuthConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
+					"source": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Source API client-credentials configuration Only applicable when provider is \"source\"",
+							Ref:         ref(SourceConnectionConfig{}.OpenAPIModelName()),
+						},
+					},
 					"oauth": {
 						SchemaProps: spec.SchemaProps{
 							Description: "OAuth app configuration shared by all OAuth app providers",
@@ -664,7 +675,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BitbucketConnectionConfig{}.OpenAPIModelName(), ConnectionOAuthConfig{}.OpenAPIModelName(), ConnectionWebhookConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseOAuthConnectionConfig{}.OpenAPIModelName(), GitOAuthConnectionConfig{}.OpenAPIModelName()},
+			BitbucketConnectionConfig{}.OpenAPIModelName(), ConnectionOAuthConfig{}.OpenAPIModelName(), ConnectionWebhookConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseOAuthConnectionConfig{}.OpenAPIModelName(), GitOAuthConnectionConfig{}.OpenAPIModelName(), SourceConnectionConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -2621,11 +2632,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
+							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`\n - `\"source\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
+							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local", "source"},
 						},
 					},
 					"webhook": {
@@ -2670,6 +2681,12 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Ref:         ref(GitLabRepositoryConfig{}.OpenAPIModelName()),
 						},
 					},
+					"source": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository served by a Source API endpoint. Mutually exclusive with local | github | git.",
+							Ref:         ref(SourceRepositoryConfig{}.OpenAPIModelName()),
+						},
+					},
 					"connection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The connection the repository references. This means the Repository is interacting with git via a Connection.",
@@ -2681,7 +2698,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BitbucketRepositoryConfig{}.OpenAPIModelName(), BranchOptions{}.OpenAPIModelName(), CommitOptions{}.OpenAPIModelName(), ConnectionInfo{}.OpenAPIModelName(), GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName(), GitHubRepositoryConfig{}.OpenAPIModelName(), GitLabRepositoryConfig{}.OpenAPIModelName(), GitRepositoryConfig{}.OpenAPIModelName(), LocalRepositoryConfig{}.OpenAPIModelName(), PullRequestOptions{}.OpenAPIModelName(), SyncOptions{}.OpenAPIModelName(), WebhookConfig{}.OpenAPIModelName()},
+			BitbucketRepositoryConfig{}.OpenAPIModelName(), BranchOptions{}.OpenAPIModelName(), CommitOptions{}.OpenAPIModelName(), ConnectionInfo{}.OpenAPIModelName(), GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName(), GitHubRepositoryConfig{}.OpenAPIModelName(), GitLabRepositoryConfig{}.OpenAPIModelName(), GitRepositoryConfig{}.OpenAPIModelName(), LocalRepositoryConfig{}.OpenAPIModelName(), PullRequestOptions{}.OpenAPIModelName(), SourceRepositoryConfig{}.OpenAPIModelName(), SyncOptions{}.OpenAPIModelName(), WebhookConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -2879,11 +2896,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
+							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`\n - `\"source\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
+							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local", "source"},
 						},
 					},
 					"target": {
@@ -3019,7 +3036,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 									SchemaProps: spec.SchemaProps{
 										Type:   []string{"string"},
 										Format: "",
-										Enum:   []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
+										Enum:   []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local", "source"},
 									},
 								},
 							},
@@ -3034,7 +3051,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 									SchemaProps: spec.SchemaProps{
 										Type:   []string{"string"},
 										Format: "",
-										Enum:   []interface{}{"bitbucketOAuth", "gitOAuth", "github", "githubEnterprise", "githubEnterpriseOAuth", "githubOAuth", "gitlabOAuth"},
+										Enum:   []interface{}{"bitbucketOAuth", "gitOAuth", "github", "githubEnterprise", "githubEnterpriseOAuth", "githubOAuth", "gitlabOAuth", "source"},
 									},
 								},
 							},
@@ -3328,11 +3345,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref common.Ref
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
+							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`\n - `\"source\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
+							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local", "source"},
 						},
 					},
 					"title": {
@@ -3627,6 +3644,191 @@ func schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref common.ReferenceCall
 		},
 		Dependencies: []string{
 			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_SourceAllowedKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The API group, e.g. `dashboard.grafana.app`. A leading `*.` matches any subdomain.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The kind, e.g. `Dashboard`. `*` matches every kind of the group.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"group", "kind"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_SourceAuth(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Possible enum values:\n - `\"bearer\"` sends the long-lived secure.token as a bearer token.\n - `\"clientCredentials\"` uses an OAuth client-credentials token kept fresh by a source Connection.\n - `\"tokenExchange\"` exchanges a short-lived token per request. Only available where a token exchange service is configured.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"bearer", "clientCredentials", "tokenExchange"},
+						},
+					},
+				},
+				Required: []string{"type"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_SourceConnectionConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "SourceConnectionConfig describes how to get a token for a Source API with the OAuth client-credentials grant. The client ID lives in spec.oauth and the client secret in secure.clientSecret.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"tokenURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The OAuth token endpoint (e.g. `https://idp.example.com/oauth/token`). It is set here and never taken from the source's descriptor, so a rogue source cannot redirect the client secret.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"audience": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The audience to request, when the token endpoint needs one.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"scopes": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "The OAuth scopes to request.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"tokenURL"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_SourceRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "SourceRepositoryConfig describes a Source API endpoint that serves the desired state of a namespace.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The Source API base URL, including the source id (e.g. `https://source.example.com/v1/sources/my-source`).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"auth": {
+						SchemaProps: spec.SchemaProps{
+							Description: "How requests to the source are authenticated. Defaults to bearer.",
+							Ref:         ref(SourceAuth{}.OpenAPIModelName()),
+						},
+					},
+					"allow": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "The kinds this source may write. Enforced by Provisioning; the source's own descriptor never grants authority. Folders are always allowed, since directories become folders. When empty, only dashboards are allowed.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(SourceAllowedKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"emptyTreePolicy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "What to do when the source returns an empty tree for a repository that manages resources. Defaults to refuse, so a faulty source cannot prune everything.\n\nPossible enum values:\n - `\"allow\"` treats an empty tree as a request to delete everything.\n - `\"refuse\"` fails the sync instead of pruning everything the repository manages.",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"allow", "refuse"},
+						},
+					},
+					"tls": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TLS settings for reaching the source.",
+							Ref:         ref(SourceTLS{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			SourceAllowedKind{}.OpenAPIModelName(), SourceAuth{}.OpenAPIModelName(), SourceTLS{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_SourceTLS(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"caBundle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PEM-encoded CA certificates that sign the source's server certificate, in addition to the system roots.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"serverName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Overrides the server name used to verify the certificate.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

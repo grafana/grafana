@@ -27,7 +27,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const repoType = repository.spec?.type;
   const repoConfig = repoType ? getRepositoryTypeConfig(repoType) : undefined;
   const providerIcon = repoConfig?.icon || 'external-link-alt';
-  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
+  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows, repository.spec?.type);
   // The repository's resources are contained in a folder named after it.
   const isFolderContained = repository.spec?.sync.target === 'folder';
 

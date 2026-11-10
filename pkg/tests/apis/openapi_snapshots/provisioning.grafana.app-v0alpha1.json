@@ -4638,13 +4638,21 @@
               }
             ]
           },
+          "source": {
+            "description": "Source API client-credentials configuration Only applicable when provider is \"source\"",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SourceConnectionConfig"
+              }
+            ]
+          },
           "title": {
             "description": "The connection display name (shown in the UI)",
             "type": "string",
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"gitOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"gitOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`\n - `\"source\"`",
             "type": "string",
             "default": "",
             "enum": [
@@ -4654,7 +4662,8 @@
               "githubEnterprise",
               "githubEnterpriseOAuth",
               "githubOAuth",
-              "gitlabOAuth"
+              "gitlabOAuth",
+              "source"
             ]
           },
           "url": {
@@ -6036,6 +6045,14 @@
               }
             ]
           },
+          "source": {
+            "description": "The repository served by a Source API endpoint. Mutually exclusive with local | github | git.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SourceRepositoryConfig"
+              }
+            ]
+          },
           "sync": {
             "description": "Sync settings -- how values are pulled from the repository into grafana",
             "default": {},
@@ -6051,7 +6068,7 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`\n - `\"source\"`",
             "type": "string",
             "default": "",
             "enum": [
@@ -6060,7 +6077,8 @@
               "github",
               "githubEnterprise",
               "gitlab",
-              "local"
+              "local",
+              "source"
             ]
           },
           "webhook": {
@@ -6271,7 +6289,7 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`\n - `\"source\"`",
             "type": "string",
             "default": "",
             "enum": [
@@ -6280,7 +6298,8 @@
               "github",
               "githubEnterprise",
               "gitlab",
-              "local"
+              "local",
+              "source"
             ]
           },
           "url": {
@@ -6342,7 +6361,8 @@
                 "githubEnterprise",
                 "githubEnterpriseOAuth",
                 "githubOAuth",
-                "gitlabOAuth"
+                "gitlabOAuth",
+                "source"
               ]
             }
           },
@@ -6357,7 +6377,8 @@
                 "github",
                 "githubEnterprise",
                 "gitlab",
-                "local"
+                "local",
+                "source"
               ]
             }
           },
@@ -6601,7 +6622,7 @@
             "default": ""
           },
           "type": {
-            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`\n - `\"source\"`",
             "type": "string",
             "default": "",
             "enum": [
@@ -6610,7 +6631,8 @@
               "github",
               "githubEnterprise",
               "gitlab",
-              "local"
+              "local",
+              "source"
             ]
           }
         }
@@ -6803,6 +6825,124 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
               }
             ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SourceAllowedKind": {
+        "type": "object",
+        "required": [
+          "group",
+          "kind"
+        ],
+        "properties": {
+          "group": {
+            "description": "The API group, e.g. `dashboard.grafana.app`. A leading `*.` matches any subdomain.",
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "description": "The kind, e.g. `Dashboard`. `*` matches every kind of the group.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SourceAuth": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "description": "Possible enum values:\n - `\"bearer\"` sends the long-lived secure.token as a bearer token.\n - `\"clientCredentials\"` uses an OAuth client-credentials token kept fresh by a source Connection.\n - `\"tokenExchange\"` exchanges a short-lived token per request. Only available where a token exchange service is configured.",
+            "type": "string",
+            "default": "",
+            "enum": [
+              "bearer",
+              "clientCredentials",
+              "tokenExchange"
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SourceConnectionConfig": {
+        "description": "SourceConnectionConfig describes how to get a token for a Source API with the OAuth client-credentials grant. The client ID lives in spec.oauth and the client secret in secure.clientSecret.",
+        "type": "object",
+        "required": [
+          "tokenURL"
+        ],
+        "properties": {
+          "audience": {
+            "description": "The audience to request, when the token endpoint needs one.",
+            "type": "string"
+          },
+          "scopes": {
+            "description": "The OAuth scopes to request.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "tokenURL": {
+            "description": "The OAuth token endpoint (e.g. `https://idp.example.com/oauth/token`). It is set here and never taken from the source's descriptor, so a rogue source cannot redirect the client secret.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SourceRepositoryConfig": {
+        "description": "SourceRepositoryConfig describes a Source API endpoint that serves the desired state of a namespace.",
+        "type": "object",
+        "properties": {
+          "allow": {
+            "description": "The kinds this source may write. Enforced by Provisioning; the source's own descriptor never grants authority. Folders are always allowed, since directories become folders. When empty, only dashboards are allowed.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SourceAllowedKind"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "auth": {
+            "description": "How requests to the source are authenticated. Defaults to bearer.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SourceAuth"
+              }
+            ]
+          },
+          "emptyTreePolicy": {
+            "description": "What to do when the source returns an empty tree for a repository that manages resources. Defaults to refuse, so a faulty source cannot prune everything.\n\nPossible enum values:\n - `\"allow\"` treats an empty tree as a request to delete everything.\n - `\"refuse\"` fails the sync instead of pruning everything the repository manages.",
+            "type": "string",
+            "enum": [
+              "allow",
+              "refuse"
+            ]
+          },
+          "tls": {
+            "description": "TLS settings for reaching the source.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SourceTLS"
+              }
+            ]
+          },
+          "url": {
+            "description": "The Source API base URL, including the source id (e.g. `https://source.example.com/v1/sources/my-source`).",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SourceTLS": {
+        "type": "object",
+        "properties": {
+          "caBundle": {
+            "description": "PEM-encoded CA certificates that sign the source's server certificate, in addition to the system roots.",
+            "type": "string"
+          },
+          "serverName": {
+            "description": "Overrides the server name used to verify the certificate.",
+            "type": "string"
           }
         }
       },

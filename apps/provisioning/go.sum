@@ -119,6 +119,8 @@ github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6 h
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6/go.mod h1:BpUYFztGINSLZmkzcS9dSHdNwBZAb8w1KD5unG1oNeg=
 github.com/grafana/nanogit v1.7.5 h1:Egd957uvKS2K1iAIwPVLES0vjGjwr8p1En4eI05vWiI=
 github.com/grafana/nanogit v1.7.5/go.mod h1:bRVX9FZlWEwGsazn/jokJa0iRopMiiR6JZqpVilNbFI=
+github.com/grpc-ecosystem/grpc-gateway/v2 v2.33.0 h1:5T5Ns3kMpWr+z3s5ZA0e7ljVyWNVNxK76sHPAxi5D1k=
+github.com/grpc-ecosystem/grpc-gateway/v2 v2.33.0/go.mod h1:oWNYw09cH8wl8fFgC5hKlBLxR4XfKy2KQpP8MJjeCcc=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY2I=
 github.com/hashicorp/errwrap v1.1.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=

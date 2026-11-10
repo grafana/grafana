@@ -14755,7 +14755,8 @@
     "connect-page": {
       "subTitle": {
         "connect-external-storage-manage-resources": "Connect to an external storage to manage your resources"
-      }
+      },
+      "title-source": "Configure Source API"
     },
     "connect-repository-button": {
       "configure": "Configure",
@@ -14855,6 +14856,7 @@
       "export": "Export",
       "kind-github-app": "GitHub App",
       "kind-oauth-app": "OAuth App",
+      "kind-source": "Source API client credentials",
       "no-connections": "No connections configured",
       "no-results": "No results matching your query",
       "search-placeholder": "Search connections",
@@ -15334,6 +15336,7 @@
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
+    "read-only-source-tooltip": "This resource is read-only and provisioned from a Source API. To make any changes, update the source. To modify the settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
       "column-action": "Action",
       "column-author": "Author",
@@ -15458,7 +15461,10 @@
       "local-tooltip": "Provision dashboards from local file system without Git.",
       "pure-git": "Pure Git",
       "pure-git-description": "Connect to any Git repository",
-      "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
+      "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links).",
+      "source": "Source API",
+      "source-description": "Pull resources from a Source API endpoint",
+      "source-tooltip": "Provisioning from an HTTP endpoint that serves the desired state of this instance as a flat tree of manifests. Read only by default; when the source supports edits, changes saved in Grafana can be written back to it."
     },
     "resource-kind": {
       "dashboard": "dashboard",
@@ -15572,6 +15578,54 @@
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
     },
+    "source": {
+      "allow-add": "Add kind",
+      "allow-description": "The kinds the source may write. When empty, only dashboards are allowed. Folders are always allowed.",
+      "allow-group-aria": "Group of allowed kind {{position}}",
+      "allow-kind-aria": "Kind of allowed kind {{position}}",
+      "allow-label": "Allowed kinds",
+      "allow-remove": "Remove allowed kind {{position}}",
+      "auth-type-bearer": "Bearer token",
+      "auth-type-bearer-description": "Send a long-lived token you provide",
+      "auth-type-client-credentials": "Client credentials",
+      "auth-type-client-credentials-description": "Use an OAuth client-credentials token kept fresh by a connection",
+      "auth-type-description": "How Grafana authenticates to the source. Token exchange is only available where a token exchange service is configured and needs no token or connection.",
+      "auth-type-label": "Authentication",
+      "auth-type-token-exchange": "Token exchange",
+      "auth-type-token-exchange-description": "Exchange a short-lived token for each request. Needs no token or connection.",
+      "ca-bundle-description": "PEM-encoded CA certificates that sign the source's server certificate, in addition to the system roots.",
+      "ca-bundle-label": "CA bundle",
+      "connection-create": "Create a source connection",
+      "connection-description": "The source connection that provides the client-credentials token.",
+      "connection-label": "Connection",
+      "connection-required": "A source connection is required",
+      "empty-tree-policy-allow": "Allow",
+      "empty-tree-policy-allow-description": "Treat an empty tree as a request to delete everything the repository manages",
+      "empty-tree-policy-description": "What to do when the source returns an empty tree for a repository that manages resources.",
+      "empty-tree-policy-label": "When the source is empty",
+      "empty-tree-policy-refuse": "Refuse",
+      "empty-tree-policy-refuse-description": "Fail the sync instead of deleting everything the repository manages",
+      "read-only-description": "Resources can't be modified through Grafana. When off, changes saved in Grafana are written back to the source, which must support edits.",
+      "read-only-note": "Resources can only be changed at the source.",
+      "server-name-description": "Overrides the server name used to verify the certificate.",
+      "server-name-label": "Server name",
+      "tls-label": "TLS options",
+      "token-description": "Token sent to the source as a bearer token",
+      "token-label": "Bearer token",
+      "token-required": "Bearer token is required",
+      "url-description": "The Source API base URL, including the source ID. It must not contain credentials, a query or a fragment.",
+      "url-label": "Source URL",
+      "url-pattern": "Must be a valid URL (https://hostname/path)",
+      "url-required": "Source URL is required"
+    },
+    "source-connection": {
+      "description-audience": "Optional. The audience to request, when the token endpoint needs one",
+      "description-client-id": "The client ID Grafana uses to authenticate to the token endpoint",
+      "description-client-secret": "The client secret Grafana uses to authenticate to the token endpoint",
+      "description-scopes": "Optional. The OAuth scopes to request",
+      "description-token-url": "The OAuth token endpoint that issues client-credentials tokens for the source",
+      "label-audience": "Audience"
+    },
     "status-badge": {
       "automatic-pulling-disabled-tooltip": "Automatic pulling disabled. Review your connection configuration to enable pulling.",
       "deleting": "Deleting",
@@ -15629,6 +15683,7 @@
       "make-sure": "Create a token with these permissions"
     },
     "validation": {
+      "allowed-kind-incomplete": "Every allowed kind needs a group and a kind.",
       "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.",
       "invalid-url": "Enter a valid URL including the scheme, e.g. https://ghe.example.com",
       "url-with-credentials": "Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead."

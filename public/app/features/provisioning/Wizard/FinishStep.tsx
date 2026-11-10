@@ -9,6 +9,7 @@ import { BranchOptionsSection } from '../Config/BranchOptionsSection';
 import { CommitOptionsSection } from '../Config/CommitOptionsSection';
 import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
 import { PullRequestOptionsSection } from '../Config/PullRequestOptionsSection';
+import { SourceReadOnlyOption } from '../Config/SourceFields';
 import { WebhookSection } from '../Config/WebhookSection';
 import { useConnectionList } from '../hooks/useConnectionList';
 import { isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
@@ -38,6 +39,7 @@ export const FinishStep = memo(function FinishStep() {
   const emailWebhookDisabled = githubAuthType === 'pat' && type === 'bitbucket' && !email?.trim();
 
   const isGitBased = isGitProvider(type);
+  const isSource = type === 'source';
 
   const [connections] = useConnectionList(githubAuthType !== 'pat' ? {} : skipToken);
   const connectionWebhookDisabled = useMemo(() => {
@@ -77,7 +79,7 @@ export const FinishStep = memo(function FinishStep() {
 
   return (
     <Stack direction="column" gap={2}>
-      {isGitBased && (
+      {(isGitBased || isSource) && (
         <Field
           noMargin
           label={t('provisioning.finish-step.label-sync-interval', 'Sync Interval (seconds)')}
@@ -101,23 +103,32 @@ export const FinishStep = memo(function FinishStep() {
         </Field>
       )}
 
-      <Field noMargin>
-        <Checkbox
-          {...register('repository.readOnly', {
-            onChange: (e) => {
-              if (e.target.checked) {
-                setValue('repository.prWorkflow', false);
-                setValue('repository.enablePushToConfiguredBranch', false);
-              }
-            },
-          })}
-          label={t('provisioning.finish-step.label-read-only', 'Read only')}
-          description={t(
-            'provisioning.finish-step.description-read-only',
-            "Resources can't be modified through Grafana."
-          )}
+      {isSource ? (
+        <SourceReadOnlyOption
+          register={register}
+          name="repository.readOnly"
+          readOnly={readOnly}
+          error={errors?.repository?.readOnly?.message}
         />
-      </Field>
+      ) : (
+        <Field noMargin invalid={!!errors?.repository?.readOnly} error={errors?.repository?.readOnly?.message}>
+          <Checkbox
+            {...register('repository.readOnly', {
+              onChange: (e) => {
+                if (e.target.checked) {
+                  setValue('repository.prWorkflow', false);
+                  setValue('repository.enablePushToConfiguredBranch', false);
+                }
+              },
+            })}
+            label={t('provisioning.finish-step.label-read-only', 'Read only')}
+            description={t(
+              'provisioning.finish-step.description-read-only',
+              "Resources can't be modified through Grafana."
+            )}
+          />
+        </Field>
+      )}
 
       {gitFields && (
         <Field noMargin>

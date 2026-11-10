@@ -49,7 +49,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   const methods = useForm<WizardFormData>({
     reValidateMode: 'onBlur',
     defaultValues: {
-      repository: { ...values, type },
+      repository: { ...values, type, ...(type === 'source' && { readOnly: true, prWorkflow: false }) },
       migrate: {
         history: true,
       },
@@ -235,6 +235,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
             <div className={styles.content}>
               <WizardStepContent
                 activeStep={activeStep}
+                repoType={repoType}
                 settingsData={settingsData}
                 repoName={repoName}
                 onGitHubAppSubmit={handleGitHubAppCreation}

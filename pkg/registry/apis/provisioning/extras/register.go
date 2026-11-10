@@ -8,11 +8,13 @@ import (
 	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/gitoauth"
+	sourceconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/source"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/source"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
@@ -61,7 +63,15 @@ func ProvideProvisioningOSSRepositoryExtras(
 			clientMetrics,
 			userAgent,
 		),
+		source.Extra(decrypter, allowInsecure, operationMetrics, source.WithURLValidator(sourceURLValidator(cfg))),
 	}
+}
+
+// sourceURLValidator applies the Git URL allowlist to the endpoints a source or its
+// connection dials, so sources on private addresses are listed the same way.
+func sourceURLValidator(cfg *setting.Cfg) *repository.URLValidator {
+	entries := cfg.SectionWithEnvOverrides("provisioning").Key("allowed_git_urls").Strings(",")
+	return repository.NewURLValidatorFromAllowlist(entries)
 }
 
 func ProvideProvisioningOSSConnectionExtras(
@@ -78,6 +88,8 @@ func ProvideProvisioningOSSConnectionExtras(
 		// http:// OAuth endpoints are only allowed in development or when explicitly opted in,
 		// since the client secret and tokens would otherwise travel in cleartext.
 		gitoauth.Extra(decrypter, cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure),
+		sourceconnection.Extra(decrypter, cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure,
+			sourceconnection.WithURLValidator(sourceURLValidator(cfg))),
 	}
 }
 

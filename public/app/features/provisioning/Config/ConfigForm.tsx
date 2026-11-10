@@ -20,6 +20,7 @@ import {
   Switch,
 } from '@grafana/ui';
 import {
+  type InlineSecureValue,
   type Repository,
   useGetFrontendSettingsQuery,
   useGetRepositoryRefsQuery,
@@ -46,6 +47,7 @@ import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
 import { PullRequestOptionsSection } from './PullRequestOptionsSection';
+import { SourceFields, SourceReadOnlyOption } from './SourceFields';
 import { WebhookSection } from './WebhookSection';
 import { getDefaultValues } from './defaults';
 
@@ -94,6 +96,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const [type, readOnly, watchedConnectionName] = watch(['type', 'readOnly', 'connectionName']);
   const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
+  const isSource = type === 'source';
 
   // Repositories that authenticate through a provisioning connection (GitHub App
   // or OAuth app) have a connection reference in their spec; PAT-based
@@ -154,6 +157,16 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const localFields = type === 'local' ? getLocalProviderFields(type) : null;
   const hasTokenInstructions = getHasTokenInstructions(type);
 
+  // A source that can't be written to reports it as a field error on the repository status.
+  const statusFieldErrors = data?.status?.fieldErrors;
+  useEffect(() => {
+    if (isSource && statusFieldErrors?.length) {
+      for (const [field, errorMessage] of getConfigFormErrors(statusFieldErrors)) {
+        setError(field, errorMessage);
+      }
+    }
+  }, [isSource, statusFieldErrors, setError]);
+
   useEffect(() => {
     if (request.isSuccess) {
       const formData = getValues();
@@ -168,6 +181,14 @@ export function ConfigForm({ data }: ConfigFormProps) {
       setTimeout(() => navigate(PROVISIONING_URL), 300);
     }
   }, [request.isSuccess, reset, getValues, repositoryName, navigate]);
+
+  // Only bearer auth keeps a token, so switching to another auth type drops the stored one.
+  const getSourceTokenChange = (form: RepositoryFormData): InlineSecureValue | undefined => {
+    if (form.source?.auth?.type === 'bearer') {
+      return form.token ? { create: form.token } : undefined;
+    }
+    return data?.secure?.token?.name ? { remove: true } : undefined;
+  };
 
   const onSubmit = async (form: RepositoryFormData) => {
     setIsLoading(true);
@@ -184,7 +205,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
       );
       const urlChanged = Boolean(usesConnection && originalUrl && form.url !== originalUrl);
       await submitData(spec, {
-        token: connectionChanged || urlChanged ? { remove: true } : form.token ? { create: form.token } : undefined,
+        token: isSource
+          ? getSourceTokenChange(form)
+          : connectionChanged || urlChanged
+            ? { remove: true }
+            : form.token
+              ? { create: form.token }
+              : undefined,
         commitSigningKey: deriveSigningKeySecret(form, Boolean(data?.secure?.commitSigningKey?.name)),
       });
     } catch (err) {
@@ -425,23 +452,50 @@ export function ConfigForm({ data }: ConfigFormProps) {
           </Field>
         )}
 
-        <Field noMargin>
-          <Checkbox
-            {...register('readOnly', {
-              onChange: (e) => {
-                if (e.target.checked) {
-                  setValue('prWorkflow', false);
-                  setValue('enablePushToConfiguredBranch', false);
-                }
-              },
-            })}
-            label={t('provisioning.finish-step.label-read-only', 'Read only')}
-            description={t(
-              'provisioning.config-form.description-read-only',
-              "Resources can't be modified through Grafana."
-            )}
-          />
-        </Field>
+        {isSource && (
+          <>
+            <SourceFields
+              control={control}
+              tokenConfigured={Boolean(data?.secure?.token?.name)}
+              names={{
+                url: 'source.url',
+                authType: 'source.auth.type',
+                token: 'token',
+                connectionName: 'connectionName',
+                allow: 'source.allow',
+                emptyTreePolicy: 'source.emptyTreePolicy',
+                caBundle: 'source.tls.caBundle',
+                serverName: 'source.tls.serverName',
+              }}
+            />
+            <SourceReadOnlyOption
+              register={register}
+              name="readOnly"
+              readOnly={readOnly}
+              error={errors.readOnly?.message}
+            />
+          </>
+        )}
+
+        {!isSource && (
+          <Field noMargin invalid={!!errors.readOnly} error={errors.readOnly?.message}>
+            <Checkbox
+              {...register('readOnly', {
+                onChange: (e) => {
+                  if (e.target.checked) {
+                    setValue('prWorkflow', false);
+                    setValue('enablePushToConfiguredBranch', false);
+                  }
+                },
+              })}
+              label={t('provisioning.finish-step.label-read-only', 'Read only')}
+              description={t(
+                'provisioning.config-form.description-read-only',
+                "Resources can't be modified through Grafana."
+              )}
+            />
+          </Field>
+        )}
 
         {gitFields && (
           <Field noMargin>
@@ -515,7 +569,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
           />
         )}
 
-        {isGitBased && (
+        {(isGitBased || isSource) && (
           <ControlledCollapse
             label={t('provisioning.config-form.label-automatic-pulling', 'Automatic pulling')}
             isOpen={false}

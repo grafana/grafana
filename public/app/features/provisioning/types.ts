@@ -9,6 +9,7 @@ import {
   type GitRepositoryConfig,
   type LocalRepositoryConfig,
   type RepositorySpec,
+  type SourceRepositoryConfig,
 } from '../../api/clients/provisioning/v0alpha1';
 
 import { type ResourceItemType } from './utils/resourceKinds';
@@ -40,6 +41,8 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch' | R
     connectionName?: string;
     // Spec-level branch naming options (maps to RepositorySpec.branch)
     branchOptions?: BranchOptions;
+    // Source API config, nested rather than flattened like the git and local configs
+    source?: SourceRepositoryConfig;
   };
 
 // Base fields shared by all connection providers (excludes the `type` discriminant).
@@ -54,6 +57,7 @@ type ConnectionFormDataBase = {
   tokenURL?: string;
   scopes?: string[];
   webhookDisabled?: boolean;
+  audience?: string;
 };
 
 type GitHubConnectionFormData = ConnectionFormDataBase &
@@ -65,6 +69,9 @@ type GitHubEnterpriseConnectionFormData = ConnectionFormDataBase &
 type OAuthConnectionFormData = ConnectionFormDataBase &
   Partial<GitHubConnectionConfig> & { type: OAuthConnectionType; serverUrl?: string };
 
+type SourceConnectionFormData = ConnectionFormDataBase &
+  Partial<GitHubConnectionConfig> & { type: 'source'; serverUrl?: string };
+
 export type OAuthConnectionType =
   | 'githubOAuth'
   | 'githubEnterpriseOAuth'
@@ -75,7 +82,8 @@ export type OAuthConnectionType =
 export type ConnectionFormData =
   | GitHubConnectionFormData
   | GitHubEnterpriseConnectionFormData
-  | OAuthConnectionFormData;
+  | OAuthConnectionFormData
+  | SourceConnectionFormData;
 
 // Added to DashboardDTO to help editor
 export interface ProvisioningPreview {

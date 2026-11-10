@@ -779,7 +779,10 @@ protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
+	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.33.0
+	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.33.0
 	buf generate apps/secret --template apps/secret/buf.gen.yaml
+	buf generate apps/provisioning/pkg/source/v1 --template apps/provisioning/pkg/source/v1/buf.gen.yaml
 	buf generate pkg/storage/unified/proto --template pkg/storage/unified/proto/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml

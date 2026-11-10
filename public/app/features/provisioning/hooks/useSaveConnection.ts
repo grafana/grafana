@@ -67,11 +67,12 @@ export function useSaveConnection(onAuthorized: (connectionName: string) => void
     }
 
     const isOAuth = isOAuthConnectionType(form.type);
+    const usesClientSecret = isOAuth || form.type === 'source';
     try {
       const result = await submitData(
         connectionSpecFromForm(form),
-        isOAuth ? undefined : form.privateKey,
-        isOAuth ? form.clientSecret : undefined
+        usesClientSecret ? undefined : form.privateKey,
+        usesClientSecret ? form.clientSecret : undefined
       );
       const name = connectionName ?? result.data?.metadata?.name;
       if (result.error || !name) {

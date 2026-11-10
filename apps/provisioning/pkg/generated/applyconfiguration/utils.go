@@ -104,6 +104,16 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.ResourceRefApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("SecureValues"):
 		return &provisioningv0alpha1.SecureValuesApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("SourceAllowedKind"):
+		return &provisioningv0alpha1.SourceAllowedKindApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("SourceAuth"):
+		return &provisioningv0alpha1.SourceAuthApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("SourceConnectionConfig"):
+		return &provisioningv0alpha1.SourceConnectionConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("SourceRepositoryConfig"):
+		return &provisioningv0alpha1.SourceRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("SourceTLS"):
+		return &provisioningv0alpha1.SourceTLSApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("SyncJobOptions"):
 		return &provisioningv0alpha1.SyncJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("SyncOptions"):

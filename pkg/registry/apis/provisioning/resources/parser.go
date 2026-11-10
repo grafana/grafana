@@ -193,6 +193,10 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	parsed.GVK = *gvk
 
+	if err := repository.CheckAllowedKind(r.config, parsed.GVK.Group, parsed.GVK.Kind); err != nil {
+		return nil, NewResourceValidationError(err)
+	}
+
 	if r.urls != nil {
 		parsed.URLs, err = r.urls.ResourceURLs(ctx, info)
 		if err != nil {

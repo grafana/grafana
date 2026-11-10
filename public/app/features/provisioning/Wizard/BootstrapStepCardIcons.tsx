@@ -10,7 +10,7 @@ export function BootstrapStepCardIcons({ target, repoType }: { target: Target; r
       <Stack direction="row">
         <Icon name="grafana" size="xxl" />
         <Icon name="arrows-h" size="xxl" />
-        <RepoIcon type="github" />
+        <RepoIcon type={repoType === 'source' ? repoType : 'github'} />
       </Stack>
     );
   }

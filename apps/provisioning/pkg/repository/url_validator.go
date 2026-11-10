@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"syscall"
 )
 
 type ipAddressResolver func(ctx context.Context, host string) ([]net.IPAddr, error)
@@ -19,6 +20,17 @@ func NewURLValidator(allowlist Allowlist, ipAddressResolver ipAddressResolver) *
 		allowlist:         allowlist,
 		ipAddressResolver: ipAddressResolver,
 	}
+}
+
+// NewURLValidatorFromAllowlist builds a validator that resolves hosts with the system resolver.
+// Entries that cannot be parsed fall back to an empty allowlist, the strictest policy; the
+// API server reports the bad configuration at startup.
+func NewURLValidatorFromAllowlist(entries []string) *URLValidator {
+	allowlist, err := NewAllowlist(entries)
+	if err != nil {
+		allowlist, _ = NewAllowlist(nil)
+	}
+	return NewURLValidator(allowlist, net.DefaultResolver.LookupIPAddr)
 }
 
 func (v *URLValidator) ValidateURL(
@@ -74,4 +86,30 @@ func isBlockedIP(ip net.IP) bool {
 		ip.IsPrivate() ||
 		ip.IsLinkLocalUnicast() ||
 		ip.IsUnspecified()
+}
+
+// DialContext wraps dialer so that connections are only made to hosts the validator
+// would accept. Hosts on the allowlist are dialed as is; for every other host the
+// resolved address is checked right before connecting, which also covers a name that
+// resolves differently from when the URL was admitted (DNS rebinding) and redirects.
+func (v *URLValidator) DialContext(dialer *net.Dialer) func(ctx context.Context, network, addr string) (net.Conn, error) {
+	checked := *dialer
+	checked.Control = func(_, address string, _ syscall.RawConn) error {
+		host, _, err := net.SplitHostPort(address)
+		if err != nil {
+			return err
+		}
+		ip := net.ParseIP(host)
+		if ip == nil {
+			return fmt.Errorf("dial address %q is not an IP address", address)
+		}
+		return validateHostIP(host, ip, v.allowlist)
+	}
+
+	return func(ctx context.Context, network, addr string) (net.Conn, error) {
+		if host, _, err := net.SplitHostPort(addr); err == nil && v.allowlist.AllowsHost(host) {
+			return dialer.DialContext(ctx, network, addr)
+		}
+		return checked.DialContext(ctx, network, addr)
+	}
 }

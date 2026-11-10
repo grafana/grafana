@@ -100,6 +100,11 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			cfg.Spec.Git, "Git config only valid when type is git"))
 	}
 
+	if cfg.Spec.Type != provisioning.SourceRepositoryType && cfg.Spec.Source != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "source"),
+			cfg.Spec.Source, "Source config only valid when type is source"))
+	}
+
 	list = append(list, validateWorkflowOptions(cfg)...)
 	list = append(list, validateCommitOptions(cfg)...)
 
@@ -165,6 +170,9 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 
 func (v *RepositoryValidator) validatePrivateEndpoint(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	rawURL := cfg.URL()
+	if rawURL == "" && cfg.Spec.Source != nil {
+		rawURL = cfg.Spec.Source.URL
+	}
 	if rawURL == "" {
 		return nil
 	}

@@ -177,7 +177,11 @@ export default function CreateNewButton({
       <Dropdown overlay={newMenu} placement="bottom-end" onVisibleChange={handleVisibleChange}>
         <Button
           disabled={isReadOnlyRepo}
-          tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}
+          tooltip={
+            isReadOnlyRepo
+              ? getReadOnlyTooltipText({ isLocal: repoType === 'local', isSource: repoType === 'source' })
+              : undefined
+          }
           variant="primary"
           icon={isOpen ? 'angle-up' : 'angle-down'}
           iconPlacement="right"

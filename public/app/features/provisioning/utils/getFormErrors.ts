@@ -10,7 +10,12 @@ type RepositoryField = keyof WizardFormData['repository'];
 type RepositoryFormPath =
   | `repository.${RepositoryField}`
   | 'repository.sync.intervalSeconds'
-  | 'repository.webhook.disabled';
+  | 'repository.webhook.disabled'
+  | 'repository.source.url'
+  | 'repository.source.auth.type'
+  | 'repository.source.allow'
+  | 'repository.source.tls.caBundle'
+  | 'repository.source.tls.serverName';
 
 type GenericFormPath = string;
 type GenericFormErrors<T extends GenericFormPath> = Array<[T, { message: string }]>;
@@ -59,7 +64,11 @@ export function extractFormErrors(data: ErrorDetails[] | Status): ErrorDetails[]
 /**
  * Normalize API field name by removing "spec." prefix.
  */
-const normalizeField = (field: string): string => field.replace(/^spec\./, '');
+const normalizeField = (field: string): string =>
+  field
+    .replace(/^spec\./, '')
+    // Errors on a single allowed kind surface on the whole list.
+    .replace(/^(source\.allow)(\[\d+\]|\.\d+).*$/, '$1');
 
 /**
  * Given a list of error details and a field mapping,
@@ -116,6 +125,15 @@ export const getFormErrors = (data: ErrorDetails[] | Status): FormErrors => {
     'bitbucket.path': 'repository.path',
     'git.branch': 'repository.branch',
     'git.url': 'repository.url',
+    'source.url': 'repository.source.url',
+    'source.auth': 'repository.source.auth.type',
+    'source.auth.type': 'repository.source.auth.type',
+    'source.allow': 'repository.source.allow',
+    'source.tls': 'repository.source.tls.caBundle',
+    'source.tls.caBundle': 'repository.source.tls.caBundle',
+    'source.tls.serverName': 'repository.source.tls.serverName',
+    'connection.name': 'repository.connectionName',
+    workflows: 'repository.readOnly',
     'sync.intervalSeconds': 'repository.sync.intervalSeconds',
     'webhook.disabled': 'repository.webhook.disabled',
   };
@@ -135,6 +153,15 @@ export const getConfigFormErrors = (data: ErrorDetails[] | Status): ConfigFormEr
     url: 'url',
     token: 'token',
     tokenUser: 'tokenUser',
+    'source.url': 'source.url',
+    'source.auth': 'source.auth.type',
+    'source.auth.type': 'source.auth.type',
+    'source.allow': 'source.allow',
+    'source.tls': 'source.tls.caBundle',
+    'source.tls.caBundle': 'source.tls.caBundle',
+    'source.tls.serverName': 'source.tls.serverName',
+    'connection.name': 'connectionName',
+    workflows: 'readOnly',
     'sync.intervalSeconds': 'sync.intervalSeconds',
     'webhook.disabled': 'webhook.disabled',
   };
@@ -172,6 +199,9 @@ export const getConnectionFormErrors = (data: ErrorDetails[] | Status): Connecti
     workspace: 'workspace',
     'gitOAuth.authURL': 'authURL',
     'gitOAuth.tokenURL': 'tokenURL',
+    'source.tokenURL': 'tokenURL',
+    'source.audience': 'audience',
+    'source.scopes': 'scopes',
     'webhook.disabled': 'webhookDisabled',
   };
 

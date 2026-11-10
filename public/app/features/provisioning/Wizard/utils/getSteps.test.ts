@@ -11,6 +11,10 @@ describe('getSteps', () => {
     expect(getSteps('github').map((s) => s.id)).toEqual(expectedStepOrder);
   });
 
+  it('leaves out the branch and path step for source repositories', () => {
+    expect(getSteps('source').map((s) => s.id)).toEqual(['authType', 'bootstrap', 'synchronize', 'finish']);
+  });
+
   it('returns local-specific labels for step 1 and 2 when type is local', () => {
     const steps = getSteps('local');
     const authTypeStep = steps.find((s) => s.id === 'authType');

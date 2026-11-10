@@ -550,4 +550,114 @@ describe('ConnectionForm', () => {
       expect(screen.queryByText('Connecting')).not.toBeInTheDocument();
     });
   });
+
+  describe('Source API connection', () => {
+    beforeEach(() => {
+      server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ availableConnectionTypes: ['source'] })));
+    });
+
+    it('creates a client-credentials connection without starting an OAuth authorization', async () => {
+      const connectionWrites: unknown[] = [];
+      let authorizeCalls = 0;
+      server.use(
+        http.post(`${BASE}/connections`, async ({ request }) => {
+          connectionWrites.push(await request.json());
+          return HttpResponse.json({
+            metadata: { name: 'new-source-conn' },
+            spec: { type: 'source', title: 'Source credentials' },
+          });
+        }),
+        http.post(`${BASE}/connections/:name/authorize`, () => {
+          authorizeCalls++;
+          return HttpResponse.json({});
+        })
+      );
+      const windowOpen = jest.spyOn(window, 'open').mockReturnValue(null);
+
+      const { user } = setup();
+
+      await user.type(await screen.findByLabelText(/^Title/), 'Source credentials');
+      await user.type(screen.getByLabelText(/^Token URL/), 'https://idp.example.com/oauth/token');
+      await user.type(screen.getByLabelText(/^Audience/), 'sources-api');
+      await user.type(screen.getByLabelText(/^Scopes/), 'sources:read{Enter}');
+      await user.type(screen.getByLabelText(/^Client ID/), 'grafana-client');
+      await user.type(screen.getByLabelText(/^Client secret/), 'super-secret');
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => expect(connectionWrites.length).toBeGreaterThan(0));
+      expect(connectionWrites.at(-1)).toEqual({
+        metadata: { generateName: 'c' },
+        spec: {
+          title: 'Source credentials',
+          type: 'source',
+          oauth: { clientID: 'grafana-client' },
+          source: {
+            tokenURL: 'https://idp.example.com/oauth/token',
+            audience: 'sources-api',
+            scopes: ['sources:read'],
+          },
+        },
+        secure: { clientSecret: { create: 'super-secret' } },
+      });
+      expect(authorizeCalls).toBe(0);
+      expect(windowOpen).not.toHaveBeenCalled();
+      expect(screen.queryByText('Connecting')).not.toBeInTheDocument();
+      windowOpen.mockRestore();
+    });
+
+    it('requires the token URL, client ID and client secret', async () => {
+      const { user } = setup();
+
+      await user.type(await screen.findByLabelText(/^Title/), 'Source credentials');
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      expect(await screen.findAllByText('This field is required')).toHaveLength(3);
+    });
+
+    it('shows no webhook, GitHub App or OAuth app fields', async () => {
+      setup();
+
+      expect(await screen.findByLabelText(/^Token URL/)).toBeInTheDocument();
+      expect(screen.queryByLabelText(/^GitHub App ID/)).not.toBeInTheDocument();
+      expect(screen.queryByText('Callback URL')).not.toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: /Disable webhook integration/ })).not.toBeInTheDocument();
+    });
+
+    it('shows saved field errors on the token URL and offers no reauthorization when disconnected', async () => {
+      const connection = createMockConnection({
+        spec: {
+          title: 'Source credentials',
+          type: 'source',
+          oauth: { clientID: 'grafana-client' },
+          source: { tokenURL: 'https://idp.example.com/oauth/token' },
+        },
+        secure: { clientSecret: { name: 'configured' } },
+        status: {
+          observedGeneration: 1,
+          health: { healthy: false, checked: 2 },
+          conditions: [
+            {
+              type: 'Ready',
+              status: 'False',
+              reason: 'Unhealthy',
+              message: 'token endpoint rejected the credentials',
+              lastTransitionTime: new Date().toISOString(),
+              observedGeneration: 1,
+            },
+          ],
+          fieldErrors: [
+            { field: 'spec.source.tokenURL', detail: 'token endpoint is unreachable', type: 'FieldValueInvalid' },
+          ],
+        },
+      });
+
+      setup({ data: connection });
+
+      expect(await screen.findByLabelText(/^Token URL/)).toHaveValue('https://idp.example.com/oauth/token');
+      expect(await screen.findByText('token endpoint is unreachable')).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Client ID/)).toHaveValue('grafana-client');
+      expect(screen.getByText('Disconnected')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Reauthorize/ })).not.toBeInTheDocument();
+    });
+  });
 });

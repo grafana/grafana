@@ -1,0 +1,618 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "source.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "SourceService",
+      "description": "SourceService is the Source API: a small, provider-neutral contract that\nProvisioning pulls a namespace's desired state from, instead of Git.\n\nThe HTTP/JSON binding below is the wire contract. gRPC is generated from the\nsame definition but is not part of v1: the API crosses trust boundaries where\nREST is the norm. Sizes are int32 because protobuf JSON encodes int64 as a\nstring; files are capped well below 2 GiB.\n\nOnly GetTree and GetFile are required. Everything else is advertised in the\nDescriptor, and a source that lacks a capability answers 501. A source that\nadvertises the write capability can also be edited: PutFile, DeleteFile and\nMove each produce one new revision."
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/sources/{id}": {
+      "get": {
+        "summary": "GetDescriptor describes what the source implements. Cacheable (max-age=300).",
+        "operationId": "SourceService_GetDescriptor",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Descriptor"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Opaque, URL-safe source id.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SourceService"
+        ]
+      }
+    },
+    "/v1/sources/{id}/compare": {
+      "get": {
+        "summary": "Compare returns the changes that turn the tree at base into the tree at\nhead. Capability: compare, which requires history. Paths are readable at\nhead; deleted paths and previous_path are readable at base.",
+        "operationId": "SourceService_Compare",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CompareResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "base",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "head",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "SourceService"
+        ]
+      }
+    },
+    "/v1/sources/{id}/files/{path}": {
+      "get": {
+        "summary": "GetFile returns the raw bytes of a file. ETag equals the tree entry's hash.\nFiles carry secrets, so responses send Cache-Control: no-store.",
+        "operationId": "SourceService_GetFile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiHttpBody"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          },
+          {
+            "name": "revision",
+            "description": "Defaults to the current revision.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SourceService"
+        ]
+      },
+      "delete": {
+        "summary": "DeleteFile deletes a file, or with recursive every file under a directory.\nCapability: write.",
+        "operationId": "SourceService_DeleteFile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Mutation"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          },
+          {
+            "name": "message",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "recursive",
+            "description": "Required to delete a directory, which removes every file under it.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "SourceService"
+        ]
+      },
+      "put": {
+        "summary": "PutFile creates or replaces a file. Capability: write. The request body is the\nraw file, sent with Content-Type: application/octet-stream. If-None-Match: * only creates (409 if it exists), If-Match: * only\nreplaces (404 if it is missing) and If-Match: \"\u003chash\u003e\" only replaces that\nversion (412 otherwise). Without a condition the file is simply written.",
+        "operationId": "SourceService_PutFile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Mutation"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          },
+          {
+            "name": "body",
+            "description": "The raw file; its content type is ignored.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiHttpBody"
+            }
+          },
+          {
+            "name": "message",
+            "description": "An optional description of the change, for sources that keep one.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SourceService"
+        ]
+      }
+    },
+    "/v1/sources/{id}/move": {
+      "post": {
+        "summary": "Move renames a file, or with a trailing slash on both paths a directory, in one\nrevision. The destination must not exist. Capability: write.",
+        "operationId": "SourceService_Move",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Mutation"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SourceServiceMoveBody"
+            }
+          }
+        ],
+        "tags": [
+          "SourceService"
+        ]
+      }
+    },
+    "/v1/sources/{id}/revision": {
+      "get": {
+        "summary": "GetRevision returns the current revision in O(1). Capability: revision.\nSends ETag and honours If-None-Match: 304 means unchanged.",
+        "operationId": "SourceService_GetRevision",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRevisionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SourceService"
+        ]
+      }
+    },
+    "/v1/sources/{id}/tree": {
+      "get": {
+        "summary": "GetTree lists the files of a revision, one page at a time. Without a\nrevision the response is pinned to the current one and returns it; later\npages must send it and the source must serve that snapshot or answer 410.",
+        "operationId": "SourceService_GetTree",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetTreeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "SourceService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "SourceServiceMoveBody": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "apiHttpBody": {
+      "type": "object",
+      "properties": {
+        "contentType": {
+          "type": "string",
+          "description": "The HTTP Content-Type header value specifying the content type of the body."
+        },
+        "data": {
+          "type": "string",
+          "format": "byte",
+          "description": "The HTTP request/response body as raw binary."
+        },
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          },
+          "description": "Application specific response metadata. Must be set in the first response\nfor streaming APIs."
+        }
+      },
+      "description": "Message that represents an arbitrary HTTP body. It should only be used for\npayload formats that can't be represented as JSON, such as raw binary or\nan HTML page.\n\n\nThis message can be used both in streaming and non-streaming API methods in\nthe request as well as the response.\n\nIt can be used as a top-level request field, which is convenient if one\nwants to extract parameters from either the URL or HTTP template into the\nrequest fields and also want access to the raw HTTP body.\n\nExample:\n\n    message GetResourceRequest {\n      // A unique request id.\n      string request_id = 1;\n\n      // The raw HTTP body is bound to this field.\n      google.api.HttpBody http_body = 2;\n\n    }\n\n    service ResourceService {\n      rpc GetResource(GetResourceRequest)\n        returns (google.api.HttpBody);\n      rpc UpdateResource(google.api.HttpBody)\n        returns (google.protobuf.Empty);\n\n    }\n\nExample with streaming methods:\n\n    service CaldavService {\n      rpc GetCalendar(stream google.api.HttpBody)\n        returns (stream google.api.HttpBody);\n      rpc UpdateCalendar(stream google.api.HttpBody)\n        returns (stream google.api.HttpBody);\n\n    }\n\nUse of this type only changes how the request and response bodies are\nhandled, all other features will continue to work unchanged."
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string",
+          "description": "Identifies the type of the serialized Protobuf message with a URI reference\nconsisting of a prefix ending in a slash and the fully-qualified type name.\n\nExample: type.googleapis.com/google.protobuf.StringValue\n\nThis string must contain at least one `/` character, and the content after\nthe last `/` must be the fully-qualified name of the type in canonical\nform, without a leading dot. Do not write a scheme on these URI references\nso that clients do not attempt to contact them.\n\nThe prefix is arbitrary and Protobuf implementations are expected to\nsimply strip off everything up to and including the last `/` to identify\nthe type. `type.googleapis.com/` is a common default prefix that some\nlegacy implementations require. This prefix does not indicate the origin of\nthe type, and URIs containing it are not expected to respond to any\nrequests.\n\nAll type URL strings must be legal URI references with the additional\nrestriction (for the text format) that the content of the reference\nmust consist only of alphanumeric characters, percent-encoded escapes, and\ncharacters in the following set (not including the outer backticks):\n`/-.~_!$\u0026()*+,;=`. Despite our allowing percent encodings, implementations\nshould not unescape them to prevent confusion with existing parsers. For\nexample, `type.googleapis.com%2FFoo` should be rejected.\n\nIn the original design of `Any`, the possibility of launching a type\nresolution service at these type URLs was considered but Protobuf never\nimplemented one and considers contacting these URLs to be problematic and\na potential security issue. Do not attempt to contact type URLs."
+        }
+      },
+      "additionalProperties": true,
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nIn its binary encoding, an `Any` is an ordinary message; but in other wire\nforms like JSON, it has a special encoding. The format of the type URL is\ndescribed on the `type_url` field.\n\nProtobuf APIs provide utilities to interact with `Any` values:\n\n- A 'pack' operation accepts a message and constructs a generic `Any` wrapper\n  around it.\n- An 'unpack' operation reads the content of an `Any` message, either into an\n  existing message or a new one. Unpack operations must check the type of the\n  value they unpack against the declared `type_url`.\n- An 'is' operation decides whether an `Any` contains a message of the given\n  type, i.e. whether it can 'unpack' that type.\n\nThe JSON format representation of an `Any` follows one of these cases:\n\n- For types without special-cased JSON encodings, the JSON format\n  representation of the `Any` is the same as that of the message, with an\n  additional `@type` field which contains the type URL.\n- For types with special-cased JSON encodings (typically called 'well-known'\n  types, listed in https://protobuf.dev/programming-guides/json/#any), the\n  JSON format representation has a key `@type` which contains the type URL\n  and a key `value` which contains the JSON-serialized value.\n\nThe text format representation of an `Any` is like a message with one field\nwhose name is the type URL in brackets. For example, an `Any` containing a\n`foo.Bar` message may be written `[type.googleapis.com/foo.Bar] { a: 2 }`."
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1Capabilities": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "boolean",
+          "description": "GetRevision is served."
+        },
+        "history": {
+          "$ref": "#/definitions/v1History",
+          "description": "Files and tree can be read at past revisions."
+        },
+        "compare": {
+          "type": "boolean",
+          "description": "Compare is served."
+        },
+        "notify": {
+          "type": "boolean",
+          "description": "The source sends change hints."
+        },
+        "write": {
+          "type": "boolean",
+          "description": "PutFile, DeleteFile and Move are served, so the source can be edited."
+        },
+        "secrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "How secret values are carried in files: \"inline\", optionally \"ref\"."
+        }
+      }
+    },
+    "v1Change": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "One of created, updated, deleted, renamed. Renamed is optional: a delete\nplus a create is fine."
+        },
+        "path": {
+          "type": "string"
+        },
+        "previousPath": {
+          "type": "string"
+        }
+      }
+    },
+    "v1CompareResponse": {
+      "type": "object",
+      "properties": {
+        "base": {
+          "type": "string"
+        },
+        "head": {
+          "type": "string"
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Change"
+          }
+        },
+        "nextCursor": {
+          "type": "string"
+        }
+      }
+    },
+    "v1Descriptor": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "type": "string",
+          "description": "Always \"source.grafana.app/v1\"."
+        },
+        "id": {
+          "type": "string"
+        },
+        "capabilities": {
+          "$ref": "#/definitions/v1Capabilities"
+        },
+        "limits": {
+          "$ref": "#/definitions/v1Limits"
+        }
+      }
+    },
+    "v1GetRevisionResponse": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "description": "Opaque, compared for equality only. Matches ^[A-Za-z0-9_-]{7,128}$."
+        }
+      }
+    },
+    "v1GetTreeResponse": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string"
+        },
+        "complete": {
+          "type": "boolean",
+          "description": "True only on the last page. A client must refuse an incomplete tree."
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1TreeEntry"
+          }
+        },
+        "nextCursor": {
+          "type": "string"
+        }
+      }
+    },
+    "v1History": {
+      "type": "object",
+      "properties": {
+        "retained": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Number of past revisions that stay readable."
+        }
+      }
+    },
+    "v1Limits": {
+      "type": "object",
+      "properties": {
+        "maxFiles": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "maxFileBytes": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "maxPageSize": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1Mutation": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "description": "The revision the edit produced."
+        }
+      },
+      "description": "Mutation is the result of an edit."
+    },
+    "v1TreeEntry": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Relative, \"/\" separated, at most 1024 chars and 8 segments, extension\n.yaml, .yml or .json, no dot-prefixed segment except .keep."
+        },
+        "hash": {
+          "type": "string",
+          "description": "Opaque, at most 128 chars, identical to the ETag of the file."
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    }
+  }
+}

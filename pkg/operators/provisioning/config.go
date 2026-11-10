@@ -33,12 +33,14 @@ import (
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/gitoauth"
+	sourceconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/source"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	sourcerepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/source"
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
@@ -735,6 +737,13 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 				return nil, fmt.Errorf("local_permitted_prefixes is required in [operator] section for local repository type")
 			}
 			extras = append(extras, local.Extra(homePath, permittedPrefixes, operationMetrics))
+		case provisioning.SourceRepositoryType:
+			sourceOpts := []sourcerepo.Option{sourcerepo.WithURLValidator(sourceURLValidator(c.Settings))}
+			// Token exchange needs the operator's token exchange configuration.
+			if exchangeClient, err := c.TokenExchangeClient(); err == nil {
+				sourceOpts = append(sourceOpts, sourcerepo.WithTokenExchanger(sourceTokenExchanger{exchangeClient}))
+			}
+			extras = append(extras, sourcerepo.Extra(decrypter, allowInsecure, operationMetrics, sourceOpts...))
 		default:
 			return nil, fmt.Errorf("unsupported repository type: %s", t)
 		}
@@ -773,6 +782,8 @@ func (c *ControllerConfig) ConnectionExtras() ([]connection.Extra, error) {
 		githubconnection.Extra(decrypter, githubconnection.ProvideFactory()),
 		githuboauth.Extra(decrypter, githubrepo.ProvideFactory()),
 		gitoauth.Extra(decrypter, allowInsecure),
+		sourceconnection.Extra(decrypter, allowInsecure,
+			sourceconnection.WithURLValidator(sourceURLValidator(c.Settings))),
 	}
 
 	c.connectionExtras = extras
@@ -873,4 +884,22 @@ func defaultConnectionTypes(extras []connection.Extra) []string {
 		}
 	}
 	return types
+}
+
+// sourceURLValidator applies the Git URL allowlist to the endpoints a source or its connection dials.
+func sourceURLValidator(cfg *setting.Cfg) *repository.URLValidator {
+	return repository.NewURLValidatorFromAllowlist(cfg.SectionWithEnvOverrides("provisioning").Key("allowed_git_urls").Strings(","))
+}
+
+// sourceTokenExchanger adapts the authlib client to the exchange a source repository needs.
+type sourceTokenExchanger struct {
+	client *authn.TokenExchangeClient
+}
+
+func (e sourceTokenExchanger) Exchange(ctx context.Context, namespace, audience string) (string, error) {
+	rsp, err := e.client.Exchange(ctx, authn.TokenExchangeRequest{Audiences: []string{audience}, Namespace: namespace})
+	if err != nil {
+		return "", err
+	}
+	return rsp.Token, nil
 }
