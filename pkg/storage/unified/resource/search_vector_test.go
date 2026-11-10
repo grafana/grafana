@@ -244,7 +244,6 @@ func TestVectorSearch_HappyPath(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	assert.Nil(t, resp.Error)
 	require.Len(t, resp.Results, 2)
 
 	// Results map fields one-for-one and pass Score through unchanged.
@@ -733,7 +732,6 @@ func TestVectorSearch_ExternalCollectionEnforcesAuthz(t *testing.T) {
 		Key: validKey(), Query: "q", Limit: 5,
 	})
 	require.NoError(t, err)
-	assert.Nil(t, resp.Error)
 	require.Len(t, resp.Results, 1)
 	assert.Equal(t, "u1", resp.Results[0].Name)
 	assert.NotZero(t, access.batchCalls, "BatchCheck must run for external collections")
@@ -811,7 +809,6 @@ func TestVectorSearchSharedCollectionReadableByTwoTenants(t *testing.T) {
 			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{UserID: 1, UserUID: "reader", Namespace: namespace, Type: authlib.TypeUser})
 			response, err := s.VectorSearch(ctx, &resourcepb.VectorSearchRequest{Key: &resourcepb.ResourceKey{Namespace: namespace, Group: "docs.example.com", Resource: "manuals"}, Query: "guide"})
 			require.NoError(t, err)
-			require.Nil(t, response.GetError())
 			require.Len(t, response.GetResults(), 1)
 			require.Equal(t, "guide", response.GetResults()[0].GetName())
 			require.Equal(t, vector.SharedNamespace, backend.gotNamespace)

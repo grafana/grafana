@@ -64,8 +64,6 @@
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./unstable ./testing ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json",
     "i18n-extract": "i18next-cli extract --sync-primary"
   },
   "devDependencies": {
@@ -101,8 +99,8 @@
   "dependencies": {
     "@emotion/css": "^11.13.5",
     "@faker-js/faker": "^10.6.0",
-    "@grafana/api-clients": "13.4.0-pre",
-    "@grafana/i18n": "13.4.0-pre",
+    "@grafana/api-clients": "workspace:*",
+    "@grafana/i18n": "workspace:*",
     "@reduxjs/toolkit": "^2.10.1",
     "fishery": "^2.3.1",
     "lodash": "^4.17.21",
