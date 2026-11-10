@@ -642,10 +642,11 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 }
 
 func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
-	// Read the original file to get its content for parsing and authorization. The
-	// copy being moved is the one on the target ref, which can differ from the
-	// configured branch -- a secret rotated there must not be moved back.
-	originalFile, err := r.readWithRefFallback(ctx, opts.OriginalPath, opts.Ref)
+	// Read the original file to get its content for parsing and authorization.
+	// This stays on the configured branch: the parser resolves the folder used for
+	// the delete check from _folder.json, and that must never come from a
+	// caller-supplied ref (see the Authorizer doc comment).
+	originalFile, err := r.repo.Read(ctx, opts.OriginalPath, "")
 	if err != nil {
 		return nil, fmt.Errorf("read original file: %w", err)
 	}
@@ -902,7 +903,10 @@ func (r *DualReadWriter) keepCommittedSecureValues(ctx context.Context, parsed *
 
 	committed, err := r.readWithRefFallback(ctx, path, ref)
 	if err != nil {
-		if errors.Is(err, repository.ErrFileNotFound) || errors.Is(err, repository.ErrRefNotFound) || apierrors.IsNotFound(err) {
+		// Nothing to keep: the file is absent, or too large to read -- and an
+		// oversized file must stay replaceable by one that fits.
+		if errors.Is(err, repository.ErrFileNotFound) || errors.Is(err, repository.ErrRefNotFound) ||
+			apierrors.IsNotFound(err) || apierrors.IsRequestEntityTooLargeError(err) {
 			return nil
 		}
 		return fmt.Errorf("read committed file: %w", err)

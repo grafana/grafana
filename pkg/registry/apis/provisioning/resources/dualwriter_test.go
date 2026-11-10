@@ -1941,6 +1941,28 @@ func TestKeepPlaintextSecureValues(t *testing.T) {
 		})
 	}
 
+	t.Run("a file replaced by a different resource does not inherit the secret", func(t *testing.T) {
+		for _, tt := range []struct {
+			name   string
+			mutate func(*unstructured.Unstructured)
+		}{
+			{name: "different name", mutate: func(u *unstructured.Unstructured) { u.SetName("ds-2") }},
+			{name: "different kind", mutate: func(u *unstructured.Unstructured) { u.SetKind("Playlist") }},
+			{name: "different group", mutate: func(u *unstructured.Unstructured) {
+				u.SetAPIVersion("playlist.grafana.app/v0alpha1")
+			}},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				updated := secureObject(nil)
+				tt.mutate(updated)
+				keepPlaintextSecureValues(secureObject(map[string]any{
+					"password": map[string]any{"create": "hunter2"},
+				}), updated)
+				require.NotContains(t, updated.Object, "secure")
+			})
+		}
+	})
+
 	t.Run("committed plaintext is copied, not shared", func(t *testing.T) {
 		committed := secureObject(map[string]any{"password": map[string]any{"create": "hunter2"}})
 		updated := secureObject(nil)
@@ -1955,7 +1977,9 @@ func TestKeepPlaintextSecureValues(t *testing.T) {
 
 // TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues verifies that an update
 // carrying only the secure value reference the resource API returns does not drop the
-// plaintext already committed in the file.
+// plaintext already committed in the file. The dry run is left enabled on purpose: the
+// restore has to happen before it, or a real datasource update fails on the echoed
+// reference before the repair runs.
 func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
 	const (
 		repoName = "repo"
@@ -1981,12 +2005,23 @@ func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
 	require.NoError(t, err)
 	meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: repoName})
 
-	var written *unstructured.Unstructured
+	// The live resource only ever exposes the reference, which is what the client
+	// echoed back in the update above.
+	existing := obj.DeepCopy()
+	require.NoError(t, unstructured.SetNestedStringMap(existing.Object, map[string]string{"name": "lds-sv-ds-1-password"}, "secure", "password"))
+
+	var dryRunObj, liveObj *unstructured.Unstructured
 	client := &MockDynamicResourceInterface{}
+	client.On("Get", mock.Anything, "ds-1", metav1.GetOptions{}, mock.Anything).Return(existing, nil)
 	client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(&unstructured.Unstructured{}, nil).
 		Run(func(args mock.Arguments) {
-			written = args.Get(1).(*unstructured.Unstructured).DeepCopy()
+			written := args.Get(1).(*unstructured.Unstructured).DeepCopy()
+			if len(args.Get(2).(metav1.UpdateOptions).DryRun) > 0 {
+				dryRunObj = written
+				return
+			}
+			liveObj = written
 		})
 
 	parsed := &ParsedResource{
@@ -1996,11 +2031,8 @@ func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
 		GVK:    schema.GroupVersionKind{Group: "testdata.datasource.grafana.app", Version: "v0alpha1", Kind: "DataSource"},
 		GVR:    schema.GroupVersionResource{Group: "testdata.datasource.grafana.app", Version: "v0alpha1", Resource: "datasources"},
 		Client: client,
-		Repo:   provisioning.ResourceRepositoryInfo{Name: repoName, Namespace: "default"},
+		Repo:   provisioning.ResourceRepositoryInfo{Name: repoName, Namespace: "default", Type: provisioning.LocalRepositoryType},
 		Action: provisioning.ResourceActionUpdate,
-		// Existing + DryRunResponse are pre-set so Run goes straight to the update call.
-		Existing:       obj.DeepCopy(),
-		DryRunResponse: obj.DeepCopy(),
 	}
 
 	var savedFile []byte
@@ -2017,23 +2049,22 @@ func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
 
 	dw := NewDualReadWriter(rw, parser, NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind), stubAuthorizer{}, false)
 	_, err = dw.UpdateResource(context.Background(), DualWriteOptions{
-		Path:       path,
-		Message:    "msg",
-		SkipDryRun: true,
+		Path:    path,
+		Message: "msg",
 	})
 	require.NoError(t, err)
 
+	keptSecure := map[string]any{"password": map[string]any{"create": "hunter2"}}
+
 	var saved map[string]any
 	require.NoError(t, json.Unmarshal(savedFile, &saved))
-	require.Equal(t,
-		map[string]any{"password": map[string]any{"create": "hunter2"}},
-		saved["secure"],
-		"the file must keep the plaintext it already had")
+	require.Equal(t, keptSecure, saved["secure"], "the file must keep the plaintext it already had")
 
-	require.NotNil(t, written)
-	require.Equal(t,
-		map[string]any{"password": map[string]any{"create": "hunter2"}},
-		written.Object["secure"],
+	require.NotNil(t, dryRunObj, "the dry run must have happened")
+	require.Equal(t, keptSecure, dryRunObj.Object["secure"],
+		"the restore must happen before the dry run, or the dry run rejects the echoed reference")
+	require.NotNil(t, liveObj)
+	require.Equal(t, keptSecure, liveObj.Object["secure"],
 		"the resource update must carry the plaintext from the file")
 }
 
@@ -2077,6 +2108,18 @@ func TestKeepCommittedSecureValues_ReadFallback(t *testing.T) {
 		parsed := newParsed()
 		dw := &DualReadWriter{repo: rw}
 		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, ""))
+		require.NotContains(t, parsed.Obj.Object, "secure")
+	})
+
+	t.Run("an oversized committed file is replaceable", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, path, "").
+			Return(nil, apierrors.NewRequestEntityTooLargeError("file is too big"))
+
+		parsed := newParsed()
+		dw := &DualReadWriter{repo: rw}
+		require.NoError(t, dw.keepCommittedSecureValues(context.Background(), parsed, path, ""),
+			"a file too large to read must not block the smaller replacement")
 		require.NotContains(t, parsed.Obj.Object, "secure")
 	})
 
@@ -2181,6 +2224,39 @@ func TestMoveFile_SecureValues(t *testing.T) {
 		mockClient.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		mockClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		rw.AssertNotCalled(t, "Move", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	// The parser resolves the folder behind the source delete check from
+	// _folder.json, and the Authorizer requires that to come from the configured
+	// branch: metadata on a caller-supplied ref can name any folder.
+	t.Run("the original is read on the configured branch, not the target ref", func(t *testing.T) {
+		config, rw := newSyncedGitRepo(t)
+		// Writing to a ref other than the configured branch needs the branch workflow.
+		config.Spec.Workflows = append(config.Spec.Workflows, provisioning.BranchWorkflow)
+		mockParser := NewMockParser(t)
+
+		originalFile := &repository.FileInfo{Data: []byte(`{}`), Path: "old/dash.json"}
+		rw.On("Read", mock.Anything, "old/dash.json", "").Return(originalFile, nil)
+		mockParser.On("Parse", mock.Anything, originalFile).
+			Return(newParsed(t, map[string]any{
+				"apiVersion": "dashboard.grafana.app/v0alpha1",
+				"kind":       "Dashboard",
+				"metadata":   map[string]any{"name": "dash-uid"},
+			}, nil), nil)
+		mockParser.On("Parse", mock.Anything, mock.Anything).
+			Return(nil, assert.AnError).Maybe()
+
+		dw := newDualWriter(t, config, rw, mockParser)
+		_, err := dw.MoveResource(context.Background(), DualWriteOptions{
+			OriginalPath: "old/dash.json",
+			Path:         "new/dash.json",
+			Ref:          "feature",
+			Data:         []byte(`{}`),
+			Message:      "move",
+		})
+		require.Error(t, err, "the move stops once the source has been parsed")
+
+		rw.AssertNotCalled(t, "Read", mock.Anything, "old/dash.json", "feature")
 	})
 }
 
