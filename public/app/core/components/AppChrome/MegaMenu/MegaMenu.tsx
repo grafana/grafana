@@ -77,30 +77,33 @@ export const MegaMenu = memo(
               ) : (
                 <>
                   {pinnedEntries.length > 0 && (
-                    <div className={styles.pinnedBox}>
-                      <div className={styles.pinnedHeading} id={pinnedHeadingId}>
-                        <Text variant="bodySmall" color="secondary" weight="medium">
-                          {pinnedListLabel}
-                        </Text>
-                        <div className={styles.pinnedHeadingLine} />
+                    <>
+                      <div className={styles.pinnedBox}>
+                        <div className={styles.pinnedHeading} id={pinnedHeadingId}>
+                          <Text variant="bodySmall" color="secondary" weight="medium">
+                            {pinnedListLabel}
+                          </Text>
+                          <div className={styles.pinnedHeadingLine} />
+                        </div>
+                        <ul className={styles.list} aria-labelledby={pinnedHeadingId}>
+                          {pinnedEntries.map((entry) =>
+                            entry.section ? (
+                              renderNavItem(entry.section, entry.url, true)
+                            ) : (
+                              <MegaMenuPinnedItem
+                                key={entry.url}
+                                line={entry.line}
+                                activeItem={activeItem}
+                                onUnpin={() => onPinItem(entry.line.item)}
+                                onClick={onNavigate}
+                                disabled={isSaving}
+                              />
+                            )
+                          )}
+                        </ul>
                       </div>
-                      <ul className={styles.list} aria-labelledby={pinnedHeadingId}>
-                        {pinnedEntries.map((entry) =>
-                          entry.section ? (
-                            renderNavItem(entry.section, entry.url, true)
-                          ) : (
-                            <MegaMenuPinnedItem
-                              key={entry.url}
-                              line={entry.line}
-                              activeItem={activeItem}
-                              onUnpin={() => onPinItem(entry.line.item)}
-                              onClick={onNavigate}
-                              disabled={isSaving}
-                            />
-                          )
-                        )}
-                      </ul>
-                    </div>
+                      <hr className={styles.dividerLine} />
+                    </>
                   )}
                   {scopesMegaMenuEnabled && (
                     <ErrorBoundaryAlert boundaryName="scopes-dashboards-mega-menu">

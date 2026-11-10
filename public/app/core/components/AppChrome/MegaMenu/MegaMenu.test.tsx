@@ -168,15 +168,15 @@ describe('MegaMenu', () => {
     expect(window.localStorage.getItem(HIDDEN_KEY)).toBe('["explore"]');
   });
 
-  it('shows saved breadcrumbs and retains the original navigation item without a divider below Pinned', async () => {
+  it('shows saved breadcrumbs with a divider and retains the original navigation item', async () => {
     const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
     await screen.findByRole('list', { name: 'Pinned items' });
     expect(pinnedRegion().getByRole('link', { name: /Dashboards.*Playlists/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Expand section: Dashboards' }));
     expect(screen.getAllByText('Playlists')).toHaveLength(2);
-    expect(screen.getByRole('list', { name: 'Pinned items' }).parentElement?.nextElementSibling).toBe(
-      screen.getByRole('list', { name: 'Navigation' })
-    );
+    const divider = screen.getByRole('list', { name: 'Pinned items' }).parentElement?.nextElementSibling;
+    expect(divider).toHaveRole('separator');
+    expect(divider?.nextElementSibling).toBe(screen.getByRole('list', { name: 'Navigation' }));
   });
 
   it.each([
