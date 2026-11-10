@@ -3,15 +3,19 @@ import { Suspense, lazy, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { ErrorBoundaryAlert, LoadingPlaceholder } from '@grafana/ui';
-import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui/unstable';
+import { type CodeMirrorEditorProps } from '@grafana/ui/unstable';
+import {
+  CoreCodeMirrorEditor,
+  type CoreCodeMirrorEditorProps,
+} from 'app/core/components/CodeMirror/CoreCodeMirrorEditor';
 
 const TemplateCodeMirror = lazy(async () => {
   const { goTemplate } = await import('./editor/goTemplate');
   const extensions = [goTemplate()];
 
   return {
-    default: function TemplateCodeMirror(props: CodeMirrorEditorProps) {
-      return <CodeMirrorEditor {...props} extensions={extensions} />;
+    default: function TemplateCodeMirror(props: CoreCodeMirrorEditorProps) {
+      return <CoreCodeMirrorEditor {...props} extensions={extensions} />;
     },
   };
 });

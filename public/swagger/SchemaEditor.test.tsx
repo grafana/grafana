@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import type { CodeMirrorEditorProps } from '@grafana/ui/unstable';
+import type { CoreCodeMirrorEditorProps } from 'app/core/components/CodeMirror/CoreCodeMirrorEditor';
 
 import SchemaEditor from './SchemaEditor';
 import * as annotations from './schemaAnnotations';
@@ -14,8 +14,8 @@ jest.mock('codemirror-json-schema', () => ({
 }));
 
 // Keep the editor boundary interactive without depending on CodeMirror's DOM in jsdom.
-jest.mock('@grafana/ui/unstable', () => ({
-  CodeMirrorEditor: ({ value, readOnly, onChange, onBlur, onSave }: CodeMirrorEditorProps) => (
+jest.mock('app/core/components/CodeMirror/CoreCodeMirrorEditor', () => ({
+  CoreCodeMirrorEditor: ({ value, readOnly, onChange, onBlur, onSave }: CoreCodeMirrorEditorProps) => (
     <textarea
       aria-label="Request body"
       value={value}

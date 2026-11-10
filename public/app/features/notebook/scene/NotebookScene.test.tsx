@@ -46,9 +46,8 @@ setPluginImportUtils({
 
 // See CodeCell.test.tsx — the real editor does not run in jsdom, and is a lazily loaded chunk that
 // would otherwise resolve outside of this file's act() calls.
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
-  CodeMirrorEditor: ({
+jest.mock('app/core/components/CodeMirror/CoreCodeMirrorEditor', () => ({
+  CoreCodeMirrorEditor: ({
     value,
     readOnly,
     onChange,
