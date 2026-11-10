@@ -170,8 +170,8 @@
       "borderColor": "palette.neutral200"
     },
     "switch": {
-      "activeBackground": "palette.orange700",
-      "activeBackgroundHover": "palette.orange800"
+      "activeBackground": "palette.orange500",
+      "activeBackgroundHover": "palette.orange600"
     },
     "tooltip": {
       "borderColor": "palette.neutral200"
