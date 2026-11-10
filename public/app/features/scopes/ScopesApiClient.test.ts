@@ -612,7 +612,6 @@ describe('ScopesApiClient', () => {
 
   describe('fetchScopeNavigations', () => {
     it('should fetch navigations for scopes', async () => {
-      // Expected: MSW handler returns MOCK_SUB_SCOPE_MIMIR_ITEMS for 'mimir' scope
       const scopeName = 'mimir';
       const mockNavigations = [
         {

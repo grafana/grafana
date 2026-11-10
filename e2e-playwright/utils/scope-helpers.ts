@@ -2,6 +2,11 @@ import { expect, type Page, type Response } from '@playwright/test';
 
 import { type ScopeDashboardBindingSpec, type ScopeDashboardBindingStatus } from '@grafana/data';
 
+import {
+  type FindScopeNavigationsResults,
+  type ScopeNavigation,
+  type ScopeNavigationStatus,
+} from '../../public/app/api/clients/scope/v0alpha1/endpoints.gen';
 import { type Resource } from '../../public/app/features/apiserver/types';
 
 import { testScopes } from './scopes';
@@ -447,6 +452,26 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     });
   });
 
+  const buildNavigation = (
+    scope: TestScope,
+    name: string,
+    url: string,
+    status: ScopeNavigationStatus
+  ): ScopeNavigation => ({
+    kind: 'ScopeNavigation',
+    apiVersion: 'scope.grafana.app/v0alpha1',
+    metadata: {
+      name,
+      resourceVersion: '1',
+      creationTimestamp: 'stamp',
+    },
+    spec: {
+      url,
+      scope: `scope-${scope.name}`,
+    },
+    status,
+  });
+
   // Mock scope_navigations endpoint with scope-specific URL pattern
   await page.route(scopeNavigationsUrl, async (route) => {
     await route.fulfill({
@@ -455,37 +480,39 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
       body: JSON.stringify({
         apiVersion: 'scope.grafana.app/v0alpha1',
         items: scopes.flatMap((scope) => {
-          const navigations: Array<{
-            kind: string;
-            apiVersion: string;
-            metadata: { name: string; resourceVersion: string; creationTimestamp: string };
-            spec: { url: string; scope: string };
-            status: { title: string };
-          }> = [];
+          const navigations: ScopeNavigation[] = [];
+          const dashboardUid = scope.dashboardUid ?? 'edediimbjhdz4b';
+          const dashboardTitle = scope.dashboardTitle ?? 'A tall dashboard';
 
           // Create a scope navigation if dashboardUid is provided
           if (scope.dashboardUid && scope.addLinks) {
-            navigations.push({
-              kind: 'ScopeNavigation',
-              apiVersion: 'scope.grafana.app/v0alpha1',
-              metadata: {
-                name: `scope-${scope.name}-nav`,
-                resourceVersion: '1',
-                creationTimestamp: 'stamp',
-              },
-              spec: {
-                url: `/d/${scope.dashboardUid}`,
-                scope: `scope-${scope.name}`,
-              },
-              status: {
+            navigations.push(
+              buildNavigation(scope, `scope-${scope.name}-nav`, `/d/${scope.dashboardUid}`, {
                 title: scope.dashboardTitle ?? scope.title,
-              },
-            });
+              })
+            );
           }
+
+          for (let i = 0; i < 10; i++) {
+            const selectedGroup = groups[i % groups.length];
+            navigations.push(
+              buildNavigation(scope, `scope-${scope.name}-nav-${i}`, `/d/${dashboardUid}/${Math.random()}`, {
+                title: dashboardTitle + (selectedGroup[0] ?? 'U') + i,
+                ...(selectedGroup !== '' && { groups: [selectedGroup] }),
+              })
+            );
+          }
+
+          // make sure there is always a navigation with no group
+          navigations.push(
+            buildNavigation(scope, `scope-${scope.name}-nav-ungrouped`, `/d/${dashboardUid}/${Math.random()}`, {
+              title: dashboardTitle + 'U123',
+            })
+          );
 
           return navigations;
         }),
-      }),
+      } satisfies FindScopeNavigationsResults),
     });
   });
 
