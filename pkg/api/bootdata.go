@@ -146,8 +146,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	frontendSettings.Datasources = dataSources
 	frontendSettings.Panels = panels
 
-	frontendSettings.PluginCatalogManagedPlugins = hs.managedPluginsService.ManagedPlugins(c.Req.Context())
-
 	for n, ds := range dataSources {
 		if ds.IsDefault {
 			frontendSettings.DefaultDatasource = n
@@ -375,22 +373,23 @@ func (hs *HTTPServer) getFSPanels(c *contextmodel.ReqContext, availablePanels ma
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
-			ID:              panel.ID,
-			Name:            panel.Name,
-			AliasIDs:        panel.AliasIDs,
-			Info:            panel.Info,
-			Module:          panel.Module,
-			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
-			BaseURL:         panel.BaseURL,
-			SkipDataQuery:   panel.SkipDataQuery,
-			Suggestions:     panel.Suggestions,
-			HideFromList:    panel.HideFromList,
-			ReleaseState:    string(panel.State),
-			Signature:       string(panel.Signature),
-			Sort:            getPanelSort(panel.ID),
-			Angular:         panel.Angular,
-			LoadingStrategy: panel.LoadingStrategy,
-			Translations:    panel.Translations,
+			ID:               panel.ID,
+			Name:             panel.Name,
+			AliasIDs:         panel.AliasIDs,
+			Info:             panel.Info,
+			Module:           panel.Module,
+			ModuleHash:       hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
+			BaseURL:          panel.BaseURL,
+			SkipDataQuery:    panel.SkipDataQuery,
+			SkipDefaultQuery: panel.SkipDefaultQuery,
+			Suggestions:      panel.Suggestions,
+			HideFromList:     panel.HideFromList,
+			ReleaseState:     string(panel.State),
+			Signature:        string(panel.Signature),
+			Sort:             getPanelSort(panel.ID),
+			Angular:          panel.Angular,
+			LoadingStrategy:  panel.LoadingStrategy,
+			Translations:     panel.Translations,
 		}
 	}
 

@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
-	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -36,7 +36,7 @@ var (
 
 func TestAPIEndpoint_GetCurrentOrgPreferences(t *testing.T) {
 	client := prefapi.NewMockK8sClient(t)
-	client.EXPECT().Get(mock.Anything, prefutils.NamespaceOwner()).Return(&preferences.PreferencesSpec{Theme: new("dark")}, nil)
+	client.EXPECT().Get(mock.Anything, resource.NamespaceOwner()).Return(&preferences.PreferencesSpec{Theme: new("dark")}, nil)
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
@@ -76,7 +76,7 @@ func TestAPIEndpoint_PutCurrentOrgPreferences(t *testing.T) {
 	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 
 	client := prefapi.NewMockK8sClient(t)
-	client.EXPECT().Update(mock.Anything, prefutils.NamespaceOwner(), mock.Anything).Return(nil)
+	client.EXPECT().Update(mock.Anything, resource.NamespaceOwner(), mock.Anything).Return(nil)
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
@@ -168,7 +168,7 @@ func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
 	cfg := setting.NewCfg()
 
 	client := prefapi.NewMockK8sClient(t)
-	client.EXPECT().Patch(mock.Anything, prefutils.NamespaceOwner(), mock.Anything).Return(nil)
+	client.EXPECT().Patch(mock.Anything, resource.NamespaceOwner(), mock.Anything).Return(nil)
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg

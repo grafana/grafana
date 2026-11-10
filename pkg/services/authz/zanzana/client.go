@@ -12,6 +12,7 @@ import (
 // Client is a wrapper around [openfgav1.OpenFGAServiceClient]
 type Client interface {
 	authlib.AccessClient
+	authlib.UserPermissionsClient
 	List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error)
 	Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error)
 	Write(ctx context.Context, req *authzextv1.WriteRequest) error

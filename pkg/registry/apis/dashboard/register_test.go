@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -29,6 +30,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/client-go/dynamic"
 	kubecommon "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis"
@@ -796,10 +798,10 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 
 		t.Run(version, func(t *testing.T) {
 			deleteKey := "secret"
-			dashboard := map[string]any{"title": "dashboard"}
-			mine := dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "mine"}, Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}}
+			blobs := dashv0.SnapshotBlobs{Dashboard: &dashv0.SnapshotBlobReference{Data: new("e30="), ContentType: new("application/json")}}
+			mine := dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "mine"}, Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey}, Blobs: blobs}
 			mine.SetCreatedBy("user:alice")
-			theirs := dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "theirs"}, Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}}
+			theirs := dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "theirs"}, Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey}, Blobs: blobs}
 			theirs.SetCreatedBy("user:bob")
 
 			mockStore := grafanarest.NewMockStorage(t)
@@ -837,6 +839,10 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 
 			getter, ok := snapStorage.(rest.Getter)
 			require.True(t, ok, "registered snapshot storage must support Get")
+			_, canCreate := snapStorage.(rest.Creater)
+			require.False(t, canCreate)
+			_, canUpdate := snapStorage.(rest.Updater)
+			require.False(t, canUpdate)
 			lister, ok := snapStorage.(rest.Lister)
 			require.True(t, ok, "registered snapshot storage must support List")
 
@@ -848,7 +854,7 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 			gotSnap, ok := getObj.(*dashv0.Snapshot)
 			require.True(t, ok)
 			require.Nil(t, gotSnap.Spec.DeleteKey)
-			require.Nil(t, gotSnap.Spec.Dashboard)
+			require.Nil(t, gotSnap.Blobs.Dashboard)
 
 			// Non-admin LIST excludes other creators' snapshots and omits sensitive fields.
 			nonAdminObj, err := lister.List(identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice", OrgRole: org.RoleEditor}), &internalversion.ListOptions{})
@@ -858,7 +864,7 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 			require.Equal(t, []string{"mine"}, names(nonAdminList))
 			for i := range nonAdminList.Items {
 				require.Nil(t, nonAdminList.Items[i].Spec.DeleteKey)
-				require.Nil(t, nonAdminList.Items[i].Spec.Dashboard)
+				require.Nil(t, nonAdminList.Items[i].Blobs.Dashboard)
 			}
 
 			// Admin LIST includes other creators' snapshots (still stripped).
@@ -869,7 +875,7 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 			require.ElementsMatch(t, []string{"mine", "theirs"}, names(adminList))
 			for i := range adminList.Items {
 				require.Nil(t, adminList.Items[i].Spec.DeleteKey)
-				require.Nil(t, adminList.Items[i].Spec.Dashboard)
+				require.Nil(t, adminList.Items[i].Blobs.Dashboard)
 			}
 		})
 	}
@@ -903,11 +909,40 @@ func TestOtherDashboardGroupResourcesDeclareGVK(t *testing.T) {
 			require.Equal(t, group, so.GVK.Group)
 			require.NotEmpty(t, so.GVK.Version, "an empty version persists without an apiVersion")
 			require.NotEmpty(t, so.GVK.Kind)
-			// Folder support is the one thing these three actually disagree on, and
-			// for notebooks it is load-bearing: their RBAC grant is a flat notebooks:*
+			require.Equal(t, tc.name == "snapshots", so.EnableInlineBlobs)
+			// For notebooks folder support is load-bearing: their RBAC grant is a flat notebooks:*
 			// wildcard, so a folder-scoped notebook would bypass the folder's ACL.
 			require.Equal(t, tc.folder, so.EnableFolderSupport)
 			require.False(t, so.RequireFolder)
 		})
+	}
+}
+
+func TestAfterDeleteStopsWaitingForAStalledPermissionDelete(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var client dynamic.NamespaceableResourceInterface = &stalledPermissionClient{}
+		b := &DashboardsAPIBuilder{resourcePermissionsSvc: &client}
+
+		start := time.Now()
+		b.afterDelete(&dashv1.Dashboard{ObjectMeta: metav1.ObjectMeta{Name: "dash-uid", Namespace: "stacks-1"}}, &metav1.DeleteOptions{})
+
+		require.Equal(t, afterDeleteTimeout, time.Since(start))
+	})
+}
+
+type stalledPermissionClient struct {
+	dynamic.NamespaceableResourceInterface
+}
+
+func (c *stalledPermissionClient) Namespace(string) dynamic.ResourceInterface {
+	return c
+}
+
+func (c *stalledPermissionClient) Delete(ctx context.Context, _ string, _ metav1.DeleteOptions, _ ...string) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(time.Hour):
+		return nil
 	}
 }

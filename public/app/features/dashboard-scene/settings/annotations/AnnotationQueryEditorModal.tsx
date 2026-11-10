@@ -83,8 +83,8 @@ function AnnotationDataSourcePicker({ layer, onBeforeChange, onAfterChange }: An
       const dsRef = getDataSourceRef(ds);
       const oldQuery = query;
 
-      // If the data source type changed, reset the query to defaults
-      const newQuery =
+      // If the data source type changed, reset the query to defaults but keep how its control is displayed
+      const newQuery: typeof query =
         query.datasource?.type !== dsRef.type
           ? {
               datasource: dsRef,
@@ -93,6 +93,7 @@ function AnnotationDataSourcePicker({ layer, onBeforeChange, onAfterChange }: An
               iconColor: query.iconColor,
               name: query.name,
               hide: query.hide,
+              placement: query.placement,
               filter: query.filter,
               mappings: query.mappings,
               type: query.type,

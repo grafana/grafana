@@ -93,8 +93,8 @@ function getSelectors() {
     teamsRow: () => within(teamsTable()).getByRole('row', { name: /team one team.one@test\.com 2000/i }),
     orgsTable,
     orgsEditorRow: () => within(orgsTable()).getByRole('row', { name: /main editor current/i }),
-    orgsViewerRow: () => within(orgsTable()).getByRole('row', { name: /second viewer select organisation/i }),
-    orgsAdminRow: () => within(orgsTable()).getByRole('row', { name: /third admin select organisation/i }),
+    orgsViewerRow: () => within(orgsTable()).getByRole('row', { name: /second viewer select organization/i }),
+    orgsAdminRow: () => within(orgsTable()).getByRole('row', { name: /third admin select organization/i }),
     sessionsTable,
     sessionsRow: () =>
       within(sessionsTable()).getByRole('row', {
@@ -308,7 +308,7 @@ describe('UserProfileEditPage', () => {
         const { props } = await getTestContext();
         const orgsAdminSelectButton = () =>
           within(getSelectors().orgsAdminRow()).getByRole('button', {
-            name: /select organisation/i,
+            name: /select organization/i,
           });
 
         await userEvent.click(orgsAdminSelectButton());

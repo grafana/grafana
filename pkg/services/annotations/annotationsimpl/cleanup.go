@@ -16,14 +16,14 @@ type CleanupServiceImpl struct {
 
 func ProvideCleanupService(db db.DB, cfg *setting.Cfg) *CleanupServiceImpl {
 	return &CleanupServiceImpl{
-		store: NewXormStore(cfg, log.New("annotations"), db, nil, nil),
+		store: NewXormStore(cfg, log.New("annotations"), db, nil, nil, nil),
 	}
 }
 
 const (
-	alertAnnotationType     = "alert_id <> 0"
-	dashboardAnnotationType = "dashboard_id <> 0 AND alert_id = 0"
-	apiAnnotationType       = "alert_id = 0 AND dashboard_id = 0"
+	alertAnnotationType     = "(alert_id <> 0 OR alert_uid <> '')"
+	dashboardAnnotationType = "dashboard_id <> 0 AND alert_id = 0 AND alert_uid = ''"
+	apiAnnotationType       = "alert_id = 0 AND alert_uid = '' AND dashboard_id = 0"
 )
 
 // Run deletes old annotations created by alert rules, API

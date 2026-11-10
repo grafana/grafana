@@ -23,49 +23,45 @@ description: Create and edit a dashboard
 weight: 1
 image_maps:
   - key: sidebar-toolbar
-    src: /media/docs/grafana/dashboards/screenshot-edit-mode-imagemap-v13.1.png
+    src: /media/docs/grafana/dashboards/screenshot-edit-mode-imagemap-v13.3.png
     alt: An annotated image of the sidebar and toolbar
     points:
       - x_coord: 101
-        y_coord: 11
+        y_coord: 17
         content: |
           **Add new element**: Click to open the sidebar with add options. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 18
+        y_coord: 23
         content: |
           **Dashboard options**: Click the icon to open the sidebar and access dashboard options. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 24.5
+        y_coord: 29.5
         content: |
           **Feedback**: Submit feedback on the new editing experience. Edit mode only.
       - x_coord: 101
-        y_coord: 31
+        y_coord: 35.5
         content: |
           **Edit as code**: Edit the dashboard JSON. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 38.5
+        y_coord: 43.5
         content: |
           **Export**: Click to display [export](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
       - x_coord: 101
-        y_coord: 45
+        y_coord: 50
         content: |
           **Content outline**: Navigate a dashboard using the [Content outline](#navigate-using-the-content-outline).
       - x_coord: 101
-        y_coord: 51
+        y_coord: 56
         content: |
           **Filters overview**: Open the filters overview drawer.
       - x_coord: 101
-        y_coord: 57
+        y_coord: 62
         content: |
           **Dashboard insights**: View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, and query counts.
       - x_coord: 101
-        y_coord: 65
+        y_coord: 70
         content: |
           **Hide**: Click to hide the sidebar and toolbar.
-      - x_coord: 89
-        y_coord: 13
-        content: |
-          **Dock/Undock**: Click to dock or undock the sidebar.
 ---
 
 # Create dashboards
@@ -88,9 +84,11 @@ To create a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New dashboard**.
-1. Click the **Add new element** icon (blue plus sign) and click or drag a panel onto the dashboard.
+1. Do one of the following:
+   - Create a dashboard with Grafana Assistant by describing what you want to build. Make sure to save your dashboard.
+   - Click **+ Add visualization**. Then proceed to the next step.
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.2.png" max-width="750px" alt="Empty dashboard with sidebar open" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.3.png" max-width="750px" alt="Empty dashboard" >}}
 
 {{< /shared >}}
 
@@ -147,7 +145,7 @@ To create a dashboard, follow these steps:
 1. Select a folder, if applicable.
 1. Click **Save**
 1. Click **Back**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 {{< /docs/list >}}
 
@@ -158,6 +156,7 @@ Now that you've created a basic dashboard, you can augment it with more options,
 - [The sidebar and toolbar](#the-sidebar-and-toolbar): Learn about editing without leaving the dashboard.
 - [Navigate using the content outline](#navigate-using-the-content-outline): Learn how to quickly navigate to any dashboard element with the content outline.
 - [Edit a dashboard](#edit-a-dashboard): Learn how to edit a dashboard.
+- [Undo and redo changes](#undo-and-redo-changes): Learn how to revert and reinstate changes while you edit. (Public preview)
 
 ### The sidebar and toolbar
 
@@ -170,7 +169,7 @@ Hover your cursor over the numbers to display descriptions of the toolbar option
 
 {{< image-map key="sidebar-toolbar" >}}
 
-The toolbar is displayed in both edit and view mode, but the **Dashboard options** and **Feedback** icons aren't available in view mode.
+The toolbar is displayed in both edit and view mode, but the **Dashboard options**, **Feedback**, and **Edit as code**, **Undo**, and **Redo** icons aren't available in view mode (Undo and redo are in public preview).
 
 The available configuration options in the sidebar differ depending on the selected dashboard element:
 
@@ -230,7 +229,7 @@ To edit a dashboard, follow these steps:
 <!-- prettier-ignore-start -->
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Do one of the following:
 
    | Update                 | Action                        |
@@ -238,19 +237,77 @@ To edit a dashboard, follow these steps:
    | Edit dashboard settings | Click the **Dashboard options** icon to access dashboard settings in the sidebar. |
    | Add more panels        | <p>Click the **Add new element** icon and select **Panel**.</p><p>You can also hover your cursor on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.</p>   |
    | Add dashboard controls | Click **Add new element** and select one of the following: <ul><li>[Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls)</li><li>[Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables)</li><li>[Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries)</li><li>[Link](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-links)</li></ul> |
-   | Group panels           | <p>Click the **Add new element** icon and select **Add row/Group into rows** or **Add tab/Group into tabs**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** button and select a grouping option or select a specific set of panels and group them into rows or tabs.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>   |
+   | Group panels           | Group panels in any of the following ways depending on your needs:<ul><li>Click the **Add new element** icon and select **Add row/Group into rows** or **Add tab/Group into tabs**.</li><li>Hover your cursor on the dashboard to display the **Group panels** button and select a grouping option.</li><li>Hold `Shift` and click the panels you want to group, and then select a grouping option from the sidebar or [the bulk actions tooltip](#group-or-delete-multiple-panels-with-bulk-actions).</li></ul><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>   |
    | Edit panels | <p>Hover your cursor over any part of a panel to display the actions tooltip, which has the following options: **Settings**, **Edit visualization**, **Copy**, **Duplicate**, **Delete**.</p><p>Click **Settings** to access high-level panel options in the sidebar, or **Edit visualization** to open the panel editor.</p>  |
+   | Delete multiple panels | Hold `Shift` and click the panels you want to update, hover your cursor over one of them to display the [bulk actions tooltip](#group-or-delete-multiple-panels-with-bulk-actions), and then click **Delete**. |
    | Edit dashboard controls | <p>Hover your cursor over any part of a dashboard control to display the actions tooltip, which has the following options: **Settings**, **Duplicate**, and **Delete**. Click **Settings** to access options in the sidebar. For some controls, the tooltip also includes an **Edit query** or **Edit values** option. |
    | Edit rows and tabs | Click a row or tab to access grouping settings in the sidebar. |
-   | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+   | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).   |
+   | Undo or redo changes   | Click the **Undo** or **Redo** icon in the toolbar. For more information, refer to [Undo and redo changes](#undo-and-redo-changes). (Public preview) |
 
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Back**, if needed.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 <!-- prettier-ignore-end -->
+
+### Group and delete multiple panels with bulk actions
+
+When you select more than one panel, you can group or delete them all at once, with the bulk actions menu.
+This lets you make these changes directly on the dashboard, without opening the sidebar.
+
+To group or delete multiple panels, follow these steps:
+
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
+1. Hold `Shift` and click each panel you want to select.
+
+   A dotted blue line surrounds the selected panels.
+
+1. Hover your cursor over any of the selected panels to display the actions tooltip.
+
+   The tooltip shows the number of panels selected, including their [repeated instances](#configure-repeat-options).
+   If you select only one panel that repeats, the tooltip displays single-panel options, and not bulk actions.
+
+1. Choose one of the following:
+   - **Group into row**: Moves the selected panels into a new row.
+   - **Group into tab**: Moves the selected panels into a new tab.
+   - **Delete**: Deletes all the selected panels.
+
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Select **Viewing** in the dashboard mode drop-down list.
+
+If you hover over a panel that isn't part of your selection, the tooltip displays single-panel options instead.
+
+When grouping isn't available for your selection, for example because the selected panels are in different rows, hover your cursor over one of the selected panels to display a tooltip explaining why.
+
+### Undo and redo changes
+
+{{< docs/public-preview product="Dashboard undo and redo" featureFlag="`dashboardUndoRedo`" >}}
+
+While you're editing a dashboard, you can revert a change with the **Undo** option and reinstate it with **Redo** in the toolbar:
+
+- Click the **Undo** icon to revert the most recent change.
+- Click the **Redo** icon to reinstate the change you most recently reverted.
+
+Grafana keeps up to 100 changes in the undo and redo history.
+That means you can continue clicking **Undo** to keep undoing changes you've made, or **Redo** to keep reinstating changes, even if you've saved the dashboard.
+Hover your cursor over the icons to display a tooltip with the change you're about to revert or reinstate:
+
+{{< video-embed src="/media/docs/grafana/dashboards/screenrecord-undo-redo-stack-v13.3.mp4" alt="Screen recording of three changes being reverted and reinstated" >}}
+
+While the undo and redo options aren't available when you're in the panel editor, you can undo and redo those panel changes when you go back to the dashboard.
+If you make multiple changes to the panel before returning to the dashboard, all the changes are reverted or reinstated as a batch.
+
+Keep the following undo and redo behavior in mind:
+
+- **Options disabled when there are no changes**: **Undo** is disabled until you make a change, and **Redo** is disabled until you undo a change.
+- **History resets in a new session**: You can't undo changes from a previous edit session, even if you haven't saved them.
+- **Limited history**: Grafana keeps up to 100 changes in the history. When the limit is reached, the oldest changes are removed first.
 
 ## Panel layouts
 
@@ -260,7 +317,7 @@ There are two panel layout options:
 - **Custom**: You can position and size panels individually. This is the default selection for a new dashboard. **Show/hide rules** are not supported.
 - **Auto grid**: Panels resize and fit automatically to create a uniform grid. You can't make manual changes to this layout. **Show/hide rules** are supported.
 
-When you first create a dashboard, you select a layout and that selection becomes your the default for rows and tabs that you add to the dashboard.
+When you first create a dashboard, the default layout is **Auto**.
 However, you can change this default in the dashboard settings.
 
 ### Auto grid layout
@@ -280,7 +337,7 @@ If you try to resize a panel in auto grid layout, a dialog box opens with the fo
 
 If you're working in a tab, the layout type indicator is automatically displayed. To see which layout type is active for a row, hover your cursor over that row to display the indicator.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-auto-layout-indicators-v13.2.png" max-width="750px" alt="Dashboard showing auto layout indicators" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-auto-layout-indicators-v13.3.png" max-width="750px" alt="Dashboard showing auto layout indicators" >}}
 
 For repeated panels, this interaction is available on the last panel in the group.
 
@@ -289,14 +346,14 @@ For repeated panels, this interaction is available on the last panel in the grou
 To update the panel layout, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the dashboard or the grouping that contains the panel layout you want to update.
 1. Click the **Dashboard options** icon to open the sidebar, if needed.
 1. Under **Layout**, select **Custom** or **Auto**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Configure repeat options
 
@@ -310,7 +367,7 @@ To configure repeats, follow these steps:
 {{< docs/list >}}
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
@@ -329,7 +386,7 @@ To configure repeats, follow these steps:
 1. When you've finished setting the repeat option, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 {{< /shared >}}
 
@@ -426,7 +483,7 @@ For this rule type, you can select time ranges from **5 minutes** to **5 years**
 To configure a show/hide rule, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
@@ -446,7 +503,7 @@ To configure a show/hide rule, follow these steps:
 1. When you've finished setting rules, save the dashboard.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 Hidden panels, rows, or tabs aren't visible when the dashboard is in view mode.
 In edit mode, hidden dashboard elements are displayed with an icon or overlay indicating this.
@@ -456,7 +513,7 @@ In edit mode, hidden dashboard elements are displayed with an icon or overlay in
 To move a panel, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Navigate to the panel you want to move.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the panel.
@@ -469,7 +526,7 @@ To move a panel, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save** again.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Resize a panel
 
@@ -478,7 +535,7 @@ When your dashboard or grouping has a **Custom** layout, you can manually resize
 To resize a panel, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Navigate to the panel you want to resize.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the panel.
@@ -487,16 +544,17 @@ To resize a panel, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Copy, duplicate, or delete dashboard elements
 
-You can copy and paste, duplicate, or delete any dashboard elements using the sidebar:
+You can copy and paste, duplicate, or delete any dashboard elements using the sidebar.
+To delete several panels at once, you can also use the actions tooltip; refer to [Edit multiple panels](#group-or-delete-multiple-panels-with-bulk-actions).
 
 To manage dashboard elements, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Do one of the following:
    - For panels, rows, or tabs, click the element you want to update to open the sidebar. If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
    - For dashboard controls&mdash;filters, variables, annotations, or links&mdash; click the control at the top of the dashboard to display the edit and delete options, and then click the edit icon for the control. This opens the sidebar.
@@ -511,14 +569,14 @@ To manage dashboard elements, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Copy a dashboard
 
 To make a copy of a dashboard, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Save** drop-down list and select **Save as copy**.
 1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
 
