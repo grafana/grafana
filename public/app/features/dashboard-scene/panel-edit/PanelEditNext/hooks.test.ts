@@ -8,7 +8,7 @@ import type { PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
-import { usePanelEditorShell, useVizAndDataPaneLayout } from './hooks';
+import { getDefaultSidebarWidth, usePanelEditorShell, useVizAndDataPaneLayout } from './hooks';
 
 jest.mock('@grafana/ui', () => ({
   useTheme2: jest.fn(),
@@ -58,12 +58,24 @@ describe('usePanelEditorShell', () => {
   });
 });
 
+describe('getDefaultSidebarWidth', () => {
+  it.each([
+    [1000, 260, 'the collapse threshold when 20% would start it closed'],
+    [1440, 288, '20% of a laptop window'],
+    [1750, 350, '20% reaching the 350px cap'],
+    [2560, 350, 'the 350px cap on large screens'],
+  ])('gives a %spx window a %spx sidebar (%s)', (windowWidth, expected) => {
+    expect(getDefaultSidebarWidth(windowWidth)).toBe(expected);
+  });
+});
+
 describe('useVizAndDataPaneLayout', () => {
   const WIDTH_KEY = 'grafana.dashboard.query-editor-next.sidebar-width';
   const COLLAPSED_KEY = 'grafana.dashboard.query-editor-next.sidebar-collapsed';
 
   beforeEach(() => {
     localStorage.clear();
+    window.innerWidth = 1920;
     // Recorded calls are inspected below, so they must not carry over between cases.
     jest.clearAllMocks();
     jest.mocked(getDashboardSceneFor).mockReturnValue({ useState: jest.fn(() => ({})) } as never);
@@ -128,6 +140,20 @@ describe('useVizAndDataPaneLayout', () => {
     localStorage.setItem(WIDTH_KEY, stored);
 
     expect(renderLayout()?.initialSize).toBe(350);
+  });
+
+  it('sizes the sidebar to the window without persisting it until the user drags', () => {
+    window.innerWidth = 1440;
+
+    const options = renderLayout();
+
+    expect(options?.initialSize).toBe(288);
+    expect(options?.resetSize).toBe(288);
+    expect(localStorage.getItem(WIDTH_KEY)).toBeNull();
+
+    act(() => options?.onPaneSizeChanged?.(400, 0.3));
+
+    expect(localStorage.getItem(WIDTH_KEY)).toBe('400');
   });
 
   // None of the splitter's own state survives a reload, so collapse has to round-trip through local
