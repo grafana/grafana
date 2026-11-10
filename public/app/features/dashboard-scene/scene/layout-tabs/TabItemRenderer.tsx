@@ -127,6 +127,12 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
               });
               observer.observe(document.body, { childList: true, subtree: true });
 
+              // An embedded dashboard isn't synced with the page URL, which belongs to the page around
+              // it: switch the tab here instead.
+              if (dashboard.state.meta.isEmbedded) {
+                parentLayout.switchToTab(model);
+                return;
+              }
               locationService.partial({ [urlKey]: mySlug });
             }}
             onPointerDown={(evt) => {

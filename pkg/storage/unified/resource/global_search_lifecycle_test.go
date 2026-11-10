@@ -791,7 +791,7 @@ func TestReconcileMatchesNamesStorageListsInAnotherOrder(t *testing.T) {
 		rsp, err := writer.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: fmt.Appendf(nil,
 			`{"apiVersion":"dashboard.grafana.app/v1","kind":"Dashboard","metadata":{"name":%q,"namespace":%q},"spec":{"title":%q}}`, name, ns, name)})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 		read := store.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
 		require.Nil(t, read.Error)
 		refs = append(refs, DocumentRef{Name: name, RV: read.ResourceVersion})
@@ -1167,7 +1167,6 @@ func TestRebuildIndexesCatchesUpAGlobalIndexWithImports(t *testing.T) {
 		Keys:      []*resourcepb.ResourceKey{{Namespace: "ns", Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
 	})
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	assert.Equal(t, int64(1), rsp.RebuildCount)
 	assert.Equal(t, importTuesday, idx.completedTypeBuilds[dashboardsGroupResource].StorageImportTime, "caught up before it returned")
 }
@@ -1178,13 +1177,12 @@ func TestRebuildIndexesReportsAFailedImportCheck(t *testing.T) {
 	server, idx := repairServer(t, &reconcileStorage{}, nil)
 	idx.completedTypeBuildsErr = errors.New("index unavailable")
 
-	rsp, err := server.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
+	_, err := server.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
 		Namespace: "ns",
 		Keys:      []*resourcepb.ResourceKey{{Namespace: "ns", Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
 	})
-	require.NoError(t, err)
-	require.NotNil(t, rsp.Error)
-	assert.Contains(t, rsp.Error.Message, "index unavailable")
+	rspErr := rpcErrorResult(t, err)
+	assert.Contains(t, rspErr.Message, "index unavailable")
 }
 
 // Only a newer import counts, as for a per-resource index. An older time than
@@ -1968,14 +1966,13 @@ func TestGlobalSearchIsUnavailableWhileTheIndexIsDisabled(t *testing.T) {
 	server := globalTestServer(t, &multiTypeStorage{}, &mockSearchBackend{})
 	server.globalIndexEnabled = false
 
-	rsp, err := server.Search(t.Context(), &resourcepb.ResourceSearchRequest{
+	_, err := server.Search(t.Context(), &resourcepb.ResourceSearchRequest{
 		Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
 		Limit:        10,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	require.NoError(t, err)
-	require.NotNil(t, rsp.Error)
-	assert.Equal(t, int32(http.StatusServiceUnavailable), rsp.Error.Code)
+	rspErr := rpcErrorResult(t, err)
+	assert.Equal(t, int32(http.StatusServiceUnavailable), rspErr.Code)
 }
 
 func TestRebuildRequestsCombineReconcile(t *testing.T) {

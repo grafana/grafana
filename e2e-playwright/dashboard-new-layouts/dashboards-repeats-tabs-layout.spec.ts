@@ -1,19 +1,11 @@
-import { Components, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
-
 import V2DashWithTabRepeats from '../dashboards/V2DashWithTabRepeats.json';
 
-import { test, expect } from './fixtures';
-import { expectRepeatedTabTitlesToBe, expectDashboardChangesToContain, flows, moveTab, getTabBox } from './helpers';
+import { expect, test } from './fixtures';
+import { expectDashboardChangesToContain, expectRepeatedTabTitlesToBe, flows, getTabBox, moveTab } from './helpers';
 
 const REPEAT_TITLE_BASE = 'Tab - ';
 const NEW_TITLE_BASE = 'edited tab rep - ';
 const REPEAT_OPTIONS = [1, 2, 3, 4];
-
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
 
 test.use({
   viewport: { width: 1920, height: 1080 },
@@ -118,7 +110,7 @@ test.describe(
       selectors,
       page,
       controls,
-      sidebar,
+      panelEditor,
       panels,
       tabs,
       canvas,
@@ -135,7 +127,7 @@ test.describe(
 
       await expect(canvas.getContainer()).toBeHidden(); // verifying that panel editor loaded
 
-      await sidebar.panelOptions.setTitle('New edited panel');
+      await panelEditor.options.setTitle('New edited panel');
 
       // playwright too fast, verifying JSON diff that changes landed
       await expectDashboardChangesToContain(dashboardPage, page, selectors, 'New edited panel');

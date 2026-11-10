@@ -59,7 +59,7 @@ func TestResourceUpdateRejectsInlineBlobDataOnNoOp(t *testing.T) {
 	require.NoError(t, err)
 	reads, writes := backend.reads.Load(), backend.writes.Load()
 	rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: value, ResourceVersion: rv})
-	err = ErrorFromResponse(rsp.GetError(), err)
+	require.Nil(t, rsp)
 	require.Error(t, err)
 	require.EqualValues(t, http.StatusBadRequest, AsErrorResult(err).Code)
 	require.Equal(t, reads, backend.reads.Load())
@@ -71,11 +71,11 @@ func TestResourceBlobValidationPreservesAuthentication(t *testing.T) {
 	key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default", Name: "item"}
 	value := blobValidationBody(`,"blobs":{"dashboard":{"data":"e30="}}`)
 	created, err := srv.Create(t.Context(), &resourcepb.CreateRequest{Key: key, Value: value})
-	require.NoError(t, err)
-	require.EqualValues(t, http.StatusUnauthorized, created.GetError().GetCode())
+	require.Nil(t, created)
+	require.EqualValues(t, http.StatusUnauthorized, rpcErrorResult(t, err).GetCode())
 	updated, err := srv.Update(t.Context(), &resourcepb.UpdateRequest{Key: key, Value: value})
-	require.NoError(t, err)
-	require.EqualValues(t, http.StatusUnauthorized, updated.GetError().GetCode())
+	require.Nil(t, updated)
+	require.EqualValues(t, http.StatusUnauthorized, rpcErrorResult(t, err).GetCode())
 }
 
 func TestResourceWritesPreserveBlobReferences(t *testing.T) {
@@ -94,24 +94,25 @@ func TestResourceWritesPreserveBlobReferences(t *testing.T) {
 			value := []byte(strings.ReplaceAll(string(blobValidationBody(blobs)), `"name":"item"`, fmt.Sprintf(`"name":%q`, name)))
 			original := append([]byte(nil), value...)
 			created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
-			require.NoError(t, ErrorFromResponse(created.GetError(), err))
+			require.NoError(t, err)
+			require.Positive(t, created.ResourceVersion)
 			require.Equal(t, original, value)
 			read, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-			require.NoError(t, ErrorFromResponse(read.GetError(), err))
+			require.NoError(t, err)
 			require.JSONEq(t, string(original), string(read.Value))
 			if i == 3 {
 				require.Contains(t, string(read.Value), `"size":9007199254740993`)
 			}
 
 			unchanged, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: read.Value, ResourceVersion: read.ResourceVersion})
-			require.NoError(t, ErrorFromResponse(unchanged.GetError(), err))
+			require.NoError(t, err)
 			require.Equal(t, read.ResourceVersion, unchanged.ResourceVersion)
 
 			updatedValue := []byte(strings.ReplaceAll(string(value), `"resource-specific"`, `"updated resource-specific"`))
 			updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: updatedValue, ResourceVersion: read.ResourceVersion})
-			require.NoError(t, ErrorFromResponse(updated.GetError(), err))
+			require.NoError(t, err)
 			read, err = srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-			require.NoError(t, ErrorFromResponse(read.GetError(), err))
+			require.NoError(t, err)
 			require.JSONEq(t, string(updatedValue), string(read.Value))
 			if i == 3 {
 				require.Contains(t, string(read.Value), `"size":9007199254740993`)
@@ -131,7 +132,7 @@ func TestResourceWritesRejectInlineBlobData(t *testing.T) {
 	key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default", Name: "item"}
 	original := blobValidationBody(`,"blobs":{"dashboard":{"uid":"existing"}}`)
 	created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: original})
-	require.NoError(t, ErrorFromResponse(created.GetError(), err))
+	require.NoError(t, err)
 
 	for name, value := range map[string][]byte{
 		"inline bytes":     blobValidationBody(`,"blobs":{"dashboard":{"contentType":"application/json","data":"e30="}}`),
@@ -150,19 +151,19 @@ func TestResourceWritesRejectInlineBlobData(t *testing.T) {
 		for _, operation := range []string{"create", "update"} {
 			t.Run(operation+"/"+name, func(t *testing.T) {
 				reads, writes := backend.reads.Load(), backend.writes.Load()
-				var failure *resourcepb.ErrorResult
 				var err error
 				if operation == "create" {
 					createKey := proto.Clone(key).(*resourcepb.ResourceKey)
 					createKey.Name = "new-item"
 					createValue := []byte(strings.ReplaceAll(string(value), `"name":"item"`, `"name":"new-item"`))
 					rsp, callErr := srv.Create(ctx, &resourcepb.CreateRequest{Key: createKey, Value: createValue})
-					failure, err = rsp.GetError(), callErr
+					require.Nil(t, rsp)
+					err = callErr
 				} else {
 					rsp, callErr := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: value, ResourceVersion: created.ResourceVersion})
-					failure, err = rsp.GetError(), callErr
+					require.Nil(t, rsp)
+					err = callErr
 				}
-				err = ErrorFromResponse(failure, err)
 				require.Error(t, err)
 				require.EqualValues(t, http.StatusBadRequest, AsErrorResult(err).Code)
 				require.Equal(t, reads, backend.reads.Load(), "invalid blob input must not reach backend reads")
@@ -171,7 +172,7 @@ func TestResourceWritesRejectInlineBlobData(t *testing.T) {
 		}
 	}
 	read, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-	require.NoError(t, ErrorFromResponse(read.GetError(), err))
+	require.NoError(t, err)
 	require.JSONEq(t, string(original), string(read.Value))
 	require.Equal(t, created.ResourceVersion, read.ResourceVersion)
 }

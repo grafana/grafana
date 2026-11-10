@@ -58,6 +58,10 @@ const defaultRulerSyncPollInterval = 5 * time.Minute
 // final word.
 const baselineCheckInterval = 10 * time.Second
 
+// maxConcurrentOrgSyncs bounds syncAllOrgs' fan-out, so a large all-due
+// fleet can't flood the apiserver and outbound network in one burst.
+const maxConcurrentOrgSyncs = 8
+
 // convertedPrometheusManager marks the rules the syncer owns. Mirrors the manager
 // the convert API assigns to converted-Prometheus imports.
 var convertedPrometheusManager = utils.ManagerProperties{Kind: utils.ManagerKindClassicConvertedPrometheus} //nolint:staticcheck
@@ -89,6 +93,16 @@ type orgStore interface {
 	FetchOrgIds(ctx context.Context) ([]int64, error)
 }
 
+// orgSyncState is one org's in-memory sync cache: hash is the last applied
+// upstream hash (valid only when hashSet, since 0 is a legal hash), and
+// lastAttemptAt/pollInterval are dueForSync's due-check bookkeeping.
+type orgSyncState struct {
+	hash          uint64
+	hashSet       bool
+	lastAttemptAt time.Time
+	pollInterval  time.Duration
+}
+
 // ExternalRulerSyncer mirrors alert rules from a configured external Mimir
 // ruler datasource into Grafana as converted-Prometheus rules. It is the rule
 // analogue of ExternalAMSyncer. The loop driver (Run) is intentionally thin so
@@ -106,16 +120,13 @@ type ExternalRulerSyncer struct {
 	// folderPermissions restricts the sync folder to admin-only modification.
 	folderPermissions accesscontrol.FolderPermissionsService
 
-	lastSyncHashMu sync.RWMutex
-	lastSyncHash   map[int64]uint64
-
-	// lastAttemptMu guards dueForSync's per-org due-check cache: lastAttemptAt
-	// is when an org last actually ran, lastPollInterval its resolved cadence.
-	// No entry yet means always due, so a new org isn't stuck waiting out
+	// stateMu guards state, the syncer's only per-org in-memory cache: the
+	// last-applied upstream hash plus dueForSync's due-check bookkeeping (last
+	// attempt time and resolved poll interval). No entry yet means an org is
+	// always due, so a new org isn't stuck waiting out
 	// defaultRulerSyncPollInterval before its first sync.
-	lastAttemptMu    sync.RWMutex
-	lastAttemptAt    map[int64]time.Time
-	lastPollInterval map[int64]time.Duration
+	stateMu sync.RWMutex
+	state   map[int64]*orgSyncState
 
 	// cfgStore is required; NewExternalRulerSyncer's callers always pass a
 	// real one. See cfgStore for why its client is built lazily rather than
@@ -153,10 +164,8 @@ func NewExternalRulerSyncer(
 		namespaceStore:    namespaceStore,
 		orgStore:          orgStore,
 		folderPermissions: folderPermissions,
-		lastSyncHash:      make(map[int64]uint64),
-		lastAttemptAt:     make(map[int64]time.Time),
-		lastPollInterval:  make(map[int64]time.Duration),
-		cfgStore:          newCfgStore(clientGenerator, namespaceMapper),
+		state:             make(map[int64]*orgSyncState),
+		cfgStore:          newCfgStore(clientGenerator, namespaceMapper, logger),
 	}
 }
 
@@ -220,6 +229,13 @@ func (s *ExternalRulerSyncer) recordSyncResult(ctx context.Context, orgID int64,
 	})
 }
 
+func (s *ExternalRulerSyncer) recordUnchanged(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, appliedHash string) {
+	now := time.Now()
+	s.writeStatus(ctx, orgID, func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {
+		return computeUnchangedStatus(prev, uid, origin, now, appliedHash)
+	})
+}
+
 // recordNotConfigured records Synced=Unknown/NotConfigured for the org, seeding
 // the singleton if absent (writeStatus creates on missing). Best-effort. Called
 // only when the API path is reachable (flag on) but no datasourceUid is set —
@@ -252,13 +268,22 @@ func (s *ExternalRulerSyncer) Run(ctx context.Context) error {
 	}
 }
 
+// syncAllOrgs runs SyncOrg for every due org, up to maxConcurrentOrgSyncs at
+// once. Each goroutine shares ctx itself, never a derived one, so one org
+// failing or running long can't abort or block any other.
 func (s *ExternalRulerSyncer) syncAllOrgs(ctx context.Context) {
 	orgIDs, err := s.orgStore.FetchOrgIds(ctx)
 	if err != nil {
 		s.logger.Error("Failed to fetch org IDs for external ruler sync", "error", err)
 		return
 	}
+
+	sem := make(chan struct{}, maxConcurrentOrgSyncs)
+	var wg sync.WaitGroup
 	for _, orgID := range orgIDs {
+		if ctx.Err() != nil {
+			break
+		}
 		if _, disabled := s.settings.DisabledOrgs[orgID]; disabled {
 			continue
 		}
@@ -268,8 +293,15 @@ func (s *ExternalRulerSyncer) syncAllOrgs(ctx context.Context) {
 		if !s.dueForSync(orgID) {
 			continue
 		}
-		s.SyncOrg(ctx, orgID)
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(orgID int64) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			s.SyncOrg(ctx, orgID)
+		}(orgID)
 	}
+	wg.Wait()
 }
 
 // dueForSync reports whether orgID's poll interval has elapsed since its
@@ -277,27 +309,39 @@ func (s *ExternalRulerSyncer) syncAllOrgs(ctx context.Context) {
 // Run's baseline ticker can skip resolveExternalRulerConfig's apiserver call
 // for orgs not yet due, without a per-org goroutine or timer.
 func (s *ExternalRulerSyncer) dueForSync(orgID int64) bool {
-	s.lastAttemptMu.RLock()
-	defer s.lastAttemptMu.RUnlock()
-	last, ok := s.lastAttemptAt[orgID]
+	s.stateMu.RLock()
+	defer s.stateMu.RUnlock()
+	st, ok := s.state[orgID]
 	if !ok {
 		return true
 	}
-	interval := s.lastPollInterval[orgID]
+	interval := st.pollInterval
 	if interval <= 0 {
 		interval = defaultRulerSyncPollInterval
 	}
-	return time.Since(last) >= interval
+	return time.Since(st.lastAttemptAt) >= interval
 }
 
 // recordAttempt caches orgID's last-attempt time and interval for dueForSync.
 // Called after a successful resolve only, so a transient apiserver hiccup is
 // retried on the next tick rather than throttled by a stale interval.
 func (s *ExternalRulerSyncer) recordAttempt(orgID int64, interval time.Duration) {
-	s.lastAttemptMu.Lock()
-	s.lastAttemptAt[orgID] = time.Now()
-	s.lastPollInterval[orgID] = interval
-	s.lastAttemptMu.Unlock()
+	s.stateMu.Lock()
+	defer s.stateMu.Unlock()
+	st := s.orgState(orgID)
+	st.lastAttemptAt = time.Now()
+	st.pollInterval = interval
+}
+
+// orgState returns orgID's state entry, creating it if absent. Callers must
+// hold stateMu for writing; orgState itself doesn't lock.
+func (s *ExternalRulerSyncer) orgState(orgID int64) *orgSyncState {
+	st, ok := s.state[orgID]
+	if !ok {
+		st = &orgSyncState{}
+		s.state[orgID] = st
+	}
+	return st
 }
 
 // IsConfiguredForOrg reports whether external ruler sync is configured for the
@@ -429,13 +473,16 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	hashStr := strconv.FormatUint(hash, 10)
 	if rc.persistedHash != "" && rc.persistedHash == hashStr {
 		s.logger.Debug("External ruler config unchanged since last sync (persisted)", "org_id", orgID)
+		s.recordUnchanged(ctx, orgID, rc.uid, rc.origin, hashStr)
 		return
 	}
-	s.lastSyncHashMu.RLock()
-	prev, has := s.lastSyncHash[orgID]
-	s.lastSyncHashMu.RUnlock()
-	if has && prev == hash {
+	s.stateMu.RLock()
+	st, has := s.state[orgID]
+	unchanged := has && st.hashSet && st.hash == hash
+	s.stateMu.RUnlock()
+	if unchanged {
 		s.logger.Debug("External ruler config unchanged since last sync", "org_id", orgID)
+		s.recordUnchanged(ctx, orgID, rc.uid, rc.origin, hashStr)
 		return
 	}
 
@@ -444,9 +491,10 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		return
 	}
 
-	s.lastSyncHashMu.Lock()
-	s.lastSyncHash[orgID] = hash
-	s.lastSyncHashMu.Unlock()
+	s.stateMu.Lock()
+	st = s.orgState(orgID)
+	st.hash, st.hashSet = hash, true
+	s.stateMu.Unlock()
 	s.metrics.SyncHash.WithLabelValues(orgIDStr).Set(float64(hash & mask53))
 	s.logger.Debug("External ruler sync applied", "org_id", orgID, "namespaces", len(cfg))
 	s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil, hashStr)
@@ -579,5 +627,10 @@ func (s *ExternalRulerSyncer) prune(ctx context.Context, user identity.Requester
 func (s *ExternalRulerSyncer) recordFailure(ctx context.Context, orgID int64, orgIDStr string, uid string, origin externalSyncOrigin, syncErr *SyncError) {
 	s.logger.Warn("External ruler sync failed", "org_id", orgID, "reason", syncErr.Reason.Label(), "error", syncErr)
 	s.metrics.SyncFailures.WithLabelValues(orgIDStr, syncErr.Reason.Label()).Inc()
+	if syncErr.Reason.InvalidatesDedup() {
+		s.stateMu.Lock()
+		s.orgState(orgID).hashSet = false
+		s.stateMu.Unlock()
+	}
 	s.recordSyncResult(ctx, orgID, uid, origin, syncErr, "")
 }

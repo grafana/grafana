@@ -237,9 +237,7 @@ func TestIntegrationLegacyCheckGlobalParity(t *testing.T) {
 									got, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
 										Restriction: restriction,
 										Namespace:   "org-12", Subject: requester.GetUID(), Expression: expression,
-										GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{
-											RequesterOrgId: requesterOrgID,
-										},
+										RequesterOrgId: proto.Int64(requesterOrgID),
 									})
 
 									require.NoError(t, err)
@@ -347,8 +345,8 @@ func TestIntegrationLegacyCheckGlobalManagedPermissions(t *testing.T) {
 						require.NoError(t, err)
 						response, err := service.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
 							Namespace: "org-12", Subject: requester.GetUID(), Expression: expression,
-							GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{RequesterOrgId: orgID},
-							Restriction:      &authzextv1.LegacyActionRestriction{Actions: []string{"dashboards:read"}},
+							RequesterOrgId: proto.Int64(orgID),
+							Restriction:    &authzextv1.LegacyActionRestriction{Actions: []string{"dashboards:read"}},
 						})
 						require.NoError(t, err)
 						require.True(t, proto.Equal(&authzextv1.LegacyCheckResponse{Allowed: allowed}, response), "got %v", response)
