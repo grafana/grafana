@@ -1832,9 +1832,7 @@ func TestLocalRepository_Move(t *testing.T) {
 	}
 }
 
-// A root that matches no permitted prefix is left empty by NewRepository, and os.Stat("")
-// reports not-exist -- so ReadTree used to answer with an empty tree and no error, which a
-// full sync reads as "every managed resource was removed" and deletes them.
+// An unresolved root used to read as an empty tree, which a full sync takes for a mass delete.
 func TestLocalRepositoryUnresolvedRootFailsReadsInsteadOfLookingEmpty(t *testing.T) {
 	repo := NewRepository(
 		&provisioning.Repository{

@@ -17,25 +17,21 @@ import (
 // Name is fixed so a restart reconciles the same object instead of creating a second one.
 const Name = "bootstrap"
 
-// SyncTarget is the target the bootstrap repository syncs to. Exported so the startup guard
-// that checks it is allowed cannot drift from what applySpec writes.
+// SyncTarget is exported so the startup guard cannot drift from what applySpec writes.
 const SyncTarget = provisioning.SyncTargetTypeFolderless
 
 // updateAttempts bounds the re-read when another replica writes between our read and update.
-// The hook runs once per boot, so a dropped conflict would leave a changed path stale until
-// the next restart.
+// The hook runs once per boot, so a dropped conflict stays stale until the next restart.
 const updateAttempts = 3
 
 const (
 	title = "Bootstrap"
-	// Shown in the admin UI, where this repository cannot be configured, so it has to say
-	// where its configuration lives and what the directory behind it is for.
+	// Shown in the admin UI, where this repository cannot be configured.
 	description = "Instance configuration, synced from the directory set in [provisioning] bootstrap_path. " +
 		"Add repositories, connections, dashboards and folders to that directory to provision them on startup."
 )
 
-// Queue drains a repository's queued jobs. Disabling the sync stops the controller from
-// scheduling new ones, but a job queued before that still runs.
+// Queue drains a repository's queued jobs; disabling the sync only stops new ones.
 type Queue interface {
 	CleanupQueue(ctx context.Context, namespace, repository string) (int, error)
 }
@@ -47,9 +43,8 @@ type Repositories interface {
 	Update(ctx context.Context, repo *provisioning.Repository, opts metav1.UpdateOptions) (*provisioning.Repository, error)
 }
 
-// Config is the bootstrap repository to register. An empty Path means none is configured,
-// which still needs reconciling: a repository registered on an earlier run must stop syncing
-// rather than keep reading a directory the configuration no longer names.
+// Config is the bootstrap repository to register. An empty Path still needs reconciling: a
+// repository an earlier run registered must stop reading a directory nothing names anymore.
 type Config struct {
 	// Path is the directory the repository reads, as configured.
 	Path string
@@ -75,9 +70,8 @@ func (c Config) matches(repo *provisioning.Repository) bool {
 		reflect.DeepEqual(repo.Annotations, want.Annotations)
 }
 
-// Reconcile brings the bootstrap repository in line with the configuration: a configured path
-// registers it and keeps its shape, a cleared one stops the repository an earlier run left
-// behind. Both run on every boot, since the configuration can change between them.
+// Reconcile registers the repository and keeps its shape, or stops one an earlier run left
+// behind when the path is cleared. The configuration can change between boots, so both run.
 func Reconcile(ctx context.Context, repos Repositories, queue Queue, cfg Config) error {
 	step := ensure
 	if !cfg.Enabled() {
@@ -95,9 +89,8 @@ func Reconcile(ctx context.Context, repos Repositories, queue Queue, cfg Config)
 	return err
 }
 
-// disable stops the sync on a bootstrap repository left over from a run that configured one.
-// The repository and everything it provisioned are kept: clearing a setting should not delete
-// an instance's dashboards, and an operator who wants them gone can delete the repository.
+// disable keeps the repository and what it provisioned: clearing a setting should not delete
+// an instance's dashboards.
 func disable(ctx context.Context, repos Repositories, queue Queue, cfg Config) error {
 	existing, err := repos.Get(ctx, Name, metav1.GetOptions{})
 	switch {
@@ -121,9 +114,8 @@ func disable(ctx context.Context, repos Repositories, queue Queue, cfg Config) e
 	return drain(ctx, queue, cfg)
 }
 
-// drain clears jobs queued while the sync was still enabled. Without it a pull queued before
-// the disable still runs -- only the controller's scheduling consults sync.enabled -- and a
-// sync over a directory that went away with the setting deletes what it had provisioned.
+// drain clears jobs queued while the sync was still enabled; only scheduling consults
+// sync.enabled, so a pull queued before the disable would still run against a gone directory.
 func drain(ctx context.Context, queue Queue, cfg Config) error {
 	if queue == nil {
 		return nil
@@ -149,9 +141,8 @@ func ensure(ctx context.Context, repos Repositories, cfg Config) error {
 		return fmt.Errorf("read bootstrap repository: %w", err)
 	}
 
-	// The name was not reserved before, so an unrelated repository may hold it. Repointing
-	// that one at the bootstrap directory would hand its resources to another source, and
-	// the next full sync would schedule the ones missing here for deletion.
+	// The name was not reserved before. Repointing an unrelated repository at the bootstrap
+	// directory would hand its resources over, and the next full sync would delete them.
 	if !owned(existing) {
 		return fmt.Errorf("a repository named %q already exists and is not managed by %s; rename or remove it to use [provisioning] bootstrap_path",
 			Name, utils.ManagerKindFileProvisioning)
@@ -168,8 +159,8 @@ func ensure(ctx context.Context, repos Repositories, cfg Config) error {
 	return nil
 }
 
-// create registers the repository. It returns a nil repository when the create succeeded, and
-// the object another writer created when it lost the race — which still has to be vouched for.
+// create returns a nil repository on success, and the one another writer created when it lost
+// the race — which still has to be vouched for.
 func create(ctx context.Context, repos Repositories, cfg Config) (*provisioning.Repository, error) {
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: Name, Namespace: cfg.Namespace},
@@ -205,8 +196,7 @@ func (c Config) apply(repo *provisioning.Repository) {
 	if err != nil {
 		return // a typed Repository always has an accessor
 	}
-	// Marks the configuration as owned by bootstrap_path, which renders it read-only in
-	// the UI. What this repository provisions is repo-managed, and stays editable.
+	// Renders the configuration read-only in the UI; what it provisions stays editable.
 	meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:        utils.ManagerKindFileProvisioning,
 		Identity:    Name,
@@ -215,26 +205,21 @@ func (c Config) apply(repo *provisioning.Repository) {
 	applySpec(&repo.Spec, c.Path)
 }
 
-// applySpec stamps the configured shape onto spec.
+// applySpec replaces spec, so a field it does not set is zero rather than what was stored.
 func applySpec(spec *provisioning.RepositorySpec, path string) {
-	spec.Title = title
-	spec.Description = description
-	spec.Type = provisioning.LocalRepositoryType
-	spec.Local = &provisioning.LocalRepositoryConfig{Path: path}
-	// Editing a provisioned resource is routed to this repository's files endpoint, which
-	// needs a write workflow to accept it.
-	spec.Workflows = []provisioning.Workflow{provisioning.WriteWorkflow}
-	spec.Sync.Enabled = true
-	// The directory is instance configuration, not a folder of dashboards.
-	spec.Sync.Target = SyncTarget
-	spec.GitHub = nil
-	spec.GitHubEnterprise = nil
-	spec.Git = nil
-	spec.Bitbucket = nil
-	spec.GitLab = nil
-	spec.Connection = nil
-	spec.Webhook = nil
-	spec.Branch = nil
-	spec.PullRequest = nil
-	spec.Commit = nil
+	interval := spec.Sync.IntervalSeconds
+	*spec = provisioning.RepositorySpec{
+		Title:       title,
+		Description: description,
+		Type:        provisioning.LocalRepositoryType,
+		Local:       &provisioning.LocalRepositoryConfig{Path: path},
+		// Edits to provisioned resources route to the files endpoint, which needs this.
+		Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+		Sync: provisioning.SyncOptions{
+			Enabled: true,
+			// The directory is instance configuration, not a folder of dashboards.
+			Target:          SyncTarget,
+			IntervalSeconds: interval,
+		},
+	}
 }

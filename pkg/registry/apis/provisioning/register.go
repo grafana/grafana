@@ -493,10 +493,8 @@ func RegisterAPIService(
 	return builder, nil
 }
 
-// allowedSyncTargets returns the sync targets a repository may be created with. An
-// instance-target repository can only exist where no other repository does, so a bootstrap
-// repository rules it out: dropping the target says so at admission and on the settings
-// endpoint, rather than leaving a caller to hit the existing-repository conflict.
+// allowedSyncTargets drops the instance target when a bootstrap repository exists, since that
+// target needs an instance with no other repository. Saying so at admission beats a conflict.
 func allowedSyncTargets(configured []string, bootstrapEnabled bool) []provisioning.SyncTargetType {
 	targets := make([]provisioning.SyncTargetType, 0, len(configured))
 	for _, target := range configured {
@@ -508,10 +506,8 @@ func allowedSyncTargets(configured []string, bootstrapEnabled bool) []provisioni
 	return targets
 }
 
-// bootstrapConfigFromSettings builds the bootstrap repository configuration from
-// [provisioning] bootstrap_path. A path set without the local repository type is a
-// configuration error: enabling the type here would widen what the instance accepts, and
-// ignoring the path would leave it unprovisioned.
+// bootstrapConfigFromSettings reads [provisioning] bootstrap_path. A path set without the local
+// repository type is an error: enabling it here would widen what the instance accepts.
 func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
 	// Single namespace: the parser rejects a manifest whose namespace is not the repository's.
 	namespace := request.GetNamespaceMapper(cfg)(cfg.DefaultOrgID())
@@ -1081,10 +1077,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
-			// Runs whether or not a path is configured: clearing bootstrap_path has to stop the
-			// repository a previous run registered, which costs one read on an instance that
-			// never used one. Never fatal: a rejected bootstrap repository must not keep the
-			// instance down.
+			// Runs with no path configured too, to stop a repository a previous run registered.
+			// Never fatal: a rejected bootstrap repository must not keep the instance down.
 			if b.bootstrapConfig.Reconcilable() {
 				if err := bootstrap.Reconcile(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.jobs, b.bootstrapConfig); err != nil {
 					logging.FromContext(postStartHookCtx.Context).Error("failed to reconcile bootstrap repository",

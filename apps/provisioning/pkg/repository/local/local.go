@@ -148,11 +148,8 @@ func (r *localRepository) validateRequest(ref string) error {
 		return apierrors.NewBadRequest("local repository does not support ref")
 	}
 
-	// An unresolved root must not read as an empty repository: os.Stat("") reports
-	// not-exist, so ReadTree would return an empty tree and a full sync would take that
-	// for "every managed resource was removed from the repository" and delete them. The
-	// root is unresolved when the configured path matches no permitted prefix, which
-	// happens to a stored repository when the prefix that permitted it goes away.
+	// os.Stat("") reports not-exist, so an unresolved root would read as an empty tree and a
+	// full sync would delete every resource it manages.
 	if r.path == "" {
 		return apierrors.NewBadRequest("local repository path is empty or matches no permitted prefix")
 	}

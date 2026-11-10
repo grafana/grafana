@@ -1320,9 +1320,7 @@ func TestValidateCommitOptions(t *testing.T) {
 	}
 }
 
-// A repository whose configured path has stopped being permitted -- a bootstrap repository
-// after bootstrap_path is cleared -- would otherwise be unable to turn its own sync off,
-// leaving it enabled against a directory the configuration no longer names.
+// A repository whose path has stopped being permitted must still be able to turn its sync off.
 func TestAdmissionValidator_Validate_AllowsDisablingSyncWithoutRevalidatingTheSpec(t *testing.T) {
 	old := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1418,9 +1416,7 @@ func TestAdmissionValidator_Validate_StillValidatesWhenEnablingSync(t *testing.T
 	assert.Contains(t, err.Error(), "not permitted")
 }
 
-// The exemption holds only while everything the validators read is unchanged. Finalizers are
-// among that: remove-orphan and release-orphan are mutually exclusive, and a deletion that
-// ran both handlers would both strip and keep the same resources.
+// Finalizers count as a change: remove-orphan and release-orphan are mutually exclusive.
 func TestAdmissionValidator_Validate_StillValidatesFinalizersBundledWithDisablingSync(t *testing.T) {
 	old := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1487,9 +1483,8 @@ func TestAdmissionValidator_Validate_StillValidatesSecureValuesBundledWithDisabl
 	assert.Contains(t, err.Error(), "rejected")
 }
 
-// The mutator clamps the sync interval to min_sync_interval before validation, so raising
-// that setting in the same restart that clears bootstrap_path would otherwise make the
-// disable look like a second change and send it back through path validation.
+// The mutator clamps the interval before validation, so raising min_sync_interval in the same
+// restart would otherwise make the disable look like a second change.
 func TestAdmissionValidator_Validate_AllowsDisablingSyncAfterTheIntervalWasClamped(t *testing.T) {
 	old := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{

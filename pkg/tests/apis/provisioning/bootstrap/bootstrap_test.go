@@ -19,13 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
-// TestIntegrationProvisioning_Bootstrap covers the self-inception: a directory mounted
-// as bootstrap_path is synced by a repository Grafana registers itself, so the dashboards,
-// folders, repositories and connections declared in that directory all come up with it.
-// That repository's own configuration is not editable; what it provisions is.
-//
-// The repository declared in the bootstrap path reads a sibling directory rather than one
-// inside the bootstrap path, so the two repositories never claim the same resource.
+// TestIntegrationProvisioning_Bootstrap covers the self-inception: a repository Grafana
+// registers itself syncs bootstrap_path, provisioning what that directory declares. The
+// repository it declares reads a sibling directory, so the two never claim the same resource.
 func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 	root := t.TempDir()
 	bootstrapPath := filepath.Join(root, "bootstrap")
@@ -79,9 +75,8 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 		assert.Equal(t, "Team A", folders[0].Object["spec"].(map[string]any)["title"])
 	})
 
-	// The bootstrap repository is managed by file-provisioning and manages resources under the
-	// same name, and the count request filters on the manager id alone -- so the sync has to
-	// pick its own entry out of several rather than expect exactly one, or the card is empty.
+	// The count request filters on the manager id alone, which this repository shares with its
+	// file-provisioning manager, so the sync has to pick its own entry out of several.
 	t.Run("reports what it manages in its stats", func(t *testing.T) {
 		repo, err := helper.Repositories.Resource.Get(t.Context(), "bootstrap", metav1.GetOptions{})
 		require.NoError(t, err)
@@ -151,9 +146,8 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 	})
 
 	t.Run("forbids instance-target repositories", func(t *testing.T) {
-		// An instance-target repository may only exist where no other repository does, so
-		// the bootstrap repository rules it out. The target is dropped from the allowed
-		// set, which is what the caller and the UI see.
+		// The instance target needs an instance with no other repository, so it is dropped from
+		// the allowed set the caller and the UI see.
 		instance := &unstructured.Unstructured{Object: nestedRepository(nestedPath)}
 		instance.SetName("instance-target")
 		instance.Object["spec"].(map[string]any)["sync"].(map[string]any)["target"] = "instance"
@@ -288,9 +282,8 @@ func nestedRepository(path string) map[string]any {
 	}
 }
 
-// tokenRepository is a repository with a secure value of its own. Sync and webhooks are
-// off: it is here to be edited, not to reach GitHub. A plaintext token is accepted because
-// the repository carrying the file is local, where secure values are allowed.
+// tokenRepository carries a secure value of its own. Sync and webhooks are off: it is here to
+// be edited, not to reach GitHub.
 func tokenRepository() map[string]any {
 	return map[string]any{
 		"apiVersion": "provisioning.grafana.app/v0alpha1",

@@ -429,10 +429,8 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return invalidRepositoryError(a.GetName(), list)
 	}
 
-	// Run validators. A spec whose only change is switching the sync off is exempt: the
-	// validators authorize spec content, and this change introduces none -- while a
-	// repository whose configured path or URL has since stopped being permitted would
-	// otherwise be unable to turn its own sync off.
+	// Switching the sync off introduces no content to authorize, and a repository whose path
+	// or URL has stopped being permitted must still be able to turn its own sync off.
 	if !isSyncDisableOnly(a, r) {
 		for _, validator := range v.validators {
 			list = append(list, validator.Validate(ctx, r)...)
@@ -445,12 +443,8 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	return nil
 }
 
-// isSyncDisableOnly reports whether this update turns off a running sync and changes nothing
-// the validators read, so revalidating could only reject what is already stored. Everything
-// they do read has to be unchanged, not just the spec: the finalizers carry rules of their own
-// (remove-orphan and release-orphan are mutually exclusive), and the secure values decide
-// whether a repository is allowed to reach its remote at all. An object being deleted never
-// reaches here, so its deletion timestamp is already out of scope.
+// isSyncDisableOnly reports whether this update only turns off a running sync. Finalizers and
+// secure values count as changes too: both carry rules the validators enforce.
 func isSyncDisableOnly(a admission.Attributes, r *provisioning.Repository) bool {
 	if a.GetOperation() != admission.Update {
 		return false
@@ -460,12 +454,8 @@ func isSyncDisableOnly(a admission.Attributes, r *provisioning.Repository) bool 
 		return false
 	}
 
-	// Compare against the stored object with the sync already switched off, so the only
-	// difference left to find is something the caller changed alongside it. The sync
-	// interval is excluded: the mutator clamps it to min_sync_interval before this runs,
-	// so raising that setting would otherwise make every disable look like a second
-	// change. Nothing validates the field -- the mutator owns it and the controller clamps
-	// it again when scheduling -- so there is nothing here to authorize.
+	// The interval is excluded because the mutator clamps it to min_sync_interval before this
+	// runs, so raising that setting would make every disable look like a second change.
 	want := old.DeepCopy()
 	want.Spec.Sync.Enabled = false
 	want.Spec.Sync.IntervalSeconds = r.Spec.Sync.IntervalSeconds

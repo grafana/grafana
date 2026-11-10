@@ -230,9 +230,8 @@ func TestConfigEnabled(t *testing.T) {
 // namespace survives because it comes from the org, not from the setting.
 var cleared = Config{Namespace: namespace}
 
-// Clearing bootstrap_path is documented as disabling the bootstrap repository, but the
-// repository persists, and its old path can stay independently permitted (conf/provisioning
-// covers conf/provisioning/bootstrap), so the controllers would keep syncing it after restart.
+// The repository persists a cleared path, and its old path can stay permitted on its own, so
+// without this the controllers keep syncing it after a restart.
 func TestReconcileStopsSyncWhenThePathIsCleared(t *testing.T) {
 	client := newClientset(repositoryWith(config.apply))
 
@@ -322,9 +321,8 @@ func repositoryWith(mutate func(*provisioning.Repository)) *provisioning.Reposit
 	return repo
 }
 
-// Only the controller's scheduling consults sync.enabled, so a pull queued before the disable
-// still runs. If the directory went away with the setting, that sync reads an empty repository
-// and deletes what the bootstrap repository had provisioned.
+// Only scheduling consults sync.enabled, so a pull queued before the disable still runs -- and
+// reads an empty repository if the directory went away with the setting.
 func TestReconcileDrainsQueuedJobsWhenThePathIsCleared(t *testing.T) {
 	client := newClientset(repositoryWith(config.apply))
 	queue := noQueue(t)

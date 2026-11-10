@@ -68,9 +68,8 @@ func ProvideProvisioningOSSRepositoryExtras(
 	}
 }
 
-// PermittedLocalPaths returns the prefixes a local repository may read. The bootstrap path
-// is permitted on the strength of being configured, since Grafana registers that repository
-// itself and nothing an operator could do would make admission accept it otherwise.
+// PermittedLocalPaths returns the prefixes a local repository may read. Being configured is
+// what permits the bootstrap path, since Grafana registers that repository itself.
 func PermittedLocalPaths(cfg *setting.Cfg) []string {
 	if cfg.ProvisioningBootstrapPath == "" {
 		return cfg.PermittedProvisioningPaths

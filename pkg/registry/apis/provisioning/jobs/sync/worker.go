@@ -267,14 +267,8 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	return syncError
 }
 
-// completeFailedSync finalizes the job progress after a failure that happens once the repository
-// has already been marked as 'working', and writes the terminal state back to the repository.
-// Without this writeback the repository would report 'working' forever: sync jobs are singletons
-// per repository and failed syncs are not re-enqueued.
-// managedStats returns what the repository itself manages. The count request filters on the
-// manager id alone, so an id that another manager kind also uses comes back as an entry per
-// kind: the bootstrap repository is managed by file-provisioning and manages resources under
-// that same name, which is why matching the kind here is not optional.
+// managedStats returns what the repository itself manages. The count request filters on the id
+// alone, which the bootstrap repository shares with its file-provisioning manager.
 func managedStats(stats *provisioning.ResourceStats, name string) ([]provisioning.ResourceCount, bool) {
 	if stats == nil {
 		return nil, false
@@ -287,6 +281,8 @@ func managedStats(stats *provisioning.ResourceStats, name string) ([]provisionin
 	return nil, false
 }
 
+// completeFailedSync writes the terminal state back after a failure past the 'working' mark.
+// Without it the repository reports 'working' forever: failed syncs are not re-enqueued.
 func (r *SyncWorker) completeFailedSync(ctx context.Context, cfg *provisioning.Repository, job provisioning.Job, progress jobs.JobProgressRecorder, lastRef string, syncErr error) {
 	jobStatus := progress.Complete(ctx, syncErr)
 	syncStatus := jobStatus.ToSyncStatus(job.Name)
