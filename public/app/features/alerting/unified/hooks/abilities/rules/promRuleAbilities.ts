@@ -24,6 +24,7 @@ import {
   type RuleEditAbilityResult,
   type SkipToken,
   buildSilenceAbility,
+  computePromRuleUpdateAbility,
   computeRuleDeletePermanentlyAbility,
   computeRuleDuplicateAbility,
   computeRuleEditAbility,
@@ -44,12 +45,17 @@ import {
  *
  * Pass `skipToken` when no prom rule is available — all fields return `NOT_SUPPORTED`.
  *
- * Priority: LOADING > PROVISIONED > IS_PLUGIN_MANAGED > INSUFFICIENT_PERMISSIONS
+ * Update priority: LOADING > LOOKUP_FAILED > PROVISIONED > IS_PLUGIN_MANAGED > INSUFFICIENT_PERMISSIONS
  */
 export function usePromRuleAdministrationAbility(rule: GrafanaPromRuleDTO | SkipToken): RuleEditAbilityResult {
   const promRule = rule === skipToken ? undefined : rule;
-  const { isEditable, isRemovable, loading: editableLoading } = useIsGrafanaPromRuleEditable(promRule);
-  const { isPluginManaged, pluginLoading } = useRulePluginImmutability(promRule);
+  const {
+    isEditable,
+    isRemovable,
+    loading: editableLoading,
+    error: folderError,
+  } = useIsGrafanaPromRuleEditable(promRule);
+  const { isPluginManaged, pluginLoading, pluginError } = useRulePluginImmutability(promRule);
 
   return useMemo(() => {
     if (rule === skipToken) {
@@ -71,15 +77,12 @@ export function usePromRuleAdministrationAbility(rule: GrafanaPromRuleDTO | Skip
     const rulesPermissions = getRulesPermissions('grafana');
 
     // The prom path has no ruler availability concept — `supported` is always true here.
-    const update = computeRuleEditAbility(
+    const update = computePromRuleUpdateAbility(rule, {
       loading,
-      true,
-      isProvisioned,
-      isFederated,
+      lookupFailed: folderError != null || pluginError != null,
       isPluginManaged,
-      isEditable ?? false,
-      rulesPermissions.update
-    );
+      canEdit: isEditable,
+    });
     const del = computeRuleEditAbility(
       loading,
       true,
@@ -100,7 +103,7 @@ export function usePromRuleAdministrationAbility(rule: GrafanaPromRuleDTO | Skip
       deletePermanently: computeRuleDeletePermanentlyAbility(isAlertingRule, del),
       loading,
     };
-  }, [rule, editableLoading, pluginLoading, isEditable, isRemovable, isPluginManaged]);
+  }, [rule, editableLoading, pluginLoading, isEditable, isRemovable, isPluginManaged, folderError, pluginError]);
 }
 
 // ── usePromRuleSilenceAbility ─────────────────────────────────────────────────

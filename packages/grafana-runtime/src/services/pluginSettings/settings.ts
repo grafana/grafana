@@ -1,5 +1,6 @@
 import { PluginType } from '@grafana/data';
 
+import { isFetchError } from '../backendSrv';
 import { isAuthError } from '../pluginUtils';
 
 import { getPluginSettings } from './getPluginSettings';
@@ -10,12 +11,19 @@ export async function getAppPluginEnabled(pluginId: string): Promise<boolean> {
     return false;
   }
 
-  const app = await getPluginSettings(pluginId);
-  if (!app) {
-    return false;
+  try {
+    const app = await getPluginSettings(pluginId);
+    if (!app) {
+      return false;
+    }
+    return app.type === PluginType.app && Boolean(app.enabled);
+  } catch (error) {
+    const cause = error instanceof Error ? error.cause : error;
+    if (isFetchError(cause) && cause.status === 404) {
+      return false;
+    }
+    throw error;
   }
-
-  return app.type === PluginType.app && Boolean(app.enabled);
 }
 
 /**

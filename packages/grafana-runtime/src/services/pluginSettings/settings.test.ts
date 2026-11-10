@@ -9,7 +9,7 @@ import { setLogger, initializeLoggersRegistry } from '../logging/registry';
 import { getPluginMetaFromCache, refetchPluginMeta } from '../pluginMeta/plugins';
 import { clockPanelMetaOnPrem, myOrgTestAppMeta } from '../pluginMeta/test-fixtures/v0alpha1Response';
 
-import { isAppPluginEnabled } from './settings';
+import { getAppPluginEnabled, isAppPluginEnabled } from './settings';
 import { legacyClockPanelOnPrem, legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
 import { myOrgTestAppSettings } from './test-fixtures/v0alpha1Response';
 jest.mock('../pluginMeta/plugins', () => ({
@@ -173,6 +173,23 @@ describe('settings', () => {
 
     beforeEach(() => {
       backendSrv.get = jest.fn().mockResolvedValue(legacyMyOrgTestAppSettings);
+    });
+
+    describe('getAppPluginEnabled', () => {
+      it('treats a missing plugin as not enabled', async () => {
+        backendSrv.get = jest.fn().mockRejectedValue({ status: 404, data: {} });
+
+        await expect(getAppPluginEnabled('missing-app')).resolves.toBe(false);
+      });
+
+      it.each([403, 503])('propagates lookup failures (%s) rather than returning disabled', async (status) => {
+        const error = { status, data: {} };
+        backendSrv.get = jest.fn().mockRejectedValue(error);
+
+        await expect(getAppPluginEnabled('unavailable-app')).rejects.toMatchObject(
+          status === 403 ? error : { cause: error }
+        );
+      });
     });
 
     describe('isAppPluginEnabled', () => {

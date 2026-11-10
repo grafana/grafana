@@ -5,18 +5,20 @@ import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
+import { type FolderDTO } from 'app/types/folders';
 import { type GrafanaPromRuleDTO, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { getRulesPermissions } from '../../../utils/access-control';
 import { isAdmin } from '../../../utils/misc';
-import { getRulePluginOrigin } from '../../../utils/rules';
+import { getRulePluginOrigin, isProvisionedPromRule } from '../../../utils/rules';
 import {
   type AsyncAbility,
   Granted,
   InsufficientPermissions,
   IsPluginManaged,
   Loading,
+  LookupFailed,
   NotSupported,
   Provisioned,
 } from '../types';
@@ -119,6 +121,42 @@ export function computeRuleEditAbility(
   return Granted;
 }
 
+export interface PromRuleUpdateDependencies {
+  loading: boolean;
+  lookupFailed: boolean;
+  canEdit: boolean;
+  isPluginManaged: boolean;
+}
+
+export function computePromRuleUpdateAbility(
+  rule: GrafanaPromRuleDTO,
+  { loading, lookupFailed, canEdit, isPluginManaged }: PromRuleUpdateDependencies
+): AsyncAbility {
+  if (loading) {
+    return Loading;
+  }
+  if (lookupFailed) {
+    return LookupFailed;
+  }
+  return computeRuleEditAbility(
+    false,
+    true,
+    isProvisionedPromRule(rule),
+    false,
+    isPluginManaged,
+    canEdit,
+    getRulesPermissions('grafana').update
+  );
+}
+
+export function getGrafanaRuleFolderPermissions(folder?: FolderDTO): { canEdit: boolean; canRemove: boolean } {
+  const permissions = getRulesPermissions('grafana');
+  return {
+    canEdit: Boolean(folder && ctx.hasPermissionInMetadata(permissions.update, folder)),
+    canRemove: Boolean(folder && ctx.hasPermissionInMetadata(permissions.delete, folder)),
+  };
+}
+
 /**
  * Computes the duplicate {@link AsyncAbility} for a rule.
  * Shared between the Ruler and Prom paths — duplicate is intentionally not blocked
@@ -169,17 +207,23 @@ export function computeRuleDeletePermanentlyAbility(isApplicable: boolean, delet
 export function useRulePluginImmutability(rule: RulerRuleDTO | GrafanaPromRuleDTO | undefined): {
   isPluginManaged: boolean;
   pluginLoading: boolean;
+  pluginError?: unknown;
 } {
   const pluginOrigin = getRulePluginOrigin(rule);
   // Empty string returns false immediately without a network call
-  const { value: isPluginInstalled = false, loading: isLoading } = useAppPluginEnabled(pluginOrigin?.pluginId ?? '');
+  const {
+    value: isPluginInstalled = false,
+    loading: isLoading,
+    error,
+  } = useAppPluginEnabled(pluginOrigin?.pluginId ?? '');
 
   return useMemo(
     () => ({
       isPluginManaged: pluginOrigin ? isLoading || isPluginInstalled : false,
       pluginLoading: isLoading && Boolean(pluginOrigin?.pluginId),
+      pluginError: pluginOrigin ? error : undefined,
     }),
-    [pluginOrigin, isLoading, isPluginInstalled]
+    [pluginOrigin, isLoading, isPluginInstalled, error]
   );
 }
 
@@ -216,20 +260,19 @@ export function useIsGrafanaPromRuleEditable(rule?: GrafanaPromRuleDTO): {
   isEditable: boolean;
   isRemovable: boolean;
   loading: boolean;
+  error?: unknown;
 } {
   const folderUID = rule?.folderUid;
-  const { folder, loading } = useFolder(folderUID);
+  const { folder, loading, error } = useFolder(folderUID);
 
   return useMemo(() => {
     if (!rule || !folderUID) {
       return { isEditable: false, isRemovable: false, loading: false };
     }
     if (!folder) {
-      return { isEditable: false, isRemovable: false, loading };
+      return { isEditable: false, isRemovable: false, loading, error };
     }
-    const rulesPermissions = getRulesPermissions('grafana');
-    const canEditGrafanaRules = ctx.hasPermissionInMetadata(rulesPermissions.update, folder);
-    const canRemoveGrafanaRules = ctx.hasPermissionInMetadata(rulesPermissions.delete, folder);
-    return { isEditable: canEditGrafanaRules, isRemovable: canRemoveGrafanaRules, loading };
-  }, [rule, folderUID, folder, loading]);
+    const { canEdit, canRemove } = getGrafanaRuleFolderPermissions(folder);
+    return { isEditable: canEdit, isRemovable: canRemove, loading, error };
+  }, [rule, folderUID, folder, loading, error]);
 }

@@ -97,7 +97,7 @@ export {
   usePanelPluginVersion,
 } from './services/pluginMeta/hooks';
 export { getListedPanelPluginIds, getPanelPluginVersion, isPanelPluginInstalled } from './services/pluginMeta/panels';
-export { isAppPluginEnabled } from './services/pluginSettings/settings';
+export { getAppPluginEnabled, isAppPluginEnabled } from './services/pluginSettings/settings';
 export { useAppPluginEnabled, usePluginSettings } from './services/pluginSettings/hooks';
 export { getPluginSettings } from './services/pluginSettings/getPluginSettings';
 export { updateAppPluginSettings } from './services/pluginSettings/updateAppPluginSettings';
