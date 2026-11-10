@@ -127,3 +127,4 @@ export {
   type UseHasDataSourceInstanceResult,
 } from './services/dataSource/hooks';
 export { getAppPluginHealth } from './services/pluginHealth/getAppPluginHealth';
+export { callAppPluginProxy } from './services/pluginProxy/callAppPluginProxy';
