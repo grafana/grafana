@@ -6,6 +6,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -126,6 +127,7 @@ func TestIntegrationProvideAuthZLegacyAccessClient(t *testing.T) {
 				t.Run(check.name, func(t *testing.T) {
 					req := LegacyCheckRequest{
 						Namespace:        "default",
+						RequesterOrgID:   ptr.To[int64](1),
 						Subject:          "anonymous:0",
 						Evaluator:        check.evaluator,
 						InternalIdentity: check.internalIdentity,
