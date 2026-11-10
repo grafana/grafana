@@ -433,7 +433,11 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		// Storage alone rejects this with a 403 that carries no reason or message.
 		t.Run("reject a v2 dashboard in the root folder when the user may not create there", func(t *testing.T) {
 			viewerClient := getResourceClient(t, ctx.Helper, ctx.ViewerUser, v2GVR)
-			_, err := viewerClient.Resource.Create(context.Background(), v2RootDashboard(), v1.CreateOptions{})
+			created, err := viewerClient.Resource.Create(context.Background(), v2RootDashboard(), v1.CreateOptions{})
+			if err == nil {
+				// Don't leave the dashboard behind for the quota tests that run next in this org.
+				_ = adminClient.Resource.Delete(context.Background(), created.GetName(), v1.DeleteOptions{})
+			}
 			ctx.Helper.RequireApiErrorStatus(err, v1.StatusReasonForbidden, http.StatusForbidden)
 			ctx.Helper.EnsureStatusError(err, http.StatusForbidden, "folders.folder.grafana.app is forbidden: access denied to folder")
 		})

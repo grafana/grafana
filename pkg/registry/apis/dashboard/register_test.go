@@ -185,9 +185,20 @@ func TestDashboardAPIBuilder_ValidateCreateInRootFolder(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{GenerateName: "new-"},
 		Spec:       dashv2.DashboardSpec{Title: "New dashboard"},
 	}
+	v2InGeneralFolder := &dashv2.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "new-",
+			Annotations:  map[string]string{utils.AnnoKeyFolder: accesscontrol.GeneralFolderUID},
+		},
+		Spec: dashv2.DashboardSpec{Title: "New dashboard"},
+	}
 	v2beta1Dashboard := &dashv2beta1.Dashboard{
 		ObjectMeta: metav1.ObjectMeta{GenerateName: "new-"},
 		Spec:       dashv2beta1.DashboardSpec{Title: "New dashboard"},
+	}
+	v2alpha1Dashboard := &dashv2alpha1.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{GenerateName: "new-"},
+		Spec:       dashv2alpha1.DashboardSpec{Title: "New dashboard"},
 	}
 	v1Dashboard := &dashv1.Dashboard{
 		ObjectMeta: metav1.ObjectMeta{GenerateName: "new-"},
@@ -201,7 +212,9 @@ func TestDashboardAPIBuilder_ValidateCreateInRootFolder(t *testing.T) {
 		gvr            schema.GroupVersionResource
 		allowed        bool
 		noAccessClient bool
+		dryRun         bool
 		wantChecks     int
+		wantFolder     string
 		wantErr        string
 	}{
 		{
@@ -221,12 +234,36 @@ func TestDashboardAPIBuilder_ValidateCreateInRootFolder(t *testing.T) {
 			wantChecks: 1,
 		},
 		{
+			name:       "checks a v2 create in the general folder against that folder",
+			obj:        v2InGeneralFolder,
+			gvk:        dashv2.DashboardResourceInfo.GroupVersionKind(),
+			gvr:        dashv2.DashboardResourceInfo.GroupVersionResource(),
+			wantChecks: 1,
+			wantFolder: accesscontrol.GeneralFolderUID,
+			wantErr:    `folders.folder.grafana.app "general" is forbidden: access denied to folder`,
+		},
+		{
 			name:       "rejects a v2beta1 create the user may not make",
 			obj:        v2beta1Dashboard,
 			gvk:        dashv2beta1.DashboardResourceInfo.GroupVersionKind(),
 			gvr:        dashv2beta1.DashboardResourceInfo.GroupVersionResource(),
 			wantChecks: 1,
 			wantErr:    "folders.folder.grafana.app is forbidden: access denied to folder",
+		},
+		{
+			name:       "rejects a v2alpha1 create the user may not make",
+			obj:        v2alpha1Dashboard,
+			gvk:        dashv2alpha1.DashboardResourceInfo.GroupVersionKind(),
+			gvr:        dashv2alpha1.DashboardResourceInfo.GroupVersionResource(),
+			wantChecks: 1,
+			wantErr:    "folders.folder.grafana.app is forbidden: access denied to folder",
+		},
+		{
+			name:   "skips the check for a dry run",
+			obj:    v2Dashboard,
+			gvk:    dashv2.DashboardResourceInfo.GroupVersionKind(),
+			gvr:    dashv2.DashboardResourceInfo.GroupVersionResource(),
+			dryRun: true,
 		},
 		{
 			name: "leaves a v1 create to storage",
@@ -264,7 +301,7 @@ func TestDashboardAPIBuilder_ValidateCreateInRootFolder(t *testing.T) {
 			}
 
 			err := b.Validate(identity.WithRequester(context.Background(), requester), admission.NewAttributesRecord(
-				tt.obj, nil, tt.gvk, "default", "", tt.gvr, "", admission.Create, &metav1.CreateOptions{}, false, nil,
+				tt.obj, nil, tt.gvk, "default", "", tt.gvr, "", admission.Create, &metav1.CreateOptions{}, tt.dryRun, nil,
 			), nil)
 
 			if tt.wantErr != "" {
@@ -282,7 +319,7 @@ func TestDashboardAPIBuilder_ValidateCreateInRootFolder(t *testing.T) {
 					Resource:  dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
 					Namespace: "default",
 				}, checks[i])
-				require.Equal(t, "", folders[i], "the root folder is checked the way storage checks it")
+				require.Equal(t, tt.wantFolder, folders[i], "the root folder is checked the way storage checks it")
 			}
 		})
 	}

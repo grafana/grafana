@@ -652,21 +652,21 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate folder access permissions and existence if specified
-	if !a.IsDryRun() && !folder.IsRootFolderUID(accessor.GetFolder()) {
-		if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
-			return err
-		}
-		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
-			return err
-		}
-	}
-
-	// The root folder has no folder object for the check above, so only storage rejects a root
-	// create, with a 403 that carries no reason or message. v2 is what the dashboard editor saves
-	// through, so check it here and give it the same Forbidden as any other folder.
-	if !a.IsDryRun() && folder.IsRootFolderUID(accessor.GetFolder()) && isV2Dashboard(dashObj) {
-		if err := b.verifyRootFolderCreatePermission(ctx, id, a.GetNamespace(), accessor.GetFolder()); err != nil {
-			return err
+	if !a.IsDryRun() {
+		if !folder.IsRootFolderUID(accessor.GetFolder()) {
+			if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
+				return err
+			}
+			if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
+				return err
+			}
+		} else if isV2Dashboard(dashObj) && b.accessClient != nil {
+			// The root folder has no folder object to verify, so otherwise only storage rejects a root
+			// create, with a 403 that carries no reason or message. v2 is what the dashboard editor
+			// saves through, so check it here and give it the same Forbidden as any other folder.
+			if err := b.checkDashboardCreateInFolder(ctx, id, a.GetNamespace(), accessor.GetFolder()); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -1777,12 +1777,8 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		})
 }
 
-// verifyRootFolderCreatePermission runs the create check storage runs for the root folder. Without an
-// access client there is nothing to check against here, so the decision is left to storage.
-func (b *DashboardsAPIBuilder) verifyRootFolderCreatePermission(ctx context.Context, user identity.Requester, namespace, folderID string) error {
-	if b.accessClient == nil {
-		return nil
-	}
+// checkDashboardCreateInFolder runs the create check storage runs for a dashboard in folderID.
+func (b *DashboardsAPIBuilder) checkDashboardCreateInFolder(ctx context.Context, user identity.Requester, namespace, folderID string) error {
 	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
 	resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
 		Verb:      utils.VerbCreate,
@@ -1845,19 +1841,5 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 		return nil
 	}
 
-	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
-	resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
-		Verb:      utils.VerbCreate,
-		Group:     gvr.Group,
-		Resource:  gvr.Resource,
-		Namespace: ns.Value,
-	}, folderID)
-	if err != nil {
-		return err
-	}
-	if !resp.Allowed {
-		return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderID, folder.ErrAccessDenied)
-	}
-
-	return nil
+	return b.checkDashboardCreateInFolder(ctx, user, ns.Value, folderID)
 }
