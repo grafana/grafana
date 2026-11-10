@@ -59,8 +59,8 @@ func watchSendError(err error) error {
 	return err
 }
 
-// queueRPCError is the error-only equivalent of HandleQueueError: a full
-// tenant queue is reported as 429/ResourceExhausted.
+// queueRPCError reports a full tenant queue as 429/ResourceExhausted;
+// other failures retain rpcErrorFrom's status and cancellation semantics.
 func queueRPCError(err error) error {
 	if errors.Is(err, scheduler.ErrTenantQueueFull) {
 		return GRPCStatusError(NewTooManyRequestsError("tenant queue is full, please try again later"))
@@ -2219,6 +2219,10 @@ func (s *server) initWatcher() error {
 		s.initSeededWatcher(backend)
 		return nil
 	}
+	if backend, ok := s.backend.(ResumeFloorWatchBackend); ok && backend.WatchResumeFloorsEnabled() {
+		s.initSeededWatcher(resumeFloorWatchBackend{backend: backend})
+		return nil
+	}
 	events, err := s.backend.WatchWriteEvents(s.ctx)
 	if err != nil {
 		return err
@@ -2720,11 +2724,14 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	if err != nil {
 		return nil, rpcErrorFrom(err)
 	}
-	// Blob backends may still report failure in the body.
-	if rsp.GetError() != nil {
-		return nil, GRPCStatusError(rsp.GetError())
+	if rsp == nil {
+		return nil, errBlobBackendNoResponse()
 	}
 	return rsp, nil
+}
+
+func errBlobBackendNoResponse() error {
+	return GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "blob backend returned no response"})
 }
 
 func (s *server) authorizeBlobPut(ctx context.Context, req *resourcepb.PutBlobRequest) *resourcepb.ErrorResult {
@@ -2844,9 +2851,8 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 	if err != nil {
 		return nil, rpcErrorFrom(err)
 	}
-	// Blob backends may still report failure in the body.
-	if rsp.GetError() != nil {
-		return nil, GRPCStatusError(rsp.GetError())
+	if rsp == nil {
+		return nil, errBlobBackendNoResponse()
 	}
 	return rsp, nil
 }

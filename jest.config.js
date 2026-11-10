@@ -113,7 +113,6 @@ module.exports = {
     // Harness additions must not change source-test shard membership.
     '<rootDir>/scripts/test-harness/',
     // Decoupled plugins run their own tests so ignoring them here.
-    '<rootDir>/public/app/plugins/datasource/azuremonitor',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
     '<rootDir>/public/app/plugins/datasource/graphite',
   ],

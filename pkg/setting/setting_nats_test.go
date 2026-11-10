@@ -108,6 +108,38 @@ cluster_tls_ca_path = /etc/nats/ca.crt
 		}
 	})
 
+	t.Run("notifier defaults follow enabled", func(t *testing.T) {
+		cases := map[string]struct {
+			raw         string
+			notifier    bool
+			watchMaxAge time.Duration
+		}{
+			// Empty values are what conf/defaults.ini ships.
+			"disabled with empty defaults": {"[nats]\nenabled = false\nnotifier =\nnotifier_watch_max_age =\n", false, 0},
+			"enabled with empty defaults":  {"[nats]\nenabled = true\nnotifier =\nnotifier_watch_max_age =\n", true, time.Hour},
+			"enabled only":                 {"[nats]\nenabled = true\n", true, time.Hour},
+			"enabled, notifier off":        {"[nats]\nenabled = true\nnotifier = false\n", false, 0},
+			"enabled, max age set":         {"[nats]\nenabled = true\nnotifier_watch_max_age = 5m\n", true, 5 * time.Minute},
+			"enabled, max age off":         {"[nats]\nenabled = true\nnotifier_watch_max_age = 0\n", true, 0},
+			"disabled, notifier set":       {"[nats]\nnotifier = true\n", true, 0},
+			"enabled, shadow only":         {"[nats]\nenabled = true\nnotifier_shadow = true\n", false, 0},
+			"enabled, shadow and notifier": {"[nats]\nenabled = true\nnotifier_shadow = true\nnotifier = true\n", true, time.Hour},
+		}
+		for name, tc := range cases {
+			t.Run(name, func(t *testing.T) {
+				cfg := NewCfg()
+				f, err := ini.Load([]byte(tc.raw))
+				require.NoError(t, err)
+				cfg.Raw = f
+
+				require.NoError(t, readNATSSettings(cfg))
+
+				require.Equal(t, tc.notifier, cfg.NATS.Notifier)
+				require.Equal(t, tc.watchMaxAge, cfg.NATS.NotifierWatchMaxAge)
+			})
+		}
+	})
+
 	t.Run("parses notifier watch max age", func(t *testing.T) {
 		cfg := NewCfg()
 		f, err := ini.Load([]byte("[nats]\nnotifier = true\nnotifier_watch_max_age = 5m\n"))
