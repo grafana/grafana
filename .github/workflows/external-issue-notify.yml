@@ -95,6 +95,7 @@ jobs:
           CREATED_DATE: ${{ steps.metadata.outputs.created_date }}
           IS_CHAMPION: ${{ steps.metadata.outputs.is_champion }}
           SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
+          PR_STATUS_DISABLED: ${{ vars.PR_STATUS_DISABLED }}
         run: node ./community-triage/.github/workflows/scripts/issue-notify.mts notify
 
       - name: Post welcome comment
@@ -103,6 +104,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
+          CARD_MARKER: ${{ steps.notify.outputs.card_marker }}
         run: node ./community-triage/.github/workflows/scripts/issue-notify.mts welcome
 
       - name: Ensure auto-triaged label exists

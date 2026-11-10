@@ -493,7 +493,20 @@ jobs:
           COHERENCE: ${{ needs.triage.outputs.coherence }}
           COHERENCE_REASON: ${{ needs.triage.outputs.coherence_reason }}
           FLAGS: ${{ needs.triage.outputs.flags }}
+          PR_STATUS_DISABLED: ${{ vars.PR_STATUS_DISABLED }}
         run: node ./community-triage/.github/workflows/scripts/pr-notify.mts notify
+
+      # Leaves the card's Slack reference on the PR so a later run can find it.
+      # Empty unless a notified team has pr_status on.
+      - name: Record the card on the PR
+        if: steps.notify.outputs.card_marker != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+          CARD_MARKER: ${{ steps.notify.outputs.card_marker }}
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts record-cards
 
       # The script skips the greeting when the review already delivered it, and
       # comments nothing when there is nothing outstanding.
