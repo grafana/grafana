@@ -10,6 +10,7 @@ import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometh
 import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
 import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
 import { LazyManagedBadge } from 'app/features/provisioning/components/LazyManagedBadge';
+import { LazyPullRequestBanner } from 'app/features/provisioning/components/Shared/LazyPullRequestBanner';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -55,6 +56,12 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Managed badge',
         description: 'Shows which system manages a resource, with Git Sync repository links',
         component: LazyManagedBadge,
+      },
+      {
+        id: PluginExtensionExposedComponents.PullRequestBannerV1,
+        title: 'Pull request banner',
+        description: 'Shows the Git Sync pull request link from the URL after a commit to a new branch',
+        component: LazyPullRequestBanner,
       },
       {
         id: PluginExtensionExposedComponents.PrometheusQueryResultsV1,
