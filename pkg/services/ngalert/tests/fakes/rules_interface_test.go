@@ -17,7 +17,6 @@ var (
 	_ rulestore.NamespaceStore          = (*RuleStore)(nil)
 	_ rulestore.RuleReader              = (*RuleStore)(nil)
 	_ rulestore.RulePageReader          = (*RuleStore)(nil)
-	_ rulestore.RuleByIDReader          = (*RuleStore)(nil)
 	_ rulestore.RuleGroupReader         = (*RuleStore)(nil)
 	_ rulestore.RuleCounter             = (*RuleStore)(nil)
 	_ rulestore.RuleGroupCounter        = (*RuleStore)(nil)

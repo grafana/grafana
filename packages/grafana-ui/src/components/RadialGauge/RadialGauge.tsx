@@ -126,7 +126,7 @@ export function RadialGauge(props: RadialGaugeProps) {
 
     // if min === max, the min and max thresholds will also be equal, which causes visual bugs.
     const thresholdsBar = rawThresholdsBar && fieldDisplay.field.min !== fieldDisplay.field.max;
-    const { startValueAngle, endValueAngle, angleRange } = getValueAngleForValue(
+    const { startValueAngle, endValueAngle, angleRange, markerAtStart } = getValueAngleForValue(
       fieldDisplay,
       startAngle,
       endAngle,
@@ -162,7 +162,8 @@ export function RadialGauge(props: RadialGaugeProps) {
         <SpotlightGradient
           key={spotlightGradientId}
           id={spotlightGradientId}
-          angle={endValueAngle + startAngle}
+          angle={markerAtStart ? startAngle + startValueAngle : endValueAngle + startAngle}
+          bloomAtStart={markerAtStart}
           dimensions={dimensions}
           roundedBars={roundedBars}
           theme={theme}
@@ -204,6 +205,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           gradient={gradientStops}
           fieldDisplay={fieldDisplay}
           endpointMarker={endpointMarker}
+          markerAtStart={markerAtStart}
         />
       );
     }

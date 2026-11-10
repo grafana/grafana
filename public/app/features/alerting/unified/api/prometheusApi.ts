@@ -10,7 +10,7 @@ import {
   type PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 
 import { type WithNotificationOptions, alertingApi } from './alertingApi';
 import { normalizeRuleGroup } from './prometheus';

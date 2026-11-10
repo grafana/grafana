@@ -13,7 +13,10 @@ import {
   type StandardEditorContext,
   toDataFrame,
 } from '@grafana/data';
+import { getTemplateSrv, setTemplateSrv } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+
+import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 
 import {
   getStandardEditorContext,
@@ -23,6 +26,18 @@ import {
 
 describe('getVisualizationOptions', () => {
   describe('getStandardEditorContext', () => {
+    let originalTemplateSrv: ReturnType<typeof getTemplateSrv>;
+
+    beforeEach(() => {
+      originalTemplateSrv = getTemplateSrv();
+      // Suggestions use the registered service, independently of the context's replaceVariables callback.
+      setTemplateSrv(initTemplateSrv('visualization-options', []));
+    });
+
+    afterEach(() => {
+      setTemplateSrv(originalTemplateSrv);
+    });
+
     it('defaults the series data to an empty array', () => {
       const editorContext = getStandardEditorContext({
         data: undefined,

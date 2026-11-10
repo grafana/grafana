@@ -40,7 +40,8 @@ const (
 // Request-level failures come back as gRPC status codes with an empty response
 // body:
 //
-//	INVALID_ARGUMENT   bad filter, oversized batch (>500 vectors or >4 KiB metadata), empty content or title,
+//	INVALID_ARGUMENT   bad filter, oversized batch (>500 Upsert inputs, >2,000 UpsertSubresources inputs,
+//	                   >500 Delete UIDs, or >4 KiB metadata), empty content or title,
 //	                   empty inputs, missing delete selector, empty metadata update (neither set nor unset)
 //	NOT_FOUND          collection not allowlisted / never provisioned
 //	PERMISSION_DENIED  request namespace not permitted for the caller identity
@@ -118,7 +119,8 @@ func (c *vectorStoreClient) UpdateMetadata(ctx context.Context, in *VectorUpdate
 // Request-level failures come back as gRPC status codes with an empty response
 // body:
 //
-//	INVALID_ARGUMENT   bad filter, oversized batch (>500 vectors or >4 KiB metadata), empty content or title,
+//	INVALID_ARGUMENT   bad filter, oversized batch (>500 Upsert inputs, >2,000 UpsertSubresources inputs,
+//	                   >500 Delete UIDs, or >4 KiB metadata), empty content or title,
 //	                   empty inputs, missing delete selector, empty metadata update (neither set nor unset)
 //	NOT_FOUND          collection not allowlisted / never provisioned
 //	PERMISSION_DENIED  request namespace not permitted for the caller identity

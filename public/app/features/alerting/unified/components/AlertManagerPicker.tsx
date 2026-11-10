@@ -7,7 +7,8 @@ import { InlineField, Select, SelectMenuOptions, useStyles2 } from '@grafana/ui'
 
 import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
 import { useAlertmanager } from '../state/AlertmanagerContext';
-import { type AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
+import { type AlertManagerDataSource } from '../utils/datasource';
 
 interface Props {
   disabled?: boolean;

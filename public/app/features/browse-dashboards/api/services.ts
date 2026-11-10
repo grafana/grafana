@@ -1,6 +1,5 @@
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { config } from '@grafana/runtime';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { legacyAPI } from 'app/api/clients/legacy';
@@ -28,16 +27,7 @@ import {
 
 import { PAGE_SIZE } from './constants';
 
-async function searchOldAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) {
-  const backendSrv = getBackendSrv();
-  return await backendSrv.get<NestedFolderDTO[]>('/api/folders', {
-    parentUid: parentUID,
-    page,
-    limit: pageSize,
-  });
-}
-
-async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<NestedFolderDTO[]> {
+async function searchFolders(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<NestedFolderDTO[]> {
   const results = await getGrafanaSearcher().search({
     kind: ['folder'],
     location: parentUID || 'general',
@@ -73,11 +63,7 @@ export async function listFolders(
 ): Promise<DashboardViewItem[]> {
   let folders: NestedFolderDTO[] = [];
   if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, true)) {
-      folders = await searchNewAPI(parentUID, page, pageSize);
-    } else {
-      folders = await searchOldAPI(parentUID, page, pageSize);
-    }
+    folders = await searchFolders(parentUID, page, pageSize);
   }
 
   return folders.map(({ uid, title, managedBy }) => {

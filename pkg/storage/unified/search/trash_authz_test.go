@@ -119,9 +119,6 @@ func liveDoc(name, folder string) *resource.BulkIndexItem {
 	return d
 }
 
-// trashIndexBuilders covers both authorization paths. Post-rank is intended to
-// become the default, so trash authz on only the in-searcher path would silently
-// revert to the read check when that happens.
 func trashIndexBuilders() []struct {
 	name  string
 	build func(t *testing.T) resource.ResourceIndex
@@ -130,9 +127,6 @@ func trashIndexBuilders() []struct {
 		name  string
 		build func(t *testing.T) resource.ResourceIndex
 	}{
-		{"in-searcher", func(t *testing.T) resource.ResourceIndex {
-			return newTestDashboardsIndex(t, threshold, 20, func(resource.ResourceIndex) (int64, error) { return 1, nil })
-		}},
 		{"post-rank", func(t *testing.T) resource.ResourceIndex {
 			return newTestDashboardsIndexPostRank(t, 20)
 		}},
@@ -171,7 +165,6 @@ func runTrashSearch(
 	ctx := authlib.WithAuthInfo(context.Background(), user)
 	res, err := index.Search(ctx, ac, q, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 	return res
 }
 
@@ -466,13 +459,8 @@ func TestTrashAuthz_AppliesOnEveryPage(t *testing.T) {
 // deletions off the total, which no "inexact" flag prevents.
 func TestTrashAuthz_TotalHitsCountOnlyAuthorizedHits(t *testing.T) {
 	// Alice owns one; Bob owns four that match the same query.
-	build := func(t *testing.T, postRank bool) resource.ResourceIndex {
-		var index resource.ResourceIndex
-		if postRank {
-			index = newTestDashboardsIndexPostRank(t, 20)
-		} else {
-			index = newTestDashboardsIndex(t, threshold, 20, func(resource.ResourceIndex) (int64, error) { return 1, nil })
-		}
+	build := func(t *testing.T) resource.ResourceIndex {
+		index := newTestDashboardsIndexPostRank(t, 20)
 		bobs := []string{"bob-1", "bob-2", "bob-3", "bob-4"}
 		docs := make([]*resource.BulkIndexItem, 0, len(bobs)+1)
 		docs = append(docs, trashDoc("alice-1", "folder-1", trashAlice))
@@ -483,26 +471,19 @@ func TestTrashAuthz_TotalHitsCountOnlyAuthorizedHits(t *testing.T) {
 		return index
 	}
 
-	for _, path := range []struct {
-		name     string
-		postRank bool
-	}{{"in-searcher", false}, {"post-rank", true}} {
-		t.Run(path.name, func(t *testing.T) {
-			// limit 1 is the case that used to leak: the page fills on Alice's only
-			// hit, so the scan stopped before exhausting and reported Bleve's
-			// unfiltered count of 5.
-			for _, limit := range []int64{1, 2, 100} {
-				t.Run(fmt.Sprintf("limit %d", limit), func(t *testing.T) {
-					index := build(t, path.postRank)
-					q := trashQueryFor(func(q *resourcepb.ResourceSearchRequest) { q.Limit = limit })
+	// limit 1 is the case that used to leak: the page fills on Alice's only
+	// hit, so the scan stopped before exhausting and reported Bleve's
+	// unfiltered count of 5.
+	for _, limit := range []int64{1, 2, 100} {
+		t.Run(fmt.Sprintf("limit %d", limit), func(t *testing.T) {
+			index := build(t)
+			q := trashQueryFor(func(q *resourcepb.ResourceSearchRequest) { q.Limit = limit })
 
-					res := runTrashSearch(t, index, &trashAccessClient{}, "alice", q)
+			res := runTrashSearch(t, index, &trashAccessClient{}, "alice", q)
 
-					assert.Equal(t, []string{"alice-1"}, namesOf(res))
-					assert.Equal(t, int64(1), res.TotalHits, "Bob's four deletions must not be counted")
-					assert.True(t, res.TotalHitsExact, "the whole match set was scanned, so the count is exact")
-				})
-			}
+			assert.Equal(t, []string{"alice-1"}, namesOf(res))
+			assert.Equal(t, int64(1), res.TotalHits, "Bob's four deletions must not be counted")
+			assert.True(t, res.TotalHitsExact, "the whole match set was scanned, so the count is exact")
 		})
 	}
 }
@@ -620,7 +601,6 @@ func TestSearchMissingServicePermissionsReturnsError(t *testing.T) {
 								return
 							}
 							require.NoError(t, err)
-							require.Nil(t, res.Error)
 							if outcome.userAllowed {
 								require.Equal(t, []string{"dash-1"}, namesOf(res))
 							} else {

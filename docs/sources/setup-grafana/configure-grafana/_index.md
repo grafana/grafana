@@ -2244,6 +2244,10 @@ Set the query offset to imported Grafana-managed rules when `query_offset` is no
 
 Set the default data source UID to use for query execution when importing Prometheus rules. Grafana uses this default when the `X-Grafana-Alerting-Datasource-UID` header isn't provided during import. If this option isn't set, the header becomes required. The default value is empty.
 
+#### `max_request_body_bytes`
+
+Set the maximum allowed request body size in bytes for Prometheus conversion API POST endpoints. This limits the size of rule group and Alertmanager configuration payloads that can be imported. Set to `0` to disable the limit. The default value is `52428800` (50 MB).
+
 <hr>
 
 ### `[recording_rules]`
@@ -3041,6 +3045,18 @@ It also allows `http://` authorization and token endpoints on `gitOAuth` connect
 While public addresses are always allowed, to prevent server-side request forgery (SSRF), repository URLs that resolve to loopback, private (RFC 1918), link-local, or unspecified addresses are rejected by default.
 
 If you want to allow an internal or self-hosted Git server, such as an on-premises GitHub Enterprise host, add an entry here. Each entry can be a hostname, `host:port`, a full URL (only the host is used), a literal IP address, or a CIDR range.
+
+This field is empty by default.
+
+#### `bootstrap_path`
+
+Directory that Grafana registers a local repository over at startup, so the files you mount there can declare the instance's own repositories and connections. Add repositories, connections, dashboards, and folders to that directory to provision them on startup.
+
+You can't edit this repository's configuration, because it comes from this setting, but you can edit the resources it provisions. The setting requires the `local` repository type, and it forbids the `instance` sync target.
+
+The value must be a path that a local repository can read. Grafana doesn't start when the path contains a traversal (`..`) or a hidden component, or when it's the filesystem root.
+
+Emptying this setting deletes the repository that an earlier run registered and everything that repository provisioned.
 
 This field is empty by default.
 

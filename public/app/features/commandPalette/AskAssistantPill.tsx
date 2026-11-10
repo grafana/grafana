@@ -10,9 +10,8 @@ import { useStyles2 } from '@grafana/ui';
 
 /**
  * Button in the command palette search row offering to ask the Grafana Assistant, together with its Shift+Enter
- * shortcut. Deep search almost always returns something, so the empty state (and its "ask the assistant" button)
- * rarely shows anymore — this keeps that escape hatch reachable while results exist. Renders nothing when
- * the assistant is unavailable or the search query is empty.
+ * shortcut, keeping Assistant search reachable while results are displayed. Renders nothing when the assistant
+ * is unavailable or the search query is empty.
  */
 export function AskAssistantPill() {
   const styles = useStyles2(getStyles);

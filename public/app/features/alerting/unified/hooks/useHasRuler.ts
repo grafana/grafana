@@ -1,7 +1,7 @@
 import { type GrafanaRulesSourceSymbol, type RulesSource } from 'app/types/unified-alerting';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { getRulesSourceName } from '../utils/datasource';
+import { getRulesSourceName } from '../utils/rulesSource';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
