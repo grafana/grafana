@@ -244,6 +244,15 @@ describe('settings', () => {
           { validatePath: true }
         );
       });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(updateAppPluginSettings('text/secret?x=', { enabled: true })).rejects.toThrow(
+          'Invalid plugin ID \"text/secret?x=\"'
+        );
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -290,6 +299,15 @@ describe('settings', () => {
           showErrorAlert: false,
           validatePath: true,
         });
+      });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(updateAppPluginSettings('text/secret?x=', { enabled: true })).rejects.toThrow(
+          'Invalid plugin ID \"text/secret?x=\"'
+        );
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
     });
   });

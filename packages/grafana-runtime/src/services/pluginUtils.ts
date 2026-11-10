@@ -1,5 +1,3 @@
-import { type AppPluginConfig, type DataSourcePluginMeta, type PanelPluginMeta } from '@grafana/data';
-
 import { config } from '../config';
 
 export function getApiVersion(): string {
@@ -26,56 +24,16 @@ export function getCacheKey(pluginId: string, _showErrorAlert = false) {
   return `getAppPluginSettings-${pluginId}`;
 }
 
-const pluginIdPattern = /^[0-9a-z]+\-([0-9a-z]+\-)?(app|panel|datasource)$/;
-
-export function validatePluginId(pluginId: string): boolean {
-  if (!pluginId) {
-    return false;
+const pluginIdFormatPattern = /^[a-zA-Z0-9_-]+$/;
+export function assertPluginIdFormat(pluginId = ''): void {
+  if (typeof pluginId !== 'string' || !pluginIdFormatPattern.test(pluginId)) {
+    throw new Error(`Invalid plugin ID "${pluginId}"`);
   }
-
-  return pluginIdPattern.test(pluginId);
-}
-
-interface ValidateArgs {
-  pluginId?: string;
-  apps?: AppPluginConfig[];
-  datasources?: DataSourcePluginMeta[];
-  panels?: PanelPluginMeta[];
-}
-
-export function isValidPluginId({ pluginId, apps = [], datasources = [], panels = [] }: ValidateArgs): boolean {
-  if (!pluginId) {
-    return false;
-  }
-
-  if (validatePluginId(pluginId)) {
-    return true;
-  }
-
-  const app = apps.find((a) => a.id === pluginId);
-  if (app) {
-    return true;
-  }
-
-  const datasource = datasources.find((d) => d.id === pluginId);
-  if (datasource) {
-    return true;
-  }
-
-  const panel = panels.find((p) => p.id === pluginId);
-  if (panel) {
-    return true;
-  }
-
-  return false;
 }
 
 const apiVersionPattern = /^v[0-9]+(?:(?:alpha|beta)[0-9]+)?$/;
-
-export function isValidApiVersion(apiVersion?: string): boolean {
-  if (!apiVersion) {
-    return false;
+export function assertApiVersion(apiVersion = ''): void {
+  if (typeof apiVersion !== 'string' || !apiVersionPattern.test(apiVersion)) {
+    throw new Error(`Invalid API version "${apiVersion}"`);
   }
-
-  return apiVersionPattern.test(apiVersion);
 }

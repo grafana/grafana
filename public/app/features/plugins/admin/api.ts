@@ -1,6 +1,11 @@
 import { type PluginError, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
-import { installPluginMeta, logPluginMetaError, uninstallPluginMeta } from '@grafana/runtime/internal';
+import {
+  assertPluginIdFormat,
+  installPluginMeta,
+  logPluginMetaError,
+  uninstallPluginMeta,
+} from '@grafana/runtime/internal';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { isVersionGtOrEq } from 'app/core/utils/version';
 
@@ -221,6 +226,8 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
 }
 
 export async function installPlugin(id: string, version?: string) {
+  assertPluginIdFormat(id);
+
   // Install via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
   // We call both this and the legacy path because the K8s settings API doesn't cover all
   // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
@@ -246,6 +253,8 @@ export async function installPlugin(id: string, version?: string) {
 }
 
 export async function uninstallPlugin(id: string) {
+  assertPluginIdFormat(id);
+
   // Uninstall via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
   // We call both this and the legacy path because the K8s settings API doesn't cover all
   // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.

@@ -1,106 +1,83 @@
-import { app } from './pluginMeta/test-fixtures/config.apps';
-import { prometheusMeta } from './pluginMeta/test-fixtures/config.datasources';
-import { panel } from './pluginMeta/test-fixtures/config.panels';
-import { isValidApiVersion, isValidPluginId, validatePluginId } from './pluginUtils';
+import { assertPluginIdFormat, assertApiVersion } from './pluginUtils';
 
-describe('validatePluginId', () => {
-  it('should accept app plugin IDs', () => {
-    expect(validatePluginId('grafana-exploretraces-app')).toBe(true);
+describe('assertPluginIdFormat', () => {
+  it.each([
+    'grafana-exploretraces-app',
+    'grafana-clock-panel',
+    'grafana-testdata-datasource',
+    'prometheus',
+    'text',
+    'grafana-synthetic-monitoring-app',
+    'grafana-image-renderer',
+    'Grafana_Test-123',
+  ])('should not throw for plugin ids with valid format %s', (pluginId) => {
+    expect(assertPluginIdFormat(pluginId)).toBeUndefined();
   });
 
-  it('should accept panel plugin IDs', () => {
-    expect(validatePluginId('grafana-clock-panel')).toBe(true);
-  });
-
-  it('should accept datasource plugin IDs', () => {
-    expect(validatePluginId('grafana-testdata-datasource')).toBe(true);
-  });
-
-  it('should reject bare core plugin IDs', () => {
-    expect(validatePluginId('prometheus')).toBe(false);
-  });
-
-  it('should reject URL segment injection', () => {
-    expect(validatePluginId('my-app/secret?x=')).toBe(false);
-    expect(validatePluginId('my-app/secret')).toBe(false);
-    expect(validatePluginId('my-app\\secret')).toBe(false);
-    expect(validatePluginId('my-app?x=secret')).toBe(false);
-    expect(validatePluginId('my-app#ignored')).toBe(false);
-  });
-
-  it('should reject percent-encoded path separators', () => {
-    expect(validatePluginId('my-app%2fsecret')).toBe(false);
-    expect(validatePluginId('my-app%5csecret')).toBe(false);
-    expect(validatePluginId('my-app%252fsecret')).toBe(false);
-  });
-
-  it('should reject control characters', () => {
-    expect(validatePluginId('grafana-example-app\t')).toBe(false);
-    expect(validatePluginId('grafana-example-app\n')).toBe(false);
-    expect(validatePluginId('grafana-example-app\r')).toBe(false);
-    expect(validatePluginId('grafana-example-app\0')).toBe(false);
+  it.each([
+    '',
+    undefined,
+    123,
+    true,
+    ' ',
+    '.',
+    '..',
+    '...',
+    'grafana-exploretraces-app.',
+    'grafana-exploretraces-app..',
+    'grafana-exploretraces-app...',
+    './grafana-exploretraces-app',
+    '../grafana-exploretraces-app',
+    '.../grafana-exploretraces-app',
+    'grafana-exploretraces-app/.',
+    'grafana-exploretraces-app/..',
+    'grafana-exploretraces-app/../secret',
+    'grafana-exploretraces-app/secret',
+    'grafana-exploretraces-app\\secret',
+    'grafana-exploretraces-app?x=',
+    'grafana-exploretraces-app?x=secret',
+    'grafana-exploretraces-app#ignored',
+    'grafana-exploretraces-app/%2e%2e/secret',
+    'grafana-exploretraces-app%2fsecret',
+    'grafana-exploretraces-app%5csecret',
+    'grafana-exploretraces-app%252fsecret',
+    'grafana-exploretraces-app\t',
+    'grafana-exploretraces-app\n',
+    'grafana-exploretraces-app\r',
+    'grafana-exploretraces-app\0',
+  ])('should throw for plugin ids with invalid format %s', (pluginId) => {
+    expect(() => assertPluginIdFormat(pluginId as unknown as string)).toThrow(`Invalid plugin ID "${pluginId ?? ''}"`);
   });
 });
 
-describe('isValidPluginId', () => {
-  it('should accept plugin IDs matching the naming convention', () => {
-    expect(isValidPluginId({ pluginId: 'grafana-exploretraces-app' })).toBe(true);
-  });
-
-  it('should accept known app plugin IDs', () => {
-    expect(isValidPluginId({ pluginId: 'myorg-someplugin-app', apps: [app] })).toBe(true);
-  });
-
-  it('should accept known datasource plugin IDs', () => {
-    expect(isValidPluginId({ pluginId: 'prometheus', datasources: [prometheusMeta] })).toBe(true);
-  });
-
-  it('should accept known panel plugin IDs', () => {
-    expect(isValidPluginId({ pluginId: 'grafana-test-panel', panels: [panel] })).toBe(true);
-  });
-
-  it('should reject unknown plugin IDs', () => {
-    expect(isValidPluginId({ pluginId: 'unknown', apps: [app], datasources: [prometheusMeta], panels: [panel] })).toBe(
-      false
-    );
-  });
-
-  it.each(['prometheus/secret', 'prometheus\\secret', 'prometheus?x=1', 'prometheus#ignored', 'prometheus%2fsecret'])(
-    'should reject URL segment injection for known plugin IDs: %s',
-    (pluginId) => {
-      expect(isValidPluginId({ pluginId, datasources: [prometheusMeta] })).toBe(false);
-    }
-  );
-});
-
-describe('isValidApiVersion', () => {
+describe('assertApiVersion', () => {
   it('should accept stable API versions', () => {
-    expect(isValidApiVersion('v1')).toBe(true);
+    expect(assertApiVersion('v1')).toBeUndefined();
   });
 
   it('should accept alpha API versions', () => {
-    expect(isValidApiVersion('v0alpha1')).toBe(true);
+    expect(assertApiVersion('v0alpha1')).toBeUndefined();
   });
 
   it('should accept beta API versions', () => {
-    expect(isValidApiVersion('v1beta1')).toBe(true);
+    expect(assertApiVersion('v1beta1')).toBeUndefined();
   });
 
   it.each(['', '1', 'v1alpha', 'v1.0'])('should reject malformed API versions: %s', (apiVersion) => {
-    expect(isValidApiVersion(apiVersion)).toBe(false);
+    expect(() => assertApiVersion(apiVersion)).toThrow(`Invalid API version "${apiVersion}"`);
   });
 
   it.each(['v1/namespaces/other/app/instance/proxy/secret?x=', 'v1\\secret', 'v1?x=1', 'v1#ignored', 'v1%2fsecret'])(
     'should reject URL segment injection: %s',
     (apiVersion) => {
-      expect(isValidApiVersion(apiVersion)).toBe(false);
+      expect(() => assertApiVersion(apiVersion)).toThrow(`Invalid API version "${apiVersion}"`);
     }
   );
 
   it('should reject control characters', () => {
-    expect(isValidApiVersion('v1\t')).toBe(false);
-    expect(isValidApiVersion('v1\n')).toBe(false);
-    expect(isValidApiVersion('v1\r')).toBe(false);
-    expect(isValidApiVersion('v1\0')).toBe(false);
+    expect(() => assertApiVersion('v1\t')).toThrow(`Invalid API version "v1\t"`);
+    expect(() => assertApiVersion('v1\n')).toThrow(`Invalid API version "v1\n"`);
+    expect(() => assertApiVersion('v1\r')).toThrow(`Invalid API version "v1\r"`);
+    expect(() => assertApiVersion('v1\0')).toThrow(`Invalid API version "v1\0"`);
   });
 });

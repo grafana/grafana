@@ -2,6 +2,7 @@ import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromise } from '../../utils/getCachedPromise';
+import { assertPluginIdFormat } from '../pluginUtils';
 
 import { logPluginMetaError } from './logging';
 import type { PluginMetasResponse } from './types';
@@ -40,6 +41,8 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
 }
 
 export async function installPluginMeta(pluginId: string, version: string): Promise<void> {
+  assertPluginIdFormat(pluginId);
+
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     return;
   }
@@ -72,6 +75,8 @@ export async function installPluginMeta(pluginId: string, version: string): Prom
 }
 
 export async function uninstallPluginMeta(pluginId: string): Promise<void> {
+  assertPluginIdFormat(pluginId);
+
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     return;
   }
