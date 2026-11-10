@@ -30,8 +30,11 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 import { type VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
+import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 
 import { clearDefaultQuery } from '../utils/clearDefaultQuery';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { setQueryRunnerQueries } from '../utils/queryRunnerState';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
@@ -65,7 +68,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       open: newState,
     });
 
-    if (!newState && this.state.isNewPanel && !this.state.hasPickedViz) {
+    if (!newState && (this._selectedPluginId || (this.state.isNewPanel && !this.state.hasPickedViz))) {
       const panel = this.state.panelRef.resolve();
       const pluginId = this._selectedPluginId ?? panel.state.pluginId;
       if (getPanelPluginMetaSync(pluginId)?.skipDefaultQuery) {
@@ -120,6 +123,12 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     }
 
     panel.changePluginType(pluginId, cachedOptions, newFieldConfig);
+
+    const runner = getQueryRunnerFor(panel);
+    if (!getPanelPluginMetaSync(pluginId)?.skipDefaultQuery && runner?.state.queries.length === 0) {
+      setQueryRunnerQueries(runner, [createDefaultQuery()]);
+      runner.runQueries();
+    }
 
     if (options.options) {
       panel.onOptionsChange(options.options, true);

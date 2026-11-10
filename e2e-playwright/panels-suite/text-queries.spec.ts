@@ -5,7 +5,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 const datasource = { type: 'grafana', uid: 'grafana' };
 const query = { refId: 'A', datasource, queryType: 'randomWalk', startValue: 42, min: 42, max: 42 };
 
-test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
+test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true, queryEditorNext: true } } });
 
 test.describe('Text query lifecycle', { tag: ['@panels'] }, () => {
   for (const pluginVersion of ['13.2.9', '13.3.0', '13.4.0']) {
@@ -102,14 +102,43 @@ test.describe('Text query lifecycle', { tag: ['@panels'] }, () => {
     }
   });
 
-  test('new Text has no query until one is added explicitly', async ({ gotoDashboardPage, page, selectors }) => {
-    const dashboard = await gotoDashboardPage({});
-    const editor = await dashboard.addPanel();
-    await editor.setVisualization('Text');
-    await expect(page.getByTestId('TextNGEditor')).toBeVisible();
-    await expect(editor.getByGrafanaSelector(selectors.components.QueryEditorRows.rows)).toHaveCount(0);
-    await editor.datasource.set('-- Grafana --');
-    await editor.getByGrafanaSelector(selectors.components.QueryTab.addQuery).click();
-    await expect(editor.getByGrafanaSelector(selectors.components.QueryEditorRows.rows)).toHaveCount(1);
-  });
+  for (const queryEditorNext of [false, true]) {
+    test.describe(`new Text with queryEditorNext=${queryEditorNext}`, () => {
+      test('reloads the inline editor with data after adding the first query', async ({
+        gotoDashboardPage,
+        page,
+        selectors,
+      }) => {
+        await page.addInitScript((useNext) => {
+          localStorage.setItem(
+            'grafana.dashboard.query-editor-next.v2-preference',
+            JSON.stringify({ value: useNext, timestamp: Date.now() })
+          );
+        }, queryEditorNext);
+        const dashboard = await gotoDashboardPage({});
+        const editor = await dashboard.addPanel();
+        await editor.setVisualization('Time series');
+        const queries = queryEditorNext
+          ? page.locator('[data-query-sidebar-card="A"]')
+          : editor.getByGrafanaSelector(selectors.components.QueryEditorRows.rows);
+        await expect(queries).toHaveCount(1);
+        await editor.setVisualization('Text');
+        const textEditor = page.getByTestId('TextNGEditor');
+        await expect(textEditor).toBeVisible();
+        await expect(queries).toHaveCount(0);
+        await textEditor.locator('.cm-content').fill('Value: ${__value.raw}');
+
+        const addQuery = queryEditorNext
+          ? page.getByLabel('Add query', { exact: true })
+          : editor.getByGrafanaSelector(selectors.components.QueryTab.addQuery);
+        await addQuery.click();
+
+        await expect(queries).toHaveCount(1);
+        await expect(textEditor).toBeVisible();
+        await expect(
+          page.getByTestId('TextNGEditor-preview').frameLocator('iframe[title="Text panel content"]').locator('body')
+        ).toContainText(/Value: -?\d+(?:\.\d+)?/);
+      });
+    });
+  }
 });
