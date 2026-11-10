@@ -16,10 +16,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/resource"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
@@ -130,7 +130,7 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 		Items: make([]preferences.Preferences, 0, len(groups)+2),
 	}
 
-	addPreferencesToResult := func(owner utils.OwnerReference) error {
+	addPreferencesToResult := func(owner resource.OwnerReference) error {
 		return s.appendOwnerPreferences(ctx, user, isUser, owner, result)
 	}
 
@@ -146,7 +146,7 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 		if r[0].Operator != selection.Equals {
 			return nil, fmt.Errorf("only the = operator is supported")
 		}
-		owner, ok := utils.ParseOwnerFromName(r[0].Value)
+		owner, ok := resource.ParseOwnerFromName(r[0].Value)
 		if !ok {
 			return result, nil
 		}
@@ -158,7 +158,7 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 
 	if isUser {
 		// Add the explicit user values
-		if err = addPreferencesToResult(utils.UserOwner(user.GetIdentifier())); err != nil {
+		if err = addPreferencesToResult(resource.UserOwner(user.GetIdentifier())); err != nil {
 			return nil, err
 		}
 
@@ -168,14 +168,14 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 			if i >= PreferencesTeamLimit {
 				break // only process the first PreferencesTeamLimit -- to keep it bounded
 			}
-			if err = addPreferencesToResult(utils.TeamOwner(group)); err != nil {
+			if err = addPreferencesToResult(resource.TeamOwner(group)); err != nil {
 				return nil, err
 			}
 		}
 	}
 
 	// Add the org flavor
-	if err = addPreferencesToResult(utils.NamespaceOwner()); err != nil {
+	if err = addPreferencesToResult(resource.NamespaceOwner()); err != nil {
 		return nil, err
 	}
 
@@ -184,15 +184,15 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 
 // appendOwnerPreferences fetches the preferences for a single owner and, if the
 // caller is allowed to see them and they exist, appends them to result.
-func (s *preferencesStorage) appendOwnerPreferences(ctx context.Context, user identity.Requester, isUser bool, owner utils.OwnerReference, result *preferences.PreferencesList) error {
+func (s *preferencesStorage) appendOwnerPreferences(ctx context.Context, user identity.Requester, isUser bool, owner resource.OwnerReference, result *preferences.PreferencesList) error {
 	switch owner.Owner {
-	case utils.NamespaceResourceOwner:
+	case resource.NamespaceResourceOwner:
 		// OK
-	case utils.UserResourceOwner:
+	case resource.UserResourceOwner:
 		if !isUser || user.GetIdentifier() != owner.Identifier {
 			return nil
 		}
-	case utils.TeamResourceOwner:
+	case resource.TeamResourceOwner:
 		if !isUser {
 			return nil
 		}

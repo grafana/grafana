@@ -78,7 +78,6 @@ func TestCDKBlobStreamingThroughResourceClient(t *testing.T) {
 
 	put, err := client.PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, ContentType: "image/png", Value: value})
 	require.NoError(t, err)
-	require.Nil(t, put.Error)
 	require.Equal(t, int64(len(value)), put.Size)
 	path := "default/playlist.grafana.app/playlists/stream/" + put.Uid + ".png"
 	stored, err := bucket.ReadAll(ctx, path)
@@ -90,11 +89,10 @@ func TestCDKBlobStreamingThroughResourceClient(t *testing.T) {
 		Value: []byte(fmt.Sprintf(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"stream","namespace":"default","annotations":{"grafana.app/blob":"%s; size=%d; mime=image/png"}},"blobs":{"image":{"uid":"%s","size":%d,"contentType":"image/png"}},"spec":{"title":"test","interval":"5m","items":[]}}`, put.Uid, put.Size, put.Uid, put.Size)),
 	})
 	require.NoError(t, err)
-	require.Nil(t, created.Error)
+	require.NotNil(t, created)
 
 	get, err := client.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, Uid: put.Uid, MustProxyBytes: true})
 	require.NoError(t, err)
-	require.Nil(t, get.Error)
 	require.Equal(t, value, get.Value)
 }
 

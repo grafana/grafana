@@ -1318,10 +1318,8 @@ func TestHybridSearch_FolderTitleResolutionFailsOpen(t *testing.T) {
 		"transport error": func(idx *hybridFakeIndex) {
 			idx.folderErr = errors.New("folder index exploded")
 		},
-		"payload-embedded error": func(idx *hybridFakeIndex) {
-			idx.folderResp = &resourcepb.ResourceSearchResponse{
-				Error: &resourcepb.ErrorResult{Message: "index building", Code: 503},
-			}
+		"status error": func(idx *hybridFakeIndex) {
+			idx.folderErr = GRPCStatusError(&resourcepb.ErrorResult{Message: "index building", Code: 503})
 		},
 		"malformed field values": func(idx *hybridFakeIndex) {
 			idx.folderResp = malformedFieldValueResponse()
@@ -1435,10 +1433,8 @@ func TestHybridSearch_ManagedByResolutionFailsOpen(t *testing.T) {
 		"transport error": func(idx *hybridFakeIndex) {
 			idx.managedByErr = errors.New("index exploded")
 		},
-		"payload-embedded error": func(idx *hybridFakeIndex) {
-			idx.managedByResp = &resourcepb.ResourceSearchResponse{
-				Error: &resourcepb.ErrorResult{Message: "index building", Code: 503},
-			}
+		"status error": func(idx *hybridFakeIndex) {
+			idx.managedByErr = GRPCStatusError(&resourcepb.ErrorResult{Message: "index building", Code: 503})
 		},
 		"malformed field values": func(idx *hybridFakeIndex) {
 			idx.managedByResp = malformedFieldValueResponse()

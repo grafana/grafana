@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -66,7 +67,7 @@ type countingSearcher struct {
 }
 
 func (s *countingSearcher) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
-	resp, err := s.ResourceIndexClient.GetStats(ctx, in, opts...)
+	resp, err := s.ResourceIndexClient.GetStats(federated.WithCaller(ctx, s.caller), in, opts...)
 	outcome := countOutcomeOK
 	switch {
 	case err == nil:

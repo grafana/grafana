@@ -6,7 +6,7 @@ import { type ReactElement, type ReactNode, useMemo, useState } from 'react';
 import { type DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/feature-flags';
 import { type QueryGroupOptions } from 'app/types/query';
 
 import { QueryEditorType } from '../constants';

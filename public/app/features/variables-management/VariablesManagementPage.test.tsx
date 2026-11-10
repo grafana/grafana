@@ -6,7 +6,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { locationService, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { folderHandlers, setTestFlags } from '@grafana/test-utils/unstable';
 import { type VariableSpec } from 'app/api/clients/dashboard/v2beta1';
 import { buildBreadcrumbs } from 'app/core/components/Breadcrumbs/utils';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
@@ -28,6 +28,7 @@ jest.mock('./VariableEditorView', () => ({
 const folderUid = 'folder-a';
 const folderTitle = 'Folder A';
 const folderVariablesUrl = `/dashboards/f/${folderUid}/folder-a/variables`;
+const folderUrl = `${folderHandlers.FOLDERS}/${folderUid}`;
 
 const folderVariable = {
   metadata: {
@@ -62,16 +63,27 @@ function renderPage(url: string) {
 
 describe('VariablesManagementPage editor navigation', () => {
   beforeEach(() => {
-    // foldersAppPlatformAPI defaults to on; the legacy folder API is simpler to stub.
-    setTestFlags({ 'grafana.dashboardGlobalVariables': true, foldersAppPlatformAPI: false });
+    setTestFlags({ 'grafana.dashboardGlobalVariables': true });
     server.use(
-      http.get(`/api/folders/${folderUid}`, () =>
+      http.get(folderUrl, () =>
+        HttpResponse.json(folderHandlers.buildFolderResource({ uid: folderUid, title: folderTitle }))
+      ),
+      http.get(`${folderUrl}/access`, () =>
         HttpResponse.json({
-          uid: folderUid,
-          title: folderTitle,
-          url: `/dashboards/f/${folderUid}/folder-a`,
+          kind: 'FolderAccessInfo',
+          apiVersion: 'folder.grafana.app/v1beta1',
+          canAdmin: true,
+          canDelete: true,
           canEdit: true,
-          parents: [],
+          canSave: true,
+        })
+      ),
+      http.get(`${folderUrl}/parents`, () =>
+        HttpResponse.json({
+          kind: 'FolderInfoList',
+          apiVersion: 'folder.grafana.app/v1beta1',
+          metadata: {},
+          items: [{ name: folderUid, title: folderTitle }],
         })
       ),
       http.get('/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/variables', () =>

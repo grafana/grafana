@@ -21,9 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/folderlabelsyncer"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
-	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	rulesstore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -101,7 +102,7 @@ func ProvideService(
 	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
 	alertingStore *store.DBstore,
-	ruleStore rules.Store,
+	ruleStore rulesstore.Store,
 	provenanceStore *provenance.ProvenanceStore,
 	httpClientProvider httpclient.Provider,
 	pluginContextProvider *plugincontext.Provider,
@@ -205,7 +206,7 @@ type AlertNG struct {
 	FolderResourcePermissions accesscontrol.FolderPermissionsService
 	annotationsRepo           annotations.Repository
 	store                     *store.DBstore
-	ruleStore                 rules.Store
+	ruleStore                 rulesstore.Store
 	provenanceStore           *provenance.ProvenanceStore
 	userService               user.Service
 	orgService                org.Service
@@ -592,6 +593,10 @@ func (ng *AlertNG) init() error {
 		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
 		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator)
 
+	legacyRuleService := legacy.NewLegacyRuleService(ng.ruleStore, ng.provenanceStore, ng.folderService, ng.QuotaService, ng.store,
+		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()), ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
+		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator)
+
 	// External Mimir ruler sync worker. Routes the ruler config GET through
 	// the datasource proxy service (same transport, auth and egress validation as
 	// the user-driven proxy). Runs operator-wide via the external_ruler_uid
@@ -637,6 +642,7 @@ func (ng *AlertNG) init() error {
 		MuteTimings:           muteTimingService,
 		InhibitionRules:       inhibitionRuleService,
 		AlertRules:            alertRuleService,
+		LegacyRuleService:     legacyRuleService,
 		AlertsRouter:          alertsRouter,
 		ExternalRulerSync:     ng.externalRulerSyncer,
 		EvaluatorFactory:      evalFactory,
