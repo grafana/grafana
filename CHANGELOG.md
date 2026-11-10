@@ -2,6 +2,15 @@
 
 # 13.3.1 (2026-11-10)
 
+### Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-110992
+- Security: Fix CVE-2026-111024
+- Security: Fix CVE-2026-13721
+- Security: Fix CVE-2026-14242
+
 ### Features and enhancements
 
 - **DateTime:** Update moment-timezone and easy-tz for 2026 time zone changes [#136951](https://github.com/grafana/grafana/pull/136951), [@joshhunt](https://github.com/joshhunt)
@@ -194,6 +203,15 @@
 <!-- 13.2.6 START -->
 
 # 13.2.6 (2026-11-10)
+
+### Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-110992
+- Security: Fix CVE-2026-111024
+- Security: Fix CVE-2026-13721
+- Security: Fix CVE-2026-14242
 
 ### Features and enhancements
 
@@ -485,6 +503,17 @@
 <!-- 13.1.10 START -->
 
 # 13.1.10 (2026-11-10)
+
+### Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-106472
+- Security: Fix CVE-2026-107365
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-110992
+- Security: Fix CVE-2026-111024
+- Security: Fix CVE-2026-13721
+- Security: Fix CVE-2026-14242
 
 ### Features and enhancements
 
@@ -845,6 +874,18 @@
 <!-- 13.0.13 START -->
 
 # 13.0.13 (2026-11-10)
+
+## Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-106472
+- Security: Fix CVE-2026-107365
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-110992
+- Security: Fix CVE-2026-111024
+- Security: Fix CVE-2026-13721
+- Security: Fix CVE-2026-14242
+- Security: Fix CVE-2026-82014
 
 ### Features and enhancements
 
@@ -1393,6 +1434,17 @@
 <!-- 12.4.15 START -->
 
 # 12.4.15 (2026-11-10)
+
+### Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-106472
+- Security: Fix CVE-2026-106475
+- Security: Fix CVE-2026-107365
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-111000
+- Security: Fix CVE-2026-81843
+- Security: Fix CVE-2026-82014
 
 ### Features and enhancements
 
