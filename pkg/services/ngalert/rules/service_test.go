@@ -29,7 +29,6 @@ func TestService_forwardsStoreMethods(t *testing.T) {
 	byGroup := &ngmodels.GetAlertRulesGroupByRuleUIDQuery{OrgID: 41, UID: "group-rule"}
 	list := &ngmodels.ListAlertRulesQuery{OrgID: 41, NamespaceUIDs: []string{"list-folder"}}
 	page := &ngmodels.ListAlertRulesExtendedQuery{Limit: 13, ContinueToken: "input-token"}
-	byID := ngmodels.GetAlertRuleByIDQuery{OrgID: 41, ID: 59}
 	inserts := []ngmodels.InsertRule{{AlertRule: ngmodels.AlertRule{UID: "inserted"}, Message: "create"}}
 	updates := []ngmodels.UpdateRule{{Existing: rule, New: ngmodels.AlertRule{UID: "updated"}, Message: "update"}}
 	routingQuery := ngmodels.ListContactPointRoutingsQuery{OrgID: 41, ReceiverName: "receiver", TimeIntervalName: "interval"}
@@ -72,7 +71,6 @@ func TestService_forwardsStoreMethods(t *testing.T) {
 		{"GetRuleGroupInterval", []any{ctx, int64(41), "interval-folder", "interval-group"}, []any{int64(83)}, func(s *Service) []any {
 			return serviceResult(s.GetRuleGroupInterval(ctx, 41, "interval-folder", "interval-group"))
 		}},
-		{"GetRuleByID", []any{ctx, byID}, []any{rule}, func(s *Service) []any { return serviceResult(s.GetRuleByID(ctx, byID)) }},
 		{"ListAlertRulesByGroup", []any{ctx, page}, []any{rules, "next-group"}, func(s *Service) []any { return serviceThreeResults(s.ListAlertRulesByGroup(ctx, page)) }},
 		{"Count", []any{ctx, int64(41)}, []any{int64(89)}, func(s *Service) []any { return serviceResult(s.Count(ctx, 41)) }},
 		{"CountRuleGroups", []any{ctx, int64(41)}, []any{int64(97)}, func(s *Service) []any { return serviceResult(s.CountRuleGroups(ctx, 41)) }},
@@ -90,6 +88,12 @@ func TestService_forwardsStoreMethods(t *testing.T) {
 		{"SaveAlertRuleStatus", []any{ctx, int64(41), "status-rule", status}, nil, func(s *Service) []any { return []any{s.SaveAlertRuleStatus(ctx, 41, "status-rule", status)} }},
 		{"DeleteInFolders", []any{ctx, int64(41), folders, requester}, nil, func(s *Service) []any { return []any{s.DeleteInFolders(ctx, 41, folders, requester)} }},
 		{"CountInFolders", []any{ctx, int64(41), folders, requester}, []any{int64(103)}, func(s *Service) []any { return serviceResult(s.CountInFolders(ctx, 41, folders, requester)) }},
+		{"CountInFoldersByType", []any{ctx, int64(41), folders, ngmodels.RuleTypeFilterRecording, requester}, []any{int64(109)}, func(s *Service) []any {
+			return serviceResult(s.CountInFoldersByType(ctx, 41, folders, ngmodels.RuleTypeFilterRecording, requester))
+		}},
+		{"GetAllFoldersWithRulesByType", []any{ctx, int64(41), ngmodels.RuleTypeFilterRecording}, []any{map[string]struct{}{"recording-folder": {}}}, func(s *Service) []any {
+			return serviceResult(s.GetAllFoldersWithRulesByType(ctx, 41, ngmodels.RuleTypeFilterRecording))
+		}},
 		{"GetAllFoldersWithRules", []any{ctx, int64(41)}, []any{map[string]struct{}{"occupied-folder": {}}}, func(s *Service) []any { return serviceResult(s.GetAllFoldersWithRules(ctx, 41)) }},
 		{"CleanUpDeletedAlertRules", []any{ctx}, []any{int64(107)}, func(s *Service) []any { return serviceResult(s.CleanUpDeletedAlertRules(ctx)) }},
 	}
@@ -370,6 +374,16 @@ func (s *serviceStoreSpy) DeleteInFolders(ctx context.Context, orgID int64, fold
 func (s *serviceStoreSpy) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error) {
 	s.check("CountInFolders", ctx, orgID, folderUIDs, user)
 	return s.out[0].(int64), s.err
+}
+
+func (s *serviceStoreSpy) CountInFoldersByType(ctx context.Context, orgID int64, folderUIDs []string, ruleType ngmodels.RuleTypeFilter, user identity.Requester) (int64, error) {
+	s.check("CountInFoldersByType", ctx, orgID, folderUIDs, ruleType, user)
+	return s.out[0].(int64), s.err
+}
+
+func (s *serviceStoreSpy) GetAllFoldersWithRulesByType(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter) (map[string]struct{}, error) {
+	s.check("GetAllFoldersWithRulesByType", ctx, orgID, ruleType)
+	return s.out[0].(map[string]struct{}), s.err
 }
 
 func (s *serviceStoreSpy) GetAllFoldersWithRules(ctx context.Context, orgID int64) (map[string]struct{}, error) {

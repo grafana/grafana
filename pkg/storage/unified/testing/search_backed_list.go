@@ -351,7 +351,6 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 			for {
 				resp, err := server.List(ctx, newReq(pageSize, token))
 				require.NoError(t, err)
-				require.Nil(t, resp.Error)
 				require.Greater(t, resp.ResourceVersion, int64(0))
 				if listRV == 0 {
 					listRV = resp.ResourceVersion
@@ -395,7 +394,6 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		access.reset()
 		assertNoKeyScans(t, opts, func() { resp, err = server.List(ctx, newReq(1000, "")) })
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
 		require.Empty(t, resp.NextPageToken, "the whole set fits on one page")
 		require.Len(t, resp.Items, authorized)
 		assertListAuthorization(t, opts, access, 1, authorized)
@@ -429,7 +427,6 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 
 		resp, err := server.List(coldCtx, req)
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
 		require.Len(t, resp.Items, 1)
 		require.Equal(t, float64(1), promtestutil.ToFloat64(requested)-before, "only the returned row's body counts")
 	})
@@ -559,7 +556,6 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 			require.Less(t, pages, 10, "pagination must terminate")
 			resp, err := server.List(ctx, newReq(token))
 			require.NoError(t, err)
-			require.Nil(t, resp.Error)
 			if listRV == 0 {
 				listRV = resp.ResourceVersion
 			}
@@ -612,7 +608,6 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 
 				resp, err := server.List(ctx, req)
 				require.NoError(t, err)
-				require.Nil(t, resp.Error)
 				for _, item := range resp.Items {
 					obj := &unstructured.Unstructured{}
 					require.NoError(t, obj.UnmarshalJSON(item.Value))

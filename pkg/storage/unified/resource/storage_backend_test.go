@@ -1264,9 +1264,7 @@ func TestKvStorageBackend_ReadResource_ErrorStatus(t *testing.T) {
 					require.NotNil(t, response.Error)
 					require.Contains(t, response.Error.Message, tc.err.Error())
 					require.Equal(t, tc.want, grpcCodeFromErrorResult(response.Error))
-					_, err := UnaryErrorResultInterceptor()(t.Context(), req, nil, func(context.Context, any) (any, error) {
-						return &resourcepb.ReadResponse{Error: response.Error}, nil
-					})
+					err := GRPCStatusError(response.Error)
 					require.Equal(t, tc.want, status.Code(err))
 				})
 			}

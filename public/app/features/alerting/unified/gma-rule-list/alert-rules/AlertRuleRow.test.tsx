@@ -121,6 +121,11 @@ describe('AlertRuleRow', () => {
     expect(screen.queryByText(/label/)).not.toBeInTheDocument();
   });
 
+  it('renders actions in the right column when provided', () => {
+    renderRow({ searchHit: baseHit(), actions: <button>More</button> });
+    expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
+  });
+
   describe('instance counts', () => {
     it('shows firing and healthy counts in the meta strip linked to the instances tab', () => {
       renderRow({ searchHit: baseHit({ totalsFiring: 3, totalsHealthy: 7 }) });

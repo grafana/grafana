@@ -133,7 +133,7 @@ func (b *APIBuilder) handleStats(w http.ResponseWriter, r *http.Request) {
 	}
 	// TODO: check if lister could list too many repositories or resources
 	stats, err := b.resourceLister.Stats(r.Context(), u.GetNamespace(), "")
-	if err := resource.StatusErrorFromResponse(nil, err); err != nil {
+	if err := resource.StatusErrorFromGRPC(err); err != nil {
 		errhttp.Write(r.Context(), err, w)
 		return
 	}

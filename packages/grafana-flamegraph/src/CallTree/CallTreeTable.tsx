@@ -31,6 +31,7 @@ type CallTreeTableProps = {
   scrollContainerRef: { current: HTMLDivElement | null };
   focusedNodeId?: string;
   callersNodeLabel?: string;
+  onRowClick: (row: Row<CallTreeNode>) => void;
 };
 
 export function CallTreeTable({
@@ -50,6 +51,7 @@ export function CallTreeTable({
   scrollContainerRef,
   focusedNodeId,
   callersNodeLabel,
+  onRowClick,
 }: CallTreeTableProps) {
   const styles = useStyles2(getStyles);
   const SCROLLBAR_WIDTH = 16;
@@ -113,7 +115,7 @@ export function CallTreeTable({
           })}
         </thead>
         <tbody {...getTableBodyProps()} className={styles.tbody}>
-          {rows.map((row, rowIndex) => {
+          {rows.map((row) => {
             prepareRow(row);
             const { key, ...rowProps } = row.getRowProps();
             const isFocusedRow = row.original.id === focusedNodeId;
@@ -125,6 +127,11 @@ export function CallTreeTable({
                 key={key}
                 {...rowProps}
                 ref={isSearchMatchRow ? searchMatchRowRef : null}
+                onClick={({ target, currentTarget }) => {
+                  if (target instanceof Element && currentTarget.contains(target) && !target.closest('button')) {
+                    onRowClick(row);
+                  }
+                }}
                 className={cx(
                   styles.tr,
                   (isFocusedRow ||
@@ -151,7 +158,7 @@ export function CallTreeTable({
                       )}
                       style={getColumnStyle(cell.column, functionColumnMinWidth, pinnedRight)}
                     >
-                      {cell.render('Cell', { rowIndex })}
+                      {cell.render('Cell')}
                     </td>
                   );
                 })}
@@ -273,8 +280,9 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     tr: css({
       backgroundColor: background,
+      cursor: 'pointer',
       '&:hover': {
-        backgroundColor: theme.colors.emphasize(background, 0.03),
+        backgroundColor: colorManipulator.onBackground(theme.colors.action.hover, background).toRgbString(),
       },
     }),
     focusedRow: css({
@@ -310,7 +318,7 @@ function getStyles(theme: GrafanaTheme2) {
     td: css({
       padding: '0px 6px',
       borderBottom: 'none',
-      height: '20px',
+      height: '24px',
       verticalAlign: 'middle',
       overflow: 'hidden',
     }),

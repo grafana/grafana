@@ -92,6 +92,7 @@ declare module "@openfeature/core" {
     | "alertingEnrichmentPerRule"
     | "alertingEnrichmentAssistantInvestigations"
     | "alerting.dataSourceManagedRouteProxy"
+    | "alerting.watchersBanner"
     | "alerting.manualAssistantInvestigation"
     | "alerting.ruleReviews"
     | "alerting.ruleQuality"
@@ -112,7 +113,6 @@ declare module "@openfeature/core" {
     | "alertEnrichment"
     | "alertingImportAlertmanagerAPI"
     | "preferLibraryPanelTitle"
-    | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "dashboardLevelTimeMacros"
     | "favoriteDatasources"
@@ -159,7 +159,6 @@ declare module "@openfeature/core" {
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
     | "dashboard.vectorSearch"
-    | "grafana.vectorSearchCmdk"
     | "grafana.cmdkHybridSearch"
     | "grafana.cmdkDashboardTags"
     | "assistant.fullscreenWorkspace"
@@ -204,7 +203,9 @@ declare module "@openfeature/core" {
     | "grafana.geomapProtomapsBasemap"
     | "reporting.removeLogoUrlField"
     | "dashboards.disablePublicDashboards"
-    | "grafana.panelActionsPopover";
+    | "grafana.panelActionsPopover"
+    | "grafana.dashboardSidebarExplicitOpen"
+    | "grafana.folderPickerFolderEditAccess";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

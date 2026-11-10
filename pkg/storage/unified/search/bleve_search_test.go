@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -221,6 +222,25 @@ func TestCanSearchByTitle(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("ma"), []string{"name4"})
 		// no word in any title starts with "zz" — prefix wildcard matches nothing.
 		checkSearchQuery(t, index, newTestQuery("zz"), nil)
+	})
+
+	t.Run("multi-word queries shorter than ngram min are rewritten as prefix wildcards", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "QA Weekly Report - Billing",
+			"name2": "QA Weekly Report - Search",
+			"name3": "Weekly Ops",
+			"name4": "Team QA Weekly",
+		})
+
+		// Every word is too short to have n-grams, so "QA W" becomes "QA W*",
+		// which matches the start of the title.
+		checkSearchQueryUnordered(t, index, newTestQuery("QA W"), []string{"name1", "name2"})
+		checkSearchQueryUnordered(t, index, newTestQuery("QA We"), []string{"name1", "name2"})
+		checkSearchQueryUnordered(t, index, newTestQuery("qa w"), []string{"name1", "name2"})
+		checkSearchQuery(t, index, newTestQuery("XX W"), nil)
+		// Surrounding whitespace is dropped, so a single short word still matches any title word by prefix.
+		checkSearchQueryUnordered(t, index, newTestQuery("QA "), []string{"name1", "name2", "name4"})
 	})
 
 	t.Run("title filter ignores empty tokens from split values", func(t *testing.T) {
@@ -622,7 +642,6 @@ func TestFieldValueSearchResults(t *testing.T) {
 
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
 		require.Len(t, res.Rows, 1)
 		require.Equal(t, "dashboard-1", res.Rows[0].Key.Name)
@@ -654,7 +673,6 @@ func TestFieldValueSearchResults(t *testing.T) {
 
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Len(t, res.Rows, 1)
 		require.Equal(t, "dashboard-1", res.Rows[0].Key.Name)
 
@@ -672,7 +690,6 @@ func TestFieldValueSearchResults(t *testing.T) {
 
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Len(t, res.Rows, 1)
 		require.NotNil(t, res.Rows[0].Score)
 	})
@@ -683,7 +700,6 @@ func TestFieldValueSearchResults(t *testing.T) {
 
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.NotEmpty(t, res.Fields)
 		require.Len(t, res.Rows, 1)
 		require.NotNil(t, res.Rows[0].Score)
@@ -705,11 +721,11 @@ func TestFieldValueSearchResults(t *testing.T) {
 		req.Fields = []string{"does_not_exist"}
 		req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
 
-		res, err := index.Search(t.Context(), nil, req, nil, nil)
-		require.NoError(t, err)
-		require.NotNil(t, res.Error)
-		require.Equal(t, int32(400), res.Error.Code)
-		require.Contains(t, res.Error.Message, `unknown response field "does_not_exist"`)
+		_, err := index.Search(t.Context(), nil, req, nil, nil)
+		resErr := resourceutil.ErrorResultFromGRPCDetails(err)
+		require.NotNil(t, resErr)
+		require.Equal(t, int32(400), resErr.Code)
+		require.Contains(t, resErr.Message, `unknown response field "does_not_exist"`)
 	})
 }
 
@@ -786,11 +802,11 @@ func TestDoubleEqualsExactMatch(t *testing.T) {
 			},
 			Limit: 100000,
 		}
-		res, err := index.Search(context.Background(), nil, req, nil, nil)
-		require.NoError(t, err)
-		require.NotNil(t, res.Error)
-		require.Equal(t, int32(400), res.Error.Code)
-		require.Contains(t, res.Error.Message, "unsupported query operation")
+		_, err := index.Search(context.Background(), nil, req, nil, nil)
+		resErr := resourceutil.ErrorResultFromGRPCDetails(err)
+		require.NotNil(t, resErr)
+		require.Equal(t, int32(400), resErr.Code)
+		require.Contains(t, resErr.Message, "unsupported query operation")
 	})
 
 	t.Run("double equals with multiple values returns error", func(t *testing.T) {
@@ -810,11 +826,11 @@ func TestDoubleEqualsExactMatch(t *testing.T) {
 			},
 			Limit: 100000,
 		}
-		res, err := index.Search(context.Background(), nil, req, nil, nil)
-		require.NoError(t, err)
-		require.NotNil(t, res.Error)
-		require.Equal(t, int32(400), res.Error.Code)
-		require.Contains(t, res.Error.Message, "unsupported query operation")
+		_, err := index.Search(context.Background(), nil, req, nil, nil)
+		resErr := resourceutil.ErrorResultFromGRPCDetails(err)
+		require.NotNil(t, resErr)
+		require.Equal(t, int32(400), resErr.Code)
+		require.Contains(t, resErr.Message, "unsupported query operation")
 	})
 
 	t.Run("single equals on title keeps fuzzy behavior", func(t *testing.T) {
@@ -1314,10 +1330,11 @@ func indexRegexKeywordValues(t testing.TB, index resource.ResourceIndex, key res
 func requireBadRequestSearch(t *testing.T, index resource.ResourceIndex, query *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
 	t.Helper()
 	res, err := index.Search(context.Background(), nil, query, nil, nil)
-	require.NoError(t, err)
-	require.NotNil(t, res.Error)
-	require.Equal(t, int32(400), res.Error.Code)
-	return res.Error
+	require.Nil(t, res)
+	errRes := resourceutil.ErrorResultFromGRPCDetails(err)
+	require.NotNil(t, errRes, "expected an ErrorResult detail on %v", err)
+	require.Equal(t, int32(400), errRes.Code)
+	return errRes
 }
 
 func requireBadRequestSearchError(t *testing.T, index resource.ResourceIndex, access authlib.AccessClient, query *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
@@ -1573,11 +1590,11 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 
 	// A field the index was not built with is refused, rather than answered with an
 	// empty result that reads as "nothing matches".
-	res, err := index.Search(context.Background(), nil, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"unknown.field", "another_value"), nil, nil)
-	require.NoError(t, err)
-	require.NotNil(t, res.Error)
-	require.True(t, resource.IsSelectableFieldNotIndexed(res.Error))
-	require.Equal(t, int32(http.StatusBadRequest), res.Error.Code)
+	_, err = index.Search(context.Background(), nil, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"unknown.field", "another_value"), nil, nil)
+	resErr := resourceutil.ErrorResultFromGRPCDetails(err)
+	require.NotNil(t, resErr)
+	require.True(t, resource.IsSelectableFieldNotIndexed(resErr))
+	require.Equal(t, int32(http.StatusBadRequest), resErr.Code)
 }
 
 func selectableFieldQuery(key *resourcepb.ResourceKey, field, value string) *resourcepb.ResourceSearchRequest {
@@ -1868,7 +1885,6 @@ func searchNames(t *testing.T, index resource.ResourceIndex, ac authlib.AccessCl
 	ctx := authlib.WithAuthInfo(context.Background(), requester)
 	res, err := index.Search(ctx, ac, q, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 	names := make([]string, 0, len(res.Rows))
 	for _, row := range res.Rows {
 		names = append(names, row.Key.Name)
@@ -1887,8 +1903,7 @@ func columnNames(res *resourcepb.ResourceSearchResponse) []string {
 	return names
 }
 
-// searchResponse runs a search and returns the raw response (without asserting
-// on res.Error), so tests can assert on error/bad-request behavior.
+// searchResponse runs a search that must succeed and returns the raw response.
 func searchResponse(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, q *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
 	t.Helper()
 	requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
@@ -2427,7 +2442,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		q := listQuery(10)
 		q.SearchAfter = []string{"doc-a", "doc-a"}
 		names, res := searchNames(t, index, ac, q)
-		require.Nil(t, res.Error)
+		require.NotNil(t, res)
 		// Falls back to the in-searcher path; returns docs with (title, name)
 		// > ("doc-a", "doc-a").
 		require.Equal(t, []string{"doc-b", "doc-c"}, names)
@@ -2442,8 +2457,10 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// mismatched bleve search.
 		q := listQuery(10)
 		q.SearchAfter = []string{"a", "b", "c", "d"}
-		res := searchResponse(t, index, ac, q)
-		require.NotNil(t, res.Error)
+		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
+		res, err := index.Search(authlib.WithAuthInfo(context.Background(), requester), ac, q, nil, nil)
+		require.Nil(t, res)
+		require.Equal(t, int32(http.StatusBadRequest), resourceutil.ErrorResultFromGRPCDetails(err).GetCode())
 	})
 
 	// --- Facets on the postFilter path (aggregated app-side over authorized hits) ---
@@ -3014,7 +3031,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		q := listQuery(10)
 		q.SearchBefore = []string{"doc-c", "doc-c"}
 		names, res := searchNames(t, index, ac, q)
-		require.Nil(t, res.Error)
+		require.NotNil(t, res)
 		// Falls back to in-searcher SearchBefore: the hits before ("doc-c","doc-c").
 		require.Equal(t, []string{"doc-a", "doc-b"}, names)
 	})
@@ -3262,7 +3279,6 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		ctx := authlib.WithAuthInfo(context.Background(), requester)
 		res, err := dash.Search(ctx, ac, q, &resource.SearchIndexes{Federated: []resource.ResourceIndex{folderIdx}}, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		out := make([][2]string, 0, len(res.Rows))
 		for _, row := range res.Rows {
 			out = append(out, [2]string{row.Key.Resource, row.Key.Name})
@@ -3593,7 +3609,6 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Equal(t, int64(len(liveNames)), res.TotalHits)
 
 		facet, ok := res.Facet["tags"]
@@ -3670,7 +3685,6 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 			Id:        manager.Identity,
 		}, &resource.SearchStats{})
 		require.NoError(t, err)
-		require.Nil(t, listed.Error)
 
 		names := make([]string, 0, len(listed.Items))
 		for _, item := range listed.Items {
@@ -3782,7 +3796,6 @@ func checkSearchQueryUnordered(t *testing.T, index resource.ResourceIndex, query
 	t.Helper()
 	res, err := index.Search(context.Background(), nil, query, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 	require.Equal(t, int64(len(expectedNames)), res.TotalHits)
 
 	names := make([]string, 0, len(res.Rows))
@@ -3892,7 +3905,6 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		for _, name := range []string{"oldest", "middle", "newest"} {
 			res, err := index.Search(context.Background(), nil, q, nil, nil)
 			require.NoError(t, err)
-			require.Nil(t, res.Error)
 			require.Len(t, res.Rows, 1)
 			row := res.Rows[0]
 			require.Equal(t, name, row.Key.Name)
@@ -3989,15 +4001,16 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 				tc.mutate(q)
 
 				res, err := index.Search(context.Background(), nil, q, nil, nil)
-				require.NoError(t, err, "a bad request comes back in the response, not as an error")
-				require.NotNil(t, res.Error)
-				require.Equal(t, int32(400), res.Error.Code)
+				require.Nil(t, res)
+				resErr := resourceutil.ErrorResultFromGRPCDetails(err)
+				require.NotNil(t, resErr)
+				require.Equal(t, int32(400), resErr.Code)
 
 				// The same request against trash is fine.
 				q.IsDeleted = true
 				res, err = index.Search(context.Background(), nil, q, nil, nil)
 				require.NoError(t, err)
-				require.Nil(t, res.Error)
+				require.NotNil(t, res)
 			})
 		}
 	})
@@ -4073,7 +4086,6 @@ func TestTrashSearchFiltersAndReturnsTags(t *testing.T) {
 
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Len(t, res.Fields, 1, "a field without a column definition is dropped silently")
 		require.Equal(t, resource.SEARCH_FIELD_TAGS, res.Fields[0].Name)
 
@@ -4168,10 +4180,10 @@ func TestFilteringOnBooleanAndNumericFields(t *testing.T) {
 		{"filter on a field that only declares retrieve", filter(resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS, "=", "true")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := index.Search(context.Background(), nil, tc.query, nil, nil)
-			require.NoError(t, err, "a bad request comes back in the response, not as an error")
-			require.NotNil(t, res.Error)
-			require.Equal(t, int32(400), res.Error.Code)
+			_, err := index.Search(context.Background(), nil, tc.query, nil, nil)
+			resErr := resourceutil.ErrorResultFromGRPCDetails(err)
+			require.NotNil(t, resErr)
+			require.Equal(t, int32(400), resErr.Code)
 		})
 	}
 }
@@ -4229,7 +4241,6 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 			Limit:        10,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Len(t, res.Rows, len(want))
 
 		for _, row := range res.Rows {
@@ -4245,7 +4256,6 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 			Limit:        10,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Len(t, res.Rows, len(want))
 
 		for _, row := range res.Rows {
@@ -4262,7 +4272,6 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error)
 		require.Len(t, res.Rows, len(want))
 
 		for _, row := range res.Rows {
@@ -4273,14 +4282,14 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 	// The resource version is not a field a caller can name, so asking for it is a
 	// bad request rather than a way to read the stored string.
 	t.Run("the stored field is not requestable", func(t *testing.T) {
-		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+		_, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
 			Options:      opts,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Fields:       []string{resource.SEARCH_FIELD_RV_STRING},
 			Limit:        10,
 		}, nil, nil)
-		require.NoError(t, err)
-		require.NotNil(t, res.Error)
+		resErr := resourceutil.ErrorResultFromGRPCDetails(err)
+		require.NotNil(t, resErr)
 	})
 }
 
@@ -4301,7 +4310,6 @@ func TestPostRankAuthzSearchReturnsExactResourceVersion(t *testing.T) {
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 
 	want := map[string]int64{"lower": rvLower, "upper": rvUpper, "no-rv": 0}
 	require.Len(t, res.Rows, len(want))
@@ -4326,7 +4334,6 @@ func TestTrashSearchReturnsExactResourceVersion(t *testing.T) {
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 	require.Len(t, res.Rows, 1)
 	require.Equal(t, "deleted", res.Rows[0].Key.Name)
 	require.Equal(t, rvUpper, res.Rows[0].ResourceVersion)
@@ -4426,9 +4433,9 @@ func TestSearchRejectsInternalFields(t *testing.T) {
 				t.Run(name, func(t *testing.T) {
 					req := newRequest()
 					mutate(req)
-					res := search(t, req)
-					require.NotNil(t, res.Error, "request naming %q must be refused", field)
-					require.Equal(t, int32(http.StatusBadRequest), res.Error.Code)
+					res, err := index.Search(context.Background(), nil, req, nil, nil)
+					require.Nil(t, res, "request naming %q must be refused", field)
+					require.Equal(t, int32(http.StatusBadRequest), resourceutil.ErrorResultFromGRPCDetails(err).GetCode())
 				})
 			}
 		})
@@ -4445,7 +4452,7 @@ func TestSearchRejectsInternalFields(t *testing.T) {
 		} {
 			req := newRequest()
 			req.Fields = []string{field}
-			require.Nil(t, search(t, req).Error, "field %q must stay usable", field)
+			require.NotNil(t, search(t, req), "field %q must stay usable", field)
 		}
 	})
 
@@ -4456,6 +4463,6 @@ func TestSearchRejectsInternalFields(t *testing.T) {
 		req.Options.Labels = []*resourcepb.Requirement{
 			{Key: resource.SEARCH_FIELD_RV_STRING, Operator: string(selection.Equals), Values: []string{"1"}},
 		}
-		require.Nil(t, search(t, req).Error)
+		require.NotNil(t, search(t, req))
 	})
 }
