@@ -15,7 +15,7 @@ import {
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 import { getSelectedUIDs } from 'app/features/browse-dashboards/utils/dashboards';
-import { invalidateStarredSearch } from 'app/features/stars/api';
+import { invalidateStarredSearchFor } from 'app/features/stars/api';
 import { type FolderDTO, type NewFolder } from 'app/types/folders';
 import { dispatch } from 'app/types/store';
 
@@ -385,9 +385,9 @@ export function useUpdateFolder() {
 
     const result = await updateFolderMutation(payload);
     refresh({ childrenOf: folder.parentUid });
-    // A rename changes the starred rows' labels without changing the star set
+    // A rename changes a starred row's label without changing the star set
     if (!result.error) {
-      dispatch(invalidateStarredSearch());
+      dispatch(invalidateStarredSearchFor([folder.uid]));
     }
 
     return {

@@ -27,7 +27,7 @@ export function DashboardTabs() {
 
   const recent = useRecentActivity();
   // Searched again on each visit so a rename or delete from another tab shows. Searched in full, then cut: stars on
-  // deleted or inaccessible items don't take up slots.
+  // deleted or inaccessible items don't take up slots, and the rows come in title order.
   const {
     rows: starredRows,
     loading: starredLoading,

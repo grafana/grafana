@@ -21,7 +21,7 @@ import { type SaveDashboardCommand } from 'app/features/dashboard/components/Sav
 import { clearDashboardsPageCache } from 'app/features/dashboard-scene/utils/cache';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
-import { invalidateStarredSearch } from 'app/features/stars/api';
+import { invalidateStarredSearch, invalidateStarredSearchFor } from 'app/features/stars/api';
 import { dispatch, getState } from 'app/store/store';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { type FolderDTO } from 'app/types/folders';
@@ -76,6 +76,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
           refreshTeamFolders();
           invalidateQuotaUsage(dispatch);
+          // The delete cascades to descendants the client never listed, so every starred row is re-searched
           dispatch(invalidateStarredSearch());
         } catch {
           // Error handled by mutation caller
@@ -232,7 +233,7 @@ export const browseDashboardsAPI = createApi({
         queryFulfilled.then(() => {
           dispatch(refreshParents({ kind: 'dashboard', uids: dashboardUIDs }));
           invalidateQuotaUsage(dispatch);
-          dispatch(invalidateStarredSearch());
+          dispatch(invalidateStarredSearchFor(dashboardUIDs));
         });
       },
     }),
@@ -296,7 +297,7 @@ export const browseDashboardsAPI = createApi({
             invalidateQuotaUsage(dispatch);
           }
           // A save can change the title, url slug or folder of a starred row
-          dispatch(invalidateStarredSearch());
+          dispatch(invalidateStarredSearchFor([data.uid]));
         });
       },
     }),

@@ -1,3 +1,4 @@
+import { type UnknownAction } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
 import { act, renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
@@ -5,12 +6,14 @@ import { act, renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { config, setAppEvents, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { folderHandlers, getFolderFixtures } from '@grafana/test-utils/unstable';
+import { folderHandlers, getFolderFixtures, setMockStarredFolders } from '@grafana/test-utils/unstable';
+import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { appEvents } from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { invalidateStarredSearch } from 'app/features/stars/api';
-import { configureStore } from 'app/store/configureStore';
+import { userStarsFieldSelector } from 'app/features/stars/utils';
+import { addExtraMiddleware, configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type StoreState } from 'app/types/store';
 
@@ -379,8 +382,20 @@ describe('app platform folder create/update', () => {
 
 describe('useUpdateFolder starred rows', () => {
   const originalAppSubUrl = String(config.appSubUrl);
+  // Records the starred search invalidations every store built from here on dispatches
+  const invalidations: UnknownAction[] = [];
+
+  beforeAll(() => {
+    addExtraMiddleware(() => (next) => (action) => {
+      if (collectionsAPIv1alpha1.util.invalidateTags.match(action)) {
+        invalidations.push(action);
+      }
+      return next(action);
+    });
+  });
 
   beforeEach(() => {
+    invalidations.length = 0;
     config.appSubUrl = '';
     folderAPIVersionResolver.set('v1beta1');
     setupUpdateFolderHandler();
@@ -391,20 +406,42 @@ describe('useUpdateFolder starred rows', () => {
     folderAPIVersionResolver.set('v1beta1');
   });
 
-  it('re-searches the starred rows after rename', async () => {
-    const uid = folderA_folderA.item.uid;
-    const store = configureStore();
-    const dispatchSpy = jest.spyOn(store, 'dispatch');
+  const renameFolder = async (uid: string, store: ReturnType<typeof configureStore>) => {
     const { user } = await setupUpdateFolder(uid, store);
-
     await user.clear(screen.getByLabelText('Folder Title'));
     await user.type(screen.getByLabelText('Folder Title'), 'Updated Folder');
     await user.click(screen.getByText('Update Folder'));
-
     expect(await screen.findByText('Folder updated')).toBeInTheDocument();
+  };
+
+  it('re-searches the starred rows after renaming a starred folder', async () => {
+    const uid = folderA_folderA.item.uid;
+    setMockStarredFolders([uid]);
+    const store = configureStore();
+    // The star set as a mounted view would have cached it
+    await store.dispatch(
+      collectionsAPIv1alpha1.endpoints.listStars.initiate({ fieldSelector: userStarsFieldSelector() })
+    );
+
+    await renameFolder(uid, store);
+
     // The rename changes a starred row's label without changing the star set, so the rows are searched again
-    await waitFor(() => expect(dispatchSpy).toHaveBeenCalledWith(invalidateStarredSearch()));
+    await waitFor(() => expect(invalidations).toEqual([invalidateStarredSearch()]));
     await expectChildrenRefetched(store, undefined, folderA.item.uid);
+  });
+
+  it('leaves the starred rows alone after renaming an unstarred folder', async () => {
+    setMockStarredFolders([folderB.item.uid]);
+    const store = configureStore();
+    await store.dispatch(
+      collectionsAPIv1alpha1.endpoints.listStars.initiate({ fieldSelector: userStarsFieldSelector() })
+    );
+
+    await renameFolder(folderA_folderA.item.uid, store);
+
+    // The children refetch follows the rename, so by now the rows would have been invalidated too
+    await expectChildrenRefetched(store, undefined, folderA.item.uid);
+    expect(invalidations).toEqual([]);
   });
 });
 

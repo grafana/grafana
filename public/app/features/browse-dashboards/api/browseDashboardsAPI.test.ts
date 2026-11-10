@@ -9,6 +9,7 @@ import { config, setBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setMockStarredDashboards } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { legacyAPI } from 'app/api/clients/legacy';
@@ -19,6 +20,7 @@ import { type SaveDashboardCommand } from 'app/features/dashboard/components/Sav
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { deletedDashboardsCache } from 'app/features/search/service/deletedDashboardsCache';
 import { invalidateStarredSearch } from 'app/features/stars/api';
+import { userStarsFieldSelector } from 'app/features/stars/utils';
 import * as variablesManagementCache from 'app/features/variables-management/cache';
 import { setStore } from 'app/store/store';
 import { type FolderDTO } from 'app/types/folders';
@@ -38,32 +40,14 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
 
 describe('browseDashboardsAPI', () => {
   const getDashboardAPIMock = jest.mocked(getDashboardAPI);
-  const createTestStore = () => {
-    const store = configureStore({
-      reducer: {
-        [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
-        [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
-        // Needed because deleting a folder refreshes the team folders tree, which fetches the user's teams
-        [legacyAPI.reducerPath]: legacyAPI.reducer,
-        browseDashboards: browseDashboardsReducer,
-      },
-      middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(
-          browseDashboardsAPI.middleware,
-          folderAPIv1beta1.middleware,
-          legacyAPI.middleware
-        ),
-    });
-    setStore(store as unknown as Store);
-    return store;
-  };
-
-  // Mirrors createTestStore but appends an action-recording middleware so tests can assert on dispatches
+  // The slices the mutations reach: the stars slice because a write to named items re-searches the starred rows only
+  // if one of them is starred. `recorder` sees every dispatch, so tests can assert on them.
   const makeRecorderStore = (recorder: Middleware) => {
     const store = configureStore({
       reducer: {
         [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
         [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
+        [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer,
         // Needed because deleting a folder refreshes the team folders tree, which fetches the user's teams
         [legacyAPI.reducerPath]: legacyAPI.reducer,
         browseDashboards: browseDashboardsReducer,
@@ -72,6 +56,7 @@ describe('browseDashboardsAPI', () => {
         getDefaultMiddleware().concat(
           browseDashboardsAPI.middleware,
           folderAPIv1beta1.middleware,
+          collectionsAPIv1alpha1.middleware,
           legacyAPI.middleware,
           recorder
         ),
@@ -79,6 +64,8 @@ describe('browseDashboardsAPI', () => {
     setStore(store as unknown as Store);
     return store;
   };
+
+  const createTestStore = () => makeRecorderStore(() => (next) => (action) => next(action));
 
   // Records starred-search invalidations so tests can assert on starred row cleanup
   const createStoreWithStarredSearchRecorder = () => {
@@ -589,16 +576,7 @@ describe('browseDashboardsAPI', () => {
         return next(action);
       };
 
-      const store = configureStore({
-        reducer: {
-          [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
-          [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
-          browseDashboards: browseDashboardsReducer,
-        },
-        middleware: (getDefaultMiddleware) =>
-          getDefaultMiddleware().concat(browseDashboardsAPI.middleware, folderAPIv1beta1.middleware, recorder),
-      });
-      setStore(store as unknown as Store);
+      const store = makeRecorderStore(recorder);
       return { store, refetchPendingArgs };
     };
 
@@ -704,6 +682,64 @@ describe('browseDashboardsAPI', () => {
       await waitFor(() => {
         expect(refetchPendingArgs).toEqual([{ parentUID: newFolderUid }]);
       });
+    });
+  });
+
+  describe('saveDashboard starred rows', () => {
+    const dashboardUid = 'dash-1';
+
+    // Records the children refetch the save dispatches just before deciding on the starred rows
+    const createStoreWithSaveRecorder = () => {
+      const invalidations: UnknownAction[] = [];
+      const refetches: UnknownAction[] = [];
+      const recorder: Middleware = () => (next) => (action) => {
+        if (collectionsAPIv1alpha1.util.invalidateTags.match(action)) {
+          invalidations.push(action);
+        }
+        if (refetchChildren.pending.match(action)) {
+          refetches.push(action);
+        }
+        return next(action);
+      };
+      return { store: makeRecorderStore(recorder), invalidations, refetches };
+    };
+
+    const saveDashboard = async (store: ReturnType<typeof makeRecorderStore>) => {
+      // The star set as a mounted view would have cached it
+      await store.dispatch(
+        collectionsAPIv1alpha1.endpoints.listStars.initiate({ fieldSelector: userStarsFieldSelector() })
+      );
+      const cmd: SaveDashboardCommand<Dashboard> = {
+        dashboard: { uid: dashboardUid, title: 'Renamed', panels: [], schemaVersion: 1 } as unknown as Dashboard,
+        folderUid: 'folder-1',
+      };
+      await store.dispatch(browseDashboardsAPI.endpoints.saveDashboard.initiate(cmd));
+    };
+
+    beforeEach(() => {
+      getDashboardAPIMock.mockImplementation(() =>
+        createMockDashboardAPI(jest.fn().mockResolvedValue({ uid: dashboardUid }))
+      );
+    });
+
+    it('re-searches the starred rows after saving a starred dashboard', async () => {
+      setMockStarredDashboards([dashboardUid]);
+      const { store, invalidations } = createStoreWithSaveRecorder();
+
+      await saveDashboard(store);
+
+      await waitFor(() => expect(invalidations).toEqual([invalidateStarredSearch()]));
+    });
+
+    it('leaves the starred rows alone after saving an unstarred dashboard', async () => {
+      setMockStarredDashboards(['another-dashboard']);
+      const { store, invalidations, refetches } = createStoreWithSaveRecorder();
+
+      await saveDashboard(store);
+
+      // The children refetch precedes the decision on the rows in the same callback, so by now it has been made
+      await waitFor(() => expect(refetches).toHaveLength(1));
+      expect(invalidations).toEqual([]);
     });
   });
 });

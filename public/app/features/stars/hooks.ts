@@ -72,14 +72,14 @@ export const useStarredSearch = ({
 }: { skip?: boolean; refetchOnMountOrArgChange?: boolean } = {}) => {
   const stars = useListStarsQuery(skip ? skipToken : { fieldSelector: userStarsFieldSelector() });
 
-  // Sorted so the cache key is the set, not the order the API listed it in
+  // Keyed by search kind, names sorted, so the cache key is the set and not the order the API listed it in
   const args = useMemo(() => {
     if (!stars.data) {
       return undefined;
     }
-    return STARRED_KINDS.flatMap(({ group, kind }) => {
+    return STARRED_KINDS.flatMap(({ group, kind, searchKind }) => {
       const names = [...findStarredNames(stars.data, group, kind)].sort();
-      return names.length > 0 ? [{ group, kind, names }] : [];
+      return names.length > 0 ? [{ kind: searchKind, names }] : [];
     });
   }, [stars.data]);
   const search = useSearchStarredQuery(args ?? skipToken, { refetchOnMountOrArgChange });

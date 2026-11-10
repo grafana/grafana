@@ -23,18 +23,24 @@ export function useNavTree(): NavModelItem[] {
     if (!rows) {
       return [];
     }
-    return rows
-      .flatMap((row): NavModelItem[] => {
-        const kind = findStarredKindBySearchKind(row.kind);
-        // A row nobody can star, or one whose kind has no nav entry, is not a starred item to show
-        if (!kind) {
-          return [];
-        }
-        const { icon, sortWeight } = kind;
-        // A dashboard and a folder may share a uid, so the kind is part of the identity
-        return [{ id: `${STARRED_ID_PREFIX}${row.kind}/${row.uid}`, text: row.name, url: row.url, icon, sortWeight }];
-      })
-      .sort((a, b) => (a.sortWeight ?? 0) - (b.sortWeight ?? 0) || collator.compare(a.text, b.text));
+    return (
+      rows
+        // The rows are of starred kinds already; the lookup is for the icon and the sort group
+        .flatMap((row) => {
+          const kind = findStarredKindBySearchKind(row.kind);
+          return kind ? [{ kind, row }] : [];
+        })
+        .sort((a, b) => a.kind.sortWeight - b.kind.sortWeight || collator.compare(a.row.name, b.row.name))
+        .map(
+          ({ kind, row }): NavModelItem => ({
+            // A dashboard and a folder may share a uid, so the kind is part of the identity
+            id: `${STARRED_ID_PREFIX}${row.kind}/${row.uid}`,
+            text: row.name,
+            url: row.url,
+            icon: kind.icon,
+          })
+        )
+    );
   }, [rows]);
 
   return useMemo(

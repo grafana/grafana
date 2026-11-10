@@ -98,13 +98,10 @@ export function DashList(props: PanelProps<Options>) {
     });
   }, [props.options, props.replaceVariables, throttledRenderCount]);
 
-  // Searched again on each mount like the other groups, then cut after sorting so the panel shows the first
+  // Searched again on each mount like the other groups. The rows come in title order, so the cut keeps the first
   // `maxItems` alphabetically
   const { rows: starredRows } = useStarredSearch({ skip: !showStarred, refetchOnMountOrArgChange: true });
-  const starredDashboards = useMemo(
-    () => [...(starredRows ?? [])].sort((a, b) => collator.compare(a.name, b.name)).slice(0, maxItems),
-    [starredRows, maxItems]
-  );
+  const starredDashboards = starredRows?.slice(0, maxItems) ?? [];
 
   const { foldersByUid } = useDashboardLocationInfo(
     showFolderNames && (dashboards.size > 0 || starredDashboards.length > 0)
