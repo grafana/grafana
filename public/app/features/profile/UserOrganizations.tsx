@@ -62,7 +62,7 @@ const UserOrganizations = memo<Props>(({ isLoading, orgs, user, setUserOrg, head
                           setUserOrg(org);
                         }}
                       >
-                        <Trans i18nKey="user-orgs.select-org-button">Select organisation</Trans>
+                        <Trans i18nKey="user-orgs.select-org-button">Select organization</Trans>
                       </Button>
                     )}
                   </td>

@@ -2,6 +2,7 @@ package snapshot
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -25,6 +26,7 @@ import (
 
 type fakeBlobStore struct {
 	put      *resourcepb.PutBlobRequest
+	putCalls int
 	get      *resourcepb.GetBlobRequest
 	putRsp   *resourcepb.PutBlobResponse
 	putErr   error
@@ -34,6 +36,7 @@ type fakeBlobStore struct {
 
 func (f *fakeBlobStore) PutBlob(_ context.Context, req *resourcepb.PutBlobRequest, _ ...grpc.CallOption) (*resourcepb.PutBlobResponse, error) {
 	f.put = req
+	f.putCalls++
 	f.value = req.Value
 	return f.putRsp, f.putErr
 }
@@ -49,72 +52,38 @@ func (f *fakeBlobStore) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequ
 func newBlobTestSnapshot() *dashv0.Snapshot {
 	return &dashv0.Snapshot{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "snap-1"},
-		Spec: dashv0.SnapshotSpec{
-			Dashboard: map[string]any{"title": "CPU", "panels": []any{}},
-		},
+		Blobs: dashv0.SnapshotBlobs{Dashboard: &dashv0.SnapshotBlobReference{
+			Data:        new(base64.StdEncoding.EncodeToString([]byte(`{"title":"CPU","panels":[]}`))),
+			ContentType: new("application/json"),
+		}},
 	}
 }
 
-func TestMoveDashboardToBlob(t *testing.T) {
-	ctx := context.Background()
+func dashboardContentForTest(t *testing.T, snap *dashv0.Snapshot) map[string]any {
+	t.Helper()
+	dashboard, err := inlineDashboardContent(snap)
+	require.NoError(t, err)
+	return dashboard
+}
 
-	t.Run("stores the dashboard as a blob and references it from blobs.dashboard", func(t *testing.T) {
-		store := &fakeBlobStore{putRsp: &resourcepb.PutBlobResponse{Uid: "blob-1", Size: 27, Hash: "abc", MimeType: "application/json"}}
+func TestInlineDashboardContent(t *testing.T) {
+	for _, value := range []string{`{"id":9007199254740993}`, `{}`} {
 		snap := newBlobTestSnapshot()
-
-		require.NoError(t, moveDashboardToBlob(ctx, store, snap))
-
-		require.Nil(t, snap.Spec.Dashboard)
-		require.Equal(t, &resourcepb.ResourceKey{Namespace: "default", Group: dashv0.GROUP, Resource: "snapshots", Name: "snap-1"}, store.put.Resource)
-		require.JSONEq(t, `{"title":"CPU","panels":[]}`, string(store.put.Value))
-		require.Equal(t, "blob-1", snap.Blobs.Dashboard.Uid)
-		require.Equal(t, int64(27), *snap.Blobs.Dashboard.Size)
-		require.Equal(t, "abc", *snap.Blobs.Dashboard.Hash)
-		require.Equal(t, "application/json", *snap.Blobs.Dashboard.ContentType)
-		require.Empty(t, snap.GetAnnotations())
-
-		encoded, err := json.Marshal(snap)
+		snap.Blobs.Dashboard.Data = new(base64.StdEncoding.EncodeToString([]byte(value)))
+		dashboard, err := inlineDashboardContent(snap)
 		require.NoError(t, err)
-		decoded := &dashv0.Snapshot{}
-		require.NoError(t, json.Unmarshal(encoded, decoded))
-		require.Equal(t, snap.Blobs, decoded.Blobs)
-		require.Contains(t, string(encoded), `"blobs":{"dashboard":{"uid":"blob-1"`)
-	})
-
-	t.Run("keeps the dashboard inline when the blob store is not implemented", func(t *testing.T) {
-		store := &fakeBlobStore{putRsp: &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotImplemented}}}
-		snap := newBlobTestSnapshot()
-
-		require.NoError(t, moveDashboardToBlob(ctx, store, snap))
-
-		require.NotNil(t, snap.Spec.Dashboard)
-		require.Nil(t, snap.Blobs.Dashboard)
-	})
-
-	t.Run("keeps the dashboard inline when the blob store returns gRPC 501", func(t *testing.T) {
-		failure := &resourcepb.ErrorResult{Code: http.StatusNotImplemented, Message: "blob store not configured"}
-		st, err := status.New(codes.Unimplemented, failure.Message).WithDetails(failure)
+		encoded, err := json.Marshal(dashboard)
 		require.NoError(t, err)
-		store := &fakeBlobStore{putErr: st.Err()}
-		snap := newBlobTestSnapshot()
-
-		require.NoError(t, moveDashboardToBlob(ctx, store, snap))
-		require.NotNil(t, snap.Spec.Dashboard)
-		require.Nil(t, snap.Blobs.Dashboard)
-	})
-
-	t.Run("returns a Kubernetes status for other gRPC errors", func(t *testing.T) {
-		failure := &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "denied"}
-		st, err := status.New(codes.PermissionDenied, failure.Message).WithDetails(failure)
-		require.NoError(t, err)
-		snap := newBlobTestSnapshot()
-
-		err = moveDashboardToBlob(ctx, &fakeBlobStore{putErr: st.Err()}, snap)
-
-		require.True(t, apierrors.IsForbidden(err), "expected Kubernetes 403, got %v", err)
-		require.NotNil(t, snap.Spec.Dashboard)
-		require.Nil(t, snap.Blobs.Dashboard)
-	})
+		require.JSONEq(t, value, string(encoded))
+	}
+	for _, value := range []string{`null`, `[]`, `"dashboard"`, `{} {}`, `invalid`} {
+		t.Run(value, func(t *testing.T) {
+			snap := newBlobTestSnapshot()
+			snap.Blobs.Dashboard.Data = new(base64.StdEncoding.EncodeToString([]byte(value)))
+			_, err := inlineDashboardContent(snap)
+			require.Error(t, err)
+		})
+	}
 }
 
 func TestPublicSnapshotDashboardBlob(t *testing.T) {
@@ -122,17 +91,16 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 	store := &fakeBlobStore{checkGet: func(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
 		info, ok := authlib.AuthInfoFrom(ctx)
 		if !ok || info == nil {
-			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusUnauthorized}}, nil
+			return nil, status.Error(codes.Unauthenticated, "missing auth info")
 		}
 		if info.GetNamespace() != req.Resource.Namespace {
-			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusForbidden}}, nil
+			return nil, status.Error(codes.PermissionDenied, "namespace mismatch")
 		}
 		return &resourcepb.GetBlobResponse{Value: []byte(`{"title":"CPU"}`)}, nil
 	}}
 	snap := newBlobTestSnapshot()
 	snap.Namespace = namespace
-	snap.Spec.Dashboard = nil
-	snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
+	snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: new("blob-1")}
 	getter := grafanarest.NewMockStorage(t)
 	getter.On("Get", mock.Anything, "snap-1", mock.Anything).Return(snap, nil)
 	getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*snap}}, nil)
@@ -186,7 +154,7 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 	t.Run("inline public lookup through the default namespace", func(t *testing.T) {
 		inline := snap.DeepCopy()
 		inline.Blobs.Dashboard = nil
-		inline.Spec.Dashboard = map[string]any{"title": "CPU"}
+		require.NoError(t, setDashboardContent(inline, map[string]any{"title": "CPU"}))
 		getter := grafanarest.NewMockStorage(t)
 		getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*inline}}, nil)
 		r, err := NewDashboardREST(getter, nil)
@@ -215,8 +183,7 @@ func TestLoadDashboardContent(t *testing.T) {
 	t.Run("reads the blob referenced by blobs.dashboard", func(t *testing.T) {
 		store := &fakeBlobStore{value: []byte(`{"title":"CPU","panels":[]}`)}
 		snap := newBlobTestSnapshot()
-		snap.Spec.Dashboard = nil
-		snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
+		snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: new("blob-1")}
 
 		dash, err := loadDashboardContent(ctx, store, snap)
 
@@ -227,26 +194,16 @@ func TestLoadDashboardContent(t *testing.T) {
 		require.Equal(t, map[string]any{"title": "CPU", "panels": []any{}}, dash)
 	})
 
-	for _, tc := range []struct {
-		name string
-		ref  *dashv0.SnapshotBlobReference
-	}{
-		{"no reference", nil},
-		{"empty blob UID", &dashv0.SnapshotBlobReference{}},
-	} {
-		t.Run("returns inline dashboard with "+tc.name, func(t *testing.T) {
-			snap := newBlobTestSnapshot()
-			snap.Blobs.Dashboard = tc.ref
-			dash, err := loadDashboardContent(ctx, nil, snap)
-
-			require.NoError(t, err)
-			require.Equal(t, snap.Spec.Dashboard, dash)
-		})
-	}
+	t.Run("reads internal legacy inline input", func(t *testing.T) {
+		snap := newBlobTestSnapshot()
+		dash, err := loadDashboardContent(ctx, nil, snap)
+		require.NoError(t, err)
+		require.Equal(t, dashboardContentForTest(t, snap), dash)
+	})
 
 	t.Run("fails when a reference exists but no blob store is configured", func(t *testing.T) {
 		snap := newBlobTestSnapshot()
-		snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
+		snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: new("blob-1")}
 
 		dash, err := loadDashboardContent(ctx, nil, snap)
 
@@ -254,10 +211,33 @@ func TestLoadDashboardContent(t *testing.T) {
 		require.Nil(t, dash)
 	})
 
+	t.Run("preserves attached error details", func(t *testing.T) {
+		failure := &resourcepb.ErrorResult{
+			Code: http.StatusForbidden, Reason: string(metav1.StatusReasonForbidden), Message: "blob denied",
+			Details: &resourcepb.ErrorDetails{Group: dashv0.GROUP, Kind: "snapshots", Name: "snap-1"},
+		}
+		st, err := status.New(codes.PermissionDenied, failure.Message).WithDetails(failure)
+		require.NoError(t, err)
+		snap := newBlobTestSnapshot()
+		snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: new("blob-1")}
+		store := &fakeBlobStore{checkGet: func(context.Context, *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+			return nil, st.Err()
+		}}
+
+		dash, err := loadDashboardContent(ctx, store, snap)
+
+		require.Nil(t, dash)
+		apiStatus, ok := err.(apierrors.APIStatus)
+		require.True(t, ok, "expected direct APIStatus, got %T", err)
+		require.Equal(t, metav1.Status{
+			Status: metav1.StatusFailure, Code: http.StatusForbidden, Reason: metav1.StatusReasonForbidden, Message: failure.Message,
+			Details: &metav1.StatusDetails{Group: dashv0.GROUP, Kind: "snapshots", Name: "snap-1"},
+		}, apiStatus.Status())
+	})
+
 	t.Run("missing streamed blob returns a Kubernetes 404", func(t *testing.T) {
 		snap := newBlobTestSnapshot()
-		snap.Spec.Dashboard = nil
-		snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "missing"}
+		snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: new("missing")}
 		store := &fakeBlobStore{checkGet: func(context.Context, *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
 			return nil, status.Error(codes.NotFound, "blob not found")
 		}}
@@ -276,7 +256,7 @@ func TestLoadDashboardContent(t *testing.T) {
 			return nil, apierrors.NewServiceUnavailable("blob unavailable")
 		}},
 		{"storage error", func(context.Context, *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
-			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}, nil
+			return &resourcepb.GetBlobResponse{}, status.Error(codes.NotFound, "blob not found")
 		}},
 		{"signed URL", func(context.Context, *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
 			return &resourcepb.GetBlobResponse{Url: "https://example.com/blob"}, nil
@@ -287,7 +267,7 @@ func TestLoadDashboardContent(t *testing.T) {
 	} {
 		t.Run("does not fall back to inline dashboard on "+tc.name, func(t *testing.T) {
 			snap := newBlobTestSnapshot()
-			snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
+			snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: new("blob-1")}
 			dash, err := loadDashboardContent(ctx, &fakeBlobStore{checkGet: tc.get}, snap)
 
 			require.Error(t, err)

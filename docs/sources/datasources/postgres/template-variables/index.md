@@ -35,7 +35,8 @@ The PostgreSQL data source includes a dedicated variable query editor with the f
 
 To create a query variable:
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Variable**.
 1. Select **Query** as the variable type.

@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -38,7 +37,6 @@ const (
 
 var (
 	ErrLokiStoreInternal = errutil.Internal("annotations.loki.internal")
-	ErrLokiStoreNotFound = errutil.NotFound("annotations.loki.notFound")
 )
 
 type lokiQueryClient interface {
@@ -48,13 +46,12 @@ type lokiQueryClient interface {
 
 // LokiHistorianStore is a read store that queries Loki for alert state history.
 type LokiHistorianStore struct {
-	client    lokiQueryClient
-	db        db.DB
-	log       log.Logger
-	ruleStore rulestore.RuleByIDReader
+	client lokiQueryClient
+	db     db.DB
+	log    log.Logger
 }
 
-func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db db.DB, ruleStore rulestore.RuleByIDReader, log log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) *LokiHistorianStore {
+func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db db.DB, log log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) *LokiHistorianStore {
 	if !useStore(cfg) {
 		return nil
 	}
@@ -66,10 +63,9 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db d
 
 	metrics := ngmetrics.NewHistorianMetrics(reg, subsystem)
 	return &LokiHistorianStore{
-		client:    lokiclient.NewLokiClient(lokiCfg, lokiclient.NewRequester(), metrics.BytesWritten, metrics.WriteDuration, log, tracer, historian.LokiClientSpanName),
-		db:        db,
-		log:       log,
-		ruleStore: ruleStore,
+		client: lokiclient.NewLokiClient(lokiCfg, lokiclient.NewRequester(), metrics.BytesWritten, metrics.WriteDuration, log, tracer, historian.LokiClientSpanName),
+		db:     db,
+		log:    log,
 	}
 }
 
@@ -89,22 +85,8 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query annotations.ItemQuer
 		return make([]*annotations.ItemDTO, 0), nil
 	}
 
-	var ruleUID string
-	if query.AlertUID != "" {
-		ruleUID = query.AlertUID
-	} else if query.AlertID != 0 {
-		rule, err := r.ruleStore.GetRuleByID(ctx, ngmodels.GetAlertRuleByIDQuery{OrgID: query.OrgID, ID: query.AlertID})
-		if err != nil {
-			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
-				return make([]*annotations.ItemDTO, 0), ErrLokiStoreNotFound.Errorf("rule with ID %d does not exist", query.AlertID)
-			}
-			return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to query rule: %w", err)
-		}
-		ruleUID = rule.UID
-	}
-
 	// No folders in the filter because it filter by Dashboard UID, and the request is already authorized.
-	logQL, err := historian.BuildLogQuery(buildHistoryQuery(&query, accessResources.Dashboards, ruleUID), nil, r.client.MaxQuerySize())
+	logQL, err := historian.BuildLogQuery(buildHistoryQuery(&query, accessResources.Dashboards, query.AlertUID), nil, r.client.MaxQuerySize())
 	if err != nil {
 		grafanaErr := errutil.Error{}
 		if errors.As(err, &grafanaErr) {
@@ -179,6 +161,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream lokiclient.Stream, ac 
 
 		items = append(items, &annotations.ItemDTO{
 			AlertID:      entry.RuleID,
+			AlertUID:     entry.RuleUID,
 			DashboardID:  ac.Dashboards[entry.DashboardUID], // nolint: staticcheck
 			DashboardUID: &entry.DashboardUID,
 			PanelID:      entry.PanelID,

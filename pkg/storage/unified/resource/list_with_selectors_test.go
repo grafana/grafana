@@ -466,11 +466,12 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searchClient.last.ResultFormat)
 	})
 
-	t.Run("returns an embedded search error", func(t *testing.T) {
+	t.Run("returns a search status error", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
-			Error: NewBadRequestError("search failed"),
-		}}
+		result := NewBadRequestError("search failed")
+		st, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
+		require.NoError(t, err)
+		searchClient := &stubSearchClient{err: st.Err()}
 		s := createTestServer(searchClient, 1024)
 		req := &resourcepb.ListRequest{
 			Limit: 10,
@@ -480,18 +481,16 @@ func TestListWithSelectors(t *testing.T) {
 			},
 		}
 
-		resp, err := s.listWithSelectors(ctx, req)
-		require.NoError(t, err)
-		require.NotNil(t, resp.Error)
-		require.Equal(t, int32(http.StatusBadRequest), resp.Error.Code)
-		require.Equal(t, "search failed", resp.Error.Message)
+		_, err = s.listWithSelectors(ctx, req)
+		respErr := rpcErrorResult(t, err)
+		require.NotNil(t, respErr)
+		require.Equal(t, int32(http.StatusBadRequest), respErr.Code)
+		require.Equal(t, "search failed", respErr.Message)
 	})
 
 	t.Run("asks for the store scan when the index lacks a requested field", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
-			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
-		}}
+		searchClient := &stubSearchClient{err: selectableFieldNotIndexedGRPCError(t)}
 		s := createTestServer(searchClient, 1024)
 		req := &resourcepb.ListRequest{
 			Limit: 10,
@@ -508,9 +507,7 @@ func TestListWithSelectors(t *testing.T) {
 
 	t.Run("keeps the error mid-pagination, where the store scan cannot resume", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
-			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
-		}}
+		searchClient := &stubSearchClient{err: selectableFieldNotIndexedGRPCError(t)}
 		s := createTestServer(searchClient, 1024)
 		req := &resourcepb.ListRequest{
 			Limit:         10,
@@ -521,10 +518,10 @@ func TestListWithSelectors(t *testing.T) {
 			},
 		}
 
-		resp, err := s.listWithSelectors(ctx, req)
-		require.NoError(t, err)
-		require.NotNil(t, resp.Error)
-		require.True(t, IsSelectableFieldNotIndexed(resp.Error))
+		_, err := s.listWithSelectors(ctx, req)
+		respErr := rpcErrorResult(t, err)
+		require.NotNil(t, respErr)
+		require.True(t, IsSelectableFieldNotIndexed(respErr))
 	})
 
 	for _, continued := range []bool{false, true} {
@@ -598,10 +595,10 @@ func TestListWithSelectors(t *testing.T) {
 			},
 		}
 
-		resp, err := s.listWithSelectors(ctx, req)
-		require.NoError(t, err)
-		require.NotNil(t, resp.Error)
-		require.Equal(t, int32(http.StatusBadRequest), resp.Error.Code)
+		_, err := s.listWithSelectors(ctx, req)
+		respErr := rpcErrorResult(t, err)
+		require.NotNil(t, respErr)
+		require.Equal(t, int32(http.StatusBadRequest), respErr.Code)
 	})
 
 	for _, tc := range []struct {
@@ -988,9 +985,6 @@ func selectableFieldNotIndexedGRPCError(t *testing.T) error {
 
 func TestListFallsBackToStoreWhenIndexLacksField(t *testing.T) {
 	for name, searchClient := range map[string]*stubSearchClient{
-		"embedded error": {resp: &resourcepb.ResourceSearchResponse{
-			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
-		}},
 		"gRPC error": {err: selectableFieldNotIndexedGRPCError(t)},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -1163,10 +1157,10 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		s.log = logger
 
 		resp, err := s.listWithSelectors(ctx, req())
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
-		require.Equal(t, "failed to read resource", resp.Error.Message)
-		require.Empty(t, resp.Items)
+		respErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusInternalServerError), respErr.Code)
+		require.Equal(t, "failed to read resource", respErr.Message)
+		require.Nil(t, resp)
 		require.Equal(t, 1, logger.ErrorLogs.Calls)
 		require.Equal(t, "Failed to read unauthorized search result", logger.ErrorLogs.Message)
 	})
@@ -1176,10 +1170,10 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		s.backend = &batchFakeBackend{fakeBackend: &fakeBackend{}, errored: map[string]struct{}{"b": {}}}
 		// access allows everything (default FixedAccessClient(true) from createTestServer)
 
-		resp, err := s.listWithSelectors(ctx, req())
-		require.NoError(t, err)
-		require.NotNil(t, resp.Error)
-		require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+		_, err := s.listWithSelectors(ctx, req())
+		respErr := rpcErrorResult(t, err)
+		require.NotNil(t, respErr)
+		require.Equal(t, int32(http.StatusInternalServerError), respErr.Code)
 	})
 
 	t.Run("bad request aborts the list without returning partial items", func(t *testing.T) {
@@ -1190,9 +1184,9 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		}
 
 		resp, err := s.listWithSelectors(ctx, req())
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusBadRequest), resp.Error.Code)
-		require.Empty(t, resp.Items)
+		respErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusBadRequest), respErr.Code)
+		require.Nil(t, resp)
 	})
 
 	t.Run("unrecognized error aborts the list without returning partial items", func(t *testing.T) {
@@ -1203,9 +1197,9 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		}
 
 		resp, err := s.listWithSelectors(ctx, req())
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusConflict), resp.Error.Code)
-		require.Empty(t, resp.Items)
+		respErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusConflict), respErr.Code)
+		require.Nil(t, resp)
 	})
 
 	t.Run("not-found row is left out without authorizing", func(t *testing.T) {
@@ -1277,15 +1271,15 @@ func TestListWithSelectorsSurfacesKVRuntimeFailuresBeforeAuthorization(t *testin
 			unauthorized := newServer()
 			unauthorized.access = denyByNameAccess{deny: map[string]struct{}{"failed": {}}}
 			resp, err := unauthorized.listWithSelectors(ctx, req)
-			require.NoError(t, err)
-			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
-			require.Equal(t, "failed to read resource", resp.Error.Message)
-			require.Empty(t, resp.Items)
+			respErr := rpcErrorResult(t, err)
+			require.Equal(t, int32(http.StatusInternalServerError), respErr.Code)
+			require.Equal(t, "failed to read resource", respErr.Message)
+			require.Nil(t, resp)
 
 			authorized := newServer()
-			resp, err = authorized.listWithSelectors(ctx, req)
-			require.NoError(t, err)
-			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+			_, err = authorized.listWithSelectors(ctx, req)
+			respErr = rpcErrorResult(t, err)
+			require.Equal(t, int32(http.StatusInternalServerError), respErr.Code)
 		})
 	}
 }
@@ -1321,10 +1315,10 @@ func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
 		},
 	})
 
-	require.NoError(t, err)
-	require.Empty(t, resp.Items)
-	require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
-	require.Equal(t, "transient storage failure", resp.Error.Message)
+	respErr := rpcErrorResult(t, err)
+	require.Nil(t, resp)
+	require.Equal(t, int32(http.StatusInternalServerError), respErr.Code)
+	require.Equal(t, "transient storage failure", respErr.Message)
 	// The first chunk is read by exact key; the second chunk's exact read fails and
 	// ends the list without another read.
 	require.Equal(t, 2, kvWrapper.dataCalls)

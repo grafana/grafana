@@ -367,6 +367,25 @@ func TestNewFSRequestConfig(t *testing.T) {
 		})
 	}
 
+	t.Run("sends the nav overrides in the slim settings, with the full settings off", func(t *testing.T) {
+		cfg := newCfg()
+		sections, err := cfg.Raw.NewSection("navigation.app_sections")
+		require.NoError(t, err)
+		_, err = sections.NewKey("grafana-collector-app", "connections 1")
+		require.NoError(t, err)
+		license := &licensing.OSSLicensingService{Cfg: cfg}
+
+		// The client-built nav tree reads these at boot, so they cannot wait for
+		// the bootdata call that the full settings would come from
+		config, err := NewFSRequestConfig(context.Background(), cfg, license, newPluginsCDN(), false)
+		require.NoError(t, err)
+
+		assert.Nil(t, config.FullFrontendSettings)
+		assert.Equal(t, map[string]dtos.FrontendSettingsNavigationPlacementDTO{
+			"grafana-collector-app": {SectionID: "connections", SortWeight: 1},
+		}, config.Navigation.AppSections)
+	})
+
 	t.Run("does not build full frontend settings when flag disabled", func(t *testing.T) {
 		cfg := newCfg()
 		license := &licensing.OSSLicensingService{Cfg: cfg}

@@ -32,7 +32,7 @@ The dashboard version history feature lets you compare dashboards and restore pr
 
 To compare two dashboard versions, follow these steps:
 
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. In the toolbar, click the **Dashboard options** icon.
 1. In the sidebar, click **View all settings**.
 1. Go to the **Versions** tab.
@@ -40,7 +40,8 @@ To compare two dashboard versions, follow these steps:
 1. Click **Compare versions** to view the diff between the two versions.
 1. Review the text descriptions of the differences between the versions.
 1. (Optional) Expand the **View JSON diff** section of the page to see the diff of the raw JSON that represents your dashboard.
-1. When you've finished comparing versions, click **Back** and **Exit edit**.
+1. When you've finished comparing versions, click **Back to dashboard**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 When you're comparing versions, if one of the versions you've selected is the latest version, a button to restore the previous version is also displayed, so you can restore a version from the compare view:
 
@@ -50,7 +51,7 @@ When you're comparing versions, if one of the versions you've selected is the la
 
 To restore to a previously saved dashboard version, follow these steps:
 
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Dashboard options** icon.
 1. In the sidebar, click **View all settings**.
 1. Go to the **Versions** tab.

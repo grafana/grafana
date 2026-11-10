@@ -7,6 +7,7 @@ import (
 	"maps"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -538,8 +539,8 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelDelete(ctx context.Context, n
 		Limit:        1,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
-		return err
+	if err != nil {
+		return resource.StatusErrorFromGRPC(err)
 	}
 	if result.GetTotalHits() > 0 {
 		return apierrors.NewForbidden(
@@ -1079,12 +1080,8 @@ func notebookStorageOpts() apistore.StorageOptions {
 	}
 }
 
-// snapshotStorageOpts configures snapshot storage. Snapshots need nothing beyond
-// the GVK that storageForVersion pairs these with, which is the whole point of
-// going through it: the declared kind is what stops a snapshot from being
-// persisted as some other kind in the dashboard group.
 func snapshotStorageOpts() apistore.StorageOptions {
-	return apistore.StorageOptions{}
+	return apistore.StorageOptions{EnableInlineBlobs: true}
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
@@ -1347,6 +1344,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			Service:               b.snapshotService,
 			Namespacer:            b.namespacer,
 			ExternalSnapshotToken: b.snapshotOptions.ExternalSnapshotToken,
+			Blobs:                 b.unified,
 		}
 
 		selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
@@ -1361,7 +1359,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			return err
 		}
 		snapshotGr := snapshots.GroupResource()
-		snapshotDualWrite, err := opts.DualWriteBuilder(snapshotGr, snapshotLegacyStore, snapshot.NewUnifiedBlobStorage(unifiedSnapshotStore, b.unified))
+		snapshotDualWrite, err := opts.DualWriteBuilder(snapshotGr, snapshotLegacyStore, snapshot.NewUnifiedBlobStorage(unifiedSnapshotStore))
 		if err != nil {
 			return err
 		}
@@ -1411,8 +1409,13 @@ func (b *DashboardsAPIBuilder) resourcePermissionsClient(ctx context.Context) (*
 	return b.resourcePermissionsSvc, nil
 }
 
+// afterDelete runs inside the delete request, which the apiserver times out at 34 s.
+const afterDeleteTimeout = 5 * time.Second
+
 func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), afterDeleteTimeout)
+	defer cancel()
+
 	log := logging.DefaultLogger
 
 	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
@@ -1722,7 +1725,7 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 }
 
 // GetAuthorizer returns a composite authorizer that dispatches by resource type.
-// Notebooks, snapshots, and variables use dedicated authorizers; other resources
+// Notebooks, snapshots, variables, and namespace search use dedicated authorizers; other resources
 // fall back to ServiceAuthorizer. Variables with no classic accessControl (standalone)
 // fall through to ServiceAuthorizer after the feature flag.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -1734,6 +1737,9 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	// Variables use classic variables:* when accessControl is wired; otherwise
 	// they fall through to the service authorizer (standalone / Cloud).
 	variableAuthorizer := newVariableAuthorizer(b.accessControl, serviceAuthorizer)
+	// Namespace search is allowed with a read of dashboards and folders or with
+	// the existing grant on the search resource.
+	searchAuthorizer := newSearchAuthorizer(serviceAuthorizer)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -1745,6 +1751,8 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return variableAuthorizer.Authorize(ctx, attr)
 				case dashv0.SnapshotResourceInfo.GetName():
 					return snapshotAuthorizer.Authorize(ctx, attr)
+				case searchResource:
+					return searchAuthorizer.Authorize(ctx, attr)
 				}
 			}
 			return serviceAuthorizer.Authorize(ctx, attr)
