@@ -4,8 +4,6 @@ import Highlighter from 'react-highlight-words';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, RadioButtonDot, useStyles2, Text } from '@grafana/ui';
 
-import { useScopesServices } from '../ScopesContextProvider';
-
 import { ScopesTree } from './ScopesTree';
 import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
 import { type NodesMap, type SelectedScope, type TreeNode } from './types';
@@ -193,10 +191,8 @@ export function ScopesTreeItem({
   selectedScopes,
   highlighted,
 }: ScopesTreeItemProps) {
-  const { selectScope, deselectScope, toggleExpandedNode } = useScopeActions();
+  const { selectScope, deselectScope, toggleExpandedNode, closeAndApply } = useScopeActions();
   const styles = useStyles2(getStyles);
-  const services = useScopesServices();
-  const { closeAndApply } = services?.scopesSelectorService || {};
   if (anyChildExpanded && !treeNode.expanded) {
     return null;
   }
@@ -246,7 +242,7 @@ export function ScopesTreeItem({
                 scopeNodeId={treeNode.scopeNodeId}
                 onClick={() => {
                   selectScope(treeNode.scopeNodeId);
-                  closeAndApply?.();
+                  closeAndApply();
                 }}
               >
                 <TitleContent shouldHighlight={shouldHighlight} titleText={titleText} searchWords={searchWords} />

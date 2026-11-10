@@ -1,33 +1,20 @@
-import { Observable } from 'rxjs';
-
-import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
-import { type ScopesSelectorServiceState } from 'app/features/scopes/selector/ScopesSelectorService';
 import { useRecentScopes } from 'app/features/scopes/selector/useRecentScopes';
+import { useScopeActions } from 'app/features/scopes/selector/useScopeActions';
+import { useAppliedScopeIds } from 'app/features/scopes/selector/useScopesSelectorState';
 
 import { type CommandPaletteAction } from '../types';
 import { SECTION_RECENT_SCOPES, RECENT_SCOPES_PRIORITY } from '../values';
 
-const EMPTY_OBSERVABLE = new Observable<ScopesSelectorServiceState>();
-
 export function useRecentScopesActions(): CommandPaletteAction[] {
-  const services = useScopesServices();
-
-  const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
-    services?.scopesSelectorService.stateObservable ?? EMPTY_OBSERVABLE,
-    services?.scopesSelectorService.state
-  );
-
-  const appliedScopeIds = selectorServiceState?.appliedScopes.map((s) => s.scopeId) ?? [];
+  const appliedScopeIds = useAppliedScopeIds();
   const recentScopes = useRecentScopes(appliedScopeIds);
+  const { isAvailable, changeScopes } = useScopeActions();
 
-  if (!(config.featureToggles.scopeFilters && services)) {
+  if (!(config.featureToggles.scopeFilters && isAvailable)) {
     return [];
   }
-
-  const { scopesSelectorService } = services;
 
   return recentScopes.map((recentScopeSet) => {
     const names = recentScopeSet.scopes.map((s) => s.title).join(', ');
@@ -47,7 +34,7 @@ export function useRecentScopesActions(): CommandPaletteAction[] {
       keywords: keywords,
       priority: RECENT_SCOPES_PRIORITY,
       perform: () => {
-        scopesSelectorService.changeScopes(recentScopeSet.scopeIds, undefined, recentScopeSet.scopeNodeId);
+        changeScopes(recentScopeSet.scopeIds, { scopeNodeId: recentScopeSet.scopeNodeId });
       },
     };
   });

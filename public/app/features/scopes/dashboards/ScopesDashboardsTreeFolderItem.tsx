@@ -6,6 +6,7 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
+import { useScopeActions } from '../selector/useScopeActions';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { type OnFolderUpdate, type SuggestedNavigationsFolder, type SuggestedNavigationsFoldersMap } from './types';
@@ -39,8 +40,7 @@ export function ScopesDashboardsTreeFolderItem({
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, megaMenuStyle, visualRefreshEnabled);
 
-  // get scopesselector service
-  const scopesSelectorService = useScopesServices()?.scopesSelectorService ?? undefined;
+  const { isAvailable: hasScopesSelector, changeScopes } = useScopeActions();
   const scopesDashboardsService = useScopesServices()?.scopesDashboardsService ?? undefined;
   return (
     <div className={styles.container} role="treeitem" aria-selected={folder.expanded}>
@@ -71,7 +71,7 @@ export function ScopesDashboardsTreeFolderItem({
             onClick={async (e) => {
               e.preventDefault();
               e.stopPropagation();
-              if (folder.subScopeName && scopesSelectorService) {
+              if (folder.subScopeName && hasScopesSelector) {
                 const activeSubScopePath = scopesDashboardsService?.state.navScopePath;
                 // Check if the active scope is a child of the current folder's scope
                 const activeScope = activeSubScopePath?.[activeSubScopePath.length - 1];
@@ -83,12 +83,9 @@ export function ScopesDashboardsTreeFolderItem({
                   activeSubScopePath?.slice(folderLocationInActivePath + 1) ?? []
                 );
                 // Now changeScopes will skip fetchDashboards because navigationScope is set
-                scopesSelectorService.changeScopes(
-                  folderLocationInActivePath >= 0 && activeScope ? [activeScope] : [folder.subScopeName],
-                  undefined,
-                  undefined,
-                  false
-                );
+                changeScopes(folderLocationInActivePath >= 0 && activeScope ? [activeScope] : [folder.subScopeName], {
+                  redirect: false,
+                });
               }
             }}
           />
