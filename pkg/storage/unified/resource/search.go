@@ -3405,7 +3405,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 			val = v.(string)
 		}
 	}
-	return &IndexableDocument{
+	doc := &IndexableDocument{
 		Key: &resourcepb.ResourceKey{
 			Namespace: key.Namespace,
 			Group:     key.Group,
@@ -3418,7 +3418,13 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 			"title": title,
 			"value": val,
 		},
-	}, nil
+	}
+	if meta, err := utils.MetaAccessor(&u); err == nil {
+		if manager, ok := meta.GetManagerProperties(); ok {
+			doc.Manager = &manager
+		}
+	}
+	return doc, nil
 }
 
 // TestDocumentBuilderSupplier implements DocumentBuilderSupplier for testing
