@@ -57,7 +57,7 @@ describe('FolderRepo', () => {
     { name: 'no folder', folder: undefined },
     { name: 'an unmanaged folder', folder: { ...ROOT_FOLDER, managedBy: undefined, managerId: undefined } },
   ])('renders nothing for $name', ({ folder }) => {
-    render(<FolderRepo folder={folder} canEdit />);
+    render(<FolderRepo folder={folder} />);
 
     expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
@@ -77,7 +77,7 @@ describe('FolderRepo', () => {
   ])('hides the badge on an instance-managed setup for $name', async ({ folder }) => {
     mockRepositories([{ ...REPOSITORY, target: 'instance' }]);
 
-    render(<FolderRepo folder={folder} canEdit />);
+    render(<FolderRepo folder={folder} />);
 
     await waitFor(() => expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument());
   });
@@ -95,20 +95,20 @@ describe('FolderRepo', () => {
     // the manager id can identify the repository.
     const folder: DashboardViewItem = { ...ROOT_FOLDER, uid: 'abc123' };
 
-    const { user } = render(<FolderRepo folder={folder} canEdit />);
+    const { user } = render(<FolderRepo folder={folder} />);
     await user.hover(screen.getByTestId('icon-exchange-alt'));
 
-    expect(await screen.findByText('Managed by: Repository My Repo')).toBeInTheDocument();
+    expect(await screen.findByText(/Managed by: Repository My Repo/)).toBeInTheDocument();
     expect(folderRequests).toBe(0);
   });
 
   it('falls back to the repository name in the tooltip when it has no title', async () => {
     mockRepositories([{ ...REPOSITORY, title: '' }]);
 
-    const { user } = render(<FolderRepo folder={ROOT_FOLDER} canEdit />);
+    const { user } = render(<FolderRepo folder={ROOT_FOLDER} />);
     await user.hover(screen.getByTestId('icon-exchange-alt'));
 
-    expect(await screen.findByText('Managed by: Repository repo-1')).toBeInTheDocument();
+    expect(await screen.findByText(/Managed by: Repository repo-1/)).toBeInTheDocument();
   });
 
   it('renders the generic repository badge for a legacy item without a manager id', async () => {
@@ -120,28 +120,31 @@ describe('FolderRepo', () => {
     expect(await screen.findByText('Managed by: Repository')).toBeInTheDocument();
   });
 
-  it('renders the read-only badge when the repository has no workflows', async () => {
+  it('locks the badge when the repository has no workflows', async () => {
     mockRepositories([{ ...REPOSITORY, workflows: [] }]);
 
-    render(<FolderRepo folder={ROOT_FOLDER} canEdit />);
+    const { user } = render(<FolderRepo folder={ROOT_FOLDER} />);
 
+    expect(await screen.findByTestId('icon-lock')).toBeInTheDocument();
+    await user.hover(screen.getByTestId('icon-exchange-alt'));
     expect(await screen.findByText('Read only')).toBeInTheDocument();
   });
 
-  it('keeps the managed badge but drops the read-only badge when the user cannot edit the folder', async () => {
-    mockRepositories([{ ...REPOSITORY, workflows: [] }]);
+  it('leaves the badge unlocked when the repository accepts writes', async () => {
+    mockRepositories([REPOSITORY]);
 
-    const { user } = render(<FolderRepo folder={ROOT_FOLDER} canEdit={false} />);
-    await user.hover(screen.getByTestId('icon-exchange-alt'));
+    const { user } = render(<FolderRepo folder={ROOT_FOLDER} />);
 
-    expect(await screen.findByText('Managed by: Repository My Repo')).toBeInTheDocument();
-    expect(screen.queryByText('Read only')).not.toBeInTheDocument();
+    await user.hover(await screen.findByTestId('icon-exchange-alt'));
+
+    expect(await screen.findByText('Editable')).toBeInTheDocument();
+    expect(screen.queryByTestId('icon-lock')).not.toBeInTheDocument();
   });
 
   it('renders the orphaned badge when the manager id names a deleted repository', async () => {
     mockRepositories([{ ...REPOSITORY, name: 'other-repo' }]);
 
-    const { user } = render(<FolderRepo folder={ROOT_FOLDER} canEdit />);
+    const { user } = render(<FolderRepo folder={ROOT_FOLDER} />);
 
     const orphanedBadge = await screen.findByTestId('icon-exclamation-triangle');
     expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
@@ -157,7 +160,7 @@ describe('FolderRepo', () => {
       })
     );
 
-    render(<FolderRepo folder={ROOT_FOLDER} canEdit />);
+    render(<FolderRepo folder={ROOT_FOLDER} />);
 
     expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
     expect(screen.queryByTestId('icon-exclamation-triangle')).not.toBeInTheDocument();
@@ -167,8 +170,8 @@ describe('FolderRepo', () => {
     contextSrv.isEditor = true;
     mockRepositories([REPOSITORY]);
 
-    const { user } = render(<FolderRepo folder={ROOT_FOLDER} enableRepositoryLink sourcePath="dashboards" canEdit />);
-    await user.click(await screen.findByRole('button', { name: 'Managed by: Repository My Repo' }));
+    const { user } = render(<FolderRepo folder={ROOT_FOLDER} enableRepositoryLink sourcePath="dashboards" />);
+    await user.click(await screen.findByRole('button', { name: 'Editable. Managed by: Repository My Repo' }));
 
     expect(await screen.findByRole('menuitem', { name: /view source file/i })).toHaveAttribute(
       'href',

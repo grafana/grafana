@@ -59,6 +59,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { type RecoverToNewBranch } from 'app/features/provisioning/types';
+import { managerAllowsEdits } from 'app/features/provisioning/utils/managedResource';
 import { VariablesChanged } from 'app/features/variables/types';
 import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
@@ -2456,6 +2457,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return (
       this.isManaged() && !this.isManagedRepository() && !this.state.meta.k8s?.annotations?.[AnnoKeyManagerAllowsEdits]
     );
+  }
+
+  /**
+   * Whether the dashboard's manager permits edits in Grafana. The managing repository's workflow
+   * configuration is an input only the caller can resolve. Says nothing about the user's
+   * permissions or the dashboard's own state.
+   */
+  managerAllowsEdits(isReadOnlyRepo = false) {
+    return managerAllowsEdits({ metadata: { annotations: this.state.meta.k8s?.annotations } }, { isReadOnlyRepo });
   }
 
   getPath() {

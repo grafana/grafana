@@ -38,3 +38,23 @@ export function getOrphanedRepositoryTooltip(): string {
 export function getManagedReadOnlyTooltip(): string {
   return t('provisioning.managed-read-only-tooltip', 'This resource is managed externally and is read-only');
 }
+
+/** Short label for whether a resource's manager permits edits in Grafana. */
+export function getManagerAccessLabel(allowsEdits: boolean): string {
+  return allowsEdits
+    ? t('provisioning.manager-access.editable', 'Editable')
+    : t('provisioning.manager-access.read-only', 'Read only');
+}
+
+/**
+ * Accessible name for a managed badge that also reports the manager's policy: the icons carry that
+ * state visually, so it has to reach screen readers too. Interpolated so translators control the
+ * order of both halves.
+ */
+export function getManagedAccessLabel(managedBy: string, allowsEdits: boolean): string {
+  return t('provisioning.managed-access-label', '{{access}}. {{managedBy}}', {
+    access: getManagerAccessLabel(allowsEdits),
+    managedBy,
+    interpolation: { escapeValue: false },
+  });
+}

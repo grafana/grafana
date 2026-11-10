@@ -15081,6 +15081,7 @@
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
     },
+    "managed-access-label": "{{access}}. {{managedBy}}",
     "managed-badge": {
       "classic-file-provisioning": "Managed by: File provisioning",
       "kubectl": "Managed by: Kubectl",
@@ -15097,6 +15098,10 @@
       "title": "This resource is managed externally"
     },
     "managed-read-only-tooltip": "This resource is managed externally and is read-only",
+    "manager-access": {
+      "editable": "Editable",
+      "read-only": "Read only"
+    },
     "message": {
       "show-less": "show less",
       "show-more": "show more",
@@ -15299,9 +15304,6 @@
       "to-increase-limits": "To add more {{type}},",
       "update-configuration-link": "update your Grafana configuration",
       "upgrade-link": "upgrade your account"
-    },
-    "read-only-badge": {
-      "text": "Read only"
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",

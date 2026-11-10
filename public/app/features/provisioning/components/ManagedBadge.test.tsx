@@ -252,4 +252,70 @@ describe('ManagedBadge', () => {
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
   });
+
+  describe('what the manager allows', () => {
+    it('locks the manager icon and names the read-only state in the tooltip', async () => {
+      const { user } = render(
+        <ManagedBadge managerKind={ManagerKind.Repo} name="My Repo" managerAllowsEdits={false} />
+      );
+
+      expect(screen.getByTestId('icon-lock')).toBeInTheDocument();
+      await user.hover(screen.getByTestId('icon-exchange-alt'));
+
+      expect(await screen.findByText('Read only')).toBeInTheDocument();
+      expect(screen.getByText('Managed by: Repository My Repo')).toBeInTheDocument();
+    });
+
+    it('leaves the manager icon unlocked and names the editable state in the tooltip', async () => {
+      const { user } = render(<ManagedBadge managerKind={ManagerKind.Repo} name="My Repo" managerAllowsEdits />);
+
+      expect(screen.queryByTestId('icon-lock')).not.toBeInTheDocument();
+      await user.hover(screen.getByTestId('icon-exchange-alt'));
+
+      expect(await screen.findByText('Editable')).toBeInTheDocument();
+      expect(screen.getByText('Managed by: Repository My Repo')).toBeInTheDocument();
+    });
+
+    it('says nothing about editability when the policy is not supplied', async () => {
+      const { user } = render(<ManagedBadge managerKind={ManagerKind.Terraform} />);
+
+      expect(screen.queryByTestId('icon-lock')).not.toBeInTheDocument();
+
+      await user.hover(screen.getByTestId('icon-exchange-alt'));
+      expect(await screen.findByText('Managed by: Terraform')).toBeInTheDocument();
+      expect(screen.queryByText('Editable')).not.toBeInTheDocument();
+    });
+
+    it('keeps the orphaned warning instead of the manager policy', async () => {
+      const { user } = render(
+        <ManagedBadge managerKind={ManagerKind.Repo} name="My Repo" managerAllowsEdits={false} isOrphaned />
+      );
+
+      expect(screen.queryByTestId('icon-lock')).not.toBeInTheDocument();
+      await user.hover(screen.getByTestId('icon-exclamation-triangle'));
+      expect(await screen.findByText('Repository not found')).toBeInTheDocument();
+    });
+
+    it('names the state on the dropdown trigger and heads the menu with it', async () => {
+      setPermissions({ isEditor: true });
+      mockRepositories([makeRepository()]);
+
+      const { user } = render(
+        <ManagedBadge
+          managerKind={ManagerKind.Repo}
+          repositoryName="my-repo"
+          sourcePath="dashboards/foo.json"
+          managerAllowsEdits
+        />
+      );
+
+      const trigger = await screen.findByRole('button', { name: 'Editable. Managed by: Repository My Repo' });
+      expect(screen.queryByTestId('icon-lock')).not.toBeInTheDocument();
+      expect(screen.getByTestId('icon-angle-down')).toBeInTheDocument();
+
+      await user.click(trigger);
+      expect(await screen.findByText('Editable')).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: /view source file/i })).toBeInTheDocument();
+    });
+  });
 });

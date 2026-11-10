@@ -41,7 +41,11 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
           <Text variant="h3">{title}</Text>
           <ConnectionStatusBadge status={status} />
           {isReadOnly && (
-            <ManagedBadge managerKind={getManagerKind(connection)} name={getManagerIdentity(connection)} />
+            <ManagedBadge
+              managerKind={getManagerKind(connection)}
+              name={getManagerIdentity(connection)}
+              managerAllowsEdits={!isReadOnly}
+            />
           )}
         </Stack>
       </Card.Heading>
