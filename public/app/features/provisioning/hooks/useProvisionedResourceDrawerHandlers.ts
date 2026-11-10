@@ -1,9 +1,9 @@
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 
 import { useDispatch } from 'app/types/store';
 
 import { buildResourceBranchRedirectUrl, type ResourceBranchAction } from '../utils/redirect';
-import { type ResourceKindInfo } from '../utils/resourceKinds';
+import { type SaveableKindInfo } from '../utils/resourceKinds';
 
 /** Shape forwarded by {@link SaveProvisionedResourceDrawer}'s `onBranchSuccess` callback. */
 interface BranchSuccessData {
@@ -26,8 +26,8 @@ export interface ProvisionedResourceDrawerHandlers {
   goToList: () => void;
   /**
    * Branch (PR) workflow: builds the `onBranchSuccess` handler for the given commit action. It
-   * navigates to the kind's collection page with the pull-request params so the page surfaces the
-   * PR banner (mirrors the dashboard flow). `create`/`update`/`delete` differ only by this action.
+   * navigates to the kind's collection page, or stays on the current page for a kind without one,
+   * with the pull-request params so the page surfaces the PR banner (mirrors the dashboard flow). `create`/`update`/`delete` differ only by this action.
    */
   makeOnBranchSuccess: (action: ResourceBranchAction) => (data: BranchSuccessData) => void;
 }
@@ -40,9 +40,10 @@ export interface ProvisionedResourceDrawerHandlers {
  * from the {@link ResourceKindInfo}. The kind's `invalidateListTags` (if any) is dispatched so the
  * committed change shows up on its list page.
  */
-export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): ProvisionedResourceDrawerHandlers {
+export function useProvisionedResourceDrawerHandlers(kind: SaveableKindInfo): ProvisionedResourceDrawerHandlers {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const invalidate = () => {
     const action = kind.invalidateListTags?.();
@@ -53,7 +54,9 @@ export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): Pr
 
   const goToList = () => {
     invalidate();
-    navigate(kind.listRoute);
+    if (kind.listRoute) {
+      navigate(kind.listRoute);
+    }
   };
 
   const makeOnBranchSuccess =
@@ -62,7 +65,7 @@ export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): Pr
       invalidate();
       navigate(
         buildResourceBranchRedirectUrl({
-          baseUrl: kind.listRoute,
+          baseUrl: kind.listRoute ?? pathname,
           paramName: 'new_pull_request_url',
           paramValue: urls?.newPullRequestURL,
           repoType,

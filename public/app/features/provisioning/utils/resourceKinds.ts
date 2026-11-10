@@ -309,6 +309,22 @@ export interface ResourceKindDisplay {
   folderScoped?: boolean;
 }
 
+export type SaveableKindInfo = ResourceKindDisplay & Partial<Pick<ResourceKindInfo, 'invalidateListTags'>>;
+
+export function getSaveableKind(group: string, kind: string): SaveableKindInfo {
+  return (
+    getKindDisplayByGroupKind(group, kind) ?? {
+      getLabel: () => kind,
+      pluralLabel: () => kind,
+      group,
+      kind,
+      resource: '',
+      itemType: kind,
+      icon: 'file-alt',
+    }
+  );
+}
+
 function allDisplayKinds(): ResourceKindDisplay[] {
   const manifestKinds = getManifestKinds()
     .filter((m) => !allKindInfos.some((info) => info.group === m.group && info.kind === m.kind))

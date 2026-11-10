@@ -649,7 +649,12 @@ export {
   type PluginExtensionResourceAttributesContext,
   type CentralAlertHistorySceneV1Props,
 } from './types/pluginExtensions';
-export { type ManagedBadgeV1Props, type PrometheusQueryResultsV1Props } from './types/exposedComponentProps';
+export {
+  type ManagedBadgeV1Props,
+  type PrometheusQueryResultsV1Props,
+  type SaveResourceDrawerV1Props,
+  type SaveResourceDrawerV1Resource,
+} from './types/exposedComponentProps';
 export {
   type ScopeDashboardBindingSpec,
   type ScopeDashboardBindingStatus,
