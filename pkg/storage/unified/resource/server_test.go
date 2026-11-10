@@ -5059,13 +5059,21 @@ func TestQueueRPCError(t *testing.T) {
 	requireRPCError(t, err, NewTooManyRequestsError("tenant queue is full, please try again later"))
 	require.Equal(t, codes.ResourceExhausted, status.Code(err))
 
-	// Matches the error HandleQueueError embeds in the response.
 	other := errors.New("timeout")
-	legacy, legacyErr := HandleQueueError(other, func(e *resourcepb.ErrorResult) *resourcepb.ReadResponse {
-		return &resourcepb.ReadResponse{Error: e}
-	})
-	require.NoError(t, legacyErr)
-	requireRPCError(t, queueRPCError(other), legacy.Error)
+	requireRPCError(t, queueRPCError(other), &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "timeout"})
+
+	for _, tc := range []struct {
+		err  error
+		want codes.Code
+	}{
+		{context.Canceled, codes.Canceled},
+		{context.DeadlineExceeded, codes.DeadlineExceeded},
+	} {
+		t.Run(tc.want.String(), func(t *testing.T) {
+			queueErr := fmt.Errorf("failed to enqueue for tenant stacks-13: %w", tc.err)
+			require.Equal(t, tc.want, status.Code(queueRPCError(queueErr)))
+		})
+	}
 }
 
 // Servers return native status errors without any conversion interceptor, both

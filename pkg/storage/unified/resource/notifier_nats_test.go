@@ -776,7 +776,10 @@ func TestWatchShutdownPreservesInvalidation(t *testing.T) {
 				defer close(done)
 				done <- srv.Watch(req, stream)
 			}()
-			t.Cleanup(func() { cancel(); <-done })
+			t.Cleanup(func() {
+				cancel()
+				<-done //nolint:errcheck // The watch result is checked below; cleanup only waits for it to exit.
+			})
 			requireNatsRecoveryEvent(t, stream.mockWatchServer, resourcepb.WatchEvent_BOOKMARK)
 			require.NoError(t, createTestPlaylist(ctx, srv))
 			select {
