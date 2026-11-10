@@ -12,16 +12,12 @@ describe('withoutPerResourceSearch', () => {
     expect(include('/users/trash')).toBe(false);
   });
 
-  it('keeps an allowlisted search, but not its hybrid variant or other searches', () => {
-    const allowlisted = withoutPerResourceSearch(undefined, ['/folders/search']);
-    if (typeof allowlisted !== 'function') {
-      throw new Error('expected a function');
-    }
-
-    expect(allowlisted('anyName', operation('/folders/search'))).toBe(true);
-    expect(allowlisted('anyName', operation('/folders/search/hybrid'))).toBe(false);
-    expect(allowlisted('anyName', operation('/dashboards/search'))).toBe(false);
-    expect(include('/folders/search')).toBe(false);
+  it('keeps the allowlisted folder and rule sequence searches, but not their hybrid variants', () => {
+    expect(include('/folders/search')).toBe(true);
+    expect(include('/folders/search/hybrid')).toBe(false);
+    expect(include('/rulesequences/search')).toBe(true);
+    expect(include('/rulesequences/search/hybrid')).toBe(false);
+    expect(include('/alertrules/search')).toBe(false);
   });
 
   // The dashboard search at the group root is a different, older endpoint that the
@@ -93,22 +89,14 @@ describe('dashboard search configuration', () => {
 });
 
 describe.each([
-  ['folder/v1beta1', '/folders'],
-  ['rules.alerting/v1beta1', '/rulesequences'],
-])('allowlisted search configuration in %s', (client, base) => {
+  ['folder', 'folder/v1beta1', '/folders'],
+  ['rule sequence', 'rules.alerting/v0alpha1', '/rulesequences'],
+  ['rule sequence', 'rules.alerting/v1beta1', '/rulesequences'],
+])('%s search configuration in %s', (_label, client, base) => {
   if (!('outputFiles' in config)) {
     throw new Error('expected output files');
   }
   const apiConfig = config.outputFiles[`../clients/rtkq/${client}/endpoints.gen.ts`];
-
-  it('keeps the allowlisted search', () => {
-    const filter = apiConfig.filterEndpoints;
-    if (typeof filter !== 'function') {
-      throw new Error('expected an endpoint matcher');
-    }
-    expect(filter('anyName', operation(`${base}/search`))).toBe(true);
-    expect(filter('anyName', operation(`${base}/search/hybrid`))).toBe(false);
-  });
 
   it.each([
     [`${base}/search`, 'post', true],
@@ -121,20 +109,5 @@ describe.each([
       throw new Error('expected an endpoint matcher');
     }
     expect(override.pattern('anyName', operation(path, verb))).toBe(overridden);
-  });
-});
-
-describe('rules.alerting v0alpha1 configuration', () => {
-  if (!('outputFiles' in config)) {
-    throw new Error('expected output files');
-  }
-  const apiConfig = config.outputFiles['../clients/rtkq/rules.alerting/v0alpha1/endpoints.gen.ts'];
-
-  it('drops the rule sequence search, which only v1beta1 generates', () => {
-    const filter = apiConfig.filterEndpoints;
-    if (typeof filter !== 'function') {
-      throw new Error('expected an endpoint matcher');
-    }
-    expect(filter('anyName', operation('/rulesequences/search'))).toBe(false);
   });
 });
