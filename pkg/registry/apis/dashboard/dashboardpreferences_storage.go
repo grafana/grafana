@@ -338,7 +338,9 @@ type batchItemErrorClient struct {
 func (c batchItemErrorClient) BatchCheck(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 	resp, err := c.AccessClient.BatchCheck(ctx, info, req)
 	if err != nil {
-		return resp, err
+		logging.FromContext(ctx).Error("dashboard preferences list failed to check folder access",
+			"namespace", req.Namespace, "err", err)
+		return authlib.BatchCheckResponse{}, &folderAccessCheckError{cause: err}
 	}
 	// In request order, because the results are a map and the first failure should not vary.
 	for _, check := range req.Checks {
@@ -351,9 +353,9 @@ func (c batchItemErrorClient) BatchCheck(ctx context.Context, info authlib.AuthI
 	return resp, nil
 }
 
-// folderAccessCheckError keeps its cause out of its text because the apiserver sends the text of a list
-// error to the client, and a per-item cause can be the access backend's raw message, which can carry
-// datastore details. BatchCheck logs the cause instead.
+// folderAccessCheckError keeps its cause out of its text because the apiserver sends the text of an
+// authorizer, admission or list error to the client, and the cause can be the access backend's raw
+// message, which can carry datastore details. Whoever returns it logs the cause instead.
 type folderAccessCheckError struct {
 	cause error
 }

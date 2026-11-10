@@ -1,8 +1,11 @@
 package dashboard
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"log/slog"
 	"slices"
 	"testing"
 
@@ -13,6 +16,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -168,7 +172,6 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 			grants:    map[string][]string{"f1": {utils.VerbGet, utils.VerbSetPermissions}},
 			checkErrs: map[string]error{"f1": checkErr},
 		}, grafanaauthorizer.NewServiceAuthorizer())
-		ctx := identity.WithRequester(context.Background(), editor)
 
 		for _, tt := range []struct{ verb, wantReason string }{
 			{verb: "get", wantReason: noFolderAccess},
@@ -177,11 +180,24 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 			{verb: "create", wantReason: notFolderAdmin},
 		} {
 			t.Run(tt.verb, func(t *testing.T) {
+				var logs bytes.Buffer
+				ctx := logging.Context(identity.WithRequester(context.Background(), editor), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
+
 				decision, reason, err := failing.Authorize(ctx, dashboardPreferencesAuthzAttributes(tt.verb, "folder-f1"))
 
 				require.ErrorIs(t, err, checkErr)
+				// The apiserver sends an authorizer error's text to the client, and the cause can be the access
+				// backend's raw message.
+				require.EqualError(t, err, "folder access could not be checked")
 				require.Equal(t, authorizer.DecisionDeny, decision)
 				require.Equal(t, tt.wantReason, reason)
+
+				var record map[string]any
+				require.NoError(t, json.Unmarshal(logs.Bytes(), &record), "expected one log record, got %s", logs.String())
+				require.Equal(t, "ERROR", record["level"])
+				require.Equal(t, "stacks-1", record["namespace"])
+				require.Equal(t, "f1", record["folder"])
+				require.Equal(t, "folder check failed", record["err"])
 			})
 		}
 	})

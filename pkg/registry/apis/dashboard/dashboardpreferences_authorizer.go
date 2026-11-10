@@ -7,6 +7,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -180,7 +181,9 @@ func checkDashboardPreferencesFolderAccess(ctx context.Context, accessClient aut
 		Name:      folderUID,
 	}, folderUID)
 	if err != nil {
-		return false, err
+		logging.FromContext(ctx).Error("dashboard preferences failed to check folder access",
+			"namespace", namespace, "folder", folderUID, "err", err)
+		return false, &folderAccessCheckError{cause: err}
 	}
 	return resp.Allowed, nil
 }

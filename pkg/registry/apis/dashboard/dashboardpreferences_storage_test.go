@@ -743,6 +743,10 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient).List(identity.WithRequester(ctx, u1), nil)
 				require.ErrorIs(t, err, boom)
 				require.Nil(t, obj)
+				// The access backend's message stays out of the text the apiserver sends to the client.
+				if tt.batchErr != nil {
+					require.EqualError(t, err, "folder access could not be checked")
+				}
 			})
 		}
 	})
