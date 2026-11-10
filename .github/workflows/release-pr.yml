@@ -276,7 +276,7 @@ jobs:
           PACKAGE_MANAGER: ${{ steps.pm.outputs.name }}
         run: |
           if [ "$PACKAGE_MANAGER" = 'yarn' ]; then
-            yarn install
+            YARN_ENABLE_IMMUTABLE_INSTALLS=false yarn install
             yarn prettier:write
           else
             pnpm install --no-frozen-lockfile
