@@ -5,7 +5,7 @@ import { type Config } from '@grafana/api-clients/rtkq/notifications.alerting/v0
 import { useAutoSyncConfigQuery } from '../../api/configApi';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { SYNCED_CONDITION_TYPE } from '../../utils/autoSync';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 
 import { type StagedExtraConfig, isStagedExtraConfig } from './stagedConfig';
 
