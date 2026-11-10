@@ -309,6 +309,16 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     });
   });
 
+  it('loads a dashboard whose v2 save stored links as null', () => {
+    // A dashboard saved at v2 with the list left out of the body is stored with null (#136859)
+    const dashboard = cloneDeep(defaultDashboard);
+    Object.assign(dashboard.spec, { links: null });
+
+    const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+    expect(scene.state.links).toEqual([]);
+  });
+
   it('should set panel ds if it is mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
     getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
