@@ -4,24 +4,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { MegaMenuItemText, type Props } from './MegaMenuItemText';
 
-const renderItemText = (props: Partial<Props> = {}) => {
-  return render(
-    <MegaMenuItemText
-      url="/explore"
-      itemName="Explore"
-      onPin={() => {}}
-      isPinned={false}
-      canCustomise={false}
-      editMode={false}
-      isHideable={false}
-      isHidden={false}
-      onToggleHidden={() => {}}
-      {...props}
-    >
+const renderItemText = (props: Partial<Props> = {}) =>
+  render(
+    <MegaMenuItemText url="/explore" itemName="Explore & Test" onPin={() => {}} isPinned={false} {...props}>
       <span>Explore & Test</span>
     </MegaMenuItemText>
   );
-};
 
 describe('MegaMenuItemText', () => {
   beforeEach(() => {
@@ -32,55 +20,36 @@ describe('MegaMenuItemText', () => {
     contextSrv.isSignedIn = false;
   });
 
-  it('keeps ampersands unescaped in the legacy bookmark tooltip', async () => {
-    const { user } = renderItemText({ itemName: 'Explore & Test', canCustomise: false });
-
-    await user.hover(screen.getByLabelText('Bookmark Explore & Test'));
-    const tooltip = await screen.findByRole('tooltip');
-
-    expect(tooltip).toHaveTextContent('Bookmark Explore & Test');
-    expect(tooltip).not.toHaveTextContent('Bookmark Explore &amp; Test');
+  it.each([
+    { navigationInfoArchRefresh: false, isPinned: false, label: 'Bookmark Explore & Test', icon: 'bookmark' },
+    { navigationInfoArchRefresh: true, isPinned: false, label: 'Pin Explore & Test', icon: 'gf-pin-unfilled' },
+    { navigationInfoArchRefresh: true, isPinned: true, label: 'Unpin Explore & Test', icon: 'gf-pin-filled' },
+  ])('uses $label with unescaped tooltip text and the $icon icon', async ({ label, icon, ...props }) => {
+    const onPin = jest.fn();
+    const { user } = renderItemText({ ...props, onPin });
+    const button = screen.getByLabelText(label);
+    expect(screen.getByTestId(`icon-${icon}`)).toBeInTheDocument();
+    await user.hover(button);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(label);
+    await user.click(button);
+    expect(onPin).toHaveBeenCalledWith('/explore');
   });
 
-  it('keeps ampersands unescaped in pin and hide tooltips when customising an unpinned visible item', async () => {
-    const { user } = renderItemText({
-      itemName: 'Explore & Test',
-      canCustomise: true,
-      editMode: true,
-      isPinned: false,
-      isHideable: true,
-      isHidden: false,
-    });
-
-    await user.hover(screen.getByLabelText('Pin Explore & Test'));
-    const pinTooltip = await screen.findByRole('tooltip');
-    expect(pinTooltip).toHaveTextContent('Pin Explore & Test');
-    expect(pinTooltip).not.toHaveTextContent('Pin Explore &amp; Test');
-
-    await user.hover(screen.getByLabelText('Hide Explore & Test'));
-    const hideTooltip = await screen.findByRole('tooltip');
-    expect(hideTooltip).toHaveTextContent('Hide Explore & Test');
-    expect(hideTooltip).not.toHaveTextContent('Hide Explore &amp; Test');
+  it('keeps the pin control reachable from the link by keyboard', async () => {
+    const onPin = jest.fn();
+    const { user } = renderItemText({ navigationInfoArchRefresh: true, onPin });
+    await user.tab();
+    expect(screen.getByRole('link')).toHaveFocus();
+    await user.tab();
+    expect(screen.getByLabelText('Pin Explore & Test')).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(onPin).toHaveBeenCalledWith('/explore');
   });
 
-  it('keeps ampersands unescaped in unpin and show tooltips when customising a pinned hidden item', async () => {
-    const { user } = renderItemText({
-      itemName: 'Explore & Test',
-      canCustomise: true,
-      editMode: true,
-      isPinned: true,
-      isHideable: true,
-      isHidden: true,
-    });
-
-    await user.hover(screen.getByLabelText('Unpin Explore & Test'));
-    const unpinTooltip = await screen.findByRole('tooltip');
-    expect(unpinTooltip).toHaveTextContent('Unpin Explore & Test');
-    expect(unpinTooltip).not.toHaveTextContent('Unpin Explore &amp; Test');
-
-    await user.hover(screen.getByLabelText('Show Explore & Test'));
-    const showTooltip = await screen.findByRole('tooltip');
-    expect(showTooltip).toHaveTextContent('Show Explore & Test');
-    expect(showTooltip).not.toHaveTextContent('Show Explore &amp; Test');
+  it('keeps anonymous navigation available without pin controls', () => {
+    contextSrv.isSignedIn = false;
+    renderItemText({ navigationInfoArchRefresh: true });
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/explore');
+    expect(screen.queryByLabelText('Pin Explore & Test')).not.toBeInTheDocument();
   });
 });

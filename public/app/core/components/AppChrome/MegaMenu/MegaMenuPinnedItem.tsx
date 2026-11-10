@@ -1,24 +1,20 @@
 import { css, cx } from '@emotion/css';
-import { type DraggableProvided } from '@hello-pangea/dnd';
 
 import { type GrafanaTheme2, type NavModelItem, toIconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, IconButton, Link, Tooltip, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 
-import { getDragHandleStyles } from './styles';
 import { hiddenKey, type PinnedLine } from './utils';
 
 interface Props {
   /** The single breadcrumb line to render. Whole-section pins (Starred) go through MegaMenuItem. */
   line: PinnedLine;
   activeItem?: NavModelItem;
-  editMode?: boolean;
   onUnpin: () => void;
   onClick?: () => void;
-  /** When set (edit mode), makes the entry draggable and shows a drag handle. */
-  draggableProvided?: DraggableProvided;
-  /** Disable the unpin control (e.g. while a save is in flight) so edits can't be made and lost. */
+  /** Disable unpin while a preferences write is in flight. */
   disabled?: boolean;
 }
 
@@ -27,18 +23,9 @@ interface Props {
  * top-level parent's icon leading. The leaf (the pinned item) always stays visible; the ancestor
  * crumbs truncate first. Whole-section pins (Starred) are rendered by MegaMenuItem instead.
  */
-export function MegaMenuPinnedItem({
-  line,
-  activeItem,
-  editMode,
-  onUnpin,
-  onClick,
-  draggableProvided,
-  disabled,
-}: Props) {
+export function MegaMenuPinnedItem({ line, activeItem, onUnpin, onClick, disabled }: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
-  const dragStyles = useStyles2(getDragHandleStyles);
   const { item, ancestors, icon } = line;
   const label = item.text;
 
@@ -53,23 +40,8 @@ export function MegaMenuPinnedItem({
   const LinkComponent = item.url && !item.target && item.url.startsWith('/') ? Link : 'a';
 
   return (
-    <li
-      ref={draggableProvided?.innerRef}
-      className={styles.entry}
-      data-nav-id={hiddenKey(item)}
-      {...draggableProvided?.draggableProps}
-    >
+    <li className={styles.entry} data-nav-id={hiddenKey(item)}>
       <div className={styles.row}>
-        {draggableProvided && (
-          // Every pinned row is draggable, so the handle owns the reserved column outright.
-          <div
-            className={cx(dragStyles.column, dragStyles.handle)}
-            {...draggableProvided.dragHandleProps}
-            aria-label={t('navigation.megamenu-item.reorder-aria-label', 'Reorder {{itemName}}', { itemName: label })}
-          >
-            <Icon name="draggabledots" size="md" />
-          </div>
-        )}
         <Tooltip content={fullPath} placement="top">
           <LinkComponent
             href={item.url ?? ''}
@@ -93,13 +65,14 @@ export function MegaMenuPinnedItem({
             <span className={styles.leaf}>{item.text}</span>
           </LinkComponent>
         </Tooltip>
-        {editMode && (
+        {contextSrv.isSignedIn && (
           <>
             {/* Centre the unpin in a fixed slot matching the Starred section's control slot so the
                 unpin icons line up exactly, then reserve the trailing chevron column the nav rows have. */}
             <span className={styles.unpinSlot}>
               <IconButton
                 name="gf-pin-filled"
+                className="pin-icon"
                 onClick={onUnpin}
                 aria-pressed
                 disabled={disabled}
@@ -128,9 +101,11 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
     gap: theme.spacing(1),
     height: theme.spacing(4),
     minWidth: 0,
-    '&:hover': {
+    '&:hover, &:focus-within': {
       backgroundColor: theme.colors.action.hover,
+      '.pin-icon': { opacity: 1 },
     },
+    '.pin-icon': { opacity: 0 },
   }),
   link: css({
     alignItems: 'center',
