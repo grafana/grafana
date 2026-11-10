@@ -1,3 +1,12 @@
+<!-- 13.1.10 START -->
+
+# 13.1.10 (2026-11-10)
+
+### Features and enhancements
+
+- **Provisioning:** allow same-host URL change on connection-backed repositories [#137090](https://github.com/grafana/grafana/pull/137090), [@MissingRoberto](https://github.com/MissingRoberto)
+
+<!-- 13.1.10 END -->
 <!-- 13.1.9 START -->
 
 # 13.1.9 (2026-10-27)
