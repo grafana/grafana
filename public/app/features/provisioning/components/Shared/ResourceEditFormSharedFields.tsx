@@ -11,7 +11,7 @@ import {
   useLazyGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
-import { validateBranchName } from 'app/features/provisioning/utils/git';
+import { stripSlashes, validateBranchName } from 'app/features/provisioning/utils/git';
 import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 
 import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
@@ -114,8 +114,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     });
 
     const showFolderFilename = (isNew || allowPathEdit) && resourceType === 'dashboard';
-    const configuredRepoPath =
-      repository?.type !== 'local' ? repository?.path?.trim().replace(/^\/+|\/+$/g, '') : undefined;
+    const configuredRepoPath = isGitProvider(repository?.type) ? stripSlashes(repository?.path ?? '') : undefined;
 
     // A new branch only exists after the save creates it; until the selected branch is a known
     // remote ref, list folders from the configured branch instead of requesting an unborn ref

@@ -260,37 +260,36 @@ describe('ResourceEditFormSharedFields', () => {
       expect(filenameInput).toHaveValue('test.json');
     });
 
-    it('should display repository root description and default placeholder when repository path is not configured', () => {
-      setup({ isNew: true, repository: mockRepo.github });
-
-      expect(
-        screen.getByText('Folder inside the repository. Leave empty for the repository root.')
-      ).toBeInTheDocument();
-      expect(screen.getByRole('combobox', { name: /folder/i })).toHaveAttribute(
-        'placeholder',
-        'Select or enter folder path'
-      );
-    });
-
-    it('should display repository root description and default placeholder for local repositories even with path', () => {
-      setup({
-        isNew: true,
-        repository: {
+    it.each([
+      [mockRepo.github, 'Folder inside the repository. Leave empty for the repository root.'],
+      [
+        {
           ...mockRepo.local,
           path: '/var/lib/grafana/dashboards',
         },
-      });
+        'Folder inside the repository. Leave empty for the repository root.',
+      ],
+      [
+        {
+          ...mockRepo.github,
+          path: 'dashboards/production',
+        },
+        'Folder inside the repository. Leave empty for the configured repository path (dashboards/production).',
+      ],
+      [
+        {
+          ...mockRepo.github,
+          path: '/team-a/dashboards/',
+        },
+        'Folder inside the repository. Leave empty for the configured repository path (team-a/dashboards).',
+      ],
+    ])('should display correct repository folder description', (repository, expectedDescription) => {
+      setup({ isNew: true, repository });
 
-      expect(
-        screen.getByText('Folder inside the repository. Leave empty for the repository root.')
-      ).toBeInTheDocument();
-      expect(screen.getByRole('combobox', { name: /folder/i })).toHaveAttribute(
-        'placeholder',
-        'Select or enter folder path'
-      );
+      expect(screen.getByText(expectedDescription)).toBeInTheDocument();
     });
 
-    it('should display configured repository path in description and neutral placeholder when repository path is set', () => {
+    it('should retain neutral placeholder when repository path is configured', () => {
       setup({
         isNew: true,
         repository: {
@@ -299,31 +298,6 @@ describe('ResourceEditFormSharedFields', () => {
         },
       });
 
-      expect(
-        screen.getByText(
-          'Folder inside the repository. Leave empty for the configured repository path (dashboards/production).'
-        )
-      ).toBeInTheDocument();
-      expect(screen.getByRole('combobox', { name: /folder/i })).toHaveAttribute(
-        'placeholder',
-        'Select or enter folder path'
-      );
-    });
-
-    it('should trim leading and trailing slashes from configured repository path in description', () => {
-      setup({
-        isNew: true,
-        repository: {
-          ...mockRepo.github,
-          path: '/team-a/dashboards/',
-        },
-      });
-
-      expect(
-        screen.getByText(
-          'Folder inside the repository. Leave empty for the configured repository path (team-a/dashboards).'
-        )
-      ).toBeInTheDocument();
       expect(screen.getByRole('combobox', { name: /folder/i })).toHaveAttribute(
         'placeholder',
         'Select or enter folder path'
