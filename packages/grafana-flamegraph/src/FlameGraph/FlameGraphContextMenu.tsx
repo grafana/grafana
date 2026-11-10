@@ -71,7 +71,9 @@ const FlameGraphContextMenu = ({
         viewMode,
         paneView,
         isDiff: data.isDiffFlamegraph(),
-        isSandwich: sandwichItem !== undefined,
+        // Match the predicate FlameGraph uses to render sandwich mode so an empty
+        // label does not report sandwich mode while the graph stays in normal view.
+        isSandwich: Boolean(sandwichItem),
         search,
         collapseConfig,
       }) || [];
