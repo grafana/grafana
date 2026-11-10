@@ -5,6 +5,9 @@ import { invalidateCachedPromisesCache, getCachedPromise } from '../../utils/get
 import { type MonitoringLogger } from '../../utils/logging';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { setLogger, initializeLoggersRegistry } from '../logging/registry';
+import { assertAppPluginId } from '../pluginMeta/apps';
+import { assertDatasourcePluginId } from '../pluginMeta/datasources';
+import { assertPanelPluginId } from '../pluginMeta/panels';
 import { getPluginMetaFromCache, refetchPluginMeta } from '../pluginMeta/plugins';
 import { clockPanelMetaOnPrem, myOrgTestAppMeta, v0alpha1Response } from '../pluginMeta/test-fixtures/v0alpha1Response';
 import { getCacheKey } from '../pluginUtils';
@@ -20,9 +23,24 @@ jest.mock('../pluginMeta/plugins', () => ({
   refetchPluginMeta: jest.fn(),
 }));
 
+jest.mock('../pluginMeta/apps', () => ({
+  assertAppPluginId: jest.fn(),
+}));
+
+jest.mock('../pluginMeta/datasources', () => ({
+  assertDatasourcePluginId: jest.fn(),
+}));
+
+jest.mock('../pluginMeta/panels', () => ({
+  assertPanelPluginId: jest.fn(),
+}));
+
 const getPluginMetaFromCacheMock = jest.mocked(getPluginMetaFromCache);
 const refetchPluginMetaMock = jest.mocked(refetchPluginMeta);
 const testdata = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'grafana-testdata-datasource')!;
+const assertAppPluginIdMock = jest.mocked(assertAppPluginId);
+const assertDatasourcePluginIdMock = jest.mocked(assertDatasourcePluginId);
+const assertPanelPluginIdMock = jest.mocked(assertPanelPluginId);
 
 describe('settings', () => {
   let backendSrv: BackendSrv;
@@ -55,6 +73,9 @@ describe('settings', () => {
       logWarning: jest.fn(),
     };
     setLogger('grafana/runtime.plugins.settings', logger);
+    assertAppPluginIdMock.mockResolvedValue(undefined);
+    assertDatasourcePluginIdMock.mockResolvedValue(undefined);
+    assertPanelPluginIdMock.mockResolvedValue(undefined);
   });
 
   describe('when plugins.useMTPluginSettings flag is enabled', () => {
@@ -244,6 +265,19 @@ describe('settings', () => {
           { validatePath: true }
         );
       });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        assertAppPluginIdMock.mockRejectedValue(new Error('Invalid plugin id'));
+        assertDatasourcePluginIdMock.mockRejectedValue(new Error('Invalid plugin id'));
+        assertPanelPluginIdMock.mockRejectedValue(new Error('Invalid plugin id'));
+
+        await expect(updateAppPluginSettings('text/secret?x=', {})).rejects.toThrow('Invalid plugin ID');
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(backendSrv.post).not.toHaveBeenCalled();
+        expect(backendSrv.patch).not.toHaveBeenCalled();
+        expect(refetchPluginMetaMock).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -290,6 +324,19 @@ describe('settings', () => {
           showErrorAlert: false,
           validatePath: true,
         });
+      });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        assertAppPluginIdMock.mockRejectedValue(new Error('Invalid plugin id'));
+        assertDatasourcePluginIdMock.mockRejectedValue(new Error('Invalid plugin id'));
+        assertPanelPluginIdMock.mockRejectedValue(new Error('Invalid plugin id'));
+
+        await expect(updateAppPluginSettings('text/secret?x=', {})).rejects.toThrow('Invalid plugin ID');
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(backendSrv.post).not.toHaveBeenCalled();
+        expect(backendSrv.patch).not.toHaveBeenCalled();
+        expect(refetchPluginMetaMock).not.toHaveBeenCalled();
       });
     });
   });

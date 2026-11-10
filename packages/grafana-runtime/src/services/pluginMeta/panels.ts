@@ -136,13 +136,13 @@ export async function getPanelPluginMeta(pluginId: string): Promise<PanelPluginM
     await initPanelPluginMetas();
   }
 
-  const panel = panels[pluginId];
+  const panel = Object.hasOwn(panels, pluginId) ? panels[pluginId] : undefined;
   if (panel) {
     return structuredClone(panel);
   }
 
   // Check alias values before failing
-  const aliased = panelsByAliasIDs[pluginId];
+  const aliased = Object.hasOwn(panelsByAliasIDs, pluginId) ? panelsByAliasIDs[pluginId] : undefined;
   if (aliased) {
     return structuredClone(aliased);
   }
@@ -196,4 +196,11 @@ export async function refetchPanelPluginMetas(): Promise<void> {
 
   const metas = await refetchPluginMetas();
   setPanelPluginMetasFromResponse(metas);
+}
+
+export async function assertPanelPluginId(pluginId: string): Promise<void> {
+  const panel = await getPanelPluginMeta(pluginId);
+  if (!panel) {
+    throw new Error(`PluginMeta: panel plugin with id "${pluginId}" is not installed`);
+  }
 }

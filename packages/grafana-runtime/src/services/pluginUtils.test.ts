@@ -1,7 +1,4 @@
-import { app } from './pluginMeta/test-fixtures/config.apps';
-import { prometheusMeta } from './pluginMeta/test-fixtures/config.datasources';
-import { panel } from './pluginMeta/test-fixtures/config.panels';
-import { isValidApiVersion, isValidPluginId, validatePluginId } from './pluginUtils';
+import { isValidApiVersion, validatePluginId } from './pluginUtils';
 
 describe('validatePluginId', () => {
   it('should accept app plugin IDs', () => {
@@ -40,37 +37,6 @@ describe('validatePluginId', () => {
     expect(validatePluginId('grafana-example-app\r')).toBe(false);
     expect(validatePluginId('grafana-example-app\0')).toBe(false);
   });
-});
-
-describe('isValidPluginId', () => {
-  it('should accept plugin IDs matching the naming convention', () => {
-    expect(isValidPluginId({ pluginId: 'grafana-exploretraces-app' })).toBe(true);
-  });
-
-  it('should accept known app plugin IDs', () => {
-    expect(isValidPluginId({ pluginId: 'myorg-someplugin-app', apps: [app] })).toBe(true);
-  });
-
-  it('should accept known datasource plugin IDs', () => {
-    expect(isValidPluginId({ pluginId: 'prometheus', datasources: [prometheusMeta] })).toBe(true);
-  });
-
-  it('should accept known panel plugin IDs', () => {
-    expect(isValidPluginId({ pluginId: 'grafana-test-panel', panels: [panel] })).toBe(true);
-  });
-
-  it('should reject unknown plugin IDs', () => {
-    expect(isValidPluginId({ pluginId: 'unknown', apps: [app], datasources: [prometheusMeta], panels: [panel] })).toBe(
-      false
-    );
-  });
-
-  it.each(['prometheus/secret', 'prometheus\\secret', 'prometheus?x=1', 'prometheus#ignored', 'prometheus%2fsecret'])(
-    'should reject URL segment injection for known plugin IDs: %s',
-    (pluginId) => {
-      expect(isValidPluginId({ pluginId, datasources: [prometheusMeta] })).toBe(false);
-    }
-  );
 });
 
 describe('isValidApiVersion', () => {

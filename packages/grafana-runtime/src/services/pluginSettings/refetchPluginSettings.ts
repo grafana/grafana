@@ -3,6 +3,7 @@ import { type PluginMeta } from '@grafana/data';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromiseWithArgs } from '../../utils/getCachedPromise';
+import { assertPluginId } from '../assertPluginId';
 import { refetchPluginMeta } from '../pluginMeta/plugins';
 import { getCacheKey, getLegacyCacheKey } from '../pluginUtils';
 
@@ -11,6 +12,8 @@ import { logPluginSettingsDebug } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
 
 export async function refetchPluginSettings(pluginId: string): Promise<PluginMeta> {
+  await assertPluginId(pluginId);
+
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
     return refetchCachedLegacySettings(pluginId, false);
   }

@@ -342,6 +342,15 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       expect(installed).toEqual(['grafana-test-panel']);
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
+
+    it.each(['__proto__', 'constructor', 'toString'])(
+      'should return null for inherited plugin IDs: %s',
+      async (pluginId) => {
+        const result = await getPanelPluginMeta(pluginId);
+
+        expect(result).toBeNull();
+      }
+    );
   });
 
   describe('and refetchPanelPluginMetas is called', () => {

@@ -3,6 +3,7 @@ import { type PluginMeta } from '@grafana/data';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromiseWithArgs } from '../../utils/getCachedPromise';
+import { assertPluginId } from '../assertPluginId';
 import { getBackendSrv } from '../backendSrv';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
 import { getApiVersion, getCacheKey, getLegacyCacheKey, getNamespace, isAuthError } from '../pluginUtils';
@@ -59,6 +60,8 @@ export function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean)
  * @returns The plugin's `PluginMeta`.
  */
 export async function getPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta> {
+  await assertPluginId(pluginId);
+
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
     return getCachedLegacySettings(pluginId, showErrorAlert);
   }

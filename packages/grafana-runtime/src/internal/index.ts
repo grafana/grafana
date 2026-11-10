@@ -87,7 +87,8 @@ export {
   setPanelPluginMetas,
   refetchPanelPluginMetas,
 } from '../services/pluginMeta/panels';
-export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
+export { installPluginMeta } from '../services/pluginMeta/installPluginMeta';
+export { uninstallPluginMeta } from '../services/pluginMeta/uninstallPluginMeta';
 export { refetchPluginMetasAfterPluginChange } from '../services/pluginMeta/pluginChange';
 export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
 export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
@@ -110,3 +111,4 @@ export {
 } from '../services/dataSource/constants';
 export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';
 export { isSignedInOrAnonymous } from '../services/user';
+export { assertPluginId } from '../services/assertPluginId';

@@ -1,5 +1,5 @@
 import { getBackendSrv, type MonitoringLogger, setBackendSrv } from '@grafana/runtime';
-import { installPluginMeta, uninstallPluginMeta, FlagKeys } from '@grafana/runtime/internal';
+import { installPluginMeta, uninstallPluginMeta, FlagKeys, assertPluginId } from '@grafana/runtime/internal';
 import { mockLogger, setTestFlags } from '@grafana/test-utils/unstable';
 
 import { installPlugin, uninstallPlugin } from './api';
@@ -10,12 +10,14 @@ jest.mock('@grafana/runtime/internal', () => {
     ...actual,
     installPluginMeta: jest.fn(actual.installPluginMeta),
     uninstallPluginMeta: jest.fn(actual.uninstallPluginMeta),
+    assertPluginId: jest.fn(),
   };
 });
 
 const installPluginMetaMock = jest.mocked(installPluginMeta);
 const uninstallPluginMetaMock = jest.mocked(uninstallPluginMeta);
 const originalFetch = global.fetch;
+const assertPluginIdMock = jest.mocked(assertPluginId);
 
 describe('api', () => {
   let logger: MonitoringLogger;
@@ -37,6 +39,7 @@ describe('api', () => {
       ok: true,
       status: 200,
     });
+    assertPluginIdMock.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -108,6 +111,18 @@ describe('api', () => {
           { pluginId: 'myorg-test-panel', pluginVersion: '1.5.0' }
         );
       });
+
+      it('should reject invalid plugin IDs before installing', async () => {
+        assertPluginIdMock.mockRejectedValue(new Error('Invalid plugin ID'));
+
+        await expect(installPlugin('myorg-test-panel/secret?x=', '1.5.0')).rejects.toThrow('Invalid plugin ID');
+
+        expect(assertPluginIdMock).toHaveBeenCalledWith('myorg-test-panel/secret?x=');
+        expect(installPluginMetaMock).not.toHaveBeenCalled();
+        expect(getBackendSrv().post).not.toHaveBeenCalled();
+        expect(global.fetch).not.toHaveBeenCalled();
+        expect(logger.logError).not.toHaveBeenCalled();
+      });
     });
 
     describe('uninstallPlugin', () => {
@@ -144,6 +159,18 @@ describe('api', () => {
           { pluginId: 'myorg-test-panel' }
         );
       });
+
+      it('should reject invalid plugin IDs before uninstalling', async () => {
+        assertPluginIdMock.mockRejectedValue(new Error('Invalid plugin ID'));
+
+        await expect(uninstallPlugin('myorg-test-panel/secret?x=')).rejects.toThrow('Invalid plugin ID');
+
+        expect(assertPluginIdMock).toHaveBeenCalledWith('myorg-test-panel/secret?x=');
+        expect(uninstallPluginMetaMock).not.toHaveBeenCalled();
+        expect(getBackendSrv().post).not.toHaveBeenCalled();
+        expect(global.fetch).not.toHaveBeenCalled();
+        expect(logger.logError).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -170,6 +197,18 @@ describe('api', () => {
           { showErrorAlert: false }
         );
       });
+
+      it('should reject invalid plugin IDs before installing', async () => {
+        assertPluginIdMock.mockRejectedValue(new Error('Invalid plugin ID'));
+
+        await expect(installPlugin('myorg-test-panel/secret?x=', '1.5.0')).rejects.toThrow('Invalid plugin ID');
+
+        expect(assertPluginIdMock).toHaveBeenCalledWith('myorg-test-panel/secret?x=');
+        expect(installPluginMetaMock).not.toHaveBeenCalled();
+        expect(getBackendSrv().post).not.toHaveBeenCalled();
+        expect(global.fetch).not.toHaveBeenCalled();
+        expect(logger.logError).not.toHaveBeenCalled();
+      });
     });
 
     describe('uninstallPlugin', () => {
@@ -181,6 +220,18 @@ describe('api', () => {
         expect(global.fetch).not.toHaveBeenCalled(); // no call to fetch is made because of feature flag check in uninstallPluginMeta
         expect(getBackendSrv().post).toHaveBeenCalledTimes(1);
         expect(getBackendSrv().post).toHaveBeenCalledWith('/api/plugins/myorg-test-panel/uninstall');
+      });
+
+      it('should reject invalid plugin IDs before uninstalling', async () => {
+        assertPluginIdMock.mockRejectedValue(new Error('Invalid plugin ID'));
+
+        await expect(uninstallPlugin('myorg-test-panel/secret?x=')).rejects.toThrow('Invalid plugin ID');
+
+        expect(assertPluginIdMock).toHaveBeenCalledWith('myorg-test-panel/secret?x=');
+        expect(uninstallPluginMetaMock).not.toHaveBeenCalled();
+        expect(getBackendSrv().post).not.toHaveBeenCalled();
+        expect(global.fetch).not.toHaveBeenCalled();
+        expect(logger.logError).not.toHaveBeenCalled();
       });
     });
   });

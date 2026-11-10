@@ -6,6 +6,9 @@ import { TracedError } from '../../utils/TracedError';
 import { type MonitoringLogger } from '../../utils/logging';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { initializeLoggersRegistry, setLogger } from '../logging/registry';
+import { assertAppPluginId } from '../pluginMeta/apps';
+import { assertDatasourcePluginId } from '../pluginMeta/datasources';
+import { assertPanelPluginId } from '../pluginMeta/panels';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
 import { v0alpha1Response } from '../pluginMeta/test-fixtures/v0alpha1Response';
 
@@ -15,7 +18,22 @@ jest.mock('../pluginMeta/plugins', () => ({
   getPluginMetaFromCache: jest.fn(),
 }));
 
+jest.mock('../pluginMeta/apps', () => ({
+  assertAppPluginId: jest.fn(),
+}));
+
+jest.mock('../pluginMeta/datasources', () => ({
+  assertDatasourcePluginId: jest.fn(),
+}));
+
+jest.mock('../pluginMeta/panels', () => ({
+  assertPanelPluginId: jest.fn(),
+}));
+
 const getPluginMetaFromCacheMock = jest.mocked(getPluginMetaFromCache);
+const assertAppPluginIdMock = jest.mocked(assertAppPluginId);
+const assertDatasourcePluginIdMock = jest.mocked(assertDatasourcePluginId);
+const assertPanelPluginIdMock = jest.mocked(assertPanelPluginId);
 
 describe('health', () => {
   let backendSrv: BackendSrv;
@@ -53,6 +71,9 @@ describe('health', () => {
     setLogger('grafana/runtime.plugins.settings', logger);
     getPluginMetaFromCacheMock.mockResolvedValue(app);
     backendSrv.get = jest.fn().mockResolvedValue(result);
+    assertAppPluginIdMock.mockResolvedValue(undefined);
+    assertDatasourcePluginIdMock.mockResolvedValue(undefined);
+    assertPanelPluginIdMock.mockResolvedValue(undefined);
   });
 
   describe('when plugins.useMTPluginSettings flag is enabled', () => {
@@ -173,23 +194,26 @@ describe('health', () => {
       });
 
       it('should use an empty message when a healthy k8s response omits it', async () => {
+        assertAppPluginIdMock.mockResolvedValue(undefined);
         backendSrv.get = jest.fn().mockResolvedValue({ status: 'OK' });
 
-        const response = await getAppPluginHealth('grafana-exploretraces-app');
+        const response = await getAppPluginHealth('grafana-synthetic-monitoring-app');
 
         expect(response).toEqual({ status: 'OK', message: '' });
       });
 
       it('should return undefined for data source plugins', async () => {
+        assertDatasourcePluginIdMock.mockResolvedValue(undefined);
         getPluginMetaFromCacheMock.mockResolvedValue(ds);
 
-        const response = await getAppPluginHealth('grafana-testdata-datasource');
+        const response = await getAppPluginHealth('prometheus');
 
         expect(response).toBeUndefined();
         expect(backendSrv.get).not.toHaveBeenCalled();
       });
 
       it('should return undefined for panel plugins', async () => {
+        assertPanelPluginIdMock.mockResolvedValue(undefined);
         getPluginMetaFromCacheMock.mockResolvedValue(panel);
 
         const response = await getAppPluginHealth('text');
@@ -251,6 +275,25 @@ describe('health', () => {
           message: 'Unauthorized',
           isHandled: true,
         });
+      });
+
+      it('should reject invalid API versions without making a request', async () => {
+        await expect(
+          getAppPluginHealth('grafana-exploretraces-app', undefined, 'v1/namespaces/other/app/instance/proxy/secret?x=')
+        ).rejects.toThrow('Invalid API version');
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+      });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        assertAppPluginIdMock.mockRejectedValue(new Error('Invalid plugin id'));
+        assertDatasourcePluginIdMock.mockRejectedValue(new Error('Invalid plugin id'));
+        assertPanelPluginIdMock.mockRejectedValue(new Error('Invalid plugin id'));
+
+        await expect(getAppPluginHealth('text/secret?x=')).rejects.toThrow('Invalid plugin ID');
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
     });
   });
@@ -386,6 +429,36 @@ describe('health', () => {
           message: 'Unauthorized',
           isHandled: true,
         });
+      });
+
+      it('should not care about invalid API versions', async () => {
+        await getAppPluginHealth(
+          'grafana-exploretraces-app',
+          undefined,
+          'v1/namespaces/other/app/instance/proxy/secret?x='
+        );
+
+        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).toHaveBeenCalledWith(
+          '/api/plugins/grafana-exploretraces-app/health',
+          undefined,
+          undefined,
+          {
+            showErrorAlert: false,
+            validatePath: true,
+          }
+        );
+      });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        assertAppPluginIdMock.mockRejectedValue(new Error('Invalid plugin id'));
+        assertDatasourcePluginIdMock.mockRejectedValue(new Error('Invalid plugin id'));
+        assertPanelPluginIdMock.mockRejectedValue(new Error('Invalid plugin id'));
+
+        await expect(getAppPluginHealth('text/secret?x=')).rejects.toThrow('Invalid plugin ID');
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
     });
   });

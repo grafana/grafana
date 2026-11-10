@@ -1,12 +1,14 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { FlagKeys, getAppPluginMetas, getDatasourcePluginMetas, getPanelPluginMetas } from '../../internal';
+import { FlagKeys } from '../../internal';
 import { TracedError } from '../../utils/TracedError';
 import { type MonitoringLogger } from '../../utils/logging';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { initializeLoggersRegistry, setLogger } from '../logging/registry';
+import { assertAppPluginId } from '../pluginMeta/apps';
+import { assertDatasourcePluginId } from '../pluginMeta/datasources';
+import { assertPanelPluginId } from '../pluginMeta/panels';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
-import { panels } from '../pluginMeta/test-fixtures/config.panels';
 import { v0alpha1Response } from '../pluginMeta/test-fixtures/v0alpha1Response';
 
 import { callAppPluginProxy } from './callAppPluginProxy';
@@ -16,21 +18,21 @@ jest.mock('../pluginMeta/plugins', () => ({
 }));
 
 jest.mock('../pluginMeta/apps', () => ({
-  getAppPluginMetas: jest.fn(),
+  assertAppPluginId: jest.fn(),
 }));
 
 jest.mock('../pluginMeta/datasources', () => ({
-  getDatasourcePluginMetas: jest.fn(),
+  assertDatasourcePluginId: jest.fn(),
 }));
 
 jest.mock('../pluginMeta/panels', () => ({
-  getPanelPluginMetas: jest.fn(),
+  assertPanelPluginId: jest.fn(),
 }));
 
 const getPluginMetaFromCacheMock = jest.mocked(getPluginMetaFromCache);
-const getAppPluginMetasMock = jest.mocked(getAppPluginMetas);
-const getDatasourcePluginMetasMock = jest.mocked(getDatasourcePluginMetas);
-const getPanelPluginMetasMock = jest.mocked(getPanelPluginMetas);
+const assertAppPluginIdMock = jest.mocked(assertAppPluginId);
+const assertDatasourcePluginIdMock = jest.mocked(assertDatasourcePluginId);
+const assertPanelPluginIdMock = jest.mocked(assertPanelPluginId);
 
 describe('plugin proxy', () => {
   let backendSrv: BackendSrv;
@@ -67,9 +69,9 @@ describe('plugin proxy', () => {
     setLogger('grafana/runtime.plugins.settings', logger);
     getPluginMetaFromCacheMock.mockResolvedValue(app);
     backendSrv.get = jest.fn().mockResolvedValue({});
-    getAppPluginMetasMock.mockResolvedValue([]);
-    getDatasourcePluginMetasMock.mockResolvedValue([]);
-    getPanelPluginMetasMock.mockResolvedValue([]);
+    assertAppPluginIdMock.mockResolvedValue(undefined);
+    assertDatasourcePluginIdMock.mockResolvedValue(undefined);
+    assertPanelPluginIdMock.mockResolvedValue(undefined);
   });
 
   describe('when plugins.useMTPluginSettings flag is enabled', () => {
@@ -160,7 +162,7 @@ describe('plugin proxy', () => {
       });
 
       it('should return undefined for panel plugins', async () => {
-        getPanelPluginMetasMock.mockResolvedValue([panels['text']]);
+        assertPanelPluginIdMock.mockResolvedValue(undefined);
         getPluginMetaFromCacheMock.mockResolvedValue(panel);
 
         const response = await callAppPluginProxy({ pluginId: 'text', routePath: 'some/route' });
@@ -243,10 +245,12 @@ describe('plugin proxy', () => {
       });
 
       it('should reject invalid plugin IDs without making a request', async () => {
-        getPanelPluginMetasMock.mockResolvedValue([panels['text']]);
+        assertAppPluginIdMock.mockRejectedValue(new Error('Invalid plugin ID'));
+        assertDatasourcePluginIdMock.mockRejectedValue(new Error('Invalid plugin ID'));
+        assertPanelPluginIdMock.mockRejectedValue(new Error('Invalid plugin ID'));
 
         await expect(callAppPluginProxy({ pluginId: 'text/secret?x=', routePath: 'some/route' })).rejects.toThrow(
-          'Invalid plugin ID'
+          'Invalid plugin ID \"text/secret?x=\"'
         );
 
         expect(backendSrv.get).not.toHaveBeenCalled();
@@ -364,10 +368,12 @@ describe('plugin proxy', () => {
       });
 
       it('should reject invalid plugin IDs without making a request', async () => {
-        getPanelPluginMetasMock.mockResolvedValue([panels['text']]);
+        assertAppPluginIdMock.mockRejectedValue(new Error('Invalid plugin ID'));
+        assertDatasourcePluginIdMock.mockRejectedValue(new Error('Invalid plugin ID'));
+        assertPanelPluginIdMock.mockRejectedValue(new Error('Invalid plugin ID'));
 
         await expect(callAppPluginProxy({ pluginId: 'text/secret?x=', routePath: 'some/route' })).rejects.toThrow(
-          'Invalid plugin ID'
+          'Invalid plugin ID \"text/secret?x=\"'
         );
 
         expect(backendSrv.get).not.toHaveBeenCalled();

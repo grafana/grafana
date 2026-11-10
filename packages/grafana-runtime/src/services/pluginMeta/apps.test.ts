@@ -259,6 +259,15 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 
       expect(result).toEqual(null);
     });
+
+    it.each(['__proto__', 'constructor', 'toString'])(
+      'should return null for inherited plugin IDs: %s',
+      async (pluginId) => {
+        const result = await getAppPluginMeta(pluginId);
+
+        expect(result).toBeNull();
+      }
+    );
   });
 });
 

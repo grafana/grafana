@@ -118,13 +118,13 @@ export async function getDatasourcePluginMeta(pluginId: string): Promise<DataSou
     await initDatasourcePluginMetas();
   }
 
-  const datasource = datasources[pluginId];
+  const datasource = Object.hasOwn(datasources, pluginId) ? datasources[pluginId] : undefined;
   if (datasource) {
     return structuredClone(datasource);
   }
 
   // Check alias values before failing
-  const aliased = datasourcesByAliasIDs[pluginId];
+  const aliased = Object.hasOwn(datasourcesByAliasIDs, pluginId) ? datasourcesByAliasIDs[pluginId] : undefined;
   if (aliased) {
     return structuredClone(aliased);
   }
@@ -166,4 +166,11 @@ export async function refetchDatasourcePluginMetas(): Promise<void> {
 
   const metas = await refetchPluginMetas();
   setDatasourcePluginMetasFromResponse(metas);
+}
+
+export async function assertDatasourcePluginId(pluginId: string): Promise<void> {
+  const ds = await getDatasourcePluginMeta(pluginId);
+  if (!ds) {
+    throw new Error(`PluginMeta: datasource plugin with id "${pluginId}" is not installed`);
+  }
 }

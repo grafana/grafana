@@ -1,5 +1,3 @@
-import { type AppPluginConfig, type DataSourcePluginMeta, type PanelPluginMeta } from '@grafana/data';
-
 import { config } from '../config';
 
 export function getApiVersion(): string {
@@ -34,40 +32,6 @@ export function validatePluginId(pluginId: string): boolean {
   }
 
   return pluginIdPattern.test(pluginId);
-}
-
-interface ValidateArgs {
-  pluginId?: string;
-  apps?: AppPluginConfig[];
-  datasources?: DataSourcePluginMeta[];
-  panels?: PanelPluginMeta[];
-}
-
-export function isValidPluginId({ pluginId, apps = [], datasources = [], panels = [] }: ValidateArgs): boolean {
-  if (!pluginId) {
-    return false;
-  }
-
-  if (validatePluginId(pluginId)) {
-    return true;
-  }
-
-  const app = apps.find((a) => a.id === pluginId);
-  if (app) {
-    return true;
-  }
-
-  const datasource = datasources.find((d) => d.id === pluginId);
-  if (datasource) {
-    return true;
-  }
-
-  const panel = panels.find((p) => p.id === pluginId);
-  if (panel) {
-    return true;
-  }
-
-  return false;
 }
 
 const apiVersionPattern = /^v[0-9]+(?:(?:alpha|beta)[0-9]+)?$/;

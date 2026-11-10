@@ -1,6 +1,8 @@
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { type HealthCheckResult, HealthStatus } from '../../utils/DataSourceWithBackend';
+import { assertApiVersion } from '../assertApiVersion';
+import { assertPluginId } from '../assertPluginId';
 import { getBackendSrv, isFetchError } from '../backendSrv';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
 import { logPluginSettingsDebug, logPluginSettingsError } from '../pluginSettings/logging';
@@ -77,8 +79,10 @@ function getAppHealth(pluginId: string, apiVersion: string, showErrorAlert?: boo
 export async function getAppPluginHealth(
   pluginId: string,
   showErrorAlert = false,
-  apiVersion = getApiVersion()
+  apiVersion?: string
 ): Promise<HealthCheckResult | undefined> {
+  await assertPluginId(pluginId);
+
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
     return getLegacyAppHealth(pluginId, showErrorAlert);
   }
@@ -93,5 +97,8 @@ export async function getAppPluginHealth(
     return undefined;
   }
 
-  return getAppHealth(pluginId, apiVersion, showErrorAlert);
+  const resolvedApiVersion = apiVersion ?? getApiVersion();
+  assertApiVersion(resolvedApiVersion);
+
+  return getAppHealth(pluginId, resolvedApiVersion, showErrorAlert);
 }

@@ -82,7 +82,7 @@ export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfi
     await initAppPluginMetas();
   }
 
-  const app = apps[pluginId];
+  const app = Object.hasOwn(apps, pluginId) ? apps[pluginId] : undefined;
   return app ? structuredClone(app) : null;
 }
 
@@ -122,4 +122,11 @@ export function clearAppPluginMetas(): void {
 
   apps = {};
   didInit = false;
+}
+
+export async function assertAppPluginId(pluginId: string): Promise<void> {
+  const app = await getAppPluginMeta(pluginId);
+  if (!app) {
+    throw new Error(`PluginMeta: app plugin with id "${pluginId}" is not installed`);
+  }
 }
