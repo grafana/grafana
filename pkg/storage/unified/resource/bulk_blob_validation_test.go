@@ -117,7 +117,6 @@ func TestBulkProcessPreservesReferenceOnlyInput(t *testing.T) {
 				require.Len(t, backend.forwarded, 1)
 				require.Same(t, req, backend.forwarded[0])
 				require.Equal(t, original, req.Value)
-				require.Nil(t, stream.response.Error)
 				require.EqualValues(t, 1, stream.response.Processed)
 			}
 		})
@@ -143,7 +142,6 @@ func TestBulkProcessNegotiatedBlobUploads(t *testing.T) {
 			require.NoError(t, srv.BulkProcess(stream))
 			require.True(t, stream.headerBeforeRecv)
 			require.NoError(t, resourcepb.ValidateInlineBlobAcknowledgement(stream.headers))
-			require.Nil(t, stream.response.Error)
 			require.EqualValues(t, 2, stream.response.Processed)
 			require.Len(t, backend.forwarded, 2)
 			require.NotSame(t, req, backend.forwarded[0])
@@ -230,7 +228,6 @@ func TestBulkProcessRemoteBlobHandshake(t *testing.T) {
 	require.NoError(t, stream.Send(bulkTestChunk("dashboard", nil, true)))
 	rsp, err := stream.CloseAndRecv()
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.EqualValues(t, 1, rsp.Processed)
 	require.Len(t, backend.forwarded, 1)
 	require.Empty(t, backend.forwarded[0].BlobUploads)
@@ -264,7 +261,6 @@ func TestBulkProcessNegotiatedInputUsesBoundedDiskSpool(t *testing.T) {
 			stream := &negotiatedBulkBlobStream{bulkBlobValidationStream: bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{ctx: ctx, requests: reqs}}}
 
 			require.NoError(t, srv.BulkProcess(stream))
-			require.Nil(t, stream.response.Error)
 			require.True(t, backend.diskBacked)
 			require.Equal(t, []int{2, 2, 1}, backend.batchSizes)
 			require.Len(t, backend.forwarded, len(reqs))

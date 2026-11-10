@@ -36,6 +36,7 @@ type IndexViewData struct {
 	Assets                 *EntryPointAssets `json:"assets"` // Includes CDN info
 	RenderBindingSupported bool              `json:"-"`
 	UseLuxon               bool              `json:"-"`
+	LiveDisabled           bool              `json:"-"`
 	// AutoLoginRedirectURL is the URL the frontend should redirect to for auto-login.
 	// Empty means no auto-login redirect should occur.
 	AutoLoginRedirectURL    string `json:"autoLoginRedirectURL,omitempty"`

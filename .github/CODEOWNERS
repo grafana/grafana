@@ -1189,7 +1189,7 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
 /scripts/openapi3/ @grafana/grafana-operator-experience-squad
-/scripts/prepare-npm-package.js @grafana/grafana-frontend-platform
+/scripts/pnpm-pack-hooks.cjs @grafana/grafana-frontend-platform
 /scripts/protobuf-check.sh @grafana/grafana-catalog
 /scripts/stripnulls.sh @grafana/grafana-as-code
 /scripts/tag_release.sh @grafana/grafana-operator-experience-squad

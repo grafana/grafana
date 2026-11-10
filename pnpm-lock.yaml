@@ -282,7 +282,7 @@ importers:
         version: 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
       '@grafana/aws-sdk':
         specifier: ^0.12.0
-        version: 0.12.3(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))
+        version: 0.12.4(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))
       '@grafana/data':
         specifier: workspace:*
         version: link:packages/grafana-data
@@ -537,7 +537,7 @@ importers:
         version: 1.4.0
       lossless-json:
         specifier: ^4.1.1
-        version: 4.3.1
+        version: 4.3.3
       marked:
         specifier: 16.3.0
         version: 16.3.0
@@ -570,7 +570,7 @@ importers:
         version: 5.1.16
       node-forge:
         specifier: ^1.4.0
-        version: 1.4.1
+        version: 1.4.3
       ol:
         specifier: ^10.10.0
         version: 10.11.0
@@ -708,10 +708,10 @@ importers:
         version: 1.6.32
       vis-data:
         specifier: ^8.0.0
-        version: 8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
+        version: 8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
       vis-network:
         specifier: 10.1.2
-        version: 10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
+        version: 10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.5
@@ -741,7 +741,7 @@ importers:
         specifier: 10.0.0
         version: 10.0.0(@stylistic/eslint-plugin@5.10.0(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0)))(@typescript-eslint/eslint-plugin@8.56.0(@typescript-eslint/parser@8.56.0(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(@typescript-eslint/parser@8.56.0(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(@typescript/typescript6@6.0.2)(eslint-config-prettier@10.1.8(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0)))(eslint-plugin-jsdoc@52.0.2(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint-plugin-react-hooks@7.1.1(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint-plugin-react@7.37.5(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0)))(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))
       '@grafana/eslint-plugin':
-        specifier: link:./packages/grafana-eslint-rules
+        specifier: workspace:*
         version: link:packages/grafana-eslint-rules
       '@grafana/levitate':
         specifier: 0.17.2
@@ -755,9 +755,6 @@ importers:
       '@manypkg/get-packages':
         specifier: ^3.0.0
         version: 3.1.0
-      '@npmcli/package-json':
-        specifier: ^6.0.0
-        version: 6.2.0
       '@playwright/test':
         specifier: 1.64.1
         version: 1.64.1
@@ -847,7 +844,7 @@ importers:
         version: 4.0.9
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/logfmt':
         specifier: ^1.2.3
         version: 1.2.6
@@ -1386,13 +1383,13 @@ importers:
         specifier: ^10.6.0
         version: 10.6.0
       '@grafana/api-clients':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-api-clients
       '@grafana/data':
         specifier: workspace:*
         version: link:../grafana-data
       '@grafana/i18n':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-i18n
       '@grafana/runtime':
         specifier: workspace:*
@@ -1442,7 +1439,7 @@ importers:
         version: 14.6.1(@testing-library/dom@10.4.1)
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/react':
         specifier: 19.2.18
         version: 19.2.18
@@ -1520,10 +1517,10 @@ importers:
         specifier: 7.0.1
         version: 7.0.1
       '@grafana/i18n':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-i18n
       '@grafana/schema':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-schema
       '@leeoniya/ufuzzy':
         specifier: ^1.0.19
@@ -1593,7 +1590,7 @@ importers:
         version: 1.6.32
       xss:
         specifier: ^1.0.14
-        version: 1.0.15
+        version: 1.0.17
       zod:
         specifier: ^4.3.0
         version: 4.6.7
@@ -1612,7 +1609,7 @@ importers:
         version: 4.7.11
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -1742,10 +1739,10 @@ importers:
         specifier: ^0.1.1
         version: 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
       '@grafana/data':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-data
       '@grafana/ui':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-ui
       '@leeoniya/ufuzzy':
         specifier: ^1.0.19
@@ -1813,7 +1810,7 @@ importers:
         version: 29.5.14
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -1909,22 +1906,22 @@ importers:
         specifier: ^11.13.5
         version: 11.13.5(supports-color@7.2.0)
       '@grafana/data':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-data
       '@grafana/e2e-selectors':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-e2e-selectors
       '@grafana/plugin-compat':
-        specifier: ^0.9.0
+        specifier: ^0.10.0
         version: link:../grafana-plugin-compat
       '@grafana/plugin-ui':
         specifier: ^0.17.3
         version: 0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@grafana/runtime':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-runtime
       '@grafana/ui':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-ui
       react-dom:
         specifier: '>=19'
@@ -2127,16 +2124,16 @@ importers:
   packages/grafana-runtime:
     dependencies:
       '@grafana/data':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-data
       '@grafana/faro-web-sdk':
         specifier: ^2.12.0
         version: 2.12.1
       '@grafana/schema':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-schema
       '@grafana/ui':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-ui
       '@openfeature/core':
         specifier: ^1.12.0
@@ -2198,7 +2195,7 @@ importers:
         version: 29.5.14
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/react':
         specifier: 19.2.18
         version: 19.2.18
@@ -2272,13 +2269,13 @@ importers:
         specifier: ^0.1.24
         version: 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
       '@grafana/data':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-data
       '@grafana/e2e-selectors':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-e2e-selectors
       '@grafana/i18n':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-i18n
       '@grafana/plugin-ui':
         specifier: ^0.17.3
@@ -2287,7 +2284,7 @@ importers:
         specifier: workspace:*
         version: link:../grafana-runtime
       '@grafana/ui':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-ui
       '@react-awesome-query-builder/ui':
         specifier: ^6.6.15
@@ -2340,7 +2337,7 @@ importers:
         version: 29.5.14
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -2410,7 +2407,7 @@ importers:
         version: 29.5.14
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -2490,22 +2487,22 @@ importers:
         specifier: ^0.27.19
         version: 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@grafana/data':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-data
       '@grafana/e2e-selectors':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-e2e-selectors
       '@grafana/faro-web-sdk':
         specifier: ^2.12.0
         version: 2.12.1
       '@grafana/i18n':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-i18n
       '@grafana/react-data-grid':
         specifier: 7.0.0-beta.60
         version: 7.0.0-beta.60(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@grafana/schema':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../grafana-schema
       '@hello-pangea/dnd':
         specifier: ^18.0.1
@@ -2548,7 +2545,7 @@ importers:
         version: 3.5.33
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/react-table':
         specifier: ^7.7.20
         version: 7.7.20
@@ -2575,7 +2572,7 @@ importers:
         version: 5.1.9
       is-hotkey:
         specifier: ^0.2.0
-        version: 0.2.0
+        version: 0.2.1
       jquery:
         specifier: ^3.7.1
         version: 3.7.1
@@ -2829,16 +2826,16 @@ importers:
         specifier: 11.13.5
         version: 11.13.5(supports-color@7.2.0)
       '@grafana/data':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../../../../../packages/grafana-data
       '@grafana/runtime':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../../../../../packages/grafana-runtime
       '@grafana/schema':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../../../../../packages/grafana-schema
       '@grafana/ui':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../../../../../packages/grafana-ui
       d3-random:
         specifier: ^3.0.1
@@ -2860,10 +2857,10 @@ importers:
         version: 7.8.2
     devDependencies:
       '@grafana/e2e-selectors':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../../../../../packages/grafana-e2e-selectors
       '@grafana/plugin-configs':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../../../../../packages/grafana-plugin-configs
       '@rspack/cli':
         specifier: ^2
@@ -2891,7 +2888,7 @@ importers:
         version: 29.5.14
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -2914,16 +2911,16 @@ importers:
         specifier: 11.13.5
         version: 11.13.5(supports-color@7.2.0)
       '@grafana/data':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../../../../../packages/grafana-data
       '@grafana/runtime':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../../../../../packages/grafana-runtime
       '@grafana/schema':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../../../../../packages/grafana-schema
       '@grafana/ui':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../../../../../packages/grafana-ui
       '@reduxjs/toolkit':
         specifier: 2.12.0
@@ -2951,7 +2948,7 @@ importers:
         version: 7.8.5
     devDependencies:
       '@grafana/plugin-configs':
-        specifier: 13.4.0-pre
+        specifier: workspace:*
         version: link:../../../../../packages/grafana-plugin-configs
       '@testing-library/dom':
         specifier: 10.4.1
@@ -2964,7 +2961,7 @@ importers:
         version: 29.5.14
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -3890,8 +3887,8 @@ packages:
       react: '>=18.0.0'
       rxjs: '>=7.0.0'
 
-  '@grafana/aws-sdk@0.12.3':
-    resolution: {integrity: sha512-O2DIAnIZcjpNtkfpFPVXkSBDo/0g04Cc6KNpCoaHvAw0rWHJf1hGnoE5znEn5lBwkgPU01HCFCbq2oIVXExQoQ==}
+  '@grafana/aws-sdk@0.12.4':
+    resolution: {integrity: sha512-x8ZMIA5Y0x9cjD3/VEWB0RsfKo5MYelXRSurZaKuxvKAKHw5xMK1/SzhJiMvZ+OAvE4wh+ve/H8yQyHWSx+VVA==}
     engines: {node: '>=24'}
     peerDependencies:
       '@grafana/plugin-ui': '>=0.14.0'
@@ -4913,18 +4910,6 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
-
-  '@npmcli/git@6.0.3':
-    resolution: {integrity: sha512-GUYESQlxZRAdhs3UhbB6pVRNUELQOHXwK9ruDkwmCv2aZ5y0SApQzUJCg02p3A7Ue2J5hxvlk1YI53c00NmRyQ==}
-    engines: {node: ^18.17.0 || >=20.5.0}
-
-  '@npmcli/package-json@6.2.0':
-    resolution: {integrity: sha512-rCNLSB/JzNvot0SEyXqWZ7tX2B5dD2a1br2Dp0vSYVo5jh8Z0EZ7lS9TsZ1UtziddB1UfNUaMCc538/HztnJGA==}
-    engines: {node: ^18.17.0 || >=20.5.0}
-
-  '@npmcli/promise-spawn@8.0.2':
-    resolution: {integrity: sha512-/bNJhjc+o6qL+Dwz/bqfTQClkEO5nTQ1ZEcdCkAQjhkZMHIh22LPG7fNh1enJP1NKWDqYiiABnjFCY7E0zHYtQ==}
-    engines: {node: ^18.17.0 || >=20.5.0}
 
   '@nx/nx-darwin-arm64@24.0.2':
     resolution: {integrity: sha512-UXiD8QtdWPsoVXMkdFnuMtw2FoaF3kPiNcKvX4dv956YK6vuL8lafxvikADqjwlRlFhKAci+ePzpbjJDNsQBiA==}
@@ -7251,8 +7236,8 @@ packages:
   '@types/lodash.memoize@4.1.7':
     resolution: {integrity: sha512-lGN7WeO4vO6sICVpf041Q7BX/9k1Y24Zo3FY0aUezr1QlKznpjzsDk3T3wvH8ofYzoK0QupN9TWcFAFZlyPwQQ==}
 
-  '@types/lodash@4.17.25':
-    resolution: {integrity: sha512-+K1NIO8I+F9/wNulfVvu23QYd0Pe9/OCqRrim4NoYIf1VoEDL90Ve4ClzpyqBLc7NpGGWRvYNCKZ1BE/Jpf8dQ==}
+  '@types/lodash@4.17.27':
+    resolution: {integrity: sha512-VenMRv/eKNrspX9v3H4dbmjsrnCOYdYBG3kxXKk3dG6X+urBGcj2Prww3xw1U5K4FV/mE4h5GbWd0szEKf+9ew==}
 
   '@types/logfmt@1.2.6':
     resolution: {integrity: sha512-9/L27oLOjVlhMEHJs4vuvgEFNsAnPISQMi4ploHhidLwv2NX1S7aDmpWuSmaC2S+mXWD/Zx7qUP0mWFO7G0zvw==}
@@ -9571,9 +9556,6 @@ packages:
     resolution: {integrity: sha512-xUtoPkMggbz0MPyPiIWr1Kp4aeWJjDZ6SMvURhimjdZgsRuDplF5/s9hcgGhyXMhs+6vpnuoiZ2kFiu3FMnS8Q==}
     engines: {node: '>=18'}
 
-  err-code@2.0.3:
-    resolution: {integrity: sha512-2bmlRpNKBxT/CRmPOlyISQpNj+qSeYvcym/uT0Jx2bMOlKLtSy1ZmLuVxSEKKyor/N5yhvp/ZiG1oE3DEYMSFA==}
-
   error-ex@1.3.2:
     resolution: {integrity: sha512-7dFHNmqeFSEt2ZBsCriorKnn3Z2pj+fd9kmI6QoWw4//DL+icEBfc0U7qJCisqrTsKTjw4fNFy2pW9OqStD84g==}
 
@@ -10485,10 +10467,6 @@ packages:
   hosted-git-info@2.8.9:
     resolution: {integrity: sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw==}
 
-  hosted-git-info@8.1.0:
-    resolution: {integrity: sha512-Rw/B2DNQaPBICNXEm8balFz9a6WpZrkCGpcWFpy7nCj+NyhSdqXipmfvtmWt9xGfp0wZnBxB+iVpLmQMYt47Tw==}
-    engines: {node: ^18.17.0 || >=20.5.0}
-
   html-encoding-sniffer@3.0.0:
     resolution: {integrity: sha512-oWv4T4yJ52iKrufjnyZPkrN0CH3QnrUqdB6In1g5Fe1mia8GmF36gnfNySxoZtxD5+NmYw1EElVXiBk93UeskA==}
     engines: {node: '>=12'}
@@ -10810,8 +10788,8 @@ packages:
   is-hotkey@0.1.4:
     resolution: {integrity: sha512-Py+aW4r5mBBY18TGzGz286/gKS+fCQ0Hee3qkaiSmEPiD0PqFpe0wuA3l7rTOUKyeXl8Mxf3XzJxIoTlSv+kxA==}
 
-  is-hotkey@0.2.0:
-    resolution: {integrity: sha512-UknnZK4RakDmTgz4PI1wIph5yxSs/mvChWs9ifnlXsKuXgWmOkY/hAE0H/k2MIqH0RlRye0i1oC07MCRSD28Mw==}
+  is-hotkey@0.2.1:
+    resolution: {integrity: sha512-r/T66LS/FY5o4Duw1rre/wMTngTuuRjzIqKioM/sWaqXcIBnCS5FIpqsoKIYox4nuWUR/aQL/d2PCdW4PFtQzw==}
 
   is-in-browser@1.1.3:
     resolution: {integrity: sha512-FeXIBgG/CPGd/WUxuEyvgGTEfwiG9Z4EKGxjNMRqviiIIfsmgrpnHLffEDdwUHqNva1VEW91o3xBT/m8Elgl9g==}
@@ -10977,10 +10955,6 @@ packages:
 
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
-
-  isexe@3.1.1:
-    resolution: {integrity: sha512-LpB/54B+/2J5hqQ7imZHfdU31OlgQqx7ZicVlkm9kzg9/w8GKLEcFfJl/t7DCEDueOyBAD6zCCwTO6Fzs0NoEQ==}
-    engines: {node: '>=16'}
 
   isobject@3.0.1:
     resolution: {integrity: sha512-WhB9zCku7EGTj/HQQRz5aUQEUeoQZH2bWcltRErOpymJ4boYE6wL9Tbr23krRPSZ+C5zqNSrSw+Cc7sZZ4b7vg==}
@@ -11464,10 +11438,6 @@ packages:
   json-parse-even-better-errors@2.3.1:
     resolution: {integrity: sha512-xyFwyhro/JEof6Ghe2iz2NcXoj2sloNsWr/XsERDK/oiPCfaNhl5ONfp+jQdAZRQQ0IJWNzH9zIZF7li91kh2w==}
 
-  json-parse-even-better-errors@4.0.0:
-    resolution: {integrity: sha512-lR4MXjGNgkJc7tkQ97kb2nuEMnNCyU//XYVH0MKTGcXEiSudQ5MKGKen3C5QubYy0vmq+JGitUg92uuywGEwIA==}
-    engines: {node: ^18.17.0 || >=20.5.0}
-
   json-schema-library@9.3.5:
     resolution: {integrity: sha512-5eBDx7cbfs+RjylsVO+N36b0GOPtv78rfqgf2uON+uaHUIC62h63Y8pkV2ovKbaL4ZpQcHp21968x5nx/dFwqQ==}
 
@@ -11754,8 +11724,8 @@ packages:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
     hasBin: true
 
-  lossless-json@4.3.1:
-    resolution: {integrity: sha512-SqD/Bg3ZfltBJ2Z14hJ/BihnvtV553WO4g9/ePtlp4lrnl9jF3AdIJt53A/Wkg/0Li+LMfxaBqgx1MiFZdQlpQ==}
+  lossless-json@4.3.3:
+    resolution: {integrity: sha512-FGFrGArHsv7BRiYOf37ZRieT9HlKw+Kpu9HvtpYjcoOEo8lqNkjny8A2YAfWNWWQC+9pcLIrLZ+IviKJhaHwGQ==}
 
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
@@ -12178,8 +12148,8 @@ packages:
     resolution: {integrity: sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  node-forge@1.4.1:
-    resolution: {integrity: sha512-w5/MfWaeMrpR/5ba6fZyAUTLSuE6aYz7H/3cYrqwZEmf5eQS3IaaLgJt4MBv7HglGFWmV22K8h4U18RJQmw/ow==}
+  node-forge@1.4.3:
+    resolution: {integrity: sha512-P6wzfh6t70avmV8FrVEAd/36sOPJQ+hkaJVX1Laap9J/77m7M0eyozDvc8SwnDf4P7MP94gwbAAo0rg3YVXT+g==}
     engines: {node: '>= 6.13.0'}
 
   node-gyp-build@4.8.4:
@@ -12213,22 +12183,6 @@ packages:
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
     engines: {node: '>=0.10.0'}
-
-  npm-install-checks@7.1.1:
-    resolution: {integrity: sha512-u6DCwbow5ynAX5BdiHQ9qvexme4U3qHW3MWe5NqH+NeBm0LbiH6zvGjNNew1fY+AZZUtVHbOPF3j7mJxbUzpXg==}
-    engines: {node: ^18.17.0 || >=20.5.0}
-
-  npm-normalize-package-bin@4.0.0:
-    resolution: {integrity: sha512-TZKxPvItzai9kN9H/TkmCtx/ZN/hvr3vUycjlfmH0ootY9yFBzNOpiXAdIn1Iteqsvk4lQn6B5PTrt+n6h8k/w==}
-    engines: {node: ^18.17.0 || >=20.5.0}
-
-  npm-package-arg@12.0.2:
-    resolution: {integrity: sha512-f1NpFjNI9O4VbKMOlA5QoBq/vSQPORHcTZ2feJpFkTHJ9eQkdlmZEKSjcAhxTGInC7RlEyScT9ui67NaOsjFWA==}
-    engines: {node: ^18.17.0 || >=20.5.0}
-
-  npm-pick-manifest@10.0.0:
-    resolution: {integrity: sha512-r4fFa4FqYY8xaM7fHecQ9Z2nE9hgNfJR+EmoKv0+chvzWkBcORX3r0FpTByP+CbOVJDladMXnPQGVN8PBLGuTQ==}
-    engines: {node: ^18.17.0 || >=20.5.0}
 
   npm-run-path@4.0.1:
     resolution: {integrity: sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw==}
@@ -12749,10 +12703,6 @@ packages:
     resolution: {integrity: sha512-DEvV2ZF2r2/63V+tK8hQvrR2ZGn10srHbXviTlcv7Kpzw8jWiNTqbVgjO3IY8RxrrOUF8VPMQQFysYYYv0YZxw==}
     engines: {node: '>=6'}
 
-  proc-log@5.0.0:
-    resolution: {integrity: sha512-Azwzvl90HaF0aCz1JrDdXQykFakSSNPaPoiZ9fm5qJIMHioDZEi7OAdRwSm6rSoPtY3Qutnm3L7ogmg3dc+wbQ==}
-    engines: {node: ^18.17.0 || >=20.5.0}
-
   process-on-spawn@1.1.0:
     resolution: {integrity: sha512-JOnOPQ/8TZgjs1JIH/m9ni7FfimjNa/PRx7y/Wb5qdItsnhO0jE4AT7fC0HjC28DUQWDr50dwSYZLdRMlqDq3Q==}
     engines: {node: '>=8'}
@@ -12765,10 +12715,6 @@ packages:
     resolution: {integrity: sha512-6ZiOBfCywsD4k1BN9IX0uZhF+tJkV8q8llP64G5Hajs4JOeVLPCwpPVcpXy3BwYiUGgyJzsJJQeOIv7+hDSq8g==}
     engines: {node: ^16 || ^18 || >=20}
     deprecated: prom-client has been replaced by @prometheus-io/client
-
-  promise-retry@2.0.1:
-    resolution: {integrity: sha512-y+WKFlBR8BGXnsNlIHFGPZmyDf3DFMoLhaflAnyZgV6rG6xu+JwesTo2Q9R6XwYmtmwAFCkAk3e35jEdoeh/3g==}
-    engines: {node: '>=10'}
 
   prompts@2.4.2:
     resolution: {integrity: sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q==}
@@ -13463,10 +13409,6 @@ packages:
   ret@0.2.2:
     resolution: {integrity: sha512-M0b3YWQs7R3Z917WRQy1HHA7Ba7D8hvZg6UE5mLykJxQVE2ju0IXbGlaHPPlkY+WN7wFP+wUMXmBFA0aV6vYGQ==}
     engines: {node: '>=4'}
-
-  retry@0.12.0:
-    resolution: {integrity: sha512-9LkiTwjUh6rT555DtE9rTX+BKByPfrMzEAtnlEtdEwr3Nkffwiihqe2bWADg+OQRjt9gl6ICdmB/ZFDCGAtSow==}
-    engines: {node: '>= 4'}
 
   reusify@1.0.4:
     resolution: {integrity: sha512-U9nH88a3fc/ekCF1l0/UP1IosiuIjyTh7hBvXVMHYgVcfGvt897Xguj2UOLDeI5BG2m7/uwyaLVT6fbtCwTyzw==}
@@ -14787,10 +14729,6 @@ packages:
     resolution: {integrity: sha512-OljLrQ9SQdOUqTaQxqL5dEfZWrXExyyWsozYlAWFawPVNuD83igl7uJD2RTkNMbniIYgt8l81eCJGIdQF7avLQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
-  validate-npm-package-name@6.0.2:
-    resolution: {integrity: sha512-IUoow1YUtvoBBC06dXs8bR8B9vuA3aJfmQNKMoaPG/OFsPmoQvw8xh+6Ye25Gx9DQhoEom3Pcu9MKHerm/NpUQ==}
-    engines: {node: ^18.17.0 || >=20.5.0}
-
   value-equal@1.0.1:
     resolution: {integrity: sha512-NOJ6JZCAWr0zlxZt+xqCHNTEKOsrks2HQd4MqhP1qy4z1SkbEP467eNx6TgDKXMvUOb+OENfJCZwM+16n7fRfw==}
 
@@ -14804,8 +14742,8 @@ packages:
   vfile@6.0.3:
     resolution: {integrity: sha512-KzIbH/9tXat2u30jf+smMwFCsno4wHVdNmzFyL+T/L3UGqqk6JKfVqOFOZEpZSHADH1k40ab6NUIXZq422ov3Q==}
 
-  vis-data@8.0.5:
-    resolution: {integrity: sha512-tRQKcTGaclo60rTY1j4v7BgD9v5jfD3wl+JgR1q6I4AI7go3QH5OjMCLIuZPpL2sf4IRMlwyPlRLnK4m+Phjsw==}
+  vis-data@8.0.6:
+    resolution: {integrity: sha512-6NjsyqWL18ithgkpPqfYGvwx7JlrxgO0MkMJdZus4eovFl6ebUjNcn/UEzgm5NWvCAz4psUgkvcdLyAXFxeeDg==}
     peerDependencies:
       uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^13.0.0 || ^14.0.0
       vis-util: '>=6.0.0'
@@ -15085,11 +15023,6 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     hasBin: true
 
-  which@5.0.0:
-    resolution: {integrity: sha512-JEdGzHwwkrbWoGOlIHqQ5gtprKGOenpDHpxE9zVR1bWbOtYRyPPHMe9FaP6x61CmNaTThSkb0DAJte5jD+DmzQ==}
-    engines: {node: ^18.17.0 || >=20.5.0}
-    hasBin: true
-
   why-is-node-running@2.3.0:
     resolution: {integrity: sha512-hUrmaWBdVDcxvYqnyh09zunKzROWjbZTiNy8dBEjkS7ehEDQibXJ7XvlmtbwuTclUiIyN+CyXQD4Vmko8fNm8w==}
     engines: {node: '>=8'}
@@ -15177,8 +15110,8 @@ packages:
   xregexp@5.1.1:
     resolution: {integrity: sha512-fKXeVorD+CzWvFs7VBuKTYIW63YD1e1osxwQ8caZ6o1jg6pDAbABDG54LCIq0j5cy7PjRvGIq6sef9DYPXpncg==}
 
-  xss@1.0.15:
-    resolution: {integrity: sha512-FVdlVVC67WOIPvfOwhoMETV72f6GbW7aOabBC3WxN/oUdoEMDyLz4OgRv5/gck2ZeNqEQu+Tb0kloovXOfpYVg==}
+  xss@1.0.17:
+    resolution: {integrity: sha512-+SEr5IDSgTBnhT6bnnf0mVRHT91+HU517zkahLNhkWLz8retCgeR1YDT4OknLiExA5+chn2Wy7z3KyjvnD8A2w==}
     engines: {node: '>= 0.10.0'}
     hasBin: true
 
@@ -16250,7 +16183,7 @@ snapshots:
       react: 19.2.8
       rxjs: 7.8.2
 
-  '@grafana/aws-sdk@0.12.3(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))':
+  '@grafana/aws-sdk@0.12.4(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))':
     dependencies:
       '@grafana/plugin-ui': 0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
 
@@ -17789,31 +17722,6 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
-
-  '@npmcli/git@6.0.3':
-    dependencies:
-      '@npmcli/promise-spawn': 8.0.2
-      ini: 5.0.0
-      lru-cache: 10.4.3
-      npm-pick-manifest: 10.0.0
-      proc-log: 5.0.0
-      promise-retry: 2.0.1
-      semver: 7.8.5
-      which: 5.0.0
-
-  '@npmcli/package-json@6.2.0':
-    dependencies:
-      '@npmcli/git': 6.0.3
-      glob: 10.5.0
-      hosted-git-info: 8.1.0
-      json-parse-even-better-errors: 4.0.0
-      proc-log: 5.0.0
-      semver: 7.8.5
-      validate-npm-package-license: 3.0.4
-
-  '@npmcli/promise-spawn@8.0.2':
-    dependencies:
-      which: 5.0.0
 
   '@nx/nx-darwin-arm64@24.0.2':
     optional: true
@@ -20259,9 +20167,9 @@ snapshots:
 
   '@types/lodash.memoize@4.1.7':
     dependencies:
-      '@types/lodash': 4.17.25
+      '@types/lodash': 4.17.27
 
-  '@types/lodash@4.17.25': {}
+  '@types/lodash@4.17.27': {}
 
   '@types/logfmt@1.2.6':
     dependencies:
@@ -20875,7 +20783,7 @@ snapshots:
     dependencies:
       '@types/d3-path': 1.0.9
       '@types/d3-shape': 1.3.8
-      '@types/lodash': 4.17.25
+      '@types/lodash': 4.17.27
       '@types/react': 19.2.18
       '@visx/curve': 3.12.0
       '@visx/group': 3.12.0(react@19.2.8)
@@ -22742,8 +22650,6 @@ snapshots:
 
   environment@1.1.0: {}
 
-  err-code@2.0.3: {}
-
   error-ex@1.3.2:
     dependencies:
       is-arrayish: 0.2.1
@@ -23961,10 +23867,6 @@ snapshots:
 
   hosted-git-info@2.8.9: {}
 
-  hosted-git-info@8.1.0:
-    dependencies:
-      lru-cache: 10.4.3
-
   html-encoding-sniffer@3.0.0:
     dependencies:
       whatwg-encoding: 2.0.0
@@ -24329,7 +24231,7 @@ snapshots:
 
   is-hotkey@0.1.4: {}
 
-  is-hotkey@0.2.0: {}
+  is-hotkey@0.2.1: {}
 
   is-in-browser@1.1.3: {}
 
@@ -24454,8 +24356,6 @@ snapshots:
   isarray@2.0.5: {}
 
   isexe@2.0.0: {}
-
-  isexe@3.1.1: {}
 
   isobject@3.0.1: {}
 
@@ -25497,8 +25397,6 @@ snapshots:
 
   json-parse-even-better-errors@2.3.1: {}
 
-  json-parse-even-better-errors@4.0.0: {}
-
   json-schema-library@9.3.5:
     dependencies:
       '@sagold/json-pointer': 5.1.2
@@ -25518,7 +25416,7 @@ snapshots:
     dependencies:
       '@apidevtools/json-schema-ref-parser': 11.9.3
       '@types/json-schema': 7.0.15
-      '@types/lodash': 4.17.25
+      '@types/lodash': 4.17.27
       is-glob: 4.0.3
       js-yaml: 4.3.2
       lodash: 4.18.1
@@ -25766,7 +25664,7 @@ snapshots:
     dependencies:
       js-tokens: 4.0.0
 
-  lossless-json@4.3.1: {}
+  lossless-json@4.3.3: {}
 
   loupe@3.2.1: {}
 
@@ -26242,7 +26140,7 @@ snapshots:
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
 
-  node-forge@1.4.1: {}
+  node-forge@1.4.3: {}
 
   node-gyp-build@4.8.4:
     optional: true
@@ -26281,26 +26179,6 @@ snapshots:
       validate-npm-package-license: 3.0.4
 
   normalize-path@3.0.0: {}
-
-  npm-install-checks@7.1.1:
-    dependencies:
-      semver: 7.8.5
-
-  npm-normalize-package-bin@4.0.0: {}
-
-  npm-package-arg@12.0.2:
-    dependencies:
-      hosted-git-info: 8.1.0
-      proc-log: 5.0.0
-      semver: 7.8.5
-      validate-npm-package-name: 6.0.2
-
-  npm-pick-manifest@10.0.0:
-    dependencies:
-      npm-install-checks: 7.1.1
-      npm-normalize-package-bin: 4.0.0
-      npm-package-arg: 12.0.2
-      semver: 7.8.5
 
   npm-run-path@4.0.1:
     dependencies:
@@ -27050,8 +26928,6 @@ snapshots:
 
   prismjs@1.30.0: {}
 
-  proc-log@5.0.0: {}
-
   process-on-spawn@1.1.0:
     dependencies:
       fromentries: 1.3.2
@@ -27062,11 +26938,6 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.1
       tdigest: 0.1.2
-
-  promise-retry@2.0.1:
-    dependencies:
-      err-code: 2.0.3
-      retry: 0.12.0
 
   prompts@2.4.2:
     dependencies:
@@ -27852,8 +27723,6 @@ snapshots:
   ret@0.1.15: {}
 
   ret@0.2.2: {}
-
-  retry@0.12.0: {}
 
   reusify@1.0.4: {}
 
@@ -29536,8 +29405,6 @@ snapshots:
 
   validate-npm-package-name@5.0.1: {}
 
-  validate-npm-package-name@6.0.2: {}
-
   value-equal@1.0.1: {}
 
   vary@1.1.2: {}
@@ -29552,18 +29419,18 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  vis-data@8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)):
+  vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)):
     dependencies:
       uuid: 14.0.3
       vis-util: 6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)
 
-  vis-network@10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)):
+  vis-network@10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)):
     dependencies:
       '@egjs/hammerjs': 2.0.17
       component-emitter: 2.0.0
       keycharm: 0.4.0
       uuid: 14.0.3
-      vis-data: 8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
+      vis-data: 8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
       vis-util: 6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)
 
   vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0):
@@ -29868,10 +29735,6 @@ snapshots:
     dependencies:
       isexe: 2.0.0
 
-  which@5.0.0:
-    dependencies:
-      isexe: 3.1.1
-
   why-is-node-running@2.3.0:
     dependencies:
       siginfo: 2.0.0
@@ -29955,7 +29818,7 @@ snapshots:
     dependencies:
       '@babel/runtime-corejs3': 7.27.6
 
-  xss@1.0.15:
+  xss@1.0.17:
     dependencies:
       commander: 2.20.3
       cssfilter: 0.0.10

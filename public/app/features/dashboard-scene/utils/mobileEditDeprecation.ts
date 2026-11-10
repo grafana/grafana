@@ -4,6 +4,7 @@ import { config, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, useFlagGrafanaMobileEditDeprecation } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { isFullDashboardEditing } from '../scene/types/dashboard';
@@ -26,6 +27,15 @@ export function useIsMobileEditDeprecated(): boolean {
   const isEnabled = useFlagGrafanaMobileEditDeprecation();
   const isMobile = !useMediaQueryMinWidth('sm');
   return isEnabled && isMobile;
+}
+
+/**
+ * Reactive counterpart of `isEditEntryBlocked`
+ */
+export function useIsEditEntryBlocked(dashboard: DashboardScene | DashboardModel): boolean {
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
+  const isEditing = 'state' in dashboard && isFullDashboardEditing(dashboard.state);
+  return isMobileEditDeprecated && !isEditing;
 }
 
 /**

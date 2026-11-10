@@ -1899,11 +1899,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/mocks.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/mocks/server/db.ts": {
     "@grafana/no-config-datasources": {
       "count": 2
@@ -1962,6 +1957,11 @@
   "public/app/features/alerting/unified/testSetup/datasources.ts": {
     "@grafana/no-config-datasources": {
       "count": 2
+    }
+  },
+  "public/app/features/alerting/unified/testSetup/mockLocalStorage.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
     }
   },
   "public/app/features/alerting/unified/triage/instance-details/QueryVisualization.tsx": {

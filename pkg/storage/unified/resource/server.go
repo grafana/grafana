@@ -59,8 +59,8 @@ func watchSendError(err error) error {
 	return err
 }
 
-// queueRPCError is the error-only equivalent of HandleQueueError: a full
-// tenant queue is reported as 429/ResourceExhausted.
+// queueRPCError reports a full tenant queue as 429/ResourceExhausted;
+// other failures retain rpcErrorFrom's status and cancellation semantics.
 func queueRPCError(err error) error {
 	if errors.Is(err, scheduler.ErrTenantQueueFull) {
 		return GRPCStatusError(NewTooManyRequestsError("tenant queue is full, please try again later"))
@@ -2216,12 +2216,11 @@ const producerChanSize = 100
 // Start the server.broadcaster (requires that the backend storage services are enabled)
 func (s *server) initWatcher() error {
 	if backend, ok := s.backend.(seededWatchBackend); ok && s.seededWatchesEnabled {
-		s.initSeededWatcher(backend, nil)
+		s.initSeededWatcher(backend)
 		return nil
 	}
 	if backend, ok := s.backend.(ResumeFloorWatchBackend); ok && backend.WatchResumeFloorsEnabled() {
-		raised := newRaisedFloors()
-		s.initSeededWatcher(resumeFloorWatchBackend{backend: backend, raised: raised}, raised)
+		s.initSeededWatcher(resumeFloorWatchBackend{backend: backend})
 		return nil
 	}
 	events, err := s.backend.WatchWriteEvents(s.ctx)

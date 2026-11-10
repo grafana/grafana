@@ -20,12 +20,15 @@ export {
 export { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from './grafana/dataSources/types';
 
 export { getDataSourcesManagingAlerts, getDataSourcesWithValidRecordingTarget } from './grafana/dataSources/narrowings';
+export { type RulesSourceDataSource } from './grafana/dataSources/rulesSources';
 export {
   type DataSourcesManagingAlertsByUidResult,
   type DataSourcesWithValidRecordingTargetByUidResult,
+  type RulesSourceDataSourcesResult,
   useDataSourcesManagingAlertsByUid,
   useDataSourcesWithValidRecordingTarget,
   useDataSourcesWithValidRecordingTargetByUid,
+  useRulesSourceDataSources,
 } from './grafana/dataSources/hooks';
 
 export default {};

@@ -145,7 +145,7 @@ Build a specific plugin: `pnpm --filter @grafana-plugins/<name> dev`
 
 ## Key Notes
 
-- For unary unified storage gRPC calls, handle the returned error using the guidance in `pkg/storage/unified/resource/doc.go`; failures are reported through gRPC status, not the response's legacy `Error` field. Streaming and direct Go calls have separate requirements documented there.
+- For unary unified storage gRPC calls, handle the returned error using the guidance in `pkg/storage/unified/resource/doc.go`; failures are reported through gRPC status, not the response's legacy `Error` field. Migrated direct Go calls are also error-only; streaming calls must check terminal errors. The Bulk migration client intentionally retains its legacy response-error fallback until the remote Bulk status rollout is confirmed; see the same guidance.
 - **Wire DI**: Backend service init changes require `make gen-go`. Wire catches circular deps at compile time.
 - **CUE schemas**: Dashboard/panel schemas in `kinds/` generate both Go and TS code via `make gen-cue`.
 - **Feature toggles**: Defined in `pkg/services/featuremgmt/`, auto-generate code. Run `make gen-feature-toggles` after changes.

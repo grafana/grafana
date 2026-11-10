@@ -11,7 +11,7 @@ import {
 } from '@grafana/runtime';
 import { type DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockBoundingClientRect } from '@grafana/test-utils';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { type InternalQueryEditorInsertionPropsV1 } from 'app/features/explore/SignalExplorer/internalInsertionContract';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';

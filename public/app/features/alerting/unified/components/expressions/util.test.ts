@@ -1,7 +1,7 @@
 import { type DataFrame, FieldType, toDataFrame } from '@grafana/data';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { mockDataSource } from '../../mocks';
+import { mockDataSource } from '../../testSetup/mockDataSource';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import {

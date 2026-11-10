@@ -11,7 +11,7 @@ import { createProps, renderPanel } from './test-utils';
 
 // Stub the lazy CodeMirror bundle used by the inline editor.
 jest.mock('@grafana/ui/unstable', () => ({
-  __esModule: true,
+  ...jest.requireActual('@grafana/ui/unstable'),
   // The stubbed editor never runs completions; the source itself is covered by
   // editor/variableCompletion.test.ts.
   createVariableCompletionSource: () => () => null,

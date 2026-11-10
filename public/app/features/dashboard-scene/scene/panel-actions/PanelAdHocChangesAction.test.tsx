@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';

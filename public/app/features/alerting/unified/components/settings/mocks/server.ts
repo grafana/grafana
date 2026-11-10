@@ -8,7 +8,7 @@ import {
   type Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { mockDataSource } from '../../../mocks';
+import { mockDataSource } from '../../../testSetup/mockDataSource';
 import { DataSourceType } from '../../../utils/datasource';
 
 import internalAlertmanagerConfig from './api/alertmanager/grafana/config/api/v1/alerts.json';

@@ -1,5 +1,7 @@
 import { type Logger } from './logger';
 
+export { createLogger } from './logger';
+
 /**
  * Allows debug helpers attachement to the window object
  * @internal
