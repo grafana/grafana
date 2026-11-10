@@ -14,22 +14,26 @@ async function refreshTeamFolders() {
   dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
 }
 
+// Resource tags must not collide with object prototype keys or the list tag.
+export const getFolderTag = (name: string): { type: 'Folder'; id: string } => ({
+  type: 'Folder',
+  id: `folder:${name}`,
+});
+
 const folderListTag = { type: 'Folder' as const, id: 'LIST' };
 
 export const folderAPIv1beta1 = generatedAPI
   .enhanceEndpoints({
     endpoints: {
       getFolder: {
-        providesTags: (result, error, arg) => (result ? [{ type: 'Folder', id: arg.name }] : []),
+        providesTags: (result, error, arg) => (result ? [getFolderTag(arg.name)] : []),
       },
       listFolder: {
         providesTags: (result) =>
           result
             ? [
                 folderListTag,
-                ...result.items
-                  .map((folder) => ({ type: 'Folder' as const, id: folder.metadata?.name }))
-                  .filter(Boolean),
+                ...result.items.flatMap(({ metadata }) => (metadata?.name ? [getFolderTag(metadata.name)] : [])),
               ]
             : [folderListTag],
       },

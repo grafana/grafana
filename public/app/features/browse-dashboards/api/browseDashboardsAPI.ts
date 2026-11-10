@@ -90,6 +90,8 @@ export interface ListFolderQueryArgs {
   permission?: PermissionLevel;
 }
 
+// Namespace user-controlled UIDs away from object prototype keys and the list tag.
+const folderTag = (uid: string) => ({ type: 'getFolder' as const, id: `folder:${uid}` });
 const folderListTag = { type: 'getFolder' as const, id: 'LIST' };
 const invalidateFolderListOnSuccess = (_result: unknown, error: unknown) => (error ? [] : [folderListTag]);
 
@@ -104,9 +106,7 @@ export const browseDashboardsAPI = createApi({
   endpoints: (builder) => ({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
       providesTags: (result) =>
-        result && result.length > 0
-          ? [folderListTag, ...result.map((folder) => ({ type: 'getFolder' as const, id: folder.uid }))]
-          : [folderListTag],
+        result && result.length > 0 ? [folderListTag, ...result.map(({ uid }) => folderTag(uid))] : [folderListTag],
       query: ({ parentUid, limit, page, permission }) => ({
         url: '/folders',
         params: { parentUid, limit, page, permission },
@@ -115,7 +115,7 @@ export const browseDashboardsAPI = createApi({
 
     // get folder info (e.g. title, parents) but *not* children
     getFolder: builder.query<FolderDTO, { folderUID: string; accesscontrol: boolean; isLegacyCall: boolean }>({
-      providesTags: (_result, _error, { folderUID }) => [{ type: 'getFolder', id: folderUID }],
+      providesTags: (_result, _error, { folderUID }) => [folderTag(folderUID)],
       query: ({ folderUID, accesscontrol, isLegacyCall }) => ({
         url: `/folders/${folderUID}`,
         params: {
