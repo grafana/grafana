@@ -104,6 +104,8 @@ Returns the preferences that apply to you, after combining your user, team, and 
 
 ### Example request
 
+The following example shows a request to get merged preferences:
+
 ```http
 GET /apis/preferences.grafana.app/v1/namespaces/default/preferences/merged HTTP/1.1
 Accept: application/json
@@ -111,6 +113,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -163,6 +167,8 @@ The API doesn't support pagination with `continue`, or filtering with `labelSele
 
 ### Example request
 
+The following example shows a request to list preferences:
+
 ```http
 GET /apis/preferences.grafana.app/v1/namespaces/default/preferences HTTP/1.1
 Accept: application/json
@@ -170,6 +176,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -232,6 +240,8 @@ Returns the preferences object with the given name.
 
 ### Example request
 
+The following example shows a request to get preferences:
+
 ```http
 GET /apis/preferences.grafana.app/v1/namespaces/default/preferences/user-a1b2c3d4 HTTP/1.1
 Accept: application/json
@@ -239,6 +249,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -281,6 +293,8 @@ Creates the preferences for a user, a team, or the organization. You can also us
 
 ### Example request
 
+The following example shows a request to create preferences:
+
 ```http
 POST /apis/preferences.grafana.app/v1/namespaces/default/preferences HTTP/1.1
 Accept: application/json
@@ -304,6 +318,8 @@ JSON body schema:
 - **spec** – The preferences. For details, refer to [Preferences fields](#preferences-fields).
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 201
@@ -348,6 +364,8 @@ Replaces the preferences with the given name. If no preferences exist for the ow
 **Required permissions**: Write access for the owner. Refer to [Requirements](#requirements).
 
 ### Example request
+
+The following example shows a request to update preferences:
 
 ```http
 PUT /apis/preferences.grafana.app/v1/namespaces/default/preferences/namespace HTTP/1.1
@@ -405,6 +423,8 @@ Updates one or more preferences without changing the others. If no preferences e
 
 ### Example request
 
+The following example shows a request to patch preferences:
+
 ```http
 PATCH /apis/preferences.grafana.app/v1/namespaces/default/preferences/user-a1b2c3d4 HTTP/1.1
 Accept: application/json
@@ -444,6 +464,8 @@ Deletes the preferences with the given name. After that, every field falls back 
 **Required permissions**: Write access for the owner. Refer to [Requirements](#requirements).
 
 ### Example request
+
+The following example shows a request to delete preferences:
 
 ```http
 DELETE /apis/preferences.grafana.app/v1/namespaces/default/preferences/user-a1b2c3d4 HTTP/1.1

@@ -91,6 +91,8 @@ Lists the checks that Advisor has run in the specified namespace, including thei
 
 ### Example request
 
+The following example shows a request to list checks:
+
 ```http
 GET /apis/advisor.grafana.app/v0alpha1/namespaces/default/checks HTTP/1.1
 Accept: application/json
@@ -100,6 +102,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 Replace _`<SERVICE_ACCOUNT_TOKEN>`_ with your service account token.
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK

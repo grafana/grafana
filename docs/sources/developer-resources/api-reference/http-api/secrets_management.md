@@ -103,6 +103,8 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 
 ### Example request
 
+The following example shows a request to create a secure value:
+
 ```http
 POST /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues HTTP/1.1
 Accept: application/json
@@ -122,6 +124,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 201 Created
@@ -184,6 +188,8 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 
 ### Example request
 
+The following example shows a request to list secure values:
+
 ```http
 GET /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues HTTP/1.1
 Accept: application/json
@@ -192,6 +198,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -253,6 +261,8 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 
 ### Example request
 
+The following example shows a request to get a secure value:
+
 ```http
 GET /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
 Accept: application/json
@@ -261,6 +271,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -321,6 +333,8 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 
 ### Example request
 
+The following example shows a request to update a secure value:
+
 ```http
 PUT /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
 Accept: application/json
@@ -340,6 +354,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -394,6 +410,8 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 
 ### Example request
 
+The following example shows a request to delete a secure value:
+
 ```http
 DELETE /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
 Accept: application/json
@@ -402,6 +420,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK

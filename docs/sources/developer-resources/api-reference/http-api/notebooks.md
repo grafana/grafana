@@ -98,6 +98,8 @@ Returns the notebooks in the organization. Use the `limit` query parameter to co
 
 ### Example request
 
+The following example shows a request to list notebooks:
+
 ```http
 GET /apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks?limit=1 HTTP/1.1
 Accept: application/json
@@ -105,6 +107,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -157,6 +161,8 @@ Returns the notebook with the given name.
 **Required permissions**: `notebooks:read`
 
 ### Example request
+
+The following example shows a request to get a notebook:
 
 ```http
 GET /apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/high-latency-investigation HTTP/1.1
@@ -311,6 +317,8 @@ JSON body schema:
 
 ### Example response
 
+The following example shows the response:
+
 ```http
 HTTP/1.1 201
 Content-Type: application/json
@@ -360,6 +368,8 @@ Replaces the notebook with the given name. Send the full notebook, including `me
 **Required permissions**: `notebooks:write`
 
 ### Example request
+
+The following example shows a request to update a notebook:
 
 ```http
 PUT /apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/high-latency-investigation HTTP/1.1
@@ -417,6 +427,8 @@ Deletes the notebook with the given name.
 
 ### Example request
 
+The following example shows a request to delete a notebook:
+
 ```http
 DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/high-latency-investigation HTTP/1.1
 Accept: application/json
@@ -424,6 +436,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200

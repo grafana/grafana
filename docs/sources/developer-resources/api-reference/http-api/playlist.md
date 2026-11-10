@@ -54,6 +54,8 @@ Lists all playlists in the specified namespace.
 
 ### Example request
 
+The following example shows a request to list playlists:
+
 ```http
 GET /apis/playlist.grafana.app/v1/namespaces/default/playlists HTTP/1.1
 Accept: application/json
@@ -61,6 +63,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -118,6 +122,8 @@ Retrieves a specific playlist by name.
 
 ### Example request
 
+The following example shows a request to get a playlist:
+
 ```http
 GET /apis/playlist.grafana.app/v1/namespaces/default/playlists/my-playlist-uid HTTP/1.1
 Accept: application/json
@@ -125,6 +131,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -175,6 +183,8 @@ Creates a new playlist.
 
 ### Example request
 
+The following example shows a request to create a playlist:
+
 ```http
 POST /apis/playlist.grafana.app/v1/namespaces/default/playlists HTTP/1.1
 Accept: application/json
@@ -205,6 +215,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 201 Created
@@ -257,6 +269,8 @@ Updates an existing playlist. The entire playlist spec must be provided.
 
 ### Example request
 
+The following example shows a request to update a playlist:
+
 ```http
 PUT /apis/playlist.grafana.app/v1/namespaces/default/playlists/my-playlist-uid HTTP/1.1
 Accept: application/json
@@ -293,6 +307,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -350,6 +366,8 @@ Deletes a playlist.
 
 ### Example request
 
+The following example shows a request to delete a playlist:
+
 ```http
 DELETE /apis/playlist.grafana.app/v1/namespaces/default/playlists/my-playlist-uid HTTP/1.1
 Accept: application/json
@@ -357,6 +375,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK

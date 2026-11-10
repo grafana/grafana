@@ -88,6 +88,8 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
 ### Example request
 
+The following example shows a request to create a dashboard:
+
 ```http
 POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards HTTP/1.1
 Accept: application/json
@@ -278,6 +280,8 @@ Custom labels and annotations in the metadata field are supported on some instan
 {{< /admonition >}}
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -540,6 +544,8 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
 ### Example request
 
+The following example shows a request to update a dashboard:
+
 ```http
 POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
@@ -574,6 +580,8 @@ Custom labels and annotations in the metadata field are supported on some instan
 {{< /admonition >}}
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -637,6 +645,8 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
 ### Example request
 
+The following example shows a request to get a dashboard:
+
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
@@ -645,6 +655,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -695,6 +707,8 @@ Retrieves a dashboard with additional access information.
 
 #### Example request
 
+The following example shows a request to get a dashboard with additional access information:
+
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn/dto HTTP/1.1
 Accept: application/json
@@ -741,6 +755,8 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
 ### Example request
 
+The following example shows a request to list dashboards:
+
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?limit=1 HTTP/1.1
 Accept: application/json
@@ -749,6 +765,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -795,6 +813,8 @@ The `metadata.continue` field contains a token to fetch the next page.
 
 ### Example subsequent request using continue token
 
+The following example shows a request for the next page, using the `continue` token from the previous response:
+
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
 Accept: application/json
@@ -803,6 +823,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example subsequent response
+
+The following example shows the response for the next page:
 
 ```http
 HTTP/1.1 200 OK
@@ -876,6 +898,8 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
 ### Example request
 
+The following example shows a request to delete a dashboard:
+
 ```http
 DELETE /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
@@ -884,6 +908,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -926,6 +952,8 @@ In the v2 schema, panels are defined once in `spec.elements` and placed on the d
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 #### Example request
+
+The following example shows a request to create a dashboard with the v2 schema:
 
 ```http
 POST /apis/dashboard.grafana.app/v2/namespaces/default/dashboards HTTP/1.1
@@ -1049,6 +1077,8 @@ JSON body schema:
 - **spec.cursorSync** – Whether panels share the crosshair or tooltip: `Off`, `Crosshair`, or `Tooltip`.
 
 #### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 201 Created

@@ -76,6 +76,8 @@ Returns all short URLs in the organization. Use the `limit` query parameter to c
 
 ### Example request
 
+The following example shows a request to list short URLs:
+
 ```http
 GET /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls HTTP/1.1
 Accept: application/json
@@ -83,6 +85,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -134,6 +138,8 @@ Returns the short URL with the given name.
 
 ### Example request
 
+The following example shows a request to get a short URL:
+
 ```http
 GET /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls/AT76wBvGk HTTP/1.1
 Accept: application/json
@@ -141,6 +147,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -196,12 +204,16 @@ Redirects to the full URL that the short URL links to. Grafana builds the full U
 
 ### Example request
 
+The following example shows a request to resolve a short URL:
+
 ```http
 GET /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls/AT76wBvGk/goto HTTP/1.1
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 302 Found
@@ -210,6 +222,8 @@ Location: https://grafana.example.com/d/TxKARsmGz/new-dashboard?orgId=1&from=159
 
 ### Example request with `redirect=false`
 
+The following example shows a request with `redirect=false`, which returns the full URL in the response body instead of redirecting:
+
 ```http
 GET /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls/AT76wBvGk/goto?redirect=false HTTP/1.1
 Accept: application/json
@@ -217,6 +231,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -248,6 +264,8 @@ Creates a short URL.
 
 ### Example request
 
+The following example shows a request to create a short URL:
+
 ```http
 POST /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls HTTP/1.1
 Accept: application/json
@@ -277,6 +295,8 @@ The path must be relative. Grafana rejects the following paths:
 - Paths that contain a URL scheme, such as `https://` or `javascript:`
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 201
@@ -325,6 +345,8 @@ Replaces an existing short URL identified by name. Provide the full object, incl
 
 ### Example request
 
+The following example shows a request to update a short URL:
+
 ```http
 PUT /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls/AT76wBvGk HTTP/1.1
 Accept: application/json
@@ -345,6 +367,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -392,6 +416,8 @@ Deletes an existing short URL identified by name. This operation can't be revert
 
 ### Example request
 
+The following example shows a request to delete a short URL:
+
 ```http
 DELETE /apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls/AT76wBvGk HTTP/1.1
 Accept: application/json
@@ -399,6 +425,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200

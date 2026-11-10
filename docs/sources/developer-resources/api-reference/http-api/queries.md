@@ -78,6 +78,8 @@ Returns the saved queries in the organization. Use the `limit` query parameter t
 
 ### Example request
 
+The following example shows a request to list saved queries:
+
 ```http
 GET /apis/queries.grafana.app/v1/namespaces/default/queries?limit=1 HTTP/1.1
 Accept: application/json
@@ -85,6 +87,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -158,6 +162,8 @@ Returns the saved query with the given name.
 
 ### Example request
 
+The following example shows a request to get a saved query:
+
 ```http
 GET /apis/queries.grafana.app/v1/namespaces/default/queries/cpu-usage-by-instance HTTP/1.1
 Accept: application/json
@@ -165,6 +171,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -227,6 +235,8 @@ Creates a saved query.
 
 ### Example request
 
+The following example shows a request to create a saved query:
+
 ```http
 POST /apis/queries.grafana.app/v1/namespaces/default/queries HTTP/1.1
 Accept: application/json
@@ -274,6 +284,8 @@ JSON body schema:
 - **spec.vars** – Optional. The template variables the saved query uses, each with a `key` and optional `defaultValues`.
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 201
@@ -338,6 +350,8 @@ Replaces an existing saved query identified by name. Provide the full object, in
 
 ### Example request
 
+The following example shows a request to update a saved query:
+
 ```http
 PUT /apis/queries.grafana.app/v1/namespaces/default/queries/cpu-usage-by-instance HTTP/1.1
 Accept: application/json
@@ -375,6 +389,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -442,6 +458,8 @@ Deletes an existing saved query identified by name. This operation can't be reve
 
 ### Example request
 
+The following example shows a request to delete a saved query:
+
 ```http
 DELETE /apis/queries.grafana.app/v1/namespaces/default/queries/cpu-usage-by-instance HTTP/1.1
 Accept: application/json
@@ -449,6 +467,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200

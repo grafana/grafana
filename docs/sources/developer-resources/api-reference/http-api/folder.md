@@ -80,6 +80,8 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
 ### Example request
 
+The following example shows a request to get all folders:
+
 ```http
 GET /apis/folder.grafana.app/v1/namespaces/default/folders?limit=1 HTTP/1.1
 Accept: application/json
@@ -88,6 +90,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -126,6 +130,8 @@ The `metadata.continue` field contains a token to fetch the next page.
 
 ### Example subsequent request using continue token
 
+The following example shows a request for the next page, using the `continue` token from the previous response:
+
 ```http
 GET /apis/folder.grafana.app/v1/namespaces/default/folders?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
 Accept: application/json
@@ -134,6 +140,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example subsequent response
+
+The following example shows the response for the next page:
 
 ```http
 HTTP/1.1 200
@@ -194,6 +202,8 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
 ### Example request
 
+The following example shows a request to get a folder by UID:
+
 ```http
 GET /apis/folder.grafana.app/v1/namespaces/default/folders/aef30vrzxs3y8d HTTP/1.1
 Accept: application/json
@@ -202,6 +212,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -260,6 +272,8 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
 ### Example request
 
+The following example shows a request to create a folder:
+
 ```http
 POST /apis/folder.grafana.app/v1/namespaces/default/folders HTTP/1.1
 Accept: application/json
@@ -290,6 +304,8 @@ Custom labels and annotations in the metadata field are supported on some instan
 {{< /admonition >}}
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -346,6 +362,8 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
 ### Example request
 
+The following example shows a request to update a folder:
+
 ```http
 PUT /apis/folder.grafana.app/v1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
 Accept: application/json
@@ -376,6 +394,8 @@ Custom labels and annotations in the metadata field are supported on some instan
 {{< /admonition >}}
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -446,6 +466,8 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
 ### Example request
 
+The following example shows a request to delete a folder:
+
 ```http
 DELETE /apis/folder.grafana.app/v1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
 Accept: application/json
@@ -455,6 +477,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200

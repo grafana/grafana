@@ -76,6 +76,8 @@ These are the available endpoints:
 
 ## The annotation resource
 
+The following example shows an annotation resource:
+
 ```json
 {
   "kind": "Annotation",
@@ -126,6 +128,8 @@ Lists the annotations in the namespace, up to `limit` at a time. To filter annot
 
 ### Example request
 
+The following example shows a request to list annotations:
+
 ```http
 GET /apis/annotation.grafana.app/v0alpha1/namespaces/default/annotations?limit=2 HTTP/1.1
 Accept: application/json
@@ -133,6 +137,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -200,6 +206,8 @@ Finds annotations that match the query parameters. Results are returned most rec
 
 ### Example request
 
+The following example shows a request to search annotations:
+
 ```http
 GET /apis/annotation.grafana.app/v0alpha1/namespaces/default/search?dashboardUID=dashboard-uid-1&from=1759990000000&to=1760010000000&tag=deploy&limit=50 HTTP/1.1
 Accept: application/json
@@ -207,6 +215,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -263,6 +273,8 @@ Lists the tags used by annotations, with the number of annotations that use each
 
 ### Example request
 
+The following example shows a request to find annotation tags:
+
 ```http
 GET /apis/annotation.grafana.app/v0alpha1/namespaces/default/tags?contains=prod&limit=10 HTTP/1.1
 Accept: application/json
@@ -270,6 +282,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -304,6 +318,8 @@ Retrieves an annotation by name.
 
 ### Example request
 
+The following example shows a request to get an annotation:
+
 ```http
 GET /apis/annotation.grafana.app/v0alpha1/namespaces/default/annotations/a-123 HTTP/1.1
 Accept: application/json
@@ -311,6 +327,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -356,6 +374,8 @@ Creates an annotation. Set `metadata.generateName` to `a-` and Grafana assigns t
 
 ### Example request
 
+The following example shows a request to create an annotation:
+
 ```http
 POST /apis/annotation.grafana.app/v0alpha1/namespaces/default/annotations HTTP/1.1
 Accept: application/json
@@ -379,6 +399,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 201 Created
@@ -435,6 +457,8 @@ Creates an organization annotation by using the Graphite-compatible event format
 
 ### Example request
 
+The following example shows a request to create an annotation in Graphite format:
+
 ```http
 POST /apis/annotation.grafana.app/v0alpha1/namespaces/default/graphite HTTP/1.1
 Accept: application/json
@@ -450,6 +474,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -494,6 +520,8 @@ Replaces an annotation. Provide the entire annotation, including `metadata.name`
 
 ### Example request
 
+The following example shows a request to update an annotation:
+
 ```http
 PUT /apis/annotation.grafana.app/v0alpha1/namespaces/default/annotations/a-123 HTTP/1.1
 Accept: application/json
@@ -519,6 +547,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -567,6 +597,8 @@ Updates only the fields you provide, using a JSON merge patch. The same restrict
 
 ### Example request
 
+The following example shows a request to patch an annotation:
+
 ```http
 PATCH /apis/annotation.grafana.app/v0alpha1/namespaces/default/annotations/a-123 HTTP/1.1
 Accept: application/json
@@ -582,6 +614,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -629,6 +663,8 @@ Deletes an annotation.
 
 ### Example request
 
+The following example shows a request to delete an annotation:
+
 ```http
 DELETE /apis/annotation.grafana.app/v0alpha1/namespaces/default/annotations/a-123 HTTP/1.1
 Accept: application/json
@@ -636,6 +672,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
