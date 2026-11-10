@@ -49,6 +49,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Text:     "Migrate to Grafana Cloud",
 			Id:       "migrate-to-cloud",
 			SubTitle: "Copy resources from your self-managed installation to a cloud stack",
+			Icon:     "cloud-upload",
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
@@ -57,6 +58,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Text:     "Provisioning",
 			Id:       "provisioning",
 			SubTitle: "View and manage your provisioning connections",
+			Icon:     "code-branch",
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",
 			Keywords: []string{"git sync", "git-sync", "repository", "version control", "as code"},
 		})
@@ -164,7 +166,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Text:      "Authentication",
 			Id:        "authentication",
 			SubTitle:  "Manage your auth settings and configure single sign-on",
-			Icon:      "signin",
+			Icon:      "key-skeleton-alt",
 			IsSection: true,
 			Url:       s.cfg.AppSubURL + "/admin/authentication",
 		})
