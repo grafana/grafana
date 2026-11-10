@@ -711,7 +711,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         annotations[key] = value;
       }
     }
-    const resolutionInput = { annotations };
+    const localVariableNames = sceneGraph
+      .getVariables(this)
+      .state.variables.filter((v) => !isPredefinedOrigin(v.state.origin))
+      .map((v) => v.state.name);
+    const resolutionInput = { annotations, localVariableNames };
 
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
       if (refreshId !== this._predefinedVariablesRefreshId) {
@@ -988,7 +992,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.setState({ composerEditing: true });
       return;
     }
-    if (this.getComposerSession()?.getOverlayState().paused) {
+    if (this.getComposerSession()?.assistantWorking) {
       appEvents.publish(
         new ShowConfirmModalEvent({
           title: t('dashboard-scene.dashboard-scene.modal.title.composer-stop-editing', 'Switch to Viewing?'),
@@ -1057,7 +1061,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * turn, so while one runs it asks first: Keep working stays in Composer. Never saves or discards.
    */
   public leaveComposer() {
-    if (!this.getComposerSession()?.getOverlayState().paused) {
+    if (!this.getComposerSession()?.assistantWorking) {
       this.exitComposerMode();
       return;
     }

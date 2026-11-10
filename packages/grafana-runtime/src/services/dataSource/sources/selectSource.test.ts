@@ -1,5 +1,5 @@
 import { type CurrentUserDTO, OrgRole } from '@grafana/data';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 
 import { config } from '../../../config';
 import { FlagKeys } from '../../../internal/openFeature/openfeature.gen';

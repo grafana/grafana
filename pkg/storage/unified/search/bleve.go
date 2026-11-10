@@ -3760,13 +3760,14 @@ func (b *bleveIndex) filterQueries(ctx context.Context, req *resourcepb.Resource
 // returning nil when the query is too short to search. It may append
 // SEARCH_FIELD_SCORE to searchrequest.Fields for free-text relevance scoring.
 func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) query.Query {
-	// Queries shorter than NGRAM_MIN_TOKEN can't hit the title_ngram index. Without this
-	// rewrite, 1-char queries fell through to MatchAllQuery and 2-char queries usually returned
-	// nothing. Treat them as a prefix wildcard ("f" → "f*") so search-as-you-type matches by
-	// prefix via the existing wildcard branch. Callers that already passed a wildcard are left
-	// alone.
-	if q := req.Query; q != "" && len(q) < NGRAM_MIN_TOKEN && !strings.Contains(q, "*") {
-		req.Query = q + "*"
+	// Words shorter than NGRAM_MIN_TOKEN can't hit the title_ngram index. When every word is
+	// that short, 1-char queries fell through to MatchAllQuery and longer ones ("QA W") usually
+	// returned nothing. Treat them as a prefix wildcard ("f" → "f*", "QA W" → "QA W*") so
+	// search-as-you-type matches by prefix via the existing wildcard branch. Callers that already
+	// passed a wildcard are left alone.
+	if words := strings.Fields(req.Query); len(words) > 0 && !strings.Contains(req.Query, "*") &&
+		!slices.ContainsFunc(words, func(w string) bool { return len(w) >= NGRAM_MIN_TOKEN }) {
+		req.Query = strings.Join(words, " ") + "*"
 	}
 
 	if len(req.Query) <= 1 {

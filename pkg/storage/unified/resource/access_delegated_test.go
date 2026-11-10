@@ -909,7 +909,6 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 
 		rsp, err := s.Search(ctx, globalRequest())
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		assert.Empty(t, rsp.SkippedTypes)
 		require.NotNil(t, index.req)
 		assert.Equal(t, []*resourcepb.Requirement{{
@@ -929,7 +928,6 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 
 		rsp, err := s.Search(ctx, globalRequest())
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		assert.Equal(t, map[string]string{
 			dashboards:                "Dashboard",
 			folders:                   "Folder",
@@ -950,7 +948,6 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 
 		rsp, err := s.Search(ctx, globalRequest())
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		assert.Equal(t, "Page", rsp.Kinds["x.ext.grafana.app/pages"])
 	})
 
@@ -968,7 +965,6 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 
 		rsp, err := s.Search(ctx, req)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		assert.Equal(t, map[string]string{dashboards: "Dashboard", folders: "Folder"}, rsp.Kinds)
 	})
 
@@ -995,7 +991,6 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 		req := globalRequest()
 		rsp, err := s.Search(ctx, req)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		assert.Equal(t, []string{folders}, rsp.SkippedTypes)
 		require.NotNil(t, index.req)
 		assert.Equal(t, []*resourcepb.Requirement{{

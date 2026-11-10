@@ -82,10 +82,6 @@ func (s *Service) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 	return s.sql.GetRuleGroupInterval(ctx, orgID, namespaceUID, ruleGroup)
 }
 
-func (s *Service) GetRuleByID(ctx context.Context, query ngmodels.GetAlertRuleByIDQuery) (*ngmodels.AlertRule, error) {
-	return s.sql.GetRuleByID(ctx, query)
-}
-
 func (s *Service) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error) {
 	return s.sql.ListAlertRulesByGroup(ctx, query)
 }
@@ -162,8 +158,16 @@ func (s *Service) CountInFolders(ctx context.Context, orgID int64, folderUIDs []
 	return s.sql.CountInFolders(ctx, orgID, folderUIDs, user)
 }
 
+func (s *Service) CountInFoldersByType(ctx context.Context, orgID int64, folderUIDs []string, ruleType ngmodels.RuleTypeFilter, user identity.Requester) (int64, error) {
+	return s.sql.CountInFoldersByType(ctx, orgID, folderUIDs, ruleType, user)
+}
+
 func (s *Service) GetAllFoldersWithRules(ctx context.Context, orgID int64) (map[string]struct{}, error) {
 	return s.sql.GetAllFoldersWithRules(ctx, orgID)
+}
+
+func (s *Service) GetAllFoldersWithRulesByType(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter) (map[string]struct{}, error) {
+	return s.sql.GetAllFoldersWithRulesByType(ctx, orgID, ruleType)
 }
 
 func (s *Service) CleanUpDeletedAlertRules(ctx context.Context) (int64, error) {

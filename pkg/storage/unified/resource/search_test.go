@@ -2487,7 +2487,6 @@ func TestRebuildIndexesIgnoresUnrelatedInvalidImportTime(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, response.Error)
 	require.Zero(t, response.RebuildCount, "both requested indexes have caught up with their imports")
 	require.Len(t, response.BuildTimes, len(keys))
 	require.Zero(t, storage.listCalls, "explicit rebuilds must not read unrelated records")
@@ -2654,7 +2653,6 @@ func TestRebuildIndexes(t *testing.T) {
 
 		rsp, err := support.RebuildIndexes(context.Background(), rebuildReq)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		require.Equal(t, int64(0), rsp.RebuildCount, "no rebuilds should be triggered")
 
 		// Verify BuildTimes contains entries for key1 and key2, but not key3 (zero time)
@@ -2948,7 +2946,7 @@ func TestSearchResolvesReplacementFolderIndex(t *testing.T) {
 		backend.cache[folderKey] = folders
 		rsp, err := s.searchIndex(t.Context(), NewSearchStats("test"), req, dashKey, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 		require.Same(t, folders, primary.indexes.Folders)
 	}
 	require.Equal(t, 1, oldFolders.updateIndexCalls)
