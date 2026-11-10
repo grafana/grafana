@@ -262,6 +262,7 @@ export enum PluginExtensionPointPatterns {
 export enum PluginExtensionExposedComponents {
   CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
   AddToDashboardFormV1 = 'grafana/add-to-dashboard-form/v1',
+  ManagedBadgeV1 = 'grafana/provisioning-managed-badge/v1',
   AddToNotebookFormV1 = 'grafana/add-to-notebook-form/v1',
   AddToNotebookFormV2 = 'grafana/add-to-notebook-form/v2',
   PrometheusQueryResultsV1 = 'grafana/prometheus-query-results/v1',
