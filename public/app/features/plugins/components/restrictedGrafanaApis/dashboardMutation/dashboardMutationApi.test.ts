@@ -127,18 +127,21 @@ describe('dashboardMutationApi', () => {
     it('advertises the building phase of RENDER_PLAN only while its flag is on', () => {
       const building = { planId: 'plan-1', title: 'Plan', sections: [], phase: 'building' };
 
+      const withoutFlagSchema = renderPlanPayloadSchemaFor({ building: false, editing: false });
       const withoutFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN');
-      expect(withoutFlag).toBe(renderPlanPayloadSchemaFor({ building: false, editing: false }));
+      expect(withoutFlag).toBe(withoutFlagSchema);
       const parsed = withoutFlag!.safeParse(building);
       expect(parsed.success).toBe(true);
       expect(parsed.data).not.toHaveProperty('phase');
       // Callers may inspect the schema itself rather than parse with it.
-      expect(z.toJSONSchema(withoutFlag!, { io: 'input' }).properties).not.toHaveProperty('phase');
+      expect(z.toJSONSchema(withoutFlagSchema, { io: 'input' }).properties).not.toHaveProperty('phase');
 
       setTestFlags({ [FlagKeys.AssistantDashboardPlanBuildingScreen]: true });
+      const withFlagSchema = renderPlanPayloadSchemaFor({ building: true, editing: false });
       const withFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN');
+      expect(withFlag).toBe(withFlagSchema);
       expect(withFlag!.safeParse(building).data).toHaveProperty('phase', 'building');
-      expect(z.toJSONSchema(withFlag!, { io: 'input' }).properties).toHaveProperty('phase');
+      expect(z.toJSONSchema(withFlagSchema, { io: 'input' }).properties).toHaveProperty('phase');
     });
 
     // Grafana Assistant probes for these fields to tell whether this build's previews are editable.

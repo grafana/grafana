@@ -10,7 +10,7 @@ import { type TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 
-export interface DashboardPlanGridPos {
+interface DashboardPlanGridPos {
   x: number;
   y: number;
   w: number;
@@ -35,7 +35,7 @@ export interface DashboardPlanRow {
   panels: DashboardPlanPanel[];
 }
 
-export interface DashboardPlanSection extends DashboardPlanRow {
+interface DashboardPlanSection extends DashboardPlanRow {
   /** Rows nested in a tab. */
   sections?: DashboardPlanRow[];
 }
