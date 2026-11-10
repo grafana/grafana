@@ -692,7 +692,7 @@ describe('DashboardScenePage', () => {
 
       setup();
 
-      await waitFor(() => expect(screen.queryByText('Refresh')).toBeInTheDocument());
+      await waitFor(() => expect(screen.queryByRole('button', { name: 'Refresh' })).toBeInTheDocument());
       await waitFor(() => expect(screen.queryByText('Last 6 hours')).toBeInTheDocument());
     });
   });

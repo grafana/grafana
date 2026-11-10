@@ -8,7 +8,7 @@ import { type RuleFormValues } from '../types/rule-form';
 
 import { ROOT_ROUTE_NAME } from './k8s/constants';
 import { stringifyIdentifier } from './rule-id';
-import { type RelativeUrl, createRelativeUrl } from './url';
+import { type RelativeUrl, createAbsoluteUrl, createRelativeUrl } from './url';
 
 /**
  * Tab values for contact points page - duplicated here to avoid circular dependency
@@ -39,7 +39,7 @@ export const ALERTING_PATHS: Record<string, RelativeUrl> = {
   TIME_INTERVALS: '/alerting/routes/mute-timing',
   ROUTES: '/alerting/routes',
   ALERTS_ACTIVITY: '/alerting/alerts',
-  IMPORT_TO_GMA: '/alerting/import-to-gma',
+  IMPORT_TO_GMA: '/alerting/admin/import',
   IMPORT_DATASOURCE_MANAGED_RULES: '/alerting/import-datasource-managed-rules',
 };
 
@@ -160,6 +160,11 @@ export const grafanaRulesNav = {
     const params: Record<string, string> = options?.includeReturnTo ? { returnTo: createReturnTo() } : {};
     return createRelativeUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`, params);
   },
+  editLink: (uid: string) => createRelativeUrl(`/alerting/${encodeURIComponent(uid)}/edit`),
+  /** Absolute URL for sharing — handles sub-path installs via config.appUrl. */
+  shareLink: (uid: string) => createAbsoluteUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`),
+  newAlertRuleLink: () => createRelativeUrl('/alerting/new/alerting', { returnTo: createReturnTo() }),
+  designForProvisioningLink: () => createRelativeUrl('/alerting/export-new-rule', { returnTo: createReturnTo() }),
 };
 
 export const notificationPolicies = {

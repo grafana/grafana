@@ -112,12 +112,11 @@ func TestPerResourceFolderTreeSearchAndStorage(t *testing.T) {
 		if rv == 0 {
 			rsp, err := server.Create(ctx, &resourcepb.CreateRequest{Key: resourceKey, Value: value})
 			require.NoError(t, err)
-			require.Nil(t, rsp.Error)
+			require.NotNil(t, rsp)
 			return rsp.ResourceVersion
 		}
 		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{Key: resourceKey, Value: value, ResourceVersion: rv})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		return rsp.ResourceVersion
 	}
 	write(folderKey, "top", "", 0)
@@ -139,7 +138,6 @@ func TestPerResourceFolderTreeSearchAndStorage(t *testing.T) {
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		names := make([]string, 0, len(rsp.Rows))
 		for _, row := range rsp.Rows {
 			names = append(names, row.Key.Name)
@@ -158,7 +156,7 @@ func TestPerResourceFolderTreeSearchAndStorage(t *testing.T) {
 		ResourceVersion: midRV,
 	})
 	require.NoError(t, err)
-	require.Nil(t, deleted.Error)
+	require.NotNil(t, deleted)
 	require.Empty(t, query(resource.SEARCH_FIELD_FOLDER_TREE, "other"))
 }
 
@@ -282,7 +280,7 @@ func TestIntegrationSQLKVCreateGRPCConflictAndAlreadyExists(t *testing.T) {
 
 	// A lease can be held before anything has been persisted. This must
 	// produce a conflict, not a claim that the object already exists.
-	leaseName := key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
+	leaseName := "write/" + key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
 	manager := backend.LeaseManager()
 	held, err := manager.Acquire(ctx, leaseName)
 	require.NoError(t, err)
@@ -303,7 +301,7 @@ func TestIntegrationSQLKVCreateGRPCConflictAndAlreadyExists(t *testing.T) {
 	require.NoError(t, manager.Release(ctx, held))
 	released = true
 	rsp, err = client.Create(ctx, req)
-	require.NoError(t, resource.ErrorFromResponse(rsp.GetError(), err))
+	require.NoError(t, err)
 	require.Positive(t, rsp.GetResourceVersion())
 
 	// Only once creation has succeeded is a subsequent create a confirmed
@@ -401,8 +399,8 @@ func runConcurrentCreateClientConflicts(t *testing.T, client resource.ResourceCl
 	var wg sync.WaitGroup
 	for i := range concurrency {
 		wg.Go(func() {
-			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value})
-			results[i] = resource.ErrorFromResponse(rsp.GetError(), err)
+			_, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value})
+			results[i] = err
 		})
 	}
 	wg.Wait()

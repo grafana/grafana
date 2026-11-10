@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
+import { mockLocalStorage } from 'app/features/alerting/unified/testSetup/mockLocalStorage';
 
 import { OptionsPaneCategory, type OptionsPaneCategoryProps } from './OptionsPaneCategory';
 

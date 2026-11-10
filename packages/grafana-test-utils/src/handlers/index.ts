@@ -6,12 +6,9 @@ export { starsRoute } from './apis/collections.grafana.app/v1alpha1/handlers';
 export {
   getCustomSearchHandler,
   searchRoute,
-  getVectorSearchHandler,
-  vectorSearchRoute,
   getHybridSearchHandler,
   hybridSearchRoute,
 } from './apis/dashboard.grafana.app/v0alpha1/handlers';
 export { getSearchTeamsErrorHandler, getSearchTeamsHandler } from './api/teams/handlers';
 export { getSignedInUserTeamListHandler } from './api/user/handlers';
-export * as apiFoldersHandlers from './api/folders/handlers';
 export { customLoginHandler } from './auth/handlers';

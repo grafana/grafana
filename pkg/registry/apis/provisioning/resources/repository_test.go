@@ -291,12 +291,12 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "dashboards/test-dashboard", // No trailing slash
+							utils.AnnoKeySourcePath: "dashboards/test-dashboard.json", // No trailing slash
 						},
 					},
 				},
 			},
-			expectedPath: "dashboards/test-dashboard", // Should remain unchanged for non-folders
+			expectedPath: "dashboards/test-dashboard.json", // Should remain unchanged for non-folders
 		},
 	}
 
@@ -629,3 +629,79 @@ func (m *MockDynamicResourceInterface) ApplyStatus(ctx context.Context, name str
 
 // Ensure MockDynamicResourceInterface implements dynamic.ResourceInterface
 var _ dynamic.ResourceInterface = (*MockDynamicResourceInterface)(nil)
+
+// TestRepositoryResources_FindResourcePath_SourcePathSafety checks that FindResourcePath applies the same
+// path-safety rules enforced elsewhere in this package (traversal,
+// disallowed characters) before handing the path back to a caller, while
+// still passing an ordinary relative path through unchanged.
+func TestRepositoryResources_FindResourcePath_SourcePathSafety(t *testing.T) {
+	tests := []struct {
+		name       string
+		sourcePath string
+		wantErr    bool
+	}{
+		{
+			name:       "multi-level traversal",
+			sourcePath: "a/b/../../../outside/x.json",
+			wantErr:    true,
+		},
+		{
+			name:       "traversal disguised by a scope-like prefix",
+			sourcePath: "scope-looking/../../outside/x.json",
+			wantErr:    true,
+		},
+		{
+			name:       "current-dir and parent-dir segments combined",
+			sourcePath: "a/./../outside/x.json",
+			wantErr:    true,
+		},
+		{
+			name:       "backslash-separated traversal",
+			sourcePath: `..\outside\x.json`,
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClients := NewMockResourceClients(t)
+			mockClient := &MockDynamicResourceInterface{}
+
+			resourcesManager := &ResourcesManager{
+				clients: mockClients,
+			}
+			repositoryResources := &repositoryResources{
+				ResourcesManager: resourcesManager,
+				namespace:        "test-namespace",
+				repoName:         "test-repo",
+			}
+
+			gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+			gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Version: "v0alpha1", Resource: "dashboards"}
+
+			resourceObj := &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name":      "test-resource",
+						"namespace": "test-namespace",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeySourcePath: tt.sourcePath,
+						},
+					},
+				},
+			}
+
+			mockClients.On("ForKind", mock.Anything, gvk).Return(mockClient, gvr, nil)
+			mockClient.On("Get", mock.Anything, "test-resource", metav1.GetOptions{}, mock.Anything).Return(resourceObj, nil)
+
+			result, err := repositoryResources.FindResourcePath(context.Background(), "test-resource", gvk)
+
+			if tt.wantErr {
+				require.Error(t, err, "expected sourcePath %q to be rejected, got result %q", tt.sourcePath, result)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.sourcePath, result)
+			}
+		})
+	}
+}
