@@ -109,7 +109,6 @@
     "@manypkg/get-packages": "^3.0.0",
     "@playwright/test": "1.64.1",
     "@react-types/shared": "3.31.0",
-    "@rollup/plugin-node-resolve": "16.0.1",
     "@rsdoctor/rspack-plugin": "^1.0.0",
     "@rspack/cli": "^2",
     "@rspack/core": "^2.1.7",
