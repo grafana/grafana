@@ -1,6 +1,6 @@
 import { KBarPortal, KBarProvider, useKBar } from 'kbar';
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, userEvent } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { PluginExtensionTypes } from '@grafana/data';
@@ -461,6 +461,8 @@ describe('CommandPalette', () => {
         const user = userEvent.setup();
         const input = screen.getByPlaceholderText('Search or jump to...');
         await user.type(input, 'zzkeyboard');
+        // Dashboard search results arriving later reset the selection to the first item
+        await waitFor(() => expect(screen.queryByRole('status', { name: 'Loading bar' })).not.toBeInTheDocument());
         const firstOption = await screen.findByRole('option', { name: 'zzkeyboard first' });
         const secondOption = screen.getByRole('option', { name: 'zzkeyboard second' });
 
