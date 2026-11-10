@@ -510,7 +510,9 @@ it('moves header focus to the column taking the hidden slot when hiding the firs
     expect(header).not.toBeNull();
   });
   const focusedHeader = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
-  expect(within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for B' })).toBeInTheDocument();
+  expect(
+    within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for B' })
+  ).toBeInTheDocument();
 });
 
 it('moves header focus to the column taking the hidden slot when hiding the middle column', async () => {
@@ -525,7 +527,9 @@ it('moves header focus to the column taking the hidden slot when hiding the midd
     expect(header).not.toBeNull();
   });
   const focusedHeader = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
-  expect(within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for C' })).toBeInTheDocument();
+  expect(
+    within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for C' })
+  ).toBeInTheDocument();
 });
 
 it('moves header focus to the previous column when hiding the last column', async () => {
@@ -540,7 +544,9 @@ it('moves header focus to the previous column when hiding the last column', asyn
     expect(header).not.toBeNull();
   });
   const focusedHeader = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
-  expect(within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for B' })).toBeInTheDocument();
+  expect(
+    within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for B' })
+  ).toBeInTheDocument();
 });
 
 it('focuses by displayed order rather than catalog order when hiding a reordered column', async () => {
@@ -562,7 +568,9 @@ it('focuses by displayed order rather than catalog order when hiding a reordered
     expect(header).not.toBeNull();
   });
   const focusedHeader = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
-  expect(within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for C' })).toBeInTheDocument();
+  expect(
+    within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for C' })
+  ).toBeInTheDocument();
 });
 
 it('keeps focus on the sidebar checkbox when hiding a column from the sidebar', async () => {
