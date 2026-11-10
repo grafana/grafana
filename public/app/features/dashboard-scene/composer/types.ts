@@ -163,9 +163,9 @@ export interface ElementPick {
 }
 
 /**
- * A Select drag with `drag: 'elements'`: the panels and variable controls (on a notebook, cells) the
- * rectangle overlaps with a positive area, in layout order. A drag that covers none picks nothing and the
- * pick stays pending.
+ * A Select drag with `drag: 'elements'`: the panels, variable controls and annotation or data layer controls
+ * (on a notebook, cells) the rectangle overlaps with a positive area, in layout order. A drag that covers none
+ * picks nothing and the pick stays pending.
  */
 export interface ElementsPick {
   /**
@@ -282,9 +282,10 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
   getToolsHost(): HTMLElement | null;
 
   /**
-   * Resolves with the clicked element, or, when the user drags at least 8x8 CSS px while it is pending,
-   * with a region or the elements the drag covers (`options.drag`; a smaller drag stays a click; a press on
-   * a tab header switches tabs). With the Screenshot tool, only a drag picks, and always a region.
+   * Resolves with the clicked element, or, when the user drags while it is pending, with a region or the
+   * elements the drag covers (`options.drag`). A drag starts after 8 CSS px of movement on either axis; less
+   * stays a click. A region needs at least 8x8. A press on a tab header switches tabs. With the Screenshot
+   * tool, only a drag picks, and always a region.
    * Null when cancelled (Escape, `signal`, pause or session end). Cancelling a drag keeps the pick pending.
    */
   pickElement(

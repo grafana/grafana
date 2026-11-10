@@ -359,10 +359,6 @@ export function ComposerOverlay({
   }, []);
 
   /**
-   * Shows a draft rectangle given in viewport coordinates and, when the drag picks elements, outlines those
-   * it covers.
-   */
-  /**
    * Which element a root the drag covers is, by its ref, or null when it doesn't resolve: resolved once per root
    * per drag, so outlining what the drag covers on every pointer move stays cheap.
    */
@@ -379,6 +375,10 @@ export function ComposerOverlay({
     [session]
   );
 
+  /**
+   * Shows a draft rectangle given in viewport coordinates and, when the drag picks elements, outlines those
+   * it covers.
+   */
   const showDraft = useCallback(
     (rect: Box) => {
       const root = rootRef.current;
@@ -418,6 +418,8 @@ export function ComposerOverlay({
       if (dragSelectsElements) {
         const container = rootRef.current?.parentElement;
         const elements = container ? pickElementsIn(session, container, rect, end, dragRefOf) : [];
+        // The drag is over: the next one resolves its roots afresh.
+        dragRefCacheRef.current.clear();
         if (elements.length > 0) {
           session.completePick({ elements, additive: modifiers.metaKey || modifiers.ctrlKey });
         }

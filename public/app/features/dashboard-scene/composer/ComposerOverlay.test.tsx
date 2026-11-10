@@ -1192,6 +1192,22 @@ describe('drag selection', () => {
   });
 });
 
+/** The built-in annotation's control, as DataLayerControl renders it, in the dashboard container. */
+function annotationControl(scene: DashboardScene) {
+  const layer = sceneGraph.findObject(scene, (obj) => obj instanceof dataLayers.AnnotationsDataLayer)!;
+  const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
+  const control = document.createElement('div');
+  control.setAttribute('data-dashboard-element-key', layer.state.key!);
+  control.setAttribute('data-dashboard-element-type', 'annotation');
+  const label = document.createElement('label');
+  label.textContent = 'Annotations & Alerts';
+  const toggle = document.createElement('input');
+  toggle.type = 'checkbox';
+  control.append(label, toggle);
+  container.appendChild(control);
+  return { control, label, toggle };
+}
+
 describe('the Screenshot tool', () => {
   const track = <T,>(promise: Promise<T>) => {
     const settled = jest.fn();
@@ -1232,6 +1248,19 @@ describe('the Screenshot tool', () => {
     fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
     fireEvent.pointerUp(overlay, { clientX: 200, clientY: 350 });
     fireEvent.click(overlay, { clientX: 200, clientY: 350 });
+    await act(async () => {});
+
+    expect(settled).not.toHaveBeenCalled();
+    expect(session.getOverlayState().picking).toBe(true);
+  });
+
+  it('picks nothing from a click on an annotation label', async () => {
+    const { scene, session, startPick } = setup();
+    act(() => session.setTool('screenshot'));
+    const settled = track(startPick());
+    const { label } = annotationControl(scene);
+
+    fireEvent.click(label, { clientX: 30, clientY: 20 });
     await act(async () => {});
 
     expect(settled).not.toHaveBeenCalled();
@@ -1932,22 +1961,6 @@ describe('the additive modifier', () => {
 });
 
 describe('annotations and data layers', () => {
-  /** The built-in annotation's control, as DataLayerControl renders it, in the dashboard container. */
-  function annotationControl(scene: DashboardScene) {
-    const layer = sceneGraph.findObject(scene, (obj) => obj instanceof dataLayers.AnnotationsDataLayer)!;
-    const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
-    const control = document.createElement('div');
-    control.setAttribute('data-dashboard-element-key', layer.state.key!);
-    control.setAttribute('data-dashboard-element-type', 'annotation');
-    const label = document.createElement('label');
-    label.textContent = 'Annotations & Alerts';
-    const toggle = document.createElement('input');
-    toggle.type = 'checkbox';
-    control.append(label, toggle);
-    container.appendChild(control);
-    return { control, label, toggle };
-  }
-
   it('picks an annotation from a click on its label, pointing at its control', async () => {
     const { scene, startPick } = setup();
     const pick = startPick();
