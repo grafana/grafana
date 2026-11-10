@@ -102,7 +102,7 @@
     "@codemirror/lang-sql": "6.10.0",
     "@emotion/eslint-plugin": "11.12.0",
     "@grafana/eslint-config": "10.0.0",
-    "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
+    "@grafana/eslint-plugin": "workspace:*",
     "@grafana/levitate": "0.17.2",
     "@grafana/plugin-e2e": "^3.12.0",
     "@grafana/test-utils": "workspace:*",
