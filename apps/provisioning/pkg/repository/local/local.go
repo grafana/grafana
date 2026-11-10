@@ -148,6 +148,12 @@ func (r *localRepository) validateRequest(ref string) error {
 		return apierrors.NewBadRequest("local repository does not support ref")
 	}
 
+	// os.Stat("") reports not-exist, so an unresolved root would read as an empty tree and a
+	// full sync would delete every resource it manages.
+	if r.path == "" {
+		return apierrors.NewBadRequest("local repository path is empty or matches no permitted prefix")
+	}
+
 	return nil
 }
 

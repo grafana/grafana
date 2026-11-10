@@ -91,3 +91,26 @@ func TestIsForbiddenManagerKindChangeError(t *testing.T) {
 		})
 	}
 }
+
+func TestParseManagerKindString(t *testing.T) {
+	for _, kind := range []ManagerKind{
+		ManagerKindRepo,
+		ManagerKindTerraform,
+		ManagerKindKubectl,
+		ManagerKindPlugin,
+		ManagerKindGrafana,
+		ManagerKindFileProvisioning,
+		ManagerKindClassicFP,                  //nolint:staticcheck
+		ManagerKindClassicAPI,                 //nolint:staticcheck
+		ManagerKindClassicConvertedPrometheus, //nolint:staticcheck
+	} {
+		t.Run(string(kind), func(t *testing.T) {
+			require.Equal(t, kind, ParseManagerKindString(string(kind)))
+		})
+	}
+
+	require.Equal(t, ManagerKindUnknown, ParseManagerKindString("something-else"))
+	// File provisioning owns its resources for as long as they are configured, so unlike
+	// the classic shims its identity is a stable one.
+	require.False(t, ManagerKindFileProvisioning.IsClassic())
+}
