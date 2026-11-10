@@ -247,7 +247,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.SearchInjectFailuresPercent = 100
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
-	cfg.SearchPostRankAuthz = section.Key("search_post_rank_authz").MustBool(false)
 	// Zero values keep the search.PostRankAuthzConfig.effective() defaults.
 	cfg.SearchPostRankAuthzOverFetchFactor = section.Key("search_post_rank_authz_over_fetch_factor").MustInt(0)
 	cfg.SearchPostRankAuthzMaxWindow = section.Key("search_post_rank_authz_max_window").MustInt(0)

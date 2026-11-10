@@ -24,8 +24,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// PostRankAuthzConfig tunes the post-filter authorization path: bleve ranks
-// without the in-searcher authz wrapper, a bounded window of hits is fetched,
+// PostRankAuthzConfig tunes the post-filter authorization path: Bleve ranks,
+// a bounded window of hits is fetched,
 // and authorization runs app-side in rank order, paging via SearchAfter until
 // the page is filled or matches are exhausted. Counting can stop at the budget.
 type PostRankAuthzConfig struct {
@@ -421,8 +421,7 @@ func batchCheckItem(info docInfo) authz.BatchCheckItem {
 }
 
 // parseHitDocInfo extracts the authorization fields from an already-ranked hit.
-// Unlike batchAuthzSearcher.parseDocInfo (which reads doc values mid-search),
-// the hit here already has its ID and stored fields populated by bleve. The doc
+// The hit already has its ID and stored fields populated by bleve. The doc
 // id is <namespace>/<group>/<resourceType>/<name>; the resourceType segment
 // distinguishes dashboards from folders in a federated alias and keys the verb.
 func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (docInfo, bool) {
@@ -539,8 +538,8 @@ func (b *bleveIndex) runPostFilterAuthz(
 	reverseSort := applySearchBefore(req, firstReq)
 
 	// Windows read what authorization needs from doc values, and only the hits
-	// that make the page get their stored fields loaded, as on the in-searcher
-	// path. Most window hits never reach a page.
+	// that make the page get their stored fields loaded. Most window hits never
+	// reach a page.
 	windowReq := *firstReq
 	windowReq.Fields = nil
 	// Existing callers treat a short page as exhaustion. Only count-only scans
