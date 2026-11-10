@@ -12,6 +12,7 @@ export type GetExtraContextMenuButtonsFunction = (
     viewMode: ViewMode;
     paneView: PaneView;
     isDiff: boolean;
+    isSandwich: boolean;
     search: string;
     collapseConfig?: CollapseConfig;
   }
@@ -41,6 +42,7 @@ type Props = {
   viewMode: ViewMode;
   paneView: PaneView;
   search: string;
+  sandwichItem?: string;
 };
 
 const FlameGraphContextMenu = ({
@@ -61,6 +63,7 @@ const FlameGraphContextMenu = ({
   viewMode,
   paneView,
   search,
+  sandwichItem,
 }: Props) => {
   function renderItems() {
     const extraButtons =
@@ -68,6 +71,9 @@ const FlameGraphContextMenu = ({
         viewMode,
         paneView,
         isDiff: data.isDiffFlamegraph(),
+        // Match the predicate FlameGraph uses to render sandwich mode so an empty
+        // label does not report sandwich mode while the graph stays in normal view.
+        isSandwich: Boolean(sandwichItem),
         search,
         collapseConfig,
       }) || [];
