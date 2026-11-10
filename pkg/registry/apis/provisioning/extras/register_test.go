@@ -1,7 +1,6 @@
 package extras
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -96,17 +95,27 @@ func TestPermittedLocalPaths(t *testing.T) {
 }
 
 func TestPermittedLocalPathsMatchesTheResolver(t *testing.T) {
-	cfg := &setting.Cfg{
-		HomePath:                  "/usr/share/grafana",
-		ProvisioningBootstrapPath: "/etc/grafana/bootstrap/",
-	}
+	for _, bootstrap := range []string{
+		"/etc/grafana/bootstrap",
+		"/etc/grafana/bootstrap/",
+		"conf/provisioning/bootstrap",
+		"conf/provisioning/bootstrap/",
+	} {
+		t.Run(bootstrap, func(t *testing.T) {
+			cfg := &setting.Cfg{
+				HomePath:                  "/usr/share/grafana",
+				ProvisioningBootstrapPath: bootstrap,
+			}
 
-	resolver := local.LocalFolderResolver{
-		PermittedPrefixes: PermittedLocalPaths(cfg),
-		HomePath:          safepath.Clean(cfg.HomePath),
-	}
+			permitted := PermittedLocalPaths(cfg)
+			resolver := local.LocalFolderResolver{
+				PermittedPrefixes: permitted,
+				HomePath:          safepath.Clean(cfg.HomePath),
+			}
 
-	resolved, err := resolver.LocalPath(cfg.ProvisioningBootstrapPath)
-	require.NoError(t, err, "the bootstrap repository's own path must resolve")
-	assert.Equal(t, filepath.Clean(cfg.ProvisioningBootstrapPath), resolved)
+			resolved, err := resolver.LocalPath(cfg.ProvisioningBootstrapPath)
+			require.NoError(t, err, "the bootstrap repository's own path must resolve")
+			assert.Equal(t, permitted, []string{resolved}, "the permitted prefix must be the resolved path")
+		})
+	}
 }

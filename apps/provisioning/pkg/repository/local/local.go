@@ -57,24 +57,31 @@ func (e *InvalidLocalFolderError) Status() metav1.Status {
 	}
 }
 
+// ResolvePath normalizes a configured local repository path: an absolute path is cleaned in
+// place, a relative one resolves against homePath. Whatever decides which local paths are
+// permitted must resolve through here too, or it matches a different string than this one.
+func ResolvePath(homePath, p string) string {
+	cleaned := safepath.Clean(p)
+	// Clean rewrites OS separators, which hides a Windows volume path from path.IsAbs.
+	if filepath.IsAbs(p) || safepath.IsAbs(cleaned) {
+		return cleaned
+	}
+
+	return safepath.Join(safepath.Clean(homePath), cleaned)
+}
+
 func (r *LocalFolderResolver) LocalPath(p string) (string, error) {
 	if len(r.PermittedPrefixes) == 0 {
 		return "", &InvalidLocalFolderError{p, "no permitted prefixes were configured"}
 	}
 
-	originalPath := p
-	if !path.IsAbs(p) {
-		p = safepath.Join(r.HomePath, p)
-	} else {
-		p = safepath.Clean(p)
-	}
-
+	resolved := ResolvePath(r.HomePath, p)
 	for _, permitted := range r.PermittedPrefixes {
-		if safepath.InDir(p, permitted) {
-			return p, nil
+		if safepath.InDir(resolved, permitted) {
+			return resolved, nil
 		}
 	}
-	return "", &InvalidLocalFolderError{originalPath, "the path matches no permitted prefix"}
+	return "", &InvalidLocalFolderError{p, "the path matches no permitted prefix"}
 }
 
 var (

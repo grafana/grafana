@@ -1851,3 +1851,44 @@ func TestLocalRepositoryUnresolvedRootFailsReadsInsteadOfLookingEmpty(t *testing
 	assert.Empty(t, tree)
 	assert.Contains(t, err.Error(), "matches no permitted prefix")
 }
+
+func TestResolvePath(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		homePath string
+		path     string
+		want     string
+	}{
+		{"absolute path is kept", "/usr/share/grafana", "/etc/grafana/bootstrap", "/etc/grafana/bootstrap"},
+		{"absolute path is cleaned", "/usr/share/grafana", "/etc/grafana/bootstrap/", "/etc/grafana/bootstrap"},
+		{"relative path resolves against the home path", "/usr/share/grafana", "conf/bootstrap/", "/usr/share/grafana/conf/bootstrap"},
+		{"traversal is collapsed against the home path", "/usr/share/grafana", "../../etc/passwd", "/usr/etc/passwd"},
+		{"an unclean home path is cleaned", "/usr/share/grafana/", "conf/bootstrap", "/usr/share/grafana/conf/bootstrap"},
+		{"an empty path is the home path", "/usr/share/grafana", "", "/usr/share/grafana"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, ResolvePath(tc.homePath, tc.path))
+		})
+	}
+}
+
+func TestResolvePathMatchesLocalPath(t *testing.T) {
+	const homePath = "/usr/share/grafana"
+
+	for _, p := range []string{
+		"/etc/grafana/bootstrap",
+		"/etc/grafana/bootstrap/",
+		"conf/bootstrap",
+		"conf/bootstrap/",
+		filepath.Join(homePath, "conf", "bootstrap"),
+	} {
+		t.Run(p, func(t *testing.T) {
+			resolved := ResolvePath(homePath, p)
+			r := &LocalFolderResolver{PermittedPrefixes: []string{resolved}, HomePath: homePath}
+
+			got, err := r.LocalPath(p)
+			require.NoError(t, err, "a path permitted by its own resolution must resolve")
+			assert.Equal(t, resolved, got)
+		})
+	}
+}
