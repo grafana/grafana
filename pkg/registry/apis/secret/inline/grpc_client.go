@@ -10,6 +10,7 @@ import (
 	"github.com/fullstorydev/grpchan"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -138,35 +139,8 @@ func (g *GRPCInlineClient) CanReference(ctx context.Context, owner v0alpha1.Obje
 	return err
 }
 
-func referenceSubjectToken(ctx context.Context) string {
-	info, ok := types.AuthInfoFrom(ctx)
-	if !ok || info == nil {
-		return ""
-	}
-	accessToken := info.GetAccessToken()
-	if types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
-		return accessToken
-	}
-	if !types.IsIdentityType(info.GetIdentityType(), types.TypeUser, types.TypeServiceAccount) {
-		return ""
-	}
-
-	// Preserve an existing actor chain. A separate ID token may accompany an access token
-	// that only represents the service, so that access token cannot always be the subject.
-	if parsed, err := authnlib.Parse(accessToken); err == nil {
-		var claims authnlib.AccessTokenClaims
-		// Authentication already verified the incoming token; the signer verifies it again on exchange.
-		if err := parsed.UnsafeClaimsWithoutVerification(&claims); err == nil && claims.IsOnBehalfOfUser() {
-			return accessToken
-		}
-	}
-	// Tokenless legacy/internal calls can still check ownership. Without an ordinary
-	// securevalues:get grant, their service token cannot authorize shared references.
-	return info.GetIDToken()
-}
-
 func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.ObjectReference, value v0alpha1.RawSecureValue, desc *string) (string, error) {
-	client, err := g.getClient(owner.Namespace, "")
+	client, err := g.getClient(owner.Namespace, noForwardSubjectToken)
 	if err != nil {
 		return "", err
 	}
@@ -196,7 +170,7 @@ func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.Obje
 }
 
 func (g *GRPCInlineClient) DeleteWhenOwnedByResource(ctx context.Context, owner v0alpha1.ObjectReference, names ...string) error {
-	client, err := g.getClient(owner.Namespace, "")
+	client, err := g.getClient(owner.Namespace, noForwardSubjectToken)
 	if err != nil {
 		return err
 	}
@@ -243,4 +217,44 @@ func (g *GRPCInlineClient) getClient(namespace, subjectToken string) (inlinev1be
 	)
 
 	return inlinev1beta1.NewInlineSecureValueServiceClient(clientConn), nil
+}
+
+const noForwardSubjectToken = ""
+
+func referenceSubjectToken(ctx context.Context) string {
+	info, ok := types.AuthInfoFrom(ctx)
+	if !ok || info == nil {
+		return noForwardSubjectToken
+	}
+
+	accessToken := info.GetAccessToken()
+	if types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
+		return accessToken
+	}
+
+	// Anything that is not a user, service account, or (previously checked) access policy, don't forward.
+	if !types.IsIdentityType(info.GetIdentityType(), types.TypeUser, types.TypeServiceAccount) {
+		return noForwardSubjectToken
+	}
+
+	// Preserve an existing actor chain.
+	// A separate ID token may accompany an access token that only represents the service, so that access token cannot always be the subject.
+	if parsed, err := authnlib.Parse(accessToken); err == nil {
+		var claims authnlib.AccessTokenClaims
+		// Authentication already verified the incoming token, the auth signer verifies it again on token exchange.
+		if err := parsed.UnsafeClaimsWithoutVerification(&claims); err == nil && claims.IsOnBehalfOfUser() {
+			return accessToken
+		}
+	}
+
+	// Tokenless legacy/internal calls can still check ownership.
+	// Without an ordinary securevalues:get grant, their service token cannot authorize shared references.
+	idToken := info.GetIDToken()
+	if idToken == "" {
+		logging.FromContext(ctx).Debug(
+			"secret grpc inline can reference found an empty id token for identity",
+			"identity", info.GetUID(),
+		)
+	}
+	return idToken
 }
