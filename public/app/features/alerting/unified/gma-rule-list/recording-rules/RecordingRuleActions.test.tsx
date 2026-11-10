@@ -69,7 +69,7 @@ describe('RecordingRuleActions', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders Edit and More buttons when canEdit is true', () => {
+  it('renders Edit and More buttons when edit is granted', () => {
     renderActions(ruleWithPerms());
 
     expect(screen.getByRole('link', { name: 'Edit' })).toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('RecordingRuleActions', () => {
     expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
   });
 
-  it('shows Pause when canPause is true and rule is active', async () => {
+  it('shows Pause when pause is granted and rule is active', async () => {
     renderActions(ruleWithPerms({ paused: false }));
 
     await userEvent.click(screen.getByRole('button', { name: 'More' }));

@@ -90,14 +90,14 @@ describe('AlertRuleActions', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders Edit and More buttons when canEdit is true', () => {
+  it('renders Edit and More buttons when edit is granted', () => {
     renderActions(ruleWithPerms());
 
     expect(screen.getByRole('link', { name: 'Edit' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
   });
 
-  it('hides Edit when canEdit is false after loading', () => {
+  it('hides Edit when edit is not granted', () => {
     renderActions(ruleWithPerms({ canWrite: false }));
 
     expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
@@ -105,7 +105,7 @@ describe('AlertRuleActions', () => {
     expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
   });
 
-  it('shows Pause in More menu when canPause is true and rule is active', async () => {
+  it('shows Pause in More menu when pause is granted and rule is active', async () => {
     renderActions(ruleWithPerms({ paused: false }));
 
     await userEvent.click(screen.getByRole('button', { name: 'More' }));
