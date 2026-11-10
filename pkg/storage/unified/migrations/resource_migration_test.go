@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -220,6 +221,91 @@ func TestRunMarksRebuildAndValidationAsMigrationReads(t *testing.T) {
 	runMigration(t, engine, runner, migrator.SQLite)
 	require.True(t, fake.rebuildMigrationRead, "index rebuild runs as a migration read")
 	require.True(t, validationMigrationRead, "validation runs as a migration read")
+}
+
+// listMarkRecordingBackend records, for each listing of a resource type, whether it runs as a
+// migration read. ProcessBulk is forwarded so the migration can still import through it.
+type listMarkRecordingBackend struct {
+	resource.StorageBackend
+	bulk resource.BulkProcessingBackend
+
+	mu    sync.Mutex
+	marks map[schema.GroupResource][]bool
+}
+
+func (b *listMarkRecordingBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	if key := req.GetOptions().GetKey(); key != nil {
+		gr := schema.GroupResource{Group: key.Group, Resource: key.Resource}
+		b.mu.Lock()
+		b.marks[gr] = append(b.marks[gr], resource.MigrationReadFromContext(ctx))
+		b.mu.Unlock()
+	}
+	return b.StorageBackend.ListIterator(ctx, req, cb)
+}
+
+func (b *listMarkRecordingBackend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) (*resourcepb.BulkResponse, error) {
+	return b.bulk.ProcessBulk(ctx, setting, iter)
+}
+
+func (b *listMarkRecordingBackend) takeMarks(gr schema.GroupResource) []bool {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	marks := b.marks[gr]
+	delete(b.marks, gr)
+	return marks
+}
+
+// An index that is already open when the migration runs is rebuilt by the search server's
+// rebuild worker, not by the migration's request, so the worker has to read as the migration.
+func TestIntegrationRun_QueuedIndexRebuildIsMigrationRead(t *testing.T) {
+	env := newTestEnv(t)
+	eDB, err := dbimpl.ProvideResourceDB(env.store, setting.NewCfg(), nil)
+	require.NoError(t, err)
+	sqlStorage, err := sqlBackend.NewBackend(sqlBackend.BackendOptions{DBProvider: eDB})
+	require.NoError(t, err)
+	svc, ok := sqlStorage.(services.Service)
+	require.True(t, ok)
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
+	t.Cleanup(func() { _ = services.StopAndAwaitTerminated(context.Background(), svc) })
+
+	bulk, ok := sqlStorage.(resource.BulkProcessingBackend)
+	require.True(t, ok)
+	backend := &listMarkRecordingBackend{StorageBackend: sqlStorage, bulk: bulk, marks: map[schema.GroupResource][]bool{}}
+	server, err := newRetryTestResourceServerWithSearch(t, backend)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = server.Stop(context.Background()) })
+	client := &recordingRetryResourceClient{ResourceClient: resource.NewLocalResourceClient(server)}
+
+	gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
+	openTestSearchIndex(t, client, gr)
+	require.Equal(t, []bool{false}, backend.takeMarks(gr), "the search request builds the index as a normal read")
+
+	def := MigrationDefinition{
+		ID:          "queued-rebuild-migration-read",
+		MigrationID: "queued-rebuild-migration-read",
+		Resources:   []ResourceInfo{{GroupResource: gr}},
+		Migrators: map[schema.GroupResource]MigratorFunc{
+			gr: func(_ context.Context, _ int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+				return stream.Send(&resourcepb.BulkRequest{
+					Key:    &resourcepb.ResourceKey{Namespace: opts.Namespace, Group: gr.Group, Resource: gr.Resource, Name: "folder-1"},
+					Action: resourcepb.BulkRequest_ADDED,
+					Value:  fmt.Appendf(nil, `{"apiVersion":"folder.grafana.app/v0alpha1","kind":"Folder","metadata":{"name":"folder-1","namespace":"%s"},"spec":{"title":"Folder 1"}}`, opts.Namespace),
+				})
+			},
+		},
+	}
+	registry := NewMigrationRegistry()
+	registry.Register(def)
+	runner := NewMigrationRunner(ProvideUnifiedMigrator(client, registry), noopLocker(), &transactionalTableRenamer{log: logger}, setting.NewCfg(), def, nil)
+
+	runMigration(t, env.engine, runner, env.engine.DriverName())
+	require.NotNil(t, client.lastRebuildResponse)
+	require.EqualValues(t, 1, client.lastRebuildResponse.RebuildCount, "the open index is rebuilt by the rebuild worker")
+	// The rebuild can run more than once, as the migration retries a rebuild finishing within the
+	// second of the import: build times are kept in seconds.
+	marks := backend.takeMarks(gr)
+	require.NotEmpty(t, marks)
+	require.NotContains(t, marks, false, "the queued rebuild reads as the migration")
 }
 
 func TestMigrationRunnerStatementTimeoutIsPostgresOnly(t *testing.T) {
