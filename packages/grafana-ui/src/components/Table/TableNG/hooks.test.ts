@@ -2361,29 +2361,6 @@ describe('TableNG hooks', () => {
 });
 
 describe('useScrollShadows', () => {
-  it('allows page scrolling when content fits and restores bounce protection when it overflows', () => {
-    const element = document.createElement('div');
-    Object.defineProperties(element, {
-      scrollHeight: { value: 200, configurable: true },
-      clientHeight: { value: 200, configurable: true },
-    });
-    const ref = { current: { element } as DataGridHandle };
-    const { result, rerender } = renderHook(() => useScrollShadows(ref, true, { topOffset: 30, bottomOffset: 0 }));
-    expect(result.current.style?.['--table-overscroll-y']).toBe('auto');
-
-    Object.defineProperty(element, 'scrollHeight', { value: 201 });
-    rerender();
-    expect(result.current.style?.['--table-overscroll-y']).toBe('auto');
-
-    Object.defineProperty(element, 'scrollHeight', { value: 400 });
-    rerender();
-    expect(result.current.style?.['--table-overscroll-y']).toBe('none');
-
-    Object.defineProperty(element, 'clientHeight', { value: 400 });
-    rerender();
-    expect(result.current.style?.['--table-overscroll-y']).toBe('auto');
-  });
-
   it('does not insert new CSS rules when shadow width changes', () => {
     const element = document.createElement('div');
     Object.defineProperties(element, {

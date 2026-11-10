@@ -964,18 +964,11 @@ export function useScrollShadows(
   enabled: boolean,
   { topOffset, bottomOffset }: { topOffset: number; bottomOffset: number }
 ) {
-  const [visibility, setVisibility] = useState({
-    top: false,
-    bottom: false,
-    scrollbarHeight: 0,
-    width: 0,
-    overflowing: false,
-  });
+  const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0, width: 0 });
   const visibilityRef = useRef(visibility);
   const styles = useStyles2(getScrollShadowStyles, visibility.top, visibility.bottom);
   // Keep changing geometry out of Emotion's stylesheet cache during resizing.
   const style: CSSProperties & Record<`--${string}`, string> = {
-    '--table-overscroll-y': visibility.overflowing ? 'none' : 'auto',
     '--table-scroll-shadow-width': `${visibility.width}px`,
     '--table-scroll-shadow-top': `${topOffset}px`,
     '--table-scroll-shadow-bottom': `${bottomOffset + visibility.scrollbarHeight}px`,
@@ -998,7 +991,6 @@ export function useScrollShadows(
     // scrollbar instead of on the last visible row. The grid draws no border (see `getGridStyles`),
     // so the difference between the two heights is the scrollbar alone.
     const scrollbarHeight = offsetHeight - clientHeight;
-    const overflowing = scrollHeight > clientHeight + 1;
     const scrollBottom = scrollHeight - clientHeight - scrollTop;
     const top = scrollTop > SCROLL_SHADOW_THRESHOLD;
     const bottom = scrollBottom > SCROLL_SHADOW_THRESHOLD;
@@ -1006,10 +998,9 @@ export function useScrollShadows(
       visibilityRef.current.top !== top ||
       visibilityRef.current.bottom !== bottom ||
       visibilityRef.current.scrollbarHeight !== scrollbarHeight ||
-      visibilityRef.current.width !== width ||
-      visibilityRef.current.overflowing !== overflowing
+      visibilityRef.current.width !== width
     ) {
-      const nextVisibility = { top, bottom, scrollbarHeight, width, overflowing };
+      const nextVisibility = { top, bottom, scrollbarHeight, width };
       visibilityRef.current = nextVisibility;
       setVisibility(nextVisibility);
     }
