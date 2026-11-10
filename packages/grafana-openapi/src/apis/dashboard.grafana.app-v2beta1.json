@@ -4836,9 +4836,12 @@
           "panels": {
             "$ref": "#/components/schemas/DashboardPreferencesPanelDefaults"
           },
-          "userUID": {
-            "description": "Owner of a user tier object (\"user-<userUID>\"). Unset on org and folder objects.",
-            "type": "string"
+          "reset": {
+            "description": "Fields that use Grafana's built-in default at this tier instead of inheriting from the next tier. A built-in default can't always be written as a value: decimals defaults to auto, and panel defaults differ by plugin. A field must not be both set and reset in one tier, or listed twice.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

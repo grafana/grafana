@@ -1133,8 +1133,8 @@ export type DashboardPreferencesPanelDefaults = {
 export type DashboardPreferencesSpec = {
   dashboard?: DashboardPreferencesDashboardDefaults;
   panels?: DashboardPreferencesPanelDefaults;
-  /** Owner of a user tier object ("user-<userUID>"). Unset on org and folder objects. */
-  userUID?: string;
+  /** Fields that use Grafana's built-in default at this tier instead of inheriting from the next tier. A built-in default can't always be written as a value: decimals defaults to auto, and panel defaults differ by plugin. A field must not be both set and reset in one tier, or listed twice. */
+  reset?: string[];
 };
 export type DashboardPreferences = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
