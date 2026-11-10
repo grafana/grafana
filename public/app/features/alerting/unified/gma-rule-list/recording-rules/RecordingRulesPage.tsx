@@ -7,6 +7,7 @@ import { Box, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { grafanaRulesNav } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
@@ -61,7 +62,7 @@ function RecordingRulesPageHeader() {
   }
 
   return (
-    <LinkButton href="/alerting/new/grafana-recording" icon="plus" variant="primary">
+    <LinkButton href={grafanaRulesNav.newRecordingRuleLink()} icon="plus" variant="primary">
       <Trans i18nKey="alerting.gma-rule-list.recording-rules.header.new-rule">New recording rule</Trans>
     </LinkButton>
   );

@@ -69,7 +69,7 @@ export function RecordingRuleActions({ rule }: RecordingRuleActionsProps) {
   };
 
   const handleCopyLink = async () => {
-    const url = window.location.origin + grafanaRulesNav.viewLink(uid);
+    const url = grafanaRulesNav.shareLink(uid);
     try {
       await navigator.clipboard.writeText(url);
       appEvents.emit(AppEvents.alertSuccess, [
@@ -89,7 +89,7 @@ export function RecordingRuleActions({ rule }: RecordingRuleActionsProps) {
         icon="eye"
         url={grafanaRulesNav.viewLink(uid)}
       />
-      {isGranted(abilities.canDuplicate) && (
+      {isGranted(abilities.duplicate) && (
         <Menu.Item
           label={t('alerting.gma-rule-list.recording-rule-actions.duplicate', 'Duplicate')}
           icon="copy"
@@ -101,7 +101,7 @@ export function RecordingRuleActions({ rule }: RecordingRuleActionsProps) {
         icon="link"
         onClick={handleCopyLink}
       />
-      {isGranted(abilities.canPause) && (
+      {isGranted(abilities.pause) && (
         <>
           <Menu.Divider />
           <Menu.Item
@@ -116,7 +116,7 @@ export function RecordingRuleActions({ rule }: RecordingRuleActionsProps) {
           />
         </>
       )}
-      {isGranted(abilities.canDelete) && (
+      {isGranted(abilities.delete) && (
         <Menu.Item
           label={t('alerting.gma-rule-list.recording-rule-actions.delete', 'Delete')}
           icon="trash-alt"
@@ -135,7 +135,7 @@ export function RecordingRuleActions({ rule }: RecordingRuleActionsProps) {
 
   return (
     <Stack direction="row" alignItems="center" gap={0.5}>
-      {isGranted(abilities.canEdit) && (
+      {isGranted(abilities.edit) && (
         <LinkButton size="sm" variant="secondary" fill="text" href={grafanaRulesNav.editLink(uid)}>
           <Trans i18nKey="common.edit">Edit</Trans>
         </LinkButton>

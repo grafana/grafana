@@ -8,11 +8,11 @@ import { FolderPath } from '../rule-row/FolderPath';
 import { RuleDatasources } from '../rule-row/RuleDatasources';
 import { RuleDescription } from '../rule-row/RuleDescription';
 import { RuleInstanceCounts } from '../rule-row/RuleInstanceCounts';
-import { RuleInterval } from '../rule-row/RuleInterval';
 import { RuleLabels } from '../rule-row/RuleLabels';
 import { RuleListItem } from '../rule-row/RuleListItem';
 import { RuleOriginBadge } from '../rule-row/RuleOriginBadge';
 import { RuleRouting } from '../rule-row/RuleRouting';
+import { RuleRowActions } from '../rule-row/RuleRowActions';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
@@ -47,14 +47,7 @@ export function AlertRuleRow({ searchHit, folderPath, rule, actions }: AlertRule
           <RuleDescription lastError={searchHit.lastError} summary={searchHit.summary} />
         )
       }
-      right={
-        (searchHit.interval || actions) && (
-          <Stack alignItems="center" gap={1.5} wrap={false}>
-            {searchHit.interval && <RuleInterval interval={searchHit.interval} />}
-            {actions}
-          </Stack>
-        )
-      }
+      right={<RuleRowActions interval={searchHit.interval} actions={actions} />}
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
         <RuleInstanceCounts key="counts" searchHit={searchHit} />,

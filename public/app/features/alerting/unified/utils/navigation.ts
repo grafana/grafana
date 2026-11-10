@@ -164,6 +164,7 @@ export const grafanaRulesNav = {
   /** Absolute URL for sharing — handles sub-path installs via config.appUrl. */
   shareLink: (uid: string) => createAbsoluteUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`),
   newAlertRuleLink: () => createRelativeUrl('/alerting/new/alerting', { returnTo: createReturnTo() }),
+  newRecordingRuleLink: () => createRelativeUrl('/alerting/new/grafana-recording', { returnTo: createReturnTo() }),
   designForProvisioningLink: () => createRelativeUrl('/alerting/export-new-rule', { returnTo: createReturnTo() }),
 };
 

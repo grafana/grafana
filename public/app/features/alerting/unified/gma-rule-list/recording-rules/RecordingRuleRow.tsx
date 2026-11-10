@@ -7,10 +7,10 @@ import { grafanaRulesNav } from '../../utils/navigation';
 import { FolderPath } from '../rule-row/FolderPath';
 import { RuleDatasources } from '../rule-row/RuleDatasources';
 import { RuleDescription } from '../rule-row/RuleDescription';
-import { RuleInterval } from '../rule-row/RuleInterval';
 import { RuleLabels } from '../rule-row/RuleLabels';
 import { RuleListItem } from '../rule-row/RuleListItem';
 import { RuleOriginBadge } from '../rule-row/RuleOriginBadge';
+import { RuleRowActions } from '../rule-row/RuleRowActions';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 
 import { RuleRecordedMetric } from './RuleRecordedMetric';
@@ -45,14 +45,7 @@ export function RecordingRuleRow({ searchHit, folderPath, rule, actions }: Recor
         </Stack>
       }
       description={searchHit.lastError && <RuleDescription lastError={searchHit.lastError} />}
-      right={
-        (searchHit.interval || actions) && (
-          <Stack alignItems="center" gap={1.5} wrap={false}>
-            {searchHit.interval && <RuleInterval interval={searchHit.interval} />}
-            {actions}
-          </Stack>
-        )
-      }
+      right={<RuleRowActions interval={searchHit.interval} actions={actions} />}
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
         // Both metric and targetDatasourceUID are required: showing "Records X to <unknown>" without
