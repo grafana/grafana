@@ -58,7 +58,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
   const [transitionPending, startTransition] = useTransition();
 
   /* this hook returns a function that creates an AsyncIterable<RuleWithOrigin> which we will use to populate the front-end */
-  const getFilteredRulesIterator = useFilteredRulesIteratorProvider();
+  const { getFilteredRulesIterator, isLoading: isLoadingRulesSources } = useFilteredRulesIteratorProvider();
 
   const iteration = useRef<{
     rulesBatchIterator: AsyncIterator<RuleWithOrigin[]>;
@@ -115,7 +115,9 @@ function FilterViewResults({ filterState }: FilterViewProps) {
     }, 'alerting.rule-list.filter-view.load-result-page')
   );
 
-  const loading = isLoading(state) || transitionPending;
+  // The iterator is built on the first page load, and it keeps its rules sources. LoadMoreHelper only renders
+  // when this is false, so the first page waits for the rules source list.
+  const loading = isLoading(state) || transitionPending || isLoadingRulesSources;
   const numberOfRules = rules.length;
   const noRulesFound = numberOfRules === 0 && !loading;
   const loadingAborted = iteration.current?.abortController.signal.aborted;
