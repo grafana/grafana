@@ -844,7 +844,7 @@ importers:
         version: 4.0.9
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/logfmt':
         specifier: ^1.2.3
         version: 1.2.6
@@ -1439,7 +1439,7 @@ importers:
         version: 14.6.1(@testing-library/dom@10.4.1)
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/react':
         specifier: 19.2.18
         version: 19.2.18
@@ -1609,7 +1609,7 @@ importers:
         version: 4.7.11
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -1810,7 +1810,7 @@ importers:
         version: 29.5.14
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -2195,7 +2195,7 @@ importers:
         version: 29.5.14
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/react':
         specifier: 19.2.18
         version: 19.2.18
@@ -2337,7 +2337,7 @@ importers:
         version: 29.5.14
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -2407,7 +2407,7 @@ importers:
         version: 29.5.14
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -2545,7 +2545,7 @@ importers:
         version: 3.5.33
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/react-table':
         specifier: ^7.7.20
         version: 7.7.20
@@ -2888,7 +2888,7 @@ importers:
         version: 29.5.14
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -2961,7 +2961,7 @@ importers:
         version: 29.5.14
       '@types/lodash':
         specifier: ^4.17.25
-        version: 4.17.25
+        version: 4.17.27
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -7236,8 +7236,8 @@ packages:
   '@types/lodash.memoize@4.1.7':
     resolution: {integrity: sha512-lGN7WeO4vO6sICVpf041Q7BX/9k1Y24Zo3FY0aUezr1QlKznpjzsDk3T3wvH8ofYzoK0QupN9TWcFAFZlyPwQQ==}
 
-  '@types/lodash@4.17.25':
-    resolution: {integrity: sha512-+K1NIO8I+F9/wNulfVvu23QYd0Pe9/OCqRrim4NoYIf1VoEDL90Ve4ClzpyqBLc7NpGGWRvYNCKZ1BE/Jpf8dQ==}
+  '@types/lodash@4.17.27':
+    resolution: {integrity: sha512-VenMRv/eKNrspX9v3H4dbmjsrnCOYdYBG3kxXKk3dG6X+urBGcj2Prww3xw1U5K4FV/mE4h5GbWd0szEKf+9ew==}
 
   '@types/logfmt@1.2.6':
     resolution: {integrity: sha512-9/L27oLOjVlhMEHJs4vuvgEFNsAnPISQMi4ploHhidLwv2NX1S7aDmpWuSmaC2S+mXWD/Zx7qUP0mWFO7G0zvw==}
@@ -20167,9 +20167,9 @@ snapshots:
 
   '@types/lodash.memoize@4.1.7':
     dependencies:
-      '@types/lodash': 4.17.25
+      '@types/lodash': 4.17.27
 
-  '@types/lodash@4.17.25': {}
+  '@types/lodash@4.17.27': {}
 
   '@types/logfmt@1.2.6':
     dependencies:
@@ -20783,7 +20783,7 @@ snapshots:
     dependencies:
       '@types/d3-path': 1.0.9
       '@types/d3-shape': 1.3.8
-      '@types/lodash': 4.17.25
+      '@types/lodash': 4.17.27
       '@types/react': 19.2.18
       '@visx/curve': 3.12.0
       '@visx/group': 3.12.0(react@19.2.8)
@@ -25416,7 +25416,7 @@ snapshots:
     dependencies:
       '@apidevtools/json-schema-ref-parser': 11.9.3
       '@types/json-schema': 7.0.15
-      '@types/lodash': 4.17.25
+      '@types/lodash': 4.17.27
       is-glob: 4.0.3
       js-yaml: 4.3.2
       lodash: 4.18.1
