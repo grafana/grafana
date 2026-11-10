@@ -6,14 +6,20 @@ import {
   type ActionVariableInput,
   ActionVariableType,
   AppEvents,
+  applyFieldOverrides,
+  createTheme,
   HttpRequestMethod,
   type DataFrame,
   type DataLink,
   type Field,
   FieldType,
+  type InterpolateFunction,
+  toDataFrame,
 } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
+
+import { TemplateSrv } from '../templating/template_srv';
 
 import * as analytics from './analytics';
 import {
@@ -514,5 +520,71 @@ describe('getActions onClick', () => {
       'An error has occurred. Check console output for more details.',
     ]);
     consoleErrorSpy.mockRestore();
+  });
+});
+
+describe('getActions row data', () => {
+  const templateSrv = new TemplateSrv();
+  const replaceVariables: InterpolateFunction = (value, scopedVars, format) =>
+    templateSrv.replace(value, scopedVars, format);
+
+  const acknowledge: Action = {
+    title: 'Acknowledge',
+    type: ActionType.Fetch,
+    confirmation: 'Acknowledge ${__data.fields.Host}?',
+    variables: [{ key: 'reason', name: 'Reason', type: ActionVariableType.String }],
+    [ActionType.Fetch]: {
+      url: 'https://api.example.com/ack',
+      method: HttpRequestMethod.POST,
+      body: '{"host": "${__data.fields.Host}", "count": ${__value.raw}, "time": ${__value.time}, "reason": "$reason"}',
+    },
+  };
+
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn().mockReturnValue(of({}));
+    jest.mocked(getBackendSrv).mockReturnValue({ fetch: fetchMock } as unknown as ReturnType<typeof getBackendSrv>);
+    jest.spyOn(appEvents, 'emit').mockImplementation();
+  });
+
+  afterEach(() => {
+    jest.mocked(getBackendSrv).mockReset();
+    jest.restoreAllMocks();
+  });
+
+  // Scenes empties the previous result's field values in place when a dashboard refresh delivers new data.
+  it('keeps the row it was opened from when the panel data is emptied before the action runs', () => {
+    const [frame] = applyFieldOverrides({
+      data: [
+        toDataFrame({
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000] },
+            { name: 'Host', type: FieldType.string, values: ['host-a', 'host-b', 'host-c'] },
+            { name: 'Count', type: FieldType.number, values: [1, 2, 3] },
+          ],
+        }),
+      ],
+      fieldConfig: { defaults: { noValue: 'No alerts' }, overrides: [] },
+      replaceVariables,
+      theme: createTheme(),
+    });
+    const countField = frame.fields[2];
+
+    const [model] = getActions(frame, countField, countField.state!.scopedVars!, replaceVariables, [acknowledge], {
+      valueRowIndex: 1,
+    });
+
+    for (const field of frame.fields) {
+      field.values.length = 0;
+    }
+
+    expect(model.confirmation({ reason: 'disk full' })).toBe('Acknowledge host-b?');
+
+    model.onClick(new MouseEvent('click'), countField, { reason: 'disk full' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.objectContaining({ data: '{"host": "host-b", "count": 2, "time": 2000, "reason": "disk full"}' })
+    );
   });
 });
