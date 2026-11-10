@@ -3,6 +3,7 @@ import { render, screen, waitForElementToBeRemoved } from 'test/test-utils';
 import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import * as externalRulesSourcesModule from '../hooks/useExternalRulesSources';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import { installControllableIntersectionObserver } from '../mocks/intersectionObserver';
@@ -71,9 +72,25 @@ describe('RuleList - FilterView', () => {
 
     expect(screen.getAllByTestId('alert-rule-list-item-loader')).toHaveLength(2);
     expect(screen.queryByTestId('load-more-helper')).not.toBeInTheDocument();
+    // There is no search to cancel yet.
+    expect(screen.queryByRole('button', { name: 'Cancel search' })).not.toBeInTheDocument();
 
     await loadMoreResults();
     expect(await screen.findAllByRole('treeitem')).not.toHaveLength(0);
+  });
+
+  it('should say that data source-managed rules are missing when the data source list fails', async () => {
+    const listSpy = jest
+      .spyOn(externalRulesSourcesModule, 'useExternalRulesSources')
+      .mockReturnValue({ items: [], isLoading: false, error: new Error('list failed') });
+
+    render(<FilterView filterState={getFilter({ dataSourceNames: ['Mimir'] })} />);
+
+    expect(screen.getByText('Could not load the data source list')).toBeInTheDocument();
+    await loadMoreResults();
+    expect(screen.queryByText(/^mimir/)).not.toBeInTheDocument();
+
+    listSpy.mockRestore();
   });
 
   it('should filter results by group and rule name ', async () => {
