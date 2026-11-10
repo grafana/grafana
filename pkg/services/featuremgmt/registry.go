@@ -2226,6 +2226,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.draftDashboards",
+			Description: "Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "smoothingTransformation",
 			Description: "Enables the ASAP smoothing transformation for time series data",
 			Stage:       FeatureStageExperimental,
