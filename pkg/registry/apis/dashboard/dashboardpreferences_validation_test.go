@@ -106,6 +106,18 @@ func TestValidateDashboardPreferencesSpec(t *testing.T) {
 		{"empty time range start", `{"dashboard":{"timeRange":{"from":"","to":"now"}}}`, []string{"spec.dashboard.timeRange.from"}},
 		{"time range without end", `{"dashboard":{"timeRange":{"from":"now-1h"}}}`, []string{"spec.dashboard.timeRange.to"}}, // typed To re-marshals as ""
 		{"one cause per violation", `{"dashboard":{"cursorSync":"Bogus"},"panels":{"axis":{"scale":"log3"},"field":{"decimals":99}}}`, []string{"spec.dashboard.cursorSync", "spec.panels.axis.scale", "spec.panels.field.decimals"}},
+
+		// Admission rejects panel paths, but they are valid here like spec.panels.
+		{"reset", `{"dashboard":{"preload":true,"autoGrid":{"columnWidth":100}},"reset":["dashboard.nowDelay","dashboard.autoGrid.rowHeight","panels.field.decimals"]}`, nil},
+		{"unknown reset path", `{"reset":["dashboard.title"]}`, []string{"spec.reset.0"}},
+		{"reset path listed twice", `{"reset":["dashboard.nowDelay","dashboard.preload","dashboard.nowDelay"]}`, []string{"spec.reset.2"}},
+		// The schema already has a cause for the second entry, so the duplicate adds none.
+		{"unknown reset path listed twice", `{"reset":["dashboard.title","dashboard.title"]}`, []string{"spec.reset.0", "spec.reset.1"}},
+		{"reset of a set field", `{"dashboard":{"nowDelay":"1m"},"reset":["dashboard.nowDelay"]}`, []string{"spec.reset.0"}},
+		{"reset of a field set to false", `{"dashboard":{"preload":false},"reset":["dashboard.preload"]}`, []string{"spec.reset.0"}},
+		{"reset of a set nested field", `{"dashboard":{"autoGrid":{"columnWidth":100}},"reset":["dashboard.preload","dashboard.autoGrid.columnWidth"]}`, []string{"spec.reset.1"}},
+		{"reset of a set time range", `{"dashboard":{"timeRange":{"from":"now-1h","to":"now"}},"reset":["dashboard.timeRange"]}`, []string{"spec.reset.0"}},
+		{"reset of a set panel field", `{"panels":{"field":{"decimals":2}},"reset":["panels.field.decimals"]}`, []string{"spec.reset.0"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

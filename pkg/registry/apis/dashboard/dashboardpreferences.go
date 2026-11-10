@@ -286,6 +286,11 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesValues(spec dashv2bet
 	if spec.Panels != nil {
 		return errors.New("panel preferences are not supported yet")
 	}
+	for i, path := range spec.Reset {
+		if strings.HasPrefix(string(path), "panels.") {
+			return fmt.Errorf("spec.reset[%d]: panel preferences are not supported yet", i)
+		}
+	}
 
 	return nil
 }

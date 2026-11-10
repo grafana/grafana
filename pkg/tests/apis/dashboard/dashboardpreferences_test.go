@@ -177,6 +177,32 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 		require.ErrorContains(t, err, "panel preferences are not supported yet")
 	})
 
+	t.Run("reset", func(t *testing.T) {
+		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, "namespace", "", map[string]any{
+			"dashboard": map[string]any{"preload": true},
+			"reset":     []any{"dashboard.nowDelay"},
+		}), metav1.UpdateOptions{})
+		require.NoError(t, err)
+		got, err := admin.Resource.Get(ctx, "namespace", metav1.GetOptions{})
+		require.NoError(t, err)
+		reset, _, err := unstructured.NestedStringSlice(got.Object, "spec", "reset")
+		require.NoError(t, err)
+		require.Equal(t, []string{"dashboard.nowDelay"}, reset)
+
+		// A merge-patch keeps the stored list, so setting the field alone would leave it both set and reset.
+		_, err = admin.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"nowDelay":"1m"}}}`), metav1.PatchOptions{})
+		require.True(t, apierrors.IsInvalid(err), "expected Invalid, got %v", err)
+		_, err = admin.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"nowDelay":"1m"},"reset":null}}`), metav1.PatchOptions{})
+		require.NoError(t, err)
+
+		_, err = admin.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"reset":["dashboard.preload","dashboard.preload"]}}`), metav1.PatchOptions{})
+		require.True(t, apierrors.IsInvalid(err), "expected Invalid, got %v", err)
+
+		_, err = admin.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"reset":["panels.legend.placement"]}}`), metav1.PatchOptions{})
+		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+		require.ErrorContains(t, err, "panel preferences are not supported yet")
+	})
+
 	t.Run("continue is rejected", func(t *testing.T) {
 		_, err := viewer.Resource.List(ctx, metav1.ListOptions{Continue: "x"})
 		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)

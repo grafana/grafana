@@ -375,6 +375,11 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		{name: "panel preferences", attrs: create(withSpec(u1Preferences(), `{"panels":{"legend":{"showLegend":true}}}`)), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "panel preferences are not supported yet"},
 		// A merge-patch that nulls the last panel value leaves the groups, which Mutate drops.
 		{name: "panels with no value set", attrs: create(withSpec(u1Preferences(), `{"panels":{"graph":{}}}`)), mutate: true, requester: u1},
+		{name: "reset", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"preload":true},"reset":["dashboard.nowDelay","dashboard.autoGrid.rowHeight"]}`)), requester: u1},
+		{name: "reset listed twice", attrs: create(withSpec(u1Preferences(), `{"reset":["dashboard.nowDelay","dashboard.nowDelay"]}`)), requester: u1, wantErr: apierrors.IsInvalid},
+		{name: "reset of a set field", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"nowDelay":"1m"},"reset":["dashboard.nowDelay"]}`)), requester: u1, wantErr: apierrors.IsInvalid},
+		// Like spec.panels, a panel reset would be stored and ignored.
+		{name: "panel reset", attrs: create(withSpec(u1Preferences(), `{"reset":["dashboard.nowDelay","panels.legend.placement"]}`)), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "spec.reset[1]: panel preferences are not supported yet"},
 		{name: "wrong type", attrs: create(&dashv2beta1.Notebook{}), requester: u1, wantErr: isPlainError, wantErrMsg: "unsupported dashboard preferences version"},
 
 		{name: "scope change", attrs: update(newDashboardPreferences("folder-f1", "f2"), newDashboardPreferences("folder-f1", "f1")), requester: editor, wantErr: apierrors.IsBadRequest, wantErrMsg: "the grafana.app/folder annotation of dashboard preferences cannot be changed"},
@@ -399,6 +404,9 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		{name: "update with a negative now delay", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"nowDelay":"-1m"}}`), u1Preferences()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "spec.dashboard.nowDelay"},
 		{name: "update with a row height below the editor's minimum", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"autoGrid":{"rowHeight":49}}}`), u1Preferences()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "spec.dashboard.autoGrid.rowHeight must be at least 50"},
 		{name: "update with panel preferences", attrs: update(withSpec(u1Preferences(), `{"panels":{"legend":{"showLegend":true}}}`), u1Preferences()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "panel preferences are not supported yet"},
+		{name: "update with a panel reset", attrs: update(withSpec(u1Preferences(), `{"reset":["panels.field.decimals"]}`), u1Preferences()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "spec.reset[0]: panel preferences are not supported yet"},
+		// A merge-patch that sets a reset field keeps the stored list, so the set and the reset meet here.
+		{name: "update setting a reset field", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"nowDelay":"1m"},"reset":["dashboard.nowDelay"]}`), withSpec(u1Preferences(), `{"reset":["dashboard.nowDelay"]}`)), requester: u1, wantErr: apierrors.IsInvalid},
 		{name: "update without an old object", attrs: update(u1Preferences(), nil), requester: u1, wantErr: isPlainError, wantErrMsg: "old dashboard preferences"},
 
 		{name: "delete", attrs: dashboardPreferencesAttributesForOp(admission.Delete, nil, u1Preferences()), requester: u1},

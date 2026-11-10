@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -60,30 +62,70 @@ func validateDashboardPreferencesSpec(name string, spec dashv2beta1.DashboardPre
 		return fmt.Errorf("error decoding dashboard preferences spec: %w", err)
 	}
 
-	// Unknown keys are not violations: the typed spec has already dropped them, and AsCRDOpenAPI3 removes
-	// additionalProperties: false from the schema.
-	verr := specSchema.VisitJSON(decoded, openapi3.MultiErrors())
-	if verr == nil {
-		return nil
-	}
-
-	violations, ok := errors.AsType[openapi3.MultiError](verr)
-	if !ok {
-		violations = openapi3.MultiError{verr}
-	}
-	errs := make(field.ErrorList, 0, len(violations))
+	var errs field.ErrorList
 	// A value below an exclusive minimum also fails the minimum it is written with, and that later cause
 	// misstates the bound, so each field keeps only its first cause.
-	seen := make(map[string]bool, len(violations))
-	for _, violation := range violations {
-		fieldErr := dashboardPreferencesSchemaErrorToField(violation)
-		if seen[fieldErr.Field] {
-			continue
+	seen := make(map[string]bool)
+	add := func(fieldErr *field.Error) {
+		if !seen[fieldErr.Field] {
+			seen[fieldErr.Field] = true
+			errs = append(errs, fieldErr)
 		}
-		seen[fieldErr.Field] = true
-		errs = append(errs, fieldErr)
+	}
+
+	// Unknown keys are not violations: the typed spec has already dropped them, and AsCRDOpenAPI3 removes
+	// additionalProperties: false from the schema.
+	if verr := specSchema.VisitJSON(decoded, openapi3.MultiErrors()); verr != nil {
+		violations, ok := errors.AsType[openapi3.MultiError](verr)
+		if !ok {
+			violations = openapi3.MultiError{verr}
+		}
+		for _, violation := range violations {
+			add(dashboardPreferencesSchemaErrorToField(violation))
+		}
+	}
+	for _, fieldErr := range dashboardPreferencesResetErrors(spec.Reset, decoded) {
+		add(fieldErr)
+	}
+
+	if len(errs) == 0 {
+		return nil
 	}
 	return apierrors.NewInvalid(dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind().GroupKind(), name, errs)
+}
+
+// The schema can't state either rule: codegen drops list.UniqueItems(), and a field that is both set and
+// reset spans two fields. spec is the encoded spec, in which an unset field is absent.
+func dashboardPreferencesResetErrors(reset []dashv2beta1.DashboardPreferencesResetPath, spec any) field.ErrorList {
+	var errs field.ErrorList
+	listed := make(map[dashv2beta1.DashboardPreferencesResetPath]bool, len(reset))
+	for i, path := range reset {
+		// Named like the schema's causes, which give a list entry's index as a path element.
+		entry := field.NewPath("spec", "reset", strconv.Itoa(i))
+		if listed[path] {
+			errs = append(errs, field.Duplicate(entry, path))
+			continue
+		}
+		listed[path] = true
+		if isDashboardPreferencesFieldSet(spec, string(path)) {
+			errs = append(errs, field.Invalid(entry, path, fmt.Sprintf("spec.%s is also set; a field can be set or reset, not both", path)))
+		}
+	}
+	return errs
+}
+
+func isDashboardPreferencesFieldSet(spec any, path string) bool {
+	value := spec
+	for key := range strings.SplitSeq(path, ".") {
+		obj, ok := value.(map[string]any)
+		if !ok {
+			return false
+		}
+		if value, ok = obj[key]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func dashboardPreferencesSchemaErrorToField(err error) *field.Error {
