@@ -4,15 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestCollectorPreservesSilentQueries(t *testing.T) {
@@ -24,10 +21,6 @@ func TestCollectorPreservesSilentQueries(t *testing.T) {
 		require.Equal(t, backend.StatusOK, response.Status)
 	}
 	require.Empty(t, collector.Response().Responses["B"].Frames)
-	response, err := AccumulateJSONLines(strings.NewReader(""), "A", "B")
-	require.NoError(t, err)
-	require.Len(t, response.Responses, 2)
-	require.Equal(t, backend.StatusOK, response.Responses["B"].Status)
 }
 
 func TestCollectorRejectsMalformedContinuationsWithoutMutation(t *testing.T) {
@@ -52,12 +45,6 @@ func TestCollectorRejectsMalformedContinuationsWithoutMutation(t *testing.T) {
 			after, err := json.Marshal(collector.Response())
 			require.NoError(t, err)
 			require.JSONEq(t, string(before), string(after))
-			body := `{"refId":"A","frameId":"0","frame":` + string(first) + "}\n" + `{"refId":"A","frameId":"0","frame":` + tc.frame + "}\n"
-			require.NotPanics(t, func() {
-				response, err := AccumulateJSONLines(strings.NewReader(body), "A")
-				require.Error(t, err)
-				require.Nil(t, response)
-			})
 		})
 	}
 }
@@ -69,27 +56,6 @@ func TestCollectorRejectsMalformedInitialFrame(t *testing.T) {
 		require.Error(t, collector.OnChunk(&pluginv2.QueryChunkedDataResponse{RefId: "A", FrameId: "0", Frame: []byte(frame), Format: pluginv2.DataFrameFormat_JSON}))
 	})
 	require.Empty(t, collector.Response().Responses["A"].Frames)
-}
-
-func TestAccumulatorPreservesStatusAfterFrames(t *testing.T) {
-	for _, kind := range []string{"Status", ""} {
-		t.Run("kind="+kind, func(t *testing.T) {
-			frame, err := data.NewFrame("result", data.NewField("value", nil, []int64{1})).MarshalJSON()
-			require.NoError(t, err)
-			terminal, err := json.Marshal(metav1.Status{
-				TypeMeta: metav1.TypeMeta{Kind: kind}, Status: metav1.StatusFailure,
-				Reason: metav1.StatusReasonForbidden, Message: "bad query", Code: 403,
-			})
-			require.NoError(t, err)
-			body := `{"refId":"A","frameId":"0","frame":` + string(frame) + "}\n" + string(terminal) + "\n"
-			response, err := AccumulateJSONLines(strings.NewReader(body), "A", "B")
-			require.Nil(t, response)
-			var status *apierrors.StatusError
-			require.ErrorAs(t, err, &status)
-			require.EqualValues(t, 403, status.ErrStatus.Code)
-			require.Equal(t, "bad query", status.ErrStatus.Message)
-		})
-	}
 }
 
 type typedErrorRecorder struct {

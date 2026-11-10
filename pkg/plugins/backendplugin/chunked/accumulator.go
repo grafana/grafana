@@ -1,70 +1,102 @@
 package chunked
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
 	"errors"
 	"fmt"
 	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/datasourcetest"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// AccumulateJSONLines reads the existing JSONL protocol into the shared collector.
-// EOF ends this protocol; an HTTP Status error may follow already emitted frames.
-func AccumulateJSONLines(reader io.Reader, refIDs ...string) (*backend.QueryDataResponse, error) {
-	collector := NewQueryResponseCollector(refIDs...)
-	decoder := json.NewDecoder(reader)
-	for {
-		var raw json.RawMessage
-		if err := decoder.Decode(&raw); err != nil {
-			if errors.Is(err, io.EOF) {
-				return collector.Response(), nil
+// Read JSON lines into a full QueryDataResponse (useful for testing)
+func AccumulateJSONLines(jsonl io.Reader) (*backend.QueryDataResponse, error) {
+	return datasourcetest.AccumulateJSON(func(yield func(*pluginv2.QueryChunkedDataResponse, error) bool) {
+		decoder := jsontext.NewDecoder(jsonl, jsontext.AllowDuplicateNames(true))
+		for {
+			err := readToken(decoder, jsontext.KindBeginObject)
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					return
+				}
+				yield(nil, err)
+				return
 			}
-			return nil, fmt.Errorf("reading chunked datasource response: %w", err)
-		}
-		var header struct {
-			Kind   string          `json:"kind"`
-			RefID  string          `json:"refId"`
-			Status json.RawMessage `json:"status"`
-		}
-		if err := json.Unmarshal(raw, &header); err != nil {
-			return nil, err
-		}
-		// TypeMeta is optional when a Kubernetes Status is encoded directly.
-		// Recognize its string-valued failure status before decoding the numeric
-		// status of a query record, while keeping records with a refId separate.
-		if header.Kind == "Status" || (header.Kind == "" && header.RefID == "" && string(header.Status) == `"Failure"`) {
-			var status metav1.Status
-			if err := json.Unmarshal(raw, &status); err != nil {
-				return nil, err
+
+			var val jsontext.Value
+			var keyTok jsontext.Token
+			chunk := &pluginv2.QueryChunkedDataResponse{
+				Format: pluginv2.DataFrameFormat_JSON,
 			}
-			if status.Status != metav1.StatusFailure {
-				return nil, errors.New("unexpected non-failure Status in chunked response")
+
+			for decoder.PeekKind() != '}' {
+				keyTok, err = decoder.ReadToken()
+				if err != nil {
+					yield(nil, err)
+					return
+				}
+				key := keyTok.String()
+
+				switch key {
+				case "refId":
+					chunk.RefId, err = readStringValue(decoder)
+				case "frameId":
+					chunk.FrameId, err = readStringValue(decoder)
+				case "error":
+					chunk.Error, err = readStringValue(decoder)
+				case "errorSource":
+					chunk.ErrorSource, err = readStringValue(decoder)
+
+				case "frame":
+					val, err = decoder.ReadValue()
+					if err == nil {
+						// This needs to clone because the same buffer is used for PeekKind()
+						chunk.Frame, err = val.Clone().MarshalJSON()
+					}
+
+				default:
+					err = fmt.Errorf("unsupported property: %s (offset:%d)", key, decoder.InputOffset())
+				}
 			}
-			return nil, &apierrors.StatusError{ErrStatus: status}
+
+			if err == nil {
+				err = readToken(decoder, jsontext.KindEndObject)
+			}
+
+			// Stop iterating on error
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+
+			if !yield(chunk, nil) {
+				return // Caller stopped iterating
+			}
 		}
-		var event *struct {
-			RefID       string          `json:"refId"`
-			FrameID     string          `json:"frameId"`
-			Frame       json.RawMessage `json:"frame"`
-			Status      int32           `json:"status"`
-			Error       string          `json:"error"`
-			ErrorSource string          `json:"errorSource"`
-		}
-		if err := json.Unmarshal(raw, &event); err != nil {
-			return nil, err
-		}
-		if event == nil {
-			return nil, errors.New("chunked datasource response is missing refId")
-		}
-		if err := collector.OnChunk(&pluginv2.QueryChunkedDataResponse{
-			RefId: event.RefID, FrameId: event.FrameID, Frame: event.Frame, Format: pluginv2.DataFrameFormat_JSON,
-			Status: event.Status, Error: event.Error, ErrorSource: event.ErrorSource,
-		}); err != nil {
-			return nil, err
-		}
+	})
+}
+
+// helper function to read a specific expected token
+func readToken(d *jsontext.Decoder, expected jsontext.Kind) error {
+	tok, err := d.ReadToken()
+	if err != nil {
+		return err
 	}
+	if tok.Kind() != expected {
+		return fmt.Errorf("expected %v, got %v", expected, tok.Kind())
+	}
+	return nil
+}
+
+func readStringValue(d *jsontext.Decoder) (string, error) {
+	val, err := d.ReadToken()
+	if err != nil {
+		return "", err
+	}
+	if val.Kind() != '"' {
+		return "", fmt.Errorf("expected string")
+	}
+	return val.String(), nil
 }
