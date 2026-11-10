@@ -863,6 +863,7 @@ type Cfg struct {
 	RerankVertexModel     string
 	RerankBedrockRegion   string
 	RerankBedrockModel    string
+	RerankHedgeDelay      time.Duration
 
 	// Overrides/Quotas
 	OverridesFilePath             string
@@ -1406,7 +1407,6 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 		os.Exit(1)
 		return nil, err
 	}
-
 	// command line props
 	cfg.commandLineProps = cfg.getCommandLineProperties(args.Args)
 	// load default overrides
