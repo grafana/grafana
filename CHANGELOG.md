@@ -808,6 +808,16 @@
 - **TimeOfDayPicker:** use Combobox [#123777](https://github.com/grafana/grafana/pull/123777), [@leeoniya](https://github.com/leeoniya)
 
 <!-- 13.1.0 END -->
+<!-- 13.0.13 START -->
+
+# 13.0.13 (2026-11-10)
+
+### Features and enhancements
+
+- **DateTime:** Bump moment-timezone to 0.6.6 for 2026 time zone changes [#136948](https://github.com/grafana/grafana/pull/136948), [@joshhunt](https://github.com/joshhunt)
+- **Provisioning:** allow same-host URL change on connection-backed repositories [#137092](https://github.com/grafana/grafana/pull/137092), [@MissingRoberto](https://github.com/MissingRoberto)
+
+<!-- 13.0.13 END -->
 <!-- 13.0.12 START -->
 
 # 13.0.12 (2026-10-27)
