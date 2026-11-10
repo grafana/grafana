@@ -42,7 +42,7 @@ const folderSearchAPI = folderAPI.injectEndpoints({
   endpoints: (build) => ({
     searchRuleFolders: build.infiniteQuery<
       FolderSearchPage,
-      { kind: RuleKind; folderNames: string[] },
+      { kind: RuleKind; folderName?: string },
       string | undefined
     >({
       infiniteQueryOptions: {
@@ -54,7 +54,7 @@ const folderSearchAPI = folderAPI.injectEndpoints({
       query: ({ queryArg, pageParam }) => ({
         url: '/folders/search',
         method: 'POST',
-        body: buildFolderListSearchQuery(queryArg.kind, pageParam, queryArg.folderNames),
+        body: buildFolderListSearchQuery(queryArg.kind, pageParam, queryArg.folderName),
       }),
       rawResponseSchema: folderSearchResponseSchema,
       // A response that fails the schema becomes a query error, so the page shows it with Retry.

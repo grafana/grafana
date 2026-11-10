@@ -9,16 +9,17 @@ files without adding anything.
 - **Free text** searches rule titles: `cpu high`. A word is a filter only when it starts with one of
   the page's keys. Any other `key:value` word is title text, so `foo:bar` searches titles, and so does
   `metric:cpu` on the Alert rules page. `rule:cpu` is title text too, as in the old list.
-- **`key:value`** filters: `folder:` takes a folder name and matches folder titles exactly, ignoring
-  case, so same-named folders all match. It replaces the old list's `namespace:`, which matched
-  names fuzzily. `datasource:` takes UIDs and matches them exactly. A space after the colon is
+- **`key:value`** filters: `folder:` takes a folder name, or part of it, and matches every folder whose
+  title contains each of its words, ignoring case, like the old list's `namespace:`. The rule search
+  then searches the matching folders by UID. `datasource:` takes UIDs and matches them exactly. A space after the colon is
   allowed, so `folder: "Team 01"` is `folder:"Team 01"`, unless the next word is a filter itself.
 - **Quotes** keep spaces in a value and can start anywhere in it: `contactPoint:"on call"`,
   `"cpu high"`, `label:team="a b"`. Quoting text that would read as a filter keeps it title text:
   `"state:firing"`. Empty quotes are no text. There are no escapes, as in the old list: a backslash
   is an ordinary character, so a value can't contain a quote.
 - **Repeats**: a single-value filter keeps its last value, so `state:firing state:normal` is
-  `state:normal`. Folders, data sources, labels and title words add up.
+  `state:normal`. `folder:` is single-value too, since the folder search takes one text query.
+  Data sources, labels and title words add up.
 - **Case**: `state:`, `health:` and `paused:` values ignore case. Keys don't: `State:firing` is title
   text.
 
@@ -47,7 +48,7 @@ An empty value matches any value, so `label:team=` is `label:team`. As in Promet
    next to `policy:`, `panelId:` without `dashboard:`, and the filters the rule search can't serve
    yet, `policy:default` and `paused:false`.
 
-So `state:bogus` is a parse rejection and `folder:f*` is feedback. The page sends no request while
+So `state:bogus` is a parse rejection and `datasource:__expr__` is feedback. The page sends no request while
 there are issues.
 
 The rule search validates the rest itself, such as label regexes. When it refuses a search (422), each

@@ -82,9 +82,7 @@ describe('RecordingRulesPage folder list', () => {
     expect(await screen.findByRole('link', { name: 'Team Metrics' })).toBeInTheDocument();
     expect(folderToggles()).toEqual(['Expand Team Metrics']);
     expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
-    expect(backend.folderSearches[0].where).toEqual({
-      filter: { field: 'title', operator: 'In', values: ['team metrics'] },
-    });
+    expect(backend.folderSearches[0].where).toEqual({ text: { value: 'team metrics' } });
   });
 
   it('loads the next page of folders when the end of the list comes into view, keeping the loaded ones, until the last page', async () => {
@@ -124,11 +122,7 @@ describe('RecordingRulesPage folder list', () => {
 
   it('restarts the folder list, collapsed, when the folder filter changes', async () => {
     setup({ pageSize: { folders: 1 } });
-    const { user } = render(<RecordingRulesPage />, {
-      historyOptions: {
-        initialEntries: [`/?${new URLSearchParams({ search: 'folder:Infra folder:"Team Metrics"' })}`],
-      },
-    });
+    const { user } = render(<RecordingRulesPage />);
     await user.click(await screen.findByRole('button', { name: 'Expand Infra' }));
     await screen.findByRole('link', { name: 'latency:p99' });
     intersection.intersectObserved();

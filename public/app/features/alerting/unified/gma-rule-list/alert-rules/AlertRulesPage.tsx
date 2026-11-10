@@ -98,7 +98,7 @@ function AlertRulesBody({ hasIssues, mode, filter }: AlertRulesBodyProps) {
     );
   }
   if (mode === 'folders') {
-    return <AlertRulesFoldersView key={JSON.stringify(filter.folders)} folderNames={filter.folders} />;
+    return <AlertRulesFoldersView key={filter.folders[0]} folderName={filter.folders[0]} />;
   }
   return <AlertRulesListView filter={filter} />;
 }

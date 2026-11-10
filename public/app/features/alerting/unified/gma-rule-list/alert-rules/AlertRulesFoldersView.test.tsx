@@ -25,7 +25,7 @@ describe('AlertRulesFoldersView', () => {
   it('shows an unavailable message in place of the count when /counts fails, while the folder row stays usable', async () => {
     setup().failNext('folderCounts');
 
-    render(<AlertRulesFoldersView folderNames={[]} />);
+    render(<AlertRulesFoldersView />);
 
     expect(await screen.findByText('Count unavailable')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
@@ -36,7 +36,7 @@ describe('AlertRulesFoldersView', () => {
   it('shows zero Alert rules for a folder holding only recording rules', async () => {
     setup({ alertRules: [], recordingRules: [recordingRuleFactory.inFolder('team').build()] });
 
-    render(<AlertRulesFoldersView folderNames={[]} />);
+    render(<AlertRulesFoldersView />);
 
     expect(await screen.findByText('0 alert rules')).toBeInTheDocument();
   });
@@ -44,7 +44,7 @@ describe('AlertRulesFoldersView', () => {
   it('shows the parents from /parents beside the title, without repeating the folder itself', async () => {
     setup();
 
-    render(<AlertRulesFoldersView folderNames={[]} />);
+    render(<AlertRulesFoldersView />);
 
     expect(await screen.findByText('Platform')).toBeInTheDocument();
     expect(screen.getAllByText('Team Alerts')).toHaveLength(1);
@@ -54,7 +54,7 @@ describe('AlertRulesFoldersView', () => {
   it('keeps the title and count and shows no parent when /parents fails', async () => {
     setup().failNext('folderParents');
 
-    render(<AlertRulesFoldersView folderNames={[]} />);
+    render(<AlertRulesFoldersView />);
 
     expect(await screen.findByText('2 alert rules')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
@@ -63,12 +63,12 @@ describe('AlertRulesFoldersView', () => {
   });
 
   it.each([
-    { name: 'a folder filter returns no folders', folderNames: ['Platform'], text: 'No alert rules match this folder' },
-    { name: 'no folder filter is active', folderNames: [], text: 'No alert rules found' },
-  ])('says "$text" when $name', async ({ folderNames, text }) => {
-    setup({ alertRules: folderNames.length > 0 ? ALERT_RULES : [] });
+    { name: 'a folder filter returns no folders', folderName: 'Platform', text: 'No alert rules match this folder' },
+    { name: 'no folder filter is active', folderName: undefined, text: 'No alert rules found' },
+  ])('says "$text" when $name', async ({ folderName, text }) => {
+    setup({ alertRules: folderName ? ALERT_RULES : [] });
 
-    render(<AlertRulesFoldersView folderNames={folderNames} />);
+    render(<AlertRulesFoldersView folderName={folderName} />);
 
     expect(await screen.findByText(text)).toBeInTheDocument();
   });
@@ -76,7 +76,7 @@ describe('AlertRulesFoldersView', () => {
   it('shows the folder search error with Retry for a 500 response, and the folder after Retry', async () => {
     setup().failNext('folderSearch');
 
-    const { user } = render(<AlertRulesFoldersView folderNames={[]} />);
+    const { user } = render(<AlertRulesFoldersView />);
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load folders');
 
@@ -92,7 +92,7 @@ describe('AlertRulesFoldersView', () => {
       http.post(FOLDER_SEARCH_URL, () => HttpResponse.json({ items: [{ fields: {} }], metadata: {} }), { once: true })
     );
 
-    const { user } = render(<AlertRulesFoldersView folderNames={[]} />);
+    const { user } = render(<AlertRulesFoldersView />);
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load folders');
 
@@ -109,7 +109,7 @@ describe('AlertRulesFoldersView', () => {
       )
     );
 
-    render(<AlertRulesFoldersView folderNames={[]} />);
+    render(<AlertRulesFoldersView />);
 
     expect(await screen.findByRole('link', { name: 'team' })).toBeInTheDocument();
   });

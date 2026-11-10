@@ -50,7 +50,7 @@ describe('parsing', () => {
       query: 'foo:"a b"',
       filter: { text: ['foo:a b'] },
     },
-    { name: 'several folders', query: 'folder:f1 folder:"My Folder"', filter: { folders: ['f1', 'My Folder'] } },
+    { name: 'the last folder', query: 'folder:f1 folder:"My Folder"', filter: { folders: ['My Folder'] } },
     { name: 'a value after spaces', query: 'folder:  "My Folder"', filter: { folders: ['My Folder'] } },
     {
       name: 'a filter after an empty value as its own filter',
@@ -144,12 +144,14 @@ describe('parsing', () => {
 });
 
 describe('feedback', () => {
-  it.each(['cpu', 'folder:f1', 'label:team=api', 'label:team=~api.*'])('reports no issues for %j', (query) => {
-    expect(parse(query, sharedSchema).issues).toEqual([]);
-  });
+  it.each(['cpu', 'folder:f1', 'folder:f*', 'label:team=api', 'label:team=~api.*'])(
+    'reports no issues for %j',
+    (query) => {
+      expect(parse(query, sharedSchema).issues).toEqual([]);
+    }
+  );
 
   it.each([
-    ['folder:f*', 'folder'],
     ['datasource:__expr__', 'datasource'],
     ['datasource:"my ds"', 'datasource'],
     ['label:team=a*', 'label'],

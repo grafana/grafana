@@ -417,8 +417,8 @@ describe('RecordingRulesPage folder names', () => {
     }
   );
 
-  it('shows the empty state and sends no rule search when no folder has that name', async () => {
-    renderWithSearch('folder:Metric');
+  it('shows the empty state and sends no rule search when no folder name matches', async () => {
+    renderWithSearch('folder:Nope');
 
     expect(await screen.findByText('No recording rules match this folder')).toBeInTheDocument();
     expect(backend.ruleSearches).toEqual([]);

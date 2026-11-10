@@ -20,13 +20,13 @@ import { useRecordingRuleSearch } from './recordingRuleSearch';
 
 interface FoldersViewProps {
   /** The only filter Folders mode supports; scopes the folder listing itself. */
-  folderNames: string[];
+  folderName?: string;
 }
 
-export function RecordingRulesFoldersView({ folderNames }: FoldersViewProps) {
+export function RecordingRulesFoldersView({ folderName }: FoldersViewProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const { data, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
-    useSearchRuleFoldersInfiniteQuery({ kind: 'recording', folderNames });
+    useSearchRuleFoldersInfiniteQuery({ kind: 'recording', folderName });
   const folders = data?.pages.flatMap((page) => page.folders);
 
   const toggle = (uid: string) => {
@@ -58,7 +58,7 @@ export function RecordingRulesFoldersView({ folderNames }: FoldersViewProps) {
       <EmptyState
         variant="not-found"
         message={
-          folderNames.length > 0
+          folderName
             ? t('alerting.gma-rule-list.recording-rules.no-rules-match-folder', 'No recording rules match this folder')
             : t('alerting.gma-rule-list.recording-rules.no-rules', 'No recording rules found')
         }

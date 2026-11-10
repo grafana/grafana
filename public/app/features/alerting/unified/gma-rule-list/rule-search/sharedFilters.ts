@@ -33,15 +33,13 @@ export const sharedFilters = {
     description: () =>
       t(
         'alerting.gma-rule-list.search.help.folder',
-        'Folder name, matched exactly and ignoring case. Quote a name with spaces: folder:"Team 01".'
+        'Folder name or part of it, ignoring case. Quote a name with spaces: folder:"Team 01".'
       ),
     example: 'folder:Alerts',
     apply: (filter, value) => {
-      filter.folders.push(value);
+      filter.folders = [value];
       return true;
     },
-    // Names match titles exactly, so `*` would read as a wildcard that never matches.
-    feedback: (filter) => (filter.folders.some(hasWildcard) ? 'invalid' : undefined),
   },
   datasource: {
     key: 'datasource',

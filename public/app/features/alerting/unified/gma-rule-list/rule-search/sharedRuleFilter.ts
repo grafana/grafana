@@ -6,7 +6,7 @@ import {
 /** What both pages' search filters hold; each page's filter type adds its own filters to it. */
 export interface SharedRuleFilter {
   text: string[];
-  /** Folder names as typed; each matches the folders with that exact title, ignoring case. */
+  /** At most one folder name, as typed, since a later `folder:` replaces it. It matches folders by title text. */
   folders: string[];
   /** Query datasource UIDs. */
   dataSourceUids: string[];

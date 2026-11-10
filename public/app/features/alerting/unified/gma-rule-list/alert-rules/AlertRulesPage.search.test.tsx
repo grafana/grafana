@@ -251,7 +251,7 @@ describe('AlertRulesPage folder names', () => {
     return render(<AlertRulesPage />, { historyOptions: { initialEntries: [`/?${params}`] } });
   }
 
-  it('shows every folder with that name as its own row with its parent path in Folders mode', async () => {
+  it('shows every folder with a matching name as its own row with its parent path in Folders mode', async () => {
     renderWithSearch('folder:Alerts');
 
     expect(await screen.findAllByRole('link', { name: 'Alerts' })).toHaveLength(2);
@@ -262,13 +262,13 @@ describe('AlertRulesPage folder names', () => {
     expect(backend.folderSearches).toEqual([
       expect.objectContaining({
         labelSelector: HAS_ALERT_RULES,
-        where: { filter: { field: 'title', operator: 'In', values: ['Alerts'] } },
+        where: { text: { value: 'Alerts' } },
       }),
     ]);
     expect(backend.ruleSearches).toEqual([]);
   });
 
-  it('lists the rules of every folder with that name in List mode, with one folder search', async () => {
+  it('lists the rules of every folder with a matching name in List mode, with one folder search', async () => {
     renderWithSearch('folder:Alerts', 'list');
 
     expect(await screen.findByText('DB down')).toBeInTheDocument();
@@ -277,7 +277,7 @@ describe('AlertRulesPage folder names', () => {
     expect(backend.folderSearches).toEqual([
       expect.objectContaining({
         labelSelector: HAS_ALERT_RULES,
-        where: { filter: { field: 'title', operator: 'In', values: ['Alerts'] } },
+        where: { text: { value: 'Alerts' } },
         limit: 500,
       }),
     ]);
@@ -286,22 +286,20 @@ describe('AlertRulesPage folder names', () => {
     ]);
   });
 
-  it('matches a quoted name whatever its case, keeping it as typed in the input', async () => {
-    renderWithSearch('folder:"team 01"', 'list');
+  it('matches part of a quoted name whatever its case, keeping it as typed in the input', async () => {
+    renderWithSearch('folder:"team 0"', 'list');
 
     expect(await screen.findByText('Team 01 latency')).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('folder:"team 01"');
-    expect(backend.folderSearches[0].where).toEqual({
-      filter: { field: 'title', operator: 'In', values: ['team 01'] },
-    });
+    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('folder:"team 0"');
+    expect(backend.folderSearches[0].where).toEqual({ text: { value: 'team 0' } });
   });
 
-  it('ORs several folder names', async () => {
+  it('searches only the last folder name when there are several', async () => {
     renderWithSearch('folder:Alerts folder:"Team 01"', 'list');
 
     expect(await screen.findByText('Team 01 latency')).toBeInTheDocument();
     expect(backend.ruleSearches.map((body) => body.where)).toEqual([
-      { filter: { field: 'folder', operator: 'In', values: ['db-alerts', 'k8s-alerts', 'team-01'] } },
+      { filter: { field: 'folder', operator: 'In', values: ['team-01'] } },
     ]);
   });
 
@@ -359,8 +357,8 @@ describe('AlertRulesPage folder names', () => {
     }
   );
 
-  it('shows the empty state and sends no rule search when no folder has that name', async () => {
-    renderWithSearch('folder:Alert', 'list');
+  it('shows the empty state and sends no rule search when no folder name matches', async () => {
+    renderWithSearch('folder:Nope', 'list');
 
     expect(await screen.findByText('No alert rules match this folder')).toBeInTheDocument();
     expect(backend.folderSearches).toHaveLength(1);

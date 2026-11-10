@@ -11,8 +11,7 @@ import { type RuleSearchApiArgs, type SharedRuleFilter } from './sharedRuleFilte
 /**
  * `apiArgs` stays undefined until there is a rule search to send: when skipped, while the names are looked up, when
  * the lookup fails, and when no folder has those names, since an empty UID list would search every folder.
- * `inFolderUid` skips the lookup: a Folders mode row knows its folder's UID, and its name could match same-named
- * folders.
+ * `inFolderUid` skips the lookup: a Folders mode row knows its folder's UID, and its name could match other folders.
  */
 export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
   kind: RuleKind,
@@ -24,7 +23,7 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
     lookUp
       ? {
           searchQuery: {
-            ...buildFolderListSearchQuery(kind, undefined, filter.folders),
+            ...buildFolderListSearchQuery(kind, undefined, filter.folders[0]),
             limit: FOLDER_NAME_LOOKUP_LIMIT,
           },
         }

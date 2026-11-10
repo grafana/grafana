@@ -30,7 +30,7 @@ async function findFolderRow(title: string) {
 describe('RecordingRulesFoldersView', () => {
   it('shows a folder holding rules with its parent and its own count, and its rules once expanded', async () => {
     setup();
-    const { user } = render(<RecordingRulesFoldersView folderNames={[]} />);
+    const { user } = render(<RecordingRulesFoldersView />);
 
     const row = await findFolderRow('Team Metrics');
     expect(await within(row).findByText('Platform')).toBeInTheDocument();
@@ -48,7 +48,7 @@ describe('RecordingRulesFoldersView', () => {
   it('shows an unavailable message in place of the count when /counts fails, while the folder row stays usable', async () => {
     setup().failNext('folderCounts');
 
-    render(<RecordingRulesFoldersView folderNames={[]} />);
+    render(<RecordingRulesFoldersView />);
 
     expect(await screen.findByText('Count unavailable')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Team Metrics' })).toBeInTheDocument();
@@ -59,7 +59,7 @@ describe('RecordingRulesFoldersView', () => {
   it('shows zero Recording rules for a folder holding only alert rules', async () => {
     setup({ recordingRules: [], alertRules: [alertRuleFactory.inFolder('team').build()] });
 
-    render(<RecordingRulesFoldersView folderNames={[]} />);
+    render(<RecordingRulesFoldersView />);
 
     const row = await findFolderRow('Team Metrics');
     expect(await within(row).findByRole('img', { name: /^0 recording rules\./ })).toBeInTheDocument();
@@ -68,14 +68,14 @@ describe('RecordingRulesFoldersView', () => {
   it.each([
     {
       name: 'a folder filter returns no folders',
-      folderNames: ['Platform'],
+      folderName: 'Platform',
       text: 'No recording rules match this folder',
     },
-    { name: 'no folder filter is active', folderNames: [], text: 'No recording rules found' },
-  ])('says "$text" when $name', async ({ folderNames, text }) => {
-    setup({ recordingRules: folderNames.length > 0 ? RECORDING_RULES : [] });
+    { name: 'no folder filter is active', folderName: undefined, text: 'No recording rules found' },
+  ])('says "$text" when $name', async ({ folderName, text }) => {
+    setup({ recordingRules: folderName ? RECORDING_RULES : [] });
 
-    render(<RecordingRulesFoldersView folderNames={folderNames} />);
+    render(<RecordingRulesFoldersView folderName={folderName} />);
 
     expect(await screen.findByText(text)).toBeInTheDocument();
   });
@@ -83,7 +83,7 @@ describe('RecordingRulesFoldersView', () => {
   it('shows the folder search error with Retry for a 500 response, and the folder after Retry', async () => {
     setup().failNext('folderSearch');
 
-    const { user } = render(<RecordingRulesFoldersView folderNames={[]} />);
+    const { user } = render(<RecordingRulesFoldersView />);
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load folders');
 
