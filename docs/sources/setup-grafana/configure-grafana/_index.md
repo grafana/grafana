@@ -554,30 +554,12 @@ Required in `external` mode.
 #### `listen_address`
 
 The address that the embedded server binds `cluster_port` to.
-If empty, Grafana binds `0.0.0.0` when the database is MySQL or PostgreSQL and `discovery_enabled` is `true`, so that instances on other hosts can connect, and `127.0.0.1` otherwise.
+If empty, Grafana binds `0.0.0.0` when the database is MySQL or PostgreSQL, so that instances on other hosts can connect, and `127.0.0.1` otherwise.
 Routes between instances then authenticate with a random credential that Grafana stores in the database.
+To rotate it, refer to [Rotate the route credential](../set-up-nats-for-high-availability/#rotate-the-route-credential).
 Without cluster TLS, this credential crosses the network in clear text, and Grafana logs a warning at startup.
 Turn on cluster TLS, or restrict `cluster_port` to the Grafana instances, for example with firewall rules or a Kubernetes network policy.
 The default value is empty.
-
-#### `client_listen`
-
-Set to `true` to open `client_port` on `client_listen_address` for NATS clients outside Grafana, for example the `nats` command-line tool.
-Grafana connects to its embedded server inside the process, so it doesn't need the port.
-The port has no TLS and no authentication, so only open it on a trusted network.
-The default value is `false`.
-
-#### `client_listen_address`
-
-The address that `client_port` listens on when `client_listen` is `true`.
-It's separate from `listen_address`, so binding the cluster port to all interfaces doesn't expose the client port.
-The default value is `127.0.0.1`.
-
-#### `client_port`
-
-The client port of the embedded server.
-Grafana only opens it when `client_listen` is `true`.
-The default value is `4222`.
 
 #### `cluster_port`
 
@@ -610,26 +592,6 @@ The key must not be protected by a passphrase.
 
 Path to the PEM-encoded CA certificates that verify the certificates of peers.
 The file can contain several CA certificates, for example while you rotate the CA.
-
-#### `discovery_enabled`
-
-Set to `false` to run the embedded server as a single node that doesn't connect to other instances.
-When `true`, each instance registers in the `nats_discovery_peers` table of the Grafana database and connects to the other registered instances.
-The same table holds the route credential that every instance on the database shares.
-To rotate the credential, delete the row with the `key_path` `nats/peers/grafana.route-credential` and restart all instances.
-The default value is `true`.
-
-#### `discovery_interval`
-
-How often each instance refreshes its registration and updates its connections to peers.
-The default value is `5s`.
-
-#### `discovery_ttl`
-
-How long a peer stays registered after its last refresh.
-An instance that's stopped without shutting down cleanly stays connected to its peers for up to `discovery_ttl` plus `discovery_interval`.
-Keep it a comfortable multiple of `discovery_interval`.
-The default value is `15s`.
 
 #### `notifier`
 

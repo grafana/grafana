@@ -51,10 +51,10 @@ Before you turn on embedded NATS, ensure you have the following:
 With embedded NATS turned on, the instances of a cluster form a NATS cluster among themselves.
 You don't run or upgrade a separate NATS server.
 
-- **Discovery through the database:** Each instance registers itself in the `nats_discovery_peers` table of the main Grafana database and refreshes its row every `discovery_interval` (default `5s`).
+- **Discovery through the database:** Each instance registers itself in the `nats_discovery_peers` table of the main Grafana database and refreshes its row every few seconds.
   Grafana creates the table on its first start.
   Instances read the table to find their peers, so you don't configure a list of peers or a seed address.
-  Peers that stop refreshing their row are dropped after `discovery_ttl` (default `15s`).
+  Peers that stop refreshing their row are dropped after about 15 seconds.
   An instance that shuts down cleanly removes its row and tells its peers, so they drop it right away.
 - **Routes on the cluster port:** Each instance connects to every peer on the cluster port, `6222` by default.
   On MySQL and PostgreSQL, the cluster port listens on all network interfaces, so instances on other hosts can connect.
@@ -103,7 +103,7 @@ The following settings have defaults that suit most clusters:
   The default is `1h` while `notifier` is on.
   Refer to [What changes for unified storage](#what-changes-for-unified-storage).
 - **`listen_address`:** The address that the cluster port binds to.
-  If empty, Grafana binds `0.0.0.0` on MySQL and PostgreSQL with `discovery_enabled = true`, and `127.0.0.1` otherwise.
+  If empty, Grafana binds `0.0.0.0` on MySQL and PostgreSQL, and `127.0.0.1` otherwise.
 - **`advertise_address`:** The host that other instances dial to reach this instance.
   Refer to [Choose the address that peers connect to](#choose-the-address-that-peers-connect-to).
 - **`cluster_port`:** The port that instances connect to each other on.
@@ -301,6 +301,8 @@ The following log messages show the state of the embedded server:
   Check that the instances use MySQL or PostgreSQL, or set `listen_address` or `advertise_address`, as described in [Choose the address that peers connect to](#choose-the-address-that-peers-connect-to).
 - **Warnings and errors from the `infra.nats.server` logger:** The embedded NATS server reports problems such as failed TLS handshakes or rejected routes here.
 
+To inspect the embedded server with the `nats` command-line tool, set `client_listen = true`: it opens `client_port` (`4222`) on `client_listen_address` (`127.0.0.1`) with no TLS or authentication, so keep it on loopback and turn it off afterwards.
+
 If you set `tls_enabled = true` in embedded mode, Grafana logs a warning at startup that the `tls_*` settings are ignored, because they only apply to an external NATS server.
 
 The following metrics help you watch the bus:
@@ -316,7 +318,7 @@ The following metrics help you watch the bus:
 
 If you already run a NATS server, or you run Grafana in module mode, you can connect Grafana to that server instead of running the embedded one.
 Set `mode = external` and list the server URLs in `client_urls`.
-The `cluster_*`, `listen_address`, `advertise_address`, and `discovery_*` settings don't apply in this mode.
+The `cluster_*`, `listen_address`, and `advertise_address` settings don't apply in this mode.
 
 Use the `auth_mode` setting to choose how Grafana authenticates to your NATS server:
 
