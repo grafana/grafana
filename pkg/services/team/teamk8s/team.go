@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"sort"
 	"strconv"
 	"time"
@@ -28,16 +29,16 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	iamteam "github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -77,7 +78,7 @@ type TeamK8sService struct {
 var _ team.Service = (*TeamK8sService)(nil)
 
 // NewTeamK8sService relies on the k8s users resource for member enrichment;
-// teamimpl gates the redirect on kubernetesUsersApi, except for GetUserTeamMembershipsByUID.
+// teamimpl gates the redirect on kubernetesUsersApi.
 func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *TeamK8sService {
 	return &TeamK8sService{
 		logger:          logger,
@@ -89,34 +90,41 @@ func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apise
 	}
 }
 
-func (s *TeamK8sService) getDynamicClient(ctx context.Context, namespace string, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
+func (s *TeamK8sService) getRestConfig(ctx context.Context) (*rest.Config, error) {
 	if s.configProvider == nil {
 		return nil, errors.New("config provider not initialized")
 	}
 
 	reqCtx := contexthandler.FromContext(ctx)
 	if reqCtx == nil {
-		return nil, errors.New("no request context")
+		if !identity.IsServiceIdentity(ctx) {
+			return nil, errors.New("no request context")
+		}
+		// Background sync has no HTTP request for GetDirectRestConfig. Route its
+		// internal requests through the same handler, preserving the service identity.
+		return &rest.Config{Transport: &options.RoundTripperFunc{
+			Fn: responsewriter.WrapHandler(http.HandlerFunc(s.configProvider.DirectlyServeHTTP)),
+		}}, nil
 	}
 
-	dyn, err := dynamic.NewForConfig(s.directRestConfig(reqCtx))
+	cfg := s.configProvider.GetDirectRestConfig(reqCtx)
+	if cfg == nil {
+		return nil, errors.New("rest config not available")
+	}
+	return cfg, nil
+}
+
+func (s *TeamK8sService) getDynamicClient(ctx context.Context, namespace string, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
+	cfg, err := s.getRestConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	dyn, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	return dyn.Resource(gvr).Namespace(namespace), nil
-}
-
-// directRestConfig disables client-side rate limiting: requests are served in process, and each call
-// builds a new client, so the default 5 QPS limiter only delays reads that fan out per team.
-func (s *TeamK8sService) directRestConfig(reqCtx *contextmodel.ReqContext) *rest.Config {
-	cfg := s.configProvider.GetDirectRestConfig(reqCtx)
-	if cfg == nil {
-		return nil
-	}
-	cfg = rest.CopyConfig(cfg)
-	cfg.QPS = -1
-	return cfg
 }
 
 func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
@@ -240,16 +248,9 @@ func (s *TeamK8sService) listUserTeams(ctx context.Context, namespace, userUID s
 }
 
 func (s *TeamK8sService) getUserClient(ctx context.Context) (*iamv0alpha1.UserClient, error) {
-	if s.configProvider == nil {
-		return nil, errors.New("config provider not initialized")
-	}
-	reqCtx := contexthandler.FromContext(ctx)
-	if reqCtx == nil {
-		return nil, errors.New("no request context")
-	}
-	restConfig := s.configProvider.GetDirectRestConfig(reqCtx)
-	if restConfig == nil {
-		return nil, errors.New("rest config not available")
+	restConfig, err := s.getRestConfig(ctx)
+	if err != nil {
+		return nil, err
 	}
 	restConfig.APIPath = "apis"
 	registry := sdkk8s.NewClientRegistry(*restConfig, sdkk8s.DefaultClientConfig())
@@ -585,7 +586,7 @@ func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, e
 		return nil, errors.New("no request context")
 	}
 
-	cfg := dynamic.ConfigFor(s.directRestConfig(reqCtx))
+	cfg := dynamic.ConfigFor(s.configProvider.GetDirectRestConfig(reqCtx))
 	cfg.GroupVersion = &iamv0alpha1.GroupVersion
 	return rest.RESTClientFor(cfg)
 }
@@ -1099,9 +1100,8 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 	return members, nil
 }
 
-// GetUserTeamMembershipsByUID reads each Team returned by the searchTeams member filter, because the
-// search index stores member UIDs but not membership origin or permission. Offset pages can shift when
-// memberships change between page reads, so a concurrent change may be missed until the next call.
+// GetUserTeamMembershipsByUID reuses the users/teams cursor so concurrent membership
+// changes cannot shift offset pages and cause team sync to miss a revocation.
 func (s *TeamK8sService) GetUserTeamMembershipsByUID(ctx context.Context, query *team.GetUserTeamMembershipsByUIDQuery) ([]team.UserTeamMembership, error) {
 	ctx, span := s.tracer.Start(ctx, "team.GetUserTeamMembershipsByUID", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
@@ -1109,75 +1109,51 @@ func (s *TeamK8sService) GetUserTeamMembershipsByUID(ctx context.Context, query 
 	))
 	defer span.End()
 
-	ctxLogger := s.logger.FromContext(ctx)
-
 	if query.UserUID == "" {
-		err := errors.New("user UID is required")
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return nil, err
+		return nil, errors.New("user UID is required")
 	}
 
-	// Read as a service identity for the query's org: team search scopes to the caller's namespace
-	// and filters by the caller's permissions, but memberships must be complete for the given org,
-	// as on the legacy path.
 	namespace := s.namespaceMapper(query.OrgID)
-	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
-
-	var teamUIDs []string
-	seen := make(map[string]struct{})
-	for page := 1; ; page++ {
-		result, err := s.searchTeams(svcCtx, &team.SearchTeamsQuery{
-			OrgID:     query.OrgID,
-			MemberUID: query.UserUID,
-			Limit:     common.DefaultListLimit,
-			Page:      page,
-		}, false)
-		if err != nil {
-			ctxLogger.Error("failed to search user teams", "namespace", namespace, "userUID", query.UserUID, "page", page, "err", err)
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-			return nil, fmt.Errorf("failed to search user teams: %w", err)
-		}
-		for _, t := range result.Teams {
-			if _, ok := seen[t.UID]; !ok {
-				seen[t.UID] = struct{}{}
-				teamUIDs = append(teamUIDs, t.UID)
-			}
-		}
-		// Stop on a short page, not on TotalCount: member searches can report only the hits seen so far.
-		if len(result.Teams) < common.DefaultListLimit {
-			break
-		}
+	ctx = identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+	rows, err := s.listUserTeams(ctx, namespace, query.UserUID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list user teams: %w", err)
 	}
 
-	teams, err := s.listTeamsByUIDs(svcCtx, namespace, teamUIDs)
+	// Older API servers may omit the numeric IDs needed by the permission service.
+	var missingIDs []string
+	for _, row := range rows {
+		if (!query.External || row.External) && row.TeamInternalId == nil {
+			missingIDs = append(missingIDs, row.Team)
+		}
+	}
+	teams, err := s.listTeamsByUIDs(ctx, namespace, missingIDs)
 	if err != nil {
-		ctxLogger.Error("failed to fetch user teams", "namespace", namespace, "userUID", query.UserUID, "err", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
 		return nil, fmt.Errorf("failed to fetch user teams: %w", err)
 	}
 
-	memberships := make([]team.UserTeamMembership, 0, len(teamUIDs))
-	// The team or the membership may have been removed after the search ran.
-	for _, uid := range teamUIDs {
-		t, ok := teams[uid]
-		if !ok {
+	memberships := make([]team.UserTeamMembership, 0, len(rows))
+	for _, row := range rows {
+		if query.External && !row.External {
 			continue
 		}
-		member, ok := findMemberInTeam(t, query.UserUID)
-		if !ok || (query.External && !member.External) {
-			continue
+		var teamID int64
+		if row.TeamInternalId != nil {
+			teamID = *row.TeamInternalId
+		} else {
+			t, ok := teams[row.Team]
+			if !ok {
+				continue // The team was deleted after the membership read.
+			}
+			teamID = deprecatedInternalID(t)
 		}
 		memberships = append(memberships, team.UserTeamMembership{
-			TeamID:     deprecatedInternalID(t),
-			TeamUID:    t.Name,
-			External:   member.External,
-			Permission: permissionFromMember(member.Permission),
+			TeamID:     teamID,
+			TeamUID:    row.Team,
+			External:   row.External,
+			Permission: permissionFromMember(iamv0alpha1.TeamTeamPermission(row.Permission)),
 		})
 	}
-
 	return memberships, nil
 }
 

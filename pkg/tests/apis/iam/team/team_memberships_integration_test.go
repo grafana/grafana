@@ -18,12 +18,16 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -33,7 +37,7 @@ import (
 func TestIntegrationGetUserTeamMembershipsByUIDWithoutUsersAPI(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5} {
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3} {
 		t.Run(fmt.Sprintf("teams dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:    false,
@@ -81,13 +85,14 @@ func TestIntegrationGetUserTeamMembershipsByUIDWithoutUsersAPI(t *testing.T) {
 					}
 					// The result must not depend on the caller's org or permissions.
 					callers := map[string]context.Context{
-						"service identity":  serviceContextWithRequest(namespace),
-						"org viewer":        userContextWithRequest(t, org.Viewer),
-						"other org's admin": userContextWithRequest(t, otherOrg.Admin),
+						"background service identity": identity.WithServiceIdentityContext(t.Context(), orgID),
+						"service identity":            serviceContextWithRequest(namespace),
+						"org viewer":                  userContextWithRequest(t, org.Viewer),
+						"other org's admin":           userContextWithRequest(t, otherOrg.Admin),
 					}
 					query := &team.GetUserTeamMembershipsByUIDQuery{OrgID: orgID, UserUID: userUID}
 
-					// Unified search indexes asynchronously, so wait for the new teams to be searchable.
+					// With users API disabled, membership reads use the SQL rows maintained in modes 0 to 3.
 					require.EventuallyWithT(t, func(c *assert.CollectT) {
 						got, err := teamSvc.GetUserTeamMembershipsByUID(callers["service identity"], query)
 						require.NoError(c, err)
@@ -117,6 +122,53 @@ func TestIntegrationGetUserTeamMembershipsByUIDWithoutUsersAPI(t *testing.T) {
 					}
 				})
 			}
+		})
+	}
+}
+
+func TestIntegrationGetUserTeamMembershipsByUIDInBackground(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, mode := range []rest.DualWriterMode{rest.Mode4, rest.Mode5} {
+		t.Run(fmt.Sprintf("teams dual writer mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous:       true,
+				RBACSingleOrganization: true,
+				APIServerStorageType:   "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"teams.iam.grafana.app": {DualWriterMode: mode},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesTeamsApi,
+					featuremgmt.FlagKubernetesTeamsRedirect,
+					featuremgmt.FlagKubernetesUsersApi,
+				},
+			})
+			orgID := helper.Org1.Admin.Identity.GetOrgID()
+			client := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, Namespace: helper.Namespacer(orgID), GVR: gvrTeams})
+			userUID := helper.Org1.Viewer.Identity.GetIdentifier()
+			teamID := createTeamWithMembers(t, client, "background-synced", teamMember(userUID, iamv0alpha1.TeamTeamPermissionAdmin, true))
+			createTeamWithMembers(t, client, "background-manual", teamMember(userUID, iamv0alpha1.TeamTeamPermissionMember, false))
+
+			// Scheduled LDAP sync has a service identity but no HTTP request context.
+			ctx := identity.WithServiceIdentityForSingleNamespaceContext(t.Context(), helper.Namespacer(orgID))
+			require.Nil(t, contexthandler.FromContext(ctx))
+			query := &team.GetUserTeamMembershipsByUIDQuery{OrgID: orgID, UserUID: userUID, External: true}
+
+			// Make a SQL fallback observably wrong: these memberships only exist in unified storage.
+			env := helper.GetEnv()
+			legacy, err := teamimpl.NewLegacyService(legacysql.NewDatabaseProvider(env.SQLStore), tracing.NewNoopTracerService(), nil)
+			require.NoError(t, err)
+			stale, err := legacy.GetUserTeamMembershipsByUID(ctx, query)
+			require.NoError(t, err)
+			require.Empty(t, stale)
+
+			teamSvc := env.Server.HTTPServer.TeamService
+			require.EventuallyWithT(t, func(c *assert.CollectT) {
+				got, err := teamSvc.GetUserTeamMembershipsByUID(ctx, query)
+				require.NoError(c, err)
+				assert.Equal(c, []team.UserTeamMembership{{TeamID: teamID, TeamUID: "background-synced", External: true, Permission: team.PermissionTypeAdmin}}, got)
+			}, 10*time.Second, 100*time.Millisecond)
 		})
 	}
 }

@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -2015,259 +2014,109 @@ func TestTeamK8sService_GetUserTeamMemberships_Cache(t *testing.T) {
 	})
 }
 
-func TestTeamK8sService_directRestConfig(t *testing.T) {
-	providerConfig := &clientrest.Config{Host: "http://apiserver"}
-	svc := NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), &mockDirectRestConfigProvider{restConfig: providerConfig}, tracing.InitializeTracerForTest())
-
-	cfg := svc.directRestConfig(&contextmodel.ReqContext{})
-
-	require.Equal(t, float32(-1), cfg.QPS, "in-process clients must not be rate limited")
-	require.Equal(t, "http://apiserver", cfg.Host)
-	require.Zero(t, providerConfig.QPS, "the provider's config must not be modified")
-}
-
 func TestTeamK8sService_GetUserTeamMembershipsByUID(t *testing.T) {
-	newTeam := func(name, internalID string, members ...iamv0alpha1.TeamTeamMember) *iamv0alpha1.Team {
-		return &iamv0alpha1.Team{
-			TypeMeta: metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "Team"},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: "default",
-				Labels:    map[string]string{"grafana.app/deprecatedInternalID": internalID},
-			},
-			Spec: iamv0alpha1.TeamSpec{Title: name, Members: members},
-		}
-	}
-	externalAdmin := iamv0alpha1.TeamTeamMember{Kind: "User", Name: "user-1", Permission: iamv0alpha1.TeamTeamPermissionAdmin, External: true}
-	manualMember := iamv0alpha1.TeamTeamMember{Kind: "User", Name: "user-1", Permission: iamv0alpha1.TeamTeamPermissionMember}
-	otherUser := iamv0alpha1.TeamTeamMember{Kind: "User", Name: "user-2", External: true}
+	teamAID, teamBID := int64(10), int64(20)
+	external := iamv0alpha1.GetUserTeamsUserTeam{User: "user-1", Team: "team-a", TeamInternalId: &teamAID, Permission: "admin", External: true}
+	manual := iamv0alpha1.GetUserTeamsUserTeam{User: "user-1", Team: "team-b", TeamInternalId: &teamBID, Permission: "member"}
+	withoutID := external
+	withoutID.TeamInternalId = nil
+	externalMembership := team.UserTeamMembership{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin}
+	manualMembership := team.UserTeamMembership{TeamID: 20, TeamUID: "team-b", Permission: team.PermissionTypeMember}
 
-	type searchPage struct {
-		hits      []string
-		totalHits int64
-	}
-	// fullPage pads hits to a full search page by repeating the first hit: the service dedupes hits,
-	// so a full page costs a single team read instead of hundreds of rate-limited client requests.
-	fullPage := func(hits ...string) []string {
-		for len(hits) < common.DefaultListLimit {
-			hits = append(hits, hits[0])
-		}
-		return hits
-	}
-
-	tests := []struct {
-		name                string
-		orgID               int64
-		userUID             string
-		external            bool
-		pages               map[string]searchPage
-		teams               map[string]*iamv0alpha1.Team
-		searchStatus        int
-		failTeam            string
-		expectErr           string
-		expectedSearchPages int
-		expected            []team.UserTeamMembership
+	for _, tt := range []struct {
+		name       string
+		orgID      int64
+		stackID    string
+		userUID    string
+		external   bool
+		pages      [][]iamv0alpha1.GetUserTeamsUserTeam
+		failPage   int
+		background bool
+		missingID  bool
+		expectErr  string
+		want       []team.UserTeamMembership
 	}{
-		{
-			name:    "returns external and manual memberships from team members",
-			userUID: "user-1",
-			pages:   map[string]searchPage{"1": {hits: []string{"team-a", "team-b"}, totalHits: 2}},
-			teams: map[string]*iamv0alpha1.Team{
-				"team-a": newTeam("team-a", "10", otherUser, externalAdmin),
-				"team-b": newTeam("team-b", "20", manualMember),
-			},
-			expected: []team.UserTeamMembership{
-				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
-				{TeamID: 20, TeamUID: "team-b", External: false, Permission: team.PermissionTypeMember},
-			},
-		},
-		{
-			name:     "external filter drops manual memberships",
-			userUID:  "user-1",
-			external: true,
-			pages:    map[string]searchPage{"1": {hits: []string{"team-a", "team-b"}, totalHits: 2}},
-			teams: map[string]*iamv0alpha1.Team{
-				"team-a": newTeam("team-a", "10", externalAdmin),
-				"team-b": newTeam("team-b", "20", manualMember),
-			},
-			expected: []team.UserTeamMembership{
-				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
-			},
-		},
-		{
-			name:    "reads every search page and drops teams repeated across pages",
-			userUID: "user-1",
-			pages: map[string]searchPage{
-				"1": {hits: fullPage("team-a"), totalHits: common.DefaultListLimit + 1},
-				"2": {hits: []string{"team-a", "team-b"}, totalHits: common.DefaultListLimit + 1},
-			},
-			teams: map[string]*iamv0alpha1.Team{
-				"team-a": newTeam("team-a", "10", externalAdmin),
-				"team-b": newTeam("team-b", "20", externalAdmin),
-			},
-			expectedSearchPages: 2,
-			expected: []team.UserTeamMembership{
-				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
-				{TeamID: 20, TeamUID: "team-b", External: true, Permission: team.PermissionTypeAdmin},
-			},
-		},
-		{
-			name:    "reads past a full page when the total only counts hits seen so far",
-			userUID: "user-1",
-			pages: map[string]searchPage{
-				"1": {hits: fullPage("team-a"), totalHits: common.DefaultListLimit},
-				"2": {hits: []string{"team-b"}, totalHits: common.DefaultListLimit + 1},
-			},
-			teams: map[string]*iamv0alpha1.Team{
-				"team-a": newTeam("team-a", "10", externalAdmin),
-				"team-b": newTeam("team-b", "20", manualMember),
-			},
-			expectedSearchPages: 2,
-			expected: []team.UserTeamMembership{
-				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
-				{TeamID: 20, TeamUID: "team-b", External: false, Permission: team.PermissionTypeMember},
-			},
-		},
-		{
-			name:    "stops on an empty page after a full page",
-			userUID: "user-1",
-			pages: map[string]searchPage{
-				"1": {hits: fullPage("team-a"), totalHits: 2 * common.DefaultListLimit},
-				"2": {totalHits: 2 * common.DefaultListLimit},
-			},
-			teams: map[string]*iamv0alpha1.Team{
-				"team-a": newTeam("team-a", "10", externalAdmin),
-			},
-			expectedSearchPages: 2,
-			expected: []team.UserTeamMembership{
-				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
-			},
-		},
-		{
-			name:    "reads the query's org, not the caller's",
-			orgID:   2,
-			userUID: "user-1",
-			pages:   map[string]searchPage{"1": {hits: []string{"team-a"}, totalHits: 1}},
-			teams: map[string]*iamv0alpha1.Team{
-				"team-a": newTeam("team-a", "10", manualMember),
-			},
-			expected: []team.UserTeamMembership{
-				{TeamID: 10, TeamUID: "team-a", External: false, Permission: team.PermissionTypeMember},
-			},
-		},
-		{
-			name:    "skips teams deleted or left after the search",
-			userUID: "user-1",
-			pages:   map[string]searchPage{"1": {hits: []string{"team-a", "team-deleted", "team-left"}, totalHits: 3}},
-			teams: map[string]*iamv0alpha1.Team{
-				"team-a":    newTeam("team-a", "10", externalAdmin),
-				"team-left": newTeam("team-left", "30", otherUser),
-			},
-			expected: []team.UserTeamMembership{
-				{TeamID: 10, TeamUID: "team-a", External: true, Permission: team.PermissionTypeAdmin},
-			},
-		},
-		{
-			name:     "returns empty list when the user is in no teams",
-			userUID:  "user-1",
-			external: true,
-			pages:    map[string]searchPage{"1": {totalHits: 0}},
-			expected: []team.UserTeamMembership{},
-		},
-		{
-			name:         "returns search errors",
-			userUID:      "user-1",
-			searchStatus: http.StatusInternalServerError,
-			expectErr:    "failed to search user teams",
-		},
-		{
-			name:      "returns team read errors",
-			userUID:   "user-1",
-			pages:     map[string]searchPage{"1": {hits: []string{"team-a"}, totalHits: 1}},
-			failTeam:  "team-a",
-			expectErr: "failed to fetch user teams",
-		},
-		{
-			name:      "requires a user UID",
-			expectErr: "user UID is required",
-		},
-	}
-
-	for _, tt := range tests {
+		{name: "returns external and manual memberships", userUID: "user-1", pages: [][]iamv0alpha1.GetUserTeamsUserTeam{{external, manual}}, want: []team.UserTeamMembership{externalMembership, manualMembership}},
+		{name: "follows cursor past a short page with only manual memberships", userUID: "user-1", external: true, pages: [][]iamv0alpha1.GetUserTeamsUserTeam{{manual}, {external}}, want: []team.UserTeamMembership{externalMembership}},
+		{name: "uses the query org instead of the caller org", orgID: 2, userUID: "user-1", pages: [][]iamv0alpha1.GetUserTeamsUserTeam{{external}}, want: []team.UserTeamMembership{externalMembership}},
+		{name: "uses the stack namespace", stackID: "123", userUID: "user-1", pages: [][]iamv0alpha1.GetUserTeamsUserTeam{{external}}, want: []team.UserTeamMembership{externalMembership}},
+		{name: "returns empty memberships", userUID: "user-1", pages: [][]iamv0alpha1.GetUserTeamsUserTeam{{}}, want: []team.UserTeamMembership{}},
+		{name: "propagates a later page error without partial memberships", userUID: "user-1", pages: [][]iamv0alpha1.GetUserTeamsUserTeam{{external}, {manual}}, failPage: 2, expectErr: "failed to list user teams"},
+		{name: "reads numeric IDs omitted by older API servers", userUID: "user-1", pages: [][]iamv0alpha1.GetUserTeamsUserTeam{{withoutID}}, missingID: true, want: []team.UserTeamMembership{externalMembership}},
+		{name: "background read follows the cursor", background: true, orgID: 2, userUID: "user-1", external: true, pages: [][]iamv0alpha1.GetUserTeamsUserTeam{{manual}, {external}}, want: []team.UserTeamMembership{externalMembership}},
+		{name: "background read resolves missing IDs in the stack namespace", background: true, stackID: "123", userUID: "user-1", pages: [][]iamv0alpha1.GetUserTeamsUserTeam{{withoutID}}, missingID: true, want: []team.UserTeamMembership{externalMembership}},
+		{name: "requires user UID", expectErr: "user UID is required"},
+	} {
 		t.Run(tt.name, func(t *testing.T) {
 			orgID := tt.orgID
 			if orgID == 0 {
 				orgID = 1
 			}
-			expectedNamespace := request.GetNamespaceMapper(setting.NewCfg())(orgID)
-			var searchPages atomic.Int32
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			cfg := setting.NewCfg()
+			cfg.StackID = tt.stackID
+			namespace := request.GetNamespaceMapper(cfg)(orgID)
+			var pages, teamReads atomic.Int32
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
-				path := r.URL.Path
-				switch {
-				case strings.Contains(path, "/users"):
-					t.Errorf("unexpected users API request: %s %s", r.Method, path)
-					w.WriteHeader(http.StatusNotFound)
-					return
-				case !strings.Contains(path, "/namespaces/"+expectedNamespace+"/"):
-					t.Errorf("request outside namespace %s: %s %s", expectedNamespace, r.Method, path)
-					w.WriteHeader(http.StatusNotFound)
-					return
-				}
-				switch {
-				case strings.HasSuffix(path, "/searchTeams"):
-					searchPages.Add(1)
-					assert.Equal(t, tt.userUID, r.URL.Query().Get("member"))
-					assert.Equal(t, "500", r.URL.Query().Get("limit"))
-					assert.Empty(t, r.URL.Query().Get("membercount"), "member counts make the search handler fetch every team")
-					if tt.searchStatus != 0 {
-						w.WriteHeader(tt.searchStatus)
-						return
+				switch r.URL.Path {
+				case "/apis/iam.grafana.app/v0alpha1/namespaces/" + namespace + "/users/" + tt.userUID + "/teams":
+					page := int(pages.Add(1))
+					assert.Empty(t, r.URL.Query().Get("page"))
+					assert.Empty(t, r.URL.Query().Get("offset"))
+					if page == 1 {
+						assert.Empty(t, r.URL.Query().Get("continue"))
+					} else {
+						assert.Equal(t, "after+/=", r.URL.Query().Get("continue"))
 					}
-					page := tt.pages[r.URL.Query().Get("page")]
-					hits := make([]iamv0alpha1.GetSearchTeamsTeamHit, 0, len(page.hits))
-					for _, name := range page.hits {
-						hits = append(hits, iamv0alpha1.GetSearchTeamsTeamHit{Name: name, Title: name})
-					}
-					_ = json.NewEncoder(w).Encode(iamv0alpha1.GetSearchTeamsResponse{
-						GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{TotalHits: page.totalHits, Hits: hits},
-					})
-				case r.Method == http.MethodGet && strings.Contains(path, "/teams/"):
-					name := path[strings.LastIndex(path, "/")+1:]
-					if name == tt.failTeam {
+					if page == tt.failPage || page > len(tt.pages) {
 						w.WriteHeader(http.StatusInternalServerError)
-						_ = json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusFailure, Code: http.StatusInternalServerError})
 						return
 					}
-					obj, ok := tt.teams[name]
-					if !ok {
-						w.WriteHeader(http.StatusNotFound)
-						_ = json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusFailure, Code: http.StatusNotFound, Reason: metav1.StatusReasonNotFound})
-						return
+					response := userTeamsResponse(tt.pages[page-1])
+					if page < len(tt.pages) {
+						response.Continue = "after+/="
 					}
-					_ = json.NewEncoder(w).Encode(mustToUnstructured(t, obj))
+					assert.NoError(t, json.NewEncoder(w).Encode(response))
+				case "/apis/iam.grafana.app/v0alpha1/namespaces/" + namespace + "/teams/team-a":
+					teamReads.Add(1)
+					assert.True(t, tt.missingID, "IDs returned by the cursor endpoint need no extra team reads")
+					assert.NoError(t, json.NewEncoder(w).Encode(&iamv0alpha1.Team{
+						TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "Team"},
+						ObjectMeta: metav1.ObjectMeta{Name: "team-a", Namespace: namespace, Labels: map[string]string{"grafana.app/deprecatedInternalID": "10"}},
+					}))
 				default:
-					t.Errorf("unexpected request: %s %s", r.Method, path)
+					t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}))
-			defer ts.Close()
-
-			provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
-			svc := NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
-			ctx := identity.WithRequester(contextWithReqContext(), &identity.StaticRequester{OrgID: 1})
-
-			result, err := svc.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{
-				OrgID: orgID, UserUID: tt.userUID, External: tt.external,
+			defer server.Close()
+			provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: server.URL}}
+			provider.handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.True(t, identity.IsServiceIdentity(r.Context()))
+				requester, err := identity.GetRequester(r.Context())
+				if assert.NoError(t, err) {
+					assert.Equal(t, namespace, requester.GetNamespace())
+				}
+				server.Config.Handler.ServeHTTP(w, r)
 			})
+			svc := NewTeamK8sService(log.NewNopLogger(), cfg, provider, tracing.InitializeTracerForTest())
+			ctx := identity.WithRequester(contextWithReqContext(), &identity.StaticRequester{OrgID: 1})
+			if tt.background {
+				ctx = identity.WithServiceIdentityContext(t.Context(), 1)
+			}
+			got, err := svc.GetUserTeamMembershipsByUID(ctx, &team.GetUserTeamMembershipsByUIDQuery{OrgID: orgID, UserUID: tt.userUID, External: tt.external})
 			if tt.expectErr != "" {
 				require.ErrorContains(t, err, tt.expectErr)
+				require.Nil(t, got)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tt.expected, result)
-			if tt.expectedSearchPages != 0 {
-				require.Equal(t, int32(tt.expectedSearchPages), searchPages.Load())
+			require.Equal(t, tt.want, got)
+			require.EqualValues(t, len(tt.pages), pages.Load())
+			if tt.missingID {
+				require.EqualValues(t, 1, teamReads.Load())
+			} else {
+				require.Zero(t, teamReads.Load())
 			}
 		})
 	}
@@ -2939,13 +2788,16 @@ func userNotFoundHandler(t *testing.T) func(w http.ResponseWriter, r *http.Reque
 
 type mockDirectRestConfigProvider struct {
 	restConfig *clientrest.Config
+	handler    http.Handler
 }
 
 func (m *mockDirectRestConfigProvider) GetDirectRestConfig(_ *contextmodel.ReqContext) *clientrest.Config {
 	return m.restConfig
 }
 
-func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
+func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
+	m.handler.ServeHTTP(w, r)
+}
 
 func (m *mockDirectRestConfigProvider) IsReady() bool {
 	return true

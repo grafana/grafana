@@ -805,6 +805,7 @@ import (
 	_ "k8s.io/client-go/informers/core/v1"
 	_ "k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/kubernetes/fake"
+	_ "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/listers"
 	_ "k8s.io/client-go/listers/core/v1"
 	_ "k8s.io/client-go/rest"

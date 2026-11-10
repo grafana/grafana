@@ -121,32 +121,58 @@ func TestGetUserTeamMembershipsByUIDRouting(t *testing.T) {
 		name         string
 		targetingKey string
 		background   bool
+		usersAPI     bool
 		k8sErr       error
 		want         []team.UserTeamMembership
 		wantErr      error
 		wantLegacy   bool
 	}{
 		{
-			name:         "redirect reads through k8s without the users API",
+			name:         "redirect uses the cursor endpoint when users API is enabled",
 			targetingKey: "enabled",
+			usersAPI:     true,
 			want:         k8sMemberships,
 		},
 		{
 			name:         "redirect returns k8s errors instead of reading legacy SQL",
 			targetingKey: "enabled",
+			usersAPI:     true,
 			k8sErr:       errK8s,
 			wantErr:      errK8s,
 		},
 		{
 			name:         "reads legacy SQL without the redirect",
 			targetingKey: "disabled",
+			usersAPI:     true,
 			want:         []team.UserTeamMembership{{TeamID: 7, TeamUID: "legacy-team", External: true, Permission: team.PermissionTypeAdmin}},
 			wantLegacy:   true,
 		},
 		{
-			name:         "background service calls read legacy SQL",
+			name:         "background service calls use the same API backend as logins",
+			targetingKey: "enabled",
+			usersAPI:     true,
+			background:   true,
+			want:         k8sMemberships,
+		},
+		{
+			name:         "background API errors must not fall back to SQL",
+			targetingKey: "enabled",
+			usersAPI:     true,
+			background:   true,
+			k8sErr:       errK8s,
+			wantErr:      errK8s,
+		},
+		{
+			name:         "background reads use SQL without the users API",
 			targetingKey: "enabled",
 			background:   true,
+			want:         []team.UserTeamMembership{{TeamID: 7, TeamUID: "legacy-team", External: true, Permission: team.PermissionTypeAdmin}},
+			wantLegacy:   true,
+		},
+		{
+			name:         "reads SQL without requiring the users API",
+			targetingKey: "enabled",
+			k8sErr:       errK8s,
 			want:         []team.UserTeamMembership{{TeamID: 7, TeamUID: "legacy-team", External: true, Permission: team.PermissionTypeAdmin}},
 			wantLegacy:   true,
 		},
@@ -159,7 +185,7 @@ func TestGetUserTeamMembershipsByUIDRouting(t *testing.T) {
 			}}
 			service := &Service{
 				openFeatureClient: client,
-				iamFeatures:       iamapi.Features{},
+				iamFeatures:       iamapi.Features{UsersAPI: tt.usersAPI},
 				k8sService:        &teamtest.FakeService{ExpectedMemberships: k8sMemberships, ExpectedError: tt.k8sErr},
 				legacyService:     &LegacyService{store: legacyStore, tracer: tracing.InitializeTracerForTest()},
 			}

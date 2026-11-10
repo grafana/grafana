@@ -193,12 +193,11 @@ func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int6
 	return s.legacyService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
 }
 
-// GetUserTeamMembershipsByUID doesn't fall back on k8s errors: unified storage may be
-// authoritative, so legacy SQL can be stale and callers would act on the wrong memberships.
-// Like the other lookups, background service calls read legacy SQL (see shouldFallbackToLegacy),
-// which is only current while teams are in dual writer modes 0 to 3.
+// GetUserTeamMembershipsByUID uses the cursor-based users/teams endpoint when the users API
+// is enabled. Otherwise it reads SQL, which remains current in teams modes 0 to 3.
+// It does not fall back on API errors: unified storage may be authoritative.
 func (s *Service) GetUserTeamMembershipsByUID(ctx context.Context, query *team.GetUserTeamMembershipsByUIDQuery) ([]team.UserTeamMembership, error) {
-	if s.isK8sRedirectFlagEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+	if s.isK8sRedirectEnabled(ctx) {
 		return s.k8sService.GetUserTeamMembershipsByUID(ctx, query)
 	}
 
