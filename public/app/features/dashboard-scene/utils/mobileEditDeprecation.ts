@@ -30,7 +30,7 @@ export function useIsMobileEditDeprecated(): boolean {
 }
 
 /**
- * Reactive counterpart of `isEditEntryBlocked` 
+ * Reactive counterpart of `isEditEntryBlocked`
  */
 export function useIsEditEntryBlocked(dashboard: DashboardScene | DashboardModel): boolean {
   const isMobileEditDeprecated = useIsMobileEditDeprecated();
