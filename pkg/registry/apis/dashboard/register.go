@@ -256,13 +256,17 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient, settingService settingservice.Service) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient, settingService settingservice.Service, lifecycleExtras DashboardLifecycleExtras) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
+	// The handler is built by the caller, so the standalone path has to wire the lifecycle in as well.
+	if search != nil {
+		search.lifecycleExtras = lifecycleExtras
+	}
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     defaultMinRefreshInterval,
 		settingService:         settingService,
 		accessClient:           ac,
-		lifecycleExtras:        NoopDashboardLifecycleExtras{},
+		lifecycleExtras:        lifecycleExtras,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
 		resourcePermissionsSvc: resourcePermissionsSvc,

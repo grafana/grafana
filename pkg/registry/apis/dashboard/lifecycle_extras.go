@@ -24,7 +24,8 @@ type NoopDashboardLifecycleExtras struct{}
 
 func (NoopDashboardLifecycleExtras) Mutate(context.Context, admission.Attributes) error   { return nil }
 func (NoopDashboardLifecycleExtras) Validate(context.Context, admission.Attributes) error { return nil }
-func (NoopDashboardLifecycleExtras) HideDraftsByDefault(context.Context) bool             { return false }
+
+func (NoopDashboardLifecycleExtras) HideDraftsByDefault(context.Context) bool { return false }
 
 func ProvideNoopDashboardLifecycleExtras() DashboardLifecycleExtras {
 	return NoopDashboardLifecycleExtras{}

@@ -103,6 +103,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "lifecycle",
+										In:          "query",
+										Description: "dashboard lifecycle filter: draft returns only drafts, all returns drafts and published. When empty, drafts are hidden if the namespace hides them by default",
+										Required:    false,
+										Schema:      spec.StringProperty().WithEnum("draft", "all"),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "type",
 										In:          "query",
 										Description: "search dashboards or folders.  When empty, this will search both",

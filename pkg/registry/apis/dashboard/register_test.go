@@ -236,6 +236,7 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *te
 				nil,
 				nil,
 				nil,
+				NoopDashboardLifecycleExtras{},
 			)
 			require.True(t, dashboardBuilder.isStandalone)
 			admissionPlugin := apiserverbuilder.NewAdmissionFromBuilders([]apiserverbuilder.APIGroupBuilder{dashboardBuilder})
@@ -424,6 +425,7 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinat
 		nil,
 		nil,
 		nil,
+		NoopDashboardLifecycleExtras{},
 	)
 	admissionPlugin := apiserverbuilder.NewAdmissionFromBuilders([]apiserverbuilder.APIGroupBuilder{dashboardBuilder})
 
