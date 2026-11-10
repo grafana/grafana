@@ -7,6 +7,16 @@ export interface ManagedBadgeV1Props {
   resource: { metadata?: { annotations?: Record<string, string | undefined> } };
 }
 
+export interface RepositorySelectV1Props {
+  group: string;
+  kind: string;
+  value?: string;
+  onChange: (repositoryName: string) => void;
+  readOnly?: boolean;
+  description?: string;
+  id?: string;
+}
+
 /**
  * Props for the PrometheusQueryResults exposed component.
  * @see PluginExtensionExposedComponents.PrometheusQueryResultsV1

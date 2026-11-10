@@ -24,7 +24,9 @@ export interface ResourceRepositorySelection {
  * Gates strictly on `availableResources` (passing `[]` rather than `undefined` so a not-yet-loaded
  * settings response doesn't fall back to "all kinds available").
  */
-export function useResourceRepositorySelection(info: ResourceKindInfo): ResourceRepositorySelection {
+export function useResourceRepositorySelection(
+  info: Pick<ResourceKindInfo, 'group' | 'kind'>
+): ResourceRepositorySelection {
   const provisioningEnabled = Boolean(config.provisioningEnabled);
   const { data } = useGetFrontendSettingsQuery(provisioningEnabled ? undefined : skipToken);
 

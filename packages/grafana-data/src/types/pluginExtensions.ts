@@ -264,6 +264,7 @@ export enum PluginExtensionExposedComponents {
   AddToDashboardFormV1 = 'grafana/add-to-dashboard-form/v1',
   ManagedBadgeV1 = 'grafana/provisioning-managed-badge/v1',
   PullRequestBannerV1 = 'grafana/provisioning-pull-request-banner/v1',
+  RepositorySelectV1 = 'grafana/provisioning-repository-select/v1',
   AddToNotebookFormV1 = 'grafana/add-to-notebook-form/v1',
   AddToNotebookFormV2 = 'grafana/add-to-notebook-form/v2',
   PrometheusQueryResultsV1 = 'grafana/prometheus-query-results/v1',

@@ -11,6 +11,7 @@ import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
 import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
 import { LazyManagedBadge } from 'app/features/provisioning/components/LazyManagedBadge';
 import { LazyPullRequestBanner } from 'app/features/provisioning/components/Shared/LazyPullRequestBanner';
+import { LazyRepositorySelect } from 'app/features/provisioning/components/Shared/LazyRepositorySelect';
 import { SaveResourceDrawerExposedComponent } from 'app/features/provisioning/components/Shared/SaveResourceDrawerExposedComponent';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
@@ -63,6 +64,12 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Pull request banner',
         description: 'Shows the Git Sync pull request link from the URL after a commit to a new branch',
         component: LazyPullRequestBanner,
+      },
+      {
+        id: PluginExtensionExposedComponents.RepositorySelectV1,
+        title: 'Repository select',
+        description: 'Selects the Git Sync repository for a new resource of a kind outside folders',
+        component: LazyRepositorySelect,
       },
       {
         id: PluginExtensionExposedComponents.PrometheusQueryResultsV1,

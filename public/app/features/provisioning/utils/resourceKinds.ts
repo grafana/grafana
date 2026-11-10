@@ -460,12 +460,20 @@ export function getAvailableResourceKinds(availableResources?: SupportedResource
 }
 
 /** Whether a given kind is currently enabled for provisioning per the settings endpoint. */
-export function isResourceKindAvailable(info: ResourceKindInfo, availableResources?: SupportedResource[]): boolean {
+export function isResourceKindAvailable(
+  info: Pick<ResourceKindInfo, 'group' | 'kind'>,
+  availableResources?: SupportedResource[]
+): boolean {
   // Compare on group/kind rather than object identity so callers can pass an
   // equivalent descriptor that isn't the exact registry instance.
-  return getAvailableResourceKinds(availableResources).some(
-    (available) => available.group === info.group && available.kind === info.kind
-  );
+  if (
+    getAvailableResourceKinds(availableResources).some(
+      (available) => available.group === info.group && available.kind === info.kind
+    )
+  ) {
+    return true;
+  }
+  return Boolean(availableResources?.some((r) => r.group === info.group && r.kind === info.kind && !r.disabled));
 }
 
 /**

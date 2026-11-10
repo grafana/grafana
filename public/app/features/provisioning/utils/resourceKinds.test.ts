@@ -288,6 +288,13 @@ describe('getAvailableResourceKinds', () => {
 
     expect(isResourceKindAvailable(equivalent, available)).toBe(true);
   });
+
+  it('accepts a kind outside the registry when it is declared', () => {
+    const info = { group: 'examplegitsyncapp.ext.grafana.app', kind: 'FolderKind' };
+
+    expect(isResourceKindAvailable(info, [info])).toBe(true);
+    expect(isResourceKindAvailable(info, [{ ...info, disabled: true }])).toBe(false);
+  });
 });
 
 describe('readImmediateParent', () => {
