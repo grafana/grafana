@@ -51,16 +51,16 @@ A breaking change (`feat!: ...`) can have no scope or the scope of the package i
 
 Below 1.0 Nx shifts the bump down one level (its [`adjustSemverBumpsForZeroMajorVersion`](https://nx.dev/docs/reference/nx-json) option, on by default), so choose by intent:
 
-| Title        | Use for                         | Released as (example: from 0.7.0) |
-| ------------ | ------------------------------- | --------------------------------- |
-| `feat!: ...` | A breaking change for consumers | 0.8.0                             |
-| `feat: ...`  | A new feature or export         | 0.7.1                             |
-| `fix: ...`   | A bug fix                       | 0.7.1                             |
-| `chore: ...` | A change that needs no release  | no release                        |
+| Title        | Use for                         | Released as (example: from 0.10.0) |
+| ------------ | ------------------------------- | ---------------------------------- |
+| `feat!: ...` | A breaking change for consumers | 0.11.0                             |
+| `feat: ...`  | A new feature or export         | 0.10.1                             |
+| `fix: ...`   | A bug fix                       | 0.10.1                             |
+| `chore: ...` | A change that needs no release  | no release                         |
 
 `perf`, `refactor`, `docs`, `build`, `types`, `examples`, `test`, `style`, `ci` and `revert` do not release either. Use `fix` for an internal improvement that consumers should get. Several pull requests in one release combine into the highest bump, and every releasing title becomes a changelog entry.
 
-Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.7.0`, which the publish workflow creates. Do not delete these tags.
+Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.10.0`, which the publish workflow creates. Do not delete these tags.
 
 ### Stable releases
 
