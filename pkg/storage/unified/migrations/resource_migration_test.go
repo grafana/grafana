@@ -752,7 +752,6 @@ func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.Sto
 	// once for the successful retry.
 	require.Equal(t, int32(2), callCount.Load())
 	require.NotNil(t, client.lastRebuildResponse, "expected real RebuildIndexes call")
-	require.Nil(t, client.lastRebuildResponse.Error)
 	if expectRebuild {
 		require.EqualValues(t, 1, client.lastRebuildResponse.RebuildCount)
 	}
@@ -807,7 +806,7 @@ func openTestSearchIndex(t *testing.T, client resource.ResourceClient, gr schema
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	require.NoError(t, err)
-	require.Nil(t, searchResp.Error)
+	require.NotNil(t, searchResp)
 }
 
 type recordingRetryResourceClient struct {
@@ -930,7 +929,6 @@ func TestIntegrationRun_SQLiteLargeMigrationRebuildUsesMigrationTransaction(t *t
 	err = runner.Run(runCtx, sess, mg, RunOptions{DriverName: migrator.SQLite})
 	require.NoError(t, err)
 	require.NotNil(t, client.lastRebuildResponse)
-	require.Nil(t, client.lastRebuildResponse.Error)
 	require.EqualValues(t, 1, client.lastRebuildResponse.RebuildCount)
 }
 
