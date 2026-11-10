@@ -13,6 +13,7 @@ import {
   SLO_APP_ID,
   SYNTHETIC_MONITORING_APP_ID,
 } from 'app/core/appPluginIds';
+import { ASSISTANT_PAGES_PATH } from 'app/core/constants';
 
 import { NavID, type NavId, NavWeight } from './constants';
 
@@ -44,7 +45,6 @@ export interface AppNavConfig {
 
 export const ASSERTS_SERVICES_PATH = `/a/${ASSERTS_APP_ID}/services`;
 export const SLO_SERVICES_PATH = `/a/${SLO_APP_ID}/services`;
-export const ASSISTANT_PAGES_PATH = `/a/${ASSISTANT_APP_ID}/pages`;
 
 // The assistant pages OSS deployments get (mirrors assistantOSSNavigationPaths
 // in the Go builder)

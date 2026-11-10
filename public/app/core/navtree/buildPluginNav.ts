@@ -6,17 +6,12 @@ import {
   PluginIncludeType,
 } from '@grafana/data';
 import { ASSISTANT_APP_ID } from 'app/core/appPluginIds';
+import { ASSISTANT_PAGES_PATH } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import {
-  type AppNavConfig,
-  appNavConfigFor,
-  appNavPathConfigFor,
-  ASSISTANT_PAGES_PATH,
-  isOperatorPlacedSection,
-} from './appNavConfig';
+import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor, isOperatorPlacedSection } from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
 import {
