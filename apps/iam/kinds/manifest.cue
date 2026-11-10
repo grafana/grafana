@@ -27,6 +27,25 @@ v0alpha1: {
 
 	routes: {
 		namespaced: {
+			// Internal service operation. Not for use by end-users.
+			"/reconcilelegacyroles": {
+				"POST": {
+					name:        "createReconcileLegacyRoles"
+					description: "Internal only; not for use by end-users. Reconciles legacy fixed and plugin roles from GlobalRoles."
+					// Internal only; not for use by end-users.
+					response: {
+						// True when no roles needed creating or updating; absent roles do not affect this.
+						inSync:      bool
+						fixedRoles:  #LegacyRoleReconcileCounts
+						pluginRoles: #LegacyRoleReconcileCounts
+						durationMs:  int64
+					}
+					responseMetadata: {
+						typeMeta:   false
+						objectMeta: false
+					}
+				}
+			}
 			"/teamlbacusage": {
 				"GET": {
 					name: "getTeamLBACUsage"
@@ -143,4 +162,12 @@ v0alpha1: {
 	accessControl?: {[string]: bool}
 	// Auth module identifiers the user is externally synced with.
 	externalAuthModules?: [...string]
+}
+
+// Counts for an internal reconciliation operation; absent roles are reported only.
+#LegacyRoleReconcileCounts: {
+	created: int64
+	updated: int64
+	// Stored roles absent from GlobalRoles. Reported only; never deleted.
+	wouldDelete: [...string]
 }

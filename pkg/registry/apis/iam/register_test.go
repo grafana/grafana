@@ -111,6 +111,15 @@ func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
 
 	require.NotNil(t, b.legacyTeamStore)
 	require.Equal(t, features, b.features)
+	require.IsType(t, NoopLegacyRoleReconcileAPI{}, b.legacyRoleReconcileAPI)
+	for _, route := range b.GetAPIRoutes(iamv0.GroupVersion).Namespace {
+		require.NotEqual(t, "reconcilelegacyroles", route.Path)
+	}
+	decision, _, err := b.GetAuthorizer().Authorize(context.Background(), authorizer.AttributesRecord{
+		ResourceRequest: true, APIGroup: iamv0.GroupVersion.Group, Resource: "reconcilelegacyroles", Verb: "create", Namespace: "stacks-1",
+	})
+	require.NoError(t, err)
+	require.Equal(t, authorizer.DecisionDeny, decision)
 }
 
 func TestNewAPIService_WiresSSOStore(t *testing.T) {

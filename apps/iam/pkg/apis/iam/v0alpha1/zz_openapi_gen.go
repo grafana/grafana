@@ -12,6 +12,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		AuthInfoList{}.OpenAPIModelName():                                                   schema_pkg_apis_iam_v0alpha1_AuthInfoList(ref),
 		AuthInfoSpec{}.OpenAPIModelName():                                                   schema_pkg_apis_iam_v0alpha1_AuthInfoSpec(ref),
 		AuthInfoUserRef{}.OpenAPIModelName():                                                schema_pkg_apis_iam_v0alpha1_AuthInfoUserRef(ref),
+		CreateReconcileLegacyRolesLegacyRoleReconcileCounts{}.OpenAPIModelName():            schema_pkg_apis_iam_v0alpha1_CreateReconcileLegacyRolesLegacyRoleReconcileCounts(ref),
+		CreateReconcileLegacyRolesResponse{}.OpenAPIModelName():                             schema_pkg_apis_iam_v0alpha1_CreateReconcileLegacyRolesResponse(ref),
 		CreateSearchExternalGroupMappingsBody{}.OpenAPIModelName():                          schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsBody(ref),
 		CreateSearchExternalGroupMappingsResponse{}.OpenAPIModelName():                      schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsResponse(ref),
 		CreateServiceAccountTokenBody{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_CreateServiceAccountTokenBody(ref),
@@ -259,6 +261,91 @@ func schema_pkg_apis_iam_v0alpha1_AuthInfoUserRef(ref common.ReferenceCallback) 
 				Required: []string{"name"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_CreateReconcileLegacyRolesLegacyRoleReconcileCounts(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Counts for an internal reconciliation operation; absent roles are reported only.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"created": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"updated": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"wouldDelete": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Stored roles absent from GlobalRoles. Reported only; never deleted.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"created", "updated", "wouldDelete"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_CreateReconcileLegacyRolesResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Internal only; not for use by end-users.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"inSync": {
+						SchemaProps: spec.SchemaProps{
+							Description: "True when no roles needed creating or updating; absent roles do not affect this.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"fixedRoles": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(CreateReconcileLegacyRolesLegacyRoleReconcileCounts{}.OpenAPIModelName()),
+						},
+					},
+					"pluginRoles": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(CreateReconcileLegacyRolesLegacyRoleReconcileCounts{}.OpenAPIModelName()),
+						},
+					},
+					"durationMs": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"inSync", "fixedRoles", "pluginRoles", "durationMs"},
+			},
+		},
+		Dependencies: []string{
+			CreateReconcileLegacyRolesLegacyRoleReconcileCounts{}.OpenAPIModelName()},
 	}
 }
 
