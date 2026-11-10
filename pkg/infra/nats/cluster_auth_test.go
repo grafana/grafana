@@ -3,7 +3,6 @@ package nats
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -33,18 +32,18 @@ import (
 func TestLoadRouteCredentials(t *testing.T) {
 	t.Run("the first load creates a random credential and later loads reuse it", func(t *testing.T) {
 		store := newSharedTestKV(t)
-		first, err := loadRouteCredentials(t.Context(), store, testCipher(t), discoveryClusterName)
+		first, err := loadRouteCredentials(t.Context(), testCredentials(t, store), discoveryClusterName)
 		require.NoError(t, err)
 		require.Equal(t, routeAuthUser, first.Username())
 		pass, _ := first.Password()
 		require.Len(t, pass, 64)
 		require.Equal(t, pass, storedRouteCredential(t, store))
 
-		again, err := loadRouteCredentials(t.Context(), store, testCipher(t), discoveryClusterName)
+		again, err := loadRouteCredentials(t.Context(), testCredentials(t, store), discoveryClusterName)
 		require.NoError(t, err)
 		require.Equal(t, first, again)
 
-		other, err := loadRouteCredentials(t.Context(), newSharedTestKV(t), testCipher(t), discoveryClusterName)
+		other, err := loadRouteCredentials(t.Context(), testCredentials(t, newSharedTestKV(t)), discoveryClusterName)
 		require.NoError(t, err)
 		require.NotEqual(t, first, other)
 	})
@@ -61,7 +60,7 @@ func TestLoadRouteCredentials(t *testing.T) {
 		for i := range loaders {
 			wg.Go(func() {
 				<-start
-				creds, err := loadRouteCredentials(t.Context(), store, testCipher(t), discoveryClusterName)
+				creds, err := loadRouteCredentials(t.Context(), testCredentials(t, store), discoveryClusterName)
 				errs[i] = err
 				if err == nil {
 					got[i], _ = creds.Password()
@@ -79,76 +78,66 @@ func TestLoadRouteCredentials(t *testing.T) {
 	})
 
 	t.Run("a store failure returns an error", func(t *testing.T) {
-		_, err := loadRouteCredentials(t.Context(), failingKV{}, testCipher(t), discoveryClusterName)
+		_, err := loadRouteCredentials(t.Context(), testCredentials(t, failingKV{}), discoveryClusterName)
 		require.ErrorIs(t, err, errStoreDown)
 	})
 
-	t.Run("the credential is stored encrypted with secrets manager", func(t *testing.T) {
+	t.Run("the credential is stored as a secrets manager encrypted value", func(t *testing.T) {
 		store := newSharedTestKV(t)
-		creds, err := loadRouteCredentials(t.Context(), store, testCipher(t), discoveryClusterName)
+		creds, err := loadRouteCredentials(t.Context(), testCredentials(t, store), discoveryClusterName)
 		require.NoError(t, err)
 		pass, _ := creds.Password()
 
-		row := storedRouteCredentialRow(t, store)
-		require.NotContains(t, string(row), pass)
-		var sealed sealedRouteCredential
-		require.NoError(t, json.Unmarshal(row, &sealed))
-		plain, err := testCipher(t).encryption.Decrypt(t.Context(), testNamespace, contracts.EncryptedPayload{
-			DataKeyID:     sealed.DataKeyID,
-			EncryptedData: sealed.EncryptedData,
-		}, contracts.EncryptionOption{})
+		stored := storedEncryptedValue(t, store)
+		require.NotContains(t, string(stored.EncryptedData), pass)
+		plain, err := testCredentials(t, store).encryption.Decrypt(t.Context(), testNamespace, stored, contracts.EncryptionOption{})
 		require.NoError(t, err)
 		require.Equal(t, pass, string(plain))
 	})
 
 	t.Run("a credential that cannot be decrypted is reported and kept", func(t *testing.T) {
 		cases := map[string]struct {
-			// row returns the stored value.
-			row func(t *testing.T) []byte
-			// reader decrypts the row.
-			reader routeCipher
+			// payload returns the stored value.
+			payload func(t *testing.T) contracts.EncryptedPayload
+			// reader decrypts it.
+			reader func(t *testing.T, store kv.KV) routeCredentialStore
 		}{
-			"plain text from an earlier build": {
-				row:    func(*testing.T) []byte { return []byte(randomRoutePassword()) },
-				reader: testCipher(t),
-			},
 			"a payload without a data key": {
-				row:    func(*testing.T) []byte { return []byte(`{"encrypted_data":"AAAA"}`) },
-				reader: testCipher(t),
+				payload: func(*testing.T) contracts.EncryptedPayload {
+					return contracts.EncryptedPayload{EncryptedData: []byte("ciphertext")}
+				},
+				reader: testCredentials,
+			},
+			"corrupt ciphertext": {
+				payload: func(t *testing.T) contracts.EncryptedPayload {
+					p := sealedTestCredential(t)
+					p.EncryptedData[len(p.EncryptedData)-1] ^= 0xff
+					return p
+				},
+				reader: testCredentials,
 			},
 			"another key encryption key": {
-				row:    sealedTestCredential,
-				reader: otherKeyCipher(t),
+				payload: sealedTestCredential,
+				reader:  otherKeyCredentials,
 			},
 			"a data key that is gone": {
-				row:    sealedTestCredential,
-				reader: routeCipher{encryption: newFakeEncryption(t, newFakeDataKeys(), testKEK), namespace: testNamespace},
-			},
-			"another namespace": {
-				row:    sealedTestCredential,
-				reader: routeCipher{encryption: testCipher(t).encryption, namespace: "org-2"},
+				payload: sealedTestCredential,
+				reader: func(t *testing.T, store kv.KV) routeCredentialStore {
+					return credentialsWith(newFakeEncryption(t, newFakeDataKeys(), testKEK), store)
+				},
 			},
 		}
 		for name, tc := range cases {
 			t.Run(name, func(t *testing.T) {
 				store := newSharedTestKV(t)
-				row := tc.row(t)
-				require.NoError(t, store.Batch(t.Context(), kv.NATSPeersSection, []kv.BatchOp{
-					{Mode: kv.BatchOpCreate, Key: routeCredentialKey(discoveryClusterName), Value: row},
-				}))
+				payload := tc.payload(t)
+				putEncryptedValue(t, store, payload)
 
-				_, err := loadRouteCredentials(t.Context(), store, tc.reader, discoveryClusterName)
+				_, err := loadRouteCredentials(t.Context(), tc.reader(t, store), discoveryClusterName)
 				require.ErrorIs(t, err, errRouteCredentialUndecryptable)
-				require.Equal(t, row, storedRouteCredentialRow(t, store), "the stored credential was replaced")
+				require.Equal(t, payload, storedEncryptedValue(t, store), "the stored credential was replaced")
 			})
 		}
-	})
-
-	t.Run("the credential row is not a peer", func(t *testing.T) {
-		store := newSharedTestKV(t)
-		_, err := loadRouteCredentials(t.Context(), store, testCipher(t), discoveryClusterName)
-		require.NoError(t, err)
-		require.Empty(t, registeredPeers(t, store))
 	})
 }
 
@@ -221,7 +210,8 @@ func TestServerListenAddress(t *testing.T) {
 	})
 
 	t.Run("an unset listen address on a shared database binds every interface", func(t *testing.T) {
-		s, err := newServer(newEmbeddedTestCfg("", "").NATS, newSharedTestKV(t), testCipher(t), migrator.Postgres, log.New("infra.nats.server"), prometheus.NewRegistry())
+		store := newSharedTestKV(t)
+		s, err := newServer(newEmbeddedTestCfg("", "").NATS, store, testCredentials(t, store), migrator.Postgres, log.New("infra.nats.server"), prometheus.NewRegistry())
 		require.NoError(t, err)
 		require.Equal(t, wildcardListenAddress, s.opts.Cluster.Host)
 		require.Equal(t, routeAuthUser, s.opts.Cluster.Username)
@@ -250,7 +240,7 @@ func TestServerRouteCredentialStartup(t *testing.T) {
 	for listen, want := range map[string]string{"": wildcardListenAddress, "10.9.0.1": "10.9.0.1"} {
 		t.Run("a store failing at startup keeps the address "+strconv.Quote(want)+" behind a placeholder", func(t *testing.T) {
 			hook := newLogHook()
-			s, err := newServer(newEmbeddedTestCfg(listen, "").NATS, failingKV{}, testCipher(t), migrator.Postgres, hook, prometheus.NewRegistry())
+			s, err := newServer(newEmbeddedTestCfg(listen, "").NATS, failingKV{}, testCredentials(t, failingKV{}), migrator.Postgres, hook, prometheus.NewRegistry())
 			require.NoError(t, err)
 
 			require.Equal(t, want, s.opts.Cluster.Host)
@@ -268,9 +258,9 @@ func TestServerRouteCredentialStartup(t *testing.T) {
 	}
 
 	t.Run("each process gets its own placeholder", func(t *testing.T) {
-		a, err := newServer(newEmbeddedTestCfg("", "").NATS, failingKV{}, testCipher(t), "", log.NewNopLogger(), prometheus.NewRegistry())
+		a, err := newServer(newEmbeddedTestCfg("", "").NATS, failingKV{}, testCredentials(t, failingKV{}), "", log.NewNopLogger(), prometheus.NewRegistry())
 		require.NoError(t, err)
-		b, err := newServer(newEmbeddedTestCfg("", "").NATS, failingKV{}, testCipher(t), "", log.NewNopLogger(), prometheus.NewRegistry())
+		b, err := newServer(newEmbeddedTestCfg("", "").NATS, failingKV{}, testCredentials(t, failingKV{}), "", log.NewNopLogger(), prometheus.NewRegistry())
 		require.NoError(t, err)
 		require.NotEqual(t, a.opts.Cluster.Password, b.opts.Cluster.Password)
 	})
@@ -279,7 +269,7 @@ func TestServerRouteCredentialStartup(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			// The first read fails at construction, three more in the retry.
 			store := &flakyKV{failures: 4}
-			s, err := newServer(newEmbeddedTestCfg("", "").NATS, store, testCipher(t), "", log.NewNopLogger(), prometheus.NewRegistry())
+			s, err := newServer(newEmbeddedTestCfg("", "").NATS, store, testCredentials(t, store), "", log.NewNopLogger(), prometheus.NewRegistry())
 			require.NoError(t, err)
 			require.NotNil(t, s.routePlaceholder)
 
@@ -293,11 +283,11 @@ func TestServerRouteCredentialStartup(t *testing.T) {
 
 	t.Run("a credential this server cannot decrypt keeps the placeholder until the row is deleted", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			stored := sealedTestCredential(t)
+			stored := encryptedValueRow(t, sealedTestCredential(t))
 			store := &memCredentialKV{value: stored}
 			hook := newLogHook()
 			// Its data keys are gone, as after restoring a database without them.
-			lostKeys := routeCipher{encryption: newFakeEncryption(t, newFakeDataKeys(), testKEK), namespace: testNamespace}
+			lostKeys := credentialsWith(newFakeEncryption(t, newFakeDataKeys(), testKEK), store)
 			s, err := newServer(newEmbeddedTestCfg("", "").NATS, store, lostKeys, "", hook, prometheus.NewRegistry())
 			require.NoError(t, err)
 
@@ -330,7 +320,7 @@ func TestServerRouteCredentialStartup(t *testing.T) {
 
 	t.Run("the background retry stops with the server", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			s, err := newServer(newEmbeddedTestCfg("", "").NATS, failingKV{}, testCipher(t), "", log.NewNopLogger(), prometheus.NewRegistry())
+			s, err := newServer(newEmbeddedTestCfg("", "").NATS, failingKV{}, testCredentials(t, failingKV{}), "", log.NewNopLogger(), prometheus.NewRegistry())
 			require.NoError(t, err)
 			ctx, cancel := context.WithCancel(t.Context())
 			done := make(chan *url.Userinfo)
@@ -367,7 +357,7 @@ func TestServerClusterRouteAuth(t *testing.T) {
 		a := startTestAuthServer(t, store, nil)
 		waitForRegisteredPeers(t, store, a)
 		hookB := newLogHook()
-		b, err := newServer(newEmbeddedTestCfg("127.0.0.1", "").NATS, store, otherKeyCipher(t), "", hookB, prometheus.NewRegistry())
+		b, err := newServer(newEmbeddedTestCfg("127.0.0.1", "").NATS, store, otherKeyCredentials(t, store), "", hookB, prometheus.NewRegistry())
 		require.NoError(t, err)
 		startService(t, t.Context(), b)
 
@@ -407,7 +397,7 @@ func TestServerClusterRouteAuth(t *testing.T) {
 		// a loopback dial to a wildcard listener may reach another test's server.
 		// b binds loopback; TestServerRouteCredentialStartup covers other
 		// addresses behind the placeholder.
-		b, err := newServer(newEmbeddedTestCfg("127.0.0.1", "").NATS, storeB, testCipher(t), "", logsB, prometheus.NewRegistry())
+		b, err := newServer(newEmbeddedTestCfg("127.0.0.1", "").NATS, storeB, testCredentials(t, storeB), "", logsB, prometheus.NewRegistry())
 		require.NoError(t, err)
 		startService(t, t.Context(), b)
 
@@ -442,7 +432,7 @@ func TestServerClusterRouteAuth(t *testing.T) {
 		shortenRouteCredentialBackoff(t)
 		hook := newLogHook()
 		storeB := newDownKV(newSharedTestKV(t))
-		s, err := newServer(newEmbeddedTestCfg("127.0.0.1", "").NATS, storeB, testCipher(t), "", hook, prometheus.NewRegistry())
+		s, err := newServer(newEmbeddedTestCfg("127.0.0.1", "").NATS, storeB, testCredentials(t, storeB), "", hook, prometheus.NewRegistry())
 		require.NoError(t, err)
 		ctx, cancel := context.WithTimeout(t.Context(), hangGuard)
 		defer cancel()
@@ -473,7 +463,7 @@ func TestServerClusterRouteAuth(t *testing.T) {
 }
 
 func TestServerLoggerMasksRoutePassword(t *testing.T) {
-	creds, err := loadRouteCredentials(t.Context(), newSharedTestKV(t), testCipher(t), discoveryClusterName)
+	creds, err := loadRouteCredentials(t.Context(), testCredentials(t, newSharedTestKV(t)), discoveryClusterName)
 	require.NoError(t, err)
 	pass, _ := creds.Password()
 	hook := newLogHook()
@@ -498,7 +488,7 @@ func startTestAuthServer(t *testing.T, store kv.KV, logger log.Logger) *Server {
 	if logger == nil {
 		logger = log.New("infra.nats.server")
 	}
-	s, err := newServer(cfg.NATS, store, testCipher(t), "", logger, prometheus.NewRegistry())
+	s, err := newServer(cfg.NATS, store, testCredentials(t, store), "", logger, prometheus.NewRegistry())
 	require.NoError(t, err)
 	startService(t, t.Context(), s)
 	return s
@@ -534,29 +524,26 @@ func waitForRegisteredPeers(t *testing.T, store kv.KV, servers ...*Server) {
 	}
 }
 
-// storedRouteCredentialRow returns the raw route credential row.
-func storedRouteCredentialRow(t *testing.T, store kv.KV) []byte {
+// storedEncryptedValue returns the encrypted route credential in store.
+func storedEncryptedValue(t *testing.T, store kv.KV) contracts.EncryptedPayload {
 	t.Helper()
-	r, err := store.Get(t.Context(), kv.NATSPeersSection, routeCredentialKey(discoveryClusterName))
+	v, err := kvEncryptedValues{store: store}.Get(t.Context(), testNamespace, routeCredentialName(discoveryClusterName), routeCredentialVersion)
 	require.NoError(t, err)
-	defer func() { _ = r.Close() }()
-	row, err := io.ReadAll(r)
-	require.NoError(t, err)
-	return row
+	return v.EncryptedPayload
 }
 
-// sealedTestCredential returns a route credential encrypted with the shared
-// secrets service.
-func sealedTestCredential(t *testing.T) []byte {
+// sealedTestCredential returns a route credential encrypted with the data keys
+// the test servers share.
+func sealedTestCredential(t *testing.T) contracts.EncryptedPayload {
 	t.Helper()
-	row, err := testCipher(t).seal(t.Context(), randomRoutePassword())
+	payload, err := testCredentials(t, nil).encryption.Encrypt(t.Context(), testNamespace, []byte(randomRoutePassword()), contracts.EncryptionOption{})
 	require.NoError(t, err)
-	return row
+	return payload
 }
 
 func storedRouteCredential(t *testing.T, store kv.KV) string {
 	t.Helper()
-	pass, err := readRouteCredential(t.Context(), store, testCipher(t), routeCredentialKey(discoveryClusterName))
+	pass, err := testCredentials(t, store).read(t.Context(), routeCredentialName(discoveryClusterName))
 	require.NoError(t, err)
 	return pass
 }

@@ -389,12 +389,16 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
+	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
+	if err != nil {
+		return nil, err
+	}
 	secretDBMigrator := migrator.NewWithEngine(sqlStore)
 	secretDBMigrated, err := secret.ProvideDatabaseMigrated(cfg, secretDBMigrator)
 	if err != nil {
 		return nil, err
 	}
-	natsServer, err := nats.ProvideServer(cfg, sqlStore, encryptionManager, secretDBMigrated, registerer)
+	natsServer, err := nats.ProvideServer(cfg, sqlStore, encryptionManager, encryptedValueStorage, secretDBMigrated, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -519,10 +523,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	secureValueValidator := validator.ProvideSecureValueValidator()
 	secureValueMutator := mutator.ProvideSecureValueMutator()
 	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -1190,12 +1190,16 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
+	if err != nil {
+		return nil, err
+	}
 	secretDBMigrator := migrator.NewWithEngine(sqlStore)
 	secretDBMigrated, err := secret.ProvideDatabaseMigrated(cfg, secretDBMigrator)
 	if err != nil {
 		return nil, err
 	}
-	natsServer, err := nats.ProvideServer(cfg, sqlStore, encryptionManager, secretDBMigrated, registerer)
+	natsServer, err := nats.ProvideServer(cfg, sqlStore, encryptionManager, encryptedValueStorage, secretDBMigrated, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1309,10 +1313,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	secureValueValidator := validator.ProvideSecureValueValidator()
 	secureValueMutator := mutator.ProvideSecureValueMutator()
 	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
 	if err != nil {
 		return nil, err
 	}

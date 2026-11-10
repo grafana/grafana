@@ -249,7 +249,7 @@ func startNatsRoundTrip(t *testing.T) (context.Context, *nats.PublisherService, 
 		ClusterPort:   natsserver.RANDOM_PORT,
 	}
 
-	server, err := nats.ProvideServer(cfg, nil, nil, nil, prometheus.NewRegistry())
+	server, err := nats.ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	startNatsService(t, ctx, server)
 

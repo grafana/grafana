@@ -30,7 +30,6 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -107,7 +106,7 @@ func newTestServer(t *testing.T, nats setting.NATSSettings) (*Server, *Config) {
 	cfg := setting.NewCfg()
 	cfg.NATS = nats
 	// sqlStore is not touched here, so nil is acceptable.
-	s, err := ProvideServer(cfg, nil, nil, nil, prometheus.NewRegistry())
+	s, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	ep := ProvideNATSConfig(cfg, s)
 	return s, ep
@@ -389,10 +388,11 @@ func StartService(t *testing.T, s *Server) { startService(t, t.Context(), s) }
 
 func RequireDelivery(t *testing.T, from, to *Server) { requireDelivery(t, from, to) }
 
-func DeleteRouteCredential(t *testing.T, sqlStore db.DB) { deleteRouteCredential(t, sqlStore) }
+// RouteCredentialName and RouteCredentialVersion identify the route credential
+// among the Secrets Manager encrypted values.
+var RouteCredentialName = routeCredentialName(discoveryClusterName)
 
-// RouteCredentialKeyPath is the key_path of the route credential row.
-var RouteCredentialKeyPath = "nats/peers/" + routeCredentialKey(discoveryClusterName)
+const RouteCredentialVersion = routeCredentialVersion
 
 // RouteCredential returns the loaded route credential, nil while the server
 // waits for it.

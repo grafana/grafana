@@ -404,7 +404,7 @@ func (s *ModuleServer) initNATSModule() (services.Service, error) {
 	if s.cfg.NATS.Enabled && s.cfg.NATS.Embedded() {
 		return nil, fmt.Errorf("embedded NATS is not supported in module mode; configure [nats] mode=external")
 	}
-	natsServer, err := nats.ProvideServer(s.cfg, nil, nil, nil, s.registerer)
+	natsServer, err := nats.ProvideServer(s.cfg, nil, nil, nil, nil, s.registerer)
 	if err != nil {
 		return nil, err
 	}
