@@ -53,7 +53,8 @@ export interface NestedFolderPickerProps {
   folderFilter?: (folder: DashboardViewItem) => boolean;
 
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit.
-     Use create for dashboard destinations: while browsing, the folders on the way to ones the user can create dashboards in are shown as read only */
+     Use create for dashboard destinations: with grafana.folderPickerFolderEditAccess on, while browsing, the folders on the way to ones the user
+     can create dashboards in are shown as read only. With the flag off, create is the same as edit */
   permission?: 'view' | 'edit' | 'create';
 
   /* Callback for when the user selects a folder */
