@@ -526,7 +526,7 @@ func bootstrapLayoutFromSettings(cfg *setting.Cfg) (bootstrap.Layout, error) {
 		HomePath:     cfg.HomePath,
 	}
 	if !layout.Enabled() {
-		// Still returned, so a repository a previous run registered can be stopped.
+		// Still returned, so a repository a previous run registered can be removed.
 		return layout, nil
 	}
 	// Both would provision the default org, from two directories, and whichever reconciled last
@@ -549,8 +549,8 @@ func bootstrapLayoutFromSettings(cfg *setting.Cfg) (bootstrap.Layout, error) {
 }
 
 // reconcileBootstrap registers a bootstrap repository for every org the configuration provides a
-// directory for, and stops the one an earlier run registered for an org it no longer does. It is
-// never fatal: an org whose repository is rejected must not keep the instance, or the other
+// directory for, and removes the one an earlier run registered for an org it no longer does. It
+// is never fatal: an org whose repository is rejected must not keep the instance, or the other
 // orgs, down.
 func (b *APIBuilder) reconcileBootstrap(ctx context.Context) {
 	logger := logging.FromContext(ctx)
@@ -577,7 +577,7 @@ func (b *APIBuilder) reconcileBootstrap(ctx context.Context) {
 	}
 
 	for _, cfg := range configs {
-		if err := bootstrap.Reconcile(ctx, b.client.Repositories(cfg.Namespace), b.jobs, cfg); err != nil {
+		if err := bootstrap.Reconcile(ctx, b.client.Repositories(cfg.Namespace), cfg); err != nil {
 			logger.Error("failed to reconcile bootstrap repository",
 				"path", cfg.Path, "namespace", cfg.Namespace, "error", err)
 		}

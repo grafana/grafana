@@ -57,7 +57,7 @@ func TestLayoutResolve(t *testing.T) {
 			},
 		},
 		{
-			// An empty path still reconciles, so a repository an earlier run registered is stopped.
+			// An empty path still reconciles, so a repository an earlier run registered is removed.
 			name:     "an org without a directory gets no path",
 			orgsRoot: true,
 			dirs:     []string{"2"},
@@ -101,7 +101,7 @@ func TestLayoutResolve(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name:   "nothing configured stops every org's repository",
+			name:   "nothing configured removes every org's repository",
 			orgIDs: []int64{1, 2},
 			want:   []Config{{Namespace: "default"}, {Namespace: "org-2"}},
 		},
@@ -144,7 +144,7 @@ func TestLayoutResolve(t *testing.T) {
 		})
 	}
 
-	t.Run("a missing orgs root stops every org's repository", func(t *testing.T) {
+	t.Run("a missing orgs root removes every org's repository", func(t *testing.T) {
 		layout := Layout{OrgsRoot: filepath.Join(t.TempDir(), "absent"), DefaultOrgID: 1}
 		got, unknown, err := layout.Resolve([]int64{1, 2}, onPrem)
 		require.NoError(t, err)

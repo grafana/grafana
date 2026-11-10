@@ -51,7 +51,7 @@ func (l Layout) resolve(path string) string {
 }
 
 // Resolve returns one Config per org, and the entries under OrgsRoot that name no org. An org
-// without a directory gets an empty path, so a repository an earlier run registered is stopped
+// without a directory gets an empty path, so a repository an earlier run registered is removed
 // rather than left reading a directory nothing names anymore.
 //
 // Orgs that share a namespace are collapsed, since the mapper does that on a cloud stack; two
@@ -100,7 +100,7 @@ func (l Layout) Resolve(orgIDs []int64, namespacer func(int64) string) ([]Config
 
 // subdirectories reports which orgs have a directory under OrgsRoot, and the entries that name
 // no org. A missing root is not an error: the directory is a mount, so it may legitimately be
-// absent, and every org then reconciles to a stopped repository.
+// absent, and every org then reconciles to a removed repository.
 func (l Layout) subdirectories(orgIDs []int64) (map[int64]bool, []string, error) {
 	if l.OrgsRoot == "" {
 		return nil, nil, nil

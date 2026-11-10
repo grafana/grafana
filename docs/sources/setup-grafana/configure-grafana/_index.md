@@ -3048,6 +3048,31 @@ If you want to allow an internal or self-hosted Git server, such as an on-premis
 
 This field is empty by default.
 
+#### `bootstrap_path`
+
+Directory that Grafana registers a local repository over at startup, so the files you mount there can declare the default org's repositories and connections. Add repositories, connections, dashboards, and folders to that directory to provision them on startup.
+
+You can't edit this repository's configuration, because it comes from this setting, but you can edit the resources it provisions. The setting requires the `local` repository type, and it forbids the `instance` sync target.
+
+Emptying this setting deletes the repository that an earlier run registered and everything that repository provisioned.
+
+This field is empty by default.
+
+#### `bootstrap_orgs_path`
+
+Same as `bootstrap_path`, for an instance with several orgs. This directory holds one subdirectory per org, named by the org's numeric ID, and Grafana registers a local repository over each one, so each org is provisioned from its own directory:
+
+```
+/etc/grafana/bootstrap/1/     # org 1
+/etc/grafana/bootstrap/2/     # org 2
+```
+
+The directory itself is never a repository, so entries in it that don't name an org are ignored. Removing an org's subdirectory deletes that org's repository and everything it provisioned.
+
+This setting and `bootstrap_path` are mutually exclusive, because both would provision the default org. Grafana refuses to start when you set both.
+
+This field is empty by default.
+
 #### `min_sync_interval`
 
 The minimum sync interval that you can set for a repository. Indicates how often the controller will check for changes in the repository that were not propagated by a webhook. The minimum value is `10s`. Default is `10s`.
