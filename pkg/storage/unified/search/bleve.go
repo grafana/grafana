@@ -3235,7 +3235,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 	adaptPostRankTrashBoundary(req, searchrequest, postRankAuthz)
 	if postRankAuthz {
-		b.adaptPreRankCursor(req, searchrequest)
+		b.adaptPreRankCursor(searchrequest)
 	}
 
 	return searchrequest, nil
@@ -3255,12 +3255,10 @@ func adaptPostRankTrashBoundary(req *resourcepb.ResourceSearchRequest, searchReq
 	}
 }
 
-// A PreRank cursor over one resource has all sort values except the final
-// document ID. Its name sort uniquely identifies the boundary document in that
-// resource, so reconstructing the ID preserves SearchAfter and SearchBefore.
-// A federated cursor does not identify which resource owns the name.
-func (b *bleveIndex) adaptPreRankCursor(req *resourcepb.ResourceSearchRequest, searchRequest *bleve.SearchRequest) {
-	if b.key.IsGlobal() || len(req.Federated) > 0 || len(searchRequest.Sort) < 2 ||
+// Legacy cursors exclude every hit with the same original sort values. Bound
+// the added document ID so this remains true across resource types.
+func (b *bleveIndex) adaptPreRankCursor(searchRequest *bleve.SearchRequest) {
+	if b.key.IsGlobal() || len(searchRequest.Sort) < 2 ||
 		(len(searchRequest.SearchAfter) > 0 && len(searchRequest.SearchBefore) > 0) {
 		return
 	}
@@ -3269,16 +3267,17 @@ func (b *bleveIndex) adaptPreRankCursor(req *resourcepb.ResourceSearchRequest, s
 	}
 
 	cursor := &searchRequest.SearchAfter
+	boundary := search.HighTerm
 	if len(searchRequest.SearchBefore) > 0 {
 		cursor = &searchRequest.SearchBefore
+		boundary = search.LowTerm
 	}
 	if len(*cursor) != len(searchRequest.Sort)-1 {
 		return
 	}
 	for i, field := range searchRequest.Sort[:len(searchRequest.Sort)-1] {
 		if sortField, ok := field.(*search.SortField); ok && sortField.Field == resource.SEARCH_FIELD_NAME && (*cursor)[i] != "" {
-			id := fmt.Sprintf("%s/%s/%s/%s", b.key.Namespace, b.key.Group, b.key.Resource, (*cursor)[i])
-			*cursor = append(slices.Clone(*cursor), id)
+			*cursor = append(slices.Clone(*cursor), boundary)
 			return
 		}
 	}

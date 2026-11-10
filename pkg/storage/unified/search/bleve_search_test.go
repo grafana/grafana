@@ -3315,17 +3315,60 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		require.Equal(t, int64(4), res.TotalHits, "TotalHits is the unfiltered merged match count")
 	})
 
-	t.Run("PreRank cursor cannot identify a federated resource", func(t *testing.T) {
+	t.Run("PreRank cursors preserve federated boundaries", func(t *testing.T) {
 		dash := newTestDashboardsIndexPostRank(t, 2)
 		folder := newTestFoldersIndexPostRank(t, 2, search.PostRankAuthzConfig{})
-		q := federatedQuery(10)
-		q.SearchAfter = []string{"aaa", "shared-name"}
-		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: dashKey.Namespace}
-		ctx := authlib.WithAuthInfo(context.Background(), requester)
-		res, err := dash.Search(ctx, search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true}), q,
-			&resource.SearchIndexes{Federated: []resource.ResourceIndex{folder}}, nil)
-		require.Nil(t, res)
-		require.Equal(t, int32(http.StatusBadRequest), resourceutil.ErrorResultFromGRPCDetails(err).GetCode())
+		indexDashboards(t, dash, []*resource.BulkIndexItem{
+			newDash("d-aaa", "aaa", "allowed"),
+			newDash("shared-name", "mmm", "allowed"),
+			newDash("d-zzz", "zzz", "allowed"),
+		})
+		indexDashboards(t, folder, []*resource.BulkIndexItem{
+			newFolder("f-bbb", "bbb", nil),
+			newFolder("shared-name", "mmm", nil),
+			newFolder("f-yyy", "yyy", nil),
+		})
+		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
+		for _, cursor := range [][]string{{"aaa", "d-aaa"}, {"mmm", "shared-name"}} {
+			for _, desc := range []bool{false, true} {
+				for _, before := range []bool{false, true} {
+					t.Run(fmt.Sprintf("%s/descending=%t/before=%t", cursor[1], desc, before), func(t *testing.T) {
+						q := federatedQuery(100)
+						q.SortBy[0].Desc = desc
+						if before {
+							q.SearchBefore = slices.Clone(cursor)
+						} else {
+							q.SearchAfter = slices.Clone(cursor)
+						}
+						// Without authorization, Bleve still uses the original sort
+						// order, so it defines the legacy cursor's boundary.
+						want, _ := searchFederated(t, dash, folder, nil, q)
+						q.Limit = 1
+						got := make([][2]string, 0)
+						for page := 0; ; page++ {
+							require.Less(t, page, 10, "pagination did not terminate")
+							afterCursor, beforeCursor := slices.Clone(q.SearchAfter), slices.Clone(q.SearchBefore)
+							rows, res := searchFederated(t, dash, folder, ac, q)
+							require.Equal(t, afterCursor, q.SearchAfter, "the request cursor must not change")
+							require.Equal(t, beforeCursor, q.SearchBefore, "the request cursor must not change")
+							if len(rows) == 0 {
+								break
+							}
+							require.Len(t, rows, 1)
+							got = append(got, rows...)
+							require.Len(t, res.Rows[0].SortFields, 3)
+							if before {
+								q.SearchBefore = res.Rows[0].SortFields
+							} else {
+								q.SearchAfter = res.Rows[0].SortFields
+							}
+						}
+						// The added ID may reorder hits tied under the legacy sort.
+						require.ElementsMatch(t, want, got, "continuation must preserve the legacy boundary without skips or duplicates")
+					})
+				}
+			}
+		}
 	})
 
 	t.Run("respects permissions per resource type", func(t *testing.T) {
