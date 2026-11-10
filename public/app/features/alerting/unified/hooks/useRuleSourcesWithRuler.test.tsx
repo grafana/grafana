@@ -14,6 +14,7 @@ import { grantUserPermissions, mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
 import { buildInfoResponse } from '../testSetup/featureDiscovery';
 
+import { useDataSourcesForRules } from './useDataSourcesForRules';
 import { useRulesSourcesWithRuler } from './useRuleSourcesWithRuler';
 
 jest.mock('../api/buildInfo', () =>
@@ -39,6 +40,24 @@ function makeMimirDatasource(uid: string, name: string) {
     type: 'prometheus',
     jsonData: { manageAlerts: true } as DataSourceJsonData,
   });
+}
+
+// Every data source in these tests supports the ruler, so a ready result must list the same uids as the
+// data source list that the hook reads in the same render.
+function renderRecordingReadyStates() {
+  const readyRenders: Array<{ listed: string[]; withRuler: string[] }> = [];
+  const { result } = renderHook(
+    () => {
+      const listed = useDataSourcesForRules().items.map((ds) => ds.uid);
+      const value = useRulesSourcesWithRuler();
+      if (!value.isLoading) {
+        readyRenders.push({ listed, withRuler: value.rulesSourcesWithRuler.map((ds) => ds.uid) });
+      }
+      return value;
+    },
+    { wrapper: getProviderWrapper() }
+  );
+  return { result, readyRenders };
 }
 
 beforeEach(() => {
@@ -72,6 +91,21 @@ describe('useRulesSourcesWithRuler — baseline (current behaviour)', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
 
+  it('is not ready before the discovery for the loaded list finishes', async () => {
+    setupDataSources(makeMimirDatasource('mimir-1', 'Mimir 1'));
+    server.use(
+      http.get('/api/datasources/proxy/uid/:uid/api/v1/status/buildinfo', () =>
+        HttpResponse.json(buildInfoResponse.mimir)
+      )
+    );
+
+    const { result, readyRenders } = renderRecordingReadyStates();
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(readyRenders.length).toBeGreaterThan(0);
+    readyRenders.forEach(({ listed, withRuler }) => expect(withRuler).toEqual(listed));
+  });
+
   it('drops the earlier results when the data source cache changes', async () => {
     setupDataSources(makeMimirDatasource('mimir-1', 'Mimir 1'));
     server.use(
@@ -80,9 +114,7 @@ describe('useRulesSourcesWithRuler — baseline (current behaviour)', () => {
       )
     );
 
-    const { result } = renderHook(() => useRulesSourcesWithRuler(), {
-      wrapper: getProviderWrapper(),
-    });
+    const { result, readyRenders } = renderRecordingReadyStates();
     await waitFor(() => expect(result.current.rulesSourcesWithRuler.map((ds) => ds.uid)).toEqual(['mimir-1']));
 
     act(() => {
@@ -91,6 +123,8 @@ describe('useRulesSourcesWithRuler — baseline (current behaviour)', () => {
 
     await waitFor(() => expect(result.current.rulesSourcesWithRuler.map((ds) => ds.uid)).toEqual(['mimir-2']));
     expect(result.current.isLoading).toBe(false);
+    expect(readyRenders.some(({ listed }) => listed.includes('mimir-2'))).toBe(true);
+    readyRenders.forEach(({ listed, withRuler }) => expect(withRuler).toEqual(listed));
   });
 
   it('returns datasources whose buildinfo indicates ruler support (Mimir)', async () => {
