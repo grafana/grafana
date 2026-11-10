@@ -51,18 +51,11 @@ function folderState(result: {
 }
 
 function folderQuery(uid: string, appPlatform: boolean): DependencyQuery {
-  const key = `folder:${uid}`;
-  if (appPlatform) {
-    const endpoint = ruleFolderPermissionsApi.endpoints.getBulkRuleFolderPermissions;
-    return {
-      key,
-      select: createSelector(endpoint.select(uid), folderState),
-      subscribe: (dispatch) => dispatch(endpoint.initiate(uid)),
-    };
-  }
-  const endpoint = legacyRuleFolderPermissionsApi.endpoints.getBulkRuleFolderPermissions;
+  const endpoint = appPlatform
+    ? ruleFolderPermissionsApi.endpoints.getBulkRuleFolderPermissions
+    : legacyRuleFolderPermissionsApi.endpoints.getBulkRuleFolderPermissions;
   return {
-    key,
+    key: `folder:${uid}`,
     select: createSelector(endpoint.select(uid), folderState),
     subscribe: (dispatch) => dispatch(endpoint.initiate(uid)),
   };
@@ -80,44 +73,9 @@ function pluginQuery(id: string): DependencyQuery {
   };
 }
 
-/** Subscribes to bulk dependency queries independently of rendered rule cards. */
-export function usePromRuleUpdateAbilities(
-  rules: GrafanaPromRuleDTO[],
-  enabled: boolean
-): ReadonlyMap<string, AsyncAbility> {
+function useDependencySubscriptions(queries: DependencyQuery[]): void {
   const dispatch = useDispatch();
-  const appPlatform = useFlagFoldersAppPlatformAPI();
   const reads = useMemo(() => new Subject<Observable<unknown>>(), []);
-  const keys = JSON.stringify(
-    [
-      ...new Set(
-        rules.flatMap((rule) => {
-          const plugin = getRulePluginOrigin(rule);
-          return [
-            ...(rule.folderUid ? [`folder:${rule.folderUid}`] : []),
-            ...(plugin ? [`plugin:${plugin.pluginId}`] : []),
-          ];
-        })
-      ),
-    ].sort()
-  );
-  const queries = useMemo(() => {
-    const requested: string[] = enabled ? JSON.parse(keys) : [];
-    return requested.map((key) =>
-      key.startsWith('folder:')
-        ? folderQuery(key.slice('folder:'.length), appPlatform)
-        : pluginQuery(key.slice('plugin:'.length))
-    );
-  }, [keys, enabled, appPlatform]);
-  const selectDependencies = useMemo(
-    () =>
-      createSelector(
-        queries.map(({ select }) => select),
-        (...states) => new Map(queries.map(({ key }, index) => [key, states[index]]))
-      ),
-    [queries]
-  );
-  const dependencies = useSelector(selectDependencies);
 
   useEffect(() => {
     const subscription = reads.pipe(mergeAll(PERMISSION_LOOKUP_CONCURRENCY)).subscribe();
@@ -147,6 +105,48 @@ export function usePromRuleUpdateAbilities(
       subscriptions.forEach((subscription) => subscription.unsubscribe());
     };
   }, [queries, dispatch, reads]);
+}
+
+/** Subscribes to bulk dependency queries independently of rendered rule cards. */
+export function usePromRuleUpdateAbilities(
+  rules: GrafanaPromRuleDTO[],
+  enabled: boolean
+): ReadonlyMap<string, AsyncAbility> {
+  const appPlatform = useFlagFoldersAppPlatformAPI();
+  const keys = enabled
+    ? JSON.stringify(
+        [
+          ...new Set(
+            rules.flatMap((rule) => {
+              const plugin = getRulePluginOrigin(rule);
+              return [
+                ...(rule.folderUid ? [`folder:${rule.folderUid}`] : []),
+                ...(plugin ? [`plugin:${plugin.pluginId}`] : []),
+              ];
+            })
+          ),
+        ].sort()
+      )
+    : '[]';
+  const queries = useMemo(() => {
+    const requested: string[] = JSON.parse(keys);
+    return requested.map((key) =>
+      key.startsWith('folder:')
+        ? folderQuery(key.slice('folder:'.length), appPlatform)
+        : pluginQuery(key.slice('plugin:'.length))
+    );
+  }, [keys, appPlatform]);
+  const selectDependencies = useMemo(
+    () =>
+      createSelector(
+        queries.map(({ select }) => select),
+        (...states) => new Map(queries.map(({ key }, index) => [key, states[index]]))
+      ),
+    [queries]
+  );
+  const dependencies = useSelector(selectDependencies);
+
+  useDependencySubscriptions(queries);
 
   return useMemo(() => {
     const abilities = new Map<string, AsyncAbility>();
