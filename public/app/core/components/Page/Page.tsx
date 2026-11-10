@@ -5,6 +5,8 @@ import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useUrlParams } from 'app/core/navigation/hooks';
+import { LazyPullRequestBanner } from 'app/features/provisioning/components/Shared/LazyPullRequestBanner';
 
 import NativeScrollbar from '../NativeScrollbar';
 
@@ -55,6 +57,7 @@ export const Page: PageType = ({
   }, [navModel, pageNav, chrome, layout]);
 
   const resolvedBg = background ?? getDefaultBackgroundForLayout(layout, visualRefreshEnabled);
+  const [urlParams] = useUrlParams();
 
   return (
     <div
@@ -73,6 +76,7 @@ export const Page: PageType = ({
           onSetScrollRef={onSetScrollRef}
         >
           <div className={cx(styles.pageInner, layout === PageLayoutType.Home && styles.homeInner)}>
+            {urlParams.get('intercepted_write') && <LazyPullRequestBanner />}
             {pageHeaderNav && (
               <PageHeader
                 actions={actions}

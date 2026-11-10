@@ -22,8 +22,12 @@ type ResourceBranchUrlOptions = {
   repoUrl?: string;
 };
 
-export function buildResourceBranchRedirectUrl({
-  baseUrl = '/dashboards',
+export function buildResourceBranchRedirectUrl({ baseUrl = '/dashboards', ...options }: ResourceBranchUrlOptions): string {
+  const queryString = getResourceBranchParams(options).toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+}
+
+export function getResourceBranchParams({
   paramName,
   paramValue,
   repoType,
@@ -32,7 +36,7 @@ export function buildResourceBranchRedirectUrl({
   ref,
   configuredBranch,
   repoUrl,
-}: ResourceBranchUrlOptions): string {
+}: Omit<ResourceBranchUrlOptions, 'baseUrl'>): URLSearchParams {
   const params = new URLSearchParams();
 
   if (paramName && paramValue) {
@@ -63,8 +67,7 @@ export function buildResourceBranchRedirectUrl({
     params.set('repo_url', repoUrl);
   }
 
-  const queryString = params.toString();
-  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+  return params;
 }
 
 /**
