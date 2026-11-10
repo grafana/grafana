@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useChromeHeaderHeight } from '@grafana/runtime';
+import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { Box, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
@@ -55,7 +55,7 @@ export default withPageErrorBoundary(RecordingRulesPage);
 
 function RecordingRulesPageHeader() {
   const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
-  const canCreate = createSupported && createAllowed;
+  const canCreate = createSupported && createAllowed && config.unifiedAlerting.recordingRulesEnabled;
 
   if (!canCreate) {
     return null;
