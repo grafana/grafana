@@ -1,7 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { PanelOptionsEditorBuilder, standardEditorsRegistry } from '@grafana/data';
 import { LegendDisplayMode, type OptionsWithLegend } from '@grafana/schema';
+
+import { mockComboboxRect } from '../../test-utils/mockDom';
 
 import { addLegendOptions } from './legend';
 
@@ -122,6 +125,69 @@ describe('addLegendOptions', () => {
       expect(showIf(item, legend({ showLegend: true, displayMode: LegendDisplayMode.Table }))).toBe(true);
       expect(showIf(item, legend({ showLegend: true, displayMode: LegendDisplayMode.List }))).toBe(false);
       expect(showIf(item, legend({ showLegend: false, displayMode: LegendDisplayMode.Table }))).toBe(false);
+    });
+  });
+
+  describe('sort editors', () => {
+    beforeAll(() => {
+      mockComboboxRect();
+    });
+
+    it('shows sort by only for a visible legend in list display mode', () => {
+      const item = getItem('legend.sortBy');
+      expect(showIf(item, legend({ showLegend: true, displayMode: LegendDisplayMode.List }))).toBe(true);
+      expect(showIf(item, legend({ showLegend: true, displayMode: LegendDisplayMode.Table }))).toBe(false);
+      expect(showIf(item, legend({ showLegend: false, displayMode: LegendDisplayMode.List }))).toBe(false);
+    });
+
+    it('shows sort direction only once a sort value is chosen in list display mode', () => {
+      const item = getItem('legend.sortDesc');
+      expect(showIf(item, legend({ sortBy: 'Mean' }))).toBe(true);
+      expect(showIf(item, legend({ sortBy: undefined }))).toBe(false);
+      expect(showIf(item, legend({ sortBy: 'Mean', displayMode: LegendDisplayMode.Table }))).toBe(false);
+    });
+
+    it('is not registered when legend calcs are excluded', () => {
+      const builder = new PanelOptionsEditorBuilder<OptionsWithLegend>();
+      addLegendOptions(builder, false);
+      const paths = builder.getItems().map((i) => i.path);
+      expect(paths).not.toContain('legend.sortBy');
+      expect(paths).not.toContain('legend.sortDesc');
+    });
+
+    function renderSortByEditor(value: string | undefined, calcs: string[]) {
+      const item = getItem('legend.sortBy');
+      const onChange = jest.fn();
+      const Editor = item.editor;
+      render(
+        <Editor
+          value={value}
+          onChange={onChange}
+          item={item}
+          context={{ data: [], options: { legend: legend({ calcs }) } }}
+        />
+      );
+      return { onChange, input: screen.getByRole('combobox') };
+    }
+
+    it('offers Name and the selected calculations, stored by their display title', async () => {
+      const { onChange, input } = renderSortByEditor(undefined, ['mean', 'sum']);
+      await userEvent.click(input);
+
+      const optionNames = screen.getAllByRole('option').map((o) => o.textContent);
+      expect(optionNames).toEqual([
+        expect.stringContaining('Name'),
+        expect.stringContaining('Mean'),
+        expect.stringContaining('Total'),
+      ]);
+
+      await userEvent.click(screen.getByRole('option', { name: /Total/ }));
+      expect(onChange).toHaveBeenCalledWith('Total');
+    });
+
+    it('keeps showing a stored value whose calculation is no longer selected', () => {
+      const { input } = renderSortByEditor('Max', ['mean']);
+      expect(input).toHaveValue('Max');
     });
   });
 });

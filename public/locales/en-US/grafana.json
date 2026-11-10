@@ -10746,6 +10746,7 @@
       "legend": {
         "category": "Legend",
         "description-limit": "Limits how many items are shown by default",
+        "description-sort-by": "Select the value by which legend items are sorted",
         "description-values": "Select values or calculations to show in legend",
         "mode-options": {
           "label-list": "List",
@@ -10755,6 +10756,8 @@
         "name-mode": "Mode",
         "name-overflow": "Overflow",
         "name-placement": "Placement",
+        "name-sort-by": "Sort by",
+        "name-sort-direction": "Sort direction",
         "name-values": "Values",
         "name-visibility": "Visibility",
         "name-width": "Width",
@@ -10762,10 +10765,18 @@
           "label-ellipsis": "Ellipsis",
           "label-wrap": "Wrap"
         },
+        "placeholder-sort-by": "None",
         "placeholder-width": "Auto, px, or % (e.g. 220 or 35%)",
         "placement-options": {
           "label-bottom": "Bottom",
           "label-right": "Right"
+        },
+        "sort-by-options": {
+          "label-name": "Name"
+        },
+        "sort-direction-options": {
+          "label-ascending": "Ascending",
+          "label-descending": "Descending"
         }
       },
       "stacking": {

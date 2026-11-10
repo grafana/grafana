@@ -1,10 +1,18 @@
 import { type ChangeEvent } from 'react';
 
-import { type PanelOptionsEditorBuilder, standardEditorsRegistry, type StatsPickerConfigSettings } from '@grafana/data';
+import {
+  fieldReducers,
+  type PanelOptionsEditorBuilder,
+  standardEditorsRegistry,
+  type StatsPickerConfigSettings,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { LegendDisplayMode, type OptionsWithLegend } from '@grafana/schema';
 
+import { Combobox } from '../../components/Combobox/Combobox';
+import { type ComboboxOption } from '../../components/Combobox/types';
 import { Input } from '../../components/Input/Input';
+import { LEGEND_SORT_BY_NAME } from '../../components/VizLegend/utils';
 
 /** @public */
 export function addLegendOptions<T extends OptionsWithLegend>(
@@ -114,5 +122,68 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       },
       showIf: (currentConfig) => currentConfig.legend.showLegend !== false,
     });
+
+    // Table mode sorts by clicking column headers; the compact list has no headers, so it needs explicit controls
+    builder
+      .addCustomEditor<void, string | undefined>({
+        id: 'legend.sortBy',
+        path: 'legend.sortBy',
+        name: t('grafana-ui.builder.legend.name-sort-by', 'Sort by'),
+        category,
+        description: t(
+          'grafana-ui.builder.legend.description-sort-by',
+          'Select the value by which legend items are sorted'
+        ),
+        // Legend sorting matches display value titles, which are reducer names rather than reducer ids
+        editor: ({ value, onChange, context }) => {
+          const options: Array<ComboboxOption<string>> = [
+            { value: LEGEND_SORT_BY_NAME, label: t('grafana-ui.builder.legend.sort-by-options.label-name', 'Name') },
+          ];
+          const calcs: string[] = context.options?.legend?.calcs ?? [];
+
+          for (const calc of calcs) {
+            const reducer = fieldReducers.getIfExists(calc);
+            if (reducer) {
+              options.push({ value: reducer.name, label: reducer.name, description: reducer.description });
+            }
+          }
+
+          // Keep a value whose calculation was removed visible, so the user can see why sorting no longer applies
+          if (value && !options.some((o) => o.value === value)) {
+            options.push({ value, label: value });
+          }
+
+          return (
+            <Combobox
+              options={options}
+              value={value ?? null}
+              isClearable
+              placeholder={t('grafana-ui.builder.legend.placeholder-sort-by', 'None')}
+              onChange={(option) => onChange(option?.value)}
+            />
+          );
+        },
+        showIf: (c) => c.legend.showLegend && c.legend.displayMode === LegendDisplayMode.List,
+      })
+      .addRadio({
+        path: 'legend.sortDesc',
+        name: t('grafana-ui.builder.legend.name-sort-direction', 'Sort direction'),
+        category,
+        description: '',
+        settings: {
+          options: [
+            {
+              value: false,
+              label: t('grafana-ui.builder.legend.sort-direction-options.label-ascending', 'Ascending'),
+            },
+            {
+              value: true,
+              label: t('grafana-ui.builder.legend.sort-direction-options.label-descending', 'Descending'),
+            },
+          ],
+        },
+        showIf: (c) =>
+          c.legend.showLegend && c.legend.displayMode === LegendDisplayMode.List && Boolean(c.legend.sortBy),
+      });
   }
 }

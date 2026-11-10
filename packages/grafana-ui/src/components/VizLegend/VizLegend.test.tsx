@@ -214,4 +214,69 @@ describe('VizLegend', () => {
       expect(onToggleLegendSort).toHaveBeenCalledWith('min');
     });
   });
+
+  describe('list mode sorting', () => {
+    const items = [
+      makeItem('B', { getDisplayValues: () => [{ numeric: 5, text: '5', title: 'Mean' }] }),
+      makeItem('A', { getDisplayValues: () => [{ numeric: 20, text: '20', title: 'Mean' }] }),
+      makeItem('C', { getDisplayValues: () => [{ numeric: 1, text: '1', title: 'Mean' }] }),
+    ];
+
+    const renderedLabels = () => screen.getAllByRole('button').map((button) => button.textContent);
+
+    it.each([
+      { sortBy: undefined, sortDesc: false, expected: ['B', 'A', 'C'] },
+      { sortBy: 'Name', sortDesc: false, expected: ['A', 'B', 'C'] },
+      { sortBy: 'Mean', sortDesc: false, expected: ['C', 'B', 'A'] },
+      { sortBy: 'Mean', sortDesc: true, expected: ['A', 'B', 'C'] },
+    ])('orders items by $sortBy (desc: $sortDesc)', ({ sortBy, sortDesc, expected }) => {
+      renderWithContext(
+        <VizLegend
+          displayMode={LegendDisplayMode.List}
+          items={items}
+          placement="right"
+          sortBy={sortBy}
+          sortDesc={sortDesc}
+        />
+      );
+      expect(renderedLabels()).toEqual(expected);
+    });
+
+    it('applies the sort before the limit so the top items are shown', () => {
+      renderWithContext(
+        <VizLegend
+          displayMode={LegendDisplayMode.List}
+          items={items}
+          placement="right"
+          sortBy="Mean"
+          sortDesc
+          limit={1}
+        />
+      );
+      expect(screen.getByText('A')).toBeInTheDocument();
+      expect(screen.queryByText('B')).not.toBeInTheDocument();
+      expect(screen.queryByText('C')).not.toBeInTheDocument();
+    });
+
+    it('keeps threshold items in step order', () => {
+      renderWithContext(
+        <VizLegend
+          displayMode={LegendDisplayMode.List}
+          items={items}
+          thresholdItems={[makeItem('< 80'), makeItem('90+'), makeItem('80+')]}
+          placement="right"
+          sortBy="Name"
+        />
+      );
+      expect(renderedLabels()).toEqual(['< 80', '90+', '80+']);
+    });
+
+    it('does not reorder the caller-owned items array', () => {
+      const input = [...items];
+      renderWithContext(
+        <VizLegend displayMode={LegendDisplayMode.List} items={input} placement="right" sortBy="Name" />
+      );
+      expect(input.map((i) => i.label)).toEqual(['B', 'A', 'C']);
+    });
+  });
 });
