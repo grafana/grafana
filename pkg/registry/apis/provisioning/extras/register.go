@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
@@ -72,10 +73,14 @@ func PermittedLocalPaths(cfg *setting.Cfg) []string {
 	if cfg.ProvisioningBootstrapPath == "" {
 		return cfg.PermittedProvisioningPaths
 	}
+	// A value admission would reject is not granted either.
+	if bootstrap.ValidatePath(cfg.ProvisioningBootstrapPath) != nil {
+		return cfg.PermittedProvisioningPaths
+	}
 	// Resolved by the resolver's own helper, so the prefix and the candidate admission
 	// matches against it are the same string.
-	bootstrap := local.ResolvePath(cfg.HomePath, cfg.ProvisioningBootstrapPath)
-	return append(slices.Clone(cfg.PermittedProvisioningPaths), bootstrap)
+	permitted := local.ResolvePath(cfg.HomePath, cfg.ProvisioningBootstrapPath)
+	return append(slices.Clone(cfg.PermittedProvisioningPaths), permitted)
 }
 
 func ProvideProvisioningOSSConnectionExtras(

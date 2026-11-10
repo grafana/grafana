@@ -69,8 +69,6 @@ func TestPermittedLocalPaths(t *testing.T) {
 			want:      append(configured, "/etc/grafana/bootstrap"),
 		},
 		{
-			// The resolver cleans the candidate, so a prefix keeping its trailing slash
-			// would never match the repository's own path.
 			name:      "a trailing slash is cleaned off",
 			bootstrap: "/etc/grafana/bootstrap/",
 			want:      append(configured, "/etc/grafana/bootstrap"),
@@ -79,6 +77,22 @@ func TestPermittedLocalPaths(t *testing.T) {
 			name:      "a relative path resolves against the home path",
 			bootstrap: "conf/provisioning/bootstrap",
 			want:      append(configured, "/usr/share/grafana/conf/provisioning/bootstrap"),
+		},
+		{
+			// The empty prefix a cleaned root produces is a prefix of every path.
+			name:      "the filesystem root is not permitted",
+			bootstrap: "/",
+			want:      configured,
+		},
+		{
+			name:      "a traversal is not permitted",
+			bootstrap: "../../../etc",
+			want:      configured,
+		},
+		{
+			name:      "a hidden directory is not permitted",
+			bootstrap: "/etc/.grafana/bootstrap",
+			want:      configured,
 		},
 	}
 
