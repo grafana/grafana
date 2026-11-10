@@ -100,6 +100,24 @@ func (GitOAuthConnectionConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitOAuthConnectionConfig"
 }
 
+// SourceConnectionConfig describes how to get a token for a Source API with the
+// OAuth client-credentials grant. The client ID lives in spec.oauth and the client
+// secret in secure.clientSecret.
+type SourceConnectionConfig struct {
+	// The OAuth token endpoint (e.g. `https://idp.example.com/oauth/token`).
+	// It is set here and never taken from the source's descriptor, so a rogue source cannot redirect the client secret.
+	TokenURL string `json:"tokenURL"`
+	// The audience to request, when the token endpoint needs one.
+	Audience string `json:"audience,omitempty"`
+	// The OAuth scopes to request.
+	// +listType=atomic
+	Scopes []string `json:"scopes,omitempty"`
+}
+
+func (SourceConnectionConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SourceConnectionConfig"
+}
+
 type BitbucketConnectionConfig struct {
 	// The workspace the OAuth consumer belongs to
 	Workspace string `json:"workspace"`
@@ -146,6 +164,7 @@ const (
 	GitlabOAuthConnectionType           ConnectionType = "gitlabOAuth"
 	BitbucketOAuthConnectionType        ConnectionType = "bitbucketOAuth"
 	GitOAuthConnectionType              ConnectionType = "gitOAuth"
+	SourceConnectionType                ConnectionType = "source"
 )
 
 type ConnectionSpec struct {
@@ -173,6 +192,10 @@ type ConnectionSpec struct {
 	// Generic git OAuth app connection configuration
 	// Only applicable when provider is "gitOAuth"
 	GitOAuth *GitOAuthConnectionConfig `json:"gitOAuth,omitempty"`
+
+	// Source API client-credentials configuration
+	// Only applicable when provider is "source"
+	Source *SourceConnectionConfig `json:"source,omitempty"`
 
 	// OAuth app configuration shared by all OAuth app providers
 	OAuth *ConnectionOAuthConfig `json:"oauth,omitempty"`

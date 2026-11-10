@@ -30,6 +30,7 @@ func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister, quot
 // This validator enforces the following rules:
 // - You can only create an instance sync repository if no other repositories exist in the namespace.
 // - You cannot create a non-instance (folder or folderless) sync repository if an instance repository already exists in the namespace.
+// - Two source repositories in a namespace cannot claim the same kind.
 // - The total number of repositories in a single namespace cannot exceed the configured limit (default 10, 0 = unlimited).
 func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
@@ -59,6 +60,10 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 					"Cannot create repository when instance repository exists: "+v.Name)}
 			}
 		}
+	}
+
+	if errs := validateNoOverlappingSources(cfg, all); len(errs) > 0 {
+		return errs
 	}
 
 	// Get quota status for the namespace
@@ -103,5 +108,24 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 			fmt.Sprintf("Maximum number of %d repositories reached", maxRepos))}
 	}
 
+	return nil
+}
+
+// validateNoOverlappingSources keeps one source from overwriting what another one manages.
+func validateNoOverlappingSources(cfg *provisioning.Repository, all []provisioning.Repository) field.ErrorList {
+	if cfg.Spec.Type != provisioning.SourceRepositoryType {
+		return nil
+	}
+
+	for i := range all {
+		other := &all[i]
+		if other.Name == cfg.Name || other.Spec.Type != provisioning.SourceRepositoryType {
+			continue
+		}
+		if kind, overlaps := sourceClaimsOverlap(cfg, other); overlaps {
+			return field.ErrorList{field.Invalid(field.NewPath("spec", "source", "allow"), kind,
+				"repository "+other.Name+" already claims this kind")}
+		}
+	}
 	return nil
 }
