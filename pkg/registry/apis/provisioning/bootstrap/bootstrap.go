@@ -39,8 +39,9 @@ type Repositories interface {
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 }
 
-// Config is the bootstrap repository to register. An empty Path still needs reconciling: a
-// repository an earlier run registered has no source once nothing names its directory.
+// Config is the bootstrap repository to register in one namespace. An empty Path still needs
+// reconciling: a repository an earlier run registered has no source once nothing names its
+// directory.
 type Config struct {
 	// Path is the directory the repository reads, as configured.
 	Path string
@@ -48,14 +49,9 @@ type Config struct {
 	Namespace string
 }
 
-// Reconcilable reports whether there is a namespace to reconcile the repository in.
-func (c Config) Reconcilable() bool {
-	return c.Namespace != ""
-}
-
-// Enabled reports whether a bootstrap repository is configured.
+// Enabled reports whether this namespace has a directory to read.
 func (c Config) Enabled() bool {
-	return c.Path != "" && c.Reconcilable()
+	return c.Path != ""
 }
 
 // matches reports whether repo is already the configured shape.

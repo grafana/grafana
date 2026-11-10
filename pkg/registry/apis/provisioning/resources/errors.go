@@ -170,6 +170,11 @@ func NewResourceValidationError(err error) *ResourceValidationError {
 	}
 }
 
+// ErrForeignNamespace marks a file the repository reads but another namespace owns. Only the
+// bootstrap repository sees it: one mounted directory is registered in several org
+// namespaces, and each file is provisioned by the one its namespace names.
+var ErrForeignNamespace = errors.New("file belongs to another namespace")
+
 // ErrFolderDepthExceeded is a sentinel for any depth-exceeded violation
 // surfaced by the folder API, regardless of whether it came from a Create
 // or an Update/move.

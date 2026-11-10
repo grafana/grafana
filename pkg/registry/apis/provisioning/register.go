@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	repogithub "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
@@ -176,9 +177,9 @@ type APIBuilder struct {
 	// reconcile. Otherwise the controllers use the apiserver informer.
 	natsSubscriber nats.Subscriber
 
-	// bootstrapConfig is the read-only local repository registered from
-	// [provisioning] bootstrap_path, empty when none is configured.
-	bootstrapConfig bootstrap.Config
+	// bootstrapRegistrar registers the read-only local repository from
+	// [provisioning] bootstrap_path in each org namespace the manifests name.
+	bootstrapRegistrar bootstrap.Registrar
 
 	// keysOnlyReList makes the connection informer's periodic re-list ask storage
 	// for keys instead of whole objects. Off by default: it changes what the
@@ -361,11 +362,11 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	bootstrapConfig, err := bootstrapConfigFromSettings(cfg)
+	bootstrapRegistrar, err := bootstrapRegistrarFromSettings(cfg, orgSvc)
 	if err != nil {
 		return nil, err
 	}
-	allowedTargets := allowedSyncTargets(cfg.ProvisioningAllowedTargets, bootstrapConfig.Enabled())
+	allowedTargets := allowedSyncTargets(cfg.ProvisioningAllowedTargets, bootstrapRegistrar.Path != "")
 
 	supportedResources, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
 	if err != nil {
@@ -436,9 +437,9 @@ func RegisterAPIService(
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
 	builder.keysOnlyReList = keysOnlyReList
-	// Only the preferred version registers the bootstrap repository: it is the one that runs
-	// the post-start hook's controllers, and two of them would race on the same object.
-	builder.bootstrapConfig = bootstrapConfig
+	// Only the preferred version registers the bootstrap repositories: it is the one that runs
+	// the post-start hook's controllers, and two of them would race on the same objects.
+	builder.bootstrapRegistrar = bootstrapRegistrar
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -506,32 +507,37 @@ func allowedSyncTargets(configured []string, bootstrapEnabled bool) []provisioni
 	return targets
 }
 
-// bootstrapConfigFromSettings reads [provisioning] bootstrap_path. A path set without the local
-// repository type is an error: enabling it here would widen what the instance accepts.
-func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
-	// Single namespace: the parser rejects a manifest whose namespace is not the repository's.
-	namespace := request.GetNamespaceMapper(cfg)(cfg.DefaultOrgID())
+// bootstrapRegistrarFromSettings reads [provisioning] bootstrap_path. A path set without the
+// local repository type is an error: enabling it here would widen what the instance accepts.
+func bootstrapRegistrarFromSettings(cfg *setting.Cfg, orgSvc org.Service) (bootstrap.Registrar, error) {
+	namespacer := request.GetNamespaceMapper(cfg)
+	// Reconcilable with no path too, so repositories a previous run registered can be removed.
+	registrar := bootstrap.Registrar{
+		DefaultNamespace: namespacer(cfg.DefaultOrgID()),
+		Orgs:             bootstrap.OrgNamespaceLister(namespacer, orgSvc),
+	}
 	if cfg.ProvisioningBootstrapPath == "" {
-		// Still reconcilable, so a repository a previous run registered can be removed.
-		return bootstrap.Config{Namespace: namespace}, nil
+		return registrar, nil
 	}
 	// The path is granted to every local repository before the bootstrap repository exists,
 	// so a value admission would reject must not reach the permitted prefixes.
 	if err := bootstrap.ValidatePath(cfg.ProvisioningBootstrapPath); err != nil {
-		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path %q is not a valid local repository path: %w", cfg.ProvisioningBootstrapPath, err)
+		return bootstrap.Registrar{}, fmt.Errorf("[provisioning] bootstrap_path %q is not a valid local repository path: %w", cfg.ProvisioningBootstrapPath, err)
 	}
 	if len(cfg.ProvisioningRepositoryTypes) > 0 &&
 		!slices.Contains(cfg.ProvisioningRepositoryTypes, string(provisioning.LocalRepositoryType)) {
-		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q repository type to be enabled", provisioning.LocalRepositoryType)
+		return bootstrap.Registrar{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q repository type to be enabled", provisioning.LocalRepositoryType)
 	}
 	// Admission rejects a sync target that is not allowed, and the bootstrap repository always
 	// uses the same one, so a target it cannot use leaves the instance unprovisioned with
 	// nothing in the configuration to say why.
 	if !slices.Contains(cfg.ProvisioningAllowedTargets, string(bootstrap.SyncTarget)) {
-		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q sync target to be allowed", bootstrap.SyncTarget)
+		return bootstrap.Registrar{}, fmt.Errorf("[provisioning] bootstrap_path requires the %q sync target to be allowed", bootstrap.SyncTarget)
 	}
 
-	return bootstrap.Config{Path: cfg.ProvisioningBootstrapPath, Namespace: namespace}, nil
+	registrar.Path = cfg.ProvisioningBootstrapPath
+	registrar.Root = local.ResolvePath(cfg.HomePath, cfg.ProvisioningBootstrapPath)
+	return registrar, nil
 }
 
 // TODO: Move specific endpoint authorization together with the rest of the logic.
@@ -1082,12 +1088,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
-			// Runs with no path configured too, to remove a repository a previous run registered.
+			// Runs with no path configured too, to remove repositories a previous run registered.
 			// Never fatal: a rejected bootstrap repository must not keep the instance down.
-			if b.bootstrapConfig.Reconcilable() {
-				if err := bootstrap.Reconcile(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.bootstrapConfig); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("failed to reconcile bootstrap repository",
-						"path", b.bootstrapConfig.Path, "namespace", b.bootstrapConfig.Namespace, "error", err)
+			if b.bootstrapRegistrar.Reconcilable() {
+				repos := func(namespace string) bootstrap.Repositories {
+					return b.client.Repositories(namespace)
+				}
+				if err := b.bootstrapRegistrar.Reconcile(postStartHookCtx.Context, repos); err != nil {
+					logging.FromContext(postStartHookCtx.Context).Error("failed to reconcile bootstrap repositories",
+						"path", b.bootstrapRegistrar.Path, "error", err)
 				}
 			}
 

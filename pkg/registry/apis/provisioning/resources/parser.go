@@ -85,6 +85,7 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 
 	urls, _ := repo.(repository.RepositoryWithURLs)
 	return &parser{
+		fileProvisioned: fileProvisioned(config),
 		repo: provisioning.ResourceRepositoryInfo{
 			Type:      config.Spec.Type,
 			Title:     config.Spec.Title,
@@ -115,6 +116,21 @@ type parser struct {
 	clients ResourceClients
 
 	folderMetadataEnabled bool
+
+	// fileProvisioned marks the bootstrap repository, which is registered per org over one
+	// mounted directory: there a file's own namespace picks the org that provisions it.
+	fileProvisioned bool
+}
+
+// fileProvisioned reports whether Grafana registered this repository from a mounted
+// directory rather than a user connecting it.
+func fileProvisioned(config *provisioning.Repository) bool {
+	meta, err := utils.MetaAccessor(config)
+	if err != nil {
+		return false
+	}
+	manager, ok := meta.GetManagerProperties()
+	return ok && manager.Kind == utils.ManagerKindFileProvisioning
 }
 
 type ParsedResource struct {
@@ -231,8 +247,12 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	obj := parsed.Obj
 
 	// Validate the namespace
-	if obj.GetNamespace() != "" && obj.GetNamespace() != r.repo.Namespace {
-		return nil, NewResourceValidationError(fmt.Errorf("the file namespace does not match target namespace"))
+	if ns := obj.GetNamespace(); ns != "" && ns != r.repo.Namespace {
+		if !r.fileProvisioned {
+			return nil, NewResourceValidationError(fmt.Errorf("the file namespace does not match target namespace"))
+		}
+		// Another org's bootstrap repository reads the same directory and provisions it.
+		return nil, NewResourceValidationError(fmt.Errorf("%w: %s", ErrForeignNamespace, ns))
 	}
 	obj.SetNamespace(r.repo.Namespace)
 

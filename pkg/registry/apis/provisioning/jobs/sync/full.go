@@ -349,6 +349,11 @@ func applyChange(
 		}
 		writeSpan.RecordError(err)
 		resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
+		if errors.Is(err, resources.ErrForeignNamespace) {
+			// Reported, not failed: the org this file names provisions it from its own
+			// bootstrap repository over the same directory.
+			resultBuilder.AsSkipped()
+		}
 	}
 
 	progress.Record(writeCtx, resultBuilder.Build())

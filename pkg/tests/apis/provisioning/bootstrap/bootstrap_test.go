@@ -145,6 +145,30 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 			"a repeated sync must not report the resources it already provisioned")
 	})
 
+	// A manifest names the org it belongs to. One this instance has no org for is nobody's to
+	// provision, so the sync reports it and carries on instead of failing the job.
+	t.Run("a manifest for another namespace is not provisioned", func(t *testing.T) {
+		foreign := dashboard("foreign-org-dashboard")
+		foreign["metadata"].(map[string]any)["namespace"] = "org-99"
+		writeManifest(t, bootstrapPath, "foreign.json", foreign)
+		defer func() { require.NoError(t, os.Remove(filepath.Join(bootstrapPath, "foreign.json"))) }()
+
+		helper.SyncAndWait(t, "bootstrap", nil)
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			repo, err := helper.Repositories.Resource.Get(t.Context(), "bootstrap", metav1.GetOptions{})
+			require.NoError(c, err)
+			assert.Equal(c, "warning", mustString(t, repo, "status", "sync", "state"),
+				"the file is reported, not failed")
+			messages := common.MustNestedStringSlice(repo.Object, "status", "sync", "message")
+			require.Len(c, messages, 1)
+			assert.Contains(c, messages[0], "another namespace")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+
+		_, err := helper.DashboardsV1.Resource.Get(t.Context(), "foreign-org-dashboard", metav1.GetOptions{})
+		assert.True(t, apierrors.IsNotFound(err), "the default org must not claim another org's file, got %v", err)
+	})
+
 	t.Run("forbids instance-target repositories", func(t *testing.T) {
 		// The instance target needs an instance with no other repository, so it is dropped from
 		// the allowed set the caller and the UI see.

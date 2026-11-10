@@ -1215,3 +1215,68 @@ secure:
 	require.NoError(t, err)
 	require.Equal(t, "my-ds", parsed.Obj.GetName())
 }
+
+func TestParser_ForeignNamespace(t *testing.T) {
+	const file = `{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":"dash","namespace":"org-2"},"spec":{"title":"Test dashboard"}}`
+
+	t.Run("a connected repository may not write outside its own namespace", func(t *testing.T) {
+		p := &parser{repo: provisioning.ResourceRepositoryInfo{Namespace: "default", Name: "repo"}}
+
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{Path: "dash.json", Data: []byte(file)})
+
+		require.Nil(t, parsed)
+		require.NotErrorIs(t, err, ErrForeignNamespace)
+		require.ErrorContains(t, err, "the file namespace does not match target namespace")
+	})
+
+	t.Run("the bootstrap repository leaves the file to the org it names", func(t *testing.T) {
+		p := &parser{
+			fileProvisioned: true,
+			repo:            provisioning.ResourceRepositoryInfo{Namespace: "default", Name: "bootstrap"},
+		}
+
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{Path: "dash.json", Data: []byte(file)})
+
+		require.Nil(t, parsed)
+		require.ErrorIs(t, err, ErrForeignNamespace)
+		require.ErrorContains(t, err, "org-2")
+	})
+
+	t.Run("the bootstrap repository still owns a file that names its own namespace", func(t *testing.T) {
+		clients := NewMockResourceClients(t)
+		clients.On("SupportedResources").Return(SupportedProvisioningResources).Maybe()
+		clients.On("ForKind", mock.Anything, mock.Anything).Return(nil, schema.GroupVersionResource{
+			Group: "dashboard.grafana.app", Version: "v0alpha1", Resource: "dashboards",
+		}, nil)
+		p := &parser{
+			fileProvisioned: true,
+			repo:            provisioning.ResourceRepositoryInfo{Namespace: "org-2", Name: "bootstrap"},
+			clients:         clients,
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "org-2", Name: "bootstrap"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.LocalRepositoryType,
+					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolderless},
+				},
+			},
+		}
+
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{Path: "dash.json", Data: []byte(file)})
+
+		require.NoError(t, err)
+		require.Equal(t, "org-2", parsed.Obj.GetNamespace())
+	})
+}
+
+func TestFileProvisioned(t *testing.T) {
+	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "bootstrap"}}
+	require.False(t, fileProvisioned(repo))
+
+	meta, err := utils.MetaAccessor(repo)
+	require.NoError(t, err)
+	meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo"})
+	require.False(t, fileProvisioned(repo))
+
+	meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindFileProvisioning, Identity: "bootstrap"})
+	require.True(t, fileProvisioned(repo))
+}

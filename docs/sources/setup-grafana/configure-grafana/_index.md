@@ -3056,7 +3056,11 @@ You can't edit this repository's configuration, because it comes from this setti
 
 The value must be a path that a local repository can read. Grafana doesn't start when the path contains a traversal (`..`) or a hidden component, or when it's the filesystem root.
 
-Emptying this setting deletes the repository that an earlier run registered and everything that repository provisioned.
+A manifest can set `metadata.namespace` to provision into an organization other than the default one. Grafana registers one repository per organization named by the files, each reading the same directory, and each provisioning only the files that name its namespace. A file that sets no namespace belongs to the default organization. Grafana logs an error at startup for a namespace that no organization on the instance matches, and nothing is provisioned for it.
+
+Grafana reads the directory at startup, so a manifest that names an organization for the first time is provisioned on the next restart.
+
+Emptying this setting, or removing the last manifest that names an organization, deletes the repository that an earlier run registered there and everything that repository provisioned.
 
 This field is empty by default.
 
