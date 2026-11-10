@@ -20,7 +20,7 @@ var QueryCachingRequestHistogram = metricutil.NewHistogramVec(prometheus.Histogr
 	Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 }, []string{"datasource_type", "cache", "query_type"})
 
-var ShouldCacheQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+var ShouldCacheQueryHistogram = metricutil.NewHistogramVec(prometheus.HistogramOpts{
 	Namespace: metrics.ExporterName,
 	Subsystem: "caching",
 	Name:      "should_cache_query_request_duration_seconds",
@@ -28,7 +28,7 @@ var ShouldCacheQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramO
 	Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 }, []string{"datasource_type", "cache", "shouldCache", "query_type"})
 
-var ResourceCachingRequestHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+var ResourceCachingRequestHistogram = metricutil.NewHistogramVec(prometheus.HistogramOpts{
 	Namespace: metrics.ExporterName,
 	Subsystem: "caching",
 	Name:      "resource_caching_request_duration_seconds",
