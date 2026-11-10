@@ -9,7 +9,7 @@
  */
 
 import { waitFor } from '@testing-library/react';
-import { cloneDeep, get } from 'lodash';
+import { cloneDeep } from 'lodash';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -382,9 +382,10 @@ describe('APPLY_SPEC with a GroupByVariable', () => {
   });
 
   it.each([false, true])(
-    'merges a dashboard-level one into the adhoc variable and warns (validate: %s)',
+    'rejects a dashboard-level one with its replacement and leaves the dashboard unchanged (validate: %s)',
     async (validate) => {
       const scene = buildScene(makeSpec());
+      const before = await readSpec(scene);
 
       const result = await applySpec(
         scene,
@@ -394,38 +395,19 @@ describe('APPLY_SPEC with a GroupByVariable', () => {
         validate
       );
 
-      expect(result.success).toBe(true);
-      expect(result.warnings).toEqual([
-        expect.stringContaining('variables.1.kind: GroupByVariable is deprecated and was converted on load'),
-      ]);
-      const { variables } = await readSpec(scene);
-      expect(variables.map((variable) => variable.kind)).toEqual(['AdhocVariable']);
-      expect(variables[0].spec).toMatchObject({
-        enableGroupBy: true,
-        filters: [expect.objectContaining({ key: 'job', operator: 'groupBy' })],
-      });
+      expect(result.success).toBe(false);
+      expect(result.error).toContain(
+        'Validation failed: variables.1.kind: GroupByVariable is no longer supported. Use an AdhocVariable with spec.enableGroupBy: true'
+      );
+      expect(await readSpec(scene)).toEqual(before);
     }
   );
 
-  it('drops one that has no adhoc variable to merge into, and warns', async () => {
-    const scene = buildScene(makeSpec());
-
-    const result = await applySpec(
-      scene,
-      makeSpec((spec) => {
-        spec.variables = [groupBy];
-      })
-    );
-
-    expect(result.success).toBe(true);
-    expect(result.warnings).toEqual([expect.stringContaining('variables.0.kind: GroupByVariable is deprecated')]);
-    expect((await readSpec(scene)).variables).toEqual([]);
-  });
-
   it.each([false, true])(
-    'merges a row-level one into the row adhoc variable and warns (validate: %s)',
+    'rejects a row-level one and leaves the dashboard unchanged (validate: %s)',
     async (validate) => {
       const scene = buildScene(makeSpec());
+      const before = await readSpec(scene);
 
       const result = await applySpec(
         scene,
@@ -438,27 +420,21 @@ describe('APPLY_SPEC with a GroupByVariable', () => {
         validate
       );
 
-      expect(result.success).toBe(true);
-      expect(result.warnings).toEqual([
-        expect.stringContaining(
-          'layout.spec.rows.0.spec.variables.1.kind: GroupByVariable is deprecated and was converted on load'
-        ),
-      ]);
-      const rowVariables = get(await readSpec(scene), 'layout.spec.rows.0.spec.variables') ?? [];
-      expect(rowVariables.map((variable) => variable.kind)).toEqual(['AdhocVariable']);
-      expect(rowVariables[0].spec).toMatchObject({
-        enableGroupBy: true,
-        filters: [expect.objectContaining({ key: 'job', operator: 'groupBy' })],
-      });
+      expect(result.success).toBe(false);
+      expect(result.error).toContain(
+        'Validation failed: layout.spec.rows.0.spec.variables.1.kind: GroupByVariable is no longer supported.'
+      );
+      expect(await readSpec(scene)).toEqual(before);
     }
   );
 
-  it('drops a tab-level one that has no adhoc variable to merge into, and warns', async () => {
+  it('names every one, at dashboard and section level, in a single error', async () => {
     const scene = buildScene(makeSpec());
 
     const result = await applySpec(
       scene,
       makeSpec((spec) => {
+        spec.variables = [groupBy];
         spec.layout = {
           kind: 'TabsLayout',
           spec: { tabs: [{ kind: 'TabsLayoutTab', spec: { layout: spec.layout, variables: [groupBy] } }] },
@@ -466,28 +442,38 @@ describe('APPLY_SPEC with a GroupByVariable', () => {
       })
     );
 
-    expect(result.success).toBe(true);
-    expect(result.warnings).toEqual([
-      expect.stringContaining('layout.spec.tabs.0.spec.variables.0.kind: GroupByVariable is deprecated'),
-    ]);
-    const appliedSpec = await readSpec(scene);
-    expect(appliedSpec.layout.kind).toBe('TabsLayout');
-    expect(get(appliedSpec, 'layout.spec.tabs.0.spec.variables')).toBeUndefined();
-  });
-
-  it('returns no warnings for a spec without one', async () => {
-    const scene = buildScene(makeSpec());
-
-    const result = await applySpec(
-      scene,
-      makeSpec((spec) => {
-        spec.variables = [adhoc];
-      })
+    expect(result.success).toBe(false);
+    expect(result.error).toContain(
+      'Validation failed: variables.0.kind, layout.spec.tabs.0.spec.variables.0.kind: GroupByVariable is no longer supported.'
     );
-
-    expect(result.success).toBe(true);
-    expect(result.warnings).toBeUndefined();
   });
+
+  it.each([false, true])(
+    'applies the replacement the error names: an AdhocVariable with group by enabled and a groupBy filter (validate: %s)',
+    async (validate) => {
+      const scene = buildScene(makeSpec());
+      const replacement = {
+        ...adhoc,
+        spec: { ...adhoc.spec, enableGroupBy: true, filters: [{ key: 'job', operator: 'groupBy', value: '' }] },
+      } as unknown as VariableKind;
+
+      const result = await applySpec(
+        scene,
+        makeSpec((spec) => {
+          spec.variables = [replacement];
+        }),
+        validate
+      );
+
+      expect(result.success).toBe(true);
+      const { variables } = await readSpec(scene);
+      expect(variables.map((variable) => variable.kind)).toEqual(['AdhocVariable']);
+      expect(variables[0].spec).toMatchObject({
+        enableGroupBy: true,
+        filters: [expect.objectContaining({ key: 'job', operator: 'groupBy', value: '' })],
+      });
+    }
+  );
 });
 
 describe('APPLY_SPEC with a user-set transformation refId', () => {

@@ -1,16 +1,13 @@
 import { isRecord } from 'app/core/utils/isRecord';
 
-const GROUP_BY_VARIABLE_REPLACEMENT =
-  'Use an AdhocVariable with spec.enableGroupBy: true to let users pick group-by keys; to apply a grouping, add a filter { key, operator: "groupBy", value: "" }.';
-
 /**
  * GroupByVariable is still a kind in the v2 spec, so a stored dashboard can carry one: the loader merges it
- * into the adhoc variable on the same datasource, or drops it if there is none. Variable commands reject the
- * kind. APPLY_SPEC applies a spec that has one, since the spec is still valid, and warns.
+ * into the adhoc variable on the same datasource, or drops it if there is none. Mutation API callers must not
+ * author new ones: commands reject the kind and point to its replacement. That includes APPLY_SPEC: GET_SPEC
+ * returns the loaded dashboard, which never has one, so a GroupByVariable in an applied spec came from the caller.
  */
-export const GROUP_BY_VARIABLE_UNSUPPORTED = `GroupByVariable is no longer supported. ${GROUP_BY_VARIABLE_REPLACEMENT}`;
-
-export const GROUP_BY_VARIABLE_CONVERTED = `GroupByVariable is deprecated and was converted on load: merged as group by into the AdhocVariable on the same datasource, or dropped if there is none. ${GROUP_BY_VARIABLE_REPLACEMENT}`;
+export const GROUP_BY_VARIABLE_UNSUPPORTED =
+  'GroupByVariable is no longer supported. Use an AdhocVariable with spec.enableGroupBy: true to let users pick group-by keys; to apply a grouping, add a filter { key, operator: "groupBy", value: "" }.';
 
 /**
  * Dot paths to the `kind` of every GroupByVariable among the spec's dashboard and section variables.

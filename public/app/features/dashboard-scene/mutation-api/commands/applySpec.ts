@@ -20,7 +20,7 @@ import { applyDashboardSpec } from '../../actions/dashboard/applyDashboardSpec';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
-import { findGroupByVariablePaths, GROUP_BY_VARIABLE_CONVERTED } from './deprecatedGroupByVariable';
+import { findGroupByVariablePaths, GROUP_BY_VARIABLE_UNSUPPORTED } from './deprecatedGroupByVariable';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -40,9 +40,16 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   handler: async (payload, context) => {
     const { scene } = context;
     try {
-      // The loader merges each GroupByVariable into an adhoc variable or drops it, so tell the caller which
-      // ones it sent rather than leaving them to vanish from the applied spec.
+      // Checked even without `validate`: an unvalidated spec would have each GroupByVariable silently
+      // merged or dropped on load, leaving the caller unaware it was not applied as sent.
       const groupByPaths = findGroupByVariablePaths(payload.spec);
+      if (groupByPaths.length > 0) {
+        return {
+          success: false,
+          error: `Validation failed: ${groupByPaths.join(', ')}: ${GROUP_BY_VARIABLE_UNSUPPORTED}`,
+          changes: [],
+        };
+      }
 
       // Opt-in structural validation (default off to avoid breaking existing
       // callers). When enabled, reject an invalid spec before mutating anything.
@@ -85,14 +92,7 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
         appliedSpec = undefined;
       }
 
-      return {
-        success: true,
-        data: { applied: true, spec: appliedSpec },
-        changes: [],
-        ...(groupByPaths.length > 0 && {
-          warnings: groupByPaths.map((path) => `${path}: ${GROUP_BY_VARIABLE_CONVERTED}`),
-        }),
-      };
+      return { success: true, data: { applied: true, spec: appliedSpec }, changes: [] };
     } catch (error) {
       return {
         success: false,
