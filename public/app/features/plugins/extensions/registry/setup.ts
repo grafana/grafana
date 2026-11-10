@@ -10,6 +10,7 @@ import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometh
 import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
 import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
 import { LazyManagedBadge } from 'app/features/provisioning/components/LazyManagedBadge';
+import { SaveResourceDrawerExposedComponent } from 'app/features/provisioning/components/Shared/SaveResourceDrawerExposedComponent';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -79,6 +80,12 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Notebook',
         description: 'An editable notebook, for a host rendering one outside the notebooks route',
         component: NotebookViewLazy,
+      },
+      {
+        id: PluginExtensionExposedComponents.SaveResourceDrawerV1,
+        title: 'Save resource drawer',
+        description: 'Commits a resource to a Git Sync repository',
+        component: SaveResourceDrawerExposedComponent,
       },
       // Only with notebooks on: plugins treat the form's absence as notebooks being unavailable.
       ...(getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)
