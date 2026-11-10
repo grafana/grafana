@@ -1229,22 +1229,26 @@ func (h *ProvisioningTestHelper) RequireSingleRepoDashboard(t *testing.T, repoNa
 	return &dashboard
 }
 
-// TriggerConnectionReconciliation forces the controller to re-process a connection
-// by touching its status (aging the health timestamp by 1ms). A merge patch on the
-// status subresource carries no resourceVersion, so it never conflicts with
-// concurrent controller reconciliations.
+// TriggerConnectionReconciliation forces the controller to re-process a connection by touching
+// its status (aging the health timestamp by 1ms). The patch carries no resourceVersion, but the
+// apiserver still read-modify-writes it, so it races with the controller's own status writes.
 func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, name string) {
 	t.Helper()
-	statusPatch, err := json.Marshal(map[string]any{
-		"status": map[string]any{
-			"health": map[string]any{
-				"checked": time.Now().UnixMilli() - 1,
+	err := RetryOnConflict(t, func() error {
+		statusPatch, err := json.Marshal(map[string]any{
+			"status": map[string]any{
+				"health": map[string]any{
+					"checked": time.Now().UnixMilli() - 1,
+				},
 			},
-		},
+		})
+		if err != nil {
+			return err
+		}
+		_, err = h.Connections.Resource.Patch(t.Context(), name,
+			types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+		return err
 	})
-	require.NoError(t, err)
-	_, err = h.Connections.Resource.Patch(t.Context(), name,
-		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
 	require.NoError(t, err, "failed to patch status for connection %s", name)
 }
 
