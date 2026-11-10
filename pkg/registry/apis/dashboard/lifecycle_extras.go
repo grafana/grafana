@@ -11,16 +11,12 @@ import (
 type DashboardLifecycleExtras interface {
 	Mutate(ctx context.Context, a admission.Attributes) error
 	Validate(ctx context.Context, a admission.Attributes) error
-	// HideDraftsByDefault reports whether list and search requests in the request namespace
-	// should exclude draft dashboards unless the caller explicitly asks for them.
-	HideDraftsByDefault(ctx context.Context) bool
 }
 
 type NoopDashboardLifecycleExtras struct{}
 
 func (NoopDashboardLifecycleExtras) Mutate(context.Context, admission.Attributes) error   { return nil }
 func (NoopDashboardLifecycleExtras) Validate(context.Context, admission.Attributes) error { return nil }
-func (NoopDashboardLifecycleExtras) HideDraftsByDefault(context.Context) bool             { return false }
 
 func ProvideNoopDashboardLifecycleExtras() DashboardLifecycleExtras {
 	return NoopDashboardLifecycleExtras{}
