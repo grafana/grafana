@@ -53,12 +53,14 @@ const flatTreeSelector = createSelector(
  * land, which the tree shows like any folder whose first page is in flight.
  */
 function useStarredFoldersCollection(): DashboardViewItemCollection | undefined {
-  const { rows } = useStarredSearch();
+  const { rows, error } = useStarredSearch();
   return useMemo(() => {
-    if (!rows) {
+    // A star set that can't be read (an anonymous user's 403s) has no rows coming, so the root shows empty rather
+    // than loading forever
+    if (!rows && !error) {
       return undefined;
     }
-    const items = rows
+    const items = (rows ?? [])
       .filter((row) => row.kind === 'folder')
       .map<DashboardViewItem>((row) => ({
         kind: 'folder',
@@ -75,7 +77,7 @@ function useStarredFoldersCollection(): DashboardViewItemCollection | undefined 
       lastKindHasMoreItems: false,
       isFullyLoaded: true,
     };
-  }, [rows]);
+  }, [rows, error]);
 }
 
 const hasSelectionSelector = createSelector(selectedItemsSelector, (selectedItems) => {

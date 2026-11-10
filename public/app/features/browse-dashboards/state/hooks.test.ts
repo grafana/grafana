@@ -1,7 +1,8 @@
+import { http, HttpResponse } from 'msw';
 import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler, starsRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setMockStarredFolders } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -164,6 +165,21 @@ describe('browse-dashboards state hooks', () => {
         store.dispatch(invalidateStarredSearch());
 
         await waitFor(() => expect(result.current[1]?.item).toMatchObject({ title: 'Renamed folder' }));
+      });
+
+      it('shows the root empty rather than loading when the star set cannot be read', async () => {
+        // An anonymous user's star set is named `user-`, which the server refuses
+        server.use(
+          http.get(starsRoute, () => HttpResponse.json({ kind: 'Status', status: 'Failure' }, { status: 403 }))
+        );
+        const { result } = renderBrowseHook(() => useFlatTreeState(undefined), openStarredRoot());
+
+        await waitFor(() => expect(result.current[0].isLoading).toBe(false));
+        expect(rowsOf(result.current)).toEqual([
+          `0:folder:${STARRED_FOLDERS_UID}`,
+          `1:ui:${STARRED_FOLDERS_UID}empty-folder`,
+          `1:ui:${STARRED_FOLDERS_UID}-divider`,
+        ]);
       });
     });
   });
