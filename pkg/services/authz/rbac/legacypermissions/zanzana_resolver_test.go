@@ -135,15 +135,23 @@ func legacyFilter(perms []ac.Permission, action, scope string) []ac.Permission {
 	return out
 }
 
-// zanzanaResolve runs the Zanzana list → legacy permission mapping for one action.
+// zanzanaResolve runs every Zanzana list → legacy permission mapping for one action.
 func zanzanaResolve(resp *authzv1.ListResponse, action, scope string) ([]ac.Permission, error) {
-	group, resource, subresource, verb := common.TranslateActionToListParams(action)
-	if group == "" || resource == "" {
-		return nil, nil
-	}
 	fake := &fakeZanzanaClient{listResp: resp}
 	r := &ZanzanaPermissionResolver{client: fake}
-	return r.listPermissions(context.Background(), "org:1", "user:parity", nil, group, resource, subresource, verb, action, scope)
+	var permissions []ac.Permission
+	for _, mapping := range common.TranslateActionToListParamsAll(action) {
+		perms, err := r.listPermissions(
+			context.Background(), "org:1", "user:parity", nil,
+			mapping.Group, mapping.Resource, mapping.Subresource, mapping.Verb,
+			action, scope,
+		)
+		if err != nil {
+			return nil, err
+		}
+		permissions = append(permissions, perms...)
+	}
+	return permissions, nil
 }
 
 func TestSearchPermissionsForIdentity_NoActionOrPrefix_ListsAllSupportedActions(t *testing.T) {
@@ -167,7 +175,7 @@ func TestSearchPermissionsForIdentity_NoActionOrPrefix_ListsAllSupportedActions(
 	perms := result[42]
 	require.NotEmpty(t, perms, "should return permissions when neither action nor actionPrefix is set")
 
-	supported := common.SupportedActions()
+	supported := common.SupportedActionMappings()
 	require.True(t, len(perms) >= len(supported),
 		"should have at least one permission per supported action (got %d perms for %d actions)", len(perms), len(supported))
 
@@ -201,6 +209,43 @@ func TestSearchPermissionsForIdentity_WithAction_DoesNotListAll(t *testing.T) {
 	perms := result[42]
 	require.Len(t, perms, 1)
 	require.Equal(t, "dashboards:read", perms[0].Action)
+}
+
+func TestSearchPermissionsForIdentity_WithAnnotationAction_ListsAllResourceMappings(t *testing.T) {
+	for _, search := range []struct {
+		name    string
+		options ac.SearchOptions
+	}{
+		{name: "exact action", options: ac.SearchOptions{Action: "annotations:read"}},
+		{name: "action prefix", options: ac.SearchOptions{ActionPrefix: "annotations:read"}},
+	} {
+		t.Run(search.name, func(t *testing.T) {
+			client := &capturingZanzanaClient{
+				fakeZanzanaClient: fakeZanzanaClient{
+					listResp: &authzv1.ListResponse{All: true},
+				},
+			}
+			r := &ZanzanaPermissionResolver{client: client}
+
+			result, err := r.searchPermissionsForIdentity(
+				context.Background(), "org:1", 42, "user-uid", false, search.options,
+			)
+			require.NoError(t, err)
+			require.ElementsMatch(t, []ac.Permission{
+				{Action: "annotations:read", Scope: ac.ScopeAnnotationsTypeOrganization},
+				{Action: "annotations:read", Scope: ac.Scope("dashboards", "*")},
+				{Action: "annotations:read", Scope: ac.Scope("folders", "*")},
+			}, result[42])
+
+			require.Len(t, client.listCalls, 2)
+			requests := map[string]bool{}
+			for _, call := range client.listCalls {
+				requests[call.Group+"/"+call.Resource+"/"+call.Subresource] = true
+			}
+			require.True(t, requests["annotation.grafana.app/annotations/"])
+			require.True(t, requests["dashboard.grafana.app/dashboards/annotations"])
+		})
+	}
 }
 
 func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
