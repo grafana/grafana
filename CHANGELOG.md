@@ -2,6 +2,15 @@
 
 # 13.2.6 (2026-11-10)
 
+### Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-110992
+- Security: Fix CVE-2026-111024
+- Security: Fix CVE-2026-13721
+- Security: Fix CVE-2026-14242
+
 ### Features and enhancements
 
 - **DateTime:** Update moment-timezone and easy-tz for 2026 time zone changes [#136950](https://github.com/grafana/grafana/pull/136950), [@joshhunt](https://github.com/joshhunt)
