@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getPluginImportUtils, PanelDataErrorView } from '@grafana/runtime';
+import { useFlagTablePaginationPageSize } from '@grafana/runtime/internal';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSourceFrameIndex } from '@grafana/ui/internal';
@@ -164,6 +165,20 @@ export function TablePanel(props: Props) {
     tableHeight = Math.min(tableHeight, Math.max(fitMaxHeight - pickerReserve, 0));
   }
 
+  // Uncapped fit-content matches Text v2: with no height bound there is no
+  // derived page size, so every row renders; an explicit page size still
+  // paginates. (Pagination against the estimated natural height split content
+  // at bogus page breaks, e.g. ending at row 48 of 50.)
+  // Two deliberate differences from Text v2's auto-pagination (text/v2/pagination.ts):
+  // capped tables paginate any row count (Text only past 100 rows in PerRow
+  // mode), and explicit page size stays behind the table pagination page-size
+  // flag while Text's is ungated.
+  const paginationPageSizeEnabled = useFlagTablePaginationPageSize();
+  const explicitPageSize = paginationPageSizeEnabled ? options.pageSize : undefined;
+  const uncappedFit = fitContent && fitMaxHeight === undefined;
+  const paginateTable =
+    options.enablePagination && (!uncappedFit || (explicitPageSize != null && explicitPageSize > 0));
+
   if (!count || !hasFields) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
@@ -178,6 +193,7 @@ export function TablePanel(props: Props) {
     <TableNG
       {...commonTableProps}
       {...adHocColumns}
+      enablePagination={paginateTable}
       reorderable={Boolean(adHocColumns)}
       showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
       rowTransformationsEnabled={adHocTransformationsEnabled}
@@ -227,19 +243,34 @@ export function TablePanel(props: Props) {
     };
   });
 
+  const framePicker = (
+    <div className={noPanelPadding ? styles.framePicker : undefined}>
+      <Field noMargin>
+        <Combobox
+          aria-label={t('table.frame-picker.label', 'Query')}
+          options={names}
+          value={names[currentIndex]}
+          onChange={(val) => onChangeTableSelection(val, props)}
+        />
+      </Field>
+    </div>
+  );
+
+  // Uncapped fit-content keeps the content/footer stack in normal flow like
+  // Text v2, so the layout measures the stack's natural height.
+  if (uncappedFit) {
+    return (
+      <Stack direction="column" gap={noPanelPadding ? 0 : 1.5}>
+        {tableElement}
+        {framePicker}
+      </Stack>
+    );
+  }
+
   return (
     <Stack direction="column" gap={noPanelPadding ? 0 : 1.5} justifyContent="space-between" height="100%">
       {tableElement}
-      <div className={noPanelPadding ? styles.framePicker : undefined}>
-        <Field noMargin>
-          <Combobox
-            aria-label={t('table.frame-picker.label', 'Query')}
-            options={names}
-            value={names[currentIndex]}
-            onChange={(val) => onChangeTableSelection(val, props)}
-          />
-        </Field>
-      </div>
+      {framePicker}
     </Stack>
   );
 }
