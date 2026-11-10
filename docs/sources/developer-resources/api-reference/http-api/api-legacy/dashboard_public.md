@@ -29,6 +29,12 @@ refs:
 
 {{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+{{< admonition type="note" >}}
+
+This is a legacy API. To create, read, update, and delete dashboards, use the [Dashboard HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/). It supports both the classic dashboard JSON model (`v1`) and the dashboard schema v2 (`v2`). To learn more, refer to [API versions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/#api-versions).
+
+{{< /admonition >}}
+
 ## Requirements
 
 If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](ref:role-based-access-control-permissions) for more information.

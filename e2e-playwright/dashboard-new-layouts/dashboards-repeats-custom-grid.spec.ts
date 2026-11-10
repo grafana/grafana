@@ -171,7 +171,7 @@ test.describe(
         page,
         components,
         controls,
-        sidebar,
+        panelEditor,
         panels,
         canvas,
       }) => {
@@ -196,7 +196,7 @@ test.describe(
         // verify original repeat panel is loaded
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
 
-        await sidebar.panelOptions.setTitle(`${NEW_TITLE_BASE}$c1`);
+        await panelEditor.options.setTitle(`${NEW_TITLE_BASE}$c1`);
 
         // playwright too fast, verifying JSON diff that changes landed
         await expectDashboardChangesToContain(dashboardPage, page, selectors, NEW_TITLE_BASE);
@@ -221,7 +221,7 @@ test.describe(
         page,
         components,
         controls,
-        sidebar,
+        panelEditor,
         panels,
         canvas,
       }) => {
@@ -242,7 +242,7 @@ test.describe(
 
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
 
-        await sidebar.panelOptions.setTitle(`${NEW_TITLE_BASE}$c1`);
+        await panelEditor.options.setTitle(`${NEW_TITLE_BASE}$c1`);
 
         // playwright too fast, verifying JSON diff that changes landed
         await expectDashboardChangesToContain(dashboardPage, page, selectors, NEW_TITLE_BASE);

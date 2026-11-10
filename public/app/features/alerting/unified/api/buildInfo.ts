@@ -1,5 +1,10 @@
 import { lastValueFrom } from 'rxjs';
 
+import {
+  SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
+  type SupportedExternalRulesSourceType,
+  isSupportedExternalRulesSourceType,
+} from '@grafana/alerting/internal';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
   type AlertmanagerApiFeatures,
@@ -9,14 +14,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
-import {
-  GRAFANA_RULES_SOURCE_NAME,
-  SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
-  type SupportedExternalRulesSourceType,
-  getDataSourceByName,
-  getRulesDataSourceByUID,
-  isSupportedExternalRulesSourceType,
-} from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByName, getRulesDataSourceByUID } from '../utils/datasource';
 
 import { fetchRules } from './prometheus';
 import { type RulerApiSubtype, fetchTestRulerRulesGroup } from './ruler';

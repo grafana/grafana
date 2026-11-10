@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -98,6 +99,9 @@ type jobProcessor struct {
 	// latency) once a claim confirms a genuine pickup.
 	processed *usinformer.ProcessedMetrics
 
+	// tracer starts the root span of each job. It can be nil.
+	tracer tracing.Tracer
+
 	// Mutex to protect concurrent access to job processing
 	mu sync.Mutex
 	// currentJob is the job currently being processed
@@ -127,6 +131,17 @@ func newJobProcessor(
 	}
 }
 
+// startRootSpan starts the root span of a job.
+// The context of the job driver has no span.
+// tracing.Start creates no span when its context has no span.
+// The tracer from the driver always creates a span, so the spans of the workers record.
+func (d *jobProcessor) startRootSpan(ctx context.Context, name string) (context.Context, trace.Span) {
+	if d.tracer == nil {
+		return tracing.Start(ctx, name)
+	}
+	return d.tracer.Start(ctx, name)
+}
+
 // processKey claims the job namespace/name and drives it to completion.
 // Returns ErrAlreadyClaimed or a NotFound API error when the job is not ours
 // to process; both mean the key can be dropped. trigger records what enqueued
@@ -135,7 +150,7 @@ func newJobProcessor(
 // queue, used to record how late the event arrived once the claim confirms this
 // is a genuine (non-duplicate) pickup.
 func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, trigger claimTrigger, enqueuedAt time.Time) error {
-	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim_and_process_one_job")
+	ctx, span := d.startRootSpan(ctx, "provisioning.jobs.claim_and_process_one_job")
 	defer span.End()
 
 	logger := logging.FromContext(ctx)

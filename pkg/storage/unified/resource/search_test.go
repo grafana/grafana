@@ -1852,6 +1852,12 @@ func TestCombineBuildRequests(t *testing.T) {
 			expOK: true,
 			exp:   rebuildRequest{selectableFields: []string{"folder", "team", "title"}},
 		},
+		"keep migration read": {
+			a:     rebuildRequest{migrationRead: true},
+			b:     rebuildRequest{},
+			expOK: true,
+			exp:   rebuildRequest{migrationRead: true},
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			res1, ok := combineRebuildRequests(tc.a, tc.b)
@@ -2408,14 +2414,14 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
 	}
 
-	support.findIndexesToRebuild(importTimes, nil, now, false)
+	support.findIndexesToRebuild(t.Context(), importTimes, nil, now, false)
 	require.Equal(t, 9, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
 	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
-	support.findIndexesToRebuild(importTimes, nil, now5m, false)
+	support.findIndexesToRebuild(t.Context(), importTimes, nil, now5m, false)
 	require.Zero(t, search.getIndexCalls, "rebuild inspection must not refresh index idle timestamps")
 	require.Equal(t, 9, support.rebuildQueue.Len())
 
@@ -2487,7 +2493,6 @@ func TestRebuildIndexesIgnoresUnrelatedInvalidImportTime(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, response.Error)
 	require.Zero(t, response.RebuildCount, "both requested indexes have caught up with their imports")
 	require.Len(t, response.BuildTimes, len(keys))
 	require.Zero(t, storage.listCalls, "explicit rebuilds must not read unrelated records")
@@ -2654,7 +2659,6 @@ func TestRebuildIndexes(t *testing.T) {
 
 		rsp, err := support.RebuildIndexes(context.Background(), rebuildReq)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		require.Equal(t, int64(0), rsp.RebuildCount, "no rebuilds should be triggered")
 
 		// Verify BuildTimes contains entries for key1 and key2, but not key3 (zero time)
@@ -2824,6 +2828,73 @@ func TestRebuildIndexesForResource(t *testing.T) {
 	require.Equal(t, 0, support.rebuildQueue.Len())
 }
 
+// migrationReadListStorage records, per index, whether each listing runs as a migration read.
+type migrationReadListStorage struct {
+	*mockStorageBackend
+
+	mu    sync.Mutex
+	marks map[NamespacedResource][]bool
+}
+
+func (m *migrationReadListStorage) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
+	key := req.Options.Key
+	nsr := NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
+	m.mu.Lock()
+	m.marks[nsr] = append(m.marks[nsr], MigrationReadFromContext(ctx))
+	m.mu.Unlock()
+	return m.mockStorageBackend.ListIterator(ctx, req, callback)
+}
+
+func (m *migrationReadListStorage) marksFor(key NamespacedResource) []bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.marks[key]
+}
+
+// The rebuild worker reads as a migration only for the rebuilds a migration asked for.
+func TestRebuildIndexesQueuedRebuildKeepsMigrationRead(t *testing.T) {
+	migrated := NamespacedResource{Namespace: "migrated", Group: "group", Resource: "resource"}
+	other := NamespacedResource{Namespace: "other", Group: "group", Resource: "resource"}
+	importTime := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	storage := &migrationReadListStorage{
+		mockStorageBackend: &mockStorageBackend{lastImportTimes: []ResourceLastImportTime{
+			{NamespacedResource: migrated, LastImportTime: importTime},
+			{NamespacedResource: other, LastImportTime: importTime},
+		}},
+		marks: map[NamespacedResource][]bool{},
+	}
+	// Both indexes are open and predate the import, so the worker rebuilds them.
+	search := &mockSearchBackend{
+		buildTime: importTime.Add(time.Hour),
+		cache: map[NamespacedResource]ResourceIndex{
+			migrated: &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: importTime.Add(-time.Hour)}},
+			other:    &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: importTime.Add(-time.Hour)}},
+		},
+	}
+	support, err := newSearchServer(SearchOptions{
+		Backend:   search,
+		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+	}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NoError(t, support.init(t.Context()))
+	defer support.stop()
+
+	rebuild := func(ctx context.Context, key NamespacedResource) {
+		t.Helper()
+		rsp, err := support.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
+			Namespace: key.Namespace,
+			Keys:      []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
+		})
+		require.NoError(t, err)
+		require.EqualValues(t, 1, rsp.RebuildCount)
+	}
+	rebuild(ContextWithMigrationRead(t.Context()), migrated)
+	rebuild(t.Context(), other)
+
+	require.Equal(t, []bool{true}, storage.marksFor(migrated), "the migration's rebuild reads as the migration")
+	require.Equal(t, []bool{false}, storage.marksFor(other), "another rebuild reads as before")
+}
+
 func TestMaybeInjectFailure(t *testing.T) {
 	t.Run("disabled when percent is 0", func(t *testing.T) {
 		s := &searchServer{injectFailuresPercent: 0}
@@ -2948,7 +3019,7 @@ func TestSearchResolvesReplacementFolderIndex(t *testing.T) {
 		backend.cache[folderKey] = folders
 		rsp, err := s.searchIndex(t.Context(), NewSearchStats("test"), req, dashKey, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 		require.Same(t, folders, primary.indexes.Folders)
 	}
 	require.Equal(t, 1, oldFolders.updateIndexCalls)
@@ -3187,7 +3258,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	importTimes := map[NamespacedResource]time.Time{}
 
 	// Without jitter: all indexes are stale and should be queued.
-	chsNoJitter := support.findIndexesToRebuild(importTimes, nil, now, false)
+	chsNoJitter := support.findIndexesToRebuild(t.Context(), importTimes, nil, now, false)
 	require.Equal(t, numIndexes, len(chsNoJitter))
 
 	// Create a second server with the same config to get a fresh rebuild queue.
@@ -3195,7 +3266,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	require.NoError(t, err)
 
 	// With jitter: some indexes get extra tolerance, so fewer should be queued.
-	chsWithJitter := support2.findIndexesToRebuild(importTimes, nil, now, true)
+	chsWithJitter := support2.findIndexesToRebuild(t.Context(), importTimes, nil, now, true)
 	require.Less(t, len(chsWithJitter), numIndexes, "jitter should cause some indexes to not be queued yet")
 	require.Greater(t, len(chsWithJitter), 0, "at least some indexes should still be queued")
 }

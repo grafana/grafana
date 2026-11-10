@@ -384,9 +384,6 @@
 /scripts/list-release-artifacts.sh @grafana/grafana-operator-experience-squad
 /scripts/releasefinder.sh @baldm0mma
 
-# OSS Plugin Partnerships backend code
-/pkg/tsdb/azuremonitor/ @grafana/data-sources-plugins
-
 # Partner Datasources backend code
 /pkg/tsdb/graphite/ @grafana/data-sources-plugins
 
@@ -441,7 +438,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /public/app/core/trustedTypesPolicy.test.ts  @grafana/grafana-frontend-platform
 /public/app/core/trustedTypesPolicy.ts  @grafana/grafana-frontend-platform
 /e2e-playwright/alerting-suite/ @grafana/alerting-squad
-/e2e-playwright/cloud-plugins-suite/ @grafana/data-sources-plugins
 /e2e-playwright/diagnostics-suite/ @grafana/data-sources-plugins
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
 /e2e-playwright/notebooks-suite/ @grafana/sharing-squad
@@ -461,6 +457,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards/PanelSandboxDashboard.json @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards/TestDashboard.json @grafana/dashboards-squad @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards/TestV2Dashboard.json @grafana/dashboards-squad
+/e2e-playwright/dashboards/V2DashNestedTabs.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashRowsWithTabs.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithRowRepeats.json @grafana/dashboards-squad
@@ -723,7 +720,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/ @grafana/grafana-app-platform-squad
 
 /packages/grafana-schema/src/**/annotationslist @grafana/dashboards-squad
-/packages/grafana-schema/src/**/azuremonitor @grafana/data-sources-plugins
 /packages/grafana-schema/src/**/barchart @grafana/dataviz-squad
 /packages/grafana-schema/src/**/bargauge @grafana/dataviz-squad
 /packages/grafana-schema/src/**/candlestick @grafana/dataviz-squad
@@ -1193,7 +1189,7 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
 /scripts/openapi3/ @grafana/grafana-operator-experience-squad
-/scripts/prepare-npm-package.js @grafana/grafana-frontend-platform
+/scripts/pnpm-pack-hooks.cjs @grafana/grafana-frontend-platform
 /scripts/protobuf-check.sh @grafana/grafana-catalog
 /scripts/stripnulls.sh @grafana/grafana-as-code
 /scripts/tag_release.sh @grafana/grafana-operator-experience-squad
@@ -1222,7 +1218,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/grafana-catalog
-/public/app/plugins/datasource/azuremonitor/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/graphite/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
@@ -1426,6 +1421,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/release-build.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/release-verify.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/release-verify-packages.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/renovate-approve.yml @grafana/grafana-frontend-platform
 /.github/workflows/cleanup-branches.yml @grafana/grafana-backend-services-squad
 /.github/workflows/publish-artifact.yml @grafana/grafana-backend-services-squad
 /.github/workflows/proto-breaking-changes.yml @grafana/grafana-backend-services-squad

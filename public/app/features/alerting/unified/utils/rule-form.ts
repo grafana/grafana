@@ -1,6 +1,9 @@
 import { produce } from 'immer';
 
-import { isSupportedExternalPrometheusFlavoredRulesSourceType } from '@grafana/alerting/internal';
+import {
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+  isSupportedExternalRulesSourceType,
+} from '@grafana/alerting/internal';
 import {
   type IntervalValues,
   type RelativeTimeRange,
@@ -55,12 +58,7 @@ import {
 } from '../types/rule-form';
 
 import { Annotation } from './constants';
-import {
-  GRAFANA_RULES_SOURCE_NAME,
-  getDefaultOrFirstCompatibleDataSource,
-  isGrafanaRulesSource,
-  isSupportedExternalRulesSourceType,
-} from './datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDefaultOrFirstCompatibleDataSource, isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import {
   isGrafanaAlertingRuleByType,

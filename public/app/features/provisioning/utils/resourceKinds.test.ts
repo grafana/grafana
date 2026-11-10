@@ -2,7 +2,7 @@ import { HttpResponse, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { getIconForKind } from 'app/features/search/service/utils';
+import { getIconForKind } from 'app/features/search/service/icons';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 

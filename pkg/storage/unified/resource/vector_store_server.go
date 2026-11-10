@@ -20,9 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
-// maxWriteBatch caps inputs per upsert and uids per delete. The proto
-// documents the inputs cap; the uids cap is server-enforced symmetry.
+// maxWriteBatch caps ordinary upsert inputs and uids per delete.
 const maxWriteBatch = 500
+
+// maxSubresourceWriteBatch caps the complete desired chunk set for an entity.
+const maxSubresourceWriteBatch = 2000
 
 // maxMetadataBytes mirrors the proto contract (metadata ≤ 4 KiB JSON).
 const maxMetadataBytes = 4096
@@ -274,12 +276,12 @@ func validateMetadataObject(raw []byte) error {
 // validateInputs enforces the per-input contract. When requireUID is
 // non-empty (UpsertSubresources), every input's uid must be empty or equal
 // to it.
-func validateInputs(inputs []*resourcepb.EmbeddingInput, requireUID string) error {
+func validateInputs(inputs []*resourcepb.EmbeddingInput, requireUID string, maxInputs int) error {
 	if len(inputs) == 0 {
 		return status.Error(codes.InvalidArgument, "inputs must not be empty")
 	}
-	if len(inputs) > maxWriteBatch {
-		return status.Errorf(codes.InvalidArgument, "too many inputs: %d > %d", len(inputs), maxWriteBatch)
+	if len(inputs) > maxInputs {
+		return status.Errorf(codes.InvalidArgument, "too many inputs: %d > %d", len(inputs), maxInputs)
 	}
 	for i, in := range inputs {
 		switch {
@@ -370,7 +372,7 @@ func (s *VectorStoreServer) Upsert(ctx context.Context, req *resourcepb.VectorUp
 		return nil, err
 	}
 
-	if err := validateInputs(req.Inputs, ""); err != nil {
+	if err := validateInputs(req.Inputs, "", maxWriteBatch); err != nil {
 		return nil, err
 	}
 
@@ -411,7 +413,7 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 	if utf8.RuneCountInString(req.Uid) > maxKeyFieldLen {
 		return nil, status.Errorf(codes.InvalidArgument, "uid exceeds %d chars", maxKeyFieldLen)
 	}
-	if err := validateInputs(req.Inputs, req.Uid); err != nil {
+	if err := validateInputs(req.Inputs, req.Uid, maxSubresourceWriteBatch); err != nil {
 		return nil, err
 	}
 	seen := make(map[string]struct{}, len(req.Inputs))

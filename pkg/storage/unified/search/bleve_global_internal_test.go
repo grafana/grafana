@@ -72,7 +72,6 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 			Limit: 100,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		names := make([]string, 0, len(rsp.Rows))
 		for _, row := range rsp.Rows {
 			names = append(names, row.Key.Name)
@@ -118,7 +117,6 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 			Limit:   100,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 
 		names := make([]string, 0, len(rsp.Rows))
 		for _, row := range rsp.Rows {
@@ -133,7 +131,6 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 			Limit:   100,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 
 		found := map[string]string{}
 		for _, row := range rsp.Rows {
@@ -171,7 +168,6 @@ func TestSearchResponseResourceVersion(t *testing.T) {
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			}, nil, nil)
 			require.NoError(t, err)
-			require.Nil(t, response.Error)
 			assert.Equal(t, int64(1), response.TotalHits)
 			assert.Equal(t, tc.rv, response.ResourceVersion)
 		})
@@ -311,7 +307,6 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 			SearchAfter: after,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		if len(rsp.Rows) == 0 {
 			break
 		}
@@ -517,7 +512,6 @@ func searchFolderTree(t *testing.T, index resource.ResourceIndex, folders ...str
 		Limit: 100,
 	}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	names := make([]string, 0, len(rsp.Rows))
 	for _, row := range rsp.Rows {
 		names = append(names, row.Key.Name)
@@ -645,7 +639,6 @@ func searchFolderPaths(t *testing.T, index resource.ResourceIndex, access authli
 		Limit:   100,
 	}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.NotEmpty(t, rsp.Rows)
 	if rsp.FolderPaths == nil {
 		return nil
@@ -847,7 +840,6 @@ func testSearchReturnsRowAccess(t *testing.T, options ...setupOption) {
 			AccessVerbs: verbs,
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		access := map[string]map[string]bool{}
 		for _, row := range rsp.Rows {
 			access[row.Key.Resource+"/"+row.Key.Name] = row.Access
@@ -962,7 +954,6 @@ func TestPerResourceFolderTreeSearch(t *testing.T) {
 					before := proto.Clone(req)
 					rsp, err := dashboards.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), req, &resource.SearchIndexes{Folders: folders}, nil)
 					require.NoError(t, err)
-					require.Nil(t, rsp.Error)
 					assert.True(t, proto.Equal(before, req), "the caller's filters must not change")
 					names := make([]string, 0, len(rsp.Rows))
 					for _, row := range rsp.Rows {
@@ -1028,7 +1019,6 @@ func TestPerResourceFolderTreeUsesCurrentFolderIndex(t *testing.T) {
 	}
 	rsp, err := search(folders)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Len(t, rsp.Rows, 1)
 
 	current, err := backend.BuildIndex(ctx, folderKey, 1, "test", func(index resource.ResourceIndex) (int64, error) {
@@ -1040,7 +1030,6 @@ func TestPerResourceFolderTreeUsesCurrentFolderIndex(t *testing.T) {
 	assert.Contains(t, resourceutil.ErrorResultFromGRPCDetails(err).GetMessage(), bleve.ErrorIndexClosed.Error())
 	rsp, err = search(current)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	assert.Empty(t, rsp.Rows)
 
 	for name, source := range map[string]resource.ResourceIndex{
@@ -1083,7 +1072,6 @@ func TestPerResourceFolderTreeReopensFromDisk(t *testing.T) {
 		}, Limit: 10,
 	}, &resource.SearchIndexes{Folders: folders}, nil)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Len(t, rsp.Rows, 1)
 	assert.Equal(t, "dash", rsp.Rows[0].Key.Name)
 }
@@ -1115,7 +1103,6 @@ func TestPerResourceFolderTreeRestoresSnapshot(t *testing.T) {
 		Fields: []*resourcepb.Requirement{{Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: "in", Values: []string{"top"}}},
 	}, Limit: 10}, &resource.SearchIndexes{Folders: folderIndex}, nil)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Len(t, rsp.Rows, 1)
 	assert.Equal(t, "dash", rsp.Rows[0].Key.Name)
 }
@@ -1152,9 +1139,7 @@ func TestPerResourceFolderTreeSharedDuringMoves(t *testing.T) {
 			for range 20 {
 				rsp, err := idx.Search(t.Context(), nil, req, &resource.SearchIndexes{Folders: folders}, nil)
 				assert.NoError(t, err)
-				if rsp != nil {
-					assert.Nil(t, rsp.Error)
-				}
+				assert.NotNil(t, rsp)
 			}
 		})
 	}
@@ -1367,7 +1352,7 @@ func BenchmarkPerResourceFolderTree(b *testing.B) {
 						for b.Loop() {
 							rsp, err := dashboards.Search(b.Context(), nil, req, &resource.SearchIndexes{Folders: folders}, nil)
 							require.NoError(b, err)
-							require.Nil(b, rsp.Error)
+							require.NotNil(b, rsp)
 						}
 					})
 				}
@@ -1471,7 +1456,6 @@ func BenchmarkGlobalFolderTree(b *testing.B) {
 			Limit: 10,
 		}, nil, nil)
 		require.NoError(b, err)
-		require.Nil(b, rsp.Error)
 		require.Len(b, rsp.Rows, 10)
 	}
 
@@ -1648,7 +1632,6 @@ func TestFolderSetCheckErrorsReachTheSearchWithATextQuery(t *testing.T) {
 			Limit: 10,
 		}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Len(t, rsp.Rows, 1)
 	assert.Equal(t, "dash-top", rsp.Rows[0].Key.Name)
 
@@ -1686,7 +1669,6 @@ func TestSearchReturnsManagerAllowEdits(t *testing.T) {
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			}, nil, nil)
 			require.NoError(t, err)
-			require.Nil(t, rsp.Error)
 			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, rsp.ResultFormat)
 			assert.Equal(t, map[string]any{"editable": true, "locked": false, "unmanaged": nil}, allowEditsByName(t, rsp))
 		})

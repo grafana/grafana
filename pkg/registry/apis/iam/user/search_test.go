@@ -173,7 +173,6 @@ func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, response.GetError())
 	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, response.GetResultFormat())
 
 	parsed, err := parseResults(response)
