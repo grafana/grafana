@@ -23,15 +23,25 @@ var nameExp = regexp.MustCompile(`([^\/]*)\/*$`)
 
 const resourceManagerPath = "/v1/projects"
 
+// projectSegExp matches a single path segment (no embedded '/') so a target
+// can't smuggle in extra path segments to reach a different upstream API endpoint.
+const projectSegExp = `[^/]+`
+
+var (
+	metricDescriptorsTargetExp = regexp.MustCompile(`^/v3/projects/` + projectSegExp + `/metricDescriptors$`)
+	servicesTargetExp          = regexp.MustCompile(`^/v3/projects/` + projectSegExp + `/services$`)
+	sloTargetExp               = regexp.MustCompile(`^/v3/projects/` + projectSegExp + `/services/` + projectSegExp + `/serviceLevelObjectives$`)
+)
+
 type processResponse func(body []byte) ([]json.RawMessage, string, error)
 
 func (s *Service) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/gceDefaultProject", s.getGCEDefaultProject)
-	mux.HandleFunc("/metricDescriptors/", s.handleResourceReq(cloudMonitor, processMetricDescriptors))
-	mux.HandleFunc("/services/", s.handleResourceReq(cloudMonitor, processServices))
-	mux.HandleFunc("/slo-services/", s.handleResourceReq(cloudMonitor, processSLOs))
-	mux.HandleFunc("/projects", s.handleResourceReq(resourceManager, processProjects))
+	mux.HandleFunc("/metricDescriptors/", s.handleResourceReq(cloudMonitor, processMetricDescriptors, metricDescriptorsTargetExp))
+	mux.HandleFunc("/services/", s.handleResourceReq(cloudMonitor, processServices, servicesTargetExp))
+	mux.HandleFunc("/slo-services/", s.handleResourceReq(cloudMonitor, processSLOs, sloTargetExp))
+	mux.HandleFunc("/projects", s.handleResourceReq(resourceManager, processProjects, nil))
 	return mux
 }
 
@@ -50,9 +60,9 @@ func (s *Service) getGCEDefaultProject(rw http.ResponseWriter, req *http.Request
 	writeResponseBytes(rw, http.StatusOK, encoded)
 }
 
-func (s *Service) handleResourceReq(subDataSource string, responseFn processResponse) func(rw http.ResponseWriter, req *http.Request) {
+func (s *Service) handleResourceReq(subDataSource string, responseFn processResponse, targetExp *regexp.Regexp) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		client, code, err := s.setRequestVariables(req, subDataSource)
+		client, code, err := s.setRequestVariables(req, subDataSource, targetExp)
 		if err != nil {
 			writeErrorResponse(rw, code, fmt.Sprintf("unexpected error %v", err))
 			return
@@ -345,12 +355,21 @@ func buildResponse(responses []json.RawMessage, encoding string) ([]byte, error)
 	return encode(encoding, body)
 }
 
-func (s *Service) setRequestVariables(req *http.Request, subDataSource string) (*http.Client, int, error) {
+func (s *Service) setRequestVariables(req *http.Request, subDataSource string, targetExp *regexp.Regexp) (*http.Client, int, error) {
 	s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+
+	// The request is forwarded upstream as-is with the data source's credentials,
+	// so only allow the read-only calls the query editor makes.
+	if req.Method != http.MethodGet {
+		return nil, http.StatusMethodNotAllowed, fmt.Errorf("unexpected method %s", req.Method)
+	}
 
 	newPath, err := getTarget(req.URL.Path)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
+	}
+	if targetExp != nil && !targetExp.MatchString(newPath) {
+		return nil, http.StatusBadRequest, fmt.Errorf("unexpected resource path %q", newPath)
 	}
 
 	dsInfo, err := s.getDataSourceFromHTTPReq(req)
