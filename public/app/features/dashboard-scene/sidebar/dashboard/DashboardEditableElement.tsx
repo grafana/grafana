@@ -8,7 +8,6 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
-import { useQuestionsEnabled } from '../../scene/DashboardControlsExtensionPoint';
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { useLayoutCategory } from '../../scene/layouts-shared/DashboardLayoutSelector';
@@ -16,7 +15,6 @@ import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
-import { V2DashboardSerializer } from '../../serialization/DashboardSceneSerializer';
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
 import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
@@ -39,8 +37,6 @@ function useDashboardSidebarOptions(dashboard: DashboardScene): OptionsPaneCateg
   const { body } = dashboard.useState();
   const dashboardTitleInputId = useId();
   const dashboardDescriptionInputId = useId();
-  // Only the v2 schema saves questions; a v1 save would drop them.
-  const showQuestions = useQuestionsEnabled() && dashboard.serializer instanceof V2DashboardSerializer;
 
   const dashboardOptions = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
@@ -65,7 +61,7 @@ function useDashboardSidebarOptions(dashboard: DashboardScene): OptionsPaneCateg
   const variablesCategory = useVariablesCategory(dashboard);
   const annotationsCategory = useAnnotationsCategory(dashboardSceneGraph.getDataLayers(dashboard));
   const linksCategory = useLinksCategory(dashboard);
-  const questionsCategory = useQuestionsCategory(dashboard, 'dashboard', showQuestions);
+  const questionsCategory = useQuestionsCategory(dashboard, 'dashboard');
 
   return [
     dashboardOptions,

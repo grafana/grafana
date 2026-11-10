@@ -183,7 +183,7 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
     >
       <div className={styles.sectionControls}>
         {tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
-        {!isEditing && <DashboardControlsExtensionPoint owner={tab} />}
+        <DashboardControlsExtensionPoint owner={tab} />
       </div>
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}

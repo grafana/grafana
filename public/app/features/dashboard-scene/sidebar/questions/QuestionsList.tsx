@@ -7,6 +7,9 @@ import { useDragAndDrop } from '@grafana/ui/internal';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { useQuestionsEnabled } from '../../scene/DashboardControlsExtensionPoint';
+import { V2DashboardSerializer } from '../../serialization/DashboardSceneSerializer';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { DraggableListItems } from '../dashboard/DraggableList';
 import { SidebarAddButton } from '../dashboard/SidebarAddButton';
 import { toDraggableListItemActions } from '../dashboard/helpers';
@@ -24,13 +27,15 @@ const CATEGORY_IDS: Record<QuestionsOwnerKind, SidebarCategoryType> = {
 
 /**
  * The "Questions" category of a dashboard's, row's, or tab's options, laid out like "Links": a count, an add
- * button, and a list to reorder, edit, duplicate, or delete questions. Empty when `enabled` is false.
+ * button, and a list to reorder, edit, duplicate, or delete questions. Empty unless questions are enabled (see
+ * `useQuestionsEnabled`) and the dashboard saves as v2: a v1 save drops the questions, and turns rows and tabs into
+ * v1 rows.
  */
 export function useQuestionsCategory(
   owner: QuestionsOwner,
-  ownerKind: QuestionsOwnerKind,
-  enabled: boolean
+  ownerKind: QuestionsOwnerKind
 ): OptionsPaneCategoryDescriptor[] {
+  const enabled = useQuestionsEnabled() && getDashboardSceneFor(owner).serializer instanceof V2DashboardSerializer;
   const { questions } = owner.useState();
   const listId = useId();
   const count = questions?.length ?? 0;

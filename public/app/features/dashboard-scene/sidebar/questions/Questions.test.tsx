@@ -20,6 +20,8 @@ import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardEditableElement } from '../dashboard/DashboardEditableElement';
@@ -91,6 +93,23 @@ describe('questions in the dashboard options', () => {
     });
 
     expect(result.current.map((category) => category.props.id)).not.toContain(SidebarCategoryType.DashboardQuestions);
+  });
+
+  // A v1 save drops the questions, and turns rows into v1 rows.
+  it('are offered on a row only when the dashboard saves as v2', () => {
+    setTestFlags({ 'grafana.dashboardQuestions': true });
+    const rowCategoryIds = (serializerVersion: 'v1' | 'v2') => {
+      const row = new RowItem({ title: 'Errors', layout: DefaultGridLayoutManager.createEmpty() });
+      new DashboardScene(
+        { $data: new DashboardDataLayerSet({}), body: new RowsLayoutManager({ rows: [row] }) },
+        serializerVersion
+      );
+      const { result } = renderHook(() => row.useSidebarOptions(false), { wrapper: TestProvider });
+      return result.current.map((category) => category.props.id);
+    };
+
+    expect(rowCategoryIds('v2')).toContain(SidebarCategoryType.RowQuestions);
+    expect(rowCategoryIds('v1')).not.toContain(SidebarCategoryType.RowQuestions);
   });
 });
 

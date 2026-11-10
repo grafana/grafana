@@ -10,10 +10,14 @@ import { useStyles2 } from '@grafana/ui';
 import { getQuestionSourceRefs } from '../data-service/questionSources';
 import { sectionRef } from '../data-service/sections';
 import { getSectionPath } from '../data-service/sources';
+import { isRepeatCloneOrChildOf } from '../utils/clone';
+import { useDashboardState } from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
+import { isViewingDashboard } from './dashboardModes';
 import { RowItem } from './layout-rows/RowItem';
 import { TabItem } from './layout-tabs/TabItem';
+import { type DashboardSceneState } from './types/dashboard';
 
 const COMPONENTS_LIMIT_PER_PLUGIN = 1;
 
@@ -27,15 +31,20 @@ interface Props {
 /**
  * SPIKE: lets plugins add a control to the dashboard controls bar and to the controls of a row or tab. Each component
  * gets the questions saved on the dashboard, row, or tab, and a source reference the dashboard data API resolves to
- * the panels the control sits over. Renders nothing where no questions are saved, or with
- * `grafana.dashboardQuestions` off. Questions without text, such as one just added in the editor, are left out.
+ * the panels the control sits over. Renders nothing where no questions are saved, with `grafana.dashboardQuestions`
+ * off, or while the dashboard or a panel is edited or a plan is previewed (see `isShowingDashboard`). Questions without
+ * text, such as one just added in the editor, are left out.
+ *
+ * Renders nothing on a repeated row or tab after the first, or inside one: the dashboard data API reads only the
+ * first repeat's panels, so a later repeat's questions would be answered from the first repeat's data.
  */
 export function DashboardControlsExtensionPoint({ owner }: Props) {
   const enabled = useFlagGrafanaDashboardQuestions();
   const { questions } = owner.useState();
+  const dashboardState = useDashboardState(owner);
   const askable = questions?.filter((question) => question.text.trim()) ?? [];
 
-  if (!enabled || !askable.length) {
+  if (!enabled || !askable.length || !isShowingDashboard(dashboardState) || isRepeatCloneOrChildOf(owner)) {
     return null;
   }
 
@@ -65,6 +74,14 @@ function ControlsComponents({ owner, questions }: { owner: ControlsOwner; questi
       ))}
     </div>
   );
+}
+
+/**
+ * Viewers ask about the dashboard as it is shown: not while it is edited, a panel is edited, or a plan is previewed
+ * with placeholder panels that have no queries.
+ */
+function isShowingDashboard(state: DashboardSceneState): boolean {
+  return isViewingDashboard(state) && !state.editPanel && !state.planning;
 }
 
 function useDashboardControlsComponents() {

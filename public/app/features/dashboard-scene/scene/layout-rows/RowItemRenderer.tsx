@@ -202,7 +202,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             <div className={styles.rowLayoutWrapper} id={contentId}>
               <div className={styles.sectionControls}>
                 {rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
-                {!isEditing && !planning && <DashboardControlsExtensionPoint owner={model} />}
+                <DashboardControlsExtensionPoint owner={model} />
               </div>
               <layout.Component model={layout} />
             </div>

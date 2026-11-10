@@ -213,7 +213,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   } = model.useState();
 
   const dashboard = getDashboardSceneFor(model);
-  const { links, editPanel, isEditing } = dashboard.useState();
+  const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const scopesMegaMenuEnabled = useFlagGrafanaScopesDashboardsMegaMenu();
   const showDebugger = window.location.search.includes('scene-debugger');
@@ -232,7 +232,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         <>
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
             {!hideVariableControls && <VariableControls dashboard={dashboard} />}
-            {!isEditing && !editPanel && <DashboardControlsExtensionPoint owner={dashboard} />}
+            <DashboardControlsExtensionPoint owner={dashboard} />
             {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
             <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
               <div className={styles.fixedControls}>
@@ -286,7 +286,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         </>
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
-      {!isEditing && !editPanel && <DashboardControlsExtensionPoint owner={dashboard} />}
+      <DashboardControlsExtensionPoint owner={dashboard} />
       {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
       {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
       <DefaultControlsLoadingSkeleton
