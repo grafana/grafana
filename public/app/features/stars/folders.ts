@@ -1,7 +1,7 @@
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { type SearchQuery } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
-import { type PermissionLevel } from 'app/types/acl';
 
 /**
  * Resolves starred folder UIDs to view items with real backend UIDs. The stars API stores only UIDs,
@@ -9,7 +9,7 @@ import { type PermissionLevel } from 'app/types/acl';
  */
 export async function resolveStarredFolders(
   uids: string[],
-  permission?: PermissionLevel
+  permission?: SearchQuery['permission']
 ): Promise<DashboardViewItem[]> {
   if (uids.length === 0) {
     return [];

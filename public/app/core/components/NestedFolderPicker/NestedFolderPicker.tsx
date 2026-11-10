@@ -14,12 +14,11 @@ import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { type QueryResponse } from 'app/features/search/service/types';
+import { type QueryResponse, type SearchQuery } from 'app/features/search/service/types';
 import { extractManagerId, extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { useStarredItems } from 'app/features/stars/hooks';
-import { type PermissionLevel } from 'app/types/acl';
 
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
@@ -74,7 +73,7 @@ export interface NestedFolderPickerProps {
 
 const debouncedSearch = debounce(getSearchResults, 300);
 
-async function getSearchResults(searchQuery: string, permission?: PermissionLevel) {
+async function getSearchResults(searchQuery: string, permission?: SearchQuery['permission']) {
   const queryResponse = await getGrafanaSearcher().search({
     query: searchQuery,
     kind: ['folder'],
@@ -107,6 +106,8 @@ export function NestedFolderPicker({
   const isFolderEditAccessEnabled = useFlagGrafanaFolderPickerFolderEditAccess();
   // Only when browsing: a read only search result has no way into the folders below it
   const showReadOnly = isFolderEditAccessEnabled && showReadOnlyFolders;
+  // Every selectable folder must be one the user can create dashboards in, not only the browsed ones
+  const selectablePermission = showReadOnly ? 'create' : permission;
 
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
@@ -134,7 +135,10 @@ export function NestedFolderPicker({
     error: teamFoldersError,
   } = useTeamFolders(foldersOpenState, value, onChange, showRootFolder);
 
-  const { starredFolderTreeItems, error: starredFoldersError } = useStarredFolders(foldersOpenState, permission);
+  const { starredFolderTreeItems, error: starredFoldersError } = useStarredFolders(
+    foldersOpenState,
+    selectablePermission
+  );
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
@@ -161,7 +165,7 @@ export function NestedFolderPicker({
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
 
-    debouncedSearch(search, permission).then((queryResponse) => {
+    debouncedSearch(search, selectablePermission).then((queryResponse) => {
       // Only keep the results if it's was issued after the most recently resolved search.
       // This prevents results showing out of order if first request is slower than later ones.
       // We don't need to worry about clearing the isFetching state either - if there's a later
@@ -173,7 +177,7 @@ export function NestedFolderPicker({
         lastSearchTimestamp.current = timestamp;
       }
     });
-  }, [search, permission]);
+  }, [search, selectablePermission]);
 
   // the order of middleware is important!
   const middleware = [
@@ -505,7 +509,7 @@ function useTeamFolders(
   };
 }
 
-function useStarredFolders(foldersOpenState: Record<string, boolean>, permission?: PermissionLevel) {
+function useStarredFolders(foldersOpenState: Record<string, boolean>, permission?: SearchQuery['permission']) {
   const { data: uids, error } = useStarredItems('folder.grafana.app', 'Folder');
 
   const [folders, setFolders] = useState<DashboardViewItem[]>([]);

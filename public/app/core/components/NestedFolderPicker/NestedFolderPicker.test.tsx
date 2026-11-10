@@ -641,7 +641,7 @@ describe('NestedFolderPicker', () => {
       expect(mockOnChange).not.toHaveBeenCalled();
     });
 
-    it('keeps a permission filter, and leaves read only folders out of typed search', async () => {
+    it('filters browse and typed search on create permission, and leaves read only folders out of typed search', async () => {
       setTestFlags(readOnlyFlags);
       const requests: URLSearchParams[] = [];
       // A server without include support filters by the requested permission and never sets canCreate
@@ -666,7 +666,7 @@ describe('NestedFolderPicker', () => {
 
       for (const params of requests) {
         const isTypedSearch = params.has('query');
-        expect(params.get('permission')).toBe(isTypedSearch ? 'edit' : 'create');
+        expect(params.get('permission')).toBe('create');
         expect(params.get('include')).toBe(isTypedSearch ? null : 'pathToCreatable');
       }
     });
