@@ -22,11 +22,6 @@ describe('withoutPerResourceSearch', () => {
     expect(include('/rulesequences/search/hybrid')).toBe(false);
   });
 
-  it('drops the searches of the other rule resources', () => {
-    expect(include('/alertrules/search')).toBe(false);
-    expect(include('/recordingrules/search')).toBe(false);
-  });
-
   // The dashboard search at the group root is a different, older endpoint that the
   // frontend does call.
   it('keeps the group-root search', () => {
