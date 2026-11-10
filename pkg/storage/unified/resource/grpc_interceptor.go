@@ -11,45 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// UnaryErrorResultInterceptor converts response-embedded errors into gRPC status
-// errors while retaining the full ErrorResult as a status detail.
-func UnaryErrorResultInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-		resp, err := handler(ctx, req)
-		if err != nil {
-			return resp, err
-		}
-		result, ok := resp.(interface {
-			GetError() *resourcepb.ErrorResult
-		})
-		if !ok || result.GetError() == nil {
-			return resp, nil
-		}
-		return nil, GRPCStatusError(result.GetError())
-	}
-}
-
-// BlobStreamErrorResultInterceptor converts embedded blob errors before sending
-// them, so no successful response is observed before the gRPC status error.
-func BlobStreamErrorResultInterceptor() grpc.StreamServerInterceptor {
-	return func(srv any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		return handler(srv, &blobErrorResultStream{ServerStream: stream})
-	}
-}
-
-type blobErrorResultStream struct {
-	grpc.ServerStream
-}
-
-func (s *blobErrorResultStream) SendMsg(msg any) error {
-	if result, ok := msg.(interface {
-		GetError() *resourcepb.ErrorResult
-	}); ok && result.GetError() != nil {
-		return GRPCStatusError(result.GetError())
-	}
-	return s.ServerStream.SendMsg(msg)
-}
-
 const listPathNotApplicable = "not_applicable"
 
 type requestMetricsState struct {
@@ -82,13 +43,6 @@ func UnaryRequestDurationInterceptor(metrics *StorageMetrics) grpc.UnaryServerIn
 		resp, err := handler(ctx, req)
 		group, resource := requestKeyLabels(req)
 		code := status.Code(err)
-		if err == nil {
-			if result, ok := resp.(interface {
-				GetError() *resourcepb.ErrorResult
-			}); ok {
-				code = grpcCodeFromErrorResult(result.GetError())
-			}
-		}
 		metrics.RequestDuration.
 			WithLabelValues(path.Base(info.FullMethod), group, resource, code.String(), state.listPath).
 			Observe(time.Since(start).Seconds())

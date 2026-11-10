@@ -329,22 +329,16 @@ func translateActionToKubernetesAttributes(translation resourceTranslation, acti
 	return group, resource, subresource, verb, true
 }
 
-// TranslateActionToListParams translates an RBAC action to Zanzana List request parameters (group, resource, subresource, verb).
-// Returns empty strings if the action cannot be translated.
-func TranslateActionToListParams(action string) (group, resource, subresource, verb string) {
-	translationTypes := make([]string, 0, len(resourceTranslations))
-	for typ := range resourceTranslations {
-		translationTypes = append(translationTypes, typ)
-	}
-	sort.Strings(translationTypes)
-
-	for _, typ := range translationTypes {
-		translation := resourceTranslations[typ]
-		if group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action); ok {
-			return group, resource, subresource, verb
+// TranslateActionToListParams returns every distinct List mapping for an RBAC action.
+// Returns nil if the action cannot be translated.
+func TranslateActionToListParams(action string) []ActionListEntry {
+	var entries []ActionListEntry
+	for _, entry := range supportedActions {
+		if entry.Action == action {
+			entries = append(entries, entry)
 		}
 	}
-	return "", "", "", ""
+	return entries
 }
 
 // ActionListEntry describes an action that Zanzana supports, along with
@@ -368,7 +362,7 @@ var supportedActions = func() []ActionListEntry {
 	sort.Strings(translationTypes)
 
 	var out []ActionListEntry
-	seen := make(map[string]struct{})
+	seen := make(map[ActionListEntry]struct{})
 	for _, typ := range translationTypes {
 		translation := resourceTranslations[typ]
 
@@ -379,29 +373,30 @@ var supportedActions = func() []ActionListEntry {
 		sort.Strings(actions)
 
 		for _, action := range actions {
-			if _, ok := seen[action]; ok {
-				continue
-			}
 			group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action)
 			if !ok {
 				continue
 			}
 
-			seen[action] = struct{}{}
-			out = append(out, ActionListEntry{
+			entry := ActionListEntry{
 				Action:      action,
 				Group:       group,
 				Resource:    resource,
 				Subresource: subresource,
 				Verb:        verb,
-			})
+			}
+			if _, ok := seen[entry]; ok {
+				continue
+			}
+			seen[entry] = struct{}{}
+			out = append(out, entry)
 		}
 	}
 	return out
 }()
 
-// SupportedActions returns every RBAC action that Zanzana can resolve,
-// derived from the resource translation table.
+// SupportedActions returns the distinct List mappings derived from the translation table.
+// An action may have multiple entries when it applies to different resources.
 func SupportedActions() []ActionListEntry {
 	return supportedActions
 }

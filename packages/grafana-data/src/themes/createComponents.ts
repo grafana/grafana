@@ -119,6 +119,9 @@ export const ThemeComponentsInputSchema = z
     checkbox: z.object({
       activeBackground: z.string().optional(),
       activeBackgroundHover: z.string().optional(),
+      activeBorder: z.string().optional(),
+      activeBorderHover: z.string().optional(),
+      checkmarkColor: z.string().optional(),
     }),
     switch: z.object({
       activeBackground: z.string().optional(),
@@ -246,6 +249,9 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     checkbox: {
       activeBackground: colors.accent.main,
       activeBackgroundHover: colors.accent.shade,
+      activeBorder: colors.accent.main,
+      activeBorderHover: colors.accent.shade,
+      checkmarkColor: colors.accent.contrastText,
     },
     switch: {
       activeBackground: colors.accent.main,

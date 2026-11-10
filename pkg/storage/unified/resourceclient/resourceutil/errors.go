@@ -218,17 +218,6 @@ func StatusError(res *resourcepb.ErrorResult) error {
 	return status
 }
 
-// StatusErrorFromResponse derives a Kubernetes [apierrors.StatusError] from a unified
-// storage call that may report failure through a response-embedded [resourcepb.ErrorResult]
-// or a returned error. A returned error takes precedence and is handled by
-// [StatusErrorFromGRPC]; otherwise the embedded result is converted with [StatusError].
-func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
-	if err == nil {
-		return StatusError(respErr)
-	}
-	return StatusErrorFromGRPC(err)
-}
-
 // StatusErrorFromGRPC derives a Kubernetes [apierrors.StatusError] from the error returned
 // by a unified storage call when it can: a gRPC status (wrapped or not), an error already
 // carrying an [apierrors.APIStatus], or a context error. Returns nil for nil.
