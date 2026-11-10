@@ -3,6 +3,10 @@ import { type DataFrame } from './dataFrame';
 import { type DataLinkPostProcessor } from './fieldOverrides';
 import { type TimeZone } from './time';
 
+export interface ManagedBadgeV1Props {
+  resource: { metadata?: { annotations?: Record<string, string | undefined> } };
+}
+
 /**
  * Props for the PrometheusQueryResults exposed component.
  * @see PluginExtensionExposedComponents.PrometheusQueryResultsV1
