@@ -1381,6 +1381,15 @@
 - **TextLink:** Fix icon positioning if text wraps [#118233](https://github.com/grafana/grafana/pull/118233), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.0.0 END -->
+<!-- 12.4.15 START -->
+
+# 12.4.15 (2026-11-10)
+
+### Features and enhancements
+
+- **DateTime:** Bump moment-timezone to 0.6.6 for 2026 time zone changes [#136947](https://github.com/grafana/grafana/pull/136947), [@joshhunt](https://github.com/joshhunt)
+
+<!-- 12.4.15 END -->
 <!-- 12.4.14 START -->
 
 # 12.4.14 (2026-10-27)
