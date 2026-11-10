@@ -110,8 +110,9 @@ different parent, for example `isFull ? <A>{viz}</A> : <B>{viz}</B>`. In panel e
 the options pane outlives the preview, so a preview remount can stop panel options
 from responding without any error.
 
-If a layout change can move a scene object's component to a new parent, keep the
-object active from its owner for the owner's lifetime. Check the owner even when your
-change does not touch it. See the activation handler in
+Prefer keeping the component at a stable position in the tree. If a layout change must
+move it to a new parent, keep the object active from its owner for the owner's
+lifetime. Check the owner even when your change does not touch it. See the activation
+handler in
 [PanelEditor.tsx](panel-edit/PanelEditor.tsx) and its remount test in
 [PanelEditor.test.ts](panel-edit/PanelEditor.test.ts).
