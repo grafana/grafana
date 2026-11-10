@@ -8681,6 +8681,143 @@
       "update": "Update"
     }
   },
+  "drilldown-otel": {
+    "changes": {
+      "deploy": "Deploy",
+      "errors": "Errors",
+      "investigate": "Investigate",
+      "mapping": "Attribute mapping",
+      "quiet": "All quiet: no regressions in the last 30 minutes.",
+      "slow": "Slow",
+      "subtitle": "From span metrics, grouped by service",
+      "title": "Changed in the last 30 minutes"
+    },
+    "coverage": {
+      "complete": "All services report",
+      "logs": "Logs",
+      "logs-detail": "services with logs",
+      "metrics": "Metrics",
+      "metrics-detail": "services with span metrics",
+      "no-logs": "{{services}} with no logs",
+      "no-metrics": "{{services}} with no span metrics",
+      "no-namespace": "{{services}} without service.namespace",
+      "no-pyroscope": "No Pyroscope data source",
+      "no-spans": "{{services}} with no spans",
+      "open": "Open",
+      "profiles": "Profiles",
+      "profiles-detail": "sources",
+      "title": "Signal coverage",
+      "traces": "Traces",
+      "traces-detail": "services with spans"
+    },
+    "drawer": {
+      "attribute": "Attribute",
+      "cancel": "Cancel",
+      "confirm": "Promote",
+      "confirm-body": "This changes log indexing for the whole organization. Existing queries keep working. New log volume can raise cardinality and cost.",
+      "confirm-note": "This prototype shows the confirmation step and does not change Loki.",
+      "confirm-title": "Confirm: promote {{attribute}}",
+      "error": "Could not read the attribute mapping",
+      "gap-metadata": "Stored as structured metadata. Filters on this attribute need a stream selector until it is promoted to an index label.",
+      "gap-missing": "No log line for this service carries the attribute. Set it as a resource attribute in the SDK or the Collector.",
+      "gap-title": "{{attribute}} in Logs",
+      "index": "index label",
+      "loading": "Checking {{service}} in each signal",
+      "metadata": "structured metadata",
+      "missing": "not reported",
+      "na": "n/a",
+      "ok": "ok",
+      "promote": "Promote to index label...",
+      "subtitle": "Attribute names follow OpenTelemetry semantic conventions. Each backend spells them its own way.",
+      "title": "How this maps to each signal"
+    },
+    "error": "Could not query the OTel lab data sources",
+    "intro": "Start from a service. Every signal opens with the same scope.",
+    "loading": "Querying the OTel lab data sources",
+    "scope": {
+      "back": "Back to overview",
+      "changed": "What changed against the previous 30 minutes",
+      "compare": "Errors compared with the rest",
+      "compare-empty": "No errors in this window to compare.",
+      "compare-subtitle": "Attribute values ranked by their share of errors against their share of all spans",
+      "error": "Could not query the OTel lab data sources",
+      "loading": "Reading the four signals for {{service}}",
+      "logs-change": "{{before}} lines per minute to {{now}}",
+      "logs-detail": "lines per minute",
+      "mapping": "How this maps to each signal",
+      "metrics-change": "error rate {{before}} to {{now}}, p95 {{p95Before}} to {{p95Now}}",
+      "metrics-detail": "error rate, p95 {{p95}}",
+      "no-data": "no data",
+      "no-errors": "no error spans in this window",
+      "no-logs": "no log stream for this service",
+      "no-profiles": "No profiles data source",
+      "no-source": "no data source",
+      "not-reported": "not reported",
+      "open": "Open {{app}} Drilldown",
+      "points": "{{points}} pts",
+      "profiles-detail": "Profiles Drilldown reads only service_name. Connect a Pyroscope data source to see CPU and memory for this service.",
+      "subtitle": "The same attributes drive every signal below",
+      "title": "Scope",
+      "traces-change": "{{span}} holds {{share}}% of errors",
+      "traces-detail": "error traces in the last 30 minutes"
+    },
+    "signals": {
+      "logs": "Logs",
+      "metrics": "Metrics",
+      "no-namespace": "no namespace",
+      "none": "none",
+      "profiles": "Profiles",
+      "traces": "Traces"
+    },
+    "table": {
+      "change": "Last change",
+      "degraded": "Errors",
+      "health": "Health",
+      "healthy": "Healthy",
+      "investigate": "Investigate",
+      "mapping": "Attribute mapping",
+      "no-namespace": "service.namespace not set",
+      "service": "Service",
+      "signals": "Signals and attribute state",
+      "slow": "Slow",
+      "subtitle": "Ranked by change, then by name",
+      "title": "Services",
+      "unknown": "unknown",
+      "version": "Version"
+    },
+    "trace": {
+      "copy": "Copy trace ID",
+      "error": "Could not read the trace",
+      "loading": "Finding a trace for {{service}}",
+      "logs-empty": "No log lines in this scope. Try another scope.",
+      "logs-error": "Could not read the logs",
+      "logs-loading": "Reading logs",
+      "logs-subtitle": "Lines from every service in the trace",
+      "logs-title": "Logs for this trace",
+      "more": "Showing {{shown}} of {{total}} spans. Services in this trace: {{services}}.",
+      "none": "No trace found",
+      "none-body": "Tempo has no trace for {{service}} in the last 30 minutes.",
+      "open-logs": "Open in Logs Drilldown",
+      "open-metrics": "Open metrics for {{service}}",
+      "open-traces": "Open in Traces Drilldown",
+      "scope-both": "Resource and Trace",
+      "scope-note": "Trace is the default. Resource adds the service's logs within 30 minutes of the span. Span shows lines for the selected span.",
+      "scope-resource": "Resource",
+      "scope-span": "Span",
+      "scope-trace": "Trace",
+      "step-compare": "2 Compare errors with the rest",
+      "step-logs": "4 Logs of the trace",
+      "step-symptom": "1 Symptom",
+      "step-trace": "3 Failing trace",
+      "subtitle-failing": "Errored spans first. {{errors}} of {{spans}} spans errored.",
+      "subtitle-ok": "No error trace for this service in the last 30 minutes. Showing its newest trace. Spans in start order.",
+      "title": "Trace",
+      "warn-only": "Show only WARN and above"
+    },
+    "view": {
+      "service": "Service"
+    }
+  },
   "drilldown-page": {
     "apps": {
       "logs": "Logs",
@@ -8774,6 +8911,235 @@
     },
     "time-controls": {
       "about": "About Drilldown"
+    }
+  },
+  "drilldown-readiness": {
+    "attention": {
+      "none": "No issues found.",
+      "subtitle": "Issues grouped by what to change",
+      "title": "Needs attention"
+    },
+    "back": "Back to readiness",
+    "check": {
+      "metric-labels": "Attributes reach metrics as labels",
+      "name-match": "The name matches across signals",
+      "namespace": "service.namespace is present",
+      "sampling": "Sampling can hide traces",
+      "service-name": "service.name is set",
+      "trace-id": "Trace ID field matches the log field",
+      "trace-to-logs": "Trace to log datasource mapping resolves"
+    },
+    "checks-error": "Could not run the checks",
+    "error": "Could not query the OTel lab data sources",
+    "fix": {
+      "collector": "In the collector",
+      "collector-intro": "Add a resource processor to the collector pipeline",
+      "collector-note": "Applies to everything the collector forwards, so add the processor to the pipelines for this service only.",
+      "confirm-body": "This changes indexing for the whole organization. Existing queries keep working. New volume can raise cardinality and cost. Needs an admin.",
+      "confirm-title": "Promote at ingestion",
+      "copy": "Copy",
+      "promote": "Promote at ingestion",
+      "promote-button": "Promote",
+      "promote-note": "This prototype shows the step and does not change the backend.",
+      "recheck": "After the change, run the checks again from the Diagnose view.",
+      "sdk": "In the SDK",
+      "sdk-intro": "Add to the service's environment",
+      "sdk-note": "Applies after the service restarts. New telemetry carries the namespace. Existing data keeps its old labels.",
+      "subtitle": "Choose where to set it for {{service}}. The first option changes only this service.",
+      "title": "Set service.namespace"
+    },
+    "fix-button": "Fix",
+    "home": {
+      "intro": "Check that your services can be investigated across signals, then drill in."
+    },
+    "intro": "Run the checks support runs by hand and name the first one that fails.",
+    "issue": {
+      "identity": "Identity",
+      "identity-text": "{{service}} has no service name. The SDK default replaced service.name.",
+      "names": "Names across signals",
+      "names-text": "{{services}} have span metrics and no logs under that name.",
+      "namespace": "Namespace",
+      "namespace-text": "{{services}} send no service.namespace.",
+      "promotion": "Promotion",
+      "promotion-text": "Logs have no environment label. deployment.environment.name is not indexed."
+    },
+    "loading": "Reading the services in each signal",
+    "rerun": "Run checks again",
+    "result": {
+      "no-logs": "No logs under this name.",
+      "no-metrics": "No span metrics under this name.",
+      "no-namespace": "No namespace.",
+      "no-traces": "No traces under this name.",
+      "ready": "Ready for cross-signal investigation",
+      "unnamed": "No service name."
+    },
+    "running": "Running the checks",
+    "service": "Service",
+    "services": {
+      "diagnose": "Diagnose",
+      "logs": "Logs",
+      "metrics": "Metrics",
+      "no-namespace": "no namespace",
+      "none": "none",
+      "ok": "ok",
+      "only-gaps": "Show only gaps",
+      "open": "Open",
+      "result": "Check result",
+      "service": "Service",
+      "subtitle": "Services with a gap come first",
+      "title": "Services",
+      "traces": "Traces"
+    },
+    "status": {
+      "check": "check",
+      "fail": "fail",
+      "info": "info",
+      "not-run": "not run",
+      "pass": "pass"
+    },
+    "strip": {
+      "logs-only": "Logs only",
+      "logs-only-note": "No span metrics under this name",
+      "metrics-only": "Metrics only",
+      "metrics-only-note": "No logs under this name",
+      "no-namespace": "No namespace",
+      "no-namespace-note": "Same name can collide",
+      "ready": "Ready",
+      "ready-note": "Cross-signal links possible",
+      "title": "Readiness summary"
+    },
+    "summary": "{{need}} of {{total}} checks need a change"
+  },
+  "drilldown-real": {
+    "apps": {
+      "logs": "Logs",
+      "metrics": "Metrics",
+      "profiles": "Profiles",
+      "sql": "SQL",
+      "traces": "Traces"
+    },
+    "ask-row": {
+      "assistant-label": "Ask Grafana Assistant",
+      "assistant-placeholder": "Ask Grafana Assistant, for example: why is {{service}} slow?"
+    },
+    "data": {
+      "connect-pyroscope": "Connect a Pyroscope data source to see CPU and memory",
+      "connect-sql": "Connect a SQL data source to see business impact",
+      "error-logs": "Error logs",
+      "failed-orders": "Failed orders",
+      "no-change": "No change in latency or errors so far",
+      "no-source": "No data source",
+      "no-spans": "no spans",
+      "p95-latency": "p95 latency",
+      "slowest-span": "Slowest span",
+      "top-function": "Top function"
+    },
+    "detection": {
+      "checking": "Checking…",
+      "graph-title": "{{service}} p95 latency",
+      "title": "Grafana Assistant is checking {{service}}",
+      "waiting": "Waiting"
+    },
+    "evidence": {
+      "amount": "amount",
+      "explore-traces": "Explore traces",
+      "failed-orders": "Failed orders",
+      "flame-graph": "Flame graph",
+      "impact-title": "Impact",
+      "log-lines": "Log lines",
+      "no-logs": "No logs in this time range.",
+      "no-profiles": "No profiles data source connected.",
+      "no-sql": "No SQL data source connected.",
+      "no-sql-queries": "No SQL data source connected.",
+      "no-trace": "No trace found in this time range.",
+      "open-db": "Open in DB O11y",
+      "order-id": "order_id",
+      "p95": "p95",
+      "query": "query",
+      "request-duration": "Request duration by route",
+      "slow-queries": "Slowest queries",
+      "slow-request": "Slow request: {{name}}",
+      "status": "status",
+      "time": "time",
+      "title": "Evidence",
+      "where-title": "Where it breaks",
+      "why-title": "Why"
+    },
+    "hints": {
+      "empty": "All quiet: no regressions in the last 30 minutes.",
+      "investigate": "Investigate",
+      "no-action": "No action needed",
+      "severity-deploy": "Deploy",
+      "severity-errors": "Errors",
+      "severity-slow": "Slow",
+      "sources": "From span metrics: error rate, p95 latency and new versions",
+      "title": "Detected in the last 30 minutes"
+    },
+    "insights": {
+      "open": "Open",
+      "open-signal": "Open {{app}}: {{label}} {{value}}",
+      "title": "Insights"
+    },
+    "load-error": "Could not query the OTel lab data sources",
+    "loading": {
+      "title": "Grafana Assistant is checking {{service}}"
+    },
+    "overview-error": "Could not query the OTel lab data sources",
+    "overview-loading": "Querying the OTel lab data sources",
+    "scope": {
+      "ask-for-fix": "Ask Assistant for a fix",
+      "attribute-label": "{{attribute}} =",
+      "back": "Back to overview",
+      "change-label": "Change {{attribute}}",
+      "detected": "Scope chosen by Grafana Assistant",
+      "fix-prompt": "Likely cause on {{service}}: {{cause}} How do I fix it?",
+      "likely-cause": "Likely cause:",
+      "manual": "Scope",
+      "namespace": "service.namespace = {{namespace}}",
+      "since": "since {{since}}"
+    },
+    "services": {
+      "browse": "Browse all services",
+      "degraded": "Degraded",
+      "errors": "Errors",
+      "healthy": "Healthy",
+      "last-deploy": "Version {{deploy}}",
+      "p95": "p95",
+      "scope-environment": "Environment",
+      "scope-namespace": "Namespace",
+      "scope-service": "Service",
+      "scope-type-label": "Scope type",
+      "scope-value-label": "Scope value",
+      "scope-value-placeholder": "Pick a value",
+      "title": "Your services"
+    },
+    "signals": {
+      "connect": "Connect a data source",
+      "coverage-databases": "{{covered}} of {{total}} databases",
+      "coverage-services": "{{covered}} of {{total}} services",
+      "no-source": "No data source connected",
+      "setup": "Set up for {{services}}",
+      "title": "Explore by signal"
+    },
+    "subtitle": "Drill down into your data using Grafana's powerful queryless apps",
+    "time-controls": {
+      "about": "About Drilldown"
+    },
+    "title": "Drilldown"
+  },
+  "drilldown-versions": {
+    "tabs": {
+      "nadine": "Nadine's prototype",
+      "nadine-real": "Nadine's design, real data",
+      "otel-first": "OTel first",
+      "readiness": "Readiness"
+    },
+    "views": {
+      "home": "Home",
+      "otel-first-mapping": "Attribute mapping",
+      "otel-first-scope": "Service scope",
+      "otel-first-trace": "One trace end to end",
+      "readiness-diagnose": "Diagnose"
     }
   },
   "embed": {
