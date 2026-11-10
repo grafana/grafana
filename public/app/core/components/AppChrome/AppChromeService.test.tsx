@@ -77,6 +77,21 @@ describe('AppChromeService', () => {
     expect(stateChanges).toBe(5);
   });
 
+  it('keeps the previous page nav when only the side panel is set after a route change', () => {
+    const chromeService = new AppChromeService();
+    chromeService.update({ sectionNav: { node: { text: 'Teams' }, main: { text: 'Administration' } } });
+
+    chromeService.setMatchedRoute({ path: '/other', component: () => null });
+    const sidePanel = { full: 'panel', compact: 'menu' };
+    chromeService.setSidePanel(sidePanel);
+
+    expect(chromeService.state.getValue().sidePanel).toBe(sidePanel);
+    expect(chromeService.state.getValue().sectionNav.node.text).toBe('Teams');
+
+    chromeService.update({ actions: null });
+    expect(chromeService.state.getValue().sectionNav.node.text).toBe('Home');
+  });
+
   describe('getPageTitle', () => {
     it('is the pageNav text, else the section text, and undefined until a page sets its nav after a route change', () => {
       const chromeService = new AppChromeService();

@@ -182,6 +182,7 @@ declare module "@openfeature/core" {
     | "assistant.dashboardPlanBuildingScreen"
     | "grafana.multiTenantNavTree"
     | "grafana.navigationInfoArchRefresh"
+    | "grafana.navigationAdminSubNav"
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
     | "grafana.configFromQueryDynamicName"
