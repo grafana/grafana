@@ -11139,6 +11139,26 @@
       "tooltip-hide": "Hide password",
       "tooltip-show": "Show password"
     },
+    "pull-request-banner": {
+      "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
+      "body-created": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
+      "body-deleted": "The rest of Grafana users in your organization will still see this resource until this branch is merged",
+      "body-moved": "The rest of Grafana users in your organization will still see the current version until this branch is merged",
+      "body-updated": "The rest of Grafana users in your organization will still see the current version until this branch is merged",
+      "branch-targets": "targets",
+      "create-pull-request-in-repository": "Open the repository and create a pull or merge request from the branch you saved to.",
+      "open-in-repo-button": "Open in {{repoType}}",
+      "open-pull-request": "Open pull request in {{repoType}}",
+      "open-repository": "Open repository",
+      "title-created": "A new resource has been created in a branch in {{repoType}}.",
+      "title-deleted": "A resource has been deleted in a branch in {{repoType}}.",
+      "title-loaded": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you",
+      "title-moved": "A resource has been moved in a branch in {{repoType}}.",
+      "title-updated": "A resource has been updated in a branch in {{repoType}}.",
+      "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
+      "view-pull-request": "View pull request in {{repoType}}",
+      "view-saved-version": "View saved version"
+    },
     "query-field": {
       "loading": "Loading editor"
     },
@@ -14612,28 +14632,6 @@
       "suffix-pr-branch": "Pull request branch",
       "suffix-read-only-branch": " (read-only)"
     }
-  },
-  "provisioned-resource-preview-banner": {
-    "preview-banner": {
-      "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
-      "branch-targets": "targets",
-      "create-pull-request-in-repository": "Open the repository and create a pull or merge request from the branch you saved to.",
-      "delete-from-branch": "The rest of Grafana users in your organization will still see this resource until this branch is merged",
-      "move-from-branch": "The rest of Grafana users in your organization will still see the current version until this branch is merged",
-      "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
-      "open-in-repo-button": "Open in {{repoType}}",
-      "open-pull-request-in-repo": "Open pull request in {{repoType}}",
-      "open-repository": "Open repository",
-      "update-from-branch": "The rest of Grafana users in your organization will still see the current version until this branch is merged",
-      "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
-      "view-pull-request-in-repo": "View pull request in {{repoType}}",
-      "view-saved-version": "View saved version"
-    },
-    "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
-    "title-deleted-resource-in-branch": "A resource has been deleted in a branch in {{repoType}}.",
-    "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you",
-    "title-moved-resource-in-branch": "A resource has been moved in a branch in {{repoType}}.",
-    "title-updated-resource-in-branch": "A resource has been updated in a branch in {{repoType}}."
   },
   "provisioning": {
     "bitbucket": {
