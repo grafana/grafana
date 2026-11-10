@@ -270,8 +270,6 @@ export const FlagKeys = {
   GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
-  /** Enables semantic (vector) dashboard search in the command palette */
-  GrafanaVectorSearchCmdk: "grafana.vectorSearchCmdk",
   /** Enables the sidebar pane with new toggles and options in panel view mode */
   GrafanaViewPanelPane: "grafana.viewPanelPane",
   /** Enables the new visual design refresh for the Grafana UI */
@@ -1818,17 +1816,6 @@ export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluat
  */
 export const useFlagGrafanaUseDefaultScopesEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.useDefaultScopesEndpoint", false, options).value;
-};
-
-/**
- * Enables semantic (vector) dashboard search in the command palette
- *
- * **Details:**
- * - flag key: `grafana.vectorSearchCmdk`
- * - default value: `false`
- */
-export const useFlagGrafanaVectorSearchCmdk = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.vectorSearchCmdk", false, options).value;
 };
 
 /**

@@ -8,7 +8,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupMswServer } from '../../mockApi';
 import { MOCK_SILENCE_ID_EXISTING, grantUserPermissions, mockAlertmanagerAlert, mockSilence } from '../../mocks';
 import { setAlertmanagerAlertsHandler, setSilenceGetResolver } from '../../mocks/server/configure';
-import { MOCK_GRAFANA_ALERT_RULE_TITLE } from '../../mocks/server/handlers/grafanaRuler';
+import { MOCK_GRAFANA_ALERT_RULE_TITLE } from '../../mocks/server/constants';
 
 import SilenceViewPage from './SilenceViewPage';
 

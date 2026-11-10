@@ -2854,6 +2854,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "frontend.disableGrafanaLive",
+			Description:  "Disable the Grafana Live functionality",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "paneledit.buttonLabels",
 			Description:  "Shows text labels on the add and stacked view buttons in PanelEditNext",
 			Stage:        FeatureStageExperimental,
@@ -2904,14 +2913,6 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
 			Generate:    Generate{Go: true},
-		},
-		{
-			Name:        "grafana.vectorSearchCmdk",
-			Description: "Enables semantic (vector) dashboard search in the command palette",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
-			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "grafana.cmdkHybridSearch",
