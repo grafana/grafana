@@ -25,7 +25,10 @@ func TestUpdateIndexSizeMetric(t *testing.T) {
 			require.NoError(t, os.Mkdir(lostFound, 0o700))
 			require.NoError(t, os.WriteFile(filepath.Join(lostFound, "recovered"), []byte("not an index"), 0o600))
 			require.NoError(t, os.Chmod(lostFound, mode))
-			t.Cleanup(func() { require.NoError(t, os.Chmod(lostFound, 0o700)) })
+			t.Cleanup(func() {
+				// Directory traversal must be restored so TempDir cleanup can remove its contents.
+				require.NoError(t, os.Chmod(lostFound, 0o700)) //nolint:gosec // G302: Owner-only directory permissions are required for cleanup.
+			})
 
 			// Only the filesystem's top-level recovery directory should be skipped.
 			index := filepath.Join(root, "index", "lost+found")
